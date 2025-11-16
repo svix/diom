@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Json, Path, Query},
+    extract::{Json, Query},
     http::StatusCode,
-    routing::{delete, get, put},
+    routing::post,
     Router,
 };
 use serde::{Deserialize, Serialize};
@@ -43,6 +43,7 @@ impl KvStore {
 
 #[derive(Debug, Deserialize)]
 struct SetRequest {
+    key: String,
     value: serde_json::Value,
 }
 
@@ -51,10 +52,9 @@ struct TtlQuery {
     ttl: Option<u64>,
 }
 
-// PUT /kv/:key?ttl=3600
+// POST /kv/set?ttl=3600
 async fn set_handler(
     axum::extract::State(store): axum::extract::State<KvStore>,
-    Path(key): Path<String>,
     Query(query): Query<TtlQuery>,
     Json(req): Json<SetRequest>,
 ) -> StatusCode {
@@ -68,22 +68,27 @@ async fn set_handler(
     };
 
     let mut data = store.data.write().await;
-    data.insert(key, entry);
+    data.insert(req.key, entry);
 
     StatusCode::NO_CONTENT
 }
 
-// GET /kv/:key
+#[derive(Debug, Deserialize)]
+struct KeyRequest {
+    key: String,
+}
+
+// POST /kv/get
 async fn get_handler(
     axum::extract::State(store): axum::extract::State<KvStore>,
-    Path(key): Path<String>,
+    Json(req): Json<KeyRequest>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
     store.cleanup_expired().await;
 
     let data = store.data.read().await;
     let now = Instant::now();
 
-    if let Some(entry) = data.get(&key) {
+    if let Some(entry) = data.get(&req.key) {
         if let Some(expires_at) = entry.expires_at {
             if expires_at <= now {
                 return Err(StatusCode::NOT_FOUND);
@@ -95,30 +100,30 @@ async fn get_handler(
     }
 }
 
-// DELETE /kv/:key
+// POST /kv/delete
 async fn delete_handler(
     axum::extract::State(store): axum::extract::State<KvStore>,
-    Path(key): Path<String>,
+    Json(req): Json<KeyRequest>,
 ) -> StatusCode {
     let mut data = store.data.write().await;
-    if data.remove(&key).is_some() {
+    if data.remove(&req.key).is_some() {
         StatusCode::NO_CONTENT
     } else {
         StatusCode::NOT_FOUND
     }
 }
 
-// HEAD /kv/:key (check if key exists)
+// POST /kv/exists (check if key exists)
 async fn exists_handler(
     axum::extract::State(store): axum::extract::State<KvStore>,
-    Path(key): Path<String>,
+    Json(req): Json<KeyRequest>,
 ) -> StatusCode {
     store.cleanup_expired().await;
 
     let data = store.data.read().await;
     let now = Instant::now();
 
-    let exists = if let Some(entry) = data.get(&key) {
+    let exists = if let Some(entry) = data.get(&req.key) {
         if let Some(expires_at) = entry.expires_at {
             expires_at > now
         } else {
@@ -139,9 +144,9 @@ pub fn router() -> Router {
     let store = KvStore::new();
 
     Router::new()
-        .route("/:key", put(set_handler))
-        .route("/:key", get(get_handler))
-        .route("/:key", delete(delete_handler))
-        .route("/:key", axum::routing::head(exists_handler))
+        .route("/set", post(set_handler))
+        .route("/get", post(get_handler))
+        .route("/delete", post(delete_handler))
+        .route("/exists", post(exists_handler))
         .with_state(store)
 }

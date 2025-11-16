@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Json, Path, Query},
+    extract::Json,
     http::StatusCode,
-    routing::{delete, post},
+    routing::post,
     Router,
 };
 use serde::{Deserialize, Serialize};
@@ -33,7 +33,8 @@ impl RateLimitStore {
 }
 
 #[derive(Debug, Deserialize)]
-struct TokenBucketQuery {
+struct TokenBucketRequest {
+    key: String,
     capacity: f64,
     refill_rate: f64, // tokens per second
     #[serde(default = "default_tokens")]
@@ -51,7 +52,8 @@ struct TokenBucketResponse {
 }
 
 #[derive(Debug, Deserialize)]
-struct SlidingWindowQuery {
+struct SlidingWindowRequest {
+    key: String,
     max_requests: u64,
     window_seconds: u64,
 }
@@ -64,7 +66,8 @@ struct SlidingWindowResponse {
 }
 
 #[derive(Debug, Deserialize)]
-struct FixedWindowQuery {
+struct FixedWindowRequest {
+    key: String,
     max_requests: u64,
     window_seconds: u64,
 }
@@ -77,31 +80,29 @@ struct FixedWindowResponse {
     window_reset_at: u64, // seconds until window resets
 }
 
-// POST /ratelimit/token_bucket/:key?capacity=100&refill_rate=10&tokens=1
 async fn token_bucket_handler(
     axum::extract::State(store): axum::extract::State<RateLimitStore>,
-    Path(key): Path<String>,
-    Query(query): Query<TokenBucketQuery>,
+    Json(req): Json<TokenBucketRequest>,
 ) -> (StatusCode, Json<TokenBucketResponse>) {
     let mut buckets = store.token_buckets.write().await;
     let now = Instant::now();
 
     let (mut tokens, last_refill, capacity, refill_rate) = buckets
-        .get(&key)
+        .get(&req.key)
         .copied()
-        .unwrap_or((query.capacity, now, query.capacity, query.refill_rate));
+        .unwrap_or((req.capacity, now, req.capacity, req.refill_rate));
 
     // Refill tokens based on time elapsed
     let elapsed = now.duration_since(last_refill).as_secs_f64();
     tokens = (tokens + elapsed * refill_rate).min(capacity);
 
-    let allowed = tokens >= query.tokens;
+    let allowed = tokens >= req.tokens;
 
     if allowed {
-        tokens -= query.tokens;
+        tokens -= req.tokens;
     }
 
-    buckets.insert(key, (tokens, now, capacity, refill_rate));
+    buckets.insert(req.key, (tokens, now, capacity, refill_rate));
 
     (
         StatusCode::OK,
@@ -112,18 +113,16 @@ async fn token_bucket_handler(
     )
 }
 
-// POST /ratelimit/sliding_window/:key?max_requests=100&window_seconds=60
 async fn sliding_window_handler(
     axum::extract::State(store): axum::extract::State<RateLimitStore>,
-    Path(key): Path<String>,
-    Query(query): Query<SlidingWindowQuery>,
+    Json(req): Json<SlidingWindowRequest>,
 ) -> (StatusCode, Json<SlidingWindowResponse>) {
     let mut windows = store.sliding_windows.write().await;
     let now = Instant::now();
-    let window_duration = Duration::from_secs(query.window_seconds);
+    let window_duration = Duration::from_secs(req.window_seconds);
     let cutoff = now - window_duration;
 
-    let timestamps = windows.entry(key).or_insert_with(VecDeque::new);
+    let timestamps = windows.entry(req.key).or_insert_with(VecDeque::new);
 
     // Remove expired timestamps
     while let Some(&front) = timestamps.front() {
@@ -135,13 +134,13 @@ async fn sliding_window_handler(
     }
 
     let current_count = timestamps.len() as u64;
-    let allowed = current_count < query.max_requests;
+    let allowed = current_count < req.max_requests;
 
     if allowed {
         timestamps.push_back(now);
     }
 
-    let remaining = query.max_requests.saturating_sub(current_count + if allowed { 1 } else { 0 });
+    let remaining = req.max_requests.saturating_sub(current_count + if allowed { 1 } else { 0 });
 
     (
         StatusCode::OK,
@@ -153,35 +152,33 @@ async fn sliding_window_handler(
     )
 }
 
-// POST /ratelimit/fixed_window/:key?max_requests=100&window_seconds=60
 async fn fixed_window_handler(
     axum::extract::State(store): axum::extract::State<RateLimitStore>,
-    Path(key): Path<String>,
-    Query(query): Query<FixedWindowQuery>,
+    Json(req): Json<FixedWindowRequest>,
 ) -> (StatusCode, Json<FixedWindowResponse>) {
     let mut windows = store.fixed_windows.write().await;
     let now = Instant::now();
-    let window_duration = Duration::from_secs(query.window_seconds);
+    let window_duration = Duration::from_secs(req.window_seconds);
 
     let (mut count, window_start) = windows
-        .get(&key)
+        .get(&req.key)
         .copied()
         .unwrap_or((0, now));
 
     // Check if we need to reset the window
     if now.duration_since(window_start) >= window_duration {
         count = 0;
-        windows.insert(key.clone(), (0, now));
+        windows.insert(req.key.clone(), (0, now));
     }
 
-    let allowed = count < query.max_requests;
+    let allowed = count < req.max_requests;
 
     if allowed {
         count += 1;
-        windows.insert(key.clone(), (count, window_start));
+        windows.insert(req.key.clone(), (count, window_start));
     }
 
-    let remaining = query.max_requests.saturating_sub(count);
+    let remaining = req.max_requests.saturating_sub(count);
     let window_reset_at = window_duration
         .saturating_sub(now.duration_since(window_start))
         .as_secs();
@@ -197,29 +194,38 @@ async fn fixed_window_handler(
     )
 }
 
-// DELETE /ratelimit/:key
+#[derive(Debug, Deserialize)]
+struct ResetRequest {
+    key: String,
+}
+
+#[derive(Debug, Serialize)]
+struct ResetResponse {
+    success: bool,
+}
+
 async fn reset_handler(
     axum::extract::State(store): axum::extract::State<RateLimitStore>,
-    Path(key): Path<String>,
-) -> StatusCode {
+    Json(req): Json<ResetRequest>,
+) -> (StatusCode, Json<ResetResponse>) {
     let mut token_buckets = store.token_buckets.write().await;
     let mut sliding_windows = store.sliding_windows.write().await;
     let mut fixed_windows = store.fixed_windows.write().await;
 
-    token_buckets.remove(&key);
-    sliding_windows.remove(&key);
-    fixed_windows.remove(&key);
+    token_buckets.remove(&req.key);
+    sliding_windows.remove(&req.key);
+    fixed_windows.remove(&req.key);
 
-    StatusCode::NO_CONTENT
+    (StatusCode::OK, Json(ResetResponse { success: true }))
 }
 
 pub fn router() -> Router {
     let store = RateLimitStore::new();
 
     Router::new()
-        .route("/token_bucket/:key", post(token_bucket_handler))
-        .route("/sliding_window/:key", post(sliding_window_handler))
-        .route("/fixed_window/:key", post(fixed_window_handler))
-        .route("/:key", delete(reset_handler))
+        .route("/token_bucket", post(token_bucket_handler))
+        .route("/sliding_window", post(sliding_window_handler))
+        .route("/fixed_window", post(fixed_window_handler))
+        .route("/reset", post(reset_handler))
         .with_state(store)
 }
