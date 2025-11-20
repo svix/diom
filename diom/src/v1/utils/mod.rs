@@ -736,42 +736,6 @@ pub fn get_unix_timestamp() -> u64 {
         .as_secs()
 }
 
-#[derive(Deserialize, JsonSchema)]
-pub struct ApplicationPath {
-    pub app_id: ApplicationIdOrUid,
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct ApplicationEndpointPath {
-    pub app_id: ApplicationIdOrUid,
-    pub endpoint_id: EndpointIdOrUid,
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct ApplicationMsgPath {
-    pub app_id: ApplicationIdOrUid,
-    pub msg_id: MessageIdOrUid,
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct ApplicationMsgEndpointPath {
-    pub app_id: ApplicationIdOrUid,
-    pub msg_id: MessageIdOrUid,
-    pub endpoint_id: EndpointIdOrUid,
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct ApplicationMsgAttemptPath {
-    pub app_id: ApplicationIdOrUid,
-    pub msg_id: MessageIdOrUid,
-    pub attempt_id: MessageAttemptId,
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct EventTypeNamePath {
-    pub event_type_name: EventTypeName,
-}
-
 /// JsonStatus is a wrapper over `axum::extract::Json` as a handler output.
 ///
 /// Setting the `STATUS` const parameter automatically sets the response
