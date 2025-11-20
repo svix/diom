@@ -19,8 +19,6 @@ use validator::{Validate, ValidationErrors};
 
 use crate::v1::utils::validation_error;
 
-pub mod metadata;
-
 use super::cryptography::{AsymmetricKey, Encryption};
 
 const ALL_ERROR: &str = "__all__";

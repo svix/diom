@@ -2,31 +2,145 @@
 <html>
 
 <head>
-  <title>Svix API - ReDoc</title>
+  <title>Svix API Reference</title>
   <!-- needed for adaptive design -->
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="https://www.svix.com/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://www.svix.com/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://www.svix.com/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="https://www.svix.com/favicon-96x96.png">
 
-  <link rel="shortcut icon" href="https://www.svix.com/favicon.ico">
-  <!-- ReDoc doesn't change outer page styles -->
   <style>
-    body {
-      margin: 0;
-      padding: 0;
+    :root {
+      --scalar-custom-header-height: 50px;
     }
 
-    redoc ul[role="menu"] {
-      /* fix last item being hidden behind the redoc banner on smaller viewports */
-      padding-bottom: 32px;
+    .custom-header {
+      height: var(--scalar-custom-header-height);
+      background-color: rgb(28 28 70/1);
+
+      box-shadow: inset 0 -1px 0 var(--scalar-border-color);
+      color: #fff;
+      font-size: var(--scalar-font-size-2);
+      padding: 0 18px;
+      position: sticky;
+      justify-content: space-between;
+      top: 0;
+      z-index: 100;
+    }
+
+    .custom-header,
+    .custom-header nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .custom-header a:hover {
+      color: var(--scalar-color-2);
+    }
+
+    .light-mode {
+      --scalar-background-1: #fff;
+      --scalar-background-2: #f5f6f8;
+      --scalar-background-3: #eceef1;
+
+      --scalar-color-1: #1b1b1b;
+      --scalar-color-2: #757575;
+      --scalar-color-3: #8e8e8e;
+
+      --scalar-color-accent: #3182ce;
+      --scalar-background-accent: #3182ce1f;
+
+      --scalar-border-color: rgba(215, 215, 206, 0.68);
+    }
+
+    .dark-mode {
+      --scalar-background-1: #15171c;
+      --scalar-background-2: #1c1e24;
+      --scalar-background-3: #22252b;
+
+      --scalar-color-1: #fafafa;
+      --scalar-color-2: #c9ced8;
+      --scalar-color-3: #8c99ad;
+
+      --scalar-color-accent: #3182ce;
+      --scalar-background-accent: #3182ce1f;
+
+      --scalar-border-color: #3f4145;
+    }
+
+    /* Document Sidebar */
+    .light-mode .t-doc__sidebar,
+    .dark-mode .t-doc__sidebar {
+      --scalar-sidebar-background-1: var(--scalar-background-1);
+      --scalar-sidebar-color-1: var(--scalar-color-1);
+      --scalar-sidebar-color-2: var(--scalar-color-2);
+      --scalar-sidebar-border-color: var(--scalar-border-color);
+
+      --scalar-sidebar-item-hover-color: currentColor;
+      --scalar-sidebar-item-hover-background: var(--scalar-background-3);
+
+      --scalar-sidebar-item-active-background: var(--scalar-background-accent);
+      --scalar-sidebar-color-active: var(--scalar-color-accent);
+
+      --scalar-sidebar-search-background: var(--scalar-background-1);
+      --scalar-sidebar-search-color: var(--scalar-color-3);
+      --scalar-sidebar-search-border-color: var(--scalar-border-color);
+    }
+
+    .light-mode *::selection {
+      background-color: color-mix(in srgb, var(--scalar-color-accent), transparent 70%);
+    }
+
+    .dark-mode *::selection {
+      background-color: color-mix(in srgb, var(--scalar-color-accent), transparent 50%);
     }
   </style>
 </head>
 
 <body>
-  <redoc spec-url="/api/v1/openapi.json"></redoc>
-  <script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"> </script>
+  <header class="custom-header scalar-app">
+    <img src="https://www.svix.com/_next/static/media/svix-logo-text-white.f84c2cda.svg" width="96" height="32"
+      alt="Svix logo">
+    <nav>
+      <a href="https://www.svix.com/">Homepage</a>
+      <a href="https://docs.svix.com/">Docs</a>
+      <a href="https://www.svix.com/blog/">Blog</a>
+
+    </nav>
+  </header>
+  <div id="app"></div>
+  <!-- Load the Script -->
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+
+  <!-- Initialize the Scalar API Reference -->
+  <script>
+    Scalar.createApiReference('#app', {
+      url: '/api/v1/openapi.json',
+      hideModels: true,
+      hideClientButton: true,
+      hiddenClients: true,
+      darkMode: false,
+      showToolbar: "never",
+      generateOperationSlug: (operation) => `operation/${operation.operationId}`,
+      generateTagSlug: (tag) => `${tag.name.replace(" ", "-")}`,
+      generateWebhookSlug: (webhook) => webhook.name,
+      // Ensure old webhook urls keep working
+      // old link: https://api.svix.com/docs#tag/Webhook/operation/endpoint.updated
+      // new link: https://api.svix.com/docs#tag/Webhook/webhook/endpoint.updated
+      // Scalar (we can't modify this) prefixes each webhook slug with /webhook, that code allows us to keep old urls working
+      redirect: (hash) => {
+        if (hash.startsWith("#tag/Webhook/operation/")) {
+          return hash.replace("#tag/Webhook/operation/", "#tag/Webhook/webhook/")
+        }
+        return hash;
+      },
+    })
+  </script>
 </body>
 
 </html>
+
