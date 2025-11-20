@@ -1,21 +1,15 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Deref,
-    sync::LazyLock,
-};
+use std::{collections::HashSet, ops::Deref, sync::LazyLock};
 
-use base64::{engine::general_purpose::STANDARD, Engine};
 use chrono::{DateTime, Utc};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use rand::Rng;
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use svix_ksuid::*;
-use validator::{Validate, ValidationErrors};
+use validator::ValidationErrors;
 
 use crate::v1::utils::validation_error;
 

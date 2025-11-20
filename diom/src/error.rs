@@ -51,11 +51,6 @@ impl Error {
     }
 
     #[track_caller]
-    pub fn cache(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Cache(s.to_string()))
-    }
-
-    #[track_caller]
     pub fn timeout(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Timeout(s.to_string()))
     }
@@ -115,7 +110,6 @@ impl<T> Traceable<T> for Result<T> {
     }
 }
 
-
 impl From<ExtensionRejection> for Error {
     #[track_caller]
     fn from(value: ExtensionRejection) -> Self {
@@ -135,15 +129,9 @@ pub enum ErrorType {
     /// A generic error
     Generic(String),
     /// Database error
-    Database(String),
-    /// Queue error
-    Queue(String),
-    /// Database error
     Validation(String),
     /// Any kind of HttpError
     Http(HttpError),
-    /// Cache error
-    Cache(String),
     /// Timeout error
     Timeout(String),
 }
@@ -152,11 +140,8 @@ impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Generic(s) => s.fmt(f),
-            Self::Database(s) => s.fmt(f),
-            Self::Queue(s) => s.fmt(f),
             Self::Validation(s) => s.fmt(f),
             Self::Http(s) => s.fmt(f),
-            Self::Cache(s) => s.fmt(f),
             Self::Timeout(s) => s.fmt(f),
         }
     }

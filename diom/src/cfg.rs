@@ -1,24 +1,18 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{borrow::Cow, collections::HashMap, fmt, net::SocketAddr, sync::Arc, time::Duration};
+use std::{fmt, net::SocketAddr, sync::Arc};
 
 use anyhow::{bail, Context};
 use figment::{
     providers::{Env, Format, Toml},
     Figment,
 };
-use ipnet::IpNet;
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use tracing::Level;
-use url::Url;
 use validator::{Validate, ValidationError};
 
-use crate::{
-    core::security::JwtSigningConfig,
-    error::Result,
-    v1::utils::validation_error,
-};
+use crate::{core::security::JwtSigningConfig, error::Result};
 
 const DEFAULTS: &str = include_str!("../config.default.toml");
 
@@ -108,12 +102,10 @@ fn validate_config_complete(_config: &ConfigurationInner) -> Result<(), Validati
     Ok(())
 }
 
-impl ConfigurationInner {
-}
+impl ConfigurationInner {}
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct InternalConfig {
-}
+pub struct InternalConfig {}
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]

@@ -20,9 +20,7 @@ use tower_http::{
 };
 use tracing_subscriber::{layer::SubscriberExt as _, Layer as _};
 
-use crate::{
-    cfg::{Configuration},
-};
+use crate::cfg::Configuration;
 
 pub mod cfg;
 pub mod core;
@@ -91,19 +89,14 @@ pub struct AppState {
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
 // consuming from each others' queues
-pub async fn run_with_prefix(
-    cfg: Configuration,
-    listener: Option<TcpListener>,
-) {
+pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) {
     // OpenAPI/aide must be initialized before any routers are constructed
     // because its initialization sets generation-global settings which are
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
     // build our application with a route
-    let app_state = AppState {
-        cfg: cfg.clone(),
-    };
+    let app_state = AppState { cfg: cfg.clone() };
     let v1_router = v1::router().with_state::<()>(app_state);
 
     // Initialize all routes which need to be part of OpenAPI first.
@@ -113,13 +106,11 @@ pub async fn run_with_prefix(
 
     openapi::postprocess_spec(&mut openapi);
     let docs_router = docs::router(openapi);
-    let app = app.merge(docs_router).layer((
-        CorsLayer::new()
-            .allow_origin(Any)
-            .allow_methods(Any)
-            .allow_headers(AllowHeaders::mirror_request())
-            .max_age(Duration::from_secs(600)),
-    ));
+    let app = app.merge(docs_router).layer((CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(AllowHeaders::mirror_request())
+        .max_age(Duration::from_secs(600)),));
     let svc = tower::make::Shared::new(
         // It is important that this service wraps the router instead of being
         // applied via `Router::layer`, as it would run after routing then.
@@ -141,17 +132,14 @@ pub async fn run_with_prefix(
         .unwrap();
 }
 
-pub fn setup_tracing(
-    cfg: &ConfigurationInner,
-    for_test: bool,
-) -> tracing::Dispatch {
+pub fn setup_tracing(cfg: &ConfigurationInner, for_test: bool) -> tracing::Dispatch {
     let filter_directives = std::env::var("RUST_LOG").unwrap_or_else(|e| {
         if let std::env::VarError::NotUnicode(_) = e {
             eprintln!("RUST_LOG environment variable has non-utf8 contents, ignoring!");
         }
 
         let level = cfg.log_level.to_string();
-        let var = vec![
+        let var = [
             format!("{CRATE_NAME}={level}"),
             format!("tower_http={level}"),
         ];
@@ -217,13 +205,11 @@ pub fn setup_tracing(
         }
     };
 
-    let registry = tracing_subscriber::Registry::default()
+    tracing_subscriber::Registry::default()
         .with(otel_layer)
         .with(stdout_layer)
         .with(tracing_subscriber::EnvFilter::new(filter_directives))
-        .into();
-
-    registry
+        .into()
 }
 
 pub fn setup_metrics(cfg: &ConfigurationInner) -> Option<SdkMeterProvider> {
@@ -283,7 +269,7 @@ mod docs {
 
     // TODO: switch to generated docs instead of hardcoded JSON once generated
     // is comparable/better than hardcoded one.
-    pub fn router(_docs: OpenApi) -> ApiRouter {
+    pub(crate) fn router(_docs: OpenApi) -> ApiRouter {
         ApiRouter::new()
             .route("/", get(|| async { Redirect::temporary("/docs") }))
             .route("/docs", get(get_docs))
