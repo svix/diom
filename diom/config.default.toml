@@ -1,0 +1,125 @@
+# Default configuration file
+# Values here can also be set by setting the appropriate env var, e.g. SVIX_DB_DSN for db_dsn
+# The values shown below are the default values. Values commented out are not set but recommended.
+
+# The address to listen on
+listen_address = "0.0.0.0:8071"
+
+# The address of the Svix server to use for sending operational webhooks (disabled when omitted/null)
+# Operational webhooks (otherwise known as "incoming webhooks"), are webhooks
+# send from the Svix server to you, to let you know when some events happen.
+# For a list of supported events please refer to: https://api.svix.com/docs#tag/Webhooks
+# operational_webhook_address = "http://127.0.0.1:8071"
+
+# The main secret used by Svix. Used for client-side encryption of sensitive data, etc.
+# IMPORTANT: Once set, it can't be changed.
+# main_secret = "kPafCtH7KC351nWXQb2pEGa6IRW3OsYpzQJldB8X"
+
+# The JWT secret for authentication - should be secret and securely generated
+# jwt_secret = "8KjzRXrKkd9YFcNyqLSIY8JwiaCeRc6WK4UkMnSW"
+
+# This determines the signature algorithm used when creating JWTs
+# Supported: HS256 (default), HS384, HS512, RS256, RS384, RS512, EdDSA
+# jwt_algorithm = "HS256"
+
+# This determines the type of key that is generated for endpoint secrets by default (when none is set).
+# Supported: hmac256 (default), ed25519
+# Note: this does not affect existing keys, which will continue signing based on the type they were created with.
+default_signature_type = "hmac256"
+
+# The log level to run the service with. Supported: info, debug, trace
+log_level = "info"
+# The log format that all output will follow. Supported: default, json
+log_format = "default"
+
+# The OpenTelemetry address to send trace information to. Disabled when omitted/null.
+# opentelemetry_address = "http://localhost:4317"
+
+# The ratio at which to sample spans when sending to OpenTelemetry. When not given it defaults to
+# always sending. If the OpenTelemetry address is not set, this will do nothing.
+# opentelemetry_sample_ratio = 1.0
+
+# The name of the service to use when sending spans to OpenTelemetry.
+opentelemetry_service_name = "svix_server"
+
+# The Sentry DSN to use for error reporting. Disabled when omitted/null
+# sentry_dsn = "https://somedsn.ingest.sentry.io/12345"
+
+# The environment that the server is running in.
+# Supported: "dev", "staging", "prod"
+environment = "dev"
+
+# Whether to enable the logging of the databases at the configured log level. This may be useful for
+# analyzing their response times.
+db_tracing = false
+
+# The wanted retry schedule in seconds. Each value is the time to wait between retries.
+retry_schedule = [5,300,1800,7200,18000,36000,36000]
+
+# The DSN for the database. Only postgres is currently supported.
+db_dsn = "postgresql://postgres:postgres@pgbouncer/postgres"
+
+# The maximum number of connections for the PostgreSQL pool. Minimum value is 10.
+# Higher values can significantly increase performance if your database can handle it.
+db_pool_max_size = 100
+
+# The default DSN for redis. `queue_dsn` and `cache_dsn` with take precedence over this value.
+# (can be left empty if not using redis or if Redis is configured through the queue and/or cache
+# specific DSNs)
+# redis_dsn = "redis://redis:6379"
+
+# The maximum number of connections for the Redis pool. Minimum value of 10
+# Higher values can significantly increase performance if your database can handle it.
+redis_pool_max_size = 100
+
+# What kind of message queue to use. Supported: memory, redis, rediscluster
+# Redis backends must have a redis_dsn or queue_dsn configured, and it's highly recommended to
+# enable persistence in redis so that a server restart doesn't wipe the queue.
+queue_type = "redis"
+
+# The DSN for the Redis-backed queue. Overrides `redis_dsn`. (can be left empty if not using redis)
+# queue_dsn = "redis://redis:6379"
+
+# What kind of cache to use. Supported: memory, redis, rediscluster, none.
+# Redis backends must have a redis_dsn or cache_dsn configured.
+# The memory backend is recommended if you only have one instance running (not including workers). If you have
+# multiple API servers running, please use the redis backend or some functionality, (e.g. Idempotency)
+# may fail to work correctly.
+cache_type = "memory"
+
+# The DSN for the Redis-backed cache. Overrides `redis_dsn`. (can be left empty if not using redis)
+# cache_dsn = "redis://redis:6379"
+
+# If true, headers are prefixed with `Webhook-`, otherwise with `Svix-` (default).
+whitelabel_headers = false
+
+# If true, only allow https endpoints, otherwise also allow http.
+endpoint_https_only = false
+
+# How long of a period an endpoint must be consistently failing to be disabled. If a message is
+# successfully sent during this time, then the endpoint will not disable. Measured in hours.
+endpoint_failure_disable_after = 120
+
+# How long to wait when making a request (in seconds)
+worker_request_timeout = 30
+
+# Should this instance run the API
+api_enabled = true
+
+# Should this instance run the message worker
+worker_enabled = true
+
+# Subnets to whitelist for outbound webhooks. Note that allowing endpoints in private IP space
+# is a security risk and should only be allowed if you are using the service internally or for
+# testing purposes. Should be specified in CIDR notation, e.g., `[127.0.0.1/32, 172.17.0.0/16, 192.168.0.0/16]`
+# whitelist_subnets = []
+
+# Maximum number of concurrent worker tasks to spawn (0 is unlimited)
+worker_max_tasks = 500
+
+# Whether or not to disable TLS certificate validation on Webhook dispatch. This is a dangerous flag
+# to set true. This value will default to false.
+# dangerous_disable_tls_verification = false
+
+# Maximum seconds of queue long-poll
+queue_max_poll_secs = 20
