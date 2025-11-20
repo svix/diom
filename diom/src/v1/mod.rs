@@ -13,7 +13,7 @@ pub mod endpoints;
 pub mod utils;
 
 pub fn router() -> ApiRouter<AppState> {
-    let ret: ApiRouter<AppState> = ApiRouter::new().merge(endpoints::health::router()).layer(
+    let ret: ApiRouter<AppState> = ApiRouter::new().merge(endpoints::router()).layer(
         TraceLayer::new_for_http()
             .make_span_with(AxumOtelSpanCreator)
             .on_response(AxumOtelOnResponse)
