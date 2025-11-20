@@ -23,22 +23,17 @@ anyhow = "1.0.56"
 axum = "0.7.9"
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 base64 = "0.22"
-bb8 = "0.9.0"
-bb8-redis = "0.24.0"
-blake2 = "0.10.4"
 bytes = "1.1.0"
-chacha20poly1305 = "0.10.1"
 chrono = { version = "0.4.26", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
+diom-derive = { path = "../diom-derive" }
 dotenvy = "0.15.7"
-ed25519-compact = "2.1.1"
 enum_dispatch = "0.3.8"
 figment = { version = "0.10", features = ["toml", "env", "test"] }
 form_urlencoded = "1.1.0"
 futures = "0.3"
 hex = "0.4.3"
 hickory-resolver = "0.25.2"
-hmac-sha256 = "1"
 http = "1.1.0"
 http-body-util = "0.1.2"
 http02 = { package = "http", version = "0.2.12" }
@@ -52,30 +47,21 @@ indexmap = "2.6.0"
 ipnet = { version = "2.5", features = ["serde"] }
 itertools = "0.14"
 jsonschema = "0.33.0"
-jwt-simple = "0.11.6"
-lapin = "2.1.1"
+jwt-simple = "0.12"
 num_enum = "0.7.2"
-omniqueue = { git = "https://github.com/svix/omniqueue-rs", rev = "e7e328a576f921ca58d0bdb56b8df69fd996172d", default-features = false, features = ["in_memory", "rabbitmq-with-message-ids", "redis_cluster", "redis_sentinel", "beta"] }
-openssl = "0.10.72"
 opentelemetry = { version = "0.26.0", features = ["metrics"] }
 opentelemetry-http = "0.26.0"
 opentelemetry-otlp = { version = "0.26.0", features = ["metrics"] }
 opentelemetry-semantic-conventions = "0.26.0"
 opentelemetry_sdk = { version = "0.26.0", features = ["rt-tokio"] }
 rand = "0.8.5"
-redis = { version = "0.32.5", features = ["tokio-comp", "tokio-native-tls-comp", "streams", "cluster-async", "tcp_nodelay", "connection-manager", "sentinel"] }
 regex = "1.5.5"
 reqwest = { version = "0.12.23", default-features = false, features = ["json", "rustls-tls", "hickory-dns"] }
 schemars = { version = "0.8.11", features = ["chrono", "url", "preserve_order"] }
-sea-orm = { version = "1.1.1", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros", "with-chrono", "with-json" ], default-features = false }
-sentry = { version = "0.34.0", features = ["tracing"] }
-serde = { version = "1.0.184", features = ["derive"] }
+serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value"] }
 serde_path_to_error = "0.1.7"
-sqlx = { version = "0.8.2", features = [ "runtime-tokio-rustls", "postgres", "migrate" ] }
-svix = "1.17.0"
 svix-ksuid = "^0.5.1"
-diom-derive = { path = "../diom-derive" }
 thiserror = "2.0.11"
 time = { version = "0.3.9", features = [ "std" ] }
 tokio = { version = "1.24.2", features = ["full"] }
@@ -99,7 +85,6 @@ tikv-jemallocator = { version = "0.6", optional = true }
 assert_matches = "1.5.0"
 axum-server = { version = "0.7.1", features = ["tls-openssl"] }
 ctor = "0.2.7"
-wiremock = { version = "=0.6.4" }
 
 [lints]
 workspace = true

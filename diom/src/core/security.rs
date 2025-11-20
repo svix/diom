@@ -31,18 +31,8 @@ pub async fn permissions_from_bearer(parts: &mut Parts, state: &AppState) -> Res
             .await
             .map_err(|_| HttpError::unauthorized(None, Some("Invalid token".to_string())))?;
 
-    let claims =
-        parse_bearer(&state.cfg.jwt_signing_config, &bearer).ok_or_else(|| {
-            match state.cfg.jwt_signing_config.as_ref() {
-                JwtSigningConfig::Default { jwt_secret }
-                    if jwt_secret.to_bytes() == bearer.token().as_bytes() =>
-                {
-                    HttpError::unauthorized(None, Some(JWT_SECRET_ERR.to_string()))
-                }
-
-                _ => HttpError::unauthorized(None, Some(INVALID_TOKEN_ERR.to_string())),
-            }
-        })?;
+    let claims = parse_bearer(&state.cfg.jwt_signing_config, &bearer)
+        .ok_or_else(|| HttpError::unauthorized(None, Some(INVALID_TOKEN_ERR.to_string())))?;
     let perms = permissions_from_jwt(claims)?;
 
     Ok(perms)
@@ -60,22 +50,11 @@ pub fn permissions_from_jwt(_claims: JWTClaims<CustomClaim>) -> Result<Permissio
 }
 
 const JWT_ISSUER: &str = env!("CARGO_PKG_NAME");
-#[derive(Deserialize)]
-#[serde(untagged)]
-pub enum JwtSigningConfig {
-    /// Variants that specify both key and algorithm to use
-    Advanced(JWTAlgorithm),
-    /// The variant used when the algorithm is not specified, defaults to HS256
-    Default {
-        #[serde(deserialize_with = "deserialize_hs256")]
-        jwt_secret: HS256Key,
-    },
-}
 
 /// A wrapper for the available JWT signing algorithms exposed by `jwt-simple`
 #[derive(Deserialize)]
 #[serde(tag = "jwt_algorithm", content = "jwt_secret")]
-pub enum JWTAlgorithm {
+pub enum JwtSigningConfig {
     #[serde(deserialize_with = "deserialize_hs256")]
     HS256(HS256Key),
     #[serde(deserialize_with = "deserialize_hs384")]
@@ -115,36 +94,25 @@ pub enum EdDSA {
 impl JwtSigningConfig {
     pub fn generate(&self, claims: JWTClaims<CustomClaim>) -> Result<String, jwt_simple::Error> {
         match self {
-            JwtSigningConfig::Advanced(a) => match a {
-                JWTAlgorithm::HS256(key) => key.authenticate(claims),
-                JWTAlgorithm::HS384(key) => key.authenticate(claims),
-                JWTAlgorithm::HS512(key) => key.authenticate(claims),
-                JWTAlgorithm::RS256(kind) => match kind {
-                    RS256::Public(_) => {
-                        Err(jwt_simple::Error::msg("cannot sign JWT with public key"))
-                    }
-                    RS256::Pair(key) => key.sign(claims),
-                },
-                JWTAlgorithm::RS384(kind) => match kind {
-                    RS384::Public(_) => {
-                        Err(jwt_simple::Error::msg("cannot sign JWT with public key"))
-                    }
-                    RS384::Pair(key) => key.sign(claims),
-                },
-                JWTAlgorithm::RS512(kind) => match kind {
-                    RS512::Public(_) => {
-                        Err(jwt_simple::Error::msg("cannot sign JWT with public key"))
-                    }
-                    RS512::Pair(key) => key.sign(claims),
-                },
-                JWTAlgorithm::EdDSA(kind) => match kind {
-                    EdDSA::Public(_) => {
-                        Err(jwt_simple::Error::msg("cannot sign JWT with public key"))
-                    }
-                    EdDSA::Pair(key) => key.sign(claims),
-                },
+            JwtSigningConfig::HS256(key) => key.authenticate(claims),
+            JwtSigningConfig::HS384(key) => key.authenticate(claims),
+            JwtSigningConfig::HS512(key) => key.authenticate(claims),
+            JwtSigningConfig::RS256(kind) => match kind {
+                RS256::Public(_) => Err(jwt_simple::Error::msg("cannot sign JWT with public key")),
+                RS256::Pair(key) => key.sign(claims),
             },
-            JwtSigningConfig::Default { jwt_secret } => jwt_secret.authenticate(claims),
+            JwtSigningConfig::RS384(kind) => match kind {
+                RS384::Public(_) => Err(jwt_simple::Error::msg("cannot sign JWT with public key")),
+                RS384::Pair(key) => key.sign(claims),
+            },
+            JwtSigningConfig::RS512(kind) => match kind {
+                RS512::Public(_) => Err(jwt_simple::Error::msg("cannot sign JWT with public key")),
+                RS512::Pair(key) => key.sign(claims),
+            },
+            JwtSigningConfig::EdDSA(kind) => match kind {
+                EdDSA::Public(_) => Err(jwt_simple::Error::msg("cannot sign JWT with public key")),
+                EdDSA::Pair(key) => key.sign(claims),
+            },
         }
     }
 
@@ -154,28 +122,25 @@ impl JwtSigningConfig {
         options: Option<VerificationOptions>,
     ) -> Result<JWTClaims<CustomClaim>, jwt_simple::Error> {
         match self {
-            JwtSigningConfig::Advanced(a) => match a {
-                JWTAlgorithm::HS256(key) => key.verify_token(token, options),
-                JWTAlgorithm::HS384(key) => key.verify_token(token, options),
-                JWTAlgorithm::HS512(key) => key.verify_token(token, options),
-                JWTAlgorithm::RS256(kind) => match kind {
-                    RS256::Public(key) => key.verify_token(token, options),
-                    RS256::Pair(pair) => pair.public_key().verify_token(token, options),
-                },
-                JWTAlgorithm::RS384(kind) => match kind {
-                    RS384::Public(key) => key.verify_token(token, options),
-                    RS384::Pair(pair) => pair.public_key().verify_token(token, options),
-                },
-                JWTAlgorithm::RS512(kind) => match kind {
-                    RS512::Public(key) => key.verify_token(token, options),
-                    RS512::Pair(pair) => pair.public_key().verify_token(token, options),
-                },
-                JWTAlgorithm::EdDSA(kind) => match kind {
-                    EdDSA::Public(key) => key.verify_token(token, options),
-                    EdDSA::Pair(pair) => pair.public_key().verify_token(token, options),
-                },
+            JwtSigningConfig::HS256(key) => key.verify_token(token, options),
+            JwtSigningConfig::HS384(key) => key.verify_token(token, options),
+            JwtSigningConfig::HS512(key) => key.verify_token(token, options),
+            JwtSigningConfig::RS256(kind) => match kind {
+                RS256::Public(key) => key.verify_token(token, options),
+                RS256::Pair(pair) => pair.public_key().verify_token(token, options),
             },
-            JwtSigningConfig::Default { jwt_secret } => jwt_secret.verify_token(token, options),
+            JwtSigningConfig::RS384(kind) => match kind {
+                RS384::Public(key) => key.verify_token(token, options),
+                RS384::Pair(pair) => pair.public_key().verify_token(token, options),
+            },
+            JwtSigningConfig::RS512(kind) => match kind {
+                RS512::Public(key) => key.verify_token(token, options),
+                RS512::Pair(pair) => pair.public_key().verify_token(token, options),
+            },
+            JwtSigningConfig::EdDSA(kind) => match kind {
+                EdDSA::Public(key) => key.verify_token(token, options),
+                EdDSA::Pair(pair) => pair.public_key().verify_token(token, options),
+            },
         }
     }
 }
@@ -186,20 +151,13 @@ impl Debug for JwtSigningConfig {
             f,
             "{}",
             match self {
-                JwtSigningConfig::Advanced(a) => {
-                    match a {
-                        JWTAlgorithm::HS256(_) => "HS256",
-                        JWTAlgorithm::HS384(_) => "HS384",
-                        JWTAlgorithm::HS512(_) => "HS512",
-                        JWTAlgorithm::RS256(_) => "RS256",
-                        JWTAlgorithm::RS384(_) => "RS384",
-                        JWTAlgorithm::RS512(_) => "RS512",
-                        JWTAlgorithm::EdDSA(_) => "EdDSA",
-                    }
-                }
-                JwtSigningConfig::Default { .. } => {
-                    "HS256"
-                }
+                JwtSigningConfig::HS256(_) => "HS256",
+                JwtSigningConfig::HS384(_) => "HS384",
+                JwtSigningConfig::HS512(_) => "HS512",
+                JwtSigningConfig::RS256(_) => "RS256",
+                JwtSigningConfig::RS384(_) => "RS384",
+                JwtSigningConfig::RS512(_) => "RS512",
+                JwtSigningConfig::EdDSA(_) => "EdDSA",
             }
         )
     }
