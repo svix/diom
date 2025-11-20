@@ -1,10 +1,10 @@
 use axum::{
+    Router,
     extract::{Json, Query},
     http::StatusCode,
     routing::post,
-    Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -60,7 +60,9 @@ async fn set_handler(
 ) -> StatusCode {
     store.cleanup_expired().await;
 
-    let expires_at = query.ttl.map(|ttl| Instant::now() + Duration::from_secs(ttl));
+    let expires_at = query
+        .ttl
+        .map(|ttl| Instant::now() + Duration::from_secs(ttl));
 
     let entry = KvEntry {
         value: req.value,
@@ -89,10 +91,10 @@ async fn get_handler(
     let now = Instant::now();
 
     if let Some(entry) = data.get(&req.key) {
-        if let Some(expires_at) = entry.expires_at {
-            if expires_at <= now {
-                return Err(StatusCode::NOT_FOUND);
-            }
+        if let Some(expires_at) = entry.expires_at
+            && expires_at <= now
+        {
+            return Err(StatusCode::NOT_FOUND);
         }
         Ok(Json(entry.value.clone()))
     } else {

@@ -1,9 +1,4 @@
-use axum::{
-    extract::Json,
-    http::StatusCode,
-    routing::post,
-    Router,
-};
+use axum::{Router, extract::Json, http::StatusCode, routing::post};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
@@ -140,13 +135,19 @@ async fn sliding_window_handler(
         timestamps.push_back(now);
     }
 
-    let remaining = req.max_requests.saturating_sub(current_count + if allowed { 1 } else { 0 });
+    let remaining = req
+        .max_requests
+        .saturating_sub(current_count + if allowed { 1 } else { 0 });
 
     (
         StatusCode::OK,
         Json(SlidingWindowResponse {
             allowed,
-            current_count: if allowed { current_count + 1 } else { current_count },
+            current_count: if allowed {
+                current_count + 1
+            } else {
+                current_count
+            },
             remaining,
         }),
     )
@@ -160,10 +161,7 @@ async fn fixed_window_handler(
     let now = Instant::now();
     let window_duration = Duration::from_secs(req.window_seconds);
 
-    let (mut count, window_start) = windows
-        .get(&req.key)
-        .copied()
-        .unwrap_or((0, now));
+    let (mut count, window_start) = windows.get(&req.key).copied().unwrap_or((0, now));
 
     // Check if we need to reset the window
     if now.duration_since(window_start) >= window_duration {
