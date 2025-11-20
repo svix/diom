@@ -27,10 +27,7 @@ use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
-use crate::{
-    core::types::BaseId,
-    error::{Error, HttpError, Result, ValidationErrorItem},
-};
+use crate::error::{Error, HttpError, Result, ValidationErrorItem};
 
 pub mod patch;
 use patch::UnrequiredField;
@@ -144,8 +141,7 @@ impl<'de, T: 'static + Deserialize<'de> + Validate + From<String>> Deserialize<'
 impl<T: Validate> Validate for ReversibleIterator<T> {
     fn validate(&self) -> Result<(), validator::ValidationErrors> {
         match self {
-            ReversibleIterator::Normal(val) => val.validate(),
-            ReversibleIterator::Prev(val) => val.validate(),
+            ReversibleIterator::Normal(val) | ReversibleIterator::Prev(val) => val.validate(),
         }
     }
 }

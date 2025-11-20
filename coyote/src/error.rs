@@ -139,10 +139,8 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Generic(s) => s.fmt(f),
-            Self::Validation(s) => s.fmt(f),
+            Self::Generic(s) | Self::Validation(s) | Self::Timeout(s) => s.fmt(f),
             Self::Http(s) => s.fmt(f),
-            Self::Timeout(s) => s.fmt(f),
         }
     }
 }
