@@ -32,8 +32,7 @@ use validator::{Validate, ValidationError};
 
 use crate::{
     core::types::{
-        ApplicationIdOrUid, BaseId, EndpointIdOrUid, EventTypeName, EventTypeNameSet,
-        MessageAttemptId, MessageIdOrUid,
+        BaseId
     },
     error::{Error, HttpError, Result, ValidationErrorItem},
 };
@@ -268,50 +267,6 @@ where
         .filter(sort_column.lt(I::start_id(future_limit)));
 
     (query, iter_direction)
-}
-
-/// Marker trait for any type that is used for iterating through results
-/// in the public API.
-pub trait IdIterator: Validate + Into<sea_orm::Value> {}
-
-impl<T: BaseId + Validate + Into<sea_orm::Value>> IdIterator for T {}
-impl IdIterator for EventTypeName {}
-
-pub fn apply_pagination<
-    Q: QuerySelect + QueryOrder + QueryFilter,
-    C: ColumnTrait,
-    I: IdIterator,
->(
-    query: Q,
-    sort_column: C,
-    limit: u64,
-    iterator: Option<ReversibleIterator<I>>,
-    ordering: Ordering,
-) -> Q {
-    use Ordering::*;
-    use ReversibleIterator::*;
-
-    // Query for an extra element to be able to tell whether there's more
-    // data than the user requested.
-    let query = query.limit(limit + 1);
-
-    let iterator = if let Some(it) = iterator {
-        it
-    } else {
-        return match ordering {
-            Ascending => query.order_by_asc(sort_column),
-            Descending => query.order_by_desc(sort_column),
-        };
-    };
-
-    match (iterator, ordering) {
-        (Prev(id), Ascending) | (Normal(id), Descending) => {
-            query.order_by_desc(sort_column).filter(sort_column.lt(id))
-        }
-        (Prev(id), Descending) | (Normal(id), Ascending) => {
-            query.order_by_asc(sort_column).filter(sort_column.gt(id))
-        }
-    }
 }
 
 /// A response with no body content and a specific response code, specified by
@@ -637,59 +592,6 @@ impl<T> Deref for ValidatedQuery<T> {
 impl<T: JsonSchema> OperationInput for ValidatedQuery<T> {
     fn operation_input(ctx: &mut aide::gen::GenContext, operation: &mut aide::openapi::Operation) {
         axum::extract::Query::<T>::operation_input(ctx, operation)
-    }
-}
-
-// A special wrapper to handle query parameter lists. serde_qs and serde_urlencode can't
-// handle url query param arrays as flexibly as we need to support in our API
-pub struct EventTypesQueryParams(pub Option<EventTypeNameSet>);
-
-#[async_trait]
-impl<S> FromRequestParts<S> for EventTypesQueryParams
-where
-    S: Send + Sync,
-{
-    type Rejection = Error;
-
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
-        let pairs = form_urlencoded::parse(parts.uri.query().unwrap_or_default().as_bytes());
-
-        let event_types: HashSet<EventTypeName> = pairs
-            .filter(|(key, _)|
-                // want to handle both `?event_types=`, `?event_types[]=`, and `?event_types[1]=`
-                key == "event_types" || (key.starts_with("event_types[") && key.ends_with(']')))
-            .flat_map(|(_, value)| {
-                value
-                    .split(',')
-                    .map(|x| EventTypeName(x.to_owned()))
-                    .collect::<Vec<_>>()
-            })
-            .collect();
-
-        if event_types.is_empty() {
-            Ok(Self(None))
-        } else {
-            let event_types = EventTypeNameSet(event_types);
-            event_types.validate().map_err(|e| {
-                HttpError::unprocessable_entity(validation_errors(vec!["query".to_owned()], e))
-            })?;
-            Ok(Self(Some(event_types)))
-        }
-    }
-}
-
-impl OperationInput for EventTypesQueryParams {
-    fn operation_input(ctx: &mut aide::gen::GenContext, operation: &mut aide::openapi::Operation) {
-        // This struct must match what `EventTypesQuery` would be if we used a
-        // simple `#[derive(Deserialize)]` on it.
-        #[derive(JsonSchema)]
-        struct EventTypesQueryParams {
-            /// Filter response based on the event type
-            #[allow(unused)]
-            event_types: Option<EventTypeNameSet>,
-        }
-
-        Query::<EventTypesQueryParams>::operation_input(ctx, operation);
     }
 }
 
