@@ -38,21 +38,6 @@ impl Error {
     }
 
     #[track_caller]
-    pub fn database(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Database(s.to_string()))
-    }
-
-    #[track_caller]
-    pub fn conflict(e: DbErr) -> Self {
-        Self::new(ErrorType::Conflict(e))
-    }
-
-    #[track_caller]
-    pub fn queue(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Queue(s.to_string()))
-    }
-
-    #[track_caller]
     pub fn validation(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Validation(s.to_string()))
     }
@@ -73,16 +58,6 @@ impl Error {
     #[track_caller]
     pub fn timeout(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Timeout(s.to_string()))
-    }
-
-    #[track_caller]
-    pub fn db_timeout(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::DbTimeout(s.to_string()))
-    }
-
-    #[track_caller]
-    pub fn connection_timeout(e: DbErr) -> Self {
-        Self::new(ErrorType::ConnectionTimeout(e))
     }
 
     #[track_caller]
@@ -140,41 +115,6 @@ impl<T> Traceable<T> for Result<T> {
     }
 }
 
-impl From<DbErr> for Error {
-    #[track_caller]
-    fn from(err: DbErr) -> Self {
-        if is_timeout_error(&err) {
-            Error::db_timeout(err)
-        } else if is_conflict_err(&err) {
-            Error::conflict(err)
-        } else if is_connection_timeout_error(&err) {
-            Error::connection_timeout(err)
-        } else {
-            Error::database(err)
-        }
-    }
-}
-
-impl From<redis::RedisError> for Error {
-    #[track_caller]
-    fn from(value: redis::RedisError) -> Self {
-        Error::queue(value)
-    }
-}
-
-impl From<omniqueue::QueueError> for Error {
-    #[track_caller]
-    fn from(value: omniqueue::QueueError) -> Self {
-        Error::queue(value)
-    }
-}
-
-impl<E: error::Error + 'static> From<bb8::RunError<E>> for Error {
-    #[track_caller]
-    fn from(value: bb8::RunError<E>) -> Self {
-        Error::queue(value)
-    }
-}
 
 impl From<ExtensionRejection> for Error {
     #[track_caller]
@@ -187,13 +127,6 @@ impl From<PathRejection> for Error {
     #[track_caller]
     fn from(value: PathRejection) -> Self {
         Error::generic(value)
-    }
-}
-
-impl From<lapin::Error> for Error {
-    #[track_caller]
-    fn from(value: lapin::Error) -> Self {
-        Error::queue(format_args!("{value:?}"))
     }
 }
 
@@ -213,12 +146,6 @@ pub enum ErrorType {
     Cache(String),
     /// Timeout error
     Timeout(String),
-    /// Database timeout error
-    DbTimeout(String),
-    /// Connection timeout error
-    ConnectionTimeout(DbErr),
-    /// Conflict error
-    Conflict(DbErr),
 }
 
 impl fmt::Display for ErrorType {
@@ -231,9 +158,6 @@ impl fmt::Display for ErrorType {
             Self::Http(s) => s.fmt(f),
             Self::Cache(s) => s.fmt(f),
             Self::Timeout(s) => s.fmt(f),
-            Self::DbTimeout(s) => s.fmt(f),
-            Self::ConnectionTimeout(s) => s.fmt(f),
-            Self::Conflict(s) => s.fmt(f),
         }
     }
 }

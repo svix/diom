@@ -4,21 +4,16 @@
 #![warn(clippy::all)]
 #![forbid(unsafe_code)]
 
-use std::{borrow::Cow, sync::LazyLock, time::Duration};
+use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{metrics::SdkMeterProvider, runtime::Tokio};
-use queue::TaskQueueProducer;
-use redis::RedisManager;
-use sea_orm::DatabaseConnection;
-use sentry::integrations::tracing::EventFilter;
 use svix_ksuid::{KsuidLike, KsuidMs};
 use tokio::net::TcpListener;
 use tokio_util::sync::CancellationToken;
-use tower::layer::layer_fn;
 use tower_http::{
     cors::{AllowHeaders, Any, CorsLayer},
     normalize_path::NormalizePath,
@@ -26,29 +21,14 @@ use tower_http::{
 use tracing_subscriber::{layer::SubscriberExt as _, Layer as _};
 
 use crate::{
-    cfg::{CacheBackend, Configuration},
-    core::{
-        cache,
-        cache::Cache,
-        idempotency::IdempotencyService,
-        operational_webhooks::{OperationalWebhookSender, OperationalWebhookSenderInner},
-    },
-    db::init_db,
-    expired_message_cleaner::expired_message_cleaner_loop,
-    worker::queue_handler,
+    cfg::{Configuration},
 };
 
 pub mod cfg;
 pub mod core;
-pub mod db;
 pub mod error;
-pub mod expired_message_cleaner;
-pub mod metrics;
 pub mod openapi;
-pub mod queue;
-pub mod redis;
 pub mod v1;
-pub mod worker;
 
 const CRATE_NAME: &str = env!("CARGO_CRATE_NAME");
 
@@ -101,65 +81,28 @@ async fn graceful_shutdown_handler() {
 
 pub async fn run(cfg: Configuration) {
     let _metrics = setup_metrics(&cfg);
-    run_with_prefix(cfg.queue_prefix.clone(), cfg, None).await
+    run_with_prefix(cfg, None).await
 }
 
 #[derive(Clone)]
 pub struct AppState {
-    db: DatabaseConnection,
-    queue_tx: TaskQueueProducer,
     cfg: Configuration,
-    cache: Cache,
-    op_webhooks: OperationalWebhookSender,
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
 // consuming from each others' queues
 pub async fn run_with_prefix(
-    prefix: Option<String>,
     cfg: Configuration,
     listener: Option<TcpListener>,
 ) {
-    tracing::debug!("DB: Initializing pool");
-    let pool = init_db(&cfg).await;
-    tracing::debug!("DB: Started");
-
-    tracing::debug!("Cache: Initializing {:?}", cfg.cache_type);
-    let cache_backend = cfg.cache_backend();
-    let cache = match &cache_backend {
-        CacheBackend::None => cache::none::new(),
-        CacheBackend::Memory => cache::memory::new(),
-        CacheBackend::Redis(_)
-        | CacheBackend::RedisCluster(_)
-        | CacheBackend::RedisSentinel(_, _) => {
-            let mgr = RedisManager::from_cache_backend(&cache_backend).await;
-            cache::redis::new(mgr)
-        }
-    };
-    tracing::debug!("Cache: Started");
-
-    tracing::debug!("Queue: Initializing {:?}", cfg.queue_type);
-    let (queue_tx, queue_rx) = queue::new_pair(&cfg, prefix.as_deref()).await;
-    tracing::debug!("Queue: Started");
-
-    let op_webhook_sender = OperationalWebhookSenderInner::new(
-        cfg.jwt_signing_config.clone(),
-        cfg.operational_webhook_address.clone(),
-    );
-
     // OpenAPI/aide must be initialized before any routers are constructed
     // because its initialization sets generation-global settings which are
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
-    let svc_cache = cache.clone();
     // build our application with a route
     let app_state = AppState {
-        db: pool.clone(),
-        queue_tx: queue_tx.clone(),
         cfg: cfg.clone(),
-        cache: cache.clone(),
-        op_webhooks: op_webhook_sender.clone(),
     };
     let v1_router = v1::router().with_state::<()>(app_state);
 
@@ -171,10 +114,6 @@ pub async fn run_with_prefix(
     openapi::postprocess_spec(&mut openapi);
     let docs_router = docs::router(openapi);
     let app = app.merge(docs_router).layer((
-        layer_fn(move |service| IdempotencyService {
-            cache: svc_cache.clone(),
-            service,
-        }),
         CorsLayer::new()
             .allow_origin(Any)
             .allow_methods(Any)
@@ -187,80 +126,35 @@ pub async fn run_with_prefix(
         NormalizePath::trim_trailing_slash(app),
     );
 
-    let with_api = cfg.api_enabled;
-    let with_worker = cfg.worker_enabled;
     let listen_address = cfg.listen_address;
+    let listener = match listener {
+        Some(l) => l,
+        None => TcpListener::bind(listen_address)
+            .await
+            .expect("Error binding to listen_address"),
+    };
+    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
-    let ((), worker_loop, expired_message_cleaner_loop) = tokio::join!(
-        async {
-            if with_api {
-                let listener = match listener {
-                    Some(l) => l,
-                    None => TcpListener::bind(listen_address)
-                        .await
-                        .expect("Error binding to listen_address"),
-                };
-                tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
-
-                axum::serve(listener, svc)
-                    .with_graceful_shutdown(graceful_shutdown_handler())
-                    .await
-                    .unwrap();
-            } else {
-                tracing::debug!("API: off");
-                graceful_shutdown_handler().await;
-            }
-        },
-        async {
-            if with_worker {
-                tracing::debug!("Worker: Started");
-                queue_handler(
-                    &cfg,
-                    cache.clone(),
-                    pool.clone(),
-                    queue_tx,
-                    queue_rx,
-                    op_webhook_sender,
-                )
-                .await
-            } else {
-                tracing::debug!("Worker: off");
-                Ok(())
-            }
-        },
-        async {
-            if with_worker {
-                tracing::debug!("Expired message cleaner: Started");
-                expired_message_cleaner_loop(&pool).await
-            } else {
-                tracing::debug!("Expired message cleaner: off");
-                Ok(())
-            }
-        }
-    );
-
-    worker_loop.expect("Error initializing worker");
-    expired_message_cleaner_loop.expect("Error initializing expired message cleaner")
+    axum::serve(listener, svc)
+        .with_graceful_shutdown(graceful_shutdown_handler())
+        .await
+        .unwrap();
 }
 
 pub fn setup_tracing(
     cfg: &ConfigurationInner,
     for_test: bool,
-) -> (tracing::Dispatch, sentry::ClientInitGuard) {
+) -> tracing::Dispatch {
     let filter_directives = std::env::var("RUST_LOG").unwrap_or_else(|e| {
         if let std::env::VarError::NotUnicode(_) = e {
             eprintln!("RUST_LOG environment variable has non-utf8 contents, ignoring!");
         }
 
         let level = cfg.log_level.to_string();
-        let mut var = vec![
+        let var = vec![
             format!("{CRATE_NAME}={level}"),
             format!("tower_http={level}"),
         ];
-
-        if cfg.db_tracing {
-            var.push(format!("sqlx={level}"));
-        }
 
         var.join(",")
     });
@@ -304,19 +198,6 @@ pub fn setup_tracing(
         tracing_opentelemetry::layer().with_tracer(tracer)
     });
 
-    let sentry_guard = sentry::init(sentry::ClientOptions {
-        dsn: cfg.sentry_dsn.clone(),
-        environment: Some(Cow::Owned(cfg.environment.to_string())),
-        release: sentry::release_name!(),
-        ..Default::default()
-    });
-
-    let sentry_layer =
-        sentry::integrations::tracing::layer().event_filter(|md| match *md.level() {
-            tracing::Level::ERROR | tracing::Level::WARN => EventFilter::Event,
-            _ => EventFilter::Ignore,
-        });
-
     // Then create a subscriber with an additional layer printing to stdout.
     // This additional layer is either formatted normally or in JSON format.
     let stdout_layer = if for_test {
@@ -338,12 +219,11 @@ pub fn setup_tracing(
 
     let registry = tracing_subscriber::Registry::default()
         .with(otel_layer)
-        .with(sentry_layer)
         .with(stdout_layer)
         .with(tracing_subscriber::EnvFilter::new(filter_directives))
         .into();
 
-    (registry, sentry_guard)
+    registry
 }
 
 pub fn setup_metrics(cfg: &ConfigurationInner) -> Option<SdkMeterProvider> {
