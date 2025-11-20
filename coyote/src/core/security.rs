@@ -11,19 +11,16 @@ use axum_extra::{
 use http::request::Parts;
 use jwt_simple::prelude::*;
 use serde::Deserializer;
-use validator::Validate;
 
 use crate::{
-    error::{Error, HttpError, Result},
+    error::{HttpError, Result},
     AppState,
 };
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct CustomClaim {
-}
+pub struct CustomClaim {}
 
-pub struct Permissions {
-}
+pub struct Permissions {}
 
 pub const INVALID_TOKEN_ERR: &str = "Invalid token";
 pub const JWT_SECRET_ERR : &str = "Authentication failed. JWT signing secrets can not be used as tokens, please refer to https://github.com/svix/svix-webhooks#authentication for more information.";
@@ -59,8 +56,7 @@ pub fn parse_bearer(
 }
 
 pub fn permissions_from_jwt(_claims: JWTClaims<CustomClaim>) -> Result<Permissions> {
-    Ok(Permissions {
-    })
+    Ok(Permissions {})
 }
 
 const JWT_ISSUER: &str = env!("CARGO_PKG_NAME");
@@ -291,4 +287,3 @@ where
         Err(serde::de::Error::custom("could not deserialize key"))
     }
 }
-

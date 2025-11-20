@@ -3,7 +3,6 @@
 
 use std::{
     borrow::Cow,
-    collections::HashSet,
     error::Error as StdError,
     ops::Deref,
     sync::LazyLock,
@@ -22,18 +21,14 @@ use axum::{
     },
     response::IntoResponse,
 };
-use chrono::{DateTime, Utc};
 use http::{request::Parts, StatusCode};
 use regex::Regex;
 use schemars::JsonSchema;
-use sea_orm::{ColumnTrait, QueryFilter, QueryOrder, QuerySelect};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
 use crate::{
-    core::types::{
-        BaseId
-    },
+    core::types::BaseId,
     error::{Error, HttpError, Result, ValidationErrorItem},
 };
 
@@ -48,11 +43,6 @@ const PAGINATION_LIMIT_CAP_HARD: bool = true;
 const PAGINATION_LIMIT_CAP_LIMIT: u64 = 250;
 static PAGINATION_LIMIT_ERROR: LazyLock<String> =
     LazyLock::new(|| format!("Given limit must not exceed {PAGINATION_LIMIT_CAP_LIMIT}"));
-
-static FUTURE_QUERY_LIMIT: LazyLock<chrono::Duration> =
-    LazyLock::new(|| chrono::Duration::hours(1));
-static LIMITED_QUERY_DURATION: LazyLock<chrono::Duration> =
-    LazyLock::new(|| chrono::Duration::days(90));
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 pub struct PaginationDescending<T: Validate + JsonSchema> {
@@ -172,101 +162,6 @@ impl<T: Validate + JsonSchema> JsonSchema for ReversibleIterator<T> {
     fn is_referenceable() -> bool {
         false
     }
-}
-
-/// Applies sorting and filtration to a query from its iterator, sort column, and limit
-/// queries based on time
-/// Our rules for limiting queries are as follows
-///
-/// If `before` is passed:
-/// * lower limit on query is `before - LIMITED_QUERY_DURATION`
-/// * upper limit is `before`
-///
-/// If `after` is passed:
-/// * lower limit is `after`
-/// * upper limit is `now + FUTURE_QUERY_LIMIT`
-///
-/// If prev-iterator is passed:
-/// * lower limit is `prev-iterator`
-/// * upper limit is `prev-iterator + LIMITED_QUERY_DURATION`
-///
-/// If (normal) iterator is passed:
-/// * lower limit is `iterator - LIMITED_QUERY_DURATION`
-/// * upper limit is `iterator`
-///
-/// If no iterator is passed:
-/// * lower limit is `now() - LIMITED_QUERY_DURATION` if
-///   neither `before` nor `after` were passed
-pub(crate) fn filter_and_paginate_time_limited<Q, I>(
-    mut query: Q,
-    sort_column: impl ColumnTrait,
-    limit: u64,
-    iterator: Option<ReversibleIterator<I>>,
-    before: Option<DateTime<Utc>>,
-    after: Option<DateTime<Utc>>,
-) -> (Q, IteratorDirection)
-where
-    Q: QuerySelect + QueryOrder + QueryFilter,
-    I: BaseId<Output = I> + Validate + Into<sea_orm::Value>,
-{
-    let mut limit_time = true;
-    if let Some(before) = before {
-        if limit_time {
-            query = query.filter(sort_column.gt(I::start_id(before - *LIMITED_QUERY_DURATION)));
-            limit_time = false;
-        }
-        query = query.filter(sort_column.lt(I::start_id(before)));
-    }
-
-    if let Some(after) = after {
-        if limit_time {
-            query = query.filter(sort_column.lt(I::end_id(after + *LIMITED_QUERY_DURATION)));
-            limit_time = false;
-        }
-        query = query.filter(sort_column.gt(I::start_id(after)));
-    }
-
-    let (mut query, iter_direction) = match (&iterator, before, after) {
-        (Some(ReversibleIterator::Prev(_)), _, _) | (None, None, Some(_)) => {
-            (query.order_by_asc(sort_column), IteratorDirection::Prev)
-        }
-        _ => (query.order_by_desc(sort_column), IteratorDirection::Normal),
-    };
-
-    let now = chrono::Utc::now();
-    let future_limit = now + *FUTURE_QUERY_LIMIT;
-    match iterator {
-        Some(ReversibleIterator::Prev(id)) => {
-            let ts = id.timestamp();
-            query = query.filter(sort_column.gt(id));
-            if limit_time {
-                query = query.filter(sort_column.lt(I::end_id(ts + *LIMITED_QUERY_DURATION)));
-            }
-        }
-
-        Some(ReversibleIterator::Normal(id)) => {
-            let ts = id.timestamp();
-            query = query.filter(sort_column.lt(id));
-            if limit_time {
-                query = query.filter(sort_column.gt(I::start_id(ts - *LIMITED_QUERY_DURATION)));
-            }
-        }
-
-        None => {
-            if limit_time {
-                query = query.filter(sort_column.gt(I::start_id(now - *LIMITED_QUERY_DURATION)));
-            }
-        }
-    }
-
-    query = query
-        // Query for an extra element to be able to tell whether there's more
-        // data than the user requested.
-        .limit(limit + 1)
-        // Blanket limit on future
-        .filter(sort_column.lt(I::start_id(future_limit)));
-
-    (query, iter_direction)
 }
 
 /// A response with no body content and a specific response code, specified by

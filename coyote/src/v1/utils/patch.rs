@@ -232,7 +232,6 @@ macro_rules! patch_field_non_nullable {
         }
     };
 }
-pub(crate) use patch_field_non_nullable;
 
 /// Macro that simplifies updating a field on an [`ActiveModel`] for use in a [`ModelIn`]
 /// implementation. This macro expands to setting the field when the [`UnrequiredNullableField`] is
@@ -266,4 +265,3 @@ macro_rules! patch_field_nullable {
         }
     };
 }
-pub(crate) use patch_field_nullable;

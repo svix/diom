@@ -4,15 +4,10 @@
 #![warn(clippy::all)]
 #![forbid(unsafe_code)]
 
-use anyhow::bail;
 use clap::{Parser, Subcommand};
+use coyote::{cfg, run, setup_tracing};
 use dotenvy::dotenv;
-use coyote::{
-    cfg,
-    run, setup_tracing,
-};
 use tracing_subscriber::util::SubscriberInitExt;
-use validator::Validate;
 
 #[cfg(all(target_env = "msvc", feature = "jemalloc"))]
 compile_error!("jemalloc cannot be enabled on msvc");
@@ -20,7 +15,6 @@ compile_error!("jemalloc cannot be enabled on msvc");
 #[cfg(all(not(target_env = "msvc"), feature = "jemalloc"))]
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
-
 
 #[derive(Parser)]
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
