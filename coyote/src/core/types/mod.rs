@@ -9,7 +9,7 @@ use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use svix_ksuid::*;
-use validator::ValidationErrors;
+use validator::{Validate, ValidationErrors};
 
 use crate::v1::utils::validation_error;
 
@@ -320,88 +320,23 @@ macro_rules! jsonschema_for_repr_enum {
     }
 }
 
-#[repr(i16)]
-#[derive(Clone, Debug, Copy, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-pub enum MessageAttemptTriggerType {
-    Scheduled = 0,
-    Manual = 1,
-}
-
-jsonschema_for_repr_enum! {
-    MessageAttemptTriggerType,
-    i16,
-    "The reason an attempt was made:\n- Scheduled = 0\n- Manual = 1",
-    Scheduled, Manual
-}
-
-#[repr(i16)]
-#[derive(Clone, Debug, Copy, PartialEq, IntoPrimitive, TryFromPrimitive, Hash, Eq)]
-pub enum MessageStatus {
-    Success = 0,
-    Pending = 1,
-    Fail = 2,
-    Sending = 3,
-}
-
-jsonschema_for_repr_enum! {
-    MessageStatus,
-    i16,
-    "The sending status of the message:\n- Success = 0\n- Pending = 1\n- Fail = 2\n- Sending = 3",
-    Success, Pending, Fail, Sending
-}
-
-#[repr(i16)]
-#[derive(Clone, Debug, Copy, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
-pub enum StatusCodeClass {
-    CodeNone = 0,
-    Code1xx = 100,
-    Code2xx = 200,
-    Code3xx = 300,
-    Code4xx = 400,
-    Code5xx = 500,
-}
-
-jsonschema_for_repr_enum! {
-    StatusCodeClass,
-    i16,
-    "The different classes of HTTP status codes:\n- CodeNone = 0\n- Code1xx = 100\n- Code2xx = 200\n- Code3xx = 300\n- Code4xx = 400\n- Code5xx = 500",
-    CodeNone, Code1xx, Code2xx, Code3xx, Code4xx, Code5xx
-}
-
-enum_wrapper!(MessageAttemptTriggerType);
-enum_wrapper!(MessageStatus);
-enum_wrapper!(StatusCodeClass);
-
-#[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize)]
-pub struct FeatureFlag(pub String);
-
-common_jsonschema_impl!(
-    FeatureFlag,
+string_wrapper!(
+    EntityKey,
     crate::core::types::StringSchema {
         string_validation: Some(schemars::schema::StringValidation {
-            min_length: None,
             max_length: Some(256),
+            min_length: None,
             pattern: Some(r"^[a-zA-Z0-9\-_.]+$".to_string()),
         }),
-        example: Some("cool-new-feature".to_string()),
+        example: Some("some_key".to_string()),
     }
 );
 
-string_wrapper_impl!(FeatureFlag);
-
-impl<'de> Deserialize<'de> for FeatureFlag {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        String::deserialize(deserializer).and_then(|s| {
-            validate_limited_str(&s).map_err(serde::de::Error::custom)?;
-            Ok(FeatureFlag(s))
-        })
+impl Validate for EntityKey {
+    fn validate(&self) -> Result<(), validator::ValidationErrors> {
+        validate_limited_str(&self.0)
     }
 }
-
-pub type FeatureFlagSet = HashSet<FeatureFlag>;
 
 #[cfg(test)]
 mod tests {
