@@ -140,25 +140,37 @@ async fn kv_set(
     ValidatedJson(data): ValidatedJson<KvSetIn>,
 ) -> Result<Json<KvSetOut>> {
     let key_str = data.key.to_string();
+    let behavior = data.behavior.clone();
+    let model: KvModel = data.into();
 
-    match data.behavior {
+    match behavior {
         OperationBehavior::Insert => {
-            if kv_store.store.contains_key(&key_str) {
-                return Err(Error::http(HttpError::conflict(None, None)));
+            // Atomically insert only if key doesn't exist
+            use dashmap::mapref::entry::Entry;
+            match kv_store.store.entry(key_str) {
+                Entry::Vacant(entry) => {
+                    entry.insert(model);
+                }
+                Entry::Occupied(_) => {
+                    return Err(Error::http(HttpError::conflict(None, None)));
+                }
             }
         }
         OperationBehavior::Update => {
-            if !kv_store.store.contains_key(&key_str) {
-                return Err(Error::http(HttpError::not_found(None, None)));
+            // Atomically update only if key exists
+            match kv_store.store.get_mut(&key_str) {
+                Some(mut entry) => {
+                    *entry = model;
+                }
+                None => {
+                    return Err(Error::http(HttpError::not_found(None, None)));
+                }
             }
         }
         OperationBehavior::Upsert => {
-            // Always allow
+            kv_store.store.insert(key_str, model);
         }
     }
-
-    let model: KvModel = data.into();
-    kv_store.store.insert(key_str, model);
 
     let ret = KvSetOut {};
     Ok(Json(ret))
