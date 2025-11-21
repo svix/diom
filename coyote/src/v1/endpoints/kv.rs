@@ -64,7 +64,8 @@ pub struct KvSetIn {
     pub expires_at: u64,
     // TODO: add pub expire_in: u64,
 
-    // FIXME: do we want it here?
+    // FIXME: do we want it here? I think we probably want separate commands for insert, upsert,
+    // and update? Or does it get weird?
     #[serde(default)]
     pub behavior: OperationBehavior,
 
