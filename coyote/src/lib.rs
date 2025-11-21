@@ -87,6 +87,7 @@ pub struct AppState {
     cfg: Configuration,
     // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
     kv_store: crate::v1::endpoints::kv::KvStore,
+    cache_store: crate::v1::endpoints::cache::CacheStore,
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
@@ -101,6 +102,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let app_state = AppState {
         cfg: cfg.clone(),
         kv_store: crate::v1::endpoints::kv::KvStore::new(),
+        cache_store: crate::v1::endpoints::cache::CacheStore::new(),
     };
     let v1_router = v1::router().with_state::<()>(app_state);
 
