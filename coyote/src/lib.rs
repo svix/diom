@@ -90,6 +90,7 @@ pub struct AppState {
     cache_store: crate::v1::endpoints::cache::CacheStore,
     rate_limiter_store: crate::v1::endpoints::rate_limiter::RateLimiterStore,
     idempotency_store: crate::v1::endpoints::idempotency::IdempotencyStore,
+    queue_store: crate::v1::endpoints::queue::QueueStore,
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
@@ -107,6 +108,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         cache_store: crate::v1::endpoints::cache::CacheStore::new(),
         rate_limiter_store: crate::v1::endpoints::rate_limiter::RateLimiterStore::new(),
         idempotency_store: crate::v1::endpoints::idempotency::IdempotencyStore::new(),
+        queue_store: crate::v1::endpoints::queue::QueueStore::new(),
     };
     let v1_router = v1::router().with_state::<()>(app_state);
 
