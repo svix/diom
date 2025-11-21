@@ -85,6 +85,8 @@ pub async fn run(cfg: Configuration) {
 #[derive(Clone)]
 pub struct AppState {
     cfg: Configuration,
+    // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
+    kv_store: crate::v1::endpoints::kv::KvStore,
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
@@ -96,7 +98,10 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let mut openapi = openapi::initialize_openapi();
 
     // build our application with a route
-    let app_state = AppState { cfg: cfg.clone() };
+    let app_state = AppState {
+        cfg: cfg.clone(),
+        kv_store: crate::v1::endpoints::kv::KvStore::new(),
+    };
     let v1_router = v1::router().with_state::<()>(app_state);
 
     // Initialize all routes which need to be part of OpenAPI first.
