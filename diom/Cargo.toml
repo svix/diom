@@ -26,6 +26,7 @@ base64 = "0.22"
 bytes = "1.1.0"
 chrono = { version = "0.4.26", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
+crossbeam = "0.8"
 diom-derive = { path = "../diom-derive" }
 dashmap = "6.1"
 dotenvy = "0.15.7"
@@ -78,6 +79,7 @@ urlencoding = "2.1.2"
 # haven't gotten around to doing a proper upgrade yet (0.17 is a large
 # rewrite with a barely-useful changelog)
 validator = { git = "https://github.com/svix/validator.git", rev = "aebdc34a4ed72524902ff6d63397b9c435b0578f", features = ["derive"] }
+crossbeam-skiplist = "0.1.3"
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = { version = "0.6", optional = true }
