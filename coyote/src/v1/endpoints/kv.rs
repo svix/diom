@@ -2,17 +2,32 @@
 // SPDX-License-Identifier: MIT
 
 use aide::axum::{ApiRouter, routing::{post}};
-use axum::Json;
+use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
 use serde::{Deserialize, Serialize};
 use schemars::JsonSchema;
 use validator::Validate;
+use std::sync::Arc;
+use dashmap::DashMap;
 
 use crate::{
     AppState, core::types::EntityKey, v1::utils::{ValidatedJson, openapi_tag},
-    error::{Result},
+    error::{Result, Error, HttpError},
 
 };
+
+#[derive(Clone)]
+pub struct KvStore {
+    store: Arc<DashMap<String, KvModel>>,
+}
+
+impl KvStore {
+    pub fn new() -> Self {
+        Self {
+            store: Arc::new(DashMap::new()),
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvModel {
@@ -120,8 +135,30 @@ pub struct KvDeleteOut {
 /// KV Set
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
+    State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvSetIn>,
 ) -> Result<Json<KvSetOut>> {
+    let key_str = data.key.to_string();
+
+    match data.behavior {
+        OperationBehavior::Insert => {
+            if kv_store.store.contains_key(&key_str) {
+                return Err(Error::http(HttpError::conflict(None, None)));
+            }
+        }
+        OperationBehavior::Update => {
+            if !kv_store.store.contains_key(&key_str) {
+                return Err(Error::http(HttpError::not_found(None, None)));
+            }
+        }
+        OperationBehavior::Upsert => {
+            // Always allow
+        }
+    }
+
+    let model: KvModel = data.into();
+    kv_store.store.insert(key_str, model);
+
     let ret = KvSetOut {};
     Ok(Json(ret))
 }
@@ -129,19 +166,29 @@ async fn kv_set(
 /// KV Get
 #[aide_annotate(op_id = "v1.kv.get")]
 async fn kv_get(
+    State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvGetIn>,
 ) -> Result<Json<KvGetOut>> {
-    let ret = KvGetOut{
-    };
+    let key_str = data.key.to_string();
+
+    let model = kv_store
+        .store
+        .get(&key_str)
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let ret: KvGetOut = model.value().clone().into();
     Ok(Json(ret))
 }
 
 /// KV Delete
 #[aide_annotate(op_id = "v1.kv.delete")]
 async fn kv_del(
+    State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvDeleteIn>,
 ) -> Result<Json<KvDeleteOut>> {
-    let ret = KvDeleteOut { deleted: true };
+    let key_str = data.key.to_string();
+    let deleted = kv_store.store.remove(&key_str).is_some();
+    let ret = KvDeleteOut { deleted };
     Ok(Json(ret))
 }
 
