@@ -1,24 +1,31 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{ApiRouter, routing::{post}};
-use axum::{Json, extract::State};
+use aide::axum::{routing::post, ApiRouter};
+use axum::{extract::State, Json};
 use coyote_derive::aide_annotate;
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
-use validator::Validate;
-use std::sync::Arc;
 use dashmap::DashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use validator::Validate;
 
 use crate::{
-    AppState, core::types::EntityKey, v1::utils::{ValidatedJson, openapi_tag},
-    error::{Result, Error, HttpError},
-
+    core::types::EntityKey,
+    error::{Error, HttpError, Result},
+    v1::utils::{openapi_tag, ValidatedJson},
+    AppState,
 };
 
 #[derive(Clone)]
 pub struct CacheStore {
     store: Arc<DashMap<String, CacheModel>>,
+}
+
+impl Default for CacheStore {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CacheStore {
@@ -56,9 +63,13 @@ pub struct CacheSetIn {
     pub value: String,
 }
 
-impl Into<CacheModel> for CacheSetIn {
-    fn into(self) -> CacheModel {
-        let Self { key, expires_at, value } = self;
+impl From<CacheSetIn> for CacheModel {
+    fn from(val: CacheSetIn) -> Self {
+        let CacheSetIn {
+            key,
+            expires_at,
+            value,
+        } = val;
 
         CacheModel {
             key,
@@ -69,8 +80,7 @@ impl Into<CacheModel> for CacheSetIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct CacheSetOut {
-}
+pub struct CacheSetOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheGetIn {
@@ -93,7 +103,11 @@ pub struct CacheGetOut {
 
 impl From<CacheModel> for CacheGetOut {
     fn from(model: CacheModel) -> Self {
-        let CacheModel { key, expires_at, value } = model;
+        let CacheModel {
+            key,
+            expires_at,
+            value,
+        } = model;
 
         Self {
             key,

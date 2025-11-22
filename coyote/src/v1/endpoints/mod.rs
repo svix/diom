@@ -4,12 +4,12 @@ use aide::axum::ApiRouter;
 
 use crate::AppState;
 
-pub mod health;
-pub mod kv;
 pub mod cache;
-pub mod rate_limiter;
+pub mod health;
 pub mod idempotency;
+pub mod kv;
 pub mod queue;
+pub mod rate_limiter;
 
 pub fn router() -> ApiRouter<AppState> {
     ApiRouter::new()

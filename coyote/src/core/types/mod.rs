@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{collections::HashSet, ops::Deref, sync::LazyLock};
+use std::{ops::Deref, sync::LazyLock};
 
 use chrono::{DateTime, Utc};
-use num_enum::{IntoPrimitive, TryFromPrimitive};
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

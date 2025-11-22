@@ -1,21 +1,23 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{ApiRouter, routing::post};
-use axum::{Json, extract::State};
+use aide::axum::{routing::post, ApiRouter};
+use axum::{extract::State, Json};
 use coyote_derive::aide_annotate;
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
-use validator::Validate;
-use std::sync::Arc;
-use dashmap::DashMap;
 use crossbeam::queue::SegQueue;
 use crossbeam_skiplist::SkipMap;
+use dashmap::DashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use svix_ksuid::{KsuidLike as _, KsuidMs};
+use validator::Validate;
 
 use crate::{
-    AppState, core::types::EntityKey, v1::utils::{ValidatedJson, openapi_tag},
-    error::{Result, Error, HttpError},
+    core::types::EntityKey,
+    error::{Error, HttpError, Result},
+    v1::utils::{openapi_tag, ValidatedJson},
+    AppState,
 };
 
 /// Get current time in milliseconds since Unix epoch
@@ -67,6 +69,12 @@ struct InFlightMessage {
     timeout_at_millis: u64,
 }
 
+impl Default for QueueStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl QueueStore {
     pub fn new() -> Self {
         Self {
@@ -75,7 +83,8 @@ impl QueueStore {
     }
 
     fn get_or_create_queue(&self, queue_name: &str) -> Queue {
-        self.queues.entry(queue_name.to_string())
+        self.queues
+            .entry(queue_name.to_string())
             .or_insert_with(|| Queue {
                 ready: Arc::new(SegQueue::new()),
                 delayed: Arc::new(SkipMap::new()),
@@ -127,7 +136,8 @@ impl QueueStore {
         let now = now_millis();
 
         // Find and remove all messages that are ready (lock-free iteration)
-        let ready_keys: Vec<u64> = queue.delayed
+        let ready_keys: Vec<u64> = queue
+            .delayed
             .iter()
             .filter_map(|entry: crossbeam_skiplist::map::Entry<'_, u64, Message>| {
                 let key = *entry.key();
@@ -189,22 +199,32 @@ impl QueueStore {
 
     /// Acknowledge successful processing of a message
     fn ack(&self, queue_name: &str, message_id: &str) -> Result<()> {
-        let queue = self.queues.get(queue_name)
-            .ok_or_else(|| Error::http(HttpError::not_found(Some("Queue not found".into()), None)))?;
+        let queue = self.queues.get(queue_name).ok_or_else(|| {
+            Error::http(HttpError::not_found(Some("Queue not found".into()), None))
+        })?;
 
-        queue.in_flight.remove(message_id)
-            .ok_or_else(|| Error::http(HttpError::not_found(Some("Message not found or not in-flight".into()), None)))?;
+        queue.in_flight.remove(message_id).ok_or_else(|| {
+            Error::http(HttpError::not_found(
+                Some("Message not found or not in-flight".into()),
+                None,
+            ))
+        })?;
 
         Ok(())
     }
 
     /// Negative acknowledge - return message to queue or move to DLQ
     fn nack(&self, queue_name: &str, message_id: &str) -> Result<()> {
-        let queue = self.queues.get(queue_name)
-            .ok_or_else(|| Error::http(HttpError::not_found(Some("Queue not found".into()), None)))?;
+        let queue = self.queues.get(queue_name).ok_or_else(|| {
+            Error::http(HttpError::not_found(Some("Queue not found".into()), None))
+        })?;
 
-        let (_, in_flight_msg) = queue.in_flight.remove(message_id)
-            .ok_or_else(|| Error::http(HttpError::not_found(Some("Message not found or not in-flight".into()), None)))?;
+        let (_, in_flight_msg) = queue.in_flight.remove(message_id).ok_or_else(|| {
+            Error::http(HttpError::not_found(
+                Some("Message not found or not in-flight".into()),
+                None,
+            ))
+        })?;
 
         let mut message = in_flight_msg.message;
         message.attempt_count += 1;
@@ -274,8 +294,9 @@ impl QueueStore {
 
     /// Purge all messages from a queue
     fn purge(&self, queue_name: &str) -> Result<u64> {
-        let queue = self.queues.get(queue_name)
-            .ok_or_else(|| Error::http(HttpError::not_found(Some("Queue not found".into()), None)))?;
+        let queue = self.queues.get(queue_name).ok_or_else(|| {
+            Error::http(HttpError::not_found(Some("Queue not found".into()), None))
+        })?;
 
         let mut count = 0u64;
 
@@ -297,8 +318,9 @@ impl QueueStore {
 
     /// Get stats about a queue
     fn stats(&self, queue_name: &str) -> Result<QueueStats> {
-        let queue = self.queues.get(queue_name)
-            .ok_or_else(|| Error::http(HttpError::not_found(Some("Queue not found".into()), None)))?;
+        let queue = self.queues.get(queue_name).ok_or_else(|| {
+            Error::http(HttpError::not_found(Some("Queue not found".into()), None))
+        })?;
 
         // Note: SegQueue doesn't have a len() method, so we approximate
         // by counting ready + delayed. This is slightly imprecise but acceptable.
@@ -365,10 +387,7 @@ pub struct QueueDequeueIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
 pub enum QueueDequeueOut {
-    Message {
-        message_id: String,
-        payload: String,
-    },
+    Message { message_id: String, payload: String },
     Empty {},
 }
 
@@ -435,9 +454,10 @@ async fn queue_enqueue(
     let queue_name = data.queue_name.to_string();
 
     // Default DLQ name is "{queue_name}:DLQ"
-    let dlq_queue_name = data.dlq_queue_name
+    let dlq_queue_name = data
+        .dlq_queue_name
         .map(|k| k.to_string())
-        .or_else(|| Some(format!("{}:DLQ", queue_name)));
+        .or_else(|| Some(format!("{queue_name}:DLQ")));
 
     let message_id = queue_store.enqueue(
         &queue_name,
@@ -459,12 +479,11 @@ async fn queue_dequeue(
     let queue_name = data.queue_name.to_string();
 
     match queue_store.dequeue(&queue_name, data.visibility_timeout_seconds)? {
-        Some((message_id, payload)) => {
-            Ok(Json(QueueDequeueOut::Message { message_id, payload }))
-        }
-        None => {
-            Ok(Json(QueueDequeueOut::Empty {}))
-        }
+        Some((message_id, payload)) => Ok(Json(QueueDequeueOut::Message {
+            message_id,
+            payload,
+        })),
+        None => Ok(Json(QueueDequeueOut::Empty {})),
     }
 }
 
