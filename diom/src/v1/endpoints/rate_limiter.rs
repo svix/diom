@@ -1,18 +1,20 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{ApiRouter, routing::post};
-use axum::{Json, extract::State};
+use aide::axum::{routing::post, ApiRouter};
+use axum::{extract::State, Json};
 use diom_derive::aide_annotate;
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
-use validator::Validate;
-use std::sync::Arc;
 use dashmap::DashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use validator::Validate;
 
 use crate::{
-    AppState, core::types::EntityKey, v1::utils::{ValidatedJson, openapi_tag},
-    error::{Result, Error, HttpError},
+    core::types::EntityKey,
+    error::{Error, HttpError, Result},
+    v1::utils::{openapi_tag, ValidatedJson},
+    AppState,
 };
 
 /// Get current time in milliseconds since Unix epoch.
@@ -42,6 +44,12 @@ struct TokenBucketState {
     refill_interval_millis: u64,
 }
 
+impl Default for TokenBucketRateLimiter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TokenBucketRateLimiter {
     pub fn new() -> Self {
         Self {
@@ -59,13 +67,16 @@ impl TokenBucketRateLimiter {
         let now = now_millis();
         let refill_interval_millis = refill_interval_seconds * 1000;
 
-        self.store.insert(key.to_string(), TokenBucketState {
-            tokens: capacity,
-            last_refill_millis: now,
-            capacity,
-            refill_amount,
-            refill_interval_millis,
-        });
+        self.store.insert(
+            key.to_string(),
+            TokenBucketState {
+                tokens: capacity,
+                last_refill_millis: now,
+                capacity,
+                refill_amount,
+                refill_interval_millis,
+            },
+        );
     }
 
     fn check_and_consume(
@@ -75,8 +86,12 @@ impl TokenBucketRateLimiter {
     ) -> Result<(bool, u64, Option<u64>)> {
         let now = now_millis();
 
-        let mut entry = self.store.get_mut(key)
-            .ok_or_else(|| Error::http(HttpError::not_found(Some("Rate limiter not configured for this key".into()), None)))?;
+        let mut entry = self.store.get_mut(key).ok_or_else(|| {
+            Error::http(HttpError::not_found(
+                Some("Rate limiter not configured for this key".into()),
+                None,
+            ))
+        })?;
 
         let capacity = entry.capacity;
         let refill_amount = entry.refill_amount;
@@ -100,20 +115,17 @@ impl TokenBucketRateLimiter {
             // Calculate how long until we have enough tokens (in seconds)
             let tokens_needed = tokens_requested - entry.tokens;
             let intervals_needed = if refill_amount > 0 {
-                (tokens_needed + refill_amount - 1) / refill_amount // Ceiling division
+                tokens_needed.div_ceil(refill_amount) // Ceiling division
             } else {
                 u64::MAX
             };
             let retry_after_millis = intervals_needed.saturating_mul(refill_interval_millis);
-            let retry_after_seconds = (retry_after_millis + 999) / 1000; // Ceiling division to seconds
+            let retry_after_seconds = retry_after_millis.div_ceil(1000); // Ceiling division to seconds
             Ok((false, entry.tokens, Some(retry_after_seconds)))
         }
     }
 
-    fn get_remaining(
-        &self,
-        key: &str,
-    ) -> Result<(u64, Option<u64>)> {
+    fn get_remaining(&self, key: &str) -> Result<(u64, Option<u64>)> {
         let now = now_millis();
 
         match self.store.get(key) {
@@ -129,15 +141,16 @@ impl TokenBucketRateLimiter {
 
                 if current_tokens == 0 {
                     // Calculate retry_after for at least 1 token (in seconds)
-                    let retry_after_seconds = (refill_interval_millis + 999) / 1000; // Ceiling division
+                    let retry_after_seconds = refill_interval_millis.div_ceil(1000); // Ceiling division
                     Ok((0, Some(retry_after_seconds)))
                 } else {
                     Ok((current_tokens, None))
                 }
             }
-            None => {
-                Err(Error::http(HttpError::not_found(Some("Rate limiter not configured for this key".into()), None)))
-            }
+            None => Err(Error::http(HttpError::not_found(
+                Some("Rate limiter not configured for this key".into()),
+                None,
+            ))),
         }
     }
 }
@@ -149,6 +162,12 @@ impl TokenBucketRateLimiter {
 #[derive(Clone)]
 pub struct RateLimiterStore {
     limiter: TokenBucketRateLimiter,
+}
+
+impl Default for RateLimiterStore {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RateLimiterStore {
@@ -242,7 +261,9 @@ pub struct RateLimiterGetRemainingOut {
 /// Configure Rate Limiter
 #[aide_annotate(op_id = "v1.rate_limiter.configure")]
 async fn rate_limiter_configure(
-    State(AppState { rate_limiter_store, .. }): State<AppState>,
+    State(AppState {
+        rate_limiter_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterConfigureIn>,
 ) -> Result<Json<RateLimiterConfigureOut>> {
     let key_str = data.key.to_string();
@@ -264,15 +285,16 @@ async fn rate_limiter_configure(
 /// Rate Limiter Check and Consume
 #[aide_annotate(op_id = "v1.rate_limiter.limit")]
 async fn rate_limiter_limit(
-    State(AppState { rate_limiter_store, .. }): State<AppState>,
+    State(AppState {
+        rate_limiter_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
 ) -> Result<Json<RateLimiterCheckOut>> {
     let key_str = data.key.to_string();
 
-    let (allowed, remaining, retry_after) = rate_limiter_store.limiter.check_and_consume(
-        &key_str,
-        data.tokens_requested,
-    )?;
+    let (allowed, remaining, retry_after) = rate_limiter_store
+        .limiter
+        .check_and_consume(&key_str, data.tokens_requested)?;
 
     Ok(Json(RateLimiterCheckOut {
         allowed,
@@ -284,7 +306,9 @@ async fn rate_limiter_limit(
 /// Rate Limiter Get Remaining
 #[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
 async fn rate_limiter_get_remaining(
-    State(AppState { rate_limiter_store, .. }): State<AppState>,
+    State(AppState {
+        rate_limiter_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
 ) -> Result<Json<RateLimiterGetRemainingOut>> {
     let key_str = data.key.to_string();
@@ -307,5 +331,8 @@ pub fn router() -> ApiRouter<AppState> {
     ApiRouter::new()
         .api_route("/rate-limiter/configure", post(rate_limiter_configure))
         .api_route("/rate-limiter/limit", post(rate_limiter_limit))
-        .api_route("/rate-limiter/get-remaining", post(rate_limiter_get_remaining))
+        .api_route(
+            "/rate-limiter/get-remaining",
+            post(rate_limiter_get_remaining),
+        )
 }

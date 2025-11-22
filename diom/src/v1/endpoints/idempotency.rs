@@ -1,19 +1,21 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{ApiRouter, routing::post};
-use axum::{Json, extract::State};
+use aide::axum::{routing::post, ApiRouter};
+use axum::{extract::State, Json};
 use diom_derive::aide_annotate;
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
-use validator::Validate;
-use std::sync::Arc;
-use dashmap::DashMap;
 use dashmap::mapref::entry::Entry;
+use dashmap::DashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use validator::Validate;
 
 use crate::{
-    AppState, core::types::EntityKey, v1::utils::{ValidatedJson, openapi_tag},
-    error::{Result, Error, HttpError},
+    core::types::EntityKey,
+    error::{Error, HttpError, Result},
+    v1::utils::{openapi_tag, ValidatedJson},
+    AppState,
 };
 
 /// Get current time in milliseconds since Unix epoch
@@ -33,14 +35,18 @@ pub struct IdempotencyStore {
 #[derive(Clone, Debug)]
 enum IdempotencyState {
     /// Request is in progress (locked)
-    InProgress {
-        expires_at_millis: u64,
-    },
+    InProgress { expires_at_millis: u64 },
     /// Request completed successfully with a response
     Completed {
         expires_at_millis: u64,
         response: String,
     },
+}
+
+impl Default for IdempotencyStore {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IdempotencyStore {
@@ -55,11 +61,7 @@ impl IdempotencyStore {
     /// - Ok(None) if lock was acquired (request should proceed)
     /// - Ok(Some(response)) if request was already completed (return cached response)
     /// - Err if request is already in progress (conflict)
-    fn try_start(
-        &self,
-        key: &str,
-        ttl_seconds: u64,
-    ) -> Result<Option<String>> {
+    fn try_start(&self, key: &str, ttl_seconds: u64) -> Result<Option<String>> {
         let now = now_millis();
         let expires_at_millis = now + (ttl_seconds * 1000);
 
@@ -73,32 +75,37 @@ impl IdempotencyStore {
                 let state = entry.get();
 
                 match state {
-                    IdempotencyState::InProgress { expires_at_millis: exp } => {
+                    IdempotencyState::InProgress {
+                        expires_at_millis: exp,
+                    } => {
                         // Check if expired
                         if now >= *exp {
                             // Lock expired, replace with new lock
                             drop(entry);
                             self.store.insert(
                                 key.to_string(),
-                                IdempotencyState::InProgress { expires_at_millis }
+                                IdempotencyState::InProgress { expires_at_millis },
                             );
                             Ok(None)
                         } else {
                             // Still in progress by another request
                             Err(Error::http(HttpError::conflict(
                                 Some("Request is already in progress".into()),
-                                None
+                                None,
                             )))
                         }
                     }
-                    IdempotencyState::Completed { expires_at_millis: exp, response } => {
+                    IdempotencyState::Completed {
+                        expires_at_millis: exp,
+                        response,
+                    } => {
                         // Check if expired
                         if now >= *exp {
                             // Response expired, acquire new lock
                             drop(entry);
                             self.store.insert(
                                 key.to_string(),
-                                IdempotencyState::InProgress { expires_at_millis }
+                                IdempotencyState::InProgress { expires_at_millis },
                             );
                             Ok(None)
                         } else {
@@ -112,12 +119,7 @@ impl IdempotencyStore {
     }
 
     /// Complete a request with a successful response
-    fn complete(
-        &self,
-        key: &str,
-        response: String,
-        ttl_seconds: u64,
-    ) -> Result<()> {
+    fn complete(&self, key: &str, response: String, ttl_seconds: u64) -> Result<()> {
         let now = now_millis();
         let expires_at_millis = now + (ttl_seconds * 1000);
 
@@ -126,7 +128,7 @@ impl IdempotencyStore {
             IdempotencyState::Completed {
                 expires_at_millis,
                 response,
-            }
+            },
         );
 
         Ok(())
@@ -159,9 +161,7 @@ pub enum IdempotencyStartOut {
     /// Lock acquired, request should proceed
     Locked,
     /// Request was already completed, cached response returned
-    Completed {
-        response: String,
-    },
+    Completed { response: String },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -196,7 +196,9 @@ pub struct IdempotencyAbandonOut {}
 /// Start an idempotent request
 #[aide_annotate(op_id = "v1.idempotency.start")]
 async fn idempotency_start(
-    State(AppState { idempotency_store, .. }): State<AppState>,
+    State(AppState {
+        idempotency_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyStartIn>,
 ) -> Result<Json<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
@@ -210,7 +212,9 @@ async fn idempotency_start(
 /// Complete an idempotent request with a response
 #[aide_annotate(op_id = "v1.idempotency.complete")]
 async fn idempotency_complete(
-    State(AppState { idempotency_store, .. }): State<AppState>,
+    State(AppState {
+        idempotency_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyCompleteIn>,
 ) -> Result<Json<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
@@ -223,7 +227,9 @@ async fn idempotency_complete(
 /// Abandon an idempotent request (remove lock without saving response)
 #[aide_annotate(op_id = "v1.idempotency.abandon")]
 async fn idempotency_abandon(
-    State(AppState { idempotency_store, .. }): State<AppState>,
+    State(AppState {
+        idempotency_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyAbandonIn>,
 ) -> Result<Json<IdempotencyAbandonOut>> {
     let key_str = data.key.to_string();
