@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{routing::post, ApiRouter};
+use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use diom_derive::aide_annotate;
 use crossbeam::queue::SegQueue;
@@ -547,13 +547,37 @@ async fn queue_stats(
 // ============================================================================
 
 pub fn router() -> ApiRouter<AppState> {
-    let _tag = openapi_tag("Queue");
+    let tag = openapi_tag("Queue");
 
     ApiRouter::new()
-        .api_route("/queue/enqueue", post(queue_enqueue))
-        .api_route("/queue/dequeue", post(queue_dequeue))
-        .api_route("/queue/ack", post(queue_ack))
-        .api_route("/queue/nack", post(queue_nack))
-        .api_route("/queue/purge", post(queue_purge))
-        .api_route("/queue/stats", post(queue_stats))
+        .api_route_with(
+            "/queue/enqueue",
+            post_with(queue_enqueue, queue_enqueue_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/queue/dequeue",
+            post_with(queue_dequeue, queue_dequeue_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/queue/ack",
+            post_with(queue_ack, queue_ack_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/queue/nack",
+            post_with(queue_nack, queue_nack_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/queue/purge",
+            post_with(queue_purge, queue_purge_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/queue/stats",
+            post_with(queue_stats, queue_stats_operation),
+            &tag,
+        )
 }

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{routing::post, ApiRouter};
+use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use diom_derive::aide_annotate;
 use dashmap::DashMap;
@@ -326,13 +326,25 @@ async fn rate_limiter_get_remaining(
 // ============================================================================
 
 pub fn router() -> ApiRouter<AppState> {
-    let _tag = openapi_tag("Rate Limiter");
+    let tag = openapi_tag("Rate Limiter");
 
     ApiRouter::new()
-        .api_route("/rate-limiter/configure", post(rate_limiter_configure))
-        .api_route("/rate-limiter/limit", post(rate_limiter_limit))
-        .api_route(
+        .api_route_with(
+            "/rate-limiter/configure",
+            post_with(rate_limiter_configure, rate_limiter_configure_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/rate-limiter/limit",
+            post_with(rate_limiter_limit, rate_limiter_limit_operation),
+            &tag,
+        )
+        .api_route_with(
             "/rate-limiter/get-remaining",
-            post(rate_limiter_get_remaining),
+            post_with(
+                rate_limiter_get_remaining,
+                rate_limiter_get_remaining_operation,
+            ),
+            &tag,
         )
 }
