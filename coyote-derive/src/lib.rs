@@ -5,31 +5,6 @@ mod aide;
 
 use self::aide::{expand_aide_annotate, AideAnnotateArgumentList};
 
-#[proc_macro_derive(ModelIn)]
-pub fn derive_model_in(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    // Parse the input tokens into a syntax tree.
-    let input = parse_macro_input!(input as DeriveInput);
-
-    // Used in the quasi-quotation below as `#name`.
-    let name = input.ident;
-
-    let expanded = quote! {
-        impl From<#name> for <#name as crate::v1::utils::ModelIn>::ActiveModel {
-            fn from(data: #name) -> Self {
-                let mut ret = Self {
-                    ..Default::default()
-                };
-                data.update_model(&mut ret);
-                ret
-            }
-        }
-
-    };
-
-    // Hand the output tokens back to the compiler.
-    proc_macro::TokenStream::from(expanded)
-}
-
 #[proc_macro_derive(ModelOut)]
 pub fn derive_model_out(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the input tokens into a syntax tree.
@@ -42,27 +17,24 @@ pub fn derive_model_out(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     let generics = add_trait_bounds(input.generics);
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let expanded = if name == "EventTypeOut" {
-        // We want to use name as the id in this case
-        quote! {
-            impl #impl_generics crate::v1::utils::ModelOut for #name #ty_generics #where_clause {
-                fn id_copy(&self) -> String {
-                    self.name.0.clone()
-                }
-            }
-        }
-    } else {
-        quote! {
-            impl #impl_generics crate::v1::utils::ModelOut for #name #ty_generics #where_clause {
-                fn id_copy(&self) -> String {
-                    self.id.0.clone()
-                }
+    let expanded = quote! {
+        impl #impl_generics crate::v1::utils::ModelOut for #name #ty_generics #where_clause {
+            fn id_copy(&self) -> String {
+                self.id.0.clone()
             }
         }
     };
 
     // Hand the output tokens back to the compiler.
     proc_macro::TokenStream::from(expanded)
+}
+
+/// Does nothing.
+///
+/// Replaces the real JsonSchema derive macro if the openapi Cargo feature is not enabled.
+#[proc_macro_derive(JsonSchemaDummyDerive, attributes(schemars, validate))]
+pub fn dummy_derive_json_schema(_: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    proc_macro::TokenStream::new()
 }
 
 #[proc_macro_attribute]

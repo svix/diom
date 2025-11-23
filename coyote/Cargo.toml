@@ -14,8 +14,12 @@ ignored = [
 ]
 
 [features]
-default = ["jemalloc"]
+default = ["jemalloc", "openapi", "generate_openapi_spec"]
 jemalloc = ["dep:tikv-jemallocator"]
+openapi = [ ]
+# internal flag used by generate-openapi crate in the workspace
+generate_openapi_spec = [ ]
+
 
 [dependencies]
 aide = { version = "0.13.4", features = ["axum", "redoc", "macros", "axum-headers"] }
