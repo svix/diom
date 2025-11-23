@@ -12,6 +12,9 @@
   "paths": {
     "/api/v1/health/ping": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -26,6 +29,9 @@
         }
       },
       "head": {
+        "tags": [
+          "Health"
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -42,6 +48,12 @@
     },
     "/api/v1/cache/set": {
       "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Set",
+        "description": "Cache Set",
+        "operationId": "v1.cache.set",
         "parameters": [
           {
             "in": "header",
@@ -74,11 +86,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/cache/get": {
       "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Get",
+        "description": "Cache Get",
+        "operationId": "v1.cache.get",
         "parameters": [
           {
             "in": "header",
@@ -111,11 +134,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/cache/delete": {
       "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Del",
+        "description": "Cache Delete",
+        "operationId": "v1.cache.delete",
         "parameters": [
           {
             "in": "header",
@@ -148,11 +182,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/kv/set": {
       "post": {
+        "tags": [
+          "Key Value Store"
+        ],
+        "summary": "Kv Set",
+        "description": "KV Set",
+        "operationId": "v1.kv.set",
         "parameters": [
           {
             "in": "header",
@@ -185,11 +230,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/kv/get": {
       "post": {
+        "tags": [
+          "Key Value Store"
+        ],
+        "summary": "Kv Get",
+        "description": "KV Get",
+        "operationId": "v1.kv.get",
         "parameters": [
           {
             "in": "header",
@@ -222,11 +278,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/kv/delete": {
       "post": {
+        "tags": [
+          "Key Value Store"
+        ],
+        "summary": "Kv Del",
+        "description": "KV Delete",
+        "operationId": "v1.kv.delete",
         "parameters": [
           {
             "in": "header",
@@ -259,11 +326,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/rate-limiter/configure": {
       "post": {
+        "tags": [
+          "Rate Limiter"
+        ],
+        "summary": "Rate Limiter Configure",
+        "description": "Configure Rate Limiter",
+        "operationId": "v1.rate_limiter.configure",
         "parameters": [
           {
             "in": "header",
@@ -296,11 +374,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/rate-limiter/limit": {
       "post": {
+        "tags": [
+          "Rate Limiter"
+        ],
+        "summary": "Rate Limiter Limit",
+        "description": "Rate Limiter Check and Consume",
+        "operationId": "v1.rate_limiter.limit",
         "parameters": [
           {
             "in": "header",
@@ -333,11 +422,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/rate-limiter/get-remaining": {
       "post": {
+        "tags": [
+          "Rate Limiter"
+        ],
+        "summary": "Rate Limiter Get Remaining",
+        "description": "Rate Limiter Get Remaining",
+        "operationId": "v1.rate_limiter.get_remaining",
         "parameters": [
           {
             "in": "header",
@@ -370,11 +470,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/idempotency/start": {
       "post": {
+        "tags": [
+          "Idempotency"
+        ],
+        "summary": "Idempotency Start",
+        "description": "Start an idempotent request",
+        "operationId": "v1.idempotency.start",
         "parameters": [
           {
             "in": "header",
@@ -407,11 +518,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/idempotency/complete": {
       "post": {
+        "tags": [
+          "Idempotency"
+        ],
+        "summary": "Idempotency Complete",
+        "description": "Complete an idempotent request with a response",
+        "operationId": "v1.idempotency.complete",
         "parameters": [
           {
             "in": "header",
@@ -444,11 +566,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/idempotency/abandon": {
       "post": {
+        "tags": [
+          "Idempotency"
+        ],
+        "summary": "Idempotency Abandon",
+        "description": "Abandon an idempotent request (remove lock without saving response)",
+        "operationId": "v1.idempotency.abandon",
         "parameters": [
           {
             "in": "header",
@@ -481,11 +614,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/queue/enqueue": {
       "post": {
+        "tags": [
+          "Queue"
+        ],
+        "summary": "Queue Enqueue",
+        "description": "Enqueue a message",
+        "operationId": "v1.queue.enqueue",
         "parameters": [
           {
             "in": "header",
@@ -518,11 +662,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/queue/dequeue": {
       "post": {
+        "tags": [
+          "Queue"
+        ],
+        "summary": "Queue Dequeue",
+        "description": "Dequeue a message",
+        "operationId": "v1.queue.dequeue",
         "parameters": [
           {
             "in": "header",
@@ -555,11 +710,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/queue/ack": {
       "post": {
+        "tags": [
+          "Queue"
+        ],
+        "summary": "Queue Ack",
+        "description": "Acknowledge successful message processing",
+        "operationId": "v1.queue.ack",
         "parameters": [
           {
             "in": "header",
@@ -592,11 +758,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/queue/nack": {
       "post": {
+        "tags": [
+          "Queue"
+        ],
+        "summary": "Queue Nack",
+        "description": "Negative acknowledge - return message to queue or move to DLQ",
+        "operationId": "v1.queue.nack",
         "parameters": [
           {
             "in": "header",
@@ -629,11 +806,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/queue/purge": {
       "post": {
+        "tags": [
+          "Queue"
+        ],
+        "summary": "Queue Purge",
+        "description": "Purge all messages from a queue",
+        "operationId": "v1.queue.purge",
         "parameters": [
           {
             "in": "header",
@@ -666,11 +854,22 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/queue/stats": {
       "post": {
+        "tags": [
+          "Queue"
+        ],
+        "summary": "Queue Stats",
+        "description": "Get queue statistics",
+        "operationId": "v1.queue.stats",
         "parameters": [
           {
             "in": "header",
@@ -703,7 +902,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     }
   },
@@ -1380,37 +1584,6 @@
     },
     {
       "name": "Webhooks"
-    }
-  ],
-  "x-tagGroups": [
-    {
-      "name": "General",
-      "tags": [
-        "Application",
-        "Event Type"
-      ]
-    },
-    {
-      "name": "Application specific",
-      "tags": [
-        "Authentication",
-        "Endpoint",
-        "Message",
-        "Message Attempt",
-        "Integration"
-      ]
-    },
-    {
-      "name": "Utility",
-      "tags": [
-        "Health"
-      ]
-    },
-    {
-      "name": "Webhooks",
-      "tags": [
-        "Webhooks"
-      ]
     }
   ]
 }

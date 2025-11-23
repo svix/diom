@@ -16,7 +16,7 @@ pub fn initialize_openapi() -> OpenApi {
 
     aide::gen::in_context(|ctx| ctx.schema = schemars::gen::SchemaSettings::openapi3().into());
 
-    let tag_groups = serde_json::json![[
+    let _tag_groups = serde_json::json![[
         {
             "name": "General",
             "tags": ["Application", "Event Type"]
@@ -88,9 +88,10 @@ pub fn initialize_openapi() -> OpenApi {
                 ..openapi::Tag::default()
             },
         ],
-        extensions: indexmap::indexmap! {
-            "x-tagGroups".to_owned() => tag_groups,
-        },
+        // FIXME: add me back
+        // extensions: indexmap::indexmap! {
+        //     "x-tagGroups".to_owned() => tag_groups,
+        // },
         ..Default::default()
     }
 }

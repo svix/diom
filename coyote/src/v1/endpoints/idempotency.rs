@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{routing::post, ApiRouter};
+use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use coyote_derive::aide_annotate;
 use dashmap::mapref::entry::Entry;
@@ -244,10 +244,22 @@ async fn idempotency_abandon(
 // ============================================================================
 
 pub fn router() -> ApiRouter<AppState> {
-    let _tag = openapi_tag("Idempotency");
+    let tag = openapi_tag("Idempotency");
 
     ApiRouter::new()
-        .api_route("/idempotency/start", post(idempotency_start))
-        .api_route("/idempotency/complete", post(idempotency_complete))
-        .api_route("/idempotency/abandon", post(idempotency_abandon))
+        .api_route_with(
+            "/idempotency/start",
+            post_with(idempotency_start, idempotency_start_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/idempotency/complete",
+            post_with(idempotency_complete, idempotency_complete_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/idempotency/abandon",
+            post_with(idempotency_abandon, idempotency_abandon_operation),
+            &tag,
+        )
 }

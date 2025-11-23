@@ -19,7 +19,7 @@ async fn ping() -> Result<Json<PingOut>> {
 }
 
 pub fn router() -> ApiRouter<AppState> {
-    let _tag = openapi_tag("Health");
+    let tag = openapi_tag("Health");
 
-    ApiRouter::new().api_route("/health/ping", get(ping).head(ping))
+    ApiRouter::new().api_route_with("/health/ping", get(ping).head(ping), &tag)
 }

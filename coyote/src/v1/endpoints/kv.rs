@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{routing::post, ApiRouter};
+use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use coyote_derive::aide_annotate;
 use dashmap::DashMap;
@@ -217,10 +217,10 @@ async fn kv_del(
 }
 
 pub fn router() -> ApiRouter<AppState> {
-    let _tag = openapi_tag("Key Value Store");
+    let tag = openapi_tag("Key Value Store");
 
     ApiRouter::new()
-        .api_route("/kv/set", post(kv_set))
-        .api_route("/kv/get", post(kv_get))
-        .api_route("/kv/delete", post(kv_del))
+        .api_route_with("/kv/set", post_with(kv_set, kv_set_operation), &tag)
+        .api_route_with("/kv/get", post_with(kv_get, kv_get_operation), &tag)
+        .api_route_with("/kv/delete", post_with(kv_del, kv_del_operation), &tag)
 }

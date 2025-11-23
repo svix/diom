@@ -121,8 +121,8 @@
     Scalar.createApiReference('#app', {
       url: '/api/v1/openapi.json',
       hideModels: true,
-      hideClientButton: true,
-      hiddenClients: true,
+      // FIXME hideClientButton: true,
+      // FIXME hiddenClients: true,
       darkMode: false,
       showToolbar: "never",
       generateOperationSlug: (operation) => `operation/${operation.operationId}`,

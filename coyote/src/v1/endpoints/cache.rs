@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{routing::post, ApiRouter};
+use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use coyote_derive::aide_annotate;
 use dashmap::DashMap;
@@ -172,10 +172,22 @@ async fn cache_del(
 }
 
 pub fn router() -> ApiRouter<AppState> {
-    let _tag = openapi_tag("Cache");
+    let tag = openapi_tag("Cache");
 
     ApiRouter::new()
-        .api_route("/cache/set", post(cache_set))
-        .api_route("/cache/get", post(cache_get))
-        .api_route("/cache/delete", post(cache_del))
+        .api_route_with(
+            "/cache/set",
+            post_with(cache_set, cache_set_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/cache/get",
+            post_with(cache_get, cache_get_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/cache/delete",
+            post_with(cache_del, cache_del_operation),
+            &tag,
+        )
 }
