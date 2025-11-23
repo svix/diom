@@ -17,6 +17,11 @@ pub(crate) fn expand_aide_annotate(
         .map(title_case)
         .collect::<Vec<String>>()
         .join(" ");
+    // Is this op deprecated
+    let mut operation_deprecated = false;
+    let mut operation_security = true;
+    // Whether this operation can return a 413 "Content Too Large" error
+    let mut operation_413 = false;
     // The documentation function's name will always be the name of the
     // original function suffixed with `_operation`.
     let operation_ident = format_ident!("{}_operation", item.sig.ident);
@@ -24,23 +29,41 @@ pub(crate) fn expand_aide_annotate(
 
     // Allow overriding operation ID and summary via arguments
     for arg in args {
-        let lit = expr_to_litstr(&arg.value).ok_or_else(|| {
-            syn::Error::new_spanned(
-                &arg.value,
-                "Unexpected expression, expected a string literal",
-            )
-        })?;
+        let arg_as_litbool = || {
+            expr_to_litbool(&arg.value).ok_or_else(|| {
+                syn::Error::new_spanned(
+                    &arg.value,
+                    "Unexpected expression, expected a boolean literal",
+                )
+            })
+        };
+
+        let arg_as_litstr = || {
+            expr_to_litstr(&arg.value).ok_or_else(|| {
+                syn::Error::new_spanned(
+                    &arg.value,
+                    "Unexpected expression, expected a string literal",
+                )
+            })
+        };
 
         if arg.path.is_ident("op_id") {
-            operation_id = lit.value();
+            operation_id = arg_as_litstr()?.value();
         } else if arg.path.is_ident("op_summary") {
-            operation_summary = lit.value();
+            operation_summary = arg_as_litstr()?.value();
+        } else if arg.path.is_ident("op_deprecated") {
+            operation_deprecated = arg_as_litbool()?.value();
+        } else if arg.path.is_ident("op_auth") {
+            operation_security = arg_as_litbool()?.value();
+        } else if arg.path.is_ident("op_413") {
+            operation_413 = arg_as_litbool()?.value();
         } else {
             let path = arg.path.to_token_stream().to_string();
-            return Err(syn::Error::new_spanned(
-                arg.path,
-                format_args!("Unknown argument `{path}`, expected `op_id` or `op_summary`"),
-            ));
+            let msg = format!(
+                "Unknown argument `{path}`, expected `op_id` | `op_summary` | `op_deprecated` | \
+                 `op_auth` | `op_413`"
+            );
+            return Err(syn::Error::new_spanned(arg.path, msg));
         }
     }
 
@@ -51,34 +74,46 @@ pub(crate) fn expand_aide_annotate(
         return Err(syn::Error::new_spanned(&item.sig.ident, msg));
     }
 
+    let add_413_response = operation_413.then(|| {
+        quote! {
+            .response_with::<413, ::axum::Json<svix_server_core::error::StandardHttpError>, _>(|op| {
+                op.description("Payload too large")
+            })
+        }
+    });
+
+    let add_security = operation_security.then(|| {
+        quote! {
+            .security_requirement("HTTPBearer")
+        }
+    });
+
+    let set_deprecated = operation_deprecated.then(|| {
+        quote! {
+            #[cfg(feature = "openapi")]
+            { op.inner_mut().deprecated = true; }
+        }
+    });
+
     Ok(quote! {
         #item
 
         #visibility fn #operation_ident(
             op: ::aide::transform::TransformOperation,
         ) -> ::aide::transform::TransformOperation {
-            op
+            #[cfg(feature = "openapi")]
+            #[allow(unused_mut)]
+            let mut op = op
                 .id(#operation_id)
                 .summary(#operation_summary)
                 .description(#description)
-                .response_with::<401, ::axum::Json<crate::error::StandardHttpError>, _>(|op| {
-                    op.description("Unauthorized")
-                })
-                .response_with::<403, ::axum::Json<crate::error::StandardHttpError>, _>(|op| {
-                    op.description("Forbidden")
-                })
-                .response_with::<404, ::axum::Json<crate::error::StandardHttpError>, _>(|op| {
-                    op.description("Not Found")
-                })
-                .response_with::<409, ::axum::Json<crate::error::StandardHttpError>, _>(|op| {
-                    op.description("Conflict")
-                })
-                .response_with::<422, ::axum::Json<crate::error::ValidationHttpError>, _>(|op| {
-                    op.description("Validation Error")
-                })
-                .response_with::<429, ::axum::Json<crate::error::StandardHttpError>, _>(|op| {
-                    op.description("Too Many Requests")
-                })
+                #add_413_response
+                #add_security
+                ;
+
+            #set_deprecated
+
+            op
         }
     })
 }
@@ -115,6 +150,16 @@ fn title_case(s: &str) -> String {
     match c.next() {
         None => String::new(),
         Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
+}
+
+fn expr_to_litbool(expr: &syn::Expr) -> Option<&syn::LitBool> {
+    match expr {
+        syn::Expr::Lit(l) => match &l.lit {
+            syn::Lit::Bool(s) => Some(s),
+            _ => None,
+        },
+        _ => None,
     }
 }
 
