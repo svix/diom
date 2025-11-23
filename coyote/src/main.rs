@@ -25,6 +25,10 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Generate OpenAPI JSON specification and exit
+    #[clap()]
+    GenerateOpenapi,
+
     /// Health check command
     #[clap()]
     Healthcheck {
@@ -65,6 +69,20 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber.init();
 
     match args.command {
+        Some(Commands::GenerateOpenapi) => {
+            let mut openapi = coyote::openapi::initialize_openapi();
+
+            let router = coyote::v1::router();
+            _ = aide::axum::ApiRouter::new()
+                .nest("/api/v1", router)
+                .finish_api_with(&mut openapi, coyote::openapi::add_security_scheme);
+
+            coyote::openapi::postprocess_spec(&mut openapi);
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&openapi).expect("Failed to serialize JSON spec")
+            );
+        }
         Some(Commands::Healthcheck { .. }) => {
             unreachable!("Healthcheck command should be handled before config loading")
         }
