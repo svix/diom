@@ -69,8 +69,8 @@ pub struct KvSetIn {
     #[validate]
     pub key: Arc<EntityKey>,
     // FIXME: validate all fields
-    pub expires_at: DateTime<Utc>,
-    // TODO: add pub expire_in: u64,
+    /// Time to live in milliseconds
+    pub expire_in: u64,
 
     // FIXME: do we want it here? I think we probably want separate commands for insert, upsert,
     // and update? Or does it get weird?
@@ -83,14 +83,16 @@ pub struct KvSetIn {
     pub value: String,
 }
 
-impl From<KvSetIn> for KvModel {
-    fn from(val: KvSetIn) -> Self {
+impl KvSetIn {
+    fn into_model(self) -> KvModel {
         let KvSetIn {
             key,
-            expires_at,
+            expire_in,
             value,
             behavior: _,
-        } = val;
+        } = self;
+
+        let expires_at = Utc::now() + chrono::Duration::milliseconds(expire_in as i64);
 
         KvModel {
             key,
@@ -156,7 +158,7 @@ async fn kv_set(
 ) -> Result<Json<KvSetOut>> {
     let key = data.key.clone();
     let behavior = data.behavior.clone();
-    let model: KvModel = data.into();
+    let model = data.into_model();
 
     let expires_at = model.expires_at;
 
