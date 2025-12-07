@@ -3,7 +3,9 @@
 
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
+use chrono::{DateTime, Utc};
 use coyote_derive::aide_annotate;
+use crossbeam_skiplist::SkipMap;
 use dashmap::DashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -17,9 +19,12 @@ use crate::{
     AppState,
 };
 
+pub type ExpiryMap = SkipMap<DateTime<Utc>, Arc<EntityKey>>;
+
 #[derive(Clone)]
 pub struct KvStore {
-    store: Arc<DashMap<String, KvModel>>,
+    store: Arc<DashMap<Arc<EntityKey>, KvModel>>,
+    expiry: Arc<ExpiryMap>,
 }
 
 impl Default for KvStore {
@@ -32,6 +37,7 @@ impl KvStore {
     pub fn new() -> Self {
         Self {
             store: Arc::new(DashMap::new()),
+            expiry: Arc::new(ExpiryMap::new()),
         }
     }
 }
@@ -39,11 +45,10 @@ impl KvStore {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvModel {
     #[validate]
-    pub key: EntityKey,
+    pub key: Arc<EntityKey>,
 
-    // FIXME: should be datetime
     /// Time of expiry
-    pub expires_at: u64,
+    pub expires_at: DateTime<Utc>,
 
     // FIXME: change to Bytes
     pub value: String,
@@ -62,9 +67,9 @@ pub enum OperationBehavior {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetIn {
     #[validate]
-    pub key: EntityKey,
+    pub key: Arc<EntityKey>,
     // FIXME: validate all fields
-    pub expires_at: u64,
+    pub expires_at: DateTime<Utc>,
     // TODO: add pub expire_in: u64,
 
     // FIXME: do we want it here? I think we probably want separate commands for insert, upsert,
@@ -107,11 +112,10 @@ pub struct KvGetIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvGetOut {
     #[validate]
-    pub key: EntityKey,
+    pub key: Arc<EntityKey>,
 
-    // FIXME: should be datetime
     /// Time of expiry
-    pub expires_at: u64,
+    pub expires_at: DateTime<Utc>,
 
     // FIXME: change to Bytes
     pub value: String,
@@ -136,7 +140,7 @@ impl From<KvModel> for KvGetOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvDeleteIn {
     #[validate]
-    pub key: EntityKey,
+    pub key: Arc<EntityKey>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -150,17 +154,21 @@ async fn kv_set(
     State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvSetIn>,
 ) -> Result<Json<KvSetOut>> {
-    let key_str = data.key.to_string();
+    let key = data.key.clone();
     let behavior = data.behavior.clone();
     let model: KvModel = data.into();
+
+    let expires_at = model.expires_at;
 
     match behavior {
         OperationBehavior::Insert => {
             // Atomically insert only if key doesn't exist
             use dashmap::mapref::entry::Entry;
-            match kv_store.store.entry(key_str) {
+            match kv_store.store.entry(Arc::clone(&key)) {
                 Entry::Vacant(entry) => {
                     entry.insert(model);
+                    // Insert into expiry map
+                    kv_store.expiry.insert(expires_at, key);
                 }
                 Entry::Occupied(_) => {
                     return Err(Error::http(HttpError::conflict(None, None)));
@@ -169,9 +177,11 @@ async fn kv_set(
         }
         OperationBehavior::Update => {
             // Atomically update only if key exists
-            match kv_store.store.get_mut(&key_str) {
+            match kv_store.store.get_mut(&key) {
                 Some(mut entry) => {
                     *entry = model;
+                    // Add new expiry entry (don't need to remove old one)
+                    kv_store.expiry.insert(expires_at, key);
                 }
                 None => {
                     return Err(Error::http(HttpError::not_found(None, None)));
@@ -179,7 +189,8 @@ async fn kv_set(
             }
         }
         OperationBehavior::Upsert => {
-            kv_store.store.insert(key_str, model);
+            kv_store.expiry.insert(expires_at, Arc::clone(&key));
+            kv_store.store.insert(key, model);
         }
     }
 
@@ -193,12 +204,21 @@ async fn kv_get(
     State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvGetIn>,
 ) -> Result<Json<KvGetOut>> {
-    let key_str = data.key.to_string();
+    let key = data.key.clone();
 
     let model = kv_store
         .store
-        .get(&key_str)
+        .get(&key)
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    // Check if the key has expired
+    let now = Utc::now();
+    if model.expires_at <= now {
+        // Key has expired, remove it and return not found
+        drop(model); // Release the read lock before removing
+        kv_store.store.remove(&key);
+        return Err(Error::http(HttpError::not_found(None, None)));
+    }
 
     let ret: KvGetOut = model.value().clone().into();
     Ok(Json(ret))
@@ -210,8 +230,8 @@ async fn kv_del(
     State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvDeleteIn>,
 ) -> Result<Json<KvDeleteOut>> {
-    let key_str = data.key.to_string();
-    let deleted = kv_store.store.remove(&key_str).is_some();
+    let key = data.key.clone();
+    let deleted = kv_store.store.remove(&key).is_some();
     let ret = KvDeleteOut { deleted };
     Ok(Json(ret))
 }
