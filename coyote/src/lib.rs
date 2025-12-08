@@ -86,11 +86,11 @@ pub async fn run(cfg: Configuration) {
 pub struct AppState {
     cfg: Configuration,
     // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
-    kv_store: crate::v1::endpoints::kv::KvStore,
-    cache_store: crate::v1::endpoints::cache::CacheStore,
-    rate_limiter_store: crate::v1::endpoints::rate_limiter::RateLimiterStore,
-    idempotency_store: crate::v1::endpoints::idempotency::IdempotencyStore,
-    queue_store: crate::v1::endpoints::queue::QueueStore,
+    kv_store: crate::v1::modules::kv::KvStore,
+    cache_store: crate::v1::modules::cache::CacheStore,
+    rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore,
+    idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
+    queue_store: crate::v1::modules::queue::QueueStore,
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
@@ -104,11 +104,11 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
-        kv_store: crate::v1::endpoints::kv::KvStore::new(),
-        cache_store: crate::v1::endpoints::cache::CacheStore::new(),
-        rate_limiter_store: crate::v1::endpoints::rate_limiter::RateLimiterStore::new(),
-        idempotency_store: crate::v1::endpoints::idempotency::IdempotencyStore::new(),
-        queue_store: crate::v1::endpoints::queue::QueueStore::new(),
+        kv_store: crate::v1::modules::kv::KvStore::new(),
+        cache_store: crate::v1::modules::cache::CacheStore::new(),
+        rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore::new(),
+        idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
+        queue_store: crate::v1::modules::queue::QueueStore::new(),
     };
     let v1_router = v1::router().with_state::<()>(app_state.clone());
 
@@ -139,15 +139,15 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     };
     tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
-    // Spawn background workers for each endpoint module
+    // Spawn background workers for each module
     let workers = tokio::spawn(async move {
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
-            tokio::spawn(v1::endpoints::kv::worker(app_state.clone())),
-            tokio::spawn(v1::endpoints::cache::worker(app_state.clone())),
-            tokio::spawn(v1::endpoints::idempotency::worker(app_state.clone())),
-            tokio::spawn(v1::endpoints::rate_limiter::worker(app_state.clone())),
-            tokio::spawn(v1::endpoints::queue::worker(app_state.clone())),
+            tokio::spawn(v1::modules::kv::worker(app_state.clone())),
+            tokio::spawn(v1::modules::cache::worker(app_state.clone())),
+            tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
+            tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
+            tokio::spawn(v1::modules::queue::worker(app_state.clone())),
         );
     });
 
