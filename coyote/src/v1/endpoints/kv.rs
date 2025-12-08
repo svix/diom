@@ -8,7 +8,10 @@ use coyote_derive::aide_annotate;
 use dashmap::DashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{sync::{Arc, Mutex}, time::Duration};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use validator::Validate;
 
 use crate::{
@@ -192,7 +195,11 @@ async fn kv_set(
             }
         }
         OperationBehavior::Upsert => {
-            kv_store.expiry.lock().unwrap().insert(expires_at, Arc::clone(&key));
+            kv_store
+                .expiry
+                .lock()
+                .unwrap()
+                .insert(expires_at, Arc::clone(&key));
             kv_store.store.insert(key, model);
         }
     }
@@ -207,7 +214,7 @@ async fn kv_get(
     State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvGetIn>,
 ) -> Result<Json<KvGetOut>> {
-    let key = data.key.clone();
+    let key = data.key;
 
     let model = kv_store
         .store
@@ -233,7 +240,7 @@ async fn kv_del(
     State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvDeleteIn>,
 ) -> Result<Json<KvDeleteOut>> {
-    let key = data.key.clone();
+    let key = data.key;
     let deleted = kv_store.store.remove(&key).is_some();
     let ret = KvDeleteOut { deleted };
     Ok(Json(ret))
@@ -254,7 +261,7 @@ pub async fn worker(state: AppState) -> Result<()> {
     loop {
         // FIXME: this is not good to lock for such a long time, but we don't care as we'll change
         // the data structure anyway.
-        let mut expiry= expiry.lock().unwrap();
+        let mut expiry = expiry.lock().unwrap();
         while expiry.peek().is_some_and(|x| x.expired(Utc::now())) {
             expiry.pop();
         }
@@ -264,10 +271,10 @@ pub async fn worker(state: AppState) -> Result<()> {
 }
 
 mod expiry {
-    use std::cmp::Ordering;
     use chrono::{DateTime, Utc};
-    use std::sync::Arc;
+    use std::cmp::Ordering;
     use std::collections::BinaryHeap;
+    use std::sync::Arc;
 
     use crate::core::types::EntityKey;
 
