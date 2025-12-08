@@ -1,10 +1,37 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+//! # KV Store Module
+//!
+//! This module implements a key-value store with automatic expiration.
+//!
+//! ## Data Structure Design
+//!
+//! The KV store uses two separate data structures
+//!
+//! 1. Main Store (DashMap) - Primary storage for key-value pairs with their expiration timestamps.
+//! 2. Expiry Heap (BinaryHeap) - Maintains keys sorted by expiration time for efficient cleanup.
+//!
+//! ## How It Works
+//!
+//! - On Write: Keys are inserted into both the store and expiry heap
+//! - On Update: New expiry entries are added (old ones remain but are ignored during cleanup)
+//! - On Read: Expiration is checked; expired keys are removed and return not found
+//! - Background Worker: Periodically scans the heap and removes expired keys from the store
+//!
+//! The expiry heap may contain stale entries (from updates/deletes), but these are safely
+//! ignored during cleanup since the worker checks if the key exists and if the expiration
+//! matches before removal.
+//!
+//! ## TODO FIXME
+//! - The lock unwrap()s. I didn't bother with removing them because we'll change the data
+//!   structure before going to prod.
+
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use chrono::{DateTime, Utc};
 use coyote_derive::aide_annotate;
+use dashmap::mapref::entry::Entry;
 use dashmap::DashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -20,10 +47,6 @@ use crate::{
     v1::utils::{openapi_tag, ValidatedJson},
     AppState,
 };
-
-// TODO FIXME:
-// * The lock unwrap()s. I didn't bother with removing them because we'll change the data
-// structure before going to prod.
 
 #[derive(Clone)]
 pub struct KvStore {
@@ -169,7 +192,6 @@ async fn kv_set(
     match behavior {
         OperationBehavior::Insert => {
             // Atomically insert only if key doesn't exist
-            use dashmap::mapref::entry::Entry;
             match kv_store.store.entry(Arc::clone(&key)) {
                 Entry::Vacant(entry) => {
                     entry.insert(model);
@@ -264,9 +286,26 @@ pub async fn worker(state: AppState) -> Result<()> {
         // FIXME: this is not good to lock for such a long time, but we don't care as we'll change
         // the data structure anyway.
         {
+            let store = state.kv_store.store.clone();
             let mut expiry = state.kv_store.expiry.lock().unwrap();
             while expiry.peek().is_some_and(|x| x.expired(Utc::now())) {
-                expiry.pop();
+                if let Some(expiry_item) = expiry.pop() {
+                    match store.entry(Arc::clone(&expiry_item.key)) {
+                        Entry::Occupied(entry) => {
+                            let value = entry.get();
+                            // If the expiry is the same or older than what we expect, we should expire the item.
+                            if value.expires_at <= expiry_item.expires_at {
+                                entry.remove();
+                            }
+                        }
+                        Entry::Vacant(_) => {
+                            // FIXME: technically it could happen because of the way we do locking.
+                            // Though once we fix the multi-threading mechanism and switch away
+                            // from Dashmap, it should never be possible.
+                            tracing::error!("Got an already deleted item. Should never happen.");
+                        }
+                    }
+                }
             }
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
@@ -281,11 +320,6 @@ mod expiry {
     use std::sync::Arc;
 
     use crate::core::types::EntityKey;
-
-    // Can have two data structures.
-    // Hashmap with TTL (separate to the main one)
-    // Binary heap for the scanning - has the key.
-    //  If the expiry timestamp is not the same, assume there's another entry.
 
     pub(super) struct ExpiryHeap {
         heap: BinaryHeap<ExpiryState>,
@@ -314,8 +348,8 @@ mod expiry {
     #[derive(Eq, PartialEq)]
     pub(super) struct ExpiryState {
         /// The timestamp of when to expire.
-        expires_at: DateTime<Utc>,
-        key: Arc<EntityKey>,
+        pub(super) expires_at: DateTime<Utc>,
+        pub(super) key: Arc<EntityKey>,
     }
 
     impl ExpiryState {
