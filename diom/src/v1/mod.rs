@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub mod endpoints;
+pub mod modules;
 pub mod utils;
 
 pub fn router() -> ApiRouter<AppState> {

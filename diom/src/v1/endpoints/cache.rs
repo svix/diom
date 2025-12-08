@@ -11,9 +11,9 @@
 //!
 //! FIXME:
 //! * Potentially we could merge it with KV and just with the "group configuration" behavior we can
-//! define the cache behavior. So we don't actually need a different backend?
+//!   define the cache behavior. So we don't actually need a different backend?
 //!   * Though even if we do that, maybe cache should be an alias for kv with a default base
-//!   configuration?
+//!     configuration?
 //! * If we end up making them separate: this can potentially reuse code from kv-store?
 
 use aide::axum::{routing::post_with, ApiRouter};
