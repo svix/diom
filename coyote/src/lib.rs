@@ -110,7 +110,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         idempotency_store: crate::v1::endpoints::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::endpoints::queue::QueueStore::new(),
     };
-    let v1_router = v1::router().with_state::<()>(app_state);
+    let v1_router = v1::router().with_state::<()>(app_state.clone());
 
     // Initialize all routes which need to be part of OpenAPI first.
     let app = ApiRouter::new()
@@ -139,10 +139,25 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     };
     tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
+    // Spawn background workers for each endpoint module
+    let workers = tokio::spawn(async move {
+        // FIXME: gotta do actual error handling...
+        let _ = tokio::join!(
+            tokio::spawn(v1::endpoints::kv::worker(app_state.clone())),
+            tokio::spawn(v1::endpoints::cache::worker(app_state.clone())),
+            tokio::spawn(v1::endpoints::idempotency::worker(app_state.clone())),
+            tokio::spawn(v1::endpoints::rate_limiter::worker(app_state.clone())),
+            tokio::spawn(v1::endpoints::queue::worker(app_state.clone())),
+        );
+    });
+
     axum::serve(listener, svc)
         .with_graceful_shutdown(graceful_shutdown_handler())
         .await
         .unwrap();
+
+    // Wait for workers to finish cleanup
+    let _ = workers.await;
 }
 
 pub fn setup_tracing(cfg: &ConfigurationInner, for_test: bool) -> tracing::Dispatch {
