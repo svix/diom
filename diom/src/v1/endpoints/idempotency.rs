@@ -4,142 +4,20 @@
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use diom_derive::aide_annotate;
-use dashmap::mapref::entry::Entry;
-use dashmap::DashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use validator::Validate;
 
 use crate::{
     core::types::EntityKey,
-    error::{Error, HttpError, Result},
+    error::Result,
     v1::utils::{openapi_tag, ValidatedJson},
     AppState,
 };
 
-/// Get current time in milliseconds since Unix epoch
-fn now_millis() -> u64 {
-    chrono::Utc::now().timestamp_millis() as u64
-}
-
-// ============================================================================
-// Idempotency Store
-// ============================================================================
-
-#[derive(Clone)]
-pub struct IdempotencyStore {
-    store: Arc<DashMap<String, IdempotencyState>>,
-}
-
-#[derive(Clone, Debug)]
-enum IdempotencyState {
-    /// Request is in progress (locked)
-    InProgress { expires_at_millis: u64 },
-    /// Request completed successfully with a response
-    Completed {
-        expires_at_millis: u64,
-        response: String,
-    },
-}
-
-impl Default for IdempotencyStore {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl IdempotencyStore {
-    pub fn new() -> Self {
-        Self {
-            store: Arc::new(DashMap::new()),
-        }
-    }
-
-    /// Atomically try to acquire the lock for a request.
-    /// Returns:
-    /// - Ok(None) if lock was acquired (request should proceed)
-    /// - Ok(Some(response)) if request was already completed (return cached response)
-    /// - Err if request is already in progress (conflict)
-    fn try_start(&self, key: &str, ttl_seconds: u64) -> Result<Option<String>> {
-        let now = now_millis();
-        let expires_at_millis = now + (ttl_seconds * 1000);
-
-        match self.store.entry(key.to_string()) {
-            Entry::Vacant(entry) => {
-                // No existing entry - acquire lock
-                entry.insert(IdempotencyState::InProgress { expires_at_millis });
-                Ok(None)
-            }
-            Entry::Occupied(entry) => {
-                let state = entry.get();
-
-                match state {
-                    IdempotencyState::InProgress {
-                        expires_at_millis: exp,
-                    } => {
-                        // Check if expired
-                        if now >= *exp {
-                            // Lock expired, replace with new lock
-                            drop(entry);
-                            self.store.insert(
-                                key.to_string(),
-                                IdempotencyState::InProgress { expires_at_millis },
-                            );
-                            Ok(None)
-                        } else {
-                            // Still in progress by another request
-                            Err(Error::http(HttpError::conflict(
-                                Some("Request is already in progress".into()),
-                                None,
-                            )))
-                        }
-                    }
-                    IdempotencyState::Completed {
-                        expires_at_millis: exp,
-                        response,
-                    } => {
-                        // Check if expired
-                        if now >= *exp {
-                            // Response expired, acquire new lock
-                            drop(entry);
-                            self.store.insert(
-                                key.to_string(),
-                                IdempotencyState::InProgress { expires_at_millis },
-                            );
-                            Ok(None)
-                        } else {
-                            // Return cached response
-                            Ok(Some(response.clone()))
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /// Complete a request with a successful response
-    fn complete(&self, key: &str, response: String, ttl_seconds: u64) -> Result<()> {
-        let now = now_millis();
-        let expires_at_millis = now + (ttl_seconds * 1000);
-
-        self.store.insert(
-            key.to_string(),
-            IdempotencyState::Completed {
-                expires_at_millis,
-                response,
-            },
-        );
-
-        Ok(())
-    }
-
-    /// Abandon a request (remove the lock without saving response)
-    fn abandon(&self, key: &str) -> Result<()> {
-        self.store.remove(key);
-        Ok(())
-    }
-}
+// Re-export types that are used in AppState
+pub use crate::v1::modules::idempotency::worker;
+pub use crate::v1::modules::idempotency::IdempotencyStore;
 
 // ============================================================================
 // API Types
@@ -242,17 +120,6 @@ async fn idempotency_abandon(
 // ============================================================================
 // Router
 // ============================================================================
-
-/// This is the worker function for this module, it does background cleanup and accounting.
-pub async fn worker(_state: AppState) -> Result<()> {
-    loop {
-        if crate::is_shutting_down() {
-            break;
-        }
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    }
-    Ok(())
-}
 
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Idempotency");
