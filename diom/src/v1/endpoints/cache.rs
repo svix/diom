@@ -1,6 +1,21 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+//! Cache module.
+//!
+//! The idea of having a separate cache module is that we can aggressively evict from this one when
+//! under memory pressure, which we don't want to do with kv store (which can't be lost!). So cache
+//! is really for caching things, and not a kv store. That's why they should maybe be different.
+//! So for example we can configure eviction policies like: swap, drop, and behaviors like lru,
+//! whatever.
+//!
+//! FIXME:
+//! * Potentially we could merge it with KV and just with the "group configuration" behavior we can
+//! define the cache behavior. So we don't actually need a different backend?
+//!   * Though even if we do that, maybe cache should be an alias for kv with a default base
+//!   configuration?
+//! * If we end up making them separate: this can potentially reuse code from kv-store?
+
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
 use diom_derive::aide_annotate;
