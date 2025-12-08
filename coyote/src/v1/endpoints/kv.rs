@@ -8,7 +8,7 @@ use coyote_derive::aide_annotate;
 use dashmap::DashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
+use std::{sync::{Arc, Mutex}, time::Duration};
 use validator::Validate;
 
 use crate::{
@@ -171,7 +171,7 @@ async fn kv_set(
                 Entry::Vacant(entry) => {
                     entry.insert(model);
                     // Insert into expiry heap
-                    kv_store.expiry.lock().unwrap().push(expiry::ExpiryState::new(expires_at, key));
+                    kv_store.expiry.lock().unwrap().insert(expires_at, key);
                 }
                 Entry::Occupied(_) => {
                     return Err(Error::http(HttpError::conflict(None, None)));
@@ -183,8 +183,8 @@ async fn kv_set(
             match kv_store.store.get_mut(&key) {
                 Some(mut entry) => {
                     *entry = model;
-                    // Add new expiry entry (don't need to remove old one)
-                    kv_store.expiry.lock().unwrap().push(expiry::ExpiryState::new(expires_at, key));
+                    // Add new expiry entry (don't need to remove old one, as it will be ignored)
+                    kv_store.expiry.lock().unwrap().insert(expires_at, key);
                 }
                 None => {
                     return Err(Error::http(HttpError::not_found(None, None)));
@@ -192,7 +192,7 @@ async fn kv_set(
             }
         }
         OperationBehavior::Upsert => {
-            kv_store.expiry.lock().unwrap().push(expiry::ExpiryState::new(expires_at, Arc::clone(&key)));
+            kv_store.expiry.lock().unwrap().insert(expires_at, Arc::clone(&key));
             kv_store.store.insert(key, model);
         }
     }
@@ -248,6 +248,21 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with("/kv/delete", post_with(kv_del, kv_del_operation), &tag)
 }
 
+/// This is the worker function for this module, it does background cleanup and accounting.
+pub async fn worker(state: AppState) -> Result<()> {
+    let expiry = state.kv_store.expiry;
+    loop {
+        // FIXME: this is not good to lock for such a long time, but we don't care as we'll change
+        // the data structure anyway.
+        let mut expiry= expiry.lock().unwrap();
+        while expiry.peek().is_some_and(|x| x.expired(Utc::now())) {
+            expiry.pop();
+        }
+        drop(expiry);
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+}
+
 mod expiry {
     use std::cmp::Ordering;
     use chrono::{DateTime, Utc};
@@ -261,18 +276,40 @@ mod expiry {
     // Binary heap for the scanning - has the key.
     //  If the expiry timestamp is not the same, assume there's another entry.
 
-    pub type ExpiryHeap = BinaryHeap<ExpiryState>;
+    pub(super) struct ExpiryHeap {
+        heap: BinaryHeap<ExpiryState>,
+    }
+
+    impl ExpiryHeap {
+        pub(super) fn new() -> Self {
+            Self {
+                heap: BinaryHeap::new(),
+            }
+        }
+
+        pub(super) fn insert(&mut self, expires_at: DateTime<Utc>, key: Arc<EntityKey>) {
+            self.heap.push(ExpiryState { expires_at, key });
+        }
+
+        pub(super) fn peek(&self) -> Option<&ExpiryState> {
+            self.heap.peek()
+        }
+
+        pub(super) fn pop(&mut self) -> Option<ExpiryState> {
+            self.heap.pop()
+        }
+    }
 
     #[derive(Eq, PartialEq)]
-    pub struct ExpiryState {
+    pub(super) struct ExpiryState {
         /// The timestamp of when to expire.
         expires_at: DateTime<Utc>,
         key: Arc<EntityKey>,
     }
 
     impl ExpiryState {
-        pub fn new(expires_at: DateTime<Utc>, key: Arc<EntityKey>) -> Self {
-            Self { expires_at, key }
+        pub(super) fn expired(&self, now: DateTime<Utc>) -> bool {
+            self.expires_at <= now
         }
     }
 
