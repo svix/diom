@@ -257,17 +257,21 @@ pub fn router() -> ApiRouter<AppState> {
 
 /// This is the worker function for this module, it does background cleanup and accounting.
 pub async fn worker(state: AppState) -> Result<()> {
-    let expiry = state.kv_store.expiry;
     loop {
+        if crate::is_shutting_down() {
+            break;
+        }
         // FIXME: this is not good to lock for such a long time, but we don't care as we'll change
         // the data structure anyway.
-        let mut expiry = expiry.lock().unwrap();
-        while expiry.peek().is_some_and(|x| x.expired(Utc::now())) {
-            expiry.pop();
+        {
+            let mut expiry = state.kv_store.expiry.lock().unwrap();
+            while expiry.peek().is_some_and(|x| x.expired(Utc::now())) {
+                expiry.pop();
+            }
         }
-        drop(expiry);
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
+    Ok(())
 }
 
 mod expiry {

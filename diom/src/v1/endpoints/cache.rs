@@ -171,6 +171,17 @@ async fn cache_del(
     Ok(Json(ret))
 }
 
+/// This is the worker function for this module, it does background cleanup and accounting.
+pub async fn worker(_state: AppState) -> Result<()> {
+    loop {
+        if crate::is_shutting_down() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+    }
+    Ok(())
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Cache");
 
