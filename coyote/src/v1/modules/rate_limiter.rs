@@ -1,6 +1,41 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+//! # Rate Limiter Module
+//!
+//! This module implements a token bucket rate limiter with dynamic configuration.
+//!
+//! ## Data Structure Design
+//!
+//! The rate limiter uses a single DashMap to store per-key state:
+//!
+//! 1. Main Store (DashMap) - Storage for token bucket state per key (tokens, last_refill_millis)
+//!
+//! ## Algorithm: Token Bucket
+//!
+//! Each key maintains a "bucket" of tokens that refills over time:
+//! - **Capacity**: Maximum number of tokens the bucket can hold
+//! - **Refill**: Tokens are added at a configured rate (amount per interval)
+//! - **Consumption**: Each request consumes a specified number of tokens
+//! - **Rate Limiting**: Requests are denied when insufficient tokens are available
+//!
+//! ## How It Works
+//!
+//! - **Configuration**: Passed with each request (capacity, refill_amount, refill_interval_seconds)
+//! - **State**: Only runtime state is stored (current tokens, last refill timestamp)
+//! - **On Request**:
+//!   - Create state if first request (starts with full capacity)
+//!   - Calculate and add refilled tokens based on elapsed time
+//!   - Check if sufficient tokens available and consume if allowed
+//! - **Get Remaining**: Query current token count without consuming
+//!
+//! The design keeps configuration stateless - it's provided with each API call rather than
+//! being stored or pre-configured. This allows flexible per-request configuration changes.
+//!
+//! ## TODO FIXME
+//! - Should expire the rate limiter keys when they are "full" or otherwise unused for X amount of
+//! time.
+
 use dashmap::DashMap;
 use std::sync::Arc;
 
@@ -30,10 +65,6 @@ pub struct TokenBucketRateLimiter {
 struct TokenBucketState {
     tokens: u64,
     last_refill_millis: u64,
-    // Configuration
-    capacity: u64,
-    refill_amount: u64,
-    refill_interval_millis: u64,
 }
 
 impl Default for TokenBucketRateLimiter {
@@ -49,45 +80,25 @@ impl TokenBucketRateLimiter {
         }
     }
 
-    pub fn configure(
-        &self,
-        key: &str,
-        capacity: u64,
-        refill_amount: u64,
-        refill_interval_seconds: u64,
-    ) {
-        let now = now_millis();
-        let refill_interval_millis = refill_interval_seconds * 1000;
-
-        self.store.insert(
-            key.to_string(),
-            TokenBucketState {
-                tokens: capacity,
-                last_refill_millis: now,
-                capacity,
-                refill_amount,
-                refill_interval_millis,
-            },
-        );
-    }
-
     pub fn check_and_consume(
         &self,
         key: &str,
         tokens_requested: u64,
+        capacity: u64,
+        refill_amount: u64,
+        refill_interval_seconds: u64,
     ) -> Result<(bool, u64, Option<u64>)> {
         let now = now_millis();
+        let refill_interval_millis = refill_interval_seconds * 1000;
 
-        let mut entry = self.store.get_mut(key).ok_or_else(|| {
-            Error::http(HttpError::not_found(
-                Some("Rate limiter not configured for this key".into()),
-                None,
-            ))
-        })?;
-
-        let capacity = entry.capacity;
-        let refill_amount = entry.refill_amount;
-        let refill_interval_millis = entry.refill_interval_millis;
+        // Get or create entry with initial state
+        let mut entry = self
+            .store
+            .entry(key.to_string())
+            .or_insert_with(|| TokenBucketState {
+                tokens: capacity,
+                last_refill_millis: now,
+            });
 
         // Refill tokens based on intervals elapsed
         let elapsed_millis = now.saturating_sub(entry.last_refill_millis);
@@ -117,15 +128,19 @@ impl TokenBucketRateLimiter {
         }
     }
 
-    pub fn get_remaining(&self, key: &str) -> Result<(u64, Option<u64>)> {
+    pub fn get_remaining(
+        &self,
+        key: &str,
+        capacity: u64,
+        refill_amount: u64,
+        refill_interval_seconds: u64,
+    ) -> Result<(u64, Option<u64>)> {
         let now = now_millis();
+        let refill_interval_millis = refill_interval_seconds * 1000;
 
         match self.store.get(key) {
             Some(entry) => {
-                let capacity = entry.capacity;
-                let refill_amount = entry.refill_amount;
-                let refill_interval_millis = entry.refill_interval_millis;
-
+                // Calculate current tokens based on elapsed time and provided configuration
                 let elapsed_millis = now.saturating_sub(entry.last_refill_millis);
                 let intervals_elapsed = elapsed_millis / refill_interval_millis;
                 let new_tokens = intervals_elapsed.saturating_mul(refill_amount);
@@ -139,10 +154,10 @@ impl TokenBucketRateLimiter {
                     Ok((current_tokens, None))
                 }
             }
-            None => Err(Error::http(HttpError::not_found(
-                Some("Rate limiter not configured for this key".into()),
-                None,
-            ))),
+            None => {
+                // No state exists yet, so full capacity is available
+                Ok((capacity, None))
+            }
         }
     }
 }
