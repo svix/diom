@@ -19,10 +19,6 @@ use crate::{
 pub use crate::v1::modules::rate_limiter::worker;
 pub use crate::v1::modules::rate_limiter::RateLimiterStore;
 
-// ============================================================================
-// API Types - Configuration
-// ============================================================================
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimiterConfig {
     /// Maximum capacity of the bucket
@@ -37,10 +33,6 @@ pub struct RateLimiterConfig {
     #[validate(range(min = 1))]
     pub refill_interval_seconds: u64,
 }
-
-// ============================================================================
-// API Types - Limit
-// ============================================================================
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimiterCheckIn {
@@ -73,10 +65,6 @@ pub struct RateLimiterCheckOut {
     pub retry_after: Option<u64>,
 }
 
-// ============================================================================
-// API Types - Get Remaining
-// ============================================================================
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimiterGetRemainingIn {
     #[validate]
@@ -96,10 +84,6 @@ pub struct RateLimiterGetRemainingOut {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub retry_after: Option<u64>,
 }
-
-// ============================================================================
-// API Endpoints - Limit
-// ============================================================================
 
 /// Rate Limiter Check and Consume
 #[aide_annotate(op_id = "v1.rate_limiter.limit")]
