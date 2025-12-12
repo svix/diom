@@ -9,25 +9,25 @@
 //!
 //! The rate limiter uses a single DashMap to store per-key state:
 //!
-//! 1. Main Store (DashMap) - Storage for token bucket state per key (tokens, last_refill_millis)
+//! 1. Main Store (DashMap) - Storage for token bucket state per key (tokens, last_refill)
 //!
 //! ## Algorithm: Token Bucket
 //!
 //! Each key maintains a "bucket" of tokens that refills over time:
-//! - **Capacity**: Maximum number of tokens the bucket can hold
-//! - **Refill**: Tokens are added at a configured rate (amount per interval)
-//! - **Consumption**: Each request consumes a specified number of tokens
-//! - **Rate Limiting**: Requests are denied when insufficient tokens are available
+//! - Capacity: Maximum number of tokens the bucket can hold
+//! - Refill: Tokens are added at a configured rate (amount per interval)
+//! - Consumption: Each request consumes a specified number of tokens
+//! - Rate Limiting: Requests are denied when insufficient tokens are available
 //!
 //! ## How It Works
 //!
-//! - **Configuration**: Passed with each request (capacity, refill_amount, refill_interval_seconds)
-//! - **State**: Only runtime state is stored (current tokens, last refill timestamp)
-//! - **On Request**:
+//! - Configuration: Passed with each request (capacity, refill_amount, refill_interval_seconds)
+//! - State: Only runtime state is stored (current tokens, last refill timestamp)
+//! - On Request:
 //!   - Create state if first request (starts with full capacity)
 //!   - Calculate and add refilled tokens based on elapsed time
 //!   - Check if sufficient tokens available and consume if allowed
-//! - **Get Remaining**: Query current token count without consuming
+//! - Get Remaining: Query current token count without consuming
 //!
 //! The design keeps configuration stateless - it's provided with each API call rather than
 //! being stored or pre-configured. This allows flexible per-request configuration changes.
@@ -36,6 +36,7 @@
 //! - Should expire the rate limiter keys when they are "full" or otherwise unused for X amount of
 //! time.
 
+use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use std::sync::Arc;
 
@@ -43,14 +44,6 @@ use crate::{
     error::{Error, HttpError, Result},
     AppState,
 };
-
-/// Get current time in milliseconds since Unix epoch.
-/// Uses system time which is consistent across distributed nodes.
-/// Note: Subject to NTP adjustments and leap seconds, but rate limiters
-/// are designed to tolerate small time discrepancies.
-fn now_millis() -> u64 {
-    chrono::Utc::now().timestamp_millis() as u64
-}
 
 // ============================================================================
 // Token Bucket Rate Limiter
@@ -64,7 +57,7 @@ pub struct TokenBucketRateLimiter {
 #[derive(Clone, Debug)]
 struct TokenBucketState {
     tokens: u64,
-    last_refill_millis: u64,
+    last_refill: DateTime<Utc>,
 }
 
 impl Default for TokenBucketRateLimiter {
@@ -88,8 +81,7 @@ impl TokenBucketRateLimiter {
         refill_amount: u64,
         refill_interval_seconds: u64,
     ) -> Result<(bool, u64, Option<u64>)> {
-        let now = now_millis();
-        let refill_interval_millis = refill_interval_seconds * 1000;
+        let now = Utc::now();
 
         // Get or create entry with initial state
         let mut entry = self
@@ -97,17 +89,18 @@ impl TokenBucketRateLimiter {
             .entry(key.to_string())
             .or_insert_with(|| TokenBucketState {
                 tokens: capacity,
-                last_refill_millis: now,
+                last_refill: now,
             });
 
         // Refill tokens based on intervals elapsed
-        let elapsed_millis = now.saturating_sub(entry.last_refill_millis);
-        let intervals_elapsed = elapsed_millis / refill_interval_millis;
+        let elapsed = now.signed_duration_since(entry.last_refill);
+        let elapsed_seconds = elapsed.num_seconds().max(0) as u64;
+        let intervals_elapsed = elapsed_seconds / refill_interval_seconds;
 
         if intervals_elapsed > 0 {
             let new_tokens = intervals_elapsed.saturating_mul(refill_amount);
             entry.tokens = entry.tokens.saturating_add(new_tokens).min(capacity);
-            entry.last_refill_millis = now;
+            entry.last_refill = now;
         }
 
         // Check if enough tokens available
@@ -122,8 +115,7 @@ impl TokenBucketRateLimiter {
             } else {
                 u64::MAX
             };
-            let retry_after_millis = intervals_needed.saturating_mul(refill_interval_millis);
-            let retry_after_seconds = retry_after_millis.div_ceil(1000); // Ceiling division to seconds
+            let retry_after_seconds = intervals_needed.saturating_mul(refill_interval_seconds);
             Ok((false, entry.tokens, Some(retry_after_seconds)))
         }
     }
@@ -135,20 +127,20 @@ impl TokenBucketRateLimiter {
         refill_amount: u64,
         refill_interval_seconds: u64,
     ) -> Result<(u64, Option<u64>)> {
-        let now = now_millis();
-        let refill_interval_millis = refill_interval_seconds * 1000;
+        let now = Utc::now();
 
         match self.store.get(key) {
             Some(entry) => {
                 // Calculate current tokens based on elapsed time and provided configuration
-                let elapsed_millis = now.saturating_sub(entry.last_refill_millis);
-                let intervals_elapsed = elapsed_millis / refill_interval_millis;
+                let elapsed = now.signed_duration_since(entry.last_refill);
+                let elapsed_seconds = elapsed.num_seconds().max(0) as u64;
+                let intervals_elapsed = elapsed_seconds / refill_interval_seconds;
                 let new_tokens = intervals_elapsed.saturating_mul(refill_amount);
                 let current_tokens = entry.tokens.saturating_add(new_tokens).min(capacity);
 
                 if current_tokens == 0 {
                     // Calculate retry_after for at least 1 token (in seconds)
-                    let retry_after_seconds = refill_interval_millis.div_ceil(1000); // Ceiling division
+                    let retry_after_seconds = refill_interval_seconds;
                     Ok((0, Some(retry_after_seconds)))
                 } else {
                     Ok((current_tokens, None))
