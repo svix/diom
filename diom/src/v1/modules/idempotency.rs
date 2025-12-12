@@ -1,6 +1,16 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+//! # Idempotency module.
+//!
+//! This module implements idempotency, so people can use it to implement idempotency in their web
+//! services.
+//!
+//! ## TODO FIXME
+//! - Actually need to implement it. I guess it can use KV as its backend.
+//! - The API probably needs changing.
+
+
 use dashmap::mapref::entry::Entry;
 use dashmap::DashMap;
 use std::sync::Arc;
@@ -31,6 +41,8 @@ enum IdempotencyState {
     /// Request completed successfully with a response
     Completed {
         expires_at_millis: u64,
+        // FIXME: Should be at least bytes. Though maybe we need to make it more generic like store
+        // bytes or something?
         response: String,
     },
 }
