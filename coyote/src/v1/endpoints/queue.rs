@@ -26,7 +26,7 @@ pub use crate::v1::modules::queue::QueueStore;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueEnqueueIn {
     #[validate]
-    pub queue_name: EntityKey,
+    pub name: EntityKey,
 
     /// Message payload
     pub payload: String,
@@ -38,13 +38,13 @@ pub struct QueueEnqueueIn {
     /// Maximum number of processing attempts before moving to DLQ (default: 3)
     #[serde(default = "default_max_attempts")]
     #[validate(range(min = 1))]
-    pub max_attempts: u64,
+    pub max_attempts: u16,
 
     /// Dead letter queue name (optional, defaults to "{queue_name}:DLQ")
     pub dlq_queue_name: Option<EntityKey>,
 }
 
-fn default_max_attempts() -> u64 {
+fn default_max_attempts() -> u16 {
     3
 }
 
@@ -57,7 +57,7 @@ pub struct QueueEnqueueOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueDequeueIn {
     #[validate]
-    pub queue_name: EntityKey,
+    pub name: EntityKey,
 
     /// Visibility timeout in seconds (how long before message returns to queue if not ack'd)
     #[validate(range(min = 1))]
@@ -131,7 +131,7 @@ async fn queue_enqueue(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueEnqueueIn>,
 ) -> Result<Json<QueueEnqueueOut>> {
-    let queue_name = data.queue_name.to_string();
+    let queue_name = data.name.to_string();
 
     // Default DLQ name is "{queue_name}:DLQ"
     let dlq_queue_name = data
@@ -156,7 +156,7 @@ async fn queue_dequeue(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueDequeueIn>,
 ) -> Result<Json<QueueDequeueOut>> {
-    let queue_name = data.queue_name.to_string();
+    let queue_name = data.name.to_string();
 
     match queue_store.dequeue(&queue_name, data.visibility_timeout_seconds)? {
         Some((message_id, payload)) => Ok(Json(QueueDequeueOut::Message {
