@@ -41,6 +41,9 @@
 //! - Consider adding message priorities
 //! - Consider adding queue TTL for auto-cleanup of unused queues - probably a problem with
 //!   configuration? Not if we do configuration as a group like I wanted.
+//! - Message ID should probably be a uuidv7 or something and save some bytes. Or maybe even just
+//!   a u64 if we are going at it from a kafka point of view? Though I guess that prevents some
+//!   distributed publishing options?
 
 use chrono::{DateTime, Utc};
 use crossbeam::queue::SegQueue;
@@ -65,6 +68,19 @@ pub struct QueueConfiguration {
     pub max_attempts: u16,
     /// Dead letter queue name (optional)
     pub dlq_queue_name: Option<String>,
+}
+
+// Default configuration constants
+const DEFAULT_MAX_ATTEMPTS: u16 = 3;
+const DLQ_SUFFIX: &str = ":DLQ";
+
+impl Default for QueueConfiguration {
+    fn default() -> Self {
+        Self {
+            max_attempts: DEFAULT_MAX_ATTEMPTS,
+            dlq_queue_name: None,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -118,14 +134,20 @@ impl QueueStore {
         }
     }
 
-    fn get_or_create_queue(&self, queue_name: &str, config: QueueConfiguration) -> Queue {
+    fn get_or_create_queue(&self, queue_name: &str) -> Queue {
         self.queues
             .entry(queue_name.to_string())
-            .or_insert_with(|| Queue {
-                ready: Arc::new(SegQueue::new()),
-                delayed: Arc::new(SkipMap::new()),
-                in_flight: Arc::new(DashMap::new()),
-                config,
+            .or_insert_with(|| {
+                let config = QueueConfiguration {
+                    max_attempts: DEFAULT_MAX_ATTEMPTS,
+                    dlq_queue_name: Some(format!("{queue_name}{DLQ_SUFFIX}")),
+                };
+                Queue {
+                    ready: Arc::new(SegQueue::new()),
+                    delayed: Arc::new(SkipMap::new()),
+                    in_flight: Arc::new(DashMap::new()),
+                    config,
+                }
             })
             .clone()
     }
@@ -136,13 +158,12 @@ impl QueueStore {
         queue_name: &str,
         payload: String,
         delay_seconds: u64,
-        config: QueueConfiguration,
     ) -> Result<String> {
         let now = Utc::now();
         let message_id = KsuidMs::new(None, None).to_string();
         let available_at = now + chrono::Duration::seconds(delay_seconds as i64);
 
-        let queue = self.get_or_create_queue(queue_name, config);
+        let queue = self.get_or_create_queue(queue_name);
 
         let message = Message {
             id: message_id.clone(),
@@ -270,11 +291,7 @@ impl QueueStore {
         if message.attempt_count >= config.max_attempts {
             // Move to DLQ (if configured)
             if let Some(dlq_name) = &config.dlq_queue_name {
-                let dlq_config = QueueConfiguration {
-                    max_attempts: config.max_attempts,
-                    dlq_queue_name: None,
-                };
-                let dlq = self.get_or_create_queue(dlq_name, dlq_config);
+                let dlq = self.get_or_create_queue(dlq_name);
                 // Reset availability so it's immediately available in DLQ
                 message.available_at = Utc::now();
                 // Add directly to ready queue (no delay for DLQ)
@@ -317,11 +334,7 @@ impl QueueStore {
                 if message.attempt_count >= config.max_attempts {
                     // Move to DLQ (if configured)
                     if let Some(dlq_name) = &config.dlq_queue_name {
-                        let dlq_config = QueueConfiguration {
-                            max_attempts: config.max_attempts,
-                            dlq_queue_name: None,
-                        };
-                        let dlq = self.get_or_create_queue(dlq_name, dlq_config);
+                        let dlq = self.get_or_create_queue(dlq_name);
                         // Reset availability so it's immediately available in DLQ
                         message.available_at = now;
                         // Add directly to ready queue (no delay for DLQ)
