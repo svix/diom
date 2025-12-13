@@ -42,6 +42,7 @@
 //! - Consider adding queue TTL for auto-cleanup of unused queues - probably a problem with
 //!   configuration? Not if we do configuration as a group like I wanted.
 
+use chrono::{DateTime, Utc};
 use crossbeam::queue::SegQueue;
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashMap;
@@ -53,11 +54,6 @@ use crate::{
     error::{Error, HttpError, Result},
     AppState,
 };
-
-/// Get current time in milliseconds since Unix epoch
-fn now_millis() -> u64 {
-    chrono::Utc::now().timestamp_millis() as u64
-}
 
 // ============================================================================
 // Queue Store
@@ -85,22 +81,22 @@ struct Message {
     id: String,
     payload: String,
     /// When the message should become available (for delayed delivery)
-    available_at_millis: u64,
+    available_at: DateTime<Utc>,
     /// Number of times this message has been nacked/timed out
-    attempt_count: u64,
+    attempt_count: u16,
     /// Maximum number of attempts before moving to DLQ
-    max_attempts: u64,
+    max_attempts: u16,
     /// Dead letter queue name (if set)
     dlq_queue_name: Option<String>,
     /// Original enqueue time
-    enqueued_at_millis: u64,
+    enqueued_at: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug)]
 struct InFlightMessage {
     message: Message,
     /// When this message's processing will timeout
-    timeout_at_millis: u64,
+    timeout_at: DateTime<Utc>,
 }
 
 impl Default for QueueStore {
@@ -133,23 +129,23 @@ impl QueueStore {
         queue_name: &str,
         payload: String,
         delay_seconds: u64,
-        max_attempts: u64,
+        max_attempts: u16,
         dlq_queue_name: Option<String>,
     ) -> Result<String> {
-        let now = now_millis();
+        let now = Utc::now();
         let message_id = KsuidMs::new(None, None).to_string();
-        let available_at_millis = now + (delay_seconds * 1000);
+        let available_at = now + chrono::Duration::seconds(delay_seconds as i64);
 
         let queue = self.get_or_create_queue(queue_name);
 
         let message = Message {
             id: message_id.clone(),
             payload,
-            available_at_millis,
+            available_at,
             attempt_count: 0,
             max_attempts,
             dlq_queue_name,
-            enqueued_at_millis: now,
+            enqueued_at: now,
         };
 
         if delay_seconds == 0 {
@@ -158,7 +154,8 @@ impl QueueStore {
         } else {
             // Has delay - add to delayed skipmap (keyed by availability time + message ID for uniqueness)
             // Use combination of timestamp and message ID to avoid key collisions
-            let key = (available_at_millis << 32) | (message_id.len() as u64); // Simple unique key
+            let timestamp_millis = available_at.timestamp_millis() as u64;
+            let key = (timestamp_millis << 32) | (message_id.len() as u64); // Simple unique key
             queue.delayed.insert(key, message);
         }
 
@@ -167,7 +164,7 @@ impl QueueStore {
 
     /// Move ready delayed messages to the ready queue
     fn promote_delayed_messages(&self, queue: &Queue) {
-        let now = now_millis();
+        let now = Utc::now();
 
         // Find and remove all messages that are ready (lock-free iteration)
         let ready_keys: Vec<u64> = queue
@@ -175,8 +172,8 @@ impl QueueStore {
             .iter()
             .filter_map(|entry: crossbeam_skiplist::map::Entry<'_, u64, Message>| {
                 let key = *entry.key();
-                let timestamp = key >> 32;
-                if timestamp <= now {
+                let message = entry.value();
+                if message.available_at <= now {
                     Some(key)
                 } else {
                     // SkipMap is ordered, so once we hit a future timestamp, stop
@@ -204,7 +201,7 @@ impl QueueStore {
             None => return Ok(None),
         };
 
-        let now = now_millis();
+        let now = Utc::now();
 
         // First, check for timed-out in-flight messages and return them to the queue
         self.check_timeouts(queue_name)?;
@@ -216,11 +213,11 @@ impl QueueStore {
         if let Some(message) = queue.ready.pop() {
             let message_id = message.id.clone();
             let payload = message.payload.clone();
-            let timeout_at_millis = now + (visibility_timeout_seconds * 1000);
+            let timeout_at = now + chrono::Duration::seconds(visibility_timeout_seconds as i64);
 
             let in_flight_msg = InFlightMessage {
                 message,
-                timeout_at_millis,
+                timeout_at,
             };
 
             queue.in_flight.insert(message_id.clone(), in_flight_msg);
@@ -269,7 +266,7 @@ impl QueueStore {
             if let Some(dlq_name) = &message.dlq_queue_name {
                 let dlq = self.get_or_create_queue(dlq_name);
                 // Reset availability so it's immediately available in DLQ
-                message.available_at_millis = now_millis();
+                message.available_at = Utc::now();
                 // Add directly to ready queue (no delay for DLQ)
                 dlq.ready.push(message);
             }
@@ -289,12 +286,12 @@ impl QueueStore {
             None => return Ok(()),
         };
 
-        let now = now_millis();
+        let now = Utc::now();
         let mut timed_out = Vec::new();
 
         // Collect timed-out messages
         for entry in queue.in_flight.iter() {
-            if now >= entry.value().timeout_at_millis {
+            if now >= entry.value().timeout_at {
                 timed_out.push(entry.key().clone());
             }
         }
@@ -311,7 +308,7 @@ impl QueueStore {
                     if let Some(dlq_name) = &message.dlq_queue_name {
                         let dlq = self.get_or_create_queue(dlq_name);
                         // Reset availability so it's immediately available in DLQ
-                        message.available_at_millis = now;
+                        message.available_at = now;
                         // Add directly to ready queue (no delay for DLQ)
                         dlq.ready.push(message);
                     }
