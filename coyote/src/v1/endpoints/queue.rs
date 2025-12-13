@@ -40,7 +40,7 @@ pub struct QueueEnqueueIn {
     #[validate(range(min = 1))]
     pub max_attempts: u16,
 
-    /// Dead letter queue name (optional, defaults to "{queue_name}:DLQ")
+    /// Dead letter queue name (optional, defaults to "{name}:DLQ")
     pub dlq_queue_name: Option<EntityKey>,
 }
 
@@ -74,7 +74,7 @@ pub enum QueueDequeueOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueAckIn {
     #[validate]
-    pub queue_name: EntityKey,
+    pub name: EntityKey,
 
     /// Message ID to acknowledge
     pub message_id: String,
@@ -86,7 +86,7 @@ pub struct QueueAckOut {}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueNackIn {
     #[validate]
-    pub queue_name: EntityKey,
+    pub name: EntityKey,
 
     /// Message ID to negative acknowledge
     pub message_id: String,
@@ -98,7 +98,7 @@ pub struct QueueNackOut {}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueuePurgeIn {
     #[validate]
-    pub queue_name: EntityKey,
+    pub name: EntityKey,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -110,7 +110,7 @@ pub struct QueuePurgeOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueStatsIn {
     #[validate]
-    pub queue_name: EntityKey,
+    pub name: EntityKey,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -131,16 +131,16 @@ async fn queue_enqueue(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueEnqueueIn>,
 ) -> Result<Json<QueueEnqueueOut>> {
-    let queue_name = data.name.to_string();
+    let name = data.name.to_string();
 
-    // Default DLQ name is "{queue_name}:DLQ"
+    // Default DLQ name is "{name}:DLQ"
     let dlq_queue_name = data
         .dlq_queue_name
         .map(|k| k.to_string())
-        .or_else(|| Some(format!("{queue_name}:DLQ")));
+        .or_else(|| Some(format!("{name}:DLQ")));
 
     let message_id = queue_store.enqueue(
-        &queue_name,
+        &name,
         data.payload,
         data.delay_seconds,
         data.max_attempts,
@@ -156,9 +156,9 @@ async fn queue_dequeue(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueDequeueIn>,
 ) -> Result<Json<QueueDequeueOut>> {
-    let queue_name = data.name.to_string();
+    let name = data.name.to_string();
 
-    match queue_store.dequeue(&queue_name, data.visibility_timeout_seconds)? {
+    match queue_store.dequeue(&name, data.visibility_timeout_seconds)? {
         Some((message_id, payload)) => Ok(Json(QueueDequeueOut::Message {
             message_id,
             payload,
@@ -173,9 +173,9 @@ async fn queue_ack(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueAckIn>,
 ) -> Result<Json<QueueAckOut>> {
-    let queue_name = data.queue_name.to_string();
+    let name = data.name.to_string();
 
-    queue_store.ack(&queue_name, &data.message_id)?;
+    queue_store.ack(&name, &data.message_id)?;
 
     Ok(Json(QueueAckOut {}))
 }
@@ -186,9 +186,9 @@ async fn queue_nack(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueNackIn>,
 ) -> Result<Json<QueueNackOut>> {
-    let queue_name = data.queue_name.to_string();
+    let name = data.name.to_string();
 
-    queue_store.nack(&queue_name, &data.message_id)?;
+    queue_store.nack(&name, &data.message_id)?;
 
     Ok(Json(QueueNackOut {}))
 }
@@ -199,9 +199,9 @@ async fn queue_purge(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueuePurgeIn>,
 ) -> Result<Json<QueuePurgeOut>> {
-    let queue_name = data.queue_name.to_string();
+    let name = data.name.to_string();
 
-    let purged_count = queue_store.purge(&queue_name)?;
+    let purged_count = queue_store.purge(&name)?;
 
     Ok(Json(QueuePurgeOut { purged_count }))
 }
@@ -212,9 +212,9 @@ async fn queue_stats(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueStatsIn>,
 ) -> Result<Json<QueueStatsOut>> {
-    let queue_name = data.queue_name.to_string();
+    let name = data.name.to_string();
 
-    let stats = queue_store.stats(&queue_name)?;
+    let stats = queue_store.stats(&name)?;
 
     Ok(Json(QueueStatsOut {
         available: stats.available,
