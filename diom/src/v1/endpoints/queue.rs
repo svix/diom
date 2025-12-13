@@ -27,14 +27,14 @@ pub struct QueueSendIn {
     pub name: EntityKey,
 
     // FIXME: needs to be bytes.
-    /// Message payload
-    pub payload: String,
+    /// Array of message payloads to send
+    pub messages: Vec<String>,
 
     // FIXME: maybe make it millis?
-    /// Delay before message becomes available (seconds). Mutually exclusive with scheduled_at.
+    /// Delay before messages become available (seconds). Mutually exclusive with scheduled_at.
     pub delay_seconds: Option<u64>,
 
-    /// Specific time when message should become available. Mutually exclusive with delay_seconds.
+    /// Specific time when messages should become available. Mutually exclusive with delay_seconds.
     pub scheduled_at: Option<DateTime<Utc>>,
 }
 
@@ -50,8 +50,8 @@ fn validate_delay_options(data: &QueueSendIn) -> Result<(), validator::Validatio
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct QueueSendOut {
-    /// Unique message ID
-    pub message_id: String,
+    /// Array of unique message IDs for the enqueued messages
+    pub message_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -62,13 +62,27 @@ pub struct QueueReceiveIn {
     /// Visibility timeout in seconds (how long before message returns to queue if not ack'd)
     #[validate(range(min = 1))]
     pub visibility_timeout_seconds: u64,
+
+    /// Maximum number of messages to receive (default: 1, max: 50)
+    #[serde(default = "default_batch_size")]
+    #[validate(range(min = 1, max = 50))]
+    pub batch_size: u32,
+}
+
+fn default_batch_size() -> u32 {
+    1
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(untagged)]
-pub enum QueueReceiveOut {
-    Message { message_id: String, payload: String },
-    Empty {},
+pub struct QueueMessage {
+    pub message_id: String,
+    pub payload: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct QueueReceiveOut {
+    /// Array of received messages (empty if no messages available)
+    pub messages: Vec<QueueMessage>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -125,7 +139,7 @@ pub struct QueueStatsOut {
 // API Endpoints
 // ============================================================================
 
-/// Send a message to the queue
+/// Send messages to the queue
 #[aide_annotate(op_id = "v1.queue.send")]
 async fn queue_send(
     State(AppState { queue_store, .. }): State<AppState>,
@@ -133,7 +147,7 @@ async fn queue_send(
 ) -> Result<Json<QueueSendOut>> {
     let name = data.name.to_string();
 
-    // Calculate available_at based on delay_seconds or scheduled_at
+    // Calculate available_at once for all messages
     let available_at = match (data.delay_seconds, data.scheduled_at) {
         (Some(delay), None) => Utc::now() + chrono::Duration::seconds(delay as i64),
         (None, Some(scheduled)) => scheduled,
@@ -141,26 +155,40 @@ async fn queue_send(
         (Some(_), Some(_)) => unreachable!("validation should prevent this"),
     };
 
-    let message_id = queue_store.enqueue(&name, data.payload, available_at)?;
+    let mut message_ids = Vec::new();
 
-    Ok(Json(QueueSendOut { message_id }))
+    // Enqueue each message with the same availability time
+    for payload in data.messages {
+        let message_id = queue_store.enqueue(&name, payload, available_at)?;
+        message_ids.push(message_id);
+    }
+
+    Ok(Json(QueueSendOut { message_ids }))
 }
 
-/// Receive a message from the queue
+/// Receive messages from the queue
 #[aide_annotate(op_id = "v1.queue.receive")]
 async fn queue_receive(
     State(AppState { queue_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<QueueReceiveIn>,
 ) -> Result<Json<QueueReceiveOut>> {
     let name = data.name.to_string();
+    let mut messages = Vec::new();
 
-    match queue_store.dequeue(&name, data.visibility_timeout_seconds)? {
-        Some((message_id, payload)) => Ok(Json(QueueReceiveOut::Message {
-            message_id,
-            payload,
-        })),
-        None => Ok(Json(QueueReceiveOut::Empty {})),
+    // Dequeue up to batch_size messages
+    for _ in 0..data.batch_size {
+        match queue_store.dequeue(&name, data.visibility_timeout_seconds)? {
+            Some((message_id, payload)) => {
+                messages.push(QueueMessage {
+                    message_id,
+                    payload,
+                });
+            }
+            None => break, // No more messages available
+        }
     }
+
+    Ok(Json(QueueReceiveOut { messages }))
 }
 
 /// Acknowledge successful message processing
