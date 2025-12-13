@@ -34,16 +34,15 @@
 //!
 //! ## TODO FIXME
 //! - Should expire the rate limiter keys when they are "full" or otherwise unused for X amount of
-//! time.
+//! time. So we save on RAM.
+//! - Do we want the refill time be in milliseconds rather than seconds?
+//! - The implementation is probably stupid, haven't looked at it.
 
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use std::sync::Arc;
 
-use crate::{
-    error::{Error, HttpError, Result},
-    AppState,
-};
+use crate::{error::Result, AppState};
 
 // ============================================================================
 // Token Bucket Rate Limiter
@@ -76,7 +75,7 @@ impl TokenBucketRateLimiter {
     pub fn check_and_consume(
         &self,
         key: &str,
-        tokens_requested: u64,
+        units: u64,
         capacity: u64,
         refill_amount: u64,
         refill_interval_seconds: u64,
@@ -104,12 +103,12 @@ impl TokenBucketRateLimiter {
         }
 
         // Check if enough tokens available
-        if entry.tokens >= tokens_requested {
-            entry.tokens -= tokens_requested;
+        if entry.tokens >= units {
+            entry.tokens -= units;
             Ok((true, entry.tokens, None))
         } else {
             // Calculate how long until we have enough tokens (in seconds)
-            let tokens_needed = tokens_requested - entry.tokens;
+            let tokens_needed = units - entry.tokens;
             let intervals_needed = if refill_amount > 0 {
                 tokens_needed.div_ceil(refill_amount) // Ceiling division
             } else {

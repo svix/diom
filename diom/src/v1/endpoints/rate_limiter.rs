@@ -39,16 +39,16 @@ pub struct RateLimiterCheckIn {
     #[validate]
     pub key: EntityKey,
 
-    /// Number of tokens to consume (default: 1)
-    #[serde(default = "default_tokens_requested")]
-    pub tokens_requested: u64,
+    /// Number of units to consume (default: 1)
+    #[serde(default = "default_units")]
+    pub units: u64,
 
     /// Rate limiter configuration
     #[validate]
     pub config: RateLimiterConfig,
 }
 
-fn default_tokens_requested() -> u64 {
+fn default_units() -> u64 {
     1
 }
 
@@ -97,7 +97,7 @@ async fn rate_limiter_limit(
 
     let (allowed, remaining, retry_after) = rate_limiter_store.limiter.check_and_consume(
         &key_str,
-        data.tokens_requested,
+        data.units,
         data.config.capacity,
         data.config.refill_amount,
         data.config.refill_interval_seconds,
@@ -110,6 +110,7 @@ async fn rate_limiter_limit(
     }))
 }
 
+// FIXME: should this essentially just be a "dry-run" option on limit?
 /// Rate Limiter Get Remaining
 #[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
 async fn rate_limiter_get_remaining(
