@@ -31,18 +31,6 @@ pub struct QueueSendIn {
     /// Delay before message becomes available (seconds, default: 0)
     #[serde(default)]
     pub delay_seconds: u64,
-
-    /// Maximum number of processing attempts before moving to DLQ (default: 3)
-    #[serde(default = "default_max_attempts")]
-    #[validate(range(min = 1))]
-    pub max_attempts: u16,
-
-    /// Dead letter queue name (optional, defaults to "{name}:DLQ")
-    pub dlq_queue_name: Option<EntityKey>,
-}
-
-fn default_max_attempts() -> u16 {
-    3
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -129,19 +117,7 @@ async fn queue_send(
     ValidatedJson(data): ValidatedJson<QueueSendIn>,
 ) -> Result<Json<QueueSendOut>> {
     let name = data.name.to_string();
-
-    // Default DLQ name is "{name}:DLQ"
-    let dlq_queue_name = data
-        .dlq_queue_name
-        .map(|k| k.to_string())
-        .or_else(|| Some(format!("{name}:DLQ")));
-
-    let config = QueueConfiguration {
-        max_attempts: data.max_attempts,
-        dlq_queue_name,
-    };
-
-    let message_id = queue_store.enqueue(&name, data.payload, data.delay_seconds, config)?;
+    let message_id = queue_store.enqueue(&name, data.payload, data.delay_seconds)?;
 
     Ok(Json(QueueSendOut { message_id }))
 }
