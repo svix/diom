@@ -59,6 +59,14 @@ use crate::{
 // Queue Store
 // ============================================================================
 
+#[derive(Clone, Debug)]
+pub struct QueueConfiguration {
+    /// Maximum number of processing attempts before moving to DLQ
+    pub max_attempts: u16,
+    /// Dead letter queue name (optional)
+    pub dlq_queue_name: Option<String>,
+}
+
 #[derive(Clone)]
 pub struct QueueStore {
     // Map of queue_name -> Queue
@@ -74,6 +82,8 @@ struct Queue {
     delayed: Arc<SkipMap<u64, Message>>,
     // In-flight messages being processed (keyed by message ID for fast lookup)
     in_flight: Arc<DashMap<String, InFlightMessage>>,
+    // Queue configuration
+    config: QueueConfiguration,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -84,10 +94,6 @@ struct Message {
     available_at: DateTime<Utc>,
     /// Number of times this message has been nacked/timed out
     attempt_count: u16,
-    /// Maximum number of attempts before moving to DLQ
-    max_attempts: u16,
-    /// Dead letter queue name (if set)
-    dlq_queue_name: Option<String>,
     /// Original enqueue time
     enqueued_at: DateTime<Utc>,
 }
@@ -112,13 +118,14 @@ impl QueueStore {
         }
     }
 
-    fn get_or_create_queue(&self, queue_name: &str) -> Queue {
+    fn get_or_create_queue(&self, queue_name: &str, config: QueueConfiguration) -> Queue {
         self.queues
             .entry(queue_name.to_string())
             .or_insert_with(|| Queue {
                 ready: Arc::new(SegQueue::new()),
                 delayed: Arc::new(SkipMap::new()),
                 in_flight: Arc::new(DashMap::new()),
+                config,
             })
             .clone()
     }
@@ -129,22 +136,19 @@ impl QueueStore {
         queue_name: &str,
         payload: String,
         delay_seconds: u64,
-        max_attempts: u16,
-        dlq_queue_name: Option<String>,
+        config: QueueConfiguration,
     ) -> Result<String> {
         let now = Utc::now();
         let message_id = KsuidMs::new(None, None).to_string();
         let available_at = now + chrono::Duration::seconds(delay_seconds as i64);
 
-        let queue = self.get_or_create_queue(queue_name);
+        let queue = self.get_or_create_queue(queue_name, config);
 
         let message = Message {
             id: message_id.clone(),
             payload,
             available_at,
             attempt_count: 0,
-            max_attempts,
-            dlq_queue_name,
             enqueued_at: now,
         };
 
@@ -250,6 +254,8 @@ impl QueueStore {
             Error::http(HttpError::not_found(Some("Queue not found".into()), None))
         })?;
 
+        let config = queue.config.clone();
+
         let (_, in_flight_msg) = queue.in_flight.remove(message_id).ok_or_else(|| {
             Error::http(HttpError::not_found(
                 Some("Message not found or not in-flight".into()),
@@ -261,10 +267,14 @@ impl QueueStore {
         message.attempt_count += 1;
 
         // Check if we've exceeded max attempts
-        if message.attempt_count >= message.max_attempts {
+        if message.attempt_count >= config.max_attempts {
             // Move to DLQ (if configured)
-            if let Some(dlq_name) = &message.dlq_queue_name {
-                let dlq = self.get_or_create_queue(dlq_name);
+            if let Some(dlq_name) = &config.dlq_queue_name {
+                let dlq_config = QueueConfiguration {
+                    max_attempts: config.max_attempts,
+                    dlq_queue_name: None,
+                };
+                let dlq = self.get_or_create_queue(dlq_name, dlq_config);
                 // Reset availability so it's immediately available in DLQ
                 message.available_at = Utc::now();
                 // Add directly to ready queue (no delay for DLQ)
@@ -287,6 +297,7 @@ impl QueueStore {
         };
 
         let now = Utc::now();
+        let config = queue.config.clone();
         let mut timed_out = Vec::new();
 
         // Collect timed-out messages
@@ -303,10 +314,14 @@ impl QueueStore {
                 message.attempt_count += 1;
 
                 // Check if we've exceeded max attempts
-                if message.attempt_count >= message.max_attempts {
+                if message.attempt_count >= config.max_attempts {
                     // Move to DLQ (if configured)
-                    if let Some(dlq_name) = &message.dlq_queue_name {
-                        let dlq = self.get_or_create_queue(dlq_name);
+                    if let Some(dlq_name) = &config.dlq_queue_name {
+                        let dlq_config = QueueConfiguration {
+                            max_attempts: config.max_attempts,
+                            dlq_queue_name: None,
+                        };
+                        let dlq = self.get_or_create_queue(dlq_name, dlq_config);
                         // Reset availability so it's immediately available in DLQ
                         message.available_at = now;
                         // Add directly to ready queue (no delay for DLQ)
