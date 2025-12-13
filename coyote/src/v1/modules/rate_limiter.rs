@@ -34,7 +34,7 @@
 //!
 //! ## TODO FIXME
 //! - Should expire the rate limiter keys when they are "full" or otherwise unused for X amount of
-//! time. So we save on RAM.
+//!   time. So we save on RAM.
 //! - Do we want the refill time be in milliseconds rather than seconds?
 //! - The implementation is probably stupid, haven't looked at it.
 
