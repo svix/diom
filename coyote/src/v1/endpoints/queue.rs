@@ -3,6 +3,7 @@
 
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
+use chrono::{DateTime, Utc};
 use coyote_derive::aide_annotate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,7 @@ pub use crate::v1::modules::queue::worker;
 pub use crate::v1::modules::queue::{QueueConfiguration, QueueStore};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[validate(schema(function = "validate_delay_options"))]
 pub struct QueueSendIn {
     #[validate]
     pub name: EntityKey,
@@ -28,9 +30,22 @@ pub struct QueueSendIn {
     /// Message payload
     pub payload: String,
 
-    /// Delay before message becomes available (seconds, default: 0)
-    #[serde(default)]
-    pub delay_seconds: u64,
+    // FIXME: maybe make it millis?
+    /// Delay before message becomes available (seconds). Mutually exclusive with scheduled_at.
+    pub delay_seconds: Option<u64>,
+
+    /// Specific time when message should become available. Mutually exclusive with delay_seconds.
+    pub scheduled_at: Option<DateTime<Utc>>,
+}
+
+fn validate_delay_options(data: &QueueSendIn) -> Result<(), validator::ValidationError> {
+    // Ensure only one delay option is specified
+    if data.delay_seconds.is_some() && data.scheduled_at.is_some() {
+        return Err(validator::ValidationError::new(
+            "Cannot specify both delay_seconds and scheduled_at",
+        ));
+    }
+    Ok(())
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -117,7 +132,16 @@ async fn queue_send(
     ValidatedJson(data): ValidatedJson<QueueSendIn>,
 ) -> Result<Json<QueueSendOut>> {
     let name = data.name.to_string();
-    let message_id = queue_store.enqueue(&name, data.payload, data.delay_seconds)?;
+
+    // Calculate available_at based on delay_seconds or scheduled_at
+    let available_at = match (data.delay_seconds, data.scheduled_at) {
+        (Some(delay), None) => Utc::now() + chrono::Duration::seconds(delay as i64),
+        (None, Some(scheduled)) => scheduled,
+        (None, None) => Utc::now(), // Default: immediately available
+        (Some(_), Some(_)) => unreachable!("validation should prevent this"),
+    };
+
+    let message_id = queue_store.enqueue(&name, data.payload, available_at)?;
 
     Ok(Json(QueueSendOut { message_id }))
 }

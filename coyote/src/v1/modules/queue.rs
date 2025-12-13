@@ -152,16 +152,15 @@ impl QueueStore {
             .clone()
     }
 
-    /// Enqueue a message with optional delay
+    /// Enqueue a message with a specified availability time
     pub fn enqueue(
         &self,
         queue_name: &str,
         payload: String,
-        delay_seconds: u64,
+        available_at: DateTime<Utc>,
     ) -> Result<String> {
         let now = Utc::now();
         let message_id = KsuidMs::new(None, None).to_string();
-        let available_at = now + chrono::Duration::seconds(delay_seconds as i64);
 
         let queue = self.get_or_create_queue(queue_name);
 
@@ -173,8 +172,8 @@ impl QueueStore {
             enqueued_at: now,
         };
 
-        if delay_seconds == 0 {
-            // No delay - add to ready queue
+        if available_at <= now {
+            // No delay or time in past - add to ready queue immediately
             queue.ready.push(message);
         } else {
             // Has delay - add to delayed skipmap (keyed by availability time + message ID for uniqueness)
