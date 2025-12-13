@@ -1,6 +1,47 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+//! # Queue Module
+//!
+//! This module implements a message queue system with delayed delivery, visibility timeouts,
+//! dead-letter queues (DLQ), and retry logic.
+//!
+//! ## Data Structure Design
+//!
+//! The queue store uses multiple data structures for efficient message handling:
+//!
+//! 1. Queue Store (DashMap) - Maps queue names to Queue instances
+//! 2. Ready Queue (SegQueue) - Lock-free FIFO queue for messages ready for immediate delivery
+//! 3. Delayed Messages (SkipMap) - Lock-free ordered map for messages with delayed delivery (sorted by availability time)
+//! 4. In-Flight Messages (DashMap) - Fast lookup for messages currently being processed
+//!
+//! ## How It Works
+//!
+//! ### Message Lifecycle
+//!
+//! - Enqueue: Messages are added to either the ready queue (no delay) or delayed skipmap (with delay)
+//! - Promotion: Background process moves delayed messages to ready queue when their time comes
+//! - Dequeue: Retrieves message from ready queue and moves it to in-flight (with visibility timeout)
+//! - ACK: Successful processing removes message from in-flight
+//! - NACK: Failed processing increments attempt count and either:
+//!   - Returns message to ready queue (if attempts remaining)
+//!   - Moves to dead-letter queue (if max attempts exceeded)
+//! - Timeout: Messages not ACK'd within visibility timeout are treated like NACK
+//!
+//! ### Key Features
+//!
+//! - Delayed Delivery: Messages can be scheduled for future delivery
+//! - Visibility Timeout: Dequeued messages become invisible for a configurable period
+//! - Automatic Retry: Failed messages are automatically retried up to max_attempts
+//! - Dead-Letter Queue: Messages exceeding max attempts are moved to DLQ for inspection
+//! - Lock-Free Operations: Uses concurrent data structures for high throughput
+//!
+//! ## TODO FIXME
+//! - The delayed message key generation (line 120) uses a simple hash that could theoretically collide
+//! - Consider adding message priorities
+//! - Consider adding queue TTL for auto-cleanup of unused queues - probably a problem with
+//!   configuration? Not if we do configuration as a group like I wanted.
+
 use crossbeam::queue::SegQueue;
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashMap;
