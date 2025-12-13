@@ -17,17 +17,14 @@ use crate::{
 
 // Re-export types that are used in AppState
 pub use crate::v1::modules::queue::worker;
-pub use crate::v1::modules::queue::QueueStore;
-
-// ============================================================================
-// API Types
-// ============================================================================
+pub use crate::v1::modules::queue::{QueueConfiguration, QueueStore};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct QueueEnqueueIn {
+pub struct QueueSendIn {
     #[validate]
     pub name: EntityKey,
 
+    // FIXME: needs to be bytes.
     /// Message payload
     pub payload: String,
 
@@ -49,13 +46,13 @@ fn default_max_attempts() -> u16 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub struct QueueEnqueueOut {
+pub struct QueueSendOut {
     /// Unique message ID
     pub message_id: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct QueueDequeueIn {
+pub struct QueueReceiveIn {
     #[validate]
     pub name: EntityKey,
 
@@ -66,7 +63,7 @@ pub struct QueueDequeueIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
-pub enum QueueDequeueOut {
+pub enum QueueReceiveOut {
     Message { message_id: String, payload: String },
     Empty {},
 }
@@ -125,12 +122,12 @@ pub struct QueueStatsOut {
 // API Endpoints
 // ============================================================================
 
-/// Enqueue a message
-#[aide_annotate(op_id = "v1.queue.enqueue")]
-async fn queue_enqueue(
+/// Send a message to the queue
+#[aide_annotate(op_id = "v1.queue.send")]
+async fn queue_send(
     State(AppState { queue_store, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<QueueEnqueueIn>,
-) -> Result<Json<QueueEnqueueOut>> {
+    ValidatedJson(data): ValidatedJson<QueueSendIn>,
+) -> Result<Json<QueueSendOut>> {
     let name = data.name.to_string();
 
     // Default DLQ name is "{name}:DLQ"
@@ -139,31 +136,30 @@ async fn queue_enqueue(
         .map(|k| k.to_string())
         .or_else(|| Some(format!("{name}:DLQ")));
 
-    let message_id = queue_store.enqueue(
-        &name,
-        data.payload,
-        data.delay_seconds,
-        data.max_attempts,
+    let config = QueueConfiguration {
+        max_attempts: data.max_attempts,
         dlq_queue_name,
-    )?;
+    };
 
-    Ok(Json(QueueEnqueueOut { message_id }))
+    let message_id = queue_store.enqueue(&name, data.payload, data.delay_seconds, config)?;
+
+    Ok(Json(QueueSendOut { message_id }))
 }
 
-/// Dequeue a message
-#[aide_annotate(op_id = "v1.queue.dequeue")]
-async fn queue_dequeue(
+/// Receive a message from the queue
+#[aide_annotate(op_id = "v1.queue.receive")]
+async fn queue_receive(
     State(AppState { queue_store, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<QueueDequeueIn>,
-) -> Result<Json<QueueDequeueOut>> {
+    ValidatedJson(data): ValidatedJson<QueueReceiveIn>,
+) -> Result<Json<QueueReceiveOut>> {
     let name = data.name.to_string();
 
     match queue_store.dequeue(&name, data.visibility_timeout_seconds)? {
-        Some((message_id, payload)) => Ok(Json(QueueDequeueOut::Message {
+        Some((message_id, payload)) => Ok(Json(QueueReceiveOut::Message {
             message_id,
             payload,
         })),
-        None => Ok(Json(QueueDequeueOut::Empty {})),
+        None => Ok(Json(QueueReceiveOut::Empty {})),
     }
 }
 
@@ -222,22 +218,18 @@ async fn queue_stats(
     }))
 }
 
-// ============================================================================
-// Router
-// ============================================================================
-
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Queue");
 
     ApiRouter::new()
         .api_route_with(
-            "/queue/enqueue",
-            post_with(queue_enqueue, queue_enqueue_operation),
+            "/queue/send",
+            post_with(queue_send, queue_send_operation),
             &tag,
         )
         .api_route_with(
-            "/queue/dequeue",
-            post_with(queue_dequeue, queue_dequeue_operation),
+            "/queue/receive",
+            post_with(queue_receive, queue_receive_operation),
             &tag,
         )
         .api_route_with(
