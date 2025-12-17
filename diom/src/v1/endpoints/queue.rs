@@ -110,6 +110,18 @@ pub struct QueueNackIn {
 pub struct QueueNackOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+pub struct QueueRejectIn {
+    #[validate]
+    pub name: EntityKey,
+
+    /// Message ID to reject
+    pub message_id: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct QueueRejectOut {}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueuePurgeIn {
     #[validate]
     pub name: EntityKey,
@@ -217,6 +229,19 @@ async fn queue_nack(
     Ok(Json(QueueNackOut {}))
 }
 
+/// Reject a message - remove from processing and send to DLQ without retry
+#[aide_annotate(op_id = "v1.queue.reject")]
+async fn queue_reject(
+    State(AppState { queue_store, .. }): State<AppState>,
+    ValidatedJson(data): ValidatedJson<QueueRejectIn>,
+) -> Result<Json<QueueRejectOut>> {
+    let name = data.name.to_string();
+
+    queue_store.reject(&name, &data.message_id)?;
+
+    Ok(Json(QueueRejectOut {}))
+}
+
 /// Purge all messages from a queue
 #[aide_annotate(op_id = "v1.queue.purge")]
 async fn queue_purge(
@@ -268,6 +293,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/queue/nack",
             post_with(queue_nack, queue_nack_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/queue/reject",
+            post_with(queue_reject, queue_reject_operation),
             &tag,
         )
         .api_route_with(
