@@ -216,6 +216,7 @@ impl<T: JsonSchema> JsonSchema for UnrequiredNullableField<T> {
 /// be made.
 ///
 /// The nullable equivalent which is used for [`UnrequiredNullableField`] is [`patch_field_nullable`].
+#[allow(unused_macros)]
 macro_rules! patch_field_non_nullable {
     ($model:ident, $member:ident) => {
         match $member {
@@ -247,6 +248,7 @@ macro_rules! patch_field_non_nullable {
 /// be made.
 ///
 /// The non-nullable equivalent which is used for [`Option`] is [`patch_field_non_nullable`].
+#[allow(unused_macros)]
 macro_rules! patch_field_nullable {
     ($model:ident, $member:ident) => {
         match $member {

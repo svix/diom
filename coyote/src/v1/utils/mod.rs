@@ -113,6 +113,7 @@ pub enum ReversibleIterator<T: Validate> {
 }
 
 impl<T: Validate> ReversibleIterator<T> {
+    #[allow(dead_code)]
     pub(crate) fn direction(&self) -> IteratorDirection {
         match self {
             Self::Normal(_) => IteratorDirection::Normal,
@@ -281,6 +282,7 @@ pub enum Ordering {
     Descending,
 }
 
+#[allow(dead_code)]
 #[derive(PartialEq, Eq)]
 pub(crate) enum IteratorDirection {
     /// Regular iteration - backwards in time.
@@ -289,6 +291,7 @@ pub(crate) enum IteratorDirection {
     Prev,
 }
 
+#[allow(dead_code)]
 fn list_response_inner<T: ModelOut>(
     mut data: Vec<T>,
     limit: usize,
@@ -323,6 +326,7 @@ fn list_response_inner<T: ModelOut>(
     }
 }
 
+#[allow(dead_code)]
 pub(crate) trait ModelOut: Sized {
     fn id_copy(&self) -> String;
 
