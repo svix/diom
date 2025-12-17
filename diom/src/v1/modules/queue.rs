@@ -12,7 +12,7 @@
 //!
 //! 1. Queue Store (DashMap) - Maps queue names to Queue instances
 //! 2. Ready Queue (SegQueue) - Lock-free FIFO queue for messages ready for immediate delivery
-//! 3. Delayed Messages (SkipMap) - Lock-free ordered map for messages with delayed delivery (sorted by availability time)
+//! 3. Delayed Messages (BinaryHeap) - Min-heap for messages with delayed delivery (sorted by availability time)
 //! 4. In-Flight Messages (DashMap) - Fast lookup for messages currently being processed
 //!
 //! ## How It Works
@@ -34,10 +34,9 @@
 //! - Visibility Timeout: Dequeued messages become invisible for a configurable period
 //! - Automatic Retry: Failed messages are automatically retried up to max_attempts
 //! - Dead-Letter Queue: Messages exceeding max attempts are moved to DLQ for inspection
-//! - Lock-Free Operations: Uses concurrent data structures for high throughput
+//! - Concurrent Operations: Uses concurrent data structures (DashMap, SegQueue, BinaryHeap) for high throughput
 //!
 //! ## TODO FIXME
-//! - The delayed message key generation (line 120) uses a simple hash that could theoretically collide
 //! - Consider adding message priorities
 //! - Consider adding queue TTL for auto-cleanup of unused queues - probably a problem with
 //!   configuration? Not if we do configuration as a group like I wanted.
@@ -47,10 +46,11 @@
 
 use chrono::{DateTime, Utc};
 use crossbeam::queue::SegQueue;
-use crossbeam_skiplist::SkipMap;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
+use std::sync::{Arc, Mutex};
 use svix_ksuid::{KsuidLike as _, KsuidMs};
 
 use crate::{
@@ -93,9 +93,8 @@ pub struct QueueStore {
 struct Queue {
     // Ready messages (FIFO queue for immediate delivery)
     ready: Arc<SegQueue<Message>>,
-    // Delayed messages (lock-free ordered map: timestamp -> message)
-    // SkipMap maintains ordering and is lock-free
-    delayed: Arc<SkipMap<u64, Message>>,
+    // Delayed messages (min-heap ordered by availability time)
+    delayed: Arc<Mutex<BinaryHeap<DelayedMessage>>>,
     // In-flight messages being processed (keyed by message ID for fast lookup)
     in_flight: Arc<DashMap<String, InFlightMessage>>,
     // Queue configuration
@@ -112,6 +111,34 @@ struct Message {
     attempt_count: u16,
     /// Original enqueue time
     enqueued_at: DateTime<Utc>,
+}
+
+/// Wrapper for delayed messages in the min-heap
+/// BinaryHeap is a max-heap by default, so we reverse the ordering to get min-heap behavior
+#[derive(Clone, Debug)]
+struct DelayedMessage {
+    message: Message,
+}
+
+impl PartialEq for DelayedMessage {
+    fn eq(&self, other: &Self) -> bool {
+        self.message.available_at == other.message.available_at
+    }
+}
+
+impl Eq for DelayedMessage {}
+
+impl PartialOrd for DelayedMessage {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for DelayedMessage {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Reverse ordering for min-heap (earlier times have higher priority)
+        other.message.available_at.cmp(&self.message.available_at)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -144,7 +171,7 @@ impl QueueStore {
                 };
                 Queue {
                     ready: Arc::new(SegQueue::new()),
-                    delayed: Arc::new(SkipMap::new()),
+                    delayed: Arc::new(Mutex::new(BinaryHeap::new())),
                     in_flight: Arc::new(DashMap::new()),
                     config,
                 }
@@ -176,11 +203,12 @@ impl QueueStore {
             // No delay or time in past - add to ready queue immediately
             queue.ready.push(message);
         } else {
-            // Has delay - add to delayed skipmap (keyed by availability time + message ID for uniqueness)
-            // Use combination of timestamp and message ID to avoid key collisions
-            let timestamp_millis = available_at.timestamp_millis() as u64;
-            let key = (timestamp_millis << 32) | (message_id.len() as u64); // Simple unique key
-            queue.delayed.insert(key, message);
+            // Has delay - add to delayed min-heap
+            queue
+                .delayed
+                .lock()
+                .unwrap()
+                .push(DelayedMessage { message });
         }
 
         Ok(message_id)
@@ -189,27 +217,19 @@ impl QueueStore {
     /// Move ready delayed messages to the ready queue
     fn promote_delayed_messages(&self, queue: &Queue) {
         let now = Utc::now();
+        let mut delayed = queue.delayed.lock().unwrap();
 
-        // Find and remove all messages that are ready (lock-free iteration)
-        let ready_keys: Vec<u64> = queue
-            .delayed
-            .iter()
-            .filter_map(|entry: crossbeam_skiplist::map::Entry<'_, u64, Message>| {
-                let key = *entry.key();
-                let message = entry.value();
-                if message.available_at <= now {
-                    Some(key)
-                } else {
-                    // SkipMap is ordered, so once we hit a future timestamp, stop
-                    None
+        // Pop messages from the min-heap while they're ready
+        // The heap maintains ordering, so we only need to check the top
+        while let Some(delayed_msg) = delayed.peek() {
+            if delayed_msg.message.available_at <= now {
+                // Message is ready - pop it and move to ready queue
+                if let Some(delayed_msg) = delayed.pop() {
+                    queue.ready.push(delayed_msg.message);
                 }
-            })
-            .collect();
-
-        // Move ready messages to ready queue
-        for key in ready_keys {
-            if let Some(entry) = queue.delayed.remove(&key) {
-                queue.ready.push(entry.value().clone());
+            } else {
+                // Top message is not ready yet, so no more messages are ready
+                break;
             }
         }
     }
@@ -364,8 +384,9 @@ impl QueueStore {
         }
 
         // Count and clear delayed messages
-        let delayed_count = queue.delayed.len() as u64;
-        queue.delayed.clear();
+        let mut delayed = queue.delayed.lock().unwrap();
+        let delayed_count = delayed.len() as u64;
+        delayed.clear();
         count += delayed_count;
 
         // Clear in-flight messages
@@ -382,7 +403,7 @@ impl QueueStore {
 
         // Note: SegQueue doesn't have a len() method, so we approximate
         // by counting ready + delayed. This is slightly imprecise but acceptable.
-        let delayed_count = queue.delayed.len() as u64;
+        let delayed_count = queue.delayed.lock().unwrap().len() as u64;
 
         Ok(QueueStats {
             available: delayed_count, // Approximation: delayed messages (ready messages hard to count efficiently)
