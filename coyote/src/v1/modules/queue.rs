@@ -325,6 +325,36 @@ impl QueueStore {
         Ok(())
     }
 
+    /// Reject a message - remove from processing and send to DLQ without retry
+    pub fn reject(&self, queue_name: &str, message_id: &str) -> Result<()> {
+        let queue = self.queues.get(queue_name).ok_or_else(|| {
+            Error::http(HttpError::not_found(Some("Queue not found".into()), None))
+        })?;
+
+        let config = queue.config.clone();
+
+        let (_, in_flight_msg) = queue.in_flight.remove(message_id).ok_or_else(|| {
+            Error::http(HttpError::not_found(
+                Some("Message not found or not in-flight".into()),
+                None,
+            ))
+        })?;
+
+        let mut message = in_flight_msg.message;
+
+        // Send to DLQ (if configured) without retrying
+        if let Some(dlq_name) = &config.dlq_queue_name {
+            let dlq = self.get_or_create_queue(dlq_name);
+            // Reset availability so it's immediately available in DLQ
+            message.available_at = Utc::now();
+            // Add directly to ready queue (no delay for DLQ)
+            dlq.ready.push(message);
+        }
+        // If no DLQ configured, message is just dropped
+
+        Ok(())
+    }
+
     /// Check for timed-out in-flight messages and return them to the queue or DLQ
     fn check_timeouts(&self, queue_name: &str) -> Result<()> {
         let queue = match self.queues.get(queue_name) {
