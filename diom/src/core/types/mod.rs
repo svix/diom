@@ -5,6 +5,7 @@ use std::{ops::Deref, sync::LazyLock};
 
 use chrono::{DateTime, Utc};
 use regex::Regex;
+#[allow(unused_imports)]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use svix_ksuid::*;
@@ -14,6 +15,7 @@ use crate::v1::utils::validation_error;
 
 const ALL_ERROR: &str = "__all__";
 
+#[allow(unused_macros)]
 macro_rules! enum_wrapper {
     ($name_id:ty) => {
         impl Serialize for $name_id {
@@ -249,6 +251,7 @@ macro_rules! common_jsonschema_impl {
 
 /// A macro to which you pass the list of variants of an enum using `repr(N)`
 /// and it returns a `Vec<(N, String)>`, where each element is `(value, "VariantStringified")`
+#[allow(unused_macros)]
 macro_rules! repr_enum {
     ($($variant:ident),+) => {
         vec![
@@ -283,6 +286,7 @@ macro_rules! repr_enum {
 ///     Foo, Bar, Qux
 /// }
 /// ```
+#[allow(unused_macros)]
 macro_rules! jsonschema_for_repr_enum {
     ($tyname:ty, $repr_ty:ty, $descr:expr, $($variant:ident),+) => {
         impl JsonSchema for $tyname {

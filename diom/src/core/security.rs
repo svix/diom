@@ -49,6 +49,7 @@ pub fn permissions_from_jwt(_claims: JWTClaims<CustomClaim>) -> Result<Permissio
     Ok(Permissions {})
 }
 
+#[allow(dead_code)]
 const JWT_ISSUER: &str = env!("CARGO_PKG_NAME");
 
 /// A wrapper for the available JWT signing algorithms exposed by `jwt-simple`
