@@ -146,10 +146,7 @@ impl StreamStore {
         }
 
         let start_idx = start_offset as usize;
-        let end_idx = std::cmp::min(
-            start_idx + limit as usize,
-            messages.len(),
-        );
+        let end_idx = std::cmp::min(start_idx + limit as usize, messages.len());
 
         let result: Vec<StreamMessage> = messages[start_idx..end_idx]
             .iter()
@@ -204,7 +201,6 @@ impl StreamStore {
 
         Ok(count)
     }
-
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
