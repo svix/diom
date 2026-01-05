@@ -28,12 +28,11 @@
 //!   structure before going to prod.
 
 use chrono::{DateTime, Utc};
-use dashmap::mapref::entry::Entry;
-use dashmap::DashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{
-    sync::{Arc, Mutex},
+    collections::HashMap,
+    sync::{Arc, RwLock},
     time::Duration,
 };
 use validator::Validate;
@@ -44,10 +43,14 @@ use crate::{
     AppState,
 };
 
+struct KvStoreState {
+    store: HashMap<Arc<EntityKey>, KvModel>,
+    expiry: expiry::ExpiryHeap,
+}
+
 #[derive(Clone)]
 pub struct KvStore {
-    store: Arc<DashMap<Arc<EntityKey>, KvModel>>,
-    expiry: Arc<Mutex<expiry::ExpiryHeap>>,
+    state: Arc<RwLock<KvStoreState>>,
 }
 
 impl Default for KvStore {
@@ -59,8 +62,10 @@ impl Default for KvStore {
 impl KvStore {
     pub fn new() -> Self {
         Self {
-            store: Arc::new(DashMap::new()),
-            expiry: Arc::new(Mutex::new(expiry::ExpiryHeap::new())),
+            state: Arc::new(RwLock::new(KvStoreState {
+                store: HashMap::new(),
+                expiry: expiry::ExpiryHeap::new(),
+            })),
         }
     }
 
@@ -75,36 +80,26 @@ impl KvStore {
         match behavior {
             OperationBehavior::Insert => {
                 // Atomically insert only if key doesn't exist
-                match self.store.entry(Arc::clone(&key)) {
-                    Entry::Vacant(entry) => {
-                        entry.insert(model);
-                        // Insert into expiry heap
-                        self.expiry.lock().unwrap().insert(expires_at, key);
-                    }
-                    Entry::Occupied(_) => {
-                        return Err(Error::http(HttpError::conflict(None, None)));
-                    }
+                let mut state = self.state.write().unwrap();
+                if state.store.contains_key(&key) {
+                    return Err(Error::http(HttpError::conflict(None, None)));
                 }
+                state.store.insert(Arc::clone(&key), model);
+                state.expiry.insert(expires_at, key);
             }
             OperationBehavior::Update => {
                 // Atomically update only if key exists
-                match self.store.get_mut(&key) {
-                    Some(mut entry) => {
-                        *entry = model;
-                        // Add new expiry entry (don't need to remove old one, as it will be ignored)
-                        self.expiry.lock().unwrap().insert(expires_at, key);
-                    }
-                    None => {
-                        return Err(Error::http(HttpError::not_found(None, None)));
-                    }
+                let mut state = self.state.write().unwrap();
+                if !state.store.contains_key(&key) {
+                    return Err(Error::http(HttpError::not_found(None, None)));
                 }
+                state.store.insert(Arc::clone(&key), model);
+                state.expiry.insert(expires_at, key);
             }
             OperationBehavior::Upsert => {
-                self.expiry
-                    .lock()
-                    .unwrap()
-                    .insert(expires_at, Arc::clone(&key));
-                self.store.insert(key, model);
+                let mut state = self.state.write().unwrap();
+                state.expiry.insert(expires_at, Arc::clone(&key));
+                state.store.insert(key, model);
             }
         }
 
@@ -112,25 +107,34 @@ impl KvStore {
     }
 
     pub fn get(&self, key: &EntityKey) -> Result<KvModel> {
-        let model = self
-            .store
-            .get(key)
-            .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
-
-        // Check if the key has expired
         let now = Utc::now();
-        if model.expires_at <= now {
-            // Key has expired, remove it and return not found
-            drop(model); // Release the read lock before removing
-            self.store.remove(key);
-            return Err(Error::http(HttpError::not_found(None, None)));
+
+        // First, check if the key exists and is not expired
+        {
+            let state = self.state.read().unwrap();
+            if let Some(model) = state.store.get(key) {
+                if model.expires_at > now {
+                    return Ok(model.clone());
+                }
+            }
         }
 
-        Ok(model.value().clone())
+        // If we get here, either the key doesn't exist or it's expired
+        // If expired, remove it
+        {
+            let mut state = self.state.write().unwrap();
+            if let Some(model) = state.store.get(key) {
+                if model.expires_at <= now {
+                    state.store.remove(key);
+                }
+            }
+        }
+
+        Err(Error::http(HttpError::not_found(None, None)))
     }
 
     pub fn delete(&self, key: &Arc<EntityKey>) -> bool {
-        self.store.remove(key).is_some()
+        self.state.write().unwrap().store.remove(key).is_some()
     }
 }
 
@@ -162,26 +166,18 @@ pub async fn worker(state: AppState) -> Result<()> {
         if crate::is_shutting_down() {
             break;
         }
-        // FIXME: this is not good to lock for such a long time, but we don't care as we'll change
-        // the data structure anyway.
         {
-            let store = state.kv_store.store.clone();
-            let mut expiry = state.kv_store.expiry.lock().unwrap();
-            while expiry.peek().is_some_and(|x| x.expired(Utc::now())) {
-                if let Some(expiry_item) = expiry.pop() {
-                    match store.entry(Arc::clone(&expiry_item.key)) {
-                        Entry::Occupied(entry) => {
-                            let value = entry.get();
-                            // If the expiry is the same or older than what we expect, we should expire the item.
-                            if value.expires_at <= expiry_item.expires_at {
-                                entry.remove();
-                            }
-                        }
-                        Entry::Vacant(_) => {
-                            // FIXME: technically it could happen because of the way we do locking.
-                            // Though once we fix the multi-threading mechanism and switch away
-                            // from Dashmap, it should never be possible.
-                            tracing::error!("Got an already deleted item. Should never happen.");
+            let mut kv_state = state.kv_store.state.write().unwrap();
+            while kv_state
+                .expiry
+                .peek()
+                .is_some_and(|x| x.expired(Utc::now()))
+            {
+                if let Some(expiry_item) = kv_state.expiry.pop() {
+                    if let Some(value) = kv_state.store.get(&expiry_item.key) {
+                        // If the expiry is the same or older than what we expect, we should expire the item.
+                        if value.expires_at <= expiry_item.expires_at {
+                            kv_state.store.remove(&expiry_item.key);
                         }
                     }
                 }

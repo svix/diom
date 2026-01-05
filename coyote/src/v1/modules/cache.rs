@@ -16,10 +16,10 @@
 //!     configuration?
 //! * If we end up making them separate: this can potentially reuse code from kv-store?
 
-use dashmap::DashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use validator::Validate;
 
 use crate::{
@@ -30,7 +30,7 @@ use crate::{
 
 #[derive(Clone)]
 pub struct CacheStore {
-    pub(crate) store: Arc<DashMap<String, CacheModel>>,
+    pub(crate) store: Arc<RwLock<HashMap<String, CacheModel>>>,
 }
 
 impl Default for CacheStore {
@@ -42,23 +42,25 @@ impl Default for CacheStore {
 impl CacheStore {
     pub fn new() -> Self {
         Self {
-            store: Arc::new(DashMap::new()),
+            store: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
     pub fn set(&self, key: String, model: CacheModel) {
-        self.store.insert(key, model);
+        self.store.write().unwrap().insert(key, model);
     }
 
     pub fn get(&self, key: &str) -> Result<CacheModel> {
         self.store
+            .read()
+            .unwrap()
             .get(key)
-            .map(|entry| entry.value().clone())
+            .cloned()
             .ok_or_else(|| Error::http(HttpError::not_found(None, None)))
     }
 
     pub fn delete(&self, key: &str) -> bool {
-        self.store.remove(key).is_some()
+        self.store.write().unwrap().remove(key).is_some()
     }
 }
 

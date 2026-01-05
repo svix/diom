@@ -10,9 +10,8 @@
 //! - Actually need to implement it. I guess it can use KV as its backend.
 //! - The API probably needs changing.
 
-use dashmap::mapref::entry::Entry;
-use dashmap::DashMap;
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use crate::{
     error::{Error, HttpError, Result},
@@ -30,7 +29,7 @@ fn now_millis() -> u64 {
 
 #[derive(Clone)]
 pub struct IdempotencyStore {
-    store: Arc<DashMap<String, IdempotencyState>>,
+    store: Arc<RwLock<HashMap<String, IdempotencyState>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -55,7 +54,7 @@ impl Default for IdempotencyStore {
 impl IdempotencyStore {
     pub fn new() -> Self {
         Self {
-            store: Arc::new(DashMap::new()),
+            store: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -68,15 +67,18 @@ impl IdempotencyStore {
         let now = now_millis();
         let expires_at_millis = now + (ttl_seconds * 1000);
 
-        match self.store.entry(key.to_string()) {
-            Entry::Vacant(entry) => {
+        let mut store = self.store.write().unwrap();
+
+        match store.get(key) {
+            None => {
                 // No existing entry - acquire lock
-                entry.insert(IdempotencyState::InProgress { expires_at_millis });
+                store.insert(
+                    key.to_string(),
+                    IdempotencyState::InProgress { expires_at_millis },
+                );
                 Ok(None)
             }
-            Entry::Occupied(entry) => {
-                let state = entry.get();
-
+            Some(state) => {
                 match state {
                     IdempotencyState::InProgress {
                         expires_at_millis: exp,
@@ -84,8 +86,7 @@ impl IdempotencyStore {
                         // Check if expired
                         if now >= *exp {
                             // Lock expired, replace with new lock
-                            drop(entry);
-                            self.store.insert(
+                            store.insert(
                                 key.to_string(),
                                 IdempotencyState::InProgress { expires_at_millis },
                             );
@@ -105,8 +106,7 @@ impl IdempotencyStore {
                         // Check if expired
                         if now >= *exp {
                             // Response expired, acquire new lock
-                            drop(entry);
-                            self.store.insert(
+                            store.insert(
                                 key.to_string(),
                                 IdempotencyState::InProgress { expires_at_millis },
                             );
@@ -126,7 +126,7 @@ impl IdempotencyStore {
         let now = now_millis();
         let expires_at_millis = now + (ttl_seconds * 1000);
 
-        self.store.insert(
+        self.store.write().unwrap().insert(
             key.to_string(),
             IdempotencyState::Completed {
                 expires_at_millis,
@@ -139,7 +139,7 @@ impl IdempotencyStore {
 
     /// Abandon a request (remove the lock without saving response)
     pub fn abandon(&self, key: &str) -> Result<()> {
-        self.store.remove(key);
+        self.store.write().unwrap().remove(key);
         Ok(())
     }
 }
