@@ -39,8 +39,8 @@
 //! - The implementation is probably stupid, haven't looked at it.
 
 use chrono::{DateTime, Utc};
-use dashmap::DashMap;
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use crate::{error::Result, AppState};
 
@@ -50,7 +50,7 @@ use crate::{error::Result, AppState};
 
 #[derive(Clone)]
 pub struct TokenBucketRateLimiter {
-    store: Arc<DashMap<String, TokenBucketState>>,
+    store: Arc<RwLock<HashMap<String, TokenBucketState>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -68,7 +68,7 @@ impl Default for TokenBucketRateLimiter {
 impl TokenBucketRateLimiter {
     pub fn new() -> Self {
         Self {
-            store: Arc::new(DashMap::new()),
+            store: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -82,9 +82,10 @@ impl TokenBucketRateLimiter {
     ) -> Result<(bool, u64, Option<u64>)> {
         let now = Utc::now();
 
+        let mut store = self.store.write().unwrap();
+
         // Get or create entry with initial state
-        let mut entry = self
-            .store
+        let entry = store
             .entry(key.to_string())
             .or_insert_with(|| TokenBucketState {
                 tokens: capacity,
@@ -128,7 +129,9 @@ impl TokenBucketRateLimiter {
     ) -> Result<(u64, Option<u64>)> {
         let now = Utc::now();
 
-        match self.store.get(key) {
+        let store = self.store.read().unwrap();
+
+        match store.get(key) {
             Some(entry) => {
                 // Calculate current tokens based on elapsed time and provided configuration
                 let elapsed = now.signed_duration_since(entry.last_refill);

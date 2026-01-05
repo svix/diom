@@ -33,8 +33,8 @@
 //! - Consider adding offset commit tracking
 
 use chrono::{DateTime, Utc};
-use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use svix_ksuid::{KsuidLike as _, KsuidMs};
 
@@ -47,16 +47,19 @@ use crate::{
 // Stream Store
 // ============================================================================
 
-#[derive(Clone)]
-pub struct StreamStore {
+struct StreamStoreState {
     // Map of topic_name -> Topic
-    topics: Arc<DashMap<String, Topic>>,
+    topics: HashMap<String, Topic>,
 }
 
 #[derive(Clone)]
+pub struct StreamStore {
+    state: Arc<RwLock<StreamStoreState>>,
+}
+
 struct Topic {
     // Append-only log of messages
-    messages: Arc<RwLock<Vec<Message>>>,
+    messages: Vec<Message>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -80,17 +83,10 @@ impl Default for StreamStore {
 impl StreamStore {
     pub fn new() -> Self {
         Self {
-            topics: Arc::new(DashMap::new()),
+            state: Arc::new(RwLock::new(StreamStoreState {
+                topics: HashMap::new(),
+            })),
         }
-    }
-
-    fn get_or_create_topic(&self, topic_name: &str) -> Topic {
-        self.topics
-            .entry(topic_name.to_string())
-            .or_insert_with(|| Topic {
-                messages: Arc::new(RwLock::new(Vec::new())),
-            })
-            .clone()
     }
 
     /// Publish one or more messages to a topic
@@ -102,11 +98,16 @@ impl StreamStore {
             )));
         }
 
-        let topic = self.get_or_create_topic(topic_name);
-        let mut messages = topic.messages.write().unwrap();
+        let mut state = self.state.write().unwrap();
+        let topic = state
+            .topics
+            .entry(topic_name.to_string())
+            .or_insert_with(|| Topic {
+                messages: Vec::new(),
+            });
 
         let now = Utc::now();
-        let starting_offset = messages.len() as u64;
+        let starting_offset = topic.messages.len() as u64;
 
         for (i, payload) in payloads.into_iter().enumerate() {
             let message = Message {
@@ -115,7 +116,7 @@ impl StreamStore {
                 payload,
                 published_at: now,
             };
-            messages.push(message);
+            topic.messages.push(message);
         }
 
         Ok(())
@@ -129,16 +130,17 @@ impl StreamStore {
         start_offset: u64,
         limit: u32,
     ) -> Result<(Vec<StreamMessage>, bool)> {
-        let topic = match self.topics.get(topic_name) {
-            Some(t) => t.clone(),
+        let state = self.state.read().unwrap();
+
+        let topic = match state.topics.get(topic_name) {
+            Some(t) => t,
             None => {
                 // Topic doesn't exist, return empty result
                 return Ok((Vec::new(), false));
             }
         };
 
-        let messages = topic.messages.read().unwrap();
-        let total_messages = messages.len() as u64;
+        let total_messages = topic.messages.len() as u64;
 
         // Check if start_offset is beyond available messages
         if start_offset >= total_messages {
@@ -146,9 +148,9 @@ impl StreamStore {
         }
 
         let start_idx = start_offset as usize;
-        let end_idx = std::cmp::min(start_idx + limit as usize, messages.len());
+        let end_idx = std::cmp::min(start_idx + limit as usize, topic.messages.len());
 
-        let result: Vec<StreamMessage> = messages[start_idx..end_idx]
+        let result: Vec<StreamMessage> = topic.messages[start_idx..end_idx]
             .iter()
             .map(|msg| StreamMessage {
                 id: msg.id.clone(),
@@ -158,15 +160,17 @@ impl StreamStore {
             })
             .collect();
 
-        let has_more = end_idx < messages.len();
+        let has_more = end_idx < topic.messages.len();
 
         Ok((result, has_more))
     }
 
     /// Get information about a topic
     pub fn topic_info(&self, topic_name: &str) -> Result<TopicInfo> {
-        let topic = match self.topics.get(topic_name) {
-            Some(t) => t.clone(),
+        let state = self.state.read().unwrap();
+
+        let topic = match state.topics.get(topic_name) {
+            Some(t) => t,
             None => {
                 return Err(Error::http(HttpError::not_found(
                     Some("Topic not found".into()),
@@ -175,8 +179,7 @@ impl StreamStore {
             }
         };
 
-        let messages = topic.messages.read().unwrap();
-        let message_count = messages.len() as u64;
+        let message_count = topic.messages.len() as u64;
 
         Ok(TopicInfo {
             message_count,
@@ -191,13 +194,14 @@ impl StreamStore {
 
     /// Purge all messages from a topic
     pub fn purge(&self, topic_name: &str) -> Result<u64> {
-        let topic = self.topics.get(topic_name).ok_or_else(|| {
+        let mut state = self.state.write().unwrap();
+
+        let topic = state.topics.get_mut(topic_name).ok_or_else(|| {
             Error::http(HttpError::not_found(Some("Topic not found".into()), None))
         })?;
 
-        let mut messages = topic.messages.write().unwrap();
-        let count = messages.len() as u64;
-        messages.clear();
+        let count = topic.messages.len() as u64;
+        topic.messages.clear();
 
         Ok(count)
     }
