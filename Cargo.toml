@@ -45,7 +45,7 @@ opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt
 proc-macro2 = "1.0.78"
 quote = "1.0.15"
 regex = "1.5.5"
-reqwest = { version = "0.12.23", default-features = false, features = ["json", "rustls-tls", "hickory-dns"] }
+reqwest = { version = "0.13.1", default-features = false, features = ["json", "rustls", "hickory-dns"] }
 schemars = { version = "1.2.0", features = ["chrono04"] }
 serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value"] }
