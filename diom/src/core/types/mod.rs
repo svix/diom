@@ -3,13 +3,11 @@
 
 use std::{ops::Deref, sync::LazyLock};
 
-use chrono::{DateTime, Utc};
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
 use schemars::{json_schema, Schema};
 use serde::{Deserialize, Serialize};
-use svix_ksuid::*;
 use validator::{Validate, ValidationErrors};
 
 use crate::v1::utils::validation_error;
@@ -40,55 +38,6 @@ macro_rules! enum_wrapper {
             }
         }
     };
-}
-
-pub trait BaseId: Deref<Target = String> {
-    const PREFIX: &'static str;
-    type Output;
-
-    fn validate_(&self) -> Result<(), ValidationErrors> {
-        let mut errors = ValidationErrors::new();
-        if !&self.starts_with(Self::PREFIX) {
-            errors.add(
-                ALL_ERROR,
-                validation_error(Some("id"), Some("Invalid id. Expected different prefix")),
-            );
-        }
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
-
-    fn generate_(dt: Option<DateTime<Utc>>, payload: Option<&[u8]>) -> String {
-        let ksuid = KsuidMs::new(dt, payload);
-        format!("{}{}", Self::PREFIX, ksuid.to_string())
-    }
-
-    fn new(dt: Option<DateTime<Utc>>, payload: Option<&[u8]>) -> Self::Output;
-
-    fn start_id(start: DateTime<Utc>) -> Self::Output {
-        let buf = [0u8; KsuidMs::PAYLOAD_BYTES];
-        Self::new(Some(start), Some(&buf[..]))
-    }
-
-    fn end_id(start: DateTime<Utc>) -> Self::Output {
-        let buf = [0xFFu8; KsuidMs::PAYLOAD_BYTES];
-        Self::new(Some(start), Some(&buf[..]))
-    }
-
-    fn timestamp(&self) -> DateTime<Utc> {
-        self.ksuid().timestamp()
-    }
-
-    fn ksuid(&self) -> svix_ksuid::KsuidMs {
-        let ksuid_str = self
-            .strip_prefix(Self::PREFIX)
-            .expect("ID has invalid prefix");
-        <svix_ksuid::KsuidMs as svix_ksuid::KsuidLike>::from_base62(ksuid_str)
-            .expect("ID was not encoded as valid ksuid")
-    }
 }
 
 fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {

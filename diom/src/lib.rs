@@ -17,7 +17,6 @@ use opentelemetry_sdk::{
         SdkTracerProvider,
     },
 };
-use svix_ksuid::{KsuidLike, KsuidMs};
 use tokio::net::TcpListener;
 use tokio_util::sync::CancellationToken;
 use tower_http::{
@@ -25,6 +24,7 @@ use tower_http::{
     normalize_path::NormalizePath,
 };
 use tracing_subscriber::{layer::SubscriberExt as _, Layer as _};
+use uuid::Uuid;
 
 use crate::cfg::Configuration;
 
@@ -53,8 +53,7 @@ pub fn start_shut_down() {
     SHUTTING_DOWN_TOKEN.cancel();
 }
 
-pub static INSTANCE_ID: LazyLock<String> =
-    LazyLock::new(|| hex::encode(KsuidMs::new(None, None).to_string()));
+pub static INSTANCE_ID: LazyLock<String> = LazyLock::new(|| Uuid::new_v4().to_string());
 
 async fn graceful_shutdown_handler() {
     let ctrl_c = async {
