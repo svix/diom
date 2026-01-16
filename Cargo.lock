@@ -642,7 +642,6 @@ dependencies = [
  "ctor",
  "dotenvy",
  "figment",
- "futures",
  "hex",
  "http",
  "hyper",
