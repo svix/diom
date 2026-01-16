@@ -10,7 +10,6 @@ use figment::{
 };
 use serde::Deserialize;
 use tracing::Level;
-use validator::{Validate, ValidationError};
 
 use crate::{core::security::JwtSigningConfig, error::Result};
 
@@ -18,11 +17,7 @@ const DEFAULTS: &str = include_str!("../config.default.toml");
 
 pub type Configuration = Arc<ConfigurationInner>;
 
-#[derive(Clone, Debug, Deserialize, Validate)]
-#[validate(
-    schema(function = "validate_config_complete"),
-    skip_on_field_errors = false
-)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct ConfigurationInner {
     /// The address to listen on
     pub listen_address: SocketAddr,
@@ -98,10 +93,6 @@ impl<'de> Deserialize<'de> for ProxyAddr {
     }
 }
 
-fn validate_config_complete(_config: &ConfigurationInner) -> Result<(), ValidationError> {
-    Ok(())
-}
-
 impl ConfigurationInner {}
 
 #[derive(Clone, Debug, Deserialize)]
@@ -175,9 +166,5 @@ pub fn load() -> anyhow::Result<Arc<ConfigurationInner>> {
         .merge(Env::prefixed("DIOM_"));
 
     let config = try_extract(merged).context("failed to extract configuration")?;
-
-    config
-        .validate()
-        .context("failed to validate configuration")?;
     Ok(Arc::from(config))
 }

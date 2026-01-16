@@ -44,22 +44,22 @@ static PAGINATION_LIMIT_ERROR: LazyLock<String> =
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 pub struct PaginationDescending<T: Validate + JsonSchema> {
     /// Limit the number of returned items
-    #[validate]
+    #[validate(nested)]
     #[serde(default = "default_limit")]
     pub limit: PaginationLimit,
     /// The iterator returned from a prior invocation
-    #[validate]
+    #[validate(nested)]
     pub iterator: Option<T>,
 }
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 pub struct Pagination<T: Validate + JsonSchema> {
     /// Limit the number of returned items
-    #[validate]
+    #[validate(nested)]
     #[serde(default = "default_limit")]
     pub limit: PaginationLimit,
     /// The iterator returned from a prior invocation
-    #[validate]
+    #[validate(nested)]
     pub iterator: Option<T>,
     /// The sorting order of the returned items
     pub order: Option<Ordering>,
@@ -359,7 +359,7 @@ pub fn validation_errors(
         .flat_map(|(k, v)| {
             // Add the next field to the location
             let mut loc = acc_path.clone();
-            loc.push(k.to_owned());
+            loc.push(k.into());
 
             match v {
                 // If it's a [`validator::ValidationErrorsKind::Field`], then it will be a vector of
@@ -631,10 +631,10 @@ mod tests {
         #[validate(range(min = 10, message = "Below 10"))]
         a: u32,
 
-        #[validate]
+        #[validate(nested)]
         b: ValidationErrorTestStructInner,
 
-        #[validate]
+        #[validate(nested)]
         c: Vec<ValidationErrorTestStructInner>,
     }
 

@@ -36,7 +36,7 @@ pub struct RateLimiterConfig {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimiterCheckIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 
     /// Number of units to consume (default: 1)
@@ -44,7 +44,7 @@ pub struct RateLimiterCheckIn {
     pub units: u64,
 
     /// Rate limiter configuration
-    #[validate]
+    #[validate(nested)]
     pub config: RateLimiterConfig,
 }
 
@@ -67,11 +67,11 @@ pub struct RateLimiterCheckOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimiterGetRemainingIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 
     /// Rate limiter configuration
-    #[validate]
+    #[validate(nested)]
     pub config: RateLimiterConfig,
 }
 

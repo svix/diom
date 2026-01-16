@@ -25,7 +25,7 @@ pub use crate::v1::modules::idempotency::IdempotencyStore;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct IdempotencyStartIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 
     /// TTL in seconds for the lock/response
@@ -44,7 +44,7 @@ pub enum IdempotencyStartOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct IdempotencyCompleteIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 
     /// The response to cache
@@ -60,7 +60,7 @@ pub struct IdempotencyCompleteOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct IdempotencyAbandonIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 }
 

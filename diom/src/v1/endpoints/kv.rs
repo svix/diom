@@ -26,7 +26,7 @@ pub use crate::v1::modules::kv::KvStore as KvStoreType;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetIn {
-    #[validate]
+    #[validate(nested)]
     pub key: Arc<EntityKey>,
     // FIXME: validate all fields
     /// Time to live in milliseconds
@@ -67,13 +67,13 @@ pub struct KvSetOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvGetIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvGetOut {
-    #[validate]
+    #[validate(nested)]
     pub key: Arc<EntityKey>,
 
     /// Time of expiry
@@ -101,7 +101,7 @@ impl From<KvModel> for KvGetOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvDeleteIn {
-    #[validate]
+    #[validate(nested)]
     pub key: Arc<EntityKey>,
 }
 

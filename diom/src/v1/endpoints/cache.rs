@@ -24,7 +24,7 @@ pub use crate::v1::modules::cache::CacheStore;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheSetIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
     // FIXME: validate all fields
     pub expires_at: u64,
@@ -57,13 +57,13 @@ pub struct CacheSetOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheGetIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheGetOut {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 
     // FIXME: should be datetime
@@ -92,7 +92,7 @@ impl From<CacheModel> for CacheGetOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheDeleteIn {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 }
 

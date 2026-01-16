@@ -22,7 +22,7 @@ pub use crate::v1::modules::stream::StreamStore;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct StreamPublishIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 
     /// Array of message payloads to publish
@@ -37,7 +37,7 @@ pub struct StreamPublishOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct StreamReadIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 
     /// Offset to start reading from (0-indexed)
@@ -71,7 +71,7 @@ pub struct StreamReadOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct StreamTopicInfoIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 }
 
@@ -87,7 +87,7 @@ pub struct StreamTopicInfoOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct StreamPurgeIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 }
 

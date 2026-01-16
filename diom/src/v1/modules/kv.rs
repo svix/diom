@@ -140,7 +140,7 @@ impl KvStore {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvModel {
-    #[validate]
+    #[validate(nested)]
     pub key: Arc<EntityKey>,
 
     /// Time of expiry
