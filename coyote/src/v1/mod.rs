@@ -31,7 +31,7 @@ pub fn router() -> ApiRouter<AppState> {
 
 #[cfg(debug_assertions)]
 mod development {
-    use axum::{async_trait, extract::FromRequestParts, routing::get, Json, Router};
+    use axum::{extract::FromRequestParts, routing::get, Json, Router};
     use http::request::Parts;
 
     use crate::{
@@ -44,7 +44,6 @@ mod development {
         pub headers: String,
     }
 
-    #[async_trait]
     impl<S> FromRequestParts<S> for EchoData
     where
         S: Send + Sync,

@@ -3,6 +3,8 @@
 
 //! Module defining utilities for PATCH requests focused mostly around non-required field types.
 
+use std::borrow::Cow;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -176,29 +178,29 @@ where
 }
 
 impl<T: JsonSchema> JsonSchema for UnrequiredField<T> {
-    fn is_referenceable() -> bool {
-        false
+    fn inline_schema() -> bool {
+        true
     }
 
-    fn schema_name() -> String {
-        format!("Unrequired_{}", T::schema_name())
+    fn schema_name() -> Cow<'static, str> {
+        format!("Unrequired_{}", T::schema_name()).into()
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
         gen.subschema_for::<T>()
     }
 }
 
 impl<T: JsonSchema> JsonSchema for UnrequiredNullableField<T> {
-    fn is_referenceable() -> bool {
-        false
+    fn inline_schema() -> bool {
+        true
     }
 
-    fn schema_name() -> String {
-        format!("UnrequiredNullable_{}", T::schema_name())
+    fn schema_name() -> Cow<'static, str> {
+        format!("UnrequiredNullable_{}", T::schema_name()).into()
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
         gen.subschema_for::<Option<T>>()
     }
 }

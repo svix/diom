@@ -8,11 +8,11 @@ license = "MIT"
 version = "1.76.1"
 
 [workspace.dependencies]
-aide = { version = "0.13.4", features = ["axum", "redoc", "macros", "axum-headers"] }
+aide = { version = "=0.16.0-alpha.2", features = ["axum", "axum-json", "axum-query", "macros"] }
 anyhow = "1.0.56"
 assert_matches = "1.5.0"
-axum = "0.7.9"
-axum-extra = { version = "0.9.3", features = ["typed-header"] }
+axum = "0.8.8"
+axum-extra = { version = "0.12.5", features = ["typed-header"] }
 base64 = "0.22"
 bytes = "1.1.0"
 chrono = { version = "0.4.26", features = ["serde"] }
@@ -45,7 +45,7 @@ proc-macro2 = "1.0.78"
 quote = "1.0.15"
 regex = "1.5.5"
 reqwest = { version = "0.12.23", default-features = false, features = ["json", "rustls-tls", "hickory-dns"] }
-schemars = { version = "0.8.11", features = ["chrono", "url", "preserve_order"] }
+schemars = { version = "1.2.0", features = ["chrono04"] }
 serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value"] }
 serde_path_to_error = "0.1.7"
