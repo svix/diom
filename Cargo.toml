@@ -2,6 +2,13 @@
 members = ["coyote", "coyote-derive"]
 resolver = "2"
 
+[workspace.package]
+edition = "2021"
+license = "MIT"
+version = "1.76.1"
+
+[workspace.dependencies]
+
 [workspace.lints.rust]
 # Can't forbid as we use at least one macro that expands to unsafe code
 unsafe_code = "deny"
@@ -34,11 +41,6 @@ unnested_or_patterns = "warn"
 verbose_file_reads = "warn"
 # disabled default lints
 enum_variant_names = "allow"
-
-[workspace.package]
-edition = "2021"
-license = "MIT"
-version = "1.76.1"
 
 [profile.dev]
 debug = 0
