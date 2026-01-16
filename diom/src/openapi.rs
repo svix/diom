@@ -1,20 +1,22 @@
 use aide::openapi::{self, OpenApi, Parameter, ReferenceOr};
-use schemars::{visit::Visitor, JsonSchema};
+use schemars::JsonSchema;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn initialize_openapi() -> OpenApi {
-    aide::gen::on_error(|error| {
+    aide::generate::on_error(|error| {
         tracing::error!("Aide generation error: {error}");
     });
     // Extract schemas to `#/components/schemas/` instead of using inline schemas.
-    aide::gen::extract_schemas(true);
+    aide::generate::extract_schemas(true);
     // Have aide attempt to infer the `Content-Type` of responses based on the
     // handlers' return types.
-    aide::gen::infer_responses(true);
-    aide::gen::inferred_empty_response_status(204);
+    aide::generate::infer_responses(true);
+    aide::generate::inferred_empty_response_status(204);
 
-    aide::gen::in_context(|ctx| ctx.schema = schemars::gen::SchemaSettings::openapi3().into());
+    aide::generate::in_context(|ctx| {
+        ctx.schema = schemars::generate::SchemaSettings::openapi3().into()
+    });
 
     let _tag_groups = serde_json::json![[
         {
@@ -96,65 +98,10 @@ pub fn initialize_openapi() -> OpenApi {
     }
 }
 
-/// Replaces OpenAPI 3.1 style `"foo": true` schemas with OpenAPI 3.0 style
-/// `"foo": {"type": "object"}` schemas.
-fn replace_true_schemas(openapi: &mut OpenApi) {
-    use schemars::schema::{InstanceType, ObjectValidation, Schema, SchemaObject, SingleOrVec};
-
-    // Checks if it's a plain boolean schema, and if yes replaces it with a
-    // `{"type": "object"}` schema. If it's an object then it will descend into
-    // its properties and `additionalProperties` too.
-    fn visit_schema(schema: &mut Schema) {
-        match schema {
-            Schema::Bool(true) => {
-                *schema = Schema::Object(SchemaObject {
-                    instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Object))),
-                    ..Default::default()
-                })
-            }
-            Schema::Bool(false) => {
-                tracing::warn!("unexpected `false` schema encountered");
-            }
-            Schema::Object(obj) => {
-                // When examples are added to a `"foo": bool` schema it gets
-                // expanded into an object, i.e. `"foo": {"example": ...}`, but
-                // no "type" field is set on it. Although the OpenAPI spec does
-                // not specifically say that the type field is mandatory, in
-                // practice a lack of the "type" field should only ever occur
-                // when a `true` schema gets replaced because it is somehow
-                // modified (e.g. example added), or because it's a "$ref"
-                // object.
-                // If it's not a reference, then we must add the "type" field
-                // back with the value "object" so code generators work correctly.
-                if obj.instance_type.is_none() && obj.reference.is_none() {
-                    obj.instance_type = Some(SingleOrVec::Single(Box::new(InstanceType::Object)));
-                }
-
-                obj.object.as_mut().map(visit_object_validation);
-            }
-        }
-    }
-
-    fn visit_object_validation(obj: &mut Box<ObjectValidation>) {
-        if let Some(additional_props) = &mut obj.additional_properties {
-            visit_schema(additional_props)
-        }
-        for (_, schema) in &mut obj.properties {
-            visit_schema(schema)
-        }
-    }
-
-    if let Some(components) = &mut openapi.components {
-        for (_, schema) in &mut components.schemas {
-            visit_schema(&mut schema.json_schema)
-        }
-    }
-}
-
 /// Adds the `Idempotency-Key` header parameter to all `POST` operations in the schema.
 fn add_idempotency_to_post(openapi: &mut OpenApi) {
     // The header's value can be any valid string
-    let string_schema = aide::gen::in_context(|ctx| String::json_schema(&mut ctx.schema));
+    let string_schema = aide::generate::in_context(|ctx| String::json_schema(&mut ctx.schema));
 
     let s = openapi::SchemaObject {
         json_schema: string_schema,
@@ -211,21 +158,6 @@ fn remove_unneeded_schemas(openapi: &mut OpenApi) {
     }
 }
 
-/// Replaces the `examples` property of a schema with a singular `example`
-/// property.
-/// OpenAPI <=3.0 used `example` as an extension, >=3.1 standardized `examples`.
-fn replace_multiple_examples(openapi: &mut OpenApi) {
-    let mut visitor = schemars::visit::SetSingleExample {
-        retain_examples: false,
-    };
-
-    if let Some(components) = &mut openapi.components {
-        for (_, schema_object) in &mut components.schemas {
-            visitor.visit_schema(&mut schema_object.json_schema);
-        }
-    }
-}
-
 pub fn add_security_scheme(
     api: aide::transform::TransformOpenApi<'_>,
 ) -> aide::transform::TransformOpenApi<'_> {
@@ -243,12 +175,7 @@ pub fn add_security_scheme(
 /// Applies a list of hacks to the finished OpenAPI spec to make it usable with
 /// our tooling.
 pub fn postprocess_spec(openapi: &mut OpenApi) {
-    let hacks = [
-        add_idempotency_to_post,
-        remove_unneeded_schemas,
-        replace_true_schemas,
-        replace_multiple_examples,
-    ];
+    let hacks = [add_idempotency_to_post, remove_unneeded_schemas];
 
     for hack in hacks {
         hack(openapi);

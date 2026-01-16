@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
+use schemars::{json_schema, Schema};
 use serde::{Deserialize, Serialize};
 use svix_ksuid::*;
 use validator::{Validate, ValidationErrors};
@@ -190,7 +191,7 @@ macro_rules! string_wrapper_impl {
 /// wrapper types.
 #[derive(Default)]
 pub struct StringSchema {
-    pub string_validation: Option<schemars::schema::StringValidation>,
+    pub string_validation: Option<Schema>,
     pub example: Option<String>,
 }
 
@@ -204,11 +205,11 @@ impl StringSchema {
 
     pub fn schema_for_uids(prefix: &'static str) -> Self {
         Self {
-            string_validation: Some(schemars::schema::StringValidation {
-                min_length: Some(1),
-                max_length: Some(256),
-                pattern: Some(r"^[a-zA-Z0-9\-_.]+$".to_string()),
-            }),
+            string_validation: Some(json_schema!({
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": r"^[a-zA-Z0-9\-_.]+$",
+            })),
             example: Some(format!("unique-{prefix}identifier").replace('_', "-")),
         }
     }
@@ -221,29 +222,31 @@ impl StringSchema {
 macro_rules! common_jsonschema_impl {
     ($name_id:ident, $string_schema:expr) => {
         impl ::schemars::JsonSchema for $name_id {
-            fn schema_name() -> String {
-                stringify!($name_id).to_string()
+            fn schema_name() -> ::std::borrow::Cow<'static, str> {
+                stringify!($name_id).into()
             }
 
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+            fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
                 let mut schema = String::json_schema(gen);
 
-                if let schemars::schema::Schema::Object(obj) = &mut schema {
+                if let Some(obj) = schema.as_object_mut() {
                     // This is just to help with type hints when the macro is expanded.
                     let options: $crate::core::types::StringSchema = $string_schema;
 
-                    obj.string = options.string_validation.map(Box::new);
+                    if let Some(mut v) = options.string_validation {
+                        obj.extend(::std::mem::take(v.ensure_object()));
+                    }
+
                     if let Some(example) = options.example {
-                        obj.extensions
-                            .insert("example".to_string(), serde_json::Value::String(example));
+                        obj.insert("example".to_owned(), serde_json::Value::String(example));
                     }
                 }
 
                 schema
             }
 
-            fn is_referenceable() -> bool {
-                false
+            fn inline_schema() -> bool {
+                true
             }
         }
     };
@@ -290,11 +293,11 @@ macro_rules! repr_enum {
 macro_rules! jsonschema_for_repr_enum {
     ($tyname:ty, $repr_ty:ty, $descr:expr, $($variant:ident),+) => {
         impl JsonSchema for $tyname {
-            fn schema_name() -> String {
+            fn schema_name() -> Cow<'static, str> {
                 stringify!($tyname).to_string()
             }
 
-            fn json_schema(_: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+            fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
                 use schemars::schema::{InstanceType, Metadata, Schema, SchemaObject, SingleOrVec};
                 use $tyname::*;
 
@@ -326,11 +329,10 @@ macro_rules! jsonschema_for_repr_enum {
 string_wrapper!(
     EntityKey,
     crate::core::types::StringSchema {
-        string_validation: Some(schemars::schema::StringValidation {
-            max_length: Some(256),
-            min_length: None,
-            pattern: Some(r"^[a-zA-Z0-9\-_.]+$".to_string()),
-        }),
+        string_validation: Some(json_schema!({
+            "maxLength": 256,
+            "pattern": r"^[a-zA-Z0-9\-_.]+$",
+        })),
         example: Some("some_key".to_string()),
     }
 );

@@ -10,18 +10,18 @@ use std::{
 };
 
 use aide::{
+    openapi::StatusCode as OpenApiStatusCode,
     transform::{TransformOperation, TransformPathItem},
     OperationInput, OperationIo, OperationOutput,
 };
 use axum::{
-    async_trait,
     extract::{
         rejection::{BytesRejection, FailedToBufferBody},
         FromRequest, FromRequestParts, Query, Request,
     },
     response::IntoResponse,
 };
-use http::{request::Parts, StatusCode};
+use http::request::Parts;
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -148,16 +148,16 @@ impl<T: Validate> Validate for ReversibleIterator<T> {
 }
 
 impl<T: Validate + JsonSchema> JsonSchema for ReversibleIterator<T> {
-    fn schema_name() -> String {
-        format!("ReversibleIterator_{}", T::schema_name())
+    fn schema_name() -> Cow<'static, str> {
+        format!("ReversibleIterator_{}", T::schema_name()).into()
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
         T::json_schema(gen)
     }
 
-    fn is_referenceable() -> bool {
-        false
+    fn inline_schema() -> bool {
+        true
     }
 }
 
@@ -167,7 +167,7 @@ pub struct NoContentWithCode<const N: u16>;
 
 impl<const N: u16> IntoResponse for NoContentWithCode<N> {
     fn into_response(self) -> axum::response::Response {
-        (StatusCode::from_u16(N).unwrap(), ()).into_response()
+        (http::StatusCode::from_u16(N).unwrap(), ()).into_response()
     }
 }
 
@@ -175,18 +175,18 @@ impl<const N: u16> OperationOutput for NoContentWithCode<N> {
     type Inner = Self;
 
     fn operation_response(
-        ctx: &mut aide::gen::GenContext,
+        ctx: &mut aide::generate::GenContext,
         operation: &mut aide::openapi::Operation,
     ) -> Option<aide::openapi::Response> {
         <() as OperationOutput>::operation_response(ctx, operation)
     }
 
     fn inferred_responses(
-        ctx: &mut aide::gen::GenContext,
+        ctx: &mut aide::generate::GenContext,
         operation: &mut aide::openapi::Operation,
-    ) -> Vec<(Option<u16>, aide::openapi::Response)> {
+    ) -> Vec<(Option<OpenApiStatusCode>, aide::openapi::Response)> {
         if let Some(response) = Self::operation_response(ctx, operation) {
-            vec![(Some(N), response)]
+            vec![(Some(OpenApiStatusCode::Code(N)), response)]
         } else {
             vec![]
         }
@@ -236,12 +236,12 @@ impl<T> ListResponse<T> {
 // `JsonSchema` implementation.
 // Tracking issue: https://github.com/GREsau/schemars/issues/193
 impl<T: JsonSchema> JsonSchema for ListResponse<T> {
-    fn schema_name() -> String {
+    fn schema_name() -> Cow<'static, str> {
         let data_type_name = T::schema_name();
-        format!("ListResponse_{data_type_name}_")
+        format!("ListResponse_{data_type_name}_").into()
     }
 
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
         fn example_iterator() -> &'static str {
             "iterator"
         }
@@ -256,10 +256,10 @@ impl<T: JsonSchema> JsonSchema for ListResponse<T> {
         #[serde(rename_all = "camelCase")]
         struct ListResponse<T> {
             pub data: Vec<T>,
-            #[schemars(example = "example_iterator")]
+            #[schemars(example = example_iterator())]
             pub iterator: Option<String>,
             #[serde(skip_serializing_if = "Option::is_none")]
-            #[schemars(example = "example_prev_iterator")]
+            #[schemars(example = example_prev_iterator())]
             pub prev_iterator: Option<String>,
             pub done: bool,
         }
@@ -401,7 +401,6 @@ pub fn validation_errors(
 #[aide(input_with = "axum::extract::Json<T>", json_schema)]
 pub struct ValidatedJson<T>(pub T);
 
-#[async_trait]
 impl<T, S> FromRequest<S> for ValidatedJson<T>
 where
     T: DeserializeOwned + Validate,
@@ -457,7 +456,6 @@ where
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ValidatedQuery<T>(pub T);
 
-#[async_trait]
 impl<T, S> FromRequestParts<S> for ValidatedQuery<T>
 where
     T: DeserializeOwned + Validate,
@@ -485,7 +483,10 @@ impl<T> Deref for ValidatedQuery<T> {
 }
 
 impl<T: JsonSchema> OperationInput for ValidatedQuery<T> {
-    fn operation_input(ctx: &mut aide::gen::GenContext, operation: &mut aide::openapi::Operation) {
+    fn operation_input(
+        ctx: &mut aide::generate::GenContext,
+        operation: &mut aide::openapi::Operation,
+    ) {
         axum::extract::Query::<T>::operation_input(ctx, operation)
     }
 }
@@ -542,7 +543,7 @@ pub struct JsonStatus<const STATUS: u16, T: JsonSchema + Serialize>(pub T);
 impl<const STATUS: u16, T: JsonSchema + Serialize> IntoResponse for JsonStatus<STATUS, T> {
     fn into_response(self) -> axum::response::Response {
         (
-            StatusCode::from_u16(STATUS).unwrap(),
+            http::StatusCode::from_u16(STATUS).unwrap(),
             axum::extract::Json(self.0),
         )
             .into_response()
@@ -553,18 +554,18 @@ impl<const STATUS: u16, T: JsonSchema + Serialize> OperationOutput for JsonStatu
     type Inner = T;
 
     fn operation_response(
-        ctx: &mut aide::gen::GenContext,
+        ctx: &mut aide::generate::GenContext,
         operation: &mut aide::openapi::Operation,
     ) -> Option<aide::openapi::Response> {
         axum::extract::Json::<T>::operation_response(ctx, operation)
     }
 
     fn inferred_responses(
-        ctx: &mut aide::gen::GenContext,
+        ctx: &mut aide::generate::GenContext,
         operation: &mut aide::openapi::Operation,
-    ) -> Vec<(Option<u16>, aide::openapi::Response)> {
+    ) -> Vec<(Option<OpenApiStatusCode>, aide::openapi::Response)> {
         if let Some(resp) = Self::operation_response(ctx, operation) {
-            vec![(Some(STATUS), resp)]
+            vec![(Some(OpenApiStatusCode::Code(STATUS)), resp)]
         } else {
             vec![]
         }
@@ -586,8 +587,8 @@ pub enum JsonStatusUpsert<T: JsonSchema + Serialize> {
 impl<T: JsonSchema + Serialize> IntoResponse for JsonStatusUpsert<T> {
     fn into_response(self) -> axum::response::Response {
         let (status, body) = match self {
-            JsonStatusUpsert::Updated(v) => (StatusCode::OK, v),
-            JsonStatusUpsert::Created(v) => (StatusCode::CREATED, v),
+            JsonStatusUpsert::Updated(v) => (http::StatusCode::OK, v),
+            JsonStatusUpsert::Created(v) => (http::StatusCode::CREATED, v),
         };
         (status, axum::extract::Json(body)).into_response()
     }
@@ -597,20 +598,20 @@ impl<T: JsonSchema + Serialize> OperationOutput for JsonStatusUpsert<T> {
     type Inner = T;
 
     fn operation_response(
-        ctx: &mut aide::gen::GenContext,
+        ctx: &mut aide::generate::GenContext,
         operation: &mut aide::openapi::Operation,
     ) -> Option<aide::openapi::Response> {
         axum::extract::Json::<T>::operation_response(ctx, operation)
     }
 
     fn inferred_responses(
-        ctx: &mut aide::gen::GenContext,
+        ctx: &mut aide::generate::GenContext,
         operation: &mut aide::openapi::Operation,
-    ) -> Vec<(Option<u16>, aide::openapi::Response)> {
+    ) -> Vec<(Option<OpenApiStatusCode>, aide::openapi::Response)> {
         if let Some(resp) = Self::operation_response(ctx, operation) {
             vec![
-                (Some(StatusCode::OK.into()), resp.clone()),
-                (Some(StatusCode::CREATED.into()), resp),
+                (Some(OpenApiStatusCode::Code(200)), resp.clone()),
+                (Some(OpenApiStatusCode::Code(201)), resp),
             ]
         } else {
             vec![]
