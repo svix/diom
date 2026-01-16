@@ -66,7 +66,7 @@ impl CacheStore {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
-    #[validate]
+    #[validate(nested)]
     pub key: EntityKey,
 
     // FIXME: should be datetime

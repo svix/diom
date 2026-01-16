@@ -23,7 +23,7 @@ pub use crate::v1::modules::queue::{QueueConfiguration, QueueStore};
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[validate(schema(function = "validate_delay_options"))]
 pub struct QueueSendIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 
     // FIXME: needs to be bytes.
@@ -56,7 +56,7 @@ pub struct QueueSendOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueReceiveIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 
     /// Visibility timeout in seconds (how long before message returns to queue if not ack'd)
@@ -87,7 +87,7 @@ pub struct QueueReceiveOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueAckIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 
     /// Message ID to acknowledge
@@ -99,7 +99,7 @@ pub struct QueueAckOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueNackIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 
     /// Message ID to negative acknowledge
@@ -111,7 +111,7 @@ pub struct QueueNackOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueRejectIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 
     /// Message ID to reject
@@ -123,7 +123,7 @@ pub struct QueueRejectOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueuePurgeIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 }
 
@@ -135,7 +135,7 @@ pub struct QueuePurgeOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueStatsIn {
-    #[validate]
+    #[validate(nested)]
     pub name: EntityKey,
 }
 
