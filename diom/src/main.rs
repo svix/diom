@@ -9,13 +9,6 @@ use diom::{cfg, run, setup_tracing};
 use dotenvy::dotenv;
 use tracing_subscriber::util::SubscriberInitExt;
 
-#[cfg(all(target_env = "msvc", feature = "jemalloc"))]
-compile_error!("jemalloc cannot be enabled on msvc");
-
-#[cfg(all(not(target_env = "msvc"), feature = "jemalloc"))]
-#[global_allocator]
-static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
-
 #[derive(Parser)]
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
 struct Args {
