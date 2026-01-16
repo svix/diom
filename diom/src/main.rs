@@ -56,7 +56,8 @@ async fn main() -> anyhow::Result<()> {
 
     let cfg = cfg::load()?;
 
-    let tracing_subscriber = setup_tracing(&cfg, /* for_test = */ false);
+    let (tracing_subscriber, otel_tracer_provider) =
+        setup_tracing(&cfg, /* for_test = */ false);
     tracing_subscriber.init();
 
     match args.command {
@@ -82,6 +83,12 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    opentelemetry::global::shutdown_tracer_provider();
+    if let Some(provider) = otel_tracer_provider {
+        _ = tokio::task::spawn_blocking(move || {
+            _ = provider.shutdown();
+        })
+        .await;
+    }
+
     Ok(())
 }
