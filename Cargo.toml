@@ -15,7 +15,6 @@ axum = "0.8.8"
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
 base64 = "0.22"
 bytes = "1.1.0"
-chrono = { version = "0.4.26", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
 coyote-derive.path = "coyote-derive"
 crossbeam = "0.8"
@@ -33,6 +32,7 @@ hyper = { version = "1.8.1", features = ["full"] }
 idna_adapter = "=1.1.0"
 indexmap = "2.6.0"
 itertools = "0.14"
+jiff = { version = "0.2.18", features = ["serde"] }
 jwt-simple = "0.12"
 num_enum = "0.7.2"
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
@@ -45,7 +45,7 @@ proc-macro2 = "1.0.78"
 quote = "1.0.15"
 regex = "1.5.5"
 reqwest = { version = "0.13.1", default-features = false, features = ["json", "rustls", "hickory-dns"] }
-schemars = { version = "1.2.0", features = ["chrono04"] }
+schemars = { version = "1.2.0", features = ["jiff02"] }
 serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value"] }
 serde_path_to_error = "0.1.7"

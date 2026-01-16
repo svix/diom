@@ -3,11 +3,11 @@
 
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
-use chrono::{DateTime, Utc};
 use coyote_derive::aide_annotate;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use validator::Validate;
 
 use crate::{
@@ -52,7 +52,7 @@ impl KvSetIn {
             behavior: _,
         } = self;
 
-        let expires_at = Utc::now() + chrono::Duration::milliseconds(expire_in as i64);
+        let expires_at = Timestamp::now() + Duration::from_millis(expire_in);
 
         KvModel {
             key,
@@ -77,7 +77,7 @@ pub struct KvGetOut {
     pub key: Arc<EntityKey>,
 
     /// Time of expiry
-    pub expires_at: DateTime<Utc>,
+    pub expires_at: Timestamp,
 
     // FIXME: change to Bytes
     pub value: String,

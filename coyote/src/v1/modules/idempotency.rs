@@ -13,6 +13,8 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
+use jiff::Timestamp;
+
 use crate::{
     error::{Error, HttpError, Result},
     AppState,
@@ -20,7 +22,7 @@ use crate::{
 
 /// Get current time in milliseconds since Unix epoch
 fn now_millis() -> u64 {
-    chrono::Utc::now().timestamp_millis() as u64
+    Timestamp::now().as_millisecond() as u64
 }
 
 // ============================================================================
