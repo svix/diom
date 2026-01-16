@@ -33,7 +33,6 @@ crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 dotenvy.workspace = true
 figment.workspace = true
-futures.workspace = true
 hex.workspace = true
 http.workspace = true
 hyper.workspace = true
