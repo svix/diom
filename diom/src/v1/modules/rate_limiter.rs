@@ -38,7 +38,7 @@
 //! - Do we want the refill time be in milliseconds rather than seconds?
 //! - The implementation is probably stupid, haven't looked at it.
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -56,7 +56,7 @@ pub struct TokenBucketRateLimiter {
 #[derive(Clone, Debug)]
 struct TokenBucketState {
     tokens: u64,
-    last_refill: DateTime<Utc>,
+    last_refill: Timestamp,
 }
 
 impl Default for TokenBucketRateLimiter {
@@ -80,7 +80,7 @@ impl TokenBucketRateLimiter {
         refill_amount: u64,
         refill_interval_seconds: u64,
     ) -> Result<(bool, u64, Option<u64>)> {
-        let now = Utc::now();
+        let now = Timestamp::now();
 
         let mut store = self.store.write().unwrap();
 
@@ -93,8 +93,8 @@ impl TokenBucketRateLimiter {
             });
 
         // Refill tokens based on intervals elapsed
-        let elapsed = now.signed_duration_since(entry.last_refill);
-        let elapsed_seconds = elapsed.num_seconds().max(0) as u64;
+        let elapsed = now.duration_since(entry.last_refill);
+        let elapsed_seconds = elapsed.as_secs().max(0) as u64;
         let intervals_elapsed = elapsed_seconds / refill_interval_seconds;
 
         if intervals_elapsed > 0 {
@@ -127,15 +127,15 @@ impl TokenBucketRateLimiter {
         refill_amount: u64,
         refill_interval_seconds: u64,
     ) -> Result<(u64, Option<u64>)> {
-        let now = Utc::now();
+        let now = Timestamp::now();
 
         let store = self.store.read().unwrap();
 
         match store.get(key) {
             Some(entry) => {
                 // Calculate current tokens based on elapsed time and provided configuration
-                let elapsed = now.signed_duration_since(entry.last_refill);
-                let elapsed_seconds = elapsed.num_seconds().max(0) as u64;
+                let elapsed = now.duration_since(entry.last_refill);
+                let elapsed_seconds = elapsed.as_secs().max(0) as u64;
                 let intervals_elapsed = elapsed_seconds / refill_interval_seconds;
                 let new_tokens = intervals_elapsed.saturating_mul(refill_amount);
                 let current_tokens = entry.tokens.saturating_add(new_tokens).min(capacity);

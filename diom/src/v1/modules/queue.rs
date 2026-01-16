@@ -44,11 +44,11 @@
 //!   a u64 if we are going at it from a kafka point of view? Though I guess that prevents some
 //!   distributed publishing options?
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
+use std::{cmp::Ordering, time::Duration};
 use uuid::Uuid;
 
 use crate::{
@@ -112,11 +112,11 @@ struct Message {
     id: String,
     payload: String,
     /// When the message should become available (for delayed delivery)
-    available_at: DateTime<Utc>,
+    available_at: Timestamp,
     /// Number of times this message has been nacked/timed out
     attempt_count: u16,
     /// Original enqueue time
-    enqueued_at: DateTime<Utc>,
+    enqueued_at: Timestamp,
 }
 
 /// Wrapper for delayed messages in the min-heap
@@ -151,7 +151,7 @@ impl Ord for DelayedMessage {
 struct InFlightMessage {
     message: Message,
     /// When this message's processing will timeout
-    timeout_at: DateTime<Utc>,
+    timeout_at: Timestamp,
 }
 
 impl Default for QueueStore {
@@ -195,9 +195,9 @@ impl QueueStore {
         &self,
         queue_name: &str,
         payload: String,
-        available_at: DateTime<Utc>,
+        available_at: Timestamp,
     ) -> Result<String> {
-        let now = Utc::now();
+        let now = Timestamp::now();
         let message_id = Uuid::new_v4().to_string();
 
         let mut store_state = self.state.write().unwrap();
@@ -225,7 +225,7 @@ impl QueueStore {
 
     /// Move ready delayed messages to the ready queue
     fn promote_delayed_messages(queue_state: &mut QueueState) {
-        let now = Utc::now();
+        let now = Timestamp::now();
 
         // Pop messages from the min-heap while they're ready
         // The heap maintains ordering, so we only need to check the top
@@ -257,7 +257,7 @@ impl QueueStore {
         };
 
         let mut queue_state = queue.state.write().unwrap();
-        let now = Utc::now();
+        let now = Timestamp::now();
 
         // First, check for timed-out in-flight messages and return them to the queue
         Self::check_timeouts_internal(&mut queue_state, now);
@@ -269,7 +269,7 @@ impl QueueStore {
         if let Some(message) = queue_state.ready.pop_front() {
             let message_id = message.id.clone();
             let payload = message.payload.clone();
-            let timeout_at = now + chrono::Duration::seconds(visibility_timeout_seconds as i64);
+            let timeout_at = now + Duration::from_secs(visibility_timeout_seconds);
 
             let in_flight_msg = InFlightMessage {
                 message,
@@ -337,7 +337,7 @@ impl QueueStore {
                 let dlq = self.get_or_create_queue(&mut store_state, dlq_name);
                 let mut dlq_state = dlq.state.write().unwrap();
                 // Reset availability so it's immediately available in DLQ
-                message.available_at = Utc::now();
+                message.available_at = Timestamp::now();
                 // Add directly to ready queue (no delay for DLQ)
                 dlq_state.ready.push_back(message);
             }
@@ -378,7 +378,7 @@ impl QueueStore {
             let dlq = self.get_or_create_queue(&mut store_state, dlq_name);
             let mut dlq_state = dlq.state.write().unwrap();
             // Reset availability so it's immediately available in DLQ
-            message.available_at = Utc::now();
+            message.available_at = Timestamp::now();
             // Add directly to ready queue (no delay for DLQ)
             dlq_state.ready.push_back(message);
         }
@@ -388,7 +388,7 @@ impl QueueStore {
     }
 
     /// Check for timed-out in-flight messages and return them to the queue or DLQ (internal helper)
-    fn check_timeouts_internal(queue_state: &mut QueueState, now: DateTime<Utc>) {
+    fn check_timeouts_internal(queue_state: &mut QueueState, now: Timestamp) {
         let config = queue_state.config.clone();
         let mut timed_out = Vec::new();
 

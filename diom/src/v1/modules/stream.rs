@@ -32,7 +32,7 @@
 //! - Consider adding consumer groups for distributed processing
 //! - Consider adding offset commit tracking
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -71,7 +71,7 @@ struct Message {
     /// Message payload
     payload: String,
     /// When the message was published
-    published_at: DateTime<Utc>,
+    published_at: Timestamp,
 }
 
 impl Default for StreamStore {
@@ -106,7 +106,7 @@ impl StreamStore {
                 messages: Vec::new(),
             });
 
-        let now = Utc::now();
+        let now = Timestamp::now();
         let starting_offset = topic.messages.len() as u64;
 
         for (i, payload) in payloads.into_iter().enumerate() {
@@ -206,7 +206,7 @@ pub struct StreamMessage {
     pub id: String,
     pub offset: u64,
     pub payload: String,
-    pub published_at: DateTime<Utc>,
+    pub published_at: Timestamp,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

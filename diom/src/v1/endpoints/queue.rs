@@ -1,10 +1,9 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
+use std::time::Duration;
 
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
-use chrono::{DateTime, Utc};
 use diom_derive::aide_annotate;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -35,7 +34,7 @@ pub struct QueueSendIn {
     pub delay_seconds: Option<u64>,
 
     /// Specific time when messages should become available. Mutually exclusive with delay_seconds.
-    pub scheduled_at: Option<DateTime<Utc>>,
+    pub scheduled_at: Option<Timestamp>,
 }
 
 fn validate_delay_options(data: &QueueSendIn) -> Result<(), validator::ValidationError> {
@@ -161,9 +160,9 @@ async fn queue_send(
 
     // Calculate available_at once for all messages
     let available_at = match (data.delay_seconds, data.scheduled_at) {
-        (Some(delay), None) => Utc::now() + chrono::Duration::seconds(delay as i64),
+        (Some(delay), None) => Timestamp::now() + Duration::from_secs(delay),
         (None, Some(scheduled)) => scheduled,
-        (None, None) => Utc::now(), // Default: immediately available
+        (None, None) => Timestamp::now(), // Default: immediately available
         (Some(_), Some(_)) => unreachable!("validation should prevent this"),
     };
 

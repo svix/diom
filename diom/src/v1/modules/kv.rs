@@ -27,7 +27,7 @@
 //! - The lock unwrap()s. I didn't bother with removing them because we'll change the data
 //!   structure before going to prod.
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -107,7 +107,7 @@ impl KvStore {
     }
 
     pub fn get(&self, key: &EntityKey) -> Result<KvModel> {
-        let now = Utc::now();
+        let now = Timestamp::now();
 
         // First, check if the key exists and is not expired
         {
@@ -144,7 +144,7 @@ pub struct KvModel {
     pub key: Arc<EntityKey>,
 
     /// Time of expiry
-    pub expires_at: DateTime<Utc>,
+    pub expires_at: Timestamp,
 
     // FIXME: change to Bytes
     pub value: String,
@@ -171,7 +171,7 @@ pub async fn worker(state: AppState) -> Result<()> {
             while kv_state
                 .expiry
                 .peek()
-                .is_some_and(|x| x.expired(Utc::now()))
+                .is_some_and(|x| x.expired(Timestamp::now()))
             {
                 if let Some(expiry_item) = kv_state.expiry.pop() {
                     if let Some(value) = kv_state.store.get(&expiry_item.key) {
@@ -189,10 +189,9 @@ pub async fn worker(state: AppState) -> Result<()> {
 }
 
 mod expiry {
-    use chrono::{DateTime, Utc};
-    use std::cmp::Ordering;
-    use std::collections::BinaryHeap;
-    use std::sync::Arc;
+    use std::{cmp::Ordering, collections::BinaryHeap, sync::Arc};
+
+    use jiff::Timestamp;
 
     use crate::core::types::EntityKey;
 
@@ -207,7 +206,7 @@ mod expiry {
             }
         }
 
-        pub(super) fn insert(&mut self, expires_at: DateTime<Utc>, key: Arc<EntityKey>) {
+        pub(super) fn insert(&mut self, expires_at: Timestamp, key: Arc<EntityKey>) {
             self.heap.push(ExpiryState { expires_at, key });
         }
 
@@ -223,12 +222,12 @@ mod expiry {
     #[derive(Eq, PartialEq)]
     pub(super) struct ExpiryState {
         /// The timestamp of when to expire.
-        pub(super) expires_at: DateTime<Utc>,
+        pub(super) expires_at: Timestamp,
         pub(super) key: Arc<EntityKey>,
     }
 
     impl ExpiryState {
-        pub(super) fn expired(&self, now: DateTime<Utc>) -> bool {
+        pub(super) fn expired(&self, now: Timestamp) -> bool {
             self.expires_at <= now
         }
     }

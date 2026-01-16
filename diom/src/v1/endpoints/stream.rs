@@ -3,8 +3,8 @@
 
 use aide::axum::{routing::post_with, ApiRouter};
 use axum::{extract::State, Json};
-use chrono::{DateTime, Utc};
 use diom_derive::aide_annotate;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -58,7 +58,7 @@ pub struct StreamMessage {
     pub id: String,
     pub offset: u64,
     pub payload: String,
-    pub published_at: DateTime<Utc>,
+    pub published_at: Timestamp,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
