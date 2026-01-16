@@ -19,11 +19,9 @@ struct Args {
 #[derive(Subcommand)]
 enum Commands {
     /// Generate OpenAPI JSON specification and exit
-    #[clap()]
     GenerateOpenapi,
 
     /// Health check command
-    #[clap()]
     Healthcheck {
         // FIXME: we should make it optional and default to localhost with the settings (when ran
         // in docker)
