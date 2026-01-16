@@ -49,7 +49,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
-use svix_ksuid::{KsuidLike as _, KsuidMs};
+use uuid::Uuid;
 
 use crate::{
     error::{Error, HttpError, Result},
@@ -198,7 +198,7 @@ impl QueueStore {
         available_at: DateTime<Utc>,
     ) -> Result<String> {
         let now = Utc::now();
-        let message_id = KsuidMs::new(None, None).to_string();
+        let message_id = Uuid::new_v4().to_string();
 
         let mut store_state = self.state.write().unwrap();
         let queue = self.get_or_create_queue(&mut store_state, queue_name);

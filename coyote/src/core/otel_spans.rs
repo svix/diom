@@ -8,13 +8,13 @@ use std::net::SocketAddr;
 use axum::extract::{ConnectInfo, MatchedPath};
 use http::header;
 use opentelemetry::trace::TraceContextExt;
-use svix_ksuid::{KsuidLike, KsuidMs};
 use tower_http::{
     classify::ServerErrorsFailureClass,
     trace::{MakeSpan, OnFailure, OnResponse},
 };
 use tracing::field::{debug, Empty};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
+use uuid::Uuid;
 
 /// An implementor of [`MakeSpan`] which creates `tracing` spans populated with information about
 /// the request received by an `axum` web server.
@@ -55,7 +55,7 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
                     .get("svix-req-id")
                     .and_then(|v| v.to_str().map(ToOwned::to_owned).ok())
             })
-            .unwrap_or_else(|| KsuidMs::new(None, None).to_string());
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
 
         let remote_context = opentelemetry::global::get_text_map_propagator(|p| {
             p.extract(&opentelemetry_http::HeaderExtractor(request.headers()))

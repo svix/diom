@@ -313,12 +313,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "base-encode"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a17bd29f7c70f32e9387f4d4acfa5ea7b7749ef784fb78cf382df97069337b8c"
-
-[[package]]
 name = "base16ct"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -660,7 +654,6 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_path_to_error",
- "svix-ksuid",
  "time",
  "tokio",
  "tokio-util",
@@ -670,6 +663,7 @@ dependencies = [
  "tracing-opentelemetry",
  "tracing-subscriber",
  "url",
+ "uuid",
  "validator",
 ]
 
@@ -3069,18 +3063,6 @@ dependencies = [
  "hmac-sha512",
  "rand 0.8.5",
  "rsa",
-]
-
-[[package]]
-name = "svix-ksuid"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c0c2b19ae442a1842ba35f7eeff46e684bb24cb4a9571f41b48e5181e5eadd5"
-dependencies = [
- "base-encode",
- "byteorder",
- "chrono",
- "getrandom 0.2.17",
 ]
 
 [[package]]

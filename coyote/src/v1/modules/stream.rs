@@ -36,7 +36,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use svix_ksuid::{KsuidLike as _, KsuidMs};
+use uuid::Uuid;
 
 use crate::{
     error::{Error, HttpError, Result},
@@ -111,7 +111,7 @@ impl StreamStore {
 
         for (i, payload) in payloads.into_iter().enumerate() {
             let message = Message {
-                id: KsuidMs::new(None, None).to_string(),
+                id: Uuid::new_v4().to_string(),
                 offset: starting_offset + i as u64,
                 payload,
                 published_at: now,
