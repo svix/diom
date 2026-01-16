@@ -132,12 +132,9 @@ impl StreamStore {
     ) -> Result<(Vec<StreamMessage>, bool)> {
         let state = self.state.read().unwrap();
 
-        let topic = match state.topics.get(topic_name) {
-            Some(t) => t,
-            None => {
-                // Topic doesn't exist, return empty result
-                return Ok((Vec::new(), false));
-            }
+        let Some(topic) = state.topics.get(topic_name) else {
+            // Topic doesn't exist, return empty result
+            return Ok((Vec::new(), false));
         };
 
         let total_messages = topic.messages.len() as u64;
@@ -169,21 +166,18 @@ impl StreamStore {
     pub fn topic_info(&self, topic_name: &str) -> Result<TopicInfo> {
         let state = self.state.read().unwrap();
 
-        let topic = match state.topics.get(topic_name) {
-            Some(t) => t,
-            None => {
-                return Err(Error::http(HttpError::not_found(
-                    Some("Topic not found".into()),
-                    None,
-                )))
-            }
+        let Some(topic) = state.topics.get(topic_name) else {
+            return Err(Error::http(HttpError::not_found(
+                Some("Topic not found".into()),
+                None,
+            )));
         };
 
         let message_count = topic.messages.len() as u64;
 
         Ok(TopicInfo {
             message_count,
-            earliest_offset: if message_count > 0 { 0 } else { 0 },
+            earliest_offset: 0,
             latest_offset: if message_count > 0 {
                 message_count - 1
             } else {
