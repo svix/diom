@@ -32,8 +32,17 @@ pub struct ConfigurationInner {
     pub log_format: LogFormat,
     /// The OpenTelemetry address to send events to if given.
     pub opentelemetry_address: Option<String>,
-    /// The ratio at which to sample spans when sending to OpenTelemetry. When not given it defaults
-    /// to always sending. If the OpenTelemetry address is not set, this will do nothing.
+    /// By default, `opentelemetry_address` is expected to be a GRPC server.
+    ///
+    /// When this is set to true, HTTP is used instead.
+    #[serde(default)]
+    pub opentelemetry_metrics_use_http: bool,
+    #[serde(default = "default_opentelemetry_metrics_period")]
+    pub opentelemetry_metrics_period_seconds: u64,
+    /// The ratio at which to sample spans when sending to OpenTelemetry.
+    ///
+    /// When not given it defaults to always sending.
+    /// If the OpenTelemetry address is not set, this will do nothing.
     pub opentelemetry_sample_ratio: Option<f64>,
     /// The service name to use for OpenTelemetry. If not provided, it defaults to "coyote".
     pub opentelemetry_service_name: String,
@@ -46,6 +55,10 @@ pub struct ConfigurationInner {
 
     #[serde(flatten)]
     pub internal: InternalConfig,
+}
+
+const fn default_opentelemetry_metrics_period() -> u64 {
+    60
 }
 
 #[derive(Clone, Debug, Deserialize)]

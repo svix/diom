@@ -2,15 +2,21 @@
 // SPDX-License-Identifier: MIT
 
 #![warn(clippy::all)]
-#![forbid(unsafe_code)]
 
 use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
-use opentelemetry::trace::TracerProvider as _;
+use opentelemetry::{trace::TracerProvider as _, InstrumentationScope};
 use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::{metrics::SdkMeterProvider, runtime::Tokio};
+use opentelemetry_sdk::{
+    metrics::{periodic_reader_with_async_runtime::PeriodicReader, SdkMeterProvider},
+    runtime,
+    trace::{
+        span_processor_with_async_runtime::BatchSpanProcessor, BatchConfigBuilder, Sampler,
+        SdkTracerProvider,
+    },
+};
 use svix_ksuid::{KsuidLike, KsuidMs};
 use tokio::net::TcpListener;
 use tokio_util::sync::CancellationToken;
@@ -78,7 +84,7 @@ async fn graceful_shutdown_handler() {
 }
 
 pub async fn run(cfg: Configuration) {
-    let _metrics = setup_metrics(&cfg);
+    setup_metrics(&cfg);
     run_with_prefix(cfg, None).await
 }
 
@@ -163,7 +169,10 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let _ = workers.await;
 }
 
-pub fn setup_tracing(cfg: &ConfigurationInner, for_test: bool) -> tracing::Dispatch {
+pub fn setup_tracing(
+    cfg: &ConfigurationInner,
+    for_test: bool,
+) -> (tracing::Dispatch, Option<SdkTracerProvider>) {
     let filter_directives = std::env::var("RUST_LOG").unwrap_or_else(|e| {
         if let std::env::VarError::NotUnicode(_) = e {
             eprintln!("RUST_LOG environment variable has non-utf8 contents, ignoring!");
@@ -178,44 +187,63 @@ pub fn setup_tracing(cfg: &ConfigurationInner, for_test: bool) -> tracing::Dispa
         var.join(",")
     });
 
-    let otel_layer = cfg.opentelemetry_address.as_ref().map(|addr| {
+    let mapped = cfg.opentelemetry_address.as_ref().map(|addr| {
         // Configure the OpenTelemetry tracing layer
         opentelemetry::global::set_text_map_propagator(
             opentelemetry_sdk::propagation::TraceContextPropagator::new(),
         );
 
-        let exporter = opentelemetry_otlp::new_exporter()
-            .tonic()
-            .with_endpoint(addr);
+        let exporter = opentelemetry_otlp::SpanExporter::builder()
+            .with_tonic()
+            .with_endpoint(addr)
+            .build()
+            .expect("Failed to build span exporter");
 
-        let provider = opentelemetry_otlp::new_pipeline()
-            .tracing()
-            .with_exporter(exporter)
-            .with_trace_config(
-                opentelemetry_sdk::trace::Config::default()
-                    .with_sampler(
-                        cfg.opentelemetry_sample_ratio
-                            .map(opentelemetry_sdk::trace::Sampler::TraceIdRatioBased)
-                            .unwrap_or(opentelemetry_sdk::trace::Sampler::AlwaysOn),
-                    )
-                    .with_resource(opentelemetry_sdk::Resource::new(vec![
-                        opentelemetry::KeyValue::new(
-                            "service.name",
-                            cfg.opentelemetry_service_name.clone(),
-                        ),
-                    ])),
+        let batch_span_processor = BatchSpanProcessor::builder(exporter, runtime::Tokio)
+            .with_batch_config(
+                BatchConfigBuilder::default()
+                    .with_max_queue_size(32768)
+                    .with_scheduled_delay(Duration::from_secs(3))
+                    .build(),
             )
-            .install_batch(Tokio)
-            .unwrap();
-
-        // Based on the private `build_batch_with_exporter` method from opentelemetry-otlp
-        let tracer = provider
-            .tracer_builder("opentelemetry-otlp")
-            .with_schema_url(opentelemetry_semantic_conventions::SCHEMA_URL)
             .build();
 
-        tracing_opentelemetry::layer().with_tracer(tracer)
+        let provider = SdkTracerProvider::builder()
+            .with_sampler(
+                cfg.opentelemetry_sample_ratio
+                    .map(Sampler::TraceIdRatioBased)
+                    .unwrap_or(Sampler::AlwaysOn),
+            )
+            .with_span_processor(batch_span_processor)
+            .with_resource(
+                opentelemetry_sdk::Resource::builder()
+                    .with_service_name(cfg.opentelemetry_service_name.clone())
+                    .with_attribute(opentelemetry::KeyValue::new(
+                        "instance_id",
+                        INSTANCE_ID.as_str(),
+                    ))
+                    .with_attribute(opentelemetry::KeyValue::new(
+                        "service.version",
+                        option_env!("GITHUB_SHA").unwrap_or("unknown"),
+                    ))
+                    .build(),
+            )
+            .build();
+
+        // Based on the private `build_batch_with_exporter` method from opentelemetry-otlp
+        let layer = tracing_opentelemetry::layer().with_tracer(
+            provider.tracer_with_scope(
+                InstrumentationScope::builder("opentelemetry-otlp")
+                    .with_schema_url(opentelemetry_semantic_conventions::SCHEMA_URL)
+                    .build(),
+            ),
+        );
+
+        _ = opentelemetry::global::set_tracer_provider(provider.clone());
+        (layer, provider)
     });
+
+    let (otel_layer, otel_tracer_provider) = mapped.unzip();
 
     // Then create a subscriber with an additional layer printing to stdout.
     // This additional layer is either formatted normally or in JSON format.
@@ -236,37 +264,61 @@ pub fn setup_tracing(cfg: &ConfigurationInner, for_test: bool) -> tracing::Dispa
         }
     };
 
-    tracing_subscriber::Registry::default()
-        .with(otel_layer)
+    let dispatch = tracing_subscriber::Registry::default()
         .with(stdout_layer)
+        .with(otel_layer)
         .with(tracing_subscriber::EnvFilter::new(filter_directives))
-        .into()
+        .into();
+
+    (dispatch, otel_tracer_provider)
 }
 
-pub fn setup_metrics(cfg: &ConfigurationInner) -> Option<SdkMeterProvider> {
-    cfg.opentelemetry_address.as_ref().map(|addr| {
-        let exporter = opentelemetry_otlp::new_exporter()
-            .tonic()
-            .with_endpoint(addr);
+pub fn setup_metrics(cfg: &ConfigurationInner) {
+    if let Some(addr) = &cfg.opentelemetry_address {
+        let exporter = if cfg.opentelemetry_metrics_use_http {
+            tracing::debug!("sending http otel metrics to {addr}");
 
-        opentelemetry_otlp::new_pipeline()
-            .metrics(Tokio)
-            .with_delta_temporality()
-            .with_exporter(exporter)
-            .with_resource(opentelemetry_sdk::Resource::new(vec![
-                opentelemetry::KeyValue::new(
-                    "service.name",
-                    cfg.opentelemetry_service_name.clone(),
-                ),
-                opentelemetry::KeyValue::new("instance_id", INSTANCE_ID.to_owned()),
-                opentelemetry::KeyValue::new(
-                    "service.version",
-                    option_env!("GITHUB_SHA").unwrap_or("unknown"),
-                ),
-            ]))
-            .build()
-            .unwrap()
-    })
+            opentelemetry_otlp::MetricExporter::builder()
+                .with_http()
+                .with_endpoint(addr)
+                .build()
+                .unwrap()
+        } else {
+            tracing::debug!("sending grpc otel metrics to {addr}");
+
+            opentelemetry_otlp::MetricExporter::builder()
+                .with_tonic()
+                .with_endpoint(addr)
+                .with_temporality(opentelemetry_sdk::metrics::Temporality::Delta)
+                .build()
+                .unwrap()
+        };
+
+        let reader = PeriodicReader::builder(exporter, runtime::Tokio)
+            .with_interval(Duration::from_secs(
+                cfg.opentelemetry_metrics_period_seconds,
+            ))
+            .build();
+
+        let provider = SdkMeterProvider::builder()
+            .with_reader(reader)
+            .with_resource(
+                opentelemetry_sdk::Resource::builder()
+                    .with_service_name(cfg.opentelemetry_service_name.clone())
+                    .with_attribute(opentelemetry::KeyValue::new(
+                        "instance_id",
+                        INSTANCE_ID.as_str(),
+                    ))
+                    .with_attribute(opentelemetry::KeyValue::new(
+                        "service.version",
+                        option_env!("GITHUB_SHA").unwrap_or("unknown"),
+                    ))
+                    .build(),
+            )
+            .build();
+
+        opentelemetry::global::set_meter_provider(provider);
+    };
 }
 
 pub fn setup_tracing_for_tests() {
