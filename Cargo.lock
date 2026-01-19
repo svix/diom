@@ -620,13 +620,11 @@ dependencies = [
  "axum-extra",
  "base64",
  "bytes",
- "clap",
  "config",
  "coyote-derive",
  "crossbeam",
  "crossbeam-skiplist",
  "ctor",
- "dotenvy",
  "fjall",
  "hex",
  "http",
@@ -642,7 +640,6 @@ dependencies = [
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
  "regex",
- "reqwest 0.13.1",
  "schemars",
  "serde",
  "serde_json",
@@ -666,6 +663,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "coyote-node"
+version = "1.76.1"
+dependencies = [
+ "aide",
+ "anyhow",
+ "clap",
+ "coyote",
+ "dotenvy",
+ "reqwest 0.13.1",
+ "serde_json",
+ "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -2740,9 +2752,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-pki-types"
-version = "1.13.3"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4910321ebe4151be888e35fe062169554e74aad01beafed60410131420ceffbc"
+checksum = "be040f8b0a225e40375822a563fa9524378b9d63112f53e19ffff34df5d33fdd"
 dependencies = [
  "web-time",
  "zeroize",
@@ -2777,9 +2789,9 @@ checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
 
 [[package]]
 name = "rustls-webpki"
-version = "0.103.8"
+version = "0.103.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ffdfa2f5286e2247234e03f680868ac2815974dc39e00ea15adc445d0aafe52"
+checksum = "d7df23109aa6c1567d1c575b9952556388da57401e4ace1d15f79eedad0d8f53"
 dependencies = [
  "aws-lc-rs",
  "ring",
