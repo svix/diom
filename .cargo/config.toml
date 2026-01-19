@@ -1,0 +1,6 @@
+# We use this instead of 'build' so that these get
+# concatenated with the rustflags from other .cargo/config.toml files,
+# instead of having one overwrite the other
+# See https://github.com/rust-lang/cargo/issues/5376#issuecomment-2163350032
+[target.'cfg(true)']
+rustflags = ["--cfg", "tokio_unstable"]

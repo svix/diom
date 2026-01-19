@@ -51,7 +51,7 @@ serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value
 serde_path_to_error = "0.1.7"
 syn = "2.0.48"
 time = { version = "0.3.9", features = [ "std" ] }
-tokio = { version = "1.24.2", features = ["full"] }
+tokio = { version = "1.24.2", features = ["rt", "signal"] }
 tokio-util = "0.7"
 tower = "0.5.1"
 tower-http = { version = "0.6.1", features = ["trace", "cors", "normalize-path", "request-id"] }
@@ -67,6 +67,8 @@ validator = { version = "0.20.0", features = ["derive"] }
 unsafe_code = "deny"
 rust_2018_idioms = { level = "warn", priority = -1 }
 trivial_numeric_casts = "warn"
+# emitted by #[tokio::main(flavor = "local")]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(tokio_unstable)"] }
 unreachable_pub = "warn"
 
 [workspace.lints.clippy]
