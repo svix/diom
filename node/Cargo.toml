@@ -1,0 +1,24 @@
+[package]
+name = "diom-node"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+
+[[bin]]
+name = "diom"
+path = "src/main.rs"
+doctest = false
+
+[dependencies]
+aide.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+diom.workspace = true
+dotenvy.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true

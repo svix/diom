@@ -2,8 +2,9 @@
 name = "diom-derive"
 publish = false
 version.workspace = true
-edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
+edition = "2021"
 
 [lib]
 proc-macro = true
