@@ -5,7 +5,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 # bump .github/workflows/server-ci.yml when changing this
-rust-version = "1.85"
+rust-version = "1.91"
 
 [package.metadata.cargo-machete]
 ignored = [
@@ -32,6 +32,7 @@ coyote-derive.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 dotenvy.workspace = true
+fjall.workspace = true
 hex.workspace = true
 http.workspace = true
 hyper.workspace = true
