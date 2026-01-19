@@ -644,6 +644,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_path_to_error",
+ "test-utils",
  "tokio",
  "tokio-util",
  "tower",
@@ -3187,6 +3188,20 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "test-utils"
+version = "1.76.1"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "http",
+ "http-body-util",
+ "reqwest 0.13.1",
+ "serde",
+ "serde_json",
+ "url",
 ]
 
 [[package]]
