@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 use crate::error::Result;
-use aide::axum::{routing::get, ApiRouter};
+use aide::axum::{ApiRouter, routing::get};
 use axum::Json;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{v1::utils::openapi_tag, AppState};
+use crate::{AppState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PingOut {

@@ -6,7 +6,7 @@ use std::{ops::Deref, sync::LazyLock};
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
-use schemars::{json_schema, Schema};
+use schemars::{Schema, json_schema};
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
 
@@ -175,8 +175,8 @@ macro_rules! common_jsonschema_impl {
                 stringify!($name_id).into()
             }
 
-            fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-                let mut schema = String::json_schema(gen);
+            fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+                let mut schema = String::json_schema(generator);
 
                 if let Some(obj) = schema.as_object_mut() {
                     // This is just to help with type hints when the macro is expanded.

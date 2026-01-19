@@ -23,9 +23,9 @@ use std::sync::{Arc, RwLock};
 use validator::Validate;
 
 use crate::{
+    AppState,
     core::types::EntityKey,
     error::{Error, HttpError, Result},
-    AppState,
 };
 
 #[derive(Clone)]

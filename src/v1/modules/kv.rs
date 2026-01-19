@@ -38,9 +38,9 @@ use std::{
 use validator::Validate;
 
 use crate::{
+    AppState,
     core::types::EntityKey,
     error::{Error, HttpError, Result},
-    AppState,
 };
 
 struct KvStoreState {

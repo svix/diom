@@ -1,23 +1,23 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{routing::post_with, ApiRouter};
-use axum::{extract::State, Json};
+use aide::axum::{ApiRouter, routing::post_with};
+use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::{
+    AppState,
     core::types::EntityKey,
     error::Result,
-    v1::utils::{openapi_tag, ValidatedJson},
-    AppState,
+    v1::utils::{ValidatedJson, openapi_tag},
 };
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::rate_limiter::worker;
 pub use crate::v1::modules::rate_limiter::RateLimiterStore;
+pub use crate::v1::modules::rate_limiter::worker;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimiterConfig {
