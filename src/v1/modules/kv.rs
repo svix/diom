@@ -112,10 +112,10 @@ impl KvStore {
         // First, check if the key exists and is not expired
         {
             let state = self.state.read().unwrap();
-            if let Some(model) = state.store.get(key) {
-                if model.expires_at > now {
-                    return Ok(model.clone());
-                }
+            if let Some(model) = state.store.get(key)
+                && model.expires_at > now
+            {
+                return Ok(model.clone());
             }
         }
 
@@ -123,10 +123,10 @@ impl KvStore {
         // If expired, remove it
         {
             let mut state = self.state.write().unwrap();
-            if let Some(model) = state.store.get(key) {
-                if model.expires_at <= now {
-                    state.store.remove(key);
-                }
+            if let Some(model) = state.store.get(key)
+                && model.expires_at <= now
+            {
+                state.store.remove(key);
             }
         }
 
@@ -173,13 +173,13 @@ pub async fn worker(state: AppState) -> Result<()> {
                 .peek()
                 .is_some_and(|x| x.expired(Timestamp::now()))
             {
-                if let Some(expiry_item) = kv_state.expiry.pop() {
-                    if let Some(value) = kv_state.store.get(&expiry_item.key) {
-                        // If the expiry is the same or older than what we expect, we should expire the item.
-                        if value.expires_at <= expiry_item.expires_at {
-                            kv_state.store.remove(&expiry_item.key);
-                        }
-                    }
+                if let Some(expiry_item) = kv_state.expiry.pop()
+                    && let Some(value) = kv_state.store.get(&expiry_item.key)
+                    && value.expires_at <= expiry_item.expires_at
+                {
+                    // If the expiry is the same or older than what we expect,
+                    // we should expire the item.
+                    kv_state.store.remove(&expiry_item.key);
                 }
             }
         }
