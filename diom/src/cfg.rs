@@ -3,11 +3,7 @@
 
 use std::{fmt, net::SocketAddr, sync::Arc};
 
-use anyhow::{bail, Context};
-use figment::{
-    providers::{Env, Format, Toml},
-    Figment,
-};
+use anyhow::Context;
 use serde::Deserialize;
 use tracing::Level;
 
@@ -159,25 +155,16 @@ impl fmt::Display for LogLevel {
     }
 }
 
-/// Try to extract a [`ConfigurationInner`] from the provided [`Figment`]. Any error message should
-/// indicate the missing required field(s).
-fn try_extract(figment: Figment) -> anyhow::Result<ConfigurationInner> {
-    // Explicitly override error if `jwt_secret` is not set, as the default error does not mention
-    // the field name due it coming from an inlined field `ConfigurationInner::jwt_signing_config`
-    // See: <https://github.com/SergioBenitez/Figment/issues/80>
-    if !figment.contains("jwt_secret") {
-        bail!("missing field `jwt_secret`");
-    }
-
-    Ok(figment.extract()?)
-}
-
 pub fn load() -> anyhow::Result<Arc<ConfigurationInner>> {
-    let merged = Figment::new()
-        .merge(Toml::string(DEFAULTS))
-        .merge(Toml::file("config.toml"))
-        .merge(Env::prefixed("DIOM_"));
+    let config = config::Config::builder()
+        .add_source(config::File::from_str(DEFAULTS, config::FileFormat::Toml))
+        .add_source(config::File::with_name("config.toml"))
+        .add_source(config::Environment::with_prefix("DIOM"))
+        .build()?;
 
-    let config = try_extract(merged).context("failed to extract configuration")?;
+    let config = config
+        .try_deserialize::<ConfigurationInner>()
+        .context("failed to extract configuration")?;
+
     Ok(Arc::from(config))
 }
