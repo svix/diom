@@ -32,7 +32,7 @@ enum Commands {
 
 #[tokio::main(flavor = "local")]
 async fn main() -> anyhow::Result<()> {
-    dotenv().ok();
+    _ = dotenv();
 
     let args = Args::parse();
 
