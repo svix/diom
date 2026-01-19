@@ -18,6 +18,9 @@ pub struct ConfigurationInner {
     /// The address to listen on
     pub listen_address: SocketAddr,
 
+    /// The directory for on-disk storage.
+    pub db_directory: String,
+
     /// Contains the secret and algorithm for signing JWTs
     #[serde(flatten)]
     pub jwt_signing_config: Arc<JwtSigningConfig>,

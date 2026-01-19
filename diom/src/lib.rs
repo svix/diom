@@ -7,6 +7,7 @@ use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
+use fjall::Database;
 use opentelemetry::{trace::TracerProvider as _, InstrumentationScope};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -90,6 +91,8 @@ pub async fn run(cfg: Configuration) {
 #[derive(Clone)]
 pub struct AppState {
     cfg: Configuration,
+    #[allow(unused)]
+    db: Database,
     // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
     kv_store: crate::v1::modules::kv::KvStore,
     cache_store: crate::v1::modules::cache::CacheStore,
@@ -107,9 +110,12 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
+    let db = Database::builder(&cfg.db_directory).open().unwrap();
+
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
+        db,
         kv_store: crate::v1::modules::kv::KvStore::new(),
         cache_store: crate::v1::modules::cache::CacheStore::new(),
         rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore::new(),
