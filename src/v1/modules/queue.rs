@@ -52,8 +52,8 @@ use std::{cmp::Ordering, time::Duration};
 use uuid::Uuid;
 
 use crate::{
-    error::{Error, HttpError, Result},
     AppState,
+    error::{Error, HttpError, Result},
 };
 
 // ============================================================================

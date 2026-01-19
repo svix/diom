@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use aide::axum::{routing::post_with, ApiRouter};
-use axum::{extract::State, Json};
+use aide::axum::{ApiRouter, routing::post_with};
+use axum::{Json, extract::State};
 use diom_derive::aide_annotate;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -9,10 +9,10 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::{
+    AppState,
     core::types::EntityKey,
     error::Result,
-    v1::utils::{openapi_tag, ValidatedJson},
-    AppState,
+    v1::utils::{ValidatedJson, openapi_tag},
 };
 
 // Re-export types that are used in AppState

@@ -39,8 +39,8 @@ use std::sync::{Arc, RwLock};
 use uuid::Uuid;
 
 use crate::{
-    error::{Error, HttpError, Result},
     AppState,
+    error::{Error, HttpError, Result},
 };
 
 // ============================================================================

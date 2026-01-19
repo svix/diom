@@ -10,21 +10,21 @@ use std::{
 };
 
 use aide::{
+    OperationInput, OperationIo, OperationOutput,
     openapi::StatusCode as OpenApiStatusCode,
     transform::{TransformOperation, TransformPathItem},
-    OperationInput, OperationIo, OperationOutput,
 };
 use axum::{
     extract::{
-        rejection::{BytesRejection, FailedToBufferBody},
         FromRequest, FromRequestParts, Query, Request,
+        rejection::{BytesRejection, FailedToBufferBody},
     },
     response::IntoResponse,
 };
 use http::request::Parts;
 use regex::Regex;
 use schemars::JsonSchema;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use validator::{Validate, ValidationError};
 
 use crate::error::{Error, HttpError, Result, ValidationErrorItem};
@@ -96,11 +96,7 @@ impl Validate for PaginationLimit {
             );
         }
 
-        if errs.is_empty() {
-            Ok(())
-        } else {
-            Err(errs)
-        }
+        if errs.is_empty() { Ok(()) } else { Err(errs) }
     }
 }
 
@@ -152,8 +148,8 @@ impl<T: Validate + JsonSchema> JsonSchema for ReversibleIterator<T> {
         format!("ReversibleIterator_{}", T::schema_name()).into()
     }
 
-    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        T::json_schema(gen)
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        T::json_schema(generator)
     }
 
     fn inline_schema() -> bool {
@@ -241,7 +237,7 @@ impl<T: JsonSchema> JsonSchema for ListResponse<T> {
         format!("ListResponse_{data_type_name}_").into()
     }
 
-    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
         fn example_iterator() -> &'static str {
             "iterator"
         }
@@ -264,7 +260,7 @@ impl<T: JsonSchema> JsonSchema for ListResponse<T> {
             pub done: bool,
         }
 
-        ListResponse::<T>::json_schema(gen)
+        ListResponse::<T>::json_schema(generator)
     }
 }
 

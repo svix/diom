@@ -8,14 +8,14 @@ use std::{sync::LazyLock, time::Duration};
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
 use fjall::Database;
-use opentelemetry::{trace::TracerProvider as _, InstrumentationScope};
+use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
-    metrics::{periodic_reader_with_async_runtime::PeriodicReader, SdkMeterProvider},
+    metrics::{SdkMeterProvider, periodic_reader_with_async_runtime::PeriodicReader},
     runtime,
     trace::{
-        span_processor_with_async_runtime::BatchSpanProcessor, BatchConfigBuilder, Sampler,
-        SdkTracerProvider,
+        BatchConfigBuilder, Sampler, SdkTracerProvider,
+        span_processor_with_async_runtime::BatchSpanProcessor,
     },
 };
 use tokio::net::TcpListener;
@@ -24,7 +24,7 @@ use tower_http::{
     cors::{AllowHeaders, Any, CorsLayer},
     normalize_path::NormalizePath,
 };
-use tracing_subscriber::{layer::SubscriberExt as _, Layer as _};
+use tracing_subscriber::{Layer as _, layer::SubscriberExt as _};
 use uuid::Uuid;
 
 use crate::cfg::Configuration;

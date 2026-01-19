@@ -186,8 +186,8 @@ impl<T: JsonSchema> JsonSchema for UnrequiredField<T> {
         format!("Unrequired_{}", T::schema_name()).into()
     }
 
-    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        gen.subschema_for::<T>()
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        generator.subschema_for::<T>()
     }
 }
 
@@ -200,8 +200,8 @@ impl<T: JsonSchema> JsonSchema for UnrequiredNullableField<T> {
         format!("UnrequiredNullable_{}", T::schema_name()).into()
     }
 
-    fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        gen.subschema_for::<Option<T>>()
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        generator.subschema_for::<Option<T>>()
     }
 }
 

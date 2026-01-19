@@ -42,7 +42,7 @@ use jiff::Timestamp;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use crate::{error::Result, AppState};
+use crate::{AppState, error::Result};
 
 // ============================================================================
 // Token Bucket Rate Limiter

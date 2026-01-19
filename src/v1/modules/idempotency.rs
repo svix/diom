@@ -16,8 +16,8 @@ use std::sync::{Arc, RwLock};
 use jiff::Timestamp;
 
 use crate::{
-    error::{Error, HttpError, Result},
     AppState,
+    error::{Error, HttpError, Result},
 };
 
 /// Get current time in milliseconds since Unix epoch
