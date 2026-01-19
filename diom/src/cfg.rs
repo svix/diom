@@ -7,7 +7,7 @@ use anyhow::Context;
 use serde::Deserialize;
 use tracing::Level;
 
-use crate::{core::security::JwtSigningConfig, error::Result};
+use crate::core::security::JwtSigningConfig;
 
 const DEFAULTS: &str = include_str!("../config.default.toml");
 
@@ -45,10 +45,6 @@ pub struct ConfigurationInner {
     /// The environment (dev, staging, or prod) that the server is running in.
     pub environment: Environment,
 
-    /// Optional configuration for sending webhooks through a proxy.
-    #[serde(flatten)]
-    pub proxy_config: Option<ProxyConfig>,
-
     #[serde(flatten)]
     pub internal: InternalConfig,
 }
@@ -56,53 +52,6 @@ pub struct ConfigurationInner {
 const fn default_opentelemetry_metrics_period() -> u64 {
     60
 }
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct ProxyConfig {
-    /// Proxy address.
-    ///
-    /// Currently supported proxy types are:
-    /// - `socks5://`, i.e. a SOCKS5 proxy, with domain name resolution being
-    ///   done before the proxy gets involved
-    /// - `http://` or `https://` proxy, sending HTTP requests to the proxy;
-    ///   both HTTP and HTTPS targets are supported
-    #[serde(rename = "proxy_addr")]
-    pub addr: ProxyAddr,
-}
-
-#[derive(Clone, Debug)]
-pub enum ProxyAddr {
-    /// A SOCKS5 proxy.
-    Socks5(http::Uri),
-    /// An HTTP / HTTPs proxy.
-    Http(http::Uri),
-}
-
-impl ProxyAddr {
-    pub fn new(raw: impl Into<String>) -> Result<Self, Box<dyn std::error::Error>> {
-        let raw = raw.into();
-        let parsed: http::Uri = raw.parse()?;
-        match parsed.scheme_str().unwrap_or("") {
-            "socks5" => Ok(Self::Socks5(parsed)),
-            "http" | "https" => Ok(Self::Http(parsed)),
-            _ => Err("Unsupported proxy scheme. \
-                Supported schemes are `socks5://`, `http://` and `https://`."
-                .into()),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for ProxyAddr {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let raw = String::deserialize(deserializer)?;
-        Self::new(raw).map_err(serde::de::Error::custom)
-    }
-}
-
-impl ConfigurationInner {}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct InternalConfig {}
