@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
+// SPDX-FileCopyrightText: © 2022 Diom Authors
 // SPDX-License-Identifier: MIT
 
 use std::{error, fmt, panic::Location};
@@ -14,10 +14,10 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use serde_json::json;
 
-/// A short-hand version of a [`std::result::Result`] that defaults to Svix'es [Error].
+/// A short-hand version of a [`std::result::Result`] that defaults to Diom'es [Error].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-/// The error type returned from the Svix API
+/// The error type returned from the Diom API
 #[derive(Debug)]
 pub struct Error {
     // the file name and line number of the error. Used for debugging non Http errors
