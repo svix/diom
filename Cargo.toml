@@ -23,6 +23,7 @@ generate_openapi_spec = []
 aide.workspace = true
 anyhow.workspace = true
 axum.workspace = true
+chrono.workspace = true
 axum-extra.workspace = true
 base64.workspace = true
 bytes.workspace = true
@@ -32,6 +33,7 @@ diom-error.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 fjall.workspace = true
+format-bytes = "0.3.0"
 hex.workspace = true
 http.workspace = true
 hyper.workspace = true
@@ -46,6 +48,7 @@ opentelemetry-otlp.workspace = true
 opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
 regex.workspace = true
+rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -64,6 +67,7 @@ validator.workspace = true
 [dev-dependencies]
 assert_matches.workspace = true
 ctor.workspace = true
+tempfile.workspace = true
 test-utils.workspace = true
 
 [lints]
@@ -80,13 +84,19 @@ version = "1.76.1"
 rust-version = "1.91"
 
 [workspace.dependencies]
-aide = { version = "=0.16.0-alpha.2", features = ["axum", "axum-json", "axum-query", "macros"] }
+aide = { version = "=0.16.0-alpha.2", features = [
+    "axum",
+    "axum-json",
+    "axum-query",
+    "macros",
+] }
 anyhow = "1.0.56"
 assert_matches = "1.5.0"
 axum = "0.8.8"
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
 base64 = "0.22"
 bytes = "1.1.0"
+chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
 config = { version = "0.15.19", default-features = false, features = ["toml"] }
 diom.path = "."
@@ -112,24 +122,55 @@ jwt-simple = "0.12"
 num_enum = "0.7.2"
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"
-opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto", "reqwest-client"] }
-opentelemetry-proto = { version = "0.31.0", default-features = false, features = ["internal-logs", "gen-tonic", "trace", "with-serde"] }
+opentelemetry-otlp = { version = "0.31.0", default-features = false, features = [
+    "internal-logs",
+    "metrics",
+    "grpc-tonic",
+    "http-proto",
+    "reqwest-client",
+] }
+opentelemetry-proto = { version = "0.31.0", default-features = false, features = [
+    "internal-logs",
+    "gen-tonic",
+    "trace",
+    "with-serde",
+] }
 opentelemetry-semantic-conventions = "0.31.0"
-opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
+opentelemetry_sdk = { version = "0.31.0", features = [
+    "metrics",
+    "rt-tokio",
+    "rt-tokio-current-thread",
+    "experimental_metrics_periodicreader_with_async_runtime",
+    "experimental_trace_batch_span_processor_with_async_runtime",
+] }
 proc-macro2 = "1.0.78"
 quote = "1.0.15"
 regex = "1.5.5"
-reqwest = { version = "0.13.1", default-features = false, features = ["json", "rustls", "hickory-dns"] }
+reqwest = { version = "0.13.1", default-features = false, features = [
+    "json",
+    "rustls",
+    "hickory-dns",
+] }
+rmp-serde = "1.3"
 schemars = { version = "1.2.0", features = ["jiff02"] }
 serde = { version = "1.0.184", features = ["derive", "rc"] }
-serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value"] }
+serde_json = { version = "1.0.74", features = [
+    "arbitrary_precision",
+    "raw_value",
+] }
 serde_path_to_error = "0.1.7"
 syn = "2.0.48"
+tempfile = "3"
 test-utils.path = "crates/test-utils"
 tokio = { version = "1.24.2", features = ["rt", "signal"] }
 tokio-util = "0.7"
 tower = "0.5.1"
-tower-http = { version = "0.6.1", features = ["trace", "cors", "normalize-path", "request-id"] }
+tower-http = { version = "0.6.1", features = [
+    "trace",
+    "cors",
+    "normalize-path",
+    "request-id",
+] }
 tracing = "0.1.35"
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
