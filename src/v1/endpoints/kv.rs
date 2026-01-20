@@ -15,13 +15,13 @@ use crate::{
     core::types::EntityKey,
     error::Result,
     v1::{
-        modules::kv::{Kv2Model, OperationBehavior},
+        modules::kv::{KvModel, OperationBehavior},
         utils::{ValidatedJson, openapi_tag},
     },
 };
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::kv::Kv2Store as KvStoreType;
+pub use crate::v1::modules::kv::KvStore as KvStoreType;
 pub use crate::v1::modules::kv::worker;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -42,10 +42,10 @@ pub struct KvSetIn {
 }
 
 impl KvSetIn {
-    fn into_model(self) -> Kv2Model {
+    fn into_model(self) -> KvModel {
         let expires_at = Timestamp::now() + Duration::from_millis(self.expire_in);
 
-        Kv2Model {
+        KvModel {
             expires_at: Some(expires_at),
             value: self.value,
         }
@@ -73,7 +73,7 @@ pub struct KvGetOut {
 }
 
 impl KvGetOut {
-    fn from_model(key: EntityKey, model: Kv2Model) -> Self {
+    fn from_model(key: EntityKey, model: KvModel) -> Self {
         Self {
             key: Arc::new(key),
             expires_at: model.expires_at,

@@ -10,12 +10,12 @@ use crate::{
     AppState,
     core::types::EntityKey,
     error::Result,
-    v1::modules::kv::{Kv2Model, Kv2Store, OperationBehavior},
+    v1::modules::kv::{KvModel, KvStore, OperationBehavior},
 };
 
 #[derive(Clone)]
 pub struct CacheStore {
-    pub(crate) kv: Kv2Store,
+    pub(crate) kv: KvStore,
     pub(crate) lru_clock: HashMap<EntityKey, u64>,
     // TBD: LFU
 }
@@ -23,7 +23,7 @@ pub struct CacheStore {
 const MAX_LRU_CLOCK_SIZE: usize = 128;
 
 impl CacheStore {
-    pub fn new(kv: Kv2Store) -> Self {
+    pub fn new(kv: KvStore) -> Self {
         Self {
             kv,
             lru_clock: HashMap::new(),
@@ -31,17 +31,21 @@ impl CacheStore {
     }
 
     pub fn set(&mut self, key: EntityKey, model: CacheModel) -> Result<()> {
-        self.lru_clock.get_mut(&key).map(|c| *c += 1);
+        if let Some(c) = self.lru_clock.get_mut(&key) {
+            *c += 1;
+        }
         self.kv.set(&key, &model.into(), OperationBehavior::Upsert)
     }
 
     pub fn get(&mut self, key: &EntityKey) -> Result<Option<CacheModel>> {
-        self.lru_clock.get_mut(&key).map(|c| *c += 1);
+        if let Some(c) = self.lru_clock.get_mut(key) {
+            *c += 1;
+        }
         self.kv.get(&key.0).map(|m| m.map(Into::into))
     }
 
     pub fn delete(&mut self, key: &EntityKey) -> Result<()> {
-        self.lru_clock.remove(&key);
+        self.lru_clock.remove(key);
         self.kv.delete(&key.0)
     }
 
@@ -50,14 +54,14 @@ impl CacheStore {
 
         // Take a random sample of the KV store to count access counts
         // bug: iter is always sorted - we want to take a random sample
-        for (_, kv) in self.kv.iter().take(MAX_LRU_CLOCK_SIZE).enumerate() {
+        for kv in self.kv.iter().take(MAX_LRU_CLOCK_SIZE) {
             let key = EntityKey(
                 // WTF
                 std::str::from_utf8(kv.key().unwrap().as_ref())
                     .unwrap()
                     .to_string(),
             );
-            self.lru_clock.insert(key.into(), 0);
+            self.lru_clock.insert(key, 0);
         }
 
         Ok(())
@@ -85,7 +89,7 @@ pub async fn worker(mut state: AppState) -> Result<()> {
             break;
         }
 
-        // TBD: this isn't very smart, it could do batch removes and be based on the size of the elements.
+        // XXX: this is very basic...  we could do batch removes and be based on the size of the elements.
         if state.cache_store.kv.total_size() > MAX_CAPACITY {
             let _ = state.cache_store.reset_lru_clock();
             let _ = state.cache_store.evict_lru(1);
@@ -104,17 +108,17 @@ pub struct CacheModel {
     pub value: Vec<u8>,
 }
 
-impl From<CacheModel> for Kv2Model {
+impl From<CacheModel> for KvModel {
     fn from(model: CacheModel) -> Self {
-        Kv2Model {
+        KvModel {
             value: model.value,
             expires_at: model.expires_at,
         }
     }
 }
 
-impl From<Kv2Model> for CacheModel {
-    fn from(model: Kv2Model) -> Self {
+impl From<KvModel> for CacheModel {
+    fn from(model: KvModel) -> Self {
         CacheModel {
             value: model.value,
             expires_at: model.expires_at,
@@ -128,7 +132,7 @@ mod tests {
 
     #[test]
     fn test_lru_eviction() {
-        let mut cache = CacheStore::new(Kv2Store::new_temporary("test_lru"));
+        let mut cache = CacheStore::new(KvStore::new_temporary("test_lru"));
 
         // Insert 3 entries
         for i in 0..3 {

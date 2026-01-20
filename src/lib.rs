@@ -94,7 +94,7 @@ pub struct AppState {
     #[allow(unused)]
     db: Database,
     // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
-    kv_store: crate::v1::modules::kv::Kv2Store,
+    kv_store: crate::v1::modules::kv::KvStore,
     cache_store: crate::v1::modules::cache::CacheStore,
     rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
     idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
@@ -116,9 +116,9 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let app_state = AppState {
         cfg: cfg.clone(),
         db,
-        kv_store: crate::v1::modules::kv::Kv2Store::default(),
+        kv_store: crate::v1::modules::kv::KvStore::default(),
         cache_store: crate::v1::modules::cache::CacheStore::new(
-            crate::v1::modules::kv::Kv2Store::new("cache_store"),
+            crate::v1::modules::kv::KvStore::new("cache_store"),
         ),
         rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(),
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
@@ -159,9 +159,9 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
-            // tokio::spawn(v1::modules::cache::worker(app_state.clone())),
+            tokio::spawn(v1::modules::cache::worker(app_state.clone())),
             tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
-            // tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
+            tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
             tokio::spawn(v1::modules::queue::worker(app_state.clone())),
             tokio::spawn(v1::modules::stream::worker(app_state.clone())),
         );

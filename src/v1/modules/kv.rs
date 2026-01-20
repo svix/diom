@@ -10,12 +10,12 @@ use serde::{Deserialize, Serialize};
 use crate::core::types::EntityKey;
 use crate::{AppState, error::Result};
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Kv2Model {
+pub struct KvModel {
     pub expires_at: Option<Timestamp>,
     pub value: Vec<u8>,
 }
 
-impl Kv2Model {
+impl KvModel {
     fn data_key(key: &str) -> fjall::Slice {
         key.as_bytes().into()
     }
@@ -23,27 +23,27 @@ impl Kv2Model {
     fn expiration_key(key: &String, timestamp: Timestamp) -> Slice {
         format_bytes!(
             b"{}\0{}",
-            timestamp.as_millisecond().to_string().as_bytes(),
+            &timestamp.as_millisecond().to_be_bytes(),
             key.as_bytes(),
         )
         .into()
     }
 }
 
-impl From<&Kv2Model> for Vec<u8> {
-    fn from(val: &Kv2Model) -> Self {
+impl From<&KvModel> for Vec<u8> {
+    fn from(val: &KvModel) -> Self {
         rmp_serde::to_vec(&val).expect("should serialize")
     }
 }
 
-impl From<(UserKey, UserValue)> for Kv2Model {
+impl From<(UserKey, UserValue)> for KvModel {
     fn from((_key, value): (UserKey, UserValue)) -> Self {
         rmp_serde::from_slice(&value).expect("should deserialize")
     }
 }
 
 #[derive(Clone)]
-pub struct Kv2Store {
+pub struct KvStore {
     #[allow(unused)]
     db: OptimisticTxDatabase, // should it be SingleWriterTxDatabase?
 
@@ -64,13 +64,15 @@ pub enum OperationBehavior {
 const DIOM_KV2_DATA_KEYSPACE: &str = "DIOM_KV2_DATA";
 const DIOM_KV2_EXPIRATION_KEYSPACE: &str = "DIOM_KV2_EXPIRATION";
 
-impl Default for Kv2Store {
+impl Default for KvStore {
     fn default() -> Self {
         Self::new("default")
     }
 }
 
-impl Kv2Store {
+const EXPIRATION_BATCH_SIZE: usize = 100; // configurable?
+
+impl KvStore {
     pub fn new(namespace: &str) -> Self {
         // Should we share all the same file space and use different keyspaces or what?
         let db = OptimisticTxDatabase::builder(format!("db/kv/{namespace}"))
@@ -122,12 +124,12 @@ impl Kv2Store {
     }
 
     // TBD: needs to be passed now() from the caller?
-    pub fn get(&self, key: &str) -> Result<Option<Kv2Model>> {
+    pub fn get(&self, key: &str) -> Result<Option<KvModel>> {
         let Some(data) = self.data.get(key).map_err(crate::error::Error::generic)? else {
             return Ok(None);
         };
 
-        let model: Kv2Model = rmp_serde::from_slice(&data).expect("should deserialize");
+        let model: KvModel = rmp_serde::from_slice(&data).expect("should deserialize");
 
         if model.expires_at.is_some_and(|exp| exp < Timestamp::now()) {
             let _ = self.delete(key);
@@ -137,12 +139,7 @@ impl Kv2Store {
         Ok(Some(model))
     }
 
-    pub fn set(
-        &self,
-        key: &EntityKey,
-        model: &Kv2Model,
-        behavior: OperationBehavior,
-    ) -> Result<()> {
+    pub fn set(&self, key: &EntityKey, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
         let mut tx = self.db.write_tx().unwrap();
 
         match behavior {
@@ -151,18 +148,18 @@ impl Kv2Store {
 
                 tx.insert(
                     &self.data,
-                    Kv2Model::data_key(&key.0),
+                    KvModel::data_key(&key.0),
                     Slice::from(serialized),
                 );
                 if let Some(expires_at) = model.expires_at {
                     tx.insert(
                         &self.expiration,
-                        Kv2Model::expiration_key(&key.0, expires_at),
+                        KvModel::expiration_key(&key.0, expires_at),
                         Slice::from(key.0.as_bytes()),
                     );
                 }
 
-                tx.commit().unwrap();
+                let _ = tx.commit().unwrap();
             }
             OperationBehavior::Insert => {
                 // XXX: Not atomic bro
@@ -191,20 +188,20 @@ impl Kv2Store {
         let key_string = key.to_string();
         let mut tx = self.db.write_tx().unwrap();
         if let Some(data) = tx
-            .take(&self.data, Kv2Model::data_key(&key_string))
+            .take(&self.data, KvModel::data_key(&key_string))
             .map_err(crate::error::Error::generic)?
         {
-            let model: Kv2Model = rmp_serde::from_slice(&data).expect("should deserialize");
+            let model: KvModel = rmp_serde::from_slice(&data).expect("should deserialize");
 
             // Delete from the expiration keyspace
             if let Some(expires_at) = model.expires_at {
                 tx.remove(
                     &self.expiration,
-                    Kv2Model::expiration_key(&key_string, expires_at),
+                    KvModel::expiration_key(&key_string, expires_at),
                 );
             }
         }
-        tx.commit().unwrap();
+        let _ = tx.commit().unwrap();
         Ok(())
     }
 
@@ -219,26 +216,15 @@ impl Kv2Store {
         while let Some(item) = self.expiration.first_key_value() {
             let (exp_key, data_key) = item.into_inner().expect("should get key and value?");
 
-            // exp_key format: "{timestamp_ms}\0{original_key}"
-            let sep_pos = exp_key.iter().position(|&b| b == 0);
-            let timestamp_ms: i64 = match sep_pos {
-                Some(pos) => {
-                    let ts_str = std::str::from_utf8(&exp_key[..pos]).unwrap_or("0");
-                    ts_str.parse().unwrap_or(i64::MAX)
-                }
-                None => continue,
-            };
+            // exp_key format: "{timestamp_ms:i64 be}\0{original_key}"
+            let timestamp_ms = i64::from_be_bytes(exp_key[..8].try_into().unwrap());
 
-            if timestamp_ms < now_ms {
+            if timestamp_ms < now_ms && removed < EXPIRATION_BATCH_SIZE {
                 let original_key = std::str::from_utf8(&data_key).expect("key should be utf8");
                 let _ = self.delete(original_key);
                 removed += 1;
-
-                if removed > 100 {
-                    break;
-                }
             } else {
-                break; // sorted by timestamp, so we're done
+                break;
             }
         }
         Ok(())
@@ -275,10 +261,10 @@ mod tests {
 
     #[test]
     fn test_insert_and_get() {
-        let store = Kv2Store::new_temporary(".fjall_test_kv2");
+        let store = KvStore::new_temporary(".fjall_test_kv2");
 
         let key = EntityKey("test:key1".to_string());
-        let model = Kv2Model {
+        let model = KvModel {
             expires_at: None,
             value: b"hello world".to_vec(),
         };
@@ -296,7 +282,7 @@ mod tests {
 
     #[test]
     fn test_get_nonexistent() {
-        let store = Kv2Store::new_temporary(".fjall_test_kv2_nonexistent");
+        let store = KvStore::new_temporary(".fjall_test_kv2_nonexistent");
 
         let result = store.get("nonexistent:key").unwrap();
         assert!(result.is_none());
@@ -304,11 +290,11 @@ mod tests {
 
     #[test]
     fn test_insert_with_expiration() {
-        let store = Kv2Store::new_temporary(".fjall_test_kv2_expiry");
+        let store = KvStore::new_temporary(".fjall_test_kv2_expiry");
 
         let key = EntityKey("expiring:key".to_string());
         let expires_at = Timestamp::now().checked_add(1.hour()).unwrap();
-        let model = Kv2Model {
+        let model = KvModel {
             expires_at: Some(expires_at),
             value: b"temporary data".to_vec(),
         };
@@ -322,26 +308,26 @@ mod tests {
 
     #[test]
     fn test_multiple_inserts() {
-        let store = Kv2Store::new_temporary(".fjall_test_kv2_multi");
+        let store = KvStore::new_temporary(".fjall_test_kv2_multi");
 
         let items = vec![
             (
                 EntityKey("user:1".to_string()),
-                Kv2Model {
+                KvModel {
                     expires_at: None,
                     value: b"alice".to_vec(),
                 },
             ),
             (
                 EntityKey("user:2".to_string()),
-                Kv2Model {
+                KvModel {
                     expires_at: None,
                     value: b"bob".to_vec(),
                 },
             ),
             (
                 EntityKey("user:3".to_string()),
-                Kv2Model {
+                KvModel {
                     expires_at: None,
                     value: b"charlie".to_vec(),
                 },
@@ -362,16 +348,16 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let store = Kv2Store::new_temporary(".fjall_test_kv2_overwrite");
+        let store = KvStore::new_temporary(".fjall_test_kv2_overwrite");
 
         let key = EntityKey("overwrite:key".to_string());
-        let model1 = Kv2Model {
+        let model1 = KvModel {
             expires_at: None,
             value: b"first value".to_vec(),
         };
         store.set(&key, &model1, OperationBehavior::Upsert).unwrap();
 
-        let model2 = Kv2Model {
+        let model2 = KvModel {
             expires_at: None,
             value: b"second value".to_vec(),
         };
@@ -383,11 +369,11 @@ mod tests {
 
     #[test]
     fn test_clear_expired_removes_expired_entries() {
-        let store = Kv2Store::new_temporary(".fjall_test_kv2_clear_expired");
+        let store = KvStore::new_temporary(".fjall_test_kv2_clear_expired");
 
         // Insert an entry that's already expired (1 hour in the past)
         let expired_key = EntityKey("expired:key".to_string());
-        let expired_model = Kv2Model {
+        let expired_model = KvModel {
             expires_at: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),
             value: b"expired data".to_vec(),
         };
@@ -399,21 +385,21 @@ mod tests {
         let expired_models = [
             (
                 EntityKey("expired:key:1".to_string()),
-                Kv2Model {
+                KvModel {
                     expires_at: Some(now.checked_sub(3.hour()).unwrap()),
                     value: b"expired data 1".to_vec(),
                 },
             ),
             (
                 EntityKey("expired:key:2".to_string()),
-                Kv2Model {
+                KvModel {
                     expires_at: Some(now.checked_sub(2.hour()).unwrap()),
                     value: b"expired data 2".to_vec(),
                 },
             ),
             (
                 EntityKey("expired:key:3".to_string()),
-                Kv2Model {
+                KvModel {
                     expires_at: Some(now.checked_sub(1.second()).unwrap()), // really close to now
                     value: b"expired data 3".to_vec(),
                 },
@@ -425,7 +411,7 @@ mod tests {
         }
 
         let valid_key = EntityKey("valid:key".to_string());
-        let valid_model = Kv2Model {
+        let valid_model = KvModel {
             expires_at: Some(now.checked_add(1.hour()).unwrap()),
             value: b"valid data".to_vec(),
         };
@@ -435,7 +421,7 @@ mod tests {
 
         // Insert an entry with no expiration
         let permanent_key = EntityKey("permanent:key".to_string());
-        let permanent_model = Kv2Model {
+        let permanent_model = KvModel {
             expires_at: None,
             value: b"permanent data".to_vec(),
         };
