@@ -3,6 +3,7 @@
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
+use chrono::Duration;
 use diom_derive::aide_annotate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -12,7 +13,10 @@ use crate::{
     AppState,
     core::types::EntityKey,
     error::Result,
-    v1::utils::{ValidatedJson, openapi_tag},
+    v1::{
+        modules::rate_limiter::{RateLimitConfig, RateLimitResult, TokenBucket},
+        utils::{ValidatedJson, openapi_tag},
+    },
 };
 
 // Re-export types that are used in AppState
@@ -55,7 +59,7 @@ fn default_units() -> u64 {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimiterCheckOut {
     /// Whether the request is allowed
-    pub allowed: bool,
+    pub result: RateLimitResult,
 
     /// Number of tokens remaining
     pub remaining: u64,
@@ -88,25 +92,27 @@ pub struct RateLimiterGetRemainingOut {
 /// Rate Limiter Check and Consume
 #[aide_annotate(op_id = "v1.rate_limiter.limit")]
 async fn rate_limiter_limit(
-    State(AppState {
-        rate_limiter_store, ..
-    }): State<AppState>,
+    State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
 ) -> Result<Json<RateLimiterCheckOut>> {
     let key_str = data.key.to_string();
 
-    let (allowed, remaining, retry_after) = rate_limiter_store.limiter.check_and_consume(
-        &key_str,
-        data.units,
-        data.config.capacity,
-        data.config.refill_amount,
-        data.config.refill_interval_seconds,
-    )?;
+    let (result, remaining, retry_after) = rate_limiter
+        .limit(
+            &EntityKey(key_str),
+            data.units,
+            RateLimitConfig::TokenBucket(TokenBucket {
+                bucket_size: data.config.capacity,
+                refill_rate: data.config.refill_amount,
+                refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
+            }),
+        )
+        .map_err(|e| crate::error::Error::generic(e))?;
 
     Ok(Json(RateLimiterCheckOut {
-        allowed,
+        result,
         remaining,
-        retry_after,
+        retry_after: retry_after.map(|d| d.num_seconds() as u64),
     }))
 }
 
@@ -114,29 +120,27 @@ async fn rate_limiter_limit(
 /// Rate Limiter Get Remaining
 #[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
 async fn rate_limiter_get_remaining(
-    State(AppState {
-        rate_limiter_store, ..
-    }): State<AppState>,
+    State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
 ) -> Result<Json<RateLimiterGetRemainingOut>> {
     let key_str = data.key.to_string();
 
-    let (remaining, retry_after) = rate_limiter_store.limiter.get_remaining(
-        &key_str,
-        data.config.capacity,
-        data.config.refill_amount,
-        data.config.refill_interval_seconds,
-    )?;
+    let remaining = rate_limiter
+        .get_remaining(
+            &EntityKey(key_str),
+            RateLimitConfig::TokenBucket(TokenBucket {
+                bucket_size: data.config.capacity,
+                refill_rate: data.config.refill_amount,
+                refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
+            }),
+        )
+        .map_err(|e| crate::error::Error::generic(e))?;
 
     Ok(Json(RateLimiterGetRemainingOut {
         remaining,
-        retry_after,
+        retry_after: None, // FIXME: calculate retry after
     }))
 }
-
-// ============================================================================
-// Router
-// ============================================================================
 
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Rate Limiter");

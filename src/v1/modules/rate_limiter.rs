@@ -1,191 +1,463 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
+// Version with no dimensions.
+// Dimensions have to be handled by the user with the correct identifier and a list of rate limiters.
 
-//! # Rate Limiter Module
-//!
-//! This module implements a token bucket rate limiter with dynamic configuration.
-//!
-//! ## Data Structure Design
-//!
-//! The rate limiter uses a single DashMap to store per-key state:
-//!
-//! 1. Main Store (DashMap) - Storage for token bucket state per key (tokens, last_refill)
-//!
-//! ## Algorithm: Token Bucket
-//!
-//! Each key maintains a "bucket" of tokens that refills over time:
-//! - Capacity: Maximum number of tokens the bucket can hold
-//! - Refill: Tokens are added at a configured rate (amount per interval)
-//! - Consumption: Each request consumes a specified number of tokens
-//! - Rate Limiting: Requests are denied when insufficient tokens are available
-//!
-//! ## How It Works
-//!
-//! - Configuration: Passed with each request (capacity, refill_amount, refill_interval_seconds)
-//! - State: Only runtime state is stored (current tokens, last refill timestamp)
-//! - On Request:
-//!   - Create state if first request (starts with full capacity)
-//!   - Calculate and add refilled tokens based on elapsed time
-//!   - Check if sufficient tokens available and consume if allowed
-//! - Get Remaining: Query current token count without consuming
-//!
-//! The design keeps configuration stateless - it's provided with each API call rather than
-//! being stored or pre-configured. This allows flexible per-request configuration changes.
-//!
-//! ## TODO FIXME
-//! - Should expire the rate limiter keys when they are "full" or otherwise unused for X amount of
-//!   time. So we save on RAM.
-//! - Do we want the refill time be in milliseconds rather than seconds?
-//! - The implementation is probably stupid, haven't looked at it.
-
+use chrono::{DateTime, Duration, Utc};
+use fjall::{OptimisticTxDatabase, OptimisticTxKeyspace};
 use jiff::Timestamp;
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::{cmp::min, sync::Arc};
+use tower::retry;
 
-use crate::{AppState, error::Result};
+use crate::{AppState, core::types::EntityKey, error::Result};
 
-// ============================================================================
-// Token Bucket Rate Limiter
-// ============================================================================
+use format_bytes::format_bytes;
 
 #[derive(Clone)]
-pub struct TokenBucketRateLimiter {
-    store: Arc<RwLock<HashMap<String, TokenBucketState>>>,
+pub struct RateLimiterStore {
+    #[allow(unused)]
+    db: OptimisticTxDatabase,
+
+    token_bucket_data: OptimisticTxKeyspace,
+    fixed_window_data: OptimisticTxKeyspace,
 }
 
-#[derive(Clone, Debug)]
+const DIOM_RATE_LIMITER_TOKEN_BUCKET_DATA_KEYSPACE: &str =
+    "DIOM_RATE_LIMITER_TOKEN_BUCKET_DATA";
+const DIOM_RATE_LIMITER_FIXED_WINDOW_DATA_KEYSPACE: &str =
+    "DIOM_RATE_LIMITER_FIXED_WINDOW_DATA";
+
+impl RateLimiterStore {
+    pub fn new() -> Self {
+        Self::with_path(".data/rate_limiter_default")
+    }
+
+    pub fn with_path(path: &str) -> Self {
+        let db = fjall::OptimisticTxDatabase::builder(path).open().unwrap();
+        let token_bucket_data = db
+            .keyspace(
+                DIOM_RATE_LIMITER_TOKEN_BUCKET_DATA_KEYSPACE,
+                fjall::KeyspaceCreateOptions::default,
+            )
+            .unwrap();
+        let fixed_window_data = db
+            .keyspace(
+                DIOM_RATE_LIMITER_FIXED_WINDOW_DATA_KEYSPACE,
+                fjall::KeyspaceCreateOptions::default,
+            )
+            .unwrap();
+
+        Self {
+            db,
+            token_bucket_data,
+            fixed_window_data,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct RateLimitModel {
+    pub expires_at: Option<Timestamp>,
+    pub value: Vec<u8>,
+}
+
+pub struct FixedWindowConfig {
+    /// Window size
+    pub size: Duration,
+    /// Max tokens allowed per window
+    pub tokens: u64,
+}
+
+impl FixedWindowConfig {
+    fn get_window_start(&self, now: DateTime<Utc>) -> DateTime<Utc> {
+        let size_ms = self.size.num_milliseconds();
+        let now_ms = now.timestamp_millis();
+        let window_start_ms = (now_ms / size_ms) * size_ms;
+        DateTime::from_timestamp_millis(window_start_ms).unwrap()
+    }
+}
+
+pub struct TokenBucket {
+    /// Token refill rate in tokens per refill interval
+    pub refill_rate: u64,
+    /// Token refill interval
+    pub refill_interval: Duration,
+    /// Max tokens allowed in the bucket
+    pub bucket_size: u64,
+}
+
+impl TokenBucket {
+    fn get_new_capacity(
+        &self,
+        current: u64,
+        now: DateTime<Utc>,
+        last_refill: DateTime<Utc>,
+    ) -> u64 {
+        let mut capacity = current;
+        if last_refill < now {
+            let elapsed = now - last_refill;
+            let periods = elapsed.num_milliseconds() / self.refill_interval.num_milliseconds();
+            capacity += periods as u64 * self.refill_rate;
+        }
+        capacity.min(self.bucket_size)
+    }
+}
+
+pub enum RateLimitConfig {
+    FixedWindow(FixedWindowConfig),
+    TokenBucket(TokenBucket),
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone, JsonSchema)]
+pub enum RateLimitResult {
+    OK,
+    BLOCK,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+struct FixedWindowState {
+    count: u64,
+    window_start: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 struct TokenBucketState {
     tokens: u64,
-    last_refill: Timestamp,
+    last_refill: DateTime<Utc>,
 }
 
-impl Default for TokenBucketRateLimiter {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Clone)]
+pub struct RateLimiter {
+    store: RateLimiterStore,
+    clock: Clock,
 }
 
-impl TokenBucketRateLimiter {
+pub type Clock = Arc<dyn Fn() -> DateTime<Utc> + Send + Sync>;
+
+pub fn system_clock() -> Clock {
+    Arc::new(|| Utc::now())
+}
+
+impl RateLimiter {
     pub fn new() -> Self {
-        Self {
-            store: Arc::new(RwLock::new(HashMap::new())),
-        }
+        let store = RateLimiterStore::new();
+        Self::with_clock(store, system_clock())
     }
 
-    pub fn check_and_consume(
+    pub fn with_clock(store: RateLimiterStore, clock: Clock) -> Self {
+        RateLimiter { store, clock }
+    }
+
+    fn now(&self) -> DateTime<Utc> {
+        (self.clock)()
+    }
+
+    pub fn limit(
         &self,
-        key: &str,
-        units: u64,
-        capacity: u64,
-        refill_amount: u64,
-        refill_interval_seconds: u64,
-    ) -> Result<(bool, u64, Option<u64>)> {
-        let now = Timestamp::now();
+        identifier: &EntityKey,
+        delta: u64,
+        algorithm: RateLimitConfig,
+    ) -> fjall::Result<(RateLimitResult, u64, Option<Duration>)> {
+        let now = self.now();
+        // XXX: Unwrap
+        let mut tx = self.store.db.write_tx().unwrap();
 
-        let mut store = self.store.write().unwrap();
+        match algorithm {
+            RateLimitConfig::FixedWindow(config) => {
+                let window_start = config.get_window_start(now);
+                let max_tokens = config.tokens;
 
-        // Get or create entry with initial state
-        let entry = store
-            .entry(key.to_string())
-            .or_insert_with(|| TokenBucketState {
-                tokens: capacity,
-                last_refill: now,
-            });
+                let entry = tx
+                    .take(&self.store.fixed_window_data, identifier.as_bytes())
+                    .unwrap(); // XXX: Unwrap
+                let mut state = entry.map_or(
+                    FixedWindowState {
+                        count: 0,
+                        window_start: window_start,
+                    },
+                    |item| {
+                        let state: FixedWindowState =
+                            rmp_serde::from_slice(&item).expect("should deserialize");
+                        state
+                    },
+                );
 
-        // Refill tokens based on intervals elapsed
-        let elapsed = now.duration_since(entry.last_refill);
-        let elapsed_seconds = elapsed.as_secs().max(0) as u64;
-        let intervals_elapsed = elapsed_seconds / refill_interval_seconds;
+                if state.window_start != window_start {
+                    state.count = 0;
+                    state.window_start = window_start;
+                }
 
-        if intervals_elapsed > 0 {
-            let new_tokens = intervals_elapsed.saturating_mul(refill_amount);
-            entry.tokens = entry.tokens.saturating_add(new_tokens).min(capacity);
-            entry.last_refill = now;
-        }
+                let (remaining, result, retry_after) = if state.count + delta > max_tokens {
+                    state.count = max_tokens;
+                    (0, RateLimitResult::BLOCK, Some(config.size))
+                } else {
+                    state.count = state.count + delta;
+                    (max_tokens - state.count, RateLimitResult::OK, None)
+                };
 
-        // Check if enough tokens available
-        if entry.tokens >= units {
-            entry.tokens -= units;
-            Ok((true, entry.tokens, None))
-        } else {
-            // Calculate how long until we have enough tokens (in seconds)
-            let tokens_needed = units - entry.tokens;
-            let intervals_needed = if refill_amount > 0 {
-                tokens_needed.div_ceil(refill_amount) // Ceiling division
-            } else {
-                u64::MAX
-            };
-            let retry_after_seconds = intervals_needed.saturating_mul(refill_interval_seconds);
-            Ok((false, entry.tokens, Some(retry_after_seconds)))
+                tx.insert(
+                    &self.store.fixed_window_data,
+                    identifier.as_bytes(),
+                    rmp_serde::to_vec(&state).unwrap(),
+                );
+                tx.commit().unwrap(); // XXX: Unwrap
+
+                Ok((result, remaining, retry_after))
+            }
+
+            RateLimitConfig::TokenBucket(config) => {
+                let bucket: Option<TokenBucketState> = tx
+                    .take(&self.store.token_bucket_data, identifier.as_bytes())
+                    .unwrap() // XXX: Unwrap
+                    .map(|item| rmp_serde::from_slice(&item).expect("should deserialize"));
+
+                let mut bucket = bucket.unwrap_or(TokenBucketState {
+                    tokens: config.bucket_size,
+                    last_refill: now,
+                });
+                let capacity = config.get_new_capacity(bucket.tokens, now, bucket.last_refill);
+
+                if capacity < delta {
+                    let filled_per_millis =
+                        config.refill_rate * config.refill_interval.num_milliseconds() as u64;
+                    let retry_after = (filled_per_millis - capacity).div_ceil(delta) as i64;
+
+                    return Ok((
+                        RateLimitResult::BLOCK,
+                        capacity,
+                        Some(Duration::milliseconds(retry_after)),
+                    ));
+                }
+
+                bucket.last_refill = now;
+                bucket.tokens = capacity - delta;
+
+                tx.insert(
+                    &self.store.token_bucket_data,
+                    identifier.as_bytes(),
+                    rmp_serde::to_vec(&bucket).unwrap(),
+                );
+                tx.commit().unwrap(); // XXX: Unwrap
+
+                Ok((RateLimitResult::OK, bucket.tokens, None))
+            }
         }
     }
 
     pub fn get_remaining(
         &self,
-        key: &str,
-        capacity: u64,
-        refill_amount: u64,
-        refill_interval_seconds: u64,
-    ) -> Result<(u64, Option<u64>)> {
-        let now = Timestamp::now();
+        identifier: &EntityKey,
+        algorithm: RateLimitConfig,
+    ) -> fjall::Result<u64> {
+        let now = self.now();
+        match algorithm {
+            RateLimitConfig::FixedWindow(config) => {
+                let _window_start = config.get_window_start(now);
+                let max_tokens = config.tokens;
 
-        let store = self.store.read().unwrap();
-
-        match store.get(key) {
-            Some(entry) => {
-                // Calculate current tokens based on elapsed time and provided configuration
-                let elapsed = now.duration_since(entry.last_refill);
-                let elapsed_seconds = elapsed.as_secs().max(0) as u64;
-                let intervals_elapsed = elapsed_seconds / refill_interval_seconds;
-                let new_tokens = intervals_elapsed.saturating_mul(refill_amount);
-                let current_tokens = entry.tokens.saturating_add(new_tokens).min(capacity);
-
-                if current_tokens == 0 {
-                    // Calculate retry_after for at least 1 token (in seconds)
-                    let retry_after_seconds = refill_interval_seconds;
-                    Ok((0, Some(retry_after_seconds)))
+                let item = self
+                    .store
+                    .fixed_window_data
+                    .get(identifier.as_bytes())
+                    .unwrap(); // XXX: Unwrap
+                if let Some(item) = item {
+                    let state: FixedWindowState =
+                        rmp_serde::from_slice(&item).expect("should deserialize");
+                    Ok(max_tokens.saturating_sub(state.count))
                 } else {
-                    Ok((current_tokens, None))
+                    Ok(max_tokens)
                 }
             }
-            None => {
-                // No state exists yet, so full capacity is available
-                Ok((capacity, None))
+            RateLimitConfig::TokenBucket(config) => {
+                let bucket: Option<TokenBucketState> = self
+                    .store
+                    .token_bucket_data
+                    .get(identifier.as_bytes())
+                    .unwrap() // XXX: Unwrap
+                    .map(|item| rmp_serde::from_slice(&item).expect("should deserialize"));
+
+                match bucket {
+                    Some(bucket) => {
+                        Ok(config.get_new_capacity(bucket.tokens, now, bucket.last_refill))
+                    }
+                    None => Ok(config.bucket_size),
+                }
             }
         }
     }
-}
 
-// ============================================================================
-// Combined Rate Limiter Store
-// ============================================================================
-
-#[derive(Clone)]
-pub struct RateLimiterStore {
-    pub(crate) limiter: TokenBucketRateLimiter,
-}
-
-impl Default for RateLimiterStore {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RateLimiterStore {
-    pub fn new() -> Self {
-        Self {
-            limiter: TokenBucketRateLimiter::new(),
+    pub fn reset(
+        &mut self,
+        identifier: &EntityKey,
+        algorithm: RateLimitConfig,
+    ) -> fjall::Result<()> {
+        // let key = algorithm.entity_key(identifier);
+        match algorithm {
+            RateLimitConfig::FixedWindow(_) => {
+                self.store
+                    .fixed_window_data
+                    .remove(identifier.as_bytes())
+                    .unwrap(); // XXX: Unwrap
+            }
+            RateLimitConfig::TokenBucket(_) => {
+                self.store
+                    .token_bucket_data
+                    .remove(identifier.as_bytes())
+                    .unwrap(); // XXX: Unwrap
+            }
         }
+        Ok(())
     }
 }
 
 /// This is the worker function for this module, it does background cleanup and accounting.
-pub async fn worker(_state: AppState) -> Result<()> {
+pub async fn worker(state: AppState) -> Result<()> {
     loop {
         if crate::is_shutting_down() {
             break;
         }
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        // TODO: Implement cleanup
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Mutex;
+    use tempfile::tempdir;
+
+    struct MockClock {
+        time: Mutex<DateTime<Utc>>,
+    }
+
+    impl MockClock {
+        fn new(initial_ms: i64) -> Arc<Self> {
+            Arc::new(MockClock {
+                time: Mutex::new(DateTime::from_timestamp_millis(initial_ms).unwrap()),
+            })
+        }
+
+        fn set(&self, ms: i64) {
+            *self.time.lock().unwrap() = DateTime::from_timestamp_millis(ms).unwrap();
+        }
+
+        fn as_clock(self: &Arc<Self>) -> Clock {
+            let clock = Arc::clone(self);
+            Arc::new(move || *clock.time.lock().unwrap())
+        }
+    }
+
+    fn create_test_limiter(clock: Clock) -> (RateLimiter, tempfile::TempDir) {
+        let dir = tempdir().unwrap();
+        let store = RateLimiterStore::with_path(dir.path().to_str().unwrap());
+        let limiter = RateLimiter::with_clock(store, clock);
+        (limiter, dir)
+    }
+
+    mod fixed_window {
+        use super::*;
+
+        fn config() -> RateLimitConfig {
+            RateLimitConfig::FixedWindow(FixedWindowConfig {
+                size: Duration::seconds(1),
+                tokens: 5,
+            })
+        }
+
+        #[test]
+        fn rate_limiting() {
+            let clock = MockClock::new(0);
+            let (limiter, _dir) = create_test_limiter(clock.as_clock());
+            let id: EntityKey = "user1".to_string().into();
+
+            let (result, remaining, _) = limiter.limit(&id, 3, config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 2);
+
+            clock.set(500);
+            let (result, remaining, _) = limiter.limit(&id, 2, config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 0);
+
+            clock.set(900);
+            let (result, remaining, _) = limiter.limit(&id, 1, config()).unwrap();
+            assert!(matches!(result, RateLimitResult::BLOCK));
+            assert_eq!(remaining, 0);
+        }
+
+        #[test]
+        fn window_resets_after_interval() {
+            let clock = MockClock::new(0);
+            let (limiter, _dir) = create_test_limiter(clock.as_clock());
+            let id: EntityKey = "user1".to_string().into();
+
+            limiter.limit(&id, 5, config()).unwrap();
+            clock.set(500);
+            assert_eq!(limiter.get_remaining(&id, config()).unwrap(), 0);
+
+            // New window at t=1000
+            clock.set(1000);
+            let (result, remaining, _) = limiter.limit(&id, 1, config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 4);
+        }
+    }
+
+    mod token_bucket {
+        use super::*;
+
+        fn config() -> RateLimitConfig {
+            RateLimitConfig::TokenBucket(TokenBucket {
+                refill_rate: 1,
+                refill_interval: Duration::milliseconds(100),
+                bucket_size: 5,
+            })
+        }
+
+        fn config_refill_2() -> RateLimitConfig {
+            RateLimitConfig::TokenBucket(TokenBucket {
+                refill_rate: 2,
+                refill_interval: Duration::milliseconds(100),
+                bucket_size: 5,
+            })
+        }
+
+        #[test]
+        fn rate_limiting() {
+            let clock = MockClock::new(0);
+            let (limiter, _dir) = create_test_limiter(clock.as_clock());
+            let id: EntityKey = "user1".to_string().into();
+
+            let (result, remaining, _) = limiter.limit(&id, 3, config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 2);
+
+            let (result, remaining, _) = limiter.limit(&id, 2, config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 0);
+
+            let (result, _, _) = limiter.limit(&id, 1, config()).unwrap();
+            assert!(matches!(result, RateLimitResult::BLOCK));
+        }
+
+        #[test]
+        fn tokens_refill_over_time() {
+            let clock = MockClock::new(0);
+            let (limiter, _dir) = create_test_limiter(clock.as_clock());
+            let id: EntityKey = "user1".to_string().into();
+
+            limiter.limit(&id, 5, config_refill_2()).unwrap();
+            assert_eq!(limiter.get_remaining(&id, config_refill_2()).unwrap(), 0);
+
+            clock.set(100);
+            assert_eq!(limiter.get_remaining(&id, config_refill_2()).unwrap(), 2);
+            clock.set(300);
+            assert_eq!(limiter.get_remaining(&id, config_refill_2()).unwrap(), 5); // bucket is full
+
+            let (result, remaining, _) = limiter.limit(&id, 2, config_refill_2()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 3);
+        }
+    }
 }
