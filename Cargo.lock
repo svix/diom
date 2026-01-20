@@ -647,6 +647,8 @@ dependencies = [
  "config",
  "diom-derive",
  "diom-error",
+ "diom-kv",
+ "diom-rate-limiter",
  "crossbeam",
  "crossbeam-skiplist",
  "ctor",
@@ -709,6 +711,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "diom-kv"
+version = "1.76.1"
+dependencies = [
+ "fjall",
+ "format-bytes",
+ "jiff",
+ "rmp-serde",
+ "schemars",
+ "serde",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
 name = "diom-node"
 version = "1.76.1"
 dependencies = [
@@ -721,6 +737,18 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "diom-rate-limiter"
+version = "1.76.1"
+dependencies = [
+ "chrono",
+ "fjall",
+ "rmp-serde",
+ "schemars",
+ "serde",
+ "tempfile",
 ]
 
 [[package]]

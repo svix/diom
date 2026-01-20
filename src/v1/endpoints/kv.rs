@@ -14,15 +14,9 @@ use crate::{
     AppState,
     core::types::EntityKey,
     error::Result,
-    v1::{
-        modules::kv::{KvModel, OperationBehavior},
-        utils::{ValidatedJson, openapi_tag},
-    },
+    v1::utils::{ValidatedJson, openapi_tag},
 };
-
-// Re-export types that are used in AppState
-pub use crate::v1::modules::kv::KvStore as KvStoreType;
-pub use crate::v1::modules::kv::worker;
+use diom_kv::{KvModel, OperationBehavior};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetIn {
@@ -104,7 +98,7 @@ async fn kv_set(
     let model = data.into_model();
 
     kv_store
-        .set(&key, &model, behavior)
+        .set(&key.0, &model, behavior)
         .map_err(|e| crate::error::Error::generic(e))?;
 
     let ret = KvSetOut {};

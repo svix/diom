@@ -13,15 +13,11 @@ use crate::{
     AppState,
     core::types::EntityKey,
     error::Result,
-    v1::{
-        modules::rate_limiter::{RateLimitConfig, RateLimitResult, TokenBucket},
-        utils::{ValidatedJson, openapi_tag},
-    },
+    v1::utils::{ValidatedJson, openapi_tag},
 };
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::rate_limiter::RateLimiterStore;
-pub use crate::v1::modules::rate_limiter::worker;
+use diom_rate_limiter::{RateLimitConfig, RateLimitResult, TokenBucket};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimiterConfig {
@@ -95,11 +91,9 @@ async fn rate_limiter_limit(
     State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
 ) -> Result<Json<RateLimiterCheckOut>> {
-    let key_str = data.key.to_string();
-
     let (result, remaining, retry_after) = rate_limiter
         .limit(
-            &EntityKey(key_str),
+            &data.key,
             data.units,
             RateLimitConfig::TokenBucket(TokenBucket {
                 bucket_size: data.config.capacity,
@@ -123,11 +117,9 @@ async fn rate_limiter_get_remaining(
     State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
 ) -> Result<Json<RateLimiterGetRemainingOut>> {
-    let key_str = data.key.to_string();
-
     let remaining = rate_limiter
         .get_remaining(
-            &EntityKey(key_str),
+            &data.key,
             RateLimitConfig::TokenBucket(TokenBucket {
                 bucket_size: data.config.capacity,
                 refill_rate: data.config.refill_amount,

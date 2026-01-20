@@ -6,12 +6,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::types::EntityKey,
-    error::Result,
-    v1::modules::kv::{KvModel, KvStore, OperationBehavior},
-};
+use crate::{AppState, core::types::EntityKey, error::Result};
+
+use diom_kv::{KvModel, KvStore, OperationBehavior};
 
 #[derive(Clone)]
 pub struct CacheStore {
@@ -34,19 +31,26 @@ impl CacheStore {
         if let Some(c) = self.lru_clock.get_mut(&key) {
             *c += 1;
         }
-        self.kv.set(&key, &model.into(), OperationBehavior::Upsert)
+        self.kv
+            .set(&key.0, &model.into(), OperationBehavior::Upsert)
+            .map_err(|e| crate::error::Error::generic(e))
     }
 
     pub fn get(&mut self, key: &EntityKey) -> Result<Option<CacheModel>> {
         if let Some(c) = self.lru_clock.get_mut(key) {
             *c += 1;
         }
-        self.kv.get(&key.0).map(|m| m.map(Into::into))
+        self.kv
+            .get(&key.0)
+            .map(|m| m.map(Into::into))
+            .map_err(|e| crate::error::Error::generic(e))
     }
 
     pub fn delete(&mut self, key: &EntityKey) -> Result<()> {
         self.lru_clock.remove(key);
-        self.kv.delete(&key.0)
+        self.kv
+            .delete(&key.0)
+            .map_err(|e| crate::error::Error::generic(e))
     }
 
     pub fn reset_lru_clock(&mut self) -> Result<()> {

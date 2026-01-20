@@ -30,6 +30,8 @@ bytes.workspace = true
 config.workspace = true
 diom-derive.workspace = true
 diom-error.workspace = true
+diom-kv.workspace = true
+diom-rate-limiter.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 fjall.workspace = true
@@ -84,6 +86,7 @@ version = "1.76.1"
 rust-version = "1.91"
 
 [workspace.dependencies]
+diom-error.path = "crates/diom-error"
 aide = { version = "=0.16.0-alpha.2", features = [
     "axum",
     "axum-json",
@@ -101,7 +104,8 @@ clap = { version = "4.1.8", features = ["derive"] }
 config = { version = "0.15.19", default-features = false, features = ["toml"] }
 diom.path = "."
 diom-derive.path = "crates/diom-derive"
-diom-error.path = "crates/diom-error"
+diom-kv.path = "crates/kv"
+diom-rate-limiter.path = "crates/rate-limiter"
 crossbeam = "0.8"
 crossbeam-skiplist = "0.1.3"
 ctor = "0.6.3"
