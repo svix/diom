@@ -99,7 +99,6 @@ pub struct AppState {
     rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore,
     idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
     queue_store: crate::v1::modules::queue::QueueStore,
-    stream_store: crate::v1::modules::stream::StreamStore,
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
@@ -121,7 +120,6 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore::new(),
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::modules::queue::QueueStore::new(),
-        stream_store: crate::v1::modules::stream::StreamStore::new(),
     };
     let v1_router = v1::router().with_state::<()>(app_state.clone());
 
@@ -161,7 +159,6 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
             tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
             tokio::spawn(v1::modules::queue::worker(app_state.clone())),
-            tokio::spawn(v1::modules::stream::worker(app_state.clone())),
         );
     });
 

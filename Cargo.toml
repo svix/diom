@@ -126,6 +126,7 @@ serde_path_to_error = "0.1.7"
 syn = "2.0.48"
 tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
+stream.path = "crates/stream"
 tokio = { version = "1.24.2", features = ["rt", "signal"] }
 tokio-util = "0.7"
 tower = "0.5.1"
