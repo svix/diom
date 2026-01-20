@@ -13,6 +13,7 @@ use hyper::StatusCode;
 use schemars::JsonSchema;
 use serde::Serialize;
 use serde_json::json;
+use tokio::task::JoinError;
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Coyote'es [Error].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -319,6 +320,16 @@ impl From<ErrorType> for Error {
 impl From<fjall::Error> for Error {
     #[track_caller]
     fn from(e: fjall::Error) -> Self {
+        Self {
+            trace: vec![Location::caller()],
+            typ: ErrorType::Generic(format!("{e:?}")),
+        }
+    }
+}
+
+impl From<JoinError> for Error {
+    #[track_caller]
+    fn from(e: JoinError) -> Self {
         Self {
             trace: vec![Location::caller()],
             typ: ErrorType::Generic(format!("{e:?}")),
