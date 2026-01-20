@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use fjall::{Database, Keyspace, OptimisticTxKeyspace, UserKey, UserValue};
 use fjall::{OptimisticTxDatabase, Slice};
+use fjall::{OptimisticTxKeyspace, UserKey, UserValue};
 use format_bytes::format_bytes;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -73,7 +73,7 @@ impl Default for Kv2Store {
 impl Kv2Store {
     pub fn new(namespace: &str) -> Self {
         // Should we share all the same file space and use different keyspaces or what?
-        let db = OptimisticTxDatabase::builder(format!(".data/kv_{namespace}"))
+        let db = OptimisticTxDatabase::builder(format!("db/kv/{namespace}"))
             .open()
             .unwrap();
         let data = db
@@ -97,7 +97,7 @@ impl Kv2Store {
     }
 
     pub fn new_temporary(namespace: &str) -> Self {
-        let db = fjall::OptimisticTxDatabase::builder(format!(".data/kv_{namespace}"))
+        let db = fjall::OptimisticTxDatabase::builder(format!("db/kv/{namespace}"))
             .temporary(true)
             .open()
             .unwrap();
