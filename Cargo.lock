@@ -622,6 +622,7 @@ dependencies = [
  "bytes",
  "config",
  "coyote-derive",
+ "coyote-error",
  "crossbeam",
  "crossbeam-skiplist",
  "ctor",
@@ -664,6 +665,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "coyote-error"
+version = "1.76.1"
+dependencies = [
+ "aide",
+ "axum",
+ "hyper",
+ "schemars",
+ "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]

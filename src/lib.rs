@@ -31,7 +31,7 @@ use crate::cfg::Configuration;
 
 pub mod cfg;
 pub mod core;
-pub mod error;
+pub use coyote_error as error;
 pub mod openapi;
 pub mod v1;
 
