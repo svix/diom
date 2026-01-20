@@ -315,3 +315,13 @@ impl From<ErrorType> for Error {
         Self { trace: vec![], typ }
     }
 }
+
+impl From<fjall::Error> for Error {
+    #[track_caller]
+    fn from(e: fjall::Error) -> Self {
+        Self {
+            trace: vec![Location::caller()],
+            typ: ErrorType::Generic(format!("{e:?}")),
+        }
+    }
+}
