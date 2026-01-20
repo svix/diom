@@ -28,6 +28,7 @@ base64.workspace = true
 bytes.workspace = true
 config.workspace = true
 coyote-derive.workspace = true
+coyote-error.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 fjall.workspace = true
@@ -90,6 +91,7 @@ clap = { version = "4.1.8", features = ["derive"] }
 config = { version = "0.15.19", default-features = false, features = ["toml"] }
 coyote.path = "."
 coyote-derive.path = "crates/coyote-derive"
+coyote-error.path = "crates/coyote-error"
 crossbeam = "0.8"
 crossbeam-skiplist = "0.1.3"
 ctor = "0.6.3"

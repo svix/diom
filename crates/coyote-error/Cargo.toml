@@ -1,0 +1,19 @@
+[package]
+name = "coyote-error"
+publish = false
+version.workspace = true
+license.workspace = true
+rust-version.workspace = true
+edition = "2024"
+
+[dependencies]
+aide.workspace = true
+axum.workspace = true
+hyper.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true
