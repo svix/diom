@@ -673,6 +673,7 @@ version = "1.76.1"
 dependencies = [
  "aide",
  "axum",
+ "fjall",
  "hyper",
  "schemars",
  "serde",
