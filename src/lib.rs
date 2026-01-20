@@ -99,6 +99,8 @@ pub struct AppState {
     rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore,
     idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
     queue_store: crate::v1::modules::queue::QueueStore,
+
+    stream_state: stream::State,
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
@@ -111,6 +113,8 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
 
     let db = Database::builder(&cfg.db_directory).open().unwrap();
 
+    let stream_state = stream::State::init(&db).expect("initialing stream state");
+
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
@@ -120,6 +124,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore::new(),
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::modules::queue::QueueStore::new(),
+        stream_state,
     };
     let v1_router = v1::router().with_state::<()>(app_state.clone());
 

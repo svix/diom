@@ -1,26 +1,26 @@
-
-
-
-use std::sync::Arc;
-
+use diom_error::Error;
 use fjall::KeyspaceCreateOptions;
 
-use crate::error::Error;
+/// User facing resources/types.
+pub mod entities;
+
+/// Operations that the API will call.
+pub mod operations;
+
+// Remaining modules are private, as they strictly relate to internal stream implementation details.
+// So neither the end user, nor other crates outside of stream should know about them.
+mod tables;
 
 #[derive(Clone)]
 /// Tracks all internal state for Streams.
 pub struct State {
     /// Where metadata for streams (created_at, stream names, offsets, acks, etc.) are stored.
-    pub(self) metadata_tables: fjall::Keyspace,
-
-    /// Where messages in a stream are stored.
-    pub(self) msg_table: fjall::Keyspace,
+    pub(crate) metadata_tables: fjall::Keyspace,
 }
 
 impl State {
     pub fn init(db: &fjall::Database) -> Result<Self, Error> {
         const METADATA_KEYSPACE: &str = "_diom_stream_metadata";
-        const MSG_TABLE_KEYSPACE: &str = "_diom_stream_msg_table";
 
         // There's probably more tweaking we can do for each of these tables, but for now,
         // this should suffice.
@@ -29,14 +29,7 @@ impl State {
             let opts = KeyspaceCreateOptions::default();
             db.keyspace(METADATA_KEYSPACE, || opts)?
         };
-        
-        let msg_table = {
-            let opts = KeyspaceCreateOptions::default();
-            db.keyspace(MSG_TABLE_KEYSPACE, || opts)?
-        };
 
-        Ok(Self {
-            metadata_tables, msg_table
-        })
+        Ok(Self { metadata_tables })
     }
 }

@@ -8,13 +8,18 @@ rust-version.workspace = true
 [dependencies]
 anyhow.workspace = true
 bytes.workspace = true
+diom-error.workspace = true
+fjall.workspace = true
+fjall-utils.workspace = true
 http.workspace = true
 http-body-util.workspace = true
+jiff.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+static_assertions.workspace = true
 url.workspace = true
-fjall.workspace = true
+uuid.workspace = true
 
 [lints]
 workspace = true
