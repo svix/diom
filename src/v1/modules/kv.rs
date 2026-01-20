@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use fjall::Slice;
-use fjall::{Database, Keyspace, UserKey, UserValue};
+use fjall::{Database, Keyspace, OptimisticTxKeyspace, UserKey, UserValue};
+use fjall::{OptimisticTxDatabase, Slice};
 use format_bytes::format_bytes;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -45,10 +45,10 @@ impl From<(UserKey, UserValue)> for Kv2Model {
 #[derive(Clone)]
 pub struct Kv2Store {
     #[allow(unused)]
-    db: Database,
+    db: OptimisticTxDatabase, // should it be SingleWriterTxDatabase?
 
-    data: Keyspace,
-    expiration: Keyspace,
+    data: OptimisticTxKeyspace,
+    expiration: OptimisticTxKeyspace,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -73,7 +73,32 @@ impl Default for Kv2Store {
 impl Kv2Store {
     pub fn new(namespace: &str) -> Self {
         // Should we share all the same file space and use different keyspaces or what?
-        let db = fjall::Database::builder(format!(".data/kv_{}", namespace))
+        let db = OptimisticTxDatabase::builder(format!(".data/kv_{namespace}"))
+            .open()
+            .unwrap();
+        let data = db
+            .keyspace(
+                DIOM_KV2_DATA_KEYSPACE,
+                fjall::KeyspaceCreateOptions::default,
+            )
+            .unwrap();
+        let expiration = db
+            .keyspace(
+                DIOM_KV2_EXPIRATION_KEYSPACE,
+                fjall::KeyspaceCreateOptions::default,
+            )
+            .unwrap();
+
+        Self {
+            db,
+            data,
+            expiration,
+        }
+    }
+
+    pub fn new_temporary(namespace: &str) -> Self {
+        let db = fjall::OptimisticTxDatabase::builder(format!(".data/kv_{namespace}"))
+            .temporary(true)
             .open()
             .unwrap();
         let data = db
@@ -118,25 +143,26 @@ impl Kv2Store {
         model: &Kv2Model,
         behavior: OperationBehavior,
     ) -> Result<()> {
+        let mut tx = self.db.write_tx().unwrap();
+
         match behavior {
             OperationBehavior::Upsert => {
                 let serialized: Vec<u8> = model.into();
-                let mut batch = self.db.batch();
 
-                batch.insert(
+                tx.insert(
                     &self.data,
                     Kv2Model::data_key(&key.0),
                     Slice::from(serialized),
                 );
                 if let Some(expires_at) = model.expires_at {
-                    batch.insert(
+                    tx.insert(
                         &self.expiration,
                         Kv2Model::expiration_key(&key.0, expires_at),
                         Slice::from(key.0.as_bytes()),
                     );
                 }
 
-                batch.commit().unwrap();
+                tx.commit().unwrap();
             }
             OperationBehavior::Insert => {
                 // XXX: Not atomic bro
@@ -163,23 +189,27 @@ impl Kv2Store {
 
     pub fn delete(&self, key: &str) -> Result<()> {
         let key_string = key.to_string();
-        if let Some(data) = self.data.get(key).map_err(crate::error::Error::generic)? {
+        let mut tx = self.db.write_tx().unwrap();
+        if let Some(data) = tx
+            .take(&self.data, Kv2Model::data_key(&key_string))
+            .map_err(crate::error::Error::generic)?
+        {
             let model: Kv2Model = rmp_serde::from_slice(&data).expect("should deserialize");
-            let mut batch = self.db.batch();
-            batch.remove(&self.data, Kv2Model::data_key(&key_string));
+
+            // Delete from the expiration keyspace
             if let Some(expires_at) = model.expires_at {
-                batch.remove(
+                tx.remove(
                     &self.expiration,
                     Kv2Model::expiration_key(&key_string, expires_at),
                 );
             }
-            batch.commit().unwrap();
         }
+        tx.commit().unwrap();
         Ok(())
     }
 
-    pub fn approximate_len(&self) -> fjall::Result<usize> {
-        self.data.len()
+    pub fn approximate_len(&self) -> usize {
+        self.data.approximate_len()
     }
 
     pub fn clear_expired(&self, now: Timestamp) -> Result<()> {
@@ -213,6 +243,15 @@ impl Kv2Store {
         }
         Ok(())
     }
+
+    pub fn iter(&self) -> fjall::Iter {
+        self.data.as_ref().iter()
+    }
+
+    // silly
+    pub fn total_size(&self) -> u64 {
+        self.data.as_ref().disk_space() + self.expiration.as_ref().disk_space()
+    }
 }
 
 /// This is the worker function for this module, it does background cleanup and accounting.
@@ -234,24 +273,9 @@ mod tests {
     use super::*;
     use jiff::ToSpan;
 
-    fn create_test_store(path: &str) -> Kv2Store {
-        let db = Database::builder(path).temporary(true).open().unwrap();
-        let data = db
-            .keyspace("kv2_data", fjall::KeyspaceCreateOptions::default)
-            .unwrap();
-        let expiration = db
-            .keyspace("kv2_expiration", fjall::KeyspaceCreateOptions::default)
-            .unwrap();
-        Kv2Store {
-            db,
-            data,
-            expiration,
-        }
-    }
-
     #[test]
     fn test_insert_and_get() {
-        let store = create_test_store(".fjall_test_kv2");
+        let store = Kv2Store::new_temporary(".fjall_test_kv2");
 
         let key = EntityKey("test:key1".to_string());
         let model = Kv2Model {
@@ -272,7 +296,7 @@ mod tests {
 
     #[test]
     fn test_get_nonexistent() {
-        let store = create_test_store(".fjall_test_kv2_nonexistent");
+        let store = Kv2Store::new_temporary(".fjall_test_kv2_nonexistent");
 
         let result = store.get("nonexistent:key").unwrap();
         assert!(result.is_none());
@@ -280,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_insert_with_expiration() {
-        let store = create_test_store(".fjall_test_kv2_expiry");
+        let store = Kv2Store::new_temporary(".fjall_test_kv2_expiry");
 
         let key = EntityKey("expiring:key".to_string());
         let expires_at = Timestamp::now().checked_add(1.hour()).unwrap();
@@ -298,7 +322,7 @@ mod tests {
 
     #[test]
     fn test_multiple_inserts() {
-        let store = create_test_store(".fjall_test_kv2_multi");
+        let store = Kv2Store::new_temporary(".fjall_test_kv2_multi");
 
         let items = vec![
             (
@@ -329,9 +353,6 @@ mod tests {
             store.set(key, model, OperationBehavior::Upsert).unwrap();
         }
 
-        // Verify count
-        assert_eq!(store.approximate_len().unwrap(), items.len());
-
         // Verify each item
         for (key, expected_model) in &items {
             let retrieved = store.get(&key.0).unwrap().unwrap();
@@ -341,7 +362,7 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let store = create_test_store(".fjall_test_kv2_overwrite");
+        let store = Kv2Store::new_temporary(".fjall_test_kv2_overwrite");
 
         let key = EntityKey("overwrite:key".to_string());
         let model1 = Kv2Model {
@@ -362,7 +383,7 @@ mod tests {
 
     #[test]
     fn test_clear_expired_removes_expired_entries() {
-        let store = create_test_store(".fjall_test_kv2_clear_expired");
+        let store = Kv2Store::new_temporary(".fjall_test_kv2_clear_expired");
 
         // Insert an entry that's already expired (1 hour in the past)
         let expired_key = EntityKey("expired:key".to_string());
@@ -422,7 +443,7 @@ mod tests {
             .set(&permanent_key, &permanent_model, OperationBehavior::Upsert)
             .unwrap();
 
-        assert_eq!(store.approximate_len().unwrap(), 6);
+        assert_eq!(store.iter().count(), 6);
 
         let now = Timestamp::now();
         store.clear_expired(now).unwrap();

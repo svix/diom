@@ -1,0 +1,36 @@
+# Default configuration file
+# Values here can also be set by setting the appropriate env var, e.g. SVIX_DB_DSN for db_dsn
+# The values shown below are the default values. Values commented out are not set but recommended.
+
+# The address to listen on
+listen_address = "0.0.0.0:8050"
+
+# The directory for on-disk storage
+db_directory = "db"
+
+# The JWT secret for authentication - should be secret and securely generated
+# jwt_secret = "8KjzRXrKkd9YFcNyqLSIY8JwiaCeRc6WK4UkMnSW"
+
+# This determines the signature algorithm used when creating JWTs
+# Supported: HS256 (default), HS384, HS512, RS256, RS384, RS512, EdDSA
+jwt_algorithm = "HS256"
+
+# The log level to run the service with. Supported: info, debug, trace
+log_level = "info"
+# The log format that all output will follow. Supported: default, json
+log_format = "default"
+
+# The OpenTelemetry address to send trace information to. Disabled when omitted/null.
+# opentelemetry_address = "http://localhost:4317"
+
+# The ratio at which to sample spans when sending to OpenTelemetry. When not given it defaults to
+# always sending. If the OpenTelemetry address is not set, this will do nothing.
+# opentelemetry_sample_ratio = 1.0
+
+# The name of the service to use when sending spans to OpenTelemetry.
+opentelemetry_service_name = "diom"
+
+# The environment that the server is running in.
+# Supported: "dev", "staging", "prod"
+environment = "dev"
+

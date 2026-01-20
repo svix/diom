@@ -6,12 +6,9 @@ use fjall::{OptimisticTxDatabase, OptimisticTxKeyspace};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{cmp::min, sync::Arc};
-use tower::retry;
+use std::sync::Arc;
 
 use crate::{AppState, core::types::EntityKey, error::Result};
-
-use format_bytes::format_bytes;
 
 #[derive(Clone)]
 pub struct RateLimiterStore {
@@ -26,6 +23,12 @@ const DIOM_RATE_LIMITER_TOKEN_BUCKET_DATA_KEYSPACE: &str =
     "DIOM_RATE_LIMITER_TOKEN_BUCKET_DATA";
 const DIOM_RATE_LIMITER_FIXED_WINDOW_DATA_KEYSPACE: &str =
     "DIOM_RATE_LIMITER_FIXED_WINDOW_DATA";
+
+impl Default for RateLimiterStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl RateLimiterStore {
     pub fn new() -> Self {
@@ -135,7 +138,13 @@ pub struct RateLimiter {
 pub type Clock = Arc<dyn Fn() -> DateTime<Utc> + Send + Sync>;
 
 pub fn system_clock() -> Clock {
-    Arc::new(|| Utc::now())
+    Arc::new(Utc::now)
+}
+
+impl Default for RateLimiter {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RateLimiter {
@@ -152,6 +161,7 @@ impl RateLimiter {
         (self.clock)()
     }
 
+    // Using the same identifier but changing the algorithm is considered a different resource.
     pub fn limit(
         &self,
         identifier: &EntityKey,
@@ -173,7 +183,7 @@ impl RateLimiter {
                 let mut state = entry.map_or(
                     FixedWindowState {
                         count: 0,
-                        window_start: window_start,
+                        window_start,
                     },
                     |item| {
                         let state: FixedWindowState =
@@ -191,7 +201,7 @@ impl RateLimiter {
                     state.count = max_tokens;
                     (0, RateLimitResult::BLOCK, Some(config.size))
                 } else {
-                    state.count = state.count + delta;
+                    state.count += delta;
                     (max_tokens - state.count, RateLimitResult::OK, None)
                 };
 
@@ -200,7 +210,7 @@ impl RateLimiter {
                     identifier.as_bytes(),
                     rmp_serde::to_vec(&state).unwrap(),
                 );
-                tx.commit().unwrap(); // XXX: Unwrap
+                let _ = tx.commit().unwrap(); // XXX: Unwrap
 
                 Ok((result, remaining, retry_after))
             }
@@ -237,7 +247,7 @@ impl RateLimiter {
                     identifier.as_bytes(),
                     rmp_serde::to_vec(&bucket).unwrap(),
                 );
-                tx.commit().unwrap(); // XXX: Unwrap
+                let _ = tx.commit().unwrap(); // XXX: Unwrap
 
                 Ok((RateLimitResult::OK, bucket.tokens, None))
             }
@@ -311,12 +321,13 @@ impl RateLimiter {
 }
 
 /// This is the worker function for this module, it does background cleanup and accounting.
-pub async fn worker(state: AppState) -> Result<()> {
+pub async fn worker(_state: AppState) -> Result<()> {
     loop {
         if crate::is_shutting_down() {
             break;
         }
         // TODO: Implement cleanup
+        // We need to evict unused entries for the rate-limiter.
     }
     Ok(())
 }

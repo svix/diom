@@ -38,9 +38,7 @@ pub struct KvSetIn {
     pub behavior: OperationBehavior,
 
     // FIXME: what to do with TTL? Does it get updated on a set, not?
-
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvSetIn {
@@ -49,7 +47,7 @@ impl KvSetIn {
 
         Kv2Model {
             expires_at: Some(expires_at),
-            value: self.value.into_bytes(),
+            value: self.value,
         }
     }
 }
@@ -71,8 +69,7 @@ pub struct KvGetOut {
     /// Time of expiry
     pub expires_at: Option<Timestamp>,
 
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvGetOut {
@@ -80,7 +77,7 @@ impl KvGetOut {
         Self {
             key: Arc::new(key),
             expires_at: model.expires_at,
-            value: String::from_utf8_lossy(&model.value).into_owned(),
+            value: model.value,
         }
     }
 }
