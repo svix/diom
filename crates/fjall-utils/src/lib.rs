@@ -1,6 +1,8 @@
 mod table_row;
+mod transaction_keyspace;
 
 pub use table_row::TableRow;
+pub use transaction_keyspace::*;
 
 /// Useful for verifying all table prefixes for a given keyspace are unique,
 /// at compile time.
