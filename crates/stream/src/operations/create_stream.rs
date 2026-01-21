@@ -3,7 +3,7 @@ use crate::{
     entities::StreamId,
     tables::{NameToStreamRow, StreamRow},
 };
-use coyote_error::Result;
+use coyote_error::{Error, Result};
 use fjall_utils::TableRow as _;
 use jiff::Timestamp;
 use std::num::NonZeroU64;
@@ -43,8 +43,8 @@ impl CreateStream {
     // However for expediency, I don't want to wait for the relevant traits to be added in order to have something working.
     // It should be straightforward (famous last words) to translate this method to the Operations trait once it's in place.
     pub fn apply_operation(self, state: &State) -> Result<CreateStreamOutput> {
-        let mut stream = NameToStreamRow::fetch(&state.metadata_tables, &self.name)?
-            .and_then(|row| StreamRow::fetch(&state.metadata_tables, &row.id).transpose())
+        let mut stream = NameToStreamRow::fetch(state.metadata_tables.as_ref(), &self.name)?
+            .and_then(|row| StreamRow::fetch(state.metadata_tables.as_ref(), &row.id).transpose())
             .transpose()?
             .unwrap_or_else(|| {
                 let id = Uuid::new_v4();
@@ -62,8 +62,8 @@ impl CreateStream {
         stream.max_byte_size = self.max_byte_size;
         stream.updated_at = self.timestamp;
 
-        // FIXME(@svix-gabriel) do this atomically
         {
+            let mut tx = state.metadata_tables.write_tx()?;
             let (k1, v1) = stream.to_fjall_entry()?;
             let (k2, v2) = NameToStreamRow {
                 name: stream.name.clone(),
@@ -71,8 +71,13 @@ impl CreateStream {
             }
             .to_fjall_entry()?;
 
-            state.metadata_tables.insert(k1, v1)?;
-            state.metadata_tables.insert(k2, v2)?;
+            tx.insert(k1, v1);
+            tx.insert(k2, v2);
+
+            // FIXME(@svix-gabriel) - it's not clear to me what would actually cause a transaction to fail with a conflict.
+            // Maybe someone knows? I'm not sure what the best way to handle this would be. For now, just propogate the error
+            // since it means we failed to create the stream.
+            tx.commit()?.map_err(Error::generic)?;
         }
 
         let StreamRow {

@@ -18,6 +18,7 @@ reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 static_assertions.workspace = true
+tracing.workspace = true
 url.workspace = true
 uuid.workspace = true
 

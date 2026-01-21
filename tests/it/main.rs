@@ -16,7 +16,8 @@ use tokio::{net::TcpListener, task::JoinHandle};
 ///
 /// Once it's DROPed, the server and it's resources are cleaned up automatically (or at least, that's the intent.)
 pub struct IsolatedServerHandle {
-    _db_dir: TempDir,
+    /// handles to the database we want to automatically clean up on deletion.
+    _db_dirs: Vec<TempDir>,
     server_handle: JoinHandle<()>,
 }
 
@@ -34,10 +35,15 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
     let token = "Stubbed token. Should probably be legit when we add auth.";
 
     let db_dir = tempfile::tempdir().unwrap();
+    let optimistic_db_dir = tempfile::tempdir().unwrap();
 
     let cfg = Arc::new(ConfigurationInner {
         listen_address: addr,
         db_directory: db_dir.path().to_string_lossy().into_owned(),
+        optimistic_transaction_db_directory: optimistic_db_dir
+            .path()
+            .to_string_lossy()
+            .into_owned(),
         jwt_signing_config: Arc::new(JwtSigningConfig::HS256(jwt_key)),
         log_level: LogLevel::Debug,
         log_format: LogFormat::Default,
@@ -57,7 +63,7 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
     });
 
     let handle = IsolatedServerHandle {
-        _db_dir: db_dir,
+        _db_dirs: vec![db_dir, optimistic_db_dir],
         server_handle,
     };
 

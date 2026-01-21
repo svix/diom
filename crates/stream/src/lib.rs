@@ -1,5 +1,6 @@
 use coyote_error::Error;
 use fjall::KeyspaceCreateOptions;
+use fjall_utils::ErgonomicOptimisticTxKeyspace;
 
 /// User facing resources/types.
 pub mod entities;
@@ -15,11 +16,11 @@ mod tables;
 /// Tracks all internal state for Streams.
 pub struct State {
     /// Where metadata for streams (created_at, stream names, offsets, acks, etc.) are stored.
-    pub(crate) metadata_tables: fjall::Keyspace,
+    pub(crate) metadata_tables: ErgonomicOptimisticTxKeyspace,
 }
 
 impl State {
-    pub fn init(db: &fjall::Database) -> Result<Self, Error> {
+    pub fn init(db: fjall::OptimisticTxDatabase) -> Result<Self, Error> {
         const METADATA_KEYSPACE: &str = "_coyote_stream_metadata";
 
         // There's probably more tweaking we can do for each of these tables, but for now,
@@ -27,7 +28,7 @@ impl State {
 
         let metadata_tables = {
             let opts = KeyspaceCreateOptions::default();
-            db.keyspace(METADATA_KEYSPACE, || opts)?
+            ErgonomicOptimisticTxKeyspace::new(db, METADATA_KEYSPACE, opts)?
         };
 
         Ok(Self { metadata_tables })

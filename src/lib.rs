@@ -7,7 +7,7 @@ use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
-use fjall::Database;
+use fjall::{Database, OptimisticTxDatabase};
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -112,8 +112,11 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let mut openapi = openapi::initialize_openapi();
 
     let db = Database::builder(&cfg.db_directory).open().unwrap();
+    let optimistic_db = OptimisticTxDatabase::builder(&cfg.optimistic_transaction_db_directory)
+        .open()
+        .unwrap();
 
-    let stream_state = stream::State::init(&db).expect("initialing stream state");
+    let stream_state = stream::State::init(optimistic_db).expect("initialing stream state");
 
     // build our application with a route
     let app_state = AppState {

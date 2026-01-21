@@ -21,6 +21,9 @@ pub struct ConfigurationInner {
     /// The directory for on-disk storage.
     pub db_directory: String,
 
+    /// The directory for the on-disk storage of the database for optimistic transactions.
+    pub optimistic_transaction_db_directory: String,
+
     /// Contains the secret and algorithm for signing JWTs
     #[serde(flatten)]
     pub jwt_signing_config: Arc<JwtSigningConfig>,

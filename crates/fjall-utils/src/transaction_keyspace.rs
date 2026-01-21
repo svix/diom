@@ -1,16 +1,17 @@
 //! Everything in this module is to make mirror the API for transactions in [fjall], except transactions are scoped to a single keyspace.
 //! This avoids the pain of having to manually carry around a OptimisticTxDatabase handle, or manually tying transaction inserts/reads to
 //! specific Keyspace.
-//! 
+//!
 //! Pros: much more ergonomic if you only need a transaction for a single keyspace.
-//! 
+//!
 //! Cons: doesn't support multikeyspace transaction ops.
 use fjall::{
     Conflict, Keyspace, KeyspaceCreateOptions, OptimisticTxDatabase, OptimisticTxKeyspace,
     OptimisticWriteTx, PersistMode, Result, UserKey, UserValue,
 };
 
-/// Wraps a [fjall::OptimisticTxKeyspace], except this makes it much more ergonomic to create transactions that are scoped to a single Keyspace. 
+#[derive(Clone)]
+/// Wraps a [fjall::OptimisticTxKeyspace], except this makes it much more ergonomic to create transactions that are scoped to a single Keyspace.
 pub struct ErgonomicOptimisticTxKeyspace {
     db: OptimisticTxDatabase,
     ks: OptimisticTxKeyspace,

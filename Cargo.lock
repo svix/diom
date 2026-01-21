@@ -3193,6 +3193,7 @@ dependencies = [
  "serde",
  "serde_json",
  "static_assertions",
+ "tracing",
  "url",
  "uuid",
 ]
