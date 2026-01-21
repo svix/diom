@@ -7,7 +7,6 @@ use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
-use fjall::Database;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -27,7 +26,7 @@ use tower_http::{
 use tracing_subscriber::{Layer as _, layer::SubscriberExt as _};
 use uuid::Uuid;
 
-use crate::cfg::Configuration;
+use crate::cfg::{Configuration, DatabaseConfig};
 
 pub mod cfg;
 pub mod core;
@@ -91,8 +90,6 @@ pub async fn run(cfg: Configuration) {
 #[derive(Clone)]
 pub struct AppState {
     cfg: Configuration,
-    #[allow(unused)]
-    db: Database,
     // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
     kv_store: crate::v1::modules::kv::KvStore,
     cache_store: crate::v1::modules::cache::CacheStore,
@@ -111,14 +108,21 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
-    let db = Database::builder(&cfg.db_directory).open().unwrap();
+    let persistent_db =
+        DatabaseConfig::persistent(cfg.peristent_db_config.clone()).expect("persistent db");
 
-    let stream_state = stream::State::init(db.clone()).expect("initialing stream state");
+    let _ephemeral_db =
+        DatabaseConfig::ephemeral(cfg.ephemeral_db_config.clone()).expect("ephemeral db");
+
+    let _management_db =
+        DatabaseConfig::management(cfg.management_db_config.clone()).expect("management db");
+
+    let stream_state =
+        stream::State::init(persistent_db.clone()).expect("initializing stream state");
 
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
-        db,
         kv_store: crate::v1::modules::kv::KvStore::new(),
         cache_store: crate::v1::modules::cache::CacheStore::new(),
         rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore::new(),

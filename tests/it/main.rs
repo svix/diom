@@ -3,7 +3,10 @@ mod stream;
 use std::{net::SocketAddr, sync::Arc};
 
 use coyote::{
-    cfg::{ConfigurationInner, Environment, InternalConfig, LogFormat, LogLevel},
+    cfg::{
+        ConfigurationInner, DatabaseConfig, Environment, Ephemeral, InternalConfig, LogFormat,
+        LogLevel, Management, Persistent,
+    },
     core::security::JwtSigningConfig,
     run_with_prefix,
 };
@@ -37,7 +40,18 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
 
     let cfg = Arc::new(ConfigurationInner {
         listen_address: addr,
-        db_directory: db_dir.path().to_string_lossy().into_owned(),
+        management_db_config: Arc::new(DatabaseConfig::<Management> {
+            path: db_dir.path().to_string_lossy().to_string(),
+            ..Default::default()
+        }),
+        ephemeral_db_config: Arc::new(DatabaseConfig::<Ephemeral> {
+            path: db_dir.path().to_string_lossy().to_string(),
+            ..Default::default()
+        }),
+        peristent_db_config: Arc::new(DatabaseConfig::<Persistent> {
+            path: db_dir.path().to_string_lossy().to_string(),
+            ..Default::default()
+        }),
         jwt_signing_config: Arc::new(JwtSigningConfig::HS256(jwt_key)),
         log_level: LogLevel::Debug,
         log_format: LogFormat::Default,
