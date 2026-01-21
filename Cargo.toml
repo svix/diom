@@ -14,10 +14,8 @@ ignored = [
 ]
 
 [features]
-default = ["openapi", "generate_openapi_spec"]
+default = ["openapi"]
 openapi = []
-# internal flag used by generate-openapi crate in the workspace
-generate_openapi_spec = []
 
 [dependencies]
 aide.workspace = true
