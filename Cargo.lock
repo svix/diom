@@ -1137,6 +1137,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fjall-utils"
+version = "1.76.1"
+dependencies = [
+ "fjall",
+ "rmp-serde",
+ "serde",
+]
+
+[[package]]
 name = "flume"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
