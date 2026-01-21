@@ -1,3 +1,5 @@
+mod stream;
+
 use std::{net::SocketAddr, sync::Arc};
 
 use coyote::{

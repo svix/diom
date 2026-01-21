@@ -4,6 +4,8 @@ mod test_client;
 
 pub use test_client::{TestClient, TestRequestBuilder, TestResponse};
 
+pub use reqwest::StatusCode;
+
 #[derive(Debug)] // needed to be able to return TestResult from #[test] fns
 pub enum TestError {}
 
