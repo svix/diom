@@ -62,6 +62,7 @@ validator.workspace = true
 [dev-dependencies]
 assert_matches.workspace = true
 ctor.workspace = true
+tempfile.workspace = true
 test-utils.workspace = true
 
 [lints]
@@ -123,6 +124,7 @@ serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value"] }
 serde_path_to_error = "0.1.7"
 syn = "2.0.48"
+tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
 tokio = { version = "1.24.2", features = ["rt", "signal"] }
 tokio-util = "0.7"
