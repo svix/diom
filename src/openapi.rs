@@ -18,7 +18,7 @@ pub fn initialize_openapi() -> OpenApi {
         ctx.schema = schemars::generate::SchemaSettings::openapi3().into()
     });
 
-    let _tag_groups = serde_json::json![[
+    let _tag_groups = serde_json::json!([
         {
             "name": "General",
             "tags": ["Application", "Event Type"]
@@ -35,7 +35,7 @@ pub fn initialize_openapi() -> OpenApi {
             "name": "Webhooks",
             "tags": ["Webhooks"]
         }
-    ]];
+    ]);
 
     const DESCRIPTION: &str = include_str!("../description.md");
 
