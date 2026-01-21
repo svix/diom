@@ -6,4 +6,3 @@ pub mod idempotency;
 pub mod kv;
 pub mod queue;
 pub mod rate_limiter;
-pub mod stream;
