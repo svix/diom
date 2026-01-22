@@ -18,9 +18,6 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate OpenAPI JSON specification and exit
-    GenerateOpenapi,
-
     /// Health check command
     Healthcheck {
         // FIXME: we should make it optional and default to localhost with the settings (when ran
@@ -61,20 +58,6 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber.init();
 
     match args.command {
-        Some(Commands::GenerateOpenapi) => {
-            let mut openapi = diom::openapi::initialize_openapi();
-
-            let router = diom::v1::router();
-            _ = aide::axum::ApiRouter::new()
-                .nest("/api/v1", router)
-                .finish_api_with(&mut openapi, diom::openapi::add_security_scheme);
-
-            diom::openapi::postprocess_spec(&mut openapi);
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&openapi).expect("Failed to serialize JSON spec")
-            );
-        }
         Some(Commands::Healthcheck { .. }) => {
             unreachable!("Healthcheck command should be handled before config loading")
         }
