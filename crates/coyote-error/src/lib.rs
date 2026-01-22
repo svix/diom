@@ -152,16 +152,13 @@ impl From<HttpError> for ErrorType {
     }
 }
 
-// Python generation relies on the title of this being `HttpError`
-#[derive(Debug, Clone, Serialize, JsonSchema)]
-#[schemars(rename = "HttpErrorOut", title = "HttpError")]
+#[derive(Debug, Clone, Serialize)]
 pub struct StandardHttpError {
     code: String,
     detail: String,
 }
 
-#[derive(Debug, Clone, Serialize, JsonSchema)]
-#[schemars(rename = "HTTPValidationError")]
+#[derive(Debug, Clone, Serialize)]
 pub struct ValidationHttpError {
     detail: Vec<ValidationErrorItem>,
 }

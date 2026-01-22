@@ -1,3 +1,6 @@
+[alias]
+codegen = "run --package=codegen --features=generate --"
+
 # We use this instead of 'build' so that these get
 # concatenated with the rustflags from other .cargo/config.toml files,
 # instead of having one overwrite the other
