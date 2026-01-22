@@ -1,0 +1,37 @@
+{% from "types/macros.rs.jinja" import field_name -%}
+{% for field in type.fields %}
+    {% if field.description is defined -%}
+        {{ field.description | to_doc_comment(style="rust") }}
+    {% endif -%}
+
+    {% if field.deprecated -%}
+        #[deprecated]
+    {% endif -%}
+
+    {% if field.name != field.name | to_snake_case -%}
+        #[serde(rename = "{{ field.name }}")]
+    {% endif -%}
+
+    {#
+        we only have defaults on optional fields now,
+        so leave them alone here as well, for now
+    -#}
+    {# {% if field.default is defined and field.default is not none -%}
+    #[serde(default = "{{ field.name | to_snake_case }}_default")]
+    {% endif -%} -#}
+    {% set field_ty = field.type.to_rust() -%}
+
+    {% if not field.required or field.nullable -%}
+        {# only for patch requests, if the field is both non-required
+            and nullable, use JsOption -#}
+        {% if type.name is endingwith "Patch" and field.nullable -%}
+            {% set field_ty %}JsOption<{{ field_ty }}>{% endset -%}
+            #[serde(default, skip_serializing_if = "JsOption::is_undefined")]
+        {% else -%}
+            {% set field_ty %}Option<{{ field_ty }}>{% endset -%}
+            #[serde(skip_serializing_if = "Option::is_none")]
+        {% endif -%}
+    {% endif -%}
+
+    pub {{ field_name(field.name | to_snake_case) }}: {{ field_ty }},
+{% endfor %}

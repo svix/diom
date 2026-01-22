@@ -910,14 +910,14 @@
         ]
       }
     },
-    "/api/v1/stream/publish": {
+    "/api/v1/stream/create": {
       "post": {
         "tags": [
           "Stream"
         ],
-        "summary": "Stream Publish",
-        "description": "Publish messages to a stream topic",
-        "operationId": "v1.stream.publish",
+        "summary": "Create Stream",
+        "description": "Upserts a new Stream with the given name.",
+        "operationId": "v1.stream.create",
         "parameters": [
           {
             "in": "header",
@@ -933,7 +933,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StreamPublishIn"
+                "$ref": "#/components/schemas/CreateStreamIn"
               }
             }
           },
@@ -945,151 +945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StreamPublishOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/read": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Stream Read",
-        "description": "Read messages from a stream topic",
-        "operationId": "v1.stream.read",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StreamReadIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StreamReadOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/topic-info": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Stream Topic Info",
-        "description": "Get information about a stream topic",
-        "operationId": "v1.stream.topic_info",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StreamTopicInfoIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StreamTopicInfoOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/purge": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Stream Purge",
-        "description": "Purge all messages from a stream topic",
-        "operationId": "v1.stream.purge",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StreamPurgeIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StreamPurgeOut"
+                  "$ref": "#/components/schemas/CreateStreamOut"
                 }
               }
             }
@@ -1202,6 +1058,68 @@
       },
       "CacheSetOut": {
         "type": "object"
+      },
+      "CreateStreamIn": {
+        "type": "object",
+        "properties": {
+          "maxByteSize": {
+            "description": "How many bytes in total the stream will retain before dropping data.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "retentionPeriodSeconds": {
+            "description": "How long messages are retained in the stream before being permanently nuked.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CreateStreamOut": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string"
+          },
+          "maxByteSize": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "retentionPeriodSeconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "IdempotencyAbandonIn": {
         "type": "object",
@@ -1778,187 +1696,6 @@
         },
         "required": [
           "remaining"
-        ]
-      },
-      "StreamMessage": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
-          "payload": {
-            "type": "string"
-          },
-          "published_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "offset",
-          "payload",
-          "published_at"
-        ]
-      },
-      "StreamPublishIn": {
-        "type": "object",
-        "properties": {
-          "messages": {
-            "description": "Array of message payloads to publish",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name",
-          "messages"
-        ]
-      },
-      "StreamPublishOut": {
-        "type": "object",
-        "properties": {
-          "count": {
-            "description": "Number of messages published",
-            "type": "integer",
-            "format": "uint32",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "count"
-        ]
-      },
-      "StreamPurgeIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "StreamPurgeOut": {
-        "type": "object",
-        "properties": {
-          "purged_count": {
-            "description": "Number of messages purged",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "purged_count"
-        ]
-      },
-      "StreamReadIn": {
-        "type": "object",
-        "properties": {
-          "limit": {
-            "description": "Maximum number of messages to read (default: 10, max: 1000)",
-            "type": "integer",
-            "format": "uint32",
-            "default": 10,
-            "maximum": 1000,
-            "minimum": 1
-          },
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          },
-          "start_offset": {
-            "description": "Offset to start reading from (0-indexed)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "name",
-          "start_offset"
-        ]
-      },
-      "StreamReadOut": {
-        "type": "object",
-        "properties": {
-          "has_more": {
-            "description": "Whether there are more messages available after these",
-            "type": "boolean"
-          },
-          "messages": {
-            "description": "Array of messages",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StreamMessage"
-            }
-          }
-        },
-        "required": [
-          "messages",
-          "has_more"
-        ]
-      },
-      "StreamTopicInfoIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "StreamTopicInfoOut": {
-        "type": "object",
-        "properties": {
-          "earliest_offset": {
-            "description": "Earliest available offset (usually 0)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
-          "latest_offset": {
-            "description": "Latest offset (highest offset in the topic)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
-          "message_count": {
-            "description": "Total number of messages in the topic",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "message_count",
-          "earliest_offset",
-          "latest_offset"
         ]
       }
     }

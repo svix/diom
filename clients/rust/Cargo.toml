@@ -1,0 +1,39 @@
+[package]
+name = "diom-client"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+edition = "2024"
+
+[features]
+# openssl-sys keeps showing up in the CLI dep graph, breaking the build, even when
+# `default-features = false`.
+# Switching the default to rustls properly culls it from the tree.
+default = ["http1", "rustls-tls"]
+
+http1 = ["hyper-util/http1", "hyper-rustls?/http1"]
+http2 = ["hyper-util/http2", "hyper-rustls?/http2"]
+native-tls = ["dep:hyper-tls"]
+rustls-tls = ["dep:hyper-rustls", "dep:rustls", "hyper-rustls?/rustls-native-certs"]
+
+[dependencies]
+http.workspace = true
+http-body-util.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+hyper-rustls = { workspace = true, optional = true }
+hyper-tls = { workspace = true, optional = true }
+percent-encoding.workspace = true
+rand.workspace = true
+rustls = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tower-service.workspace = true
+url.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+jiff.workspace = true
+
+[lints]
+workspace = true

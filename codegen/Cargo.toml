@@ -15,6 +15,7 @@ generate = ["diom/openapi"]
 aide.workspace = true
 anyhow.workspace = true
 diom.workspace = true
+openapi-codegen.workspace = true
 serde_json.workspace = true
 tracing-subscriber.workspace = true
 

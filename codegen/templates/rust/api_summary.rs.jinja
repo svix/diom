@@ -1,0 +1,43 @@
+// this file is @generated
+use crate::DiomClient;
+
+{% macro resource_mods(resource) -%}
+    mod {{ resource.name | to_snake_case }};
+    {%- for _, sub in resource.subresources | items -%}
+        {{- resource_mods(sub) -}}
+    {%- endfor -%}
+{% endmacro -%}
+
+{% for res in api.resources -%}
+    {{ resource_mods(res) -}}
+{% endfor %}
+
+{% macro resource_reexports(resource) -%}
+    {% set resource_type_name = resource.name | to_upper_camel_case -%}
+    {{ resource.name | to_snake_case }}::{
+        {{ resource_type_name }},
+        {% for op in resource.operations -%}
+            {% if op | has_query_or_header_params -%}
+                {{ resource_type_name }}{{ op.name | to_upper_camel_case }}Options,
+            {% endif -%}
+        {% endfor -%}
+    },
+    {% for _, sub in resource.subresources | items -%}
+        {{ resource_reexports(sub) -}}
+    {% endfor -%}
+{% endmacro -%}
+
+pub use self::{
+    {% for res in api.resources -%}
+        {{ resource_reexports(res) }}
+    {% endfor -%}
+};
+
+impl DiomClient {
+    {% for resource in api.resources -%}
+        {% set resource_type_name = resource.name | to_upper_camel_case -%}
+        pub fn {{ resource.name | to_snake_case }}(&self) -> {{ resource_type_name }}<'_> {
+            {{ resource_type_name }}::new(&self.cfg)
+        }
+    {% endfor -%}
+}
