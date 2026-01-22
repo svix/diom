@@ -6,6 +6,7 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+coyote-error.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 format-bytes = "0.3.0"
@@ -16,7 +17,6 @@ schemars.workspace = true
 serde.workspace = true
 static_assertions.workspace = true
 tokio.workspace = true
-coyote-error.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
