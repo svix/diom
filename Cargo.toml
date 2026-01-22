@@ -14,7 +14,8 @@ ignored = [
 ]
 
 [features]
-default = ["openapi"]
+# FIXME: Make this actually effective by switching from using schemars'
+#        derive directly to using our own wrapper (like webhooks-private)
 openapi = []
 
 [dependencies]
