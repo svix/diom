@@ -334,54 +334,6 @@
         ]
       }
     },
-    "/api/v1/rate-limiter/configure": {
-      "post": {
-        "tags": [
-          "Rate Limiter"
-        ],
-        "summary": "Rate Limiter Configure",
-        "description": "Configure Rate Limiter",
-        "operationId": "v1.rate_limiter.configure",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RateLimiterConfigureIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RateLimiterConfigureOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/api/v1/rate-limiter/limit": {
       "post": {
         "tags": [
@@ -622,14 +574,14 @@
         ]
       }
     },
-    "/api/v1/queue/enqueue": {
+    "/api/v1/queue/send": {
       "post": {
         "tags": [
           "Queue"
         ],
-        "summary": "Queue Enqueue",
-        "description": "Enqueue a message",
-        "operationId": "v1.queue.enqueue",
+        "summary": "Queue Send",
+        "description": "Send messages to the queue",
+        "operationId": "v1.queue.send",
         "parameters": [
           {
             "in": "header",
@@ -645,7 +597,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QueueEnqueueIn"
+                "$ref": "#/components/schemas/QueueSendIn"
               }
             }
           },
@@ -657,7 +609,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QueueEnqueueOut"
+                  "$ref": "#/components/schemas/QueueSendOut"
                 }
               }
             }
@@ -670,14 +622,14 @@
         ]
       }
     },
-    "/api/v1/queue/dequeue": {
+    "/api/v1/queue/receive": {
       "post": {
         "tags": [
           "Queue"
         ],
-        "summary": "Queue Dequeue",
-        "description": "Dequeue a message",
-        "operationId": "v1.queue.dequeue",
+        "summary": "Queue Receive",
+        "description": "Receive messages from the queue",
+        "operationId": "v1.queue.receive",
         "parameters": [
           {
             "in": "header",
@@ -693,7 +645,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QueueDequeueIn"
+                "$ref": "#/components/schemas/QueueReceiveIn"
               }
             }
           },
@@ -705,7 +657,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QueueDequeueOut"
+                  "$ref": "#/components/schemas/QueueReceiveOut"
                 }
               }
             }
@@ -814,6 +766,54 @@
         ]
       }
     },
+    "/api/v1/queue/reject": {
+      "post": {
+        "tags": [
+          "Queue"
+        ],
+        "summary": "Queue Reject",
+        "description": "Reject a message - remove from processing and send to DLQ without retry",
+        "operationId": "v1.queue.reject",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueueRejectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueRejectOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/queue/purge": {
       "post": {
         "tags": [
@@ -909,6 +909,198 @@
           }
         ]
       }
+    },
+    "/api/v1/stream/publish": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Stream Publish",
+        "description": "Publish messages to a stream topic",
+        "operationId": "v1.stream.publish",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamPublishIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamPublishOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stream/read": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Stream Read",
+        "description": "Read messages from a stream topic",
+        "operationId": "v1.stream.read",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamReadIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamReadOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stream/topic-info": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Stream Topic Info",
+        "description": "Get information about a stream topic",
+        "operationId": "v1.stream.topic_info",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamTopicInfoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamTopicInfoOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stream/purge": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Stream Purge",
+        "description": "Purge all messages from a stream topic",
+        "operationId": "v1.stream.purge",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamPurgeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamPurgeOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -920,404 +1112,122 @@
       }
     },
     "schemas": {
-      "PingOut": {
+      "CacheDeleteIn": {
         "type": "object",
-        "required": [
-          "ok"
-        ],
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CacheSetIn": {
-        "type": "object",
-        "required": [
-          "expires_at",
-          "key",
-          "value"
-        ],
         "properties": {
           "key": {
             "type": "string",
+            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "CacheDeleteOut": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ]
+      },
+      "CacheGetIn": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "CacheGetOut": {
+        "type": "object",
+        "properties": {
           "expires_at": {
+            "description": "Time of expiry",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0.0
+            "minimum": 0
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "value": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "key",
+          "expires_at",
+          "value"
+        ]
+      },
+      "CacheSetIn": {
+        "type": "object",
+        "properties": {
+          "expires_at": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "expires_at",
+          "value"
+        ]
       },
       "CacheSetOut": {
         "type": "object"
       },
-      "CacheGetIn": {
+      "IdempotencyAbandonIn": {
         "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
         "required": [
           "key"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        }
-      },
-      "CacheGetOut": {
-        "type": "object",
-        "required": [
-          "expires_at",
-          "key",
-          "value"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
-          "expires_at": {
-            "description": "Time of expiry",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "value": {
-            "type": "string"
-          }
-        }
-      },
-      "CacheDeleteIn": {
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        }
-      },
-      "CacheDeleteOut": {
-        "type": "object",
-        "required": [
-          "deleted"
-        ],
-        "properties": {
-          "deleted": {
-            "type": "boolean"
-          }
-        }
-      },
-      "KvSetIn": {
-        "type": "object",
-        "required": [
-          "expires_at",
-          "key",
-          "value"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
-          "expires_at": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "behavior": {
-            "default": "upsert",
-            "$ref": "#/components/schemas/OperationBehavior"
-          },
-          "value": {
-            "type": "string"
-          }
-        }
-      },
-      "OperationBehavior": {
-        "type": "string",
-        "enum": [
-          "upsert",
-          "insert",
-          "update"
         ]
       },
-      "KvSetOut": {
+      "IdempotencyAbandonOut": {
         "type": "object"
-      },
-      "KvGetIn": {
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        }
-      },
-      "KvGetOut": {
-        "type": "object",
-        "required": [
-          "expires_at",
-          "key",
-          "value"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
-          "expires_at": {
-            "description": "Time of expiry",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "value": {
-            "type": "string"
-          }
-        }
-      },
-      "KvDeleteIn": {
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        }
-      },
-      "KvDeleteOut": {
-        "type": "object",
-        "required": [
-          "deleted"
-        ],
-        "properties": {
-          "deleted": {
-            "type": "boolean"
-          }
-        }
-      },
-      "RateLimiterConfigureIn": {
-        "type": "object",
-        "required": [
-          "capacity",
-          "key",
-          "refill_amount",
-          "refill_interval_seconds"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
-          "capacity": {
-            "description": "Maximum capacity of the bucket",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1.0
-          },
-          "refill_amount": {
-            "description": "Number of tokens to add per refill interval",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1.0
-          },
-          "refill_interval_seconds": {
-            "description": "Interval in seconds between refills (minimum 1 second)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1.0
-          }
-        }
-      },
-      "RateLimiterConfigureOut": {
-        "type": "object"
-      },
-      "RateLimiterCheckIn": {
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
-          "tokens_requested": {
-            "description": "Number of tokens to consume (default: 1)",
-            "default": 1,
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          }
-        }
-      },
-      "RateLimiterCheckOut": {
-        "type": "object",
-        "required": [
-          "allowed",
-          "remaining"
-        ],
-        "properties": {
-          "allowed": {
-            "description": "Whether the request is allowed",
-            "type": "boolean"
-          },
-          "remaining": {
-            "description": "Number of tokens remaining",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "retry_after": {
-            "description": "Seconds until enough tokens are available (only present when allowed is false)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0,
-            "nullable": true
-          }
-        }
-      },
-      "RateLimiterGetRemainingIn": {
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        }
-      },
-      "RateLimiterGetRemainingOut": {
-        "type": "object",
-        "required": [
-          "remaining"
-        ],
-        "properties": {
-          "remaining": {
-            "description": "Number of tokens remaining",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "retry_after": {
-            "description": "Seconds until at least one token is available (only present when remaining is 0)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0,
-            "nullable": true
-          }
-        }
-      },
-      "IdempotencyStartIn": {
-        "type": "object",
-        "required": [
-          "key",
-          "ttl_seconds"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
-          "ttl_seconds": {
-            "description": "TTL in seconds for the lock/response",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1.0
-          }
-        }
-      },
-      "IdempotencyStartOut": {
-        "type": "object",
-        "oneOf": [
-          {
-            "description": "Lock acquired, request should proceed",
-            "type": "object",
-            "required": [
-              "status"
-            ],
-            "properties": {
-              "status": {
-                "type": "string",
-                "enum": [
-                  "locked"
-                ]
-              }
-            }
-          },
-          {
-            "description": "Request was already completed, cached response returned",
-            "type": "object",
-            "required": [
-              "response",
-              "status"
-            ],
-            "properties": {
-              "status": {
-                "type": "string",
-                "enum": [
-                  "completed"
-                ]
-              },
-              "response": {
-                "type": "string"
-              }
-            }
-          }
-        ]
       },
       "IdempotencyCompleteIn": {
         "type": "object",
-        "required": [
-          "key",
-          "response",
-          "ttl_seconds"
-        ],
         "properties": {
           "key": {
             "type": "string",
+            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "response": {
             "description": "The response to cache",
@@ -1327,233 +1237,729 @@
             "description": "TTL in seconds for the cached response",
             "type": "integer",
             "format": "uint64",
-            "minimum": 1.0
+            "minimum": 1
           }
-        }
+        },
+        "required": [
+          "key",
+          "response",
+          "ttl_seconds"
+        ]
       },
       "IdempotencyCompleteOut": {
         "type": "object"
       },
-      "IdempotencyAbandonIn": {
+      "IdempotencyStartIn": {
         "type": "object",
-        "required": [
-          "key"
-        ],
         "properties": {
           "key": {
             "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        }
-      },
-      "IdempotencyAbandonOut": {
-        "type": "object"
-      },
-      "QueueEnqueueIn": {
-        "type": "object",
-        "required": [
-          "payload",
-          "queue_name"
-        ],
-        "properties": {
-          "queue_name": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
-          "payload": {
-            "description": "Message payload",
-            "type": "string"
-          },
-          "delay_seconds": {
-            "description": "Delay before message becomes available (seconds, default: 0)",
-            "default": 0,
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          },
-          "max_attempts": {
-            "description": "Maximum number of processing attempts before moving to DLQ (default: 3)",
-            "default": 3,
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1.0
-          },
-          "dlq_queue_name": {
-            "description": "Dead letter queue name (optional, defaults to \"{queue_name}:DLQ\")",
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key",
-            "nullable": true
-          }
-        }
-      },
-      "QueueEnqueueOut": {
-        "type": "object",
-        "required": [
-          "message_id"
-        ],
-        "properties": {
-          "message_id": {
-            "description": "Unique message ID",
-            "type": "string"
-          }
-        }
-      },
-      "QueueDequeueIn": {
-        "type": "object",
-        "required": [
-          "queue_name",
-          "visibility_timeout_seconds"
-        ],
-        "properties": {
-          "queue_name": {
-            "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
-          "visibility_timeout_seconds": {
-            "description": "Visibility timeout in seconds (how long before message returns to queue if not ack'd)",
+          "ttl_seconds": {
+            "description": "TTL in seconds for the lock/response",
             "type": "integer",
             "format": "uint64",
-            "minimum": 1.0
+            "minimum": 1
           }
-        }
+        },
+        "required": [
+          "key",
+          "ttl_seconds"
+        ]
       },
-      "QueueDequeueOut": {
-        "type": "object",
-        "anyOf": [
+      "IdempotencyStartOut": {
+        "oneOf": [
           {
+            "description": "Lock acquired, request should proceed",
             "type": "object",
-            "required": [
-              "message_id",
-              "payload"
-            ],
             "properties": {
-              "message_id": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "locked"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          {
+            "description": "Request was already completed, cached response returned",
+            "type": "object",
+            "properties": {
+              "response": {
                 "type": "string"
               },
-              "payload": {
-                "type": "string"
+              "status": {
+                "type": "string",
+                "enum": [
+                  "completed"
+                ]
               }
-            }
-          },
-          {
-            "type": "object"
+            },
+            "required": [
+              "status",
+              "response"
+            ]
           }
+        ]
+      },
+      "KvDeleteIn": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "KvDeleteOut": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ]
+      },
+      "KvGetIn": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "KvGetOut": {
+        "type": "object",
+        "properties": {
+          "expires_at": {
+            "description": "Time of expiry",
+            "type": "string",
+            "format": "date-time"
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "expires_at",
+          "value"
+        ]
+      },
+      "KvSetIn": {
+        "type": "object",
+        "properties": {
+          "behavior": {
+            "$ref": "#/components/schemas/OperationBehavior",
+            "default": "upsert"
+          },
+          "expire_in": {
+            "description": "Time to live in milliseconds",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "expire_in",
+          "value"
+        ]
+      },
+      "KvSetOut": {
+        "type": "object"
+      },
+      "OperationBehavior": {
+        "type": "string",
+        "enum": [
+          "upsert",
+          "insert",
+          "update"
+        ]
+      },
+      "PingOut": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "QueueAckIn": {
         "type": "object",
-        "required": [
-          "message_id",
-          "queue_name"
-        ],
         "properties": {
-          "queue_name": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
           "message_id": {
             "description": "Message ID to acknowledge",
             "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           }
-        }
+        },
+        "required": [
+          "name",
+          "message_id"
+        ]
       },
       "QueueAckOut": {
         "type": "object"
       },
-      "QueueNackIn": {
+      "QueueMessage": {
         "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "string"
+          }
+        },
         "required": [
           "message_id",
-          "queue_name"
-        ],
+          "payload"
+        ]
+      },
+      "QueueNackIn": {
+        "type": "object",
         "properties": {
-          "queue_name": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          },
           "message_id": {
             "description": "Message ID to negative acknowledge",
             "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           }
-        }
+        },
+        "required": [
+          "name",
+          "message_id"
+        ]
       },
       "QueueNackOut": {
         "type": "object"
       },
       "QueuePurgeIn": {
         "type": "object",
-        "required": [
-          "queue_name"
-        ],
         "properties": {
-          "queue_name": {
+          "name": {
             "type": "string",
+            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           }
-        }
+        },
+        "required": [
+          "name"
+        ]
       },
       "QueuePurgeOut": {
         "type": "object",
-        "required": [
-          "purged_count"
-        ],
         "properties": {
           "purged_count": {
             "description": "Number of messages purged",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0.0
+            "minimum": 0
           }
-        }
+        },
+        "required": [
+          "purged_count"
+        ]
+      },
+      "QueueReceiveIn": {
+        "type": "object",
+        "properties": {
+          "batch_size": {
+            "description": "Maximum number of messages to receive (default: 1, max: 50)",
+            "type": "integer",
+            "format": "uint32",
+            "default": 1,
+            "maximum": 50,
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "visibility_timeout_seconds": {
+            "description": "Visibility timeout in seconds (how long before message returns to queue if not ack'd)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "name",
+          "visibility_timeout_seconds"
+        ]
+      },
+      "QueueReceiveOut": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "description": "Array of received messages (empty if no messages available)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueueMessage"
+            }
+          }
+        },
+        "required": [
+          "messages"
+        ]
+      },
+      "QueueRejectIn": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "description": "Message ID to reject",
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "name",
+          "message_id"
+        ]
+      },
+      "QueueRejectOut": {
+        "type": "object"
+      },
+      "QueueSendIn": {
+        "type": "object",
+        "properties": {
+          "delay_seconds": {
+            "description": "Delay before messages become available (seconds). Mutually exclusive with scheduled_at.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "messages": {
+            "description": "Array of message payloads to send",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "scheduled_at": {
+            "description": "Specific time when messages should become available. Mutually exclusive with delay_seconds.",
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "messages"
+        ]
+      },
+      "QueueSendOut": {
+        "type": "object",
+        "properties": {
+          "message_ids": {
+            "description": "Array of unique message IDs for the enqueued messages",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "message_ids"
+        ]
       },
       "QueueStatsIn": {
         "type": "object",
-        "required": [
-          "queue_name"
-        ],
         "properties": {
-          "queue_name": {
+          "name": {
             "type": "string",
+            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           }
-        }
+        },
+        "required": [
+          "name"
+        ]
       },
       "QueueStatsOut": {
         "type": "object",
-        "required": [
-          "available",
-          "in_flight"
-        ],
         "properties": {
           "available": {
             "description": "Number of available messages",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0.0
+            "minimum": 0
           },
           "in_flight": {
             "description": "Number of in-flight messages",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0.0
+            "minimum": 0
           }
-        }
+        },
+        "required": [
+          "available",
+          "in_flight"
+        ]
+      },
+      "RateLimiterCheckIn": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "description": "Rate limiter configuration",
+            "$ref": "#/components/schemas/RateLimiterConfig"
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "units": {
+            "description": "Number of units to consume (default: 1)",
+            "type": "integer",
+            "format": "uint64",
+            "default": 1,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "key",
+          "config"
+        ]
+      },
+      "RateLimiterCheckOut": {
+        "type": "object",
+        "properties": {
+          "allowed": {
+            "description": "Whether the request is allowed",
+            "type": "boolean"
+          },
+          "remaining": {
+            "description": "Number of tokens remaining",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "retry_after": {
+            "description": "Seconds until enough tokens are available (only present when allowed is false)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "allowed",
+          "remaining"
+        ]
+      },
+      "RateLimiterConfig": {
+        "type": "object",
+        "properties": {
+          "capacity": {
+            "description": "Maximum capacity of the bucket",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_amount": {
+            "description": "Number of tokens to add per refill interval",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_interval_seconds": {
+            "description": "Interval in seconds between refills (minimum 1 second)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "capacity",
+          "refill_amount",
+          "refill_interval_seconds"
+        ]
+      },
+      "RateLimiterGetRemainingIn": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "description": "Rate limiter configuration",
+            "$ref": "#/components/schemas/RateLimiterConfig"
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "key",
+          "config"
+        ]
+      },
+      "RateLimiterGetRemainingOut": {
+        "type": "object",
+        "properties": {
+          "remaining": {
+            "description": "Number of tokens remaining",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "retry_after": {
+            "description": "Seconds until at least one token is available (only present when remaining is 0)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "remaining"
+        ]
+      },
+      "StreamMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "payload": {
+            "type": "string"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "offset",
+          "payload",
+          "published_at"
+        ]
+      },
+      "StreamPublishIn": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "description": "Array of message payloads to publish",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "name",
+          "messages"
+        ]
+      },
+      "StreamPublishOut": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "description": "Number of messages published",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "StreamPurgeIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "StreamPurgeOut": {
+        "type": "object",
+        "properties": {
+          "purged_count": {
+            "description": "Number of messages purged",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "purged_count"
+        ]
+      },
+      "StreamReadIn": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "description": "Maximum number of messages to read (default: 10, max: 1000)",
+            "type": "integer",
+            "format": "uint32",
+            "default": 10,
+            "maximum": 1000,
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "start_offset": {
+            "description": "Offset to start reading from (0-indexed)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "name",
+          "start_offset"
+        ]
+      },
+      "StreamReadOut": {
+        "type": "object",
+        "properties": {
+          "has_more": {
+            "description": "Whether there are more messages available after these",
+            "type": "boolean"
+          },
+          "messages": {
+            "description": "Array of messages",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StreamMessage"
+            }
+          }
+        },
+        "required": [
+          "messages",
+          "has_more"
+        ]
+      },
+      "StreamTopicInfoIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "StreamTopicInfoOut": {
+        "type": "object",
+        "properties": {
+          "earliest_offset": {
+            "description": "Earliest available offset (usually 0)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "latest_offset": {
+            "description": "Latest offset (highest offset in the topic)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "message_count": {
+            "description": "Total number of messages in the topic",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "message_count",
+          "earliest_offset",
+          "latest_offset"
+        ]
       }
     }
   },
