@@ -14,12 +14,13 @@ mod tables;
 #[derive(Clone)]
 /// Tracks all internal state for Streams.
 pub struct State {
+    pub(crate) db: fjall::Database,
     /// Where metadata for streams (created_at, stream names, offsets, acks, etc.) are stored.
     pub(crate) metadata_tables: fjall::Keyspace,
 }
 
 impl State {
-    pub fn init(db: &fjall::Database) -> Result<Self, Error> {
+    pub fn init(db: fjall::Database) -> Result<Self, Error> {
         const METADATA_KEYSPACE: &str = "_diom_stream_metadata";
 
         // There's probably more tweaking we can do for each of these tables, but for now,
@@ -30,6 +31,9 @@ impl State {
             db.keyspace(METADATA_KEYSPACE, || opts)?
         };
 
-        Ok(Self { metadata_tables })
+        Ok(Self {
+            db,
+            metadata_tables,
+        })
     }
 }

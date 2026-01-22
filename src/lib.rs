@@ -113,7 +113,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
 
     let db = Database::builder(&cfg.db_directory).open().unwrap();
 
-    let stream_state = stream::State::init(&db).expect("initialing stream state");
+    let stream_state = stream::State::init(db.clone()).expect("initialing stream state");
 
     // build our application with a route
     let app_state = AppState {
