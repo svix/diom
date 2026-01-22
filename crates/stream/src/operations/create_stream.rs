@@ -62,7 +62,6 @@ impl CreateStream {
         stream.max_byte_size = self.max_byte_size;
         stream.updated_at = self.timestamp;
 
-        // FIXME(@svix-gabriel) do this atomically
         {
             let (k1, v1) = stream.to_fjall_entry()?;
             let (k2, v2) = NameToStreamRow {
@@ -71,8 +70,10 @@ impl CreateStream {
             }
             .to_fjall_entry()?;
 
-            state.metadata_tables.insert(k1, v1)?;
-            state.metadata_tables.insert(k2, v2)?;
+            let mut batch = state.db.batch();
+            batch.insert(&state.metadata_tables, k1, v1);
+            batch.insert(&state.metadata_tables, k2, v2);
+            batch.commit()?;
         }
 
         let StreamRow {
