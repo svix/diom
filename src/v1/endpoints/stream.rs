@@ -56,13 +56,17 @@ async fn create_stream(
     so in practice the structure of this handler will look different once those two pieces are in place.
     */
 
-    let op = stream::operations::CreateStream::new(
-        data.name,
-        data.retention_period_seconds,
-        data.max_byte_size,
-    );
+    let out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::CreateStream::new(
+            &stream_state,
+            data.name,
+            data.retention_period_seconds,
+            data.max_byte_size,
+        )?;
 
-    let out = tokio::task::spawn_blocking(move || op.apply_operation(&stream_state)).await??;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
 
     let CreateStreamOutput {
         id,
