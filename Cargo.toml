@@ -73,7 +73,7 @@ workspace = true
 
 ### Workspace manifest ###
 [workspace]
-members = ["node", "crates/*"]
+members = ["codegen", "node", "crates/*"]
 resolver = "2"
 
 [workspace.package]

@@ -548,6 +548,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "codegen"
+version = "1.76.1"
+dependencies = [
+ "aide",
+ "anyhow",
+ "coyote",
+ "serde_json",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "colorchoice"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -688,13 +699,11 @@ dependencies = [
 name = "coyote-node"
 version = "1.76.1"
 dependencies = [
- "aide",
  "anyhow",
  "clap",
  "coyote",
  "dotenvy",
  "reqwest 0.13.1",
- "serde_json",
  "tokio",
  "tracing-subscriber",
 ]

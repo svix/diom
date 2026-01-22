@@ -1,0 +1,22 @@
+[package]
+name = "codegen"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+edition = "2024"
+
+[features]
+# This Cargo feature flag exists so rust-analyzer doesn't enable coyote's
+# openapi feature, which is expensive for compile times.
+# This is important for Cargo commands spawned by RA in particular.
+generate = ["coyote/openapi"]
+
+[dependencies]
+aide.workspace = true
+anyhow.workspace = true
+coyote.workspace = true
+serde_json.workspace = true
+tracing-subscriber.workspace = true
+
+[lints]
+workspace = true
