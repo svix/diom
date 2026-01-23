@@ -50,6 +50,7 @@ schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_path_to_error.workspace = true
+serde_with.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
 tower.workspace = true
@@ -148,6 +149,7 @@ schemars = { version = "1.2.0", features = ["jiff02"] }
 serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value"] }
 serde_path_to_error = "0.1.7"
+serde_with = "3.16.1"
 static_assertions = "1.1"
 syn = "2.0.48"
 tempfile = "3.24.0"
