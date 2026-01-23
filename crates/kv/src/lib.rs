@@ -1,5 +1,9 @@
-use std::time::Duration;
 pub mod tables;
+
+use coyote_configgroup::{
+    ConfigGroup,
+    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig},
+};
 use coyote_error::Result;
 use fjall::{Database, KeyspaceCreateOptions};
 
@@ -25,14 +29,6 @@ impl From<KvPairRow> for KvModel {
         }
     }
 }
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub enum EvictionPolicy {
-    #[default]
-    NoEviction,
-    LeastRecentlyUsed,
-}
-
 #[derive(Clone)]
 pub struct KvStore {
     db: fjall::Database,
@@ -227,33 +223,106 @@ const MAX_CAPACITY: u64 = 1024 * 8; // FIXME: make this configurable
 
 /// This is the worker function for this module, it does background cleanup and accounting.
 /// It deletes expired entries from the database and evicts entries if the KvStore is configured to do so.
-pub async fn worker<F>(stores: &mut [&mut KvStore], is_shutting_down: F)
+pub async fn worker<F>(configgroup_state: &coyote_configgroup::State, is_shutting_down: F)
 where
     F: Fn() -> bool,
 {
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+
+    let clean_up = |mut store: KvStore| {
+        let now = Timestamp::now();
+        // Expiration cleanup
+        let _ = store.clear_expired(now);
+
+        // Eviction
+        if store.disk_space() > MAX_CAPACITY && store.policy == EvictionPolicy::LeastRecentlyUsed {
+            // FIXME(@svix-lucho): we can add smarter eviction instead of just doing one at a time
+            let _ = store.evict_lru(1);
+        }
+    };
+
     loop {
         if is_shutting_down() {
             break;
         }
-        let now = Timestamp::now();
-        for store in stores.iter_mut() {
-            // Expiration cleanup
-            let _ = store.clear_expired(now);
 
-            // Eviction
-            if store.disk_space() > MAX_CAPACITY
-                && store.policy == EvictionPolicy::LeastRecentlyUsed
-            {
-                // FIXME(@svix-lucho): we can add smarter eviction instead of just doing one at a time
-                let _ = store.evict_lru(1);
+        timer.tick().await;
+
+        let kv_groups = match configgroup_state.fetch_all_groups() {
+            Ok(groups) => groups,
+            Err(e) => {
+                tracing::error!(error = ?e, "Failed to get KV config groups.");
+                continue;
             }
+        };
+
+        for group in kv_groups {
+            let group: ConfigGroup<KeyValueConfig> = match group {
+                Ok(g) => g,
+                Err(e) => {
+                    tracing::error!(error = ?e, "Failed to parse KV config group.");
+                    continue;
+                }
+            };
+            let db = configgroup_state.give_me_the_right_db(&group);
+            let policy = group.config.eviction_policy();
+            let store = KvStore::new(KeyValueConfig::NAMESPACE, db, policy);
+
+            clean_up(store);
         }
-        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        let cache_groups = match configgroup_state.fetch_all_groups() {
+            Ok(groups) => groups,
+            Err(e) => {
+                tracing::error!(error = ?e, "Failed to get Cache config groups.");
+                continue;
+            }
+        };
+
+        for group in cache_groups {
+            let group: ConfigGroup<CacheConfig> = match group {
+                Ok(g) => g,
+                Err(e) => {
+                    tracing::error!(error = ?e, "Failed to process Cache config group.");
+                    continue;
+                }
+            };
+            let db = configgroup_state.give_me_the_right_db(&group);
+            let policy = group.config.eviction_policy();
+            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy);
+
+            clean_up(store);
+        }
+
+        let idempotency_groups = match configgroup_state.fetch_all_groups() {
+            Ok(groups) => groups,
+            Err(e) => {
+                tracing::error!(error = ?e, "Failed to get Idempotency config groups.");
+                continue;
+            }
+        };
+
+        for group in idempotency_groups {
+            let group: ConfigGroup<IdempotencyConfig> = match group {
+                Ok(g) => g,
+                Err(e) => {
+                    tracing::error!(error = ?e, "Failed to process Idempotency config group.");
+                    continue;
+                }
+            };
+            let db = configgroup_state.give_me_the_right_db(&group);
+            let policy = group.config.eviction_policy();
+            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy);
+
+            clean_up(store);
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use super::*;
     use jiff::ToSpan;
 

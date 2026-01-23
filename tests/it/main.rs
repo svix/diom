@@ -49,10 +49,6 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
 
     let cfg = Arc::new(ConfigurationInner {
         listen_address: addr,
-        management_db: Arc::new(DatabaseConfig {
-            path: db_dir.clone(),
-            ..Default::default()
-        }),
         ephemeral_db: Arc::new(DatabaseConfig {
             path: db_dir.clone(),
             ..Default::default()
