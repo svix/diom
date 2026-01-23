@@ -38,7 +38,7 @@ impl ExpirationRow {
         let ts_ms = expiration_time.as_millisecond();
         let ts_bytes = ts_ms.to_be_bytes();
         let ts_hex = hex::encode(ts_bytes);
-        let computed_key = format!("{ts_hex}\0{}", key);
+        let computed_key = format!("{ts_hex}\0{key}");
 
         Self {
             expiration_time,
