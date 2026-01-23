@@ -4,6 +4,7 @@ pub mod tables;
 use std::time::Duration;
 
 use coyote_error::Result;
+use fjall::Database;
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
@@ -27,14 +28,7 @@ pub enum RateLimitResult {
 }
 
 impl RateLimiter {
-    // FIXME(@svix-lucho): get the db from the app state (caller)
-    pub fn new() -> Self {
-        Self::with_path(".data/rate_limiter_default")
-    }
-
-    pub fn with_path(path: &str) -> Self {
-        let db = fjall::Database::builder(path).open().unwrap();
-
+    pub fn new(path: &str, db: Database) -> Self {
         let rate_limiter_keyspace = format!("_coyote_rate_limiter_{path}");
 
         let tables = {
@@ -192,7 +186,8 @@ mod tests {
 
     fn create_test_limiter() -> (RateLimiter, tempfile::TempDir) {
         let dir = tempdir().unwrap();
-        let limiter = RateLimiter::with_path(dir.path().to_str().unwrap());
+        let db = Database::builder(&dir).temporary(true).open().unwrap();
+        let limiter = RateLimiter::new("rate-limiter", db);
         (limiter, dir)
     }
 

@@ -12,6 +12,9 @@ use tracing_subscriber::util::SubscriberInitExt;
 #[derive(Parser)]
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
 struct Args {
+    #[clap(long)]
+    config_path: Option<String>,
+
     #[clap(subcommand)]
     command: Option<Commands>,
 }
@@ -25,6 +28,8 @@ enum Commands {
         /// The server URL, for example http://localhost:8050
         server_url: String,
     },
+    /// Run the server (this is also the default if no subcommand is passed)
+    Server,
 }
 
 #[tokio::main(flavor = "local")]
@@ -51,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    let cfg = cfg::load()?;
+    let cfg = cfg::load(args.config_path.as_deref())?;
 
     let (tracing_subscriber, otel_tracer_provider) =
         setup_tracing(&cfg, /* for_test = */ false);
@@ -61,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Healthcheck { .. }) => {
             unreachable!("Healthcheck command should be handled before config loading")
         }
-        None => {
+        Some(Commands::Server) | None => {
             run(cfg).await;
         }
     };
