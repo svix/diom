@@ -5,6 +5,7 @@ use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
 const OUTPUTS: &[(&str, &str)] = &[
+    // Rust SDK
     (
         "codegen/templates/rust/api_summary.rs.jinja",
         "clients/rust/src/api",
@@ -20,6 +21,15 @@ const OUTPUTS: &[(&str, &str)] = &[
     (
         "codegen/templates/rust/component_type.rs.jinja",
         "clients/rust/src/models",
+    ),
+    // CLI
+    (
+        "codegen/templates/cli/api_summary.rs.jinja",
+        "clients/cli/src/cmds/api",
+    ),
+    (
+        "codegen/templates/cli/api_resource.rs.jinja",
+        "clients/cli/src/cmds/api",
     ),
 ];
 
@@ -72,7 +82,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     std::process::Command::new("cargo")
-        .args(["fmt", "--package=coyote-client"])
+        .args(["fmt", "--package=coyote-client", "--package=coyote-cli"])
         .status()?;
 
     Ok(())
