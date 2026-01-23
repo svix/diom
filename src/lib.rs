@@ -26,7 +26,10 @@ use tower_http::{
 use tracing_subscriber::{Layer as _, layer::SubscriberExt as _};
 use uuid::Uuid;
 
-use crate::cfg::{Configuration, DatabaseConfig};
+use crate::{
+    cfg::Configuration,
+    v1::modules::{cache, kv},
+};
 
 pub mod cfg;
 pub mod core;
@@ -111,23 +114,18 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let persistent_db =
         DatabaseConfig::persistent(cfg.peristent_db_config.clone()).expect("persistent db");
 
-    let _ephemeral_db =
-        DatabaseConfig::ephemeral(cfg.ephemeral_db_config.clone()).expect("ephemeral db");
+    let stream_state = stream::State::init(db.clone()).expect("initialing stream state");
+    let kv_store = kv::KvStore::init(db.clone()).expect("initialing kv store");
 
-    let _management_db =
-        DatabaseConfig::management(cfg.management_db_config.clone()).expect("management db");
-
-    let stream_state =
-        stream::State::init(persistent_db.clone()).expect("initializing stream state");
+    let cache_kv_store = kv::KvStore::init(db.clone()).expect("initialing cache kv store");
+    let cache_store = cache::CacheStore::init(cache_kv_store);
 
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
         db,
-        kv_store: crate::v1::modules::kv::KvStore::new("kv_store"),
-        cache_store: crate::v1::modules::cache::CacheStore::new(
-            crate::v1::modules::kv::KvStore::new("cache_store"),
-        ),
+        kv_store,
+        cache_store,
         rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(),
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::modules::queue::QueueStore::new(),

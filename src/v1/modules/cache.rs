@@ -19,7 +19,7 @@ pub struct CacheStore {
 const MAX_LRU_CLOCK_SIZE: usize = 128;
 
 impl CacheStore {
-    pub fn new(kv: KvStore) -> Self {
+    pub fn init(kv: KvStore) -> Self {
         Self {
             kv,
             lru_clock: HashMap::new(),
@@ -127,11 +127,15 @@ impl From<KvModel> for CacheModel {
 
 #[cfg(test)]
 mod tests {
+    use test_utils::get_test_db;
+
     use super::*;
 
     #[test]
     fn test_lru_eviction() {
-        let mut cache = CacheStore::new(KvStore::new_temporary("test_lru"));
+        let (db, _tempdir) = get_test_db();
+        let kv_store = KvStore::init(db).unwrap();
+        let mut cache = CacheStore::init(kv_store);
 
         for i in 0..3 {
             cache

@@ -1,7 +1,7 @@
 use std::time::Duration;
 pub mod tables;
-use diom_error::Result;
-use fjall::{Database, KeyspaceCreateOptions};
+use diom_error::{Error, Result};
+use fjall::KeyspaceCreateOptions;
 
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -41,45 +41,20 @@ pub enum OperationBehavior {
     Update,
 }
 
-impl Default for KvStore {
-    fn default() -> Self {
-        Self::new("default")
-    }
-}
-
 const EXPIRATION_BATCH_SIZE: usize = 100; // FIXME(@svix-lucho): make this configurable?
 
 impl KvStore {
-    // FIXME(@svix-lucho): receive the db from the caller
-    pub fn new(namespace: &str) -> Self {
-        let db = Database::builder(format!("db/kv/{namespace}"))
-            .open()
-            .unwrap();
+    pub fn init(db: fjall::Database) -> Result<Self, Error> {
+        const KV_KEYSPACE: &str = "_diom_kv";
 
-        let kv_keyspace = format!("_diom_kv_{namespace}");
-
+        // There's probably more tweaking we can do for each of these tables, but for now,
+        // this should suffice.
         let tables = {
             let opts = KeyspaceCreateOptions::default();
-            db.keyspace(&kv_keyspace, || opts).unwrap()
+            db.keyspace(KV_KEYSPACE, || opts)?
         };
 
-        Self { db, tables }
-    }
-
-    pub fn new_temporary(namespace: &str) -> Self {
-        let db = Database::builder(format!("db/kv/{namespace}"))
-            .temporary(true)
-            .open()
-            .unwrap();
-
-        let kv_keyspace = format!("_diom_kv_temporary_{namespace}");
-
-        let tables = {
-            let opts = KeyspaceCreateOptions::default();
-            db.keyspace(&kv_keyspace, || opts).unwrap()
-        };
-
-        Self { db, tables }
+        Ok(Self { db, tables })
     }
 
     // FIXME(@svix-lucho): needs to be passed now() from the caller?
@@ -221,10 +196,12 @@ where
 mod tests {
     use super::*;
     use jiff::ToSpan;
+    use test_utils::get_test_db;
 
     #[test]
     fn test_insert_and_get() {
-        let store = KvStore::new_temporary(".test_kv_insert_and_get");
+        let (db, _tempdir) = get_test_db();
+        let store = KvStore::init(db).unwrap();
 
         let key = "test:key1";
         let model = KvModel {
@@ -246,7 +223,8 @@ mod tests {
 
     #[test]
     fn test_insert_behaviors() {
-        let store = KvStore::new_temporary(".test_kv_insert_behaviors");
+        let (db, _tempdir) = get_test_db();
+        let store = KvStore::init(db).unwrap();
 
         let res = store.set(
             "key1",
@@ -302,7 +280,8 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let store = KvStore::new_temporary(".test_kv_overwrite");
+        let (db, _tempdir) = get_test_db();
+        let store = KvStore::init(db).unwrap();
 
         let key = "overwrite:key";
         let model1 = KvModel {
@@ -323,7 +302,8 @@ mod tests {
 
     #[test]
     fn test_clear_expired_removes_expired_entries() {
-        let store = KvStore::new_temporary(".test_kv_clear_expired");
+        let (db, _tempdir) = get_test_db();
+        let store = KvStore::init(db).unwrap();
 
         let expired_model = KvModel {
             expires_at: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),

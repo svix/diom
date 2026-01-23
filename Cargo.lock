@@ -872,6 +872,7 @@ dependencies = [
  "serde",
  "static_assertions",
  "tempfile",
+ "test-utils",
  "tokio",
 ]
 
@@ -3886,11 +3887,13 @@ version = "1.76.1"
 dependencies = [
  "anyhow",
  "bytes",
+ "fjall",
  "http",
  "http-body-util",
  "reqwest 0.13.1",
  "serde",
  "serde_json",
+ "tempfile",
  "url",
 ]
 

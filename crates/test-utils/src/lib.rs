@@ -1,10 +1,11 @@
 use std::fmt::{Debug, Display};
 
 mod test_client;
-
+use fjall::Database;
 pub use test_client::{TestClient, TestRequestBuilder, TestResponse};
 
 pub use reqwest::StatusCode;
+use tempfile::TempDir;
 
 #[derive(Debug)] // needed to be able to return TestResult from #[test] fns
 pub enum TestError {}
@@ -24,3 +25,14 @@ impl<T: Display + Debug> From<T> for TestError {
 }
 
 pub type TestResult<T = ()> = Result<T, TestError>;
+
+pub fn get_test_db() -> (Database, TempDir) {
+    let db_dir = tempfile::tempdir().unwrap();
+
+    let db = Database::builder(db_dir.path().to_str().unwrap())
+        .temporary(true)
+        .open()
+        .unwrap();
+
+    (db, db_dir)
+}
