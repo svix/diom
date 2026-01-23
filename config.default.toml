@@ -5,9 +5,6 @@
 # The address to listen on
 listen_address = "0.0.0.0:8050"
 
-# The directory for on-disk storage
-db_directory = "db"
-
 # The JWT secret for authentication - should be secret and securely generated
 # jwt_secret = "8KjzRXrKkd9YFcNyqLSIY8JwiaCeRc6WK4UkMnSW"
 
@@ -34,3 +31,8 @@ opentelemetry_service_name = "coyote"
 # Supported: "dev", "staging", "prod"
 environment = "dev"
 
+# Directory where persistent database is stored.
+persistent_db_path = "./db"
+
+# Directory where ephemeral database is stored.
+ephemeral_db_path = "./db"
