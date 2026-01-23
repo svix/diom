@@ -3,7 +3,7 @@
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
-use chrono::Duration;
+use chrono::{Duration, Utc};
 use coyote_derive::aide_annotate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -91,8 +91,10 @@ async fn rate_limiter_limit(
     State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
 ) -> Result<Json<RateLimiterCheckOut>> {
+    let now = Utc::now(); // FIXME(@svix-lucho): should come from consensus?
     let (result, remaining, retry_after) = rate_limiter
         .limit(
+            now,
             &data.key,
             data.units,
             RateLimitConfig::TokenBucket(TokenBucket {
@@ -117,8 +119,10 @@ async fn rate_limiter_get_remaining(
     State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
 ) -> Result<Json<RateLimiterGetRemainingOut>> {
+    let now = Utc::now(); // FIXME(@svix-lucho): should come from consensus?
     let remaining = rate_limiter
         .get_remaining(
+            now,
             &data.key,
             RateLimitConfig::TokenBucket(TokenBucket {
                 bucket_size: data.config.capacity,
