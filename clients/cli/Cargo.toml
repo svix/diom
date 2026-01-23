@@ -1,0 +1,30 @@
+[package]
+name = "diom-cli"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+edition = "2024"
+
+[package.metadata.cargo-machete]
+ignored = [
+    # not a direct dependency, but we want to pin its version
+    # see comment in root Cargo.toml
+    "idna_adapter",
+]
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+clap_complete.workspace = true
+colored_json.workspace = true
+concolor-clap.workspace = true
+config.workspace = true
+diom-client.workspace = true
+dirs.workspace = true
+idna_adapter.workspace = true
+rustls.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["macros", "time", "rt-multi-thread"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true

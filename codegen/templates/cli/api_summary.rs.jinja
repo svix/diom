@@ -1,0 +1,25 @@
+// this file is @generated
+{% macro resource_mods(resource) -%}
+    mod {{ resource.name | to_snake_case }};
+    {%- for _, sub in resource.subresources | items -%}
+        {{- resource_mods(sub) -}}
+    {%- endfor -%}
+{% endmacro -%}
+
+{% for res in api.resources -%}
+    {{ resource_mods(res) -}}
+{% endfor %}
+
+{% macro resource_reexports(resource) -%}
+    {% set resource_type_name = resource.name | to_upper_camel_case -%}
+    {{ resource.name | to_snake_case }}::{{ resource_type_name }}Args,
+    {% for _, sub in resource.subresources | items -%}
+        {{ resource_reexports(sub) -}}
+    {% endfor -%}
+{% endmacro -%}
+
+pub(crate) use self::{
+    {% for res in api.resources -%}
+        {{ resource_reexports(res) }}
+    {% endfor -%}
+};
