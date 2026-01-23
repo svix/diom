@@ -1,89 +1,161 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
+use std::{collections::HashMap, time::Duration};
 
-//! Cache module.
-//!
-//! The idea of having a separate cache module is that we can aggressively evict from this one when
-//! under memory pressure, which we don't want to do with kv store (which can't be lost!). So cache
-//! is really for caching things, and not a kv store. That's why they should maybe be different.
-//! So for example we can configure eviction policies like: swap, drop, and behaviors like lru,
-//! whatever.
-//!
-//! FIXME:
-//! * Potentially we could merge it with KV and just with the "group configuration" behavior we can
-//!   define the cache behavior. So we don't actually need a different backend?
-//!   * Though even if we do that, maybe cache should be an alias for kv with a default base
-//!     configuration?
-//! * If we end up making them separate: this can potentially reuse code from kv-store?
-
+use itertools::Itertools;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::types::EntityKey,
-    error::{Error, HttpError, Result},
-};
+use crate::{AppState, error::Result};
+
+use diom_kv::{KvModel, KvStore, OperationBehavior};
 
 #[derive(Clone)]
 pub struct CacheStore {
-    pub(crate) store: Arc<RwLock<HashMap<String, CacheModel>>>,
+    pub(crate) kv: KvStore,
+    pub(crate) lru_clock: HashMap<String, u64>,
 }
 
-impl Default for CacheStore {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+const MAX_LRU_CLOCK_SIZE: usize = 128;
 
 impl CacheStore {
-    pub fn new() -> Self {
+    pub fn new(kv: KvStore) -> Self {
         Self {
-            store: Arc::new(RwLock::new(HashMap::new())),
+            kv,
+            lru_clock: HashMap::new(),
         }
     }
 
-    pub fn set(&self, key: String, model: CacheModel) {
-        self.store.write().unwrap().insert(key, model);
+    pub fn set(&mut self, key: &str, model: CacheModel) -> Result<()> {
+        if let Some(c) = self.lru_clock.get_mut(key) {
+            *c += 1;
+        }
+        self.kv
+            .set(key, &model.into(), OperationBehavior::Upsert)
+            .map_err(|e| crate::error::Error::generic(e))
     }
 
-    pub fn get(&self, key: &str) -> Result<CacheModel> {
-        self.store
-            .read()
-            .unwrap()
+    pub fn get(&mut self, key: &str) -> Result<Option<CacheModel>> {
+        if let Some(c) = self.lru_clock.get_mut(key) {
+            *c += 1;
+        }
+        self.kv
             .get(key)
-            .cloned()
-            .ok_or_else(|| Error::http(HttpError::not_found(None, None)))
+            .map(|m| m.map(Into::into))
+            .map_err(|e| crate::error::Error::generic(e))
     }
 
-    pub fn delete(&self, key: &str) -> bool {
-        self.store.write().unwrap().remove(key).is_some()
+    pub fn delete(&mut self, key: &str) -> Result<()> {
+        self.lru_clock.remove(key);
+        self.kv
+            .delete(key)
+            .map_err(|e| crate::error::Error::generic(e))
+    }
+
+    pub fn reset_lru_clock(&mut self) -> Result<()> {
+        self.lru_clock.clear();
+
+        // Take a random sample of the KV store to count access counts
+        // FIXME: iter is always sorted - we want to take a random sample
+        // Also, taking this many elements is inefficient...
+        // Strip the table prefix to get the original key
+        for kv in self.kv.iter()?.take(MAX_LRU_CLOCK_SIZE) {
+            self.lru_clock.insert(kv.key.to_string(), 0);
+        }
+
+        Ok(())
+    }
+
+    pub fn evict_lru(&mut self, count: usize) -> Result<()> {
+        for (key, _) in self
+            .lru_clock
+            .iter()
+            .sorted_by_key(|(_, count)| *count)
+            .take(count)
+        {
+            let _ = self.kv.delete(key);
+        }
+        Ok(())
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct CacheModel {
-    #[validate(nested)]
-    pub key: EntityKey,
-
-    // FIXME: should be datetime
-    /// Time of expiry
-    pub expires_at: u64,
-
-    // FIXME: change to Bytes
-    pub value: String,
-}
+const MAX_CAPACITY: u64 = 1024 * 8; // FIXME: of course, make it configurable
 
 /// This is the worker function for this module, it does background cleanup and accounting.
-pub async fn worker(_state: AppState) -> Result<()> {
+pub async fn worker(mut state: AppState) -> Result<()> {
     loop {
         if crate::is_shutting_down() {
             break;
         }
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+
+        // XXX: this is very basic...  we could do batch removes and be based on the size of the elements.
+        if state.cache_store.kv.disk_space() > MAX_CAPACITY {
+            let _ = state.cache_store.reset_lru_clock();
+            let _ = state.cache_store.evict_lru(1);
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        } else {
+            tokio::time::sleep(Duration::from_secs(30)).await;
+        }
     }
     Ok(())
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+pub struct CacheModel {
+    pub expires_at: Option<Timestamp>,
+
+    pub value: Vec<u8>,
+}
+
+impl From<CacheModel> for KvModel {
+    fn from(model: CacheModel) -> Self {
+        KvModel {
+            value: model.value,
+            expires_at: model.expires_at,
+        }
+    }
+}
+
+impl From<KvModel> for CacheModel {
+    fn from(model: KvModel) -> Self {
+        CacheModel {
+            value: model.value,
+            expires_at: model.expires_at,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lru_eviction() {
+        let mut cache = CacheStore::new(KvStore::new_temporary("test_lru"));
+
+        for i in 0..3 {
+            cache
+                .set(
+                    format!("k{i}").as_str(),
+                    CacheModel {
+                        expires_at: None,
+                        value: vec![i],
+                    },
+                )
+                .unwrap();
+        }
+
+        cache.reset_lru_clock().unwrap();
+
+        cache.get("k2").unwrap();
+        cache.get("k2").unwrap();
+        cache.get("k1").unwrap();
+        cache.get("k1").unwrap();
+
+        cache.evict_lru(1).unwrap();
+
+        assert!(cache.get("k0").unwrap().is_none());
+        assert!(cache.get("k1").unwrap().is_some());
+        assert!(cache.get("k2").unwrap().is_some());
+    }
 }

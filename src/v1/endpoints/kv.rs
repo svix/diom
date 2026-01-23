@@ -46,18 +46,21 @@ pub struct KvSetIn {
 impl KvSetIn {
     fn into_model(self) -> KvModel {
         let KvSetIn {
-            key,
+            key: _,
             expire_in,
             value,
             behavior: _,
         } = self;
 
-        let expires_at = Timestamp::now() + Duration::from_millis(expire_in);
+        let expires_at = if expire_in > 0 {
+            Some(Timestamp::now() + Duration::from_millis(expire_in))
+        } else {
+            None
+        };
 
         KvModel {
-            key,
             expires_at,
-            value,
+            value: value.into_bytes(),
         }
     }
 }
@@ -77,24 +80,18 @@ pub struct KvGetOut {
     pub key: Arc<EntityKey>,
 
     /// Time of expiry
-    pub expires_at: Timestamp,
+    pub expires_at: Option<Timestamp>,
 
     // FIXME: change to Bytes
     pub value: String,
 }
 
-impl From<KvModel> for KvGetOut {
-    fn from(model: KvModel) -> Self {
-        let KvModel {
-            key,
-            expires_at,
-            value,
-        } = model;
-
+impl KvGetOut {
+    fn from_model(key: Arc<EntityKey>, model: KvModel) -> Self {
         Self {
             key,
-            expires_at,
-            value,
+            expires_at: model.expires_at,
+            value: String::from_utf8(model.value).unwrap_or_else(|_| String::new()),
         }
     }
 }
@@ -120,7 +117,9 @@ async fn kv_set(
     let behavior = data.behavior.clone();
     let model = data.into_model();
 
-    kv_store.set(key, model, behavior)?;
+    kv_store
+        .set(&key.0, &model, behavior)
+        .map_err(|e| crate::error::Error::generic(e))?;
 
     let ret = KvSetOut {};
     Ok(Json(ret))
@@ -132,8 +131,17 @@ async fn kv_get(
     State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvGetIn>,
 ) -> Result<Json<KvGetOut>> {
-    let model = kv_store.get(&data.key)?;
-    let ret: KvGetOut = model.into();
+    let model = kv_store
+        .get(&data.key.0)
+        .map_err(|e| crate::error::Error::generic(e))?;
+    let ret = match model {
+        Some(m) => KvGetOut::from_model(Arc::new(data.key.clone()), m),
+        None => {
+            return Err(crate::error::Error::http(
+                crate::error::HttpError::not_found(None, Some("Key not found".to_string())),
+            ));
+        }
+    };
     Ok(Json(ret))
 }
 
@@ -143,7 +151,10 @@ async fn kv_del(
     State(AppState { kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvDeleteIn>,
 ) -> Result<Json<KvDeleteOut>> {
-    let deleted = kv_store.delete(&data.key);
+    let deleted = kv_store
+        .delete(&data.key.0)
+        .map_err(|e| crate::error::Error::generic(e))
+        .is_ok();
     let ret = KvDeleteOut { deleted };
     Ok(Json(ret))
 }
