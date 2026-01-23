@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
 use coyote_error::{Error, Result};
-use fjall::{OptimisticTxKeyspace, OptimisticWriteTx, Readable};
 use serde::{Serialize, de::DeserializeOwned};
 
 /// A trait for types that can be stored as rows in a fjall keyspace.
@@ -39,53 +38,43 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         keyspace.get(&key)?.map(Self::from_fjall_value).transpose()
     }
 
-    fn iter(keyspace: &fjall::Keyspace) -> Result<impl Iterator<Item = Self>> {
-        Ok(keyspace.iter().map(|g| {
-            let v = g.value().expect("iter error?");
-            let r = Self::from_fjall_value(v).expect("deserialize error?");
-            r
-        }))
+    fn insert(keyspace: &fjall::Keyspace, row: &Self) -> Result<()> {
+        let (key, value) = row.to_fjall_entry()?;
+        keyspace.insert(key, value)?;
+        Ok(())
     }
 
-    fn take_tx(
-        tx: &mut OptimisticWriteTx,
-        keyspace: &OptimisticTxKeyspace,
-        key: &Self::Key,
-    ) -> Result<Option<Self>> {
+    fn remove(keyspace: &fjall::Keyspace, key: &Self::Key) -> Result<()> {
         let key = Self::make_fjall_key(key);
-        tx.take(keyspace, key)?
-            .map(Self::from_fjall_value)
-            .transpose()
+        keyspace.remove(key)?;
+        Ok(())
     }
 
-    fn get_tx(
-        tx: &mut OptimisticWriteTx,
-        keyspace: &OptimisticTxKeyspace,
-        key: &Self::Key,
-    ) -> Result<Option<Self>> {
-        let key = Self::make_fjall_key(key);
-        tx.get(keyspace, &key)?
-            .map(Self::from_fjall_value)
-            .transpose()
-    }
-
-    fn insert_tx(
-        tx: &mut OptimisticWriteTx,
-        keyspace: &OptimisticTxKeyspace,
+    // FIXME(@svix-lucho): maybe this isn't needed
+    fn insert_batch(
+        batch: &mut fjall::OwnedWriteBatch,
+        keyspace: &fjall::Keyspace,
         row: &Self,
     ) -> Result<()> {
         let (key, value) = row.to_fjall_entry()?;
-        tx.insert(keyspace, key, value);
+        batch.insert(keyspace, key, value);
         Ok(())
     }
 
-    fn remove_tx(
-        tx: &mut OptimisticWriteTx,
-        keyspace: &OptimisticTxKeyspace,
-        row: &Self,
+    fn remove_batch(
+        batch: &mut fjall::OwnedWriteBatch,
+        keyspace: &fjall::Keyspace,
+        key: &Self::Key,
     ) -> Result<()> {
-        let key = Self::make_fjall_key(row.get_key());
-        tx.remove(keyspace, key);
+        let key = Self::make_fjall_key(key);
+        batch.remove(keyspace, key);
         Ok(())
+    }
+
+    fn iter(keyspace: &fjall::Keyspace) -> Result<impl Iterator<Item = Self>> {
+        Ok(keyspace.prefix(Self::TABLE_PREFIX).map(|g| {
+            let v = g.value().expect("iter error?");
+            Self::from_fjall_value(v).expect("deserialize error?")
+        }))
     }
 }
