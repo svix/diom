@@ -120,13 +120,16 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let cache_kv_store = kv::KvStore::init(db.clone()).expect("initialing cache kv store");
     let cache_store = cache::CacheStore::init(cache_kv_store);
 
+    let rate_limiter = crate::v1::modules::rate_limiter::RateLimiter::init(db.clone())
+        .expect("initializing rate limiter");
+
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
         db,
         kv_store,
         cache_store,
-        rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(),
+        rate_limiter,
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,

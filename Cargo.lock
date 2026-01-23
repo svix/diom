@@ -903,6 +903,7 @@ dependencies = [
  "serde",
  "static_assertions",
  "tempfile",
+ "test-utils",
  "tokio",
 ]
 

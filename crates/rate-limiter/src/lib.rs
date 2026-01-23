@@ -1,7 +1,7 @@
 pub mod tables;
 
 use chrono::{DateTime, Duration, Utc};
-use diom_error::Result;
+use diom_error::{Error, Result};
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
 use schemars::JsonSchema;
@@ -70,22 +70,17 @@ pub enum RateLimitResult {
 }
 
 impl RateLimiter {
-    // FIXME(@svix-lucho): get the db from the app state (caller)
-    pub fn new() -> Self {
-        Self::with_path(".data/rate_limiter_default")
-    }
+    pub fn init(db: fjall::Database) -> Result<Self, Error> {
+        const RATE_LIMITER_KEYSPACE: &str = "_diom_rate_limiter";
 
-    pub fn with_path(path: &str) -> Self {
-        let db = fjall::Database::builder(path).open().unwrap();
-
-        let rate_limiter_keyspace = format!("_diom_rate_limiter_{path}");
-
+        // There's probably more tweaking we can do for each of these tables, but for now,
+        // this should suffice.
         let tables = {
             let opts = KeyspaceCreateOptions::default();
-            db.keyspace(&rate_limiter_keyspace, || opts).unwrap()
+            db.keyspace(RATE_LIMITER_KEYSPACE, || opts)?
         };
 
-        Self { db, tables }
+        Ok(Self { db, tables })
     }
 
     // Using the same identifier but changing the algorithm is considered a different resource.
@@ -224,16 +219,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
-
-    fn create_test_limiter() -> (RateLimiter, tempfile::TempDir) {
-        let dir = tempdir().unwrap();
-        let limiter = RateLimiter::with_path(dir.path().to_str().unwrap());
-        (limiter, dir)
-    }
 
     mod fixed_window {
         use super::*;
+        use test_utils::get_test_db;
 
         fn config() -> RateLimitConfig {
             RateLimitConfig::FixedWindow(FixedWindow {
@@ -244,7 +233,8 @@ mod tests {
 
         #[test]
         fn rate_limiting() {
-            let (limiter, _dir) = create_test_limiter();
+            let (db, _tempdir) = get_test_db();
+            let limiter = RateLimiter::init(db).unwrap();
             let id = "user1";
 
             let mut clock = DateTime::from_timestamp_millis(0).unwrap();
@@ -277,6 +267,7 @@ mod tests {
 
     mod token_bucket {
         use super::*;
+        use test_utils::get_test_db;
 
         fn config() -> RateLimitConfig {
             RateLimitConfig::TokenBucket(TokenBucket {
@@ -296,7 +287,8 @@ mod tests {
 
         #[test]
         fn rate_limiting() {
-            let (limiter, _dir) = create_test_limiter();
+            let (db, _tempdir) = get_test_db();
+            let limiter = RateLimiter::init(db).unwrap();
             let id = "user1";
 
             let clock = Utc::now();
@@ -314,7 +306,8 @@ mod tests {
 
         #[test]
         fn tokens_refill_over_time() {
-            let (limiter, _dir) = create_test_limiter();
+            let (db, _tempdir) = get_test_db();
+            let limiter = RateLimiter::init(db).unwrap();
             let id = "user1";
 
             let mut clock = Utc::now();
