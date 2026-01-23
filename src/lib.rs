@@ -119,8 +119,10 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let app_state = AppState {
         cfg: cfg.clone(),
         db,
-        kv_store: crate::v1::modules::kv::KvStore::new(),
-        cache_store: crate::v1::modules::cache::CacheStore::new(),
+        kv_store: crate::v1::modules::kv::KvStore::new("kv_store"),
+        cache_store: crate::v1::modules::cache::CacheStore::new(
+            crate::v1::modules::kv::KvStore::new("cache_store"),
+        ),
         rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore::new(),
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::modules::queue::QueueStore::new(),
