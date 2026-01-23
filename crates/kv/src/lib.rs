@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn test_insert_and_get() {
-        let store = KvStore::new_temporary(".test_kv");
+        let store = KvStore::new_temporary(".test_kv_insert_and_get");
 
         let key = "test:key1";
         let model = KvModel {
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn test_insert_behaviors() {
-        let store = KvStore::new_temporary(".test_kv");
+        let store = KvStore::new_temporary(".test_kv_insert_behaviors");
 
         let res = store.set(
             "key1",
@@ -302,7 +302,7 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let store = KvStore::new_temporary(".test_kv");
+        let store = KvStore::new_temporary(".test_kv_overwrite");
 
         let key = "overwrite:key";
         let model1 = KvModel {
@@ -323,7 +323,7 @@ mod tests {
 
     #[test]
     fn test_clear_expired_removes_expired_entries() {
-        let store = KvStore::new_temporary(".test_kv");
+        let store = KvStore::new_temporary(".test_kv_clear_expired");
 
         let expired_model = KvModel {
             expires_at: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),
