@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use diom_error::{Error, Result};
+use fjall::{OptimisticTxKeyspace, OptimisticWriteTx, Readable};
 use serde::{Serialize, de::DeserializeOwned};
 
 /// A trait for types that can be stored as rows in a fjall keyspace.
@@ -38,43 +39,53 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         keyspace.get(&key)?.map(Self::from_fjall_value).transpose()
     }
 
-    fn insert(keyspace: &fjall::Keyspace, row: &Self) -> Result<()> {
-        let (key, value) = row.to_fjall_entry()?;
-        keyspace.insert(key, value)?;
-        Ok(())
-    }
-
-    fn remove(keyspace: &fjall::Keyspace, key: &Self::Key) -> Result<()> {
-        let key = Self::make_fjall_key(key);
-        keyspace.remove(key)?;
-        Ok(())
-    }
-
     fn iter(keyspace: &fjall::Keyspace) -> Result<impl Iterator<Item = Self>> {
-        Ok(keyspace.prefix(Self::TABLE_PREFIX).map(|g| {
+        Ok(keyspace.iter().map(|g| {
             let v = g.value().expect("iter error?");
-            Self::from_fjall_value(v).expect("deserialize error?")
+            let r = Self::from_fjall_value(v).expect("deserialize error?");
+            r
         }))
     }
-}
 
-/// Adds convenience methods to fjall's WriteBatch that work with TableRow
-pub trait WriteBatchExt {
-    fn insert_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, row: &T) -> Result<()>;
+    fn take_tx(
+        tx: &mut OptimisticWriteTx,
+        keyspace: &OptimisticTxKeyspace,
+        key: &Self::Key,
+    ) -> Result<Option<Self>> {
+        let key = Self::make_fjall_key(key);
+        tx.take(keyspace, key)?
+            .map(Self::from_fjall_value)
+            .transpose()
+    }
 
-    fn remove_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, key: &T::Key) -> Result<()>;
-}
+    fn get_tx(
+        tx: &mut OptimisticWriteTx,
+        keyspace: &OptimisticTxKeyspace,
+        key: &Self::Key,
+    ) -> Result<Option<Self>> {
+        let key = Self::make_fjall_key(key);
+        tx.get(keyspace, &key)?
+            .map(Self::from_fjall_value)
+            .transpose()
+    }
 
-impl WriteBatchExt for fjall::OwnedWriteBatch {
-    fn insert_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, row: &T) -> Result<()> {
+    fn insert_tx(
+        tx: &mut OptimisticWriteTx,
+        keyspace: &OptimisticTxKeyspace,
+        row: &Self,
+    ) -> Result<()> {
         let (key, value) = row.to_fjall_entry()?;
-        self.insert(keyspace, key, value);
+        tx.insert(keyspace, key, value);
         Ok(())
     }
 
-    fn remove_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, key: &T::Key) -> Result<()> {
-        let key = T::make_fjall_key(key);
-        self.remove(keyspace, key);
+    fn remove_tx(
+        tx: &mut OptimisticWriteTx,
+        keyspace: &OptimisticTxKeyspace,
+        row: &Self,
+    ) -> Result<()> {
+        let key = Self::make_fjall_key(row.get_key());
+        tx.remove(keyspace, key);
         Ok(())
     }
 }

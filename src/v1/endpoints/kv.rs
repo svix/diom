@@ -135,7 +135,7 @@ async fn kv_get(
         .get(&data.key.0)
         .map_err(|e| crate::error::Error::generic(e))?;
     let ret = match model {
-        Some(m) => KvGetOut::from_model(Arc::new(data.key), m),
+        Some(m) => KvGetOut::from_model(Arc::new(data.key.clone()), m),
         None => {
             return Err(crate::error::Error::http(
                 crate::error::HttpError::not_found(None, Some("Key not found".to_string())),

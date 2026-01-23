@@ -1,9 +1,9 @@
 use std::time::Duration;
 pub mod tables;
 use diom_error::Result;
-use fjall::{Database, KeyspaceCreateOptions};
-
-use fjall_utils::{TableRow, WriteBatchExt};
+use fjall::{KeyspaceCreateOptions, OptimisticTxDatabase};
+use fjall::{OptimisticTxKeyspace, OptimisticWriteTx};
+use fjall_utils::TableRow;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -27,8 +27,10 @@ impl From<KvPairRow> for KvModel {
 
 #[derive(Clone)]
 pub struct KvStore {
-    db: fjall::Database,
-    tables: fjall::Keyspace,
+    #[allow(unused)]
+    db: OptimisticTxDatabase, // FIXME: should it be SingleWriterTxDatabase?
+
+    tables: OptimisticTxKeyspace,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -47,12 +49,12 @@ impl Default for KvStore {
     }
 }
 
-const EXPIRATION_BATCH_SIZE: usize = 100; // FIXME(@svix-lucho): make this configurable?
+const EXPIRATION_BATCH_SIZE: usize = 100; // FIXME: make this configurable?
 
 impl KvStore {
-    // FIXME(@svix-lucho): receive the db from the caller
+    // FIXME: receive the db from the caller
     pub fn new(namespace: &str) -> Self {
-        let db = Database::builder(format!("db/kv/{namespace}"))
+        let db = OptimisticTxDatabase::builder(format!("db/kv/{namespace}"))
             .open()
             .unwrap();
 
@@ -67,7 +69,7 @@ impl KvStore {
     }
 
     pub fn new_temporary(namespace: &str) -> Self {
-        let db = Database::builder(format!("db/kv/{namespace}"))
+        let db = fjall::OptimisticTxDatabase::builder(format!("db/kv/{namespace}"))
             .temporary(true)
             .open()
             .unwrap();
@@ -82,9 +84,9 @@ impl KvStore {
         Self { db, tables }
     }
 
-    // FIXME(@svix-lucho): needs to be passed now() from the caller?
+    // FIXME: needs to be passed now() from the caller?
     pub fn get(&self, key: &str) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? else {
+        let Some(data) = KvPairRow::fetch(&self.tables.as_ref(), &key.to_string())? else {
             return Ok(None);
         };
 
@@ -96,8 +98,8 @@ impl KvStore {
         Ok(Some(data.into()))
     }
 
-    fn fetch_non_expired(&self, key: &str) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? else {
+    fn fetch_non_expired(&self, tx: &mut OptimisticWriteTx, key: &str) -> Result<Option<KvModel>> {
+        let Some(data) = KvPairRow::get_tx(tx, &self.tables, &key.to_string())? else {
             return Ok(None);
         };
 
@@ -109,46 +111,50 @@ impl KvStore {
         Ok(Some(data.into()))
     }
 
-    fn insert_with_expiration(&self, key: &str, model: &KvModel) -> Result<()> {
-        let mut batch = self.db.batch();
-
+    fn insert_with_expiration(
+        &self,
+        tx: &mut OptimisticWriteTx,
+        key: &str,
+        model: &KvModel,
+    ) -> Result<()> {
         let row = KvPairRow {
             key: key.to_string(),
             value: model.value.clone(),
             expires_at: model.expires_at,
         };
-
-        batch.insert_row(&self.tables, &row)?;
+        KvPairRow::insert_tx(tx, &self.tables, &row)?;
 
         if let Some(expires_at) = model.expires_at {
             let expiration_row = ExpirationRow::new(expires_at, key.to_string());
-            batch.insert_row(&self.tables, &expiration_row)?;
+            ExpirationRow::insert_tx(tx, &self.tables, &expiration_row)?;
         }
-
-        batch.commit()?;
 
         Ok(())
     }
 
     pub fn set(&self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
+        let mut tx = self.db.write_tx().unwrap();
+
         match behavior {
             OperationBehavior::Upsert => {
-                self.insert_with_expiration(key, model)?;
+                self.insert_with_expiration(&mut tx, key, model)?;
+
+                let _ = tx.commit().unwrap();
             }
             OperationBehavior::Insert => {
-                let exists = self.fetch_non_expired(key)?.is_some();
+                let exists = self.fetch_non_expired(&mut tx, key)?.is_some();
                 if !exists {
-                    self.insert_with_expiration(key, model)?;
+                    self.insert_with_expiration(&mut tx, key, model)?;
                 } else {
-                    // FIXME(@svix-lucho): Do nothing?
+                    // FIXME: Do nothing?
                 }
             }
             OperationBehavior::Update => {
                 let exists = self.get(key).is_ok_and(|e| e.is_some());
                 if exists {
-                    self.insert_with_expiration(key, model)?;
+                    self.insert_with_expiration(&mut tx, key, model)?;
                 } else {
-                    // FIXME(@svix-lucho): Do nothing?
+                    // FIXME: Do nothing?
                 }
             }
         }
@@ -157,33 +163,29 @@ impl KvStore {
     }
 
     pub fn delete(&self, key: &str) -> Result<()> {
-        let mut batch = self.db.batch();
-
-        if let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? {
+        let mut tx = self.db.write_tx().unwrap();
+        if let Some(data) = KvPairRow::take_tx(&mut tx, &self.tables, &key.to_string())? {
             // Delete from the expiration keyspace
             if let Some(expires_at) = data.expires_at {
                 let r = ExpirationRow::new(expires_at, key.to_string());
-                batch.remove_row::<ExpirationRow>(&self.tables, r.get_key())?;
+
+                ExpirationRow::remove_tx(&mut tx, &self.tables, &r)?;
             }
-            batch.remove_row::<KvPairRow>(&self.tables, &key.to_string())?;
         }
-
-        batch.commit()?;
-
+        let _ = tx.commit().unwrap();
         Ok(())
     }
 
     pub fn disk_space(&self) -> u64 {
-        self.tables.disk_space()
+        self.tables.as_ref().disk_space()
     }
 
     pub fn clear_expired(&self, now: Timestamp) -> Result<()> {
         let mut removed = 0;
         let now_ms = now.as_millisecond();
 
-        for item in ExpirationRow::iter(&self.tables)? {
+        for item in ExpirationRow::iter(self.tables.as_ref())? {
             if item.expiration_time.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
-                // FIXME(@svix-lucho): we can batch removes here to make this more efficient
                 let _ = self.delete(&item.key);
                 removed += 1;
             } else if item.expiration_time.as_millisecond() >= now_ms {
@@ -196,7 +198,7 @@ impl KvStore {
     }
 
     pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
-        KvPairRow::iter(&self.tables)
+        KvPairRow::iter(self.tables.as_ref())
     }
 }
 
@@ -224,7 +226,7 @@ mod tests {
 
     #[test]
     fn test_insert_and_get() {
-        let store = KvStore::new_temporary(".test_kv_insert_and_get");
+        let store = KvStore::new_temporary(".test_kv");
 
         let key = "test:key1";
         let model = KvModel {
@@ -246,7 +248,7 @@ mod tests {
 
     #[test]
     fn test_insert_behaviors() {
-        let store = KvStore::new_temporary(".test_kv_insert_behaviors");
+        let store = KvStore::new_temporary(".test_kv");
 
         let res = store.set(
             "key1",
@@ -302,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let store = KvStore::new_temporary(".test_kv_overwrite");
+        let store = KvStore::new_temporary(".test_kv");
 
         let key = "overwrite:key";
         let model1 = KvModel {
@@ -323,7 +325,7 @@ mod tests {
 
     #[test]
     fn test_clear_expired_removes_expired_entries() {
-        let store = KvStore::new_temporary(".test_kv_clear_expired");
+        let store = KvStore::new_temporary(".test_kv");
 
         let expired_model = KvModel {
             expires_at: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),
