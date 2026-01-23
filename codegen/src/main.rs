@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, fs};
+use std::{collections::BTreeSet, fs, path::Path};
 
 use anyhow::Context as _;
 use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
@@ -43,6 +43,8 @@ fn main() -> anyhow::Result<()> {
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    std::env::set_current_dir(repo_root())?;
 
     let mut openapi = coyote::openapi::initialize_openapi();
 
@@ -92,6 +94,10 @@ fn main() -> anyhow::Result<()> {
         .status()?;
 
     Ok(())
+}
+
+fn repo_root() -> &'static Path {
+    Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap()
 }
 
 fn get_webhooks(spec: &openapi_codegen::aide::openapi::OpenApi) -> Vec<String> {
