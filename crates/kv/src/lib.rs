@@ -3,7 +3,7 @@ pub mod tables;
 use diom_error::Result;
 use fjall::{Database, KeyspaceCreateOptions};
 
-use fjall_utils::TableRow;
+use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -118,11 +118,11 @@ impl KvStore {
             expires_at: model.expires_at,
         };
 
-        KvPairRow::insert_batch(&mut batch, &self.tables, &row)?;
+        batch.insert_row(&self.tables, &row)?;
 
         if let Some(expires_at) = model.expires_at {
             let expiration_row = ExpirationRow::new(expires_at, key.to_string());
-            ExpirationRow::insert_batch(&mut batch, &self.tables, &expiration_row)?;
+            batch.insert_row(&self.tables, &expiration_row)?;
         }
 
         batch.commit()?;
@@ -163,9 +163,9 @@ impl KvStore {
             // Delete from the expiration keyspace
             if let Some(expires_at) = data.expires_at {
                 let r = ExpirationRow::new(expires_at, key.to_string());
-                ExpirationRow::remove_batch(&mut batch, &self.tables, r.get_key())?;
+                batch.remove_row::<ExpirationRow>(&self.tables, r.get_key())?;
             }
-            KvPairRow::remove_batch(&mut batch, &self.tables, &key.to_string())?;
+            batch.remove_row::<KvPairRow>(&self.tables, &key.to_string())?;
         }
 
         batch.commit()?;
