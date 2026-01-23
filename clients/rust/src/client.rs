@@ -6,7 +6,7 @@ use crate::{Configuration, connector::make_connector};
 
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub struct SvixOptions {
+pub struct DiomOptions {
     pub debug: bool,
 
     pub server_url: Option<String>,
@@ -43,7 +43,7 @@ pub struct SvixOptions {
     pub proxy_address: Option<String>,
 }
 
-impl Default for SvixOptions {
+impl Default for DiomOptions {
     fn default() -> Self {
         Self {
             debug: false,
@@ -64,11 +64,11 @@ pub struct DiomClient {
 }
 
 impl DiomClient {
-    pub fn new(token: String, options: Option<SvixOptions>) -> Self {
+    pub fn new(token: String, options: Option<DiomOptions>) -> Self {
         let options = options.unwrap_or_default();
 
         let cfg = Arc::new(Configuration {
-            user_agent: Some(format!("svix-libs/{CRATE_VERSION}/rust")),
+            user_agent: Some(format!("diom-client/{CRATE_VERSION}/rust")),
             client: HyperClient::builder(TokioExecutor::new())
                 .build(make_connector(options.proxy_address)),
             timeout: options.timeout,
@@ -78,31 +78,24 @@ impl DiomClient {
             num_retries: options.num_retries.unwrap_or(2),
             retry_schedule: options.retry_schedule,
         });
-        let svix = Self {
+        let client = Self {
             cfg,
             server_url: options.server_url,
         };
-        svix.with_token(token)
+        client.with_token(token)
     }
 
-    /// Creates a new `Svix` API client with a different token,
+    /// Creates a new `DiomClient` API client with a different token,
     /// re-using all of the settings and the Hyper client from
-    /// an existing `Svix` instance.
+    /// an existing `DiomClient` instance.
     ///
     /// This can be used to change the token without incurring
     /// the cost of TLS initialization.
     pub fn with_token(&self, token: String) -> Self {
-        let base_path = self.server_url.clone().unwrap_or_else(|| {
-            match token.split('.').next_back() {
-                Some("us") => "https://api.us.svix.com",
-                Some("eu") => "https://api.eu.svix.com",
-                Some("in") => "https://api.in.svix.com",
-                Some("ca") => "https://api.ca.svix.com",
-                Some("au") => "https://api.au.svix.com",
-                _ => "https://api.svix.com",
-            }
-            .to_string()
-        });
+        let base_path = self
+            .server_url
+            .clone()
+            .unwrap_or_else(|| "http://localhost:8050".to_owned());
         let cfg = Arc::new(Configuration {
             base_path,
             user_agent: self.cfg.user_agent.clone(),
@@ -120,17 +113,22 @@ impl DiomClient {
     }
 }
 
-/* #[cfg(test)]
+#[cfg(test)]
 mod tests {
+    use crate::models::CacheSetIn;
+
     use super::DiomClient;
 
     #[test]
     fn test_future_send_sync() {
         fn require_send_sync<T: Send + Sync>(_: T) {}
 
-        let svix = DiomClient::new(String::new(), None);
-        let message_api = svix.message();
-        let fut = message_api.expunge_content(String::new(), String::new());
+        let client = DiomClient::new(String::new(), None);
+        let cache_api = client.cache();
+        let fut = cache_api.set(
+            CacheSetIn::new(0, "key".to_owned(), "value".to_owned()),
+            None,
+        );
         require_send_sync(fut);
     }
-} */
+}
