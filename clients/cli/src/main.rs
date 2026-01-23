@@ -126,11 +126,12 @@ async fn main() -> Result<()> {
 }
 
 fn get_client(cfg: &Config) -> Result<CoyoteClient> {
-    let token = cfg.auth_token.clone().ok_or_else(|| {
+    // FIXME: Add login functionality once there is authn in the server
+    /* let token = cfg.auth_token.clone().ok_or_else(|| {
         anyhow::anyhow!("No auth token set. Try running `{BIN_NAME} login` to get started.")
-    })?;
+    })?; */
     let opts = get_client_options(cfg)?;
-    Ok(CoyoteClient::new(token, Some(opts)))
+    Ok(CoyoteClient::new("xxx".to_owned(), Some(opts)))
 }
 
 fn get_client_options(cfg: &Config) -> Result<CoyoteOptions> {
