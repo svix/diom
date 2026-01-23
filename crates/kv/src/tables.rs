@@ -16,7 +16,7 @@ pub struct KvPairRow {
 }
 
 impl TableRow for KvPairRow {
-    const TABLE_PREFIX: &'static str = "_KVPAIR_";
+    const TABLE_PREFIX: &'static str = "_KV_PAIR_";
     type Key = String;
 
     fn get_key(&self) -> &Self::Key {
@@ -49,7 +49,7 @@ impl ExpirationRow {
 }
 
 impl TableRow for ExpirationRow {
-    const TABLE_PREFIX: &'static str = "_CSTRM_";
+    const TABLE_PREFIX: &'static str = "_KV_EXP_";
 
     type Key = String;
 
