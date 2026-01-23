@@ -6,7 +6,6 @@ use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 
 use crate::tables::{FixedWindowState, TokenBucketState};
 
@@ -15,21 +14,20 @@ pub struct RateLimiter {
     #[allow(dead_code)]
     db: fjall::Database,
     tables: fjall::Keyspace,
-    clock: Clock,
 }
 
-pub struct FixedWindowConfig {
+pub struct FixedWindow {
     /// Window size
     pub size: Duration,
     /// Max tokens allowed per window
     pub tokens: u64,
 }
 
-impl FixedWindowConfig {
+impl FixedWindow {
     fn get_window_start(&self, now: DateTime<Utc>) -> DateTime<Utc> {
         let size_ms = self.size.num_milliseconds();
         let now_ms = now.timestamp_millis();
-        let window_start_ms = (now_ms / size_ms) * size_ms;
+        let window_start_ms = now_ms - (now_ms % size_ms);
         DateTime::from_timestamp_millis(window_start_ms).unwrap()
     }
 }
@@ -61,7 +59,7 @@ impl TokenBucket {
 }
 
 pub enum RateLimitConfig {
-    FixedWindow(FixedWindowConfig),
+    FixedWindow(FixedWindow),
     TokenBucket(TokenBucket),
 }
 
@@ -71,12 +69,6 @@ pub enum RateLimitResult {
     BLOCK,
 }
 
-pub type Clock = Arc<dyn Fn() -> DateTime<Utc> + Send + Sync>;
-
-pub fn system_clock() -> Clock {
-    Arc::new(Utc::now)
-}
-
 impl RateLimiter {
     // FIXME(@svix-lucho): get the db from the app state (caller)
     pub fn new() -> Self {
@@ -84,10 +76,6 @@ impl RateLimiter {
     }
 
     pub fn with_path(path: &str) -> Self {
-        Self::with_path_and_clock(path, system_clock())
-    }
-
-    pub fn with_path_and_clock(path: &str, clock: Clock) -> Self {
         let db = fjall::Database::builder(path).open().unwrap();
 
         let rate_limiter_keyspace = format!("_diom_rate_limiter_{path}");
@@ -97,23 +85,17 @@ impl RateLimiter {
             db.keyspace(&rate_limiter_keyspace, || opts).unwrap()
         };
 
-        Self { db, tables, clock }
-    }
-
-    fn now(&self) -> DateTime<Utc> {
-        (self.clock)()
+        Self { db, tables }
     }
 
     // Using the same identifier but changing the algorithm is considered a different resource.
     pub fn limit(
         &self,
+        now: DateTime<Utc>,
         identifier: &str,
         delta: u64,
         algorithm: RateLimitConfig,
     ) -> Result<(RateLimitResult, u64, Option<Duration>)> {
-        // FIXME(@svix-lucho): should receive now() from the caller
-        let now = self.now();
-
         match algorithm {
             RateLimitConfig::FixedWindow(fw_config) => {
                 let window_start = fw_config.get_window_start(now);
@@ -130,8 +112,9 @@ impl RateLimiter {
 
                 if state.window_start != window_start {
                     state.count = 0;
-                    state.window_start = window_start;
                 }
+
+                state.window_start = window_start;
 
                 let (remaining, result, retry_after) = if state.count + delta > max_tokens {
                     state.count = max_tokens;
@@ -180,19 +163,23 @@ impl RateLimiter {
         }
     }
 
-    pub fn get_remaining(&self, identifier: &str, algorithm: RateLimitConfig) -> Result<u64> {
-        let now = self.now();
+    pub fn get_remaining(
+        &self,
+        now: DateTime<Utc>,
+        identifier: &str,
+        algorithm: RateLimitConfig,
+    ) -> Result<u64> {
         match algorithm {
             RateLimitConfig::FixedWindow(config) => {
-                let _window_start = config.get_window_start(now);
+                let window_start = config.get_window_start(now);
                 let max_tokens = config.tokens;
                 let identifier_key = identifier.to_string();
 
-                if let Some(state) = FixedWindowState::fetch(&self.tables, &identifier_key)? {
-                    Ok(max_tokens.saturating_sub(state.count))
-                } else {
-                    Ok(max_tokens)
-                }
+                let used_count = FixedWindowState::fetch(&self.tables, &identifier_key)?
+                    .filter(|state| state.window_start == window_start)
+                    .map_or(0, |state| state.count);
+
+                Ok(max_tokens.saturating_sub(used_count))
             }
             RateLimitConfig::TokenBucket(config) => {
                 let identifier_key = identifier.to_string();
@@ -237,33 +224,11 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
     use tempfile::tempdir;
 
-    struct MockClock {
-        time: Mutex<DateTime<Utc>>,
-    }
-
-    impl MockClock {
-        fn new(initial_ms: i64) -> Arc<Self> {
-            Arc::new(MockClock {
-                time: Mutex::new(DateTime::from_timestamp_millis(initial_ms).unwrap()),
-            })
-        }
-
-        fn set(&self, ms: i64) {
-            *self.time.lock().unwrap() = DateTime::from_timestamp_millis(ms).unwrap();
-        }
-
-        fn as_clock(self: &Arc<Self>) -> Clock {
-            let clock = Arc::clone(self);
-            Arc::new(move || *clock.time.lock().unwrap())
-        }
-    }
-
-    fn create_test_limiter(clock: Clock) -> (RateLimiter, tempfile::TempDir) {
+    fn create_test_limiter() -> (RateLimiter, tempfile::TempDir) {
         let dir = tempdir().unwrap();
-        let limiter = RateLimiter::with_path_and_clock(dir.path().to_str().unwrap(), clock);
+        let limiter = RateLimiter::with_path(dir.path().to_str().unwrap());
         (limiter, dir)
     }
 
@@ -271,7 +236,7 @@ mod tests {
         use super::*;
 
         fn config() -> RateLimitConfig {
-            RateLimitConfig::FixedWindow(FixedWindowConfig {
+            RateLimitConfig::FixedWindow(FixedWindow {
                 size: Duration::seconds(1),
                 tokens: 5,
             })
@@ -279,40 +244,34 @@ mod tests {
 
         #[test]
         fn rate_limiting() {
-            let clock = MockClock::new(0);
-            let (limiter, _dir) = create_test_limiter(clock.as_clock());
+            let (limiter, _dir) = create_test_limiter();
             let id = "user1";
 
-            let (result, remaining, _) = limiter.limit(id, 3, config()).unwrap();
+            let mut clock = DateTime::from_timestamp_millis(0).unwrap();
+            let (result, remaining, _) = limiter.limit(clock, id, 3, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 2);
 
-            clock.set(500);
-            let (result, remaining, _) = limiter.limit(id, 2, config()).unwrap();
+            clock += Duration::milliseconds(500);
+            let (result, remaining, _) = limiter.limit(clock, id, 2, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 0);
 
-            clock.set(900);
-            let (result, remaining, _) = limiter.limit(id, 1, config()).unwrap();
+            clock += Duration::milliseconds(400);
+            let (result, remaining, _) = limiter.limit(clock, id, 1, config()).unwrap();
             assert!(matches!(result, RateLimitResult::BLOCK));
             assert_eq!(remaining, 0);
-        }
 
-        #[test]
-        fn window_resets_after_interval() {
-            let clock = MockClock::new(0);
-            let (limiter, _dir) = create_test_limiter(clock.as_clock());
-            let id = "user1";
-
-            limiter.limit(id, 5, config()).unwrap();
-            clock.set(500);
-            assert_eq!(limiter.get_remaining(id, config()).unwrap(), 0);
-
-            // New window at t=1000
-            clock.set(1000);
-            let (result, remaining, _) = limiter.limit(id, 1, config()).unwrap();
+            // Resets at t=1000ms
+            clock += Duration::milliseconds(100);
+            let (result, remaining, _) = limiter.limit(clock, id, 1, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 4);
+
+            // Doesn't accumulate
+            clock += Duration::milliseconds(100000);
+            let remaining = limiter.get_remaining(clock, id, config()).unwrap();
+            assert_eq!(remaining, 5);
         }
     }
 
@@ -337,37 +296,45 @@ mod tests {
 
         #[test]
         fn rate_limiting() {
-            let clock = MockClock::new(0);
-            let (limiter, _dir) = create_test_limiter(clock.as_clock());
+            let (limiter, _dir) = create_test_limiter();
             let id = "user1";
 
-            let (result, remaining, _) = limiter.limit(id, 3, config()).unwrap();
+            let clock = Utc::now();
+            let (result, remaining, _) = limiter.limit(clock, id, 3, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 2);
 
-            let (result, remaining, _) = limiter.limit(id, 2, config()).unwrap();
+            let (result, remaining, _) = limiter.limit(clock, id, 2, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 0);
 
-            let (result, _, _) = limiter.limit(id, 1, config()).unwrap();
+            let (result, _, _) = limiter.limit(clock, id, 1, config()).unwrap();
             assert!(matches!(result, RateLimitResult::BLOCK));
         }
 
         #[test]
         fn tokens_refill_over_time() {
-            let clock = MockClock::new(0);
-            let (limiter, _dir) = create_test_limiter(clock.as_clock());
+            let (limiter, _dir) = create_test_limiter();
             let id = "user1";
 
-            limiter.limit(id, 5, config_refill_2()).unwrap();
-            assert_eq!(limiter.get_remaining(id, config_refill_2()).unwrap(), 0);
+            let mut clock = Utc::now();
+            limiter.limit(clock, id, 5, config_refill_2()).unwrap();
+            assert_eq!(
+                limiter.get_remaining(clock, id, config_refill_2()).unwrap(),
+                0
+            );
 
-            clock.set(100);
-            assert_eq!(limiter.get_remaining(id, config_refill_2()).unwrap(), 2);
-            clock.set(300);
-            assert_eq!(limiter.get_remaining(id, config_refill_2()).unwrap(), 5); // bucket is full
-
-            let (result, remaining, _) = limiter.limit(id, 2, config_refill_2()).unwrap();
+            clock += Duration::milliseconds(100);
+            assert_eq!(
+                limiter.get_remaining(clock, id, config_refill_2()).unwrap(),
+                2
+            );
+            clock += Duration::milliseconds(200);
+            assert_eq!(
+                limiter.get_remaining(clock, id, config_refill_2()).unwrap(),
+                5
+            ); // bucket is full
+            let (result, remaining, _) = limiter.limit(clock, id, 2, config_refill_2()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 3);
         }
