@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+pub mod cluster;
 pub mod otel_spans;
 pub mod retry;
 pub mod security;

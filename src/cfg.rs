@@ -83,6 +83,9 @@ pub struct ConfigurationInner {
     /// The address to listen on
     pub listen_address: SocketAddr,
 
+    /// The address to listen on for replication/etc
+    pub interserver_listen_address: SocketAddr,
+
     #[serde(flatten, with = "management_db")]
     pub management_db_config: Arc<DatabaseConfig<Management>>,
 

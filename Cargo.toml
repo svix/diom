@@ -20,10 +20,12 @@ openapi = []
 
 [dependencies]
 aide.workspace = true
+anyerror.workspace = true
 anyhow.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
 base64.workspace = true
+byteorder.workspace = true
 bytes.workspace = true
 chrono.workspace = true
 config.workspace = true
@@ -43,11 +45,13 @@ itertools.workspace = true
 jiff.workspace = true
 jwt-simple.workspace = true
 mime.workspace = true
+openraft.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true
 opentelemetry-otlp.workspace = true
 opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
+paste.workspace = true
 regex.workspace = true
 rmp-serde.workspace = true
 schemars.workspace = true
@@ -67,6 +71,7 @@ tracing-subscriber = { workspace = true, features = ["json"] }
 url.workspace = true
 uuid.workspace = true
 validator.workspace = true
+zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
@@ -98,11 +103,13 @@ rust-version = "1.91"
 
 [workspace.dependencies]
 aide = { version = "=0.16.0-alpha.2", features = ["axum", "axum-json", "axum-query", "macros"] }
+anyerror = { version = "0.1.13", features = ["anyhow"] }
 anyhow = "1.0.56"
 assert_matches = "1.5.0"
 axum = "0.8.8"
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
 base64 = "0.22"
+byteorder = "1.5.0"
 bytes = "1.1.0"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
@@ -121,7 +128,7 @@ crossbeam-skiplist = "0.1.3"
 ctor = "0.6.3"
 dirs = "6.0.0"
 dotenvy = "0.15.7"
-fjall = "3.0.1"
+fjall = { version = "3.0.1", features = ["lz4", "metrics"] }
 fjall-utils.path = "crates/fjall-utils"
 hex = "0.4.3"
 hickory-resolver = "0.25.2"
@@ -141,12 +148,14 @@ jwt-simple = "0.12"
 mime = "0.3"
 num_enum = "0.7.2"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "0a51d3898dab5943404890c31788f81e2f07f22e" }
+openraft = { version = "0.9.21", features = ["tracing-log", "anyhow", "serde", "storage-v2"] }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"
 opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto", "reqwest-client"] }
 opentelemetry-proto = { version = "0.31.0", default-features = false, features = ["internal-logs", "gen-tonic", "trace", "with-serde"] }
 opentelemetry-semantic-conventions = "0.31.0"
 opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
+paste = "1.0.15"
 percent-encoding = "2.3.2"
 proc-macro2 = "1.0.78"
 quote = "1.0.15"
@@ -167,7 +176,7 @@ syn = "2.0.48"
 tap = "1"
 tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
-tokio = { version = "1.24.2", features = ["rt", "signal"] }
+tokio = { version = "1.24.2", features = ["rt", "signal", "fs"] }
 tokio-util = "0.7"
 tower = "0.5.1"
 tower-http = { version = "0.6.1", features = ["trace", "cors", "normalize-path", "request-id"] }
@@ -178,6 +187,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["a
 url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
+zip = "7"
 
 [workspace.lints.rust]
 # Can't forbid as we use at least one macro that expands to unsafe code
