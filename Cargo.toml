@@ -31,7 +31,6 @@ coyote-derive.workspace = true
 coyote-error.workspace = true
 coyote-kv.workspace = true
 coyote-rate-limiter.workspace = true
-chrono.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 fjall.workspace = true
