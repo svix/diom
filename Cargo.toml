@@ -131,7 +131,7 @@ itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
 jwt-simple = "0.12"
 num_enum = "0.7.2"
-openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "ca08cda3aa7bf90f6577e1736806c8537144bfae" }
+openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "0a51d3898dab5943404890c31788f81e2f07f22e" }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"
 opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto", "reqwest-client"] }
