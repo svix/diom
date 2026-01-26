@@ -88,7 +88,7 @@ members = [
     "node",
 ]
 # By default, don't build extra helpers like codegen.
-default-members = ["node", "crates/*"]
+default-members = [".", "node", "crates/*"]
 resolver = "2"
 
 [workspace.package]

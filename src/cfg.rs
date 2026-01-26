@@ -51,7 +51,7 @@ impl<S: StorageType> DatabaseConfig<S> {
     }
 }
 
-impl DatabaseConfig<Ephemeral> {
+impl DatabaseConfig<Persistent> {
     pub fn persistent(db_config: Arc<DatabaseConfig<Persistent>>) -> Result<Database> {
         Self::database(
             &db_config.path,
@@ -60,7 +60,7 @@ impl DatabaseConfig<Ephemeral> {
     }
 }
 
-impl DatabaseConfig<Persistent> {
+impl DatabaseConfig<Ephemeral> {
     pub fn ephemeral(db_config: Arc<DatabaseConfig<Ephemeral>>) -> Result<Database> {
         Self::database(
             &db_config.path,
