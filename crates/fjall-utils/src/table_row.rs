@@ -37,4 +37,44 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         let key = Self::make_fjall_key(key);
         keyspace.get(&key)?.map(Self::from_fjall_value).transpose()
     }
+
+    fn insert(keyspace: &fjall::Keyspace, row: &Self) -> Result<()> {
+        let (key, value) = row.to_fjall_entry()?;
+        keyspace.insert(key, value)?;
+        Ok(())
+    }
+
+    fn remove(keyspace: &fjall::Keyspace, key: &Self::Key) -> Result<()> {
+        let key = Self::make_fjall_key(key);
+        keyspace.remove(key)?;
+        Ok(())
+    }
+
+    fn iter(keyspace: &fjall::Keyspace) -> Result<impl Iterator<Item = Self>> {
+        Ok(keyspace.prefix(Self::TABLE_PREFIX).map(|g| {
+            let v = g.value().expect("iter error?");
+            Self::from_fjall_value(v).expect("deserialize error?")
+        }))
+    }
+}
+
+/// Adds convenience methods to fjall's WriteBatch that work with TableRow
+pub trait WriteBatchExt {
+    fn insert_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, row: &T) -> Result<()>;
+
+    fn remove_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, key: &T::Key) -> Result<()>;
+}
+
+impl WriteBatchExt for fjall::OwnedWriteBatch {
+    fn insert_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, row: &T) -> Result<()> {
+        let (key, value) = row.to_fjall_entry()?;
+        self.insert(keyspace, key, value);
+        Ok(())
+    }
+
+    fn remove_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, key: &T::Key) -> Result<()> {
+        let key = T::make_fjall_key(key);
+        self.remove(keyspace, key);
+        Ok(())
+    }
 }
