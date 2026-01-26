@@ -30,6 +30,7 @@ use validator::{Validate, ValidationError};
 use crate::error::{Error, HttpError, Result, ValidationErrorItem};
 
 pub mod patch;
+pub mod proto;
 use patch::UnrequiredField;
 
 const fn default_limit() -> PaginationLimit {
