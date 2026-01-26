@@ -502,8 +502,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fac4744fb15ae8337dc853fee7fb3f4e48c0fbaa23d0afe49c447b4fab126118"
 dependencies = [
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -743,10 +745,12 @@ dependencies = [
  "axum-extra",
  "base64",
  "bytes",
+ "chrono",
  "config",
  "diom-derive",
  "diom-error",
  "diom-kv",
+ "diom-rate-limiter",
  "crossbeam",
  "crossbeam-skiplist",
  "ctor",
@@ -886,6 +890,23 @@ dependencies = [
  "reqwest 0.13.1",
  "tokio",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "diom-rate-limiter"
+version = "1.76.1"
+dependencies = [
+ "chrono",
+ "diom-error",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "rmp-serde",
+ "schemars 1.2.0",
+ "serde",
+ "static_assertions",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
