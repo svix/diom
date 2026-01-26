@@ -28,6 +28,7 @@ bytes.workspace = true
 config.workspace = true
 coyote-derive.workspace = true
 coyote-error.workspace = true
+coyote-kv.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 fjall.workspace = true
