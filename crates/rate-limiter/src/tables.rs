@@ -10,7 +10,6 @@ static_assertions::const_assert!(fjall_utils::are_all_unique(&[
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct FixedWindowState {
-    // FIXME(@svix-lucho) - This makes us store the key in the table twice. We should avoid it.
     pub key: String,
     pub count: u64,
     pub window_start: DateTime<Utc>,
@@ -27,7 +26,6 @@ impl TableRow for FixedWindowState {
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct TokenBucketState {
-    // FIXME(@svix-lucho) - This makes us store the key in the table twice. We should avoid it.
     pub key: String,
     pub tokens: u64,
     pub last_refill: DateTime<Utc>,
