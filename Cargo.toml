@@ -30,7 +30,6 @@ diom-derive.workspace = true
 diom-error.workspace = true
 diom-kv.workspace = true
 diom-rate-limiter.workspace = true
-stream.workspace = true
 chrono.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
