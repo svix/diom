@@ -218,6 +218,7 @@ impl KvStore {
             if let Some((key, _)) = self.lru.pop_front() {
                 // Check if key is still present. It could have been expired or the LRU map could be out of sync.
                 if self.fetch_non_expired(&key)?.is_some() {
+                    // FIXME(@svix-lucho): does this have to go through consensus?
                     let _ = self.delete(&key);
                     evicted += 1;
                 }
