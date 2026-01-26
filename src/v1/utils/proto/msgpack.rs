@@ -15,7 +15,7 @@ impl axum::response::IntoResponse for MissingMsgPackContentType {
     fn into_response(self) -> axum::response::Response {
         let status = StatusCode::BAD_REQUEST;
 
-        tracing::warn!(status=?status, "missing content-type");
+        tracing::warn!(?status, "missing content-type");
 
         (
             status,
@@ -32,7 +32,7 @@ impl axum::response::IntoResponse for MsgPackParseError {
     fn into_response(self) -> axum::response::Response {
         let status = StatusCode::BAD_REQUEST;
 
-        tracing::warn!(status=?status, error = ?self.0, "parse error");
+        tracing::warn!(?status, error = ?self.0, "parse error");
 
         (status, "Failed to parse the request body as msgpack").into_response()
     }
