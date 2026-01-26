@@ -3,9 +3,9 @@ repos:
     rev: 582b9c66e0791980685c8b80bb11e6a3df1a06ef
     hooks:
       - id: end-of-file-fixer
-        exclude: "(^.yarn/)|(.svg$)|(openapi.json)"
+        exclude: "(^.yarn/)|(.svg$)"
       - id: trailing-whitespace
-        exclude: "(^.yarn/)|(.svg$)|(openapi.json)"
+        exclude: "(^.yarn/)|(.svg$)"
       - id: check-case-conflict
       - id: check-illegal-windows-names
       - id: check-merge-conflict
