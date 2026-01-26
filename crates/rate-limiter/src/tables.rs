@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -19,8 +21,8 @@ impl TableRow for FixedWindowState {
     const TABLE_PREFIX: &'static str = "_FIXED_WINDOW_";
     type Key = String;
 
-    fn get_key(&self) -> &Self::Key {
-        &self.key
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Borrowed(&self.key)
     }
 }
 
@@ -35,7 +37,7 @@ impl TableRow for TokenBucketState {
     const TABLE_PREFIX: &'static str = "_TOKEN_BUCKET_";
     type Key = String;
 
-    fn get_key(&self) -> &Self::Key {
-        &self.key
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Borrowed(&self.key)
     }
 }
