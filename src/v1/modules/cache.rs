@@ -82,6 +82,7 @@ impl CacheStore {
 const MAX_CAPACITY: u64 = 1024 * 8; // FIXME: of course, make it configurable
 
 /// This is the worker function for this module, it does background cleanup and accounting.
+/// FIXME(@svix-lucho): This has to be redone, it's... not great.
 pub async fn worker(mut state: AppState) -> Result<()> {
     loop {
         if crate::is_shutting_down() {
