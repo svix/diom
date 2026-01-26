@@ -44,6 +44,9 @@ pub use coyote_error as error;
 pub mod openapi;
 pub mod v1;
 
+// FIXME- remove the `pub` modifier
+pub mod workers;
+
 const CRATE_NAME: &str = env!("CARGO_CRATE_NAME");
 
 static SHUTTING_DOWN_TOKEN: LazyLock<CancellationToken> = LazyLock::new(CancellationToken::new);

@@ -875,6 +875,7 @@ dependencies = [
  "coyote-kv",
  "coyote-proto",
  "coyote-rate-limiter",
+ "coyote-runtime",
  "ctor",
  "fjall",
  "http",
@@ -1057,6 +1058,15 @@ dependencies = [
  "static_assertions",
  "tempfile",
  "tokio",
+]
+
+[[package]]
+name = "coyote-runtime"
+version = "1.76.1"
+dependencies = [
+ "coyote-error",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
