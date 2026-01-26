@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+use std::time::Duration;
+
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use diom_derive::aide_annotate;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -20,34 +23,26 @@ use crate::{
 
 // Re-export types that are used in AppState
 pub use crate::v1::modules::cache::CacheStore;
-pub use crate::v1::modules::cache::worker;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheSetIn {
     #[validate(nested)]
     pub key: EntityKey,
-    // FIXME: validate all fields
-    pub expires_at: u64,
-    // TODO: add pub expire_in: u64,
 
-    // FIXME: what to do with TTL? Does it get updated on a set, not?
+    /// Time to live in milliseconds
+    pub expire_in: u64,
 
     // FIXME: change to Bytes
     pub value: String,
 }
 
-impl From<CacheSetIn> for CacheModel {
-    fn from(val: CacheSetIn) -> Self {
-        let CacheSetIn {
-            key,
-            expires_at,
-            value,
-        } = val;
+impl CacheSetIn {
+    fn into_model(self) -> CacheModel {
+        let expires_at = Timestamp::now() + Duration::from_millis(self.expire_in);
 
         CacheModel {
-            key,
-            expires_at,
-            value,
+            expires_at: Some(expires_at),
+            value: self.value.into_bytes(),
         }
     }
 }
@@ -66,26 +61,19 @@ pub struct CacheGetOut {
     #[validate(nested)]
     pub key: EntityKey,
 
-    // FIXME: should be datetime
     /// Time of expiry
-    pub expires_at: u64,
+    pub expires_at: Option<Timestamp>,
 
     // FIXME: change to Bytes
     pub value: String,
 }
 
-impl From<CacheModel> for CacheGetOut {
-    fn from(model: CacheModel) -> Self {
-        let CacheModel {
-            key,
-            expires_at,
-            value,
-        } = model;
-
+impl CacheGetOut {
+    fn from_model(key: EntityKey, model: CacheModel) -> Self {
         Self {
             key,
-            expires_at,
-            value,
+            expires_at: model.expires_at,
+            value: String::from_utf8_lossy(&model.value).into_owned(),
         }
     }
 }
@@ -104,39 +92,40 @@ pub struct CacheDeleteOut {
 /// Cache Set
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
-    State(AppState { cache_store, .. }): State<AppState>,
+    State(AppState {
+        mut cache_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<CacheSetIn>,
 ) -> Result<Json<CacheSetOut>> {
-    let key_str = data.key.to_string();
-    let model: CacheModel = data.into();
-    cache_store.set(key_str, model);
-
-    let ret = CacheSetOut {};
-    Ok(Json(ret))
+    let key = data.key.clone();
+    cache_store.set(key.as_str(), data.into_model())?;
+    Ok(Json(CacheSetOut {}))
 }
 
 /// Cache Get
 #[aide_annotate(op_id = "v1.cache.get")]
 async fn cache_get(
-    State(AppState { cache_store, .. }): State<AppState>,
+    State(AppState {
+        mut cache_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<CacheGetIn>,
 ) -> Result<Json<CacheGetOut>> {
-    let key_str = data.key.to_string();
-    let model = cache_store.get(&key_str)?;
-    let ret: CacheGetOut = model.into();
-    Ok(Json(ret))
+    let model = cache_store
+        .get(&data.key)?
+        .ok_or_else(|| crate::error::HttpError::not_found(None, None))?;
+    Ok(Json(CacheGetOut::from_model(data.key, model)))
 }
 
 /// Cache Delete
 #[aide_annotate(op_id = "v1.cache.delete")]
 async fn cache_del(
-    State(AppState { cache_store, .. }): State<AppState>,
+    State(AppState {
+        mut cache_store, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<CacheDeleteIn>,
 ) -> Result<Json<CacheDeleteOut>> {
-    let key_str = data.key.to_string();
-    let deleted = cache_store.delete(&key_str);
-    let ret = CacheDeleteOut { deleted };
-    Ok(Json(ret))
+    cache_store.delete(&data.key)?;
+    Ok(Json(CacheDeleteOut { deleted: true }))
 }
 
 pub fn router() -> ApiRouter<AppState> {
