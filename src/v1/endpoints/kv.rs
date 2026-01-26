@@ -110,7 +110,7 @@ pub struct KvDeleteOut {
 /// KV Set
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
-    State(AppState { kv_store, .. }): State<AppState>,
+    State(AppState { mut kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvSetIn>,
 ) -> Result<Json<KvSetOut>> {
     let key = data.key.clone();
@@ -128,7 +128,7 @@ async fn kv_set(
 /// KV Get
 #[aide_annotate(op_id = "v1.kv.get")]
 async fn kv_get(
-    State(AppState { kv_store, .. }): State<AppState>,
+    State(AppState { mut kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvGetIn>,
 ) -> Result<Json<KvGetOut>> {
     let model = kv_store
@@ -148,7 +148,7 @@ async fn kv_get(
 /// KV Delete
 #[aide_annotate(op_id = "v1.kv.delete")]
 async fn kv_del(
-    State(AppState { kv_store, .. }): State<AppState>,
+    State(AppState { mut kv_store, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvDeleteIn>,
 ) -> Result<Json<KvDeleteOut>> {
     let deleted = kv_store

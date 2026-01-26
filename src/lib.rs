@@ -7,6 +7,7 @@ use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
+use coyote_kv::EvictionPolicy;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -120,9 +121,11 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let stream_state =
         stream::State::init(persistent_db.clone()).expect("initializing stream state");
 
-    let kv_store = crate::v1::modules::kv::KvStore::new("kv_store");
+    let kv_store = crate::v1::modules::kv::KvStore::new("kv_store", EvictionPolicy::NoEviction);
 
-    let cache_store = crate::v1::modules::cache::CacheStore::new(kv_store.clone());
+    let cache_kv_store =
+        crate::v1::modules::kv::KvStore::new("cache_store", EvictionPolicy::LeastRecentlyUsed);
+    let cache_store = crate::v1::modules::cache::CacheStore::new(cache_kv_store);
 
     // build our application with a route
     let app_state = AppState {
@@ -168,7 +171,6 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
-            tokio::spawn(v1::modules::cache::worker(app_state.clone())),
             tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
             tokio::spawn(v1::modules::queue::worker(app_state.clone())),

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -30,28 +32,43 @@ pub(crate) struct ExpirationRow {
     pub key: String,
 
     #[serde(skip)]
-    computed_key: String,
+    computed_key: ExpirationKey,
 }
 
 impl ExpirationRow {
     pub(crate) fn new(expiration_time: Timestamp, key: String) -> Self {
+        Self {
+            computed_key: ExpirationKey::from(expiration_time, key.clone()),
+            expiration_time,
+            key,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct ExpirationKey(String);
+
+impl ExpirationKey {
+    pub(crate) fn from(expiration_time: Timestamp, key: String) -> Self {
         let ts_ms = expiration_time.as_millisecond();
         let ts_bytes = ts_ms.to_be_bytes();
         let ts_hex = hex::encode(ts_bytes);
         let computed_key = format!("{ts_hex}\0{key}");
 
-        Self {
-            expiration_time,
-            key,
-            computed_key,
-        }
+        Self(computed_key)
+    }
+}
+
+impl Display for ExpirationKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
 impl TableRow for ExpirationRow {
     const TABLE_PREFIX: &'static str = "_KV_EXP_";
 
-    type Key = String;
+    type Key = ExpirationKey;
 
     fn get_key(&self) -> &Self::Key {
         &self.computed_key
