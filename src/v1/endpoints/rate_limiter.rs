@@ -92,23 +92,21 @@ async fn rate_limiter_limit(
     ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
 ) -> Result<Json<RateLimiterCheckOut>> {
     let now = Utc::now(); // FIXME(@svix-lucho): should come from consensus?
-    let (result, remaining, retry_after) = rate_limiter
-        .limit(
-            now,
-            &data.key,
-            data.units,
-            RateLimitConfig::TokenBucket(TokenBucket {
-                bucket_size: data.config.capacity,
-                refill_rate: data.config.refill_amount,
-                refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
-            }),
-        )
-        .map_err(|e| crate::error::Error::generic(e))?;
+    let (result, remaining, retry_after) = rate_limiter.limit(
+        now,
+        &data.key,
+        data.units,
+        RateLimitConfig::TokenBucket(TokenBucket {
+            bucket_size: data.config.capacity,
+            refill_rate: data.config.refill_amount,
+            refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
+        }),
+    )?;
 
     Ok(Json(RateLimiterCheckOut {
         result,
         remaining,
-        retry_after: retry_after.map(|d| d.num_seconds() as u64),
+        retry_after: retry_after.map(|t| t.num_milliseconds() as u64),
     }))
 }
 
@@ -120,21 +118,19 @@ async fn rate_limiter_get_remaining(
     ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
 ) -> Result<Json<RateLimiterGetRemainingOut>> {
     let now = Utc::now(); // FIXME(@svix-lucho): should come from consensus?
-    let remaining = rate_limiter
-        .get_remaining(
-            now,
-            &data.key,
-            RateLimitConfig::TokenBucket(TokenBucket {
-                bucket_size: data.config.capacity,
-                refill_rate: data.config.refill_amount,
-                refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
-            }),
-        )
-        .map_err(|e| crate::error::Error::generic(e))?;
+    let (remaining, retry_after) = rate_limiter.get_remaining(
+        now,
+        &data.key,
+        RateLimitConfig::TokenBucket(TokenBucket {
+            bucket_size: data.config.capacity,
+            refill_rate: data.config.refill_amount,
+            refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
+        }),
+    )?;
 
     Ok(Json(RateLimiterGetRemainingOut {
         remaining,
-        retry_after: None, // FIXME: calculate retry after
+        retry_after: retry_after.map(|t| t.num_milliseconds() as u64),
     }))
 }
 
