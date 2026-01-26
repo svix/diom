@@ -35,7 +35,7 @@ impl AppendToStream {
             .enumerate()
             .map(|(i, msg)| {
                 let i =
-                    MsgId::try_from(i).expect("usize should trivially be convertable to a msg-id");
+                    MsgId::try_from(i).expect("usize should trivially be convertible to a msg-id");
                 let msg_id = offset + i;
                 (msg_id, msg)
             })

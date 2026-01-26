@@ -48,7 +48,7 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
             path: db_dir.path().to_string_lossy().to_string(),
             ..Default::default()
         }),
-        peristent_db_config: Arc::new(DatabaseConfig::<Persistent> {
+        persistent_db_config: Arc::new(DatabaseConfig::<Persistent> {
             path: db_dir.path().to_string_lossy().to_string(),
             ..Default::default()
         }),
