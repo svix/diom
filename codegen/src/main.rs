@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<()> {
 
     diom::openapi::postprocess_spec(&mut openapi);
 
-    let openapi_json = serde_json::to_string_pretty(&openapi)?;
+    let openapi_json = serde_json::to_string_pretty(&openapi)? + "\n";
 
     // Only write openapi.json (and thus update its modified-at timestamp) if there are any changes.
     // Avoids unnecessary rebuilds of the diom crate which uses `include_str!("openapi.json")`.

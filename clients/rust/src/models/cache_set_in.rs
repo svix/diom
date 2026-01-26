@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CacheSetIn {
-    pub expires_at: u64,
+    /// Time to live in milliseconds
+    pub expire_in: u64,
 
     pub key: String,
 
@@ -12,9 +13,9 @@ pub struct CacheSetIn {
 }
 
 impl CacheSetIn {
-    pub fn new(expires_at: u64, key: String, value: String) -> Self {
+    pub fn new(expire_in: u64, key: String, value: String) -> Self {
         Self {
-            expires_at,
+            expire_in,
             key,
             value,
         }

@@ -957,6 +957,54 @@
           }
         ]
       }
+    },
+    "/api/v1/stream/append": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Append To Stream",
+        "description": "Appends messages to the stream.",
+        "operationId": "v1.stream.append",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppendToStreamIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppendToStreamOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -968,6 +1016,41 @@
       }
     },
     "schemas": {
+      "AppendToStreamIn": {
+        "type": "object",
+        "properties": {
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MsgIn"
+            }
+          },
+          "streamId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "streamId",
+          "msgs"
+        ]
+      },
+      "AppendToStreamOut": {
+        "type": "object",
+        "properties": {
+          "msgIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "msgIds"
+        ]
+      },
       "CacheDeleteIn": {
         "type": "object",
         "properties": {
@@ -1012,9 +1095,9 @@
         "properties": {
           "expires_at": {
             "description": "Time of expiry",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           },
           "key": {
             "type": "string",
@@ -1028,14 +1111,14 @@
         },
         "required": [
           "key",
-          "expires_at",
           "value"
         ]
       },
       "CacheSetIn": {
         "type": "object",
         "properties": {
-          "expires_at": {
+          "expire_in": {
+            "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
             "minimum": 0
@@ -1052,7 +1135,7 @@
         },
         "required": [
           "key",
-          "expires_at",
+          "expire_in",
           "value"
         ]
       },
@@ -1092,7 +1175,8 @@
             "format": "date-time"
           },
           "id": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "maxByteSize": {
             "type": "integer",
@@ -1271,7 +1355,8 @@
           "expires_at": {
             "description": "Time of expiry",
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "key": {
             "type": "string",
@@ -1285,7 +1370,6 @@
         },
         "required": [
           "key",
-          "expires_at",
           "value"
         ]
       },
@@ -1320,6 +1404,30 @@
       },
       "KvSetOut": {
         "type": "object"
+      },
+      "MsgIn": {
+        "type": "object",
+        "properties": {
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "payload": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "payload",
+          "headers"
+        ]
       },
       "OperationBehavior": {
         "type": "string",

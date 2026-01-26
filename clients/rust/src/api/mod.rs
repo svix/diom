@@ -15,7 +15,7 @@ pub use self::{
         QueueRejectOptions, QueueSendOptions, QueueStatsOptions,
     },
     rate_limiter::{RateLimiter, RateLimiterGetRemainingOptions, RateLimiterLimitOptions},
-    stream::{Stream, StreamCreateOptions},
+    stream::{Stream, StreamAppendOptions, StreamCreateOptions},
 };
 
 impl DiomClient {
