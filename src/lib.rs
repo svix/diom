@@ -109,7 +109,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let mut openapi = openapi::initialize_openapi();
 
     let persistent_db =
-        DatabaseConfig::persistent(cfg.peristent_db_config.clone()).expect("persistent db");
+        DatabaseConfig::persistent(cfg.persistent_db_config.clone()).expect("persistent db");
 
     let _ephemeral_db =
         DatabaseConfig::ephemeral(cfg.ephemeral_db_config.clone()).expect("ephemeral db");

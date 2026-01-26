@@ -87,7 +87,7 @@ pub struct ConfigurationInner {
     pub management_db_config: Arc<DatabaseConfig<Management>>,
 
     #[serde(flatten, with = "persistent_db")]
-    pub peristent_db_config: Arc<DatabaseConfig<Persistent>>,
+    pub persistent_db_config: Arc<DatabaseConfig<Persistent>>,
 
     #[serde(flatten, with = "ephemeral_db")]
     pub ephemeral_db_config: Arc<DatabaseConfig<Ephemeral>>,

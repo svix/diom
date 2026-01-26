@@ -53,7 +53,7 @@ async fn create_stream(
 
     This is missing a few important things
         1. We haven't setup thread-per-core, so this could go to any thread.
-        2. We haven't setup quorum/raft stuff yet, so there's no concensus.
+        2. We haven't setup quorum/raft stuff yet, so there's no consensus.
 
     I didn't want to let either of these things block developing stream,
     so in practice the structure of this handler will look different once those two pieces are in place.
@@ -114,7 +114,7 @@ async fn append_to_stream(
 
     This is missing a few important things
         1. We haven't setup thread-per-core, so this could go to any thread.
-        2. We haven't setup quorum/raft stuff yet, so there's no concensus.
+        2. We haven't setup quorum/raft stuff yet, so there's no consensus.
 
     I didn't want to let either of these things block developing stream,
     so in practice the structure of this handler will look different once those two pieces are in place.
