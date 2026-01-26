@@ -15,11 +15,14 @@ http.workspace = true
 http-body-util.workspace = true
 jiff.workspace = true
 reqwest.workspace = true
+rmp-serde.workspace = true
+schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 static_assertions.workspace = true
 url.workspace = true
 uuid.workspace = true
+validator.workspace = true
 
 [lints]
 workspace = true
