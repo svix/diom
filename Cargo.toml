@@ -28,6 +28,7 @@ bytes.workspace = true
 config.workspace = true
 diom-derive.workspace = true
 diom-error.workspace = true
+diom-kv.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 fjall.workspace = true
