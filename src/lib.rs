@@ -26,10 +26,7 @@ use tower_http::{
 use tracing_subscriber::{Layer as _, layer::SubscriberExt as _};
 use uuid::Uuid;
 
-use crate::{
-    cfg::Configuration,
-    v1::modules::{cache, kv},
-};
+use crate::cfg::{Configuration, DatabaseConfig};
 
 pub mod cfg;
 pub mod core;
@@ -114,19 +111,29 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let persistent_db =
         DatabaseConfig::persistent(cfg.peristent_db_config.clone()).expect("persistent db");
 
-    let stream_state = stream::State::init(db.clone()).expect("initialing stream state");
-    let kv_store = kv::KvStore::init(db.clone()).expect("initialing kv store");
+    let ephemeral_db =
+        DatabaseConfig::ephemeral(cfg.ephemeral_db_config.clone()).expect("ephemeral db");
 
-    let cache_kv_store = kv::KvStore::init(db.clone()).expect("initialing cache kv store");
-    let cache_store = cache::CacheStore::init(cache_kv_store);
+    let _management_db =
+        DatabaseConfig::management(cfg.management_db_config.clone()).expect("management db");
 
-    let rate_limiter = crate::v1::modules::rate_limiter::RateLimiter::init(db.clone())
+    let stream_state =
+        stream::State::init(persistent_db.clone()).expect("initializing stream state");
+
+    let cache_kv_store =
+        crate::v1::modules::kv::KvStore::init(ephemeral_db.clone()).expect("initialing kv store");
+
+    let kv_store =
+        crate::v1::modules::kv::KvStore::init(persistent_db.clone()).expect("initialing kv store");
+
+    let cache_store = crate::v1::modules::cache::CacheStore::init(cache_kv_store);
+
+    let rate_limiter = crate::v1::modules::rate_limiter::RateLimiter::init(ephemeral_db.clone())
         .expect("initializing rate limiter");
 
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
-        db,
         kv_store,
         cache_store,
         rate_limiter,
@@ -134,6 +141,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,
     };
+
     let v1_router = v1::router().with_state::<()>(app_state.clone());
 
     // Initialize all routes which need to be part of OpenAPI first.
