@@ -54,5 +54,28 @@ async fn test_create_stream() -> TestResult {
         })
     );
 
+    client
+        .post("stream/append")
+        .json(json!({
+            "streamId": id,
+            "msgs": [
+                {"payload": [1, 2, 3], "headers": {}},
+                {"payload": [4, 5, 6], "headers": {"key": "value"}}
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "streamId": id,
+            "msgs": [
+                {"payload": [7, 8, 9], "headers": {}}
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     Ok(())
 }
