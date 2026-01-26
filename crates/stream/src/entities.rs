@@ -6,4 +6,5 @@ use uuid::Uuid;
 // We absolutely can (and should) use more robust types.
 pub type StreamId = Uuid;
 pub type MsgId = u64;
+pub type ConsumerGroup = String;
 pub type MsgHeaders = HashMap<String, String>;
