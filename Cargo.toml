@@ -28,7 +28,6 @@ bytes.workspace = true
 config.workspace = true
 diom-derive.workspace = true
 diom-error.workspace = true
-stream.workspace = true
 crossbeam.workspace = true
 crossbeam-skiplist.workspace = true
 fjall.workspace = true
@@ -51,6 +50,7 @@ serde.workspace = true
 serde_json.workspace = true
 serde_path_to_error.workspace = true
 serde_with.workspace = true
+stream.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
 tower.workspace = true
@@ -68,15 +68,14 @@ ctor.workspace = true
 tempfile.workspace = true
 test-utils.workspace = true
 
-
 [lints]
 workspace = true
 
 ### Workspace manifest ###
 [workspace]
 members = [
-    "clients/rust",
     "clients/cli",
+    "clients/rust",
     "codegen",
     "crates/*",
     "node",
@@ -151,15 +150,15 @@ serde_json = { version = "1.0.74", features = ["arbitrary_precision", "raw_value
 serde_path_to_error = "0.1.7"
 serde_with = "3.16.1"
 static_assertions = "1.1"
+stream.path = "crates/stream"
 syn = "2.0.48"
 tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
-stream.path = "crates/stream"
 tokio = { version = "1.24.2", features = ["rt", "signal"] }
 tokio-util = "0.7"
 tower = "0.5.1"
-tower-service = "0.3.3"
 tower-http = { version = "0.6.1", features = ["trace", "cors", "normalize-path", "request-id"] }
+tower-service = "0.3.3"
 tracing = "0.1.35"
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "local-time", "fmt", "registry", "std"] }
