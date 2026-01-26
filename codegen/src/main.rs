@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<()> {
 
     coyote::openapi::postprocess_spec(&mut openapi);
 
-    let openapi_json = serde_json::to_string_pretty(&openapi)?;
+    let openapi_json = serde_json::to_string_pretty(&openapi)? + "\n";
 
     // Only write openapi.json (and thus update its modified-at timestamp) if there are any changes.
     // Avoids unnecessary rebuilds of the coyote crate which uses `include_str!("openapi.json")`.
