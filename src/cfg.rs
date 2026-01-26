@@ -222,7 +222,7 @@ management_db_path="/3"
             .build()
             .unwrap();
 
-        let db_config = config.clone().try_deserialize::<TestConfig>().unwrap();
+        let db_config = config.try_deserialize::<TestConfig>().unwrap();
 
         assert_eq!(db_config.ephemeral_db_config.path, "/1".to_string());
         assert_eq!(
