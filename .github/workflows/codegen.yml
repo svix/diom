@@ -1,0 +1,48 @@
+name: Codegen
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/openapi.yml'
+      - 'openapi.json'
+      # schemars updates
+      - 'Cargo.lock'
+      # code changes
+      - 'crates'
+      - 'src'
+  pull_request:
+    paths:
+      - '.github/workflows/openapi.yml'
+      - 'openapi.json'
+      # schemars updates
+      - 'Cargo.lock'
+      # code changes
+      - 'crates'
+      - 'src'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-build:
+    name: Check openapi.json and SDKs
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Regerate openapi.json and SDKs
+        run: cargo codegen
+
+      - name: Check for uncommitted changes
+        run: |
+          gs=$(git status -s)
+          if [[ -n "$gs" ]]; then
+            echo 'there are uncommitted changes!'
+            echo 'please rerun `cargo codegen` and commit the result'
+            git status
+            exit 1
+          else
+            echo 'all good.'
+          fi
