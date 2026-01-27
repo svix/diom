@@ -1,10 +1,12 @@
 pub mod algorithms;
 pub mod tables;
 
-use chrono::{DateTime, Duration, Utc};
+use std::time::Duration;
+
 use diom_error::Result;
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -46,7 +48,7 @@ impl RateLimiter {
     // Using the same identifier but changing the algorithm is considered a different resource.
     pub fn limit(
         &self,
-        now: DateTime<Utc>,
+        now: Timestamp,
         identifier: &str,
         delta: u64,
         algorithm: RateLimitConfig,
@@ -56,7 +58,7 @@ impl RateLimiter {
 
     fn limit_inner(
         &self,
-        now: DateTime<Utc>,
+        now: Timestamp,
         identifier: &str,
         delta: u64,
         algorithm: RateLimitConfig,
@@ -85,7 +87,7 @@ impl RateLimiter {
                 let (remaining, result, retry_after) = if state.count + delta > max_tokens {
                     state.count = max_tokens;
                     let window_end = window_start + fw_config.size;
-                    let time_until_reset = window_end - now;
+                    let time_until_reset = window_end.duration_since(now).try_into().unwrap();
                     (0, RateLimitResult::BLOCK, Some(time_until_reset))
                 } else {
                     state.count += delta;
@@ -113,13 +115,13 @@ impl RateLimiter {
 
                 if capacity < delta {
                     let filled_per_millis =
-                        tb_config.refill_rate * tb_config.refill_interval.num_milliseconds() as u64;
-                    let retry_after = (filled_per_millis - capacity).div_ceil(delta) as i64;
+                        tb_config.refill_rate * tb_config.refill_interval.as_millis() as u64;
+                    let retry_after = (filled_per_millis - capacity).div_ceil(delta);
 
                     return Ok((
                         RateLimitResult::BLOCK,
                         capacity,
-                        Some(Duration::milliseconds(retry_after)),
+                        Some(Duration::from_millis(retry_after)),
                     ));
                 }
 
@@ -137,7 +139,7 @@ impl RateLimiter {
 
     pub fn get_remaining(
         &self,
-        now: DateTime<Utc>,
+        now: Timestamp,
         identifier: &str,
         algorithm: RateLimitConfig,
     ) -> Result<(u64, Option<Duration>)> {
@@ -199,7 +201,7 @@ mod tests {
 
         fn config() -> RateLimitConfig {
             RateLimitConfig::FixedWindow(FixedWindow {
-                size: Duration::seconds(1),
+                size: Duration::from_secs(1),
                 tokens: 5,
             })
         }
@@ -209,37 +211,37 @@ mod tests {
             let (limiter, _dir) = create_test_limiter();
             let id = "user1";
 
-            let mut clock = DateTime::from_timestamp_millis(0).unwrap();
+            let mut clock = Timestamp::UNIX_EPOCH;
             let (result, remaining, retry_after) = limiter.limit(clock, id, 3, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 2);
             assert_eq!(retry_after, None);
 
-            clock += Duration::milliseconds(500);
+            clock += Duration::from_millis(500);
             let (result, remaining, retry_after) = limiter.limit(clock, id, 2, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 0);
             assert_eq!(retry_after, None);
 
-            clock += Duration::milliseconds(400);
+            clock += Duration::from_millis(400);
             let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config()).unwrap();
             assert!(matches!(result, RateLimitResult::BLOCK));
             assert_eq!(remaining, 0);
-            assert_eq!(retry_after, Some(Duration::milliseconds(100)));
+            assert_eq!(retry_after, Some(Duration::from_millis(100)));
 
             let (remaining_2, retry_after_2) = limiter.get_remaining(clock, id, config()).unwrap();
             assert_eq!(remaining_2, remaining);
             assert_eq!(retry_after_2, retry_after);
 
             // Resets at t=1000ms
-            clock += Duration::milliseconds(100);
+            clock += Duration::from_millis(100);
             let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 4);
             assert_eq!(retry_after, None);
 
             // Doesn't accumulate
-            clock += Duration::milliseconds(100000);
+            clock += Duration::from_millis(100000);
             let (remaining, retry_after) = limiter.get_remaining(clock, id, config()).unwrap();
             assert_eq!(remaining, 5);
             assert_eq!(retry_after, None);
@@ -252,7 +254,7 @@ mod tests {
         fn config() -> RateLimitConfig {
             RateLimitConfig::TokenBucket(TokenBucket {
                 refill_rate: 1,
-                refill_interval: Duration::milliseconds(100),
+                refill_interval: Duration::from_millis(100),
                 bucket_size: 5,
             })
         }
@@ -260,7 +262,7 @@ mod tests {
         fn config_refill_2() -> RateLimitConfig {
             RateLimitConfig::TokenBucket(TokenBucket {
                 refill_rate: 2,
-                refill_interval: Duration::milliseconds(100),
+                refill_interval: Duration::from_millis(100),
                 bucket_size: 5,
             })
         }
@@ -270,7 +272,7 @@ mod tests {
             let (limiter, _dir) = create_test_limiter();
             let id = "user1";
 
-            let clock = Utc::now();
+            let clock = Timestamp::now();
             let (result, remaining, retry_after) = limiter.limit(clock, id, 3, config()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 2);
@@ -284,7 +286,7 @@ mod tests {
             let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config()).unwrap();
             assert!(matches!(result, RateLimitResult::BLOCK));
             assert_eq!(remaining, 0);
-            assert_eq!(retry_after, Some(Duration::milliseconds(100)));
+            assert_eq!(retry_after, Some(Duration::from_millis(100)));
         }
 
         #[test]
@@ -292,20 +294,20 @@ mod tests {
             let (limiter, _dir) = create_test_limiter();
             let id = "user1";
 
-            let mut clock = Utc::now();
+            let mut clock = Timestamp::now();
             let (result, remaining, retry_after) =
                 limiter.limit(clock, id, 5, config_refill_2()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 0);
             assert_eq!(retry_after, None);
 
-            clock += Duration::milliseconds(100);
+            clock += Duration::from_millis(100);
             let (remaining, retry_after) =
                 limiter.get_remaining(clock, id, config_refill_2()).unwrap();
             assert_eq!(remaining, 2);
             assert_eq!(retry_after, None);
 
-            clock += Duration::milliseconds(200);
+            clock += Duration::from_millis(200);
             let (remaining, retry_after) =
                 limiter.get_remaining(clock, id, config_refill_2()).unwrap();
             assert_eq!(remaining, 5);

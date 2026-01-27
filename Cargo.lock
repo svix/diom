@@ -858,7 +858,6 @@ dependencies = [
  "base64",
  "byteorder",
  "bytes",
- "chrono",
  "config",
  "diom-derive",
  "diom-error",
@@ -1013,7 +1012,6 @@ dependencies = [
 name = "diom-rate-limiter"
 version = "1.76.1"
 dependencies = [
- "chrono",
  "diom-error",
  "fjall",
  "fjall-utils",

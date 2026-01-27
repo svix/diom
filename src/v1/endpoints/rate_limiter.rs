@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+use std::time::Duration;
+
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
-use chrono::{Duration, Utc};
 use diom_derive::aide_annotate;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -91,7 +93,7 @@ async fn rate_limiter_limit(
     State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
 ) -> Result<Json<RateLimiterCheckOut>> {
-    let now = Utc::now(); // FIXME(@svix-lucho): should come from consensus?
+    let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
     let (result, remaining, retry_after) = rate_limiter.limit(
         now,
         &data.key,
@@ -99,14 +101,14 @@ async fn rate_limiter_limit(
         RateLimitConfig::TokenBucket(TokenBucket {
             bucket_size: data.config.capacity,
             refill_rate: data.config.refill_amount,
-            refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
+            refill_interval: Duration::from_secs(data.config.refill_interval_seconds),
         }),
     )?;
 
     Ok(Json(RateLimiterCheckOut {
         result,
         remaining,
-        retry_after: retry_after.map(|t| t.num_milliseconds() as u64),
+        retry_after: retry_after.map(|t| t.as_millis() as u64),
     }))
 }
 
@@ -117,20 +119,20 @@ async fn rate_limiter_get_remaining(
     State(AppState { rate_limiter, .. }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
 ) -> Result<Json<RateLimiterGetRemainingOut>> {
-    let now = Utc::now(); // FIXME(@svix-lucho): should come from consensus?
+    let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
     let (remaining, retry_after) = rate_limiter.get_remaining(
         now,
         &data.key,
         RateLimitConfig::TokenBucket(TokenBucket {
             bucket_size: data.config.capacity,
             refill_rate: data.config.refill_amount,
-            refill_interval: Duration::seconds(data.config.refill_interval_seconds as i64),
+            refill_interval: Duration::from_secs(data.config.refill_interval_seconds),
         }),
     )?;
 
     Ok(Json(RateLimiterGetRemainingOut {
         remaining,
-        retry_after: retry_after.map(|t| t.num_milliseconds() as u64),
+        retry_after: retry_after.map(|t| t.as_millis() as u64),
     }))
 }
 
