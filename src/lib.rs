@@ -144,14 +144,9 @@ pub async fn run_with_prefix(
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
-    let persistent_db =
-        DatabaseConfig::persistent(cfg.persistent_db_config.clone()).expect("persistent db");
-
-    let _ephemeral_db =
-        DatabaseConfig::ephemeral(cfg.ephemeral_db_config.clone()).expect("ephemeral db");
-
-    let _management_db =
-        DatabaseConfig::management(cfg.management_db_config.clone()).expect("management db");
+    let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
+    let _ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
+    let _management_db = DatabaseConfig::management(&cfg.management_db).expect("management db");
 
     let stream_state =
         stream::State::init(persistent_db.clone()).expect("initializing stream state");
