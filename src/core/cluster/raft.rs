@@ -130,6 +130,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Test has a long runtime. We still run this in CI using `--run-ignored all`"]
     fn test_storage() -> anyhow::Result<()> {
         openraft::testing::Suite::test_all(CoyoteStoreBuilder)?;
         Ok(())
