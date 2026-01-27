@@ -61,7 +61,7 @@ impl TableRow for StreamRow {
 
 /// A lease represents a consumer group's "hold" on a block of messages. This is used to prevent multiple consumers in the same consumer group
 /// from touching the same messages.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub(crate) struct LeaseRow {
     pub stream_id: StreamId,
     pub cg: ConsumerGroup,
@@ -72,12 +72,12 @@ pub(crate) struct LeaseRow {
     pub leased_at: Timestamp,
     /// LeaseRows expire based on the visibility timeout.
     pub expires_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     /// When the block of messages was acknowledged / processed by a consumer in the group.
     pub acked_at: Option<Timestamp>,
 }
 
-/// For the key, we use a composit of (stream_id, consumer_group, block_end).
+/// For the key, we use a composite of (stream_id, consumer_group, block_end).
 /// This ensures we can easily fetch all of the leases for a (stream_id, consumer_group).
 #[derive(Clone)]
 pub(crate) struct LeaseKey(Vec<u8>);
@@ -128,7 +128,7 @@ pub(crate) struct LeaseDiff {
 impl LeaseDiff {
     pub(crate) fn apply_diff(self, state: &State, batch: &mut OwnedWriteBatch) -> Result<()> {
         for lease in self.to_delete {
-            let key = lease.get_key().into_owned().0;
+            let key = LeaseRow::make_fjall_key(lease.get_key().as_ref());
             batch.remove(&state.metadata_tables, key);
         }
 
@@ -162,7 +162,7 @@ impl LeaseRow {
     /// Any Lease that has expired (it's expiration time is past `now`), can be trivially
     /// deleted.
     ///
-    /// Any leases that where 1) `acked_at.is_some()`, and 2) the message ranges are overlapping,
+    /// Any leases where 1) `acked_at.is_some()`, and 2) the message ranges are overlapping,
     /// can be compacted. This involves deleting the old leases, and replacing them with merged lease.
     pub(crate) fn cull_and_compact(leases: Vec<Self>, now: Timestamp) -> LeaseDiff {
         let mut to_delete = Vec::new();
@@ -241,6 +241,10 @@ impl LeaseRow {
             to_delete,
             to_insert,
         }
+    }
+
+    pub(crate) fn is_active(&self, now: Timestamp) -> bool {
+        self.acked_at.is_none() && self.expires_at > now
     }
 }
 
@@ -370,13 +374,13 @@ impl MsgRow {
 
     /// Fetch up to `batch_size` available messages, in order, from the stream.
     /// Messages captured by the leases are excluded.
-    pub(crate) fn fetch_available(
+    pub(crate) fn fetch_available<'a>(
         state: &State,
         stream_id: StreamId,
-        leases: &[LeaseRow],
+        leases: impl IntoIterator<Item = &'a LeaseRow>,
         batch_size: NonZeroUsize,
     ) -> Result<Vec<(MsgId, MsgRow)>> {
-        let blocked_ranges = merge_lease_ranges(leases);
+        let blocked_ranges = merge_lease_ranges(leases.into_iter());
         let mut msgs_left = batch_size.into();
         let mut results = Vec::with_capacity(msgs_left);
 
@@ -394,7 +398,7 @@ impl MsgRow {
             let n = MsgRow::fetch_in_range(state, range, &mut results, msgs_left)?;
             msgs_left -= n;
 
-            if msgs_left <= 0 {
+            if msgs_left == 0 {
                 return Ok(results);
             }
         }
@@ -416,9 +420,8 @@ struct BlockedRange {
 }
 
 /// Merge and sort lease ranges for the given stream into non-overlapping blocked ranges.
-fn merge_lease_ranges(leases: &[LeaseRow]) -> Vec<BlockedRange> {
+fn merge_lease_ranges<'a>(leases: impl Iterator<Item = &'a LeaseRow>) -> Vec<BlockedRange> {
     let mut ranges: Vec<BlockedRange> = leases
-        .iter()
         .map(|l| BlockedRange {
             start: l.block_start,
             end: l.block_end,
@@ -933,7 +936,7 @@ mod tests {
             let state = test_state("fetch_available_empty_stream");
             let stream_id = StreamId::new_v4();
 
-            let result = MsgRow::fetch_available(&state, stream_id, &[], batch(10)).unwrap();
+            let result = MsgRow::fetch_available(&state, stream_id, [], batch(10)).unwrap();
 
             assert!(result.is_empty());
         }
@@ -944,7 +947,7 @@ mod tests {
             let stream_id = StreamId::new_v4();
             insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
 
-            let result = MsgRow::fetch_available(&state, stream_id, &[], batch(10)).unwrap();
+            let result = MsgRow::fetch_available(&state, stream_id, [], batch(10)).unwrap();
 
             assert_eq!(result.len(), 5);
             assert_eq!(result[0].0, 1);
@@ -960,7 +963,7 @@ mod tests {
             let stream_id = StreamId::new_v4();
             insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
-            let result = MsgRow::fetch_available(&state, stream_id, &[], batch(3)).unwrap();
+            let result = MsgRow::fetch_available(&state, stream_id, [], batch(3)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].0, 1);
@@ -1142,7 +1145,7 @@ mod tests {
             let stream_id = StreamId::new_v4();
             insert_msgs(&state, stream_id, &[1, 2, 3]);
 
-            let result = MsgRow::fetch_available(&state, stream_id, &[], batch(10)).unwrap();
+            let result = MsgRow::fetch_available(&state, stream_id, [], batch(10)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].1.payload, b"msg-1");
