@@ -2,3 +2,6 @@
 /target
 .claude
 .vscode
+.TODO.md
+logs
+.data/

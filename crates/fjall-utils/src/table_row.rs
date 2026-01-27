@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::borrow::Cow;
 
 use diom_error::{Error, Result};
 use serde::{Serialize, de::DeserializeOwned};
@@ -9,18 +9,22 @@ use serde::{Serialize, de::DeserializeOwned};
 pub trait TableRow: Sized + Serialize + DeserializeOwned {
     const TABLE_PREFIX: &'static str;
 
-    type Key: Display;
+    type Key: AsRef<[u8]> + Clone;
 
     /// Return the field used for indexing into the table.
-    fn get_key(&self) -> &Self::Key;
+    fn get_key(&self) -> Cow<'_, Self::Key>;
 
     fn make_fjall_key(key: &Self::Key) -> fjall::UserKey {
-        let prefix = Self::TABLE_PREFIX;
-        format!("{prefix}{key}").into()
+        let mut key_bytes =
+            Vec::<u8>::with_capacity(Self::TABLE_PREFIX.len() + b"\0".len() + key.as_ref().len());
+        key_bytes.extend_from_slice(Self::TABLE_PREFIX.as_bytes());
+        key_bytes.extend_from_slice(b"\0");
+        key_bytes.extend_from_slice(key.as_ref());
+        key_bytes.into()
     }
 
     fn to_fjall_entry(&self) -> Result<(fjall::UserKey, fjall::UserValue)> {
-        let key = Self::make_fjall_key(self.get_key());
+        let key = Self::make_fjall_key(self.get_key().as_ref());
         // FIXME(@svix-gabriel) - it's not clear if we're committed to using msgpack
         // for internal serialization. Using messagepack for now, but this
         // should be easy to change later.

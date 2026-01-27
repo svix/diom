@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::borrow::Cow;
 
 use fjall_utils::TableRow;
 use jiff::Timestamp;
@@ -21,8 +21,8 @@ impl TableRow for KvPairRow {
     const TABLE_PREFIX: &'static str = "_KV_PAIR_";
     type Key = String;
 
-    fn get_key(&self) -> &Self::Key {
-        &self.key
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Borrowed(&self.key)
     }
 }
 
@@ -45,7 +45,7 @@ impl ExpirationRow {
     }
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct ExpirationKey(String);
 
 impl ExpirationKey {
@@ -59,9 +59,9 @@ impl ExpirationKey {
     }
 }
 
-impl Display for ExpirationKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+impl AsRef<[u8]> for ExpirationKey {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_bytes()
     }
 }
 
@@ -70,7 +70,7 @@ impl TableRow for ExpirationRow {
 
     type Key = ExpirationKey;
 
-    fn get_key(&self) -> &Self::Key {
-        &self.computed_key
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Borrowed(&self.computed_key)
     }
 }
