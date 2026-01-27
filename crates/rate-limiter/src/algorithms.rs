@@ -1,4 +1,6 @@
-use chrono::{DateTime, Duration, Utc};
+use std::time::Duration;
+
+use jiff::Timestamp;
 
 pub struct FixedWindow {
     /// Window size
@@ -8,11 +10,11 @@ pub struct FixedWindow {
 }
 
 impl FixedWindow {
-    pub(crate) fn get_window_start(&self, now: DateTime<Utc>) -> DateTime<Utc> {
-        let size_ms = self.size.num_milliseconds();
-        let now_ms = now.timestamp_millis();
+    pub(crate) fn get_window_start(&self, now: Timestamp) -> Timestamp {
+        let size_ms = self.size.as_millis() as i64;
+        let now_ms = now.as_millisecond();
         let window_start_ms = now_ms - (now_ms % size_ms);
-        DateTime::from_timestamp_millis(window_start_ms).unwrap()
+        Timestamp::from_millisecond(window_start_ms).unwrap()
     }
 }
 
@@ -29,14 +31,19 @@ impl TokenBucket {
     pub(crate) fn get_new_capacity(
         &self,
         current: u64,
-        now: DateTime<Utc>,
-        last_refill: DateTime<Utc>,
+        now: Timestamp,
+        last_refill: Timestamp,
     ) -> u64 {
         let mut capacity = current;
         if last_refill < now {
-            let elapsed = now - last_refill;
-            let periods = elapsed.num_milliseconds() / self.refill_interval.num_milliseconds();
-            capacity += periods as u64 * self.refill_rate;
+            let elapsed_millis: u64 = now
+                .duration_since(last_refill)
+                .as_millis()
+                .try_into()
+                .unwrap();
+            let refill_interval_millis: u64 = self.refill_interval.as_millis().try_into().unwrap();
+
+            capacity += (elapsed_millis / refill_interval_millis) * self.refill_rate;
         }
         capacity.min(self.bucket_size)
     }
