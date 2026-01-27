@@ -1,11 +1,11 @@
 mod stream;
 
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 use diom::{
     cfg::{
-        ConfigurationInner, DatabaseConfig, Environment, Ephemeral, InternalConfig, LogFormat,
-        LogLevel, Management, Persistent,
+        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, Ephemeral,
+        InternalConfig, LogFormat, LogLevel, Management, Persistent,
     },
     core::security::JwtSigningConfig,
     run_with_prefix,
@@ -19,7 +19,7 @@ use tokio::{net::TcpListener, task::JoinHandle};
 ///
 /// Once it's DROPed, the server and it's resources are cleaned up automatically (or at least, that's the intent.)
 pub struct IsolatedServerHandle {
-    _db_dir: TempDir,
+    _dir: TempDir,
     server_handle: JoinHandle<()>,
 }
 
@@ -39,21 +39,23 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
     let jwt_key = HS256Key::generate();
     let token = "Stubbed token. Should probably be legit when we add auth.";
 
-    let db_dir = tempfile::tempdir().unwrap();
+    let workdir = tempfile::tempdir().unwrap();
+    let db_dir = workdir.path().join("db");
+    let log_path = workdir.path().join("logs");
+    let snapshot_path = workdir.path().join("snapshots");
 
     let cfg = Arc::new(ConfigurationInner {
         listen_address: addr,
-        interserver_listen_address: repl_addr,
         management_db_config: Arc::new(DatabaseConfig::<Management> {
-            path: db_dir.path().to_string_lossy().to_string(),
+            path: db_dir.clone(),
             ..Default::default()
         }),
         ephemeral_db_config: Arc::new(DatabaseConfig::<Ephemeral> {
-            path: db_dir.path().to_string_lossy().to_string(),
+            path: db_dir.clone(),
             ..Default::default()
         }),
         persistent_db_config: Arc::new(DatabaseConfig::<Persistent> {
-            path: db_dir.path().to_string_lossy().to_string(),
+            path: db_dir,
             ..Default::default()
         }),
         jwt_signing_config: Arc::new(JwtSigningConfig::HS256(jwt_key)),
@@ -66,16 +68,26 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
         opentelemetry_service_name: "diom-test".to_string(),
         environment: Environment::Dev,
         internal: InternalConfig {},
+        cluster: ClusterConfiguration {
+            listen_address: repl_addr,
+            name: "diom-test".to_string(),
+            snapshot_path,
+            log_path,
+            connection_timeout: Duration::from_millis(50),
+            heartbeat_interval_ms: 100,
+            election_timeout_min_ms: 200,
+            election_timeout_max_ms: 300,
+        },
     });
 
     let base_uri = format!("http://{addr}/api/v1");
 
     let server_handle = tokio::spawn(async move {
-        run_with_prefix(cfg, Some(listener)).await;
+        run_with_prefix(cfg, Some(listener), Some(repl_listener)).await;
     });
 
     let handle = IsolatedServerHandle {
-        _db_dir: db_dir,
+        _dir: workdir,
         server_handle,
     };
 

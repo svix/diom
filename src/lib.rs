@@ -85,7 +85,7 @@ async fn graceful_shutdown_handler() {
 
 pub async fn run(cfg: Configuration) {
     setup_metrics(&cfg);
-    run_with_prefix(cfg, None).await
+    run_with_prefix(cfg, None, None).await
 }
 
 #[derive(Clone)]
@@ -98,12 +98,47 @@ pub struct AppState {
     idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
     queue_store: crate::v1::modules::queue::QueueStore,
 
+    raft: core::cluster::Raft,
+    node_id: core::cluster::NodeId,
+
     stream_state: stream::State,
+}
+
+async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<TcpListener>) {
+    let listen_address = cfg.cluster.listen_address;
+    let listener = match listener {
+        Some(l) => l,
+        None => TcpListener::bind(listen_address)
+            .await
+            .expect("Error binding to listen_address"),
+    };
+    tracing::debug!(
+        "Inter-Server: Listening on {}",
+        listener.local_addr().unwrap()
+    );
+
+    let app = core::cluster::router().with_state(state.clone());
+    let svc = tower::make::Shared::new(
+        // It is important that this service wraps the router instead of being
+        // applied via `Router::layer`, as it would run after routing then.
+        NormalizePath::trim_trailing_slash(app),
+    );
+
+    axum::serve(listener, svc)
+        .with_graceful_shutdown(graceful_shutdown_handler())
+        .await
+        .unwrap();
+
+    state.raft.shutdown().await.unwrap();
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
 // consuming from each others' queues
-pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) {
+pub async fn run_with_prefix(
+    cfg: Configuration,
+    listener: Option<TcpListener>,
+    interserver_listener: Option<TcpListener>,
+) {
     // OpenAPI/aide must be initialized before any routers are constructed
     // because its initialization sets generation-global settings which are
     // needed at router-construction time.
@@ -121,23 +156,45 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let stream_state =
         stream::State::init(persistent_db.clone()).expect("initializing stream state");
 
-    let kv_store = crate::v1::modules::kv::KvStore::new("kv_store", EvictionPolicy::NoEviction);
+    let kv_store = crate::v1::modules::kv::KvStore::new(
+        "kv_store",
+        persistent_db.clone(),
+        EvictionPolicy::NoEviction,
+    );
 
-    let cache_kv_store =
-        crate::v1::modules::kv::KvStore::new("cache_store", EvictionPolicy::LeastRecentlyUsed);
+    let cache_kv_store = crate::v1::modules::kv::KvStore::new(
+        "cache_store",
+        persistent_db.clone(),
+        EvictionPolicy::LeastRecentlyUsed,
+    );
     let cache_store = crate::v1::modules::cache::CacheStore::new(cache_kv_store);
+
+    let (raft, node_id) = core::cluster::initialize_raft(&cfg, persistent_db.clone())
+        .await
+        .expect("failed to initialize cluster");
 
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
         kv_store,
         cache_store,
-        rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(),
+        rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(
+            "rate_limiter_default",
+            persistent_db.clone(),
+        ),
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,
+        raft,
+        node_id,
     };
     let v1_router = v1::router().with_state::<()>(app_state.clone());
+
+    let interserver = tokio::spawn(run_interserver(
+        cfg.clone(),
+        app_state.clone(),
+        interserver_listener,
+    ));
 
     // Initialize all routes which need to be part of OpenAPI first.
     let app = ApiRouter::new()
@@ -184,6 +241,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
 
     // Wait for workers to finish cleanup
     let _ = workers.await;
+    let _ = interserver.await;
 }
 
 pub fn setup_tracing(

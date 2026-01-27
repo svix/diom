@@ -1,13 +1,22 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{fmt, marker::PhantomData, net::SocketAddr, path::PathBuf, sync::Arc};
+use std::{
+    fmt,
+    marker::PhantomData,
+    net::SocketAddr,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 
 use crate::error::Result;
 use anyhow::Context;
+use config::ConfigBuilder;
 use fjall::Database;
 use serde::Deserialize;
 use serde_with::with_prefix;
+use tap::Pipe;
 use tracing::Level;
 
 use crate::core::security::JwtSigningConfig;
@@ -36,7 +45,7 @@ impl StorageType for Management {}
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct DatabaseConfig<S: StorageType> {
-    pub path: String,
+    pub path: PathBuf,
     #[serde(default)]
     pub filename: Option<String>,
     #[serde(skip_serializing, default)]
@@ -44,7 +53,7 @@ pub struct DatabaseConfig<S: StorageType> {
 }
 
 impl<S: StorageType> DatabaseConfig<S> {
-    fn database(dir: &str, file: &str) -> Result<Database> {
+    fn database(dir: &Path, file: &str) -> Result<Database> {
         let mut path = PathBuf::from(dir);
         path.push(file);
         fjall::Database::builder(path).open().map_err(|e| e.into())
@@ -79,12 +88,51 @@ impl DatabaseConfig<Management> {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct ClusterConfiguration {
+    /// The address to listen on for replication
+    pub listen_address: SocketAddr,
+
+    pub name: String,
+
+    pub snapshot_path: PathBuf,
+
+    pub log_path: PathBuf,
+
+    #[serde(default = "ClusterConfiguration::default_connection_timeout")]
+    pub connection_timeout: Duration,
+
+    #[serde(default = "ClusterConfiguration::default_heartbeat_interval_ms")]
+    pub heartbeat_interval_ms: u64,
+
+    #[serde(default = "ClusterConfiguration::default_election_timeout_min_ms")]
+    pub election_timeout_min_ms: u64,
+
+    #[serde(default = "ClusterConfiguration::default_election_timeout_max_ms")]
+    pub election_timeout_max_ms: u64,
+}
+
+impl ClusterConfiguration {
+    const fn default_connection_timeout() -> Duration {
+        Duration::from_secs(7)
+    }
+
+    const fn default_heartbeat_interval_ms() -> u64 {
+        500
+    }
+
+    const fn default_election_timeout_min_ms() -> u64 {
+        1500
+    }
+
+    const fn default_election_timeout_max_ms() -> u64 {
+        3000
+    }
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct ConfigurationInner {
     /// The address to listen on
     pub listen_address: SocketAddr,
-
-    /// The address to listen on for replication/etc
-    pub interserver_listen_address: SocketAddr,
 
     #[serde(flatten, with = "management_db")]
     pub management_db_config: Arc<DatabaseConfig<Management>>,
@@ -121,6 +169,8 @@ pub struct ConfigurationInner {
     pub opentelemetry_service_name: String,
     /// The environment (dev, staging, or prod) that the server is running in.
     pub environment: Environment,
+
+    pub cluster: ClusterConfiguration,
 
     #[serde(flatten)]
     pub internal: InternalConfig,
@@ -181,10 +231,16 @@ impl fmt::Display for LogLevel {
     }
 }
 
-pub fn load() -> anyhow::Result<Arc<ConfigurationInner>> {
+pub fn load(config_path: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner>> {
     let config = config::Config::builder()
         .add_source(config::File::from_str(DEFAULTS, config::FileFormat::Toml))
-        .add_source(config::File::with_name("config.toml"))
+        .pipe(|config: ConfigBuilder<_>| {
+            if let Some(path) = config_path {
+                config.add_source(config::File::with_name(path))
+            } else {
+                config
+            }
+        })
         .add_source(config::Environment::with_prefix("DIOM"))
         .build()?;
 

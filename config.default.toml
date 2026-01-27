@@ -36,3 +36,16 @@ persistent_db_path = "./db"
 
 # Directory where ephemeral database is stored.
 ephemeral_db_path = "./db"
+
+# Directory where management data is stored
+management_db_path = "./db"
+
+[cluster]
+# The address to listen on for replication traffic
+listen_address = "0.0.0.0:18050"
+# The path in which binlogs are stored
+log_path = "./logs"
+# The path in which cluster snapshots are stored
+snapshot_path = "./snapshots"
+# The name of this cluster
+name = "diom"

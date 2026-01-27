@@ -1,3 +1,4 @@
+use anyhow::Context;
 use byteorder::{BigEndian, ByteOrder};
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable, Slice, UserKey};
 use openraft::storage::{LogFlushed, RaftLogStorage};
@@ -7,13 +8,12 @@ use openraft::{
 use std::fmt::Debug;
 use std::ops::{Bound, RangeBounds};
 use std::path::Path;
-use tap::{Tap, TapFallible};
+use tap::{Pipe, Tap, TapFallible};
 use tracing::{Instrument as _, Span};
 
+use super::NodeId;
 use super::errors::*;
 use super::raft::TypeConfig;
-
-type NodeId = <TypeConfig as RaftTypeConfig>::NodeId;
 
 // This is an implementation of an openraft Logs store backed by fjall
 
@@ -182,6 +182,32 @@ impl DiomLogs {
             log_keyspace,
             meta_keyspace,
         })
+    }
+
+    /// Get the NodeId (or, if we don't have one, make a new one)
+    pub async fn get_node_id(&mut self) -> anyhow::Result<NodeId> {
+        let meta_keyspace = self.meta_keyspace.clone();
+        let db = self.db.clone();
+        tokio::task::spawn_blocking(move || {
+            if let Some(raw_node_id) = meta_keyspace
+                .get("node_id")
+                .context("fetching node ID from logs database")?
+            {
+                let node_id = rmp_serde::from_slice(&raw_node_id)?;
+                tracing::debug!(?node_id, "starting up with existing node ID");
+                node_id
+            } else {
+                let node_id = NodeId::generate();
+                tracing::info!(?node_id, "generated a new node ID");
+                meta_keyspace
+                    .insert("node_id", rmp_serde::to_vec(&node_id)?)
+                    .context("saving node ID to logs database")?;
+                db.persist(PersistMode::SyncAll)?;
+                node_id
+            }
+            .pipe(Ok)
+        })
+        .await?
     }
 
     async fn append_entries_(
