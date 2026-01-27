@@ -1,4 +1,4 @@
-use std::{num::NonZeroU64, ops::RangeInclusive};
+use std::{borrow::Cow, num::NonZeroU64, ops::RangeInclusive};
 
 use crate::{
     State,
@@ -26,8 +26,8 @@ impl TableRow for NameToStreamRow {
     const TABLE_PREFIX: &'static str = "_CID2NAME_";
     type Key = String;
 
-    fn get_key(&self) -> &Self::Key {
-        &self.name
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Borrowed(&self.name)
     }
 }
 
@@ -48,8 +48,8 @@ impl TableRow for StreamRow {
 
     type Key = StreamId;
 
-    fn get_key(&self) -> &Self::Key {
-        &self.id
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Borrowed(&self.id)
     }
 }
 

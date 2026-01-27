@@ -159,7 +159,7 @@ impl KvStore {
             // Delete from the expiration keyspace
             if let Some(expires_at) = data.expires_at {
                 let r = ExpirationRow::new(expires_at, key.to_string());
-                batch.remove_row::<ExpirationRow>(&self.tables, r.get_key())?;
+                batch.remove_row::<ExpirationRow>(&self.tables, r.get_key().as_ref())?;
             }
             batch.remove_row::<KvPairRow>(&self.tables, &key.to_string())?;
         }
