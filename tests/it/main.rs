@@ -33,6 +33,9 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr: SocketAddr = listener.local_addr().unwrap();
 
+    let repl_listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let repl_addr: SocketAddr = repl_listener.local_addr().unwrap();
+
     let jwt_key = HS256Key::generate();
     let token = "Stubbed token. Should probably be legit when we add auth.";
 
@@ -40,6 +43,7 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
 
     let cfg = Arc::new(ConfigurationInner {
         listen_address: addr,
+        interserver_listen_address: repl_addr,
         management_db_config: Arc::new(DatabaseConfig::<Management> {
             path: db_dir.path().to_string_lossy().to_string(),
             ..Default::default()
@@ -48,7 +52,7 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
             path: db_dir.path().to_string_lossy().to_string(),
             ..Default::default()
         }),
-        peristent_db_config: Arc::new(DatabaseConfig::<Persistent> {
+        persistent_db_config: Arc::new(DatabaseConfig::<Persistent> {
             path: db_dir.path().to_string_lossy().to_string(),
             ..Default::default()
         }),

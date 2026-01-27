@@ -94,7 +94,7 @@ pub struct AppState {
     // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
     kv_store: crate::v1::modules::kv::KvStore,
     cache_store: crate::v1::modules::cache::CacheStore,
-    rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore,
+    rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
     idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
     queue_store: crate::v1::modules::queue::QueueStore,
 
@@ -110,7 +110,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
     let mut openapi = openapi::initialize_openapi();
 
     let persistent_db =
-        DatabaseConfig::persistent(cfg.peristent_db_config.clone()).expect("persistent db");
+        DatabaseConfig::persistent(cfg.persistent_db_config.clone()).expect("persistent db");
 
     let _ephemeral_db =
         DatabaseConfig::ephemeral(cfg.ephemeral_db_config.clone()).expect("ephemeral db");
@@ -132,7 +132,7 @@ pub async fn run_with_prefix(cfg: Configuration, listener: Option<TcpListener>) 
         cfg: cfg.clone(),
         kv_store,
         cache_store,
-        rate_limiter_store: crate::v1::modules::rate_limiter::RateLimiterStore::new(),
+        rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(),
         idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
         queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,

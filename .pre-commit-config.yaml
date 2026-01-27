@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 582b9c66e0791980685c8b80bb11e6a3df1a06ef
+    hooks:
+      - id: end-of-file-fixer
+        exclude: "(^.yarn/)|(.svg$)"
+      - id: trailing-whitespace
+        exclude: "(^.yarn/)|(.svg$)"
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-yaml
+        args: ["--allow-multiple-documents"]
+      - id: check-json
+        exclude: "(tsconfig|foo).json$"
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.20.0
+    hooks:
+      - id: yamlfmt
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.42.1
+    hooks:
+      - id: typos

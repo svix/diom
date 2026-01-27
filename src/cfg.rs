@@ -51,7 +51,7 @@ impl<S: StorageType> DatabaseConfig<S> {
     }
 }
 
-impl DatabaseConfig<Ephemeral> {
+impl DatabaseConfig<Persistent> {
     pub fn persistent(db_config: Arc<DatabaseConfig<Persistent>>) -> Result<Database> {
         Self::database(
             &db_config.path,
@@ -60,7 +60,7 @@ impl DatabaseConfig<Ephemeral> {
     }
 }
 
-impl DatabaseConfig<Persistent> {
+impl DatabaseConfig<Ephemeral> {
     pub fn ephemeral(db_config: Arc<DatabaseConfig<Ephemeral>>) -> Result<Database> {
         Self::database(
             &db_config.path,
@@ -83,11 +83,14 @@ pub struct ConfigurationInner {
     /// The address to listen on
     pub listen_address: SocketAddr,
 
+    /// The address to listen on for replication/etc
+    pub interserver_listen_address: SocketAddr,
+
     #[serde(flatten, with = "management_db")]
     pub management_db_config: Arc<DatabaseConfig<Management>>,
 
     #[serde(flatten, with = "persistent_db")]
-    pub peristent_db_config: Arc<DatabaseConfig<Persistent>>,
+    pub persistent_db_config: Arc<DatabaseConfig<Persistent>>,
 
     #[serde(flatten, with = "ephemeral_db")]
     pub ephemeral_db_config: Arc<DatabaseConfig<Ephemeral>>,

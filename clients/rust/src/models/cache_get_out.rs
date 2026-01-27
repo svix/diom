@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CacheGetOut {
     /// Time of expiry
-    pub expires_at: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<jiff::Timestamp>,
 
     pub key: String,
 
@@ -13,9 +14,9 @@ pub struct CacheGetOut {
 }
 
 impl CacheGetOut {
-    pub fn new(expires_at: u64, key: String, value: String) -> Self {
+    pub fn new(key: String, value: String) -> Self {
         Self {
-            expires_at,
+            expires_at: None,
             key,
             value,
         }

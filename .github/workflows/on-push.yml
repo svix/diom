@@ -1,0 +1,8 @@
+name: CI on Push to Main
+on:
+  push:
+    branches: ['main']
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit

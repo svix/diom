@@ -15,6 +15,19 @@ impl From<StreamCreateOptions> for coyote_client::api::StreamCreateOptions {
     }
 }
 
+#[derive(Args, Clone)]
+pub struct StreamAppendOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<StreamAppendOptions> for coyote_client::api::StreamAppendOptions {
+    fn from(value: StreamAppendOptions) -> Self {
+        let StreamAppendOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct StreamArgs {
@@ -29,6 +42,12 @@ pub enum StreamCommands {
         create_stream_in: crate::json::JsonOf<coyote_client::models::CreateStreamIn>,
         #[clap(flatten)]
         options: StreamCreateOptions,
+    },
+    /// Appends messages to the stream.
+    Append {
+        append_to_stream_in: crate::json::JsonOf<coyote_client::models::AppendToStreamIn>,
+        #[clap(flatten)]
+        options: StreamAppendOptions,
     },
 }
 
@@ -46,6 +65,16 @@ impl StreamCommands {
                 let resp = client
                     .stream()
                     .create(create_stream_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Append {
+                append_to_stream_in,
+                options,
+            } => {
+                let resp = client
+                    .stream()
+                    .append(append_to_stream_in.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
