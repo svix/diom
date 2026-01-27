@@ -48,7 +48,7 @@ pub struct DatabaseConfig<S: StorageType> {
     pub path: PathBuf,
     #[serde(default)]
     pub filename: Option<String>,
-    #[serde(skip_serializing, default)]
+    #[serde(skip)]
     pub _phantom: PhantomData<S>,
 }
 
