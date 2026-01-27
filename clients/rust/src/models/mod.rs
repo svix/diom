@@ -34,6 +34,7 @@ mod queue_send_in;
 mod queue_send_out;
 mod queue_stats_in;
 mod queue_stats_out;
+mod rate_limit_result;
 mod rate_limiter_check_in;
 mod rate_limiter_check_out;
 mod rate_limiter_config;
@@ -53,8 +54,8 @@ pub use self::{
     queue_receive_out::QueueReceiveOut, queue_reject_in::QueueRejectIn,
     queue_reject_out::QueueRejectOut, queue_send_in::QueueSendIn, queue_send_out::QueueSendOut,
     queue_stats_in::QueueStatsIn, queue_stats_out::QueueStatsOut,
-    rate_limiter_check_in::RateLimiterCheckIn, rate_limiter_check_out::RateLimiterCheckOut,
-    rate_limiter_config::RateLimiterConfig,
+    rate_limit_result::RateLimitResult, rate_limiter_check_in::RateLimiterCheckIn,
+    rate_limiter_check_out::RateLimiterCheckOut, rate_limiter_config::RateLimiterConfig,
     rate_limiter_get_remaining_in::RateLimiterGetRemainingIn,
     rate_limiter_get_remaining_out::RateLimiterGetRemainingOut,
 };
