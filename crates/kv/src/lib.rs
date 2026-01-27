@@ -51,44 +51,11 @@ pub enum OperationBehavior {
     Update,
 }
 
-impl Default for KvStore {
-    fn default() -> Self {
-        Self::new("default", EvictionPolicy::NoEviction)
-    }
-}
-
 const EXPIRATION_BATCH_SIZE: usize = 100; // FIXME(@svix-lucho): make this configurable?
 
 impl KvStore {
-    // FIXME(@svix-lucho): receive the db from the caller
-    pub fn new(namespace: &str, policy: EvictionPolicy) -> Self {
-        let db = Database::builder(format!("db/kv/{namespace}"))
-            .open()
-            .unwrap();
-
+    pub fn new(namespace: &str, db: Database, policy: EvictionPolicy) -> Self {
         let kv_keyspace = format!("_coyote_kv_{namespace}");
-
-        let tables = {
-            let opts = KeyspaceCreateOptions::default();
-            db.keyspace(&kv_keyspace, || opts).unwrap()
-        };
-
-        Self {
-            db,
-            tables,
-            policy,
-            lru: LinkedHashMap::new(),
-        }
-    }
-
-    // FIXME(@svix-lucho): remove when we receive db from the caller
-    pub fn new_temporary(namespace: &str, policy: EvictionPolicy) -> Self {
-        let db = Database::builder(format!("db/kv/{namespace}"))
-            .temporary(true)
-            .open()
-            .unwrap();
-
-        let kv_keyspace = format!("_coyote_kv_temporary_{namespace}");
 
         let tables = {
             let opts = KeyspaceCreateOptions::default();
@@ -119,6 +86,7 @@ impl KvStore {
         self.fetch_non_expired(key)
     }
 
+    // FIXME(@svix-lucho): needs to be passed now() from the caller!
     fn fetch_non_expired(&mut self, key: &str) -> Result<Option<KvModel>> {
         let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? else {
             return Ok(None);
@@ -211,6 +179,7 @@ impl KvStore {
         KvPairRow::iter(&self.tables)
     }
 
+    // FIXME(@svix-lucho): needs to be passed now() from the caller!
     pub fn evict_lru(&mut self, count: usize) -> Result<()> {
         let mut evicted = 0;
 
@@ -288,10 +257,34 @@ mod tests {
     use super::*;
     use jiff::ToSpan;
 
+    struct SetupFixture {
+        _workdir: tempfile::TempDir,
+        store: KvStore,
+    }
+
+    impl SetupFixture {
+        fn new() -> Self {
+            Self::new_with_policy(EvictionPolicy::NoEviction)
+        }
+
+        fn new_with_policy(policy: EvictionPolicy) -> Self {
+            let workdir = tempfile::tempdir().unwrap();
+            let db = Database::builder(workdir.as_ref())
+                .temporary(true)
+                .open()
+                .unwrap();
+            let store = KvStore::new("test", db, policy);
+            Self {
+                _workdir: workdir,
+                store,
+            }
+        }
+    }
+
     #[test]
     fn test_insert_and_get() {
-        let mut store =
-            KvStore::new_temporary(".test_kv_insert_and_get", EvictionPolicy::NoEviction);
+        let setup = SetupFixture::new();
+        let mut store = setup.store;
 
         let key = "test:key1";
         let model = KvModel {
@@ -313,8 +306,8 @@ mod tests {
 
     #[test]
     fn test_insert_behaviors() {
-        let mut store =
-            KvStore::new_temporary(".test_kv_insert_behaviors", EvictionPolicy::NoEviction);
+        let setup = SetupFixture::new();
+        let mut store = setup.store;
 
         let res = store.set(
             "key1",
@@ -372,7 +365,8 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let mut store = KvStore::new_temporary(".test_kv_overwrite", EvictionPolicy::NoEviction);
+        let setup = SetupFixture::new();
+        let mut store = setup.store;
 
         let key = "overwrite:key";
         let model1 = KvModel {
@@ -394,8 +388,8 @@ mod tests {
 
     #[test]
     fn test_clear_expired_removes_expired_entries() {
-        let mut store =
-            KvStore::new_temporary(".test_kv_clear_expired", EvictionPolicy::NoEviction);
+        let setup = SetupFixture::new();
+        let mut store = setup.store;
 
         let expired_model = KvModel {
             expires_at: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),
@@ -490,7 +484,8 @@ mod tests {
 
     #[test]
     fn test_lru_eviction() {
-        let mut kv = KvStore::new_temporary("test_lru", EvictionPolicy::LeastRecentlyUsed);
+        let setup = SetupFixture::new_with_policy(EvictionPolicy::LeastRecentlyUsed);
+        let mut kv = setup.store;
 
         for i in 0..3 {
             insert_key(&mut kv, format!("k{i}").as_str(), None);
@@ -510,10 +505,8 @@ mod tests {
 
     #[test]
     fn test_lru_eviction_with_expiration() {
-        let mut kv = KvStore::new_temporary(
-            ".test_lru_with_expiration",
-            EvictionPolicy::LeastRecentlyUsed,
-        );
+        let setup = SetupFixture::new_with_policy(EvictionPolicy::LeastRecentlyUsed);
+        let mut kv = setup.store;
 
         insert_key(
             &mut kv,
@@ -554,10 +547,8 @@ mod tests {
 
     #[test]
     fn test_lru_eviction_already_expired() {
-        let mut kv = KvStore::new_temporary(
-            ".test_lru_already_expired",
-            EvictionPolicy::LeastRecentlyUsed,
-        );
+        let setup = SetupFixture::new_with_policy(EvictionPolicy::LeastRecentlyUsed);
+        let mut kv = setup.store;
 
         insert_key(
             &mut kv,
