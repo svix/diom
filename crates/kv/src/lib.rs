@@ -4,6 +4,7 @@ use diom_error::Result;
 use fjall::{Database, KeyspaceCreateOptions};
 
 use fjall_utils::{TableRow, WriteBatchExt};
+use hashlink::{LinkedHashMap, linked_hash_map::RawEntryMut};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,10 +26,19 @@ impl From<KvPairRow> for KvModel {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum EvictionPolicy {
+    #[default]
+    NoEviction,
+    LeastRecentlyUsed,
+}
+
 #[derive(Clone)]
 pub struct KvStore {
     db: fjall::Database,
     tables: fjall::Keyspace,
+    policy: EvictionPolicy,
+    lru: LinkedHashMap<String, Option<Timestamp>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -43,7 +53,7 @@ pub enum OperationBehavior {
 
 impl Default for KvStore {
     fn default() -> Self {
-        Self::new("default")
+        Self::new("default", EvictionPolicy::NoEviction)
     }
 }
 
@@ -51,7 +61,7 @@ const EXPIRATION_BATCH_SIZE: usize = 100; // FIXME(@svix-lucho): make this confi
 
 impl KvStore {
     // FIXME(@svix-lucho): receive the db from the caller
-    pub fn new(namespace: &str) -> Self {
+    pub fn new(namespace: &str, policy: EvictionPolicy) -> Self {
         let db = Database::builder(format!("db/kv/{namespace}"))
             .open()
             .unwrap();
@@ -63,10 +73,16 @@ impl KvStore {
             db.keyspace(&kv_keyspace, || opts).unwrap()
         };
 
-        Self { db, tables }
+        Self {
+            db,
+            tables,
+            policy,
+            lru: LinkedHashMap::new(),
+        }
     }
 
-    pub fn new_temporary(namespace: &str) -> Self {
+    // FIXME(@svix-lucho): remove when we receive db from the caller
+    pub fn new_temporary(namespace: &str, policy: EvictionPolicy) -> Self {
         let db = Database::builder(format!("db/kv/{namespace}"))
             .temporary(true)
             .open()
@@ -79,11 +95,31 @@ impl KvStore {
             db.keyspace(&kv_keyspace, || opts).unwrap()
         };
 
-        Self { db, tables }
+        Self {
+            db,
+            tables,
+            policy,
+            lru: LinkedHashMap::new(),
+        }
     }
 
-    // FIXME(@svix-lucho): needs to be passed now() from the caller?
-    pub fn get(&self, key: &str) -> Result<Option<KvModel>> {
+    fn update_lru(&mut self, key: &str, expires_at: Option<Timestamp>) {
+        match self.lru.raw_entry_mut().from_key(key) {
+            RawEntryMut::Occupied(mut occupied) => {
+                occupied.to_back();
+                *occupied.get_mut() = expires_at;
+            }
+            RawEntryMut::Vacant(vacant) => {
+                vacant.insert(key.to_string(), expires_at);
+            }
+        }
+    }
+
+    pub fn get(&mut self, key: &str) -> Result<Option<KvModel>> {
+        self.fetch_non_expired(key)
+    }
+
+    fn fetch_non_expired(&mut self, key: &str) -> Result<Option<KvModel>> {
         let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? else {
             return Ok(None);
         };
@@ -93,23 +129,12 @@ impl KvStore {
             return Ok(None);
         }
 
-        Ok(Some(data.into()))
-    }
-
-    fn fetch_non_expired(&self, key: &str) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? else {
-            return Ok(None);
-        };
-
-        if data.expires_at.is_some_and(|exp| exp < Timestamp::now()) {
-            let _ = self.delete(key);
-            return Ok(None);
-        }
+        self.update_lru(key, data.expires_at);
 
         Ok(Some(data.into()))
     }
 
-    fn insert_with_expiration(&self, key: &str, model: &KvModel) -> Result<()> {
+    fn insert_with_expiration(&mut self, key: &str, model: &KvModel) -> Result<()> {
         let mut batch = self.db.batch();
 
         let row = KvPairRow {
@@ -127,16 +152,19 @@ impl KvStore {
 
         batch.commit()?;
 
+        self.update_lru(key, model.expires_at);
+
         Ok(())
     }
 
-    pub fn set(&self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
+    pub fn set(&mut self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
         match behavior {
             OperationBehavior::Upsert => {
                 self.insert_with_expiration(key, model)?;
             }
             OperationBehavior::Insert => {
                 let exists = self.fetch_non_expired(key)?.is_some();
+
                 if !exists {
                     self.insert_with_expiration(key, model)?;
                 } else {
@@ -144,7 +172,7 @@ impl KvStore {
                 }
             }
             OperationBehavior::Update => {
-                let exists = self.get(key).is_ok_and(|e| e.is_some());
+                let exists = self.fetch_non_expired(key)?.is_some();
                 if exists {
                     self.insert_with_expiration(key, model)?;
                 } else {
@@ -156,7 +184,7 @@ impl KvStore {
         Ok(())
     }
 
-    pub fn delete(&self, key: &str) -> Result<()> {
+    pub fn delete(&mut self, key: &str) -> Result<()> {
         let mut batch = self.db.batch();
 
         if let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? {
@@ -170,6 +198,8 @@ impl KvStore {
 
         batch.commit()?;
 
+        self.lru.remove(key);
+
         Ok(())
     }
 
@@ -177,17 +207,22 @@ impl KvStore {
         self.tables.disk_space()
     }
 
-    pub fn clear_expired(&self, now: Timestamp) -> Result<()> {
-        let mut removed = 0;
-        let now_ms = now.as_millisecond();
+    pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
+        KvPairRow::iter(&self.tables)
+    }
 
-        for item in ExpirationRow::iter(&self.tables)? {
-            if item.expiration_time.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
-                // FIXME(@svix-lucho): we can batch removes here to make this more efficient
-                let _ = self.delete(&item.key);
-                removed += 1;
-            } else if item.expiration_time.as_millisecond() >= now_ms {
-                // expiration rows are ordered, so we can break early
+    pub fn evict_lru(&mut self, count: usize) -> Result<()> {
+        let mut evicted = 0;
+
+        while evicted < count {
+            if let Some((key, _)) = self.lru.pop_front() {
+                // Check if key is still present. It could have been expired or the LRU map could be out of sync.
+                if self.fetch_non_expired(&key)?.is_some() {
+                    // FIXME(@svix-lucho): does this have to go through consensus?
+                    let _ = self.delete(&key);
+                    evicted += 1;
+                }
+            } else {
                 break;
             }
         }
@@ -195,13 +230,35 @@ impl KvStore {
         Ok(())
     }
 
-    pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
-        KvPairRow::iter(&self.tables)
+    pub fn clear_expired(&mut self, now: Timestamp) -> Result<()> {
+        let mut removed = 0;
+        let now_ms = now.as_millisecond();
+        let mut expired_keys = Vec::new();
+
+        for item in ExpirationRow::iter(&self.tables)? {
+            if item.expiration_time.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
+                expired_keys.push(item.key);
+                removed += 1;
+            } else if item.expiration_time.as_millisecond() >= now_ms {
+                // expiration rows are ordered, so we can break early
+                break;
+            }
+        }
+
+        // FIXME(@svix-lucho): we can batch removes here to make this more efficient
+        for key in expired_keys {
+            let _ = self.delete(&key);
+        }
+
+        Ok(())
     }
 }
 
+const MAX_CAPACITY: u64 = 1024 * 8; // FIXME: make this configurable
+
 /// This is the worker function for this module, it does background cleanup and accounting.
-pub async fn worker<F>(stores: &[&KvStore], is_shutting_down: F)
+/// It deletes expired entries from the database and evicts entries if the KvStore is configured to do so.
+pub async fn worker<F>(stores: &mut [&mut KvStore], is_shutting_down: F)
 where
     F: Fn() -> bool,
 {
@@ -210,8 +267,17 @@ where
             break;
         }
         let now = Timestamp::now();
-        for store in stores {
+        for store in stores.iter_mut() {
+            // Expiration cleanup
             let _ = store.clear_expired(now);
+
+            // Eviction
+            if store.disk_space() > MAX_CAPACITY
+                && store.policy == EvictionPolicy::LeastRecentlyUsed
+            {
+                // FIXME(@svix-lucho): we can add smarter eviction instead of just doing one at a time
+                let _ = store.evict_lru(1);
+            }
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
@@ -224,7 +290,8 @@ mod tests {
 
     #[test]
     fn test_insert_and_get() {
-        let store = KvStore::new_temporary(".test_kv_insert_and_get");
+        let mut store =
+            KvStore::new_temporary(".test_kv_insert_and_get", EvictionPolicy::NoEviction);
 
         let key = "test:key1";
         let model = KvModel {
@@ -234,19 +301,20 @@ mod tests {
 
         store.set(key, &model, OperationBehavior::Upsert).unwrap();
 
+        assert!(key_exists(&mut store, "test:key1"));
         let retrieved = store.get("test:key1").unwrap();
         assert!(retrieved.is_some());
         let retrieved = retrieved.unwrap();
         assert_eq!(retrieved.value, b"hello world");
         assert_eq!(retrieved.expires_at, None);
 
-        let result = store.get("nonexistent:key").unwrap();
-        assert!(result.is_none());
+        assert!(!key_exists(&mut store, "nonexistent:key"));
     }
 
     #[test]
     fn test_insert_behaviors() {
-        let store = KvStore::new_temporary(".test_kv_insert_behaviors");
+        let mut store =
+            KvStore::new_temporary(".test_kv_insert_behaviors", EvictionPolicy::NoEviction);
 
         let res = store.set(
             "key1",
@@ -257,8 +325,7 @@ mod tests {
             OperationBehavior::Update,
         );
         assert!(res.is_ok());
-        let result = store.get("key1").unwrap();
-        assert!(result.is_none());
+        assert!(!key_exists(&mut store, "key1"));
 
         let res = store.set(
             "key1",
@@ -269,6 +336,7 @@ mod tests {
             OperationBehavior::Insert,
         );
         assert!(res.is_ok());
+        assert!(key_exists(&mut store, "key1"));
         let result = store.get("key1").unwrap();
         assert!(result.is_some());
 
@@ -281,6 +349,7 @@ mod tests {
             OperationBehavior::Insert,
         );
         assert!(res.is_ok());
+        assert!(key_exists(&mut store, "key1"));
         let result = store.get("key1").unwrap();
         assert!(result.is_some());
 
@@ -295,6 +364,7 @@ mod tests {
             OperationBehavior::Upsert,
         );
         assert!(res.is_ok());
+        assert!(key_exists(&mut store, "key1"));
         let result = store.get("key1").unwrap();
         assert!(result.is_some());
         assert_eq!(result.unwrap().value, b"key1 upserted");
@@ -302,7 +372,7 @@ mod tests {
 
     #[test]
     fn test_overwrite() {
-        let store = KvStore::new_temporary(".test_kv_overwrite");
+        let mut store = KvStore::new_temporary(".test_kv_overwrite", EvictionPolicy::NoEviction);
 
         let key = "overwrite:key";
         let model1 = KvModel {
@@ -317,13 +387,15 @@ mod tests {
         };
         store.set(key, &model2, OperationBehavior::Upsert).unwrap();
 
+        assert!(key_exists(&mut store, "overwrite:key"));
         let retrieved = store.get("overwrite:key").unwrap().unwrap();
         assert_eq!(retrieved.value, b"second value");
     }
 
     #[test]
     fn test_clear_expired_removes_expired_entries() {
-        let store = KvStore::new_temporary(".test_kv_clear_expired");
+        let mut store =
+            KvStore::new_temporary(".test_kv_clear_expired", EvictionPolicy::NoEviction);
 
         let expired_model = KvModel {
             expires_at: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),
@@ -386,15 +458,133 @@ mod tests {
         store.clear_expired(now).unwrap();
 
         for (key, _) in &expired_models {
-            assert!(store.get(key).unwrap().is_none());
+            assert!(!key_exists(&mut store, key));
         }
 
+        assert!(key_exists(&mut store, valid_key));
         let valid = store.get(valid_key).unwrap();
         assert!(valid.is_some());
         assert_eq!(valid.unwrap().value, b"valid data");
 
+        assert!(key_exists(&mut store, permanent_key));
         let permanent = store.get(permanent_key).unwrap();
         assert!(permanent.is_some());
         assert_eq!(permanent.unwrap().value, b"permanent data");
+    }
+
+    fn insert_key(kv: &mut KvStore, key: &str, expires_at: Option<Timestamp>) {
+        kv.set(
+            key,
+            &KvModel {
+                expires_at,
+                value: key.as_bytes().to_vec(),
+            },
+            OperationBehavior::Upsert,
+        )
+        .unwrap()
+    }
+
+    fn key_exists(cache: &mut KvStore, key: &str) -> bool {
+        cache.get(key).unwrap().is_some()
+    }
+
+    #[test]
+    fn test_lru_eviction() {
+        let mut kv = KvStore::new_temporary("test_lru", EvictionPolicy::LeastRecentlyUsed);
+
+        for i in 0..3 {
+            insert_key(&mut kv, format!("k{i}").as_str(), None);
+        }
+
+        kv.get("k2").unwrap();
+        kv.get("k2").unwrap();
+        kv.get("k1").unwrap();
+        kv.get("k1").unwrap();
+
+        kv.evict_lru(1).unwrap();
+
+        assert!(!key_exists(&mut kv, "k0"));
+        assert!(key_exists(&mut kv, "k1"));
+        assert!(key_exists(&mut kv, "k2"));
+    }
+
+    #[test]
+    fn test_lru_eviction_with_expiration() {
+        let mut kv = KvStore::new_temporary(
+            ".test_lru_with_expiration",
+            EvictionPolicy::LeastRecentlyUsed,
+        );
+
+        insert_key(
+            &mut kv,
+            "k0",
+            Some(Timestamp::now() + Duration::from_secs(1)),
+        );
+
+        for i in 1..5 {
+            insert_key(&mut kv, format!("k{i}").as_str(), None);
+        }
+
+        assert!(key_exists(&mut kv, "k0"));
+        assert!(key_exists(&mut kv, "k1"));
+        assert!(key_exists(&mut kv, "k2"));
+        assert!(key_exists(&mut kv, "k3"));
+        assert!(key_exists(&mut kv, "k4"));
+
+        for i in 2..5 {
+            kv.get(format!("k{i}").as_str()).unwrap();
+        }
+
+        let now = Timestamp::now();
+        kv.clear_expired(now + Duration::from_secs(5)).unwrap();
+        kv.evict_lru(1).unwrap();
+
+        assert!(!key_exists(&mut kv, "k0")); // expired
+        assert!(!key_exists(&mut kv, "k1")); // evicted
+
+        assert!(key_exists(&mut kv, "k2"));
+        assert!(key_exists(&mut kv, "k3"));
+        assert!(key_exists(&mut kv, "k4"));
+
+        // Evict all remaining keys
+        kv.evict_lru(10).unwrap();
+
+        assert!(kv.iter().unwrap().next().is_none());
+    }
+
+    #[test]
+    fn test_lru_eviction_already_expired() {
+        let mut kv = KvStore::new_temporary(
+            ".test_lru_already_expired",
+            EvictionPolicy::LeastRecentlyUsed,
+        );
+
+        insert_key(
+            &mut kv,
+            "k0",
+            Some(Timestamp::now() + Duration::from_secs(100)),
+        );
+
+        insert_key(
+            &mut kv,
+            "k1",
+            Some(Timestamp::now() + Duration::from_secs(5)),
+        );
+        insert_key(&mut kv, "k2", None);
+
+        assert!(key_exists(&mut kv, "k0"));
+        assert!(key_exists(&mut kv, "k1"));
+        assert!(key_exists(&mut kv, "k2"));
+
+        kv.get("k1").unwrap();
+        kv.get("k2").unwrap();
+
+        let now = Timestamp::now();
+        kv.evict_lru(1).unwrap();
+        kv.clear_expired(now + Duration::from_secs(10)).unwrap();
+
+        assert!(!key_exists(&mut kv, "k0")); // evicted
+        assert!(!key_exists(&mut kv, "k1")); // expired
+        assert!(key_exists(&mut kv, "k2"));
     }
 }
