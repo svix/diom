@@ -9,7 +9,7 @@ use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{ExpirationRow, KvPairRow};
+use crate::tables::{ExpirationRow, HashedKey, KvPairRow};
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct KvModel {
@@ -38,7 +38,7 @@ pub struct KvStore {
     db: fjall::Database,
     tables: fjall::Keyspace,
     policy: EvictionPolicy,
-    lru: LinkedHashMap<String, Option<Timestamp>>,
+    lru: LinkedHashMap<HashedKey, Option<Timestamp>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -103,14 +103,14 @@ impl KvStore {
         }
     }
 
-    fn update_lru(&mut self, key: &str, expires_at: Option<Timestamp>) {
+    fn update_lru(&mut self, key: &HashedKey, expires_at: Option<Timestamp>) {
         match self.lru.raw_entry_mut().from_key(key) {
             RawEntryMut::Occupied(mut occupied) => {
                 occupied.to_back();
                 *occupied.get_mut() = expires_at;
             }
             RawEntryMut::Vacant(vacant) => {
-                vacant.insert(key.to_string(), expires_at);
+                vacant.insert(key.clone(), expires_at);
             }
         }
     }
@@ -120,7 +120,8 @@ impl KvStore {
     }
 
     fn fetch_non_expired(&mut self, key: &str) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? else {
+        let hashed_key = HashedKey::from(key.to_string());
+        let Some(data) = KvPairRow::fetch(&self.tables, &hashed_key)? else {
             return Ok(None);
         };
 
@@ -129,7 +130,7 @@ impl KvStore {
             return Ok(None);
         }
 
-        self.update_lru(key, data.expires_at);
+        self.update_lru(&hashed_key, data.expires_at);
 
         Ok(Some(data.into()))
     }
@@ -137,11 +138,8 @@ impl KvStore {
     fn insert_with_expiration(&mut self, key: &str, model: &KvModel) -> Result<()> {
         let mut batch = self.db.batch();
 
-        let row = KvPairRow {
-            key: key.to_string(),
-            value: model.value.clone(),
-            expires_at: model.expires_at,
-        };
+        let hashed_key = HashedKey::from(key.to_string());
+        let row = KvPairRow::new(key.to_string(), model.value.clone(), model.expires_at);
 
         batch.insert_row(&self.tables, &row)?;
 
@@ -152,7 +150,7 @@ impl KvStore {
 
         batch.commit()?;
 
-        self.update_lru(key, model.expires_at);
+        self.update_lru(&hashed_key, model.expires_at);
 
         Ok(())
     }
@@ -186,17 +184,20 @@ impl KvStore {
 
     pub fn delete(&mut self, key: &str) -> Result<()> {
         let mut batch = self.db.batch();
+        self.delete_key(&mut batch, &HashedKey::from(key.to_string()))?;
+        batch.commit()?;
+        Ok(())
+    }
 
-        if let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? {
+    fn delete_key(&mut self, batch: &mut fjall::OwnedWriteBatch, key: &HashedKey) -> Result<()> {
+        if let Some(data) = KvPairRow::fetch(&self.tables, key)? {
             // Delete from the expiration keyspace
             if let Some(expires_at) = data.expires_at {
                 let r = ExpirationRow::new(expires_at, key.to_string());
                 batch.remove_row::<ExpirationRow>(&self.tables, r.get_key())?;
             }
-            batch.remove_row::<KvPairRow>(&self.tables, &key.to_string())?;
+            batch.remove_row::<KvPairRow>(&self.tables, key)?;
         }
-
-        batch.commit()?;
 
         self.lru.remove(key);
 
@@ -213,13 +214,14 @@ impl KvStore {
 
     pub fn evict_lru(&mut self, count: usize) -> Result<()> {
         let mut evicted = 0;
+        let mut batch = self.db.batch();
 
         while evicted < count {
             if let Some((key, _)) = self.lru.pop_front() {
                 // Check if key is still present. It could have been expired or the LRU map could be out of sync.
-                if self.fetch_non_expired(&key)?.is_some() {
+                if KvPairRow::fetch(&self.tables, &key)?.is_some() {
                     // FIXME(@svix-lucho): does this have to go through consensus?
-                    let _ = self.delete(&key);
+                    let _ = self.delete_key(&mut batch, &key);
                     evicted += 1;
                 }
             } else {
@@ -227,17 +229,19 @@ impl KvStore {
             }
         }
 
+        batch.commit()?;
+
         Ok(())
     }
 
     pub fn clear_expired(&mut self, now: Timestamp) -> Result<()> {
         let mut removed = 0;
         let now_ms = now.as_millisecond();
-        let mut expired_keys = Vec::new();
+        let mut expired_keys = Vec::<HashedKey>::new();
 
         for item in ExpirationRow::iter(&self.tables)? {
             if item.expiration_time.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
-                expired_keys.push(item.key);
+                expired_keys.push(HashedKey::from(item.key));
                 removed += 1;
             } else if item.expiration_time.as_millisecond() >= now_ms {
                 // expiration rows are ordered, so we can break early
@@ -245,10 +249,11 @@ impl KvStore {
             }
         }
 
-        // FIXME(@svix-lucho): we can batch removes here to make this more efficient
+        let mut batch = self.db.batch();
         for key in expired_keys {
-            let _ = self.delete(&key);
+            let _ = self.delete_key(&mut batch, &key);
         }
+        batch.commit()?;
 
         Ok(())
     }
