@@ -35,6 +35,8 @@ jobs:
           gs=$(git status -s)
           if [[ -n "$gs" ]]; then
             echo 'there are uncommitted changes!'
+            # `cargo codegen` is not meant to be executed here 😒
+            # shellcheck disable=SC2016
             echo 'please rerun `cargo codegen` and commit the result'
             git status
             exit 1
