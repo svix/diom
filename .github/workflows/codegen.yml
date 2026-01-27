@@ -1,5 +1,4 @@
 name: Codegen
-
 on:
   push:
     branches:
@@ -21,20 +20,16 @@ on:
       # code changes
       - 'crates'
       - 'src'
-
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   check-build:
     name: Check openapi.json and SDKs
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
-
       - name: Check for uncommitted changes
         run: |
           gs=$(git status -s)
