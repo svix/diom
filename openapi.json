@@ -1686,6 +1686,13 @@
           "in_flight"
         ]
       },
+      "RateLimitResult": {
+        "type": "string",
+        "enum": [
+          "OK",
+          "BLOCK"
+        ]
+      },
       "RateLimiterCheckIn": {
         "type": "object",
         "properties": {
@@ -1715,15 +1722,15 @@
       "RateLimiterCheckOut": {
         "type": "object",
         "properties": {
-          "allowed": {
-            "description": "Whether the request is allowed",
-            "type": "boolean"
-          },
           "remaining": {
             "description": "Number of tokens remaining",
             "type": "integer",
             "format": "uint64",
             "minimum": 0
+          },
+          "result": {
+            "description": "Whether the request is allowed",
+            "$ref": "#/components/schemas/RateLimitResult"
           },
           "retry_after": {
             "description": "Seconds until enough tokens are available (only present when allowed is false)",
@@ -1734,7 +1741,7 @@
           }
         },
         "required": [
-          "allowed",
+          "result",
           "remaining"
         ]
       },
