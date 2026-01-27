@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use fjall_utils::TableRow;
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 // IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
@@ -12,7 +12,7 @@ static_assertions::const_assert!(fjall_utils::are_all_unique(&[
 pub struct FixedWindowState {
     pub key: String,
     pub count: u64,
-    pub window_start: DateTime<Utc>,
+    pub window_start: Timestamp,
 }
 
 impl TableRow for FixedWindowState {
@@ -28,7 +28,7 @@ impl TableRow for FixedWindowState {
 pub struct TokenBucketState {
     pub key: String,
     pub tokens: u64,
-    pub last_refill: DateTime<Utc>,
+    pub last_refill: Timestamp,
 }
 
 impl TableRow for TokenBucketState {

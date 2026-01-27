@@ -858,7 +858,6 @@ dependencies = [
  "base64",
  "byteorder",
  "bytes",
- "chrono",
  "config",
  "coyote-derive",
  "coyote-error",
@@ -1013,7 +1012,6 @@ dependencies = [
 name = "coyote-rate-limiter"
 version = "1.76.1"
 dependencies = [
- "chrono",
  "coyote-error",
  "fjall",
  "fjall-utils",

@@ -6,7 +6,6 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-chrono = { workspace = true, features = ["serde"] }
 coyote-error.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
