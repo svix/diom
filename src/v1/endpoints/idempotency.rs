@@ -74,14 +74,12 @@ pub struct IdempotencyAbandonOut {}
 /// Start an idempotent request
 #[aide_annotate(op_id = "v1.idempotency.start")]
 async fn idempotency_start(
-    State(AppState {
-        mut idempotency_store,
-        ..
-    }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyStartIn>,
 ) -> Result<Json<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
 
+    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
     match idempotency_store.try_start(&key_str, data.ttl_seconds)? {
         None => Ok(Json(IdempotencyStartOut::Locked)),
         Some(response) => {
@@ -97,14 +95,12 @@ async fn idempotency_start(
 /// Complete an idempotent request with a response
 #[aide_annotate(op_id = "v1.idempotency.complete")]
 async fn idempotency_complete(
-    State(AppState {
-        mut idempotency_store,
-        ..
-    }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyCompleteIn>,
 ) -> Result<Json<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
 
+    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
     idempotency_store.complete(&key_str, data.response.into_bytes(), data.ttl_seconds)?;
 
     Ok(Json(IdempotencyCompleteOut {}))
@@ -113,14 +109,12 @@ async fn idempotency_complete(
 /// Abandon an idempotent request (remove lock without saving response)
 #[aide_annotate(op_id = "v1.idempotency.abandon")]
 async fn idempotency_abandon(
-    State(AppState {
-        mut idempotency_store,
-        ..
-    }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyAbandonIn>,
 ) -> Result<Json<IdempotencyAbandonOut>> {
     let key_str = data.key.to_string();
 
+    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
     idempotency_store.abandon(&key_str)?;
 
     Ok(Json(IdempotencyAbandonOut {}))
