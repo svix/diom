@@ -28,8 +28,6 @@ use validator::{Validate, ValidationError};
 
 use crate::error::{Error, HttpError, Result, ValidationErrorItem};
 
-pub mod proto;
-
 // Helper method to simplify the somewhat egregious API for creating a ValidationError
 pub fn validation_error(code: Option<&'static str>, msg: Option<&'static str>) -> ValidationError {
     ValidationError {

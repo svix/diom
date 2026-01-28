@@ -1,6 +1,7 @@
-use axum::extract::rejection::BytesRejection;
-use axum::extract::{FromRequest, OptionalFromRequest, Request};
-use axum::response::{IntoResponse, Response};
+use axum::{
+    extract::{FromRequest, OptionalFromRequest, Request, rejection::BytesRejection},
+    response::{IntoResponse, Response},
+};
 use bytes::{BufMut, Bytes, BytesMut};
 use http::{
     StatusCode,

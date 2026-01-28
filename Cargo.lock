@@ -874,6 +874,7 @@ dependencies = [
  "coyote-derive",
  "coyote-error",
  "coyote-kv",
+ "coyote-proto",
  "coyote-rate-limiter",
  "crossbeam",
  "crossbeam-skiplist",
@@ -1019,6 +1020,19 @@ dependencies = [
  "reqwest 0.13.1",
  "tokio",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "coyote-proto"
+version = "1.76.1"
+dependencies = [
+ "axum",
+ "bytes",
+ "http",
+ "mime",
+ "rmp-serde",
+ "serde",
+ "tracing",
 ]
 
 [[package]]
