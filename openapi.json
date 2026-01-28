@@ -1232,7 +1232,7 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "response": {
-            "description": "The response to cache",
+            "description": "The response to cache\nFIXME(@svix-lucho): change to Bytes",
             "type": "string"
           },
           "ttl_seconds": {
