@@ -1,11 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use axum::{
-    self, Json,
+    Json,
     extract::State,
     response::{IntoResponse, Response},
     routing::{get, post},
 };
+use coyote_proto::MsgPack;
 use http::{StatusCode, Uri};
 use openraft::raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest};
 use serde::{Deserialize, Serialize};
@@ -15,7 +16,7 @@ use super::Node;
 use super::NodeId;
 use super::network::detect_address;
 use super::raft::TypeConfig;
-use crate::{AppState, v1::utils::proto::MsgPack};
+use crate::AppState;
 
 pub fn router() -> axum::Router<AppState> {
     // TODO: implement snapshot methods
