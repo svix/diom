@@ -9,8 +9,8 @@ on:
       # schemars updates
       - 'Cargo.lock'
       # code changes
-      - 'crates'
-      - 'src'
+      - 'crates/**'
+      - 'src/**'
   pull_request:
     paths:
       - '.github/workflows/openapi.yml'
@@ -18,8 +18,8 @@ on:
       # schemars updates
       - 'Cargo.lock'
       # code changes
-      - 'crates'
-      - 'src'
+      - 'crates/**'
+      - 'src/**'
 env:
   CARGO_TERM_COLOR: always
 jobs:
