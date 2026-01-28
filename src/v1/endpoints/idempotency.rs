@@ -17,7 +17,6 @@ use crate::{
 
 // Re-export types that are used in AppState
 pub use crate::v1::modules::idempotency::IdempotencyStore;
-pub use crate::v1::modules::idempotency::worker;
 
 // ============================================================================
 // API Types
@@ -48,6 +47,7 @@ pub struct IdempotencyCompleteIn {
     pub key: EntityKey,
 
     /// The response to cache
+    /// FIXME(@svix-lucho): change to Bytes
     pub response: String,
 
     /// TTL in seconds for the cached response
@@ -75,7 +75,8 @@ pub struct IdempotencyAbandonOut {}
 #[aide_annotate(op_id = "v1.idempotency.start")]
 async fn idempotency_start(
     State(AppState {
-        idempotency_store, ..
+        mut idempotency_store,
+        ..
     }): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyStartIn>,
 ) -> Result<Json<IdempotencyStartOut>> {
@@ -83,7 +84,13 @@ async fn idempotency_start(
 
     match idempotency_store.try_start(&key_str, data.ttl_seconds)? {
         None => Ok(Json(IdempotencyStartOut::Locked)),
-        Some(response) => Ok(Json(IdempotencyStartOut::Completed { response })),
+        Some(response) => {
+            let response_str = String::from_utf8(response)
+                .map_err(|_| crate::error::HttpError::internal_server_error(None, None))?;
+            Ok(Json(IdempotencyStartOut::Completed {
+                response: response_str,
+            }))
+        }
     }
 }
 
@@ -91,13 +98,14 @@ async fn idempotency_start(
 #[aide_annotate(op_id = "v1.idempotency.complete")]
 async fn idempotency_complete(
     State(AppState {
-        idempotency_store, ..
+        mut idempotency_store,
+        ..
     }): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyCompleteIn>,
 ) -> Result<Json<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
 
-    idempotency_store.complete(&key_str, data.response, data.ttl_seconds)?;
+    idempotency_store.complete(&key_str, data.response.into_bytes(), data.ttl_seconds)?;
 
     Ok(Json(IdempotencyCompleteOut {}))
 }
@@ -106,7 +114,8 @@ async fn idempotency_complete(
 #[aide_annotate(op_id = "v1.idempotency.abandon")]
 async fn idempotency_abandon(
     State(AppState {
-        idempotency_store, ..
+        mut idempotency_store,
+        ..
     }): State<AppState>,
     ValidatedJson(data): ValidatedJson<IdempotencyAbandonIn>,
 ) -> Result<Json<IdempotencyAbandonOut>> {
