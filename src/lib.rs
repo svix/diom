@@ -145,7 +145,7 @@ pub async fn run_with_prefix(
     let mut openapi = openapi::initialize_openapi();
 
     let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
-    let _ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
+    let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
     let _management_db = DatabaseConfig::management(&cfg.management_db).expect("management db");
 
     let stream_state =
@@ -159,10 +159,18 @@ pub async fn run_with_prefix(
 
     let cache_kv_store = crate::v1::modules::kv::KvStore::new(
         "cache_store",
-        persistent_db.clone(),
+        ephemeral_db.clone(),
         EvictionPolicy::LeastRecentlyUsed,
     );
     let cache_store = crate::v1::modules::cache::CacheStore::new(cache_kv_store);
+
+    let idempotency_kv_store = crate::v1::modules::kv::KvStore::new(
+        "idempotency_store",
+        persistent_db.clone(),
+        EvictionPolicy::NoEviction,
+    );
+    let idempotency_store =
+        crate::v1::modules::idempotency::IdempotencyStore::new(idempotency_kv_store);
 
     let (raft, node_id) = core::cluster::initialize_raft(&cfg, persistent_db.clone())
         .await
@@ -177,7 +185,7 @@ pub async fn run_with_prefix(
             "rate_limiter_default",
             persistent_db.clone(),
         ),
-        idempotency_store: crate::v1::modules::idempotency::IdempotencyStore::new(),
+        idempotency_store,
         queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,
         raft,
@@ -223,7 +231,6 @@ pub async fn run_with_prefix(
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
-            tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
             tokio::spawn(v1::modules::queue::worker(app_state.clone())),
         );
