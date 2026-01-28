@@ -110,9 +110,11 @@ pub struct KvDeleteOut {
 /// KV Set
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
-    State(AppState { mut kv_store, .. }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvSetIn>,
 ) -> Result<Json<KvSetOut>> {
+    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+
     let key = data.key.clone();
     let behavior = data.behavior.clone();
     let model = data.into_model();
@@ -128,9 +130,11 @@ async fn kv_set(
 /// KV Get
 #[aide_annotate(op_id = "v1.kv.get")]
 async fn kv_get(
-    State(AppState { mut kv_store, .. }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvGetIn>,
 ) -> Result<Json<KvGetOut>> {
+    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+
     let model = kv_store
         .get(&data.key.0)
         .map_err(|e| crate::error::Error::generic(e))?;
@@ -148,9 +152,11 @@ async fn kv_get(
 /// KV Delete
 #[aide_annotate(op_id = "v1.kv.delete")]
 async fn kv_del(
-    State(AppState { mut kv_store, .. }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<KvDeleteIn>,
 ) -> Result<Json<KvDeleteOut>> {
+    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+
     let deleted = kv_store
         .delete(&data.key.0)
         .map_err(|e| crate::error::Error::generic(e))

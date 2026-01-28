@@ -27,6 +27,7 @@ axum-extra.workspace = true
 byteorder.workspace = true
 bytes.workspace = true
 config.workspace = true
+diom-configgroup.workspace = true
 diom-derive.workspace = true
 diom-error.workspace = true
 diom-kv.workspace = true
@@ -111,6 +112,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml"] }
 diom.path = "."
 diom-client.path = "clients/rust"
+diom-configgroup.path = "crates/diom-configgroup"
 diom-derive.path = "crates/diom-derive"
 diom-error.path = "crates/diom-error"
 diom-kv.path = "crates/kv"

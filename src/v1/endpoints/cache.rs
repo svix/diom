@@ -92,11 +92,10 @@ pub struct CacheDeleteOut {
 /// Cache Set
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
-    State(AppState {
-        mut cache_store, ..
-    }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<CacheSetIn>,
 ) -> Result<Json<CacheSetOut>> {
+    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     let key = data.key.clone();
     cache_store.set(key.as_str(), data.into_model())?;
     Ok(Json(CacheSetOut {}))
@@ -105,11 +104,10 @@ async fn cache_set(
 /// Cache Get
 #[aide_annotate(op_id = "v1.cache.get")]
 async fn cache_get(
-    State(AppState {
-        mut cache_store, ..
-    }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<CacheGetIn>,
 ) -> Result<Json<CacheGetOut>> {
+    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     let model = cache_store
         .get(&data.key)?
         .ok_or_else(|| crate::error::HttpError::not_found(None, None))?;
@@ -119,11 +117,10 @@ async fn cache_get(
 /// Cache Delete
 #[aide_annotate(op_id = "v1.cache.delete")]
 async fn cache_del(
-    State(AppState {
-        mut cache_store, ..
-    }): State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(data): ValidatedJson<CacheDeleteIn>,
 ) -> Result<Json<CacheDeleteOut>> {
+    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     cache_store.delete(&data.key)?;
     Ok(Json(CacheDeleteOut { deleted: true }))
 }

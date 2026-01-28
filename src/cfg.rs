@@ -48,13 +48,6 @@ impl DatabaseConfig {
             db_config.filename.as_deref().unwrap_or("fjall_ephemeral"),
         )
     }
-
-    pub fn management(db_config: &DatabaseConfig) -> Result<Database> {
-        Self::database(
-            &db_config.path,
-            db_config.filename.as_deref().unwrap_or("fjall_management"),
-        )
-    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -104,7 +97,6 @@ pub struct ConfigurationInner {
     /// The address to listen on
     pub listen_address: SocketAddr,
 
-    pub management_db: Arc<DatabaseConfig>,
     pub persistent_db: Arc<DatabaseConfig>,
     pub ephemeral_db: Arc<DatabaseConfig>,
 
@@ -222,7 +214,6 @@ mod tests {
 
     #[derive(Deserialize)]
     struct TestConfig {
-        pub management_db: Arc<DatabaseConfig>,
         pub persistent_db: Arc<DatabaseConfig>,
         pub ephemeral_db: Arc<DatabaseConfig>,
     }
@@ -232,7 +223,6 @@ mod tests {
         let raw_config = r#"
 ephemeral_db = { path = "/1", filename = "test1" }
 persistent_db.path = "/2"
-management_db.path = "/3"
 "#;
 
         let config = config::Config::builder()
@@ -247,8 +237,5 @@ management_db.path = "/3"
 
         assert_eq!(db_config.persistent_db.path, "/2".to_string());
         assert!(db_config.persistent_db.filename.is_none());
-
-        assert_eq!(db_config.management_db.path, "/3".to_string());
-        assert!(db_config.management_db.filename.is_none());
     }
 }

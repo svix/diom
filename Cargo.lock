@@ -869,6 +869,7 @@ dependencies = [
  "byteorder",
  "bytes",
  "config",
+ "diom-configgroup",
  "diom-derive",
  "diom-error",
  "diom-kv",
@@ -959,6 +960,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "diom-configgroup"
+version = "1.76.1"
+dependencies = [
+ "diom-error",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "schemars 1.2.0",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "diom-derive"
 version = "1.76.1"
 dependencies = [
@@ -986,6 +1000,7 @@ dependencies = [
 name = "diom-kv"
 version = "1.76.1"
 dependencies = [
+ "diom-configgroup",
  "diom-error",
  "fjall",
  "fjall-utils",
@@ -999,6 +1014,7 @@ dependencies = [
  "static_assertions",
  "tempfile",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

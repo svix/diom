@@ -37,9 +37,6 @@ persistent_db.path = "./db"
 # Directory where ephemeral database is stored.
 ephemeral_db.path = "./db"
 
-# Directory where management data is stored
-management_db.path = "./db"
-
 [cluster]
 # The address to listen on for replication traffic
 listen_address = "0.0.0.0:18050"

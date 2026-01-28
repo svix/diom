@@ -108,6 +108,7 @@ impl IdempotencyStore {
 
 #[cfg(test)]
 mod tests {
+    use diom_configgroup::entities::EvictionPolicy;
     use fjall::Database;
     use test_utils::TestResult;
 
@@ -121,7 +122,7 @@ mod tests {
         fn new() -> TestResult<Self> {
             let workdir = tempfile::tempdir()?;
             let db = Database::builder(workdir.as_ref()).temporary(true).open()?;
-            let kv = KvStore::new("test", db, diom_kv::EvictionPolicy::NoEviction);
+            let kv = KvStore::new("test", db, EvictionPolicy::NoEviction);
             let store = IdempotencyStore::new(kv);
             Ok(Self { store })
         }

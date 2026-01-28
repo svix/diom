@@ -28,7 +28,6 @@ impl CacheStore {
         self.kv.delete(key)
     }
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
     pub expires_at: Option<Timestamp>,

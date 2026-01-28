@@ -7,7 +7,13 @@ use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
-use diom_kv::EvictionPolicy;
+use diom_configgroup::{
+    BothDatabases,
+    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig},
+    group_name,
+};
+use diom_error::Result;
+use diom_kv::KvStore;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -27,7 +33,10 @@ use tower_http::{
 use tracing_subscriber::{Layer as _, layer::SubscriberExt as _};
 use uuid::Uuid;
 
-use crate::cfg::{Configuration, DatabaseConfig};
+use crate::{
+    cfg::{Configuration, DatabaseConfig},
+    v1::modules::{cache::CacheStore, idempotency::IdempotencyStore},
+};
 
 pub mod cfg;
 pub mod core;
@@ -91,17 +100,17 @@ pub async fn run(cfg: Configuration) {
 #[derive(Clone)]
 pub struct AppState {
     cfg: Configuration,
-    // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
-    kv_store: crate::v1::modules::kv::KvStore,
-    cache_store: crate::v1::modules::cache::CacheStore,
     rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
-    idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
     queue_store: crate::v1::modules::queue::QueueStore,
 
     raft: core::cluster::Raft,
     node_id: core::cluster::NodeId,
 
     stream_state: stream::State,
+    configgroup_state: diom_configgroup::State,
+
+    // TODO: Remove this once we have proper default config groups
+    persistent_db: fjall::Database,
 }
 
 async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<TcpListener>) {
@@ -132,6 +141,115 @@ async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<T
     state.raft.shutdown().await.unwrap();
 }
 
+impl AppState {
+    // FIXME: Blocking
+    pub fn kv_store_by_key(&self, key_name: &str) -> Result<KvStore> {
+        let Some(group_name_str) = group_name(key_name) else {
+            // FIXME: This should be a default ConfigGroup struct
+            return Ok(KvStore::new(
+                KeyValueConfig::NAMESPACE,
+                self.persistent_db.clone(),
+                EvictionPolicy::NoEviction,
+            ));
+        };
+
+        let Some(group) = self
+            .configgroup_state
+            .fetch_group::<KeyValueConfig>(group_name_str.to_string())?
+        else {
+            // FIXME: This should be a default ConfigGroup struct
+            return Ok(KvStore::new(
+                KeyValueConfig::NAMESPACE,
+                self.persistent_db.clone(),
+                EvictionPolicy::NoEviction,
+            ));
+        };
+
+        let policy = group.config.eviction_policy();
+        let kv_store = KvStore::new(
+            KeyValueConfig::NAMESPACE,
+            self.configgroup_state.give_me_the_right_db(&group),
+            policy,
+        );
+
+        Ok(kv_store)
+    }
+
+    // FIXME: Blocking
+    pub fn cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
+        let Some(group_name_str) = group_name(key_name) else {
+            // FIXME: This should be a default ConfigGroup struct
+            return Ok(CacheStore {
+                kv: KvStore::new(
+                    CacheConfig::NAMESPACE,
+                    self.persistent_db.clone(),
+                    EvictionPolicy::NoEviction,
+                ),
+            });
+        };
+
+        let Some(group) = self
+            .configgroup_state
+            .fetch_group::<CacheConfig>(group_name_str.to_string())?
+        else {
+            // FIXME: This should be a default ConfigGroup struct
+            return Ok(CacheStore {
+                kv: KvStore::new(
+                    CacheConfig::NAMESPACE,
+                    self.persistent_db.clone(),
+                    EvictionPolicy::NoEviction,
+                ),
+            });
+        };
+
+        let policy = group.config.eviction_policy();
+        let kv_store = KvStore::new(
+            CacheConfig::NAMESPACE,
+            self.configgroup_state.give_me_the_right_db(&group),
+            policy,
+        );
+
+        Ok(CacheStore { kv: kv_store })
+    }
+
+    // FIXME: Blocking
+    pub fn idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
+        let Some(group_name_str) = group_name(key_name) else {
+            // FIXME: This should be a default ConfigGroup struct
+            return Ok(IdempotencyStore {
+                kv: KvStore::new(
+                    IdempotencyConfig::NAMESPACE,
+                    self.persistent_db.clone(),
+                    EvictionPolicy::NoEviction,
+                ),
+            });
+        };
+
+        let Some(group) = self
+            .configgroup_state
+            .fetch_group::<IdempotencyConfig>(group_name_str.to_string())?
+        else {
+            // FIXME: This should be a default ConfigGroup struct
+            return Ok(IdempotencyStore {
+                kv: KvStore::new(
+                    IdempotencyConfig::NAMESPACE,
+                    self.persistent_db.clone(),
+                    EvictionPolicy::NoEviction,
+                ),
+            });
+        };
+
+        let policy = group.config.eviction_policy();
+        let kv_store = KvStore::new(
+            IdempotencyConfig::NAMESPACE,
+            self.configgroup_state.give_me_the_right_db(&group),
+            policy,
+        );
+
+        Ok(IdempotencyStore { kv: kv_store })
+    }
+}
+
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
 // consuming from each others' queues
 pub async fn run_with_prefix(
@@ -146,31 +264,15 @@ pub async fn run_with_prefix(
 
     let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
     let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
-    let _management_db = DatabaseConfig::management(&cfg.management_db).expect("management db");
+
+    let configgroup_state = diom_configgroup::State::init(BothDatabases {
+        persistent_db: persistent_db.clone(),
+        ephemeral_db: ephemeral_db.clone(),
+    })
+    .expect("initializing configgroup state");
 
     let stream_state =
         stream::State::init(persistent_db.clone()).expect("initializing stream state");
-
-    let kv_store = crate::v1::modules::kv::KvStore::new(
-        "kv_store",
-        persistent_db.clone(),
-        EvictionPolicy::NoEviction,
-    );
-
-    let cache_kv_store = crate::v1::modules::kv::KvStore::new(
-        "cache_store",
-        ephemeral_db.clone(),
-        EvictionPolicy::LeastRecentlyUsed,
-    );
-    let cache_store = crate::v1::modules::cache::CacheStore::new(cache_kv_store);
-
-    let idempotency_kv_store = crate::v1::modules::kv::KvStore::new(
-        "idempotency_store",
-        persistent_db.clone(),
-        EvictionPolicy::NoEviction,
-    );
-    let idempotency_store =
-        crate::v1::modules::idempotency::IdempotencyStore::new(idempotency_kv_store);
 
     let (raft, node_id) = core::cluster::initialize_raft(&cfg, persistent_db.clone())
         .await
@@ -179,17 +281,16 @@ pub async fn run_with_prefix(
     // build our application with a route
     let app_state = AppState {
         cfg: cfg.clone(),
-        kv_store,
-        cache_store,
         rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(
             "rate_limiter_default",
             persistent_db.clone(),
         ),
-        idempotency_store,
         queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,
         raft,
         node_id,
+        persistent_db,
+        configgroup_state,
     };
     let v1_router = v1::router().with_state::<()>(app_state.clone());
 
