@@ -33,16 +33,19 @@ pub fn router() -> ApiRouter<AppState> {
 mod development {
     use axum::{Json, Router, extract::FromRequestParts, routing::get};
     use http::request::Parts;
+    use serde::Serialize;
 
     use crate::{
         AppState,
         error::{Error, Result},
-        v1::utils::EmptyResponse,
     };
 
     struct EchoData {
         pub headers: String,
     }
+
+    #[derive(Serialize)]
+    struct EmptyResponse {}
 
     impl<S> FromRequestParts<S> for EchoData
     where

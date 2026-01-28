@@ -20,31 +20,24 @@ openapi = []
 
 [dependencies]
 aide.workspace = true
-anyerror.workspace = true
+anyerror.workspace = true # not a direct dependency, but we need to enable one of its features
 anyhow.workspace = true
 axum.workspace = true
 axum-extra.workspace = true
-base64.workspace = true
 byteorder.workspace = true
 bytes.workspace = true
-clap.workspace = true
 config.workspace = true
 diom-derive.workspace = true
 diom-error.workspace = true
 diom-kv.workspace = true
+diom-proto.workspace = true
 diom-rate-limiter.workspace = true
-crossbeam.workspace = true
-crossbeam-skiplist.workspace = true
 fjall.workspace = true
-hex.workspace = true
 http.workspace = true
-hyper.workspace = true
 idna_adapter.workspace = true
 indexmap.workspace = true
-itertools.workspace = true
 jiff.workspace = true
 jwt-simple.workspace = true
-mime.workspace = true
 openraft.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true
@@ -109,7 +102,6 @@ anyhow = "1.0.56"
 assert_matches = "1.5.0"
 axum = { version = "0.8.8", features = ["macros"] }
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
-base64 = "0.22"
 byteorder = "1.5.0"
 bytes = "1.1.0"
 clap = { version = "4.1.8", features = ["derive"] }
@@ -122,9 +114,8 @@ diom-client.path = "clients/rust"
 diom-derive.path = "crates/diom-derive"
 diom-error.path = "crates/diom-error"
 diom-kv.path = "crates/kv"
+diom-proto.path = "crates/diom-proto"
 diom-rate-limiter.path = "crates/rate-limiter"
-crossbeam = "0.8"
-crossbeam-skiplist = "0.1.3"
 ctor = "0.6.3"
 dirs = "6.0.0"
 dotenvy = "0.15.7"
