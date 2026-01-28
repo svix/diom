@@ -32,13 +32,13 @@ opentelemetry_service_name = "diom"
 environment = "dev"
 
 # Directory where persistent database is stored.
-persistent_db_path = "./db"
+persistent_db.path = "./db"
 
 # Directory where ephemeral database is stored.
-ephemeral_db_path = "./db"
+ephemeral_db.path = "./db"
 
 # Directory where management data is stored
-management_db_path = "./db"
+management_db.path = "./db"
 
 [cluster]
 # The address to listen on for replication traffic

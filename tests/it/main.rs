@@ -4,8 +4,8 @@ use std::{net::SocketAddr, sync::Arc, time::Duration};
 
 use diom::{
     cfg::{
-        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, Ephemeral,
-        InternalConfig, LogFormat, LogLevel, Management, Persistent,
+        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
+        LogFormat, LogLevel,
     },
     core::security::JwtSigningConfig,
     run_with_prefix,
@@ -46,15 +46,15 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
 
     let cfg = Arc::new(ConfigurationInner {
         listen_address: addr,
-        management_db_config: Arc::new(DatabaseConfig::<Management> {
+        management_db: Arc::new(DatabaseConfig {
             path: db_dir.clone(),
             ..Default::default()
         }),
-        ephemeral_db_config: Arc::new(DatabaseConfig::<Ephemeral> {
+        ephemeral_db: Arc::new(DatabaseConfig {
             path: db_dir.clone(),
             ..Default::default()
         }),
-        persistent_db_config: Arc::new(DatabaseConfig::<Persistent> {
+        persistent_db: Arc::new(DatabaseConfig {
             path: db_dir,
             ..Default::default()
         }),
