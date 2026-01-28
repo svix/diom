@@ -18,7 +18,6 @@ use crate::{
     v1::utils::{ValidatedJson, openapi_tag},
 };
 
-// Re-export types that are used in AppState
 use diom_rate_limiter::{RateLimitConfig, RateLimitResult, TokenBucket};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -90,7 +89,9 @@ pub struct RateLimiterGetRemainingOut {
 /// Rate Limiter Check and Consume
 #[aide_annotate(op_id = "v1.rate_limiter.limit")]
 async fn rate_limiter_limit(
-    State(AppState { rate_limiter, .. }): State<AppState>,
+    State(AppState {
+        mut rate_limiter, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
 ) -> Result<Json<RateLimiterCheckOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
@@ -112,11 +113,12 @@ async fn rate_limiter_limit(
     }))
 }
 
-// FIXME: should this essentially just be a "dry-run" option on limit?
 /// Rate Limiter Get Remaining
 #[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
 async fn rate_limiter_get_remaining(
-    State(AppState { rate_limiter, .. }): State<AppState>,
+    State(AppState {
+        mut rate_limiter, ..
+    }): State<AppState>,
     ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
 ) -> Result<Json<RateLimiterGetRemainingOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?

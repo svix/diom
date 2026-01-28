@@ -8,6 +8,7 @@ use std::{sync::LazyLock, time::Duration};
 use aide::axum::ApiRouter;
 use cfg::ConfigurationInner;
 use diom_kv::EvictionPolicy;
+use diom_rate_limiter::RateLimiter;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -94,7 +95,7 @@ pub struct AppState {
     // FIXME: is there a way to not have it here. Instead have it fully contained in each module?
     kv_store: crate::v1::modules::kv::KvStore,
     cache_store: crate::v1::modules::cache::CacheStore,
-    rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
+    rate_limiter: RateLimiter,
     idempotency_store: crate::v1::modules::idempotency::IdempotencyStore,
     queue_store: crate::v1::modules::queue::QueueStore,
 
@@ -172,6 +173,13 @@ pub async fn run_with_prefix(
     let idempotency_store =
         crate::v1::modules::idempotency::IdempotencyStore::new(idempotency_kv_store);
 
+    let rate_limiter_kv_store = crate::v1::modules::kv::KvStore::new(
+        "rate_limiter_store",
+        persistent_db.clone(),
+        EvictionPolicy::NoEviction,
+    );
+    let rate_limiter = diom_rate_limiter::RateLimiter::new(rate_limiter_kv_store);
+
     let (raft, node_id) = core::cluster::initialize_raft(&cfg, persistent_db.clone())
         .await
         .expect("failed to initialize cluster");
@@ -181,10 +189,7 @@ pub async fn run_with_prefix(
         cfg: cfg.clone(),
         kv_store,
         cache_store,
-        rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(
-            "rate_limiter_default",
-            persistent_db.clone(),
-        ),
+        rate_limiter,
         idempotency_store,
         queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,
@@ -231,7 +236,6 @@ pub async fn run_with_prefix(
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
-            tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
             tokio::spawn(v1::modules::queue::worker(app_state.clone())),
         );
     });

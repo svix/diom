@@ -1026,6 +1026,7 @@ name = "diom-rate-limiter"
 version = "1.76.1"
 dependencies = [
  "diom-error",
+ "diom-kv",
  "fjall",
  "fjall-utils",
  "jiff",
@@ -1034,6 +1035,7 @@ dependencies = [
  "serde",
  "static_assertions",
  "tempfile",
+ "test-utils",
  "tokio",
 ]
 

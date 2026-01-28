@@ -1,12 +1,10 @@
 pub mod algorithms;
 pub mod tables;
 
-use std::time::Duration;
+use std::{cmp::max, time::Duration};
 
 use diom_error::Result;
-use fjall::Database;
-use fjall::KeyspaceCreateOptions;
-use fjall_utils::TableRow;
+use diom_kv::{KvModel, KvStore, OperationBehavior};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,9 +14,7 @@ use crate::tables::{FixedWindowState, TokenBucketState};
 
 #[derive(Clone)]
 pub struct RateLimiter {
-    #[allow(dead_code)]
-    db: fjall::Database,
-    tables: fjall::Keyspace,
+    pub kv: KvStore,
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone, JsonSchema)]
@@ -28,49 +24,44 @@ pub enum RateLimitResult {
 }
 
 impl RateLimiter {
-    pub fn new(path: &str, db: Database) -> Self {
-        let rate_limiter_keyspace = format!("_diom_rate_limiter_{path}");
-
-        let tables = {
-            let opts = KeyspaceCreateOptions::default();
-            db.keyspace(&rate_limiter_keyspace, || opts).unwrap()
-        };
-
-        Self { db, tables }
+    pub fn new(kv: KvStore) -> Self {
+        Self { kv }
     }
 
     // Using the same identifier but changing the algorithm is considered a different resource.
     pub fn limit(
-        &self,
+        &mut self,
         now: Timestamp,
         identifier: &str,
         delta: u64,
         algorithm: RateLimitConfig,
     ) -> Result<(RateLimitResult, u64, Option<Duration>)> {
-        self.limit_inner(now, identifier, delta, algorithm, true)
+        self.limit_inner(now, identifier, delta, algorithm, false)
     }
 
     fn limit_inner(
-        &self,
+        &mut self,
         now: Timestamp,
         identifier: &str,
         delta: u64,
         algorithm: RateLimitConfig,
-        update: bool,
+        dry_run: bool,
     ) -> Result<(RateLimitResult, u64, Option<Duration>)> {
         match algorithm {
             RateLimitConfig::FixedWindow(fw_config) => {
                 let window_start = fw_config.get_window_start(now);
                 let max_tokens = fw_config.tokens;
 
-                let identifier_key = identifier.to_string();
-                let mut state = FixedWindowState::fetch(&self.tables, &identifier_key)?.unwrap_or(
-                    FixedWindowState {
+                let identifier_key = fw_config.get_key(identifier);
+                let mut state = self
+                    .kv
+                    .get(identifier_key.as_str())?
+                    .map(|m| m.value.into())
+                    .unwrap_or(FixedWindowState {
                         key: identifier_key.clone(),
                         count: 0,
                         window_start,
-                    },
-                );
+                    });
 
                 if state.window_start != window_start {
                     state.count = 0;
@@ -88,22 +79,32 @@ impl RateLimiter {
                     (max_tokens - state.count, RateLimitResult::OK, None)
                 };
 
-                if update {
-                    FixedWindowState::insert(&self.tables, &state)?;
+                if !dry_run {
+                    self.kv.set(
+                        identifier_key.as_str(),
+                        &KvModel {
+                            value: state.into(),
+                            expires_at: None, // FIXME(@svix-lucho): add expiration
+                        },
+                        OperationBehavior::Upsert,
+                    )?;
                 }
 
                 Ok((result, remaining, retry_after))
             }
 
             RateLimitConfig::TokenBucket(tb_config) => {
-                let identifier_key = identifier.to_string();
-                let mut bucket = TokenBucketState::fetch(&self.tables, &identifier_key)?.unwrap_or(
-                    TokenBucketState {
+                let identifier_key = tb_config.get_key(identifier);
+
+                let mut bucket = self
+                    .kv
+                    .get(identifier_key.as_str())?
+                    .map(|m| m.value.into())
+                    .unwrap_or(TokenBucketState {
                         key: identifier_key.clone(),
                         tokens: tb_config.bucket_size,
                         last_refill: now,
-                    },
-                );
+                    });
 
                 let capacity = tb_config.get_new_capacity(bucket.tokens, now, bucket.last_refill);
 
@@ -122,8 +123,15 @@ impl RateLimiter {
                 bucket.last_refill = now;
                 bucket.tokens = capacity - delta;
 
-                if update {
-                    TokenBucketState::insert(&self.tables, &bucket)?;
+                if !dry_run {
+                    self.kv.set(
+                        identifier_key.as_str(),
+                        &KvModel {
+                            value: bucket.clone().into(),
+                            expires_at: None, // FIXME(@svix-lucho): add expiration
+                        },
+                        OperationBehavior::Upsert,
+                    )?;
                 }
 
                 Ok((RateLimitResult::OK, bucket.tokens, None))
@@ -132,15 +140,15 @@ impl RateLimiter {
     }
 
     pub fn get_remaining(
-        &self,
+        &mut self,
         now: Timestamp,
         identifier: &str,
         algorithm: RateLimitConfig,
     ) -> Result<(u64, Option<Duration>)> {
         let (result, remaining, retry_after) =
-            self.limit_inner(now, identifier, 1, algorithm, false)?;
+            self.limit_inner(now, identifier, 1, algorithm, true)?;
 
-        // We 'simulated' consuming 1 token, so we add it back to get the actual remaining capacity
+        // We did a 'dry-run' consuming 1 token, so we add it back to get the actual remaining capacity
         let actual_remaining = if matches!(result, RateLimitResult::OK) {
             remaining + 1
         } else {
@@ -151,44 +159,35 @@ impl RateLimiter {
     }
 
     pub fn reset(&mut self, identifier: &str, algorithm: RateLimitConfig) -> Result<()> {
-        let identifier_key = identifier.to_string();
         match algorithm {
-            RateLimitConfig::FixedWindow(_) => {
-                FixedWindowState::remove(&self.tables, &identifier_key)?;
+            RateLimitConfig::FixedWindow(fw_config) => {
+                let key = fw_config.get_key(identifier);
+                self.kv.delete(key.as_str())?;
             }
-            RateLimitConfig::TokenBucket(_) => {
-                TokenBucketState::remove(&self.tables, &identifier_key)?;
+            RateLimitConfig::TokenBucket(tb_config) => {
+                let key = tb_config.get_key(identifier);
+                self.kv.delete(key.as_str())?;
             }
         }
         Ok(())
     }
 }
 
-/// This is the worker function for this module, it does background cleanup and accounting.
-pub async fn worker<F>(_stores: &[&RateLimiter], is_shutting_down: F)
-where
-    F: Fn() -> bool,
-{
-    loop {
-        if is_shutting_down() {
-            break;
-        }
-        // FIXME(@svix-lucho): add background cleanup task. Cleanup logic depends on the algorithm.
-        // Delete the expired/non-rate-limited entries first.
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
+    use diom_kv::EvictionPolicy;
+    use fjall::Database;
+    use test_utils::TestResult;
 
-    fn create_test_limiter() -> (RateLimiter, tempfile::TempDir) {
-        let dir = tempdir().unwrap();
-        let db = Database::builder(&dir).temporary(true).open().unwrap();
-        let limiter = RateLimiter::new("rate-limiter", db);
-        (limiter, dir)
+    fn create_test_limiter() -> RateLimiter {
+        let workdir = tempfile::tempdir().unwrap();
+        let db = Database::builder(workdir.as_ref())
+            .temporary(true)
+            .open()
+            .unwrap();
+        let kv = KvStore::new("rate-limiter", db, EvictionPolicy::NoEviction);
+        RateLimiter::new(kv)
     }
 
     mod fixed_window {
@@ -202,44 +201,46 @@ mod tests {
         }
 
         #[test]
-        fn rate_limiting() {
-            let (limiter, _dir) = create_test_limiter();
+        fn rate_limiting() -> TestResult {
+            let mut limiter = create_test_limiter();
             let id = "user1";
 
             let mut clock = Timestamp::UNIX_EPOCH;
-            let (result, remaining, retry_after) = limiter.limit(clock, id, 3, config()).unwrap();
+            let (result, remaining, retry_after) = limiter.limit(clock, id, 3, config())?;
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 2);
             assert_eq!(retry_after, None);
 
             clock += Duration::from_millis(500);
-            let (result, remaining, retry_after) = limiter.limit(clock, id, 2, config()).unwrap();
+            let (result, remaining, retry_after) = limiter.limit(clock, id, 2, config())?;
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 0);
             assert_eq!(retry_after, None);
 
             clock += Duration::from_millis(400);
-            let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config()).unwrap();
+            let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config())?;
             assert!(matches!(result, RateLimitResult::BLOCK));
             assert_eq!(remaining, 0);
             assert_eq!(retry_after, Some(Duration::from_millis(100)));
 
-            let (remaining_2, retry_after_2) = limiter.get_remaining(clock, id, config()).unwrap();
+            let (remaining_2, retry_after_2) = limiter.get_remaining(clock, id, config())?;
             assert_eq!(remaining_2, remaining);
             assert_eq!(retry_after_2, retry_after);
 
             // Resets at t=1000ms
             clock += Duration::from_millis(100);
-            let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config()).unwrap();
+            let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config())?;
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 4);
             assert_eq!(retry_after, None);
 
             // Doesn't accumulate
             clock += Duration::from_millis(100000);
-            let (remaining, retry_after) = limiter.get_remaining(clock, id, config()).unwrap();
+            let (remaining, retry_after) = limiter.get_remaining(clock, id, config())?;
             assert_eq!(remaining, 5);
             assert_eq!(retry_after, None);
+
+            Ok(())
         }
     }
 
@@ -263,56 +264,56 @@ mod tests {
         }
 
         #[test]
-        fn rate_limiting() {
-            let (limiter, _dir) = create_test_limiter();
+        fn rate_limiting() -> TestResult {
+            let mut limiter = create_test_limiter();
             let id = "user1";
 
             let clock = Timestamp::now();
-            let (result, remaining, retry_after) = limiter.limit(clock, id, 3, config()).unwrap();
+            let (result, remaining, retry_after) = limiter.limit(clock, id, 3, config())?;
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 2);
             assert_eq!(retry_after, None);
 
-            let (result, remaining, retry_after) = limiter.limit(clock, id, 2, config()).unwrap();
+            let (result, remaining, retry_after) = limiter.limit(clock, id, 2, config())?;
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 0);
             assert_eq!(retry_after, None);
 
-            let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config()).unwrap();
+            let (result, remaining, retry_after) = limiter.limit(clock, id, 1, config())?;
             assert!(matches!(result, RateLimitResult::BLOCK));
             assert_eq!(remaining, 0);
             assert_eq!(retry_after, Some(Duration::from_millis(100)));
+            Ok(())
         }
 
         #[test]
-        fn tokens_refill_over_time() {
-            let (limiter, _dir) = create_test_limiter();
+        fn tokens_refill_over_time() -> TestResult {
+            let mut limiter = create_test_limiter();
             let id = "user1";
 
             let mut clock = Timestamp::now();
             let (result, remaining, retry_after) =
-                limiter.limit(clock, id, 5, config_refill_2()).unwrap();
+                limiter.limit(clock, id, 5, config_refill_2())?;
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 0);
             assert_eq!(retry_after, None);
 
             clock += Duration::from_millis(100);
-            let (remaining, retry_after) =
-                limiter.get_remaining(clock, id, config_refill_2()).unwrap();
+            let (remaining, retry_after) = limiter.get_remaining(clock, id, config_refill_2())?;
             assert_eq!(remaining, 2);
             assert_eq!(retry_after, None);
 
             clock += Duration::from_millis(200);
-            let (remaining, retry_after) =
-                limiter.get_remaining(clock, id, config_refill_2()).unwrap();
+            let (remaining, retry_after) = limiter.get_remaining(clock, id, config_refill_2())?;
             assert_eq!(remaining, 5);
             assert_eq!(retry_after, None);
 
             let (result, remaining, retry_after) =
-                limiter.limit(clock, id, 2, config_refill_2()).unwrap();
+                limiter.limit(clock, id, 2, config_refill_2())?;
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 3);
             assert_eq!(retry_after, None);
+            Ok(())
         }
     }
 }

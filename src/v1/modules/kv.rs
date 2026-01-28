@@ -8,6 +8,7 @@ pub async fn worker(mut state: AppState) -> Result<()> {
         &mut state.kv_store,
         &mut state.cache_store.kv,
         &mut state.idempotency_store.kv,
+        &mut state.rate_limiter.kv,
     ];
     diom_kv::worker(&mut stores, crate::is_shutting_down).await;
     Ok(())

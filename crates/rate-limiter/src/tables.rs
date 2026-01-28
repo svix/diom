@@ -4,6 +4,8 @@ use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+use crate::algorithms::RateLimitKey;
+
 // IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
 static_assertions::const_assert!(fjall_utils::are_all_unique(&[
     FixedWindowState::TABLE_PREFIX,
@@ -12,7 +14,7 @@ static_assertions::const_assert!(fjall_utils::are_all_unique(&[
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct FixedWindowState {
-    pub key: String,
+    pub key: RateLimitKey,
     pub count: u64,
     pub window_start: Timestamp,
 }
@@ -22,13 +24,13 @@ impl TableRow for FixedWindowState {
     type Key = String;
 
     fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
+        Cow::Owned(self.key.as_str().to_string())
     }
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct TokenBucketState {
-    pub key: String,
+    pub key: RateLimitKey,
     pub tokens: u64,
     pub last_refill: Timestamp,
 }
@@ -38,6 +40,6 @@ impl TableRow for TokenBucketState {
     type Key = String;
 
     fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
+        Cow::Owned(self.key.as_str().to_string())
     }
 }

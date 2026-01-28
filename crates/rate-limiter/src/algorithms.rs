@@ -1,6 +1,18 @@
 use std::time::Duration;
 
 use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
+
+use crate::tables::{FixedWindowState, TokenBucketState};
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct RateLimitKey(String);
+
+impl RateLimitKey {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
 
 pub struct FixedWindow {
     /// Window size
@@ -15,6 +27,10 @@ impl FixedWindow {
         let now_ms = now.as_millisecond();
         let window_start_ms = now_ms - (now_ms % size_ms);
         Timestamp::from_millisecond(window_start_ms).unwrap()
+    }
+
+    pub(crate) fn get_key(&self, identifier: &str) -> RateLimitKey {
+        RateLimitKey(format!("rate_limiter:fixed_window:{}", identifier))
     }
 }
 
@@ -47,9 +63,37 @@ impl TokenBucket {
         }
         capacity.min(self.bucket_size)
     }
+
+    pub(crate) fn get_key(&self, identifier: &str) -> RateLimitKey {
+        RateLimitKey(format!("rate_limiter:token_bucket:{}", identifier))
+    }
 }
 
 pub enum RateLimitConfig {
     FixedWindow(FixedWindow),
     TokenBucket(TokenBucket),
+}
+
+impl From<Vec<u8>> for FixedWindowState {
+    fn from(value: Vec<u8>) -> Self {
+        rmp_serde::from_slice(&value).expect("Failed to deserialize FixedWindowState")
+    }
+}
+
+impl From<FixedWindowState> for Vec<u8> {
+    fn from(state: FixedWindowState) -> Self {
+        rmp_serde::to_vec(&state).expect("Failed to serialize FixedWindowState")
+    }
+}
+
+impl From<Vec<u8>> for TokenBucketState {
+    fn from(value: Vec<u8>) -> Self {
+        rmp_serde::from_slice(&value).expect("Failed to deserialize TokenBucketState")
+    }
+}
+
+impl From<TokenBucketState> for Vec<u8> {
+    fn from(state: TokenBucketState) -> Self {
+        rmp_serde::to_vec(&state).expect("Failed to serialize TokenBucketState")
+    }
 }

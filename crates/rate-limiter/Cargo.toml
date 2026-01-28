@@ -16,8 +16,11 @@ serde.workspace = true
 static_assertions.workspace = true
 tokio.workspace = true
 
+diom-kv.workspace = true
+
 [dev-dependencies]
 tempfile.workspace = true
+test-utils.workspace = true
 
 [lints]
 workspace = true
