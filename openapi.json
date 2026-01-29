@@ -670,6 +670,54 @@
         ]
       }
     },
+    "/api/v1/stream/fetch": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Fetch From Stream",
+        "description": "Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.\n\nUnlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading\nmessages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held\nuntil the visibility timeout expires, or the messages are acked.",
+        "operationId": "v1.stream.fetch",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchFromStreamIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchFromStreamOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/stream/fetch-locking": {
       "post": {
         "tags": [
