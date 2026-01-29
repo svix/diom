@@ -27,8 +27,7 @@ jobs:
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo fmt -- --check
-      # TODO: re-enable when stuff passes cargo-clippy
-      # - run: cargo clippy -- --workspace -all-features --all-targets
+      - run: cargo clippy --workspace --all-features --all-targets
       - run: cargo sort --check --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
   # TODO: re-enable cargo-machete when we're further along in dev
   # check-unused-deps:
