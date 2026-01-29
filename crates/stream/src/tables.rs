@@ -9,7 +9,7 @@ use crate::{
     entities::{ConsumerGroup, MsgHeaders, MsgId, StreamId},
 };
 
-use coyote_error::{Error, Result};
+use coyote_error::{Error, HttpError, Result};
 use fjall::OwnedWriteBatch;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
@@ -22,9 +22,11 @@ static_assertions::const_assert!(fjall_utils::are_all_unique(&[
     LeaseRow::TABLE_PREFIX,
 ]));
 
+use crate::entities::StreamName;
+
 #[derive(Serialize, Deserialize)]
 pub(crate) struct NameToStreamRow {
-    pub name: String,
+    pub name: StreamName,
     pub id: StreamId,
 }
 
@@ -37,10 +39,25 @@ impl TableRow for NameToStreamRow {
     }
 }
 
+impl NameToStreamRow {
+    /// Looks up the `StreamId` for a given stream name.
+    pub(crate) fn get_stream_id(state: &State, name: &str) -> Result<StreamId> {
+        Self::fetch(&state.metadata_tables, &name.to_owned())?
+            .map(|row| row.id)
+            .ok_or_else(|| {
+                HttpError::not_found(
+                    Some("stream_not_found".to_owned()),
+                    Some(format!("Stream with name '{name}' not found")),
+                )
+                .into()
+            })
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub(crate) struct StreamRow {
     pub id: StreamId,
-    pub name: String,
+    pub name: StreamName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub retention_period_seconds: Option<NonZeroU64>,
     #[serde(skip_serializing_if = "Option::is_none")]
