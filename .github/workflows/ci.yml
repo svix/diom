@@ -22,6 +22,10 @@ jobs:
           components: rustfmt, clippy
       - uses: taiki-e/install-action@cargo-sort
       - uses: Swatinem/rust-cache@v2
+        with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo fmt -- --check
       # TODO: re-enable when stuff passes cargo-clippy
       # - run: cargo clippy -- --workspace -all-features --all-targets
@@ -59,6 +63,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
+        with:
+          # only save the cache on the main branch
+          # cf https://github.com/Swatinem/rust-cache/issues/95
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
       - name: Check for uncommitted changes
