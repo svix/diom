@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::num::NonZeroU64;
+use std::{
+    num::{NonZeroU16, NonZeroU64},
+    time::Duration,
+};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
@@ -11,8 +14,8 @@ use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use stream::{
-    entities::{MsgId, StreamId},
-    operations::{CreateStreamOutput, MsgIn},
+    entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamId},
+    operations::CreateStreamOutput,
 };
 use validator::Validate;
 
@@ -131,6 +134,105 @@ async fn append_to_stream(
     }))
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchFromStreamIn {
+    stream_id: StreamId,
+    consumer_group: ConsumerGroup,
+
+    /// How many messages to read from the stream.
+    batch_size: NonZeroU16,
+
+    /// How long messages are locked by the consumer.
+    visibility_timeout_seconds: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchFromStreamOut {
+    msgs: Vec<MsgOut>,
+}
+
+/// Fetches messages from the stream, locking over the consumer group.
+///
+/// This call prevents other consumers within the same consumer group from reading from the stream
+/// until either the visibility timeout expires, or the last message in the batch is acknowledged.
+#[aide_annotate(op_id = "v1.stream.fetch-locking")]
+async fn locking_fetch_from_stream(
+    State(AppState { stream_state, .. }): State<AppState>,
+    ValidatedJson(data): ValidatedJson<FetchFromStreamIn>,
+) -> Result<Json<FetchFromStreamOut>> {
+    /*
+    FIXME(@svix-gabriel)
+
+    This is missing a few important things
+        1. We haven't setup thread-per-core, so this could go to any thread.
+        2. We haven't setup quorum/raft stuff yet, so there's no consensus..
+
+    I didn't want to let either of these things block developing stream,
+    so in practice the structure of this handler will look different once those two pieces are in place.
+    */
+
+    let out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::FetchLocking::new(
+            &stream_state,
+            data.stream_id,
+            data.consumer_group,
+            data.batch_size,
+            Duration::from_secs(data.visibility_timeout_seconds),
+        )?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(Json(FetchFromStreamOut { msgs: out.msgs }))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AckIn {
+    stream_id: StreamId,
+    consumer_group: ConsumerGroup,
+    min_msg_id: Option<MsgId>,
+    max_msg_id: MsgId,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AckOut {}
+
+/// Acks the messages for the consumer group, allowing more messages to be consumed.
+#[aide_annotate(op_id = "v1.stream.ack")]
+async fn ack(
+    State(AppState { stream_state, .. }): State<AppState>,
+    ValidatedJson(data): ValidatedJson<AckIn>,
+) -> Result<Json<AckOut>> {
+    /*
+    FIXME(@svix-gabriel)
+
+    This is missing a few important things
+        1. We haven't setup thread-per-core, so this could go to any thread.
+        2. We haven't setup quorum/raft stuff yet, so there's no consensus..
+
+    I didn't want to let either of these things block developing stream,
+    so in practice the structure of this handler will look different once those two pieces are in place.
+    */
+
+    let _out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Ack::new(
+            &stream_state,
+            data.stream_id,
+            data.consumer_group,
+            data.min_msg_id.unwrap_or(MsgId::MIN),
+            data.max_msg_id,
+        )?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(Json(AckOut {}))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Stream");
 
@@ -145,4 +247,13 @@ pub fn router() -> ApiRouter<AppState> {
             post_with(append_to_stream, append_to_stream_operation),
             &tag,
         )
+        .api_route_with(
+            "/stream/fetch-locking",
+            post_with(
+                locking_fetch_from_stream,
+                locking_fetch_from_stream_operation,
+            ),
+            &tag,
+        )
+        .api_route_with("/stream/ack", post_with(ack, ack_operation), &tag)
 }

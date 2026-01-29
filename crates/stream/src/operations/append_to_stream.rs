@@ -1,20 +1,10 @@
 use crate::{
     State,
-    entities::{MsgId, StreamId},
+    entities::{MsgId, MsgIn, StreamId},
     tables::{MsgRow, msg_row_key},
 };
 use diom_error::Result;
 use jiff::Timestamp;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use validator::Validate;
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct MsgIn {
-    pub payload: Vec<u8>,
-    pub headers: HashMap<String, String>,
-}
 
 pub struct AppendToStream {
     stream_id: StreamId,
