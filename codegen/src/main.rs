@@ -4,32 +4,33 @@ use anyhow::Context as _;
 use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
-const OUTPUTS: &[(&str, &str)] = &[
+/// Map of output directory => list of templates that should write there.
+///
+/// Note: These directories are emptied before new files are generated.
+/// Do not place non-generated code there.
+const OUTPUTS: &[(&str, &[&str])] = &[
     // Rust SDK
     (
-        "codegen/templates/rust/api_summary.rs.jinja",
         "clients/rust/src/api",
+        &[
+            "codegen/templates/rust/api_summary.rs.jinja",
+            "codegen/templates/rust/api_resource.rs.jinja",
+        ],
     ),
     (
-        "codegen/templates/rust/api_resource.rs.jinja",
-        "clients/rust/src/api",
-    ),
-    (
-        "codegen/templates/rust/component_type_summary.rs.jinja",
         "clients/rust/src/models",
-    ),
-    (
-        "codegen/templates/rust/component_type.rs.jinja",
-        "clients/rust/src/models",
+        &[
+            "codegen/templates/rust/component_type_summary.rs.jinja",
+            "codegen/templates/rust/component_type.rs.jinja",
+        ],
     ),
     // CLI
     (
-        "codegen/templates/cli/api_summary.rs.jinja",
         "clients/cli/src/cmds/api",
-    ),
-    (
-        "codegen/templates/cli/api_resource.rs.jinja",
-        "clients/cli/src/cmds/api",
+        &[
+            "codegen/templates/cli/api_summary.rs.jinja",
+            "codegen/templates/cli/api_resource.rs.jinja",
+        ],
     ),
 ];
 
@@ -85,8 +86,11 @@ fn main() -> anyhow::Result<()> {
         &BTreeSet::new(),
     )?;
 
-    for &(template, output_dir) in OUTPUTS {
-        openapi_codegen::generate(&api, template.to_owned(), output_dir.into(), true)?;
+    for &(output_dir, templates) in OUTPUTS {
+        fs::remove_dir_all(output_dir)?;
+        for &template in templates {
+            openapi_codegen::generate(&api, template.to_owned(), output_dir.into(), true)?;
+        }
     }
 
     std::process::Command::new("cargo")
