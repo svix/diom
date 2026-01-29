@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
       - name: Check for uncommitted changes
