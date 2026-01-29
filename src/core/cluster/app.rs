@@ -3,7 +3,7 @@
 use std::collections::BTreeMap;
 
 use axum::{
-    Json,
+    Extension, Json,
     extract::State,
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -17,7 +17,7 @@ use openraft::{
 use serde::Serialize;
 use tap::{Pipe, TapFallible};
 
-use super::{Node, NodeId, network::detect_address, proto::*, raft::TypeConfig};
+use super::{Node, NodeId, handle::RaftState, network::detect_address, proto::*, raft::TypeConfig};
 use crate::AppState;
 
 pub fn router() -> axum::Router<AppState> {
@@ -70,7 +70,7 @@ where
 
 #[tracing::instrument(skip_all)]
 async fn append_entries(
-    State(state): State<AppState>,
+    Extension(state): Extension<RaftState>,
     MsgPack(body): MsgPack<AppendEntriesRequest<TypeConfig>>,
 ) -> impl IntoResponse {
     tracing::debug!(
@@ -82,7 +82,7 @@ async fn append_entries(
 
 #[tracing::instrument(skip_all)]
 async fn vote(
-    State(state): State<AppState>,
+    Extension(state): Extension<RaftState>,
     MsgPack(body): MsgPack<VoteRequest<NodeId>>,
 ) -> impl IntoResponse {
     tracing::debug!(
@@ -94,7 +94,7 @@ async fn vote(
 
 #[tracing::instrument(skip_all)]
 async fn stream_snapshot(
-    State(state): State<AppState>,
+    Extension(state): Extension<RaftState>,
     MsgPack(req): MsgPack<InstallSnapshotRequest<TypeConfig>>,
 ) -> impl IntoResponse {
     let _num_bytes = req.data.len();
@@ -109,9 +109,12 @@ async fn stream_snapshot(
 
 // Administrative functions
 
-async fn discover(State(app_state): State<AppState>) -> Json<DiscoverResponse> {
+async fn discover(
+    State(app_state): State<AppState>,
+    Extension(raft_state): Extension<RaftState>,
+) -> Json<DiscoverResponse> {
     let cluster_name = app_state.cfg.cluster.name.clone();
-    let cluster = app_state
+    let cluster = raft_state
         .raft
         .with_raft_state(move |state| DiscoverClusterResponse {
             last_committed_log_id: state.committed,
@@ -128,20 +131,20 @@ async fn discover(State(app_state): State<AppState>) -> Json<DiscoverResponse> {
         .tap_err(|err| tracing::warn!(?err, "failed to find local cluster state"))
         .ok();
     let response = DiscoverResponse {
-        node_id: app_state.node_id,
+        node_id: raft_state.node_id,
         cluster,
     };
     Json(response)
 }
 
-async fn metrics(State(state): State<AppState>) -> impl IntoResponse {
+async fn metrics(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     let metrics = state.raft.metrics().borrow().clone();
 
     Json(metrics)
 }
 
 async fn add_learner(
-    State(state): State<AppState>,
+    Extension(state): Extension<RaftState>,
     Json(request): Json<AddLearnerRequest>,
 ) -> impl IntoResponse {
     let url = format!("http://{}/repl/raft/vote", request.address);
@@ -153,15 +156,15 @@ async fn add_learner(
 }
 
 async fn upgrade_learner(
-    State(state): State<AppState>,
+    Extension(raft_state): Extension<RaftState>,
     Json(request): Json<UpgradeLearnerRequest>,
 ) -> impl IntoResponse {
     let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
-    admin_response(state.raft.change_membership(request, true).await)
+    admin_response(raft_state.raft.change_membership(request, true).await)
 }
 
 async fn change_membership(
-    State(state): State<AppState>,
+    Extension(state): Extension<RaftState>,
     Json(request): Json<ChangeMembershipRequest>,
 ) -> impl IntoResponse {
     state
@@ -171,8 +174,11 @@ async fn change_membership(
         .pipe(admin_response)
 }
 
-async fn initialize(State(state): State<AppState>) -> impl IntoResponse {
-    let addr = match detect_address(&state.cfg) {
+async fn initialize(
+    State(app_state): State<AppState>,
+    Extension(state): Extension<RaftState>,
+) -> impl IntoResponse {
+    let addr = match detect_address(&app_state.cfg) {
         Ok(a) => a,
         Err(_e) => return internal_error("could not find any valid addresses"),
     }
@@ -184,7 +190,7 @@ async fn initialize(State(state): State<AppState>) -> impl IntoResponse {
     state.raft.initialize(nodes).await.pipe(admin_response)
 }
 
-async fn health(State(state): State<AppState>) -> impl IntoResponse {
+async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     let leader = state.raft.current_leader().await;
     let me = state.node_id;
     state

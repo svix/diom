@@ -1,0 +1,19 @@
+[package]
+name = "coyote-operations"
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+axum.workspace = true
+bytes.workspace = true
+coyote-error.workspace = true
+http.workspace = true
+http-serde.workspace = true
+rmp-serde.workspace = true
+serde.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

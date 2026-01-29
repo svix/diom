@@ -14,9 +14,14 @@ use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{ExpirationRow, KvPairRow};
+pub mod operations;
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+use crate::{
+    operations::SetOperation,
+    tables::{ExpirationRow, KvPairRow},
+};
+
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct KvModel {
     pub expires_at: Option<Timestamp>,
     pub value: Vec<u8>,
@@ -129,7 +134,22 @@ impl KvStore {
         Ok(())
     }
 
+    pub fn set_operation(
+        &self,
+        key: String,
+        model: KvModel,
+        behavior: OperationBehavior,
+    ) -> SetOperation {
+        SetOperation::new(key, model, behavior)
+    }
+
     pub fn set(&mut self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
+        // TODO: remove this method
+        tracing::error!("unsafe method KvStore::set called!");
+        self.set_(key, model, behavior)
+    }
+
+    fn set_(&mut self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
         match behavior {
             OperationBehavior::Upsert => {
                 self.insert_with_expiration(key, model)?;
