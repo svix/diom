@@ -19,12 +19,10 @@ async fn create_stream_upserts() -> TestResult {
         .json();
 
     let ts = &response["createdAt"];
-    let id = &response["id"];
 
     assert_eq!(
         response,
         json!({
-            "id": id,
             "name": "test-stream",
             "maxByteSize": 1024,
             "retentionPeriodSeconds": 9999,
@@ -47,7 +45,6 @@ async fn create_stream_upserts() -> TestResult {
     assert_eq!(
         update,
         json!({
-            "id": id,
             "name": "test-stream",
             "maxByteSize": null,
             "retentionPeriodSeconds": null,
@@ -63,7 +60,7 @@ async fn create_stream_upserts() -> TestResult {
 async fn stream_append_and_locking_consumption() -> TestResult {
     let (client, _server_handle) = super::start_server().await;
 
-    let stream = client
+    let _stream = client
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
@@ -73,12 +70,10 @@ async fn stream_append_and_locking_consumption() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    let id = &stream["id"];
-
     client
         .post("stream/append")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "msgs": [
                 {"payload": [1, 2], "headers": {"msg": "1"}},
                 {"payload": [3, 4], "headers": {"msg": "2"}},
@@ -91,7 +86,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     client
         .post("stream/append")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "msgs": [
                 {"payload": [7, 8], "headers": {"msg": "4"}},
                 {"payload": [9, 10], "headers": {"msg": "5"}},
@@ -104,7 +99,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     let fetch1 = client
         .post("stream/fetch-locking")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "consumerGroup": "test-group",
             "batchSize": 3,
             "visibilityTimeoutSeconds": 3600
@@ -133,7 +128,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     client
         .post("stream/ack")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "consumerGroup": "test-group",
             "maxMsgId": max_msg_id
         }))
@@ -144,7 +139,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     let fetch2 = client
         .post("stream/fetch-locking")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "consumerGroup": "test-group",
             "batchSize": 3,
             "visibilityTimeoutSeconds": 3600
@@ -171,7 +166,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
 async fn stream_visibility_timeout() -> TestResult {
     let (client, _server_handle) = super::start_server().await;
 
-    let stream = client
+    let _stream = client
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
@@ -181,12 +176,11 @@ async fn stream_visibility_timeout() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    let id = &stream["id"];
 
     client
         .post("stream/append")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "msgs": [
                 {"payload": [1, 2], "headers": {"msg": "1"}},
                 {"payload": [3, 4], "headers": {"msg": "2"}},
@@ -199,7 +193,7 @@ async fn stream_visibility_timeout() -> TestResult {
     let fetch1 = client
         .post("stream/fetch-locking")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "consumerGroup": "test-group",
             "batchSize": 3,
             "visibilityTimeoutSeconds": 1
@@ -226,7 +220,7 @@ async fn stream_visibility_timeout() -> TestResult {
     let fetch2 = client
         .post("stream/fetch-locking")
         .json(json!({
-            "streamId": id,
+            "name": "test-stream",
             "consumerGroup": "test-group",
             "batchSize": 3,
             "visibilityTimeoutSeconds": 1
