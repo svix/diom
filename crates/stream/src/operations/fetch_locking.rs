@@ -2,8 +2,8 @@ use std::num::NonZeroU16;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, MsgOut, StreamId},
-    tables::{LeaseDiff, LeaseRow, MsgRow},
+    entities::{ConsumerGroup, MsgId, MsgOut, StreamName},
+    tables::{LeaseDiff, LeaseRow, MsgRow, NameToStreamRow},
 };
 use diom_error::{HttpError, Result};
 use jiff::Timestamp;
@@ -20,11 +20,12 @@ pub struct FetchLockingOutput {
 impl FetchLocking {
     pub fn new(
         state: &State,
-        stream_id: StreamId,
+        name: StreamName,
         cg: ConsumerGroup,
         batch_size: NonZeroU16,
         visibility_timeout: std::time::Duration,
     ) -> Result<Self> {
+        let stream_id = NameToStreamRow::get_stream_id(state, &name)?;
         let now = Timestamp::now();
         let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
 

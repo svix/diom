@@ -1,7 +1,7 @@
 use crate::{
     State,
-    entities::{MsgId, MsgIn, StreamId},
-    tables::{MsgRow, msg_row_key},
+    entities::{MsgId, MsgIn, StreamId, StreamName},
+    tables::{MsgRow, NameToStreamRow, msg_row_key},
 };
 use diom_error::Result;
 use jiff::Timestamp;
@@ -16,7 +16,8 @@ pub struct AppendToStreamOutput {
 }
 
 impl AppendToStream {
-    pub fn new(state: &State, stream_id: StreamId, msgs: Vec<MsgIn>) -> Result<Self> {
+    pub fn new(state: &State, name: StreamName, msgs: Vec<MsgIn>) -> Result<Self> {
+        let stream_id = NameToStreamRow::get_stream_id(state, &name)?;
         let offset = MsgRow::get_next_msg_id_in_stream(state, stream_id)?;
         let created_at = Timestamp::now();
 

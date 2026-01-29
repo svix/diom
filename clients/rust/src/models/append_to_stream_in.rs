@@ -8,12 +8,11 @@ use super::msg_in::MsgIn;
 pub struct AppendToStreamIn {
     pub msgs: Vec<MsgIn>,
 
-    #[serde(rename = "streamId")]
-    pub stream_id: String,
+    pub name: String,
 }
 
 impl AppendToStreamIn {
-    pub fn new(msgs: Vec<MsgIn>, stream_id: String) -> Self {
-        Self { msgs, stream_id }
+    pub fn new(msgs: Vec<MsgIn>, name: String) -> Self {
+        Self { msgs, name }
     }
 }

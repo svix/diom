@@ -793,13 +793,12 @@
             "minimum": 0,
             "nullable": true
           },
-          "streamId": {
-            "type": "string",
-            "format": "uuid"
+          "name": {
+            "type": "string"
           }
         },
         "required": [
-          "streamId",
+          "name",
           "consumerGroup",
           "maxMsgId"
         ]
@@ -816,13 +815,12 @@
               "$ref": "#/components/schemas/MsgIn"
             }
           },
-          "streamId": {
-            "type": "string",
-            "format": "uuid"
+          "name": {
+            "type": "string"
           }
         },
         "required": [
-          "streamId",
+          "name",
           "msgs"
         ]
       },
@@ -965,10 +963,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
           "maxByteSize": {
             "type": "integer",
             "format": "uint64",
@@ -990,7 +984,6 @@
           }
         },
         "required": [
-          "id",
           "name",
           "createdAt",
           "updatedAt"
@@ -1009,9 +1002,8 @@
           "consumerGroup": {
             "type": "string"
           },
-          "streamId": {
-            "type": "string",
-            "format": "uuid"
+          "name": {
+            "type": "string"
           },
           "visibilityTimeoutSeconds": {
             "description": "How long messages are locked by the consumer.",
@@ -1021,7 +1013,7 @@
           }
         },
         "required": [
-          "streamId",
+          "name",
           "consumerGroup",
           "batchSize",
           "visibilityTimeoutSeconds"

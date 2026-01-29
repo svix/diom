@@ -1,6 +1,6 @@
 use crate::{
     State,
-    entities::StreamId,
+    entities::StreamName,
     tables::{NameToStreamRow, StreamRow},
 };
 use diom_error::Result;
@@ -14,8 +14,7 @@ pub struct CreateStream {
 }
 
 pub struct CreateStreamOutput {
-    pub id: StreamId,
-    pub name: String,
+    pub name: StreamName,
     pub retention_period_seconds: Option<NonZeroU64>,
     pub max_byte_size: Option<NonZeroU64>,
     pub created_at: Timestamp,
@@ -25,7 +24,7 @@ pub struct CreateStreamOutput {
 impl CreateStream {
     pub fn new(
         state: &State,
-        name: String,
+        name: StreamName,
         retention_period_seconds: Option<NonZeroU64>,
         max_byte_size: Option<NonZeroU64>,
     ) -> Result<Self> {
@@ -75,7 +74,6 @@ impl CreateStream {
         }
 
         Ok(CreateStreamOutput {
-            id: name_entry.id,
             name: name_entry.name,
             retention_period_seconds: self.stream.retention_period_seconds,
             max_byte_size: self.stream.max_byte_size,

@@ -14,7 +14,7 @@ use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use stream::{
-    entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamId},
+    entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName},
     operations::CreateStreamOutput,
 };
 use validator::Validate;
@@ -27,7 +27,7 @@ use crate::{
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateStreamIn {
-    pub name: String,
+    pub name: StreamName,
     /// How long messages are retained in the stream before being permanently nuked.
     pub retention_period_seconds: Option<NonZeroU64>,
     /// How many bytes in total the stream will retain before dropping data.
@@ -37,8 +37,7 @@ pub struct CreateStreamIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateStreamOut {
-    pub id: StreamId,
-    pub name: String,
+    pub name: StreamName,
     pub retention_period_seconds: Option<NonZeroU64>,
     pub max_byte_size: Option<NonZeroU64>,
     pub created_at: Timestamp,
@@ -75,7 +74,6 @@ async fn create_stream(
     .await??;
 
     let CreateStreamOutput {
-        id,
         name,
         retention_period_seconds,
         max_byte_size,
@@ -84,7 +82,6 @@ async fn create_stream(
     } = out;
 
     Ok(Json(CreateStreamOut {
-        id,
         name,
         retention_period_seconds,
         max_byte_size,
@@ -96,7 +93,7 @@ async fn create_stream(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AppendToStreamIn {
-    pub stream_id: StreamId,
+    pub name: StreamName,
     pub msgs: Vec<MsgIn>,
 }
 
@@ -124,7 +121,7 @@ async fn append_to_stream(
     */
 
     let out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::AppendToStream::new(&stream_state, data.stream_id, data.msgs)?;
+        let op = stream::operations::AppendToStream::new(&stream_state, data.name, data.msgs)?;
         op.apply_operation(&stream_state)
     })
     .await??;
@@ -137,7 +134,7 @@ async fn append_to_stream(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct FetchFromStreamIn {
-    stream_id: StreamId,
+    name: StreamName,
     consumer_group: ConsumerGroup,
 
     /// How many messages to read from the stream.
@@ -176,7 +173,7 @@ async fn locking_fetch_from_stream(
     let out = tokio::task::spawn_blocking(move || {
         let op = stream::operations::FetchLocking::new(
             &stream_state,
-            data.stream_id,
+            data.name,
             data.consumer_group,
             data.batch_size,
             Duration::from_secs(data.visibility_timeout_seconds),
@@ -191,7 +188,7 @@ async fn locking_fetch_from_stream(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AckIn {
-    stream_id: StreamId,
+    name: StreamName,
     consumer_group: ConsumerGroup,
     min_msg_id: Option<MsgId>,
     max_msg_id: MsgId,
@@ -221,7 +218,7 @@ async fn ack(
     let _out = tokio::task::spawn_blocking(move || {
         let op = stream::operations::Ack::new(
             &stream_state,
-            data.stream_id,
+            data.name,
             data.consumer_group,
             data.min_msg_id.unwrap_or(MsgId::MIN),
             data.max_msg_id,
