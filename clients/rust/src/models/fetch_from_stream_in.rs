@@ -11,8 +11,7 @@ pub struct FetchFromStreamIn {
     #[serde(rename = "consumerGroup")]
     pub consumer_group: String,
 
-    #[serde(rename = "streamId")]
-    pub stream_id: String,
+    pub name: String,
 
     /// How long messages are locked by the consumer.
     #[serde(rename = "visibilityTimeoutSeconds")]
@@ -23,13 +22,13 @@ impl FetchFromStreamIn {
     pub fn new(
         batch_size: u16,
         consumer_group: String,
-        stream_id: String,
+        name: String,
         visibility_timeout_seconds: u64,
     ) -> Self {
         Self {
             batch_size,
             consumer_group,
-            stream_id,
+            name,
             visibility_timeout_seconds,
         }
     }

@@ -7,8 +7,6 @@ pub struct CreateStreamOut {
     #[serde(rename = "createdAt")]
     pub created_at: jiff::Timestamp,
 
-    pub id: String,
-
     #[serde(rename = "maxByteSize")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_byte_size: Option<u64>,
@@ -24,15 +22,9 @@ pub struct CreateStreamOut {
 }
 
 impl CreateStreamOut {
-    pub fn new(
-        created_at: jiff::Timestamp,
-        id: String,
-        name: String,
-        updated_at: jiff::Timestamp,
-    ) -> Self {
+    pub fn new(created_at: jiff::Timestamp, name: String, updated_at: jiff::Timestamp) -> Self {
         Self {
             created_at,
-            id,
             max_byte_size: None,
             name,
             retention_period_seconds: None,
