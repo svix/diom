@@ -28,6 +28,32 @@ impl From<StreamAppendOptions> for diom_client::api::StreamAppendOptions {
     }
 }
 
+#[derive(Args, Clone)]
+pub struct StreamFetchLockingOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<StreamFetchLockingOptions> for diom_client::api::StreamFetchLockingOptions {
+    fn from(value: StreamFetchLockingOptions) -> Self {
+        let StreamFetchLockingOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
+#[derive(Args, Clone)]
+pub struct StreamAckOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<StreamAckOptions> for diom_client::api::StreamAckOptions {
+    fn from(value: StreamAckOptions) -> Self {
+        let StreamAckOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct StreamArgs {
@@ -48,6 +74,21 @@ pub enum StreamCommands {
         append_to_stream_in: crate::json::JsonOf<diom_client::models::AppendToStreamIn>,
         #[clap(flatten)]
         options: StreamAppendOptions,
+    },
+    /// Fetches messages from the stream, locking over the consumer group.
+    ///
+    /// This call prevents other consumers within the same consumer group from reading from the stream
+    /// until either the visibility timeout expires, or the last message in the batch is acknowledged.
+    FetchLocking {
+        fetch_from_stream_in: crate::json::JsonOf<diom_client::models::FetchFromStreamIn>,
+        #[clap(flatten)]
+        options: StreamFetchLockingOptions,
+    },
+    /// Acks the messages for the consumer group, allowing more messages to be consumed.
+    Ack {
+        ack_in: crate::json::JsonOf<diom_client::models::AckIn>,
+        #[clap(flatten)]
+        options: StreamAckOptions,
     },
 }
 
@@ -75,6 +116,23 @@ impl StreamCommands {
                 let resp = client
                     .stream()
                     .append(append_to_stream_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::FetchLocking {
+                fetch_from_stream_in,
+                options,
+            } => {
+                let resp = client
+                    .stream()
+                    .fetch_locking(fetch_from_stream_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Ack { ack_in, options } => {
+                let resp = client
+                    .stream()
+                    .ack(ack_in.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

@@ -574,342 +574,6 @@
         ]
       }
     },
-    "/api/v1/queue/send": {
-      "post": {
-        "tags": [
-          "Queue"
-        ],
-        "summary": "Queue Send",
-        "description": "Send messages to the queue",
-        "operationId": "v1.queue.send",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueueSendIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueueSendOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/queue/receive": {
-      "post": {
-        "tags": [
-          "Queue"
-        ],
-        "summary": "Queue Receive",
-        "description": "Receive messages from the queue",
-        "operationId": "v1.queue.receive",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueueReceiveIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueueReceiveOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/queue/ack": {
-      "post": {
-        "tags": [
-          "Queue"
-        ],
-        "summary": "Queue Ack",
-        "description": "Acknowledge successful message processing",
-        "operationId": "v1.queue.ack",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueueAckIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueueAckOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/queue/nack": {
-      "post": {
-        "tags": [
-          "Queue"
-        ],
-        "summary": "Queue Nack",
-        "description": "Negative acknowledge - return message to queue or move to DLQ",
-        "operationId": "v1.queue.nack",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueueNackIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueueNackOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/queue/reject": {
-      "post": {
-        "tags": [
-          "Queue"
-        ],
-        "summary": "Queue Reject",
-        "description": "Reject a message - remove from processing and send to DLQ without retry",
-        "operationId": "v1.queue.reject",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueueRejectIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueueRejectOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/queue/purge": {
-      "post": {
-        "tags": [
-          "Queue"
-        ],
-        "summary": "Queue Purge",
-        "description": "Purge all messages from a queue",
-        "operationId": "v1.queue.purge",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueuePurgeIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueuePurgeOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/queue/stats": {
-      "post": {
-        "tags": [
-          "Queue"
-        ],
-        "summary": "Queue Stats",
-        "description": "Get queue statistics",
-        "operationId": "v1.queue.stats",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "idempotency-key",
-            "description": "The request's idempotency key",
-            "schema": {
-              "type": "string"
-            },
-            "style": "simple"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueueStatsIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueueStatsOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/api/v1/stream/create": {
       "post": {
         "tags": [
@@ -1005,6 +669,102 @@
           }
         ]
       }
+    },
+    "/api/v1/stream/fetch-locking": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Locking Fetch From Stream",
+        "description": "Fetches messages from the stream, locking over the consumer group.\n\nThis call prevents other consumers within the same consumer group from reading from the stream\nuntil either the visibility timeout expires, or the last message in the batch is acknowledged.",
+        "operationId": "v1.stream.fetch-locking",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchFromStreamIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchFromStreamOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stream/ack": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Ack",
+        "description": "Acks the messages for the consumer group, allowing more messages to be consumed.",
+        "operationId": "v1.stream.ack",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AckOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1016,6 +776,37 @@
       }
     },
     "schemas": {
+      "AckIn": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "maxMsgId": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "minMsgId": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "streamId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "streamId",
+          "consumerGroup",
+          "maxMsgId"
+        ]
+      },
+      "AckOut": {
+        "type": "object"
+      },
       "AppendToStreamIn": {
         "type": "object",
         "properties": {
@@ -1203,6 +994,51 @@
           "name",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "FetchFromStreamIn": {
+        "type": "object",
+        "properties": {
+          "batchSize": {
+            "description": "How many messages to read from the stream.",
+            "type": "integer",
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 1
+          },
+          "consumerGroup": {
+            "type": "string"
+          },
+          "streamId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visibilityTimeoutSeconds": {
+            "description": "How long messages are locked by the consumer.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "streamId",
+          "consumerGroup",
+          "batchSize",
+          "visibilityTimeoutSeconds"
+        ]
+      },
+      "FetchFromStreamOut": {
+        "type": "object",
+        "properties": {
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MsgOut"
+            }
+          }
+        },
+        "required": [
+          "msgs"
         ]
       },
       "IdempotencyAbandonIn": {
@@ -1429,6 +1265,41 @@
           "headers"
         ]
       },
+      "MsgOut": {
+        "type": "object",
+        "properties": {
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "id": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "payload": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "payload",
+          "headers",
+          "timestamp"
+        ]
+      },
       "OperationBehavior": {
         "type": "string",
         "enum": [
@@ -1446,244 +1317,6 @@
         },
         "required": [
           "ok"
-        ]
-      },
-      "QueueAckIn": {
-        "type": "object",
-        "properties": {
-          "message_id": {
-            "description": "Message ID to acknowledge",
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name",
-          "message_id"
-        ]
-      },
-      "QueueAckOut": {
-        "type": "object"
-      },
-      "QueueMessage": {
-        "type": "object",
-        "properties": {
-          "message_id": {
-            "type": "string"
-          },
-          "payload": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message_id",
-          "payload"
-        ]
-      },
-      "QueueNackIn": {
-        "type": "object",
-        "properties": {
-          "message_id": {
-            "description": "Message ID to negative acknowledge",
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name",
-          "message_id"
-        ]
-      },
-      "QueueNackOut": {
-        "type": "object"
-      },
-      "QueuePurgeIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "QueuePurgeOut": {
-        "type": "object",
-        "properties": {
-          "purged_count": {
-            "description": "Number of messages purged",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "purged_count"
-        ]
-      },
-      "QueueReceiveIn": {
-        "type": "object",
-        "properties": {
-          "batch_size": {
-            "description": "Maximum number of messages to receive (default: 1, max: 50)",
-            "type": "integer",
-            "format": "uint32",
-            "default": 1,
-            "maximum": 50,
-            "minimum": 1
-          },
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          },
-          "visibility_timeout_seconds": {
-            "description": "Visibility timeout in seconds (how long before message returns to queue if not ack'd)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "name",
-          "visibility_timeout_seconds"
-        ]
-      },
-      "QueueReceiveOut": {
-        "type": "object",
-        "properties": {
-          "messages": {
-            "description": "Array of received messages (empty if no messages available)",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/QueueMessage"
-            }
-          }
-        },
-        "required": [
-          "messages"
-        ]
-      },
-      "QueueRejectIn": {
-        "type": "object",
-        "properties": {
-          "message_id": {
-            "description": "Message ID to reject",
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name",
-          "message_id"
-        ]
-      },
-      "QueueRejectOut": {
-        "type": "object"
-      },
-      "QueueSendIn": {
-        "type": "object",
-        "properties": {
-          "delay_seconds": {
-            "description": "Delay before messages become available (seconds). Mutually exclusive with scheduled_at.",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "nullable": true
-          },
-          "messages": {
-            "description": "Array of message payloads to send",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          },
-          "scheduled_at": {
-            "description": "Specific time when messages should become available. Mutually exclusive with delay_seconds.",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "required": [
-          "name",
-          "messages"
-        ]
-      },
-      "QueueSendOut": {
-        "type": "object",
-        "properties": {
-          "message_ids": {
-            "description": "Array of unique message IDs for the enqueued messages",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "message_ids"
-        ]
-      },
-      "QueueStatsIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "QueueStatsOut": {
-        "type": "object",
-        "properties": {
-          "available": {
-            "description": "Number of available messages",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
-          "in_flight": {
-            "description": "Number of in-flight messages",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "available",
-          "in_flight"
         ]
       },
       "RateLimitResult": {

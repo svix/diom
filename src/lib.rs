@@ -101,7 +101,6 @@ pub async fn run(cfg: Configuration) {
 pub struct AppState {
     cfg: Configuration,
     rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
-    queue_store: crate::v1::modules::queue::QueueStore,
 
     raft: core::cluster::Raft,
     node_id: core::cluster::NodeId,
@@ -285,7 +284,6 @@ pub async fn run_with_prefix(
             "rate_limiter_default",
             persistent_db.clone(),
         ),
-        queue_store: crate::v1::modules::queue::QueueStore::new(),
         stream_state,
         raft,
         node_id,
@@ -333,7 +331,6 @@ pub async fn run_with_prefix(
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
-            tokio::spawn(v1::modules::queue::worker(app_state.clone())),
         );
     });
 

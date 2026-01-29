@@ -16,3 +16,4 @@
 * Code guidelines
   * Keep mutation or state manipulation as isolated as possible
   * Keep functions short and simple. If a function is too long, split it into shorter, self documenting functions.
+* If any changes are made to `src/v1/endpoints/*`, run `cargo codegen` when done to update the client library code.
