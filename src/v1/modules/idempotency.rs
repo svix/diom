@@ -122,7 +122,7 @@ mod tests {
         fn new() -> TestResult<Self> {
             let workdir = tempfile::tempdir()?;
             let db = Database::builder(workdir.as_ref()).temporary(true).open()?;
-            let kv = KvStore::new("test", db, EvictionPolicy::NoEviction);
+            let kv = KvStore::new("test", db, EvictionPolicy::NoEviction, None);
             let store = IdempotencyStore::new(kv);
             Ok(Self { store })
         }

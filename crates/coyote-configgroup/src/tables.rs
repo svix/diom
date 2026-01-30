@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, num::NonZeroU64};
 
 use coyote_error::Result;
 use fjall::Keyspace;
@@ -14,6 +14,8 @@ pub struct ConfigGroup<C: ModuleConfig> {
     pub id: ConfigGroupId,
     pub name: String,
     pub storage_type: StorageType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
 
     pub created_at: Timestamp,
     pub updated_at: Timestamp,

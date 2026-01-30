@@ -151,6 +151,7 @@ impl AppState {
                 KeyValueConfig::NAMESPACE,
                 self.persistent_db.clone(),
                 EvictionPolicy::NoEviction,
+                None,
             ));
         };
 
@@ -163,6 +164,7 @@ impl AppState {
                 KeyValueConfig::NAMESPACE,
                 self.persistent_db.clone(),
                 EvictionPolicy::NoEviction,
+                None,
             ));
         };
 
@@ -171,6 +173,7 @@ impl AppState {
             KeyValueConfig::NAMESPACE,
             self.configgroup_state.give_me_the_right_db(&group),
             policy,
+            None,
         );
 
         Ok(kv_store)
@@ -185,6 +188,7 @@ impl AppState {
                     CacheConfig::NAMESPACE,
                     self.persistent_db.clone(),
                     EvictionPolicy::NoEviction,
+                    None,
                 ),
             });
         };
@@ -199,6 +203,7 @@ impl AppState {
                     CacheConfig::NAMESPACE,
                     self.persistent_db.clone(),
                     EvictionPolicy::NoEviction,
+                    None,
                 ),
             });
         };
@@ -208,6 +213,7 @@ impl AppState {
             CacheConfig::NAMESPACE,
             self.configgroup_state.give_me_the_right_db(&group),
             policy,
+            None,
         );
 
         Ok(CacheStore { kv: kv_store })
@@ -222,6 +228,7 @@ impl AppState {
                     IdempotencyConfig::NAMESPACE,
                     self.persistent_db.clone(),
                     EvictionPolicy::NoEviction,
+                    None,
                 ),
             });
         };
@@ -236,6 +243,7 @@ impl AppState {
                     IdempotencyConfig::NAMESPACE,
                     self.persistent_db.clone(),
                     EvictionPolicy::NoEviction,
+                    None,
                 ),
             });
         };
@@ -245,6 +253,7 @@ impl AppState {
             IdempotencyConfig::NAMESPACE,
             self.configgroup_state.give_me_the_right_db(&group),
             policy,
+            None,
         );
 
         Ok(IdempotencyStore { kv: kv_store })
