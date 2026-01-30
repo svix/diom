@@ -15,10 +15,16 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
     fn get_key(&self) -> Cow<'_, Self::Key>;
 
     fn make_fjall_key(key: &Self::Key) -> fjall::UserKey {
-        let mut key_bytes =
-            Vec::<u8>::with_capacity(Self::TABLE_PREFIX.len() + b"\0".len() + key.as_ref().len());
-        key_bytes.extend_from_slice(Self::TABLE_PREFIX.as_bytes());
-        key_bytes.extend_from_slice(b"\0");
+        let mut key_bytes = if Self::TABLE_PREFIX.is_empty() {
+            Vec::<u8>::with_capacity(key.as_ref().len())
+        } else {
+            let mut key_bytes = Vec::<u8>::with_capacity(
+                Self::TABLE_PREFIX.len() + b"\0".len() + key.as_ref().len(),
+            );
+            key_bytes.extend_from_slice(Self::TABLE_PREFIX.as_bytes());
+            key_bytes.extend_from_slice(b"\0");
+            key_bytes
+        };
         key_bytes.extend_from_slice(key.as_ref());
         key_bytes.into()
     }
@@ -28,7 +34,7 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         // FIXME(@svix-gabriel) - it's not clear if we're committed to using msgpack
         // for internal serialization. Using messagepack for now, but this
         // should be easy to change later.
-        let value = rmp_serde::to_vec(&self).map_err(Error::generic)?;
+        let value = rmp_serde::to_vec_named(&self).map_err(Error::generic)?;
 
         Ok((key, value.into()))
     }

@@ -3,6 +3,8 @@ use std::time::Duration;
 use serde_json::{Value, json};
 use test_utils::{StatusCode, TestClient, TestResult};
 
+use crate::TestContext;
+
 async fn kv_set(
     client: &TestClient,
     key: &str,
@@ -37,7 +39,11 @@ async fn kv_get(client: &TestClient, key: &str) -> TestResult<Value> {
 
 #[tokio::test]
 async fn test_kv_set_and_get() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     kv_set(&client, "kv-key-1", 50000, "kv-value-456", "upsert").await?;
 
@@ -52,7 +58,11 @@ async fn test_kv_set_and_get() -> TestResult {
 
 #[tokio::test]
 async fn test_kv_set_with_insert_and_delete() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     kv_set(&client, "kv-key-2", 0, "permanent-value", "insert").await?;
 
@@ -84,7 +94,11 @@ async fn test_kv_set_with_insert_and_delete() -> TestResult {
 
 #[tokio::test]
 async fn test_kv_expiration() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     kv_set(&client, "test-key-3", 100, "test-value-345", "upsert").await?;
 

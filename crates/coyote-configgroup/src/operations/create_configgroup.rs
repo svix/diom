@@ -17,8 +17,7 @@ pub struct CreateConfigGroup<C: ModuleConfig> {
     timestamp: Timestamp,
     name: String,
     storage_type: Option<StorageType>,
-    #[serde(default)]
-    pub max_storage_bytes: Option<NonZeroU64>,
+    max_storage_bytes: Option<NonZeroU64>,
     config: C,
 }
 

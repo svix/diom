@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use test_utils::{StatusCode, TestResult};
 
+use crate::TestContext;
+
 #[derive(Serialize)]
 struct CacheSetIn<'a> {
     key: &'a str,
@@ -17,7 +19,11 @@ struct CacheGetIn<'a> {
 
 #[tokio::test]
 async fn test_cache_set_and_get_msgpack_in() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     client
         .post("cache/set")
@@ -55,7 +61,11 @@ struct CacheGetOut {
 
 #[tokio::test]
 async fn test_cache_set_and_get_msgpack_out() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     client
         .post("cache/set")

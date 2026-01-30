@@ -114,7 +114,7 @@ async fn kv_set(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
 ) -> Result<MsgPackOrJson<KvSetOut>> {
-    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
 
     let key = data.key.clone();
     let behavior = data.behavior.clone();
@@ -134,7 +134,7 @@ async fn kv_get(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
 ) -> Result<MsgPackOrJson<KvGetOut>> {
-    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
 
     let model = kv_store
         .get(&data.key.0)
@@ -156,7 +156,7 @@ async fn kv_del(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvDeleteIn>,
 ) -> Result<MsgPackOrJson<KvDeleteOut>> {
-    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
 
     let deleted = kv_store
         .delete(&data.key.0)

@@ -1,4 +1,6 @@
+mod bootstrap;
 mod cache;
+mod configgroup;
 mod kv;
 mod msgpack;
 mod rate_limiter;
@@ -33,7 +35,13 @@ impl Drop for IsolatedServerHandle {
     }
 }
 
-async fn start_server() -> (TestClient, IsolatedServerHandle) {
+pub struct TestContext {
+    pub client: TestClient,
+    pub cfg: Arc<ConfigurationInner>,
+    pub handle: IsolatedServerHandle,
+}
+
+async fn start_server() -> TestContext {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr: SocketAddr = listener.local_addr().unwrap();
 
@@ -82,8 +90,11 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
 
     let base_uri = format!("http://{addr}/api/v1");
 
-    let server_handle = tokio::spawn(async move {
-        run_with_prefix(cfg, Some(listener), Some(repl_listener)).await;
+    let server_handle = tokio::spawn({
+        let cfg = cfg.clone();
+        async move {
+            run_with_prefix(cfg, Some(listener), Some(repl_listener)).await;
+        }
     });
 
     let handle = IsolatedServerHandle {
@@ -93,5 +104,11 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
 
     let client = TestClient::new(base_uri, token);
 
-    (client, handle)
+    coyote::bootstrap::run(None, cfg.clone());
+
+    TestContext {
+        client,
+        cfg,
+        handle,
+    }
 }

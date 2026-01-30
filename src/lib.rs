@@ -10,10 +10,10 @@ use axum::middleware;
 use cfg::ConfigurationInner;
 use coyote_configgroup::{
     BothDatabases,
-    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig},
+    entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
     group_name,
 };
-use coyote_error::Result;
+use coyote_error::{Error, Result};
 use coyote_kv::KvStore;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
@@ -40,6 +40,7 @@ use crate::{
     v1::modules::{cache::CacheStore, idempotency::IdempotencyStore},
 };
 
+pub mod bootstrap;
 pub mod cfg;
 pub mod core;
 pub use coyote_error as error;
@@ -109,9 +110,6 @@ pub struct AppState {
 
     stream_state: stream::State,
     configgroup_state: coyote_configgroup::State,
-
-    // TODO: Remove this once we have proper default config groups
-    persistent_db: fjall::Database,
 }
 
 async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<TcpListener>) {
@@ -143,30 +141,13 @@ async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<T
 }
 
 impl AppState {
-    // FIXME: Blocking
-    pub fn kv_store_by_key(&self, key_name: &str) -> Result<KvStore> {
-        let Some(group_name_str) = group_name(key_name) else {
-            // FIXME: This should be a default ConfigGroup struct
-            return Ok(KvStore::new(
-                KeyValueConfig::NAMESPACE,
-                self.persistent_db.clone(),
-                EvictionPolicy::NoEviction,
-                None,
-            ));
-        };
+    fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
+        let group_name = group_name(key_name);
 
-        let Some(group) = self
+        let group = self
             .configgroup_state
-            .fetch_group::<KeyValueConfig>(group_name_str.to_string())?
-        else {
-            // FIXME: This should be a default ConfigGroup struct
-            return Ok(KvStore::new(
-                KeyValueConfig::NAMESPACE,
-                self.persistent_db.clone(),
-                EvictionPolicy::NoEviction,
-                None,
-            ));
-        };
+            .fetch_group::<C>(group_name.to_string())?
+            .ok_or_else(|| Error::generic(format!("group {group_name} not found")))?;
 
         let policy = group.config.eviction_policy();
         let kv_store = KvStore::new(
@@ -179,83 +160,17 @@ impl AppState {
         Ok(kv_store)
     }
 
-    // FIXME: Blocking
-    pub fn cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
-        let Some(group_name_str) = group_name(key_name) else {
-            // FIXME: This should be a default ConfigGroup struct
-            return Ok(CacheStore {
-                kv: KvStore::new(
-                    CacheConfig::NAMESPACE,
-                    self.persistent_db.clone(),
-                    EvictionPolicy::NoEviction,
-                    None,
-                ),
-            });
-        };
+    pub fn get_kv_store_by_key(&self, key_name: &str) -> Result<KvStore> {
+        self.get_store_by_key::<KeyValueConfig>(key_name)
+    }
 
-        let Some(group) = self
-            .configgroup_state
-            .fetch_group::<CacheConfig>(group_name_str.to_string())?
-        else {
-            // FIXME: This should be a default ConfigGroup struct
-            return Ok(CacheStore {
-                kv: KvStore::new(
-                    CacheConfig::NAMESPACE,
-                    self.persistent_db.clone(),
-                    EvictionPolicy::NoEviction,
-                    None,
-                ),
-            });
-        };
-
-        let policy = group.config.eviction_policy();
-        let kv_store = KvStore::new(
-            CacheConfig::NAMESPACE,
-            self.configgroup_state.give_me_the_right_db(&group),
-            policy,
-            None,
-        );
-
+    pub fn get_cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
+        let kv_store = self.get_store_by_key::<CacheConfig>(key_name)?;
         Ok(CacheStore { kv: kv_store })
     }
 
-    // FIXME: Blocking
-    pub fn idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
-        let Some(group_name_str) = group_name(key_name) else {
-            // FIXME: This should be a default ConfigGroup struct
-            return Ok(IdempotencyStore {
-                kv: KvStore::new(
-                    IdempotencyConfig::NAMESPACE,
-                    self.persistent_db.clone(),
-                    EvictionPolicy::NoEviction,
-                    None,
-                ),
-            });
-        };
-
-        let Some(group) = self
-            .configgroup_state
-            .fetch_group::<IdempotencyConfig>(group_name_str.to_string())?
-        else {
-            // FIXME: This should be a default ConfigGroup struct
-            return Ok(IdempotencyStore {
-                kv: KvStore::new(
-                    IdempotencyConfig::NAMESPACE,
-                    self.persistent_db.clone(),
-                    EvictionPolicy::NoEviction,
-                    None,
-                ),
-            });
-        };
-
-        let policy = group.config.eviction_policy();
-        let kv_store = KvStore::new(
-            IdempotencyConfig::NAMESPACE,
-            self.configgroup_state.give_me_the_right_db(&group),
-            policy,
-            None,
-        );
-
+    pub fn get_idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
+        let kv_store = self.get_store_by_key::<IdempotencyConfig>(key_name)?;
         Ok(IdempotencyStore { kv: kv_store })
     }
 }
@@ -298,7 +213,6 @@ pub async fn run_with_prefix(
         stream_state,
         raft,
         node_id,
-        persistent_db,
         configgroup_state,
     };
     let v1_router = v1::router().with_state::<()>(app_state.clone());

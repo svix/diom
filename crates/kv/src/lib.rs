@@ -4,7 +4,7 @@ use std::num::NonZeroU64;
 
 use coyote_configgroup::{
     ConfigGroup,
-    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig},
+    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig},
 };
 use coyote_error::Result;
 use fjall::{Database, KeyspaceCreateOptions};
