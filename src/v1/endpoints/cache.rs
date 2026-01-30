@@ -6,6 +6,7 @@ use std::time::Duration;
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
+use coyote_proto::ValidatedJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -15,10 +16,7 @@ use crate::{
     AppState,
     core::types::EntityKey,
     error::Result,
-    v1::{
-        modules::cache::CacheModel,
-        utils::{ValidatedJson, openapi_tag},
-    },
+    v1::{modules::cache::CacheModel, utils::openapi_tag},
 };
 
 // Re-export types that are used in AppState

@@ -2,145 +2,27 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
-    borrow::Cow,
-    error::Error as StdError,
     ops::Deref,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use aide::{
-    OperationInput, OperationIo, OperationOutput,
+    OperationInput, OperationOutput,
     openapi::StatusCode as OpenApiStatusCode,
     transform::{TransformOperation, TransformPathItem},
 };
 use axum::{
-    extract::{
-        FromRequest, FromRequestParts, Query, Request,
-        rejection::{BytesRejection, FailedToBufferBody},
-    },
+    extract::{FromRequestParts, Query},
     response::IntoResponse,
 };
+use coyote_error::{validation_error, validation_errors};
 use http::request::Parts;
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Serialize, de::DeserializeOwned};
 use validator::{Validate, ValidationError};
 
-use crate::error::{Error, HttpError, Result, ValidationErrorItem};
-
-// Helper method to simplify the somewhat egregious API for creating a ValidationError
-pub fn validation_error(code: Option<&'static str>, msg: Option<&'static str>) -> ValidationError {
-    ValidationError {
-        code: std::borrow::Cow::from(code.unwrap_or("validation")),
-        message: msg.map(std::borrow::Cow::from),
-        params: std::collections::HashMap::new(),
-    }
-}
-
-/// Recursively searches a [`validator::ValidationErrors`] tree into a linear list of errors to be
-/// sent to the user
-pub fn validation_errors(
-    acc_path: Vec<String>,
-    err: validator::ValidationErrors,
-) -> Vec<ValidationErrorItem> {
-    err.into_errors()
-        .into_iter()
-        .flat_map(|(k, v)| {
-            // Add the next field to the location
-            let mut loc = acc_path.clone();
-            loc.push(k.into());
-
-            match v {
-                // If it's a [`validator::ValidationErrorsKind::Field`], then it will be a vector of
-                // errors to map to [`ValidationErrorItem`]s and insert to [`out`] before the next
-                // iteration
-                validator::ValidationErrorsKind::Field(vec) => vec
-                    .into_iter()
-                    .map(|err| ValidationErrorItem {
-                        loc: loc.clone(),
-                        msg: err
-                            .message
-                            .unwrap_or(Cow::Borrowed("Validation error"))
-                            .to_string(),
-                        ty: "value_error".to_owned(),
-                    })
-                    .collect(),
-                // If it is a [`validator::ValidationErrorsKind::Struct`], then it will be another
-                // [`validator::ValidationErrors`] to search
-                validator::ValidationErrorsKind::Struct(errors) => validation_errors(loc, *errors),
-
-                // If it is a [`validator::ValidationErrorsKind::List`], then it will be an
-                // [`std::collections::BTreeMap`] of [`validator::ValidationErrors`] to search
-                validator::ValidationErrorsKind::List(map) => map
-                    .into_iter()
-                    .flat_map(|(k, v)| {
-                        // Add the list index to the location
-                        let mut loc = loc.clone();
-                        loc.push(format!("[{k}]"));
-
-                        validation_errors(loc, *v)
-                    })
-                    .collect(),
-            }
-        })
-        .collect()
-}
-
-#[derive(Debug, Clone, Copy, Default, OperationIo)]
-#[aide(input_with = "axum::extract::Json<T>", json_schema)]
-pub struct ValidatedJson<T>(pub T);
-
-impl<T, S> FromRequest<S> for ValidatedJson<T>
-where
-    T: DeserializeOwned + Validate,
-    S: Send + Sync,
-{
-    type Rejection = Error;
-
-    async fn from_request(req: Request, state: &S) -> Result<Self> {
-        let b = bytes::Bytes::from_request(req, state).await.map_err(|e| {
-            tracing::error!("Error reading body as bytes: {}", e);
-
-            match e {
-                BytesRejection::FailedToBufferBody(FailedToBufferBody::LengthLimitError(_)) => {
-                    HttpError::too_large(None, None)
-                }
-
-                _ => HttpError::internal_server_error(
-                    None,
-                    Some("Failed to read request body".to_owned()),
-                ),
-            }
-        })?;
-        let mut de = serde_json::Deserializer::from_slice(&b);
-
-        let value: T = serde_path_to_error::deserialize(&mut de).map_err(|e| {
-            let mut path = e
-                .path()
-                .to_string()
-                .split('.')
-                .map(ToOwned::to_owned)
-                .collect::<Vec<String>>();
-            let inner = e.inner();
-
-            let mut loc = vec!["body".to_owned()];
-            loc.append(&mut path);
-            HttpError::unprocessable_entity(vec![ValidationErrorItem {
-                loc,
-                msg: inner
-                    .source()
-                    .map(ToString::to_string)
-                    .unwrap_or_else(|| e.to_string()),
-                ty: "value_error.jsondecode".to_owned(),
-            }])
-        })?;
-
-        value.validate().map_err(|e| {
-            HttpError::unprocessable_entity(validation_errors(vec!["body".to_owned()], e))
-        })?;
-        Ok(ValidatedJson(value))
-    }
-}
+use crate::error::{Error, HttpError, Result};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ValidatedQuery<T>(pub T);

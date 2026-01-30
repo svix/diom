@@ -10,6 +10,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::Result;
+use coyote_proto::ValidatedJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -19,10 +20,7 @@ use stream::{
 };
 use validator::Validate;
 
-use crate::{
-    AppState,
-    v1::utils::{ValidatedJson, openapi_tag},
-};
+use crate::{AppState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]

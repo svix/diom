@@ -4,6 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
+use coyote_proto::ValidatedJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,7 +17,7 @@ use crate::{
     error::Result,
     v1::{
         modules::kv::{KvModel, OperationBehavior},
-        utils::{ValidatedJson, openapi_tag},
+        utils::openapi_tag,
     },
 };
 
