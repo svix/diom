@@ -64,6 +64,8 @@ jobs:
       - uses: taiki-e/install-action@cargo-nextest
       - uses: taiki-e/install-action@just
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: just test --run-ignored all
   check-codegen:
     name: Check openapi.json and SDKs
@@ -72,8 +74,6 @@ jobs:
       - uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
         with:
-          # only save the cache on the main branch
-          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
