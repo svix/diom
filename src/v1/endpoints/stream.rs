@@ -185,6 +185,42 @@ async fn locking_fetch_from_stream(
     Ok(Json(FetchFromStreamOut { msgs: out.msgs }))
 }
 
+/// Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.
+///
+/// Unlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading
+/// messages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held
+/// until the visibility timeout expires, or the messages are acked.
+#[aide_annotate(op_id = "v1.stream.fetch")]
+async fn fetch_from_stream(
+    State(AppState { stream_state, .. }): State<AppState>,
+    ValidatedJson(data): ValidatedJson<FetchFromStreamIn>,
+) -> Result<Json<FetchFromStreamOut>> {
+    /*
+    FIXME(@svix-gabriel)
+
+    This is missing a few important things
+        1. We haven't setup thread-per-core, so this could go to any thread.
+        2. We haven't setup quorum/raft stuff yet, so there's no consensus..
+
+    I didn't want to let either of these things block developing stream,
+    so in practice the structure of this handler will look different once those two pieces are in place.
+    */
+
+    let out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Fetch::new(
+            &stream_state,
+            data.name,
+            data.consumer_group,
+            data.batch_size,
+            Duration::from_secs(data.visibility_timeout_seconds),
+        )?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(Json(FetchFromStreamOut { msgs: out.msgs }))
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AckIn {
@@ -242,6 +278,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/stream/append",
             post_with(append_to_stream, append_to_stream_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/stream/fetch",
+            post_with(fetch_from_stream, fetch_from_stream_operation),
             &tag,
         )
         .api_route_with(

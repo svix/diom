@@ -29,6 +29,19 @@ impl From<StreamAppendOptions> for diom_client::api::StreamAppendOptions {
 }
 
 #[derive(Args, Clone)]
+pub struct StreamFetchOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<StreamFetchOptions> for diom_client::api::StreamFetchOptions {
+    fn from(value: StreamFetchOptions) -> Self {
+        let StreamFetchOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
+#[derive(Args, Clone)]
 pub struct StreamFetchLockingOptions {
     #[arg(long)]
     pub idempotency_key: Option<String>,
@@ -75,6 +88,16 @@ pub enum StreamCommands {
         #[clap(flatten)]
         options: StreamAppendOptions,
     },
+    /// Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.
+    ///
+    /// Unlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading
+    /// messages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held
+    /// until the visibility timeout expires, or the messages are acked.
+    Fetch {
+        fetch_from_stream_in: crate::json::JsonOf<diom_client::models::FetchFromStreamIn>,
+        #[clap(flatten)]
+        options: StreamFetchOptions,
+    },
     /// Fetches messages from the stream, locking over the consumer group.
     ///
     /// This call prevents other consumers within the same consumer group from reading from the stream
@@ -116,6 +139,16 @@ impl StreamCommands {
                 let resp = client
                     .stream()
                     .append(append_to_stream_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Fetch {
+                fetch_from_stream_in,
+                options,
+            } => {
+                let resp = client
+                    .stream()
+                    .fetch(fetch_from_stream_in.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

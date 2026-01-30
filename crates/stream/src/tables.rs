@@ -403,21 +403,18 @@ impl MsgRow {
 
         let mut min = MsgId::MIN;
         for block in blocked_ranges {
-            let max = block.start.saturating_sub(1);
-            if max == MsgId::MIN {
-                min = block.end + 1;
-                continue;
-            }
+            if block.start > min {
+                let max = block.start - 1;
+                let range = msg_row_key_range(stream_id, min..=max);
 
-            let range = msg_row_key_range(stream_id, min..=max);
+                let n = MsgRow::fetch_in_range(state, range, &mut results, msgs_left)?;
+                msgs_left -= n;
+
+                if msgs_left == 0 {
+                    return Ok(results);
+                }
+            }
             min = block.end + 1;
-
-            let n = MsgRow::fetch_in_range(state, range, &mut results, msgs_left)?;
-            msgs_left -= n;
-
-            if msgs_left == 0 {
-                return Ok(results);
-            }
         }
 
         if msgs_left > 0 {

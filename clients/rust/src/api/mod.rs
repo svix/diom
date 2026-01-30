@@ -12,7 +12,7 @@ pub use self::{
     rate_limiter::{RateLimiter, RateLimiterGetRemainingOptions, RateLimiterLimitOptions},
     stream::{
         Stream, StreamAckOptions, StreamAppendOptions, StreamCreateOptions,
-        StreamFetchLockingOptions,
+        StreamFetchLockingOptions, StreamFetchOptions,
     },
 };
 

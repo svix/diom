@@ -12,6 +12,11 @@ pub struct StreamAppendOptions {
 }
 
 #[derive(Default)]
+pub struct StreamFetchOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
 pub struct StreamFetchLockingOptions {
     pub idempotency_key: Option<String>,
 }
@@ -56,6 +61,25 @@ impl<'a> Stream<'a> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/append")
             .with_optional_header_param("idempotency-key", idempotency_key)
             .with_body_param(append_to_stream_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.
+    ///
+    /// Unlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading
+    /// messages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held
+    /// until the visibility timeout expires, or the messages are acked.
+    pub async fn fetch(
+        &self,
+        fetch_from_stream_in: FetchFromStreamIn,
+        options: Option<StreamFetchOptions>,
+    ) -> Result<FetchFromStreamOut> {
+        let StreamFetchOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/stream/fetch")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(fetch_from_stream_in)
             .execute(self.cfg)
             .await
     }
