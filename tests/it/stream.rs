@@ -242,3 +242,419 @@ async fn stream_visibility_timeout() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn queue_fetch_with_queue_semantics() -> TestResult {
+    let (client, _server_handle) = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [1, 2], "headers": {"msg": "1"}},
+                {"payload": [3, 4], "headers": {"msg": "2"}},
+                {"payload": [5, 6], "headers": {"msg": "3"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch first batch of 2 messages
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 2,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 2);
+    assert_eq!(
+        msgs1[0],
+        json!({"id": 0, "payload": [1, 2], "headers": {"msg": "1"}, "timestamp": msgs1[0]["timestamp"]})
+    );
+    assert_eq!(
+        msgs1[1],
+        json!({"id": 1, "payload": [3, 4], "headers": {"msg": "2"}, "timestamp": msgs1[1]["timestamp"]})
+    );
+
+    // Ack the first batch
+    let max_msg_id = &msgs1[1]["id"];
+    client
+        .post("stream/ack")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "maxMsgId": max_msg_id
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch second batch - should get remaining message
+    let fetch2 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 2,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs2 = fetch2["msgs"].as_array().unwrap();
+    assert_eq!(msgs2.len(), 1);
+    assert_eq!(
+        msgs2[0],
+        json!({"id": 2, "payload": [5, 6], "headers": {"msg": "3"}, "timestamp": msgs2[0]["timestamp"]})
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_fetch_concurrent_consumers() -> TestResult {
+    let (client, _server_handle) = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [1, 2], "headers": {"msg": "A"}},
+                {"payload": [3, 4], "headers": {"msg": "B"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch message A with a short visibility timeout
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 1,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 1);
+    assert_eq!(
+        msgs1[0],
+        json!({"id": 0, "payload": [1, 2], "headers": {"msg": "A"}, "timestamp": msgs1[0]["timestamp"]})
+    );
+
+    // Fetch again - should get message B (not blocked by A's lock)
+    let fetch2 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 1,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs2 = fetch2["msgs"].as_array().unwrap();
+    assert_eq!(msgs2.len(), 1);
+    assert_eq!(
+        msgs2[0],
+        json!({"id": 1, "payload": [3, 4], "headers": {"msg": "B"}, "timestamp": msgs2[0]["timestamp"]})
+    );
+
+    // Wait for A's visibility timeout to expire
+    tokio::time::sleep(Duration::from_secs(2)).await;
+
+    // Fetch again - should get message A back (its lock expired)
+    let fetch3 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 1,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs3 = fetch3["msgs"].as_array().unwrap();
+    assert_eq!(msgs3.len(), 1);
+    assert_eq!(
+        msgs3[0],
+        json!({"id": 0, "payload": [1, 2], "headers": {"msg": "A"}, "timestamp": msgs3[0]["timestamp"]})
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
+    let (client, _server_handle) = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [0], "headers": {"msg": "A"}},
+                {"payload": [1], "headers": {"msg": "B"}},
+                {"payload": [2], "headers": {"msg": "C"}},
+                {"payload": [3], "headers": {"msg": "D"}},
+                {"payload": [4], "headers": {"msg": "E"}},
+                {"payload": [5], "headers": {"msg": "F"}},
+                {"payload": [6], "headers": {"msg": "G"}},
+                {"payload": [7], "headers": {"msg": "H"}},
+                {"payload": [8], "headers": {"msg": "I"}},
+                {"payload": [9], "headers": {"msg": "J"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch A + B with short visibility timeout
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 2,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 2);
+    assert_eq!(msgs1[0]["headers"]["msg"], "A");
+    assert_eq!(msgs1[1]["headers"]["msg"], "B");
+
+    // Fetch C + D with short visibility timeout
+    let fetch2 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 2,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs2 = fetch2["msgs"].as_array().unwrap();
+    assert_eq!(msgs2.len(), 2);
+    assert_eq!(msgs2[0]["headers"]["msg"], "C");
+    assert_eq!(msgs2[1]["headers"]["msg"], "D");
+
+    // Fetch E + F with LONG visibility timeout
+    let fetch3 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 2,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs3 = fetch3["msgs"].as_array().unwrap();
+    assert_eq!(msgs3.len(), 2);
+    assert_eq!(msgs3[0]["headers"]["msg"], "E");
+    assert_eq!(msgs3[1]["headers"]["msg"], "F");
+
+    // Ack C + D
+    client
+        .post("stream/ack")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "minMsgId": msgs2[0]["id"],
+            "maxMsgId": msgs2[1]["id"]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for A+B visibility timeout to expire (but not E+F)
+    tokio::time::sleep(Duration::from_secs(3)).await;
+
+    // Fetch remaining - should get A, B (expired), G, H, I, J (never fetched)
+    // Should NOT get C, D (acked) or E, F (still locked)
+    let fetch4 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 10,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs4 = fetch4["msgs"].as_array().unwrap();
+    assert_eq!(msgs4.len(), 6);
+    assert_eq!(msgs4[0]["headers"]["msg"], "A");
+    assert_eq!(msgs4[1]["headers"]["msg"], "B");
+    assert_eq!(msgs4[2]["headers"]["msg"], "G");
+    assert_eq!(msgs4[3]["headers"]["msg"], "H");
+    assert_eq!(msgs4[4]["headers"]["msg"], "I");
+    assert_eq!(msgs4[5]["headers"]["msg"], "J");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
+    let (client, _server_handle) = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [0], "headers": {"msg": "A"}},
+                {"payload": [1], "headers": {"msg": "B"}},
+                {"payload": [2], "headers": {"msg": "C"}},
+                {"payload": [3], "headers": {"msg": "D"}},
+                {"payload": [4], "headers": {"msg": "E"}},
+                {"payload": [5], "headers": {"msg": "F"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch first block: A, B, C (ids 0, 1, 2)
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 3,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 3);
+    assert_eq!(msgs1[0]["headers"]["msg"], "A");
+    assert_eq!(msgs1[1]["headers"]["msg"], "B");
+    assert_eq!(msgs1[2]["headers"]["msg"], "C");
+
+    // Fetch second block: D, E, F (ids 3, 4, 5)
+    let fetch2 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 3,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs2 = fetch2["msgs"].as_array().unwrap();
+    assert_eq!(msgs2.len(), 3);
+    assert_eq!(msgs2[0]["headers"]["msg"], "D");
+    assert_eq!(msgs2[1]["headers"]["msg"], "E");
+    assert_eq!(msgs2[2]["headers"]["msg"], "F");
+
+    // Ack a range that overlaps both blocks but doesn't fully cover either:
+    // minMsgId=1, maxMsgId=4 acks B, C, D, E (but NOT A or F)
+    client
+        .post("stream/ack")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "minMsgId": 1,
+            "maxMsgId": 4
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for visibility timeout to expire
+    tokio::time::sleep(Duration::from_secs(3)).await;
+
+    // Fetch again - should get A and F back (the unacked messages)
+    let fetch3 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 10,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs3 = fetch3["msgs"].as_array().unwrap();
+    assert_eq!(msgs3.len(), 2);
+    assert_eq!(msgs3[0]["headers"]["msg"], "A");
+    assert_eq!(msgs3[1]["headers"]["msg"], "F");
+
+    Ok(())
+}
