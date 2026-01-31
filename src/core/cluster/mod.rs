@@ -1,7 +1,9 @@
 mod app;
+mod discovery;
 mod errors;
 mod logs;
 mod network;
+mod proto;
 mod raft;
 mod serialized_state_machine;
 mod state_machine;

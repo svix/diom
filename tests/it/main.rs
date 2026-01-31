@@ -82,6 +82,7 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
             secret: None,
             seed_nodes: vec![],
             replication_request_timeout: Duration::from_millis(50),
+            startup_discovery_delay: Duration::from_millis(0),
         },
     });
 

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use axum::{
     Json,
@@ -8,24 +8,30 @@ use axum::{
 };
 use coyote_proto::MsgPack;
 use http::{StatusCode, Uri};
-use openraft::raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest};
-use serde::{Deserialize, Serialize};
-use tap::Pipe;
+use openraft::{
+    ChangeMembers,
+    raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest},
+};
+use serde::Serialize;
+use tap::{Pipe, TapFallible};
 
 use super::Node;
 use super::NodeId;
 use super::network::detect_address;
+use super::proto::*;
 use super::raft::TypeConfig;
 use crate::AppState;
 
 pub fn router() -> axum::Router<AppState> {
     // TODO: implement snapshot methods
     axum::Router::new()
+        .route("/repl/discover", get(discover))
         .route("/repl/raft/append_entries", post(append_entries))
         .route("/repl/raft/vote", post(vote))
         .route("/repl/raft/stream-snapshot", post(stream_snapshot))
         .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/raft/admin/add-learner", post(add_learner))
+        .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
         .route(
             "/repl/raft/admin/change-membership",
             post(change_membership),
@@ -105,16 +111,35 @@ async fn stream_snapshot(
 
 // Administrative functions
 
+async fn discover(State(app_state): State<AppState>) -> Json<DiscoverResponse> {
+    let cluster_name = app_state.cfg.cluster.name.clone();
+    let cluster = app_state
+        .raft
+        .with_raft_state(move |state| DiscoverClusterResponse {
+            last_committed_log_id: state.committed,
+            cluster_name,
+            state: state.server_state,
+            known_peers: state
+                .membership_state
+                .committed()
+                .nodes()
+                .map(|(nid, n)| (*nid, n.addr.parse().unwrap()))
+                .collect(),
+        })
+        .await
+        .tap_err(|err| tracing::warn!(?err, "failed to find local cluster state"))
+        .ok();
+    let response = DiscoverResponse {
+        node_id: app_state.node_id,
+        cluster,
+    };
+    Json(response)
+}
+
 async fn metrics(State(state): State<AppState>) -> impl IntoResponse {
     let metrics = state.raft.metrics().borrow().clone();
 
     Json(metrics)
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct AddLearnerRequest {
-    node_id: NodeId,
-    address: String,
 }
 
 async fn add_learner(
@@ -129,9 +154,12 @@ async fn add_learner(
     admin_response(state.raft.add_learner(request.node_id, node, true).await)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-struct ChangeMembershipRequest {
-    desired_node_ids: BTreeSet<NodeId>,
+async fn upgrade_learner(
+    State(state): State<AppState>,
+    request: Json<UpgradeLearnerRequest>,
+) -> impl IntoResponse {
+    let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
+    admin_response(state.raft.change_membership(request, true).await)
 }
 
 async fn change_membership(

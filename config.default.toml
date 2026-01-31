@@ -57,6 +57,8 @@ replication_request_timeout_ms = 30000
 discovery_request_timeout_ms = 10000
 # how long should we poll for discovery after booting
 discovery_timeout_ms = 30000
+# how long to wait before starting discovery to allow the axum app to boot
+startup_discovery_delay_ms = 10
 
 # the time to handshake all cluster connections
 connection_timeout_ms = 3100

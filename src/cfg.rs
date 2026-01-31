@@ -101,6 +101,12 @@ pub struct ClusterConfiguration {
         with = "crate::serde::duration::millis"
     )]
     pub discovery_timeout: Duration,
+
+    #[serde(
+        rename = "startup_discovery_delay_ms",
+        with = "crate::serde::duration::millis"
+    )]
+    pub startup_discovery_delay: Duration,
 }
 
 #[derive(Clone, Debug, Deserialize)]

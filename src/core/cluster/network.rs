@@ -1,16 +1,36 @@
 use std::net::SocketAddr;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crate::cfg::Configuration;
 
 use super::raft::TypeConfig;
 use super::{Node, NodeId};
-use http::header;
+use anyhow::Context;
+use http::{HeaderMap, HeaderValue, header};
 use openraft::error::{NetworkError, RPCError, Unreachable};
 use openraft::network::RPCOption;
 use openraft::{RaftNetwork, RaftNetworkFactory, RaftTypeConfig};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
+
+pub(super) fn build_client(
+    cfg: &Configuration,
+    _request_timeout: Duration,
+) -> anyhow::Result<reqwest::Client> {
+    let mut headers = HeaderMap::new();
+    if let Some(secret) = &cfg.cluster.secret {
+        let header_value = format!("Bearer {secret}");
+        let header_value =
+            HeaderValue::from_str(&header_value).context("invalid interserver secret")?;
+        headers.insert(header::AUTHORIZATION, header_value);
+    }
+    let client = reqwest::Client::builder()
+        .connect_timeout(cfg.cluster.connection_timeout)
+        .default_headers(headers)
+        .build()
+        .context("building raft network client")?;
+    Ok(client)
+}
 
 pub(super) struct NetworkFactory {
     client: reqwest::Client,
@@ -19,9 +39,7 @@ pub(super) struct NetworkFactory {
 impl NetworkFactory {
     pub(super) fn new(cfg: &Configuration) -> Self {
         Self {
-            client: reqwest::Client::builder()
-                .connect_timeout(cfg.cluster.connection_timeout)
-                .build()
+            client: build_client(cfg, cfg.cluster.replication_request_timeout)
                 .expect("failed to build Raft network"),
         }
     }
