@@ -34,9 +34,11 @@ coyote-kv.workspace = true
 coyote-proto.workspace = true
 coyote-rate-limiter.workspace = true
 fjall.workspace = true
+futures-util.workspace = true
 http.workspace = true
 idna_adapter.workspace = true
 indexmap.workspace = true
+itertools.workspace = true
 jiff.workspace = true
 jwt-simple.workspace = true
 openraft.workspace = true
@@ -47,6 +49,7 @@ opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
 paste.workspace = true
 pnet.workspace = true
+rand.workspace = true
 regex.workspace = true
 reqwest.workspace = true
 rmp-serde.workspace = true
@@ -123,6 +126,7 @@ dirs = "6.0.0"
 dotenvy = "0.15.7"
 fjall = { version = "3.0.1", features = ["lz4", "metrics"] }
 fjall-utils.path = "crates/fjall-utils"
+futures-util = "0.3"
 hashlink = "0.11"
 hex = "0.4.3"
 hickory-resolver = "0.25.2"
@@ -228,3 +232,6 @@ debug = 0
 # nearly as often as workspace crates in local development.
 opt-level = 3
 strip = true
+
+[patch.crates-io]
+dotenvy = { git = "https://github.com/svix-jbrown/dotenvy.git", rev = "ffa0aa149e2c6da57113859001257f0d99b43431" }

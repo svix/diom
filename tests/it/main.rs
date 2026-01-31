@@ -76,6 +76,12 @@ async fn start_server() -> (TestClient, IsolatedServerHandle) {
             heartbeat_interval_ms: 100,
             election_timeout_min_ms: 200,
             election_timeout_max_ms: 300,
+            auto_initialize: true,
+            discovery_request_timeout: Duration::from_millis(10),
+            discovery_timeout: Duration::from_secs(1),
+            secret: None,
+            seed_nodes: vec![],
+            replication_request_timeout: Duration::from_millis(50),
         },
     });
 

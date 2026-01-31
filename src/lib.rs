@@ -42,6 +42,7 @@ pub mod cfg;
 pub mod core;
 pub use coyote_error as error;
 pub mod openapi;
+mod serde;
 pub mod v1;
 
 const CRATE_NAME: &str = env!("CARGO_CRATE_NAME");
