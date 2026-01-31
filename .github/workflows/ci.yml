@@ -66,7 +66,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: just test --run-ignored all
+      - run: just test --profile ci
   check-codegen:
     name: Check openapi.json and SDKs
     runs-on: ubuntu-24.04
