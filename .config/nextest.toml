@@ -1,0 +1,6 @@
+[profile.default]
+default-filter = 'not test(~openraft_slow)'
+
+[profile.ci]
+fail-fast = false
+default-filter = 'all()'
