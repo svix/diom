@@ -11,6 +11,8 @@ edition = "2024"
 ignored = [
     # not a direct dependency, but we want to pin its version
     "idna_adapter",
+    # required by aide::OperationIo derive macro
+    "schemars",
 ]
 
 [features]
@@ -53,7 +55,6 @@ rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_path_to_error.workspace = true
 stream.workspace = true
 tap.workspace = true
 tokio.workspace = true

@@ -10,10 +10,15 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use hyper::StatusCode;
-use schemars::JsonSchema;
 use serde::Serialize;
 use serde_json::json;
 use tokio::task::JoinError;
+
+mod validation;
+
+pub use self::validation::{
+    ValidationErrorItem, ValidationHttpError, validation_error, validation_errors,
+};
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Diom'es [Error].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -159,33 +164,10 @@ pub struct StandardHttpError {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ValidationHttpError {
-    detail: Vec<ValidationErrorItem>,
-}
-
-#[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum HttpErrorBody {
     Standard(StandardHttpError),
     Validation(ValidationHttpError),
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]
-/// Validation errors have their own schema to provide context for invalid requests eg. mismatched
-/// types and out of bounds values. There may be any number of these per 422 UNPROCESSABLE ENTITY
-/// error.
-pub struct ValidationErrorItem {
-    /// The location as a [`Vec`] of [`String`]s -- often in the form `["body", "field_name"]`,
-    /// `["query", "field_name"]`, etc. They may, however, be arbitrarily deep.
-    pub loc: Vec<String>,
-
-    /// The message accompanying the validation error item.
-    pub msg: String,
-
-    /// The type of error, often "type_error" or "value_error", but sometimes with more context like
-    /// as "value_error.number.not_ge"
-    #[serde(rename = "type")]
-    pub ty: String,
 }
 
 #[derive(Debug, Clone)]
