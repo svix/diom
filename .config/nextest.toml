@@ -1,6 +1,11 @@
 [profile.default]
 default-filter = 'not test(~openraft_slow)'
+slow-timeout = { period = "10s", terminate-after = 4 }
 
 [profile.ci]
 fail-fast = false
 default-filter = 'all()'
+
+[[profile.ci.overrides]]
+filter = 'test(~openraft_slow)'
+slow-timeout = { period = "60s", terminate-after = 1}
