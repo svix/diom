@@ -897,7 +897,6 @@ dependencies = [
  "schemars 1.2.0",
  "serde",
  "serde_json",
- "serde_path_to_error",
  "stream",
  "tap",
  "tempfile",
@@ -994,6 +993,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
+ "validator",
 ]
 
 [[package]]
@@ -1034,13 +1034,19 @@ dependencies = [
 name = "coyote-proto"
 version = "1.76.1"
 dependencies = [
+ "aide 0.16.0-alpha.2",
  "axum",
  "bytes",
+ "coyote-error",
  "http",
  "mime",
  "rmp-serde",
+ "schemars 1.2.0",
  "serde",
+ "serde_json",
+ "serde_path_to_error",
  "tracing",
+ "validator",
 ]
 
 [[package]]

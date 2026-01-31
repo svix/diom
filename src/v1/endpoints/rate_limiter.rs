@@ -6,17 +6,13 @@ use std::time::Duration;
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
+use coyote_proto::ValidatedJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::types::EntityKey,
-    error::Result,
-    v1::utils::{ValidatedJson, openapi_tag},
-};
+use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
 use coyote_rate_limiter::{RateLimitConfig, RateLimitResult, TokenBucket};
