@@ -67,6 +67,19 @@ impl From<StreamAckRangeOptions> for coyote_client::api::StreamAckRangeOptions {
     }
 }
 
+#[derive(Args, Clone)]
+pub struct StreamAckOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<StreamAckOptions> for coyote_client::api::StreamAckOptions {
+    fn from(value: StreamAckOptions) -> Self {
+        let StreamAckOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct StreamArgs {
@@ -112,6 +125,12 @@ pub enum StreamCommands {
         ack_msg_range_in: crate::json::JsonOf<coyote_client::models::AckMsgRangeIn>,
         #[clap(flatten)]
         options: StreamAckRangeOptions,
+    },
+    /// Acks a single message.
+    Ack {
+        ack: crate::json::JsonOf<coyote_client::models::Ack>,
+        #[clap(flatten)]
+        options: StreamAckOptions,
     },
 }
 
@@ -169,6 +188,13 @@ impl StreamCommands {
                 let resp = client
                     .stream()
                     .ack_range(ack_msg_range_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Ack { ack, options } => {
+                let resp = client
+                    .stream()
+                    .ack(ack.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

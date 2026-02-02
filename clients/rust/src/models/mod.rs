@@ -1,6 +1,7 @@
 // this file is @generated
 #![allow(clippy::too_many_arguments)]
 
+mod ack;
 mod ack_msg_range_in;
 mod ack_msg_range_in_out;
 mod append_to_stream_in;
@@ -32,7 +33,7 @@ mod rate_limiter_get_remaining_in;
 mod rate_limiter_get_remaining_out;
 
 pub use self::{
-    ack_msg_range_in::AckMsgRangeIn, ack_msg_range_in_out::AckMsgRangeInOut,
+    ack::Ack, ack_msg_range_in::AckMsgRangeIn, ack_msg_range_in_out::AckMsgRangeInOut,
     append_to_stream_in::AppendToStreamIn, append_to_stream_out::AppendToStreamOut,
     cache_delete_in::CacheDeleteIn, cache_delete_out::CacheDeleteOut, cache_get_in::CacheGetIn,
     cache_get_out::CacheGetOut, cache_set_in::CacheSetIn, cache_set_out::CacheSetOut,
