@@ -21,20 +21,21 @@ where
     type Rejection = Error;
 
     async fn from_request(req: Request, state: &S) -> Result<Self> {
-        let b = bytes::Bytes::from_request(req, state).await.map_err(|e| {
-            tracing::error!("Error reading body as bytes: {}", e);
-
-            match e {
+        let b = bytes::Bytes::from_request(req, state)
+            .await
+            .map_err(|e| match e {
                 BytesRejection::FailedToBufferBody(FailedToBufferBody::LengthLimitError(_)) => {
                     HttpError::too_large(None, None)
                 }
 
-                _ => HttpError::internal_server_error(
-                    None,
-                    Some("Failed to read request body".to_owned()),
-                ),
-            }
-        })?;
+                _ => {
+                    tracing::error!("Error reading body as bytes: {e}");
+                    HttpError::internal_server_error(
+                        None,
+                        Some("Failed to read request body".to_owned()),
+                    )
+                }
+            })?;
         let mut de = serde_json::Deserializer::from_slice(&b);
 
         let value: T = serde_path_to_error::deserialize(&mut de).map_err(|e| {
