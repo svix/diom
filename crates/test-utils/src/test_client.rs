@@ -11,6 +11,8 @@ use reqwest::StatusCode;
 use serde::Serialize;
 use url::Url;
 
+const APPLICATION_MSGPACK: HeaderValue = HeaderValue::from_static("application/msgpack");
+
 #[derive(Clone, Debug)]
 pub struct TestClient {
     pub base_uri: String,
@@ -130,6 +132,16 @@ impl TestRequestBuilder<'_> {
         assert!(self.body.is_none());
         self.headers.insert(header::CONTENT_TYPE, APPLICATION_JSON);
         self.body = Some(serde_json::to_vec(&body).unwrap().into());
+        self
+    }
+
+    #[must_use]
+    #[track_caller]
+    pub fn msgpack(mut self, body: impl Serialize) -> Self {
+        assert!(self.body.is_none());
+        self.headers
+            .insert(header::CONTENT_TYPE, APPLICATION_MSGPACK);
+        self.body = Some(rmp_serde::to_vec_named(&body).unwrap().into());
         self
     }
 

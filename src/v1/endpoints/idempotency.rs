@@ -4,7 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use diom_derive::aide_annotate;
-use diom_proto::ValidatedJson;
+use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -71,7 +71,7 @@ pub struct IdempotencyAbandonOut {}
 #[aide_annotate(op_id = "v1.idempotency.start")]
 async fn idempotency_start(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<IdempotencyStartIn>,
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyStartIn>,
 ) -> Result<Json<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
 
@@ -92,7 +92,7 @@ async fn idempotency_start(
 #[aide_annotate(op_id = "v1.idempotency.complete")]
 async fn idempotency_complete(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<IdempotencyCompleteIn>,
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyCompleteIn>,
 ) -> Result<Json<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
 
@@ -106,7 +106,7 @@ async fn idempotency_complete(
 #[aide_annotate(op_id = "v1.idempotency.abandon")]
 async fn idempotency_abandon(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<IdempotencyAbandonIn>,
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbandonIn>,
 ) -> Result<Json<IdempotencyAbandonOut>> {
     let key_str = data.key.to_string();
 

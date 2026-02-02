@@ -4,7 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use diom_derive::aide_annotate;
-use diom_proto::ValidatedJson;
+use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -112,7 +112,7 @@ pub struct KvDeleteOut {
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<KvSetIn>,
+    MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
 ) -> Result<Json<KvSetOut>> {
     let mut kv_store = state.kv_store_by_key(&data.key.0)?;
 
@@ -132,7 +132,7 @@ async fn kv_set(
 #[aide_annotate(op_id = "v1.kv.get")]
 async fn kv_get(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<KvGetIn>,
+    MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
 ) -> Result<Json<KvGetOut>> {
     let mut kv_store = state.kv_store_by_key(&data.key.0)?;
 
@@ -154,7 +154,7 @@ async fn kv_get(
 #[aide_annotate(op_id = "v1.kv.delete")]
 async fn kv_del(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<KvDeleteIn>,
+    MsgPackOrJson(data): MsgPackOrJson<KvDeleteIn>,
 ) -> Result<Json<KvDeleteOut>> {
     let mut kv_store = state.kv_store_by_key(&data.key.0)?;
 
