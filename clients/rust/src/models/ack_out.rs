@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct AckMsgRangeInOut {}
+pub struct AckOut {}
 
-impl AckMsgRangeInOut {
+impl AckOut {
     pub fn new() -> Self {
         Self {}
     }

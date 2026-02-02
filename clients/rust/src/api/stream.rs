@@ -112,7 +112,7 @@ impl<'a> Stream<'a> {
         &self,
         ack_msg_range_in: AckMsgRangeIn,
         options: Option<StreamAckRangeOptions>,
-    ) -> Result<AckMsgRangeInOut> {
+    ) -> Result<AckMsgRangeOut> {
         let StreamAckRangeOptions { idempotency_key } = options.unwrap_or_default();
 
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack-range")
@@ -123,11 +123,7 @@ impl<'a> Stream<'a> {
     }
 
     /// Acks a single message.
-    pub async fn ack(
-        &self,
-        ack: Ack,
-        options: Option<StreamAckOptions>,
-    ) -> Result<AckMsgRangeInOut> {
+    pub async fn ack(&self, ack: Ack, options: Option<StreamAckOptions>) -> Result<AckOut> {
         let StreamAckOptions { idempotency_key } = options.unwrap_or_default();
 
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack")

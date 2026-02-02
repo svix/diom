@@ -801,7 +801,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AckMsgRangeInOut"
+                  "$ref": "#/components/schemas/AckMsgRangeOut"
                 }
               }
             }
@@ -849,7 +849,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AckMsgRangeInOut"
+                  "$ref": "#/components/schemas/AckOut"
                 }
               }
             }
@@ -920,7 +920,10 @@
           "maxMsgId"
         ]
       },
-      "AckMsgRangeInOut": {
+      "AckMsgRangeOut": {
+        "type": "object"
+      },
+      "AckOut": {
         "type": "object"
       },
       "AppendToStreamIn": {

@@ -3,7 +3,8 @@
 
 mod ack;
 mod ack_msg_range_in;
-mod ack_msg_range_in_out;
+mod ack_msg_range_out;
+mod ack_out;
 mod append_to_stream_in;
 mod append_to_stream_out;
 mod cache_delete_in;
@@ -33,7 +34,7 @@ mod rate_limiter_get_remaining_in;
 mod rate_limiter_get_remaining_out;
 
 pub use self::{
-    ack::Ack, ack_msg_range_in::AckMsgRangeIn, ack_msg_range_in_out::AckMsgRangeInOut,
+    ack::Ack, ack_msg_range_in::AckMsgRangeIn, ack_msg_range_out::AckMsgRangeOut, ack_out::AckOut,
     append_to_stream_in::AppendToStreamIn, append_to_stream_out::AppendToStreamOut,
     cache_delete_in::CacheDeleteIn, cache_delete_out::CacheDeleteOut, cache_get_in::CacheGetIn,
     cache_get_out::CacheGetOut, cache_set_in::CacheSetIn, cache_set_out::CacheSetOut,
