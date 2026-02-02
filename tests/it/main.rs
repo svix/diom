@@ -1,5 +1,6 @@
 mod cache;
 mod kv;
+mod msgpack;
 mod rate_limiter;
 mod stream;
 
