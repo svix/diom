@@ -10,7 +10,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::Result;
-use coyote_proto::ValidatedJson;
+use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -46,7 +46,7 @@ pub struct CreateStreamOut {
 #[aide_annotate(op_id = "v1.stream.create")]
 async fn create_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CreateStreamIn>,
+    MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
 ) -> Result<Json<CreateStreamOut>> {
     /*
     FIXME(@svix-gabriel)
@@ -105,7 +105,7 @@ pub struct AppendToStreamOut {
 #[aide_annotate(op_id = "v1.stream.append")]
 async fn append_to_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<AppendToStreamIn>,
+    MsgPackOrJson(data): MsgPackOrJson<AppendToStreamIn>,
 ) -> Result<Json<AppendToStreamOut>> {
     /*
     FIXME(@svix-gabriel)
@@ -155,7 +155,7 @@ pub struct FetchFromStreamOut {
 #[aide_annotate(op_id = "v1.stream.fetch-locking")]
 async fn locking_fetch_from_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<FetchFromStreamIn>,
+    MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<Json<FetchFromStreamOut>> {
     /*
     FIXME(@svix-gabriel)
@@ -191,7 +191,7 @@ async fn locking_fetch_from_stream(
 #[aide_annotate(op_id = "v1.stream.fetch")]
 async fn fetch_from_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<FetchFromStreamIn>,
+    MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<Json<FetchFromStreamOut>> {
     /*
     FIXME(@svix-gabriel)
@@ -236,7 +236,7 @@ pub struct AckOut {}
 #[aide_annotate(op_id = "v1.stream.ack")]
 async fn ack(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<AckIn>,
+    MsgPackOrJson(data): MsgPackOrJson<AckIn>,
 ) -> Result<Json<AckOut>> {
     /*
     FIXME(@svix-gabriel)

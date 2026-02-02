@@ -1,4 +1,4 @@
 mod msgpack;
-mod validated_json;
+mod msgpack_or_json;
 
-pub use self::{msgpack::MsgPack, validated_json::ValidatedJson};
+pub use self::{msgpack::MsgPack, msgpack_or_json::MsgPackOrJson};

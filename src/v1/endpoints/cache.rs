@@ -6,7 +6,7 @@ use std::time::Duration;
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Json, extract::State};
 use coyote_derive::aide_annotate;
-use coyote_proto::ValidatedJson;
+use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -91,7 +91,7 @@ pub struct CacheDeleteOut {
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CacheSetIn>,
+    MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
 ) -> Result<Json<CacheSetOut>> {
     let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     let key = data.key.clone();
@@ -103,7 +103,7 @@ async fn cache_set(
 #[aide_annotate(op_id = "v1.cache.get")]
 async fn cache_get(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CacheGetIn>,
+    MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
 ) -> Result<Json<CacheGetOut>> {
     let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     let model = cache_store
@@ -116,7 +116,7 @@ async fn cache_get(
 #[aide_annotate(op_id = "v1.cache.delete")]
 async fn cache_del(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CacheDeleteIn>,
+    MsgPackOrJson(data): MsgPackOrJson<CacheDeleteIn>,
 ) -> Result<Json<CacheDeleteOut>> {
     let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     cache_store.delete(&data.key)?;
