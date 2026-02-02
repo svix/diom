@@ -10,18 +10,19 @@ pub struct KvSetIn {
     pub behavior: Option<OperationBehavior>,
 
     /// Time to live in milliseconds
-    pub expire_in: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expire_in: Option<u64>,
 
     pub key: String,
 
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvSetIn {
-    pub fn new(expire_in: u64, key: String, value: String) -> Self {
+    pub fn new(key: String, value: Vec<u8>) -> Self {
         Self {
             behavior: None,
-            expire_in,
+            expire_in: None,
             key,
             value,
         }

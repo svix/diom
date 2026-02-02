@@ -1241,7 +1241,13 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "value": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
           }
         },
         "required": [
@@ -1260,7 +1266,8 @@
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 1,
+            "nullable": true
           },
           "key": {
             "type": "string",
@@ -1269,12 +1276,17 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "value": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
           }
         },
         "required": [
           "key",
-          "expire_in",
           "value"
         ]
       },
