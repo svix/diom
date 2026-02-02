@@ -221,7 +221,7 @@ async fn fetch_from_stream(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AckIn {
+pub struct AckMsgRangeIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
     min_msg_id: Option<MsgId>,
@@ -230,14 +230,14 @@ pub struct AckIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AckOut {}
+pub struct AckMsgRangeInOut {}
 
 /// Acks the messages for the consumer group, allowing more messages to be consumed.
-#[aide_annotate(op_id = "v1.stream.ack")]
-async fn ack(
+#[aide_annotate(op_id = "v1.stream.ack-range")]
+async fn ack_range(
     State(AppState { stream_state, .. }): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<AckIn>,
-) -> Result<MsgPackOrJson<AckOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<AckMsgRangeIn>,
+) -> Result<MsgPackOrJson<AckMsgRangeInOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -261,7 +261,7 @@ async fn ack(
     })
     .await??;
 
-    Ok(MsgPackOrJson(AckOut {}))
+    Ok(MsgPackOrJson(AckMsgRangeInOut {}))
 }
 
 pub fn router() -> ApiRouter<AppState> {
@@ -291,5 +291,9 @@ pub fn router() -> ApiRouter<AppState> {
             ),
             &tag,
         )
-        .api_route_with("/stream/ack", post_with(ack, ack_operation), &tag)
+        .api_route_with(
+            "/stream/ack-range",
+            post_with(ack_range, ack_range_operation),
+            &tag,
+        )
 }

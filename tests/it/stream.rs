@@ -126,7 +126,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     // Ack the first batch
     let max_msg_id = &msgs1[2]["id"];
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",
@@ -298,7 +298,7 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
     // Ack the first batch
     let max_msg_id = &msgs1[1]["id"];
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",
@@ -514,7 +514,7 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
 
     // Ack C + D
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",
@@ -625,7 +625,7 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
     // Ack a range that overlaps both blocks but doesn't fully cover either:
     // minMsgId=1, maxMsgId=4 acks B, C, D, E (but NOT A or F)
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",

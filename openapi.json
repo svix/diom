@@ -766,14 +766,14 @@
         ]
       }
     },
-    "/api/v1/stream/ack": {
+    "/api/v1/stream/ack-range": {
       "post": {
         "tags": [
           "Stream"
         ],
-        "summary": "Ack",
+        "summary": "Ack Range",
         "description": "Acks the messages for the consumer group, allowing more messages to be consumed.",
-        "operationId": "v1.stream.ack",
+        "operationId": "v1.stream.ack-range",
         "parameters": [
           {
             "in": "header",
@@ -789,7 +789,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AckIn"
+                "$ref": "#/components/schemas/AckMsgRangeIn"
               }
             }
           },
@@ -801,7 +801,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AckOut"
+                  "$ref": "#/components/schemas/AckMsgRangeInOut"
                 }
               }
             }
@@ -824,7 +824,7 @@
       }
     },
     "schemas": {
-      "AckIn": {
+      "AckMsgRangeIn": {
         "type": "object",
         "properties": {
           "consumerGroup": {
@@ -851,7 +851,7 @@
           "maxMsgId"
         ]
       },
-      "AckOut": {
+      "AckMsgRangeInOut": {
         "type": "object"
       },
       "AppendToStreamIn": {

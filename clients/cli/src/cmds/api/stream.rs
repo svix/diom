@@ -55,14 +55,14 @@ impl From<StreamFetchLockingOptions> for coyote_client::api::StreamFetchLockingO
 }
 
 #[derive(Args, Clone)]
-pub struct StreamAckOptions {
+pub struct StreamAckRangeOptions {
     #[arg(long)]
     pub idempotency_key: Option<String>,
 }
 
-impl From<StreamAckOptions> for coyote_client::api::StreamAckOptions {
-    fn from(value: StreamAckOptions) -> Self {
-        let StreamAckOptions { idempotency_key } = value;
+impl From<StreamAckRangeOptions> for coyote_client::api::StreamAckRangeOptions {
+    fn from(value: StreamAckRangeOptions) -> Self {
+        let StreamAckRangeOptions { idempotency_key } = value;
         Self { idempotency_key }
     }
 }
@@ -108,10 +108,10 @@ pub enum StreamCommands {
         options: StreamFetchLockingOptions,
     },
     /// Acks the messages for the consumer group, allowing more messages to be consumed.
-    Ack {
-        ack_in: crate::json::JsonOf<coyote_client::models::AckIn>,
+    AckRange {
+        ack_msg_range_in: crate::json::JsonOf<coyote_client::models::AckMsgRangeIn>,
         #[clap(flatten)]
-        options: StreamAckOptions,
+        options: StreamAckRangeOptions,
     },
 }
 
@@ -162,10 +162,13 @@ impl StreamCommands {
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Ack { ack_in, options } => {
+            Self::AckRange {
+                ack_msg_range_in,
+                options,
+            } => {
                 let resp = client
                     .stream()
-                    .ack(ack_in.into_inner(), Some(options.into()))
+                    .ack_range(ack_msg_range_in.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
