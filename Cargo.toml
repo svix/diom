@@ -72,6 +72,7 @@ zip.workspace = true
 [dev-dependencies]
 assert_matches.workspace = true
 ctor.workspace = true
+rmp-serde.workspace = true
 rmpv.workspace = true
 tempfile.workspace = true
 test-utils.workspace = true
@@ -174,7 +175,7 @@ test-utils.path = "crates/test-utils"
 tokio = { version = "1.24.2", features = ["rt", "signal", "fs"] }
 tokio-util = "0.7"
 tower = "0.5.1"
-tower-http = { version = "0.6.1", features = ["trace", "cors", "normalize-path", "request-id"] }
+tower-http = { version = "0.6.1", features = ["cors", "normalize-path", "request-id", "trace", "util"] }
 tower-service = "0.3.3"
 tracing = "0.1.35"
 tracing-opentelemetry = "0.32.1"

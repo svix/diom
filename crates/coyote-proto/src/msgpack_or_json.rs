@@ -1,3 +1,5 @@
+#![expect(clippy::disallowed_types)] // FIXME: currently triggers due to input_with / output_with
+
 use aide::OperationIo;
 use axum::{
     RequestExt as _,
@@ -5,18 +7,63 @@ use axum::{
         FromRequest, Request,
         rejection::{BytesRejection, FailedToBufferBody},
     },
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
-use bytes::Bytes;
-use coyote_error::{Error, HttpError, Result, ValidationErrorItem, validation_errors};
-use http::{HeaderMap, header};
-use serde::de::DeserializeOwned;
+use bytes::{BufMut as _, Bytes, BytesMut};
+use coyote_error::{
+    Error, HttpError, Result, ResultExt as _, ValidationErrorItem, validation_errors,
+};
+use http::{HeaderMap, HeaderValue, header};
+use serde::{Serialize, de::DeserializeOwned};
 use validator::Validate;
+
+tokio::task_local! {
+    static RESPONSE_CONTENT_TYPE: SupportedContentType;
+}
+
+/// Middleware that captures the `accept` header on incoming requests and makes it available for
+/// [`MsgPackOrJson`]'s `IntoResponse` implementation.
+pub fn capture_accept_hdr(request: Request, next: Next) -> impl Future<Output = Response> {
+    let headers = request.headers();
+    let accept = headers.get(header::ACCEPT);
+
+    let accept_msgpack = accept.is_some_and(|hdr_val| {
+        hdr_val
+            .as_bytes()
+            .split(|&b| b == b',')
+            // FIXME: Does not support q-values
+            .any(|accept| accept == mime::APPLICATION_MSGPACK.as_ref().as_bytes())
+    });
+
+    // FIXME: What to do if accept is set but contains neither msgpack or JSON? Return an error?
+    let res_content_type = if accept_msgpack
+        || accept.is_none()
+            && headers
+                .get(header::CONTENT_TYPE)
+                .is_some_and(|hdr_val| hdr_val == mime::APPLICATION_MSGPACK.as_ref().as_bytes())
+    {
+        // If explicitly accepted, or no accept header is specified
+        // but request content-type is msgpack, use msgpack
+        SupportedContentType::MsgPack
+    } else {
+        // Otherwise, use JSON
+        SupportedContentType::Json
+    };
+
+    RESPONSE_CONTENT_TYPE.scope(res_content_type, next.run(request))
+}
 
 /// MsgPack-or-JSON extractor.
 ///
 /// Validates incoming bodies using the [`Validate`] trait.
 #[derive(Debug, Clone, Copy, Default, OperationIo)]
-#[aide(input_with = "axum::extract::Json<T>", json_schema)] // FIXME: Also document MsgPack
+#[aide(
+    // FIXME: Also document MsgPack
+    input_with = "axum::Json<T>",
+    output_with = "axum::Json<T>",
+    json_schema
+)]
 pub struct MsgPackOrJson<T>(pub T);
 
 impl<T, S> FromRequest<S> for MsgPackOrJson<T>
@@ -84,6 +131,53 @@ where
     }
 }
 
+impl<T> IntoResponse for MsgPackOrJson<T>
+where
+    T: Serialize,
+{
+    fn into_response(self) -> Response {
+        // Extracted into separate fn so it's only compiled once for all T.
+        fn make_response(
+            buf: BytesMut,
+            content_type: &'static mime::Mime,
+            ser_result: Result<()>,
+        ) -> Response {
+            match ser_result {
+                Ok(()) => (
+                    [(
+                        header::CONTENT_TYPE,
+                        HeaderValue::from_static(content_type.as_ref()),
+                    )],
+                    buf.freeze(),
+                )
+                    .into_response(),
+                Err(err) => err.into_response(),
+            }
+        }
+
+        let res_content_type = RESPONSE_CONTENT_TYPE.try_get().unwrap_or_else(|_| {
+            tracing::error!(
+                "MsgPackOrJson used as response without capture_accept_hdr, falling back to JSON"
+            );
+            SupportedContentType::Json
+        });
+
+        let mut buf = BytesMut::with_capacity(128).writer();
+        let (content_type, res) = match res_content_type {
+            SupportedContentType::MsgPack => (
+                &mime::APPLICATION_MSGPACK,
+                rmp_serde::encode::write_named(&mut buf, &self.0).map_err_generic(),
+            ),
+            SupportedContentType::Json => (
+                &mime::APPLICATION_JSON,
+                serde_json::to_writer(&mut buf, &self.0).map_err_generic(),
+            ),
+        };
+        make_response(buf.into_inner(), content_type, res)
+    }
+}
+
+#[derive(Clone, Copy)]
 enum SupportedContentType {
     MsgPack,
     Json,

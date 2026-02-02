@@ -4,7 +4,7 @@
 use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use coyote_derive::aide_annotate;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -92,11 +92,11 @@ pub struct CacheDeleteOut {
 async fn cache_set(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
-) -> Result<Json<CacheSetOut>> {
+) -> Result<MsgPackOrJson<CacheSetOut>> {
     let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     let key = data.key.clone();
     cache_store.set(key.as_str(), data.into_model())?;
-    Ok(Json(CacheSetOut {}))
+    Ok(MsgPackOrJson(CacheSetOut {}))
 }
 
 /// Cache Get
@@ -104,12 +104,12 @@ async fn cache_set(
 async fn cache_get(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
-) -> Result<Json<CacheGetOut>> {
+) -> Result<MsgPackOrJson<CacheGetOut>> {
     let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     let model = cache_store
         .get(&data.key)?
         .ok_or_else(|| crate::error::HttpError::not_found(None, None))?;
-    Ok(Json(CacheGetOut::from_model(data.key, model)))
+    Ok(MsgPackOrJson(CacheGetOut::from_model(data.key, model)))
 }
 
 /// Cache Delete
@@ -117,10 +117,10 @@ async fn cache_get(
 async fn cache_del(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheDeleteIn>,
-) -> Result<Json<CacheDeleteOut>> {
+) -> Result<MsgPackOrJson<CacheDeleteOut>> {
     let mut cache_store = state.cache_store_by_key(&data.key.0)?;
     cache_store.delete(&data.key)?;
-    Ok(Json(CacheDeleteOut { deleted: true }))
+    Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }
 
 pub fn router() -> ApiRouter<AppState> {

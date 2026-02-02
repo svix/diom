@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use coyote_derive::aide_annotate;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -113,7 +113,7 @@ pub struct KvDeleteOut {
 async fn kv_set(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
-) -> Result<Json<KvSetOut>> {
+) -> Result<MsgPackOrJson<KvSetOut>> {
     let mut kv_store = state.kv_store_by_key(&data.key.0)?;
 
     let key = data.key.clone();
@@ -125,7 +125,7 @@ async fn kv_set(
         .map_err(|e| crate::error::Error::generic(e))?;
 
     let ret = KvSetOut {};
-    Ok(Json(ret))
+    Ok(MsgPackOrJson(ret))
 }
 
 /// KV Get
@@ -133,7 +133,7 @@ async fn kv_set(
 async fn kv_get(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
-) -> Result<Json<KvGetOut>> {
+) -> Result<MsgPackOrJson<KvGetOut>> {
     let mut kv_store = state.kv_store_by_key(&data.key.0)?;
 
     let model = kv_store
@@ -147,7 +147,7 @@ async fn kv_get(
             ));
         }
     };
-    Ok(Json(ret))
+    Ok(MsgPackOrJson(ret))
 }
 
 /// KV Delete
@@ -155,7 +155,7 @@ async fn kv_get(
 async fn kv_del(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvDeleteIn>,
-) -> Result<Json<KvDeleteOut>> {
+) -> Result<MsgPackOrJson<KvDeleteOut>> {
     let mut kv_store = state.kv_store_by_key(&data.key.0)?;
 
     let deleted = kv_store
@@ -163,7 +163,7 @@ async fn kv_del(
         .map_err(|e| crate::error::Error::generic(e))
         .is_ok();
     let ret = KvDeleteOut { deleted };
-    Ok(Json(ret))
+    Ok(MsgPackOrJson(ret))
 }
 
 pub fn router() -> ApiRouter<AppState> {
