@@ -1,10 +1,11 @@
+use coyote_error::Result;
+use jiff::Timestamp;
+
 use crate::{
     State,
     entities::{MsgId, MsgIn, StreamId, StreamName},
     tables::{MsgRow, NameToStreamRow, msg_row_key},
 };
-use coyote_error::Result;
-use jiff::Timestamp;
 
 pub struct AppendToStream {
     stream_id: StreamId,

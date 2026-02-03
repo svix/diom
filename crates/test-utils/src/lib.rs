@@ -1,10 +1,10 @@
 use std::fmt::{Debug, Display};
 
+pub use reqwest::StatusCode;
+
 mod test_client;
 
-pub use test_client::{TestClient, TestRequestBuilder, TestResponse};
-
-pub use reqwest::StatusCode;
+pub use self::test_client::{TestClient, TestRequestBuilder, TestResponse};
 
 #[derive(Debug)] // needed to be able to return TestResult from #[test] fns
 pub enum TestError {}

@@ -1,6 +1,6 @@
 mod table_row;
 
-pub use table_row::{TableRow, WriteBatchExt};
+pub use self::table_row::{TableRow, WriteBatchExt};
 
 /// Useful for verifying all table prefixes for a given keyspace are unique,
 /// at compile time.

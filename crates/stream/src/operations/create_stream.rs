@@ -1,13 +1,15 @@
+use std::num::NonZeroU64;
+
+use coyote_error::Result;
+use fjall_utils::TableRow as _;
+use jiff::Timestamp;
+use uuid::Uuid;
+
 use crate::{
     State,
     entities::StreamName,
     tables::{NameToStreamRow, StreamRow},
 };
-use coyote_error::Result;
-use fjall_utils::TableRow as _;
-use jiff::Timestamp;
-use std::num::NonZeroU64;
-use uuid::Uuid;
 
 pub struct CreateStream {
     stream: StreamRow,

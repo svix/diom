@@ -91,13 +91,11 @@ pub async fn initialize_raft(cfg: &Configuration, db: Database) -> anyhow::Resul
 #[cfg(test)]
 mod tests {
     use fjall::Database;
-    use openraft::StorageIOError;
-    use openraft::testing::StoreBuilder;
+    use openraft::{StorageIOError, testing::StoreBuilder};
     use tempfile::TempDir;
 
-    use super::super::logs::CoyoteLogs;
-    use super::super::state_machine::Store;
     use super::{NodeId, TypeConfig};
+    use crate::core::cluster::{logs::CoyoteLogs, state_machine::Store};
 
     struct CoyoteStoreBuilder;
 

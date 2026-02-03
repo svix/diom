@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+use std::{sync::Arc, time::Duration};
+
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::State;
 use coyote_derive::aide_annotate;
@@ -8,7 +10,6 @@ use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{sync::Arc, time::Duration};
 use validator::Validate;
 
 use crate::{
@@ -22,8 +23,7 @@ use crate::{
 };
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::kv::KvStore as KvStoreType;
-pub use crate::v1::modules::kv::worker;
+pub use crate::v1::modules::kv::{KvStore as KvStoreType, worker};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetIn {

@@ -1,10 +1,10 @@
+use coyote_kv::{KvModel, KvStore, OperationBehavior};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::error::Result;
-use coyote_kv::{KvModel, KvStore, OperationBehavior};
 
 #[derive(Clone)]
 pub struct CacheStore {

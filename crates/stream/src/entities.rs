@@ -1,7 +1,8 @@
+use std::collections::HashMap;
+
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use uuid::Uuid;
 use validator::Validate;
 

@@ -1,12 +1,13 @@
 use std::num::NonZeroU16;
 
+use coyote_error::{HttpError, Result};
+use jiff::Timestamp;
+
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, MsgOut, StreamName},
     tables::{LeaseDiff, LeaseRow, MsgRow, NameToStreamRow},
 };
-use coyote_error::{HttpError, Result};
-use jiff::Timestamp;
 
 pub struct FetchLocking {
     lease_diff: LeaseDiff,

@@ -1,5 +1,7 @@
-use std::fmt::{self, Debug, Display, Formatter};
-use std::num::NonZeroU64;
+use std::{
+    fmt::{self, Debug, Display, Formatter},
+    num::NonZeroU64,
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};

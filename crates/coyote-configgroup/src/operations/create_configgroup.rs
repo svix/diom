@@ -1,4 +1,6 @@
+use coyote_error::Result;
 use fjall::Database;
+use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -6,8 +8,6 @@ use crate::{
     entities::{ConfigGroupId, ModuleConfig, StorageType},
     tables::ConfigGroup,
 };
-use coyote_error::Result;
-use fjall_utils::TableRow;
 
 #[derive(Deserialize, Serialize)]
 #[serde(bound = "C: ModuleConfig")]
