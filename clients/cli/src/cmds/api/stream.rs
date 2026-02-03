@@ -55,6 +55,19 @@ impl From<StreamFetchLockingOptions> for coyote_client::api::StreamFetchLockingO
 }
 
 #[derive(Args, Clone)]
+pub struct StreamAckRangeOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<StreamAckRangeOptions> for coyote_client::api::StreamAckRangeOptions {
+    fn from(value: StreamAckRangeOptions) -> Self {
+        let StreamAckRangeOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
+#[derive(Args, Clone)]
 pub struct StreamAckOptions {
     #[arg(long)]
     pub idempotency_key: Option<String>,
@@ -108,8 +121,14 @@ pub enum StreamCommands {
         options: StreamFetchLockingOptions,
     },
     /// Acks the messages for the consumer group, allowing more messages to be consumed.
+    AckRange {
+        ack_msg_range_in: crate::json::JsonOf<coyote_client::models::AckMsgRangeIn>,
+        #[clap(flatten)]
+        options: StreamAckRangeOptions,
+    },
+    /// Acks a single message.
     Ack {
-        ack_in: crate::json::JsonOf<coyote_client::models::AckIn>,
+        ack: crate::json::JsonOf<coyote_client::models::Ack>,
         #[clap(flatten)]
         options: StreamAckOptions,
     },
@@ -162,10 +181,20 @@ impl StreamCommands {
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Ack { ack_in, options } => {
+            Self::AckRange {
+                ack_msg_range_in,
+                options,
+            } => {
                 let resp = client
                     .stream()
-                    .ack(ack_in.into_inner(), Some(options.into()))
+                    .ack_range(ack_msg_range_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Ack { ack, options } => {
+                let resp = client
+                    .stream()
+                    .ack(ack.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

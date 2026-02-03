@@ -766,13 +766,61 @@
         ]
       }
     },
+    "/api/v1/stream/ack-range": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Ack Range",
+        "description": "Acks the messages for the consumer group, allowing more messages to be consumed.",
+        "operationId": "v1.stream.ack-range",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AckMsgRangeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AckMsgRangeOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/stream/ack": {
       "post": {
         "tags": [
           "Stream"
         ],
         "summary": "Ack",
-        "description": "Acks the messages for the consumer group, allowing more messages to be consumed.",
+        "description": "Acks a single message.",
         "operationId": "v1.stream.ack",
         "parameters": [
           {
@@ -789,7 +837,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AckIn"
+                "$ref": "#/components/schemas/Ack"
               }
             }
           },
@@ -824,7 +872,28 @@
       }
     },
     "schemas": {
-      "AckIn": {
+      "Ack": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "msgId": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "consumerGroup",
+          "msgId"
+        ]
+      },
+      "AckMsgRangeIn": {
         "type": "object",
         "properties": {
           "consumerGroup": {
@@ -850,6 +919,9 @@
           "consumerGroup",
           "maxMsgId"
         ]
+      },
+      "AckMsgRangeOut": {
+        "type": "object"
       },
       "AckOut": {
         "type": "object"

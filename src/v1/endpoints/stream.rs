@@ -24,7 +24,7 @@ use crate::{AppState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateStreamIn {
+struct CreateStreamIn {
     pub name: StreamName,
     /// How long messages are retained in the stream before being permanently nuked.
     pub retention_period_seconds: Option<NonZeroU64>,
@@ -34,7 +34,7 @@ pub struct CreateStreamIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateStreamOut {
+struct CreateStreamOut {
     pub name: StreamName,
     pub retention_period_seconds: Option<NonZeroU64>,
     pub max_byte_size: Option<NonZeroU64>,
@@ -90,14 +90,14 @@ async fn create_stream(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AppendToStreamIn {
+struct AppendToStreamIn {
     pub name: StreamName,
     pub msgs: Vec<MsgIn>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AppendToStreamOut {
+struct AppendToStreamOut {
     pub msg_ids: Vec<MsgId>,
 }
 
@@ -131,7 +131,7 @@ async fn append_to_stream(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct FetchFromStreamIn {
+struct FetchFromStreamIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
 
@@ -144,7 +144,7 @@ pub struct FetchFromStreamIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct FetchFromStreamOut {
+struct FetchFromStreamOut {
     msgs: Vec<MsgOut>,
 }
 
@@ -221,7 +221,7 @@ async fn fetch_from_stream(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AckIn {
+struct AckMsgRangeIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
     min_msg_id: Option<MsgId>,
@@ -230,14 +230,14 @@ pub struct AckIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AckOut {}
+struct AckMsgRangeOut {}
 
 /// Acks the messages for the consumer group, allowing more messages to be consumed.
-#[aide_annotate(op_id = "v1.stream.ack")]
-async fn ack(
+#[aide_annotate(op_id = "v1.stream.ack-range")]
+async fn ack_range(
     State(AppState { stream_state, .. }): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<AckIn>,
-) -> Result<MsgPackOrJson<AckOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<AckMsgRangeIn>,
+) -> Result<MsgPackOrJson<AckMsgRangeOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -261,8 +261,41 @@ async fn ack(
     })
     .await??;
 
+    Ok(MsgPackOrJson(AckMsgRangeOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct Ack {
+    name: StreamName,
+    consumer_group: ConsumerGroup,
+    msg_id: MsgId,
+}
+
+/// Acks a single message.
+#[aide_annotate(op_id = "v1.stream.ack")]
+async fn ack(
+    State(AppState { stream_state, .. }): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<Ack>,
+) -> Result<MsgPackOrJson<AckOut>> {
+    let _out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Ack::new(
+            &stream_state,
+            data.name,
+            data.consumer_group,
+            data.msg_id,
+            data.msg_id,
+        )?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
     Ok(MsgPackOrJson(AckOut {}))
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct AckOut {}
 
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Stream");
@@ -289,6 +322,11 @@ pub fn router() -> ApiRouter<AppState> {
                 locking_fetch_from_stream,
                 locking_fetch_from_stream_operation,
             ),
+            &tag,
+        )
+        .api_route_with(
+            "/stream/ack-range",
+            post_with(ack_range, ack_range_operation),
             &tag,
         )
         .api_route_with("/stream/ack", post_with(ack, ack_operation), &tag)
