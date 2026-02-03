@@ -4,7 +4,7 @@
 use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use diom_derive::aide_annotate;
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -88,7 +88,7 @@ pub struct RateLimiterGetRemainingOut {
 async fn rate_limiter_limit(
     State(AppState { rate_limiter, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterCheckIn>,
-) -> Result<Json<RateLimiterCheckOut>> {
+) -> Result<MsgPackOrJson<RateLimiterCheckOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
     let (result, remaining, retry_after) = rate_limiter.limit(
         now,
@@ -101,7 +101,7 @@ async fn rate_limiter_limit(
         }),
     )?;
 
-    Ok(Json(RateLimiterCheckOut {
+    Ok(MsgPackOrJson(RateLimiterCheckOut {
         result,
         remaining,
         retry_after: retry_after.map(|t| t.as_millis() as u64),
@@ -114,7 +114,7 @@ async fn rate_limiter_limit(
 async fn rate_limiter_get_remaining(
     State(AppState { rate_limiter, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetRemainingIn>,
-) -> Result<Json<RateLimiterGetRemainingOut>> {
+) -> Result<MsgPackOrJson<RateLimiterGetRemainingOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
     let (remaining, retry_after) = rate_limiter.get_remaining(
         now,
@@ -126,7 +126,7 @@ async fn rate_limiter_get_remaining(
         }),
     )?;
 
-    Ok(Json(RateLimiterGetRemainingOut {
+    Ok(MsgPackOrJson(RateLimiterGetRemainingOut {
         remaining,
         retry_after: retry_after.map(|t| t.as_millis() as u64),
     }))

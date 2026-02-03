@@ -1,16 +1,16 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use axum::{
-    Json,
     extract::State,
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use diom_proto::MsgPack;
+use diom_proto::{MsgPack, MsgPackOrJson};
 use http::{StatusCode, Uri};
 use openraft::raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest};
 use serde::{Deserialize, Serialize};
 use tap::Pipe;
+use validator::Validate;
 
 use super::Node;
 use super::NodeId;
@@ -57,8 +57,8 @@ where
     Err: Serialize,
 {
     match result {
-        Ok(ok) => (StatusCode::OK, Json(ok)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(e)).into_response(),
+        Ok(ok) => (StatusCode::OK, MsgPackOrJson(ok)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, MsgPackOrJson(e)).into_response(),
     }
 }
 
@@ -108,10 +108,10 @@ async fn stream_snapshot(
 async fn metrics(State(state): State<AppState>) -> impl IntoResponse {
     let metrics = state.raft.metrics().borrow().clone();
 
-    Json(metrics)
+    MsgPackOrJson(metrics)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Validate)]
 struct AddLearnerRequest {
     node_id: NodeId,
     address: String,
@@ -119,7 +119,7 @@ struct AddLearnerRequest {
 
 async fn add_learner(
     State(state): State<AppState>,
-    request: Json<AddLearnerRequest>,
+    MsgPackOrJson(request): MsgPackOrJson<AddLearnerRequest>,
 ) -> impl IntoResponse {
     let url = format!("http://{}/repl/raft/vote", request.address);
     let Ok(Some(addr)) = Uri::try_from(url).map(|v| v.authority().map(|a| a.to_string())) else {
@@ -129,14 +129,14 @@ async fn add_learner(
     admin_response(state.raft.add_learner(request.node_id, node, true).await)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Validate)]
 struct ChangeMembershipRequest {
     desired_node_ids: BTreeSet<NodeId>,
 }
 
 async fn change_membership(
     State(state): State<AppState>,
-    request: Json<ChangeMembershipRequest>,
+    MsgPackOrJson(request): MsgPackOrJson<ChangeMembershipRequest>,
 ) -> impl IntoResponse {
     state
         .raft

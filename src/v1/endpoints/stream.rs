@@ -7,7 +7,7 @@ use std::{
 };
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use diom_derive::aide_annotate;
 use diom_error::Result;
 use diom_proto::MsgPackOrJson;
@@ -47,7 +47,7 @@ pub struct CreateStreamOut {
 async fn create_stream(
     State(AppState { stream_state, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
-) -> Result<Json<CreateStreamOut>> {
+) -> Result<MsgPackOrJson<CreateStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -79,7 +79,7 @@ async fn create_stream(
         updated_at,
     } = out;
 
-    Ok(Json(CreateStreamOut {
+    Ok(MsgPackOrJson(CreateStreamOut {
         name,
         retention_period_seconds,
         max_byte_size,
@@ -106,7 +106,7 @@ pub struct AppendToStreamOut {
 async fn append_to_stream(
     State(AppState { stream_state, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<AppendToStreamIn>,
-) -> Result<Json<AppendToStreamOut>> {
+) -> Result<MsgPackOrJson<AppendToStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -124,7 +124,7 @@ async fn append_to_stream(
     })
     .await??;
 
-    Ok(Json(AppendToStreamOut {
+    Ok(MsgPackOrJson(AppendToStreamOut {
         msg_ids: out.msg_ids,
     }))
 }
@@ -156,7 +156,7 @@ pub struct FetchFromStreamOut {
 async fn locking_fetch_from_stream(
     State(AppState { stream_state, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
-) -> Result<Json<FetchFromStreamOut>> {
+) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -180,7 +180,7 @@ async fn locking_fetch_from_stream(
     })
     .await??;
 
-    Ok(Json(FetchFromStreamOut { msgs: out.msgs }))
+    Ok(MsgPackOrJson(FetchFromStreamOut { msgs: out.msgs }))
 }
 
 /// Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.
@@ -192,7 +192,7 @@ async fn locking_fetch_from_stream(
 async fn fetch_from_stream(
     State(AppState { stream_state, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
-) -> Result<Json<FetchFromStreamOut>> {
+) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -216,7 +216,7 @@ async fn fetch_from_stream(
     })
     .await??;
 
-    Ok(Json(FetchFromStreamOut { msgs: out.msgs }))
+    Ok(MsgPackOrJson(FetchFromStreamOut { msgs: out.msgs }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -237,7 +237,7 @@ pub struct AckOut {}
 async fn ack(
     State(AppState { stream_state, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<AckIn>,
-) -> Result<Json<AckOut>> {
+) -> Result<MsgPackOrJson<AckOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -261,7 +261,7 @@ async fn ack(
     })
     .await??;
 
-    Ok(Json(AckOut {}))
+    Ok(MsgPackOrJson(AckOut {}))
 }
 
 pub fn router() -> ApiRouter<AppState> {

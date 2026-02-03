@@ -7,19 +7,15 @@ use std::{
 };
 
 use aide::{
-    OperationInput, OperationOutput,
-    openapi::StatusCode as OpenApiStatusCode,
+    OperationInput,
     transform::{TransformOperation, TransformPathItem},
 };
-use axum::{
-    extract::{FromRequestParts, Query},
-    response::IntoResponse,
-};
+use axum::extract::{FromRequestParts, Query};
 use diom_error::{validation_error, validation_errors};
 use http::request::Parts;
 use regex::Regex;
 use schemars::JsonSchema;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::de::DeserializeOwned;
 use validator::{Validate, ValidationError};
 
 use crate::error::{Error, HttpError, Result};
@@ -94,44 +90,6 @@ pub fn get_unix_timestamp() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs()
-}
-
-/// JsonStatus is a wrapper over `axum::extract::Json` as a handler output.
-///
-/// Setting the `STATUS` const parameter automatically sets the response
-/// status code, as well as inserting it into the aide documentation.
-pub struct JsonStatus<const STATUS: u16, T: JsonSchema + Serialize>(pub T);
-
-impl<const STATUS: u16, T: JsonSchema + Serialize> IntoResponse for JsonStatus<STATUS, T> {
-    fn into_response(self) -> axum::response::Response {
-        (
-            http::StatusCode::from_u16(STATUS).unwrap(),
-            axum::extract::Json(self.0),
-        )
-            .into_response()
-    }
-}
-
-impl<const STATUS: u16, T: JsonSchema + Serialize> OperationOutput for JsonStatus<STATUS, T> {
-    type Inner = T;
-
-    fn operation_response(
-        ctx: &mut aide::generate::GenContext,
-        operation: &mut aide::openapi::Operation,
-    ) -> Option<aide::openapi::Response> {
-        axum::extract::Json::<T>::operation_response(ctx, operation)
-    }
-
-    fn inferred_responses(
-        ctx: &mut aide::generate::GenContext,
-        operation: &mut aide::openapi::Operation,
-    ) -> Vec<(Option<OpenApiStatusCode>, aide::openapi::Response)> {
-        if let Some(resp) = Self::operation_response(ctx, operation) {
-            vec![(Some(OpenApiStatusCode::Code(STATUS)), resp)]
-        } else {
-            vec![]
-        }
-    }
 }
 
 #[cfg(test)]

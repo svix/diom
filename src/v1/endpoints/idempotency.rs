@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use diom_derive::aide_annotate;
 use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
@@ -72,16 +72,16 @@ pub struct IdempotencyAbandonOut {}
 async fn idempotency_start(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyStartIn>,
-) -> Result<Json<IdempotencyStartOut>> {
+) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
 
     let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
     match idempotency_store.try_start(&key_str, data.ttl_seconds)? {
-        None => Ok(Json(IdempotencyStartOut::Locked)),
+        None => Ok(MsgPackOrJson(IdempotencyStartOut::Locked)),
         Some(response) => {
             let response_str = String::from_utf8(response)
                 .map_err(|_| crate::error::HttpError::internal_server_error(None, None))?;
-            Ok(Json(IdempotencyStartOut::Completed {
+            Ok(MsgPackOrJson(IdempotencyStartOut::Completed {
                 response: response_str,
             }))
         }
@@ -93,13 +93,13 @@ async fn idempotency_start(
 async fn idempotency_complete(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyCompleteIn>,
-) -> Result<Json<IdempotencyCompleteOut>> {
+) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
 
     let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
     idempotency_store.complete(&key_str, data.response.into_bytes(), data.ttl_seconds)?;
 
-    Ok(Json(IdempotencyCompleteOut {}))
+    Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
 }
 
 /// Abandon an idempotent request (remove lock without saving response)
@@ -107,13 +107,13 @@ async fn idempotency_complete(
 async fn idempotency_abandon(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbandonIn>,
-) -> Result<Json<IdempotencyAbandonOut>> {
+) -> Result<MsgPackOrJson<IdempotencyAbandonOut>> {
     let key_str = data.key.to_string();
 
     let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
     idempotency_store.abandon(&key_str)?;
 
-    Ok(Json(IdempotencyAbandonOut {}))
+    Ok(MsgPackOrJson(IdempotencyAbandonOut {}))
 }
 
 // ============================================================================

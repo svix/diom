@@ -4,6 +4,9 @@
 use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
+// FIXME: Can't use MsgPackOrJson as that would create
+// dependency cycle between diom-error and diom-proto
+#[expect(clippy::disallowed_types)]
 use axum::{
     Json,
     extract::rejection::{ExtensionRejection, PathRejection},
@@ -14,10 +17,12 @@ use serde::Serialize;
 use serde_json::json;
 use tokio::task::JoinError;
 
+mod result_ext;
 mod validation;
 
-pub use self::validation::{
-    ValidationErrorItem, ValidationHttpError, validation_error, validation_errors,
+pub use self::{
+    result_ext::ResultExt,
+    validation::{ValidationErrorItem, ValidationHttpError, validation_error, validation_errors},
 };
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Diom'es [Error].

@@ -31,7 +31,8 @@ pub fn router() -> ApiRouter<AppState> {
 
 #[cfg(debug_assertions)]
 mod development {
-    use axum::{Json, Router, extract::FromRequestParts, routing::get};
+    use axum::{Router, extract::FromRequestParts, routing::get};
+    use diom_proto::MsgPackOrJson;
     use http::request::Parts;
     use serde::Serialize;
 
@@ -59,12 +60,12 @@ mod development {
         }
     }
 
-    async fn echo(data: EchoData, body: String) -> Result<Json<EmptyResponse>> {
+    async fn echo(data: EchoData, body: String) -> Result<MsgPackOrJson<EmptyResponse>> {
         tracing::info!(">>> Echo");
         tracing::info!("{}", data.headers);
         tracing::info!("{}", body);
         tracing::info!("<<< Echo");
-        Ok(Json(EmptyResponse {}))
+        Ok(MsgPackOrJson(EmptyResponse {}))
     }
 
     pub(super) fn router() -> Router<AppState> {
