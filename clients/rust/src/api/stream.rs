@@ -22,6 +22,11 @@ pub struct StreamFetchLockingOptions {
 }
 
 #[derive(Default)]
+pub struct StreamAckRangeOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
 pub struct StreamAckOptions {
     pub idempotency_key: Option<String>,
 }
@@ -103,12 +108,27 @@ impl<'a> Stream<'a> {
     }
 
     /// Acks the messages for the consumer group, allowing more messages to be consumed.
-    pub async fn ack(&self, ack_in: AckIn, options: Option<StreamAckOptions>) -> Result<AckOut> {
+    pub async fn ack_range(
+        &self,
+        ack_msg_range_in: AckMsgRangeIn,
+        options: Option<StreamAckRangeOptions>,
+    ) -> Result<AckMsgRangeOut> {
+        let StreamAckRangeOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack-range")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(ack_msg_range_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Acks a single message.
+    pub async fn ack(&self, ack: Ack, options: Option<StreamAckOptions>) -> Result<AckOut> {
         let StreamAckOptions { idempotency_key } = options.unwrap_or_default();
 
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack")
             .with_optional_header_param("idempotency-key", idempotency_key)
-            .with_body_param(ack_in)
+            .with_body_param(ack)
             .execute(self.cfg)
             .await
     }

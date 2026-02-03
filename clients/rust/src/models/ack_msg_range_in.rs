@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct AckIn {
+pub struct AckMsgRangeIn {
     #[serde(rename = "consumerGroup")]
     pub consumer_group: String,
 
@@ -17,7 +17,7 @@ pub struct AckIn {
     pub name: String,
 }
 
-impl AckIn {
+impl AckMsgRangeIn {
     pub fn new(consumer_group: String, max_msg_id: u64, name: String) -> Self {
         Self {
             consumer_group,

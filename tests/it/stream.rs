@@ -126,7 +126,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     // Ack the first batch
     let max_msg_id = &msgs1[2]["id"];
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",
@@ -298,7 +298,7 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
     // Ack the first batch
     let max_msg_id = &msgs1[1]["id"];
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",
@@ -514,7 +514,7 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
 
     // Ack C + D
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",
@@ -625,7 +625,7 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
     // Ack a range that overlaps both blocks but doesn't fully cover either:
     // minMsgId=1, maxMsgId=4 acks B, C, D, E (but NOT A or F)
     client
-        .post("stream/ack")
+        .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
             "consumerGroup": "test-group",
@@ -655,6 +655,97 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
     assert_eq!(msgs3.len(), 2);
     assert_eq!(msgs3[0]["headers"]["msg"], "A");
     assert_eq!(msgs3[1]["headers"]["msg"], "F");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_fetch_single_ack() -> TestResult {
+    let (client, _server_handle) = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [0], "headers": {"msg": "A"}},
+                {"payload": [1], "headers": {"msg": "B"}},
+                {"payload": [2], "headers": {"msg": "C"}},
+                {"payload": [3], "headers": {"msg": "D"}},
+                {"payload": [4], "headers": {"msg": "E"}},
+                {"payload": [5], "headers": {"msg": "F"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 6,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 6);
+    assert_eq!(msgs1[0]["headers"]["msg"], "A");
+    assert_eq!(msgs1[1]["headers"]["msg"], "B");
+    assert_eq!(msgs1[2]["headers"]["msg"], "C");
+    assert_eq!(msgs1[3]["headers"]["msg"], "D");
+    assert_eq!(msgs1[4]["headers"]["msg"], "E");
+    assert_eq!(msgs1[5]["headers"]["msg"], "F");
+
+    // Ack single messages, rather than an entire block
+    for msg_id in [2, 4] {
+        client
+            .post("stream/ack")
+            .json(json!({
+                "name": "test-stream",
+                "consumerGroup": "test-group",
+                "msgId": msg_id
+            }))
+            .await?
+            .expect(StatusCode::OK);
+    }
+
+    // Wait for visibility timeout to expire
+    tokio::time::sleep(Duration::from_secs(2)).await;
+
+    // Fetch again - should get A, B, D, F back (the unacked messages)
+    let fetch3 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 10,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs3 = fetch3["msgs"].as_array().unwrap();
+    assert_eq!(msgs3.len(), 4);
+    assert_eq!(msgs3[0]["headers"]["msg"], "A");
+    assert_eq!(msgs3[1]["headers"]["msg"], "B");
+    assert_eq!(msgs3[2]["headers"]["msg"], "D");
+    assert_eq!(msgs3[3]["headers"]["msg"], "F");
 
     Ok(())
 }
