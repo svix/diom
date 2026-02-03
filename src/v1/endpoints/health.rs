@@ -3,7 +3,7 @@
 
 use crate::error::Result;
 use aide::axum::{ApiRouter, routing::get};
-use axum::Json;
+use coyote_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -14,8 +14,8 @@ pub struct PingOut {
     pub ok: bool,
 }
 
-async fn ping() -> Result<Json<PingOut>> {
-    Ok(Json(PingOut { ok: true }))
+async fn ping() -> Result<MsgPackOrJson<PingOut>> {
+    Ok(MsgPackOrJson(PingOut { ok: true }))
 }
 
 pub fn router() -> ApiRouter<AppState> {

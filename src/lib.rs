@@ -6,6 +6,7 @@
 use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
+use axum::middleware;
 use cfg::ConfigurationInner;
 use coyote_configgroup::{
     BothDatabases,
@@ -27,6 +28,7 @@ use opentelemetry_sdk::{
 use tokio::net::TcpListener;
 use tokio_util::sync::CancellationToken;
 use tower_http::{
+    ServiceExt,
     cors::{AllowHeaders, Any, CorsLayer},
     normalize_path::NormalizePath,
 };
@@ -299,22 +301,26 @@ pub async fn run_with_prefix(
     ));
 
     // Initialize all routes which need to be part of OpenAPI first.
-    let app = ApiRouter::new()
+    let api_router = ApiRouter::new()
         .nest_api_service("/api/v1", v1_router)
         .finish_api(&mut openapi);
 
     openapi::postprocess_spec(&mut openapi);
     let docs_router = docs::router(openapi);
-    let app = app.merge(docs_router).layer((CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(AllowHeaders::mirror_request())
-        .max_age(Duration::from_secs(600)),));
-    let svc = tower::make::Shared::new(
+    let router = api_router.merge(docs_router);
+    let svc = router
+        .layer((
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers(AllowHeaders::mirror_request())
+                .max_age(Duration::from_secs(600)),
+            middleware::from_fn(coyote_proto::capture_accept_hdr),
+        ))
         // It is important that this service wraps the router instead of being
         // applied via `Router::layer`, as it would run after routing then.
-        NormalizePath::trim_trailing_slash(app),
-    );
+        .trim_trailing_slash();
+    let make_svc = tower::make::Shared::new(svc);
 
     let listen_address = cfg.listen_address;
     let listener = match listener {
@@ -334,7 +340,7 @@ pub async fn run_with_prefix(
         );
     });
 
-    axum::serve(listener, svc)
+    axum::serve(listener, make_svc)
         .with_graceful_shutdown(graceful_shutdown_handler())
         .await
         .unwrap();
