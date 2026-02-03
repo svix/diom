@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, num::NonZeroU64};
 
 use coyote_error::Result;
 use fjall::Keyspace;
@@ -14,6 +14,8 @@ pub struct ConfigGroup<C: ModuleConfig> {
     pub id: ConfigGroupId,
     pub name: String,
     pub storage_type: StorageType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
 
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
@@ -23,18 +25,23 @@ pub struct ConfigGroup<C: ModuleConfig> {
 }
 
 impl<C: ModuleConfig> TableRow for ConfigGroup<C> {
-    const TABLE_PREFIX: &'static str = C::TABLE_PREFIX;
-    type Key = String;
+    const TABLE_PREFIX: &'static str = "";
+    type Key = Vec<u8>;
 
     fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.name)
+        Cow::Owned(Self::key(&self.name))
     }
 }
 
 impl<C: ModuleConfig> ConfigGroup<C> {
-    // TODO: Bytes not string
-    pub(crate) fn key(group_name: &str) -> String {
-        format!("{}\0{group_name}", C::module())
+    pub(crate) fn key(group_name: &str) -> Vec<u8> {
+        let module = (C::module() as u8).to_be_bytes();
+
+        let mut key = Vec::with_capacity(module.len() + b"\0".len() + group_name.len());
+        key.extend_from_slice(&module);
+        key.extend_from_slice(b"\0");
+        key.extend_from_slice(group_name.as_bytes());
+        key
     }
 
     pub(crate) fn fetch(keyspace: &Keyspace, group_name: &str) -> Result<Option<Self>> {

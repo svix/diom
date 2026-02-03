@@ -75,7 +75,7 @@ async fn idempotency_start(
 ) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
 
-    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
+    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
     match idempotency_store.try_start(&key_str, data.ttl_seconds)? {
         None => Ok(MsgPackOrJson(IdempotencyStartOut::Locked)),
         Some(response) => {
@@ -96,7 +96,7 @@ async fn idempotency_complete(
 ) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
 
-    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
+    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
     idempotency_store.complete(&key_str, data.response.into_bytes(), data.ttl_seconds)?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
@@ -110,7 +110,7 @@ async fn idempotency_abandon(
 ) -> Result<MsgPackOrJson<IdempotencyAbandonOut>> {
     let key_str = data.key.to_string();
 
-    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
+    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
     idempotency_store.abandon(&key_str)?;
 
     Ok(MsgPackOrJson(IdempotencyAbandonOut {}))

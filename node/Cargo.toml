@@ -12,9 +12,12 @@ doctest = false
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
+config.workspace = true
 coyote.workspace = true
 dotenvy.workspace = true
 reqwest.workspace = true
+serde.workspace = true
+tap.workspace = true
 tokio.workspace = true
 tracing-subscriber.workspace = true
 

@@ -1,8 +1,10 @@
 pub mod tables;
 
+use std::num::NonZeroU64;
+
 use coyote_configgroup::{
     ConfigGroup,
-    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig},
+    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig},
 };
 use coyote_error::Result;
 use fjall::{Database, KeyspaceCreateOptions};
@@ -34,6 +36,7 @@ pub struct KvStore {
     tables: fjall::Keyspace,
     policy: EvictionPolicy,
     lru: LinkedHashMap<String, Option<Timestamp>>,
+    max_storage_bytes: Option<NonZeroU64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -49,7 +52,12 @@ pub enum OperationBehavior {
 const EXPIRATION_BATCH_SIZE: usize = 100; // FIXME(@svix-lucho): make this configurable?
 
 impl KvStore {
-    pub fn new(namespace: &str, db: Database, policy: EvictionPolicy) -> Self {
+    pub fn new(
+        namespace: &str,
+        db: Database,
+        policy: EvictionPolicy,
+        max_storage_bytes: Option<NonZeroU64>,
+    ) -> Self {
         let kv_keyspace = format!("_coyote_kv_{namespace}");
 
         let tables = {
@@ -62,6 +70,7 @@ impl KvStore {
             tables,
             policy,
             lru: LinkedHashMap::new(),
+            max_storage_bytes,
         }
     }
 
@@ -166,8 +175,8 @@ impl KvStore {
         Ok(())
     }
 
-    pub fn disk_space(&self) -> u64 {
-        self.tables.disk_space()
+    pub fn disk_space_exceeds_capacity(&self) -> bool {
+        self.tables.disk_space() > self.max_storage_bytes.unwrap_or(NonZeroU64::MAX).get()
     }
 
     pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
@@ -218,8 +227,6 @@ impl KvStore {
     }
 }
 
-const MAX_CAPACITY: u64 = 1024 * 8; // FIXME: make this configurable
-
 /// This is the worker function for this module, it does background cleanup and accounting.
 /// It deletes expired entries from the database and evicts entries if the KvStore is configured to do so.
 pub async fn worker<F>(configgroup_state: &coyote_configgroup::State, is_shutting_down: F)
@@ -234,7 +241,8 @@ where
         let _ = store.clear_expired(now);
 
         // Eviction
-        if store.disk_space() > MAX_CAPACITY && store.policy == EvictionPolicy::LeastRecentlyUsed {
+        if store.disk_space_exceeds_capacity() && store.policy == EvictionPolicy::LeastRecentlyUsed
+        {
             // FIXME(@svix-lucho): we can add smarter eviction instead of just doing one at a time
             let _ = store.evict_lru(1);
         }
@@ -265,7 +273,12 @@ where
             };
             let db = configgroup_state.give_me_the_right_db(&group);
             let policy = group.config.eviction_policy();
-            let store = KvStore::new(KeyValueConfig::NAMESPACE, db, policy);
+            let store = KvStore::new(
+                KeyValueConfig::NAMESPACE,
+                db,
+                policy,
+                group.max_storage_bytes,
+            );
 
             clean_up(store);
         }
@@ -288,7 +301,7 @@ where
             };
             let db = configgroup_state.give_me_the_right_db(&group);
             let policy = group.config.eviction_policy();
-            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy);
+            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy, group.max_storage_bytes);
 
             clean_up(store);
         }
@@ -311,7 +324,7 @@ where
             };
             let db = configgroup_state.give_me_the_right_db(&group);
             let policy = group.config.eviction_policy();
-            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy);
+            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy, group.max_storage_bytes);
 
             clean_up(store);
         }
@@ -342,7 +355,7 @@ mod tests {
                 .temporary(true)
                 .open()
                 .unwrap();
-            let store = KvStore::new("test", db, policy);
+            let store = KvStore::new("test", db, policy, None);
             Self {
                 _workdir: workdir,
                 store,
