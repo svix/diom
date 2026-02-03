@@ -5,7 +5,7 @@ use jiff::Timestamp;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, MsgOut, StreamName},
+    entities::{ConsumerGroup, MsgId, MsgOut, StreamId, StreamName},
     tables::{LeaseDiff, LeaseRow, MsgRow, NameToStreamRow},
 };
 
@@ -16,6 +16,58 @@ pub struct Fetch {
 
 pub struct FetchOutput {
     pub msgs: Vec<MsgOut>,
+}
+
+/// Groups message IDs into contiguous ranges.
+/// Returns a vector of (start, end) tuples representing each contiguous block.
+fn group_into_contiguous_ranges(msg_ids: &[MsgId]) -> Vec<(MsgId, MsgId)> {
+    if msg_ids.is_empty() {
+        return Vec::new();
+    }
+
+    let mut ranges = Vec::new();
+    let mut range_start = msg_ids[0];
+    let mut range_end = msg_ids[0];
+
+    for &id in &msg_ids[1..] {
+        if id == range_end + 1 {
+            // Contiguous with current range
+            range_end = id;
+        } else {
+            // Gap found, close current range and start new one
+            ranges.push((range_start, range_end));
+            range_start = id;
+            range_end = id;
+        }
+    }
+    // Don't forget the last range
+    ranges.push((range_start, range_end));
+
+    ranges
+}
+
+/// Creates leases for each contiguous block of messages.
+pub(crate) fn create_leases_for_msgs(
+    msg_ids: &[MsgId],
+    stream_id: StreamId,
+    cg: ConsumerGroup,
+    now: Timestamp,
+    visibility_timeout: std::time::Duration,
+    lease_diff: &mut LeaseDiff,
+) {
+    let ranges = group_into_contiguous_ranges(msg_ids);
+    for (block_start, block_end) in ranges {
+        lease_diff.to_insert.push(LeaseRow {
+            stream_id,
+            cg: cg.clone(),
+            block_start,
+            block_end,
+            leased_at: now,
+            expires_at: now + visibility_timeout,
+            acked_at: None,
+            dlq_at: None,
+        });
+    }
 }
 
 impl Fetch {
@@ -31,26 +83,26 @@ impl Fetch {
         let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
 
         // Unlike FetchLocking, we don't block on active leases.
-        // Instead, we exclude both acked and active leases from the fetch.
+        // Instead, we exclude acked, DLQ'd, and active leases from the fetch.
         let blocked_leases = leases
             .iter()
-            .filter(|lease| lease.acked_at.is_some() || lease.is_active(now));
+            .filter(|lease| lease.acked_at.is_some() || lease.is_dlq() || lease.is_active(now));
 
         let msgs = MsgRow::fetch_available(state, stream_id, blocked_leases, batch_size.into())?;
 
         let mut lease_diff = LeaseRow::cull_and_compact(leases, now);
 
-        if !msgs.is_empty() {
-            lease_diff.to_insert.push(LeaseRow {
-                stream_id,
-                cg,
-                block_start: msgs.first().unwrap().0,
-                block_end: msgs.last().unwrap().0,
-                leased_at: now,
-                expires_at: now + visibility_timeout,
-                acked_at: None,
-            });
-        }
+        // Create separate leases for each contiguous block of messages.
+        // This prevents covering gaps (e.g., DLQ'd messages) with a single range lease.
+        let msg_ids: Vec<MsgId> = msgs.iter().map(|(id, _)| *id).collect();
+        create_leases_for_msgs(
+            &msg_ids,
+            stream_id,
+            cg,
+            now,
+            visibility_timeout,
+            &mut lease_diff,
+        );
 
         Ok(Self { lease_diff, msgs })
     }
