@@ -3,9 +3,15 @@ use std::time::Duration;
 use serde_json::json;
 use test_utils::{StatusCode, TestResult};
 
+use crate::TestContext;
+
 #[tokio::test]
 async fn create_stream_upserts() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let response = client
         .post("stream/create")
@@ -58,7 +64,11 @@ async fn create_stream_upserts() -> TestResult {
 
 #[tokio::test]
 async fn stream_append_and_locking_consumption() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -164,7 +174,11 @@ async fn stream_append_and_locking_consumption() -> TestResult {
 
 #[tokio::test]
 async fn stream_visibility_timeout() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -245,7 +259,11 @@ async fn stream_visibility_timeout() -> TestResult {
 
 #[tokio::test]
 async fn queue_fetch_with_queue_semantics() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -332,7 +350,11 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
 
 #[tokio::test]
 async fn queue_fetch_concurrent_consumers() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -425,7 +447,11 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
 
 #[tokio::test]
 async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -555,7 +581,11 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
 
 #[tokio::test]
 async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -661,7 +691,11 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
 
 #[tokio::test]
 async fn queue_fetch_single_ack() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let _stream = client
         .post("stream/create")

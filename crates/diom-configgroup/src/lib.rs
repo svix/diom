@@ -9,11 +9,16 @@ mod tables;
 
 pub use self::tables::ConfigGroup;
 
-pub fn group_name(key: &str) -> Option<&str> {
+pub const DEFAULT_GROUP_NAME: &str = "default";
+
+pub fn group_name(key: &str) -> &str {
     if !key.contains('/') {
-        return None;
+        return DEFAULT_GROUP_NAME;
     }
-    key.split("/").next()
+    match key.split("/").next() {
+        Some(k) => k,
+        None => DEFAULT_GROUP_NAME,
+    }
 }
 
 #[derive(Clone)]
@@ -56,11 +61,18 @@ impl State {
         })
     }
 
+    // Right now, this should always return something, because there should
+    // always be a `default` group.
     pub fn fetch_group<C: ModuleConfig>(
         &self,
         group_name: String,
     ) -> Result<Option<ConfigGroup<C>>> {
-        ConfigGroup::fetch(&self.keyspace, &group_name)
+        let fetch = ConfigGroup::fetch(&self.keyspace, &group_name)?;
+        if fetch.is_some() {
+            return Ok(fetch);
+        }
+
+        ConfigGroup::fetch(&self.keyspace, DEFAULT_GROUP_NAME)
     }
 
     pub fn fetch_all_groups<C: ModuleConfig>(
@@ -83,8 +95,8 @@ mod tests {
 
     #[test]
     fn test_group_name() {
-        assert_eq!(group_name("tom/bar"), Some("tom"));
-        assert_eq!(group_name("tom/bar/baz"), Some("tom"));
-        assert_eq!(group_name("bill"), None);
+        assert_eq!(group_name("tom/bar"), "tom");
+        assert_eq!(group_name("tom/bar/baz"), "tom");
+        assert_eq!(group_name("bill"), DEFAULT_GROUP_NAME);
     }
 }

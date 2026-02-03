@@ -1,0 +1,9 @@
+kv:
+  default:
+    storage_type: persistent
+cache:
+  default:
+    storage_type: persistent
+stream:
+  default:
+    storage_type: persistent

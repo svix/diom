@@ -93,7 +93,7 @@ async fn cache_set(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
-    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
+    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
     let key = data.key.clone();
     cache_store.set(key.as_str(), data.into_model())?;
     Ok(MsgPackOrJson(CacheSetOut {}))
@@ -105,7 +105,7 @@ async fn cache_get(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
-    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
+    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
     let model = cache_store
         .get(&data.key)?
         .ok_or_else(|| crate::error::HttpError::not_found(None, None))?;
@@ -118,7 +118,7 @@ async fn cache_del(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheDeleteIn>,
 ) -> Result<MsgPackOrJson<CacheDeleteOut>> {
-    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
+    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
     cache_store.delete(&data.key)?;
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }

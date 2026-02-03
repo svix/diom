@@ -5,7 +5,7 @@
 #![forbid(unsafe_code)]
 
 use clap::{Parser, Subcommand};
-use diom::{cfg, run, setup_tracing};
+use diom::{bootstrap, cfg, run, setup_tracing};
 use dotenvy::dotenv;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -21,6 +21,8 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Bootstrap command
+    Bootstrap { path: Option<String> },
     /// Health check command
     Healthcheck {
         // FIXME: we should make it optional and default to localhost with the settings (when ran
@@ -63,6 +65,9 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber.init();
 
     match args.command {
+        Some(Commands::Bootstrap { path }) => {
+            bootstrap::run(path.as_deref(), cfg);
+        }
         Some(Commands::Healthcheck { .. }) => {
             unreachable!("Healthcheck command should be handled before config loading")
         }
