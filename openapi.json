@@ -861,6 +861,102 @@
           }
         ]
       }
+    },
+    "/api/v1/stream/dlq": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Dlq",
+        "description": "Moves a message to the dead letter queue.",
+        "operationId": "v1.stream.dlq",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DlqIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DlqOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stream/redrive-dlq": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Redrive",
+        "description": "Redrives messages from the dead letter queue back to the stream.",
+        "operationId": "v1.stream.redrive",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedriveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedriveOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1108,6 +1204,30 @@
           "createdAt",
           "updatedAt"
         ]
+      },
+      "DlqIn": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "msgId": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "consumerGroup",
+          "msgId"
+        ]
+      },
+      "DlqOut": {
+        "type": "object"
       },
       "FetchFromStreamIn": {
         "type": "object",
@@ -1384,7 +1504,8 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
-            }
+            },
+            "default": {}
           },
           "payload": {
             "type": "array",
@@ -1397,8 +1518,7 @@
           }
         },
         "required": [
-          "payload",
-          "headers"
+          "payload"
         ]
       },
       "MsgOut": {
@@ -1581,6 +1701,24 @@
         "required": [
           "remaining"
         ]
+      },
+      "RedriveIn": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "consumerGroup"
+        ]
+      },
+      "RedriveOut": {
+        "type": "object"
       }
     }
   },
