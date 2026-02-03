@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use crate::error::Result;
 use aide::axum::{ApiRouter, routing::get};
 use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AppState, v1::utils::openapi_tag};
+use crate::{AppState, error::Result, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PingOut {

@@ -4,16 +4,16 @@ use std::{
     ops::RangeInclusive,
 };
 
-use crate::{
-    State,
-    entities::{ConsumerGroup, MsgHeaders, MsgId, StreamId},
-};
-
 use diom_error::{Error, HttpError, Result};
 use fjall::OwnedWriteBatch;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    State,
+    entities::{ConsumerGroup, MsgHeaders, MsgId, StreamId},
+};
 
 // IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
 static_assertions::const_assert!(fjall_utils::are_all_unique(&[

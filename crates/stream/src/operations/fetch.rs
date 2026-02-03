@@ -1,12 +1,13 @@
 use std::num::NonZeroU16;
 
+use diom_error::Result;
+use jiff::Timestamp;
+
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, MsgOut, StreamName},
     tables::{LeaseDiff, LeaseRow, MsgRow, NameToStreamRow},
 };
-use diom_error::Result;
-use jiff::Timestamp;
 
 pub struct Fetch {
     lease_diff: LeaseDiff,

@@ -1,11 +1,10 @@
 use std::borrow::Cow;
 
+use diom_error::Result;
 use fjall::Keyspace;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-
-use diom_error::Result;
 
 use crate::entities::{ConfigGroupId, ModuleConfig, StorageType};
 

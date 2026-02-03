@@ -1,16 +1,15 @@
-use std::net::SocketAddr;
-use std::time::Instant;
+use std::{net::SocketAddr, time::Instant};
 
-use crate::cfg::Configuration;
-
-use super::raft::TypeConfig;
-use super::{Node, NodeId};
 use http::header;
-use openraft::error::{NetworkError, RPCError, Unreachable};
-use openraft::network::RPCOption;
-use openraft::{RaftNetwork, RaftNetworkFactory, RaftTypeConfig};
-use serde::Serialize;
-use serde::de::DeserializeOwned;
+use openraft::{
+    RaftNetwork, RaftNetworkFactory, RaftTypeConfig,
+    error::{NetworkError, RPCError, Unreachable},
+    network::RPCOption,
+};
+use serde::{Serialize, de::DeserializeOwned};
+
+use super::{Node, NodeId, raft::TypeConfig};
+use crate::cfg::Configuration;
 
 pub(super) struct NetworkFactory {
     client: reqwest::Client,

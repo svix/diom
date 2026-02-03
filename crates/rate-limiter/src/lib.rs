@@ -4,8 +4,7 @@ pub mod tables;
 use std::time::Duration;
 
 use diom_error::Result;
-use fjall::Database;
-use fjall::KeyspaceCreateOptions;
+use fjall::{Database, KeyspaceCreateOptions};
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -181,8 +180,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     fn create_test_limiter() -> (RateLimiter, tempfile::TempDir) {
         let dir = tempdir().unwrap();

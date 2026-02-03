@@ -1,10 +1,12 @@
-use std::io::{Read, Seek, Write};
+use std::{
+    collections::BTreeMap,
+    io::{Read, Seek, Write},
+};
 
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, Readable};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use zip::{ZipArchive, write::SimpleFileOptions};
 
 // This file supports serializing a bunch of Fjall keyspaces to a file

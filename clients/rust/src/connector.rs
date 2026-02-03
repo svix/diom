@@ -17,13 +17,12 @@ type HttpsIfAvailable<T> = T;
 #[cfg(not(any(feature = "native-tls", feature = "rustls-tls")))]
 type MaybeHttpsStream<T> = T;
 
-// If only native TLS is enabled, use that.
-#[cfg(all(feature = "native-tls", not(feature = "rustls-tls")))]
-use hyper_tls::{HttpsConnector as HttpsIfAvailable, MaybeHttpsStream};
-
 // If rustls is enabled, use that.
 #[cfg(feature = "rustls-tls")]
 use hyper_rustls::{HttpsConnector as HttpsIfAvailable, MaybeHttpsStream};
+// If only native TLS is enabled, use that.
+#[cfg(all(feature = "native-tls", not(feature = "rustls-tls")))]
+use hyper_tls::{HttpsConnector as HttpsIfAvailable, MaybeHttpsStream};
 
 fn wrap_connector<H>(conn: H) -> HttpsIfAvailable<H> {
     #[cfg(not(any(feature = "native-tls", feature = "rustls-tls")))]

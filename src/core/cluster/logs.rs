@@ -1,19 +1,20 @@
+use std::{
+    fmt::Debug,
+    ops::{Bound, RangeBounds},
+    path::Path,
+};
+
 use anyhow::Context;
 use byteorder::{BigEndian, ByteOrder};
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable, Slice, UserKey};
-use openraft::storage::{LogFlushed, RaftLogStorage};
 use openraft::{
     Entry, LogId, OptionalSend, RaftLogId, RaftLogReader, RaftTypeConfig, StorageError, Vote,
+    storage::{LogFlushed, RaftLogStorage},
 };
-use std::fmt::Debug;
-use std::ops::{Bound, RangeBounds};
-use std::path::Path;
 use tap::{Pipe, Tap, TapFallible};
 use tracing::{Instrument as _, Span};
 
-use super::NodeId;
-use super::errors::*;
-use super::raft::TypeConfig;
+use super::{NodeId, errors::*, raft::TypeConfig};
 
 // This is an implementation of an openraft Logs store backed by fjall
 

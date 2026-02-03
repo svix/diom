@@ -1,10 +1,11 @@
+use diom_error::{HttpError, Result};
+use jiff::Timestamp;
+
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, StreamName},
     tables::{LeaseDiff, LeaseRow, NameToStreamRow},
 };
-use diom_error::{HttpError, Result};
-use jiff::Timestamp;
 
 pub struct Ack {
     lease_diff: LeaseDiff,

@@ -115,9 +115,8 @@ impl DiomClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::CacheSetIn;
-
     use super::DiomClient;
+    use crate::models::CacheSetIn;
 
     #[test]
     fn test_future_send_sync() {

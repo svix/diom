@@ -1,12 +1,13 @@
+use diom_error::Result;
 use fjall::{Database, Error, KeyspaceCreateOptions};
 
 use crate::entities::{ModuleConfig, StorageType};
-use diom_error::Result;
 
 pub mod entities;
 pub mod operations;
 mod tables;
-pub use tables::ConfigGroup;
+
+pub use self::tables::ConfigGroup;
 
 pub fn group_name(key: &str) -> Option<&str> {
     if !key.contains('/') {

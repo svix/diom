@@ -1,21 +1,23 @@
-use std::io::{ErrorKind, Seek, SeekFrom};
-use std::path::{Path, PathBuf};
-use std::pin::Pin;
-use std::sync::{Arc, RwLock};
+use std::{
+    io::{ErrorKind, Seek, SeekFrom},
+    path::{Path, PathBuf},
+    pin::Pin,
+    sync::{Arc, RwLock},
+};
 
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
-use openraft::storage::RaftStateMachine;
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
-    StoredMembership,
+    StoredMembership, storage::RaftStateMachine,
 };
 use serde::{Deserialize, Serialize};
 
-use super::errors::*;
+use super::{
+    errors::*,
+    raft::{Node, TypeConfig},
+    serialized_state_machine,
+};
 use crate::core::cluster::raft;
-
-use super::raft::{Node, TypeConfig};
-use super::serialized_state_machine;
 
 type NodeId = <TypeConfig as RaftTypeConfig>::NodeId;
 type StorageError = openraft::StorageError<NodeId>;

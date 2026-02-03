@@ -6,7 +6,6 @@ use diom_configgroup::{
 };
 use diom_error::Result;
 use fjall::{Database, KeyspaceCreateOptions};
-
 use fjall_utils::{TableRow, WriteBatchExt};
 use hashlink::{LinkedHashMap, linked_hash_map::RawEntryMut};
 use jiff::Timestamp;
@@ -323,8 +322,9 @@ where
 mod tests {
     use std::time::Duration;
 
-    use super::*;
     use jiff::ToSpan;
+
+    use super::*;
 
     struct SetupFixture {
         _workdir: tempfile::TempDir,

@@ -12,10 +12,7 @@ use serde::{Deserialize, Serialize};
 use tap::Pipe;
 use validator::Validate;
 
-use super::Node;
-use super::NodeId;
-use super::network::detect_address;
-use super::raft::TypeConfig;
+use super::{Node, NodeId, network::detect_address, raft::TypeConfig};
 use crate::AppState;
 
 pub fn router() -> axum::Router<AppState> {
