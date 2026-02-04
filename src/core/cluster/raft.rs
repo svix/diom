@@ -5,8 +5,7 @@ use openraft::BasicNode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::discovery::Discovery;
-use super::state_machine::StoredSnapshot;
+use super::{discovery::Discovery, state_machine::StoredSnapshot};
 use crate::cfg::Configuration;
 
 // TODO: this should actually be our Operation trait

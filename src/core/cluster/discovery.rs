@@ -1,6 +1,8 @@
-use std::collections::BTreeMap;
-use std::net::SocketAddr;
-use std::time::{Duration, Instant};
+use std::{
+    collections::BTreeMap,
+    net::SocketAddr,
+    time::{Duration, Instant},
+};
 
 use futures_util::{StreamExt, stream};
 use itertools::Itertools;
@@ -8,13 +10,20 @@ use openraft::ServerState;
 use tap::Pipe;
 use url::Url;
 
-use super::network::build_client;
-use super::raft::{Node, NodeId, Raft};
-use crate::core::cluster::network::detect_address;
-use crate::core::cluster::proto::{
-    AddLearnerRequest, DiscoverClusterResponse, DiscoverResponse, UpgradeLearnerRequest,
+use super::{
+    network::build_client,
+    raft::{Node, NodeId, Raft},
 };
-use crate::{Configuration, shutting_down_token};
+use crate::{
+    Configuration,
+    core::cluster::{
+        network::detect_address,
+        proto::{
+            AddLearnerRequest, DiscoverClusterResponse, DiscoverResponse, UpgradeLearnerRequest,
+        },
+    },
+    shutting_down_token,
+};
 
 const CONCURRENT_FETCHES: usize = 8;
 

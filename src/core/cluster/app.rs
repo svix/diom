@@ -15,11 +15,7 @@ use openraft::{
 use serde::Serialize;
 use tap::{Pipe, TapFallible};
 
-use super::Node;
-use super::NodeId;
-use super::network::detect_address;
-use super::proto::*;
-use super::raft::TypeConfig;
+use super::{Node, NodeId, network::detect_address, proto::*, raft::TypeConfig};
 use crate::AppState;
 
 pub fn router() -> axum::Router<AppState> {
