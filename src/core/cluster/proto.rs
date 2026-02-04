@@ -39,3 +39,11 @@ pub(super) struct UpgradeLearnerRequest {
 pub(super) struct ChangeMembershipRequest {
     pub desired_node_ids: BTreeSet<NodeId>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct HealthResponse {
+    pub node_id: NodeId,
+    pub last_committed_log_index: Option<u64>,
+    pub server_state: ServerState,
+    pub leader: Option<NodeId>,
+}

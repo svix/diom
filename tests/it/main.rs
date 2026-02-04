@@ -7,20 +7,24 @@ mod msgpack;
 mod rate_limiter;
 mod stream;
 
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{net::SocketAddr, sync::Arc};
 
 use coyote::{
     cfg::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
         LogFormat, LogLevel,
     },
-    core::security::JwtSigningConfig,
+    core::{cluster::proto::HealthResponse, security::JwtSigningConfig},
     run_with_prefix,
 };
 use jwt_simple::prelude::*;
 use tempfile::TempDir;
 use test_utils::TestClient;
-use tokio::{net::TcpListener, task::JoinHandle};
+use tokio::{
+    net::TcpListener,
+    task::JoinHandle,
+    time::{Duration, Instant},
+};
 
 /// Handle to an isolated test server.
 ///
@@ -40,6 +44,45 @@ pub struct TestContext {
     pub client: TestClient,
     pub cfg: Arc<ConfigurationInner>,
     pub handle: IsolatedServerHandle,
+}
+
+async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Result<bool> {
+    let response = client
+        .get(url)
+        .timeout(Duration::from_millis(10))
+        .send()
+        .await?;
+    if response.status() != 200 {
+        return Ok(false);
+    }
+    let body: HealthResponse = response.json().await?;
+    if body.server_state.is_leader() {
+        tracing::warn!(state=?body.server_state, "booted, but not leader");
+        return Ok(false);
+    }
+    Ok(true)
+}
+
+async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyhow::Result<()> {
+    tracing::info!("waiting for server to boot up");
+    let url = format!("http://{repl_addr}/repl/health");
+    let deadline = Instant::now() + max_wait;
+    let client = reqwest::Client::new();
+    loop {
+        match tokio::time::timeout_at(deadline, check_initialized(&client, &url)).await {
+            Ok(Ok(true)) => {
+                tracing::info!("server started!");
+                return Ok(());
+            }
+            Ok(Ok(false)) => {
+                tracing::debug!("server not yet up");
+            }
+            Ok(Err(err)) => {
+                tracing::warn!(?err, "error waiting for server to boot");
+            }
+            Err(_) => anyhow::bail!("timed out waiting for server to boot"),
+        }
+    }
 }
 
 async fn start_server() -> TestContext {
@@ -98,6 +141,11 @@ async fn start_server() -> TestContext {
 
     let base_uri = format!("http://{addr}/api/v1");
 
+    // TODO: this directly touches the database, so causes crashes if it runs
+    // concurrently with anything else that reads the databases. Should it go through
+    // the handle in the app somehow instead?
+    coyote::bootstrap::run(None, cfg.clone());
+
     let server_handle = tokio::spawn({
         let cfg = cfg.clone();
         async move {
@@ -112,7 +160,9 @@ async fn start_server() -> TestContext {
 
     let client = TestClient::new(base_uri, token);
 
-    coyote::bootstrap::run(None, cfg.clone());
+    wait_for_initialized(repl_addr, Duration::from_secs(2))
+        .await
+        .expect("failed to initialize server");
 
     TestContext {
         client,

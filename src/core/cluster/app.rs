@@ -184,6 +184,28 @@ async fn initialize(State(state): State<AppState>) -> impl IntoResponse {
     state.raft.initialize(nodes).await.pipe(admin_response)
 }
 
-async fn health() -> impl IntoResponse {
-    StatusCode::OK
+async fn health(State(state): State<AppState>) -> impl IntoResponse {
+    let leader = state.raft.current_leader().await;
+    let me = state.node_id;
+    state
+        .raft
+        .with_raft_state(move |s| {
+            let response = HealthResponse {
+                node_id: me,
+                last_committed_log_index: s.committed.map(|l| l.index),
+                server_state: s.server_state,
+                leader,
+            };
+            let status = if s.server_state.is_leader()
+                || s.server_state.is_follower()
+                || s.server_state.is_candidate()
+            {
+                StatusCode::OK
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (status, Json(response)).into_response()
+        })
+        .await
+        .map_err(|e| internal_error(e).into_response())
 }

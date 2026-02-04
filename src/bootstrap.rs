@@ -162,7 +162,7 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
     let bootstrap =
         BootstrapConfig::load(bootstrap_cfg_path).expect("Failed to load bootstrap config");
 
-    println!("bootstrap: {bootstrap:?}");
+    tracing::debug!("bootstrap: {bootstrap:?}");
     let persistent_db =
         DatabaseConfig::persistent(&app_config.persistent_db).expect("persistent db");
     let ephemeral_db = DatabaseConfig::ephemeral(&app_config.ephemeral_db).expect("ephemeral db");
@@ -207,4 +207,6 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
                 .expect("create config");
         }
     }
+
+    tracing::info!("done bootstrapping databases");
 }
