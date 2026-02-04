@@ -34,7 +34,7 @@ pub enum IdempotencyStartOut {
     /// Lock acquired, request should proceed
     Locked,
     /// Request was already completed, cached response returned
-    Completed { response: String },
+    Completed { response: Vec<u8> },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -43,8 +43,7 @@ pub struct IdempotencyCompleteIn {
     pub key: EntityKey,
 
     /// The response to cache
-    /// FIXME(@svix-lucho): change to Bytes
-    pub response: String,
+    pub response: Vec<u8>,
 
     /// TTL in seconds for the cached response
     #[validate(range(min = 1))]
@@ -78,13 +77,7 @@ async fn idempotency_start(
     let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
     match idempotency_store.try_start(&key_str, data.ttl_seconds)? {
         None => Ok(MsgPackOrJson(IdempotencyStartOut::Locked)),
-        Some(response) => {
-            let response_str = String::from_utf8(response)
-                .map_err(|_| crate::error::HttpError::internal_server_error(None, None))?;
-            Ok(MsgPackOrJson(IdempotencyStartOut::Completed {
-                response: response_str,
-            }))
-        }
+        Some(response) => Ok(MsgPackOrJson(IdempotencyStartOut::Completed { response })),
     }
 }
 
@@ -97,7 +90,7 @@ async fn idempotency_complete(
     let key_str = data.key.to_string();
 
     let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
-    idempotency_store.complete(&key_str, data.response.into_bytes(), data.ttl_seconds)?;
+    idempotency_store.complete(&key_str, data.response, data.ttl_seconds)?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
 }
