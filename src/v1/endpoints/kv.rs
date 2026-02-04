@@ -29,19 +29,15 @@ pub use crate::v1::modules::kv::{KvStore as KvStoreType, worker};
 pub struct KvSetIn {
     #[validate(nested)]
     pub key: Arc<EntityKey>,
-    // FIXME: validate all fields
-    /// Time to live in milliseconds
-    pub expire_in: u64,
 
-    // FIXME: do we want it here? I think we probably want separate commands for insert, upsert,
-    // and update? Or does it get weird?
+    /// Time to live in milliseconds
+    #[validate(range(min = 1))]
+    pub expire_in: Option<u64>,
+
     #[serde(default)]
     pub behavior: OperationBehavior,
 
-    // FIXME: what to do with TTL? Does it get updated on a set, not?
-
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvSetIn {
@@ -53,16 +49,10 @@ impl KvSetIn {
             behavior: _,
         } = self;
 
-        let expires_at = if expire_in > 0 {
-            Some(Timestamp::now() + Duration::from_millis(expire_in))
-        } else {
-            None
-        };
+        let expires_at =
+            expire_in.map(|expire_in| Timestamp::now() + Duration::from_millis(expire_in));
 
-        KvModel {
-            expires_at,
-            value: value.into_bytes(),
-        }
+        KvModel { expires_at, value }
     }
 }
 
@@ -83,8 +73,7 @@ pub struct KvGetOut {
     /// Time of expiry
     pub expires_at: Option<Timestamp>,
 
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvGetOut {
@@ -92,7 +81,7 @@ impl KvGetOut {
         Self {
             key,
             expires_at: model.expires_at,
-            value: String::from_utf8(model.value).unwrap_or_else(|_| String::new()),
+            value: model.value,
         }
     }
 }
