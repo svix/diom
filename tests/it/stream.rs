@@ -783,3 +783,341 @@ async fn queue_fetch_single_ack() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn queue_dlq_and_redrive() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [0], "headers": {"msg": "A"}},
+                {"payload": [1], "headers": {"msg": "B"}},
+                {"payload": [2], "headers": {"msg": "C"}},
+                {"payload": [3], "headers": {"msg": "D"}},
+                {"payload": [4], "headers": {"msg": "E"}},
+                {"payload": [5], "headers": {"msg": "F"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch all messages
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 6,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 6);
+
+    // DLQ messages B and D (ids 1 and 3)
+    for msg_id in [1, 3] {
+        client
+            .post("stream/dlq")
+            .json(json!({
+                "name": "test-stream",
+                "consumerGroup": "test-group",
+                "msgId": msg_id
+            }))
+            .await?
+            .expect(StatusCode::OK);
+    }
+
+    // Wait for visibility timeout to expire (from fetch1's lease covering 0-5)
+    tokio::time::sleep(Duration::from_secs(3)).await;
+
+    // Fetch - should get A, C, E, F (B and D are in DLQ)
+    let fetch2 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 10,
+            "visibilityTimeoutSeconds": 2
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs2 = fetch2["msgs"].as_array().unwrap();
+    assert_eq!(msgs2.len(), 4);
+    assert_eq!(msgs2[0]["headers"]["msg"], "A");
+    assert_eq!(msgs2[1]["headers"]["msg"], "C");
+    assert_eq!(msgs2[2]["headers"]["msg"], "E");
+    assert_eq!(msgs2[3]["headers"]["msg"], "F");
+
+    // Ack the fetched messages (A, C, E, F) individually so B and D aren't acked
+    for msg_id in [0, 2, 4, 5] {
+        client
+            .post("stream/ack")
+            .json(json!({
+                "name": "test-stream",
+                "consumerGroup": "test-group",
+                "msgId": msg_id
+            }))
+            .await?
+            .expect(StatusCode::OK);
+    }
+
+    // Redrive the DLQ
+    client
+        .post("stream/redrive-dlq")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group"
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for visibility timeout to expire (from fetch2's lease)
+    tokio::time::sleep(Duration::from_secs(3)).await;
+
+    // Fetch again - should get B and D (redriven from DLQ, others acked)
+    let fetch3 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 10,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs3 = fetch3["msgs"].as_array().unwrap();
+    assert_eq!(msgs3.len(), 2);
+    assert_eq!(msgs3[0]["headers"]["msg"], "B");
+    assert_eq!(msgs3[1]["headers"]["msg"], "D");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [0], "headers": {"msg": "A"}},
+                {"payload": [1], "headers": {"msg": "B"}},
+                {"payload": [2], "headers": {"msg": "C"}},
+                {"payload": [3], "headers": {"msg": "D"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch first 3 messages
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 3,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 3);
+    assert_eq!(msgs1[0]["headers"]["msg"], "A");
+    assert_eq!(msgs1[1]["headers"]["msg"], "B");
+    assert_eq!(msgs1[2]["headers"]["msg"], "C");
+
+    // DLQ message B (id 1)
+    client
+        .post("stream/dlq")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "msgId": 1
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Ack messages A and C (ids 0 and 2)
+    for msg_id in [0, 2] {
+        client
+            .post("stream/ack")
+            .json(json!({
+                "name": "test-stream",
+                "consumerGroup": "test-group",
+                "msgId": msg_id
+            }))
+            .await?
+            .expect(StatusCode::OK);
+    }
+
+    // Redrive the DLQ
+    client
+        .post("stream/redrive-dlq")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group"
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch again - should get B (redriven from DLQ) and D (never fetched)
+    let fetch2 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 3,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs2 = fetch2["msgs"].as_array().unwrap();
+    assert_eq!(msgs2.len(), 2);
+    assert_eq!(msgs2[0]["headers"]["msg"], "B");
+    assert_eq!(msgs2[1]["headers"]["msg"], "D");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
+
+    let _stream = client
+        .post("stream/create")
+        .json(json!({
+            "name": "test-stream",
+            "maxByteSize": 1024,
+            "retentionPeriodSeconds": 9999
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    client
+        .post("stream/append")
+        .json(json!({
+            "name": "test-stream",
+            "msgs": [
+                {"payload": [1, 2], "headers": {"msg": "A"}},
+            ]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let fetch1 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 1,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs1 = fetch1["msgs"].as_array().unwrap();
+    assert_eq!(msgs1.len(), 1);
+    assert_eq!(msgs1[0]["headers"]["msg"], "A");
+
+    client
+        .post("stream/dlq")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "msgId": msgs1[0]["id"]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("stream/ack")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "msgId": msgs1[0]["id"]
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("stream/redrive-dlq")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group"
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fetch again, even though the message was DLQd, since the message
+    // was also ACK'd, it shouldn't be redriven.
+    // This is to try to approximate exactly-once semantics as much as is
+    // possible.
+    let fetch2 = client
+        .post("stream/fetch")
+        .json(json!({
+            "name": "test-stream",
+            "consumerGroup": "test-group",
+            "batchSize": 10,
+            "visibilityTimeoutSeconds": 3600
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs2 = fetch2["msgs"].as_array().unwrap();
+    assert_eq!(msgs2.len(), 0);
+
+    Ok(())
+}
