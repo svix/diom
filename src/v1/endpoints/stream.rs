@@ -297,6 +297,64 @@ async fn ack(
 #[serde(rename_all = "camelCase")]
 struct AckOut {}
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct DlqIn {
+    name: StreamName,
+    consumer_group: ConsumerGroup,
+    msg_id: MsgId,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct DlqOut {}
+
+/// Moves a message to the dead letter queue.
+#[aide_annotate(op_id = "v1.stream.dlq")]
+async fn dlq(
+    State(AppState { stream_state, .. }): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<DlqIn>,
+) -> Result<MsgPackOrJson<DlqOut>> {
+    let _out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Dlq::new(
+            &stream_state,
+            data.name,
+            data.consumer_group,
+            data.msg_id,
+        )?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(MsgPackOrJson(DlqOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct RedriveIn {
+    name: StreamName,
+    consumer_group: ConsumerGroup,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct RedriveOut {}
+
+/// Redrives messages from the dead letter queue back to the stream.
+#[aide_annotate(op_id = "v1.stream.redrive")]
+async fn redrive(
+    State(AppState { stream_state, .. }): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<RedriveIn>,
+) -> Result<MsgPackOrJson<RedriveOut>> {
+    let _out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Redrive::new(&stream_state, data.name, data.consumer_group)?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(MsgPackOrJson(RedriveOut {}))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Stream");
 
@@ -330,4 +388,10 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with("/stream/ack", post_with(ack, ack_operation), &tag)
+        .api_route_with("/stream/dlq", post_with(dlq, dlq_operation), &tag)
+        .api_route_with(
+            "/stream/redrive-dlq",
+            post_with(redrive, redrive_operation),
+            &tag,
+        )
 }

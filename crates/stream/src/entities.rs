@@ -17,6 +17,7 @@ pub type MsgHeaders = HashMap<String, String>;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct MsgIn {
     pub payload: Vec<u8>,
+    #[serde(default)]
     pub headers: HashMap<String, String>,
 }
 
