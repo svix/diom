@@ -77,7 +77,7 @@ impl<C: ModuleConfig> CreateConfigGroup<C> {
 
         {
             let (k1, v1) = configgroup.to_fjall_entry()?;
-            let mut batch = db.batch();
+            let mut batch = db.batch().durability(Some(fjall::PersistMode::SyncAll));
             batch.insert(keyspace, k1, v1);
             batch.commit()?;
         }

@@ -1,6 +1,13 @@
-use std::{net::SocketAddr, time::Instant};
+use std::{
+    net::SocketAddr,
+    time::{Duration, Instant},
+};
 
-use http::header;
+use crate::cfg::Configuration;
+
+use super::{Node, NodeId, raft::TypeConfig};
+use anyhow::Context;
+use http::{HeaderMap, HeaderValue, header};
 use openraft::{
     RaftNetwork, RaftNetworkFactory, RaftTypeConfig,
     error::{NetworkError, RPCError, Unreachable},
@@ -8,8 +15,24 @@ use openraft::{
 };
 use serde::{Serialize, de::DeserializeOwned};
 
-use super::{Node, NodeId, raft::TypeConfig};
-use crate::cfg::Configuration;
+pub(super) fn build_client(
+    cfg: &Configuration,
+    _request_timeout: Duration,
+) -> anyhow::Result<reqwest::Client> {
+    let mut headers = HeaderMap::new();
+    if let Some(secret) = &cfg.cluster.secret {
+        let header_value = format!("Bearer {secret}");
+        let header_value =
+            HeaderValue::from_str(&header_value).context("invalid interserver secret")?;
+        headers.insert(header::AUTHORIZATION, header_value);
+    }
+    let client = reqwest::Client::builder()
+        .connect_timeout(cfg.cluster.connection_timeout)
+        .default_headers(headers)
+        .build()
+        .context("building raft network client")?;
+    Ok(client)
+}
 
 pub(super) struct NetworkFactory {
     client: reqwest::Client,
@@ -18,9 +41,7 @@ pub(super) struct NetworkFactory {
 impl NetworkFactory {
     pub(super) fn new(cfg: &Configuration) -> Self {
         Self {
-            client: reqwest::Client::builder()
-                .connect_timeout(cfg.cluster.connection_timeout)
-                .build()
+            client: build_client(cfg, cfg.cluster.replication_request_timeout)
                 .expect("failed to build Raft network"),
         }
     }
@@ -61,6 +82,10 @@ impl NetworkClient {
             .client
             .post(url)
             .header(header::CONTENT_TYPE, "application/msgpack")
+            .header(
+                header::ACCEPT,
+                "application/msgpack;q=0.9, application/json;q=0.5",
+            )
             .body(body)
             .send()
             .await

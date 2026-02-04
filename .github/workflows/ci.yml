@@ -58,6 +58,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
+    env:
+      RUST_LOG: debug
+      "COYOTE:LOG_LEVEL": debug
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable

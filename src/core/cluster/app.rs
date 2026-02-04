@@ -1,28 +1,35 @@
-use std::collections::{BTreeMap, BTreeSet};
+#![expect(clippy::disallowed_types)] // we can't use MsgPackOrJson because these endpoints are not OpenAPI-based
+
+use std::collections::BTreeMap;
 
 use axum::{
+    Json,
     extract::State,
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use coyote_proto::{MsgPack, MsgPackOrJson};
+use coyote_proto::MsgPack;
 use http::{StatusCode, Uri};
-use openraft::raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest};
-use serde::{Deserialize, Serialize};
-use tap::Pipe;
-use validator::Validate;
+use openraft::{
+    ChangeMembers,
+    raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest},
+};
+use serde::Serialize;
+use tap::{Pipe, TapFallible};
 
-use super::{Node, NodeId, network::detect_address, raft::TypeConfig};
+use super::{Node, NodeId, network::detect_address, proto::*, raft::TypeConfig};
 use crate::AppState;
 
 pub fn router() -> axum::Router<AppState> {
     // TODO: implement snapshot methods
     axum::Router::new()
+        .route("/repl/discover", get(discover))
         .route("/repl/raft/append_entries", post(append_entries))
         .route("/repl/raft/vote", post(vote))
         .route("/repl/raft/stream-snapshot", post(stream_snapshot))
         .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/raft/admin/add-learner", post(add_learner))
+        .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
         .route(
             "/repl/raft/admin/change-membership",
             post(change_membership),
@@ -54,8 +61,8 @@ where
     Err: Serialize,
 {
     match result {
-        Ok(ok) => (StatusCode::OK, MsgPackOrJson(ok)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, MsgPackOrJson(e)).into_response(),
+        Ok(ok) => (StatusCode::OK, Json(ok)).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(e)).into_response(),
     }
 }
 
@@ -102,21 +109,40 @@ async fn stream_snapshot(
 
 // Administrative functions
 
+async fn discover(State(app_state): State<AppState>) -> Json<DiscoverResponse> {
+    let cluster_name = app_state.cfg.cluster.name.clone();
+    let cluster = app_state
+        .raft
+        .with_raft_state(move |state| DiscoverClusterResponse {
+            last_committed_log_id: state.committed,
+            cluster_name,
+            state: state.server_state,
+            known_peers: state
+                .membership_state
+                .committed()
+                .nodes()
+                .map(|(nid, n)| (*nid, n.addr.parse().unwrap()))
+                .collect(),
+        })
+        .await
+        .tap_err(|err| tracing::warn!(?err, "failed to find local cluster state"))
+        .ok();
+    let response = DiscoverResponse {
+        node_id: app_state.node_id,
+        cluster,
+    };
+    Json(response)
+}
+
 async fn metrics(State(state): State<AppState>) -> impl IntoResponse {
     let metrics = state.raft.metrics().borrow().clone();
 
-    MsgPackOrJson(metrics)
-}
-
-#[derive(Debug, Deserialize, Validate)]
-struct AddLearnerRequest {
-    node_id: NodeId,
-    address: String,
+    Json(metrics)
 }
 
 async fn add_learner(
     State(state): State<AppState>,
-    MsgPackOrJson(request): MsgPackOrJson<AddLearnerRequest>,
+    Json(request): Json<AddLearnerRequest>,
 ) -> impl IntoResponse {
     let url = format!("http://{}/repl/raft/vote", request.address);
     let Ok(Some(addr)) = Uri::try_from(url).map(|v| v.authority().map(|a| a.to_string())) else {
@@ -126,14 +152,17 @@ async fn add_learner(
     admin_response(state.raft.add_learner(request.node_id, node, true).await)
 }
 
-#[derive(Debug, Deserialize, Validate)]
-struct ChangeMembershipRequest {
-    desired_node_ids: BTreeSet<NodeId>,
+async fn upgrade_learner(
+    State(state): State<AppState>,
+    Json(request): Json<UpgradeLearnerRequest>,
+) -> impl IntoResponse {
+    let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
+    admin_response(state.raft.change_membership(request, true).await)
 }
 
 async fn change_membership(
     State(state): State<AppState>,
-    MsgPackOrJson(request): MsgPackOrJson<ChangeMembershipRequest>,
+    Json(request): Json<ChangeMembershipRequest>,
 ) -> impl IntoResponse {
     state
         .raft
@@ -155,6 +184,28 @@ async fn initialize(State(state): State<AppState>) -> impl IntoResponse {
     state.raft.initialize(nodes).await.pipe(admin_response)
 }
 
-async fn health() -> impl IntoResponse {
-    StatusCode::OK
+async fn health(State(state): State<AppState>) -> impl IntoResponse {
+    let leader = state.raft.current_leader().await;
+    let me = state.node_id;
+    state
+        .raft
+        .with_raft_state(move |s| {
+            let response = HealthResponse {
+                node_id: me,
+                last_committed_log_index: s.committed.map(|l| l.index),
+                server_state: s.server_state,
+                leader,
+            };
+            let status = if s.server_state.is_leader()
+                || s.server_state.is_follower()
+                || s.server_state.is_candidate()
+            {
+                StatusCode::OK
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (status, Json(response)).into_response()
+        })
+        .await
+        .map_err(|e| internal_error(e).into_response())
 }

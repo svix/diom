@@ -122,6 +122,7 @@ fn deserialize_keyspace<R: Read + Seek>(
     keyspace: &Keyspace,
     chunks: Vec<Chunk>,
 ) -> anyhow::Result<()> {
+    tracing::warn!(name=%keyspace.name(), "clearing keyspace");
     keyspace.clear()?;
     let mut key_buf = vec![];
     let mut value_buf = vec![];

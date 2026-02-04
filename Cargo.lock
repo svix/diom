@@ -884,9 +884,11 @@ dependencies = [
  "coyote-rate-limiter",
  "ctor",
  "fjall",
+ "futures-util",
  "http",
  "idna_adapter",
  "indexmap",
+ "itertools 0.14.0",
  "jiff",
  "jwt-simple",
  "openraft",
@@ -897,6 +899,7 @@ dependencies = [
  "opentelemetry_sdk",
  "paste",
  "pnet",
+ "rand 0.9.2",
  "regex",
  "reqwest 0.13.1",
  "rmp-serde",
@@ -975,6 +978,7 @@ dependencies = [
  "jiff",
  "schemars 1.2.0",
  "serde",
+ "tracing",
  "uuid",
 ]
 
@@ -1350,8 +1354,7 @@ dependencies = [
 [[package]]
 name = "dotenvy"
 version = "0.15.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
+source = "git+https://github.com/svix-jbrown/dotenvy.git?rev=ffa0aa149e2c6da57113859001257f0d99b43431#ffa0aa149e2c6da57113859001257f0d99b43431"
 
 [[package]]
 name = "dtor"
@@ -1527,6 +1530,7 @@ dependencies = [
  "fjall",
  "rmp-serde",
  "serde",
+ "tracing",
 ]
 
 [[package]]

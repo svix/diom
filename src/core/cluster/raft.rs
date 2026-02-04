@@ -5,7 +5,7 @@ use openraft::BasicNode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::state_machine::StoredSnapshot;
+use super::{discovery::Discovery, state_machine::StoredSnapshot};
 use crate::cfg::Configuration;
 
 // TODO: this should actually be our Operation trait
@@ -34,6 +34,7 @@ pub(super) type Node = BasicNode;
 )]
 #[serde(transparent)]
 pub struct NodeId {
+    #[serde(with = "uuid::serde::simple")]
     inner: Uuid,
 }
 
@@ -85,6 +86,22 @@ pub async fn initialize_raft(cfg: &Configuration, db: Database) -> anyhow::Resul
     let state_machine =
         super::state_machine::Store::new(db, cfg.cluster.snapshot_path.clone()).await?;
     let raft = Raft::new(id, config, network, logs, state_machine).await?;
+    let has_cluster = raft
+        .with_raft_state(|s| {
+            s.committed.is_some() || s.membership_state.effective().nodes().count() > 0
+        })
+        .await?;
+    if !has_cluster {
+        let disco = Discovery::new(cfg.clone(), raft.clone(), id)?;
+        tokio::spawn(async move {
+            if let Err(err) = disco.discover_cluster().await {
+                tracing::error!(
+                    ?err,
+                    "discovery failed; this node must be manually initialized"
+                );
+            }
+        });
+    }
     Ok((raft, id))
 }
 

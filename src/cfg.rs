@@ -61,35 +61,52 @@ pub struct ClusterConfiguration {
 
     pub log_path: PathBuf,
 
-    #[serde(default = "ClusterConfiguration::default_connection_timeout")]
+    #[serde(default)]
+    pub secret: Option<String>,
+
+    #[serde(
+        rename = "replication_request_timeout_ms",
+        with = "crate::serde::duration::millis"
+    )]
+    pub replication_request_timeout: Duration,
+
+    #[serde(
+        rename = "discovery_request_timeout_ms",
+        with = "crate::serde::duration::millis"
+    )]
+    pub discovery_request_timeout: Duration,
+
+    #[serde(
+        rename = "connection_timeout_ms",
+        with = "crate::serde::duration::millis"
+    )]
     pub connection_timeout: Duration,
 
-    #[serde(default = "ClusterConfiguration::default_heartbeat_interval_ms")]
     pub heartbeat_interval_ms: u64,
 
-    #[serde(default = "ClusterConfiguration::default_election_timeout_min_ms")]
     pub election_timeout_min_ms: u64,
 
-    #[serde(default = "ClusterConfiguration::default_election_timeout_max_ms")]
     pub election_timeout_max_ms: u64,
-}
 
-impl ClusterConfiguration {
-    const fn default_connection_timeout() -> Duration {
-        Duration::from_secs(7)
-    }
+    #[serde(default)]
+    pub seed_nodes: Vec<SocketAddr>,
 
-    const fn default_heartbeat_interval_ms() -> u64 {
-        500
-    }
+    /// Automatically initialize the cluster on bootup if we can't discover any
+    /// peers and we don't have any existing state. If you initialize all peers
+    /// at exactly the same time, this can potentially cause errors.
+    pub auto_initialize: bool,
 
-    const fn default_election_timeout_min_ms() -> u64 {
-        1500
-    }
+    #[serde(
+        rename = "discovery_timeout_ms",
+        with = "crate::serde::duration::millis"
+    )]
+    pub discovery_timeout: Duration,
 
-    const fn default_election_timeout_max_ms() -> u64 {
-        3000
-    }
+    #[serde(
+        rename = "startup_discovery_delay_ms",
+        with = "crate::serde::duration::millis"
+    )]
+    pub startup_discovery_delay: Duration,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -198,7 +215,13 @@ pub fn load(config_path: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner>
                 config
             }
         })
-        .add_source(config::Environment::with_prefix("COYOTE"))
+        .add_source(
+            config::Environment::with_prefix("COYOTE")
+                .list_separator(",")
+                .separator(":")
+                .try_parsing(true)
+                .with_list_parse_key("cluster.seed_nodes"),
+        )
         .build()?;
 
     let config = config

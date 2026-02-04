@@ -1,9 +1,11 @@
 use openraft::RaftTypeConfig;
 
 mod app;
+mod discovery;
 mod errors;
 mod logs;
 mod network;
+pub mod proto;
 mod raft;
 mod serialized_state_machine;
 mod state_machine;
