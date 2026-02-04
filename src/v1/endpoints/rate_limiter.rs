@@ -15,10 +15,93 @@ use validator::Validate;
 use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
-use coyote_rate_limiter::{RateLimitConfig, RateLimitResult, TokenBucket};
+use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitResult, TokenBucket};
+
+// FIXME(@svix-lucho): Not fully convinced about 'method' and 'config'
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "method", content = "config", rename_all = "snake_case")]
+pub enum RateLimiterMethod {
+    TokenBucket(RateLimiterTokenBucketConfig),
+    FixedWindow(RateLimiterFixedWindowConfig),
+}
+
+// FIXME(@svix-lucho): This can be done with postprocessing of the OpenAPI spec or with some magic macro that I couldn't write
+impl JsonSchema for RateLimiterMethod {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "RateLimiterMethod".into()
+    }
+
+    fn json_schema(schema_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        #[derive(JsonSchema)]
+        #[serde(tag = "method", content = "config", rename_all = "snake_case")]
+        #[allow(unused)]
+        enum RateLimiterMethod {
+            TokenBucket(RateLimiterTokenBucketConfig),
+            FixedWindow(RateLimiterFixedWindowConfig),
+        }
+
+        let mut schema = RateLimiterMethod::json_schema(schema_gen);
+        if let Some(obj) = schema.as_object_mut() {
+            obj.insert("type".to_string(), serde_json::json!("object"));
+            obj.insert(
+                "discriminator".to_string(),
+                serde_json::json!({"propertyName": "method"}),
+            );
+        }
+        schema
+    }
+}
+
+// FIXME(@svix-lucho): Is this right?
+impl Validate for RateLimiterMethod {
+    fn validate(&self) -> Result<(), validator::ValidationErrors> {
+        match self {
+            RateLimiterMethod::TokenBucket(config) => config.validate(),
+            RateLimiterMethod::FixedWindow(config) => config.validate(),
+        }
+    }
+}
+
+impl Into<RateLimitConfig> for RateLimiterMethod {
+    fn into(self) -> RateLimitConfig {
+        match self {
+            RateLimiterMethod::TokenBucket(config) => RateLimitConfig::TokenBucket(config.into()),
+            RateLimiterMethod::FixedWindow(config) => RateLimitConfig::FixedWindow(config.into()),
+        }
+    }
+}
+
+impl Into<TokenBucket> for RateLimiterTokenBucketConfig {
+    fn into(self) -> TokenBucket {
+        TokenBucket {
+            bucket_size: self.capacity,
+            refill_rate: self.refill_amount,
+            refill_interval: Duration::from_secs(self.refill_interval_seconds),
+        }
+    }
+}
+
+impl Into<FixedWindow> for RateLimiterFixedWindowConfig {
+    fn into(self) -> FixedWindow {
+        FixedWindow {
+            size: Duration::from_secs(self.window_size_seconds),
+            tokens: self.max_requests,
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+pub struct RateLimiterFixedWindowConfig {
+    /// Window size in seconds
+    #[validate(range(min = 1))]
+    pub window_size_seconds: u64,
+
+    /// Maximum number of requests allowed within the window
+    #[validate(range(min = 1))]
+    pub max_requests: u64,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct RateLimiterConfig {
+pub struct RateLimiterTokenBucketConfig {
     /// Maximum capacity of the bucket
     #[validate(range(min = 1))]
     pub capacity: u64,
@@ -43,7 +126,8 @@ pub struct RateLimiterCheckIn {
 
     /// Rate limiter configuration
     #[validate(nested)]
-    pub config: RateLimiterConfig,
+    #[serde(flatten)]
+    pub method: RateLimiterMethod,
 }
 
 fn default_units() -> u64 {
@@ -70,7 +154,8 @@ pub struct RateLimiterGetRemainingIn {
 
     /// Rate limiter configuration
     #[validate(nested)]
-    pub config: RateLimiterConfig,
+    #[serde(flatten)]
+    pub method: RateLimiterMethod,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -90,16 +175,8 @@ async fn rate_limiter_limit(
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterCheckIn>,
 ) -> Result<MsgPackOrJson<RateLimiterCheckOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
-    let (result, remaining, retry_after) = rate_limiter.limit(
-        now,
-        &data.key,
-        data.units,
-        RateLimitConfig::TokenBucket(TokenBucket {
-            bucket_size: data.config.capacity,
-            refill_rate: data.config.refill_amount,
-            refill_interval: Duration::from_secs(data.config.refill_interval_seconds),
-        }),
-    )?;
+    let (result, remaining, retry_after) =
+        rate_limiter.limit(now, &data.key, data.units, data.method.into())?;
 
     Ok(MsgPackOrJson(RateLimiterCheckOut {
         result,
@@ -116,15 +193,8 @@ async fn rate_limiter_get_remaining(
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetRemainingIn>,
 ) -> Result<MsgPackOrJson<RateLimiterGetRemainingOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
-    let (remaining, retry_after) = rate_limiter.get_remaining(
-        now,
-        &data.key,
-        RateLimitConfig::TokenBucket(TokenBucket {
-            bucket_size: data.config.capacity,
-            refill_rate: data.config.refill_amount,
-            refill_interval: Duration::from_secs(data.config.refill_interval_seconds),
-        }),
-    )?;
+    let (remaining, retry_after) =
+        rate_limiter.get_remaining(now, &data.key, data.method.into())?;
 
     Ok(MsgPackOrJson(RateLimiterGetRemainingOut {
         remaining,

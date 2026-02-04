@@ -1585,10 +1585,6 @@
       "RateLimiterCheckIn": {
         "type": "object",
         "properties": {
-          "config": {
-            "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimiterConfig"
-          },
           "key": {
             "type": "string",
             "example": "some_key",
@@ -1603,9 +1599,49 @@
             "minimum": 0
           }
         },
+        "discriminator": {
+          "propertyName": "method"
+        },
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "token_bucket"
+                ]
+              }
+            },
+            "required": [
+              "method",
+              "config"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "fixed_window"
+                ]
+              }
+            },
+            "required": [
+              "method",
+              "config"
+            ]
+          }
+        ],
         "required": [
-          "key",
-          "config"
+          "key"
         ]
       },
       "RateLimiterCheckOut": {
@@ -1634,7 +1670,104 @@
           "remaining"
         ]
       },
-      "RateLimiterConfig": {
+      "RateLimiterFixedWindowConfig": {
+        "type": "object",
+        "properties": {
+          "max_requests": {
+            "description": "Maximum number of requests allowed within the window",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "window_size_seconds": {
+            "description": "Window size in seconds",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "window_size_seconds",
+          "max_requests"
+        ]
+      },
+      "RateLimiterGetRemainingIn": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          }
+        },
+        "discriminator": {
+          "propertyName": "method"
+        },
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "token_bucket"
+                ]
+              }
+            },
+            "required": [
+              "method",
+              "config"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "fixed_window"
+                ]
+              }
+            },
+            "required": [
+              "method",
+              "config"
+            ]
+          }
+        ],
+        "required": [
+          "key"
+        ]
+      },
+      "RateLimiterGetRemainingOut": {
+        "type": "object",
+        "properties": {
+          "remaining": {
+            "description": "Number of tokens remaining",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "retry_after": {
+            "description": "Seconds until at least one token is available (only present when remaining is 0)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "remaining"
+        ]
+      },
+      "RateLimiterTokenBucketConfig": {
         "type": "object",
         "properties": {
           "capacity": {
@@ -1661,64 +1794,6 @@
           "refill_amount",
           "refill_interval_seconds"
         ]
-      },
-      "RateLimiterGetRemainingIn": {
-        "type": "object",
-        "properties": {
-          "config": {
-            "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimiterConfig"
-          },
-          "key": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          }
-        },
-        "required": [
-          "key",
-          "config"
-        ]
-      },
-      "RateLimiterGetRemainingOut": {
-        "type": "object",
-        "properties": {
-          "remaining": {
-            "description": "Number of tokens remaining",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
-          "retry_after": {
-            "description": "Seconds until at least one token is available (only present when remaining is 0)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "nullable": true
-          }
-        },
-        "required": [
-          "remaining"
-        ]
-      },
-      "RedriveIn": {
-        "type": "object",
-        "properties": {
-          "consumerGroup": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "consumerGroup"
-        ]
-      },
-      "RedriveOut": {
-        "type": "object"
       }
     }
   },
