@@ -11,8 +11,8 @@ use std::{net::SocketAddr, sync::Arc};
 
 use coyote::{
     cfg::{
-        ClusterConfiguration, Configuration, ConfigurationInner, DatabaseConfig, Environment,
-        InternalConfig, LogFormat, LogLevel,
+        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
+        LogFormat, LogLevel,
     },
     core::{cluster::proto::HealthResponse, security::JwtSigningConfig},
     run_with_prefix, setup_tracing_for_tests,

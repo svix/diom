@@ -2,8 +2,6 @@ use coyote::cfg::DatabaseConfig;
 use coyote_configgroup::{BothDatabases, entities::StreamConfig};
 use test_utils::TestResult;
 
-use crate::ServerlessTestContext;
-
 #[tokio::test]
 async fn test_configgroup_fetch() -> TestResult {
     let ctx = super::build_config_without_server();
