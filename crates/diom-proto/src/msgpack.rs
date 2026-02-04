@@ -203,7 +203,7 @@ where
         }
 
         let mut buf = BytesMut::with_capacity(128).writer();
-        let res = rmp_serde::encode::write(&mut buf, &self.0);
+        let res = rmp_serde::encode::write_named(&mut buf, &self.0);
         make_response(buf.into_inner(), res)
     }
 }

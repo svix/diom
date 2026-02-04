@@ -7,15 +7,10 @@ use diom_configgroup::{
 };
 use test_utils::TestResult;
 
-use crate::TestContext;
-
 #[tokio::test]
 async fn test_bootstrap() -> TestResult {
-    let TestContext {
-        cfg,
-        handle: _handle,
-        ..
-    } = super::start_server().await;
+    let ctx = super::build_config_without_server();
+    let cfg = ctx.cfg;
 
     bootstrap::run(Some("./tests/it/static/bootstrap.test.yaml"), cfg.clone());
 

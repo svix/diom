@@ -46,3 +46,25 @@ log_path = "./logs"
 snapshot_path = "./snapshots"
 # The name of this cluster
 name = "diom"
+# The addresses to use to bootstrap the cluster, comma-separated
+# note that the addresses must be the canonical addresses intended to be used for replication
+# seed_nodes = "127.0.0.1:18050, 127.0.0.1:18051"
+
+# the maximum time for a single replication request to take
+replication_request_timeout_ms = 30000
+
+# the maximum time for each request in discovery
+discovery_request_timeout_ms = 10000
+# how long should we poll for discovery after booting
+discovery_timeout_ms = 30000
+# how long to wait before starting discovery to allow the axum app to boot
+startup_discovery_delay_ms = 10
+
+# the time to handshake all cluster connections
+connection_timeout_ms = 3100
+
+heartbeat_interval_ms = 500
+election_timeout_min_ms = 1500
+election_timeout_max_ms = 3000
+
+auto_initialize = true

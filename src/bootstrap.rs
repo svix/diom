@@ -162,7 +162,12 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
     let bootstrap =
         BootstrapConfig::load(bootstrap_cfg_path).expect("Failed to load bootstrap config");
 
-    println!("bootstrap: {bootstrap:?}");
+    tracing::debug!(
+        ?bootstrap,
+        persistent_db=?app_config.persistent_db,
+        ephemeral_db=?app_config.ephemeral_db,
+        "starting bootstrap"
+    );
     let persistent_db =
         DatabaseConfig::persistent(&app_config.persistent_db).expect("persistent db");
     let ephemeral_db = DatabaseConfig::ephemeral(&app_config.ephemeral_db).expect("ephemeral db");
@@ -172,39 +177,50 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
     })
     .expect("configgroup state");
 
+    let db = state.db();
+    let keyspace = state.keyspace();
+
     if let Some(kv) = bootstrap.kv {
         for (name, cfg) in kv {
+            tracing::debug!(?name, "bootstrapping kv");
             let create_cmd = cfg.create_config_group(name);
             create_cmd
-                .apply_operation(state.db(), state.keyspace())
+                .apply_operation(db, keyspace)
                 .expect("create config");
         }
     }
 
     if let Some(cache) = bootstrap.cache {
         for (name, cfg) in cache {
+            tracing::debug!(?name, "bootstrapping cache");
             let create_cmd = cfg.create_config_group(name);
             create_cmd
-                .apply_operation(state.db(), state.keyspace())
+                .apply_operation(db, keyspace)
                 .expect("create config");
         }
     }
 
     if let Some(idempotency) = bootstrap.idempotency {
         for (name, cfg) in idempotency {
+            tracing::debug!(?name, "bootstrapping idemptency");
             let create_cmd = cfg.create_config_group(name);
             create_cmd
-                .apply_operation(state.db(), state.keyspace())
+                .apply_operation(db, keyspace)
                 .expect("create config");
         }
     }
 
     if let Some(stream) = bootstrap.stream {
         for (name, cfg) in stream {
+            tracing::debug!(?name, "bootstrapping stream");
             let create_cmd = cfg.create_config_group(name);
             create_cmd
-                .apply_operation(state.db(), state.keyspace())
+                .apply_operation(db, keyspace)
                 .expect("create config");
         }
     }
+
+    state.flush_and_sync().expect("failed to persist DBs");
+
+    tracing::info!("done bootstrapping databases");
 }

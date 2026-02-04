@@ -3,6 +3,8 @@
 
 #![warn(clippy::all)]
 
+#[cfg(test)]
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
@@ -45,6 +47,7 @@ pub mod cfg;
 pub mod core;
 pub use diom_error as error;
 pub mod openapi;
+mod serde;
 pub mod v1;
 
 const CRATE_NAME: &str = env!("CARGO_CRATE_NAME");
@@ -125,7 +128,9 @@ async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<T
         listener.local_addr().unwrap()
     );
 
-    let app = core::cluster::router().with_state(state.clone());
+    let app = core::cluster::router()
+        .with_state(state.clone())
+        .layer(middleware::from_fn(diom_proto::capture_accept_hdr));
     let svc = tower::make::Shared::new(
         // It is important that this service wraps the router instead of being
         // applied via `Router::layer`, as it would run after routing then.
@@ -442,9 +447,15 @@ pub fn setup_tracing_for_tests() {
 }
 
 #[cfg(test)]
+static TEST_TRACING_INITIALIZED: AtomicBool = AtomicBool::new(false);
+
+#[cfg(test)]
 #[ctor::ctor]
 fn test_setup() {
-    setup_tracing_for_tests();
+    if !TEST_TRACING_INITIALIZED.load(Ordering::Acquire) {
+        setup_tracing_for_tests();
+        TEST_TRACING_INITIALIZED.store(true, Ordering::Release);
+    }
 }
 
 mod docs {
