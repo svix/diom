@@ -56,7 +56,7 @@ async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Resul
         return Ok(false);
     }
     let body: HealthResponse = response.json().await?;
-    if body.server_state.is_leader() {
+    if !body.server_state.is_leader() {
         tracing::warn!(state=?body.server_state, "booted, but not leader");
         return Ok(false);
     }
