@@ -1,13 +1,15 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+use std::{sync::Arc, time::Duration};
+
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use coyote_derive::aide_annotate;
+use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{sync::Arc, time::Duration};
 use validator::Validate;
 
 use crate::{
@@ -16,31 +18,26 @@ use crate::{
     error::Result,
     v1::{
         modules::kv::{KvModel, OperationBehavior},
-        utils::{ValidatedJson, openapi_tag},
+        utils::openapi_tag,
     },
 };
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::kv::KvStore as KvStoreType;
-pub use crate::v1::modules::kv::worker;
+pub use crate::v1::modules::kv::{KvStore as KvStoreType, worker};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetIn {
     #[validate(nested)]
     pub key: Arc<EntityKey>,
-    // FIXME: validate all fields
-    /// Time to live in milliseconds
-    pub expire_in: u64,
 
-    // FIXME: do we want it here? I think we probably want separate commands for insert, upsert,
-    // and update? Or does it get weird?
+    /// Time to live in milliseconds
+    #[validate(range(min = 1))]
+    pub expire_in: Option<u64>,
+
     #[serde(default)]
     pub behavior: OperationBehavior,
 
-    // FIXME: what to do with TTL? Does it get updated on a set, not?
-
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvSetIn {
@@ -52,16 +49,10 @@ impl KvSetIn {
             behavior: _,
         } = self;
 
-        let expires_at = if expire_in > 0 {
-            Some(Timestamp::now() + Duration::from_millis(expire_in))
-        } else {
-            None
-        };
+        let expires_at =
+            expire_in.map(|expire_in| Timestamp::now() + Duration::from_millis(expire_in));
 
-        KvModel {
-            expires_at,
-            value: value.into_bytes(),
-        }
+        KvModel { expires_at, value }
     }
 }
 
@@ -82,8 +73,7 @@ pub struct KvGetOut {
     /// Time of expiry
     pub expires_at: Option<Timestamp>,
 
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvGetOut {
@@ -91,7 +81,7 @@ impl KvGetOut {
         Self {
             key,
             expires_at: model.expires_at,
-            value: String::from_utf8(model.value).unwrap_or_else(|_| String::new()),
+            value: model.value,
         }
     }
 }
@@ -111,9 +101,9 @@ pub struct KvDeleteOut {
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<KvSetIn>,
-) -> Result<Json<KvSetOut>> {
-    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+    MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
+) -> Result<MsgPackOrJson<KvSetOut>> {
+    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
 
     let key = data.key.clone();
     let behavior = data.behavior.clone();
@@ -124,16 +114,16 @@ async fn kv_set(
         .map_err(|e| crate::error::Error::generic(e))?;
 
     let ret = KvSetOut {};
-    Ok(Json(ret))
+    Ok(MsgPackOrJson(ret))
 }
 
 /// KV Get
 #[aide_annotate(op_id = "v1.kv.get")]
 async fn kv_get(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<KvGetIn>,
-) -> Result<Json<KvGetOut>> {
-    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+    MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
+) -> Result<MsgPackOrJson<KvGetOut>> {
+    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
 
     let model = kv_store
         .get(&data.key.0)
@@ -146,23 +136,23 @@ async fn kv_get(
             ));
         }
     };
-    Ok(Json(ret))
+    Ok(MsgPackOrJson(ret))
 }
 
 /// KV Delete
 #[aide_annotate(op_id = "v1.kv.delete")]
 async fn kv_del(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<KvDeleteIn>,
-) -> Result<Json<KvDeleteOut>> {
-    let mut kv_store = state.kv_store_by_key(&data.key.0)?;
+    MsgPackOrJson(data): MsgPackOrJson<KvDeleteIn>,
+) -> Result<MsgPackOrJson<KvDeleteOut>> {
+    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
 
     let deleted = kv_store
         .delete(&data.key.0)
         .map_err(|e| crate::error::Error::generic(e))
         .is_ok();
     let ret = KvDeleteOut { deleted };
-    Ok(Json(ret))
+    Ok(MsgPackOrJson(ret))
 }
 
 pub fn router() -> ApiRouter<AppState> {

@@ -115,9 +115,8 @@ impl CoyoteClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::CacheSetIn;
-
     use super::CoyoteClient;
+    use crate::models::CacheSetIn;
 
     #[test]
     fn test_future_send_sync() {

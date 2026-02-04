@@ -11,11 +11,11 @@
 
 use std::time::Duration;
 
+use coyote_kv::{KvModel, KvStore, OperationBehavior};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, HttpError, Result};
-use coyote_kv::{KvModel, KvStore, OperationBehavior};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -122,7 +122,7 @@ mod tests {
         fn new() -> TestResult<Self> {
             let workdir = tempfile::tempdir()?;
             let db = Database::builder(workdir.as_ref()).temporary(true).open()?;
-            let kv = KvStore::new("test", db, EvictionPolicy::NoEviction);
+            let kv = KvStore::new("test", db, EvictionPolicy::NoEviction, None);
             let store = IdempotencyStore::new(kv);
             Ok(Self { store })
         }

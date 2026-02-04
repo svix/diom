@@ -80,6 +80,10 @@ impl NetworkClient {
             .client
             .post(url)
             .header(header::CONTENT_TYPE, "application/msgpack")
+            .header(
+                header::ACCEPT,
+                "application/msgpack;q=0.9, application/json;q=0.5",
+            )
             .body(body)
             .send()
             .await

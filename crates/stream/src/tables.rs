@@ -4,16 +4,16 @@ use std::{
     ops::RangeInclusive,
 };
 
-use crate::{
-    State,
-    entities::{ConsumerGroup, MsgHeaders, MsgId, StreamId},
-};
-
 use coyote_error::{Error, HttpError, Result};
 use fjall::OwnedWriteBatch;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    State,
+    entities::{ConsumerGroup, MsgHeaders, MsgId, StreamId},
+};
 
 // IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
 static_assertions::const_assert!(fjall_utils::are_all_unique(&[
@@ -89,9 +89,12 @@ pub(crate) struct LeaseRow {
     pub leased_at: Timestamp,
     /// LeaseRows expire based on the visibility timeout.
     pub expires_at: Timestamp,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     /// When the block of messages was acknowledged / processed by a consumer in the group.
+    #[serde(default)]
     pub acked_at: Option<Timestamp>,
+    /// DLQ'd messages are saved as a lease.
+    #[serde(default)]
+    pub dlq_at: Option<Timestamp>,
 }
 
 /// For the key, we use a composite of (stream_id, consumer_group, block_end).
@@ -177,37 +180,54 @@ impl LeaseRow {
     ///     2. Leases to insert.
     ///
     /// Any Lease that has expired (it's expiration time is past `now`), can be trivially
-    /// deleted.
+    /// deleted. DLQ'd leases are never deleted by expiration.
     ///
-    /// Any leases where 1) `acked_at.is_some()`, and 2) the message ranges are overlapping,
-    /// can be compacted. This involves deleting the old leases, and replacing them with merged lease.
+    /// Any acked or DLQ'd leases where the message ranges are adjacent or overlapping
+    /// can be compacted. This involves deleting the old leases, and replacing them with
+    /// a merged lease.
     pub(crate) fn cull_and_compact(leases: Vec<Self>, now: Timestamp) -> LeaseDiff {
         let mut to_delete = Vec::new();
         let mut to_insert = Vec::new();
 
         let mut acked_leases: Vec<Self> = Vec::new();
+        let mut dlq_leases: Vec<Self> = Vec::new();
 
         for lease in leases {
-            if lease.expires_at < now {
+            if lease.dlq_at.is_some() {
+                dlq_leases.push(lease);
+            } else if lease.expires_at < now {
                 to_delete.push(lease);
             } else if lease.acked_at.is_some() {
                 acked_leases.push(lease);
             }
         }
 
-        if acked_leases.is_empty() {
-            return LeaseDiff {
-                to_delete,
-                to_insert,
-            };
+        Self::compact_adjacent(acked_leases, &mut to_delete, &mut to_insert);
+        Self::compact_adjacent(dlq_leases, &mut to_delete, &mut to_insert);
+
+        LeaseDiff {
+            to_delete,
+            to_insert,
+        }
+    }
+
+    /// Compacts adjacent or overlapping leases by merging them into a single lease.
+    /// Groups of size 1 are left untouched.
+    fn compact_adjacent(
+        mut leases: Vec<Self>,
+        to_delete: &mut Vec<Self>,
+        to_insert: &mut Vec<Self>,
+    ) {
+        if leases.is_empty() {
+            return;
         }
 
-        acked_leases.sort_by_key(|l| l.block_start);
+        leases.sort_by_key(|l| l.block_start);
 
         let mut groups: Vec<Vec<Self>> = Vec::new();
-        let mut current_group = vec![acked_leases.remove(0)];
+        let mut current_group = vec![leases.remove(0)];
 
-        for lease in acked_leases {
+        for lease in leases {
             let last = current_group.last().unwrap();
             if last.block_end + 1 >= lease.block_start {
                 current_group.push(lease);
@@ -226,42 +246,82 @@ impl LeaseRow {
             let stream_id = group[0].stream_id;
             let cg = group[0].cg.clone();
 
-            let mut block_start = MsgId::MAX;
-            let mut block_end = MsgId::MIN;
-            let mut leased_at = Timestamp::MAX;
-            let mut expires_at = Timestamp::MIN;
-            let mut acked_at = Timestamp::MIN;
+            let mut merged = LeaseRow {
+                stream_id,
+                cg,
+                block_start: MsgId::MAX,
+                block_end: MsgId::MIN,
+                leased_at: Timestamp::MAX,
+                expires_at: Timestamp::MIN,
+                acked_at: None,
+                dlq_at: None,
+            };
 
             for lease in group {
-                block_start = block_start.min(lease.block_start);
-                block_end = block_end.max(lease.block_end);
-                leased_at = leased_at.min(lease.leased_at);
-                expires_at = expires_at.max(lease.expires_at);
+                merged.block_start = merged.block_start.min(lease.block_start);
+                merged.block_end = merged.block_end.max(lease.block_end);
+                merged.leased_at = merged.leased_at.min(lease.leased_at);
+                merged.expires_at = merged.expires_at.max(lease.expires_at);
                 if let Some(ack) = lease.acked_at {
-                    acked_at = acked_at.max(ack);
+                    merged.acked_at = Some(merged.acked_at.map_or(ack, |a| a.max(ack)));
+                }
+                if let Some(dlq) = lease.dlq_at {
+                    merged.dlq_at = Some(merged.dlq_at.map_or(dlq, |d| d.max(dlq)));
                 }
                 to_delete.push(lease);
             }
 
-            to_insert.push(Self {
-                stream_id,
-                cg,
-                block_start,
-                block_end,
-                leased_at,
-                expires_at,
-                acked_at: Some(acked_at),
-            });
-        }
-
-        LeaseDiff {
-            to_delete,
-            to_insert,
+            to_insert.push(merged);
         }
     }
 
     pub(crate) fn is_active(&self, now: Timestamp) -> bool {
-        self.acked_at.is_none() && self.expires_at > now
+        self.acked_at.is_none() && self.dlq_at.is_none() && self.expires_at > now
+    }
+
+    pub(crate) fn is_dlq(&self) -> bool {
+        self.dlq_at.is_some()
+    }
+
+    /// Shrinks or splits active leases to exclude a range of message IDs.
+    /// This is called when messages are acked or DLQ'd to ensure the active lease
+    /// no longer blocks those messages.
+    pub(crate) fn shrink_active_leases_for_range(
+        leases: &[Self],
+        min_msg_id: MsgId,
+        max_msg_id: MsgId,
+        now: Timestamp,
+        lease_diff: &mut LeaseDiff,
+    ) {
+        for lease in leases {
+            if !lease.is_active(now) {
+                continue;
+            }
+
+            // It only makes sense to shrink the lease if it overlaps with the msg range.
+            if lease.block_end < min_msg_id || max_msg_id < lease.block_start {
+                continue;
+            }
+
+            lease_diff.to_delete.push(lease.clone());
+
+            // Create replacement lease(s) for any parts that don't overlap with the range
+            // Left remainder: [lease.block_start, min_msg_id - 1] if lease starts before range
+            if lease.block_start < min_msg_id {
+                lease_diff.to_insert.push(Self {
+                    block_end: min_msg_id - 1,
+                    ..lease.clone()
+                });
+            }
+
+            // Right remainder: [max_msg_id + 1, lease.block_end] if lease ends after range
+            if lease.block_end > max_msg_id {
+                lease_diff.to_insert.push(Self {
+                    block_start: max_msg_id + 1,
+                    ..lease.clone()
+                });
+            }
+        }
     }
 }
 
@@ -484,6 +544,7 @@ mod tests {
             leased_at: ts(0),
             expires_at: ts(50),
             acked_at: None,
+            dlq_at: None,
         };
 
         let diff = LeaseRow::cull_and_compact(vec![lease.clone()], ts(100));
@@ -504,6 +565,7 @@ mod tests {
             leased_at: ts(0),
             expires_at: ts(200),
             acked_at: None,
+            dlq_at: None,
         };
 
         let diff = LeaseRow::cull_and_compact(vec![lease], ts(100));
@@ -523,6 +585,7 @@ mod tests {
             leased_at: ts(0),
             expires_at: ts(200),
             acked_at: Some(ts(50)),
+            dlq_at: None,
         };
 
         let diff = LeaseRow::cull_and_compact(vec![lease], ts(100));
@@ -543,6 +606,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(50),
                 acked_at: None,
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -552,6 +616,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(60),
                 acked_at: None,
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -561,6 +626,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(70),
                 acked_at: None,
+                dlq_at: None,
             },
         ];
 
@@ -582,6 +648,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(200),
                 acked_at: None,
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -591,6 +658,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(200),
                 acked_at: None,
+                dlq_at: None,
             },
         ];
 
@@ -612,6 +680,7 @@ mod tests {
                 leased_at: ts(10),
                 expires_at: ts(200),
                 acked_at: Some(ts(20)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -621,6 +690,7 @@ mod tests {
                 leased_at: ts(15),
                 expires_at: ts(200),
                 acked_at: Some(ts(25)),
+                dlq_at: None,
             },
         ];
 
@@ -647,6 +717,7 @@ mod tests {
                 leased_at: ts(10),
                 expires_at: ts(200),
                 acked_at: Some(ts(20)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -656,6 +727,7 @@ mod tests {
                 leased_at: ts(15),
                 expires_at: ts(200),
                 acked_at: Some(ts(25)),
+                dlq_at: None,
             },
         ];
 
@@ -681,6 +753,7 @@ mod tests {
                 leased_at: ts(10),
                 expires_at: ts(200),
                 acked_at: Some(ts(20)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -690,6 +763,7 @@ mod tests {
                 leased_at: ts(15),
                 expires_at: ts(200),
                 acked_at: Some(ts(25)),
+                dlq_at: None,
             },
         ];
 
@@ -711,6 +785,7 @@ mod tests {
                 leased_at: ts(10),
                 expires_at: ts(200),
                 acked_at: Some(ts(20)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -720,6 +795,7 @@ mod tests {
                 leased_at: ts(15),
                 expires_at: ts(200),
                 acked_at: Some(ts(25)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -729,6 +805,7 @@ mod tests {
                 leased_at: ts(18),
                 expires_at: ts(200),
                 acked_at: Some(ts(30)),
+                dlq_at: None,
             },
         ];
 
@@ -755,6 +832,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(50),
                 acked_at: None,
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -764,6 +842,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(200),
                 acked_at: None,
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -773,6 +852,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(200),
                 acked_at: Some(ts(50)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -782,6 +862,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(200),
                 acked_at: Some(ts(55)),
+                dlq_at: None,
             },
         ];
 
@@ -807,6 +888,7 @@ mod tests {
                 leased_at: ts(10),
                 expires_at: ts(200),
                 acked_at: Some(ts(20)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -816,6 +898,7 @@ mod tests {
                 leased_at: ts(15),
                 expires_at: ts(200),
                 acked_at: Some(ts(25)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -825,6 +908,7 @@ mod tests {
                 leased_at: ts(10),
                 expires_at: ts(200),
                 acked_at: Some(ts(20)),
+                dlq_at: None,
             },
             LeaseRow {
                 stream_id,
@@ -834,6 +918,7 @@ mod tests {
                 leased_at: ts(15),
                 expires_at: ts(200),
                 acked_at: Some(ts(25)),
+                dlq_at: None,
             },
         ];
 
@@ -938,6 +1023,7 @@ mod tests {
                 leased_at: ts(0),
                 expires_at: ts(1000),
                 acked_at: None,
+                dlq_at: None,
             }
         }
 
@@ -1204,6 +1290,124 @@ mod tests {
             assert_eq!(result[2].0, 5);
             assert_eq!(result[3].0, 7);
             assert_eq!(result[4].0, 9);
+        }
+
+        #[test]
+        fn dlq_lease_blocks_message() {
+            let state = test_state("fetch_available_dlq_blocks");
+            let stream_id = StreamId::new_v4();
+            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+
+            // Create a DLQ lease for message 3
+            let dlq_lease = LeaseRow {
+                stream_id,
+                cg: "test-cg".to_string(),
+                block_start: 3,
+                block_end: 3,
+                leased_at: ts(0),
+                expires_at: Timestamp::MAX,
+                acked_at: None,
+                dlq_at: Some(ts(100)),
+            };
+            let result =
+                MsgRow::fetch_available(&state, stream_id, &[dlq_lease], batch(10)).unwrap();
+
+            assert_eq!(result.len(), 4);
+            assert_eq!(result[0].0, 1);
+            assert_eq!(result[1].0, 2);
+            assert_eq!(result[2].0, 4);
+            assert_eq!(result[3].0, 5);
+        }
+
+        #[test]
+        fn cull_and_compact_preserves_dlq_leases() {
+            let stream_id = StreamId::new_v4();
+            let dlq_lease = LeaseRow {
+                stream_id,
+                cg: "cg1".to_string(),
+                block_start: 3,
+                block_end: 3,
+                leased_at: ts(0),
+                expires_at: ts(50), // Even if expired time-wise, DLQ should be preserved
+                acked_at: None,
+                dlq_at: Some(ts(10)),
+            };
+
+            let diff = LeaseRow::cull_and_compact(vec![dlq_lease], ts(100));
+
+            // DLQ lease should NOT be deleted even though it's "expired"
+            assert!(diff.to_delete.is_empty());
+            assert!(diff.to_insert.is_empty());
+        }
+
+        #[test]
+        fn cull_and_compact_adjacent_dlq_leases_are_compacted() {
+            let stream_id = StreamId::new_v4();
+            let leases = vec![
+                LeaseRow {
+                    stream_id,
+                    cg: "cg1".to_string(),
+                    block_start: 1,
+                    block_end: 3,
+                    leased_at: ts(0),
+                    expires_at: Timestamp::MAX,
+                    acked_at: None,
+                    dlq_at: Some(ts(10)),
+                },
+                LeaseRow {
+                    stream_id,
+                    cg: "cg1".to_string(),
+                    block_start: 4,
+                    block_end: 6,
+                    leased_at: ts(5),
+                    expires_at: Timestamp::MAX,
+                    acked_at: None,
+                    dlq_at: Some(ts(20)),
+                },
+            ];
+
+            let diff = LeaseRow::cull_and_compact(leases, ts(100));
+
+            assert_eq!(diff.to_delete.len(), 2);
+            assert_eq!(diff.to_insert.len(), 1);
+
+            let merged = &diff.to_insert[0];
+            assert_eq!(merged.block_start, 1);
+            assert_eq!(merged.block_end, 6);
+            assert_eq!(merged.dlq_at, Some(ts(20)));
+            assert!(merged.acked_at.is_none());
+        }
+
+        #[test]
+        fn cull_and_compact_non_adjacent_dlq_leases_not_compacted() {
+            let stream_id = StreamId::new_v4();
+            let leases = vec![
+                LeaseRow {
+                    stream_id,
+                    cg: "cg1".to_string(),
+                    block_start: 1,
+                    block_end: 3,
+                    leased_at: ts(0),
+                    expires_at: Timestamp::MAX,
+                    acked_at: None,
+                    dlq_at: Some(ts(10)),
+                },
+                LeaseRow {
+                    stream_id,
+                    cg: "cg1".to_string(),
+                    block_start: 10,
+                    block_end: 12,
+                    leased_at: ts(5),
+                    expires_at: Timestamp::MAX,
+                    acked_at: None,
+                    dlq_at: Some(ts(20)),
+                },
+            ];
+
+            let diff = LeaseRow::cull_and_compact(leases, ts(100));
+
+            assert!(diff.to_delete.is_empty());
+            assert!(diff.to_insert.is_empty());
         }
     }
 }

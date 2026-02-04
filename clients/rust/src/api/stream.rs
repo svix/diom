@@ -22,7 +22,22 @@ pub struct StreamFetchLockingOptions {
 }
 
 #[derive(Default)]
+pub struct StreamAckRangeOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
 pub struct StreamAckOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
+pub struct StreamDlqOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
+pub struct StreamRedriveOptions {
     pub idempotency_key: Option<String>,
 }
 
@@ -103,12 +118,53 @@ impl<'a> Stream<'a> {
     }
 
     /// Acks the messages for the consumer group, allowing more messages to be consumed.
-    pub async fn ack(&self, ack_in: AckIn, options: Option<StreamAckOptions>) -> Result<AckOut> {
+    pub async fn ack_range(
+        &self,
+        ack_msg_range_in: AckMsgRangeIn,
+        options: Option<StreamAckRangeOptions>,
+    ) -> Result<AckMsgRangeOut> {
+        let StreamAckRangeOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack-range")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(ack_msg_range_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Acks a single message.
+    pub async fn ack(&self, ack: Ack, options: Option<StreamAckOptions>) -> Result<AckOut> {
         let StreamAckOptions { idempotency_key } = options.unwrap_or_default();
 
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack")
             .with_optional_header_param("idempotency-key", idempotency_key)
-            .with_body_param(ack_in)
+            .with_body_param(ack)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Moves a message to the dead letter queue.
+    pub async fn dlq(&self, dlq_in: DlqIn, options: Option<StreamDlqOptions>) -> Result<DlqOut> {
+        let StreamDlqOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/stream/dlq")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(dlq_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Redrives messages from the dead letter queue back to the stream.
+    pub async fn redrive(
+        &self,
+        redrive_in: RedriveIn,
+        options: Option<StreamRedriveOptions>,
+    ) -> Result<RedriveOut> {
+        let StreamRedriveOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/stream/redrive-dlq")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(redrive_in)
             .execute(self.cfg)
             .await
     }

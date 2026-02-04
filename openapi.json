@@ -766,13 +766,61 @@
         ]
       }
     },
+    "/api/v1/stream/ack-range": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Ack Range",
+        "description": "Acks the messages for the consumer group, allowing more messages to be consumed.",
+        "operationId": "v1.stream.ack-range",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AckMsgRangeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AckMsgRangeOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/stream/ack": {
       "post": {
         "tags": [
           "Stream"
         ],
         "summary": "Ack",
-        "description": "Acks the messages for the consumer group, allowing more messages to be consumed.",
+        "description": "Acks a single message.",
         "operationId": "v1.stream.ack",
         "parameters": [
           {
@@ -789,7 +837,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AckIn"
+                "$ref": "#/components/schemas/Ack"
               }
             }
           },
@@ -813,6 +861,102 @@
           }
         ]
       }
+    },
+    "/api/v1/stream/dlq": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Dlq",
+        "description": "Moves a message to the dead letter queue.",
+        "operationId": "v1.stream.dlq",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DlqIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DlqOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stream/redrive-dlq": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Redrive",
+        "description": "Redrives messages from the dead letter queue back to the stream.",
+        "operationId": "v1.stream.redrive",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedriveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedriveOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -824,7 +968,28 @@
       }
     },
     "schemas": {
-      "AckIn": {
+      "Ack": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "msgId": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "consumerGroup",
+          "msgId"
+        ]
+      },
+      "AckMsgRangeIn": {
         "type": "object",
         "properties": {
           "consumerGroup": {
@@ -850,6 +1015,9 @@
           "consumerGroup",
           "maxMsgId"
         ]
+      },
+      "AckMsgRangeOut": {
+        "type": "object"
       },
       "AckOut": {
         "type": "object"
@@ -1037,6 +1205,30 @@
           "updatedAt"
         ]
       },
+      "DlqIn": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "msgId": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "consumerGroup",
+          "msgId"
+        ]
+      },
+      "DlqOut": {
+        "type": "object"
+      },
       "FetchFromStreamIn": {
         "type": "object",
         "properties": {
@@ -1108,8 +1300,14 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "response": {
-            "description": "The response to cache\nFIXME(@svix-lucho): change to Bytes",
-            "type": "string"
+            "description": "The response to cache",
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
           },
           "ttl_seconds": {
             "description": "TTL in seconds for the cached response",
@@ -1170,7 +1368,13 @@
             "type": "object",
             "properties": {
               "response": {
-                "type": "string"
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint8",
+                  "maximum": 255,
+                  "minimum": 0
+                }
               },
               "status": {
                 "type": "string",
@@ -1241,7 +1445,13 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "value": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
           }
         },
         "required": [
@@ -1260,7 +1470,8 @@
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 1,
+            "nullable": true
           },
           "key": {
             "type": "string",
@@ -1269,12 +1480,17 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "value": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
           }
         },
         "required": [
           "key",
-          "expire_in",
           "value"
         ]
       },
@@ -1288,7 +1504,8 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
-            }
+            },
+            "default": {}
           },
           "payload": {
             "type": "array",
@@ -1301,8 +1518,7 @@
           }
         },
         "required": [
-          "payload",
-          "headers"
+          "payload"
         ]
       },
       "MsgOut": {
@@ -1485,6 +1701,24 @@
         "required": [
           "remaining"
         ]
+      },
+      "RedriveIn": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "consumerGroup"
+        ]
+      },
+      "RedriveOut": {
+        "type": "object"
       }
     }
   },

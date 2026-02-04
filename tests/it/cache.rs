@@ -1,6 +1,8 @@
 use serde_json::{Value, json};
 use test_utils::{StatusCode, TestClient, TestResult};
 
+use crate::TestContext;
+
 async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) -> TestResult<()> {
     client
         .post("cache/set")
@@ -28,7 +30,11 @@ async fn cache_get(client: &TestClient, key: &str) -> TestResult<Value> {
 
 #[tokio::test]
 async fn test_cache_set_and_get() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     cache_set(&client, "test-key-1", 60000, "test-value-123").await?;
 
@@ -43,7 +49,11 @@ async fn test_cache_set_and_get() -> TestResult {
 
 #[tokio::test]
 async fn test_cache_set_get_and_delete() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     cache_set(&client, "test-key-2", 30000, "another-value").await?;
 

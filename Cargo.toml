@@ -11,6 +11,8 @@ edition = "2024"
 ignored = [
     # not a direct dependency, but we want to pin its version
     "idna_adapter",
+    # required by aide::OperationIo derive macro
+    "schemars",
 ]
 
 [features]
@@ -56,7 +58,6 @@ rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_path_to_error.workspace = true
 stream.workspace = true
 tap.workspace = true
 tokio.workspace = true
@@ -74,6 +75,7 @@ zip.workspace = true
 [dev-dependencies]
 assert_matches.workspace = true
 ctor.workspace = true
+rmp-serde.workspace = true
 rmpv.workspace = true
 tempfile.workspace = true
 test-utils.workspace = true
@@ -107,12 +109,12 @@ assert_matches = "1.5.0"
 axum = { version = "0.8.8", features = ["macros"] }
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
 byteorder = "1.5.0"
-bytes = "1.1.0"
+bytes = "1.11.1"
 clap = { version = "4.1.8", features = ["derive"] }
 clap_complete = "4.5.38"
 colored_json = "5.0.0"
 concolor-clap = "0.1.0"
-config = { version = "0.15.19", default-features = false, features = ["toml"] }
+config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 coyote.path = "."
 coyote-client.path = "clients/rust"
 coyote-configgroup.path = "crates/coyote-configgroup"
@@ -177,7 +179,7 @@ test-utils.path = "crates/test-utils"
 tokio = { version = "1.24.2", features = ["rt", "signal", "fs"] }
 tokio-util = "0.7"
 tower = "0.5.1"
-tower-http = { version = "0.6.1", features = ["trace", "cors", "normalize-path", "request-id"] }
+tower-http = { version = "0.6.1", features = ["cors", "normalize-path", "request-id", "trace", "util"] }
 tower-service = "0.3.3"
 tracing = "0.1.35"
 tracing-opentelemetry = "0.32.1"

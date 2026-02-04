@@ -1,10 +1,11 @@
+use coyote_error::{HttpError, Result};
+use jiff::Timestamp;
+
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, StreamName},
     tables::{LeaseDiff, LeaseRow, NameToStreamRow},
 };
-use coyote_error::{HttpError, Result};
-use jiff::Timestamp;
 
 pub struct Ack {
     lease_diff: LeaseDiff,
@@ -25,7 +26,17 @@ impl Ack {
         let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
         validate_ack_bounds(&leases, max_msg_id)?;
 
-        let mut lease_diff = LeaseRow::cull_and_compact(leases, now);
+        let mut lease_diff = LeaseRow::cull_and_compact(leases.clone(), now);
+
+        // Shrink any active leases that overlap with the acked range
+        LeaseRow::shrink_active_leases_for_range(
+            &leases,
+            min_msg_id,
+            max_msg_id,
+            now,
+            &mut lease_diff,
+        );
+
         // This new lease is potentially redundant with an extant lease.
         // However, any redundancy will be removed by future calls to `cull_and_compact`.
         lease_diff.to_insert.push(LeaseRow {
@@ -36,6 +47,7 @@ impl Ack {
             leased_at: now,
             expires_at: Timestamp::MAX,
             acked_at: Some(now),
+            dlq_at: None,
         });
 
         Ok(Self { lease_diff })

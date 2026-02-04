@@ -10,11 +10,11 @@ pub struct KvGetOut {
 
     pub key: String,
 
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl KvGetOut {
-    pub fn new(key: String, value: String) -> Self {
+    pub fn new(key: String, value: Vec<u8>) -> Self {
         Self {
             expires_at: None,
             key,

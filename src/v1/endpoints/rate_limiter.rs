@@ -4,19 +4,15 @@
 use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use coyote_derive::aide_annotate;
+use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::types::EntityKey,
-    error::Result,
-    v1::utils::{ValidatedJson, openapi_tag},
-};
+use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
 use coyote_rate_limiter::{RateLimitConfig, RateLimitResult, TokenBucket};
@@ -91,8 +87,8 @@ pub struct RateLimiterGetRemainingOut {
 #[aide_annotate(op_id = "v1.rate_limiter.limit")]
 async fn rate_limiter_limit(
     State(AppState { rate_limiter, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<RateLimiterCheckIn>,
-) -> Result<Json<RateLimiterCheckOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<RateLimiterCheckIn>,
+) -> Result<MsgPackOrJson<RateLimiterCheckOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
     let (result, remaining, retry_after) = rate_limiter.limit(
         now,
@@ -105,7 +101,7 @@ async fn rate_limiter_limit(
         }),
     )?;
 
-    Ok(Json(RateLimiterCheckOut {
+    Ok(MsgPackOrJson(RateLimiterCheckOut {
         result,
         remaining,
         retry_after: retry_after.map(|t| t.as_millis() as u64),
@@ -117,8 +113,8 @@ async fn rate_limiter_limit(
 #[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
 async fn rate_limiter_get_remaining(
     State(AppState { rate_limiter, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<RateLimiterGetRemainingIn>,
-) -> Result<Json<RateLimiterGetRemainingOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetRemainingIn>,
+) -> Result<MsgPackOrJson<RateLimiterGetRemainingOut>> {
     let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
     let (remaining, retry_after) = rate_limiter.get_remaining(
         now,
@@ -130,7 +126,7 @@ async fn rate_limiter_get_remaining(
         }),
     )?;
 
-    Ok(Json(RateLimiterGetRemainingOut {
+    Ok(MsgPackOrJson(RateLimiterGetRemainingOut {
         remaining,
         retry_after: retry_after.map(|t| t.as_millis() as u64),
     }))

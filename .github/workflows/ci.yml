@@ -13,22 +13,31 @@ env:
   RUST_BACKTRACE: 1
 jobs:
   check-fmt:
-    name: Formatting & Clippy
+    name: Formatting
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
         with:
-          components: rustfmt, clippy
+          components: rustfmt
       - uses: taiki-e/install-action@cargo-sort
+      - run: cargo fmt -- --check
+      - run: cargo sort --check --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      # Use beta toolchain for a middle ground between effective caching and the latest lints
+      - uses: dtolnay/rust-toolchain@beta
+        with:
+          components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: cargo fmt -- --check
       - run: cargo clippy --workspace --all-features --all-targets
-      - run: cargo sort --check --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
   # TODO: re-enable cargo-machete when we're further along in dev
   # check-unused-deps:
   #   name: Check Unused Dependencies
@@ -58,6 +67,8 @@ jobs:
       - uses: taiki-e/install-action@cargo-nextest
       - uses: taiki-e/install-action@just
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: just test --profile ci
   check-codegen:
     name: Check openapi.json and SDKs
@@ -66,8 +77,6 @@ jobs:
       - uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
         with:
-          # only save the cache on the main branch
-          # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Regerate openapi.json and SDKs
         run: cargo codegen

@@ -1,7 +1,8 @@
+use std::collections::HashMap;
+
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -16,6 +17,7 @@ pub type MsgHeaders = HashMap<String, String>;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct MsgIn {
     pub payload: Vec<u8>,
+    #[serde(default)]
     pub headers: HashMap<String, String>,
 }
 

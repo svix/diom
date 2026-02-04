@@ -71,6 +71,7 @@ where
 // Standard functions
 
 #[tracing::instrument(skip_all)]
+#[axum::debug_handler]
 async fn append_entries(
     State(state): State<AppState>,
     MsgPack(body): MsgPack<AppendEntriesRequest<TypeConfig>>,
@@ -144,7 +145,7 @@ async fn metrics(State(state): State<AppState>) -> impl IntoResponse {
 
 async fn add_learner(
     State(state): State<AppState>,
-    request: Json<AddLearnerRequest>,
+    Json(request): Json<AddLearnerRequest>,
 ) -> impl IntoResponse {
     let url = format!("http://{}/repl/raft/vote", request.address);
     let Ok(Some(addr)) = Uri::try_from(url).map(|v| v.authority().map(|a| a.to_string())) else {
@@ -156,7 +157,7 @@ async fn add_learner(
 
 async fn upgrade_learner(
     State(state): State<AppState>,
-    request: Json<UpgradeLearnerRequest>,
+    Json(request): Json<UpgradeLearnerRequest>,
 ) -> impl IntoResponse {
     let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
     admin_response(state.raft.change_membership(request, true).await)
@@ -164,7 +165,7 @@ async fn upgrade_learner(
 
 async fn change_membership(
     State(state): State<AppState>,
-    request: Json<ChangeMembershipRequest>,
+    Json(request): Json<ChangeMembershipRequest>,
 ) -> impl IntoResponse {
     state
         .raft

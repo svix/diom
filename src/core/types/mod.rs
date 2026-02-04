@@ -3,14 +3,13 @@
 
 use std::{ops::Deref, sync::LazyLock};
 
+use coyote_error::validation_error;
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
 use schemars::{Schema, json_schema};
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
-
-use crate::v1::utils::validation_error;
 
 const ALL_ERROR: &str = "__all__";
 

@@ -11,8 +11,8 @@ pub use self::{
     kv::{Kv, KvDeleteOptions, KvGetOptions, KvSetOptions},
     rate_limiter::{RateLimiter, RateLimiterGetRemainingOptions, RateLimiterLimitOptions},
     stream::{
-        Stream, StreamAckOptions, StreamAppendOptions, StreamCreateOptions,
-        StreamFetchLockingOptions, StreamFetchOptions,
+        Stream, StreamAckOptions, StreamAckRangeOptions, StreamAppendOptions, StreamCreateOptions,
+        StreamDlqOptions, StreamFetchLockingOptions, StreamFetchOptions, StreamRedriveOptions,
     },
 };
 

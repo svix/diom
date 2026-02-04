@@ -1,15 +1,18 @@
 use std::num::NonZeroU16;
 
-use crate::{
-    State,
-    entities::{ConsumerGroup, MsgId, MsgOut, StreamName},
-    tables::{LeaseDiff, LeaseRow, MsgRow, NameToStreamRow},
-};
 use coyote_error::{HttpError, Result};
 use jiff::Timestamp;
 
+use crate::{
+    State,
+    entities::{ConsumerGroup, MsgId, MsgOut, StreamName},
+    tables::{LeaseRow, MsgRow, NameToStreamRow},
+};
+
+use super::fetch::create_leases_for_msgs;
+
 pub struct FetchLocking {
-    lease_diff: LeaseDiff,
+    lease_diff: crate::tables::LeaseDiff,
     msgs: Vec<(MsgId, MsgRow)>,
 }
 
@@ -39,8 +42,10 @@ impl FetchLocking {
             .into());
         }
 
-        let acked_leases = leases.iter().filter(|lease| lease.acked_at.is_some());
-        let msgs = MsgRow::fetch_available(state, stream_id, acked_leases, batch_size.into())?;
+        let blocked_leases = leases
+            .iter()
+            .filter(|lease| lease.acked_at.is_some() || lease.is_dlq());
+        let msgs = MsgRow::fetch_available(state, stream_id, blocked_leases, batch_size.into())?;
 
         if msgs.is_empty() {
             // FIXME(@svix-gabriel) this isn't really an error, but we need to go back
@@ -54,15 +59,16 @@ impl FetchLocking {
 
         let mut lease_diff = LeaseRow::cull_and_compact(leases, now);
 
-        lease_diff.to_insert.push(LeaseRow {
+        // Create separate leases for each contiguous block of messages.
+        let msg_ids: Vec<MsgId> = msgs.iter().map(|(id, _)| *id).collect();
+        create_leases_for_msgs(
+            &msg_ids,
             stream_id,
             cg,
-            block_start: msgs.first().unwrap().0,
-            block_end: msgs.last().unwrap().0,
-            leased_at: now,
-            expires_at: now + visibility_timeout,
-            acked_at: None,
-        });
+            now,
+            visibility_timeout,
+            &mut lease_diff,
+        );
 
         Ok(Self { lease_diff, msgs })
     }

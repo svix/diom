@@ -7,9 +7,10 @@ use std::{
 };
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use coyote_derive::aide_annotate;
 use coyote_error::Result;
+use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -19,14 +20,11 @@ use stream::{
 };
 use validator::Validate;
 
-use crate::{
-    AppState,
-    v1::utils::{ValidatedJson, openapi_tag},
-};
+use crate::{AppState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateStreamIn {
+struct CreateStreamIn {
     pub name: StreamName,
     /// How long messages are retained in the stream before being permanently nuked.
     pub retention_period_seconds: Option<NonZeroU64>,
@@ -36,7 +34,7 @@ pub struct CreateStreamIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateStreamOut {
+struct CreateStreamOut {
     pub name: StreamName,
     pub retention_period_seconds: Option<NonZeroU64>,
     pub max_byte_size: Option<NonZeroU64>,
@@ -48,8 +46,8 @@ pub struct CreateStreamOut {
 #[aide_annotate(op_id = "v1.stream.create")]
 async fn create_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CreateStreamIn>,
-) -> Result<Json<CreateStreamOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
+) -> Result<MsgPackOrJson<CreateStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -81,7 +79,7 @@ async fn create_stream(
         updated_at,
     } = out;
 
-    Ok(Json(CreateStreamOut {
+    Ok(MsgPackOrJson(CreateStreamOut {
         name,
         retention_period_seconds,
         max_byte_size,
@@ -92,14 +90,14 @@ async fn create_stream(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AppendToStreamIn {
+struct AppendToStreamIn {
     pub name: StreamName,
     pub msgs: Vec<MsgIn>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AppendToStreamOut {
+struct AppendToStreamOut {
     pub msg_ids: Vec<MsgId>,
 }
 
@@ -107,8 +105,8 @@ pub struct AppendToStreamOut {
 #[aide_annotate(op_id = "v1.stream.append")]
 async fn append_to_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<AppendToStreamIn>,
-) -> Result<Json<AppendToStreamOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<AppendToStreamIn>,
+) -> Result<MsgPackOrJson<AppendToStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -126,14 +124,14 @@ async fn append_to_stream(
     })
     .await??;
 
-    Ok(Json(AppendToStreamOut {
+    Ok(MsgPackOrJson(AppendToStreamOut {
         msg_ids: out.msg_ids,
     }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct FetchFromStreamIn {
+struct FetchFromStreamIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
 
@@ -146,7 +144,7 @@ pub struct FetchFromStreamIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct FetchFromStreamOut {
+struct FetchFromStreamOut {
     msgs: Vec<MsgOut>,
 }
 
@@ -157,8 +155,8 @@ pub struct FetchFromStreamOut {
 #[aide_annotate(op_id = "v1.stream.fetch-locking")]
 async fn locking_fetch_from_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<FetchFromStreamIn>,
-) -> Result<Json<FetchFromStreamOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
+) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -182,7 +180,7 @@ async fn locking_fetch_from_stream(
     })
     .await??;
 
-    Ok(Json(FetchFromStreamOut { msgs: out.msgs }))
+    Ok(MsgPackOrJson(FetchFromStreamOut { msgs: out.msgs }))
 }
 
 /// Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.
@@ -193,8 +191,8 @@ async fn locking_fetch_from_stream(
 #[aide_annotate(op_id = "v1.stream.fetch")]
 async fn fetch_from_stream(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<FetchFromStreamIn>,
-) -> Result<Json<FetchFromStreamOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
+) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -218,12 +216,12 @@ async fn fetch_from_stream(
     })
     .await??;
 
-    Ok(Json(FetchFromStreamOut { msgs: out.msgs }))
+    Ok(MsgPackOrJson(FetchFromStreamOut { msgs: out.msgs }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AckIn {
+struct AckMsgRangeIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
     min_msg_id: Option<MsgId>,
@@ -232,14 +230,14 @@ pub struct AckIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct AckOut {}
+struct AckMsgRangeOut {}
 
 /// Acks the messages for the consumer group, allowing more messages to be consumed.
-#[aide_annotate(op_id = "v1.stream.ack")]
-async fn ack(
+#[aide_annotate(op_id = "v1.stream.ack-range")]
+async fn ack_range(
     State(AppState { stream_state, .. }): State<AppState>,
-    ValidatedJson(data): ValidatedJson<AckIn>,
-) -> Result<Json<AckOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<AckMsgRangeIn>,
+) -> Result<MsgPackOrJson<AckMsgRangeOut>> {
     /*
     FIXME(@svix-gabriel)
 
@@ -263,7 +261,98 @@ async fn ack(
     })
     .await??;
 
-    Ok(Json(AckOut {}))
+    Ok(MsgPackOrJson(AckMsgRangeOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct Ack {
+    name: StreamName,
+    consumer_group: ConsumerGroup,
+    msg_id: MsgId,
+}
+
+/// Acks a single message.
+#[aide_annotate(op_id = "v1.stream.ack")]
+async fn ack(
+    State(AppState { stream_state, .. }): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<Ack>,
+) -> Result<MsgPackOrJson<AckOut>> {
+    let _out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Ack::new(
+            &stream_state,
+            data.name,
+            data.consumer_group,
+            data.msg_id,
+            data.msg_id,
+        )?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(MsgPackOrJson(AckOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct AckOut {}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct DlqIn {
+    name: StreamName,
+    consumer_group: ConsumerGroup,
+    msg_id: MsgId,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct DlqOut {}
+
+/// Moves a message to the dead letter queue.
+#[aide_annotate(op_id = "v1.stream.dlq")]
+async fn dlq(
+    State(AppState { stream_state, .. }): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<DlqIn>,
+) -> Result<MsgPackOrJson<DlqOut>> {
+    let _out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Dlq::new(
+            &stream_state,
+            data.name,
+            data.consumer_group,
+            data.msg_id,
+        )?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(MsgPackOrJson(DlqOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct RedriveIn {
+    name: StreamName,
+    consumer_group: ConsumerGroup,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct RedriveOut {}
+
+/// Redrives messages from the dead letter queue back to the stream.
+#[aide_annotate(op_id = "v1.stream.redrive")]
+async fn redrive(
+    State(AppState { stream_state, .. }): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<RedriveIn>,
+) -> Result<MsgPackOrJson<RedriveOut>> {
+    let _out = tokio::task::spawn_blocking(move || {
+        let op = stream::operations::Redrive::new(&stream_state, data.name, data.consumer_group)?;
+        op.apply_operation(&stream_state)
+    })
+    .await??;
+
+    Ok(MsgPackOrJson(RedriveOut {}))
 }
 
 pub fn router() -> ApiRouter<AppState> {
@@ -293,5 +382,16 @@ pub fn router() -> ApiRouter<AppState> {
             ),
             &tag,
         )
+        .api_route_with(
+            "/stream/ack-range",
+            post_with(ack_range, ack_range_operation),
+            &tag,
+        )
         .api_route_with("/stream/ack", post_with(ack, ack_operation), &tag)
+        .api_route_with("/stream/dlq", post_with(dlq, dlq_operation), &tag)
+        .api_route_with(
+            "/stream/redrive-dlq",
+            post_with(redrive, redrive_operation),
+            &tag,
+        )
 }

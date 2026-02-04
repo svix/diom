@@ -1,5 +1,7 @@
-use std::fmt::{self, Debug, Display, Formatter};
-use std::num::NonZeroU64;
+use std::{
+    fmt::{self, Debug, Display, Formatter},
+    num::NonZeroU64,
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -8,7 +10,7 @@ use uuid::Uuid;
 pub type ConfigGroupId = Uuid;
 
 #[derive(Serialize, Deserialize)]
-#[repr(u32)]
+#[repr(u8)]
 pub enum Module {
     Cache = 1,
     Idempotency = 2,
@@ -47,9 +49,11 @@ pub enum EvictionPolicy {
 pub trait ModuleConfig:
     Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned + JsonSchema
 {
-    const TABLE_PREFIX: &'static str;
-
     fn module() -> Module;
+
+    fn eviction_policy(&self) -> EvictionPolicy {
+        EvictionPolicy::NoEviction
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
@@ -59,15 +63,7 @@ impl KeyValueConfig {
     pub const NAMESPACE: &'static str = "kv_store";
 }
 
-impl KeyValueConfig {
-    pub fn eviction_policy(&self) -> EvictionPolicy {
-        EvictionPolicy::NoEviction
-    }
-}
-
 impl ModuleConfig for KeyValueConfig {
-    const TABLE_PREFIX: &'static str = "_CONFIG_KV_";
-
     fn module() -> Module {
         Module::KeyValue
     }
@@ -87,8 +83,6 @@ impl CacheConfig {
 }
 
 impl ModuleConfig for CacheConfig {
-    const TABLE_PREFIX: &'static str = "_CONFIG_CACHE_";
-
     fn module() -> Module {
         Module::Cache
     }
@@ -96,13 +90,9 @@ impl ModuleConfig for CacheConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct StreamConfig {
     pub retention_period_seconds: Option<NonZeroU64>,
-    pub max_bytes_size: u64,
-    pub storage_type: Option<StorageType>,
 }
 
 impl ModuleConfig for StreamConfig {
-    const TABLE_PREFIX: &'static str = "_CONFIG_STREAM_";
-
     fn module() -> Module {
         Module::Stream
     }
@@ -112,8 +102,6 @@ impl ModuleConfig for StreamConfig {
 pub struct IdempotencyConfig {}
 
 impl ModuleConfig for IdempotencyConfig {
-    const TABLE_PREFIX: &'static str = "_CONFIG_IDEM_";
-
     fn module() -> Module {
         Module::Idempotency
     }

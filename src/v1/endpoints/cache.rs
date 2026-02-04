@@ -4,8 +4,9 @@
 use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use coyote_derive::aide_annotate;
+use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -15,10 +16,7 @@ use crate::{
     AppState,
     core::types::EntityKey,
     error::Result,
-    v1::{
-        modules::cache::CacheModel,
-        utils::{ValidatedJson, openapi_tag},
-    },
+    v1::{modules::cache::CacheModel, utils::openapi_tag},
 };
 
 // Re-export types that are used in AppState
@@ -93,36 +91,36 @@ pub struct CacheDeleteOut {
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CacheSetIn>,
-) -> Result<Json<CacheSetOut>> {
-    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
+    MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
+) -> Result<MsgPackOrJson<CacheSetOut>> {
+    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
     let key = data.key.clone();
     cache_store.set(key.as_str(), data.into_model())?;
-    Ok(Json(CacheSetOut {}))
+    Ok(MsgPackOrJson(CacheSetOut {}))
 }
 
 /// Cache Get
 #[aide_annotate(op_id = "v1.cache.get")]
 async fn cache_get(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CacheGetIn>,
-) -> Result<Json<CacheGetOut>> {
-    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
+    MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
+) -> Result<MsgPackOrJson<CacheGetOut>> {
+    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
     let model = cache_store
         .get(&data.key)?
         .ok_or_else(|| crate::error::HttpError::not_found(None, None))?;
-    Ok(Json(CacheGetOut::from_model(data.key, model)))
+    Ok(MsgPackOrJson(CacheGetOut::from_model(data.key, model)))
 }
 
 /// Cache Delete
 #[aide_annotate(op_id = "v1.cache.delete")]
 async fn cache_del(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<CacheDeleteIn>,
-) -> Result<Json<CacheDeleteOut>> {
-    let mut cache_store = state.cache_store_by_key(&data.key.0)?;
+    MsgPackOrJson(data): MsgPackOrJson<CacheDeleteIn>,
+) -> Result<MsgPackOrJson<CacheDeleteOut>> {
+    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
     cache_store.delete(&data.key)?;
-    Ok(Json(CacheDeleteOut { deleted: true }))
+    Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }
 
 pub fn router() -> ApiRouter<AppState> {

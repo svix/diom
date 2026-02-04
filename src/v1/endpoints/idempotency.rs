@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Json, extract::State};
+use axum::extract::State;
 use coyote_derive::aide_annotate;
+use coyote_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::types::EntityKey,
-    error::Result,
-    v1::utils::{ValidatedJson, openapi_tag},
-};
+use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
 pub use crate::v1::modules::idempotency::IdempotencyStore;
@@ -38,7 +34,7 @@ pub enum IdempotencyStartOut {
     /// Lock acquired, request should proceed
     Locked,
     /// Request was already completed, cached response returned
-    Completed { response: String },
+    Completed { response: Vec<u8> },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -47,8 +43,7 @@ pub struct IdempotencyCompleteIn {
     pub key: EntityKey,
 
     /// The response to cache
-    /// FIXME(@svix-lucho): change to Bytes
-    pub response: String,
+    pub response: Vec<u8>,
 
     /// TTL in seconds for the cached response
     #[validate(range(min = 1))]
@@ -75,20 +70,14 @@ pub struct IdempotencyAbandonOut {}
 #[aide_annotate(op_id = "v1.idempotency.start")]
 async fn idempotency_start(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<IdempotencyStartIn>,
-) -> Result<Json<IdempotencyStartOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyStartIn>,
+) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
 
-    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
+    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
     match idempotency_store.try_start(&key_str, data.ttl_seconds)? {
-        None => Ok(Json(IdempotencyStartOut::Locked)),
-        Some(response) => {
-            let response_str = String::from_utf8(response)
-                .map_err(|_| crate::error::HttpError::internal_server_error(None, None))?;
-            Ok(Json(IdempotencyStartOut::Completed {
-                response: response_str,
-            }))
-        }
+        None => Ok(MsgPackOrJson(IdempotencyStartOut::Locked)),
+        Some(response) => Ok(MsgPackOrJson(IdempotencyStartOut::Completed { response })),
     }
 }
 
@@ -96,28 +85,28 @@ async fn idempotency_start(
 #[aide_annotate(op_id = "v1.idempotency.complete")]
 async fn idempotency_complete(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<IdempotencyCompleteIn>,
-) -> Result<Json<IdempotencyCompleteOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyCompleteIn>,
+) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
 
-    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
-    idempotency_store.complete(&key_str, data.response.into_bytes(), data.ttl_seconds)?;
+    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
+    idempotency_store.complete(&key_str, data.response, data.ttl_seconds)?;
 
-    Ok(Json(IdempotencyCompleteOut {}))
+    Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
 }
 
 /// Abandon an idempotent request (remove lock without saving response)
 #[aide_annotate(op_id = "v1.idempotency.abandon")]
 async fn idempotency_abandon(
     State(state): State<AppState>,
-    ValidatedJson(data): ValidatedJson<IdempotencyAbandonIn>,
-) -> Result<Json<IdempotencyAbandonOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbandonIn>,
+) -> Result<MsgPackOrJson<IdempotencyAbandonOut>> {
     let key_str = data.key.to_string();
 
-    let mut idempotency_store = state.idempotency_store_by_key(&key_str)?;
+    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
     idempotency_store.abandon(&key_str)?;
 
-    Ok(Json(IdempotencyAbandonOut {}))
+    Ok(MsgPackOrJson(IdempotencyAbandonOut {}))
 }
 
 // ============================================================================
