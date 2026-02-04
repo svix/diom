@@ -1,5 +1,5 @@
 mod server;
-pub use server::TestContext;
+use server::TestContext;
 
 mod bootstrap;
 mod cache;

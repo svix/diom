@@ -1,4 +1,6 @@
-use std::{net::SocketAddr, sync::Arc};
+#![allow(unused)]
+
+use std::{net::SocketAddr, path::Path, sync::Arc};
 
 use coyote::{
     cfg::{
@@ -20,8 +22,8 @@ use tokio::{
 /// Handle to an isolated test server.
 ///
 /// Once it's DROPed, the server and it's resources are cleaned up automatically (or at least, that's the intent.)
-pub struct IsolatedServerHandle {
-    _dir: TempDir,
+pub(crate) struct IsolatedServerHandle {
+    _dir: Option<TempDir>,
     server_handle: JoinHandle<()>,
 }
 
@@ -48,25 +50,21 @@ impl TestServerBuilder {
         }
     }
 
-    #[allow(unused)]
     pub(crate) fn token(mut self, token: String) -> Self {
         self.token = Some(token);
         self
     }
 
-    #[allow(unused)]
     pub(crate) fn listener(mut self, listener: TcpListener) -> Self {
         self.listener = Some(listener);
         self
     }
 
-    #[allow(unused)]
     pub(crate) fn repl_listener(mut self, listener: TcpListener) -> Self {
         self.repl_listener = Some(listener);
         self
     }
 
-    #[allow(unused)]
     pub(crate) fn cfg(mut self, cfg: ConfigurationInner) -> Self {
         self.cfg = Some(cfg);
         self
@@ -94,14 +92,25 @@ impl TestServerBuilder {
         let addr: SocketAddr = listener.local_addr().unwrap();
         let repl_addr: SocketAddr = repl_listener.local_addr().unwrap();
 
-        let ServerlessTestContext { cfg, workdir } = build_config_without_server(self.cfg);
+        let (mut cfg, workdir) = if let Some(cfg) = self.cfg {
+            // Assume that workdir will be tracked externally if custom
+            (cfg, None)
+        } else {
+            let workdir = tempfile::tempdir().unwrap();
+            let cfg = default_server_config(workdir.path());
+            (cfg, Some(workdir))
+        };
 
         let cfg = {
-            let mut cfg_inner = Arc::unwrap_or_clone(cfg);
-            cfg_inner.listen_address = addr;
-            cfg_inner.cluster.listen_address = repl_addr;
-            Arc::new(cfg_inner)
+            cfg.listen_address = addr;
+            cfg.cluster.listen_address = repl_addr;
+            Arc::new(cfg)
         };
+
+        // TODO: do bootstrap through the server APIs instead of just directly
+        // touching the databases? Need to make sure that this never runs
+        // concurrently with the other DB accesses
+        coyote::bootstrap::run(None, Arc::clone(&cfg));
 
         let base_uri = format!("http://{addr}/api/v1");
 
@@ -116,7 +125,6 @@ impl TestServerBuilder {
             _dir: workdir,
             server_handle,
         };
-
         let client = TestClient::new(base_uri, &token);
 
         wait_for_initialized(repl_addr, Duration::from_secs(8))
@@ -128,15 +136,19 @@ impl TestServerBuilder {
             cfg,
             handle,
             token,
+            addr,
+            repl_addr,
         }
     }
 }
 
-pub struct TestContext {
+pub(crate) struct TestContext {
     pub client: TestClient,
     pub cfg: Arc<ConfigurationInner>,
     pub handle: IsolatedServerHandle,
     pub token: String,
+    pub addr: SocketAddr,
+    pub repl_addr: SocketAddr,
 }
 
 async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Result<bool> {
@@ -189,21 +201,16 @@ pub(crate) struct ServerlessTestContext {
     workdir: TempDir,
 }
 
-pub(crate) fn build_config_without_server(
-    cfg: Option<ConfigurationInner>,
-) -> ServerlessTestContext {
-    setup_tracing_for_tests();
-
+pub(crate) fn default_server_config(workdir: &Path) -> ConfigurationInner {
     let jwt_key = HS256Key::generate();
 
-    let workdir = tempfile::tempdir().unwrap();
-    let db_dir = workdir.path().join("db");
-    let log_path = workdir.path().join("logs");
-    let snapshot_path = workdir.path().join("snapshots");
+    let db_dir = workdir.join("db");
+    let log_path = workdir.join("logs");
+    let snapshot_path = workdir.join("snapshots");
 
     let addr: SocketAddr = "0.0.0.0:0".parse().unwrap();
 
-    let cfg = cfg.unwrap_or_else(|| ConfigurationInner {
+    ConfigurationInner {
         listen_address: addr,
         ephemeral_db: DatabaseConfig {
             path: db_dir.clone(),
@@ -240,9 +247,12 @@ pub(crate) fn build_config_without_server(
             replication_request_timeout: Duration::from_millis(50),
             startup_discovery_delay: Duration::from_millis(0),
         },
-    });
+    }
+}
 
-    let cfg = Arc::new(cfg);
+pub(crate) fn build_config_without_server() -> ServerlessTestContext {
+    let workdir = tempfile::tempdir().unwrap();
+    let cfg = Arc::new(default_server_config(workdir.path()));
 
     // TODO: do bootstrap through the server APIs instead of just directly
     // touching the databases? Need to make sure that this never runs

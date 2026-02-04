@@ -75,6 +75,8 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
+coyote-client.workspace = true
+criterion.workspace = true
 ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
@@ -126,6 +128,7 @@ coyote-kv.path = "crates/kv"
 coyote-operations.path = "crates/coyote-operations"
 coyote-proto.path = "crates/coyote-proto"
 coyote-rate-limiter.path = "crates/rate-limiter"
+criterion = "0.8.2"
 ctor = "0.6.3"
 dirs = "6.0.0"
 dotenvy = "0.15.7"
@@ -241,3 +244,7 @@ strip = true
 
 [patch.crates-io]
 dotenvy = { git = "https://github.com/svix-jbrown/dotenvy.git", rev = "ffa0aa149e2c6da57113859001257f0d99b43431" }
+
+[[bench]]
+name = "kv"
+harness = false

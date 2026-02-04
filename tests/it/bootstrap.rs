@@ -11,7 +11,7 @@ use crate::server::build_config_without_server;
 
 #[tokio::test]
 async fn test_bootstrap() -> TestResult {
-    let ctx = build_config_without_server(None);
+    let ctx = build_config_without_server();
     let cfg = ctx.cfg;
 
     bootstrap::run(Some("./tests/it/static/bootstrap.test.yaml"), cfg.clone());
