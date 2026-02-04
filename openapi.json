@@ -1180,8 +1180,14 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "response": {
-            "description": "The response to cache\nFIXME(@svix-lucho): change to Bytes",
-            "type": "string"
+            "description": "The response to cache",
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
           },
           "ttl_seconds": {
             "description": "TTL in seconds for the cached response",
@@ -1242,7 +1248,13 @@
             "type": "object",
             "properties": {
               "response": {
-                "type": "string"
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint8",
+                  "maximum": 255,
+                  "minimum": 0
+                }
               },
               "status": {
                 "type": "string",
