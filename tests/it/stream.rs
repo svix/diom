@@ -3,7 +3,7 @@ use std::time::Duration;
 use serde_json::json;
 use test_utils::{StatusCode, TestResult};
 
-use crate::TestContext;
+use crate::{TestContext, server::start_server};
 
 #[tokio::test]
 async fn create_stream_upserts() -> TestResult {
@@ -11,7 +11,7 @@ async fn create_stream_upserts() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let response = client
         .post("stream/create")
@@ -68,7 +68,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -178,7 +178,7 @@ async fn stream_visibility_timeout() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -263,7 +263,7 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -354,7 +354,7 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -451,7 +451,7 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -585,7 +585,7 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -695,7 +695,7 @@ async fn queue_fetch_single_ack() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -790,7 +790,7 @@ async fn queue_dlq_and_redrive() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -924,7 +924,7 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")
@@ -1031,7 +1031,7 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let _stream = client
         .post("stream/create")

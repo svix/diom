@@ -7,9 +7,11 @@ use coyote_configgroup::{
 };
 use test_utils::TestResult;
 
+use crate::server::build_config_without_server;
+
 #[tokio::test]
 async fn test_bootstrap() -> TestResult {
-    let ctx = super::build_config_without_server();
+    let ctx = build_config_without_server(None);
     let cfg = ctx.cfg;
 
     bootstrap::run(Some("./tests/it/static/bootstrap.test.yaml"), cfg.clone());

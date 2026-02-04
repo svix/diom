@@ -3,7 +3,7 @@ use std::time::Duration;
 use serde_json::{Value, json};
 use test_utils::{StatusCode, TestClient, TestResult};
 
-use crate::TestContext;
+use crate::{TestContext, server::start_server};
 
 async fn start(client: &TestClient, key: &str, ttl_seconds: u64) -> TestResult<Value> {
     let response = client
@@ -53,7 +53,7 @@ async fn test_idempotency_start_and_complete() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let response = start(&client, "k1", 60).await?;
     assert_eq!(response["status"], "locked");
@@ -120,7 +120,7 @@ async fn test_idempotency_abandon() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     start(&client, "k1", 1).await?;
     complete(&client, "k1", "v1", 1).await?;
@@ -147,7 +147,7 @@ async fn test_idempotency_expiration() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     // start again after expired
     start(&client, "k1", 1).await?;
@@ -185,7 +185,7 @@ async fn test_idempotency_validation() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     client
         .post("idempotency/start")

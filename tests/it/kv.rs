@@ -4,7 +4,7 @@ use jiff::Timestamp;
 use serde_json::{Value, json};
 use test_utils::{StatusCode, TestClient, TestResult};
 
-use crate::TestContext;
+use crate::{TestContext, server::start_server};
 
 async fn kv_set(
     client: &TestClient,
@@ -56,7 +56,7 @@ async fn test_kv_set_and_get() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     kv_set(&client, "kv-key-1", None, "kv-value-456", "upsert").await?;
 
@@ -96,7 +96,7 @@ async fn test_kv_set_with_insert_and_delete() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     kv_set(&client, "kv-key-2", None, "value-ignored", "update").await?;
     kv_not_found(&client, "kv-key-2").await?;
@@ -132,7 +132,7 @@ async fn test_kv_expiration() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     kv_set(&client, "test-key-3", Some(100), "test-value-345", "upsert").await?;
 
@@ -149,7 +149,7 @@ async fn test_kv_update_expiration() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     // Test updating expiration time
     kv_set(&client, "kv4", Some(500), "v4", "upsert").await?;
@@ -193,7 +193,7 @@ async fn test_kv_binary_data() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let binary_data = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     client
@@ -232,7 +232,7 @@ async fn test_kv_validation() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let invalid_keys = ["", "key with spaces", "key@special", &"a".repeat(257)];
 
@@ -279,7 +279,7 @@ async fn test_kv_delete() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     // let response = client
     //     .post("kv/delete")
