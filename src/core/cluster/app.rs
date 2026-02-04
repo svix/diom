@@ -1,3 +1,5 @@
+#![expect(clippy::disallowed_types)] // we can't use MsgPackOrJson because these endpoints are not OpenAPI-based
+
 use std::collections::BTreeMap;
 
 use axum::{
@@ -67,7 +69,6 @@ where
 // Standard functions
 
 #[tracing::instrument(skip_all)]
-#[axum::debug_handler]
 async fn append_entries(
     State(state): State<AppState>,
     MsgPack(body): MsgPack<AppendEntriesRequest<TypeConfig>>,
