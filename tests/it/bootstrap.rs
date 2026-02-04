@@ -23,8 +23,8 @@ async fn test_bootstrap() -> TestResult {
     let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
 
     let configgroup_state = diom_configgroup::State::init(BothDatabases {
-        persistent_db: persistent_db.clone(),
-        ephemeral_db: ephemeral_db.clone(),
+        persistent_db,
+        ephemeral_db,
     })
     .expect("initializing configgroup state");
 

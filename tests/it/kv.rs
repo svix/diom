@@ -145,7 +145,11 @@ async fn test_kv_expiration() -> TestResult {
 
 #[tokio::test]
 async fn test_kv_update_expiration() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     // Test updating expiration time
     kv_set(&client, "kv4", Some(500), "v4", "upsert").await?;
@@ -185,7 +189,11 @@ async fn test_kv_update_expiration() -> TestResult {
 
 #[tokio::test]
 async fn test_kv_binary_data() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let binary_data = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     client
@@ -220,7 +228,11 @@ async fn test_kv_binary_data() -> TestResult {
 
 #[tokio::test]
 async fn test_kv_validation() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     let invalid_keys = ["", "key with spaces", "key@special", &"a".repeat(257)];
 
@@ -263,7 +275,11 @@ async fn test_kv_validation() -> TestResult {
 
 #[tokio::test]
 async fn test_kv_delete() -> TestResult {
-    let (client, _server_handle) = super::start_server().await;
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
 
     // let response = client
     //     .post("kv/delete")

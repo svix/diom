@@ -6,7 +6,8 @@ use config::ConfigBuilder;
 use diom_configgroup::{
     BothDatabases,
     entities::{
-        CacheConfig, EvictionPolicy, KeyValueConfig, ModuleConfig, StorageType, StreamConfig,
+        CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig, StorageType,
+        StreamConfig,
     },
     operations::create_configgroup::CreateConfigGroup,
 };
@@ -87,6 +88,17 @@ impl IntoModuleConfig for KeyValueConfigIn {
 }
 
 #[derive(Debug, Deserialize)]
+struct IdempotencyConfigIn {}
+
+impl IntoModuleConfig for IdempotencyConfigIn {
+    type Output = IdempotencyConfig;
+
+    fn into_module_config(self) -> Self::Output {
+        IdempotencyConfig {}
+    }
+}
+
+#[derive(Debug, Deserialize)]
 struct CacheConfigIn {
     pub eviction_policy: Option<EvictionPolicyIn>,
 }
@@ -119,6 +131,7 @@ impl IntoModuleConfig for StreamConfigIn {
 #[derive(Debug, Deserialize)]
 struct BootstrapConfig {
     cache: Option<HashMap<String, ConfigGroupIn<CacheConfigIn>>>,
+    idempotency: Option<HashMap<String, ConfigGroupIn<IdempotencyConfigIn>>>,
     kv: Option<HashMap<String, ConfigGroupIn<KeyValueConfigIn>>>,
     stream: Option<HashMap<String, ConfigGroupIn<StreamConfigIn>>>,
 }
@@ -170,6 +183,15 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
 
     if let Some(cache) = bootstrap.cache {
         for (name, cfg) in cache {
+            let create_cmd = cfg.create_config_group(name);
+            create_cmd
+                .apply_operation(state.db(), state.keyspace())
+                .expect("create config");
+        }
+    }
+
+    if let Some(idempotency) = bootstrap.idempotency {
+        for (name, cfg) in idempotency {
             let create_cmd = cfg.create_config_group(name);
             create_cmd
                 .apply_operation(state.db(), state.keyspace())
