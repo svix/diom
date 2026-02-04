@@ -1347,46 +1347,19 @@
         ]
       },
       "IdempotencyStartOut": {
+        "discriminator": {
+          "mapping": {
+            "completed": "#/components/schemas/IdempotencyStartOut_completed",
+            "locked": "#/components/schemas/IdempotencyStartOut_locked"
+          },
+          "propertyName": "status"
+        },
         "oneOf": [
           {
-            "description": "Lock acquired, request should proceed",
-            "type": "object",
-            "properties": {
-              "status": {
-                "type": "string",
-                "enum": [
-                  "locked"
-                ]
-              }
-            },
-            "required": [
-              "status"
-            ]
+            "$ref": "#/components/schemas/IdempotencyStartOut_locked"
           },
           {
-            "description": "Request was already completed, cached response returned",
-            "type": "object",
-            "properties": {
-              "response": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "uint8",
-                  "maximum": 255,
-                  "minimum": 0
-                }
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "completed"
-                ]
-              }
-            },
-            "required": [
-              "status",
-              "response"
-            ]
+            "$ref": "#/components/schemas/IdempotencyStartOut_completed"
           }
         ]
       },
@@ -1600,44 +1573,18 @@
           }
         },
         "discriminator": {
+          "mapping": {
+            "fixed_window": "#/components/schemas/RateLimiterCheckIn_fixed_window",
+            "token_bucket": "#/components/schemas/RateLimiterCheckIn_token_bucket"
+          },
           "propertyName": "method"
         },
         "oneOf": [
           {
-            "type": "object",
-            "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
-              },
-              "method": {
-                "type": "string",
-                "enum": [
-                  "token_bucket"
-                ]
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
+            "$ref": "#/components/schemas/RateLimiterCheckIn_token_bucket"
           },
           {
-            "type": "object",
-            "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
-              },
-              "method": {
-                "type": "string",
-                "enum": [
-                  "fixed_window"
-                ]
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
+            "$ref": "#/components/schemas/RateLimiterCheckIn_fixed_window"
           }
         ],
         "required": [
@@ -1702,44 +1649,18 @@
           }
         },
         "discriminator": {
+          "mapping": {
+            "fixed_window": "#/components/schemas/RateLimiterGetRemainingIn_fixed_window",
+            "token_bucket": "#/components/schemas/RateLimiterGetRemainingIn_token_bucket"
+          },
           "propertyName": "method"
         },
         "oneOf": [
           {
-            "type": "object",
-            "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
-              },
-              "method": {
-                "type": "string",
-                "enum": [
-                  "token_bucket"
-                ]
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
+            "$ref": "#/components/schemas/RateLimiterGetRemainingIn_token_bucket"
           },
           {
-            "type": "object",
-            "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
-              },
-              "method": {
-                "type": "string",
-                "enum": [
-                  "fixed_window"
-                ]
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
+            "$ref": "#/components/schemas/RateLimiterGetRemainingIn_fixed_window"
           }
         ],
         "required": [
@@ -1793,6 +1714,160 @@
           "capacity",
           "refill_amount",
           "refill_interval_seconds"
+        ]
+      },
+      "IdempotencyStartOut_locked": {
+        "description": "Lock acquired, request should proceed",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "locked"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "IdempotencyStartOut_completed": {
+        "description": "Request was already completed, cached response returned",
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "maximum": 255,
+              "minimum": 0
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "response"
+        ]
+      },
+      "RateLimiterCheckIn_token_bucket": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "token_bucket"
+            ]
+          },
+          "units": {
+            "description": "Number of units to consume (default: 1)",
+            "type": "integer",
+            "format": "uint64",
+            "default": 1,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "method",
+          "config",
+          "key"
+        ]
+      },
+      "RateLimiterCheckIn_fixed_window": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "fixed_window"
+            ]
+          },
+          "units": {
+            "description": "Number of units to consume (default: 1)",
+            "type": "integer",
+            "format": "uint64",
+            "default": 1,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "method",
+          "config",
+          "key"
+        ]
+      },
+      "RateLimiterGetRemainingIn_token_bucket": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "token_bucket"
+            ]
+          }
+        },
+        "required": [
+          "method",
+          "config",
+          "key"
+        ]
+      },
+      "RateLimiterGetRemainingIn_fixed_window": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
+          },
+          "key": {
+            "type": "string",
+            "example": "some_key",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "fixed_window"
+            ]
+          }
+        },
+        "required": [
+          "method",
+          "config",
+          "key"
         ]
       }
     }

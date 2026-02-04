@@ -18,38 +18,11 @@ use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_
 use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitResult, TokenBucket};
 
 // FIXME(@svix-lucho): Not fully convinced about 'method' and 'config'
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "method", content = "config", rename_all = "snake_case")]
 pub enum RateLimiterMethod {
     TokenBucket(RateLimiterTokenBucketConfig),
     FixedWindow(RateLimiterFixedWindowConfig),
-}
-
-// FIXME(@svix-lucho): This can be done with postprocessing of the OpenAPI spec or with some magic macro that I couldn't write
-impl JsonSchema for RateLimiterMethod {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
-        "RateLimiterMethod".into()
-    }
-
-    fn json_schema(schema_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        #[derive(JsonSchema)]
-        #[serde(tag = "method", content = "config", rename_all = "snake_case")]
-        #[allow(unused)]
-        enum RateLimiterMethod {
-            TokenBucket(RateLimiterTokenBucketConfig),
-            FixedWindow(RateLimiterFixedWindowConfig),
-        }
-
-        let mut schema = RateLimiterMethod::json_schema(schema_gen);
-        if let Some(obj) = schema.as_object_mut() {
-            obj.insert("type".to_string(), serde_json::json!("object"));
-            obj.insert(
-                "discriminator".to_string(),
-                serde_json::json!({"propertyName": "method"}),
-            );
-        }
-        schema
-    }
 }
 
 // FIXME(@svix-lucho): Is this right?
@@ -62,30 +35,30 @@ impl Validate for RateLimiterMethod {
     }
 }
 
-impl Into<RateLimitConfig> for RateLimiterMethod {
-    fn into(self) -> RateLimitConfig {
-        match self {
+impl From<RateLimiterMethod> for RateLimitConfig {
+    fn from(val: RateLimiterMethod) -> Self {
+        match val {
             RateLimiterMethod::TokenBucket(config) => RateLimitConfig::TokenBucket(config.into()),
             RateLimiterMethod::FixedWindow(config) => RateLimitConfig::FixedWindow(config.into()),
         }
     }
 }
 
-impl Into<TokenBucket> for RateLimiterTokenBucketConfig {
-    fn into(self) -> TokenBucket {
+impl From<RateLimiterTokenBucketConfig> for TokenBucket {
+    fn from(val: RateLimiterTokenBucketConfig) -> Self {
         TokenBucket {
-            bucket_size: self.capacity,
-            refill_rate: self.refill_amount,
-            refill_interval: Duration::from_secs(self.refill_interval_seconds),
+            bucket_size: val.capacity,
+            refill_rate: val.refill_amount,
+            refill_interval: Duration::from_secs(val.refill_interval_seconds),
         }
     }
 }
 
-impl Into<FixedWindow> for RateLimiterFixedWindowConfig {
-    fn into(self) -> FixedWindow {
+impl From<RateLimiterFixedWindowConfig> for FixedWindow {
+    fn from(val: RateLimiterFixedWindowConfig) -> Self {
         FixedWindow {
-            size: Duration::from_secs(self.window_size_seconds),
-            tokens: self.max_requests,
+            size: Duration::from_secs(val.window_size_seconds),
+            tokens: val.max_requests,
         }
     }
 }
