@@ -11,11 +11,11 @@ use std::{net::SocketAddr, sync::Arc};
 
 use coyote::{
     cfg::{
-        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
-        LogFormat, LogLevel,
+        ClusterConfiguration, Configuration, ConfigurationInner, DatabaseConfig, Environment,
+        InternalConfig, LogFormat, LogLevel,
     },
     core::{cluster::proto::HealthResponse, security::JwtSigningConfig},
-    run_with_prefix,
+    run_with_prefix, setup_tracing_for_tests,
 };
 use jwt_simple::prelude::*;
 use tempfile::TempDir;
@@ -85,23 +85,28 @@ async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyh
     }
 }
 
-async fn start_server() -> TestContext {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr: SocketAddr = listener.local_addr().unwrap();
+/// TestContext without a running server. Since there's no background task for a server,
+/// you need to ensure to keep this context object alive for your whole test to prevent
+/// the workdir from being dropped and cleaned up
+struct ServerlessTestContext {
+    pub cfg: Arc<ConfigurationInner>,
+    workdir: TempDir,
+}
 
-    let repl_listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let repl_addr: SocketAddr = repl_listener.local_addr().unwrap();
+fn build_config_without_server() -> ServerlessTestContext {
+    setup_tracing_for_tests();
 
     let jwt_key = HS256Key::generate();
-    let token = "Stubbed token. Should probably be legit when we add auth.";
 
     let workdir = tempfile::tempdir().unwrap();
     let db_dir = workdir.path().join("db");
     let log_path = workdir.path().join("logs");
     let snapshot_path = workdir.path().join("snapshots");
 
+    let addr: SocketAddr = "0.0.0.0:0".parse().unwrap();
+
     let cfg = Arc::new(ConfigurationInner {
-        listen_address: addr,
+        listen_address: addr.clone(),
         ephemeral_db: Arc::new(DatabaseConfig {
             path: db_dir.clone(),
             ..Default::default()
@@ -121,7 +126,7 @@ async fn start_server() -> TestContext {
         environment: Environment::Dev,
         internal: InternalConfig {},
         cluster: ClusterConfiguration {
-            listen_address: repl_addr,
+            listen_address: addr.clone(),
             name: "coyote-test".to_string(),
             snapshot_path,
             log_path,
@@ -139,12 +144,33 @@ async fn start_server() -> TestContext {
         },
     });
 
-    let base_uri = format!("http://{addr}/api/v1");
+    // TODO: do bootstrap through the server APIs instead of just directly
+    // touching the databases? Need to make sure that this never runs
+    // concurrently with the other DB accesses
+    coyote::bootstrap::run(None, Arc::clone(&cfg));
 
-    // TODO: this directly touches the database, so causes crashes if it runs
-    // concurrently with anything else that reads the databases. Should it go through
-    // the handle in the app somehow instead?
-    coyote::bootstrap::run(None, cfg.clone());
+    ServerlessTestContext { cfg, workdir }
+}
+
+async fn start_server() -> TestContext {
+    let token = "Stubbed token. Should probably be legit when we add auth.";
+
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr: SocketAddr = listener.local_addr().unwrap();
+
+    let repl_listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let repl_addr: SocketAddr = repl_listener.local_addr().unwrap();
+
+    let ServerlessTestContext { cfg, workdir } = build_config_without_server();
+
+    let cfg = {
+        let mut cfg_inner = Arc::unwrap_or_clone(cfg);
+        cfg_inner.listen_address = addr;
+        cfg_inner.cluster.listen_address = repl_addr;
+        Arc::new(cfg_inner)
+    };
+
+    let base_uri = format!("http://{addr}/api/v1");
 
     let server_handle = tokio::spawn({
         let cfg = cfg.clone();

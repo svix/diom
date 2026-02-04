@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConfigGroupId, ModuleConfig, StorageType};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(bound = "C: ModuleConfig")]
 pub struct ConfigGroup<C: ModuleConfig> {
     pub id: ConfigGroupId,

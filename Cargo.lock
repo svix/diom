@@ -978,6 +978,7 @@ dependencies = [
  "jiff",
  "schemars 1.2.0",
  "serde",
+ "tracing",
  "uuid",
 ]
 
@@ -1529,6 +1530,7 @@ dependencies = [
  "fjall",
  "rmp-serde",
  "serde",
+ "tracing",
 ]
 
 [[package]]

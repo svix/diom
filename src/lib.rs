@@ -3,6 +3,8 @@
 
 #![warn(clippy::all)]
 
+#[cfg(test)]
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
@@ -445,9 +447,15 @@ pub fn setup_tracing_for_tests() {
 }
 
 #[cfg(test)]
+static TEST_TRACING_INITIALIZED: AtomicBool = AtomicBool::new(false);
+
+#[cfg(test)]
 #[ctor::ctor]
 fn test_setup() {
-    setup_tracing_for_tests();
+    if !TEST_TRACING_INITIALIZED.load(Ordering::Acquire) {
+        setup_tracing_for_tests();
+        TEST_TRACING_INITIALIZED.store(true, Ordering::Release);
+    }
 }
 
 mod docs {

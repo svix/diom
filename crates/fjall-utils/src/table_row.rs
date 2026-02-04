@@ -45,7 +45,8 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
 
     fn fetch(keyspace: &fjall::Keyspace, key: &Self::Key) -> Result<Option<Self>> {
         let key = Self::make_fjall_key(key);
-        keyspace.get(&key)?.map(Self::from_fjall_value).transpose()
+        let raw_value = keyspace.get(&key);
+        raw_value?.map(Self::from_fjall_value).transpose()
     }
 
     fn insert(keyspace: &fjall::Keyspace, row: &Self) -> Result<()> {

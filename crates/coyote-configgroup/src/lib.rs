@@ -45,6 +45,17 @@ impl State {
         &self.keyspace
     }
 
+    pub fn flush_and_sync(&self) -> Result<(), Error> {
+        self.db.persist(fjall::PersistMode::SyncAll)?;
+        self.both_dbs
+            .persistent_db
+            .persist(fjall::PersistMode::SyncAll)?;
+        self.both_dbs
+            .ephemeral_db
+            .persist(fjall::PersistMode::SyncAll)?;
+        Ok(())
+    }
+
     pub fn init(both_dbs: BothDatabases) -> Result<Self, Error> {
         const CONFIGGROUP_KEYSPACE: &str = "_coyote_cfggroup";
 
@@ -71,6 +82,10 @@ impl State {
         if fetch.is_some() {
             return Ok(fetch);
         }
+        tracing::trace!(
+            group_name,
+            "cannot find group, falling back to default group"
+        );
 
         ConfigGroup::fetch(&self.keyspace, DEFAULT_GROUP_NAME)
     }

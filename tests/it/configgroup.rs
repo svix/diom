@@ -2,15 +2,12 @@ use coyote::cfg::DatabaseConfig;
 use coyote_configgroup::{BothDatabases, entities::StreamConfig};
 use test_utils::TestResult;
 
-use crate::TestContext;
+use crate::ServerlessTestContext;
 
 #[tokio::test]
 async fn test_configgroup_fetch() -> TestResult {
-    let TestContext {
-        cfg,
-        handle: _handle,
-        ..
-    } = super::start_server().await;
+    let ctx = super::build_config_without_server();
+    let cfg = ctx.cfg;
 
     let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
     let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
