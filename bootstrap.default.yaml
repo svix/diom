@@ -4,6 +4,9 @@ kv:
 cache:
   default:
     storage_type: persistent
+idempotency:
+  default:
+    storage_type: persistent
 stream:
   default:
     storage_type: persistent
