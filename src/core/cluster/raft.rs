@@ -1,30 +1,15 @@
 use std::sync::Arc;
 
-use fjall::Database;
 use openraft::BasicNode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::{discovery::Discovery, state_machine::StoredSnapshot};
-use crate::cfg::Configuration;
-
-// TODO: this should actually be our Operation trait
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Request {
-    key: String,
-}
-
-// TODO: the value here needs to actually be the response from Operation
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Response {
-    value: Option<String>,
-}
-
-impl Response {
-    pub(crate) fn blank() -> Self {
-        Self { value: None }
-    }
-}
+use super::{
+    discovery::Discovery,
+    handle::{RaftState, Request, Response},
+    state_machine::StoredSnapshot,
+};
+use crate::{AppState, cfg::Configuration};
 
 // TODO: is BasicNode enough for us?
 pub(super) type Node = BasicNode;
@@ -71,7 +56,10 @@ openraft::declare_raft_types!(
 
 pub type Raft = openraft::Raft<TypeConfig>;
 
-pub async fn initialize_raft(cfg: &Configuration, db: Database) -> anyhow::Result<(Raft, NodeId)> {
+pub async fn initialize_raft(
+    cfg: &Configuration,
+    app_state: AppState,
+) -> anyhow::Result<RaftState> {
     let mut logs = super::DiomLogs::new(&cfg.cluster.log_path).await?;
     let id = logs.get_node_id().await?;
     let config = openraft::Config {
@@ -83,15 +71,22 @@ pub async fn initialize_raft(cfg: &Configuration, db: Database) -> anyhow::Resul
     };
     let config = Arc::new(config.validate()?);
     let network = super::network::NetworkFactory::new(cfg);
+
+    // TODO: handle ephemeral DB
+    let db = app_state.configgroup_state.db().clone();
+
     let state_machine =
-        super::state_machine::Store::new(db, cfg.cluster.snapshot_path.clone()).await?;
+        super::state_machine::Store::new(db, cfg.cluster.snapshot_path.clone(), app_state).await?;
     let raft = Raft::new(id, config, network, logs, state_machine).await?;
     let has_cluster = raft
         .with_raft_state(|s| {
             s.committed.is_some() || s.membership_state.effective().nodes().count() > 0
         })
         .await?;
-    if !has_cluster {
+    if has_cluster {
+        tracing::debug!("node already has cluster information; skipping discovery");
+    } else {
+        tracing::debug!("node has no cluster information; kicking off discovery");
         let disco = Discovery::new(cfg.clone(), raft.clone(), id)?;
         tokio::spawn(async move {
             if let Err(err) = disco.discover_cluster().await {
@@ -100,9 +95,10 @@ pub async fn initialize_raft(cfg: &Configuration, db: Database) -> anyhow::Resul
                     "discovery failed; this node must be manually initialized"
                 );
             }
+            tracing::info!("discovery succeeded");
         });
     }
-    Ok((raft, id))
+    Ok(RaftState { raft, node_id: id })
 }
 
 #[cfg(test)]
@@ -111,8 +107,12 @@ mod tests {
     use openraft::{StorageIOError, testing::StoreBuilder};
     use tempfile::TempDir;
 
-    use super::{NodeId, TypeConfig};
-    use crate::core::cluster::{logs::DiomLogs, state_machine::Store};
+    use crate::{AppState, cfg::ConfigurationInner};
+
+    use super::{
+        super::{logs::DiomLogs, state_machine::Store},
+        NodeId, TypeConfig,
+    };
 
     struct DiomStoreBuilder;
 
@@ -125,10 +125,22 @@ mod tests {
 
             let mut data_path = workdir.path().to_path_buf();
             data_path.push("data");
+            let mut e_data_path = workdir.path().to_path_buf();
+            e_data_path.push("edata");
+
             let mut snapshot_path = workdir.path().to_path_buf();
             snapshot_path.push("snapshots");
+
+            let mut cfg = ConfigurationInner::default();
+            cfg.ephemeral_db.path = e_data_path.clone();
+            cfg.persistent_db.path = data_path.clone();
+            let cfg = cfg.into();
+
             let db = Database::builder(data_path).open()?;
-            let store = Store::new(db, snapshot_path).await?;
+
+            let app_state: AppState = AppState::new(cfg);
+
+            let store = Store::new(db, snapshot_path, app_state).await?;
 
             Ok((workdir, logs, store))
         }

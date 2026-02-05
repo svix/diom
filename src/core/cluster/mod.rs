@@ -1,8 +1,10 @@
 use openraft::RaftTypeConfig;
 
 mod app;
+mod applier;
 mod discovery;
 mod errors;
+mod handle;
 mod logs;
 mod network;
 pub mod proto;
@@ -12,6 +14,7 @@ mod state_machine;
 
 pub use self::{
     app::router,
+    handle::RaftState,
     logs::DiomLogs,
     raft::{Raft, TypeConfig, initialize_raft},
     state_machine::Store,
