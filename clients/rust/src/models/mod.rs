@@ -35,6 +35,8 @@ mod rate_limiter_fixed_window_config;
 mod rate_limiter_get_remaining_in;
 mod rate_limiter_get_remaining_out;
 mod rate_limiter_token_bucket_config;
+mod redrive_in;
+mod redrive_out;
 
 pub use self::{
     ack::Ack,
@@ -51,6 +53,8 @@ pub use self::{
     cache_set_out::CacheSetOut,
     create_stream_in::CreateStreamIn,
     create_stream_out::CreateStreamOut,
+    dlq_in::DlqIn,
+    dlq_out::DlqOut,
     fetch_from_stream_in::FetchFromStreamIn,
     fetch_from_stream_out::FetchFromStreamOut,
     kv_delete_in::KvDeleteIn,
@@ -69,4 +73,6 @@ pub use self::{
     rate_limiter_get_remaining_in::{RateLimiterGetRemainingIn, RateLimiterGetRemainingInConfig},
     rate_limiter_get_remaining_out::RateLimiterGetRemainingOut,
     rate_limiter_token_bucket_config::RateLimiterTokenBucketConfig,
+    redrive_in::RedriveIn,
+    redrive_out::RedriveOut,
 };

@@ -1788,6 +1788,24 @@
           "refill_amount",
           "refill_interval_seconds"
         ]
+      },
+      "RedriveIn": {
+        "type": "object",
+        "properties": {
+          "consumerGroup": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "consumerGroup"
+        ]
+      },
+      "RedriveOut": {
+        "type": "object"
       }
     }
   },
