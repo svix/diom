@@ -33,6 +33,7 @@ coyote-configgroup.workspace = true
 coyote-derive.workspace = true
 coyote-error.workspace = true
 coyote-kv.workspace = true
+coyote-operations.workspace = true
 coyote-proto.workspace = true
 coyote-rate-limiter.workspace = true
 fjall.workspace = true

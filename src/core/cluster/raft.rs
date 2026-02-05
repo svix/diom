@@ -83,7 +83,10 @@ pub async fn initialize_raft(
             s.committed.is_some() || s.membership_state.effective().nodes().count() > 0
         })
         .await?;
-    if !has_cluster {
+    if has_cluster {
+        tracing::debug!("node already has cluster information; skipping discovery");
+    } else {
+        tracing::debug!("node has no cluster information; kicking off discovery");
         let disco = Discovery::new(cfg.clone(), raft.clone(), id)?;
         tokio::spawn(async move {
             if let Err(err) = disco.discover_cluster().await {
@@ -92,6 +95,7 @@ pub async fn initialize_raft(
                     "discovery failed; this node must be manually initialized"
                 );
             }
+            tracing::info!("discovery succeeded");
         });
     }
     Ok(RaftState { raft, node_id: id })

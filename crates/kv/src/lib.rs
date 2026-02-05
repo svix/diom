@@ -134,12 +134,7 @@ impl KvStore {
         Ok(())
     }
 
-    pub fn set_operation(
-        &self,
-        key: String,
-        model: KvModel,
-        behavior: OperationBehavior,
-    ) -> SetOperation {
+    pub fn set_operation(key: String, model: KvModel, behavior: OperationBehavior) -> SetOperation {
         SetOperation::new(key, model, behavior)
     }
 

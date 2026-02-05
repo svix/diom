@@ -1,16 +1,59 @@
-use super::raft::{NodeId, Raft};
+use super::raft::{Node, NodeId, Raft};
 use coyote_kv::operations::KvRequest;
+use coyote_operations::{OperationRequest, OperationResponse};
+use openraft::error::{ClientWriteError, RaftError};
 use serde::{Deserialize, Serialize};
+
+type WriteResult<T> = Result<T, RaftError<NodeId, ClientWriteError<NodeId, Node>>>;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ResponseParseError {
+    InvalidVariant,
+}
+
+impl std::fmt::Display for ResponseParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl std::error::Error for ResponseParseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+
+    fn description(&self) -> &str {
+        "Invalid response from consensus system"
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Request {
     Kv(coyote_kv::operations::Operation),
 }
 
+impl<T: KvRequest> From<T> for Request {
+    fn from(value: T) -> Self {
+        let op: coyote_kv::operations::Operation = value.into();
+        Request::Kv(op)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Response {
     Blank,
     Kv(coyote_kv::operations::Response),
+}
+
+impl TryFrom<Response> for coyote_kv::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::Kv(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -20,16 +63,24 @@ pub struct RaftState {
 }
 
 impl RaftState {
-    pub async fn client_write_kv<O: KvRequest>(&self, op: O) -> O::Response {
-        let request = Request::Kv(op.into());
-        // TODO: don't unwrap here!
-        let response = self.raft.client_write(request).await.unwrap();
-        let Response::Kv(response) = response.data else {
-            panic!("got back incorrect response");
+    /// Write a single operation into the Raft log and return its response.
+    pub async fn client_write<O>(&self, op: O) -> WriteResult<O::Response>
+    where
+        O: Into<Request> + OperationRequest,
+        <<O as OperationRequest>::Response as OperationResponse>::ResponseParent: TryFrom<Response>,
+    {
+        let request = op.into();
+        let response = self.raft.client_write(request).await?;
+        let Ok(module_response) =
+            <<O as OperationRequest>::Response as OperationResponse>::ResponseParent::try_from(
+                response.data,
+            )
+        else {
+            panic!("failed to deserialize module response");
         };
-        let Ok(resp) = O::Response::try_from(response) else {
-            panic!("got back incorrect response");
+        let Ok(resp) = module_response.try_into() else {
+            panic!("failed to deserialize module response");
         };
-        resp
+        Ok(resp)
     }
 }

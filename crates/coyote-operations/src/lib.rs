@@ -3,13 +3,15 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-pub trait OperationResponse {}
+pub trait OperationResponse: Serialize + DeserializeOwned + Clone + Debug {
+    /// The module-level `Response` enum
+    type ResponseParent: TryInto<Self>;
+}
 
-impl<T: Serialize + DeserializeOwned + Clone> OperationResponse for T {}
-
-pub trait OperationRequest {}
-
-impl<T: Serialize + DeserializeOwned + Clone> OperationRequest for T {}
+pub trait OperationRequest: Serialize + DeserializeOwned + Clone + Debug {
+    /// The specific Response structure for this request
+    type Response: OperationResponse;
+}
 
 /// coyote_error::Error isn't Serialize or Deserialize, and can contain arbitrary
 /// inner error types, which makes it very hard to make serialize or deserialize.

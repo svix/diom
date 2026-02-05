@@ -11,15 +11,12 @@ pub trait KvResponse: TryFrom<Response> + coyote_operations::OperationResponse
 where
     Self: 'static,
 {
-    type Request: KvRequest + 'static;
 }
 
 pub trait KvRequest: Into<Operation> + coyote_operations::OperationRequest
 where
     Self: 'static,
 {
-    type Response: KvResponse + 'static;
-
     fn apply(self, state: &mut KvStore) -> Self::Response;
 }
 

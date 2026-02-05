@@ -880,6 +880,7 @@ dependencies = [
  "coyote-derive",
  "coyote-error",
  "coyote-kv",
+ "coyote-operations",
  "coyote-proto",
  "coyote-rate-limiter",
  "ctor",

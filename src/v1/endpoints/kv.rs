@@ -6,6 +6,8 @@ use std::{sync::Arc, time::Duration};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
+use coyote_error::ResultExt;
+use coyote_kv::KvStore;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -100,18 +102,15 @@ pub struct KvDeleteOut {
 /// KV Set
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
-    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
 ) -> Result<MsgPackOrJson<KvSetOut>> {
-    let kv_store = state.get_kv_store_by_key(&data.key.0)?;
-
     let key = data.key.0.clone();
     let behavior = data.behavior.clone();
     let model = data.into_model();
 
-    let operation = kv_store.set_operation(key, model, behavior);
-    repl.client_write_kv(operation).await.0?;
+    let operation = KvStore::set_operation(key, model, behavior);
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     let ret = KvSetOut {};
     Ok(MsgPackOrJson(ret))
