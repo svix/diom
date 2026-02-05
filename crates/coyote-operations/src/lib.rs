@@ -5,12 +5,19 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub trait OperationResponse: Serialize + DeserializeOwned + Clone + Debug {
     /// The module-level `Response` enum
-    type ResponseParent: TryInto<Self>;
+    type ResponseParent: ModuleResponse + TryInto<Self>;
 }
 
 pub trait OperationRequest: Serialize + DeserializeOwned + Clone + Debug {
     /// The specific Response structure for this request
     type Response: OperationResponse;
+    type RequestParent: ModuleRequest;
+}
+
+pub trait ModuleResponse: Serialize + DeserializeOwned + Clone + Debug {}
+
+pub trait ModuleRequest: Serialize + DeserializeOwned + Clone + Debug {
+    type Response: ModuleResponse;
 }
 
 /// coyote_error::Error isn't Serialize or Deserialize, and can contain arbitrary

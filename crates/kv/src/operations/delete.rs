@@ -1,4 +1,4 @@
-use super::{KvRequest, KvResponse, Response};
+use super::{KvRequest, Operation, Response};
 use coyote_operations::{OperationRequest, OperationResponse, Result};
 use serde::{Deserialize, Serialize};
 
@@ -15,8 +15,6 @@ impl DeleteOperation {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteResponse(pub Result<()>);
-
-impl KvResponse for DeleteResponse {}
 
 impl DeleteOperation {
     fn apply_real(self, state: &mut crate::KvStore) -> Result<()> {
@@ -37,4 +35,5 @@ impl OperationResponse for DeleteResponse {
 
 impl OperationRequest for DeleteOperation {
     type Response = DeleteResponse;
+    type RequestParent = Operation;
 }

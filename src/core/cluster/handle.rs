@@ -1,5 +1,4 @@
 use super::raft::{Node, NodeId, Raft};
-use coyote_kv::operations::KvRequest;
 use coyote_operations::{OperationRequest, OperationResponse};
 use openraft::error::{ClientWriteError, RaftError};
 use serde::{Deserialize, Serialize};
@@ -32,10 +31,9 @@ pub enum Request {
     Kv(coyote_kv::operations::Operation),
 }
 
-impl<T: KvRequest> From<T> for Request {
+impl<T: Into<coyote_kv::operations::Operation>> From<T> for Request {
     fn from(value: T) -> Self {
-        let op: coyote_kv::operations::Operation = value.into();
-        Request::Kv(op)
+        Request::Kv(value.into())
     }
 }
 
@@ -68,19 +66,23 @@ impl RaftState {
     where
         O: Into<Request> + OperationRequest,
         <<O as OperationRequest>::Response as OperationResponse>::ResponseParent: TryFrom<Response>,
+        <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryFrom<
+            Response,
+        >>::Error: std::fmt::Debug,
+        <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryInto<
+            <O as OperationRequest>::Response,
+        >>::Error: std::fmt::Debug,
     {
         let request = op.into();
         let response = self.raft.client_write(request).await?;
-        let Ok(module_response) =
+        let module_response =
             <<O as OperationRequest>::Response as OperationResponse>::ResponseParent::try_from(
                 response.data,
             )
-        else {
-            panic!("failed to deserialize module response");
-        };
-        let Ok(resp) = module_response.try_into() else {
-            panic!("failed to deserialize module response");
-        };
+            .expect("raft response should be convertible into module response type");
+        let resp = module_response
+            .try_into()
+            .expect("module response should be convertible into target type");
         Ok(resp)
     }
 }
