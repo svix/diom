@@ -8,16 +8,17 @@ use std::{
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
-    StoredMembership, storage::RaftStateMachine,
+    StorageIOError, StoredMembership, storage::RaftStateMachine,
 };
 use serde::{Deserialize, Serialize};
 
 use super::{
     errors::*,
+    handle::Response,
     raft::{Node, TypeConfig},
     serialized_state_machine,
 };
-use crate::core::cluster::raft;
+use crate::AppState;
 
 type NodeId = <TypeConfig as RaftTypeConfig>::NodeId;
 type StorageError = openraft::StorageError<NodeId>;
@@ -31,6 +32,7 @@ struct LastSnapshot {
 
 #[derive(Clone)]
 pub struct Store {
+    state: AppState,
     db: Database,
     snapshot_directory: PathBuf,
     meta_keyspace: Keyspace,
@@ -59,7 +61,11 @@ impl SnapshotIdx for SnapshotMeta<NodeId, Node> {
 const METADATA_KEYSPACE: &str = "_raft_metadata";
 
 impl Store {
-    pub async fn new(db: Database, snapshot_directory: PathBuf) -> anyhow::Result<Self> {
+    pub async fn new(
+        db: Database,
+        snapshot_directory: PathBuf,
+        app_state: AppState,
+    ) -> anyhow::Result<Self> {
         if let Err(e) = tokio::fs::create_dir_all(&snapshot_directory).await
             && e.kind() != ErrorKind::AlreadyExists
         {
@@ -68,6 +74,7 @@ impl Store {
         let meta_keyspace = db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
         let mut this = Self {
             db,
+            state: app_state,
             snapshot_directory,
             meta_keyspace,
             last_snapshot: Arc::new(RwLock::new(None)),
@@ -350,7 +357,7 @@ impl RaftStateMachine<TypeConfig> for Store {
         Ok((self.last_applied_log_id, self.last_membership.clone()))
     }
 
-    async fn apply<I>(&mut self, entries: I) -> StorageResult<Vec<raft::Response>>
+    async fn apply<I>(&mut self, entries: I) -> StorageResult<Vec<Response>>
     where
         I: IntoIterator<Item = <TypeConfig as RaftTypeConfig>::Entry> + openraft::OptionalSend,
         I::IntoIter: openraft::OptionalSend,
@@ -365,18 +372,27 @@ impl RaftStateMachine<TypeConfig> for Store {
             match item.payload {
                 EntryPayload::Blank => {
                     tracing::trace!("heartbeat");
-                    replies.push(raft::Response::blank())
+                    replies.push(Response::Blank)
                 }
                 EntryPayload::Normal(req) => {
-                    // TODO actually apply something
                     tracing::trace!(log_id=?item.log_id, request=?req, "applying user request");
+                    let reply = match super::applier::apply_request(req, &self.state) {
+                        Ok(o) => o,
+                        Err(e) => {
+                            tracing::error!("failed to apply raft log");
+                            return Err(StorageError::IO {
+                                source: StorageIOError::apply(item.log_id, e),
+                            });
+                        }
+                    };
+                    replies.push(reply);
                 }
                 EntryPayload::Membership(last_membership) => {
                     tracing::trace!("changing cluster membership");
                     self.last_membership =
                         StoredMembership::new(Some(item.log_id), last_membership);
                     changed_membership = true;
-                    replies.push(raft::Response::blank())
+                    replies.push(Response::Blank)
                 }
             }
         }

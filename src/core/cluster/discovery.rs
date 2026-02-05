@@ -148,6 +148,7 @@ impl Discovery {
 
     pub(super) async fn discover_cluster(mut self) -> anyhow::Result<()> {
         if self.cfg.cluster.seed_nodes.is_empty() {
+            tracing::debug!("no seed nodes provided, initializing a one-node cluster");
             self.initialize_cluster(BTreeMap::new()).await?;
             return Ok(());
         }

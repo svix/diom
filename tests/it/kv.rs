@@ -22,7 +22,7 @@ async fn kv_set(
             "behavior": behavior
         }))
         .await?
-        .expect(StatusCode::OK);
+        .ensure(StatusCode::OK)?;
     Ok(())
 }
 
@@ -33,7 +33,7 @@ async fn kv_get(client: &TestClient, key: &str) -> TestResult<Value> {
             "key": key
         }))
         .await?
-        .expect(StatusCode::OK)
+        .ensure(StatusCode::OK)?
         .json();
     Ok(response)
 }
@@ -45,7 +45,7 @@ async fn kv_not_found(client: &TestClient, key: &str) -> TestResult<()> {
             "key": key
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND)
+        .ensure(StatusCode::NOT_FOUND)?
         .json();
     Ok(())
 }

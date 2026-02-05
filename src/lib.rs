@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::{sync::LazyLock, time::Duration};
 
 use aide::axum::ApiRouter;
-use axum::middleware;
+use axum::{Extension, middleware};
 use cfg::ConfigurationInner;
 use coyote_configgroup::{
     BothDatabases,
@@ -39,6 +39,7 @@ use uuid::Uuid;
 
 use crate::{
     cfg::{Configuration, DatabaseConfig},
+    core::cluster::RaftState,
     v1::modules::{cache::CacheStore, idempotency::IdempotencyStore},
 };
 
@@ -108,14 +109,16 @@ pub struct AppState {
     cfg: Configuration,
     rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
 
-    raft: core::cluster::Raft,
-    node_id: core::cluster::NodeId,
-
     stream_state: stream::State,
     configgroup_state: coyote_configgroup::State,
 }
 
-async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<TcpListener>) {
+async fn run_interserver(
+    cfg: Configuration,
+    state: AppState,
+    raft: RaftState,
+    listener: Option<TcpListener>,
+) {
     let listen_address = cfg.cluster.listen_address;
     let listener = match listener {
         Some(l) => l,
@@ -130,6 +133,7 @@ async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<T
 
     let app = core::cluster::router()
         .with_state(state.clone())
+        .layer(Extension(raft.clone()))
         .layer(middleware::from_fn(coyote_proto::capture_accept_hdr));
     let svc = tower::make::Shared::new(
         // It is important that this service wraps the router instead of being
@@ -142,10 +146,33 @@ async fn run_interserver(cfg: Configuration, state: AppState, listener: Option<T
         .await
         .unwrap();
 
-    state.raft.shutdown().await.unwrap();
+    raft.raft.shutdown().await.unwrap();
 }
 
 impl AppState {
+    fn new(cfg: Configuration) -> Self {
+        let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
+        let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
+
+        let configgroup_state = coyote_configgroup::State::init(BothDatabases {
+            persistent_db: persistent_db.clone(),
+            ephemeral_db,
+        })
+        .expect("initializing configgroup state");
+
+        let stream_state =
+            stream::State::init(persistent_db.clone()).expect("initializing stream state");
+        AppState {
+            cfg,
+            rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(
+                "rate_limiter_default",
+                persistent_db,
+            ),
+            stream_state,
+            configgroup_state,
+        }
+    }
+
     fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
         let group_name = group_name(key_name);
 
@@ -192,39 +219,21 @@ pub async fn run_with_prefix(
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
-    let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
-    let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
+    // build our application with a route
+    let app_state = AppState::new(cfg.clone());
 
-    let configgroup_state = coyote_configgroup::State::init(BothDatabases {
-        persistent_db: persistent_db.clone(),
-        ephemeral_db: ephemeral_db.clone(),
-    })
-    .expect("initializing configgroup state");
-
-    let stream_state =
-        stream::State::init(persistent_db.clone()).expect("initializing stream state");
-
-    let (raft, node_id) = core::cluster::initialize_raft(&cfg, persistent_db.clone())
+    let raft_state = core::cluster::initialize_raft(&cfg, app_state.clone())
         .await
         .expect("failed to initialize cluster");
 
-    // build our application with a route
-    let app_state = AppState {
-        cfg: cfg.clone(),
-        rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(
-            "rate_limiter_default",
-            persistent_db.clone(),
-        ),
-        stream_state,
-        raft,
-        node_id,
-        configgroup_state,
-    };
-    let v1_router = v1::router().with_state::<()>(app_state.clone());
+    let v1_router = v1::router()
+        .with_state::<()>(app_state.clone())
+        .layer(Extension(raft_state.clone()));
 
     let interserver = tokio::spawn(run_interserver(
         cfg.clone(),
         app_state.clone(),
+        raft_state.clone(),
         interserver_listener,
     ));
 
@@ -439,7 +448,7 @@ pub fn setup_tracing_for_tests() {
                 // Output is only printed for failing tests, but still we shouldn't overload
                 // the output with unnecessary info. When debugging a specific test, it's easy
                 // to override this default by setting the `RUST_LOG` environment variable.
-                "coyote=debug".into()
+                "coyote=debug,it=debug".into()
             }),
         )
         .with(tracing_subscriber::fmt::layer().with_test_writer())

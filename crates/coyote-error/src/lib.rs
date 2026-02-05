@@ -67,6 +67,11 @@ impl Error {
     }
 
     #[track_caller]
+    pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
+        Self::new(ErrorType::Operation { code, detail })
+    }
+
+    #[track_caller]
     pub fn trace(mut self) -> Self {
         self.trace.push(Location::caller());
         self
@@ -93,6 +98,11 @@ impl IntoResponse for Error {
                 tracing::debug!("{:?}, location: {:?}", &s, stringified);
                 s.into_response()
             }
+            ErrorType::Operation {
+                code,
+                detail: Some(detail),
+            } => (code, detail).into_response(),
+            ErrorType::Operation { code, detail: _ } => code.into_response(),
             s => {
                 tracing::error!("type: {:?}, location: {:?}", s, stringified);
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({}))).into_response()
@@ -145,6 +155,11 @@ pub enum ErrorType {
     Http(HttpError),
     /// Timeout error
     Timeout(String),
+    /// An error from an Operation application
+    Operation {
+        code: StatusCode,
+        detail: Option<String>,
+    },
 }
 
 impl fmt::Display for ErrorType {
@@ -152,6 +167,13 @@ impl fmt::Display for ErrorType {
         match self {
             Self::Generic(s) | Self::Validation(s) | Self::Timeout(s) => s.fmt(f),
             Self::Http(s) => s.fmt(f),
+            Self::Operation { detail, code } => {
+                if let Some(detail) = detail {
+                    detail.fmt(f)
+                } else {
+                    write!(f, "code {code}")
+                }
+            }
         }
     }
 }

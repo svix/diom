@@ -119,7 +119,7 @@ impl TestServerBuilder {
 
         let client = TestClient::new(base_uri, &token);
 
-        wait_for_initialized(repl_addr, Duration::from_secs(2))
+        wait_for_initialized(repl_addr, Duration::from_secs(8))
             .await
             .expect("failed to initialize server");
 
@@ -140,12 +140,14 @@ pub struct TestContext {
 }
 
 async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Result<bool> {
+    tracing::debug!("checking if server is initialized yet...");
     let response = client
         .get(url)
         .timeout(Duration::from_millis(10))
         .send()
         .await?;
     if response.status() != 200 {
+        tracing::debug!(status=%response.status(), "server returned an error");
         return Ok(false);
     }
     let body: HealthResponse = response.json().await?;
@@ -175,6 +177,7 @@ async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyh
             }
             Err(_) => anyhow::bail!("timed out waiting for server to boot"),
         }
+        tokio::time::sleep(Duration::from_millis(10)).await;
     }
 }
 
@@ -201,15 +204,15 @@ pub(crate) fn build_config_without_server(
     let addr: SocketAddr = "0.0.0.0:0".parse().unwrap();
 
     let cfg = cfg.unwrap_or_else(|| ConfigurationInner {
-        listen_address: addr.clone(),
-        ephemeral_db: Arc::new(DatabaseConfig {
+        listen_address: addr,
+        ephemeral_db: DatabaseConfig {
             path: db_dir.clone(),
             ..Default::default()
-        }),
-        persistent_db: Arc::new(DatabaseConfig {
+        },
+        persistent_db: DatabaseConfig {
             path: db_dir,
             ..Default::default()
-        }),
+        },
         jwt_signing_config: Arc::new(JwtSigningConfig::HS256(jwt_key)),
         log_level: LogLevel::Debug,
         log_format: LogFormat::Default,
@@ -221,14 +224,14 @@ pub(crate) fn build_config_without_server(
         environment: Environment::Dev,
         internal: InternalConfig {},
         cluster: ClusterConfiguration {
-            listen_address: addr.clone(),
+            listen_address: addr,
             name: "coyote-test".to_string(),
             snapshot_path,
             log_path,
             connection_timeout: Duration::from_millis(50),
-            heartbeat_interval_ms: 100,
-            election_timeout_min_ms: 200,
-            election_timeout_max_ms: 300,
+            heartbeat_interval_ms: 5,
+            election_timeout_min_ms: 10,
+            election_timeout_max_ms: 30,
             auto_initialize: true,
             discovery_request_timeout: Duration::from_millis(10),
             discovery_timeout: Duration::from_secs(1),

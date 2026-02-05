@@ -4,8 +4,10 @@
 use std::{sync::Arc, time::Duration};
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::State;
+use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
+use coyote_error::ResultExt;
+use coyote_kv::KvStore;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -14,7 +16,7 @@ use validator::Validate;
 
 use crate::{
     AppState,
-    core::types::EntityKey,
+    core::{cluster::RaftState, types::EntityKey},
     error::Result,
     v1::{
         modules::kv::{KvModel, OperationBehavior},
@@ -100,18 +102,15 @@ pub struct KvDeleteOut {
 /// KV Set
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
 ) -> Result<MsgPackOrJson<KvSetOut>> {
-    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
-
-    let key = data.key.clone();
+    let key = data.key.0.clone();
     let behavior = data.behavior.clone();
     let model = data.into_model();
 
-    kv_store
-        .set(&key.0, &model, behavior)
-        .map_err(|e| crate::error::Error::generic(e))?;
+    let operation = KvStore::set_operation(key, model, behavior);
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     let ret = KvSetOut {};
     Ok(MsgPackOrJson(ret))
