@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use test_utils::{StatusCode, TestResult};
 
-use crate::TestContext;
+use crate::{TestContext, server::start_server};
 
 #[derive(Serialize)]
 struct CacheSetIn<'a> {
@@ -23,7 +23,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     client
         .post("cache/set")
@@ -65,7 +65,7 @@ async fn test_cache_set_and_get_msgpack_out() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     client
         .post("cache/set")
