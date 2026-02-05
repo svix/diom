@@ -2,9 +2,11 @@ use diom::cfg::DatabaseConfig;
 use diom_configgroup::{BothDatabases, entities::StreamConfig};
 use test_utils::TestResult;
 
+use crate::server::build_config_without_server;
+
 #[tokio::test]
 async fn test_configgroup_fetch() -> TestResult {
-    let ctx = super::build_config_without_server();
+    let ctx = build_config_without_server(None);
     let cfg = ctx.cfg;
 
     let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");

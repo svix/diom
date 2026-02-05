@@ -3,7 +3,7 @@ use std::time::Duration;
 use serde_json::{Value, json};
 use test_utils::{StatusCode, TestClient, TestResult};
 
-use crate::TestContext;
+use crate::{TestContext, server::start_server};
 
 async fn call_limit_token_bucket(
     client: &TestClient,
@@ -36,7 +36,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
         client,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
     let refill_interval = 1;
     let refill_amount = 5;
     let capacity = 5;
