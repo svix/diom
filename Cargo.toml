@@ -74,6 +74,7 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
+coyote-client.workspace = true
 ctor.workspace = true
 rmp-serde.workspace = true
 rmpv.workspace = true

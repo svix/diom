@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use coyote_client::models::{RateLimitResult, RateLimiterCheckIn, RateLimiterGetRemainingIn};
 use serde_json::{Value, json};
 use test_utils::{StatusCode, TestClient, TestResult};
 
@@ -113,6 +114,48 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
 
     assert_eq!(response["remaining"], capacity);
     assert_eq!(response["retry_after"], json!(null));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_rate_limiter_limit_with_sdk() -> TestResult {
+    let TestContext {
+        sdk_client: client,
+        cfg: _cfg,
+        handle: _handle,
+        ..
+    } = super::start_server().await;
+
+    let request: RateLimiterCheckIn = serde_json::from_value(json!({
+        "key": "rl-key-sdk-1",
+        "units": 1,
+        "method": "token_bucket",
+        "config": {
+            "capacity": 5,
+            "refill_amount": 5,
+            "refill_interval_seconds": 10
+        }
+    }))?;
+
+    let response = client.rate_limiter().limit(request, None).await?;
+
+    assert!(matches!(response.result, RateLimitResult::Ok));
+    assert_eq!(response.remaining, 4);
+
+    let request: RateLimiterGetRemainingIn = serde_json::from_value(json!({
+        "key": "rl-key-sdk-1",
+        "method": "token_bucket",
+        "config": {
+            "capacity": 5,
+            "refill_amount": 5,
+            "refill_interval_seconds": 10
+        }
+    }))?;
+
+    let response = client.rate_limiter().get_remaining(request, None).await?;
+
+    assert_eq!(response.remaining, 4);
 
     Ok(())
 }

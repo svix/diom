@@ -876,6 +876,7 @@ dependencies = [
  "byteorder",
  "bytes",
  "config",
+ "coyote-client",
  "coyote-configgroup",
  "coyote-derive",
  "coyote-error",
