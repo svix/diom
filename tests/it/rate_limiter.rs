@@ -125,7 +125,7 @@ async fn test_rate_limiter_limit_with_sdk() -> TestResult {
         cfg: _cfg,
         handle: _handle,
         ..
-    } = super::start_server().await;
+    } = start_server().await;
 
     let request: RateLimiterCheckIn = serde_json::from_value(json!({
         "key": "rl-key-sdk-1",
