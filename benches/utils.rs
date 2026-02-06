@@ -5,10 +5,7 @@ use coyote_client::{CoyoteClient, CoyoteOptions};
 use tempfile::TempDir;
 use tokio::runtime::Runtime;
 
-#[path = "../tests/it/server/mod.rs"]
-pub(crate) mod test_server;
-
-use test_server::{TestContext, TestServerBuilder, default_server_config};
+use test_utils::server::{TestContext, TestServerBuilder, default_server_config};
 
 #[allow(unused)]
 pub(crate) struct BenchmarkContext {

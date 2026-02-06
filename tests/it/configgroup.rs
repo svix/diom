@@ -1,8 +1,6 @@
 use coyote::cfg::DatabaseConfig;
 use coyote_configgroup::{BothDatabases, entities::StreamConfig};
-use test_utils::TestResult;
-
-use crate::server::build_config_without_server;
+use test_utils::{TestResult, server::build_config_without_server};
 
 #[tokio::test]
 async fn test_configgroup_fetch() -> TestResult {

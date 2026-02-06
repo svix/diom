@@ -2,6 +2,7 @@
 
 use std::{net::SocketAddr, path::Path, sync::Arc};
 
+use crate::{TestClient, test_client};
 use coyote::{
     cfg::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
@@ -12,7 +13,6 @@ use coyote::{
 };
 use jwt_simple::prelude::*;
 use tempfile::TempDir;
-use test_utils::TestClient;
 use tokio::{
     net::TcpListener,
     task::JoinHandle,
@@ -22,7 +22,7 @@ use tokio::{
 /// Handle to an isolated test server.
 ///
 /// Once it's DROPed, the server and it's resources are cleaned up automatically (or at least, that's the intent.)
-pub(crate) struct IsolatedServerHandle {
+pub struct IsolatedServerHandle {
     _dir: Option<TempDir>,
     server_handle: JoinHandle<()>,
 }
@@ -33,7 +33,7 @@ impl Drop for IsolatedServerHandle {
     }
 }
 
-pub(crate) struct TestServerBuilder {
+pub struct TestServerBuilder {
     cfg: Option<ConfigurationInner>,
     token: Option<String>,
     listener: Option<TcpListener>,
@@ -41,7 +41,7 @@ pub(crate) struct TestServerBuilder {
 }
 
 impl TestServerBuilder {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             cfg: None,
             token: None,
@@ -50,27 +50,27 @@ impl TestServerBuilder {
         }
     }
 
-    pub(crate) fn token(mut self, token: String) -> Self {
+    pub fn token(mut self, token: String) -> Self {
         self.token = Some(token);
         self
     }
 
-    pub(crate) fn listener(mut self, listener: TcpListener) -> Self {
+    pub fn listener(mut self, listener: TcpListener) -> Self {
         self.listener = Some(listener);
         self
     }
 
-    pub(crate) fn repl_listener(mut self, listener: TcpListener) -> Self {
+    pub fn repl_listener(mut self, listener: TcpListener) -> Self {
         self.repl_listener = Some(listener);
         self
     }
 
-    pub(crate) fn cfg(mut self, cfg: ConfigurationInner) -> Self {
+    pub fn cfg(mut self, cfg: ConfigurationInner) -> Self {
         self.cfg = Some(cfg);
         self
     }
 
-    pub(crate) async fn build(self) -> TestContext {
+    pub async fn build(self) -> TestContext {
         let token = if let Some(token) = self.token {
             token
         } else {
@@ -142,7 +142,7 @@ impl TestServerBuilder {
     }
 }
 
-pub(crate) struct TestContext {
+pub struct TestContext {
     pub client: TestClient,
     pub cfg: Arc<ConfigurationInner>,
     pub handle: IsolatedServerHandle,
@@ -196,12 +196,12 @@ async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyh
 /// TestContext without a running server. Since there's no background task for a server,
 /// you need to ensure to keep this context object alive for your whole test to prevent
 /// the workdir from being dropped and cleaned up
-pub(crate) struct ServerlessTestContext {
+pub struct ServerlessTestContext {
     pub cfg: Arc<ConfigurationInner>,
     workdir: TempDir,
 }
 
-pub(crate) fn default_server_config(workdir: &Path) -> ConfigurationInner {
+pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
     let jwt_key = HS256Key::generate();
 
     let db_dir = workdir.join("db");
@@ -250,7 +250,7 @@ pub(crate) fn default_server_config(workdir: &Path) -> ConfigurationInner {
     }
 }
 
-pub(crate) fn build_config_without_server() -> ServerlessTestContext {
+pub fn build_config_without_server() -> ServerlessTestContext {
     let workdir = tempfile::tempdir().unwrap();
     let cfg = Arc::new(default_server_config(workdir.path()));
 
@@ -262,6 +262,6 @@ pub(crate) fn build_config_without_server() -> ServerlessTestContext {
     ServerlessTestContext { cfg, workdir }
 }
 
-pub(crate) async fn start_server() -> TestContext {
+pub async fn start_server() -> TestContext {
     TestServerBuilder::new().build().await
 }

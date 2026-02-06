@@ -5,9 +5,7 @@ use coyote_configgroup::{
     BothDatabases,
     entities::{CacheConfig, EvictionPolicy, KeyValueConfig, StreamConfig},
 };
-use test_utils::TestResult;
-
-use crate::server::build_config_without_server;
+use test_utils::{TestResult, server::build_config_without_server};
 
 #[tokio::test]
 async fn test_bootstrap() -> TestResult {

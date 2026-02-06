@@ -1,9 +1,11 @@
 use std::time::Duration;
 
 use serde_json::json;
-use test_utils::{StatusCode, TestResult};
 
-use crate::{TestContext, server::start_server};
+use test_utils::{
+    StatusCode, TestResult,
+    server::{TestContext, start_server},
+};
 
 #[tokio::test]
 async fn create_stream_upserts() -> TestResult {

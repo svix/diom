@@ -2,9 +2,10 @@ use std::time::Duration;
 
 use jiff::Timestamp;
 use serde_json::{Value, json};
-use test_utils::{StatusCode, TestClient, TestResult};
-
-use crate::{TestContext, server::start_server};
+use test_utils::{
+    StatusCode, TestClient, TestResult,
+    server::{TestContext, start_server},
+};
 
 async fn kv_set(
     client: &TestClient,
