@@ -1,0 +1,25 @@
+[package]
+name = "coyote-benchmarks"
+publish = false
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+coyote.workspace = true
+coyote-client.workspace = true
+criterion.workspace = true
+rand.workspace = true
+tempfile.workspace = true
+test-utils.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+
+[lints]
+workspace = true
+
+[[bench]]
+name = "kv"
+harness = false

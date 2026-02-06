@@ -4,13 +4,9 @@ use rand::{
     Rng,
     distr::{Alphanumeric, SampleString},
 };
-#[path = "utils.rs"]
-mod utils;
-
-use crate::utils::setup_server_simple;
 
 fn bench_kv(c: &mut Criterion) {
-    let ctx = setup_server_simple();
+    let ctx = coyote_benchmarks::setup_server_simple();
     let client = ctx.client;
 
     let mut rng = rand::rng();

@@ -7,15 +7,14 @@ use tokio::runtime::Runtime;
 
 use test_utils::server::{TestContext, TestServerBuilder, default_server_config};
 
-#[allow(unused)]
-pub(crate) struct BenchmarkContext {
+pub struct BenchmarkContext {
     pub rt: Runtime,
     pub server: TestContext,
     pub client: CoyoteClient,
     pub workdir: TempDir,
 }
 
-pub(crate) fn setup_server_simple() -> BenchmarkContext {
+pub fn setup_server_simple() -> BenchmarkContext {
     let rt = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()

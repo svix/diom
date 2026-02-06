@@ -76,7 +76,6 @@ zip.workspace = true
 [dev-dependencies]
 assert_matches.workspace = true
 coyote-client.workspace = true
-criterion.workspace = true
 ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
@@ -90,6 +89,7 @@ workspace = true
 ### Workspace manifest ###
 [workspace]
 members = [
+    "benchmarks",
     "clients/cli",
     "clients/rust",
     "codegen",
@@ -244,7 +244,3 @@ strip = true
 
 [patch.crates-io]
 dotenvy = { git = "https://github.com/svix-jbrown/dotenvy.git", rev = "ffa0aa149e2c6da57113859001257f0d99b43431" }
-
-[[bench]]
-name = "kv"
-harness = false
