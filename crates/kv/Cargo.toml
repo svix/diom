@@ -9,6 +9,7 @@ rust-version.workspace = true
 coyote-configgroup.workspace = true
 coyote-error.workspace = true
 coyote-operations.workspace = true
+paste.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 format-bytes = "0.3.0"
