@@ -39,27 +39,15 @@ pub enum Request {
     RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
 }
 
-impl From<coyote_kv::operations::SetOperation> for Request {
-    fn from(value: coyote_kv::operations::SetOperation) -> Self {
-        Request::Kv(value.into())
+impl From<coyote_kv::operations::KvOperation> for Request {
+    fn from(value: coyote_kv::operations::KvOperation) -> Self {
+        Request::Kv(value)
     }
 }
 
-impl From<coyote_kv::operations::DeleteOperation> for Request {
-    fn from(value: coyote_kv::operations::DeleteOperation) -> Self {
-        Request::Kv(value.into())
-    }
-}
-
-impl From<coyote_rate_limiter::operations::LimitOperation> for Request {
-    fn from(value: coyote_rate_limiter::operations::LimitOperation) -> Self {
-        Request::RateLimiter(value.into())
-    }
-}
-
-impl From<coyote_rate_limiter::operations::ResetOperation> for Request {
-    fn from(value: coyote_rate_limiter::operations::ResetOperation) -> Self {
-        Request::RateLimiter(value.into())
+impl From<coyote_rate_limiter::operations::RateLimiterOperation> for Request {
+    fn from(value: coyote_rate_limiter::operations::RateLimiterOperation) -> Self {
+        Request::RateLimiter(value)
     }
 }
 
@@ -104,7 +92,8 @@ impl RaftState {
     /// Write a single operation into the Raft log and return its response.
     pub async fn client_write<O>(&self, op: O) -> WriteResult<O::Response>
     where
-        O: Into<Request> + OperationRequest,
+        O: OperationRequest + Into<O::RequestParent>,
+        O::RequestParent: Into<Request>,
         <<O as OperationRequest>::Response as OperationResponse>::ResponseParent: TryFrom<Response>,
         <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryFrom<
             Response,
@@ -113,7 +102,7 @@ impl RaftState {
             <O as OperationRequest>::Response,
         >>::Error: std::fmt::Debug,
     {
-        let request = op.into();
+        let request = op.into().into();
         let response = self.raft.client_write(request).await?;
         let module_response =
             <<O as OperationRequest>::Response as OperationResponse>::ResponseParent::try_from(
