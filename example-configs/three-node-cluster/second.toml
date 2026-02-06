@@ -1,0 +1,14 @@
+listen_address = "127.0.0.1:8051"
+jwt_secret = "insecure_cluster"
+jwt_algorithm = "HS256"
+environment = "dev"
+persistent_db.path = "./db-second"
+ephemeral_db.path = "./db-second-ephemeral"
+
+[cluster]
+listen_address = "127.0.0.1:18051"
+log_path = "./logs-second"
+snapshot_path = "./snapshots-second"
+name = "three-node-cluster"
+seed_nodes = ["127.0.0.1:18050", "127.0.0.1:18051", "127.0.0.1:18052"]
+auto_initialize = true
