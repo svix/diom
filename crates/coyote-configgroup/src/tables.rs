@@ -6,13 +6,13 @@ use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{ConfigGroupId, ModuleConfig, StorageType};
+use crate::entities::{ConfigGroupId, ConfigGroupName, ModuleConfig, StorageType};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(bound = "C: ModuleConfig")]
 pub struct ConfigGroup<C: ModuleConfig> {
     pub id: ConfigGroupId,
-    pub name: String,
+    pub name: ConfigGroupName,
     pub storage_type: StorageType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,

@@ -1,10 +1,11 @@
+use coyote_configgroup::entities::ConfigGroupId;
 use coyote_error::{HttpError, Result};
 use jiff::Timestamp;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, StreamName},
-    tables::{LeaseDiff, LeaseRow, NameToStreamRow},
+    entities::{ConsumerGroup, MsgId},
+    tables::{LeaseDiff, LeaseRow},
 };
 
 pub struct Ack {
@@ -16,12 +17,11 @@ pub struct AckOutput {}
 impl Ack {
     pub fn new(
         state: &State,
-        name: StreamName,
+        stream_id: ConfigGroupId,
         cg: ConsumerGroup,
         min_msg_id: MsgId,
         max_msg_id: MsgId,
     ) -> Result<Self> {
-        let stream_id = NameToStreamRow::get_stream_id(state, &name)?;
         let now = Timestamp::now();
         let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
         validate_ack_bounds(&leases, max_msg_id)?;

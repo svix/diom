@@ -1,12 +1,12 @@
 use coyote_error::Result;
 use std::num::NonZeroU64;
 
-use fjall::Database;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    State,
     entities::{ConfigGroupId, ModuleConfig, StorageType},
     tables::ConfigGroup,
 };
@@ -49,16 +49,15 @@ impl<C: ModuleConfig> CreateConfigGroup<C> {
         }
     }
 
-    pub fn apply_operation(
-        self,
-        db: &Database,
-        keyspace: &fjall::Keyspace,
-    ) -> Result<CreateConfigGroupOutput<C>> {
+    pub fn apply_operation(self, state: &State) -> Result<CreateConfigGroupOutput<C>> {
+        let db = state.db();
+        let keyspace = state.keyspace();
         let configgroup = match ConfigGroup::<C>::fetch(keyspace, &self.name)? {
             Some(mut configgroup) => {
                 configgroup.storage_type = self.storage_type.unwrap_or(StorageType::Persistent);
                 configgroup.updated_at = self.timestamp;
                 configgroup.max_storage_bytes = self.max_storage_bytes;
+                configgroup.config = self.config;
                 configgroup
             }
             None => {

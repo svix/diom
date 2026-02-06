@@ -7,6 +7,3 @@ cache:
 idempotency:
   default:
     storage_type: persistent
-stream:
-  default:
-    storage_type: persistent
