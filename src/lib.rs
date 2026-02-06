@@ -5,7 +5,10 @@
 
 #[cfg(test)]
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::{sync::LazyLock, time::Duration};
+use std::{
+    sync::{Arc, LazyLock},
+    time::Duration,
+};
 
 use aide::axum::ApiRouter;
 use axum::{Extension, middleware};
@@ -27,7 +30,7 @@ use opentelemetry_sdk::{
         span_processor_with_async_runtime::BatchSpanProcessor,
     },
 };
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::Barrier};
 use tokio_util::sync::CancellationToken;
 use tower_http::{
     ServiceExt,
@@ -119,6 +122,7 @@ async fn run_interserver(
     state: AppState,
     raft: RaftState,
     listener: Option<TcpListener>,
+    bind_barrier: Arc<Barrier>,
 ) {
     let listen_address = cfg.cluster.listen_address;
     let listener = match listener {
@@ -131,6 +135,7 @@ async fn run_interserver(
         "Inter-Server: Listening on {}",
         listener.local_addr().unwrap()
     );
+    bind_barrier.wait().await;
 
     let app = core::cluster::router()
         .with_state(state.clone())
@@ -231,12 +236,27 @@ pub async fn run_with_prefix(
         .with_state::<()>(app_state.clone())
         .layer(Extension(raft_state.clone()));
 
+    let interserver_started_barrier = Arc::new(Barrier::new(2));
+
     let interserver = tokio::spawn(run_interserver(
         cfg.clone(),
         app_state.clone(),
         raft_state.clone(),
         interserver_listener,
+        Arc::clone(&interserver_started_barrier),
     ));
+
+    tokio::spawn({
+        let raft_state = raft_state.clone();
+        let cfg = cfg.clone();
+        async move {
+            interserver_started_barrier.wait().await;
+            raft_state
+                .run_discovery_if_necessary(cfg)
+                .await
+                .expect("should be able to initialize discovery");
+        }
+    });
 
     // Initialize all routes which need to be part of OpenAPI first.
     let api_router = ApiRouter::new()

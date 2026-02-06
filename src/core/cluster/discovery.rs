@@ -14,6 +14,7 @@ use url::Url;
 use super::{
     network::build_client,
     raft::{Node, NodeId, Raft},
+    state_machine::ClusterId,
 };
 use crate::{
     Configuration,
@@ -90,10 +91,10 @@ impl Discovery {
 
     async fn join_cluster(
         &self,
-        cluster_name: String,
+        cluster_id: ClusterId,
         peers: Vec<(SocketAddr, NodeId, DiscoverClusterResponse)>,
     ) -> anyhow::Result<()> {
-        tracing::info!(?cluster_name, "joining running cluster");
+        tracing::info!(?cluster_id, "joining running cluster");
         let Some((leader_addr, _leader_node_id, leader_cluster)) = peers
             .iter()
             .find_or_first(|p| p.2.state == ServerState::Leader)
@@ -142,7 +143,8 @@ impl Discovery {
             tracing::trace!(?peer_address, ?response, "adding node to new cluster");
             nodes.insert(response.node_id, Node::new(peer_address));
         }
-        self.raft.initialize(nodes).await?;
+        tracing::debug!(?nodes, "initializing cluster with nodes");
+        super::raft::initialize_cluster(&self.raft, nodes).await?;
         tracing::info!("initialized new cluster");
         Ok(())
     }
@@ -203,8 +205,11 @@ impl Discovery {
                         if let Some(cluster) = v.cluster {
                             if cluster.last_committed_log_id.is_none() {
                                 None
+                            } else if let Some(cluster_id) = cluster.cluster_id {
+                                Some((cluster_id, (k, v.node_id, cluster)))
                             } else {
-                                Some((cluster.cluster_name.clone(), (k, v.node_id, cluster)))
+                                tracing::warn!("found a last_committed_log_id, but no cluster_id! refusing to join");
+                                None
                             }
                         } else {
                             None
@@ -213,8 +218,8 @@ impl Discovery {
                     .into_group_map();
 
                 if clusters_to_peers.len() == 1 {
-                    let (cluster_name, config) = clusters_to_peers.into_iter().next().unwrap();
-                    if let Err(err) = self.join_cluster(cluster_name, config).await {
+                    let (cluster_id, config) = clusters_to_peers.into_iter().next().unwrap();
+                    if let Err(err) = self.join_cluster(cluster_id, config).await {
                         tracing::error!(?err, "failed to join cluster!");
                     } else {
                         tracing::info!("finished joining cluster");

@@ -7,6 +7,7 @@ mod errors;
 mod handle;
 mod logs;
 mod network;
+mod operations;
 pub mod proto;
 mod raft;
 mod serialized_state_machine;

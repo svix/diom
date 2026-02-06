@@ -175,6 +175,8 @@ async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyh
     let url = format!("http://{repl_addr}/repl/health");
     let deadline = Instant::now() + max_wait;
     let client = reqwest::Client::new();
+    let mut backoff_ms = 10;
+    let max_backoff_time = Duration::from_millis(500);
     loop {
         match tokio::time::timeout_at(deadline, check_initialized(&client, &url)).await {
             Ok(Ok(true)) => {
@@ -189,7 +191,8 @@ async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyh
             }
             Err(_) => anyhow::bail!("timed out waiting for server to boot"),
         }
-        tokio::time::sleep(Duration::from_millis(10)).await;
+        tokio::time::sleep(Duration::from_millis(backoff_ms).min(max_backoff_time)).await;
+        backoff_ms *= 2;
     }
 }
 
@@ -236,9 +239,9 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             snapshot_path,
             log_path,
             connection_timeout: Duration::from_millis(50),
-            heartbeat_interval_ms: 5,
-            election_timeout_min_ms: 10,
-            election_timeout_max_ms: 30,
+            heartbeat_interval_ms: 50,
+            election_timeout_min_ms: 100,
+            election_timeout_max_ms: 300,
             auto_initialize: true,
             discovery_request_timeout: Duration::from_millis(10),
             discovery_timeout: Duration::from_secs(1),

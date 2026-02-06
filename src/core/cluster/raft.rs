@@ -1,15 +1,25 @@
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc, time::Instant};
 
-use openraft::BasicNode;
+use openraft::{
+    BasicNode,
+    error::{InitializeError, RaftError},
+};
 use serde::{Deserialize, Serialize};
+use tap::TapFallible;
 use uuid::Uuid;
 
 use super::{
-    discovery::Discovery,
     handle::{RaftState, Request, Response},
     state_machine::StoredSnapshot,
 };
-use crate::{AppState, cfg::Configuration};
+use crate::{
+    AppState,
+    cfg::Configuration,
+    core::cluster::{
+        operations::InternalRequest,
+        state_machine::{ClusterId, StoreHandle},
+    },
+};
 
 // TODO: is BasicNode enough for us?
 pub(super) type Node = BasicNode;
@@ -56,6 +66,37 @@ openraft::declare_raft_types!(
 
 pub type Raft = openraft::Raft<TypeConfig>;
 
+pub(super) async fn initialize_cluster(
+    raft: &Raft,
+    cluster: BTreeMap<NodeId, Node>,
+) -> anyhow::Result<()> {
+    let start = Instant::now();
+    let voters = cluster.keys().copied().collect::<Vec<_>>();
+    match raft.initialize(cluster).await {
+        Ok(_) => {}
+        Err(RaftError::APIError(InitializeError::NotAllowed(_))) => {
+            tracing::debug!("cluster already initialized, ignoring");
+            return Ok(());
+        }
+        Err(err) => {
+            tracing::error!(?err, "error initializing cluster");
+            return Err(err.into());
+        }
+    };
+    raft.wait(None)
+        .voter_ids(voters, "waiting for cluster to bootstrap")
+        .await?;
+    let new_id = ClusterId::generate();
+    tracing::debug!(cluster_id=?new_id, "cluster initialized, setting cluster_id");
+    raft.client_write(Request::ClusterInternal(InternalRequest::SetClusterId(
+        new_id,
+    )))
+    .await
+    .tap_err(|err| tracing::error!(?err, "failed to set initial cluster id"))?;
+    tracing::debug!(elapsed=?start.elapsed(), "initialization finished");
+    Ok(())
+}
+
 pub async fn initialize_raft(
     cfg: &Configuration,
     app_state: AppState,
@@ -77,28 +118,13 @@ pub async fn initialize_raft(
 
     let state_machine =
         super::state_machine::Store::new(db, cfg.cluster.snapshot_path.clone(), app_state).await?;
-    let raft = Raft::new(id, config, network, logs, state_machine).await?;
-    let has_cluster = raft
-        .with_raft_state(|s| {
-            s.committed.is_some() || s.membership_state.effective().nodes().count() > 0
-        })
-        .await?;
-    if has_cluster {
-        tracing::debug!("node already has cluster information; skipping discovery");
-    } else {
-        tracing::debug!("node has no cluster information; kicking off discovery");
-        let disco = Discovery::new(cfg.clone(), raft.clone(), id)?;
-        tokio::spawn(async move {
-            if let Err(err) = disco.discover_cluster().await {
-                tracing::error!(
-                    ?err,
-                    "discovery failed; this node must be manually initialized"
-                );
-            }
-            tracing::info!("discovery succeeded");
-        });
-    }
-    Ok(RaftState { raft, node_id: id })
+    let state_machine: StoreHandle = state_machine.into();
+    let raft = Raft::new(id, config, network, logs, state_machine.clone()).await?;
+    Ok(RaftState {
+        raft,
+        node_id: id,
+        state_machine,
+    })
 }
 
 #[cfg(test)]
@@ -110,14 +136,17 @@ mod tests {
     use crate::{AppState, cfg::ConfigurationInner};
 
     use super::{
-        super::{logs::DiomLogs, state_machine::Store},
+        super::{
+            logs::DiomLogs,
+            state_machine::{Store, StoreHandle},
+        },
         NodeId, TypeConfig,
     };
 
     struct DiomStoreBuilder;
 
     impl DiomStoreBuilder {
-        async fn setup() -> anyhow::Result<(TempDir, DiomLogs, Store)> {
+        async fn setup() -> anyhow::Result<(TempDir, DiomLogs, StoreHandle)> {
             let workdir = tempfile::tempdir()?;
             let mut log_path = workdir.path().to_path_buf();
             log_path.push("logs");
@@ -142,14 +171,14 @@ mod tests {
 
             let store = Store::new(db, snapshot_path, app_state).await?;
 
-            Ok((workdir, logs, store))
+            Ok((workdir, logs, store.into()))
         }
     }
 
-    impl StoreBuilder<TypeConfig, DiomLogs, Store, TempDir> for DiomStoreBuilder {
+    impl StoreBuilder<TypeConfig, DiomLogs, StoreHandle, TempDir> for DiomStoreBuilder {
         async fn build(
             &self,
-        ) -> Result<(TempDir, DiomLogs, Store), openraft::StorageError<NodeId>> {
+        ) -> Result<(TempDir, DiomLogs, StoreHandle), openraft::StorageError<NodeId>> {
             Self::setup().await.map_err(|e| openraft::StorageError::IO {
                 source: StorageIOError::write(e),
             })
