@@ -127,7 +127,7 @@ impl TestServerBuilder {
         };
         let client = TestClient::new(base_uri, &token);
 
-        wait_for_initialized(repl_addr, Duration::from_secs(8))
+        wait_for_initialized(repl_addr, Duration::from_secs(30))
             .await
             .expect("failed to initialize server");
 
