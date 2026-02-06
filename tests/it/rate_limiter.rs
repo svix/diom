@@ -19,6 +19,7 @@ async fn call_limit_token_bucket(
         .json(json!({
             "key": key,
             "units": units,
+            "method": "token_bucket",
             "config": {
                 "capacity": capacity,
                 "refill_amount": refill_amount,
@@ -100,6 +101,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
         .post("rate-limiter/get-remaining")
         .json(json!({
             "key": "rl-key-1",
+            "method": "token_bucket",
             "config": {
                 "capacity": capacity,
                 "refill_amount": refill_amount,

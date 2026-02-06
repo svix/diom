@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct RateLimiterConfig {
+pub struct RateLimiterTokenBucketConfig {
     /// Maximum capacity of the bucket
     pub capacity: u64,
 
@@ -14,7 +14,7 @@ pub struct RateLimiterConfig {
     pub refill_interval_seconds: u64,
 }
 
-impl RateLimiterConfig {
+impl RateLimiterTokenBucketConfig {
     pub fn new(capacity: u64, refill_amount: u64, refill_interval_seconds: u64) -> Self {
         Self {
             capacity,
