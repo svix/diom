@@ -12,7 +12,7 @@ use validator::Validate;
 use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::idempotency::IdempotencyStore;
+pub use coyote_idempotency::IdempotencyStore;
 
 // ============================================================================
 // API Types
