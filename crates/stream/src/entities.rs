@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use diom_configgroup::entities::ConfigGroupName;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,7 @@ use validator::Validate;
 // FIXME(@svix-gabriel) - I opted for type aliases here just for expediency.
 // We absolutely can (and should) use more robust types.
 pub type StreamId = Uuid;
-pub type StreamName = String;
+pub type StreamName = ConfigGroupName;
 pub type MsgId = u64;
 pub type ConsumerGroup = String;
 pub type MsgHeaders = HashMap<String, String>;

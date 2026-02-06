@@ -1,12 +1,13 @@
 use std::num::NonZeroU16;
 
+use diom_configgroup::entities::ConfigGroupId;
 use diom_error::{HttpError, Result};
 use jiff::Timestamp;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, MsgOut, StreamName},
-    tables::{LeaseRow, MsgRow, NameToStreamRow},
+    entities::{ConsumerGroup, MsgId, MsgOut},
+    tables::{LeaseRow, MsgRow},
 };
 
 use super::fetch::create_leases_for_msgs;
@@ -23,12 +24,11 @@ pub struct FetchLockingOutput {
 impl FetchLocking {
     pub fn new(
         state: &State,
-        name: StreamName,
+        stream_id: ConfigGroupId,
         cg: ConsumerGroup,
         batch_size: NonZeroU16,
         visibility_timeout: std::time::Duration,
     ) -> Result<Self> {
-        let stream_id = NameToStreamRow::get_stream_id(state, &name)?;
         let now = Timestamp::now();
         let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
 

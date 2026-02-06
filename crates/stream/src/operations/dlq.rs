@@ -1,8 +1,9 @@
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, StreamName},
-    tables::{LeaseDiff, LeaseRow, NameToStreamRow},
+    entities::{ConsumerGroup, MsgId},
+    tables::{LeaseDiff, LeaseRow},
 };
+use diom_configgroup::entities::ConfigGroupId;
 use diom_error::{HttpError, Result};
 use jiff::Timestamp;
 
@@ -13,8 +14,12 @@ pub struct Dlq {
 pub struct DlqOutput {}
 
 impl Dlq {
-    pub fn new(state: &State, name: StreamName, cg: ConsumerGroup, msg_id: MsgId) -> Result<Self> {
-        let stream_id = NameToStreamRow::get_stream_id(state, &name)?;
+    pub fn new(
+        state: &State,
+        stream_id: ConfigGroupId,
+        cg: ConsumerGroup,
+        msg_id: MsgId,
+    ) -> Result<Self> {
         let now = Timestamp::now();
         let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
 

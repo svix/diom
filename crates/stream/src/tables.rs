@@ -1,10 +1,6 @@
-use std::{
-    borrow::Cow,
-    num::{NonZeroU64, NonZeroUsize},
-    ops::RangeInclusive,
-};
+use std::{borrow::Cow, num::NonZeroUsize, ops::RangeInclusive};
 
-use diom_error::{Error, HttpError, Result};
+use diom_error::{Error, Result};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
@@ -14,67 +10,6 @@ use crate::{
     State,
     entities::{ConsumerGroup, MsgHeaders, MsgId, StreamId},
 };
-
-// IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
-static_assertions::const_assert!(fjall_utils::are_all_unique(&[
-    NameToStreamRow::TABLE_PREFIX,
-    StreamRow::TABLE_PREFIX,
-    LeaseRow::TABLE_PREFIX,
-]));
-
-use crate::entities::StreamName;
-
-#[derive(Serialize, Deserialize)]
-pub(crate) struct NameToStreamRow {
-    pub name: StreamName,
-    pub id: StreamId,
-}
-
-impl TableRow for NameToStreamRow {
-    const TABLE_PREFIX: &'static str = "_CID2NAME_";
-    type Key = String;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.name)
-    }
-}
-
-impl NameToStreamRow {
-    /// Looks up the `StreamId` for a given stream name.
-    pub(crate) fn get_stream_id(state: &State, name: &str) -> Result<StreamId> {
-        Self::fetch(&state.metadata_tables, &name.to_owned())?
-            .map(|row| row.id)
-            .ok_or_else(|| {
-                HttpError::not_found(
-                    Some("stream_not_found".to_owned()),
-                    Some(format!("Stream with name '{name}' not found")),
-                )
-                .into()
-            })
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub(crate) struct StreamRow {
-    pub id: StreamId,
-    pub name: StreamName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retention_period_seconds: Option<NonZeroU64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_byte_size: Option<NonZeroU64>,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
-}
-
-impl TableRow for StreamRow {
-    const TABLE_PREFIX: &'static str = "_CSTRM_";
-
-    type Key = StreamId;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Owned(self.id)
-    }
-}
 
 /// A lease represents a consumer group's "hold" on a block of messages. This is used to prevent multiple consumers in the same consumer group
 /// from touching the same messages.

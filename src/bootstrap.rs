@@ -177,16 +177,11 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
     })
     .expect("configgroup state");
 
-    let db = state.db();
-    let keyspace = state.keyspace();
-
     if let Some(kv) = bootstrap.kv {
         for (name, cfg) in kv {
             tracing::debug!(?name, "bootstrapping kv");
             let create_cmd = cfg.create_config_group(name);
-            create_cmd
-                .apply_operation(db, keyspace)
-                .expect("create config");
+            create_cmd.apply_operation(&state).expect("create config");
         }
     }
 
@@ -194,9 +189,7 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
         for (name, cfg) in cache {
             tracing::debug!(?name, "bootstrapping cache");
             let create_cmd = cfg.create_config_group(name);
-            create_cmd
-                .apply_operation(db, keyspace)
-                .expect("create config");
+            create_cmd.apply_operation(&state).expect("create config");
         }
     }
 
@@ -204,9 +197,7 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
         for (name, cfg) in idempotency {
             tracing::debug!(?name, "bootstrapping idemptency");
             let create_cmd = cfg.create_config_group(name);
-            create_cmd
-                .apply_operation(db, keyspace)
-                .expect("create config");
+            create_cmd.apply_operation(&state).expect("create config");
         }
     }
 
@@ -214,9 +205,7 @@ pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
         for (name, cfg) in stream {
             tracing::debug!(?name, "bootstrapping stream");
             let create_cmd = cfg.create_config_group(name);
-            create_cmd
-                .apply_operation(db, keyspace)
-                .expect("create config");
+            create_cmd.apply_operation(&state).expect("create config");
         }
     }
 

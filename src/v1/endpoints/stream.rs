@@ -8,16 +8,16 @@ use std::{
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::State;
+use diom_configgroup::{
+    entities::StreamConfig, operations::create_configgroup::CreateConfigGroupOutput,
+};
 use diom_derive::aide_annotate;
 use diom_error::Result;
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use stream::{
-    entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName},
-    operations::CreateStreamOutput,
-};
+use stream::entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName};
 use validator::Validate;
 
 use crate::{AppState, v1::utils::openapi_tag};
@@ -45,7 +45,7 @@ struct CreateStreamOut {
 /// Upserts a new Stream with the given name.
 #[aide_annotate(op_id = "v1.stream.create")]
 async fn create_stream(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
 ) -> Result<MsgPackOrJson<CreateStreamOut>> {
     /*
@@ -58,31 +58,33 @@ async fn create_stream(
     I didn't want to let either of these things block developing stream,
     so in practice the structure of this handler will look different once those two pieces are in place.
     */
-
-    let out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::CreateStream::new(
-            &stream_state,
+    let out: CreateConfigGroupOutput<StreamConfig> = tokio::task::spawn_blocking(move || {
+        let op = diom_configgroup::operations::create_configgroup::CreateConfigGroup::new(
             data.name,
-            data.retention_period_seconds,
+            StreamConfig {
+                retention_period_seconds: data.retention_period_seconds,
+            },
+            None,
             data.max_byte_size,
-        )?;
-
-        op.apply_operation(&stream_state)
+        );
+        op.apply_operation(&state.configgroup_state)
     })
     .await??;
 
-    let CreateStreamOutput {
+    let CreateConfigGroupOutput {
         name,
-        retention_period_seconds,
-        max_byte_size,
+        config,
+        max_storage_bytes,
         created_at,
         updated_at,
+        ..
     } = out;
 
+    // println!("************** {}", config.retention_period_seconds.unwrap());
     Ok(MsgPackOrJson(CreateStreamOut {
         name,
-        retention_period_seconds,
-        max_byte_size,
+        retention_period_seconds: config.retention_period_seconds,
+        max_byte_size: max_storage_bytes,
         created_at,
         updated_at,
     }))
@@ -104,7 +106,7 @@ struct AppendToStreamOut {
 /// Appends messages to the stream.
 #[aide_annotate(op_id = "v1.stream.append")]
 async fn append_to_stream(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<AppendToStreamIn>,
 ) -> Result<MsgPackOrJson<AppendToStreamOut>> {
     /*
@@ -118,8 +120,10 @@ async fn append_to_stream(
     so in practice the structure of this handler will look different once those two pieces are in place.
     */
 
+    let group = state.get_stream(&data.name)?;
+    let stream_state = state.stream_state;
     let out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::AppendToStream::new(&stream_state, data.name, data.msgs)?;
+        let op = stream::operations::AppendToStream::new(&stream_state, group.id, data.msgs)?;
         op.apply_operation(&stream_state)
     })
     .await??;
@@ -154,7 +158,7 @@ struct FetchFromStreamOut {
 /// until either the visibility timeout expires, or the last message in the batch is acknowledged.
 #[aide_annotate(op_id = "v1.stream.fetch-locking")]
 async fn locking_fetch_from_stream(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
     /*
@@ -168,10 +172,12 @@ async fn locking_fetch_from_stream(
     so in practice the structure of this handler will look different once those two pieces are in place.
     */
 
+    let group = state.get_stream(&data.name)?;
+    let stream_state = state.stream_state;
     let out = tokio::task::spawn_blocking(move || {
         let op = stream::operations::FetchLocking::new(
             &stream_state,
-            data.name,
+            group.id,
             data.consumer_group,
             data.batch_size,
             Duration::from_secs(data.visibility_timeout_seconds),
@@ -190,7 +196,7 @@ async fn locking_fetch_from_stream(
 /// until the visibility timeout expires, or the messages are acked.
 #[aide_annotate(op_id = "v1.stream.fetch")]
 async fn fetch_from_stream(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
     /*
@@ -204,10 +210,12 @@ async fn fetch_from_stream(
     so in practice the structure of this handler will look different once those two pieces are in place.
     */
 
+    let group = state.get_stream(&data.name)?;
+    let stream_state = state.stream_state;
     let out = tokio::task::spawn_blocking(move || {
         let op = stream::operations::Fetch::new(
             &stream_state,
-            data.name,
+            group.id,
             data.consumer_group,
             data.batch_size,
             Duration::from_secs(data.visibility_timeout_seconds),
@@ -235,7 +243,7 @@ struct AckMsgRangeOut {}
 /// Acks the messages for the consumer group, allowing more messages to be consumed.
 #[aide_annotate(op_id = "v1.stream.ack-range")]
 async fn ack_range(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<AckMsgRangeIn>,
 ) -> Result<MsgPackOrJson<AckMsgRangeOut>> {
     /*
@@ -249,10 +257,12 @@ async fn ack_range(
     so in practice the structure of this handler will look different once those two pieces are in place.
     */
 
+    let group = state.get_stream(&data.name)?;
+    let stream_state = state.stream_state;
     let _out = tokio::task::spawn_blocking(move || {
         let op = stream::operations::Ack::new(
             &stream_state,
-            data.name,
+            group.id,
             data.consumer_group,
             data.min_msg_id.unwrap_or(MsgId::MIN),
             data.max_msg_id,
@@ -275,13 +285,15 @@ struct Ack {
 /// Acks a single message.
 #[aide_annotate(op_id = "v1.stream.ack")]
 async fn ack(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<Ack>,
 ) -> Result<MsgPackOrJson<AckOut>> {
+    let group = state.get_stream(&data.name)?;
+    let stream_state = state.stream_state;
     let _out = tokio::task::spawn_blocking(move || {
         let op = stream::operations::Ack::new(
             &stream_state,
-            data.name,
+            group.id,
             data.consumer_group,
             data.msg_id,
             data.msg_id,
@@ -312,13 +324,15 @@ struct DlqOut {}
 /// Moves a message to the dead letter queue.
 #[aide_annotate(op_id = "v1.stream.dlq")]
 async fn dlq(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<DlqIn>,
 ) -> Result<MsgPackOrJson<DlqOut>> {
+    let group = state.get_stream(&data.name)?;
+    let stream_state = state.stream_state;
     let _out = tokio::task::spawn_blocking(move || {
         let op = stream::operations::Dlq::new(
             &stream_state,
-            data.name,
+            group.id,
             data.consumer_group,
             data.msg_id,
         )?;
@@ -343,11 +357,13 @@ struct RedriveOut {}
 /// Redrives messages from the dead letter queue back to the stream.
 #[aide_annotate(op_id = "v1.stream.redrive")]
 async fn redrive(
-    State(AppState { stream_state, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<RedriveIn>,
 ) -> Result<MsgPackOrJson<RedriveOut>> {
+    let group = state.get_stream(&data.name)?;
+    let stream_state = state.stream_state;
     let _out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::Redrive::new(&stream_state, data.name, data.consumer_group)?;
+        let op = stream::operations::Redrive::new(&stream_state, group.id, data.consumer_group)?;
         op.apply_operation(&stream_state)
     })
     .await??;
