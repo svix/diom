@@ -11,11 +11,10 @@
 
 use std::time::Duration;
 
+use diom_error::{Error, HttpError, Result};
 use diom_kv::{KvModel, KvStore, OperationBehavior};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-
-use crate::error::{Error, HttpError, Result};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -40,7 +39,7 @@ impl From<Vec<u8>> for IdempotencyState {
 
 #[derive(Clone)]
 pub struct IdempotencyStore {
-    pub(crate) kv: KvStore,
+    kv: KvStore,
 }
 
 impl IdempotencyStore {
@@ -108,6 +107,8 @@ impl IdempotencyStore {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use diom_configgroup::entities::EvictionPolicy;
     use fjall::Database;
     use test_utils::TestResult;

@@ -928,6 +928,7 @@ dependencies = [
  "diom-configgroup",
  "diom-derive",
  "diom-error",
+ "diom-idempotency",
  "diom-kv",
  "diom-operations",
  "diom-proto",
@@ -1068,6 +1069,22 @@ dependencies = [
  "tokio",
  "tracing",
  "validator",
+]
+
+[[package]]
+name = "diom-idempotency"
+version = "1.76.1"
+dependencies = [
+ "diom-configgroup",
+ "diom-error",
+ "diom-kv",
+ "fjall",
+ "jiff",
+ "rmp-serde",
+ "serde",
+ "tempfile",
+ "test-utils",
+ "tokio",
 ]
 
 [[package]]
