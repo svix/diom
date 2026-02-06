@@ -1,8 +1,8 @@
-use http::HeaderValue;
 use serde::{Serialize, de::DeserializeOwned};
 use tap::Pipe;
 
 const CONTENT_TYPE: http::HeaderName = http::HeaderName::from_static("content-type");
+const MSGPACK: http::HeaderValue = http::HeaderValue::from_static("application/msgpack");
 
 pub trait MsgpackRequestBuilder: Sized {
     fn msgpack<T: Serialize + ?Sized>(self, body: &T) -> Result<Self, rmp_serde::encode::Error>;
@@ -11,12 +11,7 @@ pub trait MsgpackRequestBuilder: Sized {
 impl MsgpackRequestBuilder for reqwest::RequestBuilder {
     fn msgpack<T: Serialize + ?Sized>(self, body: &T) -> Result<Self, rmp_serde::encode::Error> {
         let serialized = rmp_serde::to_vec_named(body)?;
-        self.header(
-            CONTENT_TYPE,
-            HeaderValue::from_static("application/msgpack"),
-        )
-        .body(serialized)
-        .pipe(Ok)
+        self.header(CONTENT_TYPE, MSGPACK).body(serialized).pipe(Ok)
     }
 }
 
@@ -41,8 +36,8 @@ impl From<rmp_serde::decode::Error> for MsgpackResponseError {
 impl std::fmt::Display for MsgpackResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Network(e) => write!(f, "{e}"),
-            Self::Serialization(e) => write!(f, "{e}"),
+            Self::Network(e) => e.fmt(f),
+            Self::Serialization(e) => e.fmt(f),
         }
     }
 }
@@ -54,8 +49,8 @@ impl std::error::Error for MsgpackResponseError {
 
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::Network(e) => e.source(),
-            Self::Serialization(e) => e.source(),
+            Self::Network(e) => Some(e),
+            Self::Serialization(e) => Some(e),
         }
     }
 }
