@@ -15,7 +15,7 @@ pub(super) async fn apply_request(
         }
         Request::ClusterInternal(req) => Response::ClusterInternal(req.apply(state_machine).await?),
         Request::RateLimiter(req) => {
-            // Rate limiter doesn't need nor use config groups for now
+            // Rate limiter neither needs nor uses config groups for now
             Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))
         }
     })
