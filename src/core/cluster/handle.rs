@@ -36,11 +36,30 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalRequest),
     Kv(coyote_kv::operations::Operation),
+    RateLimiter(coyote_rate_limiter::operations::Operation),
 }
 
-impl<T: Into<coyote_kv::operations::Operation>> From<T> for Request {
-    fn from(value: T) -> Self {
+impl From<coyote_kv::operations::SetOperation> for Request {
+    fn from(value: coyote_kv::operations::SetOperation) -> Self {
         Request::Kv(value.into())
+    }
+}
+
+impl From<coyote_kv::operations::DeleteOperation> for Request {
+    fn from(value: coyote_kv::operations::DeleteOperation) -> Self {
+        Request::Kv(value.into())
+    }
+}
+
+impl From<coyote_rate_limiter::operations::LimitOperation> for Request {
+    fn from(value: coyote_rate_limiter::operations::LimitOperation) -> Self {
+        Request::RateLimiter(value.into())
+    }
+}
+
+impl From<coyote_rate_limiter::operations::ResetOperation> for Request {
+    fn from(value: coyote_rate_limiter::operations::ResetOperation) -> Self {
+        Request::RateLimiter(value.into())
     }
 }
 
@@ -49,6 +68,7 @@ pub enum Response {
     Blank,
     ClusterInternal(InternalResponse),
     Kv(coyote_kv::operations::Response),
+    RateLimiter(coyote_rate_limiter::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -57,6 +77,17 @@ impl TryFrom<Response> for coyote_kv::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::Kv(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_rate_limiter::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::RateLimiter(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

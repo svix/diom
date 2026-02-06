@@ -1,4 +1,5 @@
 pub mod algorithms;
+pub mod operations;
 pub mod tables;
 
 use std::time::Duration;
@@ -11,6 +12,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 pub use crate::algorithms::{FixedWindow, RateLimitConfig, TokenBucket};
+use crate::operations::{LimitOperation, ResetOperation};
 use crate::tables::{FixedWindowState, TokenBucketState};
 
 #[derive(Clone)]
@@ -149,7 +151,7 @@ impl RateLimiter {
         Ok((actual_remaining, retry_after))
     }
 
-    pub fn reset(&mut self, identifier: &str, algorithm: RateLimitConfig) -> Result<()> {
+    pub fn reset(&self, identifier: &str, algorithm: RateLimitConfig) -> Result<()> {
         let identifier_key = identifier.to_string();
         match algorithm {
             RateLimitConfig::FixedWindow(_) => {
@@ -160,6 +162,15 @@ impl RateLimiter {
             }
         }
         Ok(())
+    }
+
+    pub fn limit_operation(key: String, units: u64, method: RateLimitConfig) -> LimitOperation {
+        let now = Timestamp::now();
+        LimitOperation::new(key, now, units, method)
+    }
+
+    pub fn reset_operation(key: String, method: RateLimitConfig) -> ResetOperation {
+        ResetOperation::new(key, method)
     }
 }
 
