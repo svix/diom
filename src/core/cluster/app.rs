@@ -112,7 +112,7 @@ async fn stream_snapshot(
 async fn discover(
     State(app_state): State<AppState>,
     Extension(raft_state): Extension<RaftState>,
-) -> Json<DiscoverResponse> {
+) -> MsgPack<DiscoverResponse> {
     let cluster_name = app_state.cfg.cluster.name.clone();
     let cluster = raft_state
         .raft
@@ -134,7 +134,7 @@ async fn discover(
         node_id: raft_state.node_id,
         cluster,
     };
-    Json(response)
+    MsgPack(response)
 }
 
 async fn metrics(Extension(state): Extension<RaftState>) -> impl IntoResponse {
@@ -145,22 +145,22 @@ async fn metrics(Extension(state): Extension<RaftState>) -> impl IntoResponse {
 
 async fn add_learner(
     Extension(state): Extension<RaftState>,
-    Json(request): Json<AddLearnerRequest>,
+    MsgPack(request): MsgPack<AddLearnerRequest>,
 ) -> impl IntoResponse {
     let url = format!("http://{}/repl/raft/vote", request.address);
     let Ok(Some(addr)) = Uri::try_from(url).map(|v| v.authority().map(|a| a.to_string())) else {
         return internal_error("invalid address");
     };
     let node = Node { addr };
-    admin_response(state.raft.add_learner(request.node_id, node, true).await)
+    rpc_response(state.raft.add_learner(request.node_id, node, true).await)
 }
 
 async fn upgrade_learner(
     Extension(raft_state): Extension<RaftState>,
-    Json(request): Json<UpgradeLearnerRequest>,
+    MsgPack(request): MsgPack<UpgradeLearnerRequest>,
 ) -> impl IntoResponse {
     let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
-    admin_response(raft_state.raft.change_membership(request, true).await)
+    rpc_response(raft_state.raft.change_membership(request, true).await)
 }
 
 async fn change_membership(
