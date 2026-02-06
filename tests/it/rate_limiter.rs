@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use coyote_client::models::{RateLimitResult, RateLimiterCheckIn, RateLimiterGetRemainingIn};
 use serde_json::{Value, json};
 use test_utils::{StatusCode, TestClient, TestResult};
 
