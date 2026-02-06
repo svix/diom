@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display};
 
 pub use reqwest::StatusCode;
 
+pub mod server;
 mod test_client;
 
 pub use self::test_client::{TestClient, TestRequestBuilder, TestResponse};

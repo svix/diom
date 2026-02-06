@@ -1,7 +1,8 @@
 use serde_json::{Value, json};
-use test_utils::{StatusCode, TestClient, TestResult};
-
-use crate::{TestContext, server::start_server};
+use test_utils::{
+    StatusCode, TestClient, TestResult,
+    server::{TestContext, start_server},
+};
 
 async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) -> TestResult<()> {
     client
