@@ -7,7 +7,7 @@ mod set;
 pub use delete::DeleteOperation;
 pub use set::SetOperation;
 
-trait KvRequest: Into<Operation> + coyote_operations::OperationRequest
+trait KvRequest: Into<KvOperation> + coyote_operations::OperationRequest
 where
     Self: 'static,
 {
@@ -15,12 +15,12 @@ where
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Operation {
+pub enum KvOperation {
     Set(set::SetOperation),
     Delete(delete::DeleteOperation),
 }
 
-impl coyote_operations::ModuleRequest for Operation {
+impl coyote_operations::ModuleRequest for KvOperation {
     type Response = Response;
 }
 
@@ -32,7 +32,7 @@ pub enum Response {
 
 impl coyote_operations::ModuleResponse for Response {}
 
-impl Operation {
+impl KvOperation {
     pub fn apply(self, state: &mut KvStore) -> Response {
         match self {
             Self::Set(req) => Response::Set(req.apply(state)),
@@ -48,13 +48,13 @@ impl Operation {
     }
 }
 
-impl From<set::SetOperation> for Operation {
+impl From<set::SetOperation> for KvOperation {
     fn from(value: set::SetOperation) -> Self {
         Self::Set(value)
     }
 }
 
-impl From<delete::DeleteOperation> for Operation {
+impl From<delete::DeleteOperation> for KvOperation {
     fn from(value: delete::DeleteOperation) -> Self {
         Self::Delete(value)
     }

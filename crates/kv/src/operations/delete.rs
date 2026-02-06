@@ -1,4 +1,4 @@
-use super::{KvRequest, Operation, Response};
+use super::{KvOperation, KvRequest, Response};
 use coyote_operations::{OperationRequest, OperationResponse, Result};
 use serde::{Deserialize, Serialize};
 
@@ -35,5 +35,5 @@ impl OperationResponse for DeleteResponse {
 
 impl OperationRequest for DeleteOperation {
     type Response = DeleteResponse;
-    type RequestParent = Operation;
+    type RequestParent = KvOperation;
 }

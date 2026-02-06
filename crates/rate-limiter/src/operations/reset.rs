@@ -1,4 +1,4 @@
-use super::{Operation, RateLimiterRequest, Response};
+use super::{RateLimiterOperation, RateLimiterRequest, Response};
 use crate::RateLimitConfig;
 use coyote_operations::{OperationRequest, OperationResponse, Result};
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,7 @@ impl OperationResponse for ResetResponse {
 
 impl OperationRequest for ResetOperation {
     type Response = ResetResponse;
-    type RequestParent = Operation;
+    type RequestParent = RateLimiterOperation;
 }
 
 impl ResetOperation {

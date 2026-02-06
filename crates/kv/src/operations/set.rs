@@ -1,6 +1,6 @@
 use crate::{KvModel, OperationBehavior};
 
-use super::{KvRequest, Operation, Response};
+use super::{KvOperation, KvRequest, Response};
 use coyote_operations::{OperationRequest, OperationResponse, Result};
 use serde::{Deserialize, Serialize};
 
@@ -30,7 +30,7 @@ impl OperationResponse for SetResponse {
 
 impl OperationRequest for SetOperation {
     type Response = SetResponse;
-    type RequestParent = Operation;
+    type RequestParent = KvOperation;
 }
 
 impl SetOperation {
