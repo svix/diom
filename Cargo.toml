@@ -75,6 +75,7 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
+coyote-client.workspace = true
 ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
@@ -88,6 +89,7 @@ workspace = true
 ### Workspace manifest ###
 [workspace]
 members = [
+    "benchmarks",
     "clients/cli",
     "clients/rust",
     "codegen",
@@ -126,6 +128,7 @@ coyote-kv.path = "crates/kv"
 coyote-operations.path = "crates/coyote-operations"
 coyote-proto.path = "crates/coyote-proto"
 coyote-rate-limiter.path = "crates/rate-limiter"
+criterion = "0.8.2"
 ctor = "0.6.3"
 dirs = "6.0.0"
 dotenvy = "0.15.7"

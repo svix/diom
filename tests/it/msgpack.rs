@@ -1,9 +1,10 @@
 use http::header::CONTENT_TYPE;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use test_utils::{StatusCode, TestResult};
-
-use crate::{TestContext, server::start_server};
+use test_utils::{
+    StatusCode, TestResult,
+    server::{TestContext, start_server},
+};
 
 #[derive(Serialize)]
 struct CacheSetIn<'a> {

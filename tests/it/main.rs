@@ -1,6 +1,3 @@
-mod server;
-pub use server::TestContext;
-
 mod bootstrap;
 mod cache;
 mod configgroup;

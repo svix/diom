@@ -1,9 +1,10 @@
 use std::time::Duration;
 
 use serde_json::{Value, json};
-use test_utils::{StatusCode, TestClient, TestResult};
-
-use crate::{TestContext, server::start_server};
+use test_utils::{
+    StatusCode, TestClient, TestResult,
+    server::{TestContext, start_server},
+};
 
 async fn call_limit_token_bucket(
     client: &TestClient,
