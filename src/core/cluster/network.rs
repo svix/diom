@@ -7,6 +7,7 @@ use crate::cfg::Configuration;
 
 use super::{Node, NodeId, raft::TypeConfig};
 use anyhow::Context;
+use diom_proto::prelude::*;
 use http::{HeaderMap, HeaderValue, header};
 use openraft::{
     RaftNetwork, RaftNetworkFactory, RaftTypeConfig,
@@ -69,24 +70,21 @@ impl NetworkClient {
         let url = format!("http://{addr}/{path}");
         tracing::trace!(url, target=?self.target, "sending internal RPC");
 
-        // TODO: construct this as a stream instead
-        let body = rmp_serde::to_vec(&req).map_err(|err| {
-            tracing::warn!(
-                ?err,
-                "serialization error on RPC! this should be impossible!"
-            );
-            RPCError::Network(NetworkError::new(&err))
-        })?;
-
         let response = self
             .client
             .post(url)
-            .header(header::CONTENT_TYPE, "application/msgpack")
+            .msgpack(&req)
+            .map_err(|err| {
+                tracing::warn!(
+                    ?err,
+                    "serialization error on RPC! this should be impossible!"
+                );
+                RPCError::Network(NetworkError::new(&err))
+            })?
             .header(
                 header::ACCEPT,
                 "application/msgpack;q=0.9, application/json;q=0.5",
             )
-            .body(body)
             .send()
             .await
             .map_err(|e| {
@@ -108,19 +106,10 @@ impl NetworkClient {
             duration = ?start.elapsed(),
             "response from peer server");
 
-        let res_bytes = response
-            .bytes()
+        response
+            .msgpack()
             .await
-            .map_err(|e| RPCError::Network(NetworkError::new(&e)))?;
-
-        let data: Resp = rmp_serde::from_slice(&res_bytes).map_err(|err| {
-            tracing::warn!(
-                ?err,
-                "deserialization error on RPC! this should be impossible!"
-            );
-            RPCError::Network(NetworkError::new(&err))
-        })?;
-        Ok(data)
+            .map_err(|e| RPCError::Network(NetworkError::new(&e)))
     }
 }
 

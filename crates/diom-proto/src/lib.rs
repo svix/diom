@@ -1,5 +1,7 @@
 mod msgpack;
+mod msgpack_client;
 mod msgpack_or_json;
+pub mod prelude;
 
 pub use self::{
     msgpack::MsgPack,
