@@ -40,8 +40,9 @@ use uuid::Uuid;
 use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::cluster::RaftState,
-    v1::modules::{cache::CacheStore, idempotency::IdempotencyStore},
+    v1::modules::cache::CacheStore,
 };
+use coyote_idempotency::IdempotencyStore;
 
 pub mod bootstrap;
 pub mod cfg;
@@ -203,7 +204,7 @@ impl AppState {
 
     pub fn get_idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
         let kv_store = self.get_store_by_key::<IdempotencyConfig>(key_name)?;
-        Ok(IdempotencyStore { kv: kv_store })
+        Ok(IdempotencyStore::new(kv_store))
     }
 }
 

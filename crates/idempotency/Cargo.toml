@@ -1,0 +1,23 @@
+[package]
+name = "coyote-idempotency"
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+coyote-configgroup.workspace = true
+coyote-error.workspace = true
+coyote-kv.workspace = true
+fjall.workspace = true
+jiff.workspace = true
+rmp-serde.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+test-utils.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true

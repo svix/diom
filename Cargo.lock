@@ -928,6 +928,7 @@ dependencies = [
  "coyote-configgroup",
  "coyote-derive",
  "coyote-error",
+ "coyote-idempotency",
  "coyote-kv",
  "coyote-operations",
  "coyote-proto",
@@ -1068,6 +1069,22 @@ dependencies = [
  "tokio",
  "tracing",
  "validator",
+]
+
+[[package]]
+name = "coyote-idempotency"
+version = "1.76.1"
+dependencies = [
+ "coyote-configgroup",
+ "coyote-error",
+ "coyote-kv",
+ "fjall",
+ "jiff",
+ "rmp-serde",
+ "serde",
+ "tempfile",
+ "test-utils",
+ "tokio",
 ]
 
 [[package]]
