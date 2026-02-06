@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::{RateLimiterOperation, RateLimiterRequest, Response};
+use super::{Operation, RateLimiterRequest, Response};
 use crate::{RateLimitConfig, RateLimitResult};
 use coyote_operations::{OperationRequest, OperationResponse, Result};
 use jiff::Timestamp;
@@ -41,7 +41,7 @@ impl OperationResponse for LimitResponse {
 
 impl OperationRequest for LimitOperation {
     type Response = LimitResponse;
-    type RequestParent = RateLimiterOperation;
+    type RequestParent = Operation;
 }
 
 impl LimitOperation {
@@ -61,4 +61,3 @@ impl RateLimiterRequest for LimitOperation {
         LimitResponse(self.apply_real(state))
     }
 }
-

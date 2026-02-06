@@ -7,7 +7,7 @@ mod reset;
 pub use limit::LimitOperation;
 pub use reset::ResetOperation;
 
-trait RateLimiterRequest: Into<RateLimiterOperation> + coyote_operations::OperationRequest
+trait RateLimiterRequest: Into<Operation> + coyote_operations::OperationRequest
 where
     Self: 'static,
 {
@@ -15,12 +15,12 @@ where
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum RateLimiterOperation {
+pub enum Operation {
     Limit(limit::LimitOperation),
     Reset(reset::ResetOperation),
 }
 
-impl coyote_operations::ModuleRequest for RateLimiterOperation {
+impl coyote_operations::ModuleRequest for Operation {
     type Response = Response;
 }
 
@@ -32,7 +32,7 @@ pub enum Response {
 
 impl coyote_operations::ModuleResponse for Response {}
 
-impl RateLimiterOperation {
+impl Operation {
     pub fn apply(self, state: &RateLimiter) -> Response {
         match self {
             Self::Limit(req) => Response::Limit(req.apply(state)),
@@ -41,13 +41,13 @@ impl RateLimiterOperation {
     }
 }
 
-impl From<limit::LimitOperation> for RateLimiterOperation {
+impl From<limit::LimitOperation> for Operation {
     fn from(value: limit::LimitOperation) -> Self {
         Self::Limit(value)
     }
 }
 
-impl From<reset::ResetOperation> for RateLimiterOperation {
+impl From<reset::ResetOperation> for Operation {
     fn from(value: reset::ResetOperation) -> Self {
         Self::Reset(value)
     }

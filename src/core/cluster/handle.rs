@@ -35,18 +35,18 @@ impl std::error::Error for ResponseParseError {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Request {
     ClusterInternal(InternalRequest),
-    Kv(coyote_kv::operations::KvOperation),
-    RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
+    Kv(coyote_kv::operations::Operation),
+    RateLimiter(coyote_rate_limiter::operations::Operation),
 }
 
-impl From<coyote_kv::operations::KvOperation> for Request {
-    fn from(value: coyote_kv::operations::KvOperation) -> Self {
+impl From<coyote_kv::operations::Operation> for Request {
+    fn from(value: coyote_kv::operations::Operation) -> Self {
         Request::Kv(value)
     }
 }
 
-impl From<coyote_rate_limiter::operations::RateLimiterOperation> for Request {
-    fn from(value: coyote_rate_limiter::operations::RateLimiterOperation) -> Self {
+impl From<coyote_rate_limiter::operations::Operation> for Request {
+    fn from(value: coyote_rate_limiter::operations::Operation) -> Self {
         Request::RateLimiter(value)
     }
 }
