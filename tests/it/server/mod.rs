@@ -8,7 +8,6 @@ use coyote::{
     core::{cluster::proto::HealthResponse, security::JwtSigningConfig},
     run_with_prefix, setup_tracing_for_tests,
 };
-use coyote_client::{CoyoteClient, CoyoteOptions};
 use jwt_simple::prelude::*;
 use tempfile::TempDir;
 use test_utils::TestClient;
@@ -105,7 +104,6 @@ impl TestServerBuilder {
         };
 
         let base_uri = format!("http://{addr}/api/v1");
-        let server_url = format!("http://{addr}");
 
         let server_handle = tokio::spawn({
             let cfg = cfg.clone();
@@ -121,14 +119,6 @@ impl TestServerBuilder {
 
         let client = TestClient::new(base_uri, &token);
 
-        let sdk_client = CoyoteClient::new(
-            token.to_string(),
-            Some(CoyoteOptions {
-                server_url: Some(server_url),
-                ..Default::default()
-            }),
-        );
-
         wait_for_initialized(repl_addr, Duration::from_secs(2))
             .await
             .expect("failed to initialize server");
@@ -138,7 +128,6 @@ impl TestServerBuilder {
             cfg,
             handle,
             token,
-            sdk_client,
         }
     }
 }
@@ -148,7 +137,6 @@ pub struct TestContext {
     pub cfg: Arc<ConfigurationInner>,
     pub handle: IsolatedServerHandle,
     pub token: String,
-    pub sdk_client: CoyoteClient,
 }
 
 async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Result<bool> {
