@@ -27,7 +27,7 @@ pub fn setup_server_simple() -> BenchmarkContext {
         (TestServerBuilder::new().build().await, workdir)
     });
 
-    let server_url = Some(format!("http://{}", server.addr.to_string()));
+    let server_url = Some(format!("http://{}", server.addr));
 
     let client = coyote_client::CoyoteClient::new(
         server.token.clone(),

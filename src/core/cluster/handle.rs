@@ -1,4 +1,10 @@
-use super::raft::{Node, NodeId, Raft};
+use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
+
+use super::{
+    discovery::Discovery,
+    operations::{InternalRequest, InternalResponse},
+    raft::{Node, NodeId, Raft},
+};
 use coyote_operations::{OperationRequest, OperationResponse};
 use openraft::error::{ClientWriteError, RaftError};
 use serde::{Deserialize, Serialize};
@@ -28,6 +34,7 @@ impl std::error::Error for ResponseParseError {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Request {
+    ClusterInternal(InternalRequest),
     Kv(coyote_kv::operations::Operation),
 }
 
@@ -40,6 +47,7 @@ impl<T: Into<coyote_kv::operations::Operation>> From<T> for Request {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Response {
     Blank,
+    ClusterInternal(InternalResponse),
     Kv(coyote_kv::operations::Response),
 }
 
@@ -58,6 +66,7 @@ impl TryFrom<Response> for coyote_kv::operations::Response {
 pub struct RaftState {
     pub raft: Raft,
     pub node_id: NodeId,
+    pub state_machine: StoreHandle,
 }
 
 impl RaftState {
@@ -84,5 +93,28 @@ impl RaftState {
             .try_into()
             .expect("module response should be convertible into target type");
         Ok(resp)
+    }
+
+    pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> anyhow::Result<()> {
+        let has_cluster = self
+            .raft
+            .with_raft_state(|s| {
+                s.committed.is_some() || s.membership_state.effective().nodes().count() > 0
+            })
+            .await?;
+        if has_cluster {
+            tracing::debug!("node already has cluster information; skipping discovery");
+        } else {
+            tracing::debug!("node has no cluster information; kicking off discovery");
+            let disco = Discovery::new(cfg, self.raft.clone(), self.node_id)?;
+            if let Err(err) = disco.discover_cluster().await {
+                tracing::error!(
+                    ?err,
+                    "discovery failed; this node must be manually initialized"
+                );
+            }
+            tracing::info!("discovery succeeded");
+        }
+        Ok(())
     }
 }

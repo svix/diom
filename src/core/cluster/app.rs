@@ -40,8 +40,22 @@ pub fn router() -> axum::Router<AppState> {
 
 // Helpers
 
+#[derive(Debug, Serialize)]
+struct BasicError {
+    error_message: String,
+}
+
+impl<T: ToString> From<T> for BasicError {
+    fn from(value: T) -> Self {
+        Self {
+            error_message: value.to_string(),
+        }
+    }
+}
+
 fn internal_error(s: impl ToString) -> Response {
-    (StatusCode::INTERNAL_SERVER_ERROR, s.to_string()).into_response()
+    let body = BasicError::from(s);
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(body)).into_response()
 }
 
 fn rpc_response<Ok, Err>(result: Result<Ok, Err>) -> Response
@@ -58,11 +72,14 @@ where
 fn admin_response<Ok, Err>(result: Result<Ok, Err>) -> Response
 where
     Ok: Serialize,
-    Err: Serialize,
+    Err: ToString,
 {
     match result {
         Ok(ok) => (StatusCode::OK, Json(ok)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(e)).into_response(),
+        Err(e) => {
+            let error = BasicError::from(e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error)).into_response()
+        }
     }
 }
 
@@ -114,12 +131,14 @@ async fn discover(
     Extension(raft_state): Extension<RaftState>,
 ) -> MsgPack<DiscoverResponse> {
     let cluster_name = app_state.cfg.cluster.name.clone();
+    let cluster_id = raft_state.state_machine.cluster_id().await;
     let cluster = raft_state
         .raft
         .with_raft_state(move |state| DiscoverClusterResponse {
             last_committed_log_id: state.committed,
             cluster_name,
             state: state.server_state,
+            cluster_id,
             known_peers: state
                 .membership_state
                 .committed()
@@ -187,12 +206,15 @@ async fn initialize(
     let nodes = [(state.node_id, my_node)]
         .into_iter()
         .collect::<BTreeMap<_, _>>();
-    state.raft.initialize(nodes).await.pipe(admin_response)
+    super::raft::initialize_cluster(&state.raft, nodes)
+        .await
+        .pipe(admin_response)
 }
 
 async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     let leader = state.raft.current_leader().await;
     let me = state.node_id;
+    let cluster_id = state.state_machine.cluster_id().await;
     state
         .raft
         .with_raft_state(move |s| {
@@ -200,6 +222,7 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
                 node_id: me,
                 last_committed_log_index: s.committed.map(|l| l.index),
                 server_state: s.server_state,
+                cluster_id,
                 leader,
             };
             let status = if s.server_state.is_leader()
