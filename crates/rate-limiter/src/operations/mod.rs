@@ -39,13 +39,6 @@ impl Operation {
             Self::Reset(req) => Response::Reset(req.apply(state)),
         }
     }
-
-    pub fn key_name(&self) -> &str {
-        match self {
-            Self::Limit(req) => req.key.as_ref(),
-            Self::Reset(req) => req.key.as_ref(),
-        }
-    }
 }
 
 impl From<limit::LimitOperation> for Operation {
