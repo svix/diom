@@ -4,6 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use coyote_proto::prelude::*;
 use futures_util::{StreamExt, stream};
 use itertools::Itertools;
 use openraft::ServerState;
@@ -64,7 +65,7 @@ impl Discovery {
                             return None;
                         }
                     };
-                    let response: DiscoverResponse = match response.json().await {
+                    let response: DiscoverResponse = match response.msgpack().await {
                         Ok(resp) => resp,
                         Err(err) => {
                             tracing::warn!(peer=?s, ?err, "unable to read response body from seed node");
@@ -108,7 +109,7 @@ impl Discovery {
             node_id: self.my_node_id,
             address: self.my_addr.to_string(),
         };
-        self.client.post(url).json(&request).send().await?;
+        self.client.post(url).msgpack(&request)?.send().await?;
         tracing::debug!("waiting to catch up in replication");
         self.raft
             .wait(None)
@@ -119,7 +120,7 @@ impl Discovery {
         let request = UpgradeLearnerRequest {
             node_id: self.my_node_id,
         };
-        self.client.post(url).json(&request).send().await?;
+        self.client.post(url).msgpack(&request)?.send().await?;
         Ok(())
     }
 
