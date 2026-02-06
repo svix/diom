@@ -37,6 +37,22 @@ pub struct BothDatabases {
 }
 
 impl State {
+    pub fn init(both_dbs: BothDatabases) -> Result<Self, Error> {
+        const CONFIGGROUP_KEYSPACE: &str = "_coyote_cfggroup";
+
+        let db = both_dbs.persistent_db.clone();
+        let keyspace = {
+            let opts = KeyspaceCreateOptions::default();
+            db.keyspace(CONFIGGROUP_KEYSPACE, || opts)?
+        };
+
+        Ok(Self {
+            db,
+            both_dbs,
+            keyspace,
+        })
+    }
+
     pub fn db(&self) -> &fjall::Database {
         &self.db
     }
@@ -56,29 +72,15 @@ impl State {
         Ok(())
     }
 
-    pub fn init(both_dbs: BothDatabases) -> Result<Self, Error> {
-        const CONFIGGROUP_KEYSPACE: &str = "_coyote_cfggroup";
-
-        let db = both_dbs.persistent_db.clone();
-        let keyspace = {
-            let opts = KeyspaceCreateOptions::default();
-            db.keyspace(CONFIGGROUP_KEYSPACE, || opts)?
-        };
-
-        Ok(Self {
-            db,
-            both_dbs,
-            keyspace,
-        })
+    pub fn fetch_group<C: ModuleConfig>(&self, group_name: &str) -> Result<Option<ConfigGroup<C>>> {
+        ConfigGroup::fetch(&self.keyspace, group_name)
     }
 
-    // Right now, this should always return something, because there should
-    // always be a `default` group.
-    pub fn fetch_group<C: ModuleConfig>(
+    pub fn fetch_group_with_default<C: ModuleConfig>(
         &self,
         group_name: String,
     ) -> Result<Option<ConfigGroup<C>>> {
-        let fetch = ConfigGroup::fetch(&self.keyspace, &group_name)?;
+        let fetch = self.fetch_group(&group_name)?;
         if fetch.is_some() {
             return Ok(fetch);
         }

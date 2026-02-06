@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use uuid::Uuid;
 
 pub type ConfigGroupId = Uuid;
+pub type ConfigGroupName = String;
 
 #[derive(Serialize, Deserialize)]
 #[repr(u8)]

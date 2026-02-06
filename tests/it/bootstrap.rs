@@ -24,17 +24,13 @@ async fn test_bootstrap() -> TestResult {
     .expect("initializing configgroup state");
 
     let default_kv_group =
-        configgroup_state.fetch_group::<KeyValueConfig>("default".to_string())?;
+        configgroup_state.fetch_group_with_default::<KeyValueConfig>("default".to_string())?;
 
     let default_cache_group =
-        configgroup_state.fetch_group::<CacheConfig>("default".to_string())?;
-
-    let default_stream_group =
-        configgroup_state.fetch_group::<StreamConfig>("default".to_string())?;
+        configgroup_state.fetch_group_with_default::<CacheConfig>("default".to_string())?;
 
     assert!(default_kv_group.is_some());
     assert!(default_cache_group.is_some());
-    assert!(default_stream_group.is_some());
 
     let default_kv_group = default_kv_group.unwrap();
     assert_eq!(
@@ -42,13 +38,17 @@ async fn test_bootstrap() -> TestResult {
         Some(NonZeroU64::new(1000).unwrap())
     );
 
-    let Some(kv1) = configgroup_state.fetch_group::<KeyValueConfig>("kv1".to_string())? else {
+    let Some(kv1) =
+        configgroup_state.fetch_group_with_default::<KeyValueConfig>("kv1".to_string())?
+    else {
         panic!("kv1 missing");
     };
     assert_eq!(&kv1.name, "kv1");
     assert_eq!(kv1.max_storage_bytes, Some(NonZeroU64::new(2000).unwrap()));
 
-    let Some(kv2) = configgroup_state.fetch_group::<KeyValueConfig>("kv2".to_string())? else {
+    let Some(kv2) =
+        configgroup_state.fetch_group_with_default::<KeyValueConfig>("kv2".to_string())?
+    else {
         panic!("kv2 missing");
     };
     assert_eq!(&kv2.name, "kv2");
@@ -60,7 +60,9 @@ async fn test_bootstrap() -> TestResult {
         EvictionPolicy::NoEviction
     );
 
-    let Some(cache1) = configgroup_state.fetch_group::<CacheConfig>("cache1".to_string())? else {
+    let Some(cache1) =
+        configgroup_state.fetch_group_with_default::<CacheConfig>("cache1".to_string())?
+    else {
         panic!("cache1 missing");
     };
     assert_eq!(&cache1.name, "cache1");

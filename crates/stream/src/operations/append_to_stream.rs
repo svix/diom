@@ -1,10 +1,11 @@
+use coyote_configgroup::entities::ConfigGroupId;
 use coyote_error::Result;
 use jiff::Timestamp;
 
 use crate::{
     State,
-    entities::{MsgId, MsgIn, StreamId, StreamName},
-    tables::{MsgRow, NameToStreamRow, msg_row_key},
+    entities::{MsgId, MsgIn, StreamId},
+    tables::{MsgRow, msg_row_key},
 };
 
 pub struct AppendToStream {
@@ -17,8 +18,7 @@ pub struct AppendToStreamOutput {
 }
 
 impl AppendToStream {
-    pub fn new(state: &State, name: StreamName, msgs: Vec<MsgIn>) -> Result<Self> {
-        let stream_id = NameToStreamRow::get_stream_id(state, &name)?;
+    pub fn new(state: &State, stream_id: ConfigGroupId, msgs: Vec<MsgIn>) -> Result<Self> {
         let offset = MsgRow::get_next_msg_id_in_stream(state, stream_id)?;
         let created_at = Timestamp::now();
 

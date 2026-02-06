@@ -1,8 +1,9 @@
 use crate::{
     State,
-    entities::{ConsumerGroup, StreamName},
-    tables::{LeaseDiff, LeaseRow, NameToStreamRow},
+    entities::ConsumerGroup,
+    tables::{LeaseDiff, LeaseRow},
 };
+use coyote_configgroup::entities::ConfigGroupId;
 use coyote_error::Result;
 use jiff::Timestamp;
 
@@ -13,8 +14,7 @@ pub struct Redrive {
 pub struct RedriveOutput {}
 
 impl Redrive {
-    pub fn new(state: &State, name: StreamName, cg: ConsumerGroup) -> Result<Self> {
-        let stream_id = NameToStreamRow::get_stream_id(state, &name)?;
+    pub fn new(state: &State, stream_id: ConfigGroupId, cg: ConsumerGroup) -> Result<Self> {
         let now = Timestamp::now();
         let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
 
