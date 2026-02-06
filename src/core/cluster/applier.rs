@@ -9,5 +9,9 @@ pub(super) fn apply_request(request: Request, state: &AppState) -> anyhow::Resul
             let mut store = state.get_kv_store_by_key(req.key_name())?;
             Response::Kv(req.apply(&mut store))
         }
+        Request::RateLimiter(req) => {
+            // Rate limiter doesn't need nor use config groups for now
+            Response::RateLimiter(req.apply(&state.rate_limiter))
+        }
     })
 }

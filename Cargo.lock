@@ -1164,6 +1164,7 @@ name = "diom-rate-limiter"
 version = "1.76.1"
 dependencies = [
  "diom-error",
+ "diom-operations",
  "fjall",
  "fjall-utils",
  "jiff",

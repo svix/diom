@@ -1,7 +1,9 @@
 use std::time::Duration;
 
 use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FixedWindow {
     /// Window size
     pub size: Duration,
@@ -18,6 +20,7 @@ impl FixedWindow {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TokenBucket {
     /// Token refill rate in tokens per refill interval
     pub refill_rate: u64,
@@ -49,6 +52,7 @@ impl TokenBucket {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum RateLimitConfig {
     FixedWindow(FixedWindow),
     TokenBucket(TokenBucket),

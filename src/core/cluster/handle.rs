@@ -29,11 +29,30 @@ impl std::error::Error for ResponseParseError {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Request {
     Kv(diom_kv::operations::Operation),
+    RateLimiter(diom_rate_limiter::operations::Operation),
 }
 
-impl<T: Into<diom_kv::operations::Operation>> From<T> for Request {
-    fn from(value: T) -> Self {
+impl From<diom_kv::operations::SetOperation> for Request {
+    fn from(value: diom_kv::operations::SetOperation) -> Self {
         Request::Kv(value.into())
+    }
+}
+
+impl From<diom_kv::operations::DeleteOperation> for Request {
+    fn from(value: diom_kv::operations::DeleteOperation) -> Self {
+        Request::Kv(value.into())
+    }
+}
+
+impl From<diom_rate_limiter::operations::LimitOperation> for Request {
+    fn from(value: diom_rate_limiter::operations::LimitOperation) -> Self {
+        Request::RateLimiter(value.into())
+    }
+}
+
+impl From<diom_rate_limiter::operations::ResetOperation> for Request {
+    fn from(value: diom_rate_limiter::operations::ResetOperation) -> Self {
+        Request::RateLimiter(value.into())
     }
 }
 
@@ -41,6 +60,7 @@ impl<T: Into<diom_kv::operations::Operation>> From<T> for Request {
 pub enum Response {
     Blank,
     Kv(diom_kv::operations::Response),
+    RateLimiter(diom_rate_limiter::operations::Response),
 }
 
 impl TryFrom<Response> for diom_kv::operations::Response {
@@ -49,6 +69,17 @@ impl TryFrom<Response> for diom_kv::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::Kv(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for diom_rate_limiter::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::RateLimiter(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }
