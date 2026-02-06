@@ -12,8 +12,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 pub use crate::algorithms::{FixedWindow, RateLimitConfig, TokenBucket};
-use crate::operations::{LimitOperation, ResetOperation};
-use crate::tables::{FixedWindowState, TokenBucketState};
+use crate::{
+    operations::{LimitOperation, ResetOperation},
+    tables::{FixedWindowState, TokenBucketState},
+};
 
 #[derive(Clone)]
 pub struct RateLimiter {
