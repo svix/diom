@@ -14,9 +14,9 @@ pub struct Redrive {
 pub struct RedriveOutput {}
 
 impl Redrive {
-    pub fn new(state: &State, stream_id: ConfigGroupId, cg: ConsumerGroup) -> Result<Self> {
+    pub fn new(state: &State, group_id: ConfigGroupId, cg: ConsumerGroup) -> Result<Self> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
+        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
 
         let mut lease_diff = LeaseRow::cull_and_compact(leases.clone(), now);
 

@@ -17,13 +17,13 @@ pub struct AckOutput {}
 impl Ack {
     pub fn new(
         state: &State,
-        stream_id: ConfigGroupId,
+        group_id: ConfigGroupId,
         cg: ConsumerGroup,
         min_msg_id: MsgId,
         max_msg_id: MsgId,
     ) -> Result<Self> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
+        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
         validate_ack_bounds(&leases, max_msg_id)?;
 
         let mut lease_diff = LeaseRow::cull_and_compact(leases.clone(), now);
@@ -40,7 +40,7 @@ impl Ack {
         // This new lease is potentially redundant with an extant lease.
         // However, any redundancy will be removed by future calls to `cull_and_compact`.
         lease_diff.to_insert.push(LeaseRow {
-            stream_id,
+            group_id,
             cg,
             block_start: min_msg_id,
             block_end: max_msg_id,

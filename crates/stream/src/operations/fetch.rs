@@ -6,7 +6,7 @@ use jiff::Timestamp;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, MsgOut, StreamId},
+    entities::{ConsumerGroup, MsgId, MsgOut},
     tables::{LeaseDiff, LeaseRow, MsgRow},
 };
 
@@ -50,7 +50,7 @@ fn group_into_contiguous_ranges(msg_ids: &[MsgId]) -> Vec<(MsgId, MsgId)> {
 /// Creates leases for each contiguous block of messages.
 pub(crate) fn create_leases_for_msgs(
     msg_ids: &[MsgId],
-    stream_id: StreamId,
+    group_id: ConfigGroupId,
     cg: ConsumerGroup,
     now: Timestamp,
     visibility_timeout: std::time::Duration,
@@ -59,7 +59,7 @@ pub(crate) fn create_leases_for_msgs(
     let ranges = group_into_contiguous_ranges(msg_ids);
     for (block_start, block_end) in ranges {
         lease_diff.to_insert.push(LeaseRow {
-            stream_id,
+            group_id,
             cg: cg.clone(),
             block_start,
             block_end,
@@ -74,13 +74,13 @@ pub(crate) fn create_leases_for_msgs(
 impl Fetch {
     pub fn new(
         state: &State,
-        stream_id: ConfigGroupId,
+        group_id: ConfigGroupId,
         cg: ConsumerGroup,
         batch_size: NonZeroU16,
         visibility_timeout: std::time::Duration,
     ) -> Result<Self> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
+        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
 
         // Unlike FetchLocking, we don't block on active leases.
         // Instead, we exclude acked, DLQ'd, and active leases from the fetch.
@@ -88,7 +88,7 @@ impl Fetch {
             .iter()
             .filter(|lease| lease.acked_at.is_some() || lease.is_dlq() || lease.is_active(now));
 
-        let msgs = MsgRow::fetch_available(state, stream_id, blocked_leases, batch_size.into())?;
+        let msgs = MsgRow::fetch_available(state, group_id, blocked_leases, batch_size.into())?;
 
         let mut lease_diff = LeaseRow::cull_and_compact(leases, now);
 
@@ -97,7 +97,7 @@ impl Fetch {
         let msg_ids: Vec<MsgId> = msgs.iter().map(|(id, _)| *id).collect();
         create_leases_for_msgs(
             &msg_ids,
-            stream_id,
+            group_id,
             cg,
             now,
             visibility_timeout,
