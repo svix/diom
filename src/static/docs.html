@@ -2,11 +2,12 @@
 <html>
 
 <head>
-  <title>Svix API Reference</title>
+  <title>Diom API Reference</title>
   <!-- needed for adaptive design -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- fixme: diom branding -->
   <link rel="icon" type="image/svg+xml" href="https://www.svix.com/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="https://www.svix.com/favicon-16x16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="https://www.svix.com/favicon-32x32.png">
@@ -125,19 +126,6 @@
       // FIXME hiddenClients: true,
       darkMode: false,
       showToolbar: "never",
-      generateOperationSlug: (operation) => `operation/${operation.operationId}`,
-      generateTagSlug: (tag) => `${tag.name.replace(" ", "-")}`,
-      generateWebhookSlug: (webhook) => webhook.name,
-      // Ensure old webhook urls keep working
-      // old link: https://api.svix.com/docs#tag/Webhook/operation/endpoint.updated
-      // new link: https://api.svix.com/docs#tag/Webhook/webhook/endpoint.updated
-      // Scalar (we can't modify this) prefixes each webhook slug with /webhook, that code allows us to keep old urls working
-      redirect: (hash) => {
-        if (hash.startsWith("#tag/Webhook/operation/")) {
-          return hash.replace("#tag/Webhook/operation/", "#tag/Webhook/webhook/")
-        }
-        return hash;
-      },
     })
   </script>
 </body>

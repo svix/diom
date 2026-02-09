@@ -781,7 +781,7 @@ dependencies = [
 
 [[package]]
 name = "codegen"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "aide 0.16.0-alpha.2",
  "anyhow",
@@ -913,7 +913,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
 name = "diom"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "aide 0.16.0-alpha.2",
  "anyerror",
@@ -977,7 +977,7 @@ dependencies = [
 
 [[package]]
 name = "diom-benchmarks"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "diom",
  "diom-client",
@@ -990,7 +990,7 @@ dependencies = [
 
 [[package]]
 name = "diom-cli"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1011,7 +1011,7 @@ dependencies = [
 
 [[package]]
 name = "diom-client"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "http",
  "http-body-util",
@@ -1034,7 +1034,7 @@ dependencies = [
 
 [[package]]
 name = "diom-configgroup"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "diom-error",
  "fjall",
@@ -1048,7 +1048,7 @@ dependencies = [
 
 [[package]]
 name = "diom-derive"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1057,7 +1057,7 @@ dependencies = [
 
 [[package]]
 name = "diom-error"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "aide 0.16.0-alpha.2",
  "axum",
@@ -1073,7 +1073,7 @@ dependencies = [
 
 [[package]]
 name = "diom-idempotency"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "diom-configgroup",
  "diom-error",
@@ -1089,7 +1089,7 @@ dependencies = [
 
 [[package]]
 name = "diom-kv"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "diom-configgroup",
  "diom-error",
@@ -1111,7 +1111,7 @@ dependencies = [
 
 [[package]]
 name = "diom-node"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1127,7 +1127,7 @@ dependencies = [
 
 [[package]]
 name = "diom-operations"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "axum",
  "bytes",
@@ -1141,7 +1141,7 @@ dependencies = [
 
 [[package]]
 name = "diom-proto"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "aide 0.16.0-alpha.2",
  "axum",
@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "diom-rate-limiter"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "diom-error",
  "fjall",
@@ -1672,7 +1672,7 @@ dependencies = [
 
 [[package]]
 name = "fjall-utils"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "diom-error",
  "fjall",
@@ -4541,7 +4541,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "stream"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "diom-error",
  "fjall",
@@ -4641,7 +4641,7 @@ dependencies = [
 
 [[package]]
 name = "test-utils"
-version = "1.76.1"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "bytes",

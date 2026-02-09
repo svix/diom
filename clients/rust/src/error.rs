@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// The error type returned from the Svix API
+/// The error type returned from the Diom API
 #[derive(Debug, Clone)]
 pub enum Error {
     /// A generic error
