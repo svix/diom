@@ -10,10 +10,10 @@ pub use reset::ResetOperation;
 use coyote_operations::raft_module_operations;
 
 raft_module_operations!(
-    state = &RateLimiter,
     RateLimiterRequest,
     RateLimiterOperation {
         Limit(LimitOperation) -> LimitResponseData,
         Reset(ResetOperation) -> (),
-    }
+    },
+    state = &RateLimiter,
 );

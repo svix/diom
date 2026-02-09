@@ -10,12 +10,12 @@ pub use set::SetOperation;
 use coyote_operations::raft_module_operations;
 
 raft_module_operations!(
-    state = &mut KvStore,
     KvRequest,
     KvOperation {
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> (),
-    }
+    },
+    state = &mut KvStore,
 );
 
 impl KvOperation {

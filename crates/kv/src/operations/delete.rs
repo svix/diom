@@ -1,4 +1,5 @@
 use super::{DeleteResponse, KvRequest};
+use crate::KvStore;
 use coyote_operations::Result;
 use serde::{Deserialize, Serialize};
 
@@ -14,14 +15,14 @@ impl DeleteOperation {
 }
 
 impl DeleteOperation {
-    fn apply_real(self, state: &mut crate::KvStore) -> Result<()> {
+    fn apply_real(self, state: &mut KvStore) -> Result<()> {
         state.delete(&self.key)?;
         Ok(())
     }
 }
 
 impl KvRequest for DeleteOperation {
-    fn apply(self, state: &mut crate::KvStore) -> DeleteResponse {
+    fn apply(self, state: &mut KvStore) -> DeleteResponse {
         DeleteResponse(self.apply_real(state))
     }
 }

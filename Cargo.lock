@@ -1135,6 +1135,7 @@ dependencies = [
  "coyote-error",
  "http",
  "http-serde",
+ "paste",
  "rmp-serde",
  "serde",
  "tracing",
