@@ -24,13 +24,13 @@ pub struct FetchLockingOutput {
 impl FetchLocking {
     pub fn new(
         state: &State,
-        stream_id: ConfigGroupId,
+        group_id: ConfigGroupId,
         cg: ConsumerGroup,
         batch_size: NonZeroU16,
         visibility_timeout: std::time::Duration,
     ) -> Result<Self> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
+        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
 
         let has_active_lease = leases.iter().any(|lease| lease.is_active(now));
 
@@ -45,7 +45,7 @@ impl FetchLocking {
         let blocked_leases = leases
             .iter()
             .filter(|lease| lease.acked_at.is_some() || lease.is_dlq());
-        let msgs = MsgRow::fetch_available(state, stream_id, blocked_leases, batch_size.into())?;
+        let msgs = MsgRow::fetch_available(state, group_id, blocked_leases, batch_size.into())?;
 
         if msgs.is_empty() {
             // FIXME(@svix-gabriel) this isn't really an error, but we need to go back
@@ -63,7 +63,7 @@ impl FetchLocking {
         let msg_ids: Vec<MsgId> = msgs.iter().map(|(id, _)| *id).collect();
         create_leases_for_msgs(
             &msg_ids,
-            stream_id,
+            group_id,
             cg,
             now,
             visibility_timeout,

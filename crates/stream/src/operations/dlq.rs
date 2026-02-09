@@ -16,12 +16,12 @@ pub struct DlqOutput {}
 impl Dlq {
     pub fn new(
         state: &State,
-        stream_id: ConfigGroupId,
+        group_id: ConfigGroupId,
         cg: ConsumerGroup,
         msg_id: MsgId,
     ) -> Result<Self> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, stream_id, &cg)?;
+        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
 
         validate_dlq_bounds(&leases, msg_id)?;
 
@@ -31,7 +31,7 @@ impl Dlq {
         LeaseRow::shrink_active_leases_for_range(&leases, msg_id, msg_id, now, &mut lease_diff);
 
         lease_diff.to_insert.push(LeaseRow {
-            stream_id,
+            group_id,
             cg,
             block_start: msg_id,
             block_end: msg_id,

@@ -4,12 +4,12 @@ use jiff::Timestamp;
 
 use crate::{
     State,
-    entities::{MsgId, MsgIn, StreamId},
+    entities::{MsgId, MsgIn},
     tables::{MsgRow, msg_row_key},
 };
 
 pub struct AppendToStream {
-    stream_id: StreamId,
+    group_id: ConfigGroupId,
     msgs: Vec<(MsgId, MsgRow)>,
 }
 
@@ -18,8 +18,8 @@ pub struct AppendToStreamOutput {
 }
 
 impl AppendToStream {
-    pub fn new(state: &State, stream_id: ConfigGroupId, msgs: Vec<MsgIn>) -> Result<Self> {
-        let offset = MsgRow::get_next_msg_id_in_stream(state, stream_id)?;
+    pub fn new(state: &State, group_id: ConfigGroupId, msgs: Vec<MsgIn>) -> Result<Self> {
+        let offset = MsgRow::get_next_msg_id_in_stream(state, group_id)?;
         let created_at = Timestamp::now();
 
         let msgs: Vec<_> = msgs
@@ -42,7 +42,7 @@ impl AppendToStream {
             })
             .collect();
 
-        Ok(Self { stream_id, msgs })
+        Ok(Self { group_id, msgs })
     }
 
     // FIXME(@svix-gabriel) - I'm trying to adhere mostly to the API mentioned in the HA rfc (https://github.com/svix/rfc/pull/30/files#diff-1f8e708b840474d3072b1c965eb090a3e30b26e8b7036c6e0ae47ef36ffb09abR54)
@@ -54,7 +54,7 @@ impl AppendToStream {
         let msg_ids = self.msgs.iter().map(|(id, _msg)| *id).collect();
 
         for (id, msg) in self.msgs {
-            let key = msg_row_key(self.stream_id, id);
+            let key = msg_row_key(self.group_id, id);
             let val = msg.to_fjall_value()?;
             batch.insert(&state.msg_table, key, val);
         }
