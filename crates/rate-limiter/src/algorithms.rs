@@ -33,8 +33,10 @@ impl TokenBucket {
         current: u64,
         now: Timestamp,
         last_refill: Timestamp,
-    ) -> u64 {
+    ) -> (u64, Timestamp) {
         let mut capacity = current;
+        let mut new_last_refill = last_refill;
+
         if last_refill < now {
             let elapsed_millis: u64 = now
                 .duration_since(last_refill)
@@ -42,10 +44,15 @@ impl TokenBucket {
                 .try_into()
                 .unwrap();
             let refill_interval_millis: u64 = self.refill_interval.as_millis().try_into().unwrap();
+            let intervals = elapsed_millis / refill_interval_millis;
 
-            capacity += (elapsed_millis / refill_interval_millis) * self.refill_rate;
+            capacity += intervals * self.refill_rate;
+            capacity = capacity.min(self.bucket_size);
+
+            new_last_refill += self.refill_interval.saturating_mul(intervals as u32);
         }
-        capacity.min(self.bucket_size)
+
+        (capacity, new_last_refill)
     }
 }
 

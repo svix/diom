@@ -104,7 +104,8 @@ impl RateLimiter {
                     },
                 );
 
-                let capacity = tb_config.get_new_capacity(bucket.tokens, now, bucket.last_refill);
+                let (capacity, new_last_refill) =
+                    tb_config.get_new_capacity(bucket.tokens, now, bucket.last_refill);
 
                 if capacity < delta {
                     let filled_per_millis =
@@ -118,7 +119,7 @@ impl RateLimiter {
                     ));
                 }
 
-                bucket.last_refill = now;
+                bucket.last_refill = new_last_refill;
                 bucket.tokens = capacity - delta;
 
                 if update {
@@ -312,6 +313,42 @@ mod tests {
                 limiter.limit(clock, id, 2, config_refill_2()).unwrap();
             assert!(matches!(result, RateLimitResult::OK));
             assert_eq!(remaining, 3);
+            assert_eq!(retry_after, None);
+        }
+
+        #[test]
+        fn refill_interval_tracking() {
+            let (limiter, _dir) = create_test_limiter();
+            let id = "user1";
+
+            fn make_config() -> RateLimitConfig {
+                RateLimitConfig::TokenBucket(TokenBucket {
+                    refill_rate: 2,
+                    refill_interval: Duration::from_secs(5),
+                    bucket_size: 6,
+                })
+            }
+
+            let mut clock = Timestamp::now();
+
+            let (result, remaining, retry_after) =
+                limiter.limit(clock, id, 2, make_config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 4);
+            assert_eq!(retry_after, None);
+
+            clock += Duration::from_secs(2);
+            let (result, remaining, retry_after) =
+                limiter.limit(clock, id, 1, make_config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 3);
+            assert_eq!(retry_after, None);
+
+            clock += Duration::from_secs(3);
+            let (result, remaining, retry_after) =
+                limiter.limit(clock, id, 1, make_config()).unwrap();
+            assert!(matches!(result, RateLimitResult::OK));
+            assert_eq!(remaining, 4); // 4 (previous) + 2 (refill) - 1 (consumed)
             assert_eq!(retry_after, None);
         }
     }
