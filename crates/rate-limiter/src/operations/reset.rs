@@ -1,6 +1,6 @@
-use super::{Operation, RateLimiterRequest, Response};
+use super::{RateLimiterRequest, ResetResponse};
 use crate::RateLimitConfig;
-use coyote_operations::{OperationRequest, OperationResponse, Result};
+use coyote_operations::Result;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,18 +13,6 @@ impl ResetOperation {
     pub fn new(key: String, method: RateLimitConfig) -> Self {
         Self { key, method }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResetResponse(pub Result<()>);
-
-impl OperationResponse for ResetResponse {
-    type ResponseParent = Response;
-}
-
-impl OperationRequest for ResetOperation {
-    type Response = ResetResponse;
-    type RequestParent = Operation;
 }
 
 impl ResetOperation {

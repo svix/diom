@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use super::{Operation, RateLimiterRequest, Response};
+use super::{LimitResponse, RateLimiterRequest};
 use crate::{RateLimitConfig, RateLimitResult};
-use coyote_operations::{OperationRequest, OperationResponse, Result};
+use coyote_operations::Result;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -30,18 +30,6 @@ pub struct LimitResponseData {
     pub result: RateLimitResult,
     pub remaining: u64,
     pub retry_after: Option<Duration>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LimitResponse(pub Result<LimitResponseData>);
-
-impl OperationResponse for LimitResponse {
-    type ResponseParent = Response;
-}
-
-impl OperationRequest for LimitOperation {
-    type Response = LimitResponse;
-    type RequestParent = Operation;
 }
 
 impl LimitOperation {

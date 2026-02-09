@@ -1,7 +1,7 @@
 use crate::{KvModel, OperationBehavior};
 
-use super::{KvRequest, Operation, Response};
-use coyote_operations::{OperationRequest, OperationResponse, Result};
+use super::{KvRequest, SetResponse};
+use coyote_operations::Result;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,18 +19,6 @@ impl SetOperation {
             behavior,
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SetResponse(pub Result<()>);
-
-impl OperationResponse for SetResponse {
-    type ResponseParent = Response;
-}
-
-impl OperationRequest for SetOperation {
-    type Response = SetResponse;
-    type RequestParent = Operation;
 }
 
 impl SetOperation {
