@@ -16,6 +16,8 @@ use coyote_kv::{KvModel, KvStore, OperationBehavior};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+pub mod operations;
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 enum IdempotencyState {
@@ -47,13 +49,17 @@ impl IdempotencyStore {
         Self { kv }
     }
 
-    /// Try to acquire the lock for a request.
+    /// Try to acquire the lock for a request with a pre-computed timestamp.
     /// Returns:
     /// - Ok(None) if lock was acquired (request should proceed)
     /// - Ok(Some(response)) if request was already completed (return cached response)
     /// - Err if request is already in progress (conflict)
-    pub fn try_start(&mut self, key: &str, ttl_seconds: u64) -> Result<Option<Vec<u8>>> {
-        let now = Timestamp::now();
+    pub fn try_start(
+        &mut self,
+        key: &str,
+        ttl_seconds: u64,
+        now: Timestamp,
+    ) -> Result<Option<Vec<u8>>> {
         let expires_at = now + Duration::from_secs(ttl_seconds);
 
         match self.kv.get(key)? {
@@ -85,9 +91,14 @@ impl IdempotencyStore {
         }
     }
 
-    /// Complete a request with a successful response
-    pub fn complete(&mut self, key: &str, response: Vec<u8>, ttl_seconds: u64) -> Result<()> {
-        let now = Timestamp::now();
+    /// Complete a request with a successful response using a pre-computed timestamp
+    pub fn complete(
+        &mut self,
+        key: &str,
+        response: Vec<u8>,
+        ttl_seconds: u64,
+        now: Timestamp,
+    ) -> Result<()> {
         let expires_at = now + Duration::from_secs(ttl_seconds);
 
         let kv_model = KvModel {
@@ -102,6 +113,24 @@ impl IdempotencyStore {
     /// Abandon a request (remove the lock without saving response)
     pub fn abandon(&mut self, key: &str) -> Result<()> {
         self.kv.delete(key)
+    }
+
+    pub fn start_operation(key: String, ttl_seconds: u64) -> operations::StartOperation {
+        let now = Timestamp::now();
+        operations::StartOperation::new(key, ttl_seconds, now)
+    }
+
+    pub fn complete_operation(
+        key: String,
+        response: Vec<u8>,
+        ttl_seconds: u64,
+    ) -> operations::CompleteOperation {
+        let now = Timestamp::now();
+        operations::CompleteOperation::new(key, response, ttl_seconds, now)
+    }
+
+    pub fn abandon_operation(key: String) -> operations::AbandonOperation {
+        operations::AbandonOperation::new(key)
     }
 }
 
@@ -151,20 +180,21 @@ mod tests {
     fn test_idempotency_try_start() -> TestResult {
         let mut store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
-        let result = store.try_start("test", 10)?;
+        let now = Timestamp::now();
+        let result = store.try_start("test", 10, now)?;
         assert_eq!(result, None);
 
-        let result = store.try_start("test", 10);
+        let result = store.try_start("test", 10, now);
         assert!(result.is_err());
 
         store.abandon("test")?;
 
-        let result = store.try_start("test", 10)?;
+        let result = store.try_start("test", 10, now)?;
         assert_eq!(result, None);
 
-        store.complete("test", value.clone(), 10)?;
+        store.complete("test", value.clone(), 10, now)?;
 
-        let result = store.try_start("test", 10)?;
+        let result = store.try_start("test", 10, now)?;
         assert_eq!(result, Some(value));
         Ok(())
     }
@@ -173,11 +203,12 @@ mod tests {
     fn test_idempotency_missing() -> TestResult {
         let mut store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
+        let now = Timestamp::now();
 
         // Can complete a request without starting it first
-        store.complete("test", value.clone(), 10)?;
+        store.complete("test", value.clone(), 10, now)?;
 
-        let result = store.try_start("test", 10)?;
+        let result = store.try_start("test", 10, now)?;
         assert_eq!(result, Some(value));
 
         // Can abandon a request without starting it first
@@ -193,18 +224,18 @@ mod tests {
         let mut store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
 
-        store.try_start("test", 1)?;
+        store.try_start("test", 1, now)?;
 
         tokio::time::sleep(Duration::from_secs(2)).await;
 
-        let result = store.try_start("test", 1)?;
+        let result = store.try_start("test", 1, now)?;
         assert_eq!(result, None);
 
-        store.complete("test", value, 1)?;
+        store.complete("test", value, 1, now)?;
 
         tokio::time::sleep(Duration::from_secs(2)).await;
 
-        let result = store.try_start("test", 1)?;
+        let result = store.try_start("test", 1, now)?;
         assert_eq!(result, None);
 
         Ok(())

@@ -18,5 +18,15 @@ pub(super) async fn apply_request(
             // Rate limiter neither needs nor uses config groups for now
             Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))
         }
+        Request::Cache(req) => {
+            let mut store = state_machine.state.get_cache_store_by_key(req.key_name())?;
+            Response::Cache(req.apply(&mut store))
+        }
+        Request::Idempotency(req) => {
+            let mut store = state_machine
+                .state
+                .get_idempotency_store_by_key(req.key_name())?;
+            Response::Idempotency(req.apply(&mut store))
+        }
     })
 }

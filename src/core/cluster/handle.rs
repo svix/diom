@@ -37,6 +37,8 @@ pub enum Request {
     ClusterInternal(InternalRequest),
     Kv(coyote_kv::operations::Operation),
     RateLimiter(coyote_rate_limiter::operations::Operation),
+    Cache(crate::v1::modules::cache::operations::Operation),
+    Idempotency(coyote_idempotency::operations::Operation),
 }
 
 impl From<coyote_kv::operations::Operation> for Request {
@@ -51,12 +53,26 @@ impl From<coyote_rate_limiter::operations::Operation> for Request {
     }
 }
 
+impl From<crate::v1::modules::cache::operations::Operation> for Request {
+    fn from(value: crate::v1::modules::cache::operations::Operation) -> Self {
+        Request::Cache(value)
+    }
+}
+
+impl From<coyote_idempotency::operations::Operation> for Request {
+    fn from(value: coyote_idempotency::operations::Operation) -> Self {
+        Request::Idempotency(value)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Response {
     Blank,
     ClusterInternal(InternalResponse),
     Kv(coyote_kv::operations::Response),
     RateLimiter(coyote_rate_limiter::operations::Response),
+    Cache(crate::v1::modules::cache::operations::Response),
+    Idempotency(coyote_idempotency::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -76,6 +92,28 @@ impl TryFrom<Response> for coyote_rate_limiter::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::RateLimiter(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for crate::v1::modules::cache::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::Cache(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_idempotency::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::Idempotency(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

@@ -1078,6 +1078,7 @@ dependencies = [
  "coyote-configgroup",
  "coyote-error",
  "coyote-kv",
+ "coyote-operations",
  "fjall",
  "jiff",
  "rmp-serde",

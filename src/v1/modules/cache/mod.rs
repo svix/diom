@@ -6,6 +6,8 @@ use validator::Validate;
 
 use crate::error::Result;
 
+pub mod operations;
+
 #[derive(Clone)]
 pub struct CacheStore {
     pub(crate) kv: KvStore,
@@ -27,7 +29,16 @@ impl CacheStore {
     pub fn delete(&mut self, key: &str) -> Result<()> {
         self.kv.delete(key)
     }
+
+    pub fn set_operation(key: String, model: CacheModel) -> operations::SetOperation {
+        operations::SetOperation::new(key, model)
+    }
+
+    pub fn delete_operation(key: String) -> operations::DeleteOperation {
+        operations::DeleteOperation::new(key)
+    }
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
     pub expires_at: Option<Timestamp>,

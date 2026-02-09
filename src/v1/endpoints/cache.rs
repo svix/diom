@@ -4,8 +4,9 @@
 use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::State;
+use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
+use coyote_error::ResultExt;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -14,7 +15,7 @@ use validator::Validate;
 
 use crate::{
     AppState,
-    core::types::EntityKey,
+    core::{cluster::RaftState, types::EntityKey},
     error::Result,
     v1::{modules::cache::CacheModel, utils::openapi_tag},
 };
@@ -90,12 +91,13 @@ pub struct CacheDeleteOut {
 /// Cache Set
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
-    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
-    let key = data.key.clone();
-    cache_store.set(key.as_str(), data.into_model())?;
+    let key = data.key.0.clone();
+    let model = data.into_model();
+    let operation = crate::v1::modules::cache::CacheStore::set_operation(key, model);
+    repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
 
@@ -115,11 +117,12 @@ async fn cache_get(
 /// Cache Delete
 #[aide_annotate(op_id = "v1.cache.delete")]
 async fn cache_del(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheDeleteIn>,
 ) -> Result<MsgPackOrJson<CacheDeleteOut>> {
-    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
-    cache_store.delete(&data.key)?;
+    let key = data.key.0.clone();
+    let operation = crate::v1::modules::cache::CacheStore::delete_operation(key);
+    repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }
 
