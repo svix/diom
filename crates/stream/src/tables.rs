@@ -1,5 +1,6 @@
 use std::{borrow::Cow, num::NonZeroUsize, ops::RangeInclusive};
 
+use coyote_configgroup::entities::ConfigGroupId;
 use coyote_error::{Error, Result};
 use fjall::OwnedWriteBatch;
 use fjall_utils::TableRow;
@@ -8,14 +9,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgHeaders, MsgId, StreamId},
+    entities::{ConsumerGroup, MsgHeaders, MsgId},
 };
 
 /// A lease represents a consumer group's "hold" on a block of messages. This is used to prevent multiple consumers in the same consumer group
 /// from touching the same messages.
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub(crate) struct LeaseRow {
-    pub stream_id: StreamId,
+    pub group_id: ConfigGroupId,
     pub cg: ConsumerGroup,
     /// The first id of the message in the block held by the LeaseRow.
     pub block_start: MsgId,
@@ -32,13 +33,13 @@ pub(crate) struct LeaseRow {
     pub dlq_at: Option<Timestamp>,
 }
 
-/// For the key, we use a composite of (stream_id, consumer_group, block_end).
-/// This ensures we can easily fetch all of the leases for a (stream_id, consumer_group).
+/// For the key, we use a composite of (group_id, consumer_group, block_end).
+/// This ensures we can easily fetch all of the leases for a (group_id, consumer_group).
 #[derive(Clone)]
 pub(crate) struct LeaseKey(Vec<u8>);
 
 impl LeaseKey {
-    pub(crate) fn new(id: StreamId, cg: &ConsumerGroup, block_end: MsgId) -> Self {
+    pub(crate) fn new(id: ConfigGroupId, cg: &ConsumerGroup, block_end: MsgId) -> Self {
         let msg_id = block_end.to_be_bytes();
         let id = id.as_bytes();
 
@@ -52,7 +53,7 @@ impl LeaseKey {
         Self(key)
     }
 
-    fn prefix(id: StreamId, cg: &ConsumerGroup) -> Vec<u8> {
+    fn prefix(id: ConfigGroupId, cg: &ConsumerGroup) -> Vec<u8> {
         let id_bytes = id.as_bytes();
         let cg_bytes = cg.as_bytes();
 
@@ -97,7 +98,11 @@ impl LeaseDiff {
 }
 
 impl LeaseRow {
-    pub(crate) fn fetch_all(state: &State, id: StreamId, cg: &ConsumerGroup) -> Result<Vec<Self>> {
+    pub(crate) fn fetch_all(
+        state: &State,
+        id: ConfigGroupId,
+        cg: &ConsumerGroup,
+    ) -> Result<Vec<Self>> {
         let prefix = LeaseKey::prefix(id, cg);
 
         state
@@ -178,11 +183,11 @@ impl LeaseRow {
                 continue;
             }
 
-            let stream_id = group[0].stream_id;
+            let group_id = group[0].group_id;
             let cg = group[0].cg.clone();
 
             let mut merged = LeaseRow {
-                stream_id,
+                group_id,
                 cg,
                 block_start: MsgId::MAX,
                 block_end: MsgId::MIN,
@@ -272,7 +277,7 @@ impl TableRow for LeaseRow {
     type Key = LeaseKey;
 
     fn get_key(&self) -> Cow<'_, Self::Key> {
-        let key = LeaseKey::new(self.stream_id, &self.cg, self.block_end);
+        let key = LeaseKey::new(self.group_id, &self.cg, self.block_end);
         Cow::Owned(key)
     }
 }
@@ -291,19 +296,19 @@ pub(crate) struct MsgRow {
     pub created_at: Timestamp,
 }
 
-const MSG_KEY_LEN: usize = size_of::<StreamId>() + size_of::<MsgId>();
+const MSG_KEY_LEN: usize = size_of::<ConfigGroupId>() + size_of::<MsgId>();
 
-/// The MsgRowKey is effectively a (stream_id, msg_id), serialized so that they
-/// are ordered by msg_id in fjall, and grouped by stream_ids.
+/// The MsgRowKey is effectively a (group_id, msg_id), serialized so that they
+/// are ordered by msg_id in fjall, and grouped by group_ids.
 type MsgRowKey = [u8; MSG_KEY_LEN];
 
-pub(crate) fn msg_row_key(s_id: StreamId, m_id: MsgId) -> MsgRowKey {
+pub(crate) fn msg_row_key(s_id: ConfigGroupId, m_id: MsgId) -> MsgRowKey {
     let mut key: [u8; _] = Default::default();
     {
-        let (prefix, suffix) = key.split_at_mut(size_of::<StreamId>());
+        let (prefix, suffix) = key.split_at_mut(size_of::<ConfigGroupId>());
 
-        let stream_id = s_id.as_u128().to_be_bytes();
-        prefix.copy_from_slice(&stream_id);
+        let group_id = s_id.as_u128().to_be_bytes();
+        prefix.copy_from_slice(&group_id);
 
         let msg_id = m_id.to_be_bytes();
         suffix.copy_from_slice(&msg_id);
@@ -312,19 +317,25 @@ pub(crate) fn msg_row_key(s_id: StreamId, m_id: MsgId) -> MsgRowKey {
 }
 
 fn parse_msg_id(key: MsgRowKey) -> Result<MsgId> {
-    let bytes = (&key[size_of::<StreamId>()..])
+    let bytes = (&key[size_of::<ConfigGroupId>()..])
         .try_into()
         .map_err(Error::generic)?;
     Ok(MsgId::from_be_bytes(bytes))
 }
 
-fn msg_row_key_range(s_id: StreamId, range: RangeInclusive<MsgId>) -> RangeInclusive<MsgRowKey> {
+fn msg_row_key_range(
+    s_id: ConfigGroupId,
+    range: RangeInclusive<MsgId>,
+) -> RangeInclusive<MsgRowKey> {
     msg_row_key(s_id, *range.start())..=msg_row_key(s_id, *range.end())
 }
 
 impl MsgRow {
-    pub(crate) fn max_id_in_stream(state: &State, stream_id: StreamId) -> Result<Option<MsgId>> {
-        let range = msg_row_key_range(stream_id, MsgId::MIN..=MsgId::MAX);
+    pub(crate) fn max_id_in_stream(
+        state: &State,
+        group_id: ConfigGroupId,
+    ) -> Result<Option<MsgId>> {
+        let range = msg_row_key_range(group_id, MsgId::MIN..=MsgId::MAX);
 
         let Some(max_entry) = state.msg_table.range(range).next_back() else {
             return Ok(None);
@@ -342,8 +353,11 @@ impl MsgRow {
     }
 
     /// Returns the *next* id for a msg in the stream.
-    pub(crate) fn get_next_msg_id_in_stream(state: &State, stream_id: StreamId) -> Result<MsgId> {
-        match Self::max_id_in_stream(state, stream_id)? {
+    pub(crate) fn get_next_msg_id_in_stream(
+        state: &State,
+        group_id: ConfigGroupId,
+    ) -> Result<MsgId> {
+        match Self::max_id_in_stream(state, group_id)? {
             None => Ok(MsgId::MIN),
             Some(id) => Ok(id + 1),
         }
@@ -388,7 +402,7 @@ impl MsgRow {
     /// Messages captured by the leases are excluded.
     pub(crate) fn fetch_available<'a>(
         state: &State,
-        stream_id: StreamId,
+        group_id: ConfigGroupId,
         leases: impl IntoIterator<Item = &'a LeaseRow>,
         batch_size: NonZeroUsize,
     ) -> Result<Vec<(MsgId, MsgRow)>> {
@@ -400,7 +414,7 @@ impl MsgRow {
         for block in blocked_ranges {
             if block.start > min {
                 let max = block.start - 1;
-                let range = msg_row_key_range(stream_id, min..=max);
+                let range = msg_row_key_range(group_id, min..=max);
 
                 let n = MsgRow::fetch_in_range(state, range, &mut results, msgs_left)?;
                 msgs_left -= n;
@@ -413,7 +427,7 @@ impl MsgRow {
         }
 
         if msgs_left > 0 {
-            let range = msg_row_key_range(stream_id, min..=MsgId::MAX);
+            let range = msg_row_key_range(group_id, min..=MsgId::MAX);
             MsgRow::fetch_in_range(state, range, &mut results, msgs_left)?;
         }
 
@@ -470,9 +484,9 @@ mod tests {
 
     #[test]
     fn cull_and_compact_expired_lease_is_deleted() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
-            stream_id,
+            group_id: group_id,
             cg: "cg1".to_string(),
             block_start: 1,
             block_end: 5,
@@ -491,9 +505,9 @@ mod tests {
 
     #[test]
     fn cull_and_compact_active_lease_unchanged() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
-            stream_id,
+            group_id: group_id,
             cg: "cg1".to_string(),
             block_start: 1,
             block_end: 5,
@@ -511,9 +525,9 @@ mod tests {
 
     #[test]
     fn cull_and_compact_single_acked_lease_unchanged() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
-            stream_id,
+            group_id: group_id,
             cg: "cg1".to_string(),
             block_start: 1,
             block_end: 5,
@@ -531,10 +545,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_multiple_expired_leases_all_deleted() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 5,
@@ -544,7 +558,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 6,
                 block_end: 10,
@@ -554,7 +568,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 20,
                 block_end: 25,
@@ -573,10 +587,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_multiple_active_leases_unchanged() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 5,
@@ -586,7 +600,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 6,
                 block_end: 10,
@@ -605,10 +619,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_two_adjacent_acked_leases_are_compacted() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 5,
@@ -618,7 +632,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 6,
                 block_end: 10,
@@ -642,10 +656,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_two_overlapping_acked_leases_are_compacted() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 7,
@@ -655,7 +669,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 5,
                 block_end: 12,
@@ -678,10 +692,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_two_non_adjacent_acked_leases_not_compacted() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 5,
@@ -691,7 +705,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 10,
                 block_end: 15,
@@ -710,10 +724,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_chain_of_adjacent_acked_leases_all_compacted() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 5,
@@ -723,7 +737,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 6,
                 block_end: 10,
@@ -733,7 +747,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 11,
                 block_end: 15,
@@ -757,10 +771,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_mixed_expired_active_and_acked() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 5,
@@ -770,7 +784,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 6,
                 block_end: 10,
@@ -780,7 +794,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 20,
                 block_end: 25,
@@ -790,7 +804,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 26,
                 block_end: 30,
@@ -813,10 +827,10 @@ mod tests {
 
     #[test]
     fn cull_and_compact_multiple_separate_groups_of_acked_leases() {
-        let stream_id = StreamId::new_v4();
+        let group_id = ConfigGroupId::new_v4();
         let leases = vec![
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 1,
                 block_end: 5,
@@ -826,7 +840,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 6,
                 block_end: 10,
@@ -836,7 +850,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 50,
                 block_end: 55,
@@ -846,7 +860,7 @@ mod tests {
                 dlq_at: None,
             },
             LeaseRow {
-                stream_id,
+                group_id,
                 cg: ConsumerGroup::from("cg1".to_string()),
                 block_start: 56,
                 block_end: 60,
@@ -881,8 +895,8 @@ mod tests {
             .keyspace("test", fjall::KeyspaceCreateOptions::default)
             .unwrap();
 
-        let s1 = StreamId::new_v4();
-        let s2 = StreamId::new_v4();
+        let s1 = ConfigGroupId::new_v4();
+        let s2 = ConfigGroupId::new_v4();
 
         // Insert IDs in an arbitrary order.
         let ids = [100, 2, 1, MsgId::MAX, MsgId::MAX - 1, 999];
@@ -932,26 +946,26 @@ mod tests {
             State::init(db).unwrap()
         }
 
-        fn insert_msg(state: &State, stream_id: StreamId, msg_id: MsgId) {
+        fn insert_msg(state: &State, group_id: ConfigGroupId, msg_id: MsgId) {
             let row = MsgRow {
                 payload: format!("msg-{msg_id}").into_bytes(),
                 headers: MsgHeaders::new(),
                 created_at: ts(msg_id as i64),
             };
-            let key = msg_row_key(stream_id, msg_id);
+            let key = msg_row_key(group_id, msg_id);
             let val = row.to_fjall_value().unwrap();
             state.msg_table.insert(key, val).unwrap();
         }
 
-        fn insert_msgs(state: &State, stream_id: StreamId, ids: &[MsgId]) {
+        fn insert_msgs(state: &State, group_id: ConfigGroupId, ids: &[MsgId]) {
             for &id in ids {
-                insert_msg(state, stream_id, id);
+                insert_msg(state, group_id, id);
             }
         }
 
-        fn lease(stream_id: StreamId, block_start: MsgId, block_end: MsgId) -> LeaseRow {
+        fn lease(group_id: ConfigGroupId, block_start: MsgId, block_end: MsgId) -> LeaseRow {
             LeaseRow {
-                stream_id,
+                group_id: group_id,
                 cg: "test-cg".to_string(),
                 block_start,
                 block_end,
@@ -969,9 +983,9 @@ mod tests {
         #[test]
         fn empty_stream_returns_empty() {
             let state = test_state("fetch_available_empty_stream");
-            let stream_id = StreamId::new_v4();
+            let group_id = ConfigGroupId::new_v4();
 
-            let result = MsgRow::fetch_available(&state, stream_id, [], batch(10)).unwrap();
+            let result = MsgRow::fetch_available(&state, group_id, [], batch(10)).unwrap();
 
             assert!(result.is_empty());
         }
@@ -979,10 +993,10 @@ mod tests {
         #[test]
         fn no_leases_returns_messages_in_order() {
             let state = test_state("fetch_available_no_leases");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
-            let result = MsgRow::fetch_available(&state, stream_id, [], batch(10)).unwrap();
+            let result = MsgRow::fetch_available(&state, group_id, [], batch(10)).unwrap();
 
             assert_eq!(result.len(), 5);
             assert_eq!(result[0].0, 1);
@@ -995,10 +1009,10 @@ mod tests {
         #[test]
         fn batch_size_limits_results() {
             let state = test_state("fetch_available_batch_size_limits");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
-            let result = MsgRow::fetch_available(&state, stream_id, [], batch(3)).unwrap();
+            let result = MsgRow::fetch_available(&state, group_id, [], batch(3)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].0, 1);
@@ -1009,11 +1023,11 @@ mod tests {
         #[test]
         fn all_messages_leased_returns_empty() {
             let state = test_state("fetch_available_all_leased");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
-            let leases = vec![lease(stream_id, 1, 5)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 1, 5)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert!(result.is_empty());
         }
@@ -1021,11 +1035,11 @@ mod tests {
         #[test]
         fn lease_at_start_skips_leased_messages() {
             let state = test_state("fetch_available_lease_at_start");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
-            let leases = vec![lease(stream_id, 1, 2)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 1, 2)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].0, 3);
@@ -1036,11 +1050,11 @@ mod tests {
         #[test]
         fn lease_at_end_returns_messages_before_lease() {
             let state = test_state("fetch_available_lease_at_end");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
-            let leases = vec![lease(stream_id, 4, 5)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 4, 5)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].0, 1);
@@ -1051,11 +1065,11 @@ mod tests {
         #[test]
         fn lease_in_middle_returns_messages_on_both_sides() {
             let state = test_state("fetch_available_lease_in_middle");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
-            let leases = vec![lease(stream_id, 2, 4)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 2, 4)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 2);
             assert_eq!(result[0].0, 1);
@@ -1065,11 +1079,11 @@ mod tests {
         #[test]
         fn multiple_leases_with_gap_returns_gap_messages() {
             let state = test_state("fetch_available_multiple_leases_gap");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
-            let leases = vec![lease(stream_id, 1, 3), lease(stream_id, 7, 10)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 1, 3), lease(group_id, 7, 10)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].0, 4);
@@ -1080,12 +1094,12 @@ mod tests {
         #[test]
         fn overlapping_leases_are_handled() {
             let state = test_state("fetch_available_overlapping_leases");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
             // Overlapping leases: 1-5 and 3-7
-            let leases = vec![lease(stream_id, 1, 5), lease(stream_id, 3, 7)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 1, 5), lease(group_id, 3, 7)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].0, 8);
@@ -1096,12 +1110,12 @@ mod tests {
         #[test]
         fn adjacent_leases_block_full_range() {
             let state = test_state("fetch_available_adjacent_leases");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
             // Adjacent leases: 1-5 and 6-10
-            let leases = vec![lease(stream_id, 1, 5), lease(stream_id, 6, 10)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 1, 5), lease(group_id, 6, 10)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert!(result.is_empty());
         }
@@ -1109,12 +1123,12 @@ mod tests {
         #[test]
         fn batch_size_respects_limit_with_leases() {
             let state = test_state("fetch_available_batch_with_leases");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
             // Lease at start
-            let leases = vec![lease(stream_id, 1, 3)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(2)).unwrap();
+            let leases = vec![lease(group_id, 1, 3)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(2)).unwrap();
 
             assert_eq!(result.len(), 2);
             assert_eq!(result[0].0, 4);
@@ -1124,13 +1138,13 @@ mod tests {
         #[test]
         fn sparse_messages_with_leases() {
             let state = test_state("fetch_available_sparse_messages");
-            let stream_id = StreamId::new_v4();
+            let group_id = ConfigGroupId::new_v4();
             // Sparse message IDs
-            insert_msgs(&state, stream_id, &[10, 20, 30, 40, 50]);
+            insert_msgs(&state, group_id, &[10, 20, 30, 40, 50]);
 
             // Lease covers 15-35, blocking messages 20 and 30
-            let leases = vec![lease(stream_id, 15, 35)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 15, 35)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].0, 10);
@@ -1141,12 +1155,12 @@ mod tests {
         #[test]
         fn single_message_leased() {
             let state = test_state("fetch_available_single_msg_leased");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
             // Lease covers only message 3
-            let leases = vec![lease(stream_id, 3, 3)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 3, 3)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 4);
             assert_eq!(result[0].0, 1);
@@ -1158,12 +1172,12 @@ mod tests {
         #[test]
         fn unsorted_leases_handled_correctly() {
             let state = test_state("fetch_available_unsorted_leases");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
             // Leases provided out of order
-            let leases = vec![lease(stream_id, 7, 8), lease(stream_id, 2, 3)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 7, 8), lease(group_id, 2, 3)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 6);
             assert_eq!(result[0].0, 1);
@@ -1177,10 +1191,10 @@ mod tests {
         #[test]
         fn returned_msg_payload_is_correct() {
             let state = test_state("fetch_available_payload_correct");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3]);
 
-            let result = MsgRow::fetch_available(&state, stream_id, [], batch(10)).unwrap();
+            let result = MsgRow::fetch_available(&state, group_id, [], batch(10)).unwrap();
 
             assert_eq!(result.len(), 3);
             assert_eq!(result[0].1.payload, b"msg-1");
@@ -1191,12 +1205,12 @@ mod tests {
         #[test]
         fn lease_boundary_exactly_at_message() {
             let state = test_state("fetch_available_boundary_exact");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
             // Lease starts exactly at msg 2 and ends exactly at msg 4
-            let leases = vec![lease(stream_id, 2, 4)];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let leases = vec![lease(group_id, 2, 4)];
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 2);
             assert_eq!(result[0].0, 1);
@@ -1206,18 +1220,18 @@ mod tests {
         #[test]
         fn many_small_leases() {
             let state = test_state("fetch_available_many_small_leases");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
             // Many single-message leases blocking even numbers
             let leases = vec![
-                lease(stream_id, 2, 2),
-                lease(stream_id, 4, 4),
-                lease(stream_id, 6, 6),
-                lease(stream_id, 8, 8),
-                lease(stream_id, 10, 10),
+                lease(group_id, 2, 2),
+                lease(group_id, 4, 4),
+                lease(group_id, 6, 6),
+                lease(group_id, 8, 8),
+                lease(group_id, 10, 10),
             ];
-            let result = MsgRow::fetch_available(&state, stream_id, &leases, batch(10)).unwrap();
+            let result = MsgRow::fetch_available(&state, group_id, &leases, batch(10)).unwrap();
 
             assert_eq!(result.len(), 5);
             assert_eq!(result[0].0, 1);
@@ -1230,12 +1244,12 @@ mod tests {
         #[test]
         fn dlq_lease_blocks_message() {
             let state = test_state("fetch_available_dlq_blocks");
-            let stream_id = StreamId::new_v4();
-            insert_msgs(&state, stream_id, &[1, 2, 3, 4, 5]);
+            let group_id = ConfigGroupId::new_v4();
+            insert_msgs(&state, group_id, &[1, 2, 3, 4, 5]);
 
             // Create a DLQ lease for message 3
             let dlq_lease = LeaseRow {
-                stream_id,
+                group_id: group_id,
                 cg: "test-cg".to_string(),
                 block_start: 3,
                 block_end: 3,
@@ -1245,7 +1259,7 @@ mod tests {
                 dlq_at: Some(ts(100)),
             };
             let result =
-                MsgRow::fetch_available(&state, stream_id, &[dlq_lease], batch(10)).unwrap();
+                MsgRow::fetch_available(&state, group_id, &[dlq_lease], batch(10)).unwrap();
 
             assert_eq!(result.len(), 4);
             assert_eq!(result[0].0, 1);
@@ -1256,9 +1270,9 @@ mod tests {
 
         #[test]
         fn cull_and_compact_preserves_dlq_leases() {
-            let stream_id = StreamId::new_v4();
+            let group_id = ConfigGroupId::new_v4();
             let dlq_lease = LeaseRow {
-                stream_id,
+                group_id: group_id,
                 cg: "cg1".to_string(),
                 block_start: 3,
                 block_end: 3,
@@ -1277,10 +1291,10 @@ mod tests {
 
         #[test]
         fn cull_and_compact_adjacent_dlq_leases_are_compacted() {
-            let stream_id = StreamId::new_v4();
+            let group_id = ConfigGroupId::new_v4();
             let leases = vec![
                 LeaseRow {
-                    stream_id,
+                    group_id,
                     cg: "cg1".to_string(),
                     block_start: 1,
                     block_end: 3,
@@ -1290,7 +1304,7 @@ mod tests {
                     dlq_at: Some(ts(10)),
                 },
                 LeaseRow {
-                    stream_id,
+                    group_id,
                     cg: "cg1".to_string(),
                     block_start: 4,
                     block_end: 6,
@@ -1315,10 +1329,10 @@ mod tests {
 
         #[test]
         fn cull_and_compact_non_adjacent_dlq_leases_not_compacted() {
-            let stream_id = StreamId::new_v4();
+            let group_id = ConfigGroupId::new_v4();
             let leases = vec![
                 LeaseRow {
-                    stream_id,
+                    group_id,
                     cg: "cg1".to_string(),
                     block_start: 1,
                     block_end: 3,
@@ -1328,7 +1342,7 @@ mod tests {
                     dlq_at: Some(ts(10)),
                 },
                 LeaseRow {
-                    stream_id,
+                    group_id,
                     cg: "cg1".to_string(),
                     block_start: 10,
                     block_end: 12,
