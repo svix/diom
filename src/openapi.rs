@@ -41,8 +41,9 @@ pub fn initialize_openapi() -> OpenApi {
 
     OpenApi {
         info: openapi::Info {
-            title: "Svix API".to_owned(),
+            title: "Coyote API".to_owned(),
             version: VERSION.to_owned(),
+            // FIXME: coyote branding
             extensions: indexmap::indexmap! {
                 "x-logo".to_string() => serde_json::json!({
                     "url": "https://www.svix.com/static/img/brand-padded.svg",
@@ -54,39 +55,32 @@ pub fn initialize_openapi() -> OpenApi {
         },
         tags: vec![
             openapi::Tag {
-                name: "Application".to_owned(),
+                name: "Cache".to_owned(),
                 ..openapi::Tag::default()
             },
             openapi::Tag {
-                name: "Message".to_owned(),
+                name: "Idempotency".to_owned(),
                 ..openapi::Tag::default()
             },
             openapi::Tag {
-                name: "Message Attempt".to_owned(),
+                name: "Key Value Store".to_owned(),
+                ..openapi::Tag::default()
+            },
+            // FIXME: Add back when we have routes
+            // openapi::Tag {
+            //     name: "Queue".to_owned(),
+            //     ..openapi::Tag::default()
+            // },
+            openapi::Tag {
+                name: "Rate Limiter".to_owned(),
                 ..openapi::Tag::default()
             },
             openapi::Tag {
-                name: "Endpoint".to_owned(),
-                ..openapi::Tag::default()
-            },
-            openapi::Tag {
-                name: "Integration".to_owned(),
-                ..openapi::Tag::default()
-            },
-            openapi::Tag {
-                name: "Event Type".to_owned(),
-                ..openapi::Tag::default()
-            },
-            openapi::Tag {
-                name: "Authentication".to_owned(),
+                name: "Stream".to_owned(),
                 ..openapi::Tag::default()
             },
             openapi::Tag {
                 name: "Health".to_owned(),
-                ..openapi::Tag::default()
-            },
-            openapi::Tag {
-                name: "Webhooks".to_owned(),
                 ..openapi::Tag::default()
             },
         ],
