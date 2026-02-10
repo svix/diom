@@ -38,6 +38,7 @@ coyote-operations.workspace = true
 coyote-proto.workspace = true
 coyote-rate-limiter.workspace = true
 fjall.workspace = true
+fjall-utils.workspace = true
 futures-util.workspace = true
 http.workspace = true
 idna_adapter.workspace = true

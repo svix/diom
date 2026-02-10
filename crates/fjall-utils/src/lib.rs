@@ -1,6 +1,8 @@
 mod table_row;
 
-pub use self::table_row::{TableRow, WriteBatchExt};
+pub use self::table_row::{
+    KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt,
+};
 
 /// Useful for verifying all table prefixes for a given keyspace are unique,
 /// at compile time.
