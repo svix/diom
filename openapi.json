@@ -971,6 +971,9 @@
       "Ack": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "consumerGroup": {
             "type": "string"
           },
@@ -978,9 +981,6 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0
-          },
-          "name": {
-            "type": "string"
           }
         },
         "required": [
@@ -992,13 +992,11 @@
       "AckMsgRangeIn": {
         "type": "object",
         "properties": {
-          "consumerGroup": {
+          "name": {
             "type": "string"
           },
-          "maxMsgId": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
+          "consumerGroup": {
+            "type": "string"
           },
           "minMsgId": {
             "type": "integer",
@@ -1006,8 +1004,10 @@
             "minimum": 0,
             "nullable": true
           },
-          "name": {
-            "type": "string"
+          "maxMsgId": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
           }
         },
         "required": [
@@ -1025,14 +1025,14 @@
       "AppendToStreamIn": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "msgs": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MsgIn"
             }
-          },
-          "name": {
-            "type": "string"
           }
         },
         "required": [
@@ -1061,9 +1061,9 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           }
         },
         "required": [
@@ -1086,9 +1086,9 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           }
         },
         "required": [
@@ -1098,17 +1098,17 @@
       "CacheGetOut": {
         "type": "object",
         "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
+          },
           "expires_at": {
             "description": "Time of expiry",
             "type": "string",
             "format": "date-time",
             "nullable": true
-          },
-          "key": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "value": {
             "type": "string"
@@ -1122,17 +1122,17 @@
       "CacheSetIn": {
         "type": "object",
         "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
+          },
           "expire_in": {
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
             "minimum": 0
-          },
-          "key": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
           },
           "value": {
             "type": "string"
@@ -1150,18 +1150,18 @@
       "CreateStreamIn": {
         "type": "object",
         "properties": {
-          "maxByteSize": {
-            "description": "How many bytes in total the stream will retain before dropping data.",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
-          },
           "name": {
             "type": "string"
           },
           "retentionPeriodSeconds": {
             "description": "How long messages are retained in the stream before being permanently nuked.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "maxByteSize": {
+            "description": "How many bytes in total the stream will retain before dropping data.",
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
@@ -1175,16 +1175,6 @@
       "CreateStreamOut": {
         "type": "object",
         "properties": {
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "maxByteSize": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
-          },
           "name": {
             "type": "string"
           },
@@ -1193,6 +1183,16 @@
             "format": "uint64",
             "minimum": 1,
             "nullable": true
+          },
+          "maxByteSize": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "updatedAt": {
             "type": "string",
@@ -1208,6 +1208,9 @@
       "DlqIn": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
           "consumerGroup": {
             "type": "string"
           },
@@ -1215,9 +1218,6 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0
-          },
-          "name": {
-            "type": "string"
           }
         },
         "required": [
@@ -1232,18 +1232,18 @@
       "FetchFromStreamIn": {
         "type": "object",
         "properties": {
-          "batchSize": {
-            "description": "How many messages to read from the stream.",
-            "type": "integer",
-            "format": "uint16",
-            "maximum": 65535,
-            "minimum": 1
+          "name": {
+            "type": "string"
           },
           "consumerGroup": {
             "type": "string"
           },
-          "name": {
-            "type": "string"
+          "batchSize": {
+            "description": "How many messages to read from the stream.",
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 1,
+            "maximum": 65535
           },
           "visibilityTimeoutSeconds": {
             "description": "How long messages are locked by the consumer.",
@@ -1278,9 +1278,9 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           }
         },
         "required": [
@@ -1295,9 +1295,9 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           },
           "response": {
             "description": "The response to cache",
@@ -1305,8 +1305,8 @@
             "items": {
               "type": "integer",
               "format": "uint8",
-              "maximum": 255,
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 255
             }
           },
           "ttl_seconds": {
@@ -1330,9 +1330,9 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           },
           "ttl_seconds": {
             "description": "TTL in seconds for the lock/response",
@@ -1372,8 +1372,8 @@
                 "items": {
                   "type": "integer",
                   "format": "uint8",
-                  "maximum": 255,
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 255
                 }
               },
               "status": {
@@ -1395,9 +1395,9 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           }
         },
         "required": [
@@ -1420,9 +1420,9 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           }
         },
         "required": [
@@ -1432,25 +1432,25 @@
       "KvGetOut": {
         "type": "object",
         "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
+          },
           "expires_at": {
             "description": "Time of expiry",
             "type": "string",
             "format": "date-time",
             "nullable": true
           },
-          "key": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
-          },
           "value": {
             "type": "array",
             "items": {
               "type": "integer",
               "format": "uint8",
-              "maximum": 255,
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 255
             }
           }
         },
@@ -1462,9 +1462,11 @@
       "KvSetIn": {
         "type": "object",
         "properties": {
-          "behavior": {
-            "$ref": "#/components/schemas/OperationBehavior",
-            "default": "upsert"
+          "key": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           },
           "expire_in": {
             "description": "Time to live in milliseconds",
@@ -1473,19 +1475,17 @@
             "minimum": 1,
             "nullable": true
           },
-          "key": {
-            "type": "string",
-            "example": "some_key",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+          "behavior": {
+            "default": "upsert",
+            "$ref": "#/components/schemas/OperationBehavior"
           },
           "value": {
             "type": "array",
             "items": {
               "type": "integer",
               "format": "uint8",
-              "maximum": 255,
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 255
             }
           }
         },
@@ -1500,20 +1500,20 @@
       "MsgIn": {
         "type": "object",
         "properties": {
-          "headers": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "default": {}
-          },
           "payload": {
             "type": "array",
             "items": {
               "type": "integer",
               "format": "uint8",
-              "maximum": 255,
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "headers": {
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+              "type": "string"
             }
           }
         },
@@ -1524,12 +1524,6 @@
       "MsgOut": {
         "type": "object",
         "properties": {
-          "headers": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
           "id": {
             "type": "integer",
             "format": "uint64",
@@ -1540,8 +1534,14 @@
             "items": {
               "type": "integer",
               "format": "uint8",
-              "maximum": 255,
-              "minimum": 0
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
             }
           },
           "timestamp": {
@@ -1587,30 +1587,33 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           },
           "units": {
             "description": "Number of units to consume (default: 1)",
             "type": "integer",
             "format": "uint64",
-            "default": 1,
-            "minimum": 0
+            "minimum": 0,
+            "default": 1
           }
         },
+        "required": [
+          "key"
+        ],
         "oneOf": [
           {
             "type": "object",
             "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
-              },
               "method": {
                 "type": "string",
                 "enum": [
                   "token_bucket"
                 ]
+              },
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
               }
             },
             "required": [
@@ -1621,14 +1624,14 @@
           {
             "type": "object",
             "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
-              },
               "method": {
                 "type": "string",
                 "enum": [
                   "fixed_window"
                 ]
+              },
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
               }
             },
             "required": [
@@ -1636,23 +1639,20 @@
               "config"
             ]
           }
-        ],
-        "required": [
-          "key"
         ]
       },
       "RateLimiterCheckOut": {
         "type": "object",
         "properties": {
+          "result": {
+            "description": "Whether the request is allowed",
+            "$ref": "#/components/schemas/RateLimitResult"
+          },
           "remaining": {
             "description": "Number of tokens remaining",
             "type": "integer",
             "format": "uint64",
             "minimum": 0
-          },
-          "result": {
-            "description": "Whether the request is allowed",
-            "$ref": "#/components/schemas/RateLimitResult"
           },
           "retry_after": {
             "description": "Seconds until enough tokens are available (only present when allowed is false)",
@@ -1670,14 +1670,14 @@
       "RateLimiterFixedWindowConfig": {
         "type": "object",
         "properties": {
-          "max_requests": {
-            "description": "Maximum number of requests allowed within the window",
+          "window_size_seconds": {
+            "description": "Window size in seconds",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
           },
-          "window_size_seconds": {
-            "description": "Window size in seconds",
+          "max_requests": {
+            "description": "Maximum number of requests allowed within the window",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
@@ -1693,23 +1693,26 @@
         "properties": {
           "key": {
             "type": "string",
-            "example": "some_key",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$"
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
           }
         },
+        "required": [
+          "key"
+        ],
         "oneOf": [
           {
             "type": "object",
             "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
-              },
               "method": {
                 "type": "string",
                 "enum": [
                   "token_bucket"
                 ]
+              },
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
               }
             },
             "required": [
@@ -1720,14 +1723,14 @@
           {
             "type": "object",
             "properties": {
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
-              },
               "method": {
                 "type": "string",
                 "enum": [
                   "fixed_window"
                 ]
+              },
+              "config": {
+                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
               }
             },
             "required": [
@@ -1735,9 +1738,6 @@
               "config"
             ]
           }
-        ],
-        "required": [
-          "key"
         ]
       },
       "RateLimiterGetRemainingOut": {
@@ -1792,10 +1792,10 @@
       "RedriveIn": {
         "type": "object",
         "properties": {
-          "consumerGroup": {
+          "name": {
             "type": "string"
           },
-          "name": {
+          "consumerGroup": {
             "type": "string"
           }
         },
