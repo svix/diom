@@ -1,4 +1,4 @@
-use serde_json::{Value, json};
+use serde_json::json;
 use test_utils::{
     StatusCode, TestClient, TestResult,
     server::{TestContext, start_server},
@@ -17,7 +17,8 @@ async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) 
     Ok(())
 }
 
-async fn cache_get(client: &TestClient, key: &str) -> TestResult<Value> {
+#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
+async fn cache_get(client: &TestClient, key: &str) -> TestResult<serde_json::Value> {
     let response = client
         .post("cache/get")
         .json(json!({
