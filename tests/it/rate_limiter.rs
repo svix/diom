@@ -33,13 +33,14 @@ async fn call_limit_token_bucket(
     Ok(response)
 }
 
+#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
 async fn call_limit_fixed_window(
     client: &TestClient,
     key: &str,
     units: u64,
     max_requests: u64,
     window_size_seconds: u64,
-) -> TestResult<Value> {
+) -> TestResult<serde_json::Value> {
     let response = client
         .post("rate-limiter/limit")
         .json(json!({
