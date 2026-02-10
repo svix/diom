@@ -46,8 +46,8 @@ pub fn initialize_openapi() -> OpenApi {
             // FIXME: diom branding
             extensions: indexmap::indexmap! {
                 "x-logo".to_string() => serde_json::json!({
-                    "url": "https://www.svix.com/static/img/brand-padded.svg",
                     "altText": "Svix Logo",
+                    "url": "https://www.svix.com/static/img/brand-padded.svg",
                 }),
             },
             description: Some(DESCRIPTION.to_string()),
@@ -89,6 +89,13 @@ pub fn initialize_openapi() -> OpenApi {
         //     "x-tagGroups".to_owned() => tag_groups,
         // },
         ..Default::default()
+    }
+}
+
+/// Sorts components.schemas by name.
+fn sort_schemas_by_name(openapi: &mut OpenApi) {
+    if let Some(components) = &mut openapi.components {
+        components.schemas.sort_unstable_keys();
     }
 }
 
@@ -203,6 +210,7 @@ pub fn add_security_scheme(
 /// our tooling.
 pub fn postprocess_spec(openapi: &mut OpenApi) {
     let hacks = [
+        sort_schemas_by_name,
         add_idempotency_to_post,
         flatten_weird_nested_ref,
         remove_unneeded_schemas,
