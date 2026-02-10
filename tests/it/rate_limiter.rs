@@ -1,11 +1,12 @@
 use std::time::Duration;
 
-use serde_json::{Value, json};
+use serde_json::json;
 use test_utils::{
     StatusCode, TestClient, TestResult,
     server::{TestContext, start_server},
 };
 
+#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
 async fn call_limit_token_bucket(
     client: &TestClient,
     key: &str,
@@ -13,7 +14,7 @@ async fn call_limit_token_bucket(
     capacity: u64,
     refill_amount: u64,
     refill_interval_seconds: u64,
-) -> TestResult<Value> {
+) -> TestResult<serde_json::Value> {
     let response = client
         .post("rate-limiter/limit")
         .json(json!({

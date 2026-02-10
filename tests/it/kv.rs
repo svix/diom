@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use jiff::Timestamp;
-use serde_json::{Value, json};
+use serde_json::json;
 use test_utils::{
     StatusCode, TestClient, TestResult,
     server::{TestContext, start_server},
@@ -27,7 +27,8 @@ async fn kv_set(
     Ok(())
 }
 
-async fn kv_get(client: &TestClient, key: &str) -> TestResult<Value> {
+#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
+async fn kv_get(client: &TestClient, key: &str) -> TestResult<serde_json::Value> {
     let response = client
         .post("kv/get")
         .json(json!({

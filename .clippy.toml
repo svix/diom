@@ -1,3 +1,4 @@
 disallowed-types = [
     { path = "axum::Json", replacement = "coyote_proto::MsgPackOrJson" },
+    { path = "serde_json::Value", reason = "not compatible with msgpack" },
 ]
