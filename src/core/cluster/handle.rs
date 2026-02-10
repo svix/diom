@@ -39,14 +39,14 @@ pub enum Request {
     RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
 }
 
-impl From<coyote_kv::operations::Operation> for Request {
-    fn from(value: coyote_kv::operations::Operation) -> Self {
+impl From<coyote_kv::operations::KvOperation> for Request {
+    fn from(value: coyote_kv::operations::KvOperation) -> Self {
         Request::Kv(value)
     }
 }
 
-impl From<coyote_rate_limiter::operations::Operation> for Request {
-    fn from(value: coyote_rate_limiter::operations::Operation) -> Self {
+impl From<coyote_rate_limiter::operations::RateLimiterOperation> for Request {
+    fn from(value: coyote_rate_limiter::operations::RateLimiterOperation) -> Self {
         Request::RateLimiter(value)
     }
 }
