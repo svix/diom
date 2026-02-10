@@ -3,6 +3,8 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
+#[macro_use]
+mod macros;
 pub trait OperationResponse: Serialize + DeserializeOwned + Clone + Debug {
     /// The module-level `Response` enum
     type ResponseParent: ModuleResponse + TryInto<Self>;
