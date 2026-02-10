@@ -39,5 +39,6 @@ impl CoyoteClient {
         pub fn {{ resource.name | to_snake_case }}(&self) -> {{ resource_type_name }}<'_> {
             {{ resource_type_name }}::new(&self.cfg)
         }
+
     {% endfor -%}
 }
