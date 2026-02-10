@@ -56,7 +56,7 @@ impl TableKey for u64 {
 
     fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != 8 {
-            return Err(Error::generic("invalid byte length in key key"));
+            return Err(Error::generic("invalid byte length in key"));
         }
         Ok(BigEndian::read_u64(bytes))
     }
