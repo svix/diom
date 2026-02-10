@@ -935,6 +935,7 @@ dependencies = [
  "diom-rate-limiter",
  "ctor",
  "fjall",
+ "fjall-utils",
  "futures-util",
  "http",
  "idna_adapter",
@@ -1674,11 +1675,14 @@ dependencies = [
 name = "fjall-utils"
 version = "0.0.1"
 dependencies = [
+ "byteorder",
  "diom-error",
  "fjall",
  "rmp-serde",
  "serde",
+ "tap",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

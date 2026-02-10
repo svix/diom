@@ -6,7 +6,7 @@ use std::{
 
 use diom_error::{Error, HttpError, Result};
 use fjall::OwnedWriteBatch;
-use fjall_utils::TableRow;
+use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -325,9 +325,13 @@ impl LeaseRow {
     }
 }
 
-impl AsRef<[u8]> for LeaseKey {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
+impl TableKey for LeaseKey {
+    fn as_bytes(&self) -> Cow<'_, [u8]> {
+        Cow::Borrowed(&self.0)
+    }
+
+    fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
+        Ok(Self(bytes.to_owned()))
     }
 }
 

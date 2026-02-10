@@ -195,7 +195,7 @@ impl KvStore {
     }
 
     pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
-        KvPairRow::iter(&self.tables)
+        KvPairRow::values(&self.tables)
     }
 
     // FIXME(@svix-lucho): needs to be passed now() from the caller!
@@ -223,7 +223,7 @@ impl KvStore {
         let now_ms = now.as_millisecond();
         let mut expired_keys = Vec::new();
 
-        for item in ExpirationRow::iter(&self.tables)? {
+        for item in ExpirationRow::values(&self.tables)? {
             if item.expiration_time.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
                 expired_keys.push(item.key);
                 removed += 1;
