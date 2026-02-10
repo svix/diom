@@ -126,6 +126,9 @@
       // FIXME hiddenClients: true,
       darkMode: false,
       showToolbar: "never",
+      generateOperationSlug: (operation) => `operation/${operation.operationId}`,
+      generateTagSlug: (tag) => `${tag.name.replace(" ", "-")}`,
+      generateWebhookSlug: (webhook) => webhook.name,
     })
   </script>
 </body>
