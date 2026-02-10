@@ -1,16 +1,18 @@
 use std::{
+    borrow::Cow,
     fmt::Debug,
     ops::{Bound, RangeBounds},
     path::Path,
 };
 
 use anyhow::Context;
-use byteorder::{BigEndian, ByteOrder};
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable, Slice, UserKey};
+use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
+use fjall_utils::{KeyspaceExt, MonotonicTableRowExt, TableRow};
 use openraft::{
     Entry, LogId, OptionalSend, RaftLogId, RaftLogReader, RaftTypeConfig, StorageError, Vote,
     storage::{LogFlushed, RaftLogStorage},
 };
+use serde::{Deserialize, Serialize};
 use tap::{Pipe, Tap, TapFallible};
 use tracing::{Instrument as _, Span};
 
@@ -18,29 +20,9 @@ use super::{NodeId, errors::*, raft::TypeConfig};
 
 // This is an implementation of an openraft Logs store backed by fjall
 
-#[derive(Debug, PartialEq, Clone)]
-enum LogError {
-    KeyDeserializationError,
-}
-
-impl std::error::Error for LogError {
-    fn description(&self) -> &str {
-        "Internal error processing logs"
-    }
-
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
-}
-
-impl std::fmt::Display for LogError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // TODO: fix this
-        write!(f, "{self:?}")
-    }
-}
-
 type StorageResult<T> = Result<T, StorageError<NodeId>>;
+
+type LogEntry = <TypeConfig as RaftTypeConfig>::Entry;
 
 #[derive(Clone)]
 pub struct CoyoteLogs {
@@ -49,40 +31,27 @@ pub struct CoyoteLogs {
     log_keyspace: Keyspace,
 }
 
-type KeyType = [u8; 8];
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(transparent)]
+struct Log(LogEntry);
 
-fn index_to_key(index: u64) -> KeyType {
-    let mut buf = [0u8; 8];
-    BigEndian::write_u64(&mut buf, index);
-    buf
-}
+impl TableRow for Log {
+    const TABLE_PREFIX: &str = "log";
+    type Key = u64;
 
-fn key_to_index(key: Slice) -> Result<u64, LogError> {
-    if key.len() != 8 {
-        return Err(LogError::KeyDeserializationError);
-    }
-    Ok(BigEndian::read_u64(&key))
-}
-
-fn range_to_start<RB: RangeBounds<u64>>(range: RB) -> KeyType {
-    match range.start_bound() {
-        Bound::Included(i) => index_to_key(*i),
-        Bound::Excluded(i) => index_to_key(*i + 1),
-        Bound::Unbounded => index_to_key(0),
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Owned(self.0.log_id.index)
     }
 }
 
-impl<C> RaftLogReader<C> for CoyoteLogs
-where
-    C: RaftTypeConfig,
-{
+impl RaftLogReader<TypeConfig> for CoyoteLogs {
     #[tracing::instrument(skip(self))]
     async fn try_get_log_entries<RB: RangeBounds<u64> + Clone + Debug + OptionalSend>(
         &mut self,
         range: RB,
-    ) -> Result<Vec<C::Entry>, StorageError<C::NodeId>> {
+    ) -> Result<Vec<LogEntry>, StorageError<NodeId>> {
         let output = self
-            .read_log_entries::<C, RB>(range.clone())
+            .read_log_entries::<RB>(range.clone())
             .await
             .map_err(read_logs_err)?;
         let output_keys = output.iter().map(|e| e.get_log_id());
@@ -220,15 +189,7 @@ impl CoyoteLogs {
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
             let keys = entries.iter().map(|entry| entry.log_id).collect::<Vec<_>>();
             tracing::trace!(?keys, "appending some entries");
-            let key_vs = entries
-                .into_iter()
-                .map(|entry| (index_to_key(entry.log_id.index), entry));
-            let mut ingest = keyspace.start_ingestion()?;
-            for (id, raw_value) in key_vs {
-                let value = rmp_serde::to_vec(&raw_value)?;
-                ingest.write(id, value)?;
-            }
-            ingest.finish()?;
+            keyspace.ingest_rows(entries.into_iter().map(Log))?;
             Ok(())
         })
         .await??;
@@ -247,12 +208,7 @@ impl CoyoteLogs {
         let log_keyspace = self.log_keyspace.clone();
         let mut tx = self.db.batch().durability(Some(PersistMode::SyncAll));
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-            let keys: Vec<UserKey> = log_keyspace
-                .range(index_to_key(log_id.index)..)
-                .map(|g| g.key())
-                .collect::<Result<Vec<_>, fjall::Error>>()?;
-            tracing::trace!(?keys, ?log_id, "deleting items after log_id (inclusive)");
-            for key in keys {
+            for key in Log::keys_in_range(&log_keyspace, log_id.index..)? {
                 tx.remove(&log_keyspace, key);
             }
             tx.commit()?;
@@ -268,12 +224,7 @@ impl CoyoteLogs {
         let serialized_log_id = rmp_serde::encode::to_vec(&log_id)?;
         let mut tx = self.db.batch().durability(Some(PersistMode::SyncAll));
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-            let keys: Vec<UserKey> = log_keyspace
-                .range(..=index_to_key(log_id.index))
-                .map(|g| g.key())
-                .collect::<Result<Vec<_>, fjall::Error>>()?;
-            tracing::trace!(?keys, ?log_id, "deleting items before log_id (inclusive)");
-            for key in keys {
+            for key in Log::keys_in_range(&log_keyspace, ..=log_id.index)? {
                 tx.remove(&log_keyspace, key);
             }
             tx.insert(&meta_keyspace, "last_purged_log_id", serialized_log_id);
@@ -290,21 +241,16 @@ impl CoyoteLogs {
             .get("last_purged_log_id")
             .unwrap()
             .map(|l| rmp_serde::from_slice(&l).unwrap());
-        let first_id = self
-            .log_keyspace
-            .first_key_value()
-            .map(|g| key_to_index(g.key().unwrap()).unwrap());
-        let last_id = self
-            .log_keyspace
-            .last_key_value()
-            .map(|g| key_to_index(g.key().unwrap()).unwrap());
+        let first_id = Log::range(&self.log_keyspace, ..)
+            .next()
+            .map(|l| l.unwrap().0);
+        let last_id = Log::range(&self.log_keyspace, ..)
+            .next_back()
+            .map(|l| l.unwrap().0);
         tracing::trace!(?last_purged_log_id, first_id, last_id, "log metadata");
-        let tx = self.db.snapshot();
-        for guard in tx.iter(&self.log_keyspace) {
-            let (key, value) = guard.into_inner().unwrap();
-            let value: Entry<TypeConfig> = rmp_serde::from_slice(&value).unwrap();
-            let index = key_to_index(key).unwrap();
-            tracing::trace!(?value, ?index, "log");
+        for row in Log::range(&self.log_keyspace, ..) {
+            let (index, value) = row.unwrap();
+            tracing::trace!(?index, ?value, "log");
         }
         tracing::trace!("END LOG TRACE");
     }
@@ -337,14 +283,18 @@ impl CoyoteLogs {
         .await?
     }
 
-    async fn read_log_entries<C, RB>(&mut self, range: RB) -> anyhow::Result<Vec<C::Entry>>
+    async fn read_log_entries<RB>(&mut self, range: RB) -> anyhow::Result<Vec<LogEntry>>
     where
-        C: RaftTypeConfig,
         RB: RangeBounds<u64> + Clone + Debug + OptionalSend,
     {
-        let db = self.db.clone();
         let log_keyspace = self.log_keyspace.clone();
-        let iter_range = range_to_start(range.clone())..;
+        // For some reason, RB isn't specified as Send in the trait, so we can't
+        // use it directly across the boundary. ARGH!
+        let send_range = match range.start_bound() {
+            Bound::Unbounded => 0..,
+            Bound::Included(i) => *i..,
+            Bound::Excluded(i) => (*i + 1)..,
+        };
         // why isn't RB always Send? it's a goddamn range...
         let end = match range.end_bound() {
             Bound::Unbounded => None,
@@ -353,20 +303,16 @@ impl CoyoteLogs {
         };
         tokio::task::spawn_blocking(move || {
             let mut output = vec![];
-            let tx = db.snapshot();
-            for guard in tx.range(&log_keyspace, iter_range) {
-                let (key, value) = guard
-                    .into_inner()
-                    .tap_err(|err| tracing::warn!(?err, "Error reading values from log"))?;
-                let index = key_to_index(key)
-                    .tap_err(|err| tracing::warn!(?err, "Error parsing key from log"))?;
+            for row in Log::range(&log_keyspace, send_range) {
+                let (key, value) =
+                    row.tap_err(|err| tracing::warn!(?err, "Error reading values from log"))?;
                 if let Some(end) = end
-                    && index >= end
+                    && key >= end
                 {
                     break;
                 }
-                let value = rmp_serde::from_slice(&value)?;
-                output.push(value);
+
+                output.push(value.0);
             }
             Ok(output)
         })

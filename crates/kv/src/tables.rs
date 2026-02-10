@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
-use fjall_utils::TableRow;
+use coyote_error::ResultExt;
+use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -59,9 +60,15 @@ impl ExpirationKey {
     }
 }
 
-impl AsRef<[u8]> for ExpirationKey {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_bytes()
+impl TableKey for ExpirationKey {
+    fn as_bytes(&self) -> Cow<'_, [u8]> {
+        Cow::Borrowed(self.0.as_bytes())
+    }
+
+    fn try_from_bytes(bytes: &[u8]) -> coyote_error::Result<Self> {
+        String::from_utf8(bytes.to_owned())
+            .map(Self)
+            .map_err_generic()
     }
 }
 
