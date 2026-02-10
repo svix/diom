@@ -1,12 +1,13 @@
 use std::time::Duration;
 
-use serde_json::{Value, json};
+use serde_json::json;
 use test_utils::{
     StatusCode, TestClient, TestResult,
     server::{TestContext, start_server},
 };
 
-async fn start(client: &TestClient, key: &str, ttl_seconds: u64) -> TestResult<Value> {
+#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
+async fn start(client: &TestClient, key: &str, ttl_seconds: u64) -> TestResult<serde_json::Value> {
     let response = client
         .post("idempotency/start")
         .json(json!({

@@ -205,6 +205,7 @@ impl TestResponse {
 
     #[must_use]
     #[track_caller]
+    #[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
     pub fn json(&self) -> serde_json::Value {
         assert_eq!(
             self.headers().get(header::CONTENT_TYPE),
