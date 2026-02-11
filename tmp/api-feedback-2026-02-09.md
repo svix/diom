@@ -62,7 +62,7 @@ IMPORTANT: I only commented on the things that need to change, not all the great
 - [ ] I mentioned it somewhere (don't remember where and what came out of it): Token bucket is superior to fixed window and is a superset of it - you can implement fixed window with token bucket when refill time is the same as window size.
   - [ ] This means that having both is needlessly confusing (let's remove fixed window).
   - [ ] Though I'd also say: do we even want multiple strategies, or just one? E.g. maybe we want leaky bucket? Though maybe that can be a future thing and we shouldn't soil the API yet? (as long as we can support it later with `type` added optionally and changes the config).
-  - [ ] Either way, `method` feels like an add name for the type.
+  - [ ] Either way, `method` feels like a bad name for the type.
   - [ ] NOTE: I'm not commenting on fixed window because of it.
 - [ ] Rate limiter limit:
   - [ ] `refill_interval_seconds` -> `refill_interval`.
