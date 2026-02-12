@@ -1,7 +1,7 @@
-use crate::{KvModel, OperationBehavior};
+use crate::{KvModel, KvStore, OperationBehavior};
 
-use super::{KvRequest, Operation, Response};
-use coyote_operations::{OperationRequest, OperationResponse, Result};
+use super::{KvRequest, SetResponse};
+use coyote_operations::Result;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,27 +21,15 @@ impl SetOperation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SetResponse(pub Result<()>);
-
-impl OperationResponse for SetResponse {
-    type ResponseParent = Response;
-}
-
-impl OperationRequest for SetOperation {
-    type Response = SetResponse;
-    type RequestParent = Operation;
-}
-
 impl SetOperation {
-    fn apply_real(self, state: &mut crate::KvStore) -> Result<()> {
+    fn apply_real(self, state: &mut KvStore) -> Result<()> {
         state.set_(&self.key, &self.model, self.behavior)?;
         Ok(())
     }
 }
 
 impl KvRequest for SetOperation {
-    fn apply(self, state: &mut crate::KvStore) -> SetResponse {
+    fn apply(self, state: &mut KvStore) -> SetResponse {
         SetResponse(self.apply_real(state))
     }
 }

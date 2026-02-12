@@ -1105,6 +1105,7 @@ dependencies = [
  "hashlink 0.11.0",
  "hex",
  "jiff",
+ "paste",
  "rmp-serde",
  "schemars 1.2.0",
  "serde",
@@ -1139,6 +1140,7 @@ dependencies = [
  "coyote-error",
  "http",
  "http-serde",
+ "paste",
  "rmp-serde",
  "serde",
  "tracing",
@@ -1171,9 +1173,11 @@ name = "coyote-rate-limiter"
 version = "0.0.1"
 dependencies = [
  "coyote-error",
+ "coyote-operations",
  "fjall",
  "fjall-utils",
  "jiff",
+ "paste",
  "rmp-serde",
  "schemars 1.2.0",
  "serde",

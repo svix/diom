@@ -35,12 +35,19 @@ impl std::error::Error for ResponseParseError {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Request {
     ClusterInternal(InternalRequest),
-    Kv(coyote_kv::operations::Operation),
+    Kv(coyote_kv::operations::KvOperation),
+    RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
 }
 
-impl<T: Into<coyote_kv::operations::Operation>> From<T> for Request {
-    fn from(value: T) -> Self {
-        Request::Kv(value.into())
+impl From<coyote_kv::operations::KvOperation> for Request {
+    fn from(value: coyote_kv::operations::KvOperation) -> Self {
+        Request::Kv(value)
+    }
+}
+
+impl From<coyote_rate_limiter::operations::RateLimiterOperation> for Request {
+    fn from(value: coyote_rate_limiter::operations::RateLimiterOperation) -> Self {
+        Request::RateLimiter(value)
     }
 }
 
@@ -49,6 +56,7 @@ pub enum Response {
     Blank,
     ClusterInternal(InternalResponse),
     Kv(coyote_kv::operations::Response),
+    RateLimiter(coyote_rate_limiter::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -57,6 +65,17 @@ impl TryFrom<Response> for coyote_kv::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::Kv(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_rate_limiter::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::RateLimiter(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }
@@ -73,7 +92,8 @@ impl RaftState {
     /// Write a single operation into the Raft log and return its response.
     pub async fn client_write<O>(&self, op: O) -> WriteResult<O::Response>
     where
-        O: Into<Request> + OperationRequest,
+        O: OperationRequest + Into<O::RequestParent>,
+        O::RequestParent: Into<Request>,
         <<O as OperationRequest>::Response as OperationResponse>::ResponseParent: TryFrom<Response>,
         <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryFrom<
             Response,
@@ -82,7 +102,7 @@ impl RaftState {
             <O as OperationRequest>::Response,
         >>::Error: std::fmt::Debug,
     {
-        let request = op.into();
+        let request = op.into().into();
         let response = self.raft.client_write(request).await?;
         let module_response =
             <<O as OperationRequest>::Response as OperationResponse>::ResponseParent::try_from(

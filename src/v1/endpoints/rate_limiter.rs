@@ -4,15 +4,22 @@
 use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::State;
+use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
+use coyote_error::ResultExt;
 use coyote_proto::MsgPackOrJson;
+use coyote_rate_limiter::RateLimiter;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_tag};
+use crate::{
+    AppState,
+    core::{cluster::RaftState, types::EntityKey},
+    error::Result,
+    v1::utils::openapi_tag,
+};
 
 // Re-export types that are used in AppState
 use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitResult, TokenBucket};
@@ -144,28 +151,32 @@ pub struct RateLimiterGetRemainingOut {
 /// Rate Limiter Check and Consume
 #[aide_annotate(op_id = "v1.rate_limiter.limit")]
 async fn rate_limiter_limit(
-    State(AppState { rate_limiter, .. }): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterCheckIn>,
 ) -> Result<MsgPackOrJson<RateLimiterCheckOut>> {
-    let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
-    let (result, remaining, retry_after) =
-        rate_limiter.limit(now, &data.key, data.units, data.method.into())?;
+    let key = data.key.0.clone();
+    let units = data.units;
+    let method = data.method.into();
+
+    let operation = RateLimiter::limit_operation(key, units, method);
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RateLimiterCheckOut {
-        result,
-        remaining,
-        retry_after: retry_after.map(|t| t.as_millis() as u64),
+        result: response.result,
+        remaining: response.remaining,
+        retry_after: response
+            .retry_after
+            .map(|t: std::time::Duration| t.as_millis() as u64),
     }))
 }
 
-// FIXME: should this essentially just be a "dry-run" option on limit?
 /// Rate Limiter Get Remaining
 #[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
 async fn rate_limiter_get_remaining(
     State(AppState { rate_limiter, .. }): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetRemainingIn>,
 ) -> Result<MsgPackOrJson<RateLimiterGetRemainingOut>> {
-    let now = Timestamp::now(); // FIXME(@svix-lucho): should come from consensus?
+    let now = Timestamp::now();
     let (remaining, retry_after) =
         rate_limiter.get_remaining(now, &data.key, data.method.into())?;
 
