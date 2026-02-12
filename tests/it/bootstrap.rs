@@ -3,7 +3,7 @@ use std::num::NonZeroU64;
 use coyote::{bootstrap, cfg::DatabaseConfig};
 use coyote_configgroup::{
     BothDatabases,
-    entities::{CacheConfig, EvictionPolicy, KeyValueConfig, StreamConfig},
+    entities::{CacheConfig, EvictionPolicy, KeyValueConfig},
 };
 use test_utils::{TestResult, server::build_config_without_server};
 
