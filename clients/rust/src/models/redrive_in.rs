@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RedriveIn {
-    #[serde(rename = "consumerGroup")]
     pub consumer_group: String,
 
     pub name: String,

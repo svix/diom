@@ -4,13 +4,10 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AckMsgRangeIn {
-    #[serde(rename = "consumerGroup")]
     pub consumer_group: String,
 
-    #[serde(rename = "maxMsgId")]
     pub max_msg_id: u64,
 
-    #[serde(rename = "minMsgId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub min_msg_id: Option<u64>,
 

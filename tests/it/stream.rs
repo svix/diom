@@ -19,23 +19,23 @@ async fn create_stream_upserts() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
         .json();
 
-    let ts = &response["createdAt"];
+    let ts = &response["created_at"];
 
     assert_eq!(
         response,
         json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999,
-            "createdAt": ts,
-            "updatedAt": ts,
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999,
+            "created_at": ts,
+            "updated_at": ts,
         })
     );
 
@@ -43,8 +43,8 @@ async fn create_stream_upserts() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": null,
-            "retentionPeriodSeconds": null
+            "max_byte_size": null,
+            "retention_period_seconds": null
         }))
         .await?
         .expect(StatusCode::OK)
@@ -54,10 +54,10 @@ async fn create_stream_upserts() -> TestResult {
         update,
         json!({
             "name": "test-stream",
-            "maxByteSize": null,
-            "retentionPeriodSeconds": null,
-            "createdAt": ts,
-            "updatedAt": &update["updatedAt"],
+            "max_byte_size": null,
+            "retention_period_seconds": null,
+            "created_at": ts,
+            "updated_at": &update["updated_at"],
         })
     );
 
@@ -76,8 +76,8 @@ async fn stream_append_and_locking_consumption() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -112,9 +112,9 @@ async fn stream_append_and_locking_consumption() -> TestResult {
         .post("stream/fetch-locking")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -141,8 +141,8 @@ async fn stream_append_and_locking_consumption() -> TestResult {
         .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "maxMsgId": max_msg_id
+            "consumer_group": "test-group",
+            "max_msg_id": max_msg_id
         }))
         .await?
         .expect(StatusCode::OK);
@@ -152,9 +152,9 @@ async fn stream_append_and_locking_consumption() -> TestResult {
         .post("stream/fetch-locking")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -186,8 +186,8 @@ async fn stream_visibility_timeout() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -210,9 +210,9 @@ async fn stream_visibility_timeout() -> TestResult {
         .post("stream/fetch-locking")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 1
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 1
         }))
         .await?
         .expect(StatusCode::OK)
@@ -237,9 +237,9 @@ async fn stream_visibility_timeout() -> TestResult {
         .post("stream/fetch-locking")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 1
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 1
         }))
         .await?
         .expect(StatusCode::OK)
@@ -271,8 +271,8 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -296,9 +296,9 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 2,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 2,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -321,8 +321,8 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
         .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "maxMsgId": max_msg_id
+            "consumer_group": "test-group",
+            "max_msg_id": max_msg_id
         }))
         .await?
         .expect(StatusCode::OK);
@@ -332,9 +332,9 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 2,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 2,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -362,8 +362,8 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -386,9 +386,9 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 1,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 1,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -406,9 +406,9 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 1,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 1,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -429,9 +429,9 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 1,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 1,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -459,8 +459,8 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -491,9 +491,9 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 2,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 2,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -509,9 +509,9 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 2,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 2,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -527,9 +527,9 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 2,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 2,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -545,9 +545,9 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "minMsgId": msgs2[0]["id"],
-            "maxMsgId": msgs2[1]["id"]
+            "consumer_group": "test-group",
+            "min_msg_id": msgs2[0]["id"],
+            "max_msg_id": msgs2[1]["id"]
         }))
         .await?
         .expect(StatusCode::OK);
@@ -561,9 +561,9 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 10,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 10,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -593,8 +593,8 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -621,9 +621,9 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -640,9 +640,9 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -660,9 +660,9 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
         .post("stream/ack-range")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "minMsgId": 1,
-            "maxMsgId": 4
+            "consumer_group": "test-group",
+            "min_msg_id": 1,
+            "max_msg_id": 4
         }))
         .await?
         .expect(StatusCode::OK);
@@ -675,9 +675,9 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 10,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 10,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -703,8 +703,8 @@ async fn queue_fetch_single_ack() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -730,9 +730,9 @@ async fn queue_fetch_single_ack() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 6,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 6,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -753,8 +753,8 @@ async fn queue_fetch_single_ack() -> TestResult {
             .post("stream/ack")
             .json(json!({
                 "name": "test-stream",
-                "consumerGroup": "test-group",
-                "msgId": msg_id
+                "consumer_group": "test-group",
+                "msg_id": msg_id
             }))
             .await?
             .expect(StatusCode::OK);
@@ -768,9 +768,9 @@ async fn queue_fetch_single_ack() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 10,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 10,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -798,8 +798,8 @@ async fn queue_dlq_and_redrive() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -826,9 +826,9 @@ async fn queue_dlq_and_redrive() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 6,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 6,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -843,8 +843,8 @@ async fn queue_dlq_and_redrive() -> TestResult {
             .post("stream/dlq")
             .json(json!({
                 "name": "test-stream",
-                "consumerGroup": "test-group",
-                "msgId": msg_id
+                "consumer_group": "test-group",
+                "msg_id": msg_id
             }))
             .await?
             .expect(StatusCode::OK);
@@ -858,9 +858,9 @@ async fn queue_dlq_and_redrive() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 10,
-            "visibilityTimeoutSeconds": 2
+            "consumer_group": "test-group",
+            "batch_size": 10,
+            "visibility_timeout_seconds": 2
         }))
         .await?
         .expect(StatusCode::OK)
@@ -879,8 +879,8 @@ async fn queue_dlq_and_redrive() -> TestResult {
             .post("stream/ack")
             .json(json!({
                 "name": "test-stream",
-                "consumerGroup": "test-group",
-                "msgId": msg_id
+                "consumer_group": "test-group",
+                "msg_id": msg_id
             }))
             .await?
             .expect(StatusCode::OK);
@@ -891,7 +891,7 @@ async fn queue_dlq_and_redrive() -> TestResult {
         .post("stream/redrive-dlq")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group"
+            "consumer_group": "test-group"
         }))
         .await?
         .expect(StatusCode::OK);
@@ -904,9 +904,9 @@ async fn queue_dlq_and_redrive() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 10,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 10,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -932,8 +932,8 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -958,9 +958,9 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -977,8 +977,8 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
         .post("stream/dlq")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "msgId": 1
+            "consumer_group": "test-group",
+            "msg_id": 1
         }))
         .await?
         .expect(StatusCode::OK);
@@ -989,8 +989,8 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
             .post("stream/ack")
             .json(json!({
                 "name": "test-stream",
-                "consumerGroup": "test-group",
-                "msgId": msg_id
+                "consumer_group": "test-group",
+                "msg_id": msg_id
             }))
             .await?
             .expect(StatusCode::OK);
@@ -1001,7 +1001,7 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
         .post("stream/redrive-dlq")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group"
+            "consumer_group": "test-group"
         }))
         .await?
         .expect(StatusCode::OK);
@@ -1011,9 +1011,9 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 3,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 3,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -1039,8 +1039,8 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         .post("stream/create")
         .json(json!({
             "name": "test-stream",
-            "maxByteSize": 1024,
-            "retentionPeriodSeconds": 9999
+            "max_byte_size": 1024,
+            "retention_period_seconds": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -1061,9 +1061,9 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 1,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 1,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)
@@ -1077,8 +1077,8 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         .post("stream/dlq")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "msgId": msgs1[0]["id"]
+            "consumer_group": "test-group",
+            "msg_id": msgs1[0]["id"]
         }))
         .await?
         .expect(StatusCode::OK);
@@ -1087,8 +1087,8 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         .post("stream/ack")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "msgId": msgs1[0]["id"]
+            "consumer_group": "test-group",
+            "msg_id": msgs1[0]["id"]
         }))
         .await?
         .expect(StatusCode::OK);
@@ -1097,7 +1097,7 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         .post("stream/redrive-dlq")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group"
+            "consumer_group": "test-group"
         }))
         .await?
         .expect(StatusCode::OK);
@@ -1110,9 +1110,9 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         .post("stream/fetch")
         .json(json!({
             "name": "test-stream",
-            "consumerGroup": "test-group",
-            "batchSize": 10,
-            "visibilityTimeoutSeconds": 3600
+            "consumer_group": "test-group",
+            "batch_size": 10,
+            "visibility_timeout_seconds": 3600
         }))
         .await?
         .expect(StatusCode::OK)

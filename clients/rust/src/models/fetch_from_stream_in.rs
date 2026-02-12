@@ -5,16 +5,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FetchFromStreamIn {
     /// How many messages to read from the stream.
-    #[serde(rename = "batchSize")]
     pub batch_size: u16,
 
-    #[serde(rename = "consumerGroup")]
     pub consumer_group: String,
 
     pub name: String,
 
     /// How long messages are locked by the consumer.
-    #[serde(rename = "visibilityTimeoutSeconds")]
     pub visibility_timeout_seconds: u64,
 }
 
