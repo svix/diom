@@ -5,8 +5,10 @@ use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use coyote_cache::CacheModel;
-use coyote_cache::operations::{DeleteOperation, SetOperation};
+use coyote_cache::{
+    CacheModel,
+    operations::{DeleteOperation, SetOperation},
+};
 use coyote_derive::aide_annotate;
 use coyote_error::ResultExt;
 use coyote_proto::MsgPackOrJson;
