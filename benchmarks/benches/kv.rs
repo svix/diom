@@ -12,6 +12,7 @@ use rand::{
 fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGroup<'a, M>) {
     let client = ctx.client;
 
+    group.sample_size(60);
     group.measurement_time(std::time::Duration::from_secs(15));
 
     let mut rng = StdRng::seed_from_u64(0);
