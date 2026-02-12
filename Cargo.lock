@@ -980,13 +980,17 @@ dependencies = [
 name = "coyote-benchmarks"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
  "coyote",
  "coyote-client",
  "criterion",
+ "openraft",
  "rand 0.9.2",
+ "reqwest 0.13.1",
  "tempfile",
  "test-utils",
  "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]
