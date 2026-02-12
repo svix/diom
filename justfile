@@ -13,3 +13,7 @@ test-sdks:
 
 # Run all the test commands
 test-all: test test-sdks
+
+[working-directory: 'benchmarks']
+bench:
+    cargo bench

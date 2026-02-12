@@ -86,7 +86,7 @@ impl TestServerBuilder {
         let repl_listener = if let Some(listener) = self.repl_listener {
             listener
         } else {
-            TcpListener::bind("127.0.0.1:0").await.unwrap()
+            TcpListener::bind("0.0.0.0:0").await.unwrap()
         };
 
         let addr: SocketAddr = listener.local_addr().unwrap();
@@ -163,8 +163,8 @@ async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Resul
         return Ok(false);
     }
     let body: HealthResponse = response.json().await?;
-    if !body.server_state.is_leader() {
-        tracing::warn!(state=?body.server_state, "booted, but not leader");
+    if body.server_state.is_candidate() {
+        tracing::warn!(state=?body.server_state, "booted, but just a candidate");
         return Ok(false);
     }
     Ok(true)
