@@ -4,20 +4,16 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CreateStreamOut {
-    #[serde(rename = "createdAt")]
     pub created_at: jiff::Timestamp,
 
-    #[serde(rename = "maxByteSize")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_byte_size: Option<u64>,
 
     pub name: String,
 
-    #[serde(rename = "retentionPeriodSeconds")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub retention_period_seconds: Option<u64>,
 
-    #[serde(rename = "updatedAt")]
     pub updated_at: jiff::Timestamp,
 }
 

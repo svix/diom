@@ -3,7 +3,7 @@ use std::num::NonZeroU64;
 use diom::{bootstrap, cfg::DatabaseConfig};
 use diom_configgroup::{
     BothDatabases,
-    entities::{CacheConfig, EvictionPolicy, KeyValueConfig, StreamConfig},
+    entities::{CacheConfig, EvictionPolicy, KeyValueConfig},
 };
 use test_utils::{TestResult, server::build_config_without_server};
 

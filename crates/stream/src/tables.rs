@@ -490,7 +490,7 @@ mod tests {
     fn cull_and_compact_expired_lease_is_deleted() {
         let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
-            group_id: group_id,
+            group_id,
             cg: "cg1".to_string(),
             block_start: 1,
             block_end: 5,
@@ -511,7 +511,7 @@ mod tests {
     fn cull_and_compact_active_lease_unchanged() {
         let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
-            group_id: group_id,
+            group_id,
             cg: "cg1".to_string(),
             block_start: 1,
             block_end: 5,
@@ -531,7 +531,7 @@ mod tests {
     fn cull_and_compact_single_acked_lease_unchanged() {
         let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
-            group_id: group_id,
+            group_id,
             cg: "cg1".to_string(),
             block_start: 1,
             block_end: 5,
@@ -969,7 +969,7 @@ mod tests {
 
         fn lease(group_id: ConfigGroupId, block_start: MsgId, block_end: MsgId) -> LeaseRow {
             LeaseRow {
-                group_id: group_id,
+                group_id,
                 cg: "test-cg".to_string(),
                 block_start,
                 block_end,
@@ -1253,7 +1253,7 @@ mod tests {
 
             // Create a DLQ lease for message 3
             let dlq_lease = LeaseRow {
-                group_id: group_id,
+                group_id,
                 cg: "test-cg".to_string(),
                 block_start: 3,
                 block_end: 3,
@@ -1276,7 +1276,7 @@ mod tests {
         fn cull_and_compact_preserves_dlq_leases() {
             let group_id = ConfigGroupId::new_v4();
             let dlq_lease = LeaseRow {
-                group_id: group_id,
+                group_id,
                 cg: "cg1".to_string(),
                 block_start: 3,
                 block_end: 3,

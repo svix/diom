@@ -23,7 +23,6 @@ use validator::Validate;
 use crate::{AppState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct CreateStreamIn {
     pub name: StreamName,
     /// How long messages are retained in the stream before being permanently nuked.
@@ -33,7 +32,6 @@ struct CreateStreamIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct CreateStreamOut {
     pub name: StreamName,
     pub retention_period_seconds: Option<NonZeroU64>,
@@ -91,14 +89,12 @@ async fn create_stream(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct AppendToStreamIn {
     pub name: StreamName,
     pub msgs: Vec<MsgIn>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct AppendToStreamOut {
     pub msg_ids: Vec<MsgId>,
 }
@@ -134,7 +130,6 @@ async fn append_to_stream(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct FetchFromStreamIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
@@ -147,7 +142,6 @@ struct FetchFromStreamIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct FetchFromStreamOut {
     msgs: Vec<MsgOut>,
 }
@@ -228,7 +222,6 @@ async fn fetch_from_stream(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct AckMsgRangeIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
@@ -237,7 +230,6 @@ struct AckMsgRangeIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct AckMsgRangeOut {}
 
 /// Acks the messages for the consumer group, allowing more messages to be consumed.
@@ -275,7 +267,6 @@ async fn ack_range(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct Ack {
     name: StreamName,
     consumer_group: ConsumerGroup,
@@ -306,11 +297,9 @@ async fn ack(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct AckOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct DlqIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
@@ -318,7 +307,6 @@ struct DlqIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct DlqOut {}
 
 /// Moves a message to the dead letter queue.
@@ -344,14 +332,12 @@ async fn dlq(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct RedriveIn {
     name: StreamName,
     consumer_group: ConsumerGroup,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 struct RedriveOut {}
 
 /// Redrives messages from the dead letter queue back to the stream.

@@ -4,10 +4,8 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Ack {
-    #[serde(rename = "consumerGroup")]
     pub consumer_group: String,
 
-    #[serde(rename = "msgId")]
     pub msg_id: u64,
 
     pub name: String,
