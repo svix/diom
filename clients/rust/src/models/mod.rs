@@ -28,6 +28,7 @@ mod kv_set_out;
 mod msg_in;
 mod msg_out;
 mod operation_behavior;
+mod ping_out;
 mod rate_limit_result;
 mod rate_limiter_check_in;
 mod rate_limiter_check_out;
@@ -66,6 +67,7 @@ pub use self::{
     msg_in::MsgIn,
     msg_out::MsgOut,
     operation_behavior::OperationBehavior,
+    ping_out::PingOut,
     rate_limit_result::RateLimitResult,
     rate_limiter_check_in::{RateLimiterCheckIn, RateLimiterCheckInConfig},
     rate_limiter_check_out::RateLimiterCheckOut,
