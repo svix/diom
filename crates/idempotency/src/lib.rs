@@ -153,20 +153,23 @@ mod tests {
         let mut store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, None);
-
-        let result = store.try_start("test", 10);
-        assert!(result.is_err());
-
-        store.abandon("test")?;
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, None);
+        assert_eq!(result, IdempotencyStartResult::Locked);
+
+        store.abort("test")?;
+
+        let result = store.try_start("test", 10)?;
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         store.complete("test", value.clone(), 10)?;
 
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, Some(value));
+        assert_eq!(
+            result,
+            IdempotencyStartResult::Completed { response: value }
+        );
         Ok(())
     }
 
@@ -179,12 +182,15 @@ mod tests {
         store.complete("test", value.clone(), 10)?;
 
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, Some(value));
+        assert_eq!(
+            result,
+            IdempotencyStartResult::Completed { response: value }
+        );
 
-        // Can abandon a request without starting it first
-        store.abandon("test2")?;
+        // Can abort a request without starting it first
+        store.abort("test2")?;
         let result2 = store.try_start("test2", 10)?;
-        assert_eq!(result2, None);
+        assert_eq!(result2, IdempotencyStartResult::Started);
 
         Ok(())
     }
@@ -199,14 +205,14 @@ mod tests {
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         let result = store.try_start("test", 1)?;
-        assert_eq!(result, None);
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         store.complete("test", value, 1)?;
 
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         let result = store.try_start("test", 1)?;
-        assert_eq!(result, None);
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         Ok(())
     }

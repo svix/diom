@@ -9,8 +9,8 @@ async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) 
         .post("cache/set")
         .json(json!({
             "key": key,
-            "expire_in": expire_in,
-            "value": value
+            "ttl": expire_in,
+            "value": value.as_bytes()
         }))
         .await?
         .expect(StatusCode::OK);
@@ -43,8 +43,8 @@ async fn test_cache_set_and_get() -> TestResult {
     let response = cache_get(&client, "test-key-1").await?;
 
     assert_eq!(response["key"], "test-key-1");
-    assert_eq!(response["value"], "test-value-123");
-    assert!(response["expires_at"].is_string());
+    assert_eq!(response["value"], json!("test-value-123".as_bytes()));
+    assert!(response["expires"].is_string());
 
     Ok(())
 }
@@ -60,7 +60,7 @@ async fn test_cache_set_get_and_delete() -> TestResult {
     cache_set(&client, "test-key-2", 30000, "another-value").await?;
 
     let response = cache_get(&client, "test-key-2").await?;
-    assert_eq!(response["value"], "another-value");
+    assert_eq!(response["value"], json!("another-value".as_bytes()));
 
     let delete_response = client
         .post("cache/delete")

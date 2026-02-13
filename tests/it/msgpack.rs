@@ -9,8 +9,8 @@ use test_utils::{
 #[derive(Serialize)]
 struct CacheSetIn<'a> {
     key: &'a str,
-    expire_in: u32,
-    value: &'a str,
+    ttl: u32,
+    value: &'a [u8],
 }
 
 #[derive(Serialize)]
@@ -31,8 +31,8 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         .header("accept", "application/json")
         .msgpack(CacheSetIn {
             key: "test-key-1",
-            expire_in: 60000,
-            value: "test-value-123",
+            ttl: 60000,
+            value: b"test-value-123",
         })
         .await?
         .expect(StatusCode::OK);
@@ -46,8 +46,8 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         .json();
 
     assert_eq!(response["key"], "test-key-1");
-    assert_eq!(response["value"], "test-value-123");
-    assert!(response["expires_at"].is_string());
+    assert_eq!(response["value"], json!(b"test-value-123"));
+    assert!(response["expires"].is_string());
 
     Ok(())
 }
@@ -55,9 +55,9 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
 #[derive(Deserialize)]
 struct CacheGetOut {
     key: String,
-    value: String,
+    value: Vec<u8>,
     #[allow(unused)]
-    expires_at: String,
+    expires: Option<String>,
 }
 
 #[tokio::test]
@@ -72,8 +72,8 @@ async fn test_cache_set_and_get_msgpack_out() -> TestResult {
         .post("cache/set")
         .json(json!({
             "key": "test-key-1",
-            "expire_in": 60000,
-            "value": "test-value-123",
+            "ttl": 60000,
+            "value": "test-value-123".as_bytes(),
         }))
         .await?
         .expect(StatusCode::OK);
@@ -93,7 +93,7 @@ async fn test_cache_set_and_get_msgpack_out() -> TestResult {
 
     let response_body: CacheGetOut = rmp_serde::from_slice(response.body())?;
     assert_eq!(response_body.key, "test-key-1");
-    assert_eq!(response_body.value, "test-value-123");
+    assert_eq!(response_body.value, b"test-value-123");
 
     Ok(())
 }

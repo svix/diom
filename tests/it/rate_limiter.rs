@@ -19,12 +19,12 @@ async fn call_limit_token_bucket(
         .post("rate-limiter/limit")
         .json(json!({
             "key": key,
-            "units": units,
+            "tokens": units,
             "method": "token_bucket",
             "config": {
                 "capacity": capacity,
                 "refill_amount": refill_amount,
-                "refill_interval_seconds": refill_interval_seconds
+                "refill_interval": refill_interval_seconds
             }
         }))
         .await?
@@ -45,11 +45,11 @@ async fn call_limit_fixed_window(
         .post("rate-limiter/limit")
         .json(json!({
             "key": key,
-            "units": units,
+            "tokens": units,
             "method": "fixed_window",
             "config": {
                 "max_requests": max_requests,
-                "window_size_seconds": window_size_seconds
+                "window_size": window_size_seconds
             }
         }))
         .await?
@@ -78,7 +78,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
         refill_interval,
     )
     .await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 4);
     assert_eq!(response["retry_after"], json!(null));
 
@@ -91,7 +91,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
         refill_interval,
     )
     .await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 2);
     assert_eq!(response["retry_after"], json!(null));
 
@@ -104,7 +104,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
         refill_interval,
     )
     .await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 0);
     assert_eq!(response["retry_after"], json!(null));
 
@@ -117,7 +117,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
         refill_interval,
     )
     .await?;
-    assert_eq!(response["result"], "BLOCK");
+    assert_eq!(response["status"], "block");
     assert_eq!(response["remaining"], 0);
     assert!(response["retry_after"].is_number());
 
@@ -131,7 +131,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
             "config": {
                 "capacity": capacity,
                 "refill_amount": refill_amount,
-                "refill_interval_seconds": refill_interval
+                "refill_interval": refill_interval
             }
         }))
         .await?
@@ -156,25 +156,25 @@ async fn test_rate_limiter_limit_fixed_window() -> TestResult {
 
     let response =
         call_limit_fixed_window(&client, "rl-key-1", 1, max_requests, window_size_seconds).await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 4);
     assert_eq!(response["retry_after"], json!(null));
 
     let response =
         call_limit_fixed_window(&client, "rl-key-1", 2, max_requests, window_size_seconds).await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 2);
     assert_eq!(response["retry_after"], json!(null));
 
     let response =
         call_limit_fixed_window(&client, "rl-key-1", 2, max_requests, window_size_seconds).await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 0);
     assert_eq!(response["retry_after"], json!(null));
 
     let response =
         call_limit_fixed_window(&client, "rl-key-1", 1, max_requests, window_size_seconds).await?;
-    assert_eq!(response["result"], "BLOCK");
+    assert_eq!(response["status"], "block");
     assert_eq!(response["remaining"], 0);
     assert!(response["retry_after"].is_number());
 
@@ -187,7 +187,7 @@ async fn test_rate_limiter_limit_fixed_window() -> TestResult {
             "method": "fixed_window",
             "config": {
                 "max_requests": max_requests,
-                "window_size_seconds": window_size_seconds
+                "window_size": window_size_seconds
             }
         }))
         .await?
@@ -211,26 +211,26 @@ async fn test_rate_limiter_change_algorithm() -> TestResult {
 
     let response =
         call_limit_fixed_window(&client, "rl-key-1", 1, max_requests, window_size_seconds).await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 4);
     assert_eq!(response["retry_after"], json!(null));
 
     // Calling limit with the same key but a different algorithm behaves as a different key
     let response = call_limit_token_bucket(&client, "rl-key-1", 1, 5, 1, 1).await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 4);
     assert_eq!(response["retry_after"], json!(null));
 
     // Change algorithm parameters
     let response = call_limit_token_bucket(&client, "rl-key-1", 1, 10, 4, 2).await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 3);
     assert_eq!(response["retry_after"], json!(null));
 
     tokio::time::sleep(Duration::from_secs(2)).await;
 
     let response = call_limit_token_bucket(&client, "rl-key-1", 1, 10, 4, 2).await?;
-    assert_eq!(response["result"], "OK");
+    assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 6); // 3 (previous) + 4 (refill) - 1 (consumed)
     assert_eq!(response["retry_after"], json!(null));
 
@@ -280,10 +280,10 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
                 "key": "rl-key-1",
                 "method": "token_bucket",
                 "config": {
-                    "capacity": capacity,
-                    "refill_amount": refill_amount,
-                    "refill_interval_seconds": refill_interval
-                }
+                "capacity": capacity,
+                "refill_amount": refill_amount,
+                "refill_interval": refill_interval
+            }
         }))
         .await?
         .expect(StatusCode::OK)
