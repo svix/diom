@@ -125,7 +125,7 @@ mod tests {
         let client = CoyoteClient::new(String::new(), None);
         let cache_api = client.cache();
         let fut = cache_api.set(
-            CacheSetIn::new(0, "key".to_owned(), "value".to_owned()),
+            CacheSetIn::new("key".to_owned(), 0, "value".as_bytes().to_vec()),
             None,
         );
         require_send_sync(fut);

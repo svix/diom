@@ -8,14 +8,14 @@ pub struct RateLimiterFixedWindowConfig {
     pub max_requests: u64,
 
     /// Window size in seconds
-    pub window_size_seconds: u64,
+    pub window_size: u64,
 }
 
 impl RateLimiterFixedWindowConfig {
-    pub fn new(max_requests: u64, window_size_seconds: u64) -> Self {
+    pub fn new(max_requests: u64, window_size: u64) -> Self {
         Self {
             max_requests,
-            window_size_seconds,
+            window_size,
         }
     }
 }

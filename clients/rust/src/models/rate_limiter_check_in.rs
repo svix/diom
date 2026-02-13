@@ -11,9 +11,9 @@ use super::{
 pub struct RateLimiterCheckIn {
     pub key: String,
 
-    /// Number of units to consume (default: 1)
+    /// Number of tokens to consume (default: 1)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub units: Option<u64>,
+    pub tokens: Option<u64>,
 
     #[serde(flatten)]
     pub config: RateLimiterCheckInConfig,

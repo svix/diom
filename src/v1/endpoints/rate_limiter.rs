@@ -22,7 +22,7 @@ use crate::{
 };
 
 // Re-export types that are used in AppState
-use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitResult, TokenBucket};
+use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};
 
 // FIXME(@svix-lucho): Not fully convinced about 'method' and 'config'
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -56,7 +56,7 @@ impl From<RateLimiterTokenBucketConfig> for TokenBucket {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
-            refill_interval: Duration::from_secs(val.refill_interval_seconds),
+            refill_interval: Duration::from_secs(val.refill_interval),
         }
     }
 }
@@ -64,7 +64,7 @@ impl From<RateLimiterTokenBucketConfig> for TokenBucket {
 impl From<RateLimiterFixedWindowConfig> for FixedWindow {
     fn from(val: RateLimiterFixedWindowConfig) -> Self {
         FixedWindow {
-            size: Duration::from_secs(val.window_size_seconds),
+            size: Duration::from_secs(val.window_size),
             tokens: val.max_requests,
         }
     }
@@ -73,7 +73,7 @@ impl From<RateLimiterFixedWindowConfig> for FixedWindow {
 pub struct RateLimiterFixedWindowConfig {
     /// Window size in seconds
     #[validate(range(min = 1))]
-    pub window_size_seconds: u64,
+    pub window_size: u64,
 
     /// Maximum number of requests allowed within the window
     #[validate(range(min = 1))]
@@ -92,7 +92,12 @@ pub struct RateLimiterTokenBucketConfig {
 
     /// Interval in seconds between refills (minimum 1 second)
     #[validate(range(min = 1))]
-    pub refill_interval_seconds: u64,
+    #[serde(default = "default_interval")]
+    pub refill_interval: u64,
+}
+
+fn default_interval() -> u64 {
+    1
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -100,9 +105,9 @@ pub struct RateLimiterCheckIn {
     #[validate(nested)]
     pub key: EntityKey,
 
-    /// Number of units to consume (default: 1)
-    #[serde(default = "default_units")]
-    pub units: u64,
+    /// Number of tokens to consume (default: 1)
+    #[serde(default = "default_tokens")]
+    pub tokens: u64,
 
     /// Rate limiter configuration
     #[validate(nested)]
@@ -110,14 +115,14 @@ pub struct RateLimiterCheckIn {
     pub method: RateLimiterMethod,
 }
 
-fn default_units() -> u64 {
+fn default_tokens() -> u64 {
     1
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimiterCheckOut {
     /// Whether the request is allowed
-    pub result: RateLimitResult,
+    pub status: RateLimitStatus,
 
     /// Number of tokens remaining
     pub remaining: u64,
@@ -155,14 +160,14 @@ async fn rate_limiter_limit(
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterCheckIn>,
 ) -> Result<MsgPackOrJson<RateLimiterCheckOut>> {
     let key = data.key.0.clone();
-    let units = data.units;
+    let units = data.tokens;
     let method = data.method.into();
 
     let operation = RateLimiter::limit_operation(key, units, method);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RateLimiterCheckOut {
-        result: response.result,
+        status: response.status,
         remaining: response.remaining,
         retry_after: response
             .retry_after
