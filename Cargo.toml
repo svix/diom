@@ -29,6 +29,7 @@ axum-extra.workspace = true
 byteorder.workspace = true
 bytes.workspace = true
 config.workspace = true
+coyote-cache.workspace = true
 coyote-configgroup.workspace = true
 coyote-derive.workspace = true
 coyote-error.workspace = true
@@ -123,6 +124,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 coyote.path = "."
 coyote-client.path = "clients/rust"
+coyote-cache.path = "crates/cache"
 coyote-configgroup.path = "crates/coyote-configgroup"
 coyote-derive.path = "crates/coyote-derive"
 coyote-error.path = "crates/coyote-error"

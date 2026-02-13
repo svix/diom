@@ -4,8 +4,11 @@
 use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::State;
+use axum::{Extension, extract::State};
+use coyote_cache::CacheModel;
+use coyote_cache::operations::{DeleteOperation, SetOperation};
 use coyote_derive::aide_annotate;
+use coyote_error::ResultExt;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -14,13 +17,10 @@ use validator::Validate;
 
 use crate::{
     AppState,
-    core::types::EntityKey,
+    core::{cluster::RaftState, types::EntityKey},
     error::Result,
-    v1::{modules::cache::CacheModel, utils::openapi_tag},
+    v1::utils::openapi_tag,
 };
-
-// Re-export types that are used in AppState
-pub use crate::v1::modules::cache::CacheStore;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheSetIn {
@@ -88,12 +88,12 @@ pub struct CacheDeleteOut {
 /// Cache Set
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
-    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
-    let key = data.key.clone();
-    cache_store.set(key.as_str(), data.into_model())?;
+    let key_str = data.key.to_string();
+    let operation = SetOperation::new(key_str, data.into_model());
+    repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
 
@@ -113,11 +113,12 @@ async fn cache_get(
 /// Cache Delete
 #[aide_annotate(op_id = "v1.cache.delete")]
 async fn cache_del(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheDeleteIn>,
 ) -> Result<MsgPackOrJson<CacheDeleteOut>> {
-    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
-    cache_store.delete(&data.key)?;
+    let key_str = data.key.to_string();
+    let operation = DeleteOperation::new(key_str);
+    repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }
 
