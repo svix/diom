@@ -22,7 +22,7 @@ use crate::{
 };
 
 // Re-export types that are used in AppState
-use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitResult, TokenBucket};
+use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};
 
 // FIXME(@svix-lucho): Not fully convinced about 'method' and 'config'
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -122,7 +122,7 @@ fn default_tokens() -> u64 {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimiterCheckOut {
     /// Whether the request is allowed
-    pub result: RateLimitResult,
+    pub status: RateLimitStatus,
 
     /// Number of tokens remaining
     pub remaining: u64,
@@ -167,7 +167,7 @@ async fn rate_limiter_limit(
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RateLimiterCheckOut {
-        result: response.result,
+        status: response.status,
         remaining: response.remaining,
         retry_after: response
             .retry_after
