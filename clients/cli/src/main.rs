@@ -6,7 +6,7 @@ use concolor_clap::{Color, ColorChoice};
 use coyote_client::{CoyoteClient, CoyoteOptions};
 
 use self::{
-    cmds::api::{CacheArgs, IdempotencyArgs, KvArgs, RateLimiterArgs, StreamArgs},
+    cmds::api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, RateLimiterArgs, StreamArgs},
     config::Config,
 };
 

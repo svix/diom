@@ -1,11 +1,12 @@
 // this file is @generated
 mod cache;
+mod health;
 mod idempotency;
 mod kv;
 mod rate_limiter;
 mod stream;
 
 pub(crate) use self::{
-    cache::CacheArgs, idempotency::IdempotencyArgs, kv::KvArgs, rate_limiter::RateLimiterArgs,
-    stream::StreamArgs,
+    cache::CacheArgs, health::HealthArgs, idempotency::IdempotencyArgs, kv::KvArgs,
+    rate_limiter::RateLimiterArgs, stream::StreamArgs,
 };
