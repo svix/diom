@@ -4576,9 +4576,11 @@ version = "0.0.1"
 dependencies = [
  "coyote-configgroup",
  "coyote-error",
+ "coyote-operations",
  "fjall",
  "fjall-utils",
  "jiff",
+ "paste",
  "rmp-serde",
  "schemars 1.2.0",
  "serde",

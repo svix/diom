@@ -1,12 +1,12 @@
-use coyote_configgroup::entities::ConfigGroupId;
-use coyote_error::Result;
-use jiff::Timestamp;
-
+use super::{AppendResponse, StreamRequest};
 use crate::{
     State,
     entities::{MsgId, MsgIn},
     tables::{MsgRow, msg_row_key},
 };
+use coyote_configgroup::entities::ConfigGroupId;
+use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
 
 pub struct AppendToStream {
     group_id: ConfigGroupId,
@@ -18,7 +18,11 @@ pub struct AppendToStreamOutput {
 }
 
 impl AppendToStream {
-    pub fn new(state: &State, group_id: ConfigGroupId, msgs: Vec<MsgIn>) -> Result<Self> {
+    pub fn new(
+        state: &State,
+        group_id: ConfigGroupId,
+        msgs: Vec<MsgIn>,
+    ) -> coyote_error::Result<Self> {
         let offset = MsgRow::get_next_msg_id_in_stream(state, group_id)?;
         let created_at = Timestamp::now();
 
@@ -45,10 +49,7 @@ impl AppendToStream {
         Ok(Self { group_id, msgs })
     }
 
-    // FIXME(@svix-gabriel) - I'm trying to adhere mostly to the API mentioned in the HA rfc (https://github.com/svix/rfc/pull/30/files#diff-1f8e708b840474d3072b1c965eb090a3e30b26e8b7036c6e0ae47ef36ffb09abR54)
-    // However for expediency, I don't want to wait for the relevant traits to be added in order to have something working.
-    // It should be straightforward (famous last words) to translate this method to the Operations trait once it's in place.
-    pub fn apply_operation(self, state: &State) -> Result<AppendToStreamOutput> {
+    pub fn apply_operation(self, state: &State) -> coyote_error::Result<AppendToStreamOutput> {
         let mut batch = state.db.batch();
 
         let msg_ids = self.msgs.iter().map(|(id, _msg)| *id).collect();
@@ -62,5 +63,38 @@ impl AppendToStream {
         batch.commit()?;
 
         Ok(AppendToStreamOutput { msg_ids })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppendOperation {
+    pub(crate) group_id: ConfigGroupId,
+    pub(crate) msgs: Vec<MsgIn>,
+}
+
+impl AppendOperation {
+    pub fn new(group_id: ConfigGroupId, msgs: Vec<MsgIn>) -> Self {
+        Self { group_id, msgs }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppendResponseData {
+    pub msg_ids: Vec<MsgId>,
+}
+
+impl AppendOperation {
+    fn apply_real(self, state: &State) -> coyote_operations::Result<AppendResponseData> {
+        let op = AppendToStream::new(state, self.group_id, self.msgs)?;
+        let out = op.apply_operation(state)?;
+        Ok(AppendResponseData {
+            msg_ids: out.msg_ids,
+        })
+    }
+}
+
+impl StreamRequest for AppendOperation {
+    fn apply(self, state: &State) -> AppendResponse {
+        AppendResponse(self.apply_real(state))
     }
 }

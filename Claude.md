@@ -1,6 +1,5 @@
 # Rules
 
-* When adding dependencies, add them in alphabetical order.
 * Before making any Rust code changes, disable the rust-analyzer extension to prevent server crashes:
   ```bash
   code --disable-extension rust-lang.rust-analyzer
@@ -16,4 +15,3 @@
 * Code guidelines
   * Keep mutation or state manipulation as isolated as possible
   * Keep functions short and simple. If a function is too long, split it into shorter, self documenting functions.
-* If any changes are made to `src/v1/endpoints/*`, run `cargo codegen` when done to update the client library code.

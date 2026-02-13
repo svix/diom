@@ -39,6 +39,7 @@ pub enum Request {
     RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
     Idempotency(coyote_idempotency::operations::IdempotencyOperation),
     Cache(coyote_cache::operations::CacheOperation),
+    Stream(stream::operations::StreamOperation),
 }
 
 impl From<coyote_kv::operations::KvOperation> for Request {
@@ -65,6 +66,12 @@ impl From<coyote_cache::operations::CacheOperation> for Request {
     }
 }
 
+impl From<stream::operations::StreamOperation> for Request {
+    fn from(value: stream::operations::StreamOperation) -> Self {
+        Request::Stream(value)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Response {
     Blank,
@@ -73,6 +80,7 @@ pub enum Response {
     RateLimiter(coyote_rate_limiter::operations::Response),
     Idempotency(coyote_idempotency::operations::Response),
     Cache(coyote_cache::operations::Response),
+    Stream(stream::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -114,6 +122,17 @@ impl TryFrom<Response> for coyote_cache::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::Cache(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for stream::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::Stream(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }
