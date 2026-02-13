@@ -1,10 +1,18 @@
+// SPDX-FileCopyrightText: © 2022 Svix Authors
+// SPDX-License-Identifier: MIT
+
+//! # Cache module.
+//!
+//! This module implements a cache store.
+
+pub mod operations;
+
+use diom_error::Result;
 use diom_kv::{KvModel, KvStore, OperationBehavior};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
-
-use crate::error::Result;
 
 #[derive(Clone)]
 pub struct CacheStore {
@@ -28,6 +36,7 @@ impl CacheStore {
         self.kv.delete(key)
     }
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
     pub expiry: Option<Timestamp>,

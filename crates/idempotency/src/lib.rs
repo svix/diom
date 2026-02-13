@@ -9,6 +9,8 @@
 //! ## TODO FIXME
 //! - The API probably needs changing.
 
+pub mod operations;
+
 use std::time::Duration;
 
 use diom_error::Result;

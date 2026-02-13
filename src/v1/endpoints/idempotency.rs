@@ -2,15 +2,24 @@
 // SPDX-License-Identifier: MIT
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::State;
+use axum::Extension;
 use diom_derive::aide_annotate;
-use diom_idempotency::IdempotencyStartResult;
+use diom_error::ResultExt;
+use diom_idempotency::{
+    IdempotencyStartResult,
+    operations::{AbortOperation, CompleteOperation, TryStartOperation},
+};
 use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{AppState, core::types::EntityKey, error::Result, v1::utils::openapi_tag};
+use crate::{
+    AppState,
+    core::{cluster::RaftState, types::EntityKey},
+    error::Result,
+    v1::utils::openapi_tag,
+};
 
 // Re-export types that are used in AppState
 pub use diom_idempotency::IdempotencyStore;
@@ -84,26 +93,25 @@ pub struct IdempotencyAbortOut {}
 /// Start an idempotent request
 #[aide_annotate(op_id = "v1.idempotency.start")]
 async fn idempotency_start(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyStartIn>,
 ) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
+    let operation = TryStartOperation::new(key_str, data.ttl);
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
-    let result = idempotency_store.try_start(&key_str, data.ttl)?;
-    Ok(MsgPackOrJson(result.into()))
+    Ok(MsgPackOrJson(response.result.into()))
 }
 
 /// Complete an idempotent request with a response
 #[aide_annotate(op_id = "v1.idempotency.complete")]
 async fn idempotency_complete(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyCompleteIn>,
 ) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
-
-    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
-    idempotency_store.complete(&key_str, data.response, data.ttl)?;
+    let operation = CompleteOperation::new(key_str, data.response, data.ttl);
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
 }
@@ -111,13 +119,12 @@ async fn idempotency_complete(
 /// Abandon an idempotent request (remove lock without saving response)
 #[aide_annotate(op_id = "v1.idempotency.abort")]
 async fn idempotency_abort(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbortIn>,
 ) -> Result<MsgPackOrJson<IdempotencyAbortOut>> {
     let key_str = data.key.to_string();
-
-    let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
-    idempotency_store.abort(&key_str)?;
+    let operation = AbortOperation::new(key_str);
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyAbortOut {}))
 }

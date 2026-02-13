@@ -924,6 +924,7 @@ dependencies = [
  "byteorder",
  "bytes",
  "config",
+ "diom-cache",
  "diom-client",
  "diom-configgroup",
  "diom-derive",
@@ -991,6 +992,21 @@ dependencies = [
  "test-utils",
  "tokio",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "diom-cache"
+version = "0.0.1"
+dependencies = [
+ "diom-error",
+ "diom-kv",
+ "diom-operations",
+ "jiff",
+ "paste",
+ "rmp-serde",
+ "schemars 1.2.0",
+ "serde",
+ "validator",
 ]
 
 [[package]]
@@ -1083,8 +1099,10 @@ dependencies = [
  "diom-configgroup",
  "diom-error",
  "diom-kv",
+ "diom-operations",
  "fjall",
  "jiff",
+ "paste",
  "rmp-serde",
  "serde",
  "tempfile",
