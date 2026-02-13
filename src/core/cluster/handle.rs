@@ -37,6 +37,8 @@ pub enum Request {
     ClusterInternal(InternalRequest),
     Kv(coyote_kv::operations::KvOperation),
     RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
+    Idempotency(coyote_idempotency::operations::IdempotencyOperation),
+    Cache(coyote_cache::operations::CacheOperation),
 }
 
 impl From<coyote_kv::operations::KvOperation> for Request {
@@ -51,12 +53,26 @@ impl From<coyote_rate_limiter::operations::RateLimiterOperation> for Request {
     }
 }
 
+impl From<coyote_idempotency::operations::IdempotencyOperation> for Request {
+    fn from(value: coyote_idempotency::operations::IdempotencyOperation) -> Self {
+        Request::Idempotency(value)
+    }
+}
+
+impl From<coyote_cache::operations::CacheOperation> for Request {
+    fn from(value: coyote_cache::operations::CacheOperation) -> Self {
+        Request::Cache(value)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Response {
     Blank,
     ClusterInternal(InternalResponse),
     Kv(coyote_kv::operations::Response),
     RateLimiter(coyote_rate_limiter::operations::Response),
+    Idempotency(coyote_idempotency::operations::Response),
+    Cache(coyote_cache::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -76,6 +92,28 @@ impl TryFrom<Response> for coyote_rate_limiter::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::RateLimiter(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_idempotency::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::Idempotency(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_cache::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::Cache(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

@@ -9,6 +9,8 @@
 //! ## TODO FIXME
 //! - The API probably needs changing.
 
+pub mod operations;
+
 use std::time::Duration;
 
 use coyote_error::Result;
