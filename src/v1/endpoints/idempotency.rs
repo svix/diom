@@ -5,7 +5,10 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::Extension;
 use coyote_derive::aide_annotate;
 use coyote_error::ResultExt;
-use coyote_idempotency::operations::{AbandonOperation, CompleteOperation, TryStartOperation};
+use coyote_idempotency::{
+    IdempotencyStartResult,
+    operations::{AbortOperation, CompleteOperation, TryStartOperation},
+};
 use coyote_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -94,7 +97,7 @@ async fn idempotency_start(
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyStartIn>,
 ) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let key_str = data.key.to_string();
-    let operation = TryStartOperation::new(key_str, data.ttl_seconds);
+    let operation = TryStartOperation::new(key_str, data.ttl);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
@@ -107,20 +110,20 @@ async fn idempotency_complete(
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyCompleteIn>,
 ) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let key_str = data.key.to_string();
-    let operation = CompleteOperation::new(key_str, data.response, data.ttl_seconds);
+    let operation = CompleteOperation::new(key_str, data.response, data.ttl);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
 }
 
 /// Abandon an idempotent request (remove lock without saving response)
-#[aide_annotate(op_id = "v1.idempotency.abandon")]
-async fn idempotency_abandon(
+#[aide_annotate(op_id = "v1.idempotency.abort")]
+async fn idempotency_abort(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbandonIn>,
-) -> Result<MsgPackOrJson<IdempotencyAbandonOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbortIn>,
+) -> Result<MsgPackOrJson<IdempotencyAbortOut>> {
     let key_str = data.key.to_string();
-    let operation = AbandonOperation::new(key_str);
+    let operation = AbortOperation::new(key_str);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyAbortOut {}))

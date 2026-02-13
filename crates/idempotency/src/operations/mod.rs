@@ -1,11 +1,11 @@
 use crate::IdempotencyStore;
 use serde::{Deserialize, Serialize};
 
-mod abandon;
+mod abort;
 mod complete;
 mod try_start;
 
-pub use abandon::AbandonOperation;
+pub use abort::AbortOperation;
 pub use complete::CompleteOperation;
 pub use try_start::{TryStartOperation, TryStartResponseData};
 
@@ -16,7 +16,7 @@ raft_module_operations!(
     IdempotencyOperation {
         TryStart(TryStartOperation) -> TryStartResponseData,
         Complete(CompleteOperation) -> (),
-        Abandon(AbandonOperation) -> (),
+        Abort(AbortOperation) -> (),
     },
     state = &mut IdempotencyStore,
 );
@@ -26,7 +26,7 @@ impl IdempotencyOperation {
         match self {
             Self::TryStart(req) => req.key.as_ref(),
             Self::Complete(req) => req.key.as_ref(),
-            Self::Abandon(req) => req.key.as_ref(),
+            Self::Abort(req) => req.key.as_ref(),
         }
     }
 }
