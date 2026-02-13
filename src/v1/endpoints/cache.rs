@@ -28,19 +28,18 @@ pub struct CacheSetIn {
     pub key: EntityKey,
 
     /// Time to live in milliseconds
-    pub expire_in: u64,
+    pub ttl: u64,
 
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl CacheSetIn {
     fn into_model(self) -> CacheModel {
-        let expires_at = Timestamp::now() + Duration::from_millis(self.expire_in);
+        let expires = Timestamp::now() + Duration::from_millis(self.ttl);
 
         CacheModel {
-            expires_at: Some(expires_at),
-            value: self.value.into_bytes(),
+            expires: Some(expires),
+            value: self.value,
         }
     }
 }
@@ -60,18 +59,17 @@ pub struct CacheGetOut {
     pub key: EntityKey,
 
     /// Time of expiry
-    pub expires_at: Option<Timestamp>,
+    pub expires: Option<Timestamp>,
 
-    // FIXME: change to Bytes
-    pub value: String,
+    pub value: Vec<u8>,
 }
 
 impl CacheGetOut {
     fn from_model(key: EntityKey, model: CacheModel) -> Self {
         Self {
             key,
-            expires_at: model.expires_at,
-            value: String::from_utf8_lossy(&model.value).into_owned(),
+            expires: model.expires,
+            value: model.value,
         }
     }
 }
