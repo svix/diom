@@ -19,6 +19,8 @@ mod dlq_in;
 mod dlq_out;
 mod fetch_from_stream_in;
 mod fetch_from_stream_out;
+mod idempotency_abort_in;
+mod idempotency_abort_out;
 mod kv_delete_in;
 mod kv_delete_out;
 mod kv_get_in;
@@ -28,8 +30,7 @@ mod kv_set_out;
 mod msg_in;
 mod msg_out;
 mod operation_behavior;
-mod ping_out;
-mod rate_limit_result;
+mod rate_limit_status;
 mod rate_limiter_check_in;
 mod rate_limiter_check_out;
 mod rate_limiter_fixed_window_config;
@@ -58,6 +59,8 @@ pub use self::{
     dlq_out::DlqOut,
     fetch_from_stream_in::FetchFromStreamIn,
     fetch_from_stream_out::FetchFromStreamOut,
+    idempotency_abort_in::IdempotencyAbortIn,
+    idempotency_abort_out::IdempotencyAbortOut,
     kv_delete_in::KvDeleteIn,
     kv_delete_out::KvDeleteOut,
     kv_get_in::KvGetIn,
@@ -67,8 +70,7 @@ pub use self::{
     msg_in::MsgIn,
     msg_out::MsgOut,
     operation_behavior::OperationBehavior,
-    ping_out::PingOut,
-    rate_limit_result::RateLimitResult,
+    rate_limit_status::RateLimitStatus,
     rate_limiter_check_in::{RateLimiterCheckIn, RateLimiterCheckInConfig},
     rate_limiter_check_out::RateLimiterCheckOut,
     rate_limiter_fixed_window_config::RateLimiterFixedWindowConfig,

@@ -517,14 +517,14 @@
         ]
       }
     },
-    "/api/v1/idempotency/abandon": {
+    "/api/v1/idempotency/abort": {
       "post": {
         "tags": [
           "Idempotency"
         ],
-        "summary": "Idempotency Abandon",
+        "summary": "Idempotency Abort",
         "description": "Abandon an idempotent request (remove lock without saving response)",
-        "operationId": "v1.idempotency.abandon",
+        "operationId": "v1.idempotency.abort",
         "parameters": [
           {
             "in": "header",
@@ -540,7 +540,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdempotencyAbandonIn"
+                "$ref": "#/components/schemas/IdempotencyAbortIn"
               }
             }
           },
@@ -552,7 +552,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdempotencyAbandonOut"
+                  "$ref": "#/components/schemas/IdempotencyAbortOut"
                 }
               }
             }
@@ -1095,14 +1095,20 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "expires_at": {
+          "expires": {
             "description": "Time of expiry",
             "type": "string",
             "format": "date-time",
             "nullable": true
           },
           "value": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
           }
         },
         "required": [
@@ -1119,19 +1125,25 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "expire_in": {
+          "ttl": {
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
             "minimum": 0
           },
           "value": {
-            "type": "string"
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
           }
         },
         "required": [
           "key",
-          "expire_in",
+          "ttl",
           "value"
         ]
       },
@@ -1264,7 +1276,7 @@
           "msgs"
         ]
       },
-      "IdempotencyAbandonIn": {
+      "IdempotencyAbortIn": {
         "type": "object",
         "properties": {
           "key": {
@@ -1278,7 +1290,7 @@
           "key"
         ]
       },
-      "IdempotencyAbandonOut": {
+      "IdempotencyAbortOut": {
         "type": "object"
       },
       "IdempotencyCompleteIn": {
@@ -1300,7 +1312,7 @@
               "maximum": 255
             }
           },
-          "ttl_seconds": {
+          "ttl": {
             "description": "TTL in seconds for the cached response",
             "type": "integer",
             "format": "uint64",
@@ -1310,7 +1322,7 @@
         "required": [
           "key",
           "response",
-          "ttl_seconds"
+          "ttl"
         ]
       },
       "IdempotencyCompleteOut": {
@@ -1325,7 +1337,7 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "ttl_seconds": {
+          "ttl": {
             "description": "TTL in seconds for the lock/response",
             "type": "integer",
             "format": "uint64",
@@ -1334,13 +1346,28 @@
         },
         "required": [
           "key",
-          "ttl_seconds"
+          "ttl"
         ]
       },
       "IdempotencyStartOut": {
         "oneOf": [
           {
             "description": "Lock acquired, request should proceed",
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "started"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          {
+            "description": "Request is already in progress (locked)",
             "type": "object",
             "properties": {
               "status": {
@@ -1429,7 +1456,7 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "expires_at": {
+          "expires": {
             "description": "Time of expiry",
             "type": "string",
             "format": "date-time",
@@ -1459,7 +1486,7 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "expire_in": {
+          "ttl": {
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
@@ -1566,11 +1593,11 @@
           "ok"
         ]
       },
-      "RateLimitResult": {
+      "RateLimitStatus": {
         "type": "string",
         "enum": [
-          "OK",
-          "BLOCK"
+          "ok",
+          "block"
         ]
       },
       "RateLimiterCheckIn": {
@@ -1582,8 +1609,8 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "units": {
-            "description": "Number of units to consume (default: 1)",
+          "tokens": {
+            "description": "Number of tokens to consume (default: 1)",
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
@@ -1635,9 +1662,9 @@
       "RateLimiterCheckOut": {
         "type": "object",
         "properties": {
-          "result": {
+          "status": {
             "description": "Whether the request is allowed",
-            "$ref": "#/components/schemas/RateLimitResult"
+            "$ref": "#/components/schemas/RateLimitStatus"
           },
           "remaining": {
             "description": "Number of tokens remaining",
@@ -1654,14 +1681,14 @@
           }
         },
         "required": [
-          "result",
+          "status",
           "remaining"
         ]
       },
       "RateLimiterFixedWindowConfig": {
         "type": "object",
         "properties": {
-          "window_size_seconds": {
+          "window_size": {
             "description": "Window size in seconds",
             "type": "integer",
             "format": "uint64",
@@ -1675,7 +1702,7 @@
           }
         },
         "required": [
-          "window_size_seconds",
+          "window_size",
           "max_requests"
         ]
       },
@@ -1767,17 +1794,17 @@
             "format": "uint64",
             "minimum": 1
           },
-          "refill_interval_seconds": {
+          "refill_interval": {
             "description": "Interval in seconds between refills (minimum 1 second)",
             "type": "integer",
             "format": "uint64",
-            "minimum": 1
+            "minimum": 1,
+            "default": 1
           }
         },
         "required": [
           "capacity",
-          "refill_amount",
-          "refill_interval_seconds"
+          "refill_amount"
         ]
       },
       "RedriveIn": {

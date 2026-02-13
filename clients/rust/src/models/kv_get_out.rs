@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct KvGetOut {
     /// Time of expiry
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expires_at: Option<jiff::Timestamp>,
+    pub expires: Option<jiff::Timestamp>,
 
     pub key: String,
 
@@ -16,7 +16,7 @@ pub struct KvGetOut {
 impl KvGetOut {
     pub fn new(key: String, value: Vec<u8>) -> Self {
         Self {
-            expires_at: None,
+            expires: None,
             key,
             value,
         }

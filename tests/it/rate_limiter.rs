@@ -153,27 +153,28 @@ async fn test_rate_limiter_limit_fixed_window() -> TestResult {
     } = start_server().await;
     let max_requests = 5;
     let window_size_seconds = 1;
+    let key = "rl-key-fixed-window";
 
     let response =
-        call_limit_fixed_window(&client, "rl-key-1", 1, max_requests, window_size_seconds).await?;
+        call_limit_fixed_window(&client, key, 1, max_requests, window_size_seconds).await?;
     assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 4);
     assert_eq!(response["retry_after"], json!(null));
 
     let response =
-        call_limit_fixed_window(&client, "rl-key-1", 2, max_requests, window_size_seconds).await?;
+        call_limit_fixed_window(&client, key, 2, max_requests, window_size_seconds).await?;
     assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 2);
     assert_eq!(response["retry_after"], json!(null));
 
     let response =
-        call_limit_fixed_window(&client, "rl-key-1", 2, max_requests, window_size_seconds).await?;
+        call_limit_fixed_window(&client, key, 2, max_requests, window_size_seconds).await?;
     assert_eq!(response["status"], "ok");
     assert_eq!(response["remaining"], 0);
     assert_eq!(response["retry_after"], json!(null));
 
     let response =
-        call_limit_fixed_window(&client, "rl-key-1", 1, max_requests, window_size_seconds).await?;
+        call_limit_fixed_window(&client, key, 1, max_requests, window_size_seconds).await?;
     assert_eq!(response["status"], "block");
     assert_eq!(response["remaining"], 0);
     assert!(response["retry_after"].is_number());
@@ -183,7 +184,7 @@ async fn test_rate_limiter_limit_fixed_window() -> TestResult {
     let response = client
         .post("rate-limiter/get-remaining")
         .json(json!({
-            "key": "rl-key-1",
+            "key": key,
             "method": "fixed_window",
             "config": {
                 "max_requests": max_requests,
