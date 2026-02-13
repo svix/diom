@@ -44,7 +44,7 @@ async fn test_cache_set_and_get() -> TestResult {
 
     assert_eq!(response["key"], "test-key-1");
     assert_eq!(response["value"], json!("test-value-123".as_bytes()));
-    assert!(response["expires"].is_string());
+    assert!(response["expiry"].is_string());
 
     Ok(())
 }

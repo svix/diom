@@ -23,14 +23,14 @@ use crate::{
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct KvModel {
-    pub expires_at: Option<Timestamp>,
+    pub expiry: Option<Timestamp>,
     pub value: Vec<u8>,
 }
 
 impl From<KvPairRow> for KvModel {
     fn from(row: KvPairRow) -> Self {
         Self {
-            expires_at: row.expires_at,
+            expiry: row.expiry,
             value: row.value,
         }
     }
@@ -79,14 +79,14 @@ impl KvStore {
         }
     }
 
-    fn update_lru(&mut self, key: &str, expires_at: Option<Timestamp>) {
+    fn update_lru(&mut self, key: &str, expiry: Option<Timestamp>) {
         match self.lru.raw_entry_mut().from_key(key) {
             RawEntryMut::Occupied(mut occupied) => {
                 occupied.to_back();
-                *occupied.get_mut() = expires_at;
+                *occupied.get_mut() = expiry;
             }
             RawEntryMut::Vacant(vacant) => {
-                vacant.insert(key.to_string(), expires_at);
+                vacant.insert(key.to_string(), expiry);
             }
         }
     }
@@ -101,12 +101,12 @@ impl KvStore {
             return Ok(None);
         };
 
-        if data.expires_at.is_some_and(|exp| exp < Timestamp::now()) {
+        if data.expiry.is_some_and(|exp| exp < Timestamp::now()) {
             let _ = self.delete(key);
             return Ok(None);
         }
 
-        self.update_lru(key, data.expires_at);
+        self.update_lru(key, data.expiry);
 
         Ok(Some(data.into()))
     }
@@ -117,19 +117,19 @@ impl KvStore {
         let row = KvPairRow {
             key: key.to_string(),
             value: model.value.clone(),
-            expires_at: model.expires_at,
+            expiry: model.expiry,
         };
 
         batch.insert_row(&self.tables, &row)?;
 
-        if let Some(expires_at) = model.expires_at {
-            let expiration_row = ExpirationRow::new(expires_at, key.to_string());
+        if let Some(expiry) = model.expiry {
+            let expiration_row = ExpirationRow::new(expiry, key.to_string());
             batch.insert_row(&self.tables, &expiration_row)?;
         }
 
         batch.commit()?;
 
-        self.update_lru(key, model.expires_at);
+        self.update_lru(key, model.expiry);
 
         Ok(())
     }
@@ -176,8 +176,8 @@ impl KvStore {
 
         if let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? {
             // Delete from the expiration keyspace
-            if let Some(expires_at) = data.expires_at {
-                let r = ExpirationRow::new(expires_at, key.to_string());
+            if let Some(expiry) = data.expiry {
+                let r = ExpirationRow::new(expiry, key.to_string());
                 batch.remove_row::<ExpirationRow>(&self.tables, r.get_key().as_ref())?;
             }
             batch.remove_row::<KvPairRow>(&self.tables, &key.to_string())?;
@@ -224,10 +224,10 @@ impl KvStore {
         let mut expired_keys = Vec::new();
 
         for item in ExpirationRow::values(&self.tables)? {
-            if item.expiration_time.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
+            if item.expiry.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
                 expired_keys.push(item.key);
                 removed += 1;
-            } else if item.expiration_time.as_millisecond() >= now_ms {
+            } else if item.expiry.as_millisecond() >= now_ms {
                 // expiration rows are ordered, so we can break early
                 break;
             }
@@ -385,7 +385,7 @@ mod tests {
 
         let key = "test:key1";
         let model = KvModel {
-            expires_at: None,
+            expiry: None,
             value: b"hello world".to_vec(),
         };
 
@@ -396,7 +396,7 @@ mod tests {
         assert!(retrieved.is_some());
         let retrieved = retrieved.unwrap();
         assert_eq!(retrieved.value, b"hello world");
-        assert_eq!(retrieved.expires_at, None);
+        assert_eq!(retrieved.expiry, None);
 
         assert!(!key_exists(&mut store, "nonexistent:key"));
     }
@@ -409,7 +409,7 @@ mod tests {
         let res = store.set(
             "key1",
             &KvModel {
-                expires_at: None,
+                expiry: None,
                 value: b"key1 updated".to_vec(),
             },
             OperationBehavior::Update,
@@ -420,7 +420,7 @@ mod tests {
         let res = store.set(
             "key1",
             &KvModel {
-                expires_at: None,
+                expiry: None,
                 value: b"key1 inserted".to_vec(),
             },
             OperationBehavior::Insert,
@@ -433,7 +433,7 @@ mod tests {
         let res = store.set(
             "key1",
             &KvModel {
-                expires_at: None,
+                expiry: None,
                 value: b"another value".to_vec(),
             },
             OperationBehavior::Insert,
@@ -448,7 +448,7 @@ mod tests {
         let res = store.set(
             "key1",
             &KvModel {
-                expires_at: None,
+                expiry: None,
                 value: b"key1 upserted".to_vec(),
             },
             OperationBehavior::Upsert,
@@ -467,13 +467,13 @@ mod tests {
 
         let key = "overwrite:key";
         let model1 = KvModel {
-            expires_at: None,
+            expiry: None,
             value: b"first value".to_vec(),
         };
         store.set(key, &model1, OperationBehavior::Upsert).unwrap();
 
         let model2 = KvModel {
-            expires_at: None,
+            expiry: None,
             value: b"second value".to_vec(),
         };
         store.set(key, &model2, OperationBehavior::Upsert).unwrap();
@@ -489,7 +489,7 @@ mod tests {
         let mut store = setup.store;
 
         let expired_model = KvModel {
-            expires_at: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),
+            expiry: Some(Timestamp::now().checked_sub(1.hour()).unwrap()),
             value: b"expired data".to_vec(),
         };
         store
@@ -501,21 +501,21 @@ mod tests {
             (
                 "expired:key:1",
                 KvModel {
-                    expires_at: Some(now.checked_sub(3.hour()).unwrap()),
+                    expiry: Some(now.checked_sub(3.hour()).unwrap()),
                     value: b"expired data 1".to_vec(),
                 },
             ),
             (
                 "expired:key:2",
                 KvModel {
-                    expires_at: Some(now.checked_sub(2.hour()).unwrap()),
+                    expiry: Some(now.checked_sub(2.hour()).unwrap()),
                     value: b"expired data 2".to_vec(),
                 },
             ),
             (
                 "expired:key:3",
                 KvModel {
-                    expires_at: Some(now.checked_sub(1.second()).unwrap()), // really close to now
+                    expiry: Some(now.checked_sub(1.second()).unwrap()), // really close to now
                     value: b"expired data 3".to_vec(),
                 },
             ),
@@ -526,7 +526,7 @@ mod tests {
         }
 
         let valid_model = KvModel {
-            expires_at: Some(now.checked_add(1.hour()).unwrap()),
+            expiry: Some(now.checked_add(1.hour()).unwrap()),
             value: b"valid data".to_vec(),
         };
         let valid_key = "valid:key";
@@ -535,7 +535,7 @@ mod tests {
             .unwrap();
 
         let permanent_model = KvModel {
-            expires_at: None,
+            expiry: None,
             value: b"permanent data".to_vec(),
         };
         let permanent_key = "permanent:key";
@@ -563,11 +563,11 @@ mod tests {
         assert_eq!(permanent.unwrap().value, b"permanent data");
     }
 
-    fn insert_key(kv: &mut KvStore, key: &str, expires_at: Option<Timestamp>) {
+    fn insert_key(kv: &mut KvStore, key: &str, expiry: Option<Timestamp>) {
         kv.set(
             key,
             &KvModel {
-                expires_at,
+                expiry,
                 value: key.as_bytes().to_vec(),
             },
             OperationBehavior::Upsert,

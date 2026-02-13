@@ -66,7 +66,7 @@ async fn test_kv_set_and_get() -> TestResult {
 
     assert_eq!(response["key"], "kv-key-1");
     assert_eq!(response["value"], json!("kv-value-456".as_bytes()));
-    assert!(response["expires"].is_null());
+    assert!(response["expiry"].is_null());
 
     let expires_in = 1000;
     let now = Timestamp::now();
@@ -80,7 +80,7 @@ async fn test_kv_set_and_get() -> TestResult {
     .await?;
     let response = kv_get(&client, "kv-key-1").await?;
 
-    let expires_at: Timestamp = serde_json::from_value(response["expires"].clone()).unwrap();
+    let expires_at: Timestamp = serde_json::from_value(response["expiry"].clone()).unwrap();
     let expected = now + Duration::from_millis(expires_in);
     assert!(
         expires_at
@@ -110,7 +110,7 @@ async fn test_kv_set_with_insert_and_delete() -> TestResult {
 
     let response = kv_get(&client, "kv-key-2").await?;
     assert_eq!(response["value"], json!("permanent-value".as_bytes()));
-    assert_eq!(response["expires"], json!(null));
+    assert_eq!(response["expiry"], json!(null));
 
     let delete_response = client
         .post("kv/delete")
@@ -158,13 +158,13 @@ async fn test_kv_update_expiration() -> TestResult {
     kv_set(&client, "kv4", Some(2000), "v4", "upsert").await?;
 
     let response = kv_get(&client, "kv4").await?;
-    let expires_at = response["expires"].as_str().unwrap();
+    let expires_at = response["expiry"].as_str().unwrap();
 
     tokio::time::sleep(Duration::from_millis(1000)).await;
 
     let response = kv_get(&client, "kv4").await?;
     assert_eq!(response["value"], json!("v4".as_bytes()));
-    assert_eq!(response["expires"], expires_at);
+    assert_eq!(response["expiry"], expires_at);
 
     kv_set(&client, "kv5", Some(3000), "v5", "upsert").await?;
     kv_set(&client, "kv5", Some(500), "v5", "upsert").await?;

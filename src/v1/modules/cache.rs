@@ -30,7 +30,7 @@ impl CacheStore {
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
-    pub expires: Option<Timestamp>,
+    pub expiry: Option<Timestamp>,
 
     pub value: Vec<u8>,
 }
@@ -39,7 +39,7 @@ impl From<CacheModel> for KvModel {
     fn from(model: CacheModel) -> Self {
         KvModel {
             value: model.value,
-            expires_at: model.expires,
+            expiry: model.expiry,
         }
     }
 }
@@ -48,7 +48,7 @@ impl From<KvModel> for CacheModel {
     fn from(model: KvModel) -> Self {
         CacheModel {
             value: model.value,
-            expires: model.expires_at,
+            expiry: model.expiry,
         }
     }
 }

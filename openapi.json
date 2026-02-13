@@ -1095,7 +1095,7 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "expires": {
+          "expiry": {
             "description": "Time of expiry",
             "type": "string",
             "format": "date-time",
@@ -1456,7 +1456,7 @@
             "pattern": "^[a-zA-Z0-9\\-_.]+$",
             "example": "some_key"
           },
-          "expires": {
+          "expiry": {
             "description": "Time of expiry",
             "type": "string",
             "format": "date-time",

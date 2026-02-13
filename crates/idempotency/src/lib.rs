@@ -58,14 +58,14 @@ impl IdempotencyStore {
     /// Try to acquire the lock for a request.
     pub fn try_start(&mut self, key: &str, ttl_seconds: u64) -> Result<IdempotencyStartResult> {
         let now = Timestamp::now();
-        let expires_at = now + Duration::from_secs(ttl_seconds);
+        let expiry = now + Duration::from_secs(ttl_seconds);
 
         match self.kv.get(key)? {
             None => {
                 // No existing entry - acquire lock
                 let kv_model = KvModel {
                     value: IdempotencyState::InProgress.into(),
-                    expires_at: Some(expires_at),
+                    expiry: Some(expiry),
                 };
                 self.kv.set(key, &kv_model, OperationBehavior::Insert)?;
                 Ok(IdempotencyStartResult::Started)
@@ -89,11 +89,11 @@ impl IdempotencyStore {
     /// Complete a request with a successful response
     pub fn complete(&mut self, key: &str, response: Vec<u8>, ttl_seconds: u64) -> Result<()> {
         let now = Timestamp::now();
-        let expires_at = now + Duration::from_secs(ttl_seconds);
+        let expiry = now + Duration::from_secs(ttl_seconds);
 
         let kv_model = KvModel {
             value: IdempotencyState::Completed { response }.into(),
-            expires_at: Some(expires_at),
+            expiry: Some(expiry),
         };
         self.kv.set(key, &kv_model, OperationBehavior::Upsert)?;
 

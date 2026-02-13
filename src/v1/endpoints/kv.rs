@@ -51,10 +51,9 @@ impl KvSetIn {
             behavior: _,
         } = self;
 
-        let expires_at =
-            expire_in.map(|expire_in| Timestamp::now() + Duration::from_millis(expire_in));
+        let expiry = expire_in.map(|expire_in| Timestamp::now() + Duration::from_millis(expire_in));
 
-        KvModel { expires_at, value }
+        KvModel { expiry, value }
     }
 }
 
@@ -73,7 +72,7 @@ pub struct KvGetOut {
     pub key: Arc<EntityKey>,
 
     /// Time of expiry
-    pub expires: Option<Timestamp>,
+    pub expiry: Option<Timestamp>,
 
     pub value: Vec<u8>,
 }
@@ -82,7 +81,7 @@ impl KvGetOut {
     fn from_model(key: Arc<EntityKey>, model: KvModel) -> Self {
         Self {
             key,
-            expires: model.expires_at,
+            expiry: model.expiry,
             value: model.value,
         }
     }
