@@ -4,6 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::State;
 use diom_derive::aide_annotate;
+use diom_idempotency::IdempotencyStartResult;
 use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,16 +26,30 @@ pub struct IdempotencyStartIn {
 
     /// TTL in seconds for the lock/response
     #[validate(range(min = 1))]
-    pub ttl_seconds: u64,
+    pub ttl: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum IdempotencyStartOut {
     /// Lock acquired, request should proceed
+    Started,
+    /// Request is already in progress (locked)
     Locked,
     /// Request was already completed, cached response returned
     Completed { response: Vec<u8> },
+}
+
+impl From<IdempotencyStartResult> for IdempotencyStartOut {
+    fn from(result: IdempotencyStartResult) -> Self {
+        match result {
+            IdempotencyStartResult::Started => IdempotencyStartOut::Started,
+            IdempotencyStartResult::Locked => IdempotencyStartOut::Locked,
+            IdempotencyStartResult::Completed { response } => {
+                IdempotencyStartOut::Completed { response }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -47,20 +62,20 @@ pub struct IdempotencyCompleteIn {
 
     /// TTL in seconds for the cached response
     #[validate(range(min = 1))]
-    pub ttl_seconds: u64,
+    pub ttl: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyCompleteOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct IdempotencyAbandonIn {
+pub struct IdempotencyAbortIn {
     #[validate(nested)]
     pub key: EntityKey,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub struct IdempotencyAbandonOut {}
+pub struct IdempotencyAbortOut {}
 
 // ============================================================================
 // API Endpoints
@@ -75,10 +90,8 @@ async fn idempotency_start(
     let key_str = data.key.to_string();
 
     let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
-    match idempotency_store.try_start(&key_str, data.ttl_seconds)? {
-        None => Ok(MsgPackOrJson(IdempotencyStartOut::Locked)),
-        Some(response) => Ok(MsgPackOrJson(IdempotencyStartOut::Completed { response })),
-    }
+    let result = idempotency_store.try_start(&key_str, data.ttl)?;
+    Ok(MsgPackOrJson(result.into()))
 }
 
 /// Complete an idempotent request with a response
@@ -90,23 +103,23 @@ async fn idempotency_complete(
     let key_str = data.key.to_string();
 
     let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
-    idempotency_store.complete(&key_str, data.response, data.ttl_seconds)?;
+    idempotency_store.complete(&key_str, data.response, data.ttl)?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
 }
 
 /// Abandon an idempotent request (remove lock without saving response)
-#[aide_annotate(op_id = "v1.idempotency.abandon")]
-async fn idempotency_abandon(
+#[aide_annotate(op_id = "v1.idempotency.abort")]
+async fn idempotency_abort(
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbandonIn>,
-) -> Result<MsgPackOrJson<IdempotencyAbandonOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbortIn>,
+) -> Result<MsgPackOrJson<IdempotencyAbortOut>> {
     let key_str = data.key.to_string();
 
     let mut idempotency_store = state.get_idempotency_store_by_key(&key_str)?;
-    idempotency_store.abandon(&key_str)?;
+    idempotency_store.abort(&key_str)?;
 
-    Ok(MsgPackOrJson(IdempotencyAbandonOut {}))
+    Ok(MsgPackOrJson(IdempotencyAbortOut {}))
 }
 
 // ============================================================================
@@ -128,8 +141,8 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/idempotency/abandon",
-            post_with(idempotency_abandon, idempotency_abandon_operation),
+            "/idempotency/abort",
+            post_with(idempotency_abort, idempotency_abort_operation),
             &tag,
         )
 }

@@ -12,7 +12,7 @@ async fn start(client: &TestClient, key: &str, ttl_seconds: u64) -> TestResult<s
         .post("idempotency/start")
         .json(json!({
             "key": key,
-            "ttl_seconds": ttl_seconds
+            "ttl": ttl_seconds
         }))
         .await?
         .expect(StatusCode::OK)
@@ -31,7 +31,7 @@ async fn complete(
         .json(json!({
             "key": key,
             "response": response.as_bytes(),
-            "ttl_seconds": ttl_seconds
+            "ttl": ttl_seconds
         }))
         .await?
         .expect(StatusCode::OK);
@@ -40,7 +40,7 @@ async fn complete(
 
 async fn abandon(client: &TestClient, key: &str) -> TestResult<()> {
     client
-        .post("idempotency/abandon")
+        .post("idempotency/abort")
         .json(json!({
             "key": key
         }))
@@ -58,19 +58,21 @@ async fn test_idempotency_start_and_complete() -> TestResult {
     } = start_server().await;
 
     let response = start(&client, "k1", 60).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     start(&client, "k2", 60).await?;
 
-    // start again should conflict
-    client
+    // start again should return locked
+    let response = client
         .post("idempotency/start")
         .json(json!({
             "key": "k2",
-            "ttl_seconds": 60
+            "ttl": 60
         }))
         .await?
-        .expect(StatusCode::CONFLICT);
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(response["status"], "locked");
 
     start(&client, "k3", 60).await?;
     complete(&client, "k3", "v1", 60).await?;
@@ -83,7 +85,7 @@ async fn test_idempotency_start_and_complete() -> TestResult {
     start(&client, "k4", 60).await?;
     abandon(&client, "k4").await?;
     let response = start(&client, "k4", 60).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     start(&client, "k5", 60).await?;
     complete(&client, "k5", "v2", 60).await?;
@@ -104,14 +106,14 @@ async fn test_idempotency_start_and_complete() -> TestResult {
     abandon(&client, "k6").await?;
 
     let response = start(&client, "k6", 60).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     start(&client, "k7", 60).await?;
     complete(&client, "k7", "v1", 60).await?;
     // can abandon after completing
     abandon(&client, "k7").await?;
     let response = start(&client, "k7", 60).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     Ok(())
 }
@@ -129,7 +131,7 @@ async fn test_idempotency_abandon() -> TestResult {
     // can abandon after completing
     abandon(&client, "k1").await?;
     let response = start(&client, "k1", 1).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     // can abandon before starting
     abandon(&client, "k2").await?;
@@ -138,7 +140,7 @@ async fn test_idempotency_abandon() -> TestResult {
     // can abandon before completing
     abandon(&client, "k3").await?;
     let response = start(&client, "k3", 1).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     Ok(())
 }
@@ -155,20 +157,20 @@ async fn test_idempotency_expiration() -> TestResult {
     start(&client, "k1", 1).await?;
     tokio::time::sleep(Duration::from_secs(1)).await;
     let response = start(&client, "k1", 1).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     // start again after expired (completed)
     complete(&client, "k2", "v1", 1).await?;
     tokio::time::sleep(Duration::from_secs(1)).await;
     let response = start(&client, "k2", 1).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     // complete TTL shorter than start
     start(&client, "k4", 60).await?;
     complete(&client, "k4", "v1", 1).await?;
     tokio::time::sleep(Duration::from_secs(1)).await;
     let response = start(&client, "k4", 60).await?;
-    assert_eq!(response["status"], "locked");
+    assert_eq!(response["status"], "started");
 
     // complete TTL longer than start
     start(&client, "k5", 1).await?;
@@ -193,7 +195,7 @@ async fn test_idempotency_validation() -> TestResult {
         .post("idempotency/start")
         .json(json!({
             "key": "k",
-            "ttl_seconds": 0
+            "ttl": 0
         }))
         .await?
         .expect(StatusCode::UNPROCESSABLE_ENTITY);

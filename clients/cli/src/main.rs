@@ -6,7 +6,7 @@ use concolor_clap::{Color, ColorChoice};
 use diom_client::{DiomClient, DiomOptions};
 
 use self::{
-    cmds::api::{CacheArgs, HealthArgs, KvArgs, RateLimiterArgs, StreamArgs},
+    cmds::api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, RateLimiterArgs, StreamArgs},
     config::Config,
 };
 
@@ -61,6 +61,7 @@ impl Cli {
 #[derive(Subcommand)]
 enum RootCommands {
     Cache(CacheArgs),
+    Idempotency(IdempotencyArgs),
     Kv(KvArgs),
     RateLimit(RateLimiterArgs),
     Stream(StreamArgs),
@@ -100,6 +101,10 @@ async fn main() -> Result<()> {
 
         // Remote API calls
         RootCommands::Cache(args) => {
+            let client = get_client(&cfg?)?;
+            args.command.exec(&client, color_mode).await?;
+        }
+        RootCommands::Idempotency(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;
         }

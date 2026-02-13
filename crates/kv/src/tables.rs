@@ -15,7 +15,7 @@ static_assertions::const_assert!(fjall_utils::are_all_unique(&[
 pub struct KvPairRow {
     pub key: String,
     pub value: Vec<u8>,
-    pub expires_at: Option<Timestamp>,
+    pub expiry: Option<Timestamp>,
 }
 
 impl TableRow for KvPairRow {
@@ -29,7 +29,7 @@ impl TableRow for KvPairRow {
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ExpirationRow {
-    pub expiration_time: Timestamp,
+    pub expiry: Timestamp,
     pub key: String,
 
     #[serde(skip)]
@@ -37,10 +37,10 @@ pub(crate) struct ExpirationRow {
 }
 
 impl ExpirationRow {
-    pub(crate) fn new(expiration_time: Timestamp, key: String) -> Self {
+    pub(crate) fn new(expiry: Timestamp, key: String) -> Self {
         Self {
-            computed_key: ExpirationKey::from(expiration_time, key.clone()),
-            expiration_time,
+            computed_key: ExpirationKey::from(expiry, key.clone()),
+            expiry,
             key,
         }
     }

@@ -4,20 +4,16 @@ use serde::{Deserialize, Serialize};
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CacheSetIn {
-    /// Time to live in milliseconds
-    pub expire_in: u64,
-
     pub key: String,
 
-    pub value: String,
+    /// Time to live in milliseconds
+    pub ttl: u64,
+
+    pub value: Vec<u8>,
 }
 
 impl CacheSetIn {
-    pub fn new(expire_in: u64, key: String, value: String) -> Self {
-        Self {
-            expire_in,
-            key,
-            value,
-        }
+    pub fn new(key: String, ttl: u64, value: Vec<u8>) -> Self {
+        Self { key, ttl, value }
     }
 }

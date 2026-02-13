@@ -11,7 +11,7 @@
 
 use std::time::Duration;
 
-use diom_error::{Error, HttpError, Result};
+use diom_error::Result;
 use diom_kv::{KvModel, KvStore, OperationBehavior};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -22,6 +22,14 @@ enum IdempotencyState {
     /// Request is in progress (locked)
     InProgress,
     /// Request completed successfully with a response
+    Completed { response: Vec<u8> },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum IdempotencyStartResult {
+    Started,
+    Locked,
     Completed { response: Vec<u8> },
 }
 
@@ -48,37 +56,30 @@ impl IdempotencyStore {
     }
 
     /// Try to acquire the lock for a request.
-    /// Returns:
-    /// - Ok(None) if lock was acquired (request should proceed)
-    /// - Ok(Some(response)) if request was already completed (return cached response)
-    /// - Err if request is already in progress (conflict)
-    pub fn try_start(&mut self, key: &str, ttl_seconds: u64) -> Result<Option<Vec<u8>>> {
+    pub fn try_start(&mut self, key: &str, ttl_seconds: u64) -> Result<IdempotencyStartResult> {
         let now = Timestamp::now();
-        let expires_at = now + Duration::from_secs(ttl_seconds);
+        let expiry = now + Duration::from_secs(ttl_seconds);
 
         match self.kv.get(key)? {
             None => {
                 // No existing entry - acquire lock
                 let kv_model = KvModel {
                     value: IdempotencyState::InProgress.into(),
-                    expires_at: Some(expires_at),
+                    expiry: Some(expiry),
                 };
                 self.kv.set(key, &kv_model, OperationBehavior::Insert)?;
-                Ok(None)
+                Ok(IdempotencyStartResult::Started)
             }
             Some(kv_model) => {
                 let state: IdempotencyState = kv_model.value.into();
                 match state {
                     IdempotencyState::InProgress => {
                         // Still in progress by another request
-                        Err(Error::http(HttpError::conflict(
-                            Some("Request is already in progress".into()),
-                            None,
-                        )))
+                        Ok(IdempotencyStartResult::Locked)
                     }
                     IdempotencyState::Completed { response } => {
                         // Return cached response
-                        Ok(Some(response))
+                        Ok(IdempotencyStartResult::Completed { response })
                     }
                 }
             }
@@ -88,11 +89,11 @@ impl IdempotencyStore {
     /// Complete a request with a successful response
     pub fn complete(&mut self, key: &str, response: Vec<u8>, ttl_seconds: u64) -> Result<()> {
         let now = Timestamp::now();
-        let expires_at = now + Duration::from_secs(ttl_seconds);
+        let expiry = now + Duration::from_secs(ttl_seconds);
 
         let kv_model = KvModel {
             value: IdempotencyState::Completed { response }.into(),
-            expires_at: Some(expires_at),
+            expiry: Some(expiry),
         };
         self.kv.set(key, &kv_model, OperationBehavior::Upsert)?;
 
@@ -100,7 +101,7 @@ impl IdempotencyStore {
     }
 
     /// Abandon a request (remove the lock without saving response)
-    pub fn abandon(&mut self, key: &str) -> Result<()> {
+    pub fn abort(&mut self, key: &str) -> Result<()> {
         self.kv.delete(key)
     }
 }
@@ -152,20 +153,23 @@ mod tests {
         let mut store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, None);
-
-        let result = store.try_start("test", 10);
-        assert!(result.is_err());
-
-        store.abandon("test")?;
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, None);
+        assert_eq!(result, IdempotencyStartResult::Locked);
+
+        store.abort("test")?;
+
+        let result = store.try_start("test", 10)?;
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         store.complete("test", value.clone(), 10)?;
 
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, Some(value));
+        assert_eq!(
+            result,
+            IdempotencyStartResult::Completed { response: value }
+        );
         Ok(())
     }
 
@@ -178,12 +182,15 @@ mod tests {
         store.complete("test", value.clone(), 10)?;
 
         let result = store.try_start("test", 10)?;
-        assert_eq!(result, Some(value));
+        assert_eq!(
+            result,
+            IdempotencyStartResult::Completed { response: value }
+        );
 
-        // Can abandon a request without starting it first
-        store.abandon("test2")?;
+        // Can abort a request without starting it first
+        store.abort("test2")?;
         let result2 = store.try_start("test2", 10)?;
-        assert_eq!(result2, None);
+        assert_eq!(result2, IdempotencyStartResult::Started);
 
         Ok(())
     }
@@ -198,14 +205,14 @@ mod tests {
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         let result = store.try_start("test", 1)?;
-        assert_eq!(result, None);
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         store.complete("test", value, 1)?;
 
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         let result = store.try_start("test", 1)?;
-        assert_eq!(result, None);
+        assert_eq!(result, IdempotencyStartResult::Started);
 
         Ok(())
     }
