@@ -15,6 +15,9 @@
         "tags": [
           "Health"
         ],
+        "summary": "Ping",
+        "description": "Verify the server is up and running.",
+        "operationId": "v1.health.ping",
         "responses": {
           "200": {
             "description": "",
@@ -26,24 +29,12 @@
               }
             }
           }
-        }
-      },
-      "head": {
-        "tags": [
-          "Health"
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PingOut"
-                }
-              }
-            }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
           }
-        }
+        ]
       }
     },
     "/api/v1/cache/set": {

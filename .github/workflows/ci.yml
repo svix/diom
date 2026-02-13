@@ -71,7 +71,7 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: just test --profile ci
   check-codegen:
-    name: Check openapi.json and SDKs
+    name: Check openapi.json and SDK freshness
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
