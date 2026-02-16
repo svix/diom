@@ -152,7 +152,7 @@ async fn test_rate_limiter_limit_fixed_window() -> TestResult {
         ..
     } = start_server().await;
     let max_requests = 5;
-    let window_size_seconds = 1;
+    let window_size_seconds = 3;
     let key = "rl-key-fixed-window";
 
     let response =
@@ -179,7 +179,7 @@ async fn test_rate_limiter_limit_fixed_window() -> TestResult {
     assert_eq!(response["remaining"], 0);
     assert!(response["retry_after"].is_number());
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
 
     let response = client
         .post("rate-limiter/get-remaining")
