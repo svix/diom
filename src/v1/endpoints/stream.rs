@@ -7,12 +7,12 @@ use std::{
 };
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::State;
+use axum::{Extension, extract::State};
 use coyote_configgroup::{
     entities::StreamConfig, operations::create_configgroup::CreateConfigGroupOutput,
 };
 use coyote_derive::aide_annotate;
-use coyote_error::Result;
+use coyote_error::{Result, ResultExt};
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use stream::entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName};
 use validator::Validate;
 
-use crate::{AppState, v1::utils::openapi_tag};
+use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CreateStreamIn {
@@ -103,29 +103,15 @@ struct AppendToStreamOut {
 #[aide_annotate(op_id = "v1.stream.append")]
 async fn append_to_stream(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AppendToStreamIn>,
 ) -> Result<MsgPackOrJson<AppendToStreamOut>> {
-    /*
-    FIXME(@svix-gabriel)
-
-    This is missing a few important things
-        1. We haven't setup thread-per-core, so this could go to any thread.
-        2. We haven't setup quorum/raft stuff yet, so there's no consensus.
-
-    I didn't want to let either of these things block developing stream,
-    so in practice the structure of this handler will look different once those two pieces are in place.
-    */
-
     let group = state.get_stream(&data.name)?;
-    let stream_state = state.stream_state;
-    let out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::AppendToStream::new(&stream_state, group.id, data.msgs)?;
-        op.apply_operation(&stream_state)
-    })
-    .await??;
+    let operation = stream::operations::AppendOperation::new(group.id, data.msgs);
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(AppendToStreamOut {
-        msg_ids: out.msg_ids,
+        msg_ids: response.msg_ids,
     }))
 }
 
