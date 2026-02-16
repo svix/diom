@@ -1,58 +1,15 @@
+use super::{DlqResponse, StreamRaftState, StreamRequest};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId},
-    tables::{LeaseDiff, LeaseRow},
+    tables::LeaseRow,
 };
 use coyote_configgroup::entities::ConfigGroupId;
-use coyote_error::{HttpError, Result};
+use coyote_error::HttpError;
 use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
 
-pub struct Dlq {
-    lease_diff: LeaseDiff,
-}
-
-pub struct DlqOutput {}
-
-impl Dlq {
-    pub fn new(
-        state: &State,
-        group_id: ConfigGroupId,
-        cg: ConsumerGroup,
-        msg_id: MsgId,
-    ) -> Result<Self> {
-        let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
-
-        validate_dlq_bounds(&leases, msg_id)?;
-
-        let mut lease_diff = LeaseRow::cull_and_compact(leases.clone(), now);
-
-        // Shrink any active leases that cover this message
-        LeaseRow::shrink_active_leases_for_range(&leases, msg_id, msg_id, now, &mut lease_diff);
-
-        lease_diff.to_insert.push(LeaseRow {
-            group_id,
-            cg,
-            block_start: msg_id,
-            block_end: msg_id,
-            leased_at: now,
-            expires_at: Timestamp::MAX,
-            acked_at: None,
-            dlq_at: Some(now),
-        });
-
-        Ok(Self { lease_diff })
-    }
-
-    pub fn apply_operation(self, state: &State) -> Result<DlqOutput> {
-        let mut batch = state.db.batch();
-        self.lease_diff.apply_diff(state, &mut batch)?;
-        batch.commit()?;
-        Ok(DlqOutput {})
-    }
-}
-
-fn validate_dlq_bounds(leases: &[LeaseRow], msg_id: MsgId) -> Result<()> {
+fn validate_dlq_bounds(leases: &[LeaseRow], msg_id: MsgId) -> coyote_error::Result<()> {
     let highest_bound = leases.iter().map(|l| l.block_end).max().ok_or_else(|| {
         HttpError::bad_request(
             Some("invalid_dlq".to_owned()),
@@ -71,4 +28,65 @@ fn validate_dlq_bounds(leases: &[LeaseRow], msg_id: MsgId) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DlqOperation {
+    pub(crate) group_id: ConfigGroupId,
+    pub(crate) cg: ConsumerGroup,
+    pub(crate) msg_id: MsgId,
+}
+
+impl DlqOperation {
+    pub fn new(group_id: ConfigGroupId, cg: ConsumerGroup, msg_id: MsgId) -> Self {
+        Self {
+            group_id,
+            cg,
+            msg_id,
+        }
+    }
+
+    fn apply_real(self, state: &State) -> coyote_operations::Result<DlqResponseData> {
+        let now = Timestamp::now();
+        let leases = LeaseRow::fetch_all(state, self.group_id, &self.cg)?;
+
+        validate_dlq_bounds(&leases, self.msg_id)?;
+
+        let mut lease_diff = LeaseRow::cull_and_compact(leases.clone(), now);
+
+        // Shrink any active leases that cover this message
+        LeaseRow::shrink_active_leases_for_range(
+            &leases,
+            self.msg_id,
+            self.msg_id,
+            now,
+            &mut lease_diff,
+        );
+
+        lease_diff.to_insert.push(LeaseRow {
+            group_id: self.group_id,
+            cg: self.cg,
+            block_start: self.msg_id,
+            block_end: self.msg_id,
+            leased_at: now,
+            expires_at: Timestamp::MAX,
+            acked_at: None,
+            dlq_at: Some(now),
+        });
+
+        let mut batch = state.db.batch();
+        lease_diff.apply_diff(state, &mut batch)?;
+        batch.commit().map_err(coyote_error::Error::from)?;
+
+        Ok(DlqResponseData {})
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DlqResponseData {}
+
+impl StreamRequest for DlqOperation {
+    fn apply(self, state: StreamRaftState<'_>) -> DlqResponse {
+        DlqResponse(self.apply_real(state.stream))
+    }
 }

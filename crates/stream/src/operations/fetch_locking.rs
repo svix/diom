@@ -1,8 +1,10 @@
 use std::num::NonZeroU16;
 
+use super::{FetchLockingResponse, StreamRaftState, StreamRequest, fetch::create_leases_for_msgs};
 use coyote_configgroup::entities::ConfigGroupId;
-use coyote_error::{HttpError, Result};
+use coyote_error::HttpError;
 use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
@@ -10,50 +12,57 @@ use crate::{
     tables::{LeaseRow, MsgRow},
 };
 
-use super::fetch::create_leases_for_msgs;
-
-pub struct FetchLocking {
-    lease_diff: crate::tables::LeaseDiff,
-    msgs: Vec<(MsgId, MsgRow)>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FetchLockingOperation {
+    pub(crate) group_id: ConfigGroupId,
+    pub(crate) cg: ConsumerGroup,
+    pub(crate) batch_size: NonZeroU16,
+    pub(crate) visibility_timeout_secs: u64,
 }
 
-pub struct FetchLockingOutput {
-    pub msgs: Vec<MsgOut>,
-}
-
-impl FetchLocking {
+impl FetchLockingOperation {
     pub fn new(
-        state: &State,
         group_id: ConfigGroupId,
         cg: ConsumerGroup,
         batch_size: NonZeroU16,
-        visibility_timeout: std::time::Duration,
-    ) -> Result<Self> {
+        visibility_timeout_secs: u64,
+    ) -> Self {
+        Self {
+            group_id,
+            cg,
+            batch_size,
+            visibility_timeout_secs,
+        }
+    }
+
+    fn apply_real(self, state: &State) -> coyote_operations::Result<FetchLockingResponseData> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
+        let visibility_timeout = std::time::Duration::from_secs(self.visibility_timeout_secs);
+        let leases = LeaseRow::fetch_all(state, self.group_id, &self.cg)?;
 
         let has_active_lease = leases.iter().any(|lease| lease.is_active(now));
 
         if has_active_lease {
-            return Err(HttpError::bad_request(
+            return Err(coyote_error::Error::from(HttpError::bad_request(
                 Some("consumer_group_locked".to_owned()),
                 Some("Concurrent reads from the same consumer group".to_string()),
-            )
+            ))
             .into());
         }
 
         let blocked_leases = leases
             .iter()
             .filter(|lease| lease.acked_at.is_some() || lease.is_dlq());
-        let msgs = MsgRow::fetch_available(state, group_id, blocked_leases, batch_size.into())?;
+        let msgs =
+            MsgRow::fetch_available(state, self.group_id, blocked_leases, self.batch_size.into())?;
 
         if msgs.is_empty() {
             // FIXME(@svix-gabriel) this isn't really an error, but we need to go back
             // and change any HttpErrors anyway, so this is simpler for now.
-            return Err(HttpError::bad_request(
+            return Err(coyote_error::Error::from(HttpError::bad_request(
                 Some("empty_stream".to_owned()),
                 Some("no messages available".to_string()),
-            )
+            ))
             .into());
         }
 
@@ -63,23 +72,18 @@ impl FetchLocking {
         let msg_ids: Vec<MsgId> = msgs.iter().map(|(id, _)| *id).collect();
         create_leases_for_msgs(
             &msg_ids,
-            group_id,
-            cg,
+            self.group_id,
+            self.cg,
             now,
             visibility_timeout,
             &mut lease_diff,
         );
 
-        Ok(Self { lease_diff, msgs })
-    }
-
-    pub fn apply_operation(self, state: &State) -> Result<FetchLockingOutput> {
         let mut batch = state.db.batch();
-        self.lease_diff.apply_diff(state, &mut batch)?;
-        batch.commit()?;
+        lease_diff.apply_diff(state, &mut batch)?;
+        batch.commit().map_err(coyote_error::Error::from)?;
 
-        let msgs = self
-            .msgs
+        let msgs = msgs
             .into_iter()
             .map(|(id, msg)| MsgOut {
                 id,
@@ -89,6 +93,17 @@ impl FetchLocking {
             })
             .collect();
 
-        Ok(FetchLockingOutput { msgs })
+        Ok(FetchLockingResponseData { msgs })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FetchLockingResponseData {
+    pub msgs: Vec<MsgOut>,
+}
+
+impl StreamRequest for FetchLockingOperation {
+    fn apply(self, state: StreamRaftState<'_>) -> FetchLockingResponse {
+        FetchLockingResponse(self.apply_real(state.stream))
     }
 }
