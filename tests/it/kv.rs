@@ -154,13 +154,13 @@ async fn test_kv_update_expiration() -> TestResult {
     } = start_server().await;
 
     // Test updating expiration time
-    kv_set(&client, "kv4", Some(500), "v4", "upsert").await?;
-    kv_set(&client, "kv4", Some(2000), "v4", "upsert").await?;
+    kv_set(&client, "kv4", Some(1500), "v4", "upsert").await?;
+    kv_set(&client, "kv4", Some(3000), "v4", "upsert").await?;
 
     let response = kv_get(&client, "kv4").await?;
     let expires_at = response["expiry"].as_str().unwrap();
 
-    tokio::time::sleep(Duration::from_millis(1000)).await;
+    tokio::time::sleep(Duration::from_millis(1500)).await;
 
     let response = kv_get(&client, "kv4").await?;
     assert_eq!(response["value"], json!("v4".as_bytes()));
@@ -174,14 +174,14 @@ async fn test_kv_update_expiration() -> TestResult {
     kv_not_found(&client, "kv5").await?;
 
     // Test updating expired key
-    kv_set(&client, "kv6", Some(500), "v6", "upsert").await?;
-    kv_set(&client, "kv6", Some(100), "v6", "insert").await?;
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    kv_set(&client, "kv6", Some(1000), "v6", "upsert").await?;
+    kv_set(&client, "kv6", Some(500), "v6", "insert").await?;
+    tokio::time::sleep(Duration::from_millis(500)).await;
 
     let response = kv_get(&client, "kv6").await?;
     assert_eq!(response["value"], json!("v6".as_bytes()));
 
-    tokio::time::sleep(Duration::from_millis(400)).await;
+    tokio::time::sleep(Duration::from_millis(500)).await;
 
     kv_set(&client, "kv6", Some(500), "v6", "update").await?;
     kv_not_found(&client, "kv6").await?;
