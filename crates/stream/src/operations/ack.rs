@@ -33,10 +33,10 @@ fn validate_ack_bounds(leases: &[LeaseRow], max_msg_id: MsgId) -> Result<()> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AckOperation {
-    pub(crate) group_id: ConfigGroupId,
-    pub(crate) cg: ConsumerGroup,
-    pub(crate) min_msg_id: MsgId,
-    pub(crate) max_msg_id: MsgId,
+    group_id: ConfigGroupId,
+    cg: ConsumerGroup,
+    min_msg_id: MsgId,
+    max_msg_id: MsgId,
 }
 
 impl AckOperation {

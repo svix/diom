@@ -32,9 +32,9 @@ fn validate_dlq_bounds(leases: &[LeaseRow], msg_id: MsgId) -> coyote_error::Resu
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DlqOperation {
-    pub(crate) group_id: ConfigGroupId,
-    pub(crate) cg: ConsumerGroup,
-    pub(crate) msg_id: MsgId,
+    group_id: ConfigGroupId,
+    cg: ConsumerGroup,
+    msg_id: MsgId,
 }
 
 impl DlqOperation {

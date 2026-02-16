@@ -14,10 +14,10 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FetchLockingOperation {
-    pub(crate) group_id: ConfigGroupId,
-    pub(crate) cg: ConsumerGroup,
-    pub(crate) batch_size: NonZeroU16,
-    pub(crate) visibility_timeout_secs: u64,
+    group_id: ConfigGroupId,
+    cg: ConsumerGroup,
+    batch_size: NonZeroU16,
+    visibility_timeout_secs: u64,
 }
 
 impl FetchLockingOperation {

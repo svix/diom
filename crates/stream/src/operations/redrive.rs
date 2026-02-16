@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedriveOperation {
-    pub(crate) group_id: ConfigGroupId,
-    pub(crate) cg: ConsumerGroup,
+    group_id: ConfigGroupId,
+    cg: ConsumerGroup,
 }
 
 impl RedriveOperation {
