@@ -4576,9 +4576,11 @@ version = "0.0.1"
 dependencies = [
  "diom-configgroup",
  "diom-error",
+ "diom-operations",
  "fjall",
  "fjall-utils",
  "jiff",
+ "paste",
  "rmp-serde",
  "schemars 1.2.0",
  "serde",
