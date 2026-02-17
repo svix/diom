@@ -27,7 +27,13 @@ pub(super) async fn apply_request(
             let mut store = state_machine.state.get_cache_store_by_key(req.key_name())?;
             Response::Cache(req.apply(&mut store))
         }
-        Request::Stream(req) => Response::Stream(req.apply(&state_machine.state.stream_state)),
+        Request::Stream(req) => {
+            let state = stream::operations::StreamRaftState {
+                stream: &state_machine.state.stream_state,
+                configgroup: &state_machine.state.configgroup_state,
+            };
+            Response::Stream(req.apply(state))
+        }
         Request::ClusterInternal(req) => Response::ClusterInternal(req.apply(state_machine).await?),
     })
 }
