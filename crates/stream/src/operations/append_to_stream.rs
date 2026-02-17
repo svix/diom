@@ -1,4 +1,4 @@
-use super::{AppendResponse, StreamRequest};
+use super::{AppendResponse, StreamRaftState, StreamRequest};
 use crate::{
     State,
     entities::{MsgId, MsgIn},
@@ -94,7 +94,7 @@ impl AppendOperation {
 }
 
 impl StreamRequest for AppendOperation {
-    fn apply(self, state: &State) -> AppendResponse {
-        AppendResponse(self.apply_real(state))
+    fn apply(self, state: StreamRaftState<'_>) -> AppendResponse {
+        AppendResponse(self.apply_real(state.stream))
     }
 }

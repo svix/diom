@@ -8,9 +8,6 @@ use std::{
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use diom_configgroup::{
-    entities::StreamConfig, operations::create_configgroup::CreateConfigGroupOutput,
-};
 use diom_derive::aide_annotate;
 use diom_error::{Result, ResultExt};
 use diom_proto::MsgPackOrJson;
@@ -43,48 +40,22 @@ struct CreateStreamOut {
 /// Upserts a new Stream with the given name.
 #[aide_annotate(op_id = "v1.stream.create")]
 async fn create_stream(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
 ) -> Result<MsgPackOrJson<CreateStreamOut>> {
-    /*
-    FIXME(@svix-gabriel)
+    let operation = stream::operations::CreateStreamOperation::new(
+        data.name,
+        data.retention_period_seconds,
+        data.max_byte_size,
+    );
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    This is missing a few important things
-        1. We haven't setup thread-per-core, so this could go to any thread.
-        2. We haven't setup quorum/raft stuff yet, so there's no consensus.
-
-    I didn't want to let either of these things block developing stream,
-    so in practice the structure of this handler will look different once those two pieces are in place.
-    */
-    let out: CreateConfigGroupOutput<StreamConfig> = tokio::task::spawn_blocking(move || {
-        let op = diom_configgroup::operations::create_configgroup::CreateConfigGroup::new(
-            data.name,
-            StreamConfig {
-                retention_period_seconds: data.retention_period_seconds,
-            },
-            None,
-            data.max_byte_size,
-        );
-        op.apply_operation(&state.configgroup_state)
-    })
-    .await??;
-
-    let CreateConfigGroupOutput {
-        name,
-        config,
-        max_storage_bytes,
-        created_at,
-        updated_at,
-        ..
-    } = out;
-
-    // println!("************** {}", config.retention_period_seconds.unwrap());
     Ok(MsgPackOrJson(CreateStreamOut {
-        name,
-        retention_period_seconds: config.retention_period_seconds,
-        max_byte_size: max_storage_bytes,
-        created_at,
-        updated_at,
+        name: response.name,
+        retention_period_seconds: response.retention_period_seconds,
+        max_byte_size: response.max_byte_size,
+        created_at: response.created_at,
+        updated_at: response.updated_at,
     }))
 }
 
@@ -222,32 +193,17 @@ struct AckMsgRangeOut {}
 #[aide_annotate(op_id = "v1.stream.ack-range")]
 async fn ack_range(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AckMsgRangeIn>,
 ) -> Result<MsgPackOrJson<AckMsgRangeOut>> {
-    /*
-    FIXME(@svix-gabriel)
-
-    This is missing a few important things
-        1. We haven't setup thread-per-core, so this could go to any thread.
-        2. We haven't setup quorum/raft stuff yet, so there's no consensus..
-
-    I didn't want to let either of these things block developing stream,
-    so in practice the structure of this handler will look different once those two pieces are in place.
-    */
-
     let group = state.get_stream(&data.name)?;
-    let stream_state = state.stream_state;
-    let _out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::Ack::new(
-            &stream_state,
-            group.id,
-            data.consumer_group,
-            data.min_msg_id.unwrap_or(MsgId::MIN),
-            data.max_msg_id,
-        )?;
-        op.apply_operation(&stream_state)
-    })
-    .await??;
+    let operation = stream::operations::AckOperation::new(
+        group.id,
+        data.consumer_group,
+        data.min_msg_id.unwrap_or(MsgId::MIN),
+        data.max_msg_id,
+    );
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(AckMsgRangeOut {}))
 }
@@ -263,21 +219,17 @@ struct Ack {
 #[aide_annotate(op_id = "v1.stream.ack")]
 async fn ack(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<Ack>,
 ) -> Result<MsgPackOrJson<AckOut>> {
     let group = state.get_stream(&data.name)?;
-    let stream_state = state.stream_state;
-    let _out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::Ack::new(
-            &stream_state,
-            group.id,
-            data.consumer_group,
-            data.msg_id,
-            data.msg_id,
-        )?;
-        op.apply_operation(&stream_state)
-    })
-    .await??;
+    let operation = stream::operations::AckOperation::new(
+        group.id,
+        data.consumer_group,
+        data.msg_id,
+        data.msg_id,
+    );
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(AckOut {}))
 }

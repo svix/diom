@@ -1,11 +1,12 @@
 mod ack;
 mod append_to_stream;
+mod create_stream;
 mod dlq;
 mod fetch;
 mod fetch_locking;
 mod redrive;
 
-pub use self::{ack::*, append_to_stream::*, fetch::*, fetch_locking::*};
+pub use self::{ack::*, append_to_stream::*, create_stream::*, fetch::*, fetch_locking::*};
 pub use dlq::*;
 pub use redrive::*;
 
@@ -14,10 +15,17 @@ use serde::{Deserialize, Serialize};
 
 use diom_operations::raft_module_operations;
 
+pub struct StreamRaftState<'a> {
+    pub stream: &'a State,
+    pub configgroup: &'a diom_configgroup::State,
+}
+
 raft_module_operations!(
     StreamRequest,
     StreamOperation {
         Append(AppendOperation) -> AppendResponseData,
+        CreateStream(CreateStreamOperation) -> CreateStreamResponseData,
+        Ack(AckOperation) -> AckResponseData,
     },
-    state = &State,
+    state = StreamRaftState<'_>,
 );
