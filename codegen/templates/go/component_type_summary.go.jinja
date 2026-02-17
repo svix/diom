@@ -1,0 +1,11 @@
+package diom
+
+// This file is @generated DO NOT EDIT
+
+import diom_models "github.com/svix/diom/clients/go/internal/models"
+
+type (
+{% for type in api.types -%}
+	{{ type | to_upper_camel_case }} = diom_models.{{ type | to_upper_camel_case }}
+{% endfor %}
+)
