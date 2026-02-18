@@ -21,3 +21,22 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # raise this as time goes on and we fix some stuff
           minimum_score: 50
+  ci-required-checks:
+    name: CI Required Checks
+    runs-on: ubuntu-24.04
+    needs: [ci, lint-openapi]
+    # Always run so that this job is a stable required status check: if an
+    # upstream job is skipped (e.g. due to path filters added in the future)
+    # that is fine; we only fail if something actually failed or was cancelled.
+    if: always()
+    steps:
+      - name: All checks passed
+        run: |
+          results="${{ join(needs.*.result, ' ') }}"
+          for result in $results; do
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "A required check failed or was cancelled (results: $results)"
+              exit 1
+            fi
+          done
+          echo "All required checks passed or were skipped (results: $results)"
