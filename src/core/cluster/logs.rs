@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::Context;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
-use fjall_utils::{KeyspaceExt, MonotonicTableRowExt, TableRow};
+use fjall_utils::{MonotonicTableRowExt, TableRow};
 use openraft::{
     Entry, LogId, OptionalSend, RaftLogId, RaftLogReader, RaftTypeConfig, StorageError, Vote,
     storage::{LogFlushed, RaftLogStorage},
@@ -186,10 +186,15 @@ impl DiomLogs {
         callback: LogFlushed<TypeConfig>,
     ) -> anyhow::Result<()> {
         let keyspace = self.log_keyspace.clone();
+        let mut batch = self.db.batch().durability(Some(PersistMode::Buffer));
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
             let keys = entries.iter().map(|entry| entry.log_id).collect::<Vec<_>>();
             tracing::trace!(?keys, "appending some entries");
-            keyspace.ingest_rows(entries.into_iter().map(Log))?;
+            for entry in entries {
+                let (k, v) = Log(entry).to_fjall_entry()?;
+                batch.insert(&keyspace, k, v);
+            }
+            batch.commit()?;
             Ok(())
         })
         .await??;
