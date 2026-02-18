@@ -18,7 +18,7 @@ use tracing::Level;
 
 use crate::error::Result;
 
-const DEFAULTS: &str = include_str!("../config.default.toml");
+const DEFAULTS: &str = include_str!("../../config.default.toml");
 
 pub type Configuration = Arc<ConfigurationInner>;
 
