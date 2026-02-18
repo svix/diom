@@ -26,6 +26,10 @@ raft_module_operations!(
         Append(AppendOperation) -> AppendResponseData,
         CreateStream(CreateStreamOperation) -> CreateStreamResponseData,
         Ack(AckOperation) -> AckResponseData,
+        Fetch(FetchOperation) -> FetchResponseData,
+        FetchLocking(FetchLockingOperation) -> FetchLockingResponseData,
+        Dlq(DlqOperation) -> DlqResponseData,
+        Redrive(RedriveOperation) -> RedriveResponseData,
     },
     state = StreamRaftState<'_>,
 );

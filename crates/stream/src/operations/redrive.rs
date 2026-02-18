@@ -1,22 +1,23 @@
-use crate::{
-    State,
-    entities::ConsumerGroup,
-    tables::{LeaseDiff, LeaseRow},
-};
+use super::{RedriveResponse, StreamRaftState, StreamRequest};
+use crate::{State, entities::ConsumerGroup, tables::LeaseRow};
 use diom_configgroup::entities::ConfigGroupId;
-use diom_error::Result;
 use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
 
-pub struct Redrive {
-    lease_diff: LeaseDiff,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RedriveOperation {
+    group_id: ConfigGroupId,
+    cg: ConsumerGroup,
 }
 
-pub struct RedriveOutput {}
+impl RedriveOperation {
+    pub fn new(group_id: ConfigGroupId, cg: ConsumerGroup) -> Self {
+        Self { group_id, cg }
+    }
 
-impl Redrive {
-    pub fn new(state: &State, group_id: ConfigGroupId, cg: ConsumerGroup) -> Result<Self> {
+    fn apply_real(self, state: &State) -> diom_operations::Result<RedriveResponseData> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, group_id, &cg)?;
+        let leases = LeaseRow::fetch_all(state, self.group_id, &self.cg)?;
 
         let mut lease_diff = LeaseRow::cull_and_compact(leases.clone(), now);
 
@@ -27,13 +28,19 @@ impl Redrive {
             }
         }
 
-        Ok(Self { lease_diff })
-    }
-
-    pub fn apply_operation(self, state: &State) -> Result<RedriveOutput> {
         let mut batch = state.db.batch();
-        self.lease_diff.apply_diff(state, &mut batch)?;
-        batch.commit()?;
-        Ok(RedriveOutput {})
+        lease_diff.apply_diff(state, &mut batch)?;
+        batch.commit().map_err(diom_error::Error::from)?;
+
+        Ok(RedriveResponseData {})
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RedriveResponseData {}
+
+impl StreamRequest for RedriveOperation {
+    fn apply(self, state: StreamRaftState<'_>) -> RedriveResponse {
+        RedriveResponse(self.apply_real(state.stream))
     }
 }

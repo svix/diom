@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateStreamOperation {
-    pub(crate) name: String,
-    pub(crate) retention_period_seconds: Option<NonZeroU64>,
-    pub(crate) max_byte_size: Option<NonZeroU64>,
+    name: String,
+    retention_period_seconds: Option<NonZeroU64>,
+    max_byte_size: Option<NonZeroU64>,
 }
 
 impl CreateStreamOperation {
