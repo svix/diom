@@ -1,10 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{
-    num::{NonZeroU16, NonZeroU64},
-    time::Duration,
-};
+use std::num::{NonZeroU16, NonZeroU64};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
@@ -110,34 +107,21 @@ struct FetchFromStreamOut {
 #[aide_annotate(op_id = "v1.stream.fetch-locking")]
 async fn locking_fetch_from_stream(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
-    /*
-    FIXME(@svix-gabriel)
-
-    This is missing a few important things
-        1. We haven't setup thread-per-core, so this could go to any thread.
-        2. We haven't setup quorum/raft stuff yet, so there's no consensus..
-
-    I didn't want to let either of these things block developing stream,
-    so in practice the structure of this handler will look different once those two pieces are in place.
-    */
-
     let group = state.get_stream(&data.name)?;
-    let stream_state = state.stream_state;
-    let out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::FetchLocking::new(
-            &stream_state,
-            group.id,
-            data.consumer_group,
-            data.batch_size,
-            Duration::from_secs(data.visibility_timeout_seconds),
-        )?;
-        op.apply_operation(&stream_state)
-    })
-    .await??;
+    let operation = stream::operations::FetchLockingOperation::new(
+        group.id,
+        data.consumer_group,
+        data.batch_size,
+        data.visibility_timeout_seconds,
+    );
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(FetchFromStreamOut { msgs: out.msgs }))
+    Ok(MsgPackOrJson(FetchFromStreamOut {
+        msgs: response.msgs,
+    }))
 }
 
 /// Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.
@@ -148,34 +132,21 @@ async fn locking_fetch_from_stream(
 #[aide_annotate(op_id = "v1.stream.fetch")]
 async fn fetch_from_stream(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
-    /*
-    FIXME(@svix-gabriel)
-
-    This is missing a few important things
-        1. We haven't setup thread-per-core, so this could go to any thread.
-        2. We haven't setup quorum/raft stuff yet, so there's no consensus..
-
-    I didn't want to let either of these things block developing stream,
-    so in practice the structure of this handler will look different once those two pieces are in place.
-    */
-
     let group = state.get_stream(&data.name)?;
-    let stream_state = state.stream_state;
-    let out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::Fetch::new(
-            &stream_state,
-            group.id,
-            data.consumer_group,
-            data.batch_size,
-            Duration::from_secs(data.visibility_timeout_seconds),
-        )?;
-        op.apply_operation(&stream_state)
-    })
-    .await??;
+    let operation = stream::operations::FetchOperation::new(
+        group.id,
+        data.consumer_group,
+        data.batch_size,
+        data.visibility_timeout_seconds,
+    );
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(FetchFromStreamOut { msgs: out.msgs }))
+    Ok(MsgPackOrJson(FetchFromStreamOut {
+        msgs: response.msgs,
+    }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -251,20 +222,13 @@ struct DlqOut {}
 #[aide_annotate(op_id = "v1.stream.dlq")]
 async fn dlq(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<DlqIn>,
 ) -> Result<MsgPackOrJson<DlqOut>> {
     let group = state.get_stream(&data.name)?;
-    let stream_state = state.stream_state;
-    let _out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::Dlq::new(
-            &stream_state,
-            group.id,
-            data.consumer_group,
-            data.msg_id,
-        )?;
-        op.apply_operation(&stream_state)
-    })
-    .await??;
+    let operation =
+        stream::operations::DlqOperation::new(group.id, data.consumer_group, data.msg_id);
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(DlqOut {}))
 }
@@ -282,15 +246,12 @@ struct RedriveOut {}
 #[aide_annotate(op_id = "v1.stream.redrive")]
 async fn redrive(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RedriveIn>,
 ) -> Result<MsgPackOrJson<RedriveOut>> {
     let group = state.get_stream(&data.name)?;
-    let stream_state = state.stream_state;
-    let _out = tokio::task::spawn_blocking(move || {
-        let op = stream::operations::Redrive::new(&stream_state, group.id, data.consumer_group)?;
-        op.apply_operation(&stream_state)
-    })
-    .await??;
+    let operation = stream::operations::RedriveOperation::new(group.id, data.consumer_group);
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RedriveOut {}))
 }
