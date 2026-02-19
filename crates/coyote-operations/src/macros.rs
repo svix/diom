@@ -9,7 +9,7 @@ macro_rules! raft_module_operations {
       },
       state = $state_type:ty,
     ) => {
-        paste::paste! {
+        $crate::__reexports::paste::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
             where
                 Self: 'static,

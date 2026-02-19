@@ -9,6 +9,8 @@ edition = "2024"
 
 [package.metadata.cargo-machete]
 ignored = [
+    # not a direct dependency, but we need to enable one of its features
+    "anyerror",
     # not a direct dependency, but we want to pin its version
     "idna_adapter",
     # required by aide::OperationIo derive macro
@@ -22,12 +24,10 @@ openapi = []
 
 [dependencies]
 aide.workspace = true
-anyerror.workspace = true # not a direct dependency, but we need to enable one of its features
+anyerror.workspace = true
 anyhow.workspace = true
 axum.workspace = true
-axum-extra.workspace = true
 byteorder.workspace = true
-bytes.workspace = true
 config.workspace = true
 coyote-cache.workspace = true
 coyote-configgroup.workspace = true
@@ -113,7 +113,6 @@ anyerror = { version = "0.1.13", features = ["anyhow"] }
 anyhow = "1.0.56"
 assert_matches = "1.5.0"
 axum = { version = "0.8.8", features = ["macros"] }
-axum-extra = { version = "0.12.5", features = ["typed-header"] }
 byteorder = "1.5.0"
 bytes = "1.11.1"
 clap = { version = "4.1.8", features = ["derive"] }
