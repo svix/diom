@@ -1,15 +1,13 @@
-#![allow(unused)]
-
 use std::{net::SocketAddr, path::Path, sync::Arc};
 
-use crate::{TestClient, test_client};
+use crate::TestClient;
 use coyote::{
     cfg::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
         LogFormat, LogLevel,
     },
     core::cluster::proto::HealthResponse,
-    run_with_prefix, setup_tracing_for_tests,
+    run_with_prefix,
 };
 use tempfile::TempDir;
 use tokio::{
@@ -195,12 +193,13 @@ async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyh
     }
 }
 
-/// TestContext without a running server. Since there's no background task for a server,
-/// you need to ensure to keep this context object alive for your whole test to prevent
-/// the workdir from being dropped and cleaned up
+/// TestContext without a running server.
+///
+/// Since there's no background task for a server, you need to ensure to keep this context object
+/// alive for your whole test to prevent the workdir from being dropped and cleaned up.
 pub struct ServerlessTestContext {
     pub cfg: Arc<ConfigurationInner>,
-    workdir: TempDir,
+    _workdir: TempDir,
 }
 
 pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
@@ -250,15 +249,15 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
 }
 
 pub fn build_config_without_server() -> ServerlessTestContext {
-    let workdir = tempfile::tempdir().unwrap();
-    let cfg = Arc::new(default_server_config(workdir.path()));
+    let _workdir = tempfile::tempdir().unwrap();
+    let cfg = Arc::new(default_server_config(_workdir.path()));
 
     // TODO: do bootstrap through the server APIs instead of just directly
     // touching the databases? Need to make sure that this never runs
     // concurrently with the other DB accesses
     coyote::bootstrap::run(None, Arc::clone(&cfg));
 
-    ServerlessTestContext { cfg, workdir }
+    ServerlessTestContext { cfg, _workdir }
 }
 
 pub async fn start_server() -> TestContext {
