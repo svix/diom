@@ -1,6 +1,6 @@
-use std::{collections::BTreeSet, fs, path::Path, process::ExitCode};
+use std::{collections::BTreeSet, fs, io, path::Path, process::ExitCode};
 
-use anyhow::Context as _;
+use anyhow::{Context as _, anyhow};
 use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
@@ -63,8 +63,15 @@ fn main() -> anyhow::Result<ExitCode> {
 
     for output_dir in OUTPUTS {
         if output_dir.managed {
-            fs::remove_dir_all(output_dir.path)?;
+            let res = fs::remove_dir_all(output_dir.path);
+            if let Err(e) = res
+                && e.kind() != io::ErrorKind::NotFound
+            {
+                let context = format!("clearing managed directory `{}`", output_dir.path);
+                return Err(anyhow!(e).context(context));
+            }
         }
+
         for &template in output_dir.templates {
             let tpl_name = format!("codegen/templates/{template}");
             openapi_codegen::generate(&api, tpl_name, output_dir.path.into(), true)?;
