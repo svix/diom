@@ -5,6 +5,10 @@ license.workspace = true
 version.workspace = true
 rust-version.workspace = true
 
+[package.metadata.cargo-machete]
+# required by aide::OperationIo derive macro
+ignored = ["schemars"]
+
 [dependencies]
 aide.workspace = true
 axum.workspace = true

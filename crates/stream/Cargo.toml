@@ -12,13 +12,9 @@ diom-operations.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 jiff.workspace = true
-paste.workspace = true
 rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
-static_assertions.workspace = true
-url.workspace = true
-uuid.workspace = true
 validator.workspace = true
 
 [lints]

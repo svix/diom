@@ -12,8 +12,6 @@ diom-error.workspace = true
 fjall.workspace = true
 rmp-serde.workspace = true
 serde.workspace = true
-tap.workspace = true
-tracing.workspace = true
 uuid.workspace = true
 
 [lints]
