@@ -491,7 +491,7 @@ mod tests {
         let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
             group_id,
-            cg: "cg1".to_string(),
+            cg: "cg1".try_into().unwrap(),
             block_start: 1,
             block_end: 5,
             leased_at: ts(0),
@@ -512,7 +512,7 @@ mod tests {
         let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
             group_id,
-            cg: "cg1".to_string(),
+            cg: "cg1".try_into().unwrap(),
             block_start: 1,
             block_end: 5,
             leased_at: ts(0),
@@ -532,7 +532,7 @@ mod tests {
         let group_id = ConfigGroupId::new_v4();
         let lease = LeaseRow {
             group_id,
-            cg: "cg1".to_string(),
+            cg: "cg1".try_into().unwrap(),
             block_start: 1,
             block_end: 5,
             leased_at: ts(0),
@@ -553,7 +553,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 5,
                 leased_at: ts(0),
@@ -563,7 +563,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 6,
                 block_end: 10,
                 leased_at: ts(0),
@@ -573,7 +573,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 20,
                 block_end: 25,
                 leased_at: ts(0),
@@ -595,7 +595,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 5,
                 leased_at: ts(0),
@@ -605,7 +605,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 6,
                 block_end: 10,
                 leased_at: ts(0),
@@ -627,7 +627,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 5,
                 leased_at: ts(10),
@@ -637,7 +637,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 6,
                 block_end: 10,
                 leased_at: ts(15),
@@ -664,7 +664,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 7,
                 leased_at: ts(10),
@@ -674,7 +674,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 5,
                 block_end: 12,
                 leased_at: ts(15),
@@ -700,7 +700,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 5,
                 leased_at: ts(10),
@@ -710,7 +710,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 10,
                 block_end: 15,
                 leased_at: ts(15),
@@ -732,7 +732,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 5,
                 leased_at: ts(10),
@@ -742,7 +742,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 6,
                 block_end: 10,
                 leased_at: ts(15),
@@ -752,7 +752,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 11,
                 block_end: 15,
                 leased_at: ts(18),
@@ -779,7 +779,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 5,
                 leased_at: ts(0),
@@ -789,7 +789,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 6,
                 block_end: 10,
                 leased_at: ts(0),
@@ -799,7 +799,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 20,
                 block_end: 25,
                 leased_at: ts(0),
@@ -809,7 +809,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 26,
                 block_end: 30,
                 leased_at: ts(0),
@@ -835,7 +835,7 @@ mod tests {
         let leases = vec![
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 1,
                 block_end: 5,
                 leased_at: ts(10),
@@ -845,7 +845,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 6,
                 block_end: 10,
                 leased_at: ts(15),
@@ -855,7 +855,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 50,
                 block_end: 55,
                 leased_at: ts(10),
@@ -865,7 +865,7 @@ mod tests {
             },
             LeaseRow {
                 group_id,
-                cg: ConsumerGroup::from("cg1".to_string()),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 56,
                 block_end: 60,
                 leased_at: ts(15),
@@ -970,7 +970,7 @@ mod tests {
         fn lease(group_id: ConfigGroupId, block_start: MsgId, block_end: MsgId) -> LeaseRow {
             LeaseRow {
                 group_id,
-                cg: "test-cg".to_string(),
+                cg: "test-cg".try_into().unwrap(),
                 block_start,
                 block_end,
                 leased_at: ts(0),
@@ -1254,7 +1254,7 @@ mod tests {
             // Create a DLQ lease for message 3
             let dlq_lease = LeaseRow {
                 group_id,
-                cg: "test-cg".to_string(),
+                cg: "test-cg".try_into().unwrap(),
                 block_start: 3,
                 block_end: 3,
                 leased_at: ts(0),
@@ -1277,7 +1277,7 @@ mod tests {
             let group_id = ConfigGroupId::new_v4();
             let dlq_lease = LeaseRow {
                 group_id,
-                cg: "cg1".to_string(),
+                cg: "cg1".try_into().unwrap(),
                 block_start: 3,
                 block_end: 3,
                 leased_at: ts(0),
@@ -1299,7 +1299,7 @@ mod tests {
             let leases = vec![
                 LeaseRow {
                     group_id,
-                    cg: "cg1".to_string(),
+                    cg: "cg1".try_into().unwrap(),
                     block_start: 1,
                     block_end: 3,
                     leased_at: ts(0),
@@ -1309,7 +1309,7 @@ mod tests {
                 },
                 LeaseRow {
                     group_id,
-                    cg: "cg1".to_string(),
+                    cg: "cg1".try_into().unwrap(),
                     block_start: 4,
                     block_end: 6,
                     leased_at: ts(5),
@@ -1337,7 +1337,7 @@ mod tests {
             let leases = vec![
                 LeaseRow {
                     group_id,
-                    cg: "cg1".to_string(),
+                    cg: "cg1".try_into().unwrap(),
                     block_start: 1,
                     block_end: 3,
                     leased_at: ts(0),
@@ -1347,7 +1347,7 @@ mod tests {
                 },
                 LeaseRow {
                     group_id,
-                    cg: "cg1".to_string(),
+                    cg: "cg1".try_into().unwrap(),
                     block_start: 10,
                     block_end: 12,
                     leased_at: ts(5),
