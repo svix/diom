@@ -16,7 +16,7 @@ use serde::Deserialize;
 use tap::Pipe;
 use tracing::Level;
 
-use crate::{core::security::JwtSigningConfig, error::Result};
+use crate::error::Result;
 
 const DEFAULTS: &str = include_str!("../config.default.toml");
 
@@ -116,10 +116,6 @@ pub struct ConfigurationInner {
 
     pub persistent_db: DatabaseConfig,
     pub ephemeral_db: DatabaseConfig,
-
-    /// Contains the secret and algorithm for signing JWTs
-    #[serde(flatten)]
-    pub jwt_signing_config: Arc<JwtSigningConfig>,
 
     /// The log level to run the service with. Supported: info, debug, trace
     pub log_level: LogLevel,

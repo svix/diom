@@ -8,10 +8,9 @@ use diom::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
         LogFormat, LogLevel,
     },
-    core::{cluster::proto::HealthResponse, security::JwtSigningConfig},
+    core::cluster::proto::HealthResponse,
     run_with_prefix, setup_tracing_for_tests,
 };
-use jwt_simple::prelude::*;
 use tempfile::TempDir;
 use tokio::{
     net::TcpListener,
@@ -205,8 +204,6 @@ pub struct ServerlessTestContext {
 }
 
 pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
-    let jwt_key = HS256Key::generate();
-
     let db_dir = workdir.join("db");
     let log_path = workdir.join("logs");
     let snapshot_path = workdir.join("snapshots");
@@ -223,7 +220,6 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             path: db_dir,
             ..Default::default()
         },
-        jwt_signing_config: Arc::new(JwtSigningConfig::HS256(jwt_key)),
         log_level: LogLevel::Debug,
         log_format: LogFormat::Default,
         opentelemetry_address: None,
