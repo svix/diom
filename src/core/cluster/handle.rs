@@ -6,6 +6,7 @@ use super::{
     operations::{InternalRequest, InternalResponse},
     raft::{NodeId, Raft},
 };
+use anyhow::{Context, Result};
 use coyote_operations::{OperationRequest, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
@@ -89,6 +90,12 @@ impl From<coyote_kv::operations::CreateKvOp> for Request {
 impl From<stream_deprecated::operations::StreamOperation> for Request {
     fn from(value: stream_deprecated::operations::StreamOperation) -> Self {
         Request::Stream(value)
+    }
+}
+
+impl From<super::operations::InternalRequest> for Request {
+    fn from(value: super::operations::InternalRequest) -> Self {
+        Self::ClusterInternal(value)
     }
 }
 
@@ -194,6 +201,17 @@ impl TryFrom<Response> for stream_deprecated::operations::Response {
     }
 }
 
+impl TryFrom<Response> for super::operations::InternalResponse {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::ClusterInternal(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct RaftState {
     pub raft: Raft,
@@ -262,13 +280,14 @@ impl RaftState {
         Ok(resp)
     }
 
-    pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> anyhow::Result<()> {
+    pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> Result<()> {
         let has_cluster = self
             .raft
             .with_raft_state(|s| {
                 s.committed.is_some() || s.membership_state.effective().nodes().count() > 0
             })
-            .await?;
+            .await
+            .context("reading cluster state")?;
         if has_cluster {
             tracing::debug!("node already has cluster information; skipping discovery");
         } else {

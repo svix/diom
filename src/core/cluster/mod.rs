@@ -2,6 +2,7 @@ use openraft::RaftTypeConfig;
 
 mod app;
 mod applier;
+mod background;
 mod discovery;
 mod errors;
 mod handle;

@@ -8,6 +8,7 @@ use std::{
 use anyhow::Context;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
 use fjall_utils::{MonotonicTableRowExt, TableRow};
+use jiff::Timestamp;
 use openraft::{
     Entry, LogId, OptionalSend, RaftLogId, RaftLogReader, RaftTypeConfig, StorageError, Vote,
     storage::{LogFlushed, RaftLogStorage},
@@ -41,6 +42,21 @@ impl TableRow for Log {
 
     fn get_key(&self) -> Cow<'_, Self::Key> {
         Cow::Owned(self.0.log_id.index)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct LogIndex {
+    unix_timestamp_millis: u64,
+    log_id: u64,
+}
+
+impl TableRow for LogIndex {
+    const TABLE_PREFIX: &str = "timestamps";
+    type Key = u64;
+
+    fn get_key(&self) -> Cow<'_, Self::Key> {
+        Cow::Owned(self.unix_timestamp_millis)
     }
 }
 
@@ -143,7 +159,7 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
 }
 
 impl CoyoteLogs {
-    pub async fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+    pub fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         let db = Database::builder(path).worker_threads(1).open()?;
         let log_keyspace = db.keyspace("cluster:logs", KeyspaceCreateOptions::default)?;
         let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
@@ -152,6 +168,24 @@ impl CoyoteLogs {
             log_keyspace,
             meta_keyspace,
         })
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub(crate) async fn record_log_timestamp(
+        &self,
+        timestamp: Timestamp,
+        log_index: u64,
+    ) -> anyhow::Result<()> {
+        let rec = LogIndex {
+            unix_timestamp_millis: timestamp.as_millisecond() as u64,
+            log_id: log_index,
+        };
+        tracing::debug!(?rec, "recording log/timestamp checkpoint");
+        let (k, v) = rec.to_fjall_entry()?;
+        let keyspace = self.log_keyspace.clone();
+        tokio::task::spawn_blocking(move || -> fjall::Result<()> { keyspace.insert(k, v) })
+            .await??;
+        Ok(())
     }
 
     /// Get the NodeId (or, if we don't have one, make a new one)
@@ -284,6 +318,7 @@ impl CoyoteLogs {
             })
         })
         .await?
+        .tap(|state| tracing::trace!(?state, "read initial log state"))
     }
 
     async fn read_log_entries<RB>(&mut self, range: RB) -> anyhow::Result<Vec<LogEntry>>
@@ -367,5 +402,112 @@ impl CoyoteLogs {
             Ok(committed)
         })
         .await?
+    }
+
+    /// Return the highest log index that we know occurred before the given timestamp,
+    pub async fn log_index_before(&self, ts: Timestamp) -> anyhow::Result<Option<u64>> {
+        let log_keyspace = self.log_keyspace.clone();
+        let range = ..(ts.as_millisecond() as u64);
+        tokio::task::spawn_blocking(move || {
+            if let Some(row) = LogIndex::range(&log_keyspace, range).next_back() {
+                Ok(Some(row?.1.log_id))
+            } else {
+                Ok(None)
+            }
+        })
+        .await?
+    }
+
+    /// Return the highest log index that we know occurred at or after the given timestamp,
+    pub async fn log_index_after(&self, ts: Timestamp) -> anyhow::Result<Option<u64>> {
+        let log_keyspace = self.log_keyspace.clone();
+        let range = (ts.as_millisecond() as u64)..;
+        tokio::task::spawn_blocking(move || {
+            if let Some(row) = LogIndex::range(&log_keyspace, range).next() {
+                Ok(Some(row?.1.log_id))
+            } else {
+                Ok(None)
+            }
+        })
+        .await?
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CoyoteLogs;
+    use jiff::{Span, Timestamp};
+    use tempfile::TempDir;
+    use test_utils::TestResult;
+
+    struct TestContext {
+        _workdir: TempDir,
+        logs: CoyoteLogs,
+    }
+
+    impl TestContext {
+        fn new() -> Self {
+            let workdir = tempfile::tempdir().unwrap();
+            let logs = CoyoteLogs::new(&workdir).unwrap();
+            Self {
+                _workdir: workdir,
+                logs,
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_log_timestamps() -> TestResult {
+        let context = TestContext::new();
+        let now = Timestamp::now();
+        context
+            .logs
+            .record_log_timestamp(now - Span::new().hours(1), 1)
+            .await?;
+        context
+            .logs
+            .record_log_timestamp(now - Span::new().minutes(30), 10)
+            .await?;
+        context
+            .logs
+            .record_log_timestamp(now - Span::new().minutes(1), 20)
+            .await?;
+
+        assert_eq!(
+            context
+                .logs
+                .log_index_before(now - Span::new().hours(1))
+                .await?,
+            None
+        );
+        assert_eq!(
+            context
+                .logs
+                .log_index_before(now - Span::new().seconds(3599))
+                .await?,
+            Some(1)
+        );
+        assert_eq!(
+            context
+                .logs
+                .log_index_before(now + Span::new().seconds(1))
+                .await?,
+            Some(20)
+        );
+        assert_eq!(
+            context
+                .logs
+                .log_index_after(now - Span::new().hours(1))
+                .await?,
+            Some(1)
+        );
+        assert_eq!(
+            context
+                .logs
+                .log_index_after(now + Span::new().seconds(1))
+                .await?,
+            None
+        );
+        Ok(())
     }
 }

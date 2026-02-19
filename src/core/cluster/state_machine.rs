@@ -22,6 +22,7 @@ use uuid::Uuid;
 use super::{
     errors::*,
     handle::Response,
+    logs::CoyoteLogs,
     raft::{Node, TypeConfig},
     serialized_state_machine,
 };
@@ -82,6 +83,7 @@ pub struct Store {
     last_membership: StoredMembership<NodeId, Node>,
     last_snapshot: Arc<RwLock<Option<LastSnapshot>>>,
     cluster_id: Option<ClusterId>,
+    pub(super) logs: CoyoteLogs,
 }
 
 trait SnapshotIdx {
@@ -108,6 +110,7 @@ impl Store {
         ephemeral_db: Database,
         snapshot_directory: PathBuf,
         app_state: AppState,
+        logs: CoyoteLogs,
     ) -> anyhow::Result<Self> {
         if let Err(e) = tokio::fs::create_dir_all(&snapshot_directory).await
             && e.kind() != ErrorKind::AlreadyExists
@@ -137,6 +140,7 @@ impl Store {
             last_applied_log_id: None,
             last_membership: Default::default(),
             cluster_id: None,
+            logs,
         };
         this.load_information().await?;
         Ok(this)
@@ -323,7 +327,7 @@ impl Store {
                 }
                 EntryPayload::Normal(req) => {
                     tracing::trace!(log_id=?item.log_id, request=?req, "applying user request");
-                    let reply = match super::applier::apply_request(req, self).await {
+                    let reply = match super::applier::apply_request(req, self, item.log_id).await {
                         Ok(o) => o,
                         Err(e) => {
                             tracing::error!("failed to apply raft log");

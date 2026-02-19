@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, net::SocketAddr, sync::Arc, time::Instant};
 
+use anyhow::Context;
 use openraft::error::{InitializeError, RaftError};
 use serde::{Deserialize, Serialize};
 use tap::TapFallible;
@@ -115,8 +116,11 @@ pub async fn initialize_raft(
     cfg: &Configuration,
     app_state: AppState,
 ) -> anyhow::Result<RaftState> {
-    let mut logs = super::CoyoteLogs::new(&cfg.cluster.log_path).await?;
-    let id = logs.get_node_id().await?;
+    let mut logs = super::CoyoteLogs::new(&cfg.cluster.log_path).context("setting up log store")?;
+    let id = logs
+        .get_node_id()
+        .await
+        .context("reading node ID from logs")?;
     let config = openraft::Config {
         heartbeat_interval: cfg.cluster.heartbeat_interval_ms,
         election_timeout_min: cfg.cluster.election_timeout_min_ms,
@@ -124,23 +128,46 @@ pub async fn initialize_raft(
         cluster_name: cfg.cluster.name.clone(),
         ..Default::default()
     };
-    let config = Arc::new(config.validate()?);
+    let config = Arc::new(config.validate().context("configuring openraft")?);
     let network = super::network::NetworkFactory::new(cfg);
 
     let db = app_state.configgroup_state.both_dbs.persistent_db.clone();
     let edb = app_state.configgroup_state.both_dbs.ephemeral_db.clone();
 
-    let state_machine =
-        super::state_machine::Store::new(db, edb, cfg.cluster.snapshot_path.clone(), app_state)
-            .await?;
+    let state_machine = super::state_machine::Store::new(
+        db,
+        edb,
+        cfg.cluster.snapshot_path.clone(),
+        app_state,
+        logs.clone(),
+    )
+    .await?;
     let state_machine: StoreHandle = state_machine.into();
-    let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone()).await?;
-    Ok(RaftState {
+    let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone())
+        .await
+        .context("initializing openraft")?;
+    let handle = RaftState {
         raft,
         node_id: id,
         state_machine,
         network,
-    })
+    };
+    tokio::spawn({
+        let handle = handle.clone();
+        let cfg = cfg.clone();
+        async move {
+            if let Err(err) =
+                super::background::run_background_jobs_on_leader(cfg.clone(), handle.clone()).await
+            {
+                tracing::error!(
+                    ?err,
+                    "raft administrative process died; shutting everything down"
+                );
+                crate::start_shut_down()
+            }
+        }
+    });
+    Ok(handle)
 }
 
 #[cfg(test)]
@@ -166,7 +193,7 @@ mod tests {
             let workdir = tempfile::tempdir()?;
             let mut log_path = workdir.path().to_path_buf();
             log_path.push("logs");
-            let logs = CoyoteLogs::new(log_path).await?;
+            let logs = CoyoteLogs::new(log_path)?;
 
             let mut data_path = workdir.path().to_path_buf();
             data_path.push("data");
@@ -186,7 +213,7 @@ mod tests {
 
             let app_state: AppState = AppState::new(cfg);
 
-            let store = Store::new(db, edb, snapshot_path, app_state).await?;
+            let store = Store::new(db, edb, snapshot_path, app_state, logs.clone()).await?;
 
             Ok((workdir, logs, store.into()))
         }

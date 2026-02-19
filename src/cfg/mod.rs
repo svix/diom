@@ -120,6 +120,13 @@ pub struct ClusterConfiguration {
         default = "defaults::cluster_startup_discovery_delay"
     )]
     pub startup_discovery_delay: Duration,
+
+    #[serde(
+        rename = "log_index_interval_ms",
+        with = "crate::serde::duration::millis",
+        default = "defaults::log_index_interval"
+    )]
+    pub log_index_interval: Duration,
 }
 
 impl Default for ClusterConfiguration {
@@ -321,6 +328,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
                 auto_initialize: cluster_auto_initialize,
                 discovery_timeout: cluster_discovery_timeout,
                 startup_discovery_delay: cluster_startup_discovery_delay,
+                log_index_interval: cluster_log_index_interval,
             },
     } = &mut config;
 
@@ -383,6 +391,9 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     if let Some(value) = env_var_ms("COYOTE_CLUSTER_STARTUP_DISCOVERY_DELAY_MS")? {
         *cluster_startup_discovery_delay = value;
     };
+    if let Some(value) = env_var_ms("COYOTE_LOG_INDEX_INTERVAL_MS")? {
+        *cluster_log_index_interval = value;
+    }
 
     Ok(Arc::from(config))
 }
