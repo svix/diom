@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    // Basic Options
+    "strict": true,
+    "target": "es2017",
+    "outDir": "dist",
+    "composite": true,
+    "removeComments": true,
+    "sourceMap": true,
+    // Additional Checks
+    "noUnusedLocals": false, // Generated code contains some unused imports
+    "noUnusedParameters": true,
+    "noImplicitReturns": true, // Report error when not all code paths in function return a value
+    "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statement
+    // Workaround for https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/67406
+    "paths": {
+      "undici-types": [
+        "./node_modules/undici-types/index.d.ts"
+      ],
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
+  ]
+}
