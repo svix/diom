@@ -41,3 +41,4 @@ type Stream = coyote_apis.Stream
 func (coyote Coyote) Stream() Stream {
 	return coyote_apis.NewStream(&coyote.inner)
 }
+

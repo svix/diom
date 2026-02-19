@@ -91,7 +91,7 @@ async fn exec(cmd: &str, args: impl IntoIterator<Item = &str>) -> io::Result<()>
         .await
         .map_err(|e| {
             let kind = e.kind();
-            let msg = format!("failed to run {cmd}: e");
+            let msg = format!("failed to run {cmd}: {e:?}");
             io::Error::new(kind, msg)
         })?;
 

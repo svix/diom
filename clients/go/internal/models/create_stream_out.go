@@ -4,12 +4,14 @@ package coyote_models
 
 import (
 	"time"
+
+	coyote_proto "github.com/svix/coyote/clients/go/internal/proto"
 )
 
 type CreateStreamOut struct {
-	CreatedAt              time.Time `json:"created_at"`
-	MaxByteSize            *uint64   `json:"max_byte_size,omitempty"`
-	Name                   string    `json:"name"`
-	RetentionPeriodSeconds *uint64   `json:"retention_period_seconds,omitempty"`
-	UpdatedAt              time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+MaxByteSize *uint64 `json:"max_byte_size,omitempty"`
+Name string `json:"name"`
+RetentionPeriodSeconds *uint64 `json:"retention_period_seconds,omitempty"`
+UpdatedAt time.Time `json:"updated_at"`
 }

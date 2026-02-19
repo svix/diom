@@ -11,14 +11,15 @@ import (
 type RateLimitStatus string
 
 const (
-	RATELIMITSTATUS_OK    RateLimitStatus = "ok"
-	RATELIMITSTATUS_BLOCK RateLimitStatus = "block"
+RATELIMITSTATUS_OK RateLimitStatus = "ok"
+RATELIMITSTATUS_BLOCK RateLimitStatus = "block"
 )
 
 var allowedRateLimitStatus = []RateLimitStatus{
 	"ok",
 	"block",
-}
+	}
+
 
 func (v *RateLimitStatus) UnmarshalJSON(src []byte) error {
 	var value string
@@ -36,6 +37,6 @@ func (v *RateLimitStatus) UnmarshalJSON(src []byte) error {
 }
 
 var RateLimitStatusFromString = map[string]RateLimitStatus{
-	"ok":    RATELIMITSTATUS_OK,
-	"block": RATELIMITSTATUS_BLOCK,
-}
+	"ok" : RATELIMITSTATUS_OK,
+	"block" : RATELIMITSTATUS_BLOCK,
+	}

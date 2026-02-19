@@ -11,16 +11,17 @@ import (
 type OperationBehavior string
 
 const (
-	OPERATIONBEHAVIOR_UPSERT OperationBehavior = "upsert"
-	OPERATIONBEHAVIOR_INSERT OperationBehavior = "insert"
-	OPERATIONBEHAVIOR_UPDATE OperationBehavior = "update"
+OPERATIONBEHAVIOR_UPSERT OperationBehavior = "upsert"
+OPERATIONBEHAVIOR_INSERT OperationBehavior = "insert"
+OPERATIONBEHAVIOR_UPDATE OperationBehavior = "update"
 )
 
 var allowedOperationBehavior = []OperationBehavior{
 	"upsert",
 	"insert",
 	"update",
-}
+	}
+
 
 func (v *OperationBehavior) UnmarshalJSON(src []byte) error {
 	var value string
@@ -38,7 +39,7 @@ func (v *OperationBehavior) UnmarshalJSON(src []byte) error {
 }
 
 var OperationBehaviorFromString = map[string]OperationBehavior{
-	"upsert": OPERATIONBEHAVIOR_UPSERT,
-	"insert": OPERATIONBEHAVIOR_INSERT,
-	"update": OPERATIONBEHAVIOR_UPDATE,
-}
+	"upsert" : OPERATIONBEHAVIOR_UPSERT,
+	"insert" : OPERATIONBEHAVIOR_INSERT,
+	"update" : OPERATIONBEHAVIOR_UPDATE,
+	}

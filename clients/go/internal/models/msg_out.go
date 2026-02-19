@@ -4,11 +4,13 @@ package coyote_models
 
 import (
 	"time"
+
+	coyote_proto "github.com/svix/coyote/clients/go/internal/proto"
 )
 
 type MsgOut struct {
-	Headers   map[string]string `json:"headers"`
-	Id        uint64            `json:"id"`
-	Payload   []uint8           `json:"payload"`
-	Timestamp time.Time         `json:"timestamp"`
+	Headers map[string]string `json:"headers"`
+Id uint64 `json:"id"`
+Payload []uint8 `json:"payload"`
+Timestamp time.Time `json:"timestamp"`
 }
