@@ -3,6 +3,12 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
+/// Macro support module
+#[doc(hidden)]
+pub mod __reexports {
+    pub use paste;
+}
+
 #[macro_use]
 mod macros;
 pub trait OperationResponse: Serialize + DeserializeOwned + Clone + Debug {
