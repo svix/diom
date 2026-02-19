@@ -6,10 +6,8 @@ version.workspace = true
 rust-version.workspace = true
 
 [package.metadata.cargo-machete]
-ignored = [
-    # required by aide::OperationIo derive macro
-    "schemars",
-]
+# required by aide::OperationIo derive macro
+ignored = ["schemars"]
 
 [dependencies]
 aide.workspace = true
