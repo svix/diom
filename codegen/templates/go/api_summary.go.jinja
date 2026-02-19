@@ -1,0 +1,18 @@
+{% do set_summary_filename("apis.go") -%}
+package coyote
+
+// This file is @generated DO NOT EDIT
+
+import (
+	coyote_apis "github.com/svix/coyote/clients/go/internal/apis"
+)
+
+{% for resource in api.resources -%}
+{% set resource_name = resource.name | to_upper_camel_case -%}
+type {{ resource_name }} = coyote_apis.{{ resource_name }}
+
+func (coyote Coyote) {{ resource_name }}() {{ resource_name }} {
+	return coyote_apis.New{{ resource_name }}(&coyote.inner)
+}
+
+{% endfor -%}

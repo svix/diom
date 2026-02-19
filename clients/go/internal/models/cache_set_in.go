@@ -1,0 +1,9 @@
+package coyote_models
+
+// This file is @generated DO NOT EDIT
+
+type CacheSetIn struct {
+	Key   string  `json:"key"`
+	Ttl   uint64  `json:"ttl"` // Time to live in milliseconds
+	Value []uint8 `json:"value"`
+}
