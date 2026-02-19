@@ -1,40 +1,15 @@
-use std::{collections::BTreeSet, fs, path::Path};
+use std::{collections::BTreeSet, fs, path::Path, process::ExitCode};
 
 use anyhow::Context as _;
 use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
-/// Map of output directory => list of templates that should write there.
-///
-/// Note: These directories are emptied before new files are generated.
-/// Do not place non-generated code there.
-const OUTPUTS: &[(&str, &[&str])] = &[
-    // Rust SDK
-    (
-        "clients/rust/src/api",
-        &[
-            "codegen/templates/rust/api_summary.rs.jinja",
-            "codegen/templates/rust/api_resource.rs.jinja",
-        ],
-    ),
-    (
-        "clients/rust/src/models",
-        &[
-            "codegen/templates/rust/component_type_summary.rs.jinja",
-            "codegen/templates/rust/component_type.rs.jinja",
-        ],
-    ),
-    // CLI
-    (
-        "clients/cli/src/cmds/api",
-        &[
-            "codegen/templates/cli/api_summary.rs.jinja",
-            "codegen/templates/cli/api_resource.rs.jinja",
-        ],
-    ),
-];
+mod formatting;
+mod outputs;
 
-fn main() -> anyhow::Result<()> {
+use self::outputs::OUTPUTS;
+
+fn main() -> anyhow::Result<ExitCode> {
     anyhow::ensure!(
         cfg!(feature = "generate"),
         "must enable --feature=generate to generate code"
@@ -86,18 +61,18 @@ fn main() -> anyhow::Result<()> {
         &BTreeSet::new(),
     )?;
 
-    for &(output_dir, templates) in OUTPUTS {
-        fs::remove_dir_all(output_dir)?;
-        for &template in templates {
-            openapi_codegen::generate(&api, template.to_owned(), output_dir.into(), true)?;
+    for output_dir in OUTPUTS {
+        if output_dir.managed {
+            fs::remove_dir_all(output_dir.path)?;
+        }
+        for &template in output_dir.templates {
+            let tpl_name = format!("codegen/templates/{template}");
+            openapi_codegen::generate(&api, tpl_name, output_dir.path.into(), true)?;
         }
     }
 
-    std::process::Command::new("cargo")
-        .args(["fmt", "--package=diom-client", "--package=diom-cli"])
-        .status()?;
-
-    Ok(())
+    let exit_code = formatting::run();
+    Ok(exit_code)
 }
 
 fn repo_root() -> &'static Path {

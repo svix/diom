@@ -1,0 +1,46 @@
+{% set ty_name = type.name | to_upper_camel_case -%}
+
+import (
+	"encoding/json"
+	"fmt"
+	"slices"
+)
+
+{% if type.description is defined -%}
+{{ type.description | to_doc_comment(style="go") }}
+{% endif -%}
+type {{ ty_name }} int64
+
+const (
+{% for varname, val in type.variants -%}
+	{{ type.name | to_upper_snake_case | replace("_", "") }}_{{ varname | to_upper_snake_case }}  {{ ty_name }} = {{ val }}
+{% endfor -%}
+)
+
+var allowed{{ ty_name }} = []{{ ty_name }}{
+	{% for _, val in type.variants -%}
+	{{ val }},
+	{% endfor -%}
+}
+
+
+func (v *{{ ty_name }}) UnmarshalJSON(src []byte) error {
+	var value int64
+	err := json.Unmarshal(src, &value)
+	if err != nil {
+		return err
+	}
+	enumVal := {{ ty_name }}(value)
+	if slices.Contains(allowed{{ ty_name }}, enumVal) {
+		*v = enumVal
+		return nil
+	}
+	return fmt.Errorf("`%+v` is not a valid {{ ty_name }}", value)
+
+}
+
+var {{ ty_name }}FromInt64 = map[int64]{{ ty_name }}{
+	{% for varname, val in type.variants -%}
+	{{ val }} : {{ type.name | to_upper_snake_case | replace("_", "") }}_{{ varname | to_upper_snake_case }},
+	{% endfor -%}
+}

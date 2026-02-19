@@ -1,0 +1,29 @@
+import (
+	"time"
+
+	diom_proto "github.com/svix/diom/clients/go/internal/proto"
+)
+
+{% if type.description is defined -%}
+{{ type.description | to_doc_comment(style="go")}}
+{% endif -%}
+type {{ type.name | to_upper_camel_case }} struct {
+	{% include "types/struct_fields.go.jinja" -%}
+}
+{% if type.name is endingwith "Patch" -%}
+func (o {{ type.name | to_upper_camel_case }}) MarshalJSON() ([]byte, error) {
+	toSerialize := map[string]interface{}{}
+	{% for field in type.fields -%}
+		{% if field.nullable -%}
+	if o.{{ field.name | to_upper_camel_case }}.IsSet() {
+		toSerialize["{{ field.name }}"] = o.{{ field.name | to_upper_camel_case }}
+	}
+		{% else -%}
+	if o.{{ field.name | to_upper_camel_case }} != nil {
+		toSerialize["{{ field.name }}"] = o.{{ field.name | to_upper_camel_case }}
+	}
+		{% endif -%}
+	{% endfor -%}
+	return json.Marshal(toSerialize)
+}
+{% endif -%}
