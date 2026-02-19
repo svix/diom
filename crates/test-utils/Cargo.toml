@@ -11,7 +11,6 @@ bytes.workspace = true
 coyote.workspace = true
 http.workspace = true
 http-body-util.workspace = true
-jwt-simple.workspace = true
 reqwest.workspace = true
 rmp-serde.workspace = true
 serde.workspace = true
