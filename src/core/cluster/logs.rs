@@ -272,14 +272,12 @@ impl CoyoteLogs {
                 } else {
                     None
                 };
-            let last_log_id = if let Some(last_guard) = tx.last_key_value(&log_keyspace) {
-                let raw_entry = last_guard.value()?;
-                let value: <TypeConfig as RaftTypeConfig>::Entry =
-                    rmp_serde::from_slice(&raw_entry)?;
-                Some(value.log_id)
-            } else {
-                last_purged_log_id
-            };
+            let last_log_id =
+                if let Some(Ok(last_guard)) = Log::range(&log_keyspace, ..).next_back() {
+                    Some(last_guard.1.0.log_id)
+                } else {
+                    last_purged_log_id
+                };
             Ok(openraft::LogState {
                 last_purged_log_id,
                 last_log_id,
