@@ -1,0 +1,28 @@
+{
+  "name": "coyote",
+  "version": "1.85.0",
+  "repository": "https://github.com/svix/coyote",
+  "type": "module",
+  "keywords": [
+    "typescript"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc -p tsconfig.test.json && node --enable-source-maps test_build/src/index.test.js",
+    "check": "biome check",
+    "check:fix": "biome check --write",
+    "fmt": "biome format --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.15",
+    "mockttp": "^3.15.5",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,30 @@
+// this file is @generated
+{% do set_summary_filename("client.ts") -%}
+
+import type { CoyoteOptions } from "./options";
+import { makeRequestContext, type CoyoteRequestContext } from "./request";
+
+{%- for resource in api.resources %}
+import { {{ resource.name | to_upper_camel_case }} } from "./apis/{{ resource.name | to_lower_camel_case }}";
+{%- endfor %}
+
+export {
+  {%- for resource in api.resources %}
+  {{ resource.name | to_upper_camel_case }},
+  {%- endfor %}
+};
+
+export class Coyote {
+  private readonly requestCtx: CoyoteRequestContext;
+
+  public constructor(token: string, options: CoyoteOptions = {}) {
+    this.requestCtx = makeRequestContext(token, options);
+  }
+
+  {%- for resource in api.resources %}
+
+  public get {{ resource.name | to_lower_camel_case }}(){
+    return new {{ resource.name | to_upper_camel_case }}(this.requestCtx);
+  }
+  {%- endfor %}
+}

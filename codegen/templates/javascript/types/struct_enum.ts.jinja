@@ -1,0 +1,104 @@
+{% from "types/macros.ts.jinja" import field_from_json, field_to_json -%}
+{% for c in referenced_components -%}
+import {
+    type {{ c | to_upper_camel_case }},
+    {{ c | to_upper_camel_case }}Serializer,
+} from './{{ c | to_lower_camel_case }}';
+{% endfor -%}
+
+{% set type_name = type.name | to_upper_camel_case -%}
+{% set disc_field_name = type.discriminator_field | to_lower_camel_case -%}
+{% set content_field_name = type.content_field | to_lower_camel_case -%}
+
+interface _{{ type_name }}Fields {
+    {% include "types/struct_fields.ts.jinja" -%}
+}
+
+{# export the types for enum variants without a config -#}
+{% for variant in type.variants %}
+    {% if variant.schema_ref is not defined %}
+// biome-ignore lint/suspicious/noEmptyInterface: backwards compat
+interface {{ type_name }}{{ variant.name | to_upper_camel_case }}{{ type.content_field | to_upper_camel_case }} {}
+    {% endif %}
+{% endfor %}
+
+{% for variant in type.variants %}
+interface {{ type_name }}{{ variant.name | to_upper_camel_case }} {
+    {{ disc_field_name }}: '{{ variant.name }}';
+    {% if variant.schema_ref is defined -%}
+    {{ content_field_name }}: {{ variant.schema_ref | to_upper_camel_case }};
+    {% else -%}
+    {{ content_field_name }}?: {{ type_name }}{{ variant.name | to_upper_camel_case }}{{ type.content_field | to_upper_camel_case }}
+    {%- endif %}
+}
+{% endfor %}
+
+{{ doc_comment }}
+export type {{ type_name }} = _{{ type_name }}Fields & (
+    {%- for variant in type.variants -%}
+        | {{ type_name }}{{ variant.name | to_upper_camel_case }}
+    {% endfor -%}
+);
+
+export const {{ type.name | to_upper_camel_case }}Serializer = {
+    _fromJsonObject(object: any): {{ type.name | to_upper_camel_case }} {
+        const {{ disc_field_name }} = object['{{ type.discriminator_field }}'];
+
+        function get{{ content_field_name | to_upper_camel_case }}({{ disc_field_name }}: string): any {
+            switch ({{ disc_field_name }}) {
+            {%- for variant in type.variants %}
+                {% if variant.schema_ref is defined -%}
+                case '{{ variant.name }}':
+                    return {{ variant.schema_ref | to_upper_camel_case }}Serializer._fromJsonObject(
+                            object['{{ type.content_field }}']
+                        );
+                {%- else %}
+                case '{{ variant.name }}':
+                    return {}
+                {%- endif -%}
+            {%- endfor -%}
+                default:
+                    throw new Error(`Unexpected {{ type.discriminator_field }}: ${ {{ disc_field_name}} }`);
+            }
+        }
+
+        return {
+            {{ disc_field_name }},
+            {{ content_field_name }}:get{{ content_field_name | to_upper_camel_case }}({{ disc_field_name }}),
+            {% for field in type.fields -%}
+                {% set field_expr %}object['{{ field.name }}']{% endset -%}
+                {{ field.name | to_lower_camel_case }}: {{ field_from_json(field_expr, field.type, field.required) }},
+            {% endfor -%}
+        };
+    },
+
+    _toJsonObject(self: {{ type.name | to_upper_camel_case }}): any {
+        // biome-ignore lint/suspicious/noImplicitAnyLet: the return type needs to be any
+        let {{ content_field_name }};
+        switch (self.{{ disc_field_name }}) {
+        {%- for variant in type.variants %}
+            {%- if variant.schema_ref is defined %}
+            case '{{ variant.name }}':
+                {{ content_field_name }} =
+                    {{ variant.schema_ref | to_upper_camel_case }}Serializer._toJsonObject(
+                        self.{{ content_field_name }}
+                    );
+                break;
+            {%- else %}
+            case '{{ variant.name }}':
+                {{ content_field_name }} = {}
+                break;
+            {%- endif %}
+        {%- endfor -%}
+        }
+
+        return {
+            '{{ type.discriminator_field }}': self.{{ disc_field_name }},
+            '{{ type.content_field }}': {{ content_field_name }},
+            {% for field in type.fields -%}
+                {% set field_expr %}self.{{ field.name | to_lower_camel_case }}{% endset -%}
+                '{{ field.name }}': {{ field_to_json(field_expr, field.type, field.required) }},
+            {% endfor -%}
+        };
+    }
+}
