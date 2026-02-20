@@ -8,6 +8,7 @@ use std::{
 use openraft::{LogId, ServerState};
 use serde::{Deserialize, Serialize};
 
+use super::handle::{Request, Response};
 use crate::core::cluster::state_machine::ClusterId;
 
 use super::raft::NodeId;
@@ -50,4 +51,16 @@ pub struct HealthResponse {
     pub server_state: ServerState,
     pub leader: Option<NodeId>,
     pub cluster_id: Option<ClusterId>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ForwardedWriteRequest {
+    pub source_node_id: NodeId,
+    pub request: Request,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ForwardedWriteResponse {
+    pub log_id: LogId<NodeId>,
+    pub response: Response,
 }

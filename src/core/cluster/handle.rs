@@ -2,14 +2,13 @@ use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
 
 use super::{
     discovery::Discovery,
+    network::NetworkFactory,
     operations::{InternalRequest, InternalResponse},
-    raft::{Node, NodeId, Raft},
+    raft::{NodeId, Raft},
 };
 use coyote_operations::{OperationRequest, OperationResponse};
-use openraft::error::{ClientWriteError, RaftError};
+use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
-
-type WriteResult<T> = Result<T, RaftError<NodeId, ClientWriteError<NodeId, Node>>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResponseParseError {
@@ -143,11 +142,12 @@ pub struct RaftState {
     pub raft: Raft,
     pub node_id: NodeId,
     pub state_machine: StoreHandle,
+    pub(super) network: NetworkFactory,
 }
 
 impl RaftState {
     /// Write a single operation into the Raft log and return its response.
-    pub async fn client_write<O>(&self, op: O) -> WriteResult<O::Response>
+    pub async fn client_write<O>(&self, op: O) -> anyhow::Result<O::Response>
     where
         O: OperationRequest + Into<O::RequestParent>,
         O::RequestParent: Into<Request>,
@@ -160,10 +160,43 @@ impl RaftState {
         >>::Error: std::fmt::Debug,
     {
         let request = op.into().into();
-        let response = self.raft.client_write(request).await?;
+        let response = match self.raft.client_write(request.clone()).await {
+            Ok(resp) => {
+                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
+                resp.data
+            }
+            Err(err) => {
+                if let Some(forward_to_leader) = err.forward_to_leader() {
+                    if let Some(leader_id) = forward_to_leader.leader_id
+                        && let Some(leader_node) = &forward_to_leader.leader_node
+                    {
+                        tracing::debug!("received write to non-leader, forwarding");
+                        let mut network_handle = self.network.clone();
+                        let client = network_handle.new_client(leader_id, leader_node).await;
+                        client
+                            .forward_request::<openraft::AnyError>(
+                                super::proto::ForwardedWriteRequest {
+                                    source_node_id: self.node_id,
+                                    request: request,
+                                },
+                            )
+                            .await
+                            .map(|r| r.response)
+                            .map_err(|e| anyhow::anyhow!(e))?
+                    } else {
+                        tracing::error!(
+                            "received write to non-leader, and I don't know who the leader is!"
+                        );
+                        anyhow::bail!("no leader");
+                    }
+                } else {
+                    return Err(err.into());
+                }
+            }
+        };
         let module_response =
             <<O as OperationRequest>::Response as OperationResponse>::ResponseParent::try_from(
-                response.data,
+                response,
             )
             .expect("raft response should be convertible into module response type");
         let resp = module_response

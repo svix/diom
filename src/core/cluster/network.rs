@@ -5,7 +5,7 @@ use std::{
 
 use crate::cfg::Configuration;
 
-use super::{Node, NodeId, raft::TypeConfig};
+use super::{Node, NodeId, proto, raft::TypeConfig};
 use anyhow::Context;
 use coyote_proto::prelude::*;
 use http::{HeaderMap, HeaderValue, header};
@@ -35,6 +35,7 @@ pub(super) fn build_client(
     Ok(client)
 }
 
+#[derive(Clone)]
 pub(super) struct NetworkFactory {
     client: reqwest::Client,
 }
@@ -110,6 +111,17 @@ impl NetworkClient {
             .msgpack()
             .await
             .map_err(|e| RPCError::Network(NetworkError::new(&e)))
+    }
+
+    pub(crate) async fn forward_request<Err>(
+        &self,
+        req: proto::ForwardedWriteRequest,
+    ) -> Result<proto::ForwardedWriteResponse, openraft::error::RPCError<NodeId, Node, Err>>
+    where
+        Err: std::error::Error + DeserializeOwned,
+    {
+        self.send_request("/repl/raft/handle-forwarded-write", req)
+            .await
     }
 }
 
