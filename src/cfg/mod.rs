@@ -147,16 +147,8 @@ pub struct ConfigurationInner {
 /// make a ConfigurationInner for testing use
 impl Default for ConfigurationInner {
     fn default() -> Self {
-        use rand::distr::{Alphanumeric, SampleString};
-
-        let jwt_key = Alphanumeric.sample_string(&mut rand::rng(), 32);
-
         let config = config::Config::builder()
             .add_source(config::File::from_str(DEFAULTS, config::FileFormat::Toml))
-            .set_default("jwt_algorithm", "HS256")
-            .unwrap()
-            .set_default("jwt_secret", jwt_key)
-            .unwrap()
             .build()
             .unwrap();
 
