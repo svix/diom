@@ -127,11 +127,12 @@ pub async fn initialize_raft(
     let config = Arc::new(config.validate()?);
     let network = super::network::NetworkFactory::new(cfg);
 
-    // TODO: handle ephemeral DB
-    let db = app_state.configgroup_state.db().clone();
+    let db = app_state.configgroup_state.both_dbs.persistent_db.clone();
+    let edb = app_state.configgroup_state.both_dbs.ephemeral_db.clone();
 
     let state_machine =
-        super::state_machine::Store::new(db, cfg.cluster.snapshot_path.clone(), app_state).await?;
+        super::state_machine::Store::new(db, edb, cfg.cluster.snapshot_path.clone(), app_state)
+            .await?;
     let state_machine: StoreHandle = state_machine.into();
     let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone()).await?;
     Ok(RaftState {
@@ -181,10 +182,11 @@ mod tests {
             let cfg = cfg.into();
 
             let db = Database::builder(data_path).open()?;
+            let edb = Database::builder(e_data_path).open()?;
 
             let app_state: AppState = AppState::new(cfg);
 
-            let store = Store::new(db, snapshot_path, app_state).await?;
+            let store = Store::new(db, edb, snapshot_path, app_state).await?;
 
             Ok((workdir, logs, store.into()))
         }

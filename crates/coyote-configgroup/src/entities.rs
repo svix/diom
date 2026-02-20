@@ -34,7 +34,9 @@ impl Display for Module {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PartialOrd, Ord,
+)]
 pub enum StorageType {
     #[default]
     Persistent = 0,

@@ -51,6 +51,7 @@ opentelemetry-http.workspace = true
 opentelemetry-otlp.workspace = true
 opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
+parking_lot.workspace = true
 paste.workspace = true
 pnet.workspace = true
 rand.workspace = true
@@ -165,6 +166,7 @@ opentelemetry-otlp = { version = "0.31.0", default-features = false, features = 
 opentelemetry-proto = { version = "0.31.0", default-features = false, features = ["internal-logs", "gen-tonic", "trace", "with-serde"] }
 opentelemetry-semantic-conventions = "0.31.0"
 opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
+parking_lot = "0.12"
 paste = "1.0.15"
 percent-encoding = "2.3.2"
 pnet = "0.35"

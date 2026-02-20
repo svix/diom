@@ -2,14 +2,16 @@ use std::{
     io::{ErrorKind, Seek, SeekFrom},
     path::{Path, PathBuf},
     pin::Pin,
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 
+use coyote_configgroup::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
     StorageIOError, StoredMembership, storage::RaftStateMachine,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tap::TapFallible;
 use tokio::sync::RwLock as TokioRwLock;
@@ -52,9 +54,30 @@ impl From<Store> for StoreHandle {
     }
 }
 
+pub(super) struct Databases {
+    persistent: Database,
+    ephemeral: Database,
+}
+
+impl Databases {
+    pub(super) fn db_for(&self, name: StorageType) -> &Database {
+        match name {
+            StorageType::Persistent => &self.persistent,
+            StorageType::Ephemeral => &self.ephemeral,
+        }
+    }
+
+    pub(super) fn new(persistent: Database, ephemeral: Database) -> Self {
+        Self {
+            persistent,
+            ephemeral,
+        }
+    }
+}
+
 pub struct Store {
     pub(super) state: AppState,
-    db: Database,
+    databases: Arc<RwLock<Databases>>,
     snapshot_directory: PathBuf,
     meta_keyspace: Keyspace,
     snapshot_idx: u64,
@@ -84,7 +107,8 @@ const METADATA_KEYSPACE: &str = "_raft_metadata";
 
 impl Store {
     pub async fn new(
-        db: Database,
+        persistent_db: Database,
+        ephemeral_db: Database,
         snapshot_directory: PathBuf,
         app_state: AppState,
     ) -> anyhow::Result<Self> {
@@ -93,9 +117,11 @@ impl Store {
         {
             return Err(e.into());
         }
-        let meta_keyspace = db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
+        let meta_keyspace =
+            persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
+        let databases = Databases::new(persistent_db, ephemeral_db);
         let mut this = Self {
-            db,
+            databases: Arc::new(RwLock::new(databases)),
             state: app_state,
             snapshot_directory,
             meta_keyspace,
@@ -142,11 +168,12 @@ impl Store {
 
     #[tracing::instrument(skip(self))]
     async fn load_information(&mut self) -> anyhow::Result<()> {
-        let db = self.db.clone();
+        let handle = self.databases.clone();
         let keyspace = self.meta_keyspace.clone();
 
         let (last_applied_log_id, last_membership, last_snapshot, cluster_id) =
             tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
+                let db = &handle.read().persistent;
                 let snapshot = db.snapshot();
                 let last_applied_log_id =
                     Self::try_read_field(&snapshot, &keyspace, "last_applied_log_id").ok();
@@ -173,7 +200,7 @@ impl Store {
             .map(|s| s.meta.snapshot_idx())
             .unwrap_or(0);
         self.cluster_id = cluster_id;
-        *self.last_snapshot.write().unwrap() = last_snapshot;
+        *self.last_snapshot.write() = last_snapshot;
         Ok(())
     }
 
@@ -182,7 +209,7 @@ impl Store {
         meta: SnapshotMeta<NodeId, Node>,
         snapshot_path: PathBuf,
     ) -> anyhow::Result<()> {
-        let db = self.db.clone();
+        let handle = self.databases.clone();
         let keyspace = self.meta_keyspace.clone();
         self.snapshot_idx = std::cmp::max(self.snapshot_idx + 1, meta.snapshot_idx());
         let data = LastSnapshot {
@@ -192,12 +219,13 @@ impl Store {
         tracing::trace!(last_snapshot=?data, "setting last_snapshot");
         let serialized = rmp_serde::to_vec_named(&data)?;
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+            let db = &handle.read().persistent;
             keyspace.insert("last_snapshot", serialized)?;
             db.persist(fjall::PersistMode::SyncAll)?;
             Ok(())
         })
         .await??;
-        *self.last_snapshot.write().unwrap() = Some(data);
+        *self.last_snapshot.write() = Some(data);
         Ok(())
     }
 
@@ -206,11 +234,16 @@ impl Store {
             last_applied_log_id=?self.last_applied_log_id,
             last_membership=?self.last_membership,
             "storing id values");
-        let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
+        let handle = self.databases.clone();
         let keyspace = self.meta_keyspace.clone();
         let last_applied_log_id = rmp_serde::encode::to_vec_named(&self.last_applied_log_id)?;
         let last_membership = rmp_serde::encode::to_vec_named(&self.last_membership)?;
         tokio::task::spawn_blocking(move || {
+            let mut tx = handle
+                .read()
+                .persistent
+                .batch()
+                .durability(Some(PersistMode::Buffer));
             tx.insert(&keyspace, "last_applied_log_id", last_applied_log_id);
             tx.insert(&keyspace, "last_membership", last_membership);
             tx.commit()?;
@@ -244,9 +277,12 @@ impl Store {
     ) -> anyhow::Result<()> {
         tracing::debug!("starting snapshot installation");
         let mut f = snapshot.file.into_std().await;
-        let db = self.db.clone();
-        tokio::task::spawn_blocking(move || serialized_state_machine::load_from_file(&db, &mut f))
-            .await??;
+        let handle = self.databases.clone();
+        tokio::task::spawn_blocking(move || {
+            let databases = handle.write();
+            serialized_state_machine::load_from_file(&databases, &mut f)
+        })
+        .await??;
         self.last_applied_log_id = meta.last_log_id;
         self.last_membership = meta.last_membership.clone();
         self.record_ids_().await?;
@@ -323,7 +359,7 @@ impl Store {
         &mut self,
     ) -> StorageResult<Option<openraft::Snapshot<TypeConfig>>> {
         // clone to avoid holding a lock over an await point
-        let last_snapshot = self.last_snapshot.read().unwrap().clone();
+        let last_snapshot = self.last_snapshot.read().clone();
         if let Some(last_snapshot) = last_snapshot {
             tracing::trace!(?last_snapshot, "found last_snapshot");
             let f = tokio::fs::File::open(&last_snapshot.path)
@@ -358,18 +394,40 @@ impl Store {
             snapshot_id,
         };
 
-        let keyspaces = self
-            .db
-            .list_keyspace_names()
-            .into_iter()
-            .filter(|s| s.as_bytes() != METADATA_KEYSPACE.as_bytes())
-            .map(|s| s.to_string())
-            .collect();
+        let handle = self.databases.clone();
 
-        let snapshot =
-            StoredSnapshot::new(&meta, &self.snapshot_directory, self.db.clone(), keyspaces)
-                .await
-                .map_err(write_snapshot_err)?;
+        fn list_keyspaces(db: &Database) -> Vec<String> {
+            db.list_keyspace_names()
+                .into_iter()
+                .filter(|s| s.as_bytes() != METADATA_KEYSPACE.as_bytes())
+                .map(|s| s.to_string())
+                .collect()
+        }
+
+        let targets = tokio::task::spawn_blocking(move || {
+            let dbs = handle.write();
+
+            vec![
+                (
+                    StorageType::Persistent,
+                    dbs.persistent.clone(),
+                    dbs.persistent.snapshot(),
+                    list_keyspaces(&dbs.persistent),
+                ),
+                (
+                    StorageType::Ephemeral,
+                    dbs.ephemeral.clone(),
+                    dbs.ephemeral.snapshot(),
+                    list_keyspaces(&dbs.ephemeral),
+                ),
+            ]
+        })
+        .await
+        .map_err(|err| write_snapshot_err(anyhow::anyhow!(err)))?;
+
+        let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets)
+            .await
+            .map_err(write_snapshot_err)?;
 
         self.set_last_snapshot_(meta.clone(), snapshot.path.clone())
             .await
@@ -457,17 +515,15 @@ impl StoredSnapshot {
     async fn new(
         metadata: &SnapshotMeta<NodeId, Node>,
         directory: &Path,
-        database: Database,
-        keyspaces: Vec<String>,
+        targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
     ) -> anyhow::Result<Self> {
         let file_name = format!("coyote-{}", metadata.snapshot_id);
         let path = directory.with_file_name(file_name);
         let path_c = path.clone();
         let file = tokio::task::spawn_blocking(move || -> anyhow::Result<std::fs::File> {
-            let snapshot = database.snapshot();
             tracing::info!(path=%path_c.display(), "writing snapshot");
             let mut f = std::fs::File::create(path_c)?;
-            serialized_state_machine::serialize_to_file(database, snapshot, keyspaces, &mut f)?;
+            serialized_state_machine::serialize_to_file(targets, &mut f)?;
             f.seek(SeekFrom::Start(0))?;
             Ok(f)
         })
