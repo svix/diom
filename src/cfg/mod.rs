@@ -141,9 +141,6 @@ pub struct ConfigurationInner {
     pub environment: Environment,
 
     pub cluster: ClusterConfiguration,
-
-    #[serde(flatten)]
-    pub internal: InternalConfig,
 }
 
 #[cfg(test)]
@@ -170,9 +167,6 @@ impl Default for ConfigurationInner {
 const fn default_opentelemetry_metrics_period() -> u64 {
     60
 }
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct InternalConfig {}
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
