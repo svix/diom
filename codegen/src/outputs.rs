@@ -1,17 +1,5 @@
 /// Map of output directory => list of templates that should write there.
 pub(crate) const OUTPUTS: &[OutputDirectory] = &[
-    // Rust SDK
-    OutputDirectory::managed_dir(
-        "clients/rust/src/api",
-        &["rust/api_summary.rs.jinja", "rust/api_resource.rs.jinja"],
-    ),
-    OutputDirectory::managed_dir(
-        "clients/rust/src/models",
-        &[
-            "rust/component_type_summary.rs.jinja",
-            "rust/component_type.rs.jinja",
-        ],
-    ),
     // CLI
     OutputDirectory::managed_dir(
         "clients/cli/src/cmds/api",
@@ -30,6 +18,31 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
         &["go/component_type.go.jinja"],
     ),
     OutputDirectory::managed_dir("clients/go/internal/apis", &["go/api_resource.go.jinja"]),
+    // JavaScript
+    OutputDirectory::unmanaged_dir(
+        "clients/javascript/src",
+        &["javascript/api_summary.ts.jinja"],
+    ),
+    OutputDirectory::managed_dir(
+        "clients/javascript/src/apis",
+        &["javascript/api_resource.ts.jinja"],
+    ),
+    OutputDirectory::managed_dir(
+        "clients/javascript/src/models",
+        &["javascript/component_type.ts.jinja"],
+    ),
+    // Rust
+    OutputDirectory::managed_dir(
+        "clients/rust/src/api",
+        &["rust/api_summary.rs.jinja", "rust/api_resource.rs.jinja"],
+    ),
+    OutputDirectory::managed_dir(
+        "clients/rust/src/models",
+        &[
+            "rust/component_type_summary.rs.jinja",
+            "rust/component_type.rs.jinja",
+        ],
+    ),
 ];
 
 pub(crate) struct OutputDirectory {
