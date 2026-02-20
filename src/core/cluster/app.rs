@@ -143,7 +143,7 @@ async fn discover(
                 .membership_state
                 .committed()
                 .nodes()
-                .map(|(nid, n)| (*nid, n.addr.parse().unwrap()))
+                .map(|(nid, n)| (*nid, n.addrs()))
                 .collect(),
         })
         .await
@@ -167,10 +167,17 @@ async fn add_learner(
     MsgPack(request): MsgPack<AddLearnerRequest>,
 ) -> impl IntoResponse {
     let url = format!("http://{}/repl/raft/vote", request.address);
-    let Ok(Some(addr)) = Uri::try_from(url).map(|v| v.authority().map(|a| a.to_string())) else {
+    let Ok(Some(authority)) = Uri::try_from(url).map(|v| v.authority().map(|a| a.to_string()))
+    else {
         return internal_error("invalid address");
     };
-    let node = Node { addr };
+    let Ok(addr) = authority.parse::<std::net::SocketAddr>() else {
+        return internal_error(format!(
+            "unable to get socketaddr for authority {authority}"
+        ));
+    };
+    tracing::debug!(?authority, ?addr, "looked up learner");
+    let node = Node::new(addr);
     rpc_response(state.raft.add_learner(request.node_id, node, true).await)
 }
 
@@ -200,9 +207,8 @@ async fn initialize(
     let addr = match detect_address(&app_state.cfg) {
         Ok(a) => a,
         Err(_e) => return internal_error("could not find any valid addresses"),
-    }
-    .to_string();
-    let my_node = Node { addr };
+    };
+    let my_node = Node::new(addr);
     let nodes = [(state.node_id, my_node)]
         .into_iter()
         .collect::<BTreeMap<_, _>>();
