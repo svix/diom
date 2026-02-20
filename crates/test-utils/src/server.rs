@@ -3,8 +3,7 @@ use std::{net::SocketAddr, path::Path, sync::Arc};
 use crate::TestClient;
 use coyote::{
     cfg::{
-        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, InternalConfig,
-        LogFormat, LogLevel,
+        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, LogFormat, LogLevel,
     },
     core::cluster::proto::HealthResponse,
     run_with_prefix,
@@ -227,7 +226,6 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         opentelemetry_sample_ratio: None,
         opentelemetry_service_name: "coyote-test".to_string(),
         environment: Environment::Dev,
-        internal: InternalConfig {},
         cluster: ClusterConfiguration {
             listen_address: addr,
             name: "coyote-test".to_string(),
