@@ -12,13 +12,13 @@ use std::{
 use anyhow::Context;
 use config::ConfigBuilder;
 use fjall::Database;
-use serde::Deserialize;
+use serde::{Deserialize, de::DeserializeOwned};
 use tap::Pipe;
 use tracing::Level;
 
 use crate::error::Result;
 
-const DEFAULTS: &str = include_str!("../../config.default.toml");
+mod defaults;
 
 pub type Configuration = Arc<ConfigurationInner>;
 
@@ -53,12 +53,16 @@ impl DatabaseConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct ClusterConfiguration {
     /// The address to listen on for replication
+    #[serde(default = "defaults::cluster_listen_address")]
     pub listen_address: SocketAddr,
 
+    #[serde(default = "defaults::cluster_name")]
     pub name: String,
 
+    #[serde(default = "defaults::cluster_snapshot_path")]
     pub snapshot_path: PathBuf,
 
+    #[serde(default = "defaults::cluster_log_path")]
     pub log_path: PathBuf,
 
     #[serde(default)]
@@ -66,26 +70,32 @@ pub struct ClusterConfiguration {
 
     #[serde(
         rename = "replication_request_timeout_ms",
-        with = "crate::serde::duration::millis"
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_replication_request_timeout"
     )]
     pub replication_request_timeout: Duration,
 
     #[serde(
         rename = "discovery_request_timeout_ms",
-        with = "crate::serde::duration::millis"
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_discovery_request_timeout"
     )]
     pub discovery_request_timeout: Duration,
 
     #[serde(
         rename = "connection_timeout_ms",
-        with = "crate::serde::duration::millis"
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_connection_timeout"
     )]
     pub connection_timeout: Duration,
 
+    #[serde(default = "defaults::cluster_heartbeat_interval_ms")]
     pub heartbeat_interval_ms: u64,
 
+    #[serde(default = "defaults::cluster_election_timeout_min_ms")]
     pub election_timeout_min_ms: u64,
 
+    #[serde(default = "defaults::cluster_election_timeout_max_ms")]
     pub election_timeout_max_ms: u64,
 
     #[serde(default)]
@@ -94,52 +104,81 @@ pub struct ClusterConfiguration {
     /// Automatically initialize the cluster on bootup if we can't discover any
     /// peers and we don't have any existing state. If you initialize all peers
     /// at exactly the same time, this can potentially cause errors.
+    #[serde(default = "defaults::cluster_auto_initialize")]
     pub auto_initialize: bool,
 
     #[serde(
         rename = "discovery_timeout_ms",
-        with = "crate::serde::duration::millis"
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_discovery_timeout"
     )]
     pub discovery_timeout: Duration,
 
     #[serde(
         rename = "startup_discovery_delay_ms",
-        with = "crate::serde::duration::millis"
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_startup_discovery_delay"
     )]
     pub startup_discovery_delay: Duration,
+}
+
+impl Default for ClusterConfiguration {
+    fn default() -> Self {
+        default_from_serde().unwrap()
+    }
+}
+
+fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Error> {
+    let empty: [(String, String); 0] = [];
+    T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ConfigurationInner {
     /// The address to listen on
+    #[serde(default = "defaults::listen_address")]
     pub listen_address: SocketAddr,
 
+    #[serde(default = "defaults::persistent_db")]
     pub persistent_db: DatabaseConfig,
+    #[serde(default = "defaults::ephemeral_db")]
     pub ephemeral_db: DatabaseConfig,
 
     /// The log level to run the service with. Supported: info, debug, trace
+    #[serde(default)]
     pub log_level: LogLevel,
+
     /// The log format that all output will follow. Supported: default, json
+    #[serde(default)]
     pub log_format: LogFormat,
+
     /// The OpenTelemetry address to send events to if given.
     pub opentelemetry_address: Option<String>,
+
     /// By default, `opentelemetry_address` is expected to be a GRPC server.
     ///
     /// When this is set to true, HTTP is used instead.
     #[serde(default)]
     pub opentelemetry_metrics_use_http: bool,
-    #[serde(default = "default_opentelemetry_metrics_period")]
+
+    #[serde(default = "defaults::opentelemetry_metrics_period")]
     pub opentelemetry_metrics_period_seconds: u64,
+
     /// The ratio at which to sample spans when sending to OpenTelemetry.
     ///
     /// When not given it defaults to always sending.
     /// If the OpenTelemetry address is not set, this will do nothing.
     pub opentelemetry_sample_ratio: Option<f64>,
+
     /// The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
+    #[serde(default = "defaults::opentelemetry_service_name")]
     pub opentelemetry_service_name: String,
+
     /// The environment (dev, staging, or prod) that the server is running in.
+    #[serde(default)]
     pub environment: Environment,
 
+    #[serde(default)]
     pub cluster: ClusterConfiguration,
 }
 
@@ -147,37 +186,31 @@ pub struct ConfigurationInner {
 /// make a ConfigurationInner for testing use
 impl Default for ConfigurationInner {
     fn default() -> Self {
-        let config = config::Config::builder()
-            .add_source(config::File::from_str(DEFAULTS, config::FileFormat::Toml))
-            .build()
-            .unwrap();
-
-        config.try_deserialize::<ConfigurationInner>().unwrap()
+        default_from_serde().unwrap()
     }
 }
 
-const fn default_opentelemetry_metrics_period() -> u64 {
-    60
-}
-
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
+    #[default]
     Info,
     Debug,
     Trace,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogFormat {
+    #[default]
     Default,
     Json,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Environment {
+    #[default]
     Dev,
     Staging,
     Prod,
@@ -210,7 +243,6 @@ impl fmt::Display for LogLevel {
 
 pub fn load(config_path: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner>> {
     let config = config::Config::builder()
-        .add_source(config::File::from_str(DEFAULTS, config::FileFormat::Toml))
         .pipe(|config: ConfigBuilder<_>| {
             if let Some(path) = config_path {
                 config.add_source(config::File::with_name(path))
