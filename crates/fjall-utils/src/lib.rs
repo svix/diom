@@ -1,5 +1,9 @@
+mod readonly_db;
 mod table_row;
 
+pub use self::readonly_db::{
+    ReadableDatabase, ReadableKeyspace, ReadonlyDatabase, ReadonlyKeyspace,
+};
 pub use self::table_row::{
     KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt,
 };

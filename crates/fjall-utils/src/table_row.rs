@@ -6,6 +6,7 @@ use std::{
 };
 use uuid::Uuid;
 
+use super::readonly_db::ReadableKeyspace;
 use coyote_error::{Error, Result, ResultExt};
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -109,7 +110,7 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         rmp_serde::from_slice(&value).map_err(Error::generic)
     }
 
-    fn fetch(keyspace: &fjall::Keyspace, key: &Self::Key) -> Result<Option<Self>> {
+    fn fetch<K: ReadableKeyspace>(keyspace: &K, key: &Self::Key) -> Result<Option<Self>> {
         let key = Self::make_fjall_key(key);
         keyspace.get(&key)?.map(Self::from_fjall_value).transpose()
     }
@@ -136,7 +137,7 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
     }
 
     /// Iterate over all of the key/value pairs in this table, in sorted order
-    fn iter(keyspace: &fjall::Keyspace) -> impl Iterator<Item = Result<(Self::Key, Self)>> {
+    fn iter<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = Result<(Self::Key, Self)>> {
         let prefix = Self::prefix_with(&[]);
         keyspace.prefix(prefix).map(|g| {
             let (k, v) = g.into_inner()?;
@@ -146,7 +147,7 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         })
     }
 
-    fn values(keyspace: &fjall::Keyspace) -> Result<impl Iterator<Item = Self>> {
+    fn values<K: ReadableKeyspace>(keyspace: &K) -> Result<impl Iterator<Item = Self>> {
         Ok(keyspace.prefix(Self::TABLE_PREFIX).map(|g| {
             let v = g.value().expect("iter error?");
             Self::from_fjall_value(v).expect("deserialize error?")

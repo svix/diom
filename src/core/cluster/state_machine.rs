@@ -5,6 +5,7 @@ use std::{
     sync::Arc,
 };
 
+use crate::core::db::Databases;
 use coyote_configgroup::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
 use openraft::{
@@ -51,27 +52,6 @@ pub struct StoreHandle(Arc<TokioRwLock<Store>>);
 impl From<Store> for StoreHandle {
     fn from(value: Store) -> Self {
         Self(Arc::new(TokioRwLock::new(value)))
-    }
-}
-
-pub(super) struct Databases {
-    persistent: Database,
-    ephemeral: Database,
-}
-
-impl Databases {
-    pub(super) fn db_for(&self, name: StorageType) -> &Database {
-        match name {
-            StorageType::Persistent => &self.persistent,
-            StorageType::Ephemeral => &self.ephemeral,
-        }
-    }
-
-    pub(super) fn new(persistent: Database, ephemeral: Database) -> Self {
-        Self {
-            persistent,
-            ephemeral,
-        }
     }
 }
 
@@ -133,6 +113,13 @@ impl Store {
         };
         this.load_information().await?;
         Ok(this)
+    }
+
+    /// Get a read lock on the databases and return a handle to them. Intended to be used by the
+    /// applier
+    #[allow(dead_code)]
+    pub(super) fn db_handle(&self) -> impl std::ops::Deref<Target = Databases> {
+        self.databases.read_arc()
     }
 
     pub fn cluster_id(&self) -> Option<&ClusterId> {

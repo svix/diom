@@ -3,7 +3,7 @@ use std::{
     io::{Read, Seek, Write},
 };
 
-use super::state_machine::Databases;
+use crate::core::db::Databases;
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use coyote_configgroup::entities::StorageType;
@@ -230,8 +230,8 @@ mod tests {
 
     use fjall::{Database, KeyspaceCreateOptions, Slice};
 
-    use super::super::state_machine::Databases;
     use super::{load_from_file, serialize_to_file};
+    use crate::core::db::Databases;
     use coyote_configgroup::entities::StorageType;
 
     #[test]
