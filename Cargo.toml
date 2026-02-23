@@ -28,7 +28,6 @@ anyerror.workspace = true
 anyhow.workspace = true
 axum.workspace = true
 byteorder.workspace = true
-config.workspace = true
 coyote-cache.workspace = true
 coyote-configgroup.workspace = true
 coyote-derive.workspace = true
@@ -74,6 +73,7 @@ tracing-subscriber = { workspace = true, features = ["json"] }
 url.workspace = true
 uuid.workspace = true
 validator.workspace = true
+yaml_serde.workspace = true
 zip.workspace = true
 
 [dev-dependencies]
@@ -198,6 +198,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["a
 url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
+yaml_serde = "0.10.3"
 zip = "7"
 
 [workspace.lints.rust]

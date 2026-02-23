@@ -1,9 +1,0 @@
-kv:
-  default:
-    storage_type: persistent
-cache:
-  default:
-    storage_type: persistent
-idempotency:
-  default:
-    storage_type: persistent
