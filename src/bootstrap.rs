@@ -147,7 +147,6 @@ impl BootstrapConfig {
                     config
                 }
             })
-            .add_source(config::Environment::with_prefix("COYOTE"))
             .build()?;
 
         let config: BootstrapConfig = config
