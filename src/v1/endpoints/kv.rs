@@ -141,16 +141,14 @@ async fn kv_get(
 /// KV Delete
 #[aide_annotate(op_id = "v1.kv.delete")]
 async fn kv_del(
-    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvDeleteIn>,
 ) -> Result<MsgPackOrJson<KvDeleteOut>> {
-    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
+    let key = data.key.0.clone();
+    let operation = KvStore::delete_operation(key);
+    repl.client_write(operation).await.map_err_generic()?.0?;
 
-    let deleted = kv_store
-        .delete(&data.key.0)
-        .map_err(|e| crate::error::Error::generic(e))
-        .is_ok();
-    let ret = KvDeleteOut { deleted };
+    let ret = KvDeleteOut { deleted: true };
     Ok(MsgPackOrJson(ret))
 }
 
