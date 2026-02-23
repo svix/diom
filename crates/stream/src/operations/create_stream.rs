@@ -1,7 +1,7 @@
 use std::num::NonZeroU64;
 
 use super::{CreateStreamResponse, StreamRaftState, StreamRequest};
-use coyote_configgroup::entities::StreamConfig;
+use coyote_configgroup::entities::{StorageType, StreamConfig};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -34,7 +34,7 @@ impl CreateStreamOperation {
             StreamConfig {
                 retention_period_seconds: self.retention_period_seconds,
             },
-            None,
+            StorageType::default(),
             self.max_byte_size,
         );
         let out = op.apply_operation(configgroup_state)?;
