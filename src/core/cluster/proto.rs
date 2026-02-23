@@ -16,7 +16,7 @@ use super::raft::NodeId;
 pub(super) struct DiscoverClusterResponse {
     pub cluster_name: String,
     pub cluster_id: Option<ClusterId>,
-    pub known_peers: BTreeMap<NodeId, SocketAddr>,
+    pub known_peers: BTreeMap<NodeId, Vec<SocketAddr>>,
     pub state: ServerState,
     pub last_committed_log_id: Option<LogId<NodeId>>,
 }

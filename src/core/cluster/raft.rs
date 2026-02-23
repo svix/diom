@@ -1,9 +1,6 @@
-use std::{collections::BTreeMap, sync::Arc, time::Instant};
+use std::{collections::BTreeMap, net::SocketAddr, sync::Arc, time::Instant};
 
-use openraft::{
-    BasicNode,
-    error::{InitializeError, RaftError},
-};
+use openraft::error::{InitializeError, RaftError};
 use serde::{Deserialize, Serialize};
 use tap::TapFallible;
 use uuid::Uuid;
@@ -21,8 +18,25 @@ use crate::{
     },
 };
 
-// TODO: is BasicNode enough for us?
-pub(super) type Node = BasicNode;
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum Node {
+    #[default]
+    NoAddress,
+    SingleHomed(SocketAddr),
+}
+
+impl Node {
+    pub fn new(s: SocketAddr) -> Self {
+        Self::SingleHomed(s)
+    }
+
+    pub fn addrs(&self) -> Vec<SocketAddr> {
+        match self {
+            Self::NoAddress => vec![],
+            Self::SingleHomed(s) => vec![*s],
+        }
+    }
+}
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash, Serialize, Deserialize,
