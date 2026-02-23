@@ -56,9 +56,10 @@ impl From<EvictionPolicyIn> for EvictionPolicy {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct ConfigGroupIn<C> {
-    pub storage_type: Option<StorageTypeIn>,
+    #[serde(default)]
+    pub storage_type: StorageTypeIn,
     pub max_storage_bytes: Option<NonZeroU64>,
 
     #[serde(flatten)]
@@ -70,7 +71,7 @@ impl<C: IntoModuleConfig> ConfigGroupIn<C> {
         CreateConfigGroup::new(
             name,
             self.config.into_module_config(),
-            self.storage_type.map(|x| x.into()),
+            self.storage_type.into(),
             self.max_storage_bytes,
         )
     }
@@ -152,11 +153,7 @@ impl BootstrapConfig {
             .get_or_insert_default()
             .entry("default".to_owned())
         {
-            v.insert(ConfigGroupIn {
-                storage_type: Some(StorageTypeIn::Persistent),
-                max_storage_bytes: None,
-                config: CacheConfigIn::default(),
-            });
+            v.insert(ConfigGroupIn::default());
         }
 
         // Configure default config group for idempotency, if not part of the config file
@@ -165,11 +162,7 @@ impl BootstrapConfig {
             .get_or_insert_default()
             .entry("default".to_owned())
         {
-            v.insert(ConfigGroupIn {
-                storage_type: Some(StorageTypeIn::Persistent),
-                max_storage_bytes: None,
-                config: IdempotencyConfigIn::default(),
-            });
+            v.insert(ConfigGroupIn::default());
         }
 
         // Configure default config group for kv, if not part of the config file
@@ -178,11 +171,7 @@ impl BootstrapConfig {
             .get_or_insert_default()
             .entry("default".to_owned())
         {
-            v.insert(ConfigGroupIn {
-                storage_type: Some(StorageTypeIn::Persistent),
-                max_storage_bytes: None,
-                config: KeyValueConfigIn::default(),
-            });
+            v.insert(ConfigGroupIn::default());
         }
 
         Ok(config)
