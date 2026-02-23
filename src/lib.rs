@@ -14,11 +14,11 @@ use aide::axum::ApiRouter;
 use axum::{Extension, middleware};
 use cfg::ConfigurationInner;
 use diom_configgroup::{
-    BothDatabases, ConfigGroup,
-    entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig, StreamConfig},
+    BothDatabases,
+    entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
     group_name,
 };
-use diom_error::{Error, HttpError, Result};
+use diom_error::{Error, Result};
 use diom_kv::KvStore;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
@@ -211,17 +211,6 @@ impl AppState {
         let kv_store = self.get_store_by_key::<IdempotencyConfig>(key_name)?;
         Ok(IdempotencyStore::new(kv_store))
     }
-
-    pub fn get_stream(&self, name: &str) -> Result<ConfigGroup<StreamConfig>> {
-        self.configgroup_state
-            .fetch_group::<StreamConfig>(name)?
-            .ok_or_else(|| {
-                Error::http(HttpError::not_found(
-                    None,
-                    Some(format!("Stream {name} not found")),
-                ))
-            })
-    }
 }
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
@@ -308,6 +297,8 @@ pub async fn run_with_prefix(
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
         );
     });
+
+    bootstrap::run(cfg, raft_state).await;
 
     axum::serve(listener, make_svc)
         .with_graceful_shutdown(graceful_shutdown_handler())

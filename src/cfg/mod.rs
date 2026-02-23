@@ -180,6 +180,9 @@ pub struct ConfigurationInner {
 
     #[serde(default)]
     pub cluster: ClusterConfiguration,
+
+    #[serde(default)]
+    pub bootstrap_cfg_path: Option<String>,
 }
 
 impl Default for ConfigurationInner {
@@ -300,6 +303,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         opentelemetry_sample_ratio,
         opentelemetry_service_name,
         environment,
+        bootstrap_cfg_path,
         cluster:
             ClusterConfiguration {
                 listen_address: cluster_listen_address,
@@ -355,6 +359,9 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     }
     if let Some(value) = env_var("DIOM_CLUSTER_SECRET")? {
         *cluster_secret = Some(value);
+    }
+    if let Some(value) = env_var("DIOM_BOOTSTRAP_CFG_PATH")? {
+        *bootstrap_cfg_path = Some(value);
     }
 
     // Fields that require different parsing

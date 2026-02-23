@@ -1,0 +1,78 @@
+use std::num::NonZeroU64;
+
+use diom_configgroup::{
+    entities::{IdempotencyConfig, StorageType},
+    operations::create_configgroup::{CreateConfigGroup, CreateConfigGroupOutput},
+};
+use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
+
+use crate::operations::{CreateIdempotencyRequest, CreateIdempotencyResponse};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateIdempotencyOperation {
+    name: String,
+    storage_type: StorageType,
+    max_storage_bytes: Option<NonZeroU64>,
+}
+
+impl From<CreateIdempotencyOperation> for CreateConfigGroup<IdempotencyConfig> {
+    fn from(value: CreateIdempotencyOperation) -> Self {
+        CreateConfigGroup::new(
+            value.name,
+            IdempotencyConfig {},
+            value.storage_type,
+            value.max_storage_bytes,
+        )
+    }
+}
+
+impl CreateIdempotencyOperation {
+    pub fn new(
+        name: String,
+        storage_type: StorageType,
+        max_storage_bytes: Option<NonZeroU64>,
+    ) -> Self {
+        Self {
+            name,
+            storage_type,
+            max_storage_bytes,
+        }
+    }
+
+    fn apply_real(
+        self,
+        configgroup_state: &diom_configgroup::State,
+    ) -> diom_operations::Result<CreateIdempotencyResponseData> {
+        let op: CreateConfigGroup<IdempotencyConfig> = self.into();
+        let out = op.apply_operation(configgroup_state)?;
+        Ok(out.into())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateIdempotencyResponseData {
+    pub name: String,
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+}
+
+impl From<CreateConfigGroupOutput<IdempotencyConfig>> for CreateIdempotencyResponseData {
+    fn from(value: CreateConfigGroupOutput<IdempotencyConfig>) -> Self {
+        Self {
+            name: value.name,
+            max_storage_bytes: value.max_storage_bytes,
+            storage_type: value.storage_type,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        }
+    }
+}
+
+impl CreateIdempotencyRequest for CreateIdempotencyOperation {
+    fn apply(self, state: &diom_configgroup::State) -> CreateIdempotencyResponse {
+        CreateIdempotencyResponse(self.apply_real(state))
+    }
+}

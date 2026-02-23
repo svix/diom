@@ -21,6 +21,10 @@ type StreamCreateOptions struct {
 	IdempotencyKey *string
 }
 
+type StreamGetOptions struct {
+	IdempotencyKey *string
+}
+
 type StreamAppendOptions struct {
 	IdempotencyKey *string
 }
@@ -72,6 +76,32 @@ func (stream *Stream) Create(
 		nil,
 		headerMap,
 		&createStreamIn,
+	)
+}
+
+// Get stream with given name.
+func (stream *Stream) Get(
+	ctx context.Context,
+	getStreamIn diom_models.GetStreamIn,
+	o *StreamGetOptions,
+) (*diom_models.GetStreamOut, error) {
+	headerMap := map[string]string{}
+	var err error
+	if o != nil {
+		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return diom_proto.ExecuteRequest[diom_models.GetStreamIn, diom_models.GetStreamOut](
+		ctx,
+		stream.client,
+		"POST",
+		"/api/v1/stream/get-group",
+		nil,
+		nil,
+		headerMap,
+		&getStreamIn,
 	)
 }
 

@@ -5,8 +5,9 @@ use std::num::{NonZeroU16, NonZeroU64};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use diom_configgroup::entities::StorageType;
 use diom_derive::aide_annotate;
-use diom_error::{Result, ResultExt};
+use diom_error::{Error, HttpError, Result, ResultExt};
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -43,6 +44,7 @@ async fn create_stream(
     let operation = stream::operations::CreateStreamOperation::new(
         data.name,
         data.retention_period_seconds,
+        StorageType::default(),
         data.max_byte_size,
     );
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
@@ -74,7 +76,11 @@ async fn append_to_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AppendToStreamIn>,
 ) -> Result<MsgPackOrJson<AppendToStreamOut>> {
-    let group = state.get_stream(&data.name)?;
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
     let operation = stream::operations::AppendOperation::new(group.id, data.msgs);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
@@ -110,7 +116,11 @@ async fn locking_fetch_from_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
-    let group = state.get_stream(&data.name)?;
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
     let operation = stream::operations::FetchLockingOperation::new(
         group.id,
         data.consumer_group,
@@ -135,7 +145,11 @@ async fn fetch_from_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
-    let group = state.get_stream(&data.name)?;
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
     let operation = stream::operations::FetchOperation::new(
         group.id,
         data.consumer_group,
@@ -167,7 +181,11 @@ async fn ack_range(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AckMsgRangeIn>,
 ) -> Result<MsgPackOrJson<AckMsgRangeOut>> {
-    let group = state.get_stream(&data.name)?;
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
     let operation = stream::operations::AckOperation::new(
         group.id,
         data.consumer_group,
@@ -193,7 +211,11 @@ async fn ack(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<Ack>,
 ) -> Result<MsgPackOrJson<AckOut>> {
-    let group = state.get_stream(&data.name)?;
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
     let operation = stream::operations::AckOperation::new(
         group.id,
         data.consumer_group,
@@ -225,7 +247,11 @@ async fn dlq(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<DlqIn>,
 ) -> Result<MsgPackOrJson<DlqOut>> {
-    let group = state.get_stream(&data.name)?;
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
     let operation =
         stream::operations::DlqOperation::new(group.id, data.consumer_group, data.msg_id);
     repl.client_write(operation).await.map_err_generic()?.0?;
@@ -249,11 +275,51 @@ async fn redrive(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RedriveIn>,
 ) -> Result<MsgPackOrJson<RedriveOut>> {
-    let group = state.get_stream(&data.name)?;
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
     let operation = stream::operations::RedriveOperation::new(group.id, data.consumer_group);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RedriveOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct GetStreamIn {
+    pub name: StreamName,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct GetStreamOut {
+    pub name: StreamName,
+    pub retention_period_seconds: Option<NonZeroU64>,
+    pub max_byte_size: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+}
+
+/// Get stream with given name.
+#[aide_annotate(op_id = "v1.stream.get")]
+async fn get_stream(
+    State(state): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<GetStreamIn>,
+) -> Result<MsgPackOrJson<GetStreamOut>> {
+    let group = state
+        .configgroup_state
+        .fetch_stream_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    Ok(MsgPackOrJson(GetStreamOut {
+        name: group.name,
+        retention_period_seconds: group.config.retention_period_seconds,
+        max_byte_size: group.max_storage_bytes,
+        storage_type: group.storage_type,
+        created_at: group.created_at,
+        updated_at: group.updated_at,
+    }))
 }
 
 pub fn router() -> ApiRouter<AppState> {
@@ -263,6 +329,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/stream/create",
             post_with(create_stream, create_stream_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/stream/get-group",
+            post_with(get_stream, get_stream_operation),
             &tag,
         )
         .api_route_with(

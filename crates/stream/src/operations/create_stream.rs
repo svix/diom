@@ -1,13 +1,17 @@
 use std::num::NonZeroU64;
 
 use super::{CreateStreamResponse, StreamRaftState, StreamRequest};
-use diom_configgroup::entities::{StorageType, StreamConfig};
+use diom_configgroup::{
+    entities::{StorageType, StreamConfig},
+    operations::create_configgroup::{CreateConfigGroup, CreateConfigGroupOutput},
+};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateStreamOperation {
     name: String,
+    storage_type: StorageType,
     retention_period_seconds: Option<NonZeroU64>,
     max_byte_size: Option<NonZeroU64>,
 }
@@ -16,11 +20,13 @@ impl CreateStreamOperation {
     pub fn new(
         name: String,
         retention_period_seconds: Option<NonZeroU64>,
+        storage_type: StorageType,
         max_byte_size: Option<NonZeroU64>,
     ) -> Self {
         Self {
             name,
             retention_period_seconds,
+            storage_type,
             max_byte_size,
         }
     }
@@ -29,22 +35,22 @@ impl CreateStreamOperation {
         self,
         configgroup_state: &diom_configgroup::State,
     ) -> diom_operations::Result<CreateStreamResponseData> {
-        let op = diom_configgroup::operations::create_configgroup::CreateConfigGroup::new(
-            self.name,
+        let op: CreateConfigGroup<StreamConfig> = self.into();
+        let out = op.apply_operation(configgroup_state)?;
+        Ok(out.into())
+    }
+}
+
+impl From<CreateStreamOperation> for CreateConfigGroup<StreamConfig> {
+    fn from(value: CreateStreamOperation) -> Self {
+        CreateConfigGroup::new(
+            value.name,
             StreamConfig {
-                retention_period_seconds: self.retention_period_seconds,
+                retention_period_seconds: value.retention_period_seconds,
             },
             StorageType::default(),
-            self.max_byte_size,
-        );
-        let out = op.apply_operation(configgroup_state)?;
-        Ok(CreateStreamResponseData {
-            name: out.name,
-            retention_period_seconds: out.config.retention_period_seconds,
-            max_byte_size: out.max_storage_bytes,
-            created_at: out.created_at,
-            updated_at: out.updated_at,
-        })
+            value.max_byte_size,
+        )
     }
 }
 
@@ -52,9 +58,23 @@ impl CreateStreamOperation {
 pub struct CreateStreamResponseData {
     pub name: String,
     pub retention_period_seconds: Option<NonZeroU64>,
+    pub storage_type: StorageType,
     pub max_byte_size: Option<NonZeroU64>,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+}
+
+impl From<CreateConfigGroupOutput<StreamConfig>> for CreateStreamResponseData {
+    fn from(value: CreateConfigGroupOutput<StreamConfig>) -> Self {
+        Self {
+            name: value.name,
+            retention_period_seconds: value.config.retention_period_seconds,
+            max_byte_size: value.max_storage_bytes,
+            storage_type: value.storage_type,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        }
+    }
 }
 
 impl StreamRequest for CreateStreamOperation {

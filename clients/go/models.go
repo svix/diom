@@ -13,6 +13,8 @@ type (
 	AppendToStreamOut            = diom_models.AppendToStreamOut
 	CacheDeleteIn                = diom_models.CacheDeleteIn
 	CacheDeleteOut               = diom_models.CacheDeleteOut
+	CacheGetGroupIn              = diom_models.CacheGetGroupIn
+	CacheGetGroupOut             = diom_models.CacheGetGroupOut
 	CacheGetIn                   = diom_models.CacheGetIn
 	CacheGetOut                  = diom_models.CacheGetOut
 	CacheSetIn                   = diom_models.CacheSetIn
@@ -21,12 +23,19 @@ type (
 	CreateStreamOut              = diom_models.CreateStreamOut
 	DlqIn                        = diom_models.DlqIn
 	DlqOut                       = diom_models.DlqOut
+	EvictionPolicy               = diom_models.EvictionPolicy
 	FetchFromStreamIn            = diom_models.FetchFromStreamIn
 	FetchFromStreamOut           = diom_models.FetchFromStreamOut
+	GetStreamIn                  = diom_models.GetStreamIn
+	GetStreamOut                 = diom_models.GetStreamOut
 	IdempotencyAbortIn           = diom_models.IdempotencyAbortIn
 	IdempotencyAbortOut          = diom_models.IdempotencyAbortOut
+	IdempotencyGetGroupIn        = diom_models.IdempotencyGetGroupIn
+	IdempotencyGetGroupOut       = diom_models.IdempotencyGetGroupOut
 	KvDeleteIn                   = diom_models.KvDeleteIn
 	KvDeleteOut                  = diom_models.KvDeleteOut
+	KvGetGroupIn                 = diom_models.KvGetGroupIn
+	KvGetGroupOut                = diom_models.KvGetGroupOut
 	KvGetIn                      = diom_models.KvGetIn
 	KvGetOut                     = diom_models.KvGetOut
 	KvSetIn                      = diom_models.KvSetIn
@@ -44,4 +53,5 @@ type (
 	RateLimiterTokenBucketConfig = diom_models.RateLimiterTokenBucketConfig
 	RedriveIn                    = diom_models.RedriveIn
 	RedriveOut                   = diom_models.RedriveOut
+	StorageType                  = diom_models.StorageType
 )

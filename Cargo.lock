@@ -907,6 +907,7 @@ dependencies = [
 name = "diom-cache"
 version = "0.0.1"
 dependencies = [
+ "diom-configgroup",
  "diom-error",
  "diom-kv",
  "diom-operations",

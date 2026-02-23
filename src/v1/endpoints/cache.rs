@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::time::Duration;
+use std::{num::NonZeroU64, time::Duration};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
@@ -9,8 +9,9 @@ use diom_cache::{
     CacheModel,
     operations::{DeleteOperation, SetOperation},
 };
+use diom_configgroup::entities::{EvictionPolicy, StorageType};
 use diom_derive::aide_annotate;
-use diom_error::ResultExt;
+use diom_error::{Error, HttpError, ResultExt};
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -124,6 +125,42 @@ async fn cache_del(
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct CacheGetGroupIn {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct CacheGetGroupOut {
+    pub name: String,
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub eviction_policy: EvictionPolicy,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+}
+
+/// Get cache group
+#[aide_annotate(op_id = "v1.cache.get_group")]
+async fn cache_get_group(
+    State(state): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<CacheGetGroupIn>,
+) -> Result<MsgPackOrJson<CacheGetGroupOut>> {
+    let group = state
+        .configgroup_state
+        .fetch_cache_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    Ok(MsgPackOrJson(CacheGetGroupOut {
+        name: group.name,
+        max_storage_bytes: group.max_storage_bytes,
+        storage_type: group.storage_type,
+        eviction_policy: group.config.eviction_policy,
+        created_at: group.created_at,
+        updated_at: group.updated_at,
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Cache");
 
@@ -136,6 +173,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/cache/get",
             post_with(cache_get, cache_get_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/cache/get-group",
+            post_with(cache_get_group, cache_get_group_operation),
             &tag,
         )
         .api_route_with(

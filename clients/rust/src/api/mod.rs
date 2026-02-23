@@ -9,14 +9,15 @@ mod rate_limiter;
 mod stream;
 
 pub use self::{
-    cache::{Cache, CacheDeleteOptions, CacheGetOptions, CacheSetOptions},
+    cache::{Cache, CacheDeleteOptions, CacheGetGroupOptions, CacheGetOptions, CacheSetOptions},
     health::Health,
-    idempotency::{Idempotency, IdempotencyAbortOptions},
-    kv::{Kv, KvDeleteOptions, KvGetOptions, KvSetOptions},
+    idempotency::{Idempotency, IdempotencyAbortOptions, IdempotencyGetGroupOptions},
+    kv::{Kv, KvDeleteOptions, KvGetGroupOptions, KvGetOptions, KvSetOptions},
     rate_limiter::{RateLimiter, RateLimiterGetRemainingOptions, RateLimiterLimitOptions},
     stream::{
         Stream, StreamAckOptions, StreamAckRangeOptions, StreamAppendOptions, StreamCreateOptions,
-        StreamDlqOptions, StreamFetchLockingOptions, StreamFetchOptions, StreamRedriveOptions,
+        StreamDlqOptions, StreamFetchLockingOptions, StreamFetchOptions, StreamGetOptions,
+        StreamRedriveOptions,
     },
 };
 

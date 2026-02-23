@@ -29,6 +29,19 @@ impl From<KvGetOptions> for diom_client::api::KvGetOptions {
 }
 
 #[derive(Args, Clone)]
+pub struct KvGetGroupOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<KvGetGroupOptions> for diom_client::api::KvGetGroupOptions {
+    fn from(value: KvGetGroupOptions) -> Self {
+        let KvGetGroupOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
+#[derive(Args, Clone)]
 pub struct KvDeleteOptions {
     #[arg(long)]
     pub idempotency_key: Option<String>,
@@ -62,6 +75,12 @@ pub enum KvCommands {
         #[clap(flatten)]
         options: KvGetOptions,
     },
+    /// Get KV store
+    GetGroup {
+        kv_get_group_in: crate::json::JsonOf<diom_client::models::KvGetGroupIn>,
+        #[clap(flatten)]
+        options: KvGetGroupOptions,
+    },
     /// KV Delete
     Delete {
         kv_delete_in: crate::json::JsonOf<diom_client::models::KvDeleteIn>,
@@ -88,6 +107,16 @@ impl KvCommands {
                 let resp = client
                     .kv()
                     .get(kv_get_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::GetGroup {
+                kv_get_group_in,
+                options,
+            } => {
+                let resp = client
+                    .kv()
+                    .get_group(kv_get_group_in.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

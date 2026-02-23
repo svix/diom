@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{sync::Arc, time::Duration};
+use std::{num::NonZeroU64, sync::Arc, time::Duration};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use diom_configgroup::entities::StorageType;
 use diom_derive::aide_annotate;
-use diom_error::ResultExt;
+use diom_error::{Error, HttpError, ResultExt};
 use diom_kv::KvStore;
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -153,11 +154,50 @@ async fn kv_del(
     Ok(MsgPackOrJson(ret))
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct KvGetGroupIn {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct KvGetGroupOut {
+    pub name: String,
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+}
+
+/// Get KV store
+#[aide_annotate(op_id = "v1.kv.get_group")]
+async fn kv_get_group(
+    State(state): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<KvGetGroupIn>,
+) -> Result<MsgPackOrJson<KvGetGroupOut>> {
+    let group = state
+        .configgroup_state
+        .fetch_kv_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    Ok(MsgPackOrJson(KvGetGroupOut {
+        name: group.name,
+        max_storage_bytes: group.max_storage_bytes,
+        storage_type: group.storage_type,
+        created_at: group.created_at,
+        updated_at: group.updated_at,
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Key Value Store");
 
     ApiRouter::new()
         .api_route_with("/kv/set", post_with(kv_set, kv_set_operation), &tag)
         .api_route_with("/kv/get", post_with(kv_get, kv_get_operation), &tag)
+        .api_route_with(
+            "/kv/get-group",
+            post_with(kv_get_group, kv_get_group_operation),
+            &tag,
+        )
         .api_route_with("/kv/delete", post_with(kv_del, kv_del_operation), &tag)
 }

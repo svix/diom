@@ -7,6 +7,11 @@ pub struct StreamCreateOptions {
 }
 
 #[derive(Default)]
+pub struct StreamGetOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
 pub struct StreamAppendOptions {
     pub idempotency_key: Option<String>,
 }
@@ -61,6 +66,21 @@ impl<'a> Stream<'a> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/create")
             .with_optional_header_param("idempotency-key", idempotency_key)
             .with_body_param(create_stream_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Get stream with given name.
+    pub async fn get(
+        &self,
+        get_stream_in: GetStreamIn,
+        options: Option<StreamGetOptions>,
+    ) -> Result<GetStreamOut> {
+        let StreamGetOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/stream/get-group")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(get_stream_in)
             .execute(self.cfg)
             .await
     }

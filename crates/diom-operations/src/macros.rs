@@ -7,7 +7,27 @@ macro_rules! raft_module_operations {
           $variant:ident($operation:ident) -> $response_data_type:tt
         ),* $(,)?
       },
+      state = $state_type:ty $(,)?
+    ) => {
+        $crate::raft_module_operations!(
+            $trait_name,
+            $module_op_name {
+                $($variant($operation) -> $response_data_type),*
+            },
+            state = $state_type,
+            response = Response,
+        );
+    };
+
+    (
+      $trait_name:ident,
+      $module_op_name:ident {
+        $(
+          $variant:ident($operation:ident) -> $response_data_type:tt
+        ),* $(,)?
+      },
       state = $state_type:ty,
+      response = $response_name:ident $(,)?
     ) => {
         $crate::__reexports::paste::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
@@ -30,16 +50,16 @@ macro_rules! raft_module_operations {
             }
 
             #[derive(Debug, Clone, Serialize, Deserialize)]
-            pub enum Response {
+            pub enum $response_name {
                 $(
                     $variant([<$variant Response>]),
                 )*
             }
 
-            impl diom_operations::ModuleResponse for Response {}
+            impl diom_operations::ModuleResponse for $response_name {}
 
             impl diom_operations::ModuleRequest for $module_op_name {
-                type Response = Response;
+                type Response = $response_name;
             }
 
             $(
@@ -51,12 +71,12 @@ macro_rules! raft_module_operations {
             )*
 
             $(
-                impl TryFrom<Response> for [<$variant Response>] {
+                impl TryFrom<$response_name> for [<$variant Response>] {
                     type Error = ();
 
-                    fn try_from(value: Response) -> std::result::Result<Self, Self::Error> {
+                    fn try_from(value: $response_name) -> std::result::Result<Self, Self::Error> {
                         match value {
-                            Response::$variant(value) => Ok(value),
+                            $response_name::$variant(value) => Ok(value),
                             _ => Err(()),
                         }
                     }
@@ -65,7 +85,7 @@ macro_rules! raft_module_operations {
 
             $(
                 impl $crate::OperationResponse for [<$variant Response>] {
-                    type ResponseParent = Response;
+                    type ResponseParent = $response_name;
                 }
 
                 impl $crate::OperationRequest for $operation {
@@ -75,9 +95,9 @@ macro_rules! raft_module_operations {
             )*
 
             impl $module_op_name {
-                pub fn apply(self, state: $state_type) -> Response {
+                pub fn apply(self, state: $state_type) -> $response_name {
                     match self {
-                        $(Self::$variant(req) => Response::$variant(req.apply(state)),)*
+                        $(Self::$variant(req) => $response_name::$variant(req.apply(state)),)*
                     }
                 }
             }

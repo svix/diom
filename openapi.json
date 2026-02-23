@@ -133,6 +133,54 @@
         ]
       }
     },
+    "/api/v1/cache/get-group": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Get Group",
+        "description": "Get cache group",
+        "operationId": "v1.cache.get_group",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CacheGetGroupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheGetGroupOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/cache/delete": {
       "post": {
         "tags": [
@@ -265,6 +313,54 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/KvGetOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/kv/get-group": {
+      "post": {
+        "tags": [
+          "Key Value Store"
+        ],
+        "summary": "Kv Get Group",
+        "description": "Get KV store",
+        "operationId": "v1.kv.get_group",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KvGetGroupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KvGetGroupOut"
                 }
               }
             }
@@ -565,6 +661,54 @@
         ]
       }
     },
+    "/api/v1/idempotency/get-group": {
+      "post": {
+        "tags": [
+          "Idempotency"
+        ],
+        "summary": "Idempotency Get Group",
+        "description": "Get idempotency group",
+        "operationId": "v1.idempotency.get_group",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdempotencyGetGroupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdempotencyGetGroupOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/stream/create": {
       "post": {
         "tags": [
@@ -601,6 +745,54 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateStreamOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/stream/get-group": {
+      "post": {
+        "tags": [
+          "Stream"
+        ],
+        "summary": "Get Stream",
+        "description": "Get stream with given name.",
+        "operationId": "v1.stream.get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "description": "The request's idempotency key",
+            "schema": {
+              "type": "string"
+            },
+            "style": "simple"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStreamIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStreamOut"
                 }
               }
             }
@@ -1072,6 +1264,52 @@
           "deleted"
         ]
       },
+      "CacheGetGroupIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CacheGetGroupOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "eviction_policy": {
+            "$ref": "#/components/schemas/EvictionPolicy"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "eviction_policy",
+          "created_at",
+          "updated_at"
+        ]
+      },
       "CacheGetIn": {
         "type": "object",
         "properties": {
@@ -1232,6 +1470,13 @@
       "DlqOut": {
         "type": "object"
       },
+      "EvictionPolicy": {
+        "type": "string",
+        "enum": [
+          "NoEviction",
+          "LeastRecentlyUsed"
+        ]
+      },
       "FetchFromStreamIn": {
         "type": "object",
         "properties": {
@@ -1274,6 +1519,54 @@
         },
         "required": [
           "msgs"
+        ]
+      },
+      "GetStreamIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "GetStreamOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "retention_period_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "max_byte_size": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "created_at",
+          "updated_at"
         ]
       },
       "IdempotencyAbortIn": {
@@ -1327,6 +1620,44 @@
       },
       "IdempotencyCompleteOut": {
         "type": "object"
+      },
+      "IdempotencyGetGroupIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "IdempotencyGetGroupOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "created_at",
+          "updated_at"
+        ]
       },
       "IdempotencyStartIn": {
         "type": "object",
@@ -1431,6 +1762,48 @@
         },
         "required": [
           "deleted"
+        ]
+      },
+      "KvGetGroupIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "KvGetGroupOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "created_at",
+          "updated_at"
         ]
       },
       "KvGetIn": {
@@ -1824,6 +2197,13 @@
       },
       "RedriveOut": {
         "type": "object"
+      },
+      "StorageType": {
+        "type": "string",
+        "enum": [
+          "Persistent",
+          "Ephemeral"
+        ]
       }
     }
   },

@@ -4,23 +4,10 @@ use std::{
     num::NonZeroU64,
 };
 
-use crate::cfg::{Configuration as AppConfig, DatabaseConfig};
+use crate::{cfg::Configuration as AppConfig, core::cluster::RaftState};
 use anyhow::Context;
-use diom_configgroup::{
-    BothDatabases,
-    entities::{
-        CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig, StorageType,
-        StreamConfig,
-    },
-    operations::create_configgroup::CreateConfigGroup,
-};
+use diom_configgroup::entities::{EvictionPolicy, StorageType};
 use serde::Deserialize;
-
-trait IntoModuleConfig {
-    type Output: ModuleConfig;
-
-    fn into_module_config(self) -> Self::Output;
-}
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -66,67 +53,20 @@ struct ConfigGroupIn<C> {
     pub config: C,
 }
 
-impl<C: IntoModuleConfig> ConfigGroupIn<C> {
-    fn create_config_group(self, name: String) -> CreateConfigGroup<C::Output> {
-        CreateConfigGroup::new(
-            name,
-            self.config.into_module_config(),
-            self.storage_type.into(),
-            self.max_storage_bytes,
-        )
-    }
-}
-
 #[derive(Debug, Default, Deserialize)]
 struct KeyValueConfigIn {}
 
-impl IntoModuleConfig for KeyValueConfigIn {
-    type Output = KeyValueConfig;
-
-    fn into_module_config(self) -> Self::Output {
-        KeyValueConfig {}
-    }
-}
-
 #[derive(Debug, Default, Deserialize)]
 struct IdempotencyConfigIn {}
-
-impl IntoModuleConfig for IdempotencyConfigIn {
-    type Output = IdempotencyConfig;
-
-    fn into_module_config(self) -> Self::Output {
-        IdempotencyConfig {}
-    }
-}
 
 #[derive(Debug, Default, Deserialize)]
 struct CacheConfigIn {
     pub eviction_policy: Option<EvictionPolicyIn>,
 }
 
-impl IntoModuleConfig for CacheConfigIn {
-    type Output = CacheConfig;
-
-    fn into_module_config(self) -> Self::Output {
-        CacheConfig {
-            eviction_policy: self.eviction_policy.unwrap_or_default().into(),
-        }
-    }
-}
-
 #[derive(Debug, Deserialize)]
 struct StreamConfigIn {
     pub retention_period_seconds: Option<NonZeroU64>,
-}
-
-impl IntoModuleConfig for StreamConfigIn {
-    type Output = StreamConfig;
-
-    fn into_module_config(self) -> Self::Output {
-        StreamConfig {
-            retention_period_seconds: self.retention_period_seconds,
-        }
-    }
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -178,58 +118,85 @@ impl BootstrapConfig {
     }
 }
 
-pub fn run(bootstrap_cfg_path: Option<&str>, app_config: AppConfig) {
-    let bootstrap =
-        BootstrapConfig::load(bootstrap_cfg_path).expect("Failed to load bootstrap config");
+pub async fn run(app_config: AppConfig, raft_state: RaftState) {
+    // FIXME: Do something smarter here:
+    let mut retries = 100;
+    while !raft_state.is_up().await && retries > 0 {
+        retries -= 0;
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+
+    let bootstrap = BootstrapConfig::load(app_config.bootstrap_cfg_path.as_deref())
+        .expect("Failed to load bootstrap config");
 
     tracing::debug!(
         ?bootstrap,
         persistent_db=?app_config.persistent_db,
         ephemeral_db=?app_config.ephemeral_db,
-        "starting bootstrap"
+        "Starting bootstrapping."
     );
-    let persistent_db =
-        DatabaseConfig::persistent(&app_config.persistent_db).expect("persistent db");
-    let ephemeral_db = DatabaseConfig::ephemeral(&app_config.ephemeral_db).expect("ephemeral db");
-    let state = diom_configgroup::State::init(BothDatabases {
-        persistent_db,
-        ephemeral_db,
-    })
-    .expect("configgroup state");
 
     if let Some(kv) = bootstrap.kv {
         for (name, cfg) in kv {
             tracing::debug!(?name, "bootstrapping kv");
-            let create_cmd = cfg.create_config_group(name);
-            create_cmd.apply_operation(&state).expect("create config");
+            let operation = diom_kv::operations::CreateKvOperation::new(
+                name,
+                cfg.storage_type.into(),
+                cfg.max_storage_bytes,
+            );
+            raft_state
+                .client_write(operation)
+                .await
+                .expect("bootstrap kv failed");
         }
     }
 
     if let Some(cache) = bootstrap.cache {
         for (name, cfg) in cache {
             tracing::debug!(?name, "bootstrapping cache");
-            let create_cmd = cfg.create_config_group(name);
-            create_cmd.apply_operation(&state).expect("create config");
+            let operation = diom_cache::operations::CreateCacheOperation::new(
+                name,
+                cfg.config.eviction_policy.unwrap_or_default().into(),
+                cfg.storage_type.into(),
+                cfg.max_storage_bytes,
+            );
+            raft_state
+                .client_write(operation)
+                .await
+                .expect("bootstrap cache failed");
         }
     }
 
     if let Some(idempotency) = bootstrap.idempotency {
         for (name, cfg) in idempotency {
             tracing::debug!(?name, "bootstrapping idemptency");
-            let create_cmd = cfg.create_config_group(name);
-            create_cmd.apply_operation(&state).expect("create config");
+            let operation = diom_idempotency::operations::CreateIdempotencyOperation::new(
+                name,
+                cfg.storage_type.into(),
+                cfg.max_storage_bytes,
+            );
+            raft_state
+                .client_write(operation)
+                .await
+                .expect("bootstrap idempotency failed");
         }
     }
 
     if let Some(stream) = bootstrap.stream {
         for (name, cfg) in stream {
             tracing::debug!(?name, "bootstrapping stream");
-            let create_cmd = cfg.create_config_group(name);
-            create_cmd.apply_operation(&state).expect("create config");
+            let operation = stream::operations::CreateStreamOperation::new(
+                name,
+                cfg.config.retention_period_seconds,
+                cfg.storage_type.into(),
+                cfg.max_storage_bytes,
+            );
+            raft_state
+                .client_write(operation)
+                .await
+                .expect("bootstrap stream failed");
         }
     }
 
-    state.flush_and_sync().expect("failed to persist DBs");
-
-    tracing::info!("done bootstrapping databases");
+    tracing::info!("Finished bootstrapping.");
 }

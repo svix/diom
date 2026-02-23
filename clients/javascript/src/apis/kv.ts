@@ -9,6 +9,14 @@ import {
     KvDeleteOutSerializer,
 } from '../models/kvDeleteOut';
 import {
+    type KvGetGroupIn,
+    KvGetGroupInSerializer,
+} from '../models/kvGetGroupIn';
+import {
+    type KvGetGroupOut,
+    KvGetGroupOutSerializer,
+} from '../models/kvGetGroupOut';
+import {
     type KvGetIn,
     KvGetInSerializer,
 } from '../models/kvGetIn';
@@ -31,6 +39,10 @@ export interface KvSetOptions {
         }
 
     export interface KvGetOptions {
+        idempotencyKey?: string;
+        }
+
+    export interface KvGetGroupOptions {
         idempotencyKey?: string;
         }
 
@@ -80,6 +92,28 @@ export interface KvSetOptions {
                 return request.send(
                     this.requestCtx,
                     KvGetOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /** Get KV store */
+        public getGroup(
+            kvGetGroupIn: KvGetGroupIn,
+            options?: KvGetGroupOptions,
+            ): Promise<KvGetGroupOut> {
+            const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/get-group");
+
+            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
+            request.setBody(
+                    KvGetGroupInSerializer._toJsonObject(
+                        kvGetGroupIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    KvGetGroupOutSerializer._fromJsonObject,
                 );
             }
 

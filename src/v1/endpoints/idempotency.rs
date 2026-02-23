@@ -1,15 +1,18 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+use std::num::NonZeroU64;
+
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::Extension;
+use axum::{Extension, extract::State};
 use diom_derive::aide_annotate;
-use diom_error::ResultExt;
+use diom_error::{Error, HttpError, ResultExt};
 use diom_idempotency::{
     IdempotencyStartResult,
     operations::{AbortOperation, CompleteOperation, TryStartOperation},
 };
 use diom_proto::MsgPackOrJson;
+use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -129,6 +132,38 @@ async fn idempotency_abort(
     Ok(MsgPackOrJson(IdempotencyAbortOut {}))
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct IdempotencyGetGroupIn {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct IdempotencyGetGroupOut {
+    pub name: String,
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub created_at: Timestamp,
+    pub updated_at: Timestamp,
+}
+
+/// Get idempotency group
+#[aide_annotate(op_id = "v1.idempotency.get_group")]
+async fn idempotency_get_group(
+    State(state): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyGetGroupIn>,
+) -> Result<MsgPackOrJson<IdempotencyGetGroupOut>> {
+    let group = state
+        .configgroup_state
+        .fetch_idempotency_group(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    Ok(MsgPackOrJson(IdempotencyGetGroupOut {
+        name: group.name,
+        max_storage_bytes: group.max_storage_bytes,
+        created_at: group.created_at,
+        updated_at: group.updated_at,
+    }))
+}
+
 // ============================================================================
 // Router
 // ============================================================================
@@ -150,6 +185,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/idempotency/abort",
             post_with(idempotency_abort, idempotency_abort_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/idempotency/get-group",
+            post_with(idempotency_get_group, idempotency_get_group_operation),
             &tag,
         )
 }
