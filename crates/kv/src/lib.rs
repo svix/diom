@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub mod operations;
 
 use crate::{
-    operations::SetOperation,
+    operations::{DeleteOperation, SetOperation},
     tables::{ExpirationRow, KvPairRow},
 };
 
@@ -136,6 +136,10 @@ impl KvStore {
 
     pub fn set_operation(key: String, model: KvModel, behavior: OperationBehavior) -> SetOperation {
         SetOperation::new(key, model, behavior)
+    }
+
+    pub fn delete_operation(key: String) -> DeleteOperation {
+        DeleteOperation::new(key)
     }
 
     pub fn set(&mut self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
