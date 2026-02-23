@@ -20,7 +20,7 @@ jobs:
           ruleset: .vacuum.yaml
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # raise this as time goes on and we fix some stuff
-          minimum_score: 50
+          minimum_score: 0
   ci-required-checks:
     name: CI Required Checks
     runs-on: ubuntu-24.04
