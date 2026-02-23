@@ -868,7 +868,7 @@ dependencies = [
  "schemars 1.2.0",
  "serde",
  "serde_json",
- "stream",
+ "stream-deprecated",
  "tap",
  "tempfile",
  "test-utils",
@@ -4013,7 +4013,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
-name = "stream"
+name = "stream-deprecated"
 version = "0.0.1"
 dependencies = [
  "coyote-configgroup",
@@ -4027,6 +4027,10 @@ dependencies = [
  "serde",
  "validator",
 ]
+
+[[package]]
+name = "stream-internals"
+version = "0.0.1"
 
 [[package]]
 name = "strsim"

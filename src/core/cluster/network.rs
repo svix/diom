@@ -68,7 +68,7 @@ impl NetworkClient {
         let start = Instant::now();
         // TODO(jbrown|2026-02-20) handle multiple addresses
         let addrs = self.node.addrs();
-        let Some(addr) = addrs.get(0) else {
+        let Some(addr) = addrs.first() else {
             tracing::warn!(node_id=?self.target, node=?self.node, "node has no valid addresses, cannot send rpc");
             return Err(RPCError::Unreachable(Unreachable::new(
                 &crate::Error::generic("no has no known addresses"),

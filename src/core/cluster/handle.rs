@@ -42,7 +42,7 @@ pub enum Request {
     Cache(coyote_cache::operations::CacheOperation),
     CreateCache(coyote_cache::operations::CreateCacheOp),
     CreateIdempotency(coyote_idempotency::operations::CreateIdempotencyOp),
-    Stream(stream::operations::StreamOperation),
+    Stream(stream_deprecated::operations::StreamOperation),
 }
 
 impl From<coyote_kv::operations::KvOperation> for Request {
@@ -87,8 +87,8 @@ impl From<coyote_kv::operations::CreateKvOp> for Request {
     }
 }
 
-impl From<stream::operations::StreamOperation> for Request {
-    fn from(value: stream::operations::StreamOperation) -> Self {
+impl From<stream_deprecated::operations::StreamOperation> for Request {
+    fn from(value: stream_deprecated::operations::StreamOperation) -> Self {
         Request::Stream(value)
     }
 }
@@ -104,7 +104,7 @@ pub enum Response {
     RateLimiter(coyote_rate_limiter::operations::Response),
     Idempotency(coyote_idempotency::operations::Response),
     Cache(coyote_cache::operations::Response),
-    Stream(stream::operations::Response),
+    Stream(stream_deprecated::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -184,7 +184,7 @@ impl TryFrom<Response> for coyote_kv::operations::CreateKvOperationResponse {
     }
 }
 
-impl TryFrom<Response> for stream::operations::Response {
+impl TryFrom<Response> for stream_deprecated::operations::Response {
     type Error = ResponseParseError;
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
