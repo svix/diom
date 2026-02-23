@@ -912,6 +912,7 @@ dependencies = [
  "openraft",
  "rand 0.9.2",
  "reqwest 0.13.1",
+ "serde_json",
  "tempfile",
  "test-utils",
  "tokio",

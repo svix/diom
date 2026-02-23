@@ -5,6 +5,7 @@ use coyote_client::{CoyoteClient, CoyoteOptions};
 use openraft::ServerState;
 use std::sync::{Arc, Once};
 use tempfile::TempDir;
+use test_utils::TestClient;
 use tokio::runtime::Runtime;
 
 use test_utils::server::{TestContext, TestServerBuilder, default_server_config};
@@ -13,6 +14,7 @@ pub struct BenchmarkContext {
     pub rt: Runtime,
     pub servers: Arc<Vec<TestContext>>,
     pub client: CoyoteClient,
+    pub test_client: TestClient,
     pub workdirs: Vec<TempDir>,
 }
 
@@ -41,21 +43,24 @@ pub fn setup_single_server() -> BenchmarkContext {
     );
 
     let servers = Arc::new(vec![server]);
+    let test_client = servers[0].client.clone();
 
     BenchmarkContext {
         rt,
         servers,
         client,
+        test_client,
         workdirs: vec![workdir],
     }
 }
 
 async fn make_sure_cluster_sane_and_get_client(
     servers: Arc<Vec<TestContext>>,
-) -> anyhow::Result<CoyoteClient> {
+) -> anyhow::Result<(CoyoteClient, TestClient)> {
     let expected_followers = servers.len() - 1;
     let mut followers = 0;
     let mut server_url = None;
+    let mut leader_test_client = None;
 
     let client = reqwest::Client::new();
     for server in servers.as_ref() {
@@ -72,6 +77,7 @@ async fn make_sure_cluster_sane_and_get_client(
         let resp = resp.json::<HealthResponse>().await?;
         if resp.server_state.is_leader() {
             server_url = Some(format!("http://{}", server.addr));
+            leader_test_client = Some(server.client.clone());
         } else if resp.server_state.is_follower() {
             followers += 1;
         }
@@ -89,7 +95,10 @@ async fn make_sure_cluster_sane_and_get_client(
         }),
     );
 
-    Ok(client)
+    let test_client =
+        leader_test_client.ok_or_else(|| anyhow::anyhow!("No leader found in cluster"))?;
+
+    Ok((client, test_client))
 }
 
 pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
@@ -120,7 +129,7 @@ pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
     let servers = Arc::new(servers);
 
     let mut retries = 10;
-    let client = loop {
+    let (client, test_client) = loop {
         if retries == 0 {
             panic!("Failed to set up cluster");
         }
@@ -129,7 +138,7 @@ pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
             let servers = servers.clone();
             async { make_sure_cluster_sane_and_get_client(servers).await }
         }) {
-            Ok(client) => break client,
+            Ok(result) => break result,
             Err(e) => {
                 println!("Error during cluster setup: {e}");
                 std::thread::sleep(std::time::Duration::from_secs(1));
@@ -141,6 +150,7 @@ pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
         rt,
         servers,
         client,
+        test_client,
         workdirs,
     }
 }
