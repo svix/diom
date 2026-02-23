@@ -26,3 +26,11 @@ workspace = true
 [[bench]]
 name = "kv"
 harness = false
+
+[[bench]]
+name = "stream"
+harness = false
+
+[[bench]]
+name = "cache"
+harness = false
