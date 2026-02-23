@@ -12,6 +12,11 @@ pub struct CacheGetOptions {
 }
 
 #[derive(Default)]
+pub struct CacheGetGroupOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
 pub struct CacheDeleteOptions {
     pub idempotency_key: Option<String>,
 }
@@ -51,6 +56,21 @@ impl<'a> Cache<'a> {
         crate::request::Request::new(http::Method::POST, "/api/v1/cache/get")
             .with_optional_header_param("idempotency-key", idempotency_key)
             .with_body_param(cache_get_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Get cache group
+    pub async fn get_group(
+        &self,
+        cache_get_group_in: CacheGetGroupIn,
+        options: Option<CacheGetGroupOptions>,
+    ) -> Result<CacheGetGroupOut> {
+        let CacheGetGroupOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/cache/get-group")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(cache_get_group_in)
             .execute(self.cfg)
             .await
     }

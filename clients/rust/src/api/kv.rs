@@ -12,6 +12,11 @@ pub struct KvGetOptions {
 }
 
 #[derive(Default)]
+pub struct KvGetGroupOptions {
+    pub idempotency_key: Option<String>,
+}
+
+#[derive(Default)]
 pub struct KvDeleteOptions {
     pub idempotency_key: Option<String>,
 }
@@ -43,6 +48,21 @@ impl<'a> Kv<'a> {
         crate::request::Request::new(http::Method::POST, "/api/v1/kv/get")
             .with_optional_header_param("idempotency-key", idempotency_key)
             .with_body_param(kv_get_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Get KV store
+    pub async fn get_group(
+        &self,
+        kv_get_group_in: KvGetGroupIn,
+        options: Option<KvGetGroupOptions>,
+    ) -> Result<KvGetGroupOut> {
+        let KvGetGroupOptions { idempotency_key } = options.unwrap_or_default();
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/kv/get-group")
+            .with_optional_header_param("idempotency-key", idempotency_key)
+            .with_body_param(kv_get_group_in)
             .execute(self.cfg)
             .await
     }

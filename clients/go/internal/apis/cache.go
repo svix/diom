@@ -25,6 +25,10 @@ type CacheGetOptions struct {
 	IdempotencyKey *string
 }
 
+type CacheGetGroupOptions struct {
+	IdempotencyKey *string
+}
+
 type CacheDeleteOptions struct {
 	IdempotencyKey *string
 }
@@ -78,6 +82,32 @@ func (cache *Cache) Get(
 		nil,
 		headerMap,
 		&cacheGetIn,
+	)
+}
+
+// Get cache group
+func (cache *Cache) GetGroup(
+	ctx context.Context,
+	cacheGetGroupIn coyote_models.CacheGetGroupIn,
+	o *CacheGetGroupOptions,
+) (*coyote_models.CacheGetGroupOut, error) {
+	headerMap := map[string]string{}
+	var err error
+	if o != nil {
+		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return coyote_proto.ExecuteRequest[coyote_models.CacheGetGroupIn, coyote_models.CacheGetGroupOut](
+		ctx,
+		cache.client,
+		"POST",
+		"/api/v1/cache/get-group",
+		nil,
+		nil,
+		headerMap,
+		&cacheGetGroupIn,
 	)
 }
 

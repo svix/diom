@@ -15,6 +15,19 @@ impl From<IdempotencyAbortOptions> for coyote_client::api::IdempotencyAbortOptio
     }
 }
 
+#[derive(Args, Clone)]
+pub struct IdempotencyGetGroupOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<IdempotencyGetGroupOptions> for coyote_client::api::IdempotencyGetGroupOptions {
+    fn from(value: IdempotencyGetGroupOptions) -> Self {
+        let IdempotencyGetGroupOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct IdempotencyArgs {
@@ -29,6 +42,12 @@ pub enum IdempotencyCommands {
         idempotency_abort_in: crate::json::JsonOf<coyote_client::models::IdempotencyAbortIn>,
         #[clap(flatten)]
         options: IdempotencyAbortOptions,
+    },
+    /// Get idempotency group
+    GetGroup {
+        idempotency_get_group_in: crate::json::JsonOf<coyote_client::models::IdempotencyGetGroupIn>,
+        #[clap(flatten)]
+        options: IdempotencyGetGroupOptions,
     },
 }
 
@@ -46,6 +65,16 @@ impl IdempotencyCommands {
                 let resp = client
                     .idempotency()
                     .abort(idempotency_abort_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::GetGroup {
+                idempotency_get_group_in,
+                options,
+            } => {
+                let resp = client
+                    .idempotency()
+                    .get_group(idempotency_get_group_in.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

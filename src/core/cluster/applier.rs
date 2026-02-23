@@ -13,6 +13,9 @@ pub(super) async fn apply_request(
             let mut store = state_machine.state.get_kv_store_by_key(req.key_name())?;
             Response::Kv(req.apply(&mut store))
         }
+        Request::CreateKv(req) => {
+            Response::CreateKv(req.apply(&state_machine.state.configgroup_state))
+        }
         Request::RateLimiter(req) => {
             // Rate limiter neither needs nor uses config groups for now
             Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))
@@ -23,9 +26,15 @@ pub(super) async fn apply_request(
                 .get_idempotency_store_by_key(req.key_name())?;
             Response::Idempotency(req.apply(&mut store))
         }
+        Request::CreateIdempotency(req) => {
+            Response::CreateIdempotency(req.apply(&state_machine.state.configgroup_state))
+        }
         Request::Cache(req) => {
             let mut store = state_machine.state.get_cache_store_by_key(req.key_name())?;
             Response::Cache(req.apply(&mut store))
+        }
+        Request::CreateCache(req) => {
+            Response::CreateCache(req.apply(&state_machine.state.configgroup_state))
         }
         Request::Stream(req) => {
             let state = stream::operations::StreamRaftState {
