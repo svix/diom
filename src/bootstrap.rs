@@ -1,8 +1,11 @@
-use std::{collections::HashMap, num::NonZeroU64};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    fs::File,
+    num::NonZeroU64,
+};
 
 use crate::cfg::{Configuration as AppConfig, DatabaseConfig};
 use anyhow::Context;
-use config::ConfigBuilder;
 use diom_configgroup::{
     BothDatabases,
     entities::{
@@ -12,9 +15,6 @@ use diom_configgroup::{
     operations::create_configgroup::CreateConfigGroup,
 };
 use serde::Deserialize;
-use tap::Pipe;
-
-const DEFAULTS: &str = include_str!("../bootstrap.default.yaml");
 
 trait IntoModuleConfig {
     type Output: ModuleConfig;
@@ -56,9 +56,10 @@ impl From<EvictionPolicyIn> for EvictionPolicy {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct ConfigGroupIn<C> {
-    pub storage_type: Option<StorageTypeIn>,
+    #[serde(default)]
+    pub storage_type: StorageTypeIn,
     pub max_storage_bytes: Option<NonZeroU64>,
 
     #[serde(flatten)]
@@ -70,13 +71,13 @@ impl<C: IntoModuleConfig> ConfigGroupIn<C> {
         CreateConfigGroup::new(
             name,
             self.config.into_module_config(),
-            self.storage_type.map(|x| x.into()),
+            self.storage_type.into(),
             self.max_storage_bytes,
         )
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct KeyValueConfigIn {}
 
 impl IntoModuleConfig for KeyValueConfigIn {
@@ -87,7 +88,7 @@ impl IntoModuleConfig for KeyValueConfigIn {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct IdempotencyConfigIn {}
 
 impl IntoModuleConfig for IdempotencyConfigIn {
@@ -98,7 +99,7 @@ impl IntoModuleConfig for IdempotencyConfigIn {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct CacheConfigIn {
     pub eviction_policy: Option<EvictionPolicyIn>,
 }
@@ -128,7 +129,7 @@ impl IntoModuleConfig for StreamConfigIn {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct BootstrapConfig {
     cache: Option<HashMap<String, ConfigGroupIn<CacheConfigIn>>>,
     idempotency: Option<HashMap<String, ConfigGroupIn<IdempotencyConfigIn>>>,
@@ -138,21 +139,40 @@ struct BootstrapConfig {
 
 impl BootstrapConfig {
     fn load(config_path: Option<&str>) -> anyhow::Result<BootstrapConfig> {
-        let config = config::Config::builder()
-            .add_source(config::File::from_str(DEFAULTS, config::FileFormat::Yaml))
-            .pipe(|config: ConfigBuilder<_>| {
-                if let Some(path) = config_path {
-                    config.add_source(config::File::with_name(path))
-                } else {
-                    config
-                }
-            })
-            .add_source(config::Environment::with_prefix("DIOM"))
-            .build()?;
+        let mut config = match config_path {
+            Some(path) => {
+                let config_file = File::open(path).context("opening bootstrap config")?;
+                yaml_serde::from_reader(config_file).context("parsing bootstrap config")?
+            }
+            None => BootstrapConfig::default(),
+        };
 
-        let config: BootstrapConfig = config
-            .try_deserialize::<BootstrapConfig>()
-            .context("failed to load bootstrap configuration")?;
+        // Configure default config group for cache, if not part of the config file
+        if let Entry::Vacant(v) = config
+            .cache
+            .get_or_insert_default()
+            .entry("default".to_owned())
+        {
+            v.insert(ConfigGroupIn::default());
+        }
+
+        // Configure default config group for idempotency, if not part of the config file
+        if let Entry::Vacant(v) = config
+            .idempotency
+            .get_or_insert_default()
+            .entry("default".to_owned())
+        {
+            v.insert(ConfigGroupIn::default());
+        }
+
+        // Configure default config group for kv, if not part of the config file
+        if let Entry::Vacant(v) = config
+            .kv
+            .get_or_insert_default()
+            .entry("default".to_owned())
+        {
+            v.insert(ConfigGroupIn::default());
+        }
 
         Ok(config)
     }
