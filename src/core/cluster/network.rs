@@ -66,7 +66,14 @@ impl NetworkClient {
         Resp: DeserializeOwned,
     {
         let start = Instant::now();
-        let addr = self.node.addr.as_str();
+        // TODO(jbrown|2026-02-20) handle multiple addresses
+        let addrs = self.node.addrs();
+        let Some(addr) = addrs.get(0) else {
+            tracing::warn!(node_id=?self.target, node=?self.node, "node has no valid addresses, cannot send rpc");
+            return Err(RPCError::Unreachable(Unreachable::new(
+                &crate::Error::generic("no has no known addresses"),
+            )));
+        };
         let url = format!("http://{addr}/{path}");
         tracing::trace!(url, target=?self.target, "sending internal RPC");
 
