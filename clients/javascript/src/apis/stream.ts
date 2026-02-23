@@ -49,6 +49,14 @@ import {
     FetchFromStreamOutSerializer,
 } from '../models/fetchFromStreamOut';
 import {
+    type GetStreamIn,
+    GetStreamInSerializer,
+} from '../models/getStreamIn';
+import {
+    type GetStreamOut,
+    GetStreamOutSerializer,
+} from '../models/getStreamOut';
+import {
     type RedriveIn,
     RedriveInSerializer,
 } from '../models/redriveIn';
@@ -59,6 +67,10 @@ import {
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
 export interface StreamCreateOptions {
+        idempotencyKey?: string;
+        }
+
+    export interface StreamGetOptions {
         idempotencyKey?: string;
         }
 
@@ -110,6 +122,28 @@ export interface StreamCreateOptions {
                 return request.send(
                     this.requestCtx,
                     CreateStreamOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /** Get stream with given name. */
+        public get(
+            getStreamIn: GetStreamIn,
+            options?: StreamGetOptions,
+            ): Promise<GetStreamOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/stream/get-group");
+
+            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
+            request.setBody(
+                    GetStreamInSerializer._toJsonObject(
+                        getStreamIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    GetStreamOutSerializer._fromJsonObject,
                 );
             }
 

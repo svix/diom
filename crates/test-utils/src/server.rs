@@ -103,11 +103,6 @@ impl TestServerBuilder {
             Arc::new(cfg)
         };
 
-        // TODO: do bootstrap through the server APIs instead of just directly
-        // touching the databases? Need to make sure that this never runs
-        // concurrently with the other DB accesses
-        coyote::bootstrap::run(None, Arc::clone(&cfg));
-
         let base_uri = format!("http://{addr}/api/v1");
 
         let server_handle = tokio::spawn({
@@ -243,19 +238,8 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             replication_request_timeout: Duration::from_millis(50),
             startup_discovery_delay: Duration::from_millis(0),
         },
+        bootstrap_cfg_path: None,
     }
-}
-
-pub fn build_config_without_server() -> ServerlessTestContext {
-    let _workdir = tempfile::tempdir().unwrap();
-    let cfg = Arc::new(default_server_config(_workdir.path()));
-
-    // TODO: do bootstrap through the server APIs instead of just directly
-    // touching the databases? Need to make sure that this never runs
-    // concurrently with the other DB accesses
-    coyote::bootstrap::run(None, Arc::clone(&cfg));
-
-    ServerlessTestContext { cfg, _workdir }
 }
 
 pub async fn start_server() -> TestContext {

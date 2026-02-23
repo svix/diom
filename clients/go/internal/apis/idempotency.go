@@ -21,6 +21,10 @@ type IdempotencyAbortOptions struct {
 	IdempotencyKey *string
 }
 
+type IdempotencyGetGroupOptions struct {
+	IdempotencyKey *string
+}
+
 // Abandon an idempotent request (remove lock without saving response)
 func (idempotency *Idempotency) Abort(
 	ctx context.Context,
@@ -44,5 +48,31 @@ func (idempotency *Idempotency) Abort(
 		nil,
 		headerMap,
 		&idempotencyAbortIn,
+	)
+}
+
+// Get idempotency group
+func (idempotency *Idempotency) GetGroup(
+	ctx context.Context,
+	idempotencyGetGroupIn coyote_models.IdempotencyGetGroupIn,
+	o *IdempotencyGetGroupOptions,
+) (*coyote_models.IdempotencyGetGroupOut, error) {
+	headerMap := map[string]string{}
+	var err error
+	if o != nil {
+		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyGetGroupIn, coyote_models.IdempotencyGetGroupOut](
+		ctx,
+		idempotency.client,
+		"POST",
+		"/api/v1/idempotency/get-group",
+		nil,
+		nil,
+		headerMap,
+		&idempotencyGetGroupIn,
 	)
 }

@@ -29,6 +29,19 @@ impl From<CacheGetOptions> for coyote_client::api::CacheGetOptions {
 }
 
 #[derive(Args, Clone)]
+pub struct CacheGetGroupOptions {
+    #[arg(long)]
+    pub idempotency_key: Option<String>,
+}
+
+impl From<CacheGetGroupOptions> for coyote_client::api::CacheGetGroupOptions {
+    fn from(value: CacheGetGroupOptions) -> Self {
+        let CacheGetGroupOptions { idempotency_key } = value;
+        Self { idempotency_key }
+    }
+}
+
+#[derive(Args, Clone)]
 pub struct CacheDeleteOptions {
     #[arg(long)]
     pub idempotency_key: Option<String>,
@@ -62,6 +75,12 @@ pub enum CacheCommands {
         #[clap(flatten)]
         options: CacheGetOptions,
     },
+    /// Get cache group
+    GetGroup {
+        cache_get_group_in: crate::json::JsonOf<coyote_client::models::CacheGetGroupIn>,
+        #[clap(flatten)]
+        options: CacheGetGroupOptions,
+    },
     /// Cache Delete
     Delete {
         cache_delete_in: crate::json::JsonOf<coyote_client::models::CacheDeleteIn>,
@@ -94,6 +113,16 @@ impl CacheCommands {
                 let resp = client
                     .cache()
                     .get(cache_get_in.into_inner(), Some(options.into()))
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::GetGroup {
+                cache_get_group_in,
+                options,
+            } => {
+                let resp = client
+                    .cache()
+                    .get_group(cache_get_group_in.into_inner(), Some(options.into()))
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

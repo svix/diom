@@ -1,9 +1,11 @@
 use crate::CacheStore;
 use serde::{Deserialize, Serialize};
 
+mod create_cache;
 mod delete;
 mod set;
 
+pub use create_cache::{CreateCacheOperation, CreateCacheResponseData};
 pub use delete::DeleteOperation;
 pub use set::SetOperation;
 
@@ -26,3 +28,12 @@ impl CacheOperation {
         }
     }
 }
+
+raft_module_operations!(
+    CreateCacheRequest,
+    CreateCacheOp {
+        CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
+    },
+    state = &coyote_configgroup::State,
+    response = CreateCacheOperationResponse,
+);

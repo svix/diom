@@ -1,7 +1,7 @@
 use coyote_error::Result;
 use fjall::{Database, Error, KeyspaceCreateOptions};
 
-use crate::entities::{ModuleConfig, StorageType};
+use crate::entities::{CacheConfig, KeyValueConfig, ModuleConfig, StorageType, StreamConfig};
 
 pub mod entities;
 pub mod operations;
@@ -73,6 +73,28 @@ impl State {
     }
 
     pub fn fetch_group<C: ModuleConfig>(&self, group_name: &str) -> Result<Option<ConfigGroup<C>>> {
+        ConfigGroup::fetch(&self.keyspace, group_name)
+    }
+
+    pub fn fetch_kv_group(&self, group_name: &str) -> Result<Option<ConfigGroup<KeyValueConfig>>> {
+        ConfigGroup::fetch(&self.keyspace, group_name)
+    }
+
+    pub fn fetch_cache_group(&self, group_name: &str) -> Result<Option<ConfigGroup<CacheConfig>>> {
+        ConfigGroup::fetch(&self.keyspace, group_name)
+    }
+
+    pub fn fetch_idempotency_group(
+        &self,
+        group_name: &str,
+    ) -> Result<Option<ConfigGroup<KeyValueConfig>>> {
+        ConfigGroup::fetch(&self.keyspace, group_name)
+    }
+
+    pub fn fetch_stream_group(
+        &self,
+        group_name: &str,
+    ) -> Result<Option<ConfigGroup<StreamConfig>>> {
         ConfigGroup::fetch(&self.keyspace, group_name)
     }
 

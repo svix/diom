@@ -36,9 +36,12 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalRequest),
     Kv(coyote_kv::operations::KvOperation),
+    CreateKv(coyote_kv::operations::CreateKvOp),
     RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
     Idempotency(coyote_idempotency::operations::IdempotencyOperation),
     Cache(coyote_cache::operations::CacheOperation),
+    CreateCache(coyote_cache::operations::CreateCacheOp),
+    CreateIdempotency(coyote_idempotency::operations::CreateIdempotencyOp),
     Stream(stream::operations::StreamOperation),
 }
 
@@ -66,6 +69,24 @@ impl From<coyote_cache::operations::CacheOperation> for Request {
     }
 }
 
+impl From<coyote_cache::operations::CreateCacheOp> for Request {
+    fn from(value: coyote_cache::operations::CreateCacheOp) -> Self {
+        Request::CreateCache(value)
+    }
+}
+
+impl From<coyote_idempotency::operations::CreateIdempotencyOp> for Request {
+    fn from(value: coyote_idempotency::operations::CreateIdempotencyOp) -> Self {
+        Request::CreateIdempotency(value)
+    }
+}
+
+impl From<coyote_kv::operations::CreateKvOp> for Request {
+    fn from(value: coyote_kv::operations::CreateKvOp) -> Self {
+        Request::CreateKv(value)
+    }
+}
+
 impl From<stream::operations::StreamOperation> for Request {
     fn from(value: stream::operations::StreamOperation) -> Self {
         Request::Stream(value)
@@ -76,6 +97,9 @@ impl From<stream::operations::StreamOperation> for Request {
 pub enum Response {
     Blank,
     ClusterInternal(InternalResponse),
+    CreateCache(coyote_cache::operations::CreateCacheOperationResponse),
+    CreateIdempotency(coyote_idempotency::operations::CreateIdempotencyOperationResponse),
+    CreateKv(coyote_kv::operations::CreateKvOperationResponse),
     Kv(coyote_kv::operations::Response),
     RateLimiter(coyote_rate_limiter::operations::Response),
     Idempotency(coyote_idempotency::operations::Response),
@@ -122,6 +146,39 @@ impl TryFrom<Response> for coyote_cache::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::Cache(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_cache::operations::CreateCacheOperationResponse {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::CreateCache(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_idempotency::operations::CreateIdempotencyOperationResponse {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::CreateIdempotency(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_kv::operations::CreateKvOperationResponse {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::CreateKv(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }
@@ -193,5 +250,16 @@ impl RaftState {
             tracing::info!("discovery succeeded");
         }
         Ok(())
+    }
+
+    pub async fn is_up(&self) -> bool {
+        self.raft
+            .with_raft_state(move |s| {
+                s.server_state.is_leader()
+                    || s.server_state.is_follower()
+                    || s.server_state.is_candidate()
+            })
+            .await
+            .unwrap_or(false)
     }
 }

@@ -8,9 +8,21 @@ import {
     type IdempotencyAbortOut,
     IdempotencyAbortOutSerializer,
 } from '../models/idempotencyAbortOut';
+import {
+    type IdempotencyGetGroupIn,
+    IdempotencyGetGroupInSerializer,
+} from '../models/idempotencyGetGroupIn';
+import {
+    type IdempotencyGetGroupOut,
+    IdempotencyGetGroupOutSerializer,
+} from '../models/idempotencyGetGroupOut';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
 export interface IdempotencyAbortOptions {
+        idempotencyKey?: string;
+        }
+
+    export interface IdempotencyGetGroupOptions {
         idempotencyKey?: string;
         }
 
@@ -34,6 +46,28 @@ export interface IdempotencyAbortOptions {
                 return request.send(
                     this.requestCtx,
                     IdempotencyAbortOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /** Get idempotency group */
+        public getGroup(
+            idempotencyGetGroupIn: IdempotencyGetGroupIn,
+            options?: IdempotencyGetGroupOptions,
+            ): Promise<IdempotencyGetGroupOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/get-group");
+
+            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
+            request.setBody(
+                    IdempotencyGetGroupInSerializer._toJsonObject(
+                        idempotencyGetGroupIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    IdempotencyGetGroupOutSerializer._fromJsonObject,
                 );
             }
 

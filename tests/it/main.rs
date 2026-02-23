@@ -1,6 +1,5 @@
 mod bootstrap;
 mod cache;
-mod configgroup;
 mod idempotency;
 mod kv;
 mod msgpack;

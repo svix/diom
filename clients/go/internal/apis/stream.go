@@ -21,6 +21,10 @@ type StreamCreateOptions struct {
 	IdempotencyKey *string
 }
 
+type StreamGetOptions struct {
+	IdempotencyKey *string
+}
+
 type StreamAppendOptions struct {
 	IdempotencyKey *string
 }
@@ -72,6 +76,32 @@ func (stream *Stream) Create(
 		nil,
 		headerMap,
 		&createStreamIn,
+	)
+}
+
+// Get stream with given name.
+func (stream *Stream) Get(
+	ctx context.Context,
+	getStreamIn coyote_models.GetStreamIn,
+	o *StreamGetOptions,
+) (*coyote_models.GetStreamOut, error) {
+	headerMap := map[string]string{}
+	var err error
+	if o != nil {
+		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return coyote_proto.ExecuteRequest[coyote_models.GetStreamIn, coyote_models.GetStreamOut](
+		ctx,
+		stream.client,
+		"POST",
+		"/api/v1/stream/get-group",
+		nil,
+		nil,
+		headerMap,
+		&getStreamIn,
 	)
 }
 

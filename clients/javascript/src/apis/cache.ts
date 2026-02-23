@@ -9,6 +9,14 @@ import {
     CacheDeleteOutSerializer,
 } from '../models/cacheDeleteOut';
 import {
+    type CacheGetGroupIn,
+    CacheGetGroupInSerializer,
+} from '../models/cacheGetGroupIn';
+import {
+    type CacheGetGroupOut,
+    CacheGetGroupOutSerializer,
+} from '../models/cacheGetGroupOut';
+import {
     type CacheGetIn,
     CacheGetInSerializer,
 } from '../models/cacheGetIn';
@@ -31,6 +39,10 @@ export interface CacheSetOptions {
         }
 
     export interface CacheGetOptions {
+        idempotencyKey?: string;
+        }
+
+    export interface CacheGetGroupOptions {
         idempotencyKey?: string;
         }
 
@@ -80,6 +92,28 @@ export interface CacheSetOptions {
                 return request.send(
                     this.requestCtx,
                     CacheGetOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /** Get cache group */
+        public getGroup(
+            cacheGetGroupIn: CacheGetGroupIn,
+            options?: CacheGetGroupOptions,
+            ): Promise<CacheGetGroupOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/get-group");
+
+            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
+            request.setBody(
+                    CacheGetGroupInSerializer._toJsonObject(
+                        cacheGetGroupIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    CacheGetGroupOutSerializer._fromJsonObject,
                 );
             }
 

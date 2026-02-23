@@ -25,6 +25,10 @@ type KvGetOptions struct {
 	IdempotencyKey *string
 }
 
+type KvGetGroupOptions struct {
+	IdempotencyKey *string
+}
+
 type KvDeleteOptions struct {
 	IdempotencyKey *string
 }
@@ -78,6 +82,32 @@ func (kv *Kv) Get(
 		nil,
 		headerMap,
 		&kvGetIn,
+	)
+}
+
+// Get KV store
+func (kv *Kv) GetGroup(
+	ctx context.Context,
+	kvGetGroupIn coyote_models.KvGetGroupIn,
+	o *KvGetGroupOptions,
+) (*coyote_models.KvGetGroupOut, error) {
+	headerMap := map[string]string{}
+	var err error
+	if o != nil {
+		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return coyote_proto.ExecuteRequest[coyote_models.KvGetGroupIn, coyote_models.KvGetGroupOut](
+		ctx,
+		kv.client,
+		"POST",
+		"/api/v1/kv/get-group",
+		nil,
+		nil,
+		headerMap,
+		&kvGetGroupIn,
 	)
 }
 

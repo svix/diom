@@ -13,6 +13,8 @@ type (
 	AppendToStreamOut            = coyote_models.AppendToStreamOut
 	CacheDeleteIn                = coyote_models.CacheDeleteIn
 	CacheDeleteOut               = coyote_models.CacheDeleteOut
+	CacheGetGroupIn              = coyote_models.CacheGetGroupIn
+	CacheGetGroupOut             = coyote_models.CacheGetGroupOut
 	CacheGetIn                   = coyote_models.CacheGetIn
 	CacheGetOut                  = coyote_models.CacheGetOut
 	CacheSetIn                   = coyote_models.CacheSetIn
@@ -21,12 +23,19 @@ type (
 	CreateStreamOut              = coyote_models.CreateStreamOut
 	DlqIn                        = coyote_models.DlqIn
 	DlqOut                       = coyote_models.DlqOut
+	EvictionPolicy               = coyote_models.EvictionPolicy
 	FetchFromStreamIn            = coyote_models.FetchFromStreamIn
 	FetchFromStreamOut           = coyote_models.FetchFromStreamOut
+	GetStreamIn                  = coyote_models.GetStreamIn
+	GetStreamOut                 = coyote_models.GetStreamOut
 	IdempotencyAbortIn           = coyote_models.IdempotencyAbortIn
 	IdempotencyAbortOut          = coyote_models.IdempotencyAbortOut
+	IdempotencyGetGroupIn        = coyote_models.IdempotencyGetGroupIn
+	IdempotencyGetGroupOut       = coyote_models.IdempotencyGetGroupOut
 	KvDeleteIn                   = coyote_models.KvDeleteIn
 	KvDeleteOut                  = coyote_models.KvDeleteOut
+	KvGetGroupIn                 = coyote_models.KvGetGroupIn
+	KvGetGroupOut                = coyote_models.KvGetGroupOut
 	KvGetIn                      = coyote_models.KvGetIn
 	KvGetOut                     = coyote_models.KvGetOut
 	KvSetIn                      = coyote_models.KvSetIn
@@ -44,4 +53,5 @@ type (
 	RateLimiterTokenBucketConfig = coyote_models.RateLimiterTokenBucketConfig
 	RedriveIn                    = coyote_models.RedriveIn
 	RedriveOut                   = coyote_models.RedriveOut
+	StorageType                  = coyote_models.StorageType
 )
