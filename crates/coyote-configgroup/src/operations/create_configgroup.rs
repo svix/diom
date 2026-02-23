@@ -16,7 +16,8 @@ use crate::{
 pub struct CreateConfigGroup<C: ModuleConfig> {
     timestamp: Timestamp,
     name: String,
-    storage_type: Option<StorageType>,
+    #[serde(default)]
+    storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
     config: C,
 }
@@ -37,7 +38,7 @@ impl<C: ModuleConfig> CreateConfigGroup<C> {
     pub fn new(
         name: String,
         config: C,
-        storage_type: Option<StorageType>,
+        storage_type: StorageType,
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
         Self {
@@ -54,7 +55,7 @@ impl<C: ModuleConfig> CreateConfigGroup<C> {
         let keyspace = state.keyspace();
         let configgroup = match ConfigGroup::<C>::fetch(keyspace, &self.name)? {
             Some(mut configgroup) => {
-                configgroup.storage_type = self.storage_type.unwrap_or(StorageType::Persistent);
+                configgroup.storage_type = self.storage_type;
                 configgroup.updated_at = self.timestamp;
                 configgroup.max_storage_bytes = self.max_storage_bytes;
                 configgroup.config = self.config;
@@ -65,7 +66,7 @@ impl<C: ModuleConfig> CreateConfigGroup<C> {
                 ConfigGroup {
                     id,
                     name: self.name,
-                    storage_type: self.storage_type.unwrap_or(StorageType::Persistent),
+                    storage_type: self.storage_type,
                     max_storage_bytes: self.max_storage_bytes,
                     created_at: self.timestamp,
                     updated_at: self.timestamp,
