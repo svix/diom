@@ -96,7 +96,7 @@ async fn exec(cmd: &str, args: impl IntoIterator<Item = &str>) -> io::Result<()>
         })?;
 
     if !output.status.success() {
-        let mut msg = format!("{cmd} failed with status {}", output.status);
+        let mut msg = format!("{cmd} failed with status {}\n", output.status);
         add_cmd_output(&mut msg, "stdout", &output.stdout);
         add_cmd_output(&mut msg, "stderr", &output.stdout);
         return Err(io::Error::other(msg));
