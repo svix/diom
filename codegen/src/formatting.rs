@@ -66,16 +66,19 @@ impl ContainerizedFormatter<'_> {
             .map(|(src, dst)| format!("--mount=type=bind,src={src},dst={dst}"))
             .collect();
 
-        exec("podman", ["build", "-t", &tag, "-f", &containerfile_path]).await?;
-        exec(
-            "podman",
-            ["run"]
-                .into_iter()
-                .chain(mounts.iter().map(|m| m.as_str()))
-                .chain([tag.as_str()])
-                .chain(cmd.iter().copied()),
-        )
-        .await?;
+        let args = ["build", "-t", &tag, "-f", &containerfile_path];
+        println!("Running podman with args \"{}\"", args.join(" "));
+        exec("podman", args).await?;
+        let args = ["run"]
+            .into_iter()
+            .chain(mounts.iter().map(|m| m.as_str()))
+            .chain([tag.as_str()])
+            .chain(cmd.iter().copied());
+        println!(
+            "Running podman with args \"{}\"",
+            args.clone().collect::<Vec<_>>().join(" ")
+        );
+        exec("podman", args).await?;
 
         Ok(())
     }
