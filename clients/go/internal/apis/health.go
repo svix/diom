@@ -18,7 +18,7 @@ func NewHealth(client *coyote_proto.HttpClient) Health {
 }
 
 // Verify the server is up and running.
-func (health *Health) Ping(
+func (health Health) Ping(
 	ctx context.Context,
 ) (*coyote_models.PingOut, error) {
 	return coyote_proto.ExecuteRequest[any, coyote_models.PingOut](

@@ -26,7 +26,7 @@ type RateLimiterGetRemainingOptions struct {
 }
 
 // Rate Limiter Check and Consume
-func (rateLimiter *RateLimiter) Limit(
+func (rateLimiter RateLimiter) Limit(
 	ctx context.Context,
 	rateLimiterCheckIn coyote_models.RateLimiterCheckIn,
 	o *RateLimiterLimitOptions,
@@ -52,7 +52,7 @@ func (rateLimiter *RateLimiter) Limit(
 }
 
 // Rate Limiter Get Remaining
-func (rateLimiter *RateLimiter) GetRemaining(
+func (rateLimiter RateLimiter) GetRemaining(
 	ctx context.Context,
 	rateLimiterGetRemainingIn coyote_models.RateLimiterGetRemainingIn,
 	o *RateLimiterGetRemainingOptions,
