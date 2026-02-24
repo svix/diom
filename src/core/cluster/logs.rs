@@ -278,14 +278,17 @@ impl CoyoteLogs {
         let last_purged_log_id = LAST_PURGED_LOG_ID.get(&self.meta_keyspace);
         let first_id = Log::range(&self.log_keyspace, ..)
             .next()
-            .map(|l| l.unwrap().0);
+            .and_then(|l| l.ok())
+            .map(|(k, _)| k);
         let last_id = Log::range(&self.log_keyspace, ..)
             .next_back()
-            .map(|l| l.unwrap().0);
+            .and_then(|l| l.ok())
+            .map(|(k, _)| k);
         tracing::trace!(?last_purged_log_id, first_id, last_id, "log metadata");
         for row in Log::range(&self.log_keyspace, ..) {
-            let (index, value) = row.unwrap();
-            tracing::trace!(?index, ?value, "log");
+            if let Ok((index, value)) = row {
+                tracing::trace!(?index, ?value, "log");
+            }
         }
         tracing::trace!("END LOG TRACE");
     }

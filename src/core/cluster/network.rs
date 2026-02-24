@@ -41,11 +41,10 @@ pub(super) struct NetworkFactory {
 }
 
 impl NetworkFactory {
-    pub(super) fn new(cfg: &Configuration) -> Self {
-        Self {
-            client: build_client(cfg, cfg.cluster.replication_request_timeout)
-                .expect("failed to build Raft network"),
-        }
+    pub(super) fn new(cfg: &Configuration) -> anyhow::Result<Self> {
+        Ok(Self {
+            client: build_client(cfg, cfg.cluster.replication_request_timeout)?,
+        })
     }
 }
 

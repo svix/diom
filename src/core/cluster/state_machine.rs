@@ -89,18 +89,15 @@ pub struct Store {
 }
 
 trait SnapshotIdx {
-    fn snapshot_idx(&self) -> u64;
+    fn snapshot_idx(&self) -> Option<u64>;
 }
 
 impl SnapshotIdx for SnapshotMeta<NodeId, Node> {
-    fn snapshot_idx(&self) -> u64 {
-        // TODO: fix these unwraps
+    fn snapshot_idx(&self) -> Option<u64> {
         self.snapshot_id
             .split('-')
             .next_back()
-            .unwrap()
-            .parse()
-            .unwrap()
+            .and_then(|s| s.parse().ok())
     }
 }
 
@@ -201,7 +198,7 @@ impl Store {
         self.last_membership = last_membership;
         self.snapshot_idx = last_snapshot
             .as_ref()
-            .map(|s| s.meta.snapshot_idx())
+            .and_then(|s| s.meta.snapshot_idx())
             .unwrap_or(0);
         self.cluster_id = cluster_id;
         *self.last_snapshot.write() = last_snapshot;
@@ -215,7 +212,7 @@ impl Store {
     ) -> anyhow::Result<()> {
         let handle = self.stores.clone();
         let keyspace = self.meta_keyspace.clone();
-        self.snapshot_idx = std::cmp::max(self.snapshot_idx + 1, meta.snapshot_idx());
+        self.snapshot_idx = std::cmp::max(self.snapshot_idx + 1, meta.snapshot_idx().unwrap_or(0));
         let data = LastSnapshot {
             meta,
             path: snapshot_path,

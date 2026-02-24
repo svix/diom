@@ -218,7 +218,10 @@ impl Discovery {
                     .into_group_map();
 
                 if clusters_to_peers.len() == 1 {
-                    let (cluster_id, config) = clusters_to_peers.into_iter().next().unwrap();
+                    let (cluster_id, config) = clusters_to_peers
+                        .into_iter()
+                        .next()
+                        .expect("length already validated as non-zero");
                     if let Err(err) = self.join_cluster(cluster_id, config).await {
                         tracing::error!(?err, "failed to join cluster!");
                     } else {

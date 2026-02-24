@@ -118,7 +118,7 @@ impl BootstrapConfig {
     }
 }
 
-pub async fn run(app_config: AppConfig, raft_state: RaftState) {
+pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result<()> {
     // FIXME: Do something smarter here:
     let mut retries = 100;
     while !raft_state.is_up().await && retries > 0 {
@@ -144,10 +144,7 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) {
                 cfg.storage_type.into(),
                 cfg.max_storage_bytes,
             );
-            raft_state
-                .client_write(operation)
-                .await
-                .expect("bootstrap kv failed");
+            raft_state.client_write(operation).await?;
         }
     }
 
@@ -160,10 +157,7 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) {
                 cfg.storage_type.into(),
                 cfg.max_storage_bytes,
             );
-            raft_state
-                .client_write(operation)
-                .await
-                .expect("bootstrap cache failed");
+            raft_state.client_write(operation).await?;
         }
     }
 
@@ -175,10 +169,7 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) {
                 cfg.storage_type.into(),
                 cfg.max_storage_bytes,
             );
-            raft_state
-                .client_write(operation)
-                .await
-                .expect("bootstrap idempotency failed");
+            raft_state.client_write(operation).await?;
         }
     }
 
@@ -191,12 +182,11 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) {
                 cfg.storage_type.into(),
                 cfg.max_storage_bytes,
             );
-            raft_state
-                .client_write(operation)
-                .await
-                .expect("bootstrap stream failed");
+            raft_state.client_write(operation).await?;
         }
     }
 
     tracing::info!("Finished bootstrapping.");
+
+    Ok(())
 }
