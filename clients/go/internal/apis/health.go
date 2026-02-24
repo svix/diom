@@ -18,7 +18,7 @@ func NewHealth(client *diom_proto.HttpClient) Health {
 }
 
 // Verify the server is up and running.
-func (health *Health) Ping(
+func (health Health) Ping(
 	ctx context.Context,
 ) (*diom_models.PingOut, error) {
 	return diom_proto.ExecuteRequest[any, diom_models.PingOut](

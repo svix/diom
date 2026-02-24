@@ -54,7 +54,7 @@ type StreamRedriveOptions struct {
 }
 
 // Upserts a new Stream with the given name.
-func (stream *Stream) Create(
+func (stream Stream) Create(
 	ctx context.Context,
 	createStreamIn diom_models.CreateStreamIn,
 	o *StreamCreateOptions,
@@ -80,7 +80,7 @@ func (stream *Stream) Create(
 }
 
 // Get stream with given name.
-func (stream *Stream) Get(
+func (stream Stream) Get(
 	ctx context.Context,
 	getStreamIn diom_models.GetStreamIn,
 	o *StreamGetOptions,
@@ -106,7 +106,7 @@ func (stream *Stream) Get(
 }
 
 // Appends messages to the stream.
-func (stream *Stream) Append(
+func (stream Stream) Append(
 	ctx context.Context,
 	appendToStreamIn diom_models.AppendToStreamIn,
 	o *StreamAppendOptions,
@@ -136,7 +136,7 @@ func (stream *Stream) Append(
 // Unlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading
 // messages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held
 // until the visibility timeout expires, or the messages are acked.
-func (stream *Stream) Fetch(
+func (stream Stream) Fetch(
 	ctx context.Context,
 	fetchFromStreamIn diom_models.FetchFromStreamIn,
 	o *StreamFetchOptions,
@@ -165,7 +165,7 @@ func (stream *Stream) Fetch(
 //
 // This call prevents other consumers within the same consumer group from reading from the stream
 // until either the visibility timeout expires, or the last message in the batch is acknowledged.
-func (stream *Stream) FetchLocking(
+func (stream Stream) FetchLocking(
 	ctx context.Context,
 	fetchFromStreamIn diom_models.FetchFromStreamIn,
 	o *StreamFetchLockingOptions,
@@ -191,7 +191,7 @@ func (stream *Stream) FetchLocking(
 }
 
 // Acks the messages for the consumer group, allowing more messages to be consumed.
-func (stream *Stream) AckRange(
+func (stream Stream) AckRange(
 	ctx context.Context,
 	ackMsgRangeIn diom_models.AckMsgRangeIn,
 	o *StreamAckRangeOptions,
@@ -217,7 +217,7 @@ func (stream *Stream) AckRange(
 }
 
 // Acks a single message.
-func (stream *Stream) Ack(
+func (stream Stream) Ack(
 	ctx context.Context,
 	ack diom_models.Ack,
 	o *StreamAckOptions,
@@ -243,7 +243,7 @@ func (stream *Stream) Ack(
 }
 
 // Moves a message to the dead letter queue.
-func (stream *Stream) Dlq(
+func (stream Stream) Dlq(
 	ctx context.Context,
 	dlqIn diom_models.DlqIn,
 	o *StreamDlqOptions,
@@ -269,7 +269,7 @@ func (stream *Stream) Dlq(
 }
 
 // Redrives messages from the dead letter queue back to the stream.
-func (stream *Stream) Redrive(
+func (stream Stream) Redrive(
 	ctx context.Context,
 	redriveIn diom_models.RedriveIn,
 	o *StreamRedriveOptions,

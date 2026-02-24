@@ -34,7 +34,7 @@ type CacheDeleteOptions struct {
 }
 
 // Cache Set
-func (cache *Cache) Set(
+func (cache Cache) Set(
 	ctx context.Context,
 	cacheSetIn diom_models.CacheSetIn,
 	o *CacheSetOptions,
@@ -60,7 +60,7 @@ func (cache *Cache) Set(
 }
 
 // Cache Get
-func (cache *Cache) Get(
+func (cache Cache) Get(
 	ctx context.Context,
 	cacheGetIn diom_models.CacheGetIn,
 	o *CacheGetOptions,
@@ -86,7 +86,7 @@ func (cache *Cache) Get(
 }
 
 // Get cache group
-func (cache *Cache) GetGroup(
+func (cache Cache) GetGroup(
 	ctx context.Context,
 	cacheGetGroupIn diom_models.CacheGetGroupIn,
 	o *CacheGetGroupOptions,
@@ -112,7 +112,7 @@ func (cache *Cache) GetGroup(
 }
 
 // Cache Delete
-func (cache *Cache) Delete(
+func (cache Cache) Delete(
 	ctx context.Context,
 	cacheDeleteIn diom_models.CacheDeleteIn,
 	o *CacheDeleteOptions,

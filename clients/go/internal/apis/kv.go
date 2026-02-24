@@ -34,7 +34,7 @@ type KvDeleteOptions struct {
 }
 
 // KV Set
-func (kv *Kv) Set(
+func (kv Kv) Set(
 	ctx context.Context,
 	kvSetIn diom_models.KvSetIn,
 	o *KvSetOptions,
@@ -60,7 +60,7 @@ func (kv *Kv) Set(
 }
 
 // KV Get
-func (kv *Kv) Get(
+func (kv Kv) Get(
 	ctx context.Context,
 	kvGetIn diom_models.KvGetIn,
 	o *KvGetOptions,
@@ -86,7 +86,7 @@ func (kv *Kv) Get(
 }
 
 // Get KV store
-func (kv *Kv) GetGroup(
+func (kv Kv) GetGroup(
 	ctx context.Context,
 	kvGetGroupIn diom_models.KvGetGroupIn,
 	o *KvGetGroupOptions,
@@ -112,7 +112,7 @@ func (kv *Kv) GetGroup(
 }
 
 // KV Delete
-func (kv *Kv) Delete(
+func (kv Kv) Delete(
 	ctx context.Context,
 	kvDeleteIn diom_models.KvDeleteIn,
 	o *KvDeleteOptions,
