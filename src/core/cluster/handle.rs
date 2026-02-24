@@ -234,7 +234,7 @@ impl RaftState {
                             .forward_request::<openraft::AnyError>(
                                 super::proto::ForwardedWriteRequest {
                                     source_node_id: self.node_id,
-                                    request: request,
+                                    request,
                                 },
                             )
                             .await

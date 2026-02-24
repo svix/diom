@@ -274,7 +274,7 @@ mod tests {
         db2e_path.push("db_loaded_ephem/");
         let db2e = Database::builder(db2e_path).open()?;
 
-        let databases = Databases::new(db2.clone(), db2e.clone());
+        let databases = Databases::new(db2.clone(), db2e);
 
         let mut cursor = Cursor::new(out);
 

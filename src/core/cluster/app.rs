@@ -135,9 +135,10 @@ async fn handle_forwarded_write(
 ) -> Result<MsgPack<ForwardedWriteResponse>, crate::Error> {
     // intentionally do not use state.client_write because we don't want an infinite recursion
     // of forwardings
-    let response = state.raft.client_write(req.request).await.map_err(|e| {
-        crate::Error::generic(format!("Unable to execute forwarded write: {:?}", e))
-    })?;
+    let response =
+        state.raft.client_write(req.request).await.map_err(|e| {
+            crate::Error::generic(format!("Unable to execute forwarded write: {e:?}"))
+        })?;
     let response = ForwardedWriteResponse {
         log_id: response.log_id,
         response: response.data,

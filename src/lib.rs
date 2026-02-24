@@ -42,8 +42,10 @@ use uuid::Uuid;
 
 use crate::{
     cfg::{Configuration, DatabaseConfig},
-    core::cluster::RaftState,
-    core::db::{Databases, ReadonlyDatabases},
+    core::{
+        cluster::RaftState,
+        db::{Databases, ReadonlyDatabases},
+    },
 };
 use coyote_cache::CacheStore;
 use coyote_idempotency::IdempotencyStore;
