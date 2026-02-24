@@ -25,7 +25,8 @@ use crate::{
     v1::utils::openapi_tag,
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct CacheSetIn {
     #[validate(nested)]
     pub key: EntityKey,
@@ -47,16 +48,17 @@ impl CacheSetIn {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheSetOut {}
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheGetIn {
     #[validate(nested)]
     pub key: EntityKey,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheGetOut {
     #[validate(nested)]
     pub key: EntityKey,
