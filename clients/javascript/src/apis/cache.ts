@@ -34,33 +34,15 @@ import {
 } from '../models/cacheSetOut';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
-export interface CacheSetOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface CacheGetOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface CacheGetGroupOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface CacheDeleteOptions {
-        idempotencyKey?: string;
-        }
-
-    export class Cache {
+export class Cache {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}
 
     /** Cache Set */
         public set(
             cacheSetIn: CacheSetIn,
-            options?: CacheSetOptions,
             ): Promise<CacheSetOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/set");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     CacheSetInSerializer._toJsonObject(
                         cacheSetIn,
@@ -78,11 +60,9 @@ export interface CacheSetOptions {
     /** Cache Get */
         public get(
             cacheGetIn: CacheGetIn,
-            options?: CacheGetOptions,
             ): Promise<CacheGetOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/get");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     CacheGetInSerializer._toJsonObject(
                         cacheGetIn,
@@ -100,11 +80,9 @@ export interface CacheSetOptions {
     /** Get cache group */
         public getGroup(
             cacheGetGroupIn: CacheGetGroupIn,
-            options?: CacheGetGroupOptions,
             ): Promise<CacheGetGroupOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/get-group");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     CacheGetGroupInSerializer._toJsonObject(
                         cacheGetGroupIn,
@@ -122,11 +100,9 @@ export interface CacheSetOptions {
     /** Cache Delete */
         public delete(
             cacheDeleteIn: CacheDeleteIn,
-            options?: CacheDeleteOptions,
             ): Promise<CacheDeleteOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/delete");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     CacheDeleteInSerializer._toJsonObject(
                         cacheDeleteIn,

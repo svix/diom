@@ -17,36 +17,11 @@ func NewCache(client *coyote_proto.HttpClient) Cache {
 	return Cache{client}
 }
 
-type CacheSetOptions struct {
-	IdempotencyKey *string
-}
-
-type CacheGetOptions struct {
-	IdempotencyKey *string
-}
-
-type CacheGetGroupOptions struct {
-	IdempotencyKey *string
-}
-
-type CacheDeleteOptions struct {
-	IdempotencyKey *string
-}
-
 // Cache Set
 func (cache Cache) Set(
 	ctx context.Context,
 	cacheSetIn coyote_models.CacheSetIn,
-	o *CacheSetOptions,
 ) (*coyote_models.CacheSetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.CacheSetIn, coyote_models.CacheSetOut](
 		ctx,
 		cache.client,
@@ -54,7 +29,6 @@ func (cache Cache) Set(
 		"/api/v1/cache/set",
 		nil,
 		nil,
-		headerMap,
 		&cacheSetIn,
 	)
 }
@@ -63,16 +37,7 @@ func (cache Cache) Set(
 func (cache Cache) Get(
 	ctx context.Context,
 	cacheGetIn coyote_models.CacheGetIn,
-	o *CacheGetOptions,
 ) (*coyote_models.CacheGetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.CacheGetIn, coyote_models.CacheGetOut](
 		ctx,
 		cache.client,
@@ -80,7 +45,6 @@ func (cache Cache) Get(
 		"/api/v1/cache/get",
 		nil,
 		nil,
-		headerMap,
 		&cacheGetIn,
 	)
 }
@@ -89,16 +53,7 @@ func (cache Cache) Get(
 func (cache Cache) GetGroup(
 	ctx context.Context,
 	cacheGetGroupIn coyote_models.CacheGetGroupIn,
-	o *CacheGetGroupOptions,
 ) (*coyote_models.CacheGetGroupOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.CacheGetGroupIn, coyote_models.CacheGetGroupOut](
 		ctx,
 		cache.client,
@@ -106,7 +61,6 @@ func (cache Cache) GetGroup(
 		"/api/v1/cache/get-group",
 		nil,
 		nil,
-		headerMap,
 		&cacheGetGroupIn,
 	)
 }
@@ -115,16 +69,7 @@ func (cache Cache) GetGroup(
 func (cache Cache) Delete(
 	ctx context.Context,
 	cacheDeleteIn coyote_models.CacheDeleteIn,
-	o *CacheDeleteOptions,
 ) (*coyote_models.CacheDeleteOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.CacheDeleteIn, coyote_models.CacheDeleteOut](
 		ctx,
 		cache.client,
@@ -132,7 +77,6 @@ func (cache Cache) Delete(
 		"/api/v1/cache/delete",
 		nil,
 		nil,
-		headerMap,
 		&cacheDeleteIn,
 	)
 }

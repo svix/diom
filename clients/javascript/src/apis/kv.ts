@@ -34,33 +34,15 @@ import {
 } from '../models/kvSetOut';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
-export interface KvSetOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface KvGetOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface KvGetGroupOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface KvDeleteOptions {
-        idempotencyKey?: string;
-        }
-
-    export class Kv {
+export class Kv {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}
 
     /** KV Set */
         public set(
             kvSetIn: KvSetIn,
-            options?: KvSetOptions,
             ): Promise<KvSetOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/set");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     KvSetInSerializer._toJsonObject(
                         kvSetIn,
@@ -78,11 +60,9 @@ export interface KvSetOptions {
     /** KV Get */
         public get(
             kvGetIn: KvGetIn,
-            options?: KvGetOptions,
             ): Promise<KvGetOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/get");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     KvGetInSerializer._toJsonObject(
                         kvGetIn,
@@ -100,11 +80,9 @@ export interface KvSetOptions {
     /** Get KV store */
         public getGroup(
             kvGetGroupIn: KvGetGroupIn,
-            options?: KvGetGroupOptions,
             ): Promise<KvGetGroupOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/get-group");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     KvGetGroupInSerializer._toJsonObject(
                         kvGetGroupIn,
@@ -122,11 +100,9 @@ export interface KvSetOptions {
     /** KV Delete */
         public delete(
             kvDeleteIn: KvDeleteIn,
-            options?: KvDeleteOptions,
             ): Promise<KvDeleteOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/delete");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     KvDeleteInSerializer._toJsonObject(
                         kvDeleteIn,
