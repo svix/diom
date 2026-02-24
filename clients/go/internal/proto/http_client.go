@@ -26,7 +26,7 @@ type HttpClient struct {
 	Debug          bool
 }
 
-func DefaultSvixHttpClient(defaultBaseUrl string) HttpClient {
+func DefaultHttpClient(defaultBaseUrl string) HttpClient {
 	// Disable HTTP/2.0
 	tr := http.DefaultTransport.(*http.Transport).Clone()
 	tr.ForceAttemptHTTP2 = false

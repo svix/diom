@@ -26,7 +26,7 @@ type IdempotencyGetGroupOptions struct {
 }
 
 // Abandon an idempotent request (remove lock without saving response)
-func (idempotency *Idempotency) Abort(
+func (idempotency Idempotency) Abort(
 	ctx context.Context,
 	idempotencyAbortIn diom_models.IdempotencyAbortIn,
 	o *IdempotencyAbortOptions,
@@ -52,7 +52,7 @@ func (idempotency *Idempotency) Abort(
 }
 
 // Get idempotency group
-func (idempotency *Idempotency) GetGroup(
+func (idempotency Idempotency) GetGroup(
 	ctx context.Context,
 	idempotencyGetGroupIn diom_models.IdempotencyGetGroupIn,
 	o *IdempotencyGetGroupOptions,
