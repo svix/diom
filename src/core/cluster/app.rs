@@ -27,6 +27,10 @@ pub fn router() -> axum::Router<AppState> {
         .route("/repl/raft/append_entries", post(append_entries))
         .route("/repl/raft/vote", post(vote))
         .route("/repl/raft/stream-snapshot", post(stream_snapshot))
+        .route(
+            "/repl/raft/handle-forwarded-write",
+            post(handle_forwarded_write),
+        )
         .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/raft/admin/add-learner", post(add_learner))
         .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
@@ -122,6 +126,23 @@ async fn stream_snapshot(
         "streaming part of a snapshot"
     );
     state.raft.install_snapshot(req).await.pipe(rpc_response)
+}
+
+#[tracing::instrument(skip_all)]
+async fn handle_forwarded_write(
+    Extension(state): Extension<RaftState>,
+    MsgPack(req): MsgPack<ForwardedWriteRequest>,
+) -> Result<MsgPack<ForwardedWriteResponse>, crate::Error> {
+    // intentionally do not use state.client_write because we don't want an infinite recursion
+    // of forwardings
+    let response = state.raft.client_write(req.request).await.map_err(|e| {
+        crate::Error::generic(format!("Unable to execute forwarded write: {:?}", e))
+    })?;
+    let response = ForwardedWriteResponse {
+        log_id: response.log_id,
+        response: response.data,
+    };
+    Ok(MsgPack(response))
 }
 
 // Administrative functions

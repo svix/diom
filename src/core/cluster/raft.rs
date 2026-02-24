@@ -133,11 +133,12 @@ pub async fn initialize_raft(
     let state_machine =
         super::state_machine::Store::new(db, cfg.cluster.snapshot_path.clone(), app_state).await?;
     let state_machine: StoreHandle = state_machine.into();
-    let raft = Raft::new(id, config, network, logs, state_machine.clone()).await?;
+    let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone()).await?;
     Ok(RaftState {
         raft,
         node_id: id,
         state_machine,
+        network,
     })
 }
 
