@@ -6,6 +6,7 @@ use std::{
 };
 
 use crate::core::db::Databases;
+use anyhow::Context;
 use diom_configgroup::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
 use openraft::{
@@ -49,15 +50,31 @@ impl ClusterId {
 #[derive(Clone)]
 pub struct StoreHandle(Arc<TokioRwLock<Store>>);
 
+/// The actual meat of the database; a wrapper around fjall state
+/// and any number of module states
+pub struct Stores {
+    pub databases: Databases,
+    pub stream_state: stream_deprecated::State,
+}
+
 impl From<Store> for StoreHandle {
     fn from(value: Store) -> Self {
         Self(Arc::new(TokioRwLock::new(value)))
     }
 }
 
+/// The raft store; has to encapsulate all stored state
 pub struct Store {
     pub(super) state: AppState,
-    databases: Arc<RwLock<Databases>>,
+    // This is wrapped an an RwLock (even though the StoreHandle has its own RwLock)
+    // because it gets sent to `tokio::task::spawn_blocking` invocations all over the place,
+    // and it's possible that we could get snapshot-unsafe behavior if one of them outlived
+    // the lock on the outer structure, so we only actually lock it later; the lock should
+    // almost never be contended unless we're dropping futures.
+    //
+    // The only thing that gets a write lock to it is taking and applying a snapshot; everything
+    // else only needs a read lock.
+    stores: Arc<RwLock<Stores>>,
     snapshot_directory: PathBuf,
     meta_keyspace: Keyspace,
     snapshot_idx: u64,
@@ -99,9 +116,19 @@ impl Store {
         }
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
+
+        let stream_state = stream_deprecated::State::init(persistent_db.clone())
+            .context("initializing stream state")?;
+
         let databases = Databases::new(persistent_db, ephemeral_db);
+
+        let stores = Stores {
+            databases,
+            stream_state,
+        };
+
         let mut this = Self {
-            databases: Arc::new(RwLock::new(databases)),
+            stores: Arc::new(RwLock::new(stores)),
             state: app_state,
             snapshot_directory,
             meta_keyspace,
@@ -115,15 +142,12 @@ impl Store {
         Ok(this)
     }
 
-    /// Get a read lock on the databases and return a handle to them. Intended to be used by the
-    /// applier
-    #[allow(dead_code)]
-    pub(super) fn db_handle(&self) -> impl std::ops::Deref<Target = Databases> {
-        self.databases.read_arc()
-    }
-
     pub fn cluster_id(&self) -> Option<&ClusterId> {
         self.cluster_id.as_ref()
+    }
+
+    pub fn db_handle(&self) -> impl std::ops::Deref<Target = Stores> {
+        self.stores.read_arc()
     }
 
     pub(super) async fn set_cluster_id(&mut self, id: ClusterId) -> anyhow::Result<()> {
@@ -155,12 +179,12 @@ impl Store {
 
     #[tracing::instrument(skip(self))]
     async fn load_information(&mut self) -> anyhow::Result<()> {
-        let handle = self.databases.clone();
+        let handle = self.stores.clone();
         let keyspace = self.meta_keyspace.clone();
 
         let (last_applied_log_id, last_membership, last_snapshot, cluster_id) =
             tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
-                let db = &handle.read().persistent;
+                let db = &handle.read().databases.persistent;
                 let snapshot = db.snapshot();
                 let last_applied_log_id =
                     Self::try_read_field(&snapshot, &keyspace, "last_applied_log_id").ok();
@@ -196,7 +220,7 @@ impl Store {
         meta: SnapshotMeta<NodeId, Node>,
         snapshot_path: PathBuf,
     ) -> anyhow::Result<()> {
-        let handle = self.databases.clone();
+        let handle = self.stores.clone();
         let keyspace = self.meta_keyspace.clone();
         self.snapshot_idx = std::cmp::max(self.snapshot_idx + 1, meta.snapshot_idx());
         let data = LastSnapshot {
@@ -206,7 +230,7 @@ impl Store {
         tracing::trace!(last_snapshot=?data, "setting last_snapshot");
         let serialized = rmp_serde::to_vec_named(&data)?;
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-            let db = &handle.read().persistent;
+            let db = &handle.read().databases.persistent;
             keyspace.insert("last_snapshot", serialized)?;
             db.persist(fjall::PersistMode::SyncAll)?;
             Ok(())
@@ -221,13 +245,14 @@ impl Store {
             last_applied_log_id=?self.last_applied_log_id,
             last_membership=?self.last_membership,
             "storing id values");
-        let handle = self.databases.clone();
+        let handle = self.stores.clone();
         let keyspace = self.meta_keyspace.clone();
         let last_applied_log_id = rmp_serde::encode::to_vec_named(&self.last_applied_log_id)?;
         let last_membership = rmp_serde::encode::to_vec_named(&self.last_membership)?;
         tokio::task::spawn_blocking(move || {
             let mut tx = handle
                 .read()
+                .databases
                 .persistent
                 .batch()
                 .durability(Some(PersistMode::Buffer));
@@ -264,10 +289,10 @@ impl Store {
     ) -> anyhow::Result<()> {
         tracing::debug!("starting snapshot installation");
         let mut f = snapshot.file.into_std().await;
-        let handle = self.databases.clone();
+        let handle = self.stores.clone();
         tokio::task::spawn_blocking(move || {
-            let databases = handle.write();
-            serialized_state_machine::load_from_file(&databases, &mut f)
+            let stores = handle.write();
+            serialized_state_machine::load_from_file(&stores.databases, &mut f)
         })
         .await??;
         self.last_applied_log_id = meta.last_log_id;
@@ -381,7 +406,7 @@ impl Store {
             snapshot_id,
         };
 
-        let handle = self.databases.clone();
+        let handle = self.stores.clone();
 
         fn list_keyspaces(db: &Database) -> Vec<String> {
             db.list_keyspace_names()
@@ -392,7 +417,8 @@ impl Store {
         }
 
         let targets = tokio::task::spawn_blocking(move || {
-            let dbs = handle.write();
+            let store = handle.write();
+            let dbs = &store.databases;
 
             vec![
                 (
