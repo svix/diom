@@ -8,14 +8,15 @@ use std::{
 use crate::core::db::Databases;
 use anyhow::Context;
 use coyote_configgroup::entities::StorageType;
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
+use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
+use fjall_utils::{FjallFixedKey, ReadonlyKeyspace};
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
     StorageIOError, StoredMembership, storage::RaftStateMachine,
 };
 use parking_lot::RwLock;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use tap::TapFallible;
+use serde::{Deserialize, Serialize};
+use tap::TapOptional;
 use tokio::sync::RwLock as TokioRwLock;
 use uuid::Uuid;
 
@@ -78,6 +79,7 @@ pub struct Store {
     stores: Arc<RwLock<Stores>>,
     snapshot_directory: PathBuf,
     meta_keyspace: Keyspace,
+    readonly_meta_keyspace: ReadonlyKeyspace,
     snapshot_idx: u64,
     last_applied_log_id: Option<LogId<NodeId>>,
     last_membership: StoredMembership<NodeId, Node>,
@@ -103,6 +105,13 @@ impl SnapshotIdx for SnapshotMeta<NodeId, Node> {
 }
 
 const METADATA_KEYSPACE: &str = "_raft_metadata";
+
+static LAST_APPLIED_LOG_ID: FjallFixedKey<LogId<NodeId>> =
+    FjallFixedKey::new("last_applied_log_id");
+static LAST_SNAPSHOT: FjallFixedKey<LastSnapshot> = FjallFixedKey::new("last_snapshot");
+static LAST_MEMBERSHIP: FjallFixedKey<StoredMembership<NodeId, Node>> =
+    FjallFixedKey::new("last_membership");
+static CLUSTER_UUID: FjallFixedKey<ClusterId> = FjallFixedKey::new("cluster_uuid");
 
 impl Store {
     pub async fn new(
@@ -134,6 +143,7 @@ impl Store {
             stores: Arc::new(RwLock::new(stores)),
             state: app_state,
             snapshot_directory,
+            readonly_meta_keyspace: ReadonlyKeyspace::from(meta_keyspace.clone()),
             meta_keyspace,
             last_snapshot: Arc::new(RwLock::new(None)),
             snapshot_idx: 0,
@@ -157,8 +167,7 @@ impl Store {
     pub(super) async fn set_cluster_id(&mut self, id: ClusterId) -> anyhow::Result<()> {
         let keyspace = self.meta_keyspace.clone();
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-            let serialized = rmp_serde::to_vec(&id)?;
-            keyspace.insert("cluster_uuid", serialized)?;
+            CLUSTER_UUID.store(&keyspace, &id)?;
             Ok(())
         })
         .await??;
@@ -166,39 +175,19 @@ impl Store {
         Ok(())
     }
 
-    fn try_read_field<T: DeserializeOwned>(
-        snapshot: &fjall::Snapshot,
-        keyspace: &Keyspace,
-        key: &str,
-    ) -> anyhow::Result<T> {
-        if let Some(raw_data) = snapshot.get(keyspace, key)? {
-            rmp_serde::from_slice(&raw_data).map_err(|err| {
-                tracing::warn!(?key, ?err, "error deserializing key from meta keyspace");
-                err.into()
-            })
-        } else {
-            anyhow::bail!("no such key {key:?}");
-        }
-    }
-
     #[tracing::instrument(skip(self))]
     async fn load_information(&mut self) -> anyhow::Result<()> {
-        let handle = self.stores.clone();
-        let keyspace = self.meta_keyspace.clone();
+        let keyspace = self.readonly_meta_keyspace.clone();
 
         let (last_applied_log_id, last_membership, last_snapshot, cluster_id) =
             tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
-                let db = &handle.read().databases.persistent;
-                let snapshot = db.snapshot();
-                let last_applied_log_id =
-                    Self::try_read_field(&snapshot, &keyspace, "last_applied_log_id").ok();
-                let last_membership = Self::try_read_field(&snapshot, &keyspace, "last_membership")
-                    .tap_err(|_| tracing::trace!("found no last membership in the database!"))
+                let last_applied_log_id = LAST_APPLIED_LOG_ID.get(&keyspace)?;
+                let last_membership = LAST_MEMBERSHIP
+                    .get(&keyspace)?
+                    .tap_none(|| tracing::trace!("found no last membership in the database!"))
                     .unwrap_or_default();
-                let last_snapshot =
-                    Self::try_read_field::<LastSnapshot>(&snapshot, &keyspace, "last_snapshot")
-                        .ok();
-                let cluster_id = Self::try_read_field(&snapshot, &keyspace, "cluster_uuid").ok();
+                let last_snapshot = LAST_SNAPSHOT.get(&keyspace)?;
+                let cluster_id = CLUSTER_UUID.get(&keyspace)?;
 
                 Ok((
                     last_applied_log_id,
@@ -232,12 +221,11 @@ impl Store {
             path: snapshot_path,
         };
         tracing::trace!(last_snapshot=?data, "setting last_snapshot");
-        let serialized = rmp_serde::to_vec_named(&data)?;
-        tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+        let data = tokio::task::spawn_blocking(move || -> anyhow::Result<LastSnapshot> {
             let db = &handle.read().databases.persistent;
-            keyspace.insert("last_snapshot", serialized)?;
+            LAST_SNAPSHOT.store(&keyspace, &data)?;
             db.persist(fjall::PersistMode::SyncAll)?;
-            Ok(())
+            Ok(data)
         })
         .await??;
         *self.last_snapshot.write() = Some(data);
@@ -250,9 +238,9 @@ impl Store {
             last_membership=?self.last_membership,
             "storing id values");
         let handle = self.stores.clone();
-        let keyspace = self.meta_keyspace.clone();
-        let last_applied_log_id = rmp_serde::encode::to_vec_named(&self.last_applied_log_id)?;
-        let last_membership = rmp_serde::encode::to_vec_named(&self.last_membership)?;
+        let meta_keyspace = self.meta_keyspace.clone();
+        let last_applied_log_id = self.last_applied_log_id;
+        let last_membership = self.last_membership.clone();
         tokio::task::spawn_blocking(move || {
             let mut tx = handle
                 .read()
@@ -260,8 +248,12 @@ impl Store {
                 .persistent
                 .batch()
                 .durability(Some(PersistMode::Buffer));
-            tx.insert(&keyspace, "last_applied_log_id", last_applied_log_id);
-            tx.insert(&keyspace, "last_membership", last_membership);
+            if let Some(log_id) = &last_applied_log_id {
+                LAST_APPLIED_LOG_ID.store_tx(&mut tx, &meta_keyspace, log_id)?;
+            } else {
+                LAST_APPLIED_LOG_ID.remove_tx(&mut tx, &meta_keyspace)?;
+            }
+            LAST_MEMBERSHIP.store_tx(&mut tx, &meta_keyspace, &last_membership)?;
             tx.commit()?;
             Ok(())
         })
