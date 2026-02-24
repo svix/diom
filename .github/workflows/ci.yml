@@ -45,15 +45,13 @@ jobs:
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo clippy --workspace --all-features --all-targets
-  pre-commit:
-    name: Validate pre-commit
+  prek:
+    name: Validate prek
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-      - uses: pre-commit/action@v3.0.1
+      - uses: astral-sh/setup-uv@v7
+      - uses: j178/prek-action@v1
   test:
     name: Test
     runs-on: ubuntu-24.04
