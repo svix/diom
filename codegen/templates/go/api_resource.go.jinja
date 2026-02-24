@@ -72,7 +72,7 @@ type {{ opt_struct_name }} struct {
 	{% endif -%}
 // Deprecated: {{ op.name | to_upper_camel_case }} is deprecated.
 	{% endif -%}
-func ({{ resource_self_name }} *{{ resource_type_name }}) {{ op.name | to_upper_camel_case }}(
+func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_camel_case }}(
 	ctx context.Context,
 
 	{#- path parameters #}
