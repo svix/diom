@@ -83,3 +83,7 @@ pub(super) fn cluster_election_timeout_max_ms() -> u64 {
 pub(super) fn cluster_auto_initialize() -> bool {
     true
 }
+
+pub(super) fn log_index_interval() -> Duration {
+    Duration::from_mins(10)
+}

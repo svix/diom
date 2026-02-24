@@ -237,6 +237,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             seed_nodes: vec![],
             replication_request_timeout: Duration::from_millis(50),
             startup_discovery_delay: Duration::from_millis(0),
+            log_index_interval: Duration::from_millis(500),
         },
         bootstrap_cfg_path: None,
     }
