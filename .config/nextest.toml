@@ -7,8 +7,12 @@ fail-fast = true
 slow-timeout = { period = "120s", terminate-after = 4 }
 
 [profile.ci]
+test-threads = 16
 fail-fast = false
 default-filter = 'all()'
+
+[profile.ci.junit]
+path = "junit.xml"
 
 [[profile.ci.overrides]]
 filter = 'test(~openraft_slow)'
