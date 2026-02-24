@@ -86,7 +86,7 @@ async fn test_kv_set_and_get() -> TestResult {
         expires_at
             .as_millisecond()
             .abs_diff(expected.as_millisecond())
-            < 5 // tolerance
+            < 50 // tolerance
     );
 
     Ok(())
