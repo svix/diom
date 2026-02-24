@@ -17,36 +17,11 @@ func NewKv(client *coyote_proto.HttpClient) Kv {
 	return Kv{client}
 }
 
-type KvSetOptions struct {
-	IdempotencyKey *string
-}
-
-type KvGetOptions struct {
-	IdempotencyKey *string
-}
-
-type KvGetGroupOptions struct {
-	IdempotencyKey *string
-}
-
-type KvDeleteOptions struct {
-	IdempotencyKey *string
-}
-
 // KV Set
 func (kv *Kv) Set(
 	ctx context.Context,
 	kvSetIn coyote_models.KvSetIn,
-	o *KvSetOptions,
 ) (*coyote_models.KvSetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.KvSetIn, coyote_models.KvSetOut](
 		ctx,
 		kv.client,
@@ -54,7 +29,7 @@ func (kv *Kv) Set(
 		"/api/v1/kv/set",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&kvSetIn,
 	)
 }
@@ -63,16 +38,7 @@ func (kv *Kv) Set(
 func (kv *Kv) Get(
 	ctx context.Context,
 	kvGetIn coyote_models.KvGetIn,
-	o *KvGetOptions,
 ) (*coyote_models.KvGetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.KvGetIn, coyote_models.KvGetOut](
 		ctx,
 		kv.client,
@@ -80,7 +46,7 @@ func (kv *Kv) Get(
 		"/api/v1/kv/get",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&kvGetIn,
 	)
 }
@@ -89,16 +55,7 @@ func (kv *Kv) Get(
 func (kv *Kv) GetGroup(
 	ctx context.Context,
 	kvGetGroupIn coyote_models.KvGetGroupIn,
-	o *KvGetGroupOptions,
 ) (*coyote_models.KvGetGroupOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.KvGetGroupIn, coyote_models.KvGetGroupOut](
 		ctx,
 		kv.client,
@@ -106,7 +63,7 @@ func (kv *Kv) GetGroup(
 		"/api/v1/kv/get-group",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&kvGetGroupIn,
 	)
 }
@@ -115,16 +72,7 @@ func (kv *Kv) GetGroup(
 func (kv *Kv) Delete(
 	ctx context.Context,
 	kvDeleteIn coyote_models.KvDeleteIn,
-	o *KvDeleteOptions,
 ) (*coyote_models.KvDeleteOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		coyote_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return coyote_proto.ExecuteRequest[coyote_models.KvDeleteIn, coyote_models.KvDeleteOut](
 		ctx,
 		kv.client,
@@ -132,7 +80,7 @@ func (kv *Kv) Delete(
 		"/api/v1/kv/delete",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&kvDeleteIn,
 	)
 }

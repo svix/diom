@@ -1,5 +1,4 @@
-use aide::openapi::{self, OpenApi, Parameter, ReferenceOr};
-use schemars::JsonSchema;
+use aide::openapi::{self, OpenApi};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -99,53 +98,6 @@ fn sort_schemas_by_name(openapi: &mut OpenApi) {
     }
 }
 
-/// Adds the `Idempotency-Key` header parameter to all `POST` operations in the schema.
-fn add_idempotency_to_post(openapi: &mut OpenApi) {
-    // The header's value can be any valid string
-    let string_schema = aide::generate::in_context(|ctx| String::json_schema(&mut ctx.schema));
-
-    let s = openapi::SchemaObject {
-        json_schema: string_schema,
-        external_docs: None,
-        example: None,
-    };
-
-    let idempotency_key_data = openapi::ParameterData {
-        name: "idempotency-key".to_string(),
-        description: Some("The request's idempotency key".to_string()),
-        required: false,
-        deprecated: None,
-        format: openapi::ParameterSchemaOrContent::Schema(s),
-        example: None,
-        examples: indexmap::indexmap! {},
-        explode: None,
-        extensions: indexmap::indexmap! {},
-    };
-
-    if let Some(paths) = &mut openapi.paths {
-        for (_, op) in &mut paths.paths {
-            match op {
-                openapi::ReferenceOr::Reference { reference, .. } => {
-                    // References to operations should never appear in our
-                    // schema since all our operations are unique, and we
-                    // don't reference any 3rd party/external operations.
-                    tracing::warn!(
-                        "Unexpected operation reference encountered in OpenAPI schema: {reference}"
-                    );
-                }
-                openapi::ReferenceOr::Item(op) => {
-                    if let Some(post) = &mut op.post {
-                        post.parameters.push(ReferenceOr::Item(Parameter::Header {
-                            parameter_data: idempotency_key_data.clone(),
-                            style: openapi::HeaderStyle::Simple,
-                        }));
-                    }
-                }
-            }
-        }
-    }
-}
-
 /// Remove schemas from `components.schemas` of the spec which are under normal
 /// circumstances not referenced. At the moment these are struct schemas used
 /// by query parameters and path placeholders.
@@ -211,7 +163,6 @@ pub fn add_security_scheme(
 pub fn postprocess_spec(openapi: &mut OpenApi) {
     let hacks = [
         sort_schemas_by_name,
-        add_idempotency_to_post,
         flatten_weird_nested_ref,
         remove_unneeded_schemas,
     ];
