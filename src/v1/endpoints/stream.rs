@@ -12,7 +12,7 @@ use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use stream::entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName};
+use stream_deprecated::entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName};
 use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
@@ -41,7 +41,7 @@ async fn create_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
 ) -> Result<MsgPackOrJson<CreateStreamOut>> {
-    let operation = stream::operations::CreateStreamOperation::new(
+    let operation = stream_deprecated::operations::CreateStreamOperation::new(
         data.name,
         data.retention_period_seconds,
         StorageType::default(),
@@ -81,7 +81,7 @@ async fn append_to_stream(
         .fetch_stream_group(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = stream::operations::AppendOperation::new(group.id, data.msgs);
+    let operation = stream_deprecated::operations::AppendOperation::new(group.id, data.msgs);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(AppendToStreamOut {
@@ -121,7 +121,7 @@ async fn locking_fetch_from_stream(
         .fetch_stream_group(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = stream::operations::FetchLockingOperation::new(
+    let operation = stream_deprecated::operations::FetchLockingOperation::new(
         group.id,
         data.consumer_group,
         data.batch_size,
@@ -150,7 +150,7 @@ async fn fetch_from_stream(
         .fetch_stream_group(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = stream::operations::FetchOperation::new(
+    let operation = stream_deprecated::operations::FetchOperation::new(
         group.id,
         data.consumer_group,
         data.batch_size,
@@ -186,7 +186,7 @@ async fn ack_range(
         .fetch_stream_group(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = stream::operations::AckOperation::new(
+    let operation = stream_deprecated::operations::AckOperation::new(
         group.id,
         data.consumer_group,
         data.min_msg_id.unwrap_or(MsgId::MIN),
@@ -216,7 +216,7 @@ async fn ack(
         .fetch_stream_group(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = stream::operations::AckOperation::new(
+    let operation = stream_deprecated::operations::AckOperation::new(
         group.id,
         data.consumer_group,
         data.msg_id,
@@ -252,8 +252,11 @@ async fn dlq(
         .fetch_stream_group(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation =
-        stream::operations::DlqOperation::new(group.id, data.consumer_group, data.msg_id);
+    let operation = stream_deprecated::operations::DlqOperation::new(
+        group.id,
+        data.consumer_group,
+        data.msg_id,
+    );
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(DlqOut {}))
@@ -280,7 +283,8 @@ async fn redrive(
         .fetch_stream_group(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = stream::operations::RedriveOperation::new(group.id, data.consumer_group);
+    let operation =
+        stream_deprecated::operations::RedriveOperation::new(group.id, data.consumer_group);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RedriveOut {}))

@@ -1,0 +1,9 @@
+[package]
+name = "stream-internals"
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true

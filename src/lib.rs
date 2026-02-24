@@ -113,7 +113,7 @@ pub struct AppState {
     cfg: Configuration,
     rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
 
-    stream_state: stream::State,
+    stream_state: stream_deprecated::State,
     configgroup_state: coyote_configgroup::State,
 }
 
@@ -166,8 +166,8 @@ impl AppState {
         })
         .expect("initializing configgroup state");
 
-        let stream_state =
-            stream::State::init(persistent_db.clone()).expect("initializing stream state");
+        let stream_state = stream_deprecated::State::init(persistent_db.clone())
+            .expect("initializing stream state");
         AppState {
             cfg,
             rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(
