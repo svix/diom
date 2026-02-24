@@ -2,123 +2,6 @@
 use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
-#[derive(Args, Clone)]
-pub struct StreamCreateOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamCreateOptions> for diom_client::api::StreamCreateOptions {
-    fn from(value: StreamCreateOptions) -> Self {
-        let StreamCreateOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamGetOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamGetOptions> for diom_client::api::StreamGetOptions {
-    fn from(value: StreamGetOptions) -> Self {
-        let StreamGetOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamAppendOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamAppendOptions> for diom_client::api::StreamAppendOptions {
-    fn from(value: StreamAppendOptions) -> Self {
-        let StreamAppendOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamFetchOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamFetchOptions> for diom_client::api::StreamFetchOptions {
-    fn from(value: StreamFetchOptions) -> Self {
-        let StreamFetchOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamFetchLockingOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamFetchLockingOptions> for diom_client::api::StreamFetchLockingOptions {
-    fn from(value: StreamFetchLockingOptions) -> Self {
-        let StreamFetchLockingOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamAckRangeOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamAckRangeOptions> for diom_client::api::StreamAckRangeOptions {
-    fn from(value: StreamAckRangeOptions) -> Self {
-        let StreamAckRangeOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamAckOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamAckOptions> for diom_client::api::StreamAckOptions {
-    fn from(value: StreamAckOptions) -> Self {
-        let StreamAckOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamDlqOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamDlqOptions> for diom_client::api::StreamDlqOptions {
-    fn from(value: StreamDlqOptions) -> Self {
-        let StreamDlqOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct StreamRedriveOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<StreamRedriveOptions> for diom_client::api::StreamRedriveOptions {
-    fn from(value: StreamRedriveOptions) -> Self {
-        let StreamRedriveOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct StreamArgs {
@@ -131,20 +14,14 @@ pub enum StreamCommands {
     /// Upserts a new Stream with the given name.
     Create {
         create_stream_in: crate::json::JsonOf<diom_client::models::CreateStreamIn>,
-        #[clap(flatten)]
-        options: StreamCreateOptions,
     },
     /// Get stream with given name.
     Get {
         get_stream_in: crate::json::JsonOf<diom_client::models::GetStreamIn>,
-        #[clap(flatten)]
-        options: StreamGetOptions,
     },
     /// Appends messages to the stream.
     Append {
         append_to_stream_in: crate::json::JsonOf<diom_client::models::AppendToStreamIn>,
-        #[clap(flatten)]
-        options: StreamAppendOptions,
     },
     /// Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.
     ///
@@ -153,8 +30,6 @@ pub enum StreamCommands {
     /// until the visibility timeout expires, or the messages are acked.
     Fetch {
         fetch_from_stream_in: crate::json::JsonOf<diom_client::models::FetchFromStreamIn>,
-        #[clap(flatten)]
-        options: StreamFetchOptions,
     },
     /// Fetches messages from the stream, locking over the consumer group.
     ///
@@ -162,32 +37,22 @@ pub enum StreamCommands {
     /// until either the visibility timeout expires, or the last message in the batch is acknowledged.
     FetchLocking {
         fetch_from_stream_in: crate::json::JsonOf<diom_client::models::FetchFromStreamIn>,
-        #[clap(flatten)]
-        options: StreamFetchLockingOptions,
     },
     /// Acks the messages for the consumer group, allowing more messages to be consumed.
     AckRange {
         ack_msg_range_in: crate::json::JsonOf<diom_client::models::AckMsgRangeIn>,
-        #[clap(flatten)]
-        options: StreamAckRangeOptions,
     },
     /// Acks a single message.
     Ack {
         ack: crate::json::JsonOf<diom_client::models::Ack>,
-        #[clap(flatten)]
-        options: StreamAckOptions,
     },
     /// Moves a message to the dead letter queue.
     Dlq {
         dlq_in: crate::json::JsonOf<diom_client::models::DlqIn>,
-        #[clap(flatten)]
-        options: StreamDlqOptions,
     },
     /// Redrives messages from the dead letter queue back to the stream.
     Redrive {
         redrive_in: crate::json::JsonOf<diom_client::models::RedriveIn>,
-        #[clap(flatten)]
-        options: StreamRedriveOptions,
     },
 }
 
@@ -198,88 +63,61 @@ impl StreamCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
-            Self::Create {
-                create_stream_in,
-                options,
-            } => {
+            Self::Create { create_stream_in } => {
                 let resp = client
                     .stream()
-                    .create(create_stream_in.into_inner(), Some(options.into()))
+                    .create(create_stream_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Get {
-                get_stream_in,
-                options,
-            } => {
-                let resp = client
-                    .stream()
-                    .get(get_stream_in.into_inner(), Some(options.into()))
-                    .await?;
+            Self::Get { get_stream_in } => {
+                let resp = client.stream().get(get_stream_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::Append {
                 append_to_stream_in,
-                options,
             } => {
                 let resp = client
                     .stream()
-                    .append(append_to_stream_in.into_inner(), Some(options.into()))
+                    .append(append_to_stream_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::Fetch {
                 fetch_from_stream_in,
-                options,
             } => {
                 let resp = client
                     .stream()
-                    .fetch(fetch_from_stream_in.into_inner(), Some(options.into()))
+                    .fetch(fetch_from_stream_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::FetchLocking {
                 fetch_from_stream_in,
-                options,
             } => {
                 let resp = client
                     .stream()
-                    .fetch_locking(fetch_from_stream_in.into_inner(), Some(options.into()))
+                    .fetch_locking(fetch_from_stream_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::AckRange {
-                ack_msg_range_in,
-                options,
-            } => {
+            Self::AckRange { ack_msg_range_in } => {
                 let resp = client
                     .stream()
-                    .ack_range(ack_msg_range_in.into_inner(), Some(options.into()))
+                    .ack_range(ack_msg_range_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Ack { ack, options } => {
-                let resp = client
-                    .stream()
-                    .ack(ack.into_inner(), Some(options.into()))
-                    .await?;
+            Self::Ack { ack } => {
+                let resp = client.stream().ack(ack.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Dlq { dlq_in, options } => {
-                let resp = client
-                    .stream()
-                    .dlq(dlq_in.into_inner(), Some(options.into()))
-                    .await?;
+            Self::Dlq { dlq_in } => {
+                let resp = client.stream().dlq(dlq_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Redrive {
-                redrive_in,
-                options,
-            } => {
-                let resp = client
-                    .stream()
-                    .redrive(redrive_in.into_inner(), Some(options.into()))
-                    .await?;
+            Self::Redrive { redrive_in } => {
+                let resp = client.stream().redrive(redrive_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
         }

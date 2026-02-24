@@ -17,36 +17,11 @@ func NewKv(client *diom_proto.HttpClient) Kv {
 	return Kv{client}
 }
 
-type KvSetOptions struct {
-	IdempotencyKey *string
-}
-
-type KvGetOptions struct {
-	IdempotencyKey *string
-}
-
-type KvGetGroupOptions struct {
-	IdempotencyKey *string
-}
-
-type KvDeleteOptions struct {
-	IdempotencyKey *string
-}
-
 // KV Set
 func (kv Kv) Set(
 	ctx context.Context,
 	kvSetIn diom_models.KvSetIn,
-	o *KvSetOptions,
 ) (*diom_models.KvSetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.KvSetIn, diom_models.KvSetOut](
 		ctx,
 		kv.client,
@@ -54,7 +29,6 @@ func (kv Kv) Set(
 		"/api/v1/kv/set",
 		nil,
 		nil,
-		headerMap,
 		&kvSetIn,
 	)
 }
@@ -63,16 +37,7 @@ func (kv Kv) Set(
 func (kv Kv) Get(
 	ctx context.Context,
 	kvGetIn diom_models.KvGetIn,
-	o *KvGetOptions,
 ) (*diom_models.KvGetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.KvGetIn, diom_models.KvGetOut](
 		ctx,
 		kv.client,
@@ -80,7 +45,6 @@ func (kv Kv) Get(
 		"/api/v1/kv/get",
 		nil,
 		nil,
-		headerMap,
 		&kvGetIn,
 	)
 }
@@ -89,16 +53,7 @@ func (kv Kv) Get(
 func (kv Kv) GetGroup(
 	ctx context.Context,
 	kvGetGroupIn diom_models.KvGetGroupIn,
-	o *KvGetGroupOptions,
 ) (*diom_models.KvGetGroupOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.KvGetGroupIn, diom_models.KvGetGroupOut](
 		ctx,
 		kv.client,
@@ -106,7 +61,6 @@ func (kv Kv) GetGroup(
 		"/api/v1/kv/get-group",
 		nil,
 		nil,
-		headerMap,
 		&kvGetGroupIn,
 	)
 }
@@ -115,16 +69,7 @@ func (kv Kv) GetGroup(
 func (kv Kv) Delete(
 	ctx context.Context,
 	kvDeleteIn diom_models.KvDeleteIn,
-	o *KvDeleteOptions,
 ) (*diom_models.KvDeleteOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.KvDeleteIn, diom_models.KvDeleteOut](
 		ctx,
 		kv.client,
@@ -132,7 +77,6 @@ func (kv Kv) Delete(
 		"/api/v1/kv/delete",
 		nil,
 		nil,
-		headerMap,
 		&kvDeleteIn,
 	)
 }

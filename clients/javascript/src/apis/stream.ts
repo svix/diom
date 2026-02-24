@@ -66,53 +66,15 @@ import {
 } from '../models/redriveOut';
 import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
 
-export interface StreamCreateOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamGetOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamAppendOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamFetchOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamFetchLockingOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamAckRangeOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamAckOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamDlqOptions {
-        idempotencyKey?: string;
-        }
-
-    export interface StreamRedriveOptions {
-        idempotencyKey?: string;
-        }
-
-    export class Stream {
+export class Stream {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
     /** Upserts a new Stream with the given name. */
         public create(
             createStreamIn: CreateStreamIn,
-            options?: StreamCreateOptions,
             ): Promise<CreateStreamOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/create");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     CreateStreamInSerializer._toJsonObject(
                         createStreamIn,
@@ -130,11 +92,9 @@ export interface StreamCreateOptions {
     /** Get stream with given name. */
         public get(
             getStreamIn: GetStreamIn,
-            options?: StreamGetOptions,
             ): Promise<GetStreamOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/get-group");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     GetStreamInSerializer._toJsonObject(
                         getStreamIn,
@@ -152,11 +112,9 @@ export interface StreamCreateOptions {
     /** Appends messages to the stream. */
         public append(
             appendToStreamIn: AppendToStreamIn,
-            options?: StreamAppendOptions,
             ): Promise<AppendToStreamOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/append");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     AppendToStreamInSerializer._toJsonObject(
                         appendToStreamIn,
@@ -180,11 +138,9 @@ export interface StreamCreateOptions {
 */
         public fetch(
             fetchFromStreamIn: FetchFromStreamIn,
-            options?: StreamFetchOptions,
             ): Promise<FetchFromStreamOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/fetch");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     FetchFromStreamInSerializer._toJsonObject(
                         fetchFromStreamIn,
@@ -207,11 +163,9 @@ export interface StreamCreateOptions {
 */
         public fetchLocking(
             fetchFromStreamIn: FetchFromStreamIn,
-            options?: StreamFetchLockingOptions,
             ): Promise<FetchFromStreamOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/fetch-locking");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     FetchFromStreamInSerializer._toJsonObject(
                         fetchFromStreamIn,
@@ -229,11 +183,9 @@ export interface StreamCreateOptions {
     /** Acks the messages for the consumer group, allowing more messages to be consumed. */
         public ackRange(
             ackMsgRangeIn: AckMsgRangeIn,
-            options?: StreamAckRangeOptions,
             ): Promise<AckMsgRangeOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/ack-range");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     AckMsgRangeInSerializer._toJsonObject(
                         ackMsgRangeIn,
@@ -251,11 +203,9 @@ export interface StreamCreateOptions {
     /** Acks a single message. */
         public ack(
             ack: Ack,
-            options?: StreamAckOptions,
             ): Promise<AckOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/ack");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     AckSerializer._toJsonObject(
                         ack,
@@ -273,11 +223,9 @@ export interface StreamCreateOptions {
     /** Moves a message to the dead letter queue. */
         public dlq(
             dlqIn: DlqIn,
-            options?: StreamDlqOptions,
             ): Promise<DlqOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/dlq");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     DlqInSerializer._toJsonObject(
                         dlqIn,
@@ -295,11 +243,9 @@ export interface StreamCreateOptions {
     /** Redrives messages from the dead letter queue back to the stream. */
         public redrive(
             redriveIn: RedriveIn,
-            options?: StreamRedriveOptions,
             ): Promise<RedriveOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/redrive-dlq");
 
-            request.setHeaderParam("idempotency-key", options?.idempotencyKey);
             request.setBody(
                     RedriveInSerializer._toJsonObject(
                         redriveIn,

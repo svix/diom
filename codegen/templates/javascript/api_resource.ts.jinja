@@ -13,30 +13,6 @@ import { {{ sub.name | to_upper_camel_case}} } from './{{ sub.name | to_lower_ca
 {% endfor -%}
 import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
 
-{% for op in resource.operations -%}
-    {% if op | has_query_or_header_params -%}
-    export interface {{ resource_type_name }}{{ op.name | to_upper_camel_case }}Options {
-        {% for p in op.query_params -%}
-            {% if p.description is defined -%}
-                {{ p.description | to_doc_comment(style="js") }}
-            {% endif -%}
-            {% set field_ty = p.type.to_js() -%}
-            {% if p.name == "iterator" %}{% set field_ty = "string | null" %}{% endif -%}
-            {% if p.type.is_datetime() %}{% set field_ty = "Date | null"%}{% endif -%}
-            {{ p.name | to_lower_camel_case }}{% if not p.required %}?{% endif %}: {{ field_ty }};
-        {% endfor -%}
-        {% for p in op.header_params -%}
-            {% if p.description is defined -%}
-                {{ p.description | to_doc_comment(style="js") }}
-            {% endif -%}
-            {% set field_ty = "string" -%}
-            {{ p.name | to_lower_camel_case }}{% if not p.required %}?{% endif %}: {{ field_ty }};
-        {% endfor -%}
-    }
-
-    {% endif -%}
-{% endfor -%}
-
 export class {{ resource_type_name }} {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
@@ -63,33 +39,12 @@ export class {{ resource_type_name }} {
                 {{ field_name }}: {{ op.request_body_schema_name }},
             {% endif -%}
 
-            {# query parameters -#}
-            {% if op | has_query_or_header_params -%}
-                {% set field_ty -%}
-                    {{ resource_type_name }}{{ op.name | to_upper_camel_case }}Options
-                {%- endset -%}
-                options{% if not op | has_required_query_or_header_params %}?{% endif %}: {{ field_ty }},
-            {% endif -%}
         ): Promise<{{ response_type }}> {
             const request = new DiomRequest(HttpMethod.{{ op.method | upper }}, "{{ op.path }}");
 
             {# path parameters -#}
             {% for p in op.path_params -%}
                 request.setPathParam("{{ p }}", {{ p | to_lower_camel_case }});
-            {% endfor -%}
-
-            {# query parameters -#}
-            {% if op.query_params | length > 0 -%}
-            request.setQueryParams({
-                {% for p in op.query_params -%}
-                "{{ p.name }}": options{% if not p.required %}?{% endif %}.{{ p.name | to_lower_camel_case }},
-                {% endfor -%}
-            });
-            {% endif -%}
-
-            {# header parameters -#}
-            {% for p in op.header_params -%}
-                request.setHeaderParam("{{ p.name }}", options?.{{ p.name | to_lower_camel_case }});
             {% endfor -%}
 
             {# body parameter -#}

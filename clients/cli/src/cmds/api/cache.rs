@@ -2,58 +2,6 @@
 use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
-#[derive(Args, Clone)]
-pub struct CacheSetOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<CacheSetOptions> for diom_client::api::CacheSetOptions {
-    fn from(value: CacheSetOptions) -> Self {
-        let CacheSetOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct CacheGetOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<CacheGetOptions> for diom_client::api::CacheGetOptions {
-    fn from(value: CacheGetOptions) -> Self {
-        let CacheGetOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct CacheGetGroupOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<CacheGetGroupOptions> for diom_client::api::CacheGetGroupOptions {
-    fn from(value: CacheGetGroupOptions) -> Self {
-        let CacheGetGroupOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
-#[derive(Args, Clone)]
-pub struct CacheDeleteOptions {
-    #[arg(long)]
-    pub idempotency_key: Option<String>,
-}
-
-impl From<CacheDeleteOptions> for diom_client::api::CacheDeleteOptions {
-    fn from(value: CacheDeleteOptions) -> Self {
-        let CacheDeleteOptions { idempotency_key } = value;
-        Self { idempotency_key }
-    }
-}
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct CacheArgs {
@@ -66,26 +14,18 @@ pub enum CacheCommands {
     /// Cache Set
     Set {
         cache_set_in: crate::json::JsonOf<diom_client::models::CacheSetIn>,
-        #[clap(flatten)]
-        options: CacheSetOptions,
     },
     /// Cache Get
     Get {
         cache_get_in: crate::json::JsonOf<diom_client::models::CacheGetIn>,
-        #[clap(flatten)]
-        options: CacheGetOptions,
     },
     /// Get cache group
     GetGroup {
         cache_get_group_in: crate::json::JsonOf<diom_client::models::CacheGetGroupIn>,
-        #[clap(flatten)]
-        options: CacheGetGroupOptions,
     },
     /// Cache Delete
     Delete {
         cache_delete_in: crate::json::JsonOf<diom_client::models::CacheDeleteIn>,
-        #[clap(flatten)]
-        options: CacheDeleteOptions,
     },
 }
 
@@ -96,44 +36,23 @@ impl CacheCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
-            Self::Set {
-                cache_set_in,
-                options,
-            } => {
+            Self::Set { cache_set_in } => {
+                let resp = client.cache().set(cache_set_in.into_inner()).await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Get { cache_get_in } => {
+                let resp = client.cache().get(cache_get_in.into_inner()).await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::GetGroup { cache_get_group_in } => {
                 let resp = client
                     .cache()
-                    .set(cache_set_in.into_inner(), Some(options.into()))
+                    .get_group(cache_get_group_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Get {
-                cache_get_in,
-                options,
-            } => {
-                let resp = client
-                    .cache()
-                    .get(cache_get_in.into_inner(), Some(options.into()))
-                    .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
-            }
-            Self::GetGroup {
-                cache_get_group_in,
-                options,
-            } => {
-                let resp = client
-                    .cache()
-                    .get_group(cache_get_group_in.into_inner(), Some(options.into()))
-                    .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
-            }
-            Self::Delete {
-                cache_delete_in,
-                options,
-            } => {
-                let resp = client
-                    .cache()
-                    .delete(cache_delete_in.into_inner(), Some(options.into()))
-                    .await?;
+            Self::Delete { cache_delete_in } => {
+                let resp = client.cache().delete(cache_delete_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
         }

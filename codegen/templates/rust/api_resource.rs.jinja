@@ -14,32 +14,6 @@ use super::{
     {%- endfor %}
 };
 
-{% for op in resource.operations -%}
-    {% if op | has_query_or_header_params %}
-    {% if not op | has_required_query_or_header_params -%}
-        #[derive(Default)]
-    {% endif -%}
-    pub struct {{ resource_type_name }}{{ op.name | to_upper_camel_case }}Options {
-        {% for p in op.query_params -%}
-            {% set ty = p.type.to_rust() -%}
-            {% if not p.required %}{% set ty %}Option<{{ ty }}>{% endset %}{% endif %}
-            {% if p.description is defined -%}
-                {{ p.description | to_doc_comment(style="rust") }}
-            {% endif -%}
-            pub {{ p.name | to_snake_case }}: {{ ty }},
-        {% endfor -%}
-        {% for p in op.header_params -%}
-            {% set ty = "String" -%}
-            {% if not p.required %}{% set ty %}Option<{{ ty }}>{% endset %}{% endif %}
-            {% if p.description is defined -%}
-                {{ p.description | to_doc_comment(style="rust") }}
-            {% endif -%}
-            pub {{ p.name | to_snake_case }}: {{ ty }},
-        {% endfor -%}
-    }
-    {% endif %}
-{% endfor -%}
-
 pub struct {{ resource_type_name }}<'a> {
     cfg: &'a Configuration,
 }
@@ -58,7 +32,9 @@ impl<'a> {{ resource_type_name }}<'a> {
     {% endfor -%}
 
     {% for op in resource.operations %}
-    {% set has_params = op | has_query_or_header_params -%}
+    {% if op.query_params | length > 0 -%}
+        {% do panic("we don't do query parameters in this API") %}
+    {% endif -%}
     {% if op.description is defined -%}
         {{ op.description | to_doc_comment(style="rust") }}
     {% endif -%}
@@ -77,44 +53,12 @@ impl<'a> {{ resource_type_name }}<'a> {
         {% if op.request_body_schema_name is defined -%}
             {{ op.request_body_schema_name | to_snake_case }}: {{ op.request_body_schema_name }},
         {% endif -%}
-
-        {# query / header parameter struct -#}
-        {% if has_params -%}
-            {% set param_struct_name -%}
-                {{ resource_type_name }}{{ op.name | to_upper_camel_case }}Options
-            {%- endset -%}
-            {% set has_required_params = op | has_required_query_or_header_params -%}
-            {%- if has_required_params -%}
-                options: {{ param_struct_name }},
-            {%- else -%}
-                options: Option<{{ param_struct_name }}>,
-            {%- endif -%}
-        {% endif -%}
     ) -> Result<{{ op.response_body_schema_name | default("()") | replace("_", "") }}> {
-        {% if has_params -%}
-            {# unpack query / header parameter struct -#}
-            let {{ param_struct_name }} {
-                {% for p in op.query_params %}{{ p.name | to_snake_case }},{% endfor %}
-                {% for p in op.header_params %}{{ p.name | to_snake_case }},{% endfor %}
-            } = options
-            {%- if not has_required_params %}.unwrap_or_default(){% endif -%}
-            ;
-        {% endif -%}
-
         {# make the request #}
         crate::request::Request::new(http::Method::{{ op.method | upper }}, "{{ op.path }}")
 
         {% for p in op.path_params -%}
             .with_path_param("{{ p }}", {{ p }})
-        {% endfor -%}
-
-        {% for p in op.query_params -%}
-            {% if p.required -%}
-                .with_query_param
-            {%- else -%}
-                .with_optional_query_param
-            {%- endif -%}
-            ("{{ p.name }}", {{ p.name | to_snake_case }})
         {% endfor -%}
 
         {% for p in op.header_params -%}

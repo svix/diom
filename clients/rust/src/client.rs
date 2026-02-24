@@ -124,10 +124,11 @@ mod tests {
 
         let client = DiomClient::new(String::new(), None);
         let cache_api = client.cache();
-        let fut = cache_api.set(
-            CacheSetIn::new("key".to_owned(), 0, "value".as_bytes().to_vec()),
-            None,
-        );
+        let fut = cache_api.set(CacheSetIn::new(
+            "key".to_owned(),
+            0,
+            "value".as_bytes().to_vec(),
+        ));
         require_send_sync(fut);
     }
 }
