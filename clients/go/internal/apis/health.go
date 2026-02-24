@@ -29,6 +29,5 @@ func (health *Health) Ping(
 		nil,
 		nil,
 		nil,
-		nil,
 	)
 }

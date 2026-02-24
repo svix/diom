@@ -29,7 +29,6 @@ func (idempotency *Idempotency) Abort(
 		"/api/v1/idempotency/abort",
 		nil,
 		nil,
-		nil,
 		&idempotencyAbortIn,
 	)
 }
@@ -44,7 +43,6 @@ func (idempotency *Idempotency) GetGroup(
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/get-group",
-		nil,
 		nil,
 		nil,
 		&idempotencyGetGroupIn,

@@ -29,7 +29,6 @@ func (rateLimiter *RateLimiter) Limit(
 		"/api/v1/rate-limiter/limit",
 		nil,
 		nil,
-		nil,
 		&rateLimiterCheckIn,
 	)
 }
@@ -44,7 +43,6 @@ func (rateLimiter *RateLimiter) GetRemaining(
 		rateLimiter.client,
 		"POST",
 		"/api/v1/rate-limiter/get-remaining",
-		nil,
 		nil,
 		nil,
 		&rateLimiterGetRemainingIn,
