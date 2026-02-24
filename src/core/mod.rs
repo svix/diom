@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod cluster;
+pub mod db;
 pub mod otel_spans;
 pub mod retry;
 pub mod types;

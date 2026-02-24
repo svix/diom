@@ -1,7 +1,11 @@
+mod readonly_db;
 mod table_row;
 
-pub use self::table_row::{
-    KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt,
+pub use self::{
+    readonly_db::{ReadableDatabase, ReadableKeyspace, ReadonlyDatabase, ReadonlyKeyspace},
+    table_row::{
+        KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt,
+    },
 };
 
 /// Useful for verifying all table prefixes for a given keyspace are unique,

@@ -25,7 +25,8 @@ pub fn group_name(key: &str) -> &str {
 pub struct State {
     db: fjall::Database,
     keyspace: fjall::Keyspace,
-    both_dbs: BothDatabases,
+    // TODO(jbrown|2026-02-20) this needs to live in the SerializedStateMachine, not here
+    pub both_dbs: BothDatabases,
 }
 
 // Yeah this is dumb AF. I don't care

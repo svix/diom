@@ -42,7 +42,10 @@ use uuid::Uuid;
 
 use crate::{
     cfg::{Configuration, DatabaseConfig},
-    core::cluster::RaftState,
+    core::{
+        cluster::RaftState,
+        db::{Databases, ReadonlyDatabases},
+    },
 };
 use diom_cache::CacheStore;
 use diom_idempotency::IdempotencyStore;
@@ -115,6 +118,8 @@ pub struct AppState {
 
     stream_state: stream_deprecated::State,
     configgroup_state: diom_configgroup::State,
+    #[allow(dead_code)]
+    ro_dbs: ReadonlyDatabases,
 }
 
 async fn run_interserver(
@@ -160,6 +165,8 @@ impl AppState {
         let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
         let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
 
+        let ro_dbs = Databases::new(persistent_db.clone(), ephemeral_db.clone()).readonly();
+
         let configgroup_state = diom_configgroup::State::init(BothDatabases {
             persistent_db: persistent_db.clone(),
             ephemeral_db,
@@ -176,6 +183,7 @@ impl AppState {
             ),
             stream_state,
             configgroup_state,
+            ro_dbs,
         }
     }
 

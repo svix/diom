@@ -3,8 +3,10 @@ use std::{
     io::{Read, Seek, Write},
 };
 
+use crate::core::db::Databases;
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use diom_configgroup::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, Readable};
 use serde::{Deserialize, Serialize};
 use zip::{ZipArchive, write::SimpleFileOptions};
@@ -38,8 +40,13 @@ struct Chunk {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
-struct Manifest {
+struct KeyspaceManifest {
     keyspaces: BTreeMap<String, Vec<Chunk>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+struct Manifest {
+    databases: BTreeMap<StorageType, KeyspaceManifest>,
 }
 
 struct KeyspaceSerializer<'a, B: Write + Seek> {
@@ -149,11 +156,9 @@ fn deserialize_keyspace<R: Read + Seek>(
     Ok(())
 }
 
-#[tracing::instrument(skip(db, snapshot, file))]
+#[tracing::instrument(skip_all)]
 pub(crate) fn serialize_to_file<F: Write + Seek>(
-    db: Database,
-    snapshot: fjall::Snapshot,
-    keyspaces: Vec<String>,
+    targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
     file: &mut F,
 ) -> anyhow::Result<()> {
     file.write_all(b"DIOM01")?;
@@ -162,12 +167,16 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
 
     let mut manifest = Manifest::default();
 
-    for keyspace_name in keyspaces {
-        tracing::debug!(keyspace=%keyspace_name, "serializing a keyspce");
-        let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
-        let serializer = KeyspaceSerializer::new(&mut zip, &keyspace_name)?;
-        let chunks = serializer.serialize_keyspace(&snapshot, &keyspace)?;
-        manifest.keyspaces.insert(keyspace_name, chunks);
+    for (db_name, db, snapshot, keyspaces) in targets {
+        let mut keyspace_manifests = KeyspaceManifest::default();
+        for keyspace_name in keyspaces {
+            tracing::debug!(keyspace=%keyspace_name, "serializing a keyspce");
+            let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
+            let serializer = KeyspaceSerializer::new(&mut zip, &keyspace_name)?;
+            let chunks = serializer.serialize_keyspace(&snapshot, &keyspace)?;
+            keyspace_manifests.keyspaces.insert(keyspace_name, chunks);
+        }
+        manifest.databases.insert(db_name, keyspace_manifests);
     }
 
     let serialized_manifest = serde_json::to_vec(&manifest)?;
@@ -182,7 +191,7 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
 }
 
 #[tracing::instrument(skip_all)]
-pub(crate) fn load_from_file<F: Read + Seek>(db: &Database, f: &mut F) -> anyhow::Result<()> {
+pub(crate) fn load_from_file<F: Read + Seek>(dbs: &Databases, f: &mut F) -> anyhow::Result<()> {
     let mut magic = [0u8; 6];
     f.read_exact(&mut magic)?;
     if &magic != b"DIOM01" {
@@ -197,14 +206,19 @@ pub(crate) fn load_from_file<F: Read + Seek>(db: &Database, f: &mut F) -> anyhow
 
     let manifest: Manifest = serde_json::from_reader(manifest).context("parsing manifest")?;
 
-    for (keyspace_name, chunks) in manifest.keyspaces {
-        tracing::debug!(
-            keyspace_name,
-            num_parts = chunks.len(),
-            "deserializing a keyspace"
-        );
-        let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
-        deserialize_keyspace(&mut z, &keyspace, chunks)?;
+    for (backend_db, keyspaces) in manifest.databases {
+        tracing::debug!(?backend_db, "deserializing a database");
+        let db = dbs.db_for(backend_db);
+
+        for (keyspace_name, chunks) in keyspaces.keyspaces {
+            tracing::debug!(
+                keyspace_name,
+                num_parts = chunks.len(),
+                "deserializing a keyspace"
+            );
+            let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
+            deserialize_keyspace(&mut z, &keyspace, chunks)?;
+        }
     }
 
     Ok(())
@@ -216,7 +230,9 @@ mod tests {
 
     use fjall::{Database, KeyspaceCreateOptions, Slice};
 
-    use crate::core::cluster::serialized_state_machine::{load_from_file, serialize_to_file};
+    use super::{load_from_file, serialize_to_file};
+    use crate::core::db::Databases;
+    use diom_configgroup::entities::StorageType;
 
     #[test]
     fn test_serialize_to_file_round_trip() -> anyhow::Result<()> {
@@ -237,12 +253,14 @@ mod tests {
 
         let mut cursor = Cursor::new(vec![]);
 
-        serialize_to_file(
+        let targets = vec![(
+            StorageType::Persistent,
             db,
             snapshot,
             vec!["keyspace1".to_owned(), "keyspace2".to_owned()],
-            &mut cursor,
-        )?;
+        )];
+
+        serialize_to_file(targets, &mut cursor)?;
 
         let out = cursor.into_inner();
 
@@ -252,9 +270,15 @@ mod tests {
         db2_path.push("db_loaded/");
         let db2 = Database::builder(db2_path).open()?;
 
+        let mut db2e_path = workdir.path().to_path_buf();
+        db2e_path.push("db_loaded_ephem/");
+        let db2e = Database::builder(db2e_path).open()?;
+
+        let databases = Databases::new(db2.clone(), db2e);
+
         let mut cursor = Cursor::new(out);
 
-        load_from_file(&db2, &mut cursor)?;
+        load_from_file(&databases, &mut cursor)?;
 
         let found_keyspaces = db2
             .list_keyspace_names()
