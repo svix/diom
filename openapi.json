@@ -1322,6 +1322,9 @@
         },
         "required": [
           "key"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "CacheGetOut": {
@@ -1382,6 +1385,10 @@
         "required": [
           "key",
           "ttl",
+          "value"
+        ],
+        "x-positional": [
+          "key",
           "value"
         ]
       },
