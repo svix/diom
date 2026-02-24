@@ -17,56 +17,11 @@ func NewStream(client *diom_proto.HttpClient) Stream {
 	return Stream{client}
 }
 
-type StreamCreateOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamGetOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamAppendOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamFetchOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamFetchLockingOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamAckRangeOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamAckOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamDlqOptions struct {
-	IdempotencyKey *string
-}
-
-type StreamRedriveOptions struct {
-	IdempotencyKey *string
-}
-
 // Upserts a new Stream with the given name.
 func (stream *Stream) Create(
 	ctx context.Context,
 	createStreamIn diom_models.CreateStreamIn,
-	o *StreamCreateOptions,
 ) (*diom_models.CreateStreamOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.CreateStreamIn, diom_models.CreateStreamOut](
 		ctx,
 		stream.client,
@@ -74,7 +29,7 @@ func (stream *Stream) Create(
 		"/api/v1/stream/create",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&createStreamIn,
 	)
 }
@@ -83,16 +38,7 @@ func (stream *Stream) Create(
 func (stream *Stream) Get(
 	ctx context.Context,
 	getStreamIn diom_models.GetStreamIn,
-	o *StreamGetOptions,
 ) (*diom_models.GetStreamOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.GetStreamIn, diom_models.GetStreamOut](
 		ctx,
 		stream.client,
@@ -100,7 +46,7 @@ func (stream *Stream) Get(
 		"/api/v1/stream/get-group",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&getStreamIn,
 	)
 }
@@ -109,16 +55,7 @@ func (stream *Stream) Get(
 func (stream *Stream) Append(
 	ctx context.Context,
 	appendToStreamIn diom_models.AppendToStreamIn,
-	o *StreamAppendOptions,
 ) (*diom_models.AppendToStreamOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.AppendToStreamIn, diom_models.AppendToStreamOut](
 		ctx,
 		stream.client,
@@ -126,7 +63,7 @@ func (stream *Stream) Append(
 		"/api/v1/stream/append",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&appendToStreamIn,
 	)
 }
@@ -139,16 +76,7 @@ func (stream *Stream) Append(
 func (stream *Stream) Fetch(
 	ctx context.Context,
 	fetchFromStreamIn diom_models.FetchFromStreamIn,
-	o *StreamFetchOptions,
 ) (*diom_models.FetchFromStreamOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.FetchFromStreamIn, diom_models.FetchFromStreamOut](
 		ctx,
 		stream.client,
@@ -156,7 +84,7 @@ func (stream *Stream) Fetch(
 		"/api/v1/stream/fetch",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&fetchFromStreamIn,
 	)
 }
@@ -168,16 +96,7 @@ func (stream *Stream) Fetch(
 func (stream *Stream) FetchLocking(
 	ctx context.Context,
 	fetchFromStreamIn diom_models.FetchFromStreamIn,
-	o *StreamFetchLockingOptions,
 ) (*diom_models.FetchFromStreamOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.FetchFromStreamIn, diom_models.FetchFromStreamOut](
 		ctx,
 		stream.client,
@@ -185,7 +104,7 @@ func (stream *Stream) FetchLocking(
 		"/api/v1/stream/fetch-locking",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&fetchFromStreamIn,
 	)
 }
@@ -194,16 +113,7 @@ func (stream *Stream) FetchLocking(
 func (stream *Stream) AckRange(
 	ctx context.Context,
 	ackMsgRangeIn diom_models.AckMsgRangeIn,
-	o *StreamAckRangeOptions,
 ) (*diom_models.AckMsgRangeOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.AckMsgRangeIn, diom_models.AckMsgRangeOut](
 		ctx,
 		stream.client,
@@ -211,7 +121,7 @@ func (stream *Stream) AckRange(
 		"/api/v1/stream/ack-range",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&ackMsgRangeIn,
 	)
 }
@@ -220,16 +130,7 @@ func (stream *Stream) AckRange(
 func (stream *Stream) Ack(
 	ctx context.Context,
 	ack diom_models.Ack,
-	o *StreamAckOptions,
 ) (*diom_models.AckOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.Ack, diom_models.AckOut](
 		ctx,
 		stream.client,
@@ -237,7 +138,7 @@ func (stream *Stream) Ack(
 		"/api/v1/stream/ack",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&ack,
 	)
 }
@@ -246,16 +147,7 @@ func (stream *Stream) Ack(
 func (stream *Stream) Dlq(
 	ctx context.Context,
 	dlqIn diom_models.DlqIn,
-	o *StreamDlqOptions,
 ) (*diom_models.DlqOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.DlqIn, diom_models.DlqOut](
 		ctx,
 		stream.client,
@@ -263,7 +155,7 @@ func (stream *Stream) Dlq(
 		"/api/v1/stream/dlq",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&dlqIn,
 	)
 }
@@ -272,16 +164,7 @@ func (stream *Stream) Dlq(
 func (stream *Stream) Redrive(
 	ctx context.Context,
 	redriveIn diom_models.RedriveIn,
-	o *StreamRedriveOptions,
 ) (*diom_models.RedriveOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.RedriveIn, diom_models.RedriveOut](
 		ctx,
 		stream.client,
@@ -289,7 +172,7 @@ func (stream *Stream) Redrive(
 		"/api/v1/stream/redrive-dlq",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&redriveIn,
 	)
 }

@@ -51,17 +51,6 @@ impl Request {
         self
     }
 
-    pub(crate) fn with_optional_header_param(
-        mut self,
-        basename: &'static str,
-        param: Option<String>,
-    ) -> Self {
-        if let Some(value) = param {
-            self.header_params.insert(basename, value);
-        }
-        self
-    }
-
     pub(crate) async fn execute<T: DeserializeOwned>(
         self,
         conf: &Configuration,
@@ -78,13 +67,8 @@ impl Request {
         }
     }
 
-    async fn execute_with_backoff(mut self, conf: &Configuration) -> Result<Option<Bytes>, Error> {
+    async fn execute_with_backoff(self, conf: &Configuration) -> Result<Option<Bytes>, Error> {
         let no_return_type = self.no_return_type;
-        if self.method == http::Method::POST && !self.header_params.contains_key("idempotency-key")
-        {
-            self.header_params
-                .insert("idempotency-key", format!("auto_{}", uuid::Uuid::now_v7()));
-        }
 
         const MAX_BACKOFF: Duration = Duration::from_secs(5);
 

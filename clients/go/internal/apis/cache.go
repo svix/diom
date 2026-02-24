@@ -17,36 +17,11 @@ func NewCache(client *diom_proto.HttpClient) Cache {
 	return Cache{client}
 }
 
-type CacheSetOptions struct {
-	IdempotencyKey *string
-}
-
-type CacheGetOptions struct {
-	IdempotencyKey *string
-}
-
-type CacheGetGroupOptions struct {
-	IdempotencyKey *string
-}
-
-type CacheDeleteOptions struct {
-	IdempotencyKey *string
-}
-
 // Cache Set
 func (cache *Cache) Set(
 	ctx context.Context,
 	cacheSetIn diom_models.CacheSetIn,
-	o *CacheSetOptions,
 ) (*diom_models.CacheSetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.CacheSetIn, diom_models.CacheSetOut](
 		ctx,
 		cache.client,
@@ -54,7 +29,7 @@ func (cache *Cache) Set(
 		"/api/v1/cache/set",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&cacheSetIn,
 	)
 }
@@ -63,16 +38,7 @@ func (cache *Cache) Set(
 func (cache *Cache) Get(
 	ctx context.Context,
 	cacheGetIn diom_models.CacheGetIn,
-	o *CacheGetOptions,
 ) (*diom_models.CacheGetOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.CacheGetIn, diom_models.CacheGetOut](
 		ctx,
 		cache.client,
@@ -80,7 +46,7 @@ func (cache *Cache) Get(
 		"/api/v1/cache/get",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&cacheGetIn,
 	)
 }
@@ -89,16 +55,7 @@ func (cache *Cache) Get(
 func (cache *Cache) GetGroup(
 	ctx context.Context,
 	cacheGetGroupIn diom_models.CacheGetGroupIn,
-	o *CacheGetGroupOptions,
 ) (*diom_models.CacheGetGroupOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.CacheGetGroupIn, diom_models.CacheGetGroupOut](
 		ctx,
 		cache.client,
@@ -106,7 +63,7 @@ func (cache *Cache) GetGroup(
 		"/api/v1/cache/get-group",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&cacheGetGroupIn,
 	)
 }
@@ -115,16 +72,7 @@ func (cache *Cache) GetGroup(
 func (cache *Cache) Delete(
 	ctx context.Context,
 	cacheDeleteIn diom_models.CacheDeleteIn,
-	o *CacheDeleteOptions,
 ) (*diom_models.CacheDeleteOut, error) {
-	headerMap := map[string]string{}
-	var err error
-	if o != nil {
-		diom_proto.SerializeParamToMap("idempotency-key", o.IdempotencyKey, headerMap, &err)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return diom_proto.ExecuteRequest[diom_models.CacheDeleteIn, diom_models.CacheDeleteOut](
 		ctx,
 		cache.client,
@@ -132,7 +80,7 @@ func (cache *Cache) Delete(
 		"/api/v1/cache/delete",
 		nil,
 		nil,
-		headerMap,
+		nil,
 		&cacheDeleteIn,
 	)
 }
