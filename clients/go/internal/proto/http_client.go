@@ -11,7 +11,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -51,17 +50,13 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	method string,
 	path string,
 	pathParams map[string]string,
-	queryParams map[string]string,
 	headerParams map[string]string,
 	jsonBody *ReqBody,
 ) (*ResBody, error) {
+	urlStr := client.BaseURL + replacePathKeys(path, pathParams)
 
-	urlWithPath := client.BaseURL + replacePathKeys(path, pathParams)
-	urlStr, err := addQueryParams(urlWithPath, queryParams)
-	if err != nil {
-		return nil, err
-	}
 	var req *http.Request
+	var err error
 	if jsonBody != nil {
 		encodedBody, err := json.Marshal(jsonBody)
 		if err != nil {
@@ -77,7 +72,6 @@ func ExecuteRequest[ReqBody any, ResBody any](
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	req.Header.Set("svix-req-id", strconv.FormatUint(rand.Uint64(), 10))
@@ -179,21 +173,6 @@ func replacePathKeys(path string, pathParams map[string]string) string {
 		path = strings.ReplaceAll(path, placeholder, value)
 	}
 	return path
-}
-
-func addQueryParams(baseURL string, params map[string]string) (string, error) {
-	parsedURL, err := url.Parse(baseURL)
-	if err != nil {
-		return "", err
-	}
-
-	query := parsedURL.Query()
-	for key, value := range params {
-		query.Add(key, value)
-	}
-
-	parsedURL.RawQuery = query.Encode()
-	return parsedURL.String(), nil
 }
 
 func SerializeParamToMap(key string, val interface{}, d map[string]string, err *error) {

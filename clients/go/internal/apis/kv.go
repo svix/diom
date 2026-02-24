@@ -29,7 +29,6 @@ func (kv *Kv) Set(
 		"/api/v1/kv/set",
 		nil,
 		nil,
-		nil,
 		&kvSetIn,
 	)
 }
@@ -44,7 +43,6 @@ func (kv *Kv) Get(
 		kv.client,
 		"POST",
 		"/api/v1/kv/get",
-		nil,
 		nil,
 		nil,
 		&kvGetIn,
@@ -63,7 +61,6 @@ func (kv *Kv) GetGroup(
 		"/api/v1/kv/get-group",
 		nil,
 		nil,
-		nil,
 		&kvGetGroupIn,
 	)
 }
@@ -78,7 +75,6 @@ func (kv *Kv) Delete(
 		kv.client,
 		"POST",
 		"/api/v1/kv/delete",
-		nil,
 		nil,
 		nil,
 		&kvDeleteIn,

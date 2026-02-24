@@ -29,7 +29,6 @@ func (stream *Stream) Create(
 		"/api/v1/stream/create",
 		nil,
 		nil,
-		nil,
 		&createStreamIn,
 	)
 }
@@ -46,7 +45,6 @@ func (stream *Stream) Get(
 		"/api/v1/stream/get-group",
 		nil,
 		nil,
-		nil,
 		&getStreamIn,
 	)
 }
@@ -61,7 +59,6 @@ func (stream *Stream) Append(
 		stream.client,
 		"POST",
 		"/api/v1/stream/append",
-		nil,
 		nil,
 		nil,
 		&appendToStreamIn,
@@ -84,7 +81,6 @@ func (stream *Stream) Fetch(
 		"/api/v1/stream/fetch",
 		nil,
 		nil,
-		nil,
 		&fetchFromStreamIn,
 	)
 }
@@ -104,7 +100,6 @@ func (stream *Stream) FetchLocking(
 		"/api/v1/stream/fetch-locking",
 		nil,
 		nil,
-		nil,
 		&fetchFromStreamIn,
 	)
 }
@@ -119,7 +114,6 @@ func (stream *Stream) AckRange(
 		stream.client,
 		"POST",
 		"/api/v1/stream/ack-range",
-		nil,
 		nil,
 		nil,
 		&ackMsgRangeIn,
@@ -138,7 +132,6 @@ func (stream *Stream) Ack(
 		"/api/v1/stream/ack",
 		nil,
 		nil,
-		nil,
 		&ack,
 	)
 }
@@ -155,7 +148,6 @@ func (stream *Stream) Dlq(
 		"/api/v1/stream/dlq",
 		nil,
 		nil,
-		nil,
 		&dlqIn,
 	)
 }
@@ -170,7 +162,6 @@ func (stream *Stream) Redrive(
 		stream.client,
 		"POST",
 		"/api/v1/stream/redrive-dlq",
-		nil,
 		nil,
 		nil,
 		&redriveIn,

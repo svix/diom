@@ -29,7 +29,6 @@ func (cache *Cache) Set(
 		"/api/v1/cache/set",
 		nil,
 		nil,
-		nil,
 		&cacheSetIn,
 	)
 }
@@ -44,7 +43,6 @@ func (cache *Cache) Get(
 		cache.client,
 		"POST",
 		"/api/v1/cache/get",
-		nil,
 		nil,
 		nil,
 		&cacheGetIn,
@@ -63,7 +61,6 @@ func (cache *Cache) GetGroup(
 		"/api/v1/cache/get-group",
 		nil,
 		nil,
-		nil,
 		&cacheGetGroupIn,
 	)
 }
@@ -78,7 +75,6 @@ func (cache *Cache) Delete(
 		cache.client,
 		"POST",
 		"/api/v1/cache/delete",
-		nil,
 		nil,
 		nil,
 		&cacheDeleteIn,
