@@ -1,11 +1,14 @@
 use super::{
     handle::{Request, Response},
+    raft::NodeId,
     state_machine::Store,
 };
+use openraft::LogId;
 
 pub(super) async fn apply_request(
     request: Request,
     state_machine: &mut Store,
+    log_id: LogId<NodeId>,
 ) -> anyhow::Result<Response> {
     Ok(match request {
         Request::Kv(req) => {
@@ -44,6 +47,8 @@ pub(super) async fn apply_request(
             };
             Response::Stream(req.apply(state))
         }
-        Request::ClusterInternal(req) => Response::ClusterInternal(req.apply(state_machine).await?),
+        Request::ClusterInternal(req) => {
+            Response::ClusterInternal(req.apply(state_machine, log_id).await?)
+        }
     })
 }
