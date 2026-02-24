@@ -59,16 +59,48 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       RUST_LOG: debug
-      "COYOTE:LOG_LEVEL": debug
+      "COYOTE_LOG_LEVEL": debug
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: taiki-e/install-action@cargo-nextest
-      - uses: taiki-e/install-action@just
       - uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: just test --profile ci
+      - name: Run tests
+        id: test
+        run: bash .github/test-report.sh
+      - name: Find Comment
+        uses: peter-evans/find-comment@v1
+        if: github.ref != 'refs/heads/main'
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Test Coverage:'
+      - name: Create comment
+        if: github.ref != 'refs/heads/main' && steps.fc.outputs.comment-id == ''
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: 'Test Coverage: ${{ steps.test.outputs.coverage_percent }}%'
+      - name: Update comment
+        if: github.ref != 'refs/heads/main' && steps.fc.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          edit-mode: replace
+          body: 'Test Coverage: ${{ steps.test.outputs.coverage_percent }}%'
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: test-report
+          path: |
+            ./junit.xml
+            ./coverage-html
+          retention-days: 7
   check-codegen:
     name: Check openapi.json and SDK freshness
     runs-on: ubuntu-24.04
