@@ -185,7 +185,7 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) {
     if let Some(stream) = bootstrap.stream {
         for (name, cfg) in stream {
             tracing::debug!(?name, "bootstrapping stream");
-            let operation = stream::operations::CreateStreamOperation::new(
+            let operation = stream_deprecated::operations::CreateStreamOperation::new(
                 name,
                 cfg.config.retention_period_seconds,
                 cfg.storage_type.into(),

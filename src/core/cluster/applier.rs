@@ -37,7 +37,7 @@ pub(super) async fn apply_request(
             Response::CreateCache(req.apply(&state_machine.state.configgroup_state))
         }
         Request::Stream(req) => {
-            let state = stream::operations::StreamRaftState {
+            let state = stream_deprecated::operations::StreamRaftState {
                 stream: &state_machine.state.stream_state,
                 configgroup: &state_machine.state.configgroup_state,
             };

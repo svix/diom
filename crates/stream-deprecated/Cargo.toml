@@ -1,5 +1,5 @@
 [package]
-name = "stream"
+name = "stream-deprecated"
 edition = "2024"
 license.workspace = true
 version.workspace = true

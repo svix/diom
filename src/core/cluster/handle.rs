@@ -41,7 +41,7 @@ pub enum Request {
     Cache(diom_cache::operations::CacheOperation),
     CreateCache(diom_cache::operations::CreateCacheOp),
     CreateIdempotency(diom_idempotency::operations::CreateIdempotencyOp),
-    Stream(stream::operations::StreamOperation),
+    Stream(stream_deprecated::operations::StreamOperation),
 }
 
 impl From<diom_kv::operations::KvOperation> for Request {
@@ -86,8 +86,8 @@ impl From<diom_kv::operations::CreateKvOp> for Request {
     }
 }
 
-impl From<stream::operations::StreamOperation> for Request {
-    fn from(value: stream::operations::StreamOperation) -> Self {
+impl From<stream_deprecated::operations::StreamOperation> for Request {
+    fn from(value: stream_deprecated::operations::StreamOperation) -> Self {
         Request::Stream(value)
     }
 }
@@ -103,7 +103,7 @@ pub enum Response {
     RateLimiter(diom_rate_limiter::operations::Response),
     Idempotency(diom_idempotency::operations::Response),
     Cache(diom_cache::operations::Response),
-    Stream(stream::operations::Response),
+    Stream(stream_deprecated::operations::Response),
 }
 
 impl TryFrom<Response> for diom_kv::operations::Response {
@@ -183,7 +183,7 @@ impl TryFrom<Response> for diom_kv::operations::CreateKvOperationResponse {
     }
 }
 
-impl TryFrom<Response> for stream::operations::Response {
+impl TryFrom<Response> for stream_deprecated::operations::Response {
     type Error = ResponseParseError;
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
