@@ -1519,6 +1519,7 @@ dependencies = [
  "fjall",
  "rmp-serde",
  "serde",
+ "tracing",
  "uuid",
 ]
 

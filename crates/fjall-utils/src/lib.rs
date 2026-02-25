@@ -1,7 +1,9 @@
+mod fixed_key;
 mod readonly_db;
 mod table_row;
 
 pub use self::{
+    fixed_key::FjallFixedKey,
     readonly_db::{ReadableDatabase, ReadableKeyspace, ReadonlyDatabase, ReadonlyKeyspace},
     table_row::{
         KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt,

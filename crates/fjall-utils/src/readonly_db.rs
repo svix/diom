@@ -86,6 +86,12 @@ pub struct ReadonlyKeyspace {
     inner: Keyspace,
 }
 
+impl From<Keyspace> for ReadonlyKeyspace {
+    fn from(inner: Keyspace) -> Self {
+        Self { inner }
+    }
+}
+
 impl ReadableKeyspace for ReadonlyKeyspace {
     fn get<K: AsRef<[u8]>>(&self, key: K) -> fjall::Result<Option<fjall::UserValue>> {
         self.inner.get(key)
