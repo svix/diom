@@ -6,15 +6,15 @@ use std::{
 };
 
 use anyhow::Context;
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode, Readable};
-use fjall_utils::{MonotonicTableRowExt, TableRow};
+use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
+use fjall_utils::{FjallFixedKey, MonotonicTableRowExt, TableRow};
 use jiff::Timestamp;
 use openraft::{
     Entry, LogId, OptionalSend, RaftLogId, RaftLogReader, RaftTypeConfig, StorageError, Vote,
     storage::{LogFlushed, RaftLogStorage},
 };
 use serde::{Deserialize, Serialize};
-use tap::{Pipe, Tap, TapFallible};
+use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tracing::{Instrument as _, Span};
 
 use super::{NodeId, errors::*, raft::TypeConfig};
@@ -158,6 +158,11 @@ impl RaftLogStorage<TypeConfig> for DiomLogs {
     }
 }
 
+static NODE_ID: FjallFixedKey<NodeId> = FjallFixedKey::new("node_id");
+static LAST_PURGED_LOG_ID: FjallFixedKey<LogId<NodeId>> = FjallFixedKey::new("last_purged_log_id");
+static VOTE: FjallFixedKey<Vote<NodeId>> = FjallFixedKey::new("vote");
+static COMMITTED: FjallFixedKey<Option<LogId<NodeId>>> = FjallFixedKey::new("committed");
+
 impl DiomLogs {
     pub fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         let db = Database::builder(path).worker_threads(1).open()?;
@@ -190,21 +195,17 @@ impl DiomLogs {
 
     /// Get the NodeId (or, if we don't have one, make a new one)
     pub async fn get_node_id(&mut self) -> anyhow::Result<NodeId> {
-        let meta_keyspace = self.meta_keyspace.clone();
         let db = self.db.clone();
+        let meta_keyspace = self.meta_keyspace.clone();
         tokio::task::spawn_blocking(move || {
-            if let Some(raw_node_id) = meta_keyspace
-                .get("node_id")
-                .context("fetching node ID from logs database")?
-            {
-                let node_id = rmp_serde::from_slice(&raw_node_id)?;
+            if let Some(node_id) = NODE_ID.get(&meta_keyspace)? {
                 tracing::debug!(?node_id, "starting up with existing node ID");
                 node_id
             } else {
                 let node_id = NodeId::generate();
                 tracing::info!(?node_id, "generated a new node ID");
-                meta_keyspace
-                    .insert("node_id", rmp_serde::to_vec(&node_id)?)
+                NODE_ID
+                    .store(&meta_keyspace, &node_id)
                     .context("saving node ID to logs database")?;
                 db.persist(PersistMode::SyncAll)?;
                 node_id
@@ -260,13 +261,12 @@ impl DiomLogs {
     async fn purge_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
         let meta_keyspace = self.meta_keyspace.clone();
         let log_keyspace = self.log_keyspace.clone();
-        let serialized_log_id = rmp_serde::encode::to_vec(&log_id)?;
         let mut tx = self.db.batch().durability(Some(PersistMode::SyncAll));
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
             for key in Log::keys_in_range(&log_keyspace, ..=log_id.index)? {
                 tx.remove(&log_keyspace, key);
             }
-            tx.insert(&meta_keyspace, "last_purged_log_id", serialized_log_id);
+            LAST_PURGED_LOG_ID.store_tx(&mut tx, &meta_keyspace, &log_id)?;
             tx.commit()?;
             Ok(())
         })
@@ -275,11 +275,7 @@ impl DiomLogs {
 
     fn trace_logs(&self) {
         tracing::trace!("BEGINNING LOG TRACE");
-        let last_purged_log_id: Option<LogId<NodeId>> = self
-            .meta_keyspace
-            .get("last_purged_log_id")
-            .unwrap()
-            .map(|l| rmp_serde::from_slice(&l).unwrap());
+        let last_purged_log_id = LAST_PURGED_LOG_ID.get(&self.meta_keyspace);
         let first_id = Log::range(&self.log_keyspace, ..)
             .next()
             .map(|l| l.unwrap().0);
@@ -295,17 +291,10 @@ impl DiomLogs {
     }
 
     async fn get_log_state_(&mut self) -> anyhow::Result<openraft::LogState<TypeConfig>> {
-        let db = self.db.clone();
         let log_keyspace = self.log_keyspace.clone();
         let meta_keyspace = self.meta_keyspace.clone();
         tokio::task::spawn_blocking(move || {
-            let tx = db.snapshot();
-            let last_purged_log_id =
-                if let Some(value) = tx.get(&meta_keyspace, "last_purged_log_id")? {
-                    Some(rmp_serde::from_slice(&value)?)
-                } else {
-                    None
-                };
+            let last_purged_log_id = LAST_PURGED_LOG_ID.get(&meta_keyspace)?;
             let last_log_id =
                 if let Some(Ok(last_guard)) = Log::range(&log_keyspace, ..).next_back() {
                     Some(last_guard.1.0.log_id)
@@ -362,8 +351,7 @@ impl DiomLogs {
         let db = self.db.clone();
         let meta_keyspace = self.meta_keyspace.clone();
         tokio::task::spawn_blocking(move || {
-            let serialized = rmp_serde::to_vec(&vote)?;
-            meta_keyspace.insert("vote", serialized)?;
+            VOTE.store(&meta_keyspace, &vote)?;
             db.persist(PersistMode::SyncAll)?;
             Ok(())
         })
@@ -371,35 +359,31 @@ impl DiomLogs {
     }
 
     async fn read_vote_(&self) -> anyhow::Result<Option<Vote<NodeId>>> {
-        let Some(raw) = self.meta_keyspace.get("vote")? else {
+        let keyspace = self.meta_keyspace.clone();
+        let Some(vote) = tokio::task::spawn_blocking(move || VOTE.get(&keyspace)).await?? else {
             tracing::trace!("couldn't find a vote");
             return Ok(None);
         };
-        let vote = rmp_serde::from_slice(&raw)?;
-        tracing::trace!(?vote, "reading a vote");
+        tracing::trace!(?vote, "read a vote");
         Ok(Some(vote))
     }
 
     async fn save_committed_(&self, committed: Option<LogId<NodeId>>) -> anyhow::Result<()> {
         let meta_keyspace = self.meta_keyspace.clone();
         tracing::trace!(?committed, "saving committed state");
-        tokio::task::spawn_blocking(move || {
-            let serialized = rmp_serde::to_vec(&committed)?;
-            meta_keyspace.insert("committed", serialized)?;
-            Ok(())
-        })
-        .await?
+        tokio::task::spawn_blocking(move || COMMITTED.store(&meta_keyspace, &committed))
+            .await?
+            .context("saving committed state")
     }
 
     async fn read_committed_(&self) -> anyhow::Result<Option<LogId<NodeId>>> {
         let meta_keyspace = self.meta_keyspace.clone();
         tokio::task::spawn_blocking(move || {
-            let committed = meta_keyspace
-                .get("committed")?
-                .map(|c| rmp_serde::from_slice(&c))
-                .transpose()?;
-            tracing::trace!(?committed, "read committed state");
-            Ok(committed)
+            COMMITTED
+                .get(&meta_keyspace)?
+                .tap_some(|committed| tracing::trace!(?committed, "read committed state"))
+                .flatten()
+                .pipe(Ok)
         })
         .await?
     }
