@@ -3,16 +3,22 @@ import { Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
 import 'nextra-theme-docs/style.css'
 
+const siteData = {
+  name: "Coyote",
+  url: 'https://www.svix.com/coyote',
+}
+
 export const metadata = {
   title: {
-    default: 'Nextra – Next.js Static Site Generator',
-    template: '%s | Nextra'
+    default: `${siteData.name} – the backend survival kit`,
+    template: `%s | ${siteData.name}`
   },
+  // TODO: verify and improve opengraph.
   openGraph: {
-    url: 'https://nextra.site',
-    siteName: 'Nextra',
+    url: siteData.url,
+    siteName: siteData.name,
     locale: 'en_US',
-    type: 'website'
+    type: 'article',
   },
   // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
   icons: {
