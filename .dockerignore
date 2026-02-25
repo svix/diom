@@ -1,0 +1,35 @@
+## From .gitignore
+# Cargo's artifact dir
+/target/
+/clients/rust/target/
+/clients/cli/target/
+
+# Server config files
+.env
+
+# IDE
+Session.vim
+
+# MSVC debug files
+*.pdb
+
+# Sometimes convenient to have a tempdir for files not tracked by git
+tmp/
+
+## Docker-specific ignores
+Dockerfile
+.dockerignore
+/.config
+/docs
+/scripts
+
+/README.md
+/docker-compose.yml
+/testing-docker-compose.yml
+/justfile
+
+node_modules/
+
+/clients
+!/clients/rust/
+!/clients/cli/
