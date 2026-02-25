@@ -77,6 +77,12 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
     update-ca-certificates
 EOF
 
+ENV COYOTE_PERSISTENT_DB_PATH="/storage/db"
+# Should point to ephemeral storage in production
+ENV COYOTE_EPHEMERAL_DB_PATH="/storage/db-ephemeral"
+ENV COYOTE_CLUSTER_LOG_PATH="/storage/logs"
+ENV COYOTE_CLUSTER_SNAPSHOT_PATH="/storage/snapshots"
+
 USER appuser
 WORKDIR /home/appuser
 EXPOSE 8050
