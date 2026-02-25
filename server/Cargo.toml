@@ -1,5 +1,5 @@
 [package]
-name = "coyote-node"
+name = "coyote-server"
 version.workspace = true
 license.workspace = true
 edition = "2024"
