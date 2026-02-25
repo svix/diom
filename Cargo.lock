@@ -1038,19 +1038,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "diom-node"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "clap",
- "diom",
- "dotenvy",
- "reqwest 0.13.1",
- "tokio",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "diom-operations"
 version = "0.0.1"
 dependencies = [
@@ -1098,6 +1085,19 @@ dependencies = [
  "static_assertions",
  "tempfile",
  "tokio",
+]
+
+[[package]]
+name = "diom-server"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "diom",
+ "dotenvy",
+ "reqwest 0.13.1",
+ "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]

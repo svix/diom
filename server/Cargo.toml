@@ -1,13 +1,8 @@
 [package]
-name = "diom-node"
+name = "diom-server"
 version.workspace = true
 license.workspace = true
 edition = "2024"
-
-[[bin]]
-name = "diom"
-path = "src/main.rs"
-doctest = false
 
 [dependencies]
 anyhow.workspace = true

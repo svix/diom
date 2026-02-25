@@ -12,6 +12,11 @@ ignored = [
     "idna_adapter",
 ]
 
+[[bin]]
+name = "diom"
+path = "src/main.rs"
+doctest = false
+
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
