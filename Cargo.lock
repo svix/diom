@@ -1038,19 +1038,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "coyote-node"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "clap",
- "coyote",
- "dotenvy",
- "reqwest 0.13.1",
- "tokio",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "coyote-operations"
 version = "0.0.1"
 dependencies = [
@@ -1098,6 +1085,19 @@ dependencies = [
  "static_assertions",
  "tempfile",
  "tokio",
+]
+
+[[package]]
+name = "coyote-server"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "clap",
+ "coyote",
+ "dotenvy",
+ "reqwest 0.13.1",
+ "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]

@@ -98,10 +98,10 @@ members = [
     "clients/rust",
     "codegen",
     "crates/*",
-    "node",
+    "server",
 ]
 # By default, don't build extra helpers like codegen.
-default-members = [".", "node", "crates/*"]
+default-members = [".", "server", "crates/*"]
 resolver = "2"
 
 [workspace.package]
