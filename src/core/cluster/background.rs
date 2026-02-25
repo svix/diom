@@ -3,9 +3,13 @@ use std::{
     time::Duration,
 };
 
-use super::{Node, NodeId, handle::RaftState};
+use super::{
+    Node, NodeId,
+    handle::{BackgroundCommand, RaftState},
+};
 use crate::cfg::Configuration;
 use openraft::error::{ClientWriteError, RaftError};
+use tap::TapFallible;
 use tokio::task::JoinSet;
 
 trait BackgroundJob {
@@ -186,5 +190,111 @@ pub(super) async fn run_background_jobs_on_leader(
         }
         runner.stop_all().await?;
     }
+    Ok(())
+}
+
+enum PurgeBy {
+    Time(Duration),
+    Index(u64),
+    Nothing,
+}
+
+pub(super) async fn run_background_jobs_on_all_nodes(
+    cfg: Configuration,
+    handle: RaftState,
+    mut receiver: tokio::sync::mpsc::Receiver<BackgroundCommand>,
+) -> anyhow::Result<()> {
+    let mut last_snapshot_time = std::time::Instant::now();
+    let mut last_snapshot_index = handle.raft.with_raft_state(|st| st.committed).await?;
+    let mut ticker = tokio::time::interval(Duration::from_secs(60));
+    let shutdown = crate::shutting_down_token();
+
+    loop {
+        let event = tokio::select! {
+            event = receiver.recv() => {
+                if event.is_some() {
+                    event
+                } else {
+                    break;
+                }
+            },
+            _ = ticker.tick() => None,
+            _ = shutdown.cancelled() => break,
+        };
+        let (committed, state) = handle
+            .raft
+            .with_raft_state(|st| (st.committed, st.server_state))
+            .await?;
+        // even if the time interval has passed, if we haven't written anything it would be dumb to
+        // snapshot
+        if committed == last_snapshot_index {
+            continue;
+        }
+        let delta = match (committed, last_snapshot_index) {
+            (Some(a), Some(b)) => Some(a.index - b.index),
+            (Some(a), None) => Some(a.index),
+            _ => None,
+        };
+        let (should_snapshot, purge_by) = if let Some(threshold) = cfg.cluster.snapshot_after_time
+            && last_snapshot_time.elapsed() > threshold
+        {
+            (true, PurgeBy::Time(threshold))
+        } else if let Some(threshold) = cfg.cluster.snapshot_after_writes
+            && let Some(delta) = delta
+            && delta > (threshold as u64)
+        {
+            let purge_by = if let Some(idx) = last_snapshot_index {
+                PurgeBy::Index(idx.index)
+            } else {
+                PurgeBy::Nothing
+            };
+            (true, purge_by)
+        } else if event == Some(BackgroundCommand::Snapshot) {
+            (true, PurgeBy::Nothing)
+        } else {
+            (false, PurgeBy::Nothing)
+        };
+
+        if should_snapshot {
+            if state.is_learner() {
+                tracing::warn!("refusing to snapshot a learner");
+            } else {
+                last_snapshot_time = std::time::Instant::now();
+                last_snapshot_index = committed;
+                tracing::debug!("triggering background snapshot");
+                if let Err(err) = handle.raft.trigger().snapshot().await {
+                    tracing::error!(?err, "error triggering background snapshot; ignoring");
+                }
+            }
+
+            let offset_to_purge = match purge_by {
+                PurgeBy::Time(duration) => {
+                    let then = jiff::Timestamp::now() - duration;
+                    handle
+                        .state_machine
+                        .log_id_before_time(then)
+                        .await
+                        .tap_err(|err| {
+                            tracing::warn!(
+                                ?err,
+                                "unable to find index for timestamp; not purging logs"
+                            )
+                        })
+                        .ok()
+                        .flatten()
+                }
+                PurgeBy::Index(log_id) => Some(log_id),
+                PurgeBy::Nothing => None,
+            };
+
+            if let Some(offset_to_purge) = offset_to_purge {
+                tracing::debug!(offset_to_purge, "triggering purge of old logs");
+                if let Err(err) = handle.raft.trigger().purge_log(offset_to_purge).await {
+                    tracing::error!(?err, "failed to purge old logs");
+                }
+            }
+        }
+    }
+    tracing::info!("shutting down");
     Ok(())
 }

@@ -241,6 +241,8 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             startup_discovery_delay: Duration::from_millis(0),
             log_index_interval: Duration::from_millis(500),
             log_sync: coyote::cfg::FsyncMode::EverySecond,
+            snapshot_after_writes: None,
+            snapshot_after_time: None,
         },
         bootstrap_cfg_path: None,
     }

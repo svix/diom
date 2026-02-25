@@ -75,6 +75,7 @@ pub async fn initialize_raft(
         election_timeout_min: cfg.cluster.election_timeout_min.as_millis() as u64,
         election_timeout_max: cfg.cluster.election_timeout_max.as_millis() as u64,
         cluster_name: cfg.cluster.name.clone(),
+        snapshot_policy: openraft::SnapshotPolicy::Never,
         ..Default::default()
     };
     let config = Arc::new(config.validate().context("configuring openraft")?);
@@ -95,11 +96,13 @@ pub async fn initialize_raft(
     let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone())
         .await
         .context("initializing openraft")?;
+    let (bgtx, bgrx) = tokio::sync::mpsc::channel(10);
     let handle = RaftState {
         raft,
         node_id: id,
         state_machine,
         network,
+        background_channel: bgtx,
     };
     tokio::spawn({
         let handle = handle.clone();
@@ -107,6 +110,25 @@ pub async fn initialize_raft(
         async move {
             if let Err(err) =
                 super::background::run_background_jobs_on_leader(cfg.clone(), handle.clone()).await
+            {
+                tracing::error!(
+                    ?err,
+                    "raft administrative process died; shutting everything down"
+                );
+                crate::start_shut_down()
+            }
+        }
+    });
+    tokio::spawn({
+        let handle = handle.clone();
+        let cfg = cfg.clone();
+        async move {
+            if let Err(err) = super::background::run_background_jobs_on_all_nodes(
+                cfg.clone(),
+                handle.clone(),
+                bgrx,
+            )
+            .await
             {
                 tracing::error!(
                     ?err,

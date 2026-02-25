@@ -212,7 +212,7 @@ impl Store {
         self.snapshot_idx = std::cmp::max(self.snapshot_idx + 1, meta.snapshot_idx()?);
         let data = LastSnapshot {
             meta,
-            path: snapshot_path,
+            path: snapshot_path.clone(),
         };
         tracing::trace!(last_snapshot=?data, "setting last_snapshot");
         let data = tokio::task::spawn_blocking(move || -> anyhow::Result<LastSnapshot> {
@@ -223,6 +223,9 @@ impl Store {
         })
         .await??;
         *self.last_snapshot.write() = Some(data);
+        self.delete_unused_snapshots(&snapshot_path)
+            .await
+            .context("cleaning up snapshots after setting new snapshot")?;
         Ok(())
     }
 
@@ -519,7 +522,7 @@ impl StoredSnapshot {
         targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
     ) -> anyhow::Result<Self> {
         let file_name = format!("coyote-{}", metadata.snapshot_id);
-        let path = directory.with_file_name(file_name);
+        let path = directory.join(file_name);
         let path_c = path.clone();
         let file = tokio::task::spawn_blocking(move || -> anyhow::Result<std::fs::File> {
             tracing::info!(path=%path_c.display(), "writing snapshot");
@@ -592,5 +595,12 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
 impl StoreHandle {
     pub async fn cluster_id(&self) -> Option<ClusterId> {
         self.0.read().await.cluster_id().copied()
+    }
+
+    pub async fn log_id_before_time(
+        &self,
+        timestamp: jiff::Timestamp,
+    ) -> anyhow::Result<Option<u64>> {
+        self.0.read().await.logs.log_index_before(timestamp).await
     }
 }
