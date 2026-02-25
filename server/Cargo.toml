@@ -1,5 +1,5 @@
 [package]
-name = "diom-node"
+name = "diom-server"
 version.workspace = true
 license.workspace = true
 edition = "2024"
