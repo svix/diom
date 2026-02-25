@@ -45,6 +45,22 @@ pub enum Request {
     Stream(stream_deprecated::operations::StreamOperation),
 }
 
+impl std::fmt::Display for Request {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Request::ClusterInternal(_) => write!(f, "cluster_internal"),
+            Request::Kv(_) => write!(f, "kv"),
+            Request::CreateKv(_) => write!(f, "create_kv"),
+            Request::RateLimiter(_) => write!(f, "ratelimiter"),
+            Request::Idempotency(_) => write!(f, "idempotency"),
+            Request::Cache(_) => write!(f, "cache"),
+            Request::CreateCache(_) => write!(f, "create_cache"),
+            Request::CreateIdempotency(_) => write!(f, "create_idempotency"),
+            Request::Stream(_) => write!(f, "stream"),
+        }
+    }
+}
+
 impl From<diom_kv::operations::KvOperation> for Request {
     fn from(value: diom_kv::operations::KvOperation) -> Self {
         Request::Kv(value)
@@ -222,6 +238,7 @@ pub struct RaftState {
 
 impl RaftState {
     /// Write a single operation into the Raft log and return its response.
+    #[tracing::instrument(skip_all)]
     pub async fn client_write<O>(&self, op: O) -> anyhow::Result<O::Response>
     where
         O: OperationRequest + Into<O::RequestParent>,
