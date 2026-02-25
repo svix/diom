@@ -4,11 +4,17 @@ Bla bla
 
 ## Core concepts
 
-- **
+- **module**: a type of infrastructure primitive such as `cache`, `kv-store`, `rate-limiting`, `stream`, and more.
+- **key**: the unique key each entity gets in each module. E.g. each cache item, rate-limiter, and queue will have their own key.
+- **namespace**: a group of keys within each module that has its own configuration (such as persistence).
 
 ## API key
 
+You can get an API key from the dashboard, or if self-hosting refer to the self-hosting page.
+
 ## Using the SDKs
+
+You can install the SDKs as follows:
 
 <CodeTabGroup>
 <CodeTab>
@@ -116,6 +122,115 @@ scoop install coyote
 ```
 
 For other platforms, such as linux, checkout the <a href="https://github.com/svix/coyote#CLI">CLI docs</a> on Github.
+
+</CodeTab>
+</CodeTabGroup>
+
+Example usage:
+
+<CodeTabGroup>
+<CodeTab>
+
+```js
+import { Coyote } from "coyote";
+
+const coyote = new Coyote("AUTH_TOKEN");
+const app = await coyote.kv.set("key", "value");
+```
+
+</CodeTab>
+<CodeTab>
+
+```python
+from coyote import Coyote
+
+coyote = Coyote("AUTH_TOKEN")
+app = coyote.application.create("key", b"value")
+```
+
+</CodeTab>
+<CodeTab>
+
+```go
+import (
+	coyote "github.com/coyote/coyote-webhooks"
+)
+
+coyoteClient := coyote.New("AUTH_TOKEN", nil)
+app, err := coyoteClient.Kv.Set(ctx, "key", b"value", nil)
+```
+
+</CodeTab>
+<CodeTab>
+
+```rust
+use coyote::api::Coyote;
+
+let coyote = Coyote::new("AUTH_TOKEN".to_string(), None);
+coyote
+    .kv()
+    .set(
+        "key",
+        b"value",
+        None,
+    )
+    .await?;
+```
+
+</CodeTab>
+<CodeTab>
+
+```java
+import com.svix.Coyote;
+
+Coyote coyote = new Coyote("AUTH_TOKEN");
+coyote.getKv().set("key", b"value")
+```
+
+</CodeTab>
+<CodeTab>
+
+```kotlin
+import com.svix.kotlin.Coyote
+
+val coyote = Coyote("AUTH_TOKEN")
+coyote.kv.set("key", b"value")
+```
+
+</CodeTab>
+<CodeTab>
+
+```ruby
+require "coyote"
+
+coyote = Coyote::Client.new("AUTH_TOKEN")
+coyote.kv.set("key", b"value", null)
+```
+
+</CodeTab>
+<CodeTab>
+
+```csharp
+var coyote = new CoyoteClient("AUTH_TOKEN");
+applicationOut = await coyote.Kv.CreateAsync("key", "value");
+```
+
+</CodeTab>
+<CodeTab>
+
+```php
+$coyote = new Coyote('AUTH_TOKEN');
+
+$app = $coyote->kv->set("key", "value");
+```
+
+</CodeTab>
+<CodeTab>
+
+```shell
+export COYOTE_AUTH_TOKEN='AUTH_TOKEN'
+coyote kv set '{ "key": "key", "value": "value" }'
+```
 
 </CodeTab>
 </CodeTabGroup>
