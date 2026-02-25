@@ -1,10 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{
-    num::{NonZeroU16, NonZeroU64},
-    time::Duration,
-};
+use std::num::NonZeroU16;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
@@ -16,51 +13,48 @@ use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use stream_deprecated::entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName};
+use stream_internals::entities::{Retention, default_retention_bytes, default_retention_millis};
 use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CreateStreamIn {
+struct CreateMsgTopicIn {
     pub name: StreamName,
-    /// How long messages are retained in the stream before being permanently nuked.
-    pub retention_period_ms: Option<NonZeroU64>,
-    /// How many bytes in total the stream will retain before dropping data.
-    pub max_byte_size: Option<NonZeroU64>,
+    #[serde(default)]
+    pub retention: Retention,
+    #[serde(default)]
+    pub storage_type: StorageType,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CreateStreamOut {
+struct CreateMsgTopicOut {
     pub name: StreamName,
-    pub retention_period_ms: Option<NonZeroU64>,
-    pub max_byte_size: Option<NonZeroU64>,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub retention: Retention,
+    pub storage_type: StorageType,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
-/// Upserts a new Stream with the given name.
-#[aide_annotate(op_id = "v1.stream.create")]
-async fn create_stream(
+/// Upserts a new message topic with the given name.
+#[aide_annotate(op_id = "v1.msgs.topic.create")]
+async fn create_msg_topic(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
-) -> Result<MsgPackOrJson<CreateStreamOut>> {
-    let retention_period = data
-        .retention_period_ms
-        .map_or(Duration::ZERO, |ms| Duration::from_millis(ms.get()));
-    let operation = stream_deprecated::operations::CreateStreamOperation::new(
+    MsgPackOrJson(data): MsgPackOrJson<CreateMsgTopicIn>,
+) -> Result<MsgPackOrJson<CreateMsgTopicOut>> {
+    let operation = stream_deprecated::operations::CreateMsgTopicOperation::new(
         data.name,
-        retention_period,
-        StorageType::default(),
-        data.max_byte_size,
+        data.retention,
+        data.storage_type,
     );
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(CreateStreamOut {
+    Ok(MsgPackOrJson(CreateMsgTopicOut {
         name: response.name,
-        retention_period_ms: NonZeroU64::new(response.retention_period.as_millis() as u64),
-        max_byte_size: response.max_byte_size,
-        created_at: response.created_at,
-        updated_at: response.updated_at,
+        retention: response.retention,
+        storage_type: response.storage_type,
+        created: response.created_at,
+        updated: response.updated_at,
     }))
 }
 
@@ -297,38 +291,44 @@ async fn redrive(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct GetStreamIn {
+struct GetMsgTopicIn {
     pub name: StreamName,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct GetStreamOut {
+struct GetMsgTopicOut {
     pub name: StreamName,
-    pub retention_period_ms: Option<NonZeroU64>,
-    pub max_byte_size: Option<NonZeroU64>,
+    pub retention: Retention,
     pub storage_type: StorageType,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
-/// Get stream with given name.
-#[aide_annotate(op_id = "v1.stream.get")]
-async fn get_stream(
+/// Get message topic with given name.
+#[aide_annotate(op_id = "v1.msgs.topic.get")]
+async fn get_msg_topic(
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<GetStreamIn>,
-) -> Result<MsgPackOrJson<GetStreamOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<GetMsgTopicIn>,
+) -> Result<MsgPackOrJson<GetMsgTopicOut>> {
     let namespace = state
         .namespace_state
         .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    Ok(MsgPackOrJson(GetStreamOut {
+    let millis = u64::try_from(namespace.config.retention_period.as_millis())
+        .ok()
+        .and_then(|ms| ms.try_into().ok())
+        .unwrap_or_else(default_retention_millis);
+    let bytes = namespace
+        .max_storage_bytes
+        .unwrap_or_else(default_retention_bytes);
+
+    Ok(MsgPackOrJson(GetMsgTopicOut {
         name: namespace.name,
-        retention_period_ms: NonZeroU64::new(namespace.config.retention_period.as_millis() as u64),
-        max_byte_size: namespace.max_storage_bytes,
+        retention: Retention { millis, bytes },
         storage_type: namespace.storage_type,
-        created_at: namespace.created_at,
-        updated_at: namespace.updated_at,
+        created: namespace.created_at,
+        updated: namespace.updated_at,
     }))
 }
 
@@ -337,13 +337,13 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/stream/create",
-            post_with(create_stream, create_stream_operation),
+            "/msgs/topic/create",
+            post_with(create_msg_topic, create_msg_topic_operation),
             &tag,
         )
         .api_route_with(
-            "/stream/get-namespace",
-            post_with(get_stream, get_stream_operation),
+            "/msgs/topic/get",
+            post_with(get_msg_topic, get_msg_topic_operation),
             &tag,
         )
         .api_route_with(

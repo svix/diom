@@ -1046,6 +1046,7 @@ dependencies = [
  "jiff",
  "schemars 1.2.0",
  "serde",
+ "stream-internals",
  "tracing",
  "uuid",
 ]
@@ -4060,6 +4061,7 @@ dependencies = [
  "rmp-serde",
  "schemars 1.2.0",
  "serde",
+ "stream-internals",
  "validator",
 ]
 

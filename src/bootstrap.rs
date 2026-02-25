@@ -2,14 +2,13 @@ use std::{
     collections::{HashMap, hash_map::Entry},
     fs::File,
     num::NonZeroU64,
-    time::Duration,
 };
 
 use crate::{cfg::Configuration as AppConfig, core::cluster::RaftState};
 use anyhow::Context;
 use coyote_namespace::entities::{EvictionPolicy, StorageType};
 use serde::Deserialize;
-use stream_internals::entities::default_retention_millis;
+use stream_internals::entities::{Retention, default_retention_bytes, default_retention_millis};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -185,15 +184,19 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
     if let Some(stream) = bootstrap.stream {
         for (name, cfg) in stream {
             tracing::debug!(?name, "bootstrapping stream");
-            let retention_period = cfg.config.retention_period_ms.map_or_else(
-                || Duration::from_millis(default_retention_millis().get()),
-                |ms| Duration::from_millis(ms.get()),
-            );
-            let operation = stream_deprecated::operations::CreateStreamOperation::new(
+            let retention = Retention {
+                millis: cfg
+                    .config
+                    .retention_period_ms
+                    .unwrap_or_else(default_retention_millis),
+                bytes: cfg
+                    .max_storage_bytes
+                    .unwrap_or_else(default_retention_bytes),
+            };
+            let operation = stream_deprecated::operations::CreateMsgTopicOperation::new(
                 name,
-                retention_period,
+                retention,
                 cfg.storage_type.into(),
-                cfg.max_storage_bytes,
             );
             raft_state.client_write(operation).await?;
         }

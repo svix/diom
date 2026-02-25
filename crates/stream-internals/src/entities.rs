@@ -9,12 +9,21 @@ pub struct StreamConfig {
     pub retention_period: Duration,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {
     #[serde(default = "default_retention_millis")]
     pub millis: NonZeroU64,
     #[serde(default = "default_retention_bytes")]
     pub bytes: NonZeroU64,
+}
+
+impl Default for Retention {
+    fn default() -> Self {
+        Self {
+            millis: default_retention_millis(),
+            bytes: default_retention_bytes(),
+        }
+    }
 }
 
 pub fn default_retention_millis() -> NonZeroU64 {
@@ -23,6 +32,6 @@ pub fn default_retention_millis() -> NonZeroU64 {
         .unwrap()
 }
 
-fn default_retention_bytes() -> NonZeroU64 {
+pub fn default_retention_bytes() -> NonZeroU64 {
     NonZeroU64::new(1_000_000_000_000).expect("constant is non-zero")
 }
