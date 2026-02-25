@@ -303,7 +303,9 @@ pub async fn run_with_prefix(
         );
     });
 
-    bootstrap::run(cfg, raft_state).await;
+    bootstrap::run(cfg, raft_state)
+        .await
+        .expect("bootstrapping failed");
 
     axum::serve(listener, make_svc)
         .with_graceful_shutdown(graceful_shutdown_handler())
