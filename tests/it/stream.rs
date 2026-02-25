@@ -20,7 +20,7 @@ async fn create_stream_upserts() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -33,7 +33,7 @@ async fn create_stream_upserts() -> TestResult {
         json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999,
+            "retention_period_ms": 9999,
             "created_at": ts,
             "updated_at": ts,
         })
@@ -44,7 +44,7 @@ async fn create_stream_upserts() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": null,
-            "retention_period_seconds": null
+            "retention_period_ms": null
         }))
         .await?
         .expect(StatusCode::OK)
@@ -55,7 +55,7 @@ async fn create_stream_upserts() -> TestResult {
         json!({
             "name": "test-stream",
             "max_byte_size": null,
-            "retention_period_seconds": null,
+            "retention_period_ms": null,
             "created_at": ts,
             "updated_at": &update["updated_at"],
         })
@@ -77,7 +77,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -187,7 +187,7 @@ async fn stream_visibility_timeout() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -272,7 +272,7 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -363,7 +363,7 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -460,7 +460,7 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -594,7 +594,7 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -704,7 +704,7 @@ async fn queue_fetch_single_ack() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -799,7 +799,7 @@ async fn queue_dlq_and_redrive() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -933,7 +933,7 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)
@@ -1040,7 +1040,7 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
         .json(json!({
             "name": "test-stream",
             "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention_period_ms": 9999
         }))
         .await?
         .expect(StatusCode::OK)

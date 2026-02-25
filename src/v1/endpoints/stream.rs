@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::num::{NonZeroU16, NonZeroU64};
+use std::{
+    num::{NonZeroU16, NonZeroU64},
+    time::Duration,
+};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
@@ -21,7 +24,7 @@ use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 struct CreateStreamIn {
     pub name: StreamName,
     /// How long messages are retained in the stream before being permanently nuked.
-    pub retention_period_seconds: Option<NonZeroU64>,
+    pub retention_period_ms: Option<NonZeroU64>,
     /// How many bytes in total the stream will retain before dropping data.
     pub max_byte_size: Option<NonZeroU64>,
 }
@@ -29,7 +32,7 @@ struct CreateStreamIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CreateStreamOut {
     pub name: StreamName,
-    pub retention_period_seconds: Option<NonZeroU64>,
+    pub retention_period_ms: Option<NonZeroU64>,
     pub max_byte_size: Option<NonZeroU64>,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
@@ -41,9 +44,12 @@ async fn create_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CreateStreamIn>,
 ) -> Result<MsgPackOrJson<CreateStreamOut>> {
+    let retention_period = data
+        .retention_period_ms
+        .map_or(Duration::ZERO, |ms| Duration::from_millis(ms.get()));
     let operation = stream_deprecated::operations::CreateStreamOperation::new(
         data.name,
-        data.retention_period_seconds,
+        retention_period,
         StorageType::default(),
         data.max_byte_size,
     );
@@ -51,7 +57,7 @@ async fn create_stream(
 
     Ok(MsgPackOrJson(CreateStreamOut {
         name: response.name,
-        retention_period_seconds: response.retention_period_seconds,
+        retention_period_ms: NonZeroU64::new(response.retention_period.as_millis() as u64),
         max_byte_size: response.max_byte_size,
         created_at: response.created_at,
         updated_at: response.updated_at,
@@ -298,7 +304,7 @@ struct GetStreamIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct GetStreamOut {
     pub name: StreamName,
-    pub retention_period_seconds: Option<NonZeroU64>,
+    pub retention_period_ms: Option<NonZeroU64>,
     pub max_byte_size: Option<NonZeroU64>,
     pub storage_type: StorageType,
     pub created_at: Timestamp,
@@ -318,7 +324,7 @@ async fn get_stream(
 
     Ok(MsgPackOrJson(GetStreamOut {
         name: namespace.name,
-        retention_period_seconds: namespace.config.retention_period_seconds,
+        retention_period_ms: NonZeroU64::new(namespace.config.retention_period.as_millis() as u64),
         max_byte_size: namespace.max_storage_bytes,
         storage_type: namespace.storage_type,
         created_at: namespace.created_at,

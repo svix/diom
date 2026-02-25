@@ -62,6 +62,7 @@ rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+stream-internals.workspace = true
 stream_deprecated.workspace = true
 tap.workspace = true
 tokio.workspace = true
@@ -185,6 +186,7 @@ serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["preserve_order", "raw_value"] }
 serde_path_to_error = "0.1.7"
 static_assertions = "1.1"
+stream-internals = { path = "crates/stream-internals" }
 stream_deprecated = { path = "crates/stream-deprecated", package = "stream-deprecated" }
 syn = "2.0.48"
 tap = "1"

@@ -882,6 +882,7 @@ dependencies = [
  "serde",
  "serde_json",
  "stream-deprecated",
+ "stream-internals",
  "tap",
  "tempfile",
  "test-utils",
@@ -4065,6 +4066,11 @@ dependencies = [
 [[package]]
 name = "stream-internals"
 version = "0.0.1"
+dependencies = [
+ "fjall-utils",
+ "schemars 1.2.0",
+ "serde",
+]
 
 [[package]]
 name = "strsim"
