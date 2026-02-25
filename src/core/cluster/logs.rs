@@ -129,7 +129,6 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
             .instrument(Span::current())
             .await
             .map_err(write_logs_err)
-            .tap(|_| self.trace_logs())
     }
 
     #[tracing::instrument(skip(self))]
@@ -138,7 +137,6 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
             .instrument(Span::current())
             .await
             .map_err(write_logs_err)
-            .tap(|_| self.trace_logs())
     }
 
     #[tracing::instrument(skip(self))]
@@ -271,26 +269,6 @@ impl CoyoteLogs {
             Ok(())
         })
         .await?
-    }
-
-    fn trace_logs(&self) {
-        tracing::trace!("BEGINNING LOG TRACE");
-        let last_purged_log_id = LAST_PURGED_LOG_ID.get(&self.meta_keyspace);
-        let first_id = Log::range(&self.log_keyspace, ..)
-            .next()
-            .and_then(|l| l.ok())
-            .map(|(k, _)| k);
-        let last_id = Log::range(&self.log_keyspace, ..)
-            .next_back()
-            .and_then(|l| l.ok())
-            .map(|(k, _)| k);
-        tracing::trace!(?last_purged_log_id, first_id, last_id, "log metadata");
-        for row in Log::range(&self.log_keyspace, ..) {
-            if let Ok((index, value)) = row {
-                tracing::trace!(?index, ?value, "log");
-            }
-        }
-        tracing::trace!("END LOG TRACE");
     }
 
     async fn get_log_state_(&mut self) -> anyhow::Result<openraft::LogState<TypeConfig>> {
