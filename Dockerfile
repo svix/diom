@@ -76,7 +76,8 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
 EOF
 
 USER appuser
-EXPOSE 8071
+WORKDIR /home/appuser
+EXPOSE 8050
 
 COPY --chown=root:root --chmod=755 --from=build /app/target/release/coyote-server /usr/local/bin/coyote-server
 
