@@ -61,6 +61,8 @@ RUN <<EOF
     chown -R appuser: /app
     mkdir -p /home/appuser
     chown -R appuser: /home/appuser
+    mkdir -p /storage
+    chown -R appuser: /storage
 EOF
 
 ENV __BUST_DOCKER_BUILD_CACHE=2026-01-30
