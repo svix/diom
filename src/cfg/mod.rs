@@ -50,6 +50,72 @@ impl DatabaseConfig {
     }
 }
 
+/// A cluster seed node address with an optional port.
+///
+/// Accepts `hostname:port` or just `hostname` (port defaults to the cluster listen port).
+/// Hostnames are resolved via DNS when a [`SocketAddr`] is needed.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SeedNode {
+    pub host: String,
+    pub port: Option<u16>,
+}
+
+impl SeedNode {
+    pub fn effective_port(&self) -> u16 {
+        self.port.unwrap_or_else(|| defaults::cluster_listen_address().port())
+    }
+
+    pub async fn resolve(&self) -> anyhow::Result<SocketAddr> {
+        let port = self.effective_port();
+        let addr_str = format!("{}:{}", self.host, port);
+        tokio::net::lookup_host(addr_str)
+            .await?
+            .next()
+            .ok_or_else(|| anyhow::anyhow!("could not resolve seed node {}:{}", self.host, port))
+    }
+}
+
+impl fmt::Display for SeedNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.host, self.effective_port())
+    }
+}
+
+impl FromStr for SeedNode {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some((host, port_str)) = s.rsplit_once(':') {
+            if let Ok(port) = port_str.parse::<u16>() {
+                return Ok(SeedNode {
+                    host: host.to_owned(),
+                    port: Some(port),
+                });
+            }
+        }
+        Ok(SeedNode {
+            host: s.to_owned(),
+            port: None,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for SeedNode {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        Ok(s.parse().unwrap())
+    }
+}
+
+impl From<SocketAddr> for SeedNode {
+    fn from(addr: SocketAddr) -> Self {
+        SeedNode {
+            host: addr.ip().to_string(),
+            port: Some(addr.port()),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct ClusterConfiguration {
     /// The address to listen on for replication
@@ -99,7 +165,7 @@ pub struct ClusterConfiguration {
     pub election_timeout_max_ms: u64,
 
     #[serde(default)]
-    pub seed_nodes: Vec<SocketAddr>,
+    pub seed_nodes: Vec<SeedNode>,
 
     /// Automatically initialize the cluster on bootup if we can't discover any
     /// peers and we don't have any existing state. If you initialize all peers

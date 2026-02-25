@@ -50,7 +50,8 @@ impl Discovery {
     }
 
     async fn poll_seeds(&self) -> (Option<SocketAddr>, BTreeMap<SocketAddr, DiscoverResponse>) {
-        let mut responses = self.cfg.cluster.seed_nodes.iter().copied().map(|s| async move {
+        // Poll all seed nodes concurrently, keeping SeedNode only for display/URL purposes.
+        let seed_responses: Vec<_> = self.cfg.cluster.seed_nodes.iter().cloned().map(|s| async move {
                     let url_string = format!("http://{s}/repl/discover");
                     let url = match Url::parse(&url_string) {
                         Ok(url) => url,
@@ -77,14 +78,26 @@ impl Discovery {
                 }).pipe(stream::iter)
                 .buffer_unordered(CONCURRENT_FETCHES)
                 .filter_map(futures_util::future::ready)
-                .collect::<BTreeMap<_, _>>()
+                .collect()
                 .await;
-        let my_addr = responses
-            .iter()
-            .find(|(_k, v)| v.node_id == self.my_node_id)
-            .map(|(k, _)| k.to_owned());
-        if let Some(addr) = &my_addr {
-            responses.remove(addr);
+
+        // Resolve all hostnames to IPs once here at cluster startup; everything
+        // downstream works with SocketAddr only.
+        let mut my_addr = None;
+        let mut responses = BTreeMap::new();
+        for (seed, response) in seed_responses {
+            match seed.resolve().await {
+                Ok(addr) => {
+                    if response.node_id == self.my_node_id {
+                        my_addr = Some(addr);
+                    } else {
+                        responses.insert(addr, response);
+                    }
+                }
+                Err(err) => {
+                    tracing::warn!(?err, "could not resolve seed node {seed}, skipping");
+                }
+            }
         }
         (my_addr, responses)
     }

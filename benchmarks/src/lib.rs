@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use coyote::{cfg::LogLevel, core::cluster::proto::HealthResponse};
+use coyote::{cfg::{LogLevel, SeedNode}, core::cluster::proto::HealthResponse};
 use coyote_client::{CoyoteClient, CoyoteOptions};
 use openraft::ServerState;
 use std::sync::{Arc, Once};
@@ -112,7 +112,7 @@ pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
             (server, workdir)
         });
 
-        seed_nodes.push(server.repl_addr);
+        seed_nodes.push(SeedNode::from(server.repl_addr));
         servers.push(server);
         workdirs.push(workdir);
     }
