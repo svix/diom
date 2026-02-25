@@ -26,10 +26,13 @@ impl<'a> Cache<'a> {
             .await
     }
 
-    /// Get cache group
-    pub async fn get_group(&self, cache_get_group_in: CacheGetGroupIn) -> Result<CacheGetGroupOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/cache/get-group")
-            .with_body_param(cache_get_group_in)
+    /// Get cache namespace
+    pub async fn get_namespace(
+        &self,
+        cache_get_namespace_in: CacheGetNamespaceIn,
+    ) -> Result<CacheGetNamespaceOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1/cache/get-namespace")
+            .with_body_param(cache_get_namespace_in)
             .execute(self.cfg)
             .await
     }

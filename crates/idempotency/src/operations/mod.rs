@@ -39,6 +39,6 @@ raft_module_operations!(
     CreateIdempotencyOp {
         CreateIdempotency(CreateIdempotencyOperation) -> CreateIdempotencyResponseData,
     },
-    state = &coyote_configgroup::State,
+    state = &coyote_namespace::State,
     response = CreateIdempotencyOperationResponse,
 );

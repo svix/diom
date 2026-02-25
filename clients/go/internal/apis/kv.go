@@ -49,19 +49,19 @@ func (kv Kv) Get(
 	)
 }
 
-// Get KV store
-func (kv Kv) GetGroup(
+// Get KV namespace
+func (kv Kv) GetNamespace(
 	ctx context.Context,
-	kvGetGroupIn coyote_models.KvGetGroupIn,
-) (*coyote_models.KvGetGroupOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.KvGetGroupIn, coyote_models.KvGetGroupOut](
+	kvGetNamespaceIn coyote_models.KvGetNamespaceIn,
+) (*coyote_models.KvGetNamespaceOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.KvGetNamespaceIn, coyote_models.KvGetNamespaceOut](
 		ctx,
 		kv.client,
 		"POST",
-		"/api/v1/kv/get-group",
+		"/api/v1/kv/get-namespace",
 		nil,
 		nil,
-		&kvGetGroupIn,
+		&kvGetNamespaceIn,
 	)
 }
 

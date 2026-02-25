@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type CacheGetGroupOut struct {
+type CacheGetNamespaceOut struct {
 	CreatedAt       time.Time      `json:"created_at"`
 	EvictionPolicy  EvictionPolicy `json:"eviction_policy"`
 	MaxStorageBytes *uint64        `json:"max_storage_bytes,omitempty"`

@@ -133,34 +133,34 @@ async fn idempotency_abort(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct IdempotencyGetGroupIn {
+struct IdempotencyGetNamespaceIn {
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct IdempotencyGetGroupOut {
+struct IdempotencyGetNamespaceOut {
     pub name: String,
     pub max_storage_bytes: Option<NonZeroU64>,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
 }
 
-/// Get idempotency group
-#[aide_annotate(op_id = "v1.idempotency.get_group")]
-async fn idempotency_get_group(
+/// Get idempotency namespace
+#[aide_annotate(op_id = "v1.idempotency.get_namespace")]
+async fn idempotency_get_namespace(
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<IdempotencyGetGroupIn>,
-) -> Result<MsgPackOrJson<IdempotencyGetGroupOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_idempotency_group(&data.name)?
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyGetNamespaceIn>,
+) -> Result<MsgPackOrJson<IdempotencyGetNamespaceOut>> {
+    let namespace = state
+        .namespace_state
+        .fetch_idempotency_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    Ok(MsgPackOrJson(IdempotencyGetGroupOut {
-        name: group.name,
-        max_storage_bytes: group.max_storage_bytes,
-        created_at: group.created_at,
-        updated_at: group.updated_at,
+    Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {
+        name: namespace.name,
+        max_storage_bytes: namespace.max_storage_bytes,
+        created_at: namespace.created_at,
+        updated_at: namespace.updated_at,
     }))
 }
 
@@ -188,8 +188,11 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/idempotency/get-group",
-            post_with(idempotency_get_group, idempotency_get_group_operation),
+            "/idempotency/get-namespace",
+            post_with(
+                idempotency_get_namespace,
+                idempotency_get_namespace_operation,
+            ),
             &tag,
         )
 }

@@ -9,17 +9,17 @@ import {
     KvDeleteOutSerializer,
 } from '../models/kvDeleteOut';
 import {
-    type KvGetGroupIn,
-    KvGetGroupInSerializer,
-} from '../models/kvGetGroupIn';
-import {
-    type KvGetGroupOut,
-    KvGetGroupOutSerializer,
-} from '../models/kvGetGroupOut';
-import {
     type KvGetIn,
     KvGetInSerializer,
 } from '../models/kvGetIn';
+import {
+    type KvGetNamespaceIn,
+    KvGetNamespaceInSerializer,
+} from '../models/kvGetNamespaceIn';
+import {
+    type KvGetNamespaceOut,
+    KvGetNamespaceOutSerializer,
+} from '../models/kvGetNamespaceOut';
 import {
     type KvGetOut,
     KvGetOutSerializer,
@@ -77,21 +77,21 @@ export class Kv {
 
         
 
-    /** Get KV store */
-        public getGroup(
-            kvGetGroupIn: KvGetGroupIn,
-            ): Promise<KvGetGroupOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/get-group");
+    /** Get KV namespace */
+        public getNamespace(
+            kvGetNamespaceIn: KvGetNamespaceIn,
+            ): Promise<KvGetNamespaceOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/get-namespace");
 
             request.setBody(
-                    KvGetGroupInSerializer._toJsonObject(
-                        kvGetGroupIn,
+                    KvGetNamespaceInSerializer._toJsonObject(
+                        kvGetNamespaceIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    KvGetGroupOutSerializer._fromJsonObject,
+                    KvGetNamespaceOutSerializer._fromJsonObject,
                 );
             }
 

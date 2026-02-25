@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct IdempotencyGetGroupIn {
+pub struct CacheGetNamespaceIn {
     pub name: String,
 }
 
-impl IdempotencyGetGroupIn {
+impl CacheGetNamespaceIn {
     pub fn new(name: String) -> Self {
         Self { name }
     }

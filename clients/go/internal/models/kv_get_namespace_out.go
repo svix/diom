@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type KvGetGroupOut struct {
+type KvGetNamespaceOut struct {
 	CreatedAt       time.Time   `json:"created_at"`
 	MaxStorageBytes *uint64     `json:"max_storage_bytes,omitempty"`
 	Name            string      `json:"name"`

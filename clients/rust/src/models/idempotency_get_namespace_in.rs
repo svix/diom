@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct KvGetGroupIn {
+pub struct IdempotencyGetNamespaceIn {
     pub name: String,
 }
 
-impl KvGetGroupIn {
+impl IdempotencyGetNamespaceIn {
     pub fn new(name: String) -> Self {
         Self { name }
     }

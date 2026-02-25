@@ -20,7 +20,7 @@ impl<'a> Stream<'a> {
 
     /// Get stream with given name.
     pub async fn get(&self, get_stream_in: GetStreamIn) -> Result<GetStreamOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/stream/get-group")
+        crate::request::Request::new(http::Method::POST, "/api/v1/stream/get-namespace")
             .with_body_param(get_stream_in)
             .execute(self.cfg)
             .await

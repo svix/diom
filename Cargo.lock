@@ -836,11 +836,11 @@ dependencies = [
  "byteorder",
  "coyote-cache",
  "coyote-client",
- "coyote-configgroup",
  "coyote-derive",
  "coyote-error",
  "coyote-idempotency",
  "coyote-kv",
+ "coyote-namespace",
  "coyote-operations",
  "coyote-proto",
  "coyote-rate-limiter",
@@ -909,9 +909,9 @@ dependencies = [
 name = "coyote-cache"
 version = "0.0.1"
 dependencies = [
- "coyote-configgroup",
  "coyote-error",
  "coyote-kv",
+ "coyote-namespace",
  "coyote-operations",
  "jiff",
  "schemars 1.2.0",
@@ -963,20 +963,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "coyote-configgroup"
-version = "0.0.1"
-dependencies = [
- "coyote-error",
- "fjall",
- "fjall-utils",
- "jiff",
- "schemars 1.2.0",
- "serde",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "coyote-derive"
 version = "0.0.1"
 dependencies = [
@@ -1005,9 +991,9 @@ dependencies = [
 name = "coyote-idempotency"
 version = "0.0.1"
 dependencies = [
- "coyote-configgroup",
  "coyote-error",
  "coyote-kv",
+ "coyote-namespace",
  "coyote-operations",
  "fjall",
  "jiff",
@@ -1022,8 +1008,8 @@ dependencies = [
 name = "coyote-kv"
 version = "0.0.1"
 dependencies = [
- "coyote-configgroup",
  "coyote-error",
+ "coyote-namespace",
  "coyote-operations",
  "fjall",
  "fjall-utils",
@@ -1036,6 +1022,20 @@ dependencies = [
  "tempfile",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "coyote-namespace"
+version = "0.0.1"
+dependencies = [
+ "coyote-error",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "schemars 1.2.0",
+ "serde",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -4024,8 +4024,8 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 name = "stream-deprecated"
 version = "0.0.1"
 dependencies = [
- "coyote-configgroup",
  "coyote-error",
+ "coyote-namespace",
  "coyote-operations",
  "fjall",
  "fjall-utils",

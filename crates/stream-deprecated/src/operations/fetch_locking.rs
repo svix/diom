@@ -1,8 +1,8 @@
 use std::num::NonZeroU16;
 
 use super::{FetchLockingResponse, StreamRaftState, StreamRequest, fetch::create_leases_for_msgs};
-use coyote_configgroup::entities::ConfigGroupId;
 use coyote_error::HttpError;
+use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +14,7 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FetchLockingOperation {
-    group_id: ConfigGroupId,
+    namespace_id: NamespaceId,
     cg: ConsumerGroup,
     batch_size: NonZeroU16,
     visibility_timeout_secs: u64,
@@ -22,13 +22,13 @@ pub struct FetchLockingOperation {
 
 impl FetchLockingOperation {
     pub fn new(
-        group_id: ConfigGroupId,
+        namespace_id: NamespaceId,
         cg: ConsumerGroup,
         batch_size: NonZeroU16,
         visibility_timeout_secs: u64,
     ) -> Self {
         Self {
-            group_id,
+            namespace_id,
             cg,
             batch_size,
             visibility_timeout_secs,
@@ -38,7 +38,7 @@ impl FetchLockingOperation {
     fn apply_real(self, state: &State) -> coyote_operations::Result<FetchLockingResponseData> {
         let now = Timestamp::now();
         let visibility_timeout = std::time::Duration::from_secs(self.visibility_timeout_secs);
-        let leases = LeaseRow::fetch_all(state, self.group_id, &self.cg)?;
+        let leases = LeaseRow::fetch_all(state, self.namespace_id, &self.cg)?;
 
         let has_active_lease = leases.iter().any(|lease| lease.is_active(now));
 
@@ -53,8 +53,12 @@ impl FetchLockingOperation {
         let blocked_leases = leases
             .iter()
             .filter(|lease| lease.acked_at.is_some() || lease.is_dlq());
-        let msgs =
-            MsgRow::fetch_available(state, self.group_id, blocked_leases, self.batch_size.into())?;
+        let msgs = MsgRow::fetch_available(
+            state,
+            self.namespace_id,
+            blocked_leases,
+            self.batch_size.into(),
+        )?;
 
         if msgs.is_empty() {
             // FIXME(@svix-gabriel) this isn't really an error, but we need to go back
@@ -72,7 +76,7 @@ impl FetchLockingOperation {
         let msg_ids: Vec<MsgId> = msgs.iter().map(|(id, _)| *id).collect();
         create_leases_for_msgs(
             &msg_ids,
-            self.group_id,
+            self.namespace_id,
             self.cg,
             now,
             visibility_timeout,
