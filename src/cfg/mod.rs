@@ -174,7 +174,7 @@ pub struct ClusterConfiguration {
     /// attempt to discover it at boot time. This cannot currently be changed after cluster
     /// initialization.
     #[serde(default)]
-    pub my_address: Option<PeerAddr>,
+    pub advertised_address: Option<PeerAddr>,
 
     /// Other nodes that we should attempt to join a cluster with at boot time.
     #[serde(default)]
@@ -392,7 +392,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         bootstrap_cfg_path,
         cluster:
             ClusterConfiguration {
-                my_address: cluster_my_address,
+                advertised_address: cluster_advertised_address,
                 listen_address: cluster_listen_address,
                 name: cluster_name,
                 snapshot_path: cluster_snapshot_path,
@@ -452,7 +452,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         *bootstrap_cfg_path = Some(value);
     }
     if let Some(value) = env_var("COYOTE_MY_ADDRESS")? {
-        *cluster_my_address = Some(value);
+        *cluster_advertised_address = Some(value);
     }
 
     // Fields that require different parsing

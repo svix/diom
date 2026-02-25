@@ -49,13 +49,13 @@ impl Discovery {
         network: NetworkFactory,
     ) -> anyhow::Result<Self> {
         let client = build_client(&cfg, cfg.cluster.discovery_request_timeout)?;
-        let my_addr = if let Some(addr) = &cfg.cluster.my_address {
+        let my_addr = if let Some(addr) = &cfg.cluster.advertised_address {
             addr.clone()
         } else if is_not_any(&cfg.cluster.listen_address) {
-            tracing::debug!(listen_address=?cfg.cluster.listen_address, "my_address not passed, but listen_address is not INADDR_ANY, so using that");
+            tracing::debug!(listen_address=?cfg.cluster.listen_address, "advertised_address not passed, but listen_address is not INADDR_ANY, so using that");
             cfg.cluster.listen_address.into()
         } else {
-            tracing::debug!("my_address not passed, attempting to detect local socketaddr");
+            tracing::debug!("advertised_address not passed, attempting to detect local socketaddr");
             PeerAddr::SocketAddr(detect_address(&cfg)?)
         };
         Ok(Self {

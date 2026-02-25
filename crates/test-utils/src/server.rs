@@ -223,7 +223,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         opentelemetry_service_name: "coyote-test".to_string(),
         environment: Environment::Dev,
         cluster: ClusterConfiguration {
-            my_address: Some(cluster_addr.into()),
+            advertised_address: None,
             listen_address: cluster_addr,
             name: "coyote-test".to_string(),
             snapshot_path,
