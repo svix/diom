@@ -303,7 +303,7 @@ impl RaftState {
     }
 
     pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> Result<()> {
-        let network = NetworkFactory::new(&cfg);
+        let network = NetworkFactory::new(&cfg)?;
         let has_cluster = self
             .raft
             .with_raft_state(|s| {

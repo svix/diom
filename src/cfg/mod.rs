@@ -451,7 +451,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     if let Some(value) = env_var("COYOTE_BOOTSTRAP_CFG_PATH")? {
         *bootstrap_cfg_path = Some(value);
     }
-    if let Some(value) = env_var("COYOTE_MY_ADDRESS")? {
+    if let Some(value) = env_var("COYOTE_ADVERTISED_ADDRESS")? {
         *cluster_advertised_address = Some(value);
     }
 
