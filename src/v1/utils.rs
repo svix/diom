@@ -3,6 +3,7 @@
 
 use std::{
     ops::Deref,
+    sync::LazyLock,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -63,8 +64,8 @@ pub async fn api_not_implemented() -> Result<()> {
 }
 
 pub fn validate_no_control_characters(str: &str) -> Result<(), ValidationError> {
-    let re = Regex::new(r"[\x00-\x08]").unwrap();
-    if re.is_match(str) {
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\x00-\x08]").unwrap());
+    if RE.is_match(str) {
         return Err(validation_error(
             Some("illegal_character"),
             Some("Control characters 0x00-0x08 not allowed."),

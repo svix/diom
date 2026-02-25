@@ -129,7 +129,7 @@ pub async fn initialize_raft(
         ..Default::default()
     };
     let config = Arc::new(config.validate().context("configuring openraft")?);
-    let network = super::network::NetworkFactory::new(cfg);
+    let network = super::network::NetworkFactory::new(cfg)?;
 
     let db = app_state.configgroup_state.both_dbs.persistent_db.clone();
     let edb = app_state.configgroup_state.both_dbs.ephemeral_db.clone();

@@ -273,10 +273,14 @@ impl RaftState {
             <<O as OperationRequest>::Response as OperationResponse>::ResponseParent::try_from(
                 response,
             )
-            .expect("raft response should be convertible into module response type");
-        let resp = module_response
-            .try_into()
-            .expect("module response should be convertible into target type");
+            .map_err(|e| {
+                anyhow::anyhow!(
+                    "raft response should be convertible into module response type: {e:?}"
+                )
+            })?;
+        let resp = module_response.try_into().map_err(|e| {
+            anyhow::anyhow!("module response should be convertible into target type: {e:?}")
+        })?;
         Ok(resp)
     }
 
