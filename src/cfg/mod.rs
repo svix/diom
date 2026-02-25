@@ -22,6 +22,78 @@ mod defaults;
 
 pub type Configuration = Arc<ConfigurationInner>;
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PeerAddr {
+    SocketAddr(SocketAddr),
+    HostnameAndPort { hostname: String, port: u16 },
+}
+
+impl PeerAddr {
+    pub fn as_base_url(&self) -> url::Url {
+        let base = self.to_string();
+        format!("http://{base}")
+            .parse()
+            .expect("we validated this already")
+    }
+}
+
+impl std::fmt::Display for PeerAddr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SocketAddr(s) => s.fmt(f),
+            Self::HostnameAndPort { hostname, port } => write!(f, "{hostname}:{port}"),
+        }
+    }
+}
+
+impl From<SocketAddr> for PeerAddr {
+    fn from(value: SocketAddr) -> Self {
+        Self::SocketAddr(value)
+    }
+}
+
+impl FromStr for PeerAddr {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(p) = s.parse() {
+            return Ok(Self::SocketAddr(p));
+        }
+        if let Some((host, port_str)) = s.rsplit_once(':') {
+            if let Err(e) = addr::parse_domain_name(host) {
+                anyhow::bail!("invalid hostname {host}: {e:?}");
+            }
+            let port = port_str.parse::<u16>().context("parsing port")?;
+            Ok(Self::HostnameAndPort {
+                hostname: host.to_string(),
+                port,
+            })
+        } else {
+            anyhow::bail!("Unable to parse PeerAddr {s:?}");
+        }
+    }
+}
+
+impl<'d> serde::Deserialize<'d> for PeerAddr {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'d>,
+    {
+        let raw = String::deserialize(deserializer)?;
+        raw.parse()
+            .map_err(|e| serde::de::Error::custom(format!("invalid peer address: {e:?}")))
+    }
+}
+
+impl serde::Serialize for PeerAddr {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_string().serialize(serializer)
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct DatabaseConfig {
     pub path: PathBuf,
@@ -98,8 +170,15 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::cluster_election_timeout_max_ms")]
     pub election_timeout_max_ms: u64,
 
+    /// Address that other nodes should use to communicate with this one. If not passed, we'll
+    /// attempt to discover it at boot time. This cannot currently be changed after cluster
+    /// initialization.
     #[serde(default)]
-    pub seed_nodes: Vec<SocketAddr>,
+    pub my_address: Option<PeerAddr>,
+
+    /// Other nodes that we should attempt to join a cluster with at boot time.
+    #[serde(default)]
+    pub seed_nodes: Vec<PeerAddr>,
 
     /// Automatically initialize the cluster on bootup if we can't discover any
     /// peers and we don't have any existing state. If you initialize all peers
@@ -313,6 +392,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         bootstrap_cfg_path,
         cluster:
             ClusterConfiguration {
+                my_address: cluster_my_address,
                 listen_address: cluster_listen_address,
                 name: cluster_name,
                 snapshot_path: cluster_snapshot_path,
@@ -370,6 +450,9 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     }
     if let Some(value) = env_var("COYOTE_BOOTSTRAP_CFG_PATH")? {
         *bootstrap_cfg_path = Some(value);
+    }
+    if let Some(value) = env_var("COYOTE_MY_ADDRESS")? {
+        *cluster_my_address = Some(value);
     }
 
     // Fields that require different parsing
@@ -442,9 +525,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::net::SocketAddr;
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
-    use super::load_toml;
+    use super::{PeerAddr, load_toml};
 
     #[test]
     fn test_db() {
@@ -472,5 +555,61 @@ persistent_db.path = "/2"
             config.listen_address,
             "0.0.0.0:1234".parse::<SocketAddr>().unwrap()
         );
+    }
+
+    #[test]
+    fn test_peer_addr_parsing() {
+        let Ok(PeerAddr::SocketAddr(SocketAddr::V4(sa))) = "127.0.0.2:8050".parse() else {
+            panic!("failed to parse v4 addr")
+        };
+        assert_eq!(sa.port(), 8050);
+        assert_eq!(*sa.ip(), Ipv4Addr::new(127, 0, 0, 2));
+        let Ok(PeerAddr::SocketAddr(SocketAddr::V6(sa))) = "[::1001:2%1234]:8050".parse() else {
+            panic!("failed to parse v6 addr");
+        };
+        assert_eq!(sa.scope_id(), 1234);
+        assert_eq!(sa.port(), 8050);
+        assert_eq!(*sa.ip(), Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0x1001, 0x2));
+        assert_eq!(
+            "foobar:8050".parse::<PeerAddr>().expect("should parse"),
+            PeerAddr::HostnameAndPort {
+                hostname: "foobar".to_owned(),
+                port: 8050
+            }
+        );
+        "  illegal-hostname:1"
+            .parse::<PeerAddr>()
+            .expect_err("should fail to parse");
+        "no-port-provided"
+            .parse::<PeerAddr>()
+            .expect_err("should fail to parse");
+        "port-out-of-bounds:65537"
+            .parse::<PeerAddr>()
+            .expect_err("should fail to parse");
+    }
+
+    #[test]
+    fn test_peer_addr_serde() {
+        let addrs = [
+            PeerAddr::SocketAddr(SocketAddr::new(
+                IpAddr::V4(Ipv4Addr::new(127, 0, 0, 2)),
+                8050,
+            )),
+            PeerAddr::SocketAddr(SocketAddr::new(
+                IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 2)),
+                8051,
+            )),
+            PeerAddr::HostnameAndPort {
+                hostname: "foo".to_owned(),
+                port: 8052,
+            },
+        ];
+        for addr in addrs {
+            let serialized = serde_json::to_string(&addr).expect("should serialize");
+            assert_ne!(&serialized, "");
+            let deserialized: PeerAddr =
+                serde_json::from_str(&serialized).expect("should deserialize");
+            assert_eq!(deserialized, addr);
+        }
     }
 }

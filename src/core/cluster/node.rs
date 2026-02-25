@@ -1,12 +1,47 @@
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use tap::Pipe;
+use url::Url;
 use uuid::Uuid;
+
+use crate::cfg::PeerAddr;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Node {
     #[default]
     NoAddress,
     SingleHomed(SocketAddr),
+    HostnameAndPort {
+        hostname: String,
+        port: u16,
+    },
+}
+
+impl From<PeerAddr> for Node {
+    fn from(value: PeerAddr) -> Self {
+        match value {
+            PeerAddr::SocketAddr(socket_addr) => Self::SingleHomed(socket_addr),
+            PeerAddr::HostnameAndPort { hostname, port } => {
+                Self::HostnameAndPort { hostname, port }
+            }
+        }
+    }
+}
+
+impl TryFrom<Node> for PeerAddr {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Node) -> Result<Self, Self::Error> {
+        match value {
+            Node::NoAddress => anyhow::bail!("cannot construct peer address from unaddressed node"),
+            Node::SingleHomed(sa) => PeerAddr::SocketAddr(sa),
+            Node::HostnameAndPort { hostname, port } => {
+                PeerAddr::HostnameAndPort { hostname, port }
+            }
+        }
+        .pipe(Ok)
+    }
 }
 
 impl Node {
@@ -14,11 +49,23 @@ impl Node {
         Self::SingleHomed(s)
     }
 
-    pub fn addrs(&self) -> Vec<SocketAddr> {
+    pub fn names(&self) -> Vec<String> {
         match self {
             Self::NoAddress => vec![],
-            Self::SingleHomed(s) => vec![*s],
+            Self::SingleHomed(addr) => vec![addr.to_string()],
+            Self::HostnameAndPort { hostname, port } => vec![format!("{hostname}:{port}")],
         }
+    }
+
+    pub fn url_for(&self, path: &str) -> anyhow::Result<Url> {
+        let base = match self {
+            Self::NoAddress => anyhow::bail!("no address provided"),
+            Self::SingleHomed(sa) => sa.to_string(),
+            Self::HostnameAndPort { hostname, port } => format!("{hostname}:{port}"),
+        };
+        format!("http://{base}/{path}")
+            .parse()
+            .context("generating url for network RPC")
     }
 }
 
