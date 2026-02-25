@@ -414,7 +414,11 @@ where
     T: FromStr<Err: fmt::Display>,
 {
     env_var_parse(name, |value| {
-        value.split(',').map(FromStr::from_str).collect()
+        value
+            .split(',')
+            .map(str::trim_ascii)
+            .map(FromStr::from_str)
+            .collect()
     })
 }
 
