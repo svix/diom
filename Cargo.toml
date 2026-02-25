@@ -28,7 +28,9 @@ aide.workspace = true
 anyerror.workspace = true
 anyhow.workspace = true
 axum.workspace = true
+axum-extra.workspace = true
 byteorder.workspace = true
+constant_time_eq.workspace = true
 coyote-cache.workspace = true
 coyote-derive.workspace = true
 coyote-error.workspace = true
@@ -41,6 +43,7 @@ coyote-rate-limiter.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 futures-util.workspace = true
+headers.workspace = true
 http.workspace = true
 idna_adapter.workspace = true
 indexmap.workspace = true
@@ -118,6 +121,7 @@ anyerror = { version = "0.1.13", features = ["anyhow"] }
 anyhow = "1.0.56"
 assert_matches = "1.5.0"
 axum = { version = "0.8.8", features = ["macros"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
 byteorder = "1.5.0"
 bytes = "1.11.1"
 clap = { version = "4.1.8", features = ["derive"] }
@@ -125,6 +129,7 @@ clap_complete = "4.5.38"
 colored_json = "5.0.0"
 concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
+constant_time_eq = "0.4"
 coyote.path = "."
 coyote-cache.path = "crates/cache"
 coyote-client.path = "clients/rust"
@@ -145,6 +150,7 @@ fjall-utils.path = "crates/fjall-utils"
 fs-err = "3.3.0"
 futures-util = "0.3"
 hashlink = "0.11"
+headers = "0.4.1"
 hex = "0.4.3"
 hickory-resolver = "0.25.2"
 http = "1.1.0"

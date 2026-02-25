@@ -142,7 +142,7 @@ async fn run_interserver(
     );
     bind_barrier.wait().await;
 
-    let app = core::cluster::router()
+    let app = core::cluster::router(&cfg)
         .with_state(state.clone())
         .layer(Extension(raft.clone()))
         .layer(middleware::from_fn(coyote_proto::capture_accept_hdr));
@@ -298,11 +298,13 @@ pub async fn run_with_prefix(
 
     // Spawn background workers for each module
     let workers = tokio::spawn(async move {
+        tracing::debug!("spawned workers");
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
         );
+        tracing::debug!("workers died");
     });
 
     bootstrap::run(cfg, raft_state)
@@ -315,8 +317,10 @@ pub async fn run_with_prefix(
         .unwrap();
 
     // Wait for workers to finish cleanup
+    tracing::debug!("done serving; waiting for background tasks to finish");
     let _ = workers.await;
     let _ = interserver.await;
+    tracing::debug!("we're outta here!");
 }
 
 pub fn setup_tracing(

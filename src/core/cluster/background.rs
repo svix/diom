@@ -54,6 +54,7 @@ impl BackgroundJobRunner {
     }
 
     async fn stop_all(mut self) -> anyhow::Result<()> {
+        tracing::debug!("shutting down background jobs");
         self.jobs.abort_all();
         while let Some(job) = self.jobs.join_next().await {
             match job {
