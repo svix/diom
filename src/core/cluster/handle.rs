@@ -1,10 +1,11 @@
 use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
 
 use super::{
+    NodeId,
     discovery::Discovery,
     network::NetworkFactory,
     operations::{InternalRequest, InternalResponse},
-    raft::{NodeId, Raft},
+    raft::Raft,
 };
 use anyhow::{Context, Result};
 use coyote_operations::{OperationRequest, OperationResponse};

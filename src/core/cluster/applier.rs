@@ -1,6 +1,6 @@
 use super::{
+    NodeId,
     handle::{Request, Response},
-    raft::NodeId,
     state_machine::Store,
 };
 use openraft::LogId;

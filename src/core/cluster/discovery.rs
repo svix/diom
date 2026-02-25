@@ -11,11 +11,7 @@ use openraft::ServerState;
 use tap::Pipe;
 use url::Url;
 
-use super::{
-    network::build_client,
-    raft::{Node, NodeId, Raft},
-    state_machine::ClusterId,
-};
+use super::{Node, NodeId, network::build_client, raft::Raft, state_machine::ClusterId};
 use crate::{
     Configuration,
     core::cluster::{

@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use super::handle::{Request, Response};
 use crate::core::cluster::state_machine::ClusterId;
 
-use super::raft::NodeId;
+use super::NodeId;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct DiscoverClusterResponse {
