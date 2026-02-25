@@ -40,7 +40,7 @@ EOF
 COPY --from=planner /app/recipe.json recipe.json
 
 # Build dependencies - this is the caching Docker layer
-RUN cargo chef cook --release --package coyote-node --features coyote/openapi --recipe-path recipe.json
+RUN cargo chef cook --release --package coyote-server --features coyote/openapi --recipe-path recipe.json
 
 # Build the server
 COPY . .
@@ -48,7 +48,7 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
-RUN cargo build --release --package coyote-node --bin coyote --features coyote/openapi --frozen
+RUN cargo build --release --package coyote-server --bin coyote-server --features coyote/openapi --frozen
 
 # Production
 FROM docker.io/debian:trixie-slim AS prod
@@ -78,6 +78,6 @@ EOF
 USER appuser
 EXPOSE 8071
 
-COPY --chown=root:root --chmod=755 --from=build /app/target/release/coyote /usr/local/bin/coyote
+COPY --chown=root:root --chmod=755 --from=build /app/target/release/coyote-server /usr/local/bin/coyote-server
 
-CMD ["/usr/local/bin/coyote"]
+CMD ["/usr/local/bin/coyote-server"]
