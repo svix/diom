@@ -5,6 +5,7 @@ use super::{
 };
 use openraft::LogId;
 
+#[tracing::instrument(skip_all, fields(request = %request))]
 pub(super) async fn apply_request(
     request: Request,
     state_machine: &mut Store,

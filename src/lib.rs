@@ -328,6 +328,7 @@ pub fn setup_tracing(
         let var = [
             format!("{CRATE_NAME}={level}"),
             format!("tower_http={level}"),
+            "opentelemetry_sdk=ERROR".to_string(),
         ];
 
         var.join(",")
