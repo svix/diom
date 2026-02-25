@@ -23,7 +23,6 @@ export const metadata = {
 const navbar = (
   <Navbar
     logo={<b>Coyote</b>}
-    // ... Your additional navbar options
   />
 )
 const footer = <Footer>Copyright © Coyote.</Footer>
@@ -31,9 +30,7 @@ const footer = <Footer>Copyright © Coyote.</Footer>
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      // Not required, but good for SEO
       lang="en"
-      // Required to be set
       dir="ltr"
       // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
       suppressHydrationWarning
