@@ -147,7 +147,7 @@ const app = await coyote.kv.set("key", "value");
 from coyote import Coyote
 
 coyote = Coyote("AUTH_TOKEN")
-app = coyote.application.create("key", b"value")
+app = coyote.kv.create("key", b"value")
 ```
 
 </CodeTab>
@@ -214,7 +214,7 @@ coyote.kv.set("key", b"value", null)
 
 ```csharp
 var coyote = new CoyoteClient("AUTH_TOKEN");
-applicationOut = await coyote.Kv.CreateAsync("key", "value");
+await coyote.Kv.CreateAsync("key", "value");
 ```
 
 </CodeTab>
