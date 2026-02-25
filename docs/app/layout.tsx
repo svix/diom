@@ -1,10 +1,19 @@
 import { Footer, Layout, Navbar } from 'nextra-theme-docs'
-import { Banner, Head } from 'nextra/components'
+import { Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
 import 'nextra-theme-docs/style.css'
 
 export const metadata = {
-  // Define your metadata here
+  title: {
+    default: 'Nextra – Next.js Static Site Generator',
+    template: '%s | Nextra'
+  },
+  openGraph: {
+    url: 'https://nextra.site',
+    siteName: 'Nextra',
+    locale: 'en_US',
+    type: 'website'
+  },
   // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
   icons: {
     icon: '/favicon.svg'
