@@ -14,7 +14,7 @@ use openraft::{
     error::{NetworkError, RPCError, Unreachable},
     network::RPCOption,
 };
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub(super) fn build_client(
     cfg: &Configuration,
@@ -45,6 +45,21 @@ impl NetworkFactory {
         Ok(Self {
             client: build_client(cfg, cfg.cluster.replication_request_timeout)?,
         })
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(super) struct UnreachableError {}
+
+impl std::fmt::Display for UnreachableError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "impossible")
+    }
+}
+
+impl std::error::Error for UnreachableError {
+    fn description(&self) -> &str {
+        "this is unreachable"
     }
 }
 
@@ -128,6 +143,25 @@ impl NetworkClient {
         self.send_request("/repl/raft/handle-forwarded-write", req)
             .await
     }
+
+    pub(super) async fn add_learner(
+        &self,
+        req: proto::AddLearnerRequest,
+    ) -> Result<proto::AddLearnerResponse, openraft::error::RPCError<NodeId, Node, UnreachableError>>
+    {
+        self.send_request("/repl/raft/admin/add-learner", req).await
+    }
+
+    pub(super) async fn upgrade_learner(
+        &self,
+        req: proto::UpgradeLearnerRequest,
+    ) -> Result<
+        proto::UpgradeLearnerResponse,
+        openraft::error::RPCError<NodeId, Node, UnreachableError>,
+    > {
+        self.send_request("/repl/raft/admin/upgrade-learner", req)
+            .await
+    }
 }
 
 impl RaftNetwork<TypeConfig> for NetworkClient {
@@ -177,6 +211,13 @@ impl RaftNetworkFactory<TypeConfig> for NetworkFactory {
         target: <TypeConfig as RaftTypeConfig>::NodeId,
         node: &<TypeConfig as RaftTypeConfig>::Node,
     ) -> Self::Network {
+        self.client_for(target, node)
+    }
+}
+
+impl NetworkFactory {
+    /// Create a new client pointed at the given target
+    pub(super) fn client_for(&self, target: NodeId, node: &Node) -> NetworkClient {
         NetworkClient {
             target,
             node: node.clone(),

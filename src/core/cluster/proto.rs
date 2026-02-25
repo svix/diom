@@ -32,9 +32,15 @@ pub(super) struct AddLearnerRequest {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub(super) struct AddLearnerResponse {}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub(super) struct UpgradeLearnerRequest {
     pub node_id: NodeId,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct UpgradeLearnerResponse {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct ChangeMembershipRequest {

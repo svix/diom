@@ -15,7 +15,7 @@ use crate::{
     Configuration,
     cfg::PeerAddr,
     core::cluster::{
-        network::detect_address,
+        network::{NetworkFactory, detect_address},
         proto::{
             AddLearnerRequest, DiscoverClusterResponse, DiscoverResponse, UpgradeLearnerRequest,
         },
@@ -31,6 +31,7 @@ pub(super) struct Discovery {
     raft: Raft,
     cfg: Configuration,
     my_addr: PeerAddr,
+    network: NetworkFactory,
 }
 
 fn is_not_any(s: &SocketAddr) -> bool {
@@ -41,7 +42,12 @@ fn is_not_any(s: &SocketAddr) -> bool {
 }
 
 impl Discovery {
-    pub(super) fn new(cfg: Configuration, raft: Raft, my_node_id: NodeId) -> anyhow::Result<Self> {
+    pub(super) fn new(
+        cfg: Configuration,
+        raft: Raft,
+        my_node_id: NodeId,
+        network: NetworkFactory,
+    ) -> anyhow::Result<Self> {
         let client = build_client(&cfg, cfg.cluster.discovery_request_timeout)?;
         let my_addr = if let Some(addr) = &cfg.cluster.my_address {
             addr.clone()
@@ -58,6 +64,7 @@ impl Discovery {
             cfg,
             raft,
             my_node_id,
+            network,
         })
     }
 
@@ -110,8 +117,8 @@ impl Discovery {
         peers: Vec<(PeerAddr, NodeId, DiscoverClusterResponse)>,
     ) -> anyhow::Result<()> {
         tracing::info!(?cluster_id, "joining running cluster");
-        let Some((leader_addr, _leader_node_id, leader_cluster)) = peers
-            .iter()
+        let Some((leader_addr, leader_node_id, leader_cluster)) = peers
+            .into_iter()
             .find_or_first(|p| p.2.state == ServerState::Leader)
         else {
             anyhow::bail!("failed to find any peers to join!");
@@ -120,24 +127,24 @@ impl Discovery {
             anyhow::bail!("existing cluster has no logs");
         };
         // TODO: if any of these steps fail, how do we recover?
-        let node = Node::from(leader_addr.clone());
-        let url = node.url_for("/repl/raft/admin/add-learner")?;
-        let request = AddLearnerRequest {
-            node_id: self.my_node_id,
-            address: self.my_addr.clone(),
-        };
-        self.client.post(url).msgpack(&request)?.send().await?;
+        let client = self.network.client_for(leader_node_id, &leader_addr.into());
+        client
+            .add_learner(AddLearnerRequest {
+                node_id: self.my_node_id,
+                address: self.my_addr.clone(),
+            })
+            .await?;
         tracing::debug!("waiting to catch up in replication");
         self.raft
             .wait(None)
             .log_index_at_least(Some(log_id.index), "waiting to catch up to leader")
             .await?;
         tracing::debug!("adding self as a full member");
-        let url = node.url_for("/repl/raft/admin/upgrade-learner")?;
-        let request = UpgradeLearnerRequest {
-            node_id: self.my_node_id,
-        };
-        self.client.post(url).msgpack(&request)?.send().await?;
+        client
+            .upgrade_learner(UpgradeLearnerRequest {
+                node_id: self.my_node_id,
+            })
+            .await?;
         Ok(())
     }
 
