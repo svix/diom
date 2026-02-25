@@ -153,7 +153,7 @@ async fn run_interserver(
     );
 
     axum::serve(listener, svc)
-        .with_graceful_shutdown(graceful_shutdown_handler())
+        .with_graceful_shutdown(crate::shutting_down_token().cancelled_owned())
         .await
         .unwrap();
 
@@ -243,6 +243,8 @@ pub async fn run_with_prefix(
 
     let interserver_started_barrier = Arc::new(Barrier::new(2));
 
+    tokio::spawn(graceful_shutdown_handler());
+
     let interserver = tokio::spawn(run_interserver(
         cfg.clone(),
         app_state.clone(),
@@ -308,7 +310,7 @@ pub async fn run_with_prefix(
         .expect("bootstrapping failed");
 
     axum::serve(listener, make_svc)
-        .with_graceful_shutdown(graceful_shutdown_handler())
+        .with_graceful_shutdown(crate::shutting_down_token().cancelled_owned())
         .await
         .unwrap();
 

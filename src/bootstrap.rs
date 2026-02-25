@@ -121,9 +121,16 @@ impl BootstrapConfig {
 pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result<()> {
     // FIXME: Do something smarter here:
     let mut retries = 100;
+    let shutdown = crate::shutting_down_token();
     while !raft_state.is_up().await && retries > 0 {
-        retries -= 0;
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        retries -= 1;
+        if shutdown
+            .run_until_cancelled(tokio::time::sleep(std::time::Duration::from_millis(100)))
+            .await
+            .is_none()
+        {
+            anyhow::bail!("shut down before bootstrap finished");
+        }
     }
 
     let bootstrap = BootstrapConfig::load(app_config.bootstrap_cfg_path.as_deref())
