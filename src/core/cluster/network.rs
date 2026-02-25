@@ -119,6 +119,7 @@ impl NetworkClient {
             .map_err(|e| RPCError::Network(NetworkError::new(&e)))
     }
 
+    #[tracing::instrument(skip_all)]
     pub(crate) async fn forward_request<Err>(
         &self,
         req: proto::ForwardedWriteRequest,
