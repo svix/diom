@@ -1,4 +1,9 @@
-use std::{fmt::Write as _, io, process::ExitCode};
+use std::{
+    fmt::Write as _,
+    io,
+    path::{Path, PathBuf},
+    process::ExitCode,
+};
 
 use async_process::{Command, Stdio};
 use futures_lite::future;
@@ -19,6 +24,7 @@ pub(crate) fn run() -> ExitCode {
 async fn format_rust_clients() -> io::Result<()> {
     exec(
         "cargo",
+        &std::env::current_dir().unwrap(),
         ["fmt", "--package=diom-client", "--package=diom-cli"],
     )
     .await
@@ -59,34 +65,54 @@ impl ContainerizedFormatter<'_> {
             cmd,
         } = self;
 
+        let path = std::env::current_dir()?.join("codegen");
+
         let tag = format!("diom-formatter-{container}");
-        let containerfile_path = format!("codegen/formatters/{container}.Containerfile");
+        let containerfile_path = format!("formatters/{container}.Containerfile");
         let mounts: Vec<_> = mounts
             .iter()
-            .map(|(src, dst)| format!("--mount=type=bind,src={src},dst={dst}"))
+            .map(|(src, dst)| {
+                // docker requires that all bind mount paths be absolute
+                let path = PathBuf::from(src);
+                let src = path.canonicalize().unwrap();
+                let src = src.to_string_lossy();
+                format!("--mount=type=bind,src={src},dst={dst}")
+            })
             .collect();
 
-        let args = ["build", "-t", &tag, "-f", &containerfile_path];
-        println!("Running podman with args \"{}\"", args.join(" "));
-        exec("podman", args).await?;
+        let base = if which::which("podman").is_ok() {
+            "podman"
+        } else if which::which("docker").is_ok() {
+            "docker"
+        } else {
+            return Err(io::Error::other("could not find podman or docker in $PATH"));
+        };
+
+        let mut args = vec!["build", "-t", &tag, "-f", &containerfile_path];
+        if base == "docker" {
+            args.push(".");
+        }
+        println!("Running {base} with args \"{}\"", args.join(" "));
+        exec(base, &path, args).await?;
         let args = ["run"]
             .into_iter()
             .chain(mounts.iter().map(|m| m.as_str()))
             .chain([tag.as_str()])
             .chain(cmd.iter().copied());
         println!(
-            "Running podman with args \"{}\"",
+            "Running {base} with args \"{}\"",
             args.clone().collect::<Vec<_>>().join(" ")
         );
-        exec("podman", args).await?;
+        exec(base, &path, args).await?;
 
         Ok(())
     }
 }
 
-async fn exec(cmd: &str, args: impl IntoIterator<Item = &str>) -> io::Result<()> {
+async fn exec(cmd: &str, dir: &Path, args: impl IntoIterator<Item = &str>) -> io::Result<()> {
     let output = Command::new(cmd)
         .args(args)
+        .current_dir(dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -101,7 +127,7 @@ async fn exec(cmd: &str, args: impl IntoIterator<Item = &str>) -> io::Result<()>
     if !output.status.success() {
         let mut msg = format!("{cmd} failed with status {}\n", output.status);
         add_cmd_output(&mut msg, "stdout", &output.stdout);
-        add_cmd_output(&mut msg, "stderr", &output.stdout);
+        add_cmd_output(&mut msg, "stderr", &output.stderr);
         return Err(io::Error::other(msg));
     }
 
