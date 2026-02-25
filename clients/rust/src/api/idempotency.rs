@@ -16,7 +16,7 @@ impl<'a> Idempotency<'a> {
         idempotency_abort_in: IdempotencyAbortIn,
     ) -> Result<IdempotencyAbortOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/idempotency/abort")
-            .with_body_param(idempotency_abort_in)
+            .with_body(idempotency_abort_in)
             .execute(self.cfg)
             .await
     }
@@ -27,7 +27,7 @@ impl<'a> Idempotency<'a> {
         idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
     ) -> Result<IdempotencyGetNamespaceOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/idempotency/get-namespace")
-            .with_body_param(idempotency_get_namespace_in)
+            .with_body(idempotency_get_namespace_in)
             .execute(self.cfg)
             .await
     }
