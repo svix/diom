@@ -1,0 +1,42 @@
+x-coyote-node: &coyote-node
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: "coyote-server"
+  healthcheck:
+    test: ["CMD-SHELL", "coyote healthcheck http://localhost:8050"]
+    interval: 1s
+    timeout: 1s
+    retries: 600
+  environment:
+    COYOTE_LISTEN_ADDRESS: "0.0.0.0:8050"
+    COYOTE_ENVIRONMENT: "dev"
+    # Cluster configuration
+    COYOTE_CLUSTER_LISTEN_ADDRESS: "0.0.0.0:18050"
+    # NOTE: the cluster is not secured with this configuration. Need to set a proper secret.
+    COYOTE_CLUSTER_SECRET: "insecure-cluster"
+    COYOTE_CLUSTER_SEED_NODES: "coyote-node-0:8050, coyote-node-1:8050, coyote-node-2:8050"
+services:
+  coyote-node-0:
+    !!merge <<: *coyote-node
+    ports:
+      - "8050:8050"
+    volumes:
+      - coyote-node-0:/storage
+  coyote-node-1:
+    !!merge <<: *coyote-node
+    ports:
+      - "8051:8050"
+    volumes:
+      - coyote-node-1:/storage
+  coyote-node-2:
+    !!merge <<: *coyote-node
+    ports:
+      - "8052:8050"
+    volumes:
+      - coyote-node-2:/storage
+# FIXME: should we add jaeger and the likes? Or maybe in another file.
+volumes:
+  coyote-node-0:
+  coyote-node-1:
+  coyote-node-2:
