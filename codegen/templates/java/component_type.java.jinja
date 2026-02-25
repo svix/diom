@@ -1,0 +1,12 @@
+// this file is @generated
+package com.svix.coyote.models;
+
+{% if type.kind == "struct" -%}
+    {% include "types/struct.java.jinja" -%}
+{%- elif type.kind == "string_enum"-%}
+    {% include "types/string_enum.java.jinja" -%}
+{%- elif type.kind == "integer_enum" -%}
+    {%- include "types/integer_enum.java.jinja" -%}
+{% elif type.kind == "struct_enum" -%}
+    {% include "types/struct_enum.java.jinja" -%}
+{%- endif %}

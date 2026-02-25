@@ -1,0 +1,90 @@
+{% set resource_type_name = resource.name | to_upper_camel_case -%}
+// this file is @generated
+package com.svix.coyote.apis;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.svix.coyote.ApiException;
+import com.svix.coyote.HttpClient;
+import com.svix.coyote.Utils;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+{%- if resource.subresources | length > 0 %}
+import lombok.Getter;
+{%- endif %}
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+{%- for c in referenced_components %}
+import com.svix.coyote.models.{{ c | to_upper_camel_case }};
+{%- endfor %}
+
+public class {{ resource_type_name }} {
+    private final HttpClient client;
+
+    public {{ resource_type_name }}(HttpClient client) {
+        this.client = client;
+    }
+
+{%- for op in resource.operations %}
+    {%- set throws = "throws IOException, ApiException" %}
+    {%- set res_type = "void" %}
+    {%- if op.response_body_schema_name is defined %}
+        {%- set res_type = op.response_body_schema_name | replace("_", "") %}
+    {%- endif %}
+
+    {{ op.description | with_javadoc_deprecation(op.deprecated) | to_doc_comment(style="java") }}
+    {% if op.deprecated -%}
+    @Deprecated
+    {% endif -%}
+    public {{ res_type }} {{ op.name | to_lower_camel_case }}(
+        {% set func_args -%}
+        {# path parameters -#}
+        {% for p in op.path_params -%}
+            final String {{ p | to_lower_camel_case }},
+        {% endfor -%}
+
+        {# body parameter interface -#}
+        {% if op.request_body_schema_name is defined -%}
+            {% set req_body_field_name = op.request_body_schema_name | to_lower_camel_case -%}
+            final {{ op.request_body_schema_name }} {{ req_body_field_name }},
+        {% endif -%}
+        {% endset -%}
+        {{ func_args | strip_trailing_comma }}
+    ) {{ throws }} {
+        {# path params -#}
+        {% if op.path_params | length > 0 -%}
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath(String.format(
+            "{{ op.path | generate_java_path_str(op.path_params) }}"
+            {%- for p in op.path_params -%}
+            ,
+            {{ p | to_lower_camel_case }}
+            {%- endfor -%}
+        ));
+        {% else -%}
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("{{ op.path }}");
+        {% endif -%}
+
+        {% if res_type != "void" %}return {% endif -%}
+        this.client.executeRequest(
+            "{{ op.method | upper }}",
+            url.build(),
+            null,
+            {# request body -#}
+            {% if op.request_body_schema_name is defined -%}
+            {{ req_body_field_name }},
+            {% else -%}
+            null,
+            {% endif -%}
+            {# response body class -#}
+            {% if op.response_body_schema_name is defined -%}
+            {{ res_type }}.class
+            {% else -%}
+            null
+            {% endif -%}
+        );
+    }
+{%- endfor %}
+}
