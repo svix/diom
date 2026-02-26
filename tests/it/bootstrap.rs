@@ -85,7 +85,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(cache1["storage_type"], "Persistent");
 
     let stream2 = client
-        .post("msgs/topic/get")
+        .post("msgs/namespace/get")
         .json(json!({
             "name": "stream2",
         }))

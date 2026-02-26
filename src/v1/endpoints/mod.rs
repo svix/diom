@@ -8,6 +8,7 @@ pub mod cache;
 pub mod health;
 pub mod idempotency;
 pub mod kv;
+pub mod msgs;
 pub mod queue;
 pub mod rate_limiter;
 pub mod stream;
@@ -21,4 +22,5 @@ pub fn router() -> ApiRouter<AppState> {
         .merge(idempotency::router())
         .merge(queue::router())
         .merge(stream::router())
+        .merge(msgs::router())
 }

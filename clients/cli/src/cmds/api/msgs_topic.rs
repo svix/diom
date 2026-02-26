@@ -22,7 +22,7 @@ pub enum MsgsTopicCommands {
 }
 
 impl MsgsTopicCommands {
-    pub async fn exec(
+    pub async fn _exec(
         self,
         client: &DiomClient,
         color_mode: colored_json::ColorMode,
