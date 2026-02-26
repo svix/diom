@@ -1,0 +1,19 @@
+{% set ty_name = type.name | to_upper_camel_case -%}
+
+import com.fasterxml.jackson.annotation.JsonValue;
+
+public enum {{ ty_name }} {
+    {%- for value in type.values %}
+    {{ value | to_upper_snake_case }}("{{ value }}") {%- if loop.last %};{% else %},{% endif %}
+    {%- endfor %}
+    private final String value;
+
+    {{ ty_name }}(String value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return this.value;
+    }
+}

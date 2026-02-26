@@ -5,6 +5,8 @@ clients/go/apis.go linguist-generated
 clients/go/models.go linguist-generated
 clients/go/internal/apis/** linguist-generated
 clients/go/internal/models/** linguist-generated
+clients/java/src/main/java/com/svix/diom/apis/** linguist-generated
+clients/java/src/main/java/com/svix/diom/models/** linguist-generated
 clients/javascript/src/client.ts linguist-generated
 clients/javascript/src/apis/** linguist-generated
 clients/javascript/src/models/** linguist-generated
