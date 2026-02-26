@@ -8,7 +8,7 @@ x-coyote-node: &coyote-node
     interval: 1s
     timeout: 1s
     retries: 600
-  environment:
+  environment: &coyote-node-env
     COYOTE_LISTEN_ADDRESS: "0.0.0.0:8050"
     COYOTE_ENVIRONMENT: "dev"
     # Cluster configuration
@@ -16,6 +16,8 @@ x-coyote-node: &coyote-node
     # NOTE: the cluster is not secured with this configuration. Need to set a proper secret.
     COYOTE_CLUSTER_SECRET: "insecure-cluster"
     COYOTE_CLUSTER_SEED_NODES: "coyote-node-0:8050, coyote-node-1:8050, coyote-node-2:8050"
+    # It's best practice to only enable it for node-0, but Coyote also supports just turning it on for all.
+    COYOTE_CLUSTER_AUTO_INITIALIZE: false
 services:
   coyote-node-0:
     !!merge <<: *coyote-node
@@ -23,6 +25,9 @@ services:
       - "8050:8050"
     volumes:
       - coyote-node-0:/storage
+    environment:
+      !!merge <<: *coyote-node-env
+      COYOTE_CLUSTER_AUTO_INITIALIZE: true
   coyote-node-1:
     !!merge <<: *coyote-node
     ports:
