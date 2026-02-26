@@ -3,6 +3,8 @@ x-diom-node: &diom-node
     context: .
     dockerfile: Dockerfile
   image: "diom-server"
+  ulimits:
+    memlock: -1
   healthcheck:
     test: ["CMD-SHELL", "diom healthcheck http://localhost:8050"]
     interval: 1s
