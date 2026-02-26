@@ -21,21 +21,6 @@ pub(crate) fn run() -> ExitCode {
 }
 
 async fn format_rust_clients() -> io::Result<()> {
-    for manifest in ["clients/cli/Cargo.toml", "clients/rust/Cargo.toml"] {
-        exec(
-            "cargo",
-            [
-                "+nightly",
-                "clippy",
-                "--fix",
-                "--allow-dirty",
-                "--no-deps",
-                "--manifest-path",
-                manifest,
-            ],
-        )
-        .await?;
-    }
     exec(
         "cargo",
         [
@@ -45,8 +30,7 @@ async fn format_rust_clients() -> io::Result<()> {
             "--package=diom-cli",
         ],
     )
-    .await?;
-    Ok(())
+    .await
 }
 
 async fn format_go_client() -> io::Result<()> {

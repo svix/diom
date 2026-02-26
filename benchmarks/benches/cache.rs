@@ -67,7 +67,7 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                         .unwrap();
                 })
             },
-            BatchSize::SmallInput,
+            criterion::BatchSize::SmallInput,
         )
     });
 
@@ -86,7 +86,7 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                         .unwrap();
                 })
             },
-            BatchSize::SmallInput,
+            criterion::BatchSize::SmallInput,
         )
     });
 
@@ -105,7 +105,7 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                         .unwrap();
                 })
             },
-            BatchSize::SmallInput,
+            criterion::BatchSize::SmallInput,
         )
     });
 
