@@ -276,7 +276,7 @@ macro_rules! jsonschema_for_repr_enum {
 
 string_wrapper!(
     EntityKey,
-    crate::core::types::StringSchema {
+    StringSchema {
         string_validation: Some(json_schema!({
             "maxLength": 256,
             "pattern": r"^[a-zA-Z0-9\-_.]+$",
@@ -286,7 +286,7 @@ string_wrapper!(
 );
 
 impl Validate for EntityKey {
-    fn validate(&self) -> Result<(), validator::ValidationErrors> {
+    fn validate(&self) -> Result<(), ValidationErrors> {
         validate_limited_str(&self.0)
     }
 }

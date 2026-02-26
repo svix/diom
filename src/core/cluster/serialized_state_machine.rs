@@ -198,7 +198,7 @@ pub(crate) fn load_from_file<F: Read + Seek>(dbs: &Databases, f: &mut F) -> anyh
         panic!("unhandled snapshot format {magic:?}");
     }
 
-    let mut z = zip::read::ZipArchive::new(f)?;
+    let mut z = ZipArchive::new(f)?;
 
     let Ok(manifest) = z.by_name("manifest.json") else {
         anyhow::bail!("no manifest.json in archive");
