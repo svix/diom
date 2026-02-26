@@ -53,6 +53,7 @@ pub struct StoreHandle(Arc<TokioRwLock<Store>>);
 pub struct Stores {
     pub databases: Databases,
     pub stream_state: stream_deprecated::State,
+    pub msgs_state: coyote_msgs::State,
 }
 
 impl From<Store> for StoreHandle {
@@ -127,12 +128,15 @@ impl Store {
 
         let stream_state = stream_deprecated::State::init(persistent_db.clone())
             .context("initializing stream state")?;
+        let msgs_state =
+            coyote_msgs::State::init(persistent_db.clone()).context("initializing msgs state")?;
 
         let databases = Databases::new(persistent_db, ephemeral_db);
 
         let stores = Stores {
             databases,
             stream_state,
+            msgs_state,
         };
 
         let mut this = Self {

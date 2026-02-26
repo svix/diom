@@ -1,12 +1,11 @@
 mod ack;
 mod append_to_stream;
-mod create_msg_topic;
 mod dlq;
 mod fetch;
 mod fetch_locking;
 mod redrive;
 
-pub use self::{ack::*, append_to_stream::*, create_msg_topic::*, fetch::*, fetch_locking::*};
+pub use self::{ack::*, append_to_stream::*, fetch::*, fetch_locking::*};
 pub use dlq::*;
 pub use redrive::*;
 
@@ -24,7 +23,6 @@ raft_module_operations!(
     StreamRequest,
     StreamOperation {
         Append(AppendOperation) -> AppendResponseData,
-        CreateMsgTopic(CreateMsgTopicOperation) -> CreateMsgTopicResponseData,
         Ack(AckOperation) -> AckResponseData,
         Fetch(FetchOperation) -> FetchResponseData,
         FetchLocking(FetchLockingOperation) -> FetchLockingResponseData,

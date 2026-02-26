@@ -9,16 +9,16 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use stream_internals::entities::{Retention, default_retention_bytes, default_retention_millis};
 
-use super::{CreateMsgTopicResponse, StreamRaftState, StreamRequest};
+use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateMsgTopicOperation {
+pub struct CreateNamespaceOperation {
     pub name: String,
     pub retention: Retention,
     pub storage_type: StorageType,
 }
 
-impl CreateMsgTopicOperation {
+impl CreateNamespaceOperation {
     pub fn new(name: String, retention: Retention, storage_type: StorageType) -> Self {
         Self {
             name,
@@ -30,7 +30,7 @@ impl CreateMsgTopicOperation {
     fn apply_real(
         self,
         configgroup_state: &coyote_namespace::State,
-    ) -> coyote_operations::Result<CreateMsgTopicResponseData> {
+    ) -> coyote_operations::Result<CreateNamespaceResponseData> {
         let op = CreateNamespace::new(
             self.name,
             StreamConfig {
@@ -45,15 +45,15 @@ impl CreateMsgTopicOperation {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateMsgTopicResponseData {
+pub struct CreateNamespaceResponseData {
     pub name: String,
     pub retention: Retention,
     pub storage_type: StorageType,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
-impl From<CreateNamespaceOutput<StreamConfig>> for CreateMsgTopicResponseData {
+impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
     fn from(value: CreateNamespaceOutput<StreamConfig>) -> Self {
         let millis = u64::try_from(value.config.retention_period.as_millis())
             .ok()
@@ -67,14 +67,14 @@ impl From<CreateNamespaceOutput<StreamConfig>> for CreateMsgTopicResponseData {
             name: value.name,
             retention: Retention { millis, bytes },
             storage_type: value.storage_type,
-            created_at: value.created_at,
-            updated_at: value.updated_at,
+            created: value.created_at,
+            updated: value.updated_at,
         }
     }
 }
 
-impl StreamRequest for CreateMsgTopicOperation {
-    fn apply(self, state: StreamRaftState<'_>) -> CreateMsgTopicResponse {
-        CreateMsgTopicResponse(self.apply_real(state.namespace))
+impl MsgsRequest for CreateNamespaceOperation {
+    fn apply(self, state: MsgsRaftState<'_>) -> CreateNamespaceResponse {
+        CreateNamespaceResponse(self.apply_real(state.namespace))
     }
 }

@@ -193,7 +193,7 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
                     .max_storage_bytes
                     .unwrap_or_else(default_retention_bytes),
             };
-            let operation = stream_deprecated::operations::CreateMsgTopicOperation::new(
+            let operation = coyote_msgs::operations::CreateNamespaceOperation::new(
                 name,
                 retention,
                 cfg.storage_type.into(),

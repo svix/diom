@@ -48,6 +48,14 @@ pub(super) async fn apply_request(
             };
             Response::Stream(req.apply(state))
         }
+        Request::Msgs(req) => {
+            let stores = state_machine.db_handle();
+            let state = coyote_msgs::operations::MsgsRaftState {
+                msgs: &stores.msgs_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::Msgs(req.apply(state))
+        }
         Request::ClusterInternal(req) => {
             Response::ClusterInternal(req.apply(state_machine, log_id).await?)
         }
