@@ -53,7 +53,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
                         .unwrap();
                 })
             },
-            criterion::BatchSize::SmallInput,
+            BatchSize::SmallInput,
         )
     });
 
@@ -72,7 +72,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
                         .unwrap();
                 })
             },
-            criterion::BatchSize::SmallInput,
+            BatchSize::SmallInput,
         )
     });
 
@@ -91,7 +91,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
                         .unwrap();
                 })
             },
-            criterion::BatchSize::SmallInput,
+            BatchSize::SmallInput,
         )
     });
 

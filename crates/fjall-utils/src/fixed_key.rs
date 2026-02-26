@@ -31,12 +31,12 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
             })
     }
 
-    pub fn store(&self, keyspace: &fjall::Keyspace, value: &T) -> diom_error::Result<()> {
+    pub fn store(&self, keyspace: &fjall::Keyspace, value: &T) -> Result<()> {
         let serialized = rmp_serde::encode::to_vec_named(&value).map_err_generic()?;
         keyspace.insert(self.key, serialized).map_err_generic()
     }
 
-    pub fn remove(&self, keyspace: &fjall::Keyspace) -> diom_error::Result<()> {
+    pub fn remove(&self, keyspace: &fjall::Keyspace) -> Result<()> {
         keyspace.remove(self.key).map_err_generic()
     }
 
@@ -45,7 +45,7 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
         tx: &mut fjall::OwnedWriteBatch,
         keyspace: &fjall::Keyspace,
         value: &T,
-    ) -> diom_error::Result<()> {
+    ) -> Result<()> {
         let serialized = rmp_serde::encode::to_vec_named(&value).map_err_generic()?;
         tx.insert(keyspace, self.key, serialized);
         Ok(())
@@ -55,7 +55,7 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
         &self,
         tx: &mut fjall::OwnedWriteBatch,
         keyspace: &fjall::Keyspace,
-    ) -> diom_error::Result<()> {
+    ) -> Result<()> {
         tx.remove(keyspace, self.key);
         Ok(())
     }

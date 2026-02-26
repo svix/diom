@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
 
 use super::{
@@ -7,7 +9,7 @@ use super::{
     operations::{InternalRequest, InternalResponse},
     raft::Raft,
 };
-use anyhow::{Context, Result};
+use anyhow::Context;
 use diom_operations::{OperationRequest, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
@@ -17,8 +19,8 @@ pub enum ResponseParseError {
     InvalidVariant,
 }
 
-impl std::fmt::Display for ResponseParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ResponseParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{self:?}")
     }
 }
@@ -46,8 +48,8 @@ pub enum Request {
     Stream(stream_deprecated::operations::StreamOperation),
 }
 
-impl std::fmt::Display for Request {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Request {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Request::ClusterInternal(_) => write!(f, "cluster_internal"),
             Request::Kv(_) => write!(f, "kv"),
@@ -110,8 +112,8 @@ impl From<stream_deprecated::operations::StreamOperation> for Request {
     }
 }
 
-impl From<super::operations::InternalRequest> for Request {
-    fn from(value: super::operations::InternalRequest) -> Self {
+impl From<InternalRequest> for Request {
+    fn from(value: InternalRequest) -> Self {
         Self::ClusterInternal(value)
     }
 }
@@ -218,7 +220,7 @@ impl TryFrom<Response> for stream_deprecated::operations::Response {
     }
 }
 
-impl TryFrom<Response> for super::operations::InternalResponse {
+impl TryFrom<Response> for InternalResponse {
     type Error = ResponseParseError;
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
@@ -247,10 +249,10 @@ impl RaftState {
         <<O as OperationRequest>::Response as OperationResponse>::ResponseParent: TryFrom<Response>,
         <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryFrom<
             Response,
-        >>::Error: std::fmt::Debug,
+        >>::Error: fmt::Debug,
         <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryInto<
             <O as OperationRequest>::Response,
-        >>::Error: std::fmt::Debug,
+        >>::Error: fmt::Debug,
     {
         let request = op.into().into();
         let response = match self.raft.client_write(request.clone()).await {
@@ -302,7 +304,7 @@ impl RaftState {
         Ok(resp)
     }
 
-    pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> Result<()> {
+    pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> anyhow::Result<()> {
         let network = NetworkFactory::new(&cfg)?;
         let has_cluster = self
             .raft

@@ -62,7 +62,7 @@ pub(crate) enum Connector {
 // FIXME: If we ever do a breaking release, change this
 // to be fallible and bubble the error up from `Svix::new`.
 pub(crate) fn make_connector(proxy_addr: Option<String>) -> Connector {
-    let mut http = hyper_util::client::legacy::connect::HttpConnector::new();
+    let mut http = HttpConnector::new();
     if cfg!(any(feature = "native-tls", feature = "rustls-tls")) {
         http.enforce_http(false);
     }

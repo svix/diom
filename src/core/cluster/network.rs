@@ -74,7 +74,7 @@ impl NetworkClient {
         &self,
         path: &str,
         req: Req,
-    ) -> Result<Resp, openraft::error::RPCError<NodeId, Node, Err>>
+    ) -> Result<Resp, RPCError<NodeId, Node, Err>>
     where
         Req: Serialize,
         Err: std::error::Error + DeserializeOwned,
@@ -136,7 +136,7 @@ impl NetworkClient {
     pub(crate) async fn forward_request<Err>(
         &self,
         req: proto::ForwardedWriteRequest,
-    ) -> Result<proto::ForwardedWriteResponse, openraft::error::RPCError<NodeId, Node, Err>>
+    ) -> Result<proto::ForwardedWriteResponse, RPCError<NodeId, Node, Err>>
     where
         Err: std::error::Error + DeserializeOwned,
     {
@@ -147,18 +147,14 @@ impl NetworkClient {
     pub(super) async fn add_learner(
         &self,
         req: proto::AddLearnerRequest,
-    ) -> Result<proto::AddLearnerResponse, openraft::error::RPCError<NodeId, Node, UnreachableError>>
-    {
+    ) -> Result<proto::AddLearnerResponse, RPCError<NodeId, Node, UnreachableError>> {
         self.send_request("/repl/raft/admin/add-learner", req).await
     }
 
     pub(super) async fn upgrade_learner(
         &self,
         req: proto::UpgradeLearnerRequest,
-    ) -> Result<
-        proto::UpgradeLearnerResponse,
-        openraft::error::RPCError<NodeId, Node, UnreachableError>,
-    > {
+    ) -> Result<proto::UpgradeLearnerResponse, RPCError<NodeId, Node, UnreachableError>> {
         self.send_request("/repl/raft/admin/upgrade-learner", req)
             .await
     }

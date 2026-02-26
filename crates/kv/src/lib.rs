@@ -7,7 +7,7 @@ use diom_namespace::{
     Namespace,
     entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig},
 };
-use fjall::{Database, KeyspaceCreateOptions};
+use fjall::KeyspaceCreateOptions;
 use fjall_utils::{TableRow, WriteBatchExt};
 use hashlink::{LinkedHashMap, linked_hash_map::RawEntryMut};
 use jiff::Timestamp;
@@ -59,7 +59,7 @@ const EXPIRATION_BATCH_SIZE: usize = 100; // FIXME(@svix-lucho): make this confi
 impl KvStore {
     pub fn new(
         namespace: &str,
-        db: Database,
+        db: fjall::Database,
         policy: EvictionPolicy,
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
@@ -380,7 +380,7 @@ mod tests {
 
         fn new_with_policy(policy: EvictionPolicy) -> Self {
             let workdir = tempfile::tempdir().unwrap();
-            let db = Database::builder(workdir.as_ref())
+            let db = fjall::Database::builder(workdir.as_ref())
                 .temporary(true)
                 .open()
                 .unwrap();

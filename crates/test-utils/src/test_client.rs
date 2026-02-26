@@ -5,7 +5,7 @@ use std::{
 };
 
 use bytes::Bytes;
-use http::{HeaderMap, HeaderName, HeaderValue, Method, header};
+use http::{HeaderMap, HeaderName, HeaderValue, header};
 use http_body_util::BodyExt as _;
 use reqwest::StatusCode;
 use serde::Serialize;
@@ -59,23 +59,23 @@ impl TestClient {
     }
 
     pub fn get(&self, endpoint: impl Into<String>) -> TestRequestBuilder<'_> {
-        self.request(Method::GET, endpoint)
+        self.request(http::Method::GET, endpoint)
     }
 
     pub fn post(&self, endpoint: impl Into<String>) -> TestRequestBuilder<'_> {
-        self.request(Method::POST, endpoint)
+        self.request(http::Method::POST, endpoint)
     }
 
     pub fn put(&self, endpoint: impl Into<String>) -> TestRequestBuilder<'_> {
-        self.request(Method::PUT, endpoint)
+        self.request(http::Method::PUT, endpoint)
     }
 
     pub fn delete(&self, endpoint: impl Into<String>) -> TestRequestBuilder<'_> {
-        self.request(Method::DELETE, endpoint)
+        self.request(http::Method::DELETE, endpoint)
     }
 
     pub fn patch(&self, endpoint: impl Into<String>) -> TestRequestBuilder<'_> {
-        self.request(Method::PATCH, endpoint)
+        self.request(http::Method::PATCH, endpoint)
     }
 
     pub fn request(
@@ -100,7 +100,7 @@ impl TestClient {
 
 pub struct TestRequestBuilder<'a> {
     client: &'a TestClient,
-    method: Method,
+    method: http::Method,
     endpoint: String,
     headers: HeaderMap,
     body: Option<Bytes>,
