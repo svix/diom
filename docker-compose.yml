@@ -3,6 +3,8 @@ x-coyote-node: &coyote-node
     context: .
     dockerfile: Dockerfile
   image: "coyote-server"
+  ulimits:
+    memlock: -1
   healthcheck:
     test: ["CMD-SHELL", "coyote healthcheck http://localhost:8050"]
     interval: 1s
