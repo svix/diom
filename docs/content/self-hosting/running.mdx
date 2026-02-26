@@ -1,0 +1,27 @@
+# Running Coyote
+
+Coyote works out of the box using the default configuration.
+
+## Docker
+
+```sh
+docker run --ulimit memlock=-1 svix/coyote
+```
+
+## Docker Compose
+
+```sh
+# Download the Coyote Docker Compose file
+curl -O https://raw.githubusercontent.com/svix/coyote/main/contrib/docker-compose.yml
+
+# Run Coyote in the foreground
+docker compose up
+```
+
+## Kubernetes Operator
+
+## Kubernetes Helm Chart
+
+## Coyote Cloud
+
+Easiest.
