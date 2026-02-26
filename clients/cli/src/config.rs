@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use anyhow::Context as _;
 use config::FileFormat;
@@ -22,12 +22,14 @@ impl Config {
             .to_str()
             .context("non-UTF8 config file path")?;
 
-        let config = config::Config::builder()
-            .add_source(config::File::new(cfg_file, FileFormat::Toml))
-            .add_source(config::Environment::with_prefix("COYOTE"))
-            .build()?;
+        let mut builder = config::Config::builder();
+        if fs::exists(cfg_file)? {
+            builder = builder.add_source(config::File::new(cfg_file, FileFormat::Toml));
+        }
 
-        config
+        builder
+            .add_source(config::Environment::with_prefix("COYOTE"))
+            .build()?
             .try_deserialize()
             .context("failed to extract configuration")
     }
@@ -47,7 +49,7 @@ const FILE_NAME: &str = "config.toml";
 fn get_folder() -> anyhow::Result<PathBuf> {
     Ok(dirs::config_dir()
         .context("unable to find config path")?
-        .join("svix"))
+        .join("coyote"))
 }
 
 pub fn get_config_file_path() -> anyhow::Result<PathBuf> {
