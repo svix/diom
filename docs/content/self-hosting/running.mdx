@@ -1,8 +1,10 @@
 # Running Coyote
 
-Coyote works out of the box using the default configuration.
+Coyote works out of the box using the default configuration and supports a variety of deployment options.
 
 ## Docker
+
+Make sure you have Docker installed, and run:
 
 ```sh
 docker run --ulimit memlock=-1 svix/coyote
@@ -10,9 +12,11 @@ docker run --ulimit memlock=-1 svix/coyote
 
 ## Docker Compose
 
+Make sure you have both Docker and Docker Compose installed, and run:
+
 ```sh
 # Download the Coyote Docker Compose file
-curl -O https://raw.githubusercontent.com/svix/coyote/main/contrib/docker-compose.yml
+curl -O https://raw.githubusercontent.com/svix/coyote/refs/heads/main/docker-compose.yml
 
 # Run Coyote in the foreground
 docker compose up
@@ -20,7 +24,15 @@ docker compose up
 
 ## Kubernetes Operator
 
+The k8s operator is not yet released, please contact us to test early versions.
+
 ## Kubernetes Helm Chart
+
+The k8s helm chart is not yet released, please contact us to test early versions.
+
+## Binary and packages
+
+Coyote is a single binary and can be run directly as well. We don't currently publish binaries, but please let us know if you require ones, we would be happy to help.
 
 ## Coyote Cloud
 
