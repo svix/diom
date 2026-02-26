@@ -2,8 +2,6 @@
 use clap::{Args, Subcommand};
 use coyote_client::CoyoteClient;
 
-use super::MsgsTopicArgs;
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct MsgsArgs {
@@ -12,22 +10,14 @@ pub struct MsgsArgs {
 }
 
 #[derive(Subcommand)]
-pub enum MsgsCommands {
-    Topic(MsgsTopicArgs),
-}
+pub enum MsgsCommands {}
 
 impl MsgsCommands {
     pub async fn exec(
         self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
+        _client: &CoyoteClient,
+        _color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
-        match self {
-            Self::Topic(args) => {
-                args.command.exec(client, color_mode).await?;
-            }
-        }
-
         Ok(())
     }
 }
