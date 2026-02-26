@@ -6,6 +6,7 @@ persistent_db.path = "./db-third"
 ephemeral_db.path = "./db-third-ephemeral"
 
 [cluster]
+secret = "hunter2"
 listen_address = "127.0.0.1:18052"
 log_path = "./logs-third"
 snapshot_path = "./snapshots-third"

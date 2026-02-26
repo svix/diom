@@ -15,6 +15,7 @@ use openraft::{
     network::RPCOption,
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use tap::Pipe;
 
 pub(super) fn build_client(
     cfg: &Configuration,
@@ -38,12 +39,14 @@ pub(super) fn build_client(
 #[derive(Clone)]
 pub(super) struct NetworkFactory {
     client: reqwest::Client,
+    cfg: Configuration,
 }
 
 impl NetworkFactory {
     pub(super) fn new(cfg: &Configuration) -> anyhow::Result<Self> {
         Ok(Self {
             client: build_client(cfg, cfg.cluster.replication_request_timeout)?,
+            cfg: cfg.clone(),
         })
     }
 }
@@ -67,9 +70,11 @@ pub(super) struct NetworkClient {
     target: NodeId,
     node: Node,
     client: reqwest::Client,
+    cfg: Configuration,
 }
 
 impl NetworkClient {
+    #[allow(clippy::result_large_err)]
     async fn send_request<Req, Resp, Err>(
         &self,
         path: &str,
@@ -105,6 +110,20 @@ impl NetworkClient {
                 header::ACCEPT,
                 "application/msgpack;q=0.9, application/json;q=0.5",
             )
+            .pipe(
+                |this| -> Result<reqwest::RequestBuilder, RPCError<NodeId, Node, Err>> {
+                    if let Some(secret) = &self.cfg.cluster.secret {
+                        let auth = format!("Bearer {secret}");
+                        let auth = HeaderValue::from_str(&auth).map_err(|err| {
+                            tracing::warn!("invalid interserver secret value");
+                            RPCError::Network::<NodeId, Node, Err>(NetworkError::new(&err))
+                        })?;
+                        Ok(this.header(header::AUTHORIZATION, auth))
+                    } else {
+                        Ok(this)
+                    }
+                },
+            )?
             .send()
             .await
             .map_err(|e| {
@@ -218,6 +237,7 @@ impl NetworkFactory {
             target,
             node: node.clone(),
             client: self.client.clone(),
+            cfg: self.cfg.clone(),
         }
     }
 }
