@@ -10,5 +10,5 @@ mod stream;
 
 pub(crate) use self::{
     cache::CacheArgs, health::HealthArgs, idempotency::IdempotencyArgs, kv::KvArgs, msgs::MsgsArgs,
-    msgs_topic::MsgsTopicArgs, rate_limiter::RateLimiterArgs, stream::StreamArgs,
+    rate_limiter::RateLimiterArgs, stream::StreamArgs,
 };
