@@ -13,15 +13,15 @@ from .cache_get_namespace_out import CacheGetNamespaceOut
 from .cache_get_out import CacheGetOut
 from .cache_set_in import CacheSetIn
 from .cache_set_out import CacheSetOut
-from .create_stream_in import CreateStreamIn
-from .create_stream_out import CreateStreamOut
+from .create_msg_topic_in import CreateMsgTopicIn
+from .create_msg_topic_out import CreateMsgTopicOut
 from .dlq_in import DlqIn
 from .dlq_out import DlqOut
 from .eviction_policy import EvictionPolicy
 from .fetch_from_stream_in import FetchFromStreamIn
 from .fetch_from_stream_out import FetchFromStreamOut
-from .get_stream_in import GetStreamIn
-from .get_stream_out import GetStreamOut
+from .get_msg_topic_in import GetMsgTopicIn
+from .get_msg_topic_out import GetMsgTopicOut
 from .idempotency_abort_in import IdempotencyAbortIn
 from .idempotency_abort_out import IdempotencyAbortOut
 from .idempotency_get_namespace_in import IdempotencyGetNamespaceIn
@@ -47,6 +47,7 @@ from .rate_limiter_get_remaining_out import RateLimiterGetRemainingOut
 from .rate_limiter_token_bucket_config import RateLimiterTokenBucketConfig
 from .redrive_in import RedriveIn
 from .redrive_out import RedriveOut
+from .retention import Retention
 from .storage_type import StorageType
 
 
@@ -65,15 +66,15 @@ __all__ = [
     "CacheGetOut",
     "CacheSetIn",
     "CacheSetOut",
-    "CreateStreamIn",
-    "CreateStreamOut",
+    "CreateMsgTopicIn",
+    "CreateMsgTopicOut",
     "DlqIn",
     "DlqOut",
     "EvictionPolicy",
     "FetchFromStreamIn",
     "FetchFromStreamOut",
-    "GetStreamIn",
-    "GetStreamOut",
+    "GetMsgTopicIn",
+    "GetMsgTopicOut",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",
     "IdempotencyGetNamespaceIn",
@@ -99,5 +100,6 @@ __all__ = [
     "RateLimiterTokenBucketConfig",
     "RedriveIn",
     "RedriveOut",
+    "Retention",
     "StorageType",
 ]

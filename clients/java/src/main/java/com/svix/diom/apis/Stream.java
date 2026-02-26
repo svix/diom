@@ -19,14 +19,10 @@ import com.svix.diom.models.AckMsgRangeOut;
 import com.svix.diom.models.AckOut;
 import com.svix.diom.models.AppendToStreamIn;
 import com.svix.diom.models.AppendToStreamOut;
-import com.svix.diom.models.CreateStreamIn;
-import com.svix.diom.models.CreateStreamOut;
 import com.svix.diom.models.DlqIn;
 import com.svix.diom.models.DlqOut;
 import com.svix.diom.models.FetchFromStreamIn;
 import com.svix.diom.models.FetchFromStreamOut;
-import com.svix.diom.models.GetStreamIn;
-import com.svix.diom.models.GetStreamOut;
 import com.svix.diom.models.RedriveIn;
 import com.svix.diom.models.RedriveOut;
 
@@ -35,34 +31,6 @@ public class Stream {
 
     public Stream(HttpClient client) {
         this.client = client;
-    }
-
-    /** Upserts a new Stream with the given name. */
-    public CreateStreamOut create(
-        final CreateStreamIn createStreamIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/stream/create");
-        return this.client.executeRequest(
-            "POST",
-            url.build(),
-            null,
-            createStreamIn,
-            CreateStreamOut.class
-            );
-    }
-
-    /** Get stream with given name. */
-    public GetStreamOut get(
-        final GetStreamIn getStreamIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/stream/get-namespace");
-        return this.client.executeRequest(
-            "POST",
-            url.build(),
-            null,
-            getStreamIn,
-            GetStreamOut.class
-            );
     }
 
     /** Appends messages to the stream. */

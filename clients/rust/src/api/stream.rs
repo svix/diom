@@ -10,22 +10,6 @@ impl<'a> Stream<'a> {
         Self { cfg }
     }
 
-    /// Upserts a new Stream with the given name.
-    pub async fn create(&self, create_stream_in: CreateStreamIn) -> Result<CreateStreamOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/stream/create")
-            .with_body_param(create_stream_in)
-            .execute(self.cfg)
-            .await
-    }
-
-    /// Get stream with given name.
-    pub async fn get(&self, get_stream_in: GetStreamIn) -> Result<GetStreamOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/stream/get-namespace")
-            .with_body_param(get_stream_in)
-            .execute(self.cfg)
-            .await
-    }
-
     /// Appends messages to the stream.
     pub async fn append(&self, append_to_stream_in: AppendToStreamIn) -> Result<AppendToStreamOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/append")

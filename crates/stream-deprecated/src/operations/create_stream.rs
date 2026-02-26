@@ -1,4 +1,4 @@
-use std::num::NonZeroU64;
+use std::{num::NonZeroU64, time::Duration};
 
 use super::{CreateStreamResponse, StreamRaftState, StreamRequest};
 use diom_namespace::{
@@ -12,20 +12,20 @@ use serde::{Deserialize, Serialize};
 pub struct CreateStreamOperation {
     name: String,
     storage_type: StorageType,
-    retention_period_seconds: Option<NonZeroU64>,
+    retention_period: Duration,
     max_byte_size: Option<NonZeroU64>,
 }
 
 impl CreateStreamOperation {
     pub fn new(
         name: String,
-        retention_period_seconds: Option<NonZeroU64>,
+        retention_period: Duration,
         storage_type: StorageType,
         max_byte_size: Option<NonZeroU64>,
     ) -> Self {
         Self {
             name,
-            retention_period_seconds,
+            retention_period,
             storage_type,
             max_byte_size,
         }
@@ -46,7 +46,7 @@ impl From<CreateStreamOperation> for CreateNamespace<StreamConfig> {
         CreateNamespace::new(
             value.name,
             StreamConfig {
-                retention_period_seconds: value.retention_period_seconds,
+                retention_period: value.retention_period,
             },
             StorageType::default(),
             value.max_byte_size,
@@ -57,7 +57,7 @@ impl From<CreateStreamOperation> for CreateNamespace<StreamConfig> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateStreamResponseData {
     pub name: String,
-    pub retention_period_seconds: Option<NonZeroU64>,
+    pub retention_period: Duration,
     pub storage_type: StorageType,
     pub max_byte_size: Option<NonZeroU64>,
     pub created_at: Timestamp,
@@ -68,7 +68,7 @@ impl From<CreateNamespaceOutput<StreamConfig>> for CreateStreamResponseData {
     fn from(value: CreateNamespaceOutput<StreamConfig>) -> Self {
         Self {
             name: value.name,
-            retention_period_seconds: value.config.retention_period_seconds,
+            retention_period: value.config.retention_period,
             max_byte_size: value.max_storage_bytes,
             storage_type: value.storage_type,
             created_at: value.created_at,

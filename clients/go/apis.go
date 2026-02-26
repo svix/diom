@@ -30,6 +30,12 @@ func (diom Diom) Kv() Kv {
 	return diom_apis.NewKv(&diom.inner)
 }
 
+type Msgs = diom_apis.Msgs
+
+func (diom Diom) Msgs() Msgs {
+	return diom_apis.NewMsgs(&diom.inner)
+}
+
 type RateLimiter = diom_apis.RateLimiter
 
 func (diom Diom) RateLimiter() RateLimiter {

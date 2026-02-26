@@ -11,14 +11,6 @@ pub struct StreamArgs {
 
 #[derive(Subcommand)]
 pub enum StreamCommands {
-    /// Upserts a new Stream with the given name.
-    Create {
-        create_stream_in: crate::json::JsonOf<diom_client::models::CreateStreamIn>,
-    },
-    /// Get stream with given name.
-    Get {
-        get_stream_in: crate::json::JsonOf<diom_client::models::GetStreamIn>,
-    },
     /// Appends messages to the stream.
     Append {
         append_to_stream_in: crate::json::JsonOf<diom_client::models::AppendToStreamIn>,
@@ -63,17 +55,6 @@ impl StreamCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
-            Self::Create { create_stream_in } => {
-                let resp = client
-                    .stream()
-                    .create(create_stream_in.into_inner())
-                    .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
-            }
-            Self::Get { get_stream_in } => {
-                let resp = client.stream().get(get_stream_in.into_inner()).await?;
-                crate::json::print_json_output(&resp, color_mode)?;
-            }
             Self::Append {
                 append_to_stream_in,
             } => {

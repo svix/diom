@@ -9,6 +9,8 @@ from .idempotency import Idempotency, IdempotencyAsync
 
 from .kv import Kv, KvAsync
 
+from .msgs import Msgs, MsgsAsync
+
 from .rate_limiter import RateLimiter, RateLimiterAsync
 
 from .stream import Stream, StreamAsync
@@ -32,6 +34,10 @@ class DiomAsync(ClientBase):
     @property
     def kv(self) -> KvAsync:
         return KvAsync(self._client)
+
+    @property
+    def msgs(self) -> MsgsAsync:
+        return MsgsAsync(self._client)
 
     @property
     def rate_limiter(self) -> RateLimiterAsync:
@@ -58,6 +64,10 @@ class Diom(ClientBase):
     @property
     def kv(self) -> Kv:
         return Kv(self._client)
+
+    @property
+    def msgs(self) -> Msgs:
+        return Msgs(self._client)
 
     @property
     def rate_limiter(self) -> RateLimiter:

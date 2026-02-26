@@ -1,7 +1,4 @@
-use std::{
-    fmt::{self, Debug, Display, Formatter},
-    num::NonZeroU64,
-};
+use std::fmt::{self, Debug, Display, Formatter};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -50,9 +47,7 @@ pub enum EvictionPolicy {
     LeastRecentlyUsed,
 }
 
-pub trait ModuleConfig:
-    Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned + JsonSchema
-{
+pub trait ModuleConfig: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned {
     fn module() -> Module;
 
     fn eviction_policy(&self) -> EvictionPolicy {
@@ -91,10 +86,8 @@ impl ModuleConfig for CacheConfig {
         Module::Cache
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
-pub struct StreamConfig {
-    pub retention_period_seconds: Option<NonZeroU64>,
-}
+
+pub use stream_internals::entities::StreamConfig;
 
 impl ModuleConfig for StreamConfig {
     fn module() -> Module {

@@ -5,6 +5,7 @@ import { Cache } from "./apis/cache";
 import { Health } from "./apis/health";
 import { Idempotency } from "./apis/idempotency";
 import { Kv } from "./apis/kv";
+import { Msgs } from "./apis/msgs";
 import { RateLimiter } from "./apis/rateLimiter";
 import { Stream } from "./apis/stream";
 
@@ -13,6 +14,7 @@ export {
   Health,
   Idempotency,
   Kv,
+  Msgs,
   RateLimiter,
   Stream,
 };
@@ -38,6 +40,10 @@ export class Diom {
 
   public get kv(){
     return new Kv(this.requestCtx);
+  }
+
+  public get msgs(){
+    return new Msgs(this.requestCtx);
   }
 
   public get rateLimiter(){

@@ -19,15 +19,15 @@ type (
 	CacheGetOut                  = diom_models.CacheGetOut
 	CacheSetIn                   = diom_models.CacheSetIn
 	CacheSetOut                  = diom_models.CacheSetOut
-	CreateStreamIn               = diom_models.CreateStreamIn
-	CreateStreamOut              = diom_models.CreateStreamOut
+	CreateMsgTopicIn             = diom_models.CreateMsgTopicIn
+	CreateMsgTopicOut            = diom_models.CreateMsgTopicOut
 	DlqIn                        = diom_models.DlqIn
 	DlqOut                       = diom_models.DlqOut
 	EvictionPolicy               = diom_models.EvictionPolicy
 	FetchFromStreamIn            = diom_models.FetchFromStreamIn
 	FetchFromStreamOut           = diom_models.FetchFromStreamOut
-	GetStreamIn                  = diom_models.GetStreamIn
-	GetStreamOut                 = diom_models.GetStreamOut
+	GetMsgTopicIn                = diom_models.GetMsgTopicIn
+	GetMsgTopicOut               = diom_models.GetMsgTopicOut
 	IdempotencyAbortIn           = diom_models.IdempotencyAbortIn
 	IdempotencyAbortOut          = diom_models.IdempotencyAbortOut
 	IdempotencyGetNamespaceIn    = diom_models.IdempotencyGetNamespaceIn
@@ -53,5 +53,6 @@ type (
 	RateLimiterTokenBucketConfig = diom_models.RateLimiterTokenBucketConfig
 	RedriveIn                    = diom_models.RedriveIn
 	RedriveOut                   = diom_models.RedriveOut
+	Retention                    = diom_models.Retention
 	StorageType                  = diom_models.StorageType
 )

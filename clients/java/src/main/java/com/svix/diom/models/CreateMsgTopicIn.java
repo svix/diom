@@ -27,11 +27,13 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
-public class GetStreamIn {
+public class CreateMsgTopicIn {
 @JsonProperty private String name;
-public GetStreamIn () {}
+@JsonProperty private Retention retention;
+@JsonProperty("storage_type") private StorageType storageType;
+public CreateMsgTopicIn () {}
 
- public GetStreamIn name(String name) {
+ public CreateMsgTopicIn name(String name) {
         this.name = name;
         return this;
     }
@@ -50,19 +52,57 @@ public GetStreamIn () {}
         this.name = name;
     }
 
-    /**
-     * Create an instance of GetStreamIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of GetStreamIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to GetStreamIn
-     */
-    public static GetStreamIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, GetStreamIn.class);
+     public CreateMsgTopicIn retention(Retention retention) {
+        this.retention = retention;
+        return this;
     }
 
     /**
-     * Convert an instance of GetStreamIn to an JSON string
+    * Get retention
+    *
+     * @return retention
+     */
+    @javax.annotation.Nullable
+     public Retention getRetention() {
+        return retention;
+    }
+
+     public void setRetention(Retention retention) {
+        this.retention = retention;
+    }
+
+     public CreateMsgTopicIn storageType(StorageType storageType) {
+        this.storageType = storageType;
+        return this;
+    }
+
+    /**
+    * Get storageType
+    *
+     * @return storageType
+     */
+    @javax.annotation.Nullable
+     public StorageType getStorageType() {
+        return storageType;
+    }
+
+     public void setStorageType(StorageType storageType) {
+        this.storageType = storageType;
+    }
+
+    /**
+     * Create an instance of CreateMsgTopicIn given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of CreateMsgTopicIn
+     * @throws JsonProcessingException if the JSON string is invalid with respect to CreateMsgTopicIn
+     */
+    public static CreateMsgTopicIn fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, CreateMsgTopicIn.class);
+    }
+
+    /**
+     * Convert an instance of CreateMsgTopicIn to an JSON string
      *
      * @return JSON string
      */

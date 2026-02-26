@@ -17,38 +17,6 @@ func NewStream(client *diom_proto.HttpClient) Stream {
 	return Stream{client}
 }
 
-// Upserts a new Stream with the given name.
-func (stream Stream) Create(
-	ctx context.Context,
-	createStreamIn diom_models.CreateStreamIn,
-) (*diom_models.CreateStreamOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.CreateStreamIn, diom_models.CreateStreamOut](
-		ctx,
-		stream.client,
-		"POST",
-		"/api/v1/stream/create",
-		nil,
-		nil,
-		&createStreamIn,
-	)
-}
-
-// Get stream with given name.
-func (stream Stream) Get(
-	ctx context.Context,
-	getStreamIn diom_models.GetStreamIn,
-) (*diom_models.GetStreamOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.GetStreamIn, diom_models.GetStreamOut](
-		ctx,
-		stream.client,
-		"POST",
-		"/api/v1/stream/get-namespace",
-		nil,
-		nil,
-		&getStreamIn,
-	)
-}
-
 // Appends messages to the stream.
 func (stream Stream) Append(
 	ctx context.Context,

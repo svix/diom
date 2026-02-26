@@ -25,14 +25,6 @@ import {
     AppendToStreamOutSerializer,
 } from '../models/appendToStreamOut';
 import {
-    type CreateStreamIn,
-    CreateStreamInSerializer,
-} from '../models/createStreamIn';
-import {
-    type CreateStreamOut,
-    CreateStreamOutSerializer,
-} from '../models/createStreamOut';
-import {
     type DlqIn,
     DlqInSerializer,
 } from '../models/dlqIn';
@@ -49,14 +41,6 @@ import {
     FetchFromStreamOutSerializer,
 } from '../models/fetchFromStreamOut';
 import {
-    type GetStreamIn,
-    GetStreamInSerializer,
-} from '../models/getStreamIn';
-import {
-    type GetStreamOut,
-    GetStreamOutSerializer,
-} from '../models/getStreamOut';
-import {
     type RedriveIn,
     RedriveInSerializer,
 } from '../models/redriveIn';
@@ -68,46 +52,6 @@ import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
 
 export class Stream {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
-
-    /** Upserts a new Stream with the given name. */
-        public create(
-            createStreamIn: CreateStreamIn,
-            ): Promise<CreateStreamOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/create");
-
-            request.setBody(
-                    CreateStreamInSerializer._toJsonObject(
-                        createStreamIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    CreateStreamOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /** Get stream with given name. */
-        public get(
-            getStreamIn: GetStreamIn,
-            ): Promise<GetStreamOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/stream/get-namespace");
-
-            request.setBody(
-                    GetStreamInSerializer._toJsonObject(
-                        getStreamIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    GetStreamOutSerializer._fromJsonObject,
-                );
-            }
-
-        
 
     /** Appends messages to the stream. */
         public append(
