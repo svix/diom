@@ -33,7 +33,7 @@ pub fn setup_single_server() -> BenchmarkContext {
 
     let server_url = Some(format!("http://{}", server.addr));
 
-    let client = coyote_client::CoyoteClient::new(
+    let client = CoyoteClient::new(
         server.token.clone(),
         Some(CoyoteOptions {
             debug: false,
@@ -86,7 +86,7 @@ async fn make_sure_cluster_sane_and_get_client(
         anyhow::bail!("Expected {expected_followers} servers, got {followers}");
     }
 
-    let client = coyote_client::CoyoteClient::new(
+    let client = CoyoteClient::new(
         servers[0].token.clone(),
         Some(CoyoteOptions {
             debug: false,

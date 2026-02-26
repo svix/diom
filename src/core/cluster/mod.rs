@@ -23,5 +23,5 @@ pub use self::{
     state_machine::Stores,
 };
 
-pub type NodeId = <raft::TypeConfig as RaftTypeConfig>::NodeId;
-type Node = <raft::TypeConfig as RaftTypeConfig>::Node;
+pub type NodeId = <TypeConfig as RaftTypeConfig>::NodeId;
+type Node = <TypeConfig as RaftTypeConfig>::Node;

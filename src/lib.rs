@@ -114,7 +114,7 @@ pub async fn run(cfg: Configuration) {
 #[derive(Clone)]
 pub struct AppState {
     cfg: Configuration,
-    rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
+    rate_limiter: v1::modules::rate_limiter::RateLimiter,
 
     namespace_state: coyote_namespace::State,
 
@@ -153,7 +153,7 @@ async fn run_interserver(
     );
 
     axum::serve(listener, svc)
-        .with_graceful_shutdown(crate::shutting_down_token().cancelled_owned())
+        .with_graceful_shutdown(shutting_down_token().cancelled_owned())
         .await
         .unwrap();
 
@@ -175,7 +175,7 @@ impl AppState {
 
         AppState {
             cfg,
-            rate_limiter: crate::v1::modules::rate_limiter::RateLimiter::new(
+            rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
                 "rate_limiter_default",
                 persistent_db,
             ),
@@ -310,7 +310,7 @@ pub async fn run_with_prefix(
         .expect("bootstrapping failed");
 
     axum::serve(listener, make_svc)
-        .with_graceful_shutdown(crate::shutting_down_token().cancelled_owned())
+        .with_graceful_shutdown(shutting_down_token().cancelled_owned())
         .await
         .unwrap();
 

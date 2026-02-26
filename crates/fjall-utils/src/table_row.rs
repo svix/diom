@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ByteOrder};
-use fjall::{Guard, UserKey};
+use fjall::Guard;
 use std::{
     borrow::Cow,
     ops::{Bound, RangeBounds},
@@ -49,7 +49,7 @@ impl TableKey for Uuid {
 }
 
 impl TableKey for u64 {
-    fn as_bytes(&self) -> std::borrow::Cow<'_, [u8]> {
+    fn as_bytes(&self) -> Cow<'_, [u8]> {
         let mut buf = vec![0u8; 8];
         BigEndian::write_u64(&mut buf, *self);
         Cow::Owned(buf)
@@ -253,7 +253,7 @@ where
     ) -> Result<Vec<fjall::UserKey>> {
         range_helper::<Self, B>(keyspace, bounds)
             .map(|g| g.key().map_err(Into::into))
-            .collect::<Result<Vec<UserKey>>>()
+            .collect()
     }
 }
 

@@ -149,7 +149,7 @@ pub fn add_security_scheme(
 ) -> aide::transform::TransformOpenApi<'_> {
     api.security_scheme(
         "HTTPBearer",
-        aide::openapi::SecurityScheme::Http {
+        openapi::SecurityScheme::Http {
             scheme: "bearer".to_string(),
             bearer_format: None,
             description: Some("HTTP Bearer token passed in the `Authorization` header".into()),

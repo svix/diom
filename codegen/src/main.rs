@@ -87,7 +87,7 @@ fn repo_root() -> &'static Path {
 }
 
 fn get_webhooks(spec: &openapi_codegen::aide::openapi::OpenApi) -> Vec<String> {
-    let mut referenced_components = std::collections::BTreeSet::<String>::new();
+    let mut referenced_components = BTreeSet::new();
 
     for (_, webhook) in &spec.webhooks {
         let Some(item) = webhook.as_item() else {
@@ -108,5 +108,5 @@ fn get_webhooks(spec: &openapi_codegen::aide::openapi::OpenApi) -> Vec<String> {
         }
     }
 
-    referenced_components.into_iter().collect::<Vec<String>>()
+    referenced_components.into_iter().collect()
 }

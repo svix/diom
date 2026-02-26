@@ -11,7 +11,6 @@ use std::{
 };
 
 use anyhow::{Context, anyhow};
-use fjall::Database;
 use serde::{Deserialize, de::DeserializeOwned};
 use tap::Pipe;
 use tracing::Level;
@@ -37,7 +36,7 @@ impl PeerAddr {
     }
 }
 
-impl std::fmt::Display for PeerAddr {
+impl fmt::Display for PeerAddr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::SocketAddr(s) => s.fmt(f),
@@ -74,7 +73,7 @@ impl FromStr for PeerAddr {
     }
 }
 
-impl<'d> serde::Deserialize<'d> for PeerAddr {
+impl<'d> Deserialize<'d> for PeerAddr {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'d>,
@@ -101,20 +100,20 @@ pub struct DatabaseConfig {
 }
 
 impl DatabaseConfig {
-    fn database(dir: &Path, file: &str) -> Result<Database> {
+    fn database(dir: &Path, file: &str) -> Result<fjall::Database> {
         let mut path = PathBuf::from(dir);
         path.push(file);
         fjall::Database::builder(path).open().map_err(|e| e.into())
     }
 
-    pub fn persistent(db_config: &DatabaseConfig) -> Result<Database> {
+    pub fn persistent(db_config: &DatabaseConfig) -> Result<fjall::Database> {
         Self::database(
             &db_config.path,
             db_config.filename.as_deref().unwrap_or("fjall_persistent"),
         )
     }
 
-    pub fn ephemeral(db_config: &DatabaseConfig) -> Result<Database> {
+    pub fn ephemeral(db_config: &DatabaseConfig) -> Result<fjall::Database> {
         Self::database(
             &db_config.path,
             db_config.filename.as_deref().unwrap_or("fjall_ephemeral"),
@@ -332,8 +331,8 @@ pub enum Environment {
 
 from_str_via_serde!(Environment);
 
-impl std::fmt::Display for Environment {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Environment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",

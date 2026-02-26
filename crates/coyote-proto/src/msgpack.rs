@@ -12,8 +12,8 @@ use serde::{Serialize, de::DeserializeOwned};
 #[derive(Debug, Clone)]
 pub struct MissingMsgPackContentType;
 
-impl axum::response::IntoResponse for MissingMsgPackContentType {
-    fn into_response(self) -> axum::response::Response {
+impl IntoResponse for MissingMsgPackContentType {
+    fn into_response(self) -> Response {
         let status = StatusCode::BAD_REQUEST;
 
         tracing::warn!(?status, "missing content-type");
@@ -29,8 +29,8 @@ impl axum::response::IntoResponse for MissingMsgPackContentType {
 #[derive(Debug)]
 pub struct MsgPackParseError(rmp_serde::decode::Error);
 
-impl axum::response::IntoResponse for MsgPackParseError {
-    fn into_response(self) -> axum::response::Response {
+impl IntoResponse for MsgPackParseError {
+    fn into_response(self) -> Response {
         let status = StatusCode::BAD_REQUEST;
 
         tracing::warn!(?status, error = ?self.0, "parse error");
@@ -46,8 +46,8 @@ pub enum MsgPackRejection {
     BytesRejection(BytesRejection),
 }
 
-impl axum::response::IntoResponse for MsgPackRejection {
-    fn into_response(self) -> axum::response::Response {
+impl IntoResponse for MsgPackRejection {
+    fn into_response(self) -> Response {
         match self {
             Self::MissingMsgPackContentType(r) => r.into_response(),
             Self::MsgPackParseError(r) => r.into_response(),
@@ -68,7 +68,7 @@ impl From<MsgPackParseError> for MsgPackRejection {
     }
 }
 
-impl From<axum::extract::rejection::BytesRejection> for MsgPackRejection {
+impl From<BytesRejection> for MsgPackRejection {
     fn from(value: BytesRejection) -> Self {
         Self::BytesRejection(value)
     }
