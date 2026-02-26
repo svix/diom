@@ -9,9 +9,12 @@ use async_process::{Command, Stdio};
 use futures_lite::future;
 
 pub(crate) fn run() -> ExitCode {
-    let (r1, r2) = async_io::block_on(future::zip(format_rust_clients(), format_go_client()));
+    let (r1, (r2, r3)) = async_io::block_on(future::zip(
+        format_rust_clients(),
+        future::zip(format_go_client(), format_python_client()),
+    ));
     let mut exit_code = ExitCode::SUCCESS;
-    for result in [r1, r2] {
+    for result in [r1, r2, r3] {
         if let Err(e) = result {
             eprintln!("{e}\n");
             exit_code = ExitCode::FAILURE;
@@ -35,6 +38,20 @@ async fn format_go_client() -> io::Result<()> {
         container: "goimports",
         mounts: &[("clients/go", "/go/coyote")],
         cmd: &["goimports", "-w", "/go/coyote"],
+    }
+    .run()
+    .await
+}
+
+async fn format_python_client() -> io::Result<()> {
+    ContainerizedFormatter {
+        container: "ruff",
+        mounts: &[("clients/python", "/clients/python")],
+        cmd: &[
+            "sh",
+            "-c",
+            "ruff check --fix /clients/python/coyote && ruff format /clients/python/coyote",
+        ],
     }
     .run()
     .await
