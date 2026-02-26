@@ -11,9 +11,12 @@ test *args='':
 test-sdks:
     cargo nextest run --package=coyote-client --package=coyote-cli
 
+codegen:
+    cargo codegen
+
 # Run all the test commands
 test-all: test test-sdks
 
-[working-directory: 'benchmarks']
+[working-directory('benchmarks')]
 bench:
     cargo bench

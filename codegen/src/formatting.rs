@@ -28,7 +28,12 @@ async fn format_rust_clients() -> io::Result<()> {
     exec(
         "cargo",
         &std::env::current_dir().unwrap(),
-        ["fmt", "--package=coyote-client", "--package=coyote-cli"],
+        [
+            "+nightly",
+            "fmt",
+            "--package=coyote-client",
+            "--package=coyote-cli",
+        ],
     )
     .await
 }
@@ -109,17 +114,12 @@ impl ContainerizedFormatter<'_> {
         if base == "docker" {
             args.push(".");
         }
-        println!("Running {base} with args \"{}\"", args.join(" "));
         exec(base, &path, args).await?;
         let args = ["run"]
             .into_iter()
             .chain(mounts.iter().map(|m| m.as_str()))
             .chain([tag.as_str()])
             .chain(cmd.iter().copied());
-        println!(
-            "Running {base} with args \"{}\"",
-            args.clone().collect::<Vec<_>>().join(" ")
-        );
         exec(base, &path, args).await?;
 
         Ok(())
@@ -127,6 +127,8 @@ impl ContainerizedFormatter<'_> {
 }
 
 async fn exec(cmd: &str, dir: &Path, args: impl IntoIterator<Item = &str>) -> io::Result<()> {
+    let args = args.into_iter().collect::<Vec<_>>();
+    tracing::debug!(workdir=?dir, cmd, ?args, "running formatter command");
     let output = Command::new(cmd)
         .args(args)
         .current_dir(dir)

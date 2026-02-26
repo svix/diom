@@ -20,6 +20,7 @@ coyote.workspace = true
 futures-lite = { version = "2.6.1", default-features = false }
 openapi-codegen.workspace = true
 serde_json.workspace = true
+tracing.workspace = true
 tracing-subscriber.workspace = true
 which.workspace = true
 
