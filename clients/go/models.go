@@ -19,15 +19,15 @@ type (
 	CacheGetOut                  = coyote_models.CacheGetOut
 	CacheSetIn                   = coyote_models.CacheSetIn
 	CacheSetOut                  = coyote_models.CacheSetOut
-	CreateStreamIn               = coyote_models.CreateStreamIn
-	CreateStreamOut              = coyote_models.CreateStreamOut
+	CreateMsgTopicIn             = coyote_models.CreateMsgTopicIn
+	CreateMsgTopicOut            = coyote_models.CreateMsgTopicOut
 	DlqIn                        = coyote_models.DlqIn
 	DlqOut                       = coyote_models.DlqOut
 	EvictionPolicy               = coyote_models.EvictionPolicy
 	FetchFromStreamIn            = coyote_models.FetchFromStreamIn
 	FetchFromStreamOut           = coyote_models.FetchFromStreamOut
-	GetStreamIn                  = coyote_models.GetStreamIn
-	GetStreamOut                 = coyote_models.GetStreamOut
+	GetMsgTopicIn                = coyote_models.GetMsgTopicIn
+	GetMsgTopicOut               = coyote_models.GetMsgTopicOut
 	IdempotencyAbortIn           = coyote_models.IdempotencyAbortIn
 	IdempotencyAbortOut          = coyote_models.IdempotencyAbortOut
 	IdempotencyGetNamespaceIn    = coyote_models.IdempotencyGetNamespaceIn
@@ -53,5 +53,6 @@ type (
 	RateLimiterTokenBucketConfig = coyote_models.RateLimiterTokenBucketConfig
 	RedriveIn                    = coyote_models.RedriveIn
 	RedriveOut                   = coyote_models.RedriveOut
+	Retention                    = coyote_models.Retention
 	StorageType                  = coyote_models.StorageType
 )

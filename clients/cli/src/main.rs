@@ -6,7 +6,9 @@ use concolor_clap::{Color, ColorChoice};
 use coyote_client::{CoyoteClient, CoyoteOptions};
 
 use self::{
-    cmds::api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, RateLimiterArgs, StreamArgs},
+    cmds::api::{
+        CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs, StreamArgs,
+    },
     config::Config,
 };
 
@@ -63,6 +65,7 @@ enum RootCommands {
     Cache(CacheArgs),
     Idempotency(IdempotencyArgs),
     Kv(KvArgs),
+    Msgs(MsgsArgs),
     RateLimit(RateLimiterArgs),
     Stream(StreamArgs),
     Health(HealthArgs),
@@ -111,6 +114,10 @@ async fn main() -> Result<()> {
         RootCommands::Kv(args) => {
             let cfg = cfg?;
             let client = get_client(&cfg)?;
+            args.command.exec(&client, color_mode).await?;
+        }
+        RootCommands::Msgs(args) => {
+            let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;
         }
         RootCommands::RateLimit(args) => {

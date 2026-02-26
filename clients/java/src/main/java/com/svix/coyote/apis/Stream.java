@@ -19,14 +19,10 @@ import com.svix.coyote.models.AckMsgRangeOut;
 import com.svix.coyote.models.AckOut;
 import com.svix.coyote.models.AppendToStreamIn;
 import com.svix.coyote.models.AppendToStreamOut;
-import com.svix.coyote.models.CreateStreamIn;
-import com.svix.coyote.models.CreateStreamOut;
 import com.svix.coyote.models.DlqIn;
 import com.svix.coyote.models.DlqOut;
 import com.svix.coyote.models.FetchFromStreamIn;
 import com.svix.coyote.models.FetchFromStreamOut;
-import com.svix.coyote.models.GetStreamIn;
-import com.svix.coyote.models.GetStreamOut;
 import com.svix.coyote.models.RedriveIn;
 import com.svix.coyote.models.RedriveOut;
 
@@ -35,34 +31,6 @@ public class Stream {
 
     public Stream(HttpClient client) {
         this.client = client;
-    }
-
-    /** Upserts a new Stream with the given name. */
-    public CreateStreamOut create(
-        final CreateStreamIn createStreamIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/stream/create");
-        return this.client.executeRequest(
-            "POST",
-            url.build(),
-            null,
-            createStreamIn,
-            CreateStreamOut.class
-            );
-    }
-
-    /** Get stream with given name. */
-    public GetStreamOut get(
-        final GetStreamIn getStreamIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/stream/get-namespace");
-        return this.client.executeRequest(
-            "POST",
-            url.build(),
-            null,
-            getStreamIn,
-            GetStreamOut.class
-            );
     }
 
     /** Appends messages to the stream. */

@@ -16,35 +16,33 @@ async fn create_stream_upserts() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 },
+            "storage_type": "Ephemeral"
         }))
         .await?
         .expect(StatusCode::OK)
         .json();
 
-    let ts = &response["created_at"];
+    let ts = &response["created"];
 
     assert_eq!(
         response,
         json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999,
-            "created_at": ts,
-            "updated_at": ts,
+            "retention": { "bytes": 1024, "millis": 9999 },
+            "storage_type": "Ephemeral",
+            "created": ts,
+            "updated": ts,
         })
     );
 
     let update = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
-            "name": "test-stream",
-            "max_byte_size": null,
-            "retention_period_seconds": null
+            "name": "test-stream"
         }))
         .await?
         .expect(StatusCode::OK)
@@ -54,10 +52,10 @@ async fn create_stream_upserts() -> TestResult {
         update,
         json!({
             "name": "test-stream",
-            "max_byte_size": null,
-            "retention_period_seconds": null,
-            "created_at": ts,
-            "updated_at": &update["updated_at"],
+            "retention": &update["retention"],
+            "storage_type": "Persistent",
+            "created": ts,
+            "updated": &update["updated"],
         })
     );
 
@@ -73,11 +71,10 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -183,11 +180,10 @@ async fn stream_visibility_timeout() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -268,11 +264,10 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -359,11 +354,10 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -456,11 +450,10 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -590,11 +583,10 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -700,11 +692,10 @@ async fn queue_fetch_single_ack() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -795,11 +786,10 @@ async fn queue_dlq_and_redrive() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -929,11 +919,10 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -1036,11 +1025,10 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("stream/create")
+        .post("msgs/topic/create")
         .json(json!({
             "name": "test-stream",
-            "max_byte_size": 1024,
-            "retention_period_seconds": 9999
+            "retention": { "bytes": 1024, "millis": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)

@@ -5,5 +5,10 @@ license.workspace = true
 version.workspace = true
 rust-version.workspace = true
 
+[dependencies]
+fjall-utils.workspace = true
+schemars.workspace = true
+serde.workspace = true
+
 [lints]
 workspace = true

@@ -85,7 +85,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(cache1["storage_type"], "Persistent");
 
     let stream2 = client
-        .post("stream/get-namespace")
+        .post("msgs/topic/get")
         .json(json!({
             "name": "stream2",
         }))
@@ -93,6 +93,7 @@ async fn test_bootstrap() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(stream2["name"], "stream2");
+    assert!(stream2["retention"].is_object());
     assert_eq!(stream2["storage_type"], "Persistent");
 
     Ok(())

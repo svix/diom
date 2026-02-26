@@ -555,19 +555,19 @@
         ]
       }
     },
-    "/api/v1/stream/create": {
+    "/api/v1/msgs/topic/create": {
       "post": {
         "tags": [
           "Stream"
         ],
-        "summary": "Create Stream",
-        "description": "Upserts a new Stream with the given name.",
-        "operationId": "v1.stream.create",
+        "summary": "Create Msg Topic",
+        "description": "Upserts a new message topic with the given name.",
+        "operationId": "v1.msgs.topic.create",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateStreamIn"
+                "$ref": "#/components/schemas/CreateMsgTopicIn"
               }
             }
           },
@@ -579,7 +579,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateStreamOut"
+                  "$ref": "#/components/schemas/CreateMsgTopicOut"
                 }
               }
             }
@@ -592,19 +592,19 @@
         ]
       }
     },
-    "/api/v1/stream/get-namespace": {
+    "/api/v1/msgs/topic/get": {
       "post": {
         "tags": [
           "Stream"
         ],
-        "summary": "Get Stream",
-        "description": "Get stream with given name.",
-        "operationId": "v1.stream.get",
+        "summary": "Get Msg Topic",
+        "description": "Get message topic with given name.",
+        "operationId": "v1.msgs.topic.get",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GetStreamIn"
+                "$ref": "#/components/schemas/GetMsgTopicIn"
               }
             }
           },
@@ -616,7 +616,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetStreamOut"
+                  "$ref": "#/components/schemas/GetMsgTopicOut"
                 }
               }
             }
@@ -1142,62 +1142,55 @@
       "CacheSetOut": {
         "type": "object"
       },
-      "CreateStreamIn": {
+      "CreateMsgTopicIn": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string"
           },
-          "retention_period_seconds": {
-            "description": "How long messages are retained in the stream before being permanently nuked.",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
+          "retention": {
+            "default": {
+              "millis": 2592000000,
+              "bytes": 1000000000000
+            },
+            "$ref": "#/components/schemas/Retention"
           },
-          "max_byte_size": {
-            "description": "How many bytes in total the stream will retain before dropping data.",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
+          "storage_type": {
+            "default": "Persistent",
+            "$ref": "#/components/schemas/StorageType"
           }
         },
         "required": [
           "name"
         ]
       },
-      "CreateStreamOut": {
+      "CreateMsgTopicOut": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string"
           },
-          "retention_period_seconds": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
+          "retention": {
+            "$ref": "#/components/schemas/Retention"
           },
-          "max_byte_size": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
           },
-          "created_at": {
+          "created": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updated": {
             "type": "string",
             "format": "date-time"
           }
         },
         "required": [
           "name",
-          "created_at",
-          "updated_at"
+          "retention",
+          "storage_type",
+          "created",
+          "updated"
         ]
       },
       "DlqIn": {
@@ -1275,7 +1268,7 @@
           "msgs"
         ]
       },
-      "GetStreamIn": {
+      "GetMsgTopicIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -1286,41 +1279,33 @@
           "name"
         ]
       },
-      "GetStreamOut": {
+      "GetMsgTopicOut": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string"
           },
-          "retention_period_seconds": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
-          },
-          "max_byte_size": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
+          "retention": {
+            "$ref": "#/components/schemas/Retention"
           },
           "storage_type": {
             "$ref": "#/components/schemas/StorageType"
           },
-          "created_at": {
+          "created": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updated": {
             "type": "string",
             "format": "date-time"
           }
         },
         "required": [
           "name",
+          "retention",
           "storage_type",
-          "created_at",
-          "updated_at"
+          "created",
+          "updated"
         ]
       },
       "IdempotencyAbortIn": {
@@ -1951,6 +1936,23 @@
       },
       "RedriveOut": {
         "type": "object"
+      },
+      "Retention": {
+        "type": "object",
+        "properties": {
+          "millis": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "default": 2592000000
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "default": 1000000000000
+          }
+        }
       },
       "StorageType": {
         "type": "string",

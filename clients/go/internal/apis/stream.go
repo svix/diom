@@ -17,38 +17,6 @@ func NewStream(client *coyote_proto.HttpClient) Stream {
 	return Stream{client}
 }
 
-// Upserts a new Stream with the given name.
-func (stream Stream) Create(
-	ctx context.Context,
-	createStreamIn coyote_models.CreateStreamIn,
-) (*coyote_models.CreateStreamOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.CreateStreamIn, coyote_models.CreateStreamOut](
-		ctx,
-		stream.client,
-		"POST",
-		"/api/v1/stream/create",
-		nil,
-		nil,
-		&createStreamIn,
-	)
-}
-
-// Get stream with given name.
-func (stream Stream) Get(
-	ctx context.Context,
-	getStreamIn coyote_models.GetStreamIn,
-) (*coyote_models.GetStreamOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.GetStreamIn, coyote_models.GetStreamOut](
-		ctx,
-		stream.client,
-		"POST",
-		"/api/v1/stream/get-namespace",
-		nil,
-		nil,
-		&getStreamIn,
-	)
-}
-
 // Appends messages to the stream.
 func (stream Stream) Append(
 	ctx context.Context,

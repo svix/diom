@@ -1,3 +1,4 @@
+pub mod duration_millis;
 mod fixed_key;
 mod readonly_db;
 mod table_row;

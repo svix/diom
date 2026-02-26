@@ -4,18 +4,18 @@
 
 
 
-export interface GetStreamIn {
+export interface GetMsgTopicIn {
     name: string;
 }
 
-export const GetStreamInSerializer = {
-    _fromJsonObject(object: any): GetStreamIn {
+export const GetMsgTopicInSerializer = {
+    _fromJsonObject(object: any): GetMsgTopicIn {
         return {
             name: object['name'],
             };
     },
 
-    _toJsonObject(self: GetStreamIn): any {
+    _toJsonObject(self: GetMsgTopicIn): any {
         return {
             'name': self.name,
             };

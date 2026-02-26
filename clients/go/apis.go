@@ -30,6 +30,12 @@ func (coyote Coyote) Kv() Kv {
 	return coyote_apis.NewKv(&coyote.inner)
 }
 
+type Msgs = coyote_apis.Msgs
+
+func (coyote Coyote) Msgs() Msgs {
+	return coyote_apis.NewMsgs(&coyote.inner)
+}
+
 type RateLimiter = coyote_apis.RateLimiter
 
 func (coyote Coyote) RateLimiter() RateLimiter {

@@ -15,15 +15,15 @@ mod cache_get_namespace_out;
 mod cache_get_out;
 mod cache_set_in;
 mod cache_set_out;
-mod create_stream_in;
-mod create_stream_out;
+mod create_msg_topic_in;
+mod create_msg_topic_out;
 mod dlq_in;
 mod dlq_out;
 mod eviction_policy;
 mod fetch_from_stream_in;
 mod fetch_from_stream_out;
-mod get_stream_in;
-mod get_stream_out;
+mod get_msg_topic_in;
+mod get_msg_topic_out;
 mod idempotency_abort_in;
 mod idempotency_abort_out;
 mod idempotency_get_namespace_in;
@@ -49,6 +49,7 @@ mod rate_limiter_get_remaining_out;
 mod rate_limiter_token_bucket_config;
 mod redrive_in;
 mod redrive_out;
+mod retention;
 mod storage_type;
 
 pub use self::{
@@ -66,15 +67,15 @@ pub use self::{
     cache_get_out::CacheGetOut,
     cache_set_in::CacheSetIn,
     cache_set_out::CacheSetOut,
-    create_stream_in::CreateStreamIn,
-    create_stream_out::CreateStreamOut,
+    create_msg_topic_in::CreateMsgTopicIn,
+    create_msg_topic_out::CreateMsgTopicOut,
     dlq_in::DlqIn,
     dlq_out::DlqOut,
     eviction_policy::EvictionPolicy,
     fetch_from_stream_in::FetchFromStreamIn,
     fetch_from_stream_out::FetchFromStreamOut,
-    get_stream_in::GetStreamIn,
-    get_stream_out::GetStreamOut,
+    get_msg_topic_in::GetMsgTopicIn,
+    get_msg_topic_out::GetMsgTopicOut,
     idempotency_abort_in::IdempotencyAbortIn,
     idempotency_abort_out::IdempotencyAbortOut,
     idempotency_get_namespace_in::IdempotencyGetNamespaceIn,
@@ -100,5 +101,6 @@ pub use self::{
     rate_limiter_token_bucket_config::RateLimiterTokenBucketConfig,
     redrive_in::RedriveIn,
     redrive_out::RedriveOut,
+    retention::Retention,
     storage_type::StorageType,
 };

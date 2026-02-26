@@ -2,6 +2,6 @@ package coyote_models
 
 // This file is @generated DO NOT EDIT
 
-type GetStreamIn struct {
+type GetMsgTopicIn struct {
 	Name string `json:"name"`
 }

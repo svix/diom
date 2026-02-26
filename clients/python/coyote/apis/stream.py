@@ -8,48 +8,16 @@ from ..models import (
     AckOut,
     AppendToStreamIn,
     AppendToStreamOut,
-    CreateStreamIn,
-    CreateStreamOut,
     DlqIn,
     DlqOut,
     FetchFromStreamIn,
     FetchFromStreamOut,
-    GetStreamIn,
-    GetStreamOut,
     RedriveIn,
     RedriveOut,
 )
 
 
 class StreamAsync(ApiBase):
-    async def create(
-        self,
-        create_stream_in: CreateStreamIn,
-    ) -> CreateStreamOut:
-        """Upserts a new Stream with the given name."""
-        response = await self._request_asyncio(
-            method="post",
-            path="/api/v1/stream/create",
-            path_params={},
-            json_body=create_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
-        )
-        return CreateStreamOut.model_validate(response.json())
-
-    async def get(
-        self,
-        get_stream_in: GetStreamIn,
-    ) -> GetStreamOut:
-        """Get stream with given name."""
-        response = await self._request_asyncio(
-            method="post",
-            path="/api/v1/stream/get-namespace",
-            path_params={},
-            json_body=get_stream_in.model_dump_json(exclude_unset=True, by_alias=True),
-        )
-        return GetStreamOut.model_validate(response.json())
-
     async def append(
         self,
         append_to_stream_in: AppendToStreamIn,
@@ -158,34 +126,6 @@ class StreamAsync(ApiBase):
 
 
 class Stream(ApiBase):
-    def create(
-        self,
-        create_stream_in: CreateStreamIn,
-    ) -> CreateStreamOut:
-        """Upserts a new Stream with the given name."""
-        response = self._request_sync(
-            method="post",
-            path="/api/v1/stream/create",
-            path_params={},
-            json_body=create_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
-        )
-        return CreateStreamOut.model_validate(response.json())
-
-    def get(
-        self,
-        get_stream_in: GetStreamIn,
-    ) -> GetStreamOut:
-        """Get stream with given name."""
-        response = self._request_sync(
-            method="post",
-            path="/api/v1/stream/get-namespace",
-            path_params={},
-            json_body=get_stream_in.model_dump_json(exclude_unset=True, by_alias=True),
-        )
-        return GetStreamOut.model_validate(response.json())
-
     def append(
         self,
         append_to_stream_in: AppendToStreamIn,
