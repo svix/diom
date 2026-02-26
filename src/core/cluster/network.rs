@@ -225,7 +225,7 @@ impl NetworkFactory {
 pub(super) fn detect_address(cfg: &Configuration) -> anyhow::Result<SocketAddr> {
     // TODO: this should handle the address changing, which it currently can't
     // TODO: this should handle dual-homed (ipv4 + ipv6) systems
-    let port = cfg.cluster.listen_address.port();
+    let port = cfg.cluster.listen_address(cfg).port();
     for interface in pnet::datalink::interfaces() {
         if !interface.is_up() || interface.is_loopback() || interface.ips.is_empty() {
             continue;
