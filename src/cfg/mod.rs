@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
+    borrow::Cow,
     fmt, fs,
     net::SocketAddr,
     path::{Path, PathBuf},
@@ -123,22 +124,30 @@ impl DatabaseConfig {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ClusterConfiguration {
-    /// The address to listen on for replication
-    #[serde(default = "defaults::cluster_listen_address")]
-    pub listen_address: SocketAddr,
+    /// The address to listen on for replication. Defaults to the main listen address,
+    /// but with the port incremented by 10000
+    #[serde(default)]
+    pub listen_address: Option<SocketAddr>,
 
     #[serde(default = "defaults::cluster_name")]
     pub name: String,
 
-    #[serde(default = "defaults::cluster_snapshot_path")]
-    pub snapshot_path: PathBuf,
+    /// Location to store snapshots. This volume must have at least as much space as the
+    /// persistent DB path and ephemeral DB path combined. Defaults to a subdirectory under the
+    /// persistent DB path if not passed.
+    #[serde(default)]
+    pub snapshot_path: Option<PathBuf>,
 
-    #[serde(default = "defaults::cluster_log_path")]
-    pub log_path: PathBuf,
+    /// Location to store logs. For high-throughput systems, this should be a separate volume.
+    /// Defaults to a subdirectory under the persistent DB path if not passed.
+    #[serde(default)]
+    pub log_path: Option<PathBuf>,
 
     #[serde(default)]
     pub secret: Option<String>,
 
+    /// Timeout for replication requests. This should be set to approximately 2X the RTT of your
+    /// farthest-apart nodes.
     #[serde(
         rename = "replication_request_timeout_ms",
         with = "crate::serde::duration::millis",
@@ -146,6 +155,8 @@ pub struct ClusterConfiguration {
     )]
     pub replication_request_timeout: Duration,
 
+    /// Timeout for discovery requests. This should be set to approximately 2X the RTT of your
+    /// farthest-apart nodes.
     #[serde(
         rename = "discovery_request_timeout_ms",
         with = "crate::serde::duration::millis",
@@ -153,6 +164,9 @@ pub struct ClusterConfiguration {
     )]
     pub discovery_request_timeout: Duration,
 
+    /// Timeout for new connections. If you want to be tolerant of dropped packets, this should be
+    /// set to at least TO + ε, where TO is the initial TCP retransmission timer (typically
+    /// either 1s or 3s, depending on your operating system).
     #[serde(
         rename = "connection_timeout_ms",
         with = "crate::serde::duration::millis",
@@ -160,6 +174,8 @@ pub struct ClusterConfiguration {
     )]
     pub connection_timeout: Duration,
 
+    /// How often to send heartbeats. This controls how fast lost leaders can be detected. Must not be
+    /// less than `replication_request_timeout`.
     #[serde(
         rename = "heartbeat_interval_ms",
         with = "crate::serde::duration::millis",
@@ -167,6 +183,8 @@ pub struct ClusterConfiguration {
     )]
     pub heartbeat_interval: Duration,
 
+    /// The minimum time to let an election run for. This should be set to at least 4x the RTT of
+    /// your farthest-apart nodes, and must not be less than `heartbeat_interval_ms`.
     #[serde(
         rename = "election_timeout_min_ms",
         with = "crate::serde::duration::millis",
@@ -174,6 +192,8 @@ pub struct ClusterConfiguration {
     )]
     pub election_timeout_min: Duration,
 
+    /// The minimum time to let an election run for. This should be set to at least 5x the RTT of
+    /// your farthest-apart nodes and must not be less than `cluster_election_timeout_max`.
     #[serde(
         rename = "election_timeout_max_ms",
         with = "crate::serde::duration::millis",
@@ -217,6 +237,32 @@ pub struct ClusterConfiguration {
         default = "defaults::log_index_interval"
     )]
     pub log_index_interval: Duration,
+}
+
+impl ClusterConfiguration {
+    pub fn log_path(&self, root: &ConfigurationInner) -> Cow<'_, Path> {
+        if let Some(path) = &self.log_path {
+            Cow::Borrowed(path)
+        } else {
+            Cow::Owned(root.persistent_db.path.join("cluster_logs"))
+        }
+    }
+
+    pub fn snapshot_path(&self, root: &ConfigurationInner) -> Cow<'_, Path> {
+        if let Some(path) = &self.snapshot_path {
+            Cow::Borrowed(path)
+        } else {
+            Cow::Owned(root.persistent_db.path.join("cluster_snapshots"))
+        }
+    }
+
+    pub fn listen_address(&self, root: &ConfigurationInner) -> SocketAddr {
+        self.listen_address.unwrap_or_else(|| {
+            let port = root.listen_address.port() + 10000;
+            let ip = root.listen_address.ip();
+            SocketAddr::new(ip, port)
+        })
+    }
 }
 
 impl Default for ClusterConfiguration {
@@ -380,6 +426,16 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         };
     }
 
+    macro_rules! opt_env_overrides {
+        ( $( $field:ident: $env_var:literal ),* $(,)? ) => {
+            $(
+                if let Some(value) = env_var($env_var)? {
+                    *$field = Some(value);
+                }
+            )*
+        };
+    }
+
     macro_rules! env_ms_overrides {
         ( $( $field:ident: $env_var:literal ),* $(,)? ) => {
             $(
@@ -443,11 +499,21 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         opentelemetry_metrics_period_seconds: "COYOTE_OPENTELEMETRY_METRICS_PERIOD_SECONDS",
         opentelemetry_service_name: "COYOTE_OPENTELEMETRY_SERVICE_NAME",
         environment: "COYOTE_ENVIRONMENT",
-        cluster_listen_address: "COYOTE_CLUSTER_LISTEN_ADDRESS",
         cluster_name: "COYOTE_CLUSTER_NAME",
+        cluster_auto_initialize: "COYOTE_CLUSTER_AUTO_INITIALIZE",
+    );
+
+    opt_env_overrides!(
+        persistent_db_filename: "COYOTE_PERSISTENT_DB_FILENAME",
+        ephemeral_db_filename: "COYOTE_EPHEMERAL_DB_FILENAME",
+        opentelemetry_address: "COYOTE_OPENTELEMETRY_ADDRESS",
+        opentelemetry_sample_ratio: "COYOTE_OPENTELEMETRY_SAMPLE_RATIO",
+        bootstrap_cfg_path: "COYOTE_BOOTSTRAP_CFG_PATH",
+        cluster_listen_address: "COYOTE_CLUSTER_LISTEN_ADDRESS",
+        cluster_advertised_address: "COYOTE_CLUSTER_ADVERTISED_ADDRESS",
         cluster_snapshot_path: "COYOTE_CLUSTER_SNAPSHOT_PATH",
         cluster_log_path: "COYOTE_CLUSTER_LOG_PATH",
-        cluster_auto_initialize: "COYOTE_CLUSTER_AUTO_INITIALIZE",
+        cluster_secret: "COYOTE_CLUSTER_SECRET",
     );
 
     env_ms_overrides!(
@@ -461,29 +527,6 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         cluster_startup_discovery_delay: "COYOTE_CLUSTER_STARTUP_DISCOVERY_DELAY_MS",
         cluster_log_index_interval: "COYOTE_LOG_INDEX_INTERVAL_MS",
     );
-
-    // Option fields not supported by the simple macro above.
-    if let Some(value) = env_var("COYOTE_PERSISTENT_DB_FILENAME")? {
-        *persistent_db_filename = Some(value);
-    }
-    if let Some(value) = env_var("COYOTE_EPHEMERAL_DB_FILENAME")? {
-        *ephemeral_db_filename = Some(value);
-    }
-    if let Some(value) = env_var("COYOTE_OPENTELEMETRY_ADDRESS")? {
-        *opentelemetry_address = Some(value);
-    }
-    if let Some(value) = env_var("COYOTE_OPENTELEMETRY_SAMPLE_RATIO")? {
-        *opentelemetry_sample_ratio = Some(value);
-    }
-    if let Some(value) = env_var("COYOTE_CLUSTER_SECRET")? {
-        *cluster_secret = Some(value);
-    }
-    if let Some(value) = env_var("COYOTE_BOOTSTRAP_CFG_PATH")? {
-        *bootstrap_cfg_path = Some(value);
-    }
-    if let Some(value) = env_var("COYOTE_ADVERTISED_ADDRESS")? {
-        *cluster_advertised_address = Some(value);
-    }
 
     // Fields that require different parsing
     if let Some(value) = env_var_comma_separated("COYOTE_CLUSTER_SEED_NODES")? {
