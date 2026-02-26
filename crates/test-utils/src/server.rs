@@ -202,6 +202,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
     let snapshot_path = workdir.join("snapshots");
 
     let addr: SocketAddr = "0.0.0.0:0".parse().unwrap();
+    let cluster_addr: SocketAddr = "0.0.0.0:0".parse().unwrap();
 
     ConfigurationInner {
         listen_address: addr,
@@ -222,7 +223,8 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         opentelemetry_service_name: "diom-test".to_string(),
         environment: Environment::Dev,
         cluster: ClusterConfiguration {
-            listen_address: addr,
+            advertised_address: None,
+            listen_address: cluster_addr,
             name: "diom-test".to_string(),
             snapshot_path,
             log_path,

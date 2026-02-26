@@ -1,10 +1,11 @@
 use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
 
 use super::{
+    NodeId,
     discovery::Discovery,
     network::NetworkFactory,
     operations::{InternalRequest, InternalResponse},
-    raft::{NodeId, Raft},
+    raft::Raft,
 };
 use anyhow::{Context, Result};
 use diom_operations::{OperationRequest, OperationResponse};
@@ -302,6 +303,7 @@ impl RaftState {
     }
 
     pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> Result<()> {
+        let network = NetworkFactory::new(&cfg)?;
         let has_cluster = self
             .raft
             .with_raft_state(|s| {
@@ -313,7 +315,7 @@ impl RaftState {
             tracing::debug!("node already has cluster information; skipping discovery");
         } else {
             tracing::debug!("node has no cluster information; kicking off discovery");
-            let disco = Discovery::new(cfg, self.raft.clone(), self.node_id)?;
+            let disco = Discovery::new(cfg, self.raft.clone(), self.node_id, network)?;
             if let Err(err) = disco.discover_cluster().await {
                 tracing::error!(
                     ?err,

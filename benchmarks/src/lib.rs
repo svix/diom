@@ -112,7 +112,7 @@ pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
             (server, workdir)
         });
 
-        seed_nodes.push(server.repl_addr);
+        seed_nodes.push(server.repl_addr.into());
         servers.push(server);
         workdirs.push(workdir);
     }

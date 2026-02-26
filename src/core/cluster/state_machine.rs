@@ -21,15 +21,11 @@ use tokio::sync::RwLock as TokioRwLock;
 use uuid::Uuid;
 
 use super::{
-    errors::*,
-    handle::Response,
-    logs::DiomLogs,
-    raft::{Node, TypeConfig},
+    Node, NodeId, errors::*, handle::Response, logs::DiomLogs, raft::TypeConfig,
     serialized_state_machine,
 };
 use crate::AppState;
 
-type NodeId = <TypeConfig as RaftTypeConfig>::NodeId;
 type StorageError = openraft::StorageError<NodeId>;
 type StorageResult<T> = Result<T, StorageError>;
 

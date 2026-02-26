@@ -9,7 +9,7 @@ use axum::{
     routing::{get, post},
 };
 use diom_proto::MsgPack;
-use http::{StatusCode, Uri};
+use http::StatusCode;
 use openraft::{
     ChangeMembers,
     raft::{AppendEntriesRequest, InstallSnapshotRequest, VoteRequest},
@@ -165,7 +165,14 @@ async fn discover(
                 .membership_state
                 .committed()
                 .nodes()
-                .map(|(nid, n)| (*nid, n.addrs()))
+                .filter_map(|(nid, n)| {
+                    if let Ok(peer) = n.clone().try_into() {
+                        Some((*nid, peer))
+                    } else {
+                        tracing::warn!(node_id = ?nid, node = ?n, "could not construct peer address for node");
+                        None
+                    }
+                })
                 .collect(),
         })
         .await
@@ -188,18 +195,8 @@ async fn add_learner(
     Extension(state): Extension<RaftState>,
     MsgPack(request): MsgPack<AddLearnerRequest>,
 ) -> impl IntoResponse {
-    let url = format!("http://{}/repl/raft/vote", request.address);
-    let Ok(Some(authority)) = Uri::try_from(url).map(|v| v.authority().map(|a| a.to_string()))
-    else {
-        return internal_error("invalid address");
-    };
-    let Ok(addr) = authority.parse::<std::net::SocketAddr>() else {
-        return internal_error(format!(
-            "unable to get socketaddr for authority {authority}"
-        ));
-    };
-    tracing::debug!(?authority, ?addr, "looked up learner");
-    let node = Node::new(addr);
+    tracing::debug!(address=?request.address, "adding a learner");
+    let node = Node::from(request.address);
     rpc_response(state.raft.add_learner(request.node_id, node, true).await)
 }
 

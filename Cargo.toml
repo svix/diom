@@ -23,6 +23,7 @@ ignored = [
 openapi = []
 
 [dependencies]
+addr.workspace = true
 aide.workspace = true
 anyerror.workspace = true
 anyhow.workspace = true
@@ -110,6 +111,7 @@ version = "0.0.1"
 rust-version = "1.91"
 
 [workspace.dependencies]
+addr = "0.15"
 aide = { version = "=0.16.0-alpha.2", features = ["axum", "axum-json", "axum-query", "macros"] }
 anyerror = { version = "0.1.13", features = ["anyhow"] }
 anyhow = "1.0.56"
