@@ -43,6 +43,22 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
             "rust/component_type.rs.jinja",
         ],
     ),
+    // Python
+    OutputDirectory::unmanaged_dir("clients/python/diom", &["python/summary.py.jinja"]),
+    OutputDirectory::managed_dir(
+        "clients/python/diom/apis",
+        &[
+            "python/api_summary.py.jinja",
+            "python/api_resource.py.jinja",
+        ],
+    ),
+    OutputDirectory::managed_dir(
+        "clients/python/diom/models",
+        &[
+            "python/component_type_summary.py.jinja",
+            "python/component_type.py.jinja",
+        ],
+    ),
 ];
 
 pub(crate) struct OutputDirectory {

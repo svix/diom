@@ -1,0 +1,3 @@
+.ruff-cache/
+.venv/
+*.egg-info/

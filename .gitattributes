@@ -8,3 +8,6 @@ clients/go/internal/models/** linguist-generated
 clients/javascript/src/client.ts linguist-generated
 clients/javascript/src/apis/** linguist-generated
 clients/javascript/src/models/** linguist-generated
+clients/python/diom/diom.py linguist-generated
+clients/python/diom/apis/** linguist-generated
+clients/python/diom/models/** linguist-generated
