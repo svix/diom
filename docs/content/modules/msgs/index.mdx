@@ -1,3 +1,7 @@
+---
+asIndexPage: true
+---
+
 # Message Broker (`msgs`)
 
 The `msgs` module is Coyote's message broker module. It supports three delivery modes: `stream`, `queue`, and `FIFO`.
@@ -10,68 +14,88 @@ With Coyote, you can publish all of these to the `bookings` topic, and consume *
 
 Additionally, because Coyote is stream-backed in the background, you get all the benefits of a stream-backed system including: efficient writing, ordering, parallel-processing, and time-travel (acked `queue` messages aren't immediately deleted).
 
+## Quickstart
+
+You don't need to bla bla
+
+Just send messages
+
+delivery modes
+
+Topics
+
+Namespace
+
 ## Core concepts
 
-### Namespaces
+### Messages
 
-A namespace groups topics together with shared retention and persistence settings. Topics are created implicitly when you first publish or consume — no explicit topic setup required.
+Message is the name of the basic unit that's sent over a topic. Each message has an associated payload (called `value`), a creation timestamp created by Coyote (`timestamp`), optional key-value headers (`headers`), and an optional `group_key` which is explained below.
+Messages have an associated `timestamp` and.
 
-```json
-// coyote.msgs.namespace.create
-{
-  "persistence": "ephemeral",
-  "retention": {
-    "bytes": 4194304,
-    "millis": 604800
-  }
-}
-```
+### Topics
 
-Topics can use any path structure: `events`, `orders/created`, `users/payments/refunds`, etc.
+A `topic` is an ordered set of messages. This is where messages are published to.
+Topics are created implicitly on first use, and you can have infinitely many.
 
 ### Consumer groups
 
-Consumer groups track where a set of consumers is in a topic. Like topics, they are created implicitly on first use. You can optionally configure a consumer group to set up retry schedules or a dead letter queue.
+A consumer group tracks how a set of consumers has progressed through a topic. When multiple consumers share a group, Coyote coordinates between them so each message is processed by exactly one member of the group; letting you scale out processing by adding more consumers without duplicating work.
 
-The same group name (e.g. `G1`) is independent across different topics.
+Consumer groups are created implicitly on first use and are scoped to a topic + delivery mode combination.
+Each delivery mode uses consumer groups slightly differently, so please refer to each delivery mode for how information on how to use them.
 
-### Partitions
+### Message group keys
 
-Partitions are the unit of parallelism. A topic starts with one partition and can be scaled up with `coyote.msgs.topic.configure`. Coyote automatically assigns partitions to consumers and handles rebalancing transparently — you don't need to manage which consumer reads from which partition.
+Messages with the same `group_key` are processed in order for delivery modes that support it. So always set a key if ordering matters.
 
-**Partitions are cheap.** If you expect to need parallel consumers, configure the partition count upfront. Increasing partition count later will break ordering for in-flight keys.
+### Namespaces
 
-### Message keys
-
-Setting a `group_key` on a message routes all messages with that key to the same partition, guaranteeing ordering within that key. Messages without a key are distributed round-robin.
-
-**If ordering matters, always set a key.**
+A namespace groups topics together with shared retention and persistence settings.
 
 ## Delivery modes
 
-### Stream
-
-Stream mode is designed for ordered, exactly-once consumption with support for parallel consumers. Each consumer group tracks its position via offsets per partition.
-
-- **Ordered within a key** — messages with the same key always arrive in order.
-- **Exactly-once** — commit offsets server-side after processing.
-- **Parallel consumers** — Coyote assigns partitions to consumers automatically; scale out by adding consumers.
-
-Workflow: call `stream.receive` → process the batch → call `stream.commit` to advance the offset.
+As mentioned above, publishing is shared across all delivery methods, and the delivery methods only apply at consumption time.
 
 ### Queue
 
-Queue mode is at-least-once delivery with configurable retry schedules and dead letter queues (DLQs). One consumer holds a lease on each message at a time.
+Queue mode is at-least-once delivery with configurable retry schedules and dead letter queues (DLQs).
 
-- **Retries on failure** — `nack` a message to retry it on the configured schedule.
-- **DLQ support** — after retries are exhausted, messages are routed to a DLQ.
-- **Lease-based** — if a consumer doesn't ack before the lease expires, the message is re-queued.
+Use a queue when you need a simple unordered task queue.
 
-### FIFO queue
+For more information, read [the queue docs](./queue.mdx).
 
-FIFO is queue mode with per-key ordering: only one message per key is in-flight at a time. If a message with key `user-123` is leased, no consumer will receive another `user-123` message until it's acked or the lease expires.
+### FIFO
 
-Use FIFO when you need ordered, at-least-once delivery without the full overhead of stream processing.
+FIFO is queue mode with per-key ordering: only one consumer can process each key at a time.
+
+Use FIFO when you need ordered delivery that can scale to an arbitrary number of consumers.
+
+For more information, read [the FIFO docs](./fifo.mdx).
+
+### Stream
+
+Stream mode is designed for globally ordered consumption with head-of-line blocking.
+
+Use Stream when you need Kafka-like stream processing behavior which can't be achieved using FIFO. Otherwise, FIFO is probably preferred.
+
+For more information, read [the stream docs](./stream.mdx).
+
+## Configuration
+
+- namespace
+- topic
+- Mention partitions are mentioned under stream.
+
+
+---------------
+
+This means the group `G1` on `orders` via `queue` is independent from `G1` on `orders` via `stream`, and both are independent from `G1` on `payments`. You can reuse the same logical name freely across topics and modes.
+
+The `group_key` behaves differently depending on the module:
+- `stream`: messages with the same `group_key` are assigned to the same partition, which are in-turn always processed in order.
+- `fifo`: messages with the same `group_key` are processed in order within the same consumer group, which means that if one consumer is currently processing a message with a specific key, no order consumers are going to get a message with the same key.
+- `queue`: ignored, as queue has no notion of ordering.
 
 ## API reference
 
