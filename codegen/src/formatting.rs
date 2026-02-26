@@ -1,6 +1,7 @@
-use std::{fmt::Write as _, io, path::PathBuf, process::ExitCode};
+use std::{fmt::Write as _, io, process::ExitCode};
 
 use async_process::{Command, Stdio};
+use fs_err as fs;
 use futures_lite::future;
 
 pub(crate) fn run() -> ExitCode {
@@ -83,16 +84,15 @@ impl ContainerizedFormatter<'_> {
 
         let tag = format!("diom-formatter-{container}");
         let containerfile_path = format!("codegen/formatters/{container}.Containerfile");
-        let mounts: Vec<_> = mounts
+        let mounts = mounts
             .iter()
             .map(|(src, dst)| {
                 // docker requires that all bind mount paths be absolute
-                let path = PathBuf::from(src);
-                let src = path.canonicalize().unwrap();
-                let src = src.to_string_lossy();
-                format!("--mount=type=bind,src={src},dst={dst}")
+                let src = fs::canonicalize(src)?;
+                let src = src.display();
+                Ok(format!("--mount=type=bind,src={src},dst={dst}"))
             })
-            .collect();
+            .collect::<io::Result<Vec<_>>>()?;
 
         let base = if which::which("podman").is_ok() {
             "podman"

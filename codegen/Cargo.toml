@@ -17,6 +17,7 @@ anyhow.workspace = true
 async-io = { version = "2.6.0", features = ["tracing"] }
 async-process = { version = "2.5.0", features = ["tracing"] }
 diom.workspace = true
+fs-err.workspace = true
 futures-lite = { version = "2.6.1", default-features = false }
 openapi-codegen.workspace = true
 serde_json.workspace = true
