@@ -1,11 +1,7 @@
-use std::{
-    fmt::Write as _,
-    io,
-    path::{Path, PathBuf},
-    process::ExitCode,
-};
+use std::{fmt::Write as _, io, process::ExitCode};
 
 use async_process::{Command, Stdio};
+use fs_err as fs;
 use futures_lite::future;
 
 pub(crate) fn run() -> ExitCode {
@@ -27,7 +23,6 @@ pub(crate) fn run() -> ExitCode {
 async fn format_rust_clients() -> io::Result<()> {
     exec(
         "cargo",
-        &std::env::current_dir().unwrap(),
         [
             "+nightly",
             "fmt",
@@ -87,20 +82,17 @@ impl ContainerizedFormatter<'_> {
             cmd,
         } = self;
 
-        let path = std::env::current_dir()?.join("codegen");
-
         let tag = format!("coyote-formatter-{container}");
-        let containerfile_path = format!("formatters/{container}.Containerfile");
-        let mounts: Vec<_> = mounts
+        let containerfile_path = format!("codegen/formatters/{container}.Containerfile");
+        let mounts = mounts
             .iter()
             .map(|(src, dst)| {
                 // docker requires that all bind mount paths be absolute
-                let path = PathBuf::from(src);
-                let src = path.canonicalize().unwrap();
-                let src = src.to_string_lossy();
-                format!("--mount=type=bind,src={src},dst={dst}")
+                let src = fs::canonicalize(src)?;
+                let src = src.display();
+                Ok(format!("--mount=type=bind,src={src},dst={dst}"))
             })
-            .collect();
+            .collect::<io::Result<Vec<_>>>()?;
 
         let base = if which::which("podman").is_ok() {
             "podman"
@@ -110,28 +102,25 @@ impl ContainerizedFormatter<'_> {
             return Err(io::Error::other("could not find podman or docker in $PATH"));
         };
 
-        let mut args = vec!["build", "-t", &tag, "-f", &containerfile_path];
-        if base == "docker" {
-            args.push(".");
-        }
-        exec(base, &path, args).await?;
+        let ctx_dir = "codegen/formatters";
+        let args = vec!["build", "-t", &tag, "-f", &containerfile_path, ctx_dir];
+        exec(base, args).await?;
         let args = ["run"]
             .into_iter()
             .chain(mounts.iter().map(|m| m.as_str()))
             .chain([tag.as_str()])
             .chain(cmd.iter().copied());
-        exec(base, &path, args).await?;
+        exec(base, args).await?;
 
         Ok(())
     }
 }
 
-async fn exec(cmd: &str, dir: &Path, args: impl IntoIterator<Item = &str>) -> io::Result<()> {
+async fn exec(cmd: &str, args: impl IntoIterator<Item = &str>) -> io::Result<()> {
     let args = args.into_iter().collect::<Vec<_>>();
-    tracing::debug!(workdir=?dir, cmd, ?args, "running formatter command");
+    tracing::debug!(cmd, ?args, "running formatter command");
     let output = Command::new(cmd)
         .args(args)
-        .current_dir(dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
