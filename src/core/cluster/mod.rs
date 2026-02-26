@@ -8,6 +8,7 @@ mod errors;
 mod handle;
 mod logs;
 mod network;
+mod node;
 mod operations;
 pub mod proto;
 mod raft;

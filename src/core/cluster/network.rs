@@ -14,7 +14,7 @@ use openraft::{
     error::{NetworkError, RPCError, Unreachable},
     network::RPCOption,
 };
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub(super) fn build_client(
     cfg: &Configuration,
@@ -48,6 +48,21 @@ impl NetworkFactory {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub(super) struct UnreachableError {}
+
+impl std::fmt::Display for UnreachableError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "impossible")
+    }
+}
+
+impl std::error::Error for UnreachableError {
+    fn description(&self) -> &str {
+        "this is unreachable"
+    }
+}
+
 pub(super) struct NetworkClient {
     target: NodeId,
     node: Node,
@@ -67,15 +82,13 @@ impl NetworkClient {
     {
         let start = Instant::now();
         // TODO(jbrown|2026-02-20) handle multiple addresses
-        let addrs = self.node.addrs();
-        let Some(addr) = addrs.first() else {
+        let Ok(url) = self.node.url_for(path) else {
             tracing::warn!(node_id=?self.target, node=?self.node, "node has no valid addresses, cannot send rpc");
             return Err(RPCError::Unreachable(Unreachable::new(
                 &crate::Error::generic("no has no known addresses"),
             )));
         };
-        let url = format!("http://{addr}/{path}");
-        tracing::trace!(url, target=?self.target, "sending internal RPC");
+        tracing::trace!(%url, target=?self.target, "sending internal RPC");
 
         let response = self
             .client
@@ -130,6 +143,25 @@ impl NetworkClient {
         self.send_request("/repl/raft/handle-forwarded-write", req)
             .await
     }
+
+    pub(super) async fn add_learner(
+        &self,
+        req: proto::AddLearnerRequest,
+    ) -> Result<proto::AddLearnerResponse, openraft::error::RPCError<NodeId, Node, UnreachableError>>
+    {
+        self.send_request("/repl/raft/admin/add-learner", req).await
+    }
+
+    pub(super) async fn upgrade_learner(
+        &self,
+        req: proto::UpgradeLearnerRequest,
+    ) -> Result<
+        proto::UpgradeLearnerResponse,
+        openraft::error::RPCError<NodeId, Node, UnreachableError>,
+    > {
+        self.send_request("/repl/raft/admin/upgrade-learner", req)
+            .await
+    }
 }
 
 impl RaftNetwork<TypeConfig> for NetworkClient {
@@ -179,6 +211,13 @@ impl RaftNetworkFactory<TypeConfig> for NetworkFactory {
         target: <TypeConfig as RaftTypeConfig>::NodeId,
         node: &<TypeConfig as RaftTypeConfig>::Node,
     ) -> Self::Network {
+        self.client_for(target, node)
+    }
+}
+
+impl NetworkFactory {
+    /// Create a new client pointed at the given target
+    pub(super) fn client_for(&self, target: NodeId, node: &Node) -> NetworkClient {
         NetworkClient {
             target,
             node: node.clone(),

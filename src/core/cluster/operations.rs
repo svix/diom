@@ -1,6 +1,6 @@
 use crate::core::cluster::state_machine::ClusterId;
 
-use super::{raft::NodeId, state_machine::Store};
+use super::{NodeId, state_machine::Store};
 use openraft::LogId;
 use serde::{Deserialize, Serialize};
 

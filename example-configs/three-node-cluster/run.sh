@@ -35,10 +35,6 @@ if [[ -t 1 ]]; then
     OFF="$(printf "\e[0m")"
 fi
 
-for instance in first second third; do
-    "./prefix-output.sh" "[${TAG}$instance${OFF}]" cargo run -- --config-path "${instance}.toml" bootstrap
-done
-
 ./prefix-output.sh "[${TAG}first${OFF}] " cargo run -- --config-path ./first.toml server &
 FIRST=$!
 

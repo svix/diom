@@ -8,18 +8,14 @@ use coyote_proto::prelude::*;
 use futures_util::{StreamExt, stream};
 use itertools::Itertools;
 use openraft::ServerState;
-use tap::Pipe;
-use url::Url;
+use tap::{Pipe, TapFallible};
 
-use super::{
-    network::build_client,
-    raft::{Node, NodeId, Raft},
-    state_machine::ClusterId,
-};
+use super::{Node, NodeId, network::build_client, raft::Raft, state_machine::ClusterId};
 use crate::{
     Configuration,
+    cfg::PeerAddr,
     core::cluster::{
-        network::detect_address,
+        network::{NetworkFactory, detect_address},
         proto::{
             AddLearnerRequest, DiscoverClusterResponse, DiscoverResponse, UpgradeLearnerRequest,
         },
@@ -34,51 +30,77 @@ pub(super) struct Discovery {
     my_node_id: NodeId,
     raft: Raft,
     cfg: Configuration,
-    my_addr: SocketAddr,
+    my_addr: PeerAddr,
+    network: NetworkFactory,
+}
+
+fn is_not_any(s: &SocketAddr) -> bool {
+    match s {
+        SocketAddr::V4(s) => s.ip().is_unspecified(),
+        SocketAddr::V6(s) => s.ip().is_unspecified(),
+    }
 }
 
 impl Discovery {
-    pub(super) fn new(cfg: Configuration, raft: Raft, my_node_id: NodeId) -> anyhow::Result<Self> {
+    pub(super) fn new(
+        cfg: Configuration,
+        raft: Raft,
+        my_node_id: NodeId,
+        network: NetworkFactory,
+    ) -> anyhow::Result<Self> {
         let client = build_client(&cfg, cfg.cluster.discovery_request_timeout)?;
+        let my_addr = if let Some(addr) = &cfg.cluster.advertised_address {
+            addr.clone()
+        } else if is_not_any(&cfg.cluster.listen_address) {
+            tracing::debug!(listen_address=?cfg.cluster.listen_address, "advertised_address not passed, but listen_address is not INADDR_ANY, so using that");
+            cfg.cluster.listen_address.into()
+        } else {
+            tracing::debug!("advertised_address not passed, attempting to detect local socketaddr");
+            PeerAddr::SocketAddr(detect_address(&cfg)?)
+        };
         Ok(Self {
-            my_addr: detect_address(&cfg)?,
+            my_addr,
             client,
             cfg,
             raft,
             my_node_id,
+            network,
         })
     }
 
-    async fn poll_seeds(&self) -> (Option<SocketAddr>, BTreeMap<SocketAddr, DiscoverResponse>) {
-        let mut responses = self.cfg.cluster.seed_nodes.iter().copied().map(|s| async move {
-                    let url_string = format!("http://{s}/repl/discover");
-                    let url = match Url::parse(&url_string) {
-                        Ok(url) => url,
-                        Err(err) => {
-                            tracing::warn!(peer=?s, ?err, "invalid seed node");
-                            return None;
-                        }
-                    };
-                    let response = match self.client.get(url).send().await {
-                        Ok(resp) => resp,
-                        Err(err) => {
-                            tracing::warn!(peer=?s, ?err, "unable to poll seed node");
-                            return None;
-                        }
-                    };
-                    let response: DiscoverResponse = match response.msgpack().await {
-                        Ok(resp) => resp,
-                        Err(err) => {
-                            tracing::warn!(peer=?s, ?err, "unable to read response body from seed node");
-                            return None
-                        }
-                    };
-                    Some((s, response))
-                }).pipe(stream::iter)
-                .buffer_unordered(CONCURRENT_FETCHES)
-                .filter_map(futures_util::future::ready)
-                .collect::<BTreeMap<_, _>>()
-                .await;
+    async fn poll_node(&self, s: &PeerAddr) -> Option<DiscoverResponse> {
+        let url = s
+            .as_base_url()
+            .join("/repl/discover")
+            .expect("discovery URL should be valid");
+        self.client
+            .get(url)
+            .send()
+            .await
+            .tap_err(|err| tracing::warn!(peer=?s, ?err, "unable to poll seed node"))
+            .ok()?
+            .error_for_status()
+            .tap_err(|err| tracing::warn!(peer=?s, ?err, "got invalid HTTP response from seed"))
+            .ok()?
+            .msgpack()
+            .await
+            .tap_err(|err| tracing::warn!(peer=?s, ?err, "unable to read response body from seed"))
+            .ok()
+    }
+
+    async fn poll_seeds(&self) -> (Option<PeerAddr>, BTreeMap<PeerAddr, DiscoverResponse>) {
+        let mut responses = self
+            .cfg
+            .cluster
+            .seed_nodes
+            .clone()
+            .into_iter()
+            .map(|s| async move { self.poll_node(&s).await.map(|resp| (s, resp)) })
+            .pipe(stream::iter)
+            .buffer_unordered(CONCURRENT_FETCHES)
+            .filter_map(futures_util::future::ready)
+            .collect::<BTreeMap<_, _>>()
+            .await;
         let my_addr = responses
             .iter()
             .find(|(_k, v)| v.node_id == self.my_node_id)
@@ -86,17 +108,17 @@ impl Discovery {
         if let Some(addr) = &my_addr {
             responses.remove(addr);
         }
-        (my_addr, responses)
+        (my_addr.clone(), responses)
     }
 
     async fn join_cluster(
         &self,
         cluster_id: ClusterId,
-        peers: Vec<(SocketAddr, NodeId, DiscoverClusterResponse)>,
+        peers: Vec<(PeerAddr, NodeId, DiscoverClusterResponse)>,
     ) -> anyhow::Result<()> {
         tracing::info!(?cluster_id, "joining running cluster");
-        let Some((leader_addr, _leader_node_id, leader_cluster)) = peers
-            .iter()
+        let Some((leader_addr, leader_node_id, leader_cluster)) = peers
+            .into_iter()
             .find_or_first(|p| p.2.state == ServerState::Leader)
         else {
             anyhow::bail!("failed to find any peers to join!");
@@ -105,29 +127,30 @@ impl Discovery {
             anyhow::bail!("existing cluster has no logs");
         };
         // TODO: if any of these steps fail, how do we recover?
-        let url = format!("http://{leader_addr}/repl/raft/admin/add-learner");
-        let request = AddLearnerRequest {
-            node_id: self.my_node_id,
-            address: self.my_addr.to_string(),
-        };
-        self.client.post(url).msgpack(&request)?.send().await?;
+        let client = self.network.client_for(leader_node_id, &leader_addr.into());
+        client
+            .add_learner(AddLearnerRequest {
+                node_id: self.my_node_id,
+                address: self.my_addr.clone(),
+            })
+            .await?;
         tracing::debug!("waiting to catch up in replication");
         self.raft
             .wait(None)
             .log_index_at_least(Some(log_id.index), "waiting to catch up to leader")
             .await?;
         tracing::debug!("adding self as a full member");
-        let url = format!("http://{leader_addr}/repl/raft/admin/upgrade-learner");
-        let request = UpgradeLearnerRequest {
-            node_id: self.my_node_id,
-        };
-        self.client.post(url).msgpack(&request)?.send().await?;
+        client
+            .upgrade_learner(UpgradeLearnerRequest {
+                node_id: self.my_node_id,
+            })
+            .await?;
         Ok(())
     }
 
     async fn initialize_cluster(
         &self,
-        discovered_seeds: BTreeMap<SocketAddr, DiscoverResponse>,
+        discovered_seeds: BTreeMap<PeerAddr, DiscoverResponse>,
     ) -> anyhow::Result<()> {
         if !self.cfg.cluster.auto_initialize {
             tracing::warn!(
@@ -135,13 +158,13 @@ impl Discovery {
             );
             return Ok(());
         }
-        let my_node = Node::new(self.my_addr);
+        let my_node = Node::from(self.my_addr.clone());
         let mut nodes = [(self.my_node_id, my_node)]
             .into_iter()
             .collect::<BTreeMap<_, _>>();
         for (peer_address, response) in discovered_seeds {
             tracing::trace!(?peer_address, ?response, "adding node to new cluster");
-            nodes.insert(response.node_id, Node::new(peer_address));
+            nodes.insert(response.node_id, Node::from(peer_address));
         }
         tracing::debug!(?nodes, "initializing cluster with nodes");
         super::raft::initialize_cluster(&self.raft, nodes).await?;
@@ -171,13 +194,11 @@ impl Discovery {
         let mut rounds_with_no_peers = 0;
         while Instant::now() < deadline {
             let (my_addr, discovered_seeds) = self.poll_seeds().await;
-            if let Some(addr) = my_addr {
-                self.my_addr = addr;
+            if let Some(addr) = &my_addr {
+                tracing::debug!(?addr, "discovered my seed address");
+                self.my_addr = addr.clone();
             }
             tracing::debug!(?discovered_seeds, "discovered peers");
-            if let Some(addr) = my_addr {
-                tracing::debug!(?addr, "discovered my seed address")
-            };
 
             let num_nodes_in_live_clusters = discovered_seeds
                 .values()

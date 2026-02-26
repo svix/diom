@@ -1,23 +1,20 @@
 //! This module contains custom protocol extensions for the interserver protocol
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    net::SocketAddr,
-};
+use std::collections::{BTreeMap, BTreeSet};
 
 use openraft::{LogId, ServerState};
 use serde::{Deserialize, Serialize};
 
 use super::handle::{Request, Response};
-use crate::core::cluster::state_machine::ClusterId;
+use crate::{cfg::PeerAddr, core::cluster::state_machine::ClusterId};
 
-use super::raft::NodeId;
+use super::NodeId;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct DiscoverClusterResponse {
     pub cluster_name: String,
     pub cluster_id: Option<ClusterId>,
-    pub known_peers: BTreeMap<NodeId, Vec<SocketAddr>>,
+    pub known_peers: BTreeMap<NodeId, PeerAddr>,
     pub state: ServerState,
     pub last_committed_log_id: Option<LogId<NodeId>>,
 }
@@ -31,13 +28,19 @@ pub(super) struct DiscoverResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct AddLearnerRequest {
     pub node_id: NodeId,
-    pub address: String,
+    pub address: PeerAddr,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct AddLearnerResponse {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct UpgradeLearnerRequest {
     pub node_id: NodeId,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct UpgradeLearnerResponse {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct ChangeMembershipRequest {
