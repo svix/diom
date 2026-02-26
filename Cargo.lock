@@ -883,6 +883,7 @@ dependencies = [
  "coyote-error",
  "coyote-idempotency",
  "coyote-kv",
+ "coyote-msgs",
  "coyote-namespace",
  "coyote-operations",
  "coyote-proto",
@@ -1068,6 +1069,21 @@ dependencies = [
  "tempfile",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "coyote-msgs"
+version = "0.0.1"
+dependencies = [
+ "coyote-error",
+ "coyote-namespace",
+ "coyote-operations",
+ "fjall",
+ "jiff",
+ "schemars 1.2.0",
+ "serde",
+ "stream-internals",
+ "validator",
 ]
 
 [[package]]
@@ -4119,7 +4135,6 @@ dependencies = [
  "rmp-serde",
  "schemars 1.2.0",
  "serde",
- "stream-internals",
  "validator",
 ]
 
