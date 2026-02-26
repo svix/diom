@@ -30,7 +30,23 @@ async fn format_rust_clients() -> io::Result<()> {
             "--package=coyote-cli",
         ],
     )
-    .await
+    .await?;
+    for manifest in ["clients/cli/Cargo.toml", "clients/rust/Cargo.toml"] {
+        exec(
+            "cargo",
+            [
+                "+nightly",
+                "clippy",
+                "--fix",
+                "--allow-dirty",
+                "--no-deps",
+                "--manifest-path",
+                manifest,
+            ],
+        )
+        .await?;
+    }
+    Ok(())
 }
 
 async fn format_go_client() -> io::Result<()> {

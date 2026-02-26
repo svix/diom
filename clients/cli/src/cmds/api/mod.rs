@@ -9,6 +9,5 @@ mod rate_limiter;
 mod stream;
 
 pub(crate) use self::{
-    cache::CacheArgs, health::HealthArgs, idempotency::IdempotencyArgs, kv::KvArgs, msgs::MsgsArgs,
-    rate_limiter::RateLimiterArgs, stream::StreamArgs,
+    cache::CacheArgs, health::HealthArgs, idempotency::IdempotencyArgs, kv::KvArgs, msgs::MsgsArgs, rate_limiter::RateLimiterArgs, stream::StreamArgs,
 };
