@@ -1,4 +1,4 @@
-use diom_configgroup::entities::StorageType;
+use diom_namespace::entities::StorageType;
 use fjall::Database;
 use fjall_utils::ReadonlyDatabase;
 

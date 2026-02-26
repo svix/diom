@@ -5,7 +5,7 @@ use super::storage_type::StorageType;
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct KvGetGroupOut {
+pub struct KvGetNamespaceOut {
     pub created_at: jiff::Timestamp,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -18,7 +18,7 @@ pub struct KvGetGroupOut {
     pub updated_at: jiff::Timestamp,
 }
 
-impl KvGetGroupOut {
+impl KvGetNamespaceOut {
     pub fn new(
         created_at: jiff::Timestamp,
         name: String,

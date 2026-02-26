@@ -14,8 +14,8 @@ async fn test_bootstrap() -> TestResult {
     let test_server = TestServerBuilder::new().cfg(cfg).build().await;
     let client = test_server.client;
 
-    let default_kv_group = client
-        .post("kv/get-group")
+    let default_kv_namespace = client
+        .post("kv/get-namespace")
         .json(json!({
             "name": "default",
         }))
@@ -23,11 +23,11 @@ async fn test_bootstrap() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(default_kv_group["max_storage_bytes"], 1000);
-    assert_eq!(default_kv_group["storage_type"], "Ephemeral");
+    assert_eq!(default_kv_namespace["max_storage_bytes"], 1000);
+    assert_eq!(default_kv_namespace["storage_type"], "Ephemeral");
 
-    let default_cache_group = client
-        .post("cache/get-group")
+    let default_cache_namespace = client
+        .post("cache/get-namespace")
         .json(json!({
             "name": "default",
         }))
@@ -35,21 +35,21 @@ async fn test_bootstrap() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(default_cache_group["name"], "default");
-    assert_eq!(default_cache_group["eviction_policy"], "NoEviction");
+    assert_eq!(default_cache_namespace["name"], "default");
+    assert_eq!(default_cache_namespace["eviction_policy"], "NoEviction");
 
-    let default_idempotency_group = client
-        .post("idempotency/get-group")
+    let default_idempotency_namespace = client
+        .post("idempotency/get-namespace")
         .json(json!({
             "name": "default",
         }))
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(default_idempotency_group["name"], "default");
+    assert_eq!(default_idempotency_namespace["name"], "default");
 
     let kv1 = client
-        .post("kv/get-group")
+        .post("kv/get-namespace")
         .json(json!({
             "name": "kv1",
         }))
@@ -61,7 +61,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(kv1["storage_type"], "Ephemeral");
 
     let kv2 = client
-        .post("kv/get-group")
+        .post("kv/get-namespace")
         .json(json!({
             "name": "kv2",
         }))
@@ -72,7 +72,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(kv2["max_storage_bytes"], 3000);
 
     let cache1 = client
-        .post("cache/get-group")
+        .post("cache/get-namespace")
         .json(json!({
             "name": "cache1",
         }))
@@ -85,7 +85,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(cache1["storage_type"], "Persistent");
 
     let stream2 = client
-        .post("stream/get-group")
+        .post("stream/get-namespace")
         .json(json!({
             "name": "stream2",
         }))

@@ -6,9 +6,9 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-diom-configgroup.workspace = true
 diom-error.workspace = true
 diom-kv.workspace = true
+diom-namespace.workspace = true
 diom-operations.workspace = true
 jiff.workspace = true
 schemars.workspace = true

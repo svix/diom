@@ -2,11 +2,11 @@ pub mod tables;
 
 use std::num::NonZeroU64;
 
-use diom_configgroup::{
-    ConfigGroup,
+use diom_error::Result;
+use diom_namespace::{
+    Namespace,
     entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig},
 };
-use diom_error::Result;
 use fjall::{Database, KeyspaceCreateOptions};
 use fjall_utils::{TableRow, WriteBatchExt};
 use hashlink::{LinkedHashMap, linked_hash_map::RawEntryMut};
@@ -248,7 +248,7 @@ impl KvStore {
 
 /// This is the worker function for this module, it does background cleanup and accounting.
 /// It deletes expired entries from the database and evicts entries if the KvStore is configured to do so.
-pub async fn worker<F>(configgroup_state: &diom_configgroup::State, is_shutting_down: F)
+pub async fn worker<F>(namespace_state: &diom_namespace::State, is_shutting_down: F)
 where
     F: Fn() -> bool,
 {
@@ -274,76 +274,86 @@ where
 
         timer.tick().await;
 
-        let kv_groups = match configgroup_state.fetch_all_groups() {
-            Ok(groups) => groups,
+        let kv_namespaces = match namespace_state.fetch_all_namespaces() {
+            Ok(namespaces) => namespaces,
             Err(e) => {
-                tracing::error!(error = ?e, "Failed to get KV config groups.");
+                tracing::error!(error = ?e, "Failed to get KV namespaces.");
                 continue;
             }
         };
 
-        for group in kv_groups {
-            let group: ConfigGroup<KeyValueConfig> = match group {
+        for namespace in kv_namespaces {
+            let namespace: Namespace<KeyValueConfig> = match namespace {
                 Ok(g) => g,
                 Err(e) => {
-                    tracing::error!(error = ?e, "Failed to parse KV config group.");
+                    tracing::error!(error = ?e, "Failed to parse KV namespace.");
                     continue;
                 }
             };
-            let db = configgroup_state.give_me_the_right_db(&group);
-            let policy = group.config.eviction_policy();
+            let db = namespace_state.give_me_the_right_db(&namespace);
+            let policy = namespace.config.eviction_policy();
             let store = KvStore::new(
                 KeyValueConfig::NAMESPACE,
                 db,
                 policy,
-                group.max_storage_bytes,
+                namespace.max_storage_bytes,
             );
 
             clean_up(store);
         }
 
-        let cache_groups = match configgroup_state.fetch_all_groups() {
-            Ok(groups) => groups,
+        let cache_namespaces = match namespace_state.fetch_all_namespaces() {
+            Ok(namespaces) => namespaces,
             Err(e) => {
-                tracing::error!(error = ?e, "Failed to get Cache config groups.");
+                tracing::error!(error = ?e, "Failed to get Cache namespaces.");
                 continue;
             }
         };
 
-        for group in cache_groups {
-            let group: ConfigGroup<CacheConfig> = match group {
+        for namespace in cache_namespaces {
+            let namespace: Namespace<CacheConfig> = match namespace {
                 Ok(g) => g,
                 Err(e) => {
-                    tracing::error!(error = ?e, "Failed to process Cache config group.");
+                    tracing::error!(error = ?e, "Failed to process Cache namespace.");
                     continue;
                 }
             };
-            let db = configgroup_state.give_me_the_right_db(&group);
-            let policy = group.config.eviction_policy();
-            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy, group.max_storage_bytes);
+            let db = namespace_state.give_me_the_right_db(&namespace);
+            let policy = namespace.config.eviction_policy();
+            let store = KvStore::new(
+                CacheConfig::NAMESPACE,
+                db,
+                policy,
+                namespace.max_storage_bytes,
+            );
 
             clean_up(store);
         }
 
-        let idempotency_groups = match configgroup_state.fetch_all_groups() {
-            Ok(groups) => groups,
+        let idempotency_namespaces = match namespace_state.fetch_all_namespaces() {
+            Ok(namespaces) => namespaces,
             Err(e) => {
-                tracing::error!(error = ?e, "Failed to get Idempotency config groups.");
+                tracing::error!(error = ?e, "Failed to get Idempotency namespaces.");
                 continue;
             }
         };
 
-        for group in idempotency_groups {
-            let group: ConfigGroup<IdempotencyConfig> = match group {
+        for namespace in idempotency_namespaces {
+            let namespace: Namespace<IdempotencyConfig> = match namespace {
                 Ok(g) => g,
                 Err(e) => {
-                    tracing::error!(error = ?e, "Failed to process Idempotency config group.");
+                    tracing::error!(error = ?e, "Failed to process Idempotency namespace.");
                     continue;
                 }
             };
-            let db = configgroup_state.give_me_the_right_db(&group);
-            let policy = group.config.eviction_policy();
-            let store = KvStore::new(CacheConfig::NAMESPACE, db, policy, group.max_storage_bytes);
+            let db = namespace_state.give_me_the_right_db(&namespace);
+            let policy = namespace.config.eviction_policy();
+            let store = KvStore::new(
+                CacheConfig::NAMESPACE,
+                db,
+                policy,
+                namespace.max_storage_bytes,
+            );
 
             clean_up(store);
         }

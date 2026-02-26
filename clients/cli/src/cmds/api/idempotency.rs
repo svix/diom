@@ -15,9 +15,10 @@ pub enum IdempotencyCommands {
     Abort {
         idempotency_abort_in: crate::json::JsonOf<diom_client::models::IdempotencyAbortIn>,
     },
-    /// Get idempotency group
-    GetGroup {
-        idempotency_get_group_in: crate::json::JsonOf<diom_client::models::IdempotencyGetGroupIn>,
+    /// Get idempotency namespace
+    GetNamespace {
+        idempotency_get_namespace_in:
+            crate::json::JsonOf<diom_client::models::IdempotencyGetNamespaceIn>,
     },
 }
 
@@ -37,12 +38,12 @@ impl IdempotencyCommands {
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::GetGroup {
-                idempotency_get_group_in,
+            Self::GetNamespace {
+                idempotency_get_namespace_in,
             } => {
                 let resp = client
                     .idempotency()
-                    .get_group(idempotency_get_group_in.into_inner())
+                    .get_namespace(idempotency_get_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

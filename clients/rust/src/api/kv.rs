@@ -26,10 +26,13 @@ impl<'a> Kv<'a> {
             .await
     }
 
-    /// Get KV store
-    pub async fn get_group(&self, kv_get_group_in: KvGetGroupIn) -> Result<KvGetGroupOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/kv/get-group")
-            .with_body_param(kv_get_group_in)
+    /// Get KV namespace
+    pub async fn get_namespace(
+        &self,
+        kv_get_namespace_in: KvGetNamespaceIn,
+    ) -> Result<KvGetNamespaceOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1/kv/get-namespace")
+            .with_body_param(kv_get_namespace_in)
             .execute(self.cfg)
             .await
     }

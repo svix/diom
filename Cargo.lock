@@ -836,11 +836,11 @@ dependencies = [
  "byteorder",
  "diom-cache",
  "diom-client",
- "diom-configgroup",
  "diom-derive",
  "diom-error",
  "diom-idempotency",
  "diom-kv",
+ "diom-namespace",
  "diom-operations",
  "diom-proto",
  "diom-rate-limiter",
@@ -909,9 +909,9 @@ dependencies = [
 name = "diom-cache"
 version = "0.0.1"
 dependencies = [
- "diom-configgroup",
  "diom-error",
  "diom-kv",
+ "diom-namespace",
  "diom-operations",
  "jiff",
  "schemars 1.2.0",
@@ -963,20 +963,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "diom-configgroup"
-version = "0.0.1"
-dependencies = [
- "diom-error",
- "fjall",
- "fjall-utils",
- "jiff",
- "schemars 1.2.0",
- "serde",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "diom-derive"
 version = "0.0.1"
 dependencies = [
@@ -1005,9 +991,9 @@ dependencies = [
 name = "diom-idempotency"
 version = "0.0.1"
 dependencies = [
- "diom-configgroup",
  "diom-error",
  "diom-kv",
+ "diom-namespace",
  "diom-operations",
  "fjall",
  "jiff",
@@ -1022,8 +1008,8 @@ dependencies = [
 name = "diom-kv"
 version = "0.0.1"
 dependencies = [
- "diom-configgroup",
  "diom-error",
+ "diom-namespace",
  "diom-operations",
  "fjall",
  "fjall-utils",
@@ -1036,6 +1022,20 @@ dependencies = [
  "tempfile",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "diom-namespace"
+version = "0.0.1"
+dependencies = [
+ "diom-error",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "schemars 1.2.0",
+ "serde",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -4024,8 +4024,8 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 name = "stream-deprecated"
 version = "0.0.1"
 dependencies = [
- "diom-configgroup",
  "diom-error",
+ "diom-namespace",
  "diom-operations",
  "fjall",
  "fjall-utils",

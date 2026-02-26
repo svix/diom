@@ -111,19 +111,19 @@
         ]
       }
     },
-    "/api/v1/cache/get-group": {
+    "/api/v1/cache/get-namespace": {
       "post": {
         "tags": [
           "Cache"
         ],
-        "summary": "Cache Get Group",
-        "description": "Get cache group",
-        "operationId": "v1.cache.get_group",
+        "summary": "Cache Get Namespace",
+        "description": "Get cache namespace",
+        "operationId": "v1.cache.get_namespace",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CacheGetGroupIn"
+                "$ref": "#/components/schemas/CacheGetNamespaceIn"
               }
             }
           },
@@ -135,7 +135,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CacheGetGroupOut"
+                  "$ref": "#/components/schemas/CacheGetNamespaceOut"
                 }
               }
             }
@@ -259,19 +259,19 @@
         ]
       }
     },
-    "/api/v1/kv/get-group": {
+    "/api/v1/kv/get-namespace": {
       "post": {
         "tags": [
           "Key Value Store"
         ],
-        "summary": "Kv Get Group",
-        "description": "Get KV store",
-        "operationId": "v1.kv.get_group",
+        "summary": "Kv Get Namespace",
+        "description": "Get KV namespace",
+        "operationId": "v1.kv.get_namespace",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/KvGetGroupIn"
+                "$ref": "#/components/schemas/KvGetNamespaceIn"
               }
             }
           },
@@ -283,7 +283,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/KvGetGroupOut"
+                  "$ref": "#/components/schemas/KvGetNamespaceOut"
                 }
               }
             }
@@ -518,19 +518,19 @@
         ]
       }
     },
-    "/api/v1/idempotency/get-group": {
+    "/api/v1/idempotency/get-namespace": {
       "post": {
         "tags": [
           "Idempotency"
         ],
-        "summary": "Idempotency Get Group",
-        "description": "Get idempotency group",
-        "operationId": "v1.idempotency.get_group",
+        "summary": "Idempotency Get Namespace",
+        "description": "Get idempotency namespace",
+        "operationId": "v1.idempotency.get_namespace",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdempotencyGetGroupIn"
+                "$ref": "#/components/schemas/IdempotencyGetNamespaceIn"
               }
             }
           },
@@ -542,7 +542,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdempotencyGetGroupOut"
+                  "$ref": "#/components/schemas/IdempotencyGetNamespaceOut"
                 }
               }
             }
@@ -592,7 +592,7 @@
         ]
       }
     },
-    "/api/v1/stream/get-group": {
+    "/api/v1/stream/get-namespace": {
       "post": {
         "tags": [
           "Stream"
@@ -1011,7 +1011,24 @@
           "deleted"
         ]
       },
-      "CacheGetGroupIn": {
+      "CacheGetIn": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "x-positional": [
+          "key"
+        ]
+      },
+      "CacheGetNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -1022,7 +1039,7 @@
           "name"
         ]
       },
-      "CacheGetGroupOut": {
+      "CacheGetNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -1055,23 +1072,6 @@
           "eviction_policy",
           "created_at",
           "updated_at"
-        ]
-      },
-      "CacheGetIn": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        },
-        "required": [
-          "key"
-        ],
-        "x-positional": [
-          "key"
         ]
       },
       "CacheGetOut": {
@@ -1375,7 +1375,7 @@
       "IdempotencyCompleteOut": {
         "type": "object"
       },
-      "IdempotencyGetGroupIn": {
+      "IdempotencyGetNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -1386,7 +1386,7 @@
           "name"
         ]
       },
-      "IdempotencyGetGroupOut": {
+      "IdempotencyGetNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -1518,7 +1518,21 @@
           "deleted"
         ]
       },
-      "KvGetGroupIn": {
+      "KvGetIn": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "example": "some_key"
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "KvGetNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -1529,7 +1543,7 @@
           "name"
         ]
       },
-      "KvGetGroupOut": {
+      "KvGetNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -1558,20 +1572,6 @@
           "storage_type",
           "created_at",
           "updated_at"
-        ]
-      },
-      "KvGetIn": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
-            "example": "some_key"
-          }
-        },
-        "required": [
-          "key"
         ]
       },
       "KvGetOut": {

@@ -19,9 +19,9 @@ pub enum CacheCommands {
     Get {
         cache_get_in: crate::json::JsonOf<diom_client::models::CacheGetIn>,
     },
-    /// Get cache group
-    GetGroup {
-        cache_get_group_in: crate::json::JsonOf<diom_client::models::CacheGetGroupIn>,
+    /// Get cache namespace
+    GetNamespace {
+        cache_get_namespace_in: crate::json::JsonOf<diom_client::models::CacheGetNamespaceIn>,
     },
     /// Cache Delete
     Delete {
@@ -44,10 +44,12 @@ impl CacheCommands {
                 let resp = client.cache().get(cache_get_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::GetGroup { cache_get_group_in } => {
+            Self::GetNamespace {
+                cache_get_namespace_in,
+            } => {
                 let resp = client
                     .cache()
-                    .get_group(cache_get_group_in.into_inner())
+                    .get_namespace(cache_get_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

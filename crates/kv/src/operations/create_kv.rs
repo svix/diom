@@ -1,8 +1,8 @@
 use std::num::NonZeroU64;
 
-use diom_configgroup::{
+use diom_namespace::{
     entities::{KeyValueConfig, StorageType},
-    operations::create_configgroup::{CreateConfigGroup, CreateConfigGroupOutput},
+    operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -16,9 +16,9 @@ pub struct CreateKvOperation {
     max_storage_bytes: Option<NonZeroU64>,
 }
 
-impl From<CreateKvOperation> for CreateConfigGroup<KeyValueConfig> {
+impl From<CreateKvOperation> for CreateNamespace<KeyValueConfig> {
     fn from(value: CreateKvOperation) -> Self {
-        CreateConfigGroup::new(
+        CreateNamespace::new(
             value.name,
             KeyValueConfig {},
             value.storage_type,
@@ -42,10 +42,10 @@ impl CreateKvOperation {
 
     fn apply_real(
         self,
-        configgroup_state: &diom_configgroup::State,
+        namespace_state: &diom_namespace::State,
     ) -> diom_operations::Result<CreateKvResponseData> {
-        let op: CreateConfigGroup<KeyValueConfig> = self.into();
-        let out = op.apply_operation(configgroup_state)?;
+        let op: CreateNamespace<KeyValueConfig> = self.into();
+        let out = op.apply_operation(namespace_state)?;
         Ok(out.into())
     }
 }
@@ -59,8 +59,8 @@ pub struct CreateKvResponseData {
     pub updated_at: Timestamp,
 }
 
-impl From<CreateConfigGroupOutput<KeyValueConfig>> for CreateKvResponseData {
-    fn from(value: CreateConfigGroupOutput<KeyValueConfig>) -> Self {
+impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
+    fn from(value: CreateNamespaceOutput<KeyValueConfig>) -> Self {
         Self {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
@@ -72,7 +72,7 @@ impl From<CreateConfigGroupOutput<KeyValueConfig>> for CreateKvResponseData {
 }
 
 impl CreateKvRequest for CreateKvOperation {
-    fn apply(self, state: &diom_configgroup::State) -> CreateKvResponse {
+    fn apply(self, state: &diom_namespace::State) -> CreateKvResponse {
         CreateKvResponse(self.apply_real(state))
     }
 }

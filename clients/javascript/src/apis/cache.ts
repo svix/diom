@@ -9,17 +9,17 @@ import {
     CacheDeleteOutSerializer,
 } from '../models/cacheDeleteOut';
 import {
-    type CacheGetGroupIn,
-    CacheGetGroupInSerializer,
-} from '../models/cacheGetGroupIn';
-import {
-    type CacheGetGroupOut,
-    CacheGetGroupOutSerializer,
-} from '../models/cacheGetGroupOut';
-import {
     type CacheGetIn,
     CacheGetInSerializer,
 } from '../models/cacheGetIn';
+import {
+    type CacheGetNamespaceIn,
+    CacheGetNamespaceInSerializer,
+} from '../models/cacheGetNamespaceIn';
+import {
+    type CacheGetNamespaceOut,
+    CacheGetNamespaceOutSerializer,
+} from '../models/cacheGetNamespaceOut';
 import {
     type CacheGetOut,
     CacheGetOutSerializer,
@@ -77,21 +77,21 @@ export class Cache {
 
         
 
-    /** Get cache group */
-        public getGroup(
-            cacheGetGroupIn: CacheGetGroupIn,
-            ): Promise<CacheGetGroupOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/get-group");
+    /** Get cache namespace */
+        public getNamespace(
+            cacheGetNamespaceIn: CacheGetNamespaceIn,
+            ): Promise<CacheGetNamespaceOut> {
+            const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/get-namespace");
 
             request.setBody(
-                    CacheGetGroupInSerializer._toJsonObject(
-                        cacheGetGroupIn,
+                    CacheGetNamespaceInSerializer._toJsonObject(
+                        cacheGetNamespaceIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    CacheGetGroupOutSerializer._fromJsonObject,
+                    CacheGetNamespaceOutSerializer._fromJsonObject,
                 );
             }
 

@@ -34,6 +34,6 @@ raft_module_operations!(
     CreateKvOp {
         CreateKv(CreateKvOperation) -> CreateKvResponseData,
     },
-    state = &diom_configgroup::State,
+    state = &diom_namespace::State,
     response = CreateKvOperationResponse,
 );

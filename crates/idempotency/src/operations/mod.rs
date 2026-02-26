@@ -39,6 +39,6 @@ raft_module_operations!(
     CreateIdempotencyOp {
         CreateIdempotency(CreateIdempotencyOperation) -> CreateIdempotencyResponseData,
     },
-    state = &diom_configgroup::State,
+    state = &diom_namespace::State,
     response = CreateIdempotencyOperationResponse,
 );

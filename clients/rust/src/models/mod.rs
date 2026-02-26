@@ -9,9 +9,9 @@ mod append_to_stream_in;
 mod append_to_stream_out;
 mod cache_delete_in;
 mod cache_delete_out;
-mod cache_get_group_in;
-mod cache_get_group_out;
 mod cache_get_in;
+mod cache_get_namespace_in;
+mod cache_get_namespace_out;
 mod cache_get_out;
 mod cache_set_in;
 mod cache_set_out;
@@ -26,13 +26,13 @@ mod get_stream_in;
 mod get_stream_out;
 mod idempotency_abort_in;
 mod idempotency_abort_out;
-mod idempotency_get_group_in;
-mod idempotency_get_group_out;
+mod idempotency_get_namespace_in;
+mod idempotency_get_namespace_out;
 mod kv_delete_in;
 mod kv_delete_out;
-mod kv_get_group_in;
-mod kv_get_group_out;
 mod kv_get_in;
+mod kv_get_namespace_in;
+mod kv_get_namespace_out;
 mod kv_get_out;
 mod kv_set_in;
 mod kv_set_out;
@@ -60,9 +60,9 @@ pub use self::{
     append_to_stream_out::AppendToStreamOut,
     cache_delete_in::CacheDeleteIn,
     cache_delete_out::CacheDeleteOut,
-    cache_get_group_in::CacheGetGroupIn,
-    cache_get_group_out::CacheGetGroupOut,
     cache_get_in::CacheGetIn,
+    cache_get_namespace_in::CacheGetNamespaceIn,
+    cache_get_namespace_out::CacheGetNamespaceOut,
     cache_get_out::CacheGetOut,
     cache_set_in::CacheSetIn,
     cache_set_out::CacheSetOut,
@@ -77,13 +77,13 @@ pub use self::{
     get_stream_out::GetStreamOut,
     idempotency_abort_in::IdempotencyAbortIn,
     idempotency_abort_out::IdempotencyAbortOut,
-    idempotency_get_group_in::IdempotencyGetGroupIn,
-    idempotency_get_group_out::IdempotencyGetGroupOut,
+    idempotency_get_namespace_in::IdempotencyGetNamespaceIn,
+    idempotency_get_namespace_out::IdempotencyGetNamespaceOut,
     kv_delete_in::KvDeleteIn,
     kv_delete_out::KvDeleteOut,
-    kv_get_group_in::KvGetGroupIn,
-    kv_get_group_out::KvGetGroupOut,
     kv_get_in::KvGetIn,
+    kv_get_namespace_in::KvGetNamespaceIn,
+    kv_get_namespace_out::KvGetNamespaceOut,
     kv_get_out::KvGetOut,
     kv_set_in::KvSetIn,
     kv_set_out::KvSetOut,

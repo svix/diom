@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct IdempotencyGetGroupOut {
+pub struct IdempotencyGetNamespaceOut {
     pub created_at: jiff::Timestamp,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -14,7 +14,7 @@ pub struct IdempotencyGetGroupOut {
     pub updated_at: jiff::Timestamp,
 }
 
-impl IdempotencyGetGroupOut {
+impl IdempotencyGetNamespaceOut {
     pub fn new(created_at: jiff::Timestamp, name: String, updated_at: jiff::Timestamp) -> Self {
         Self {
             created_at,

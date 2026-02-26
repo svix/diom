@@ -34,6 +34,6 @@ raft_module_operations!(
     CreateCacheOp {
         CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
     },
-    state = &diom_configgroup::State,
+    state = &diom_namespace::State,
     response = CreateCacheOperationResponse,
 );

@@ -112,7 +112,7 @@ impl IdempotencyStore {
 mod tests {
     use std::time::Duration;
 
-    use diom_configgroup::entities::EvictionPolicy;
+    use diom_namespace::entities::EvictionPolicy;
     use fjall::Database;
     use test_utils::TestResult;
 

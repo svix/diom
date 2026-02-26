@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CacheGetGroupIn {
+pub struct KvGetNamespaceIn {
     pub name: String,
 }
 
-impl CacheGetGroupIn {
+impl KvGetNamespaceIn {
     pub fn new(name: String) -> Self {
         Self { name }
     }

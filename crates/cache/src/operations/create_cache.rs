@@ -1,8 +1,8 @@
 use std::num::NonZeroU64;
 
-use diom_configgroup::{
+use diom_namespace::{
     entities::{CacheConfig, EvictionPolicy, StorageType},
-    operations::create_configgroup::{CreateConfigGroup, CreateConfigGroupOutput},
+    operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -17,9 +17,9 @@ pub struct CreateCacheOperation {
     max_storage_bytes: Option<NonZeroU64>,
 }
 
-impl From<CreateCacheOperation> for CreateConfigGroup<CacheConfig> {
+impl From<CreateCacheOperation> for CreateNamespace<CacheConfig> {
     fn from(value: CreateCacheOperation) -> Self {
-        CreateConfigGroup::new(
+        CreateNamespace::new(
             value.name,
             CacheConfig {
                 eviction_policy: value.eviction_policy,
@@ -47,10 +47,10 @@ impl CreateCacheOperation {
 
     fn apply_real(
         self,
-        configgroup_state: &diom_configgroup::State,
+        namespace_state: &diom_namespace::State,
     ) -> diom_operations::Result<CreateCacheResponseData> {
-        let op: CreateConfigGroup<CacheConfig> = self.into();
-        let out = op.apply_operation(configgroup_state)?;
+        let op: CreateNamespace<CacheConfig> = self.into();
+        let out = op.apply_operation(namespace_state)?;
         Ok(out.into())
     }
 }
@@ -65,8 +65,8 @@ pub struct CreateCacheResponseData {
     pub updated_at: Timestamp,
 }
 
-impl From<CreateConfigGroupOutput<CacheConfig>> for CreateCacheResponseData {
-    fn from(value: CreateConfigGroupOutput<CacheConfig>) -> Self {
+impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
+    fn from(value: CreateNamespaceOutput<CacheConfig>) -> Self {
         Self {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
@@ -79,7 +79,7 @@ impl From<CreateConfigGroupOutput<CacheConfig>> for CreateCacheResponseData {
 }
 
 impl CreateCacheRequest for CreateCacheOperation {
-    fn apply(self, state: &diom_configgroup::State) -> CreateCacheResponse {
+    fn apply(self, state: &diom_namespace::State) -> CreateCacheResponse {
         CreateCacheResponse(self.apply_real(state))
     }
 }

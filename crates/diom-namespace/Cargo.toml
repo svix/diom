@@ -1,5 +1,5 @@
 [package]
-name = "diom-configgroup"
+name = "diom-namespace"
 edition = "2024"
 license.workspace = true
 version.workspace = true

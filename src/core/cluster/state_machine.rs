@@ -7,7 +7,7 @@ use std::{
 
 use crate::core::db::Databases;
 use anyhow::Context;
-use diom_configgroup::entities::StorageType;
+use diom_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{FjallFixedKey, ReadonlyKeyspace};
 use openraft::{

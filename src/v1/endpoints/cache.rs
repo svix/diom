@@ -9,9 +9,9 @@ use diom_cache::{
     CacheModel,
     operations::{DeleteOperation, SetOperation},
 };
-use diom_configgroup::entities::{EvictionPolicy, StorageType};
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, ResultExt};
+use diom_namespace::entities::{EvictionPolicy, StorageType};
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -128,12 +128,12 @@ async fn cache_del(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CacheGetGroupIn {
+struct CacheGetNamespaceIn {
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CacheGetGroupOut {
+struct CacheGetNamespaceOut {
     pub name: String,
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
@@ -142,24 +142,24 @@ struct CacheGetGroupOut {
     pub updated_at: Timestamp,
 }
 
-/// Get cache group
-#[aide_annotate(op_id = "v1.cache.get_group")]
-async fn cache_get_group(
+/// Get cache namespace
+#[aide_annotate(op_id = "v1.cache.get_namespace")]
+async fn cache_get_namespace(
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<CacheGetGroupIn>,
-) -> Result<MsgPackOrJson<CacheGetGroupOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_cache_group(&data.name)?
+    MsgPackOrJson(data): MsgPackOrJson<CacheGetNamespaceIn>,
+) -> Result<MsgPackOrJson<CacheGetNamespaceOut>> {
+    let namespace = state
+        .namespace_state
+        .fetch_cache_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    Ok(MsgPackOrJson(CacheGetGroupOut {
-        name: group.name,
-        max_storage_bytes: group.max_storage_bytes,
-        storage_type: group.storage_type,
-        eviction_policy: group.config.eviction_policy,
-        created_at: group.created_at,
-        updated_at: group.updated_at,
+    Ok(MsgPackOrJson(CacheGetNamespaceOut {
+        name: namespace.name,
+        max_storage_bytes: namespace.max_storage_bytes,
+        storage_type: namespace.storage_type,
+        eviction_policy: namespace.config.eviction_policy,
+        created_at: namespace.created_at,
+        updated_at: namespace.updated_at,
     }))
 }
 
@@ -178,8 +178,8 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/cache/get-group",
-            post_with(cache_get_group, cache_get_group_operation),
+            "/cache/get-namespace",
+            post_with(cache_get_namespace, cache_get_namespace_operation),
             &tag,
         )
         .api_route_with(

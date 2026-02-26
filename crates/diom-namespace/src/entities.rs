@@ -7,8 +7,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use uuid::Uuid;
 
-pub type ConfigGroupId = Uuid;
-pub type ConfigGroupName = String;
+pub type NamespaceId = Uuid;
+pub type NamespaceName = String;
 
 #[derive(Serialize, Deserialize)]
 #[repr(u8)]

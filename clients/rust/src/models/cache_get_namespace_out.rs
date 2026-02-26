@@ -5,7 +5,7 @@ use super::{eviction_policy::EvictionPolicy, storage_type::StorageType};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CacheGetGroupOut {
+pub struct CacheGetNamespaceOut {
     pub created_at: jiff::Timestamp,
 
     pub eviction_policy: EvictionPolicy,
@@ -20,7 +20,7 @@ pub struct CacheGetGroupOut {
     pub updated_at: jiff::Timestamp,
 }
 
-impl CacheGetGroupOut {
+impl CacheGetNamespaceOut {
     pub fn new(
         created_at: jiff::Timestamp,
         eviction_policy: EvictionPolicy,

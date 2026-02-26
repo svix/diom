@@ -2,6 +2,6 @@ package diom_models
 
 // This file is @generated DO NOT EDIT
 
-type IdempotencyGetGroupIn struct {
+type IdempotencyGetNamespaceIn struct {
 	Name string `json:"name"`
 }

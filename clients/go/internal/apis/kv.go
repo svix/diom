@@ -49,19 +49,19 @@ func (kv Kv) Get(
 	)
 }
 
-// Get KV store
-func (kv Kv) GetGroup(
+// Get KV namespace
+func (kv Kv) GetNamespace(
 	ctx context.Context,
-	kvGetGroupIn diom_models.KvGetGroupIn,
-) (*diom_models.KvGetGroupOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.KvGetGroupIn, diom_models.KvGetGroupOut](
+	kvGetNamespaceIn diom_models.KvGetNamespaceIn,
+) (*diom_models.KvGetNamespaceOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.KvGetNamespaceIn, diom_models.KvGetNamespaceOut](
 		ctx,
 		kv.client,
 		"POST",
-		"/api/v1/kv/get-group",
+		"/api/v1/kv/get-namespace",
 		nil,
 		nil,
-		&kvGetGroupIn,
+		&kvGetNamespaceIn,
 	)
 }
 

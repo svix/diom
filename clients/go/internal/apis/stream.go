@@ -42,7 +42,7 @@ func (stream Stream) Get(
 		ctx,
 		stream.client,
 		"POST",
-		"/api/v1/stream/get-group",
+		"/api/v1/stream/get-namespace",
 		nil,
 		nil,
 		&getStreamIn,

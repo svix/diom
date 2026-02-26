@@ -49,19 +49,19 @@ func (cache Cache) Get(
 	)
 }
 
-// Get cache group
-func (cache Cache) GetGroup(
+// Get cache namespace
+func (cache Cache) GetNamespace(
 	ctx context.Context,
-	cacheGetGroupIn diom_models.CacheGetGroupIn,
-) (*diom_models.CacheGetGroupOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.CacheGetGroupIn, diom_models.CacheGetGroupOut](
+	cacheGetNamespaceIn diom_models.CacheGetNamespaceIn,
+) (*diom_models.CacheGetNamespaceOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.CacheGetNamespaceIn, diom_models.CacheGetNamespaceOut](
 		ctx,
 		cache.client,
 		"POST",
-		"/api/v1/cache/get-group",
+		"/api/v1/cache/get-namespace",
 		nil,
 		nil,
-		&cacheGetGroupIn,
+		&cacheGetNamespaceIn,
 	)
 }
 

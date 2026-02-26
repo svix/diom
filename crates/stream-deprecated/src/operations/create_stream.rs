@@ -1,9 +1,9 @@
 use std::num::NonZeroU64;
 
 use super::{CreateStreamResponse, StreamRaftState, StreamRequest};
-use diom_configgroup::{
+use diom_namespace::{
     entities::{StorageType, StreamConfig},
-    operations::create_configgroup::{CreateConfigGroup, CreateConfigGroupOutput},
+    operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -33,17 +33,17 @@ impl CreateStreamOperation {
 
     fn apply_real(
         self,
-        configgroup_state: &diom_configgroup::State,
+        namespace_state: &diom_namespace::State,
     ) -> diom_operations::Result<CreateStreamResponseData> {
-        let op: CreateConfigGroup<StreamConfig> = self.into();
-        let out = op.apply_operation(configgroup_state)?;
+        let op: CreateNamespace<StreamConfig> = self.into();
+        let out = op.apply_operation(namespace_state)?;
         Ok(out.into())
     }
 }
 
-impl From<CreateStreamOperation> for CreateConfigGroup<StreamConfig> {
+impl From<CreateStreamOperation> for CreateNamespace<StreamConfig> {
     fn from(value: CreateStreamOperation) -> Self {
-        CreateConfigGroup::new(
+        CreateNamespace::new(
             value.name,
             StreamConfig {
                 retention_period_seconds: value.retention_period_seconds,
@@ -64,8 +64,8 @@ pub struct CreateStreamResponseData {
     pub updated_at: Timestamp,
 }
 
-impl From<CreateConfigGroupOutput<StreamConfig>> for CreateStreamResponseData {
-    fn from(value: CreateConfigGroupOutput<StreamConfig>) -> Self {
+impl From<CreateNamespaceOutput<StreamConfig>> for CreateStreamResponseData {
+    fn from(value: CreateNamespaceOutput<StreamConfig>) -> Self {
         Self {
             name: value.name,
             retention_period_seconds: value.config.retention_period_seconds,
@@ -79,6 +79,6 @@ impl From<CreateConfigGroupOutput<StreamConfig>> for CreateStreamResponseData {
 
 impl StreamRequest for CreateStreamOperation {
     fn apply(self, state: StreamRaftState<'_>) -> CreateStreamResponse {
-        CreateStreamResponse(self.apply_real(state.configgroup))
+        CreateStreamResponse(self.apply_real(state.namespace))
     }
 }

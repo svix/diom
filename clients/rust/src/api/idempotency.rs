@@ -21,13 +21,13 @@ impl<'a> Idempotency<'a> {
             .await
     }
 
-    /// Get idempotency group
-    pub async fn get_group(
+    /// Get idempotency namespace
+    pub async fn get_namespace(
         &self,
-        idempotency_get_group_in: IdempotencyGetGroupIn,
-    ) -> Result<IdempotencyGetGroupOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/idempotency/get-group")
-            .with_body_param(idempotency_get_group_in)
+        idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
+    ) -> Result<IdempotencyGetNamespaceOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1/idempotency/get-namespace")
+            .with_body_param(idempotency_get_namespace_in)
             .execute(self.cfg)
             .await
     }

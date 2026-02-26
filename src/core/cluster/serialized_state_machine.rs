@@ -6,7 +6,7 @@ use std::{
 use crate::core::db::Databases;
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use diom_configgroup::entities::StorageType;
+use diom_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, Readable};
 use serde::{Deserialize, Serialize};
 use zip::{ZipArchive, write::SimpleFileOptions};
@@ -232,7 +232,7 @@ mod tests {
 
     use super::{load_from_file, serialize_to_file};
     use crate::core::db::Databases;
-    use diom_configgroup::entities::StorageType;
+    use diom_namespace::entities::StorageType;
 
     #[test]
     fn test_serialize_to_file_round_trip() -> anyhow::Result<()> {

@@ -4,18 +4,18 @@
 
 
 
-export interface CacheGetGroupIn {
+export interface KvGetNamespaceIn {
     name: string;
 }
 
-export const CacheGetGroupInSerializer = {
-    _fromJsonObject(object: any): CacheGetGroupIn {
+export const KvGetNamespaceInSerializer = {
+    _fromJsonObject(object: any): KvGetNamespaceIn {
         return {
             name: object['name'],
             };
     },
 
-    _toJsonObject(self: CacheGetGroupIn): any {
+    _toJsonObject(self: KvGetNamespaceIn): any {
         return {
             'name': self.name,
             };

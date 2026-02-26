@@ -17,7 +17,7 @@ use diom_operations::raft_module_operations;
 
 pub struct StreamRaftState<'a> {
     pub stream: &'a State,
-    pub configgroup: &'a diom_configgroup::State,
+    pub namespace: &'a diom_namespace::State,
 }
 
 raft_module_operations!(

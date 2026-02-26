@@ -5,10 +5,10 @@ use std::{num::NonZeroU64, sync::Arc, time::Duration};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use diom_configgroup::entities::StorageType;
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, ResultExt};
 use diom_kv::KvStore;
+use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -153,12 +153,12 @@ async fn kv_del(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct KvGetGroupIn {
+struct KvGetNamespaceIn {
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct KvGetGroupOut {
+struct KvGetNamespaceOut {
     pub name: String,
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
@@ -166,23 +166,23 @@ struct KvGetGroupOut {
     pub updated_at: Timestamp,
 }
 
-/// Get KV store
-#[aide_annotate(op_id = "v1.kv.get_group")]
-async fn kv_get_group(
+/// Get KV namespace
+#[aide_annotate(op_id = "v1.kv.get_namespace")]
+async fn kv_get_namespace(
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<KvGetGroupIn>,
-) -> Result<MsgPackOrJson<KvGetGroupOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_kv_group(&data.name)?
+    MsgPackOrJson(data): MsgPackOrJson<KvGetNamespaceIn>,
+) -> Result<MsgPackOrJson<KvGetNamespaceOut>> {
+    let namespace = state
+        .namespace_state
+        .fetch_kv_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    Ok(MsgPackOrJson(KvGetGroupOut {
-        name: group.name,
-        max_storage_bytes: group.max_storage_bytes,
-        storage_type: group.storage_type,
-        created_at: group.created_at,
-        updated_at: group.updated_at,
+    Ok(MsgPackOrJson(KvGetNamespaceOut {
+        name: namespace.name,
+        max_storage_bytes: namespace.max_storage_bytes,
+        storage_type: namespace.storage_type,
+        created_at: namespace.created_at,
+        updated_at: namespace.updated_at,
     }))
 }
 
@@ -193,8 +193,8 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with("/kv/set", post_with(kv_set, kv_set_operation), &tag)
         .api_route_with("/kv/get", post_with(kv_get, kv_get_operation), &tag)
         .api_route_with(
-            "/kv/get-group",
-            post_with(kv_get_group, kv_get_group_operation),
+            "/kv/get-namespace",
+            post_with(kv_get_namespace, kv_get_namespace_operation),
             &tag,
         )
         .api_route_with("/kv/delete", post_with(kv_del, kv_del_operation), &tag)
