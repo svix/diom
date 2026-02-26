@@ -32,13 +32,29 @@ COYOTE_CLUSTER_SEED_NODES: "coyote-node-0:8050, coyote-node-1:8050, coyote-node-
 
 ## Common configuration values
 
-If you want to limit access to some interfaces/networks:
-Listen
-Cluster listen
+Here is an example configuration file with values you may want to change:
 
-Cluster secret.
+```toml
+# Address and port Coyote clients will use.
+listen_address = "0.0.0.0:8050"
+# The server's log level (info, debug, trace)
+log_level = "info"
 
+# Storage location for persisted modules. E.g. on AWS it would point to EBS.
+persistent_db.path = "./db-first"
+# Storage location for ephemeral modules. E.g. on AWS it would point to local SSD or ramfs.
+ephemeral_db.path = "./db-first-ephemeral"
 
+[cluster]
+# Address and port for internal cluster communication.
+listen_address = "0.0.0.0:18050"
+# Secret used for internal cluster communication.
+secret = "some-secret"
+# Cluster nodes to bootstrap cluster discovery. Coyote will use these to discover other memebers of the cluster. Most people just put all the nodes on this list, but a partial list is also fine.
+seed_nodes = ["coyote-node-0:18050", "coyote-node-1:18050", "coyote-node-2:18050"]
+```
+
+Note about storage paths: you don't need to change them if use the OCI/Docker image. Just make sure to mount a volume to `/storage` as shown in the [running Coyote section](./running.mdx).
 
 ## Supported settings
 

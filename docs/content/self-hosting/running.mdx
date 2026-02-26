@@ -7,7 +7,7 @@ Coyote works out of the box using the default configuration and supports a varie
 Make sure you have Docker installed, and run:
 
 ```sh
-docker run --ulimit memlock=-1 svix/coyote
+docker run --ulimit memlock=-1 --mount type=volume,src=coyote-storage,dst=/storage svix/coyote
 ```
 
 ## Docker Compose
