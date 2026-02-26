@@ -1,14 +1,17 @@
 #![expect(clippy::disallowed_types)] // we can't use MsgPackOrJson because these endpoints are not OpenAPI-based
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
 
 use axum::{
     Extension, Json,
-    extract::State,
+    extract::{Request, State},
+    middleware::Next,
     response::{IntoResponse, Response},
     routing::{get, post},
 };
+use axum_extra::TypedHeader;
 use diom_proto::MsgPack;
+use headers::{Authorization, authorization::Bearer};
 use http::StatusCode;
 use openraft::{
     ChangeMembers,
@@ -18,12 +21,36 @@ use serde::Serialize;
 use tap::{Pipe, TapFallible};
 
 use super::{Node, NodeId, handle::RaftState, network::detect_address, proto::*, raft::TypeConfig};
-use crate::AppState;
+use crate::{AppState, Configuration};
 
-pub fn router() -> axum::Router<AppState> {
-    // TODO: implement snapshot methods
-    axum::Router::new()
-        .route("/repl/discover", get(discover))
+#[derive(Clone)]
+struct RaftSecret(Arc<Vec<u8>>);
+
+impl RaftSecret {
+    fn new(secret: &str) -> Self {
+        Self(Arc::new(secret.as_bytes().to_owned()))
+    }
+}
+
+async fn authenticate(
+    bearer: Option<TypedHeader<Authorization<Bearer>>>,
+    Extension(RaftSecret(secret)): Extension<RaftSecret>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let Some(TypedHeader(Authorization(bearer))) = bearer else {
+        tracing::error!("got request without bearer token; rejecting");
+        return StatusCode::UNAUTHORIZED.into_response();
+    };
+    if !constant_time_eq::constant_time_eq(&secret, bearer.token().as_bytes()) {
+        tracing::error!("got invalid bearer token for raft operation");
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+    next.run(request).await
+}
+
+pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
+    let mut authenticated = axum::Router::new()
         .route("/repl/raft/append_entries", post(append_entries))
         .route("/repl/raft/vote", post(vote))
         .route("/repl/raft/stream-snapshot", post(stream_snapshot))
@@ -31,15 +58,26 @@ pub fn router() -> axum::Router<AppState> {
             "/repl/raft/handle-forwarded-write",
             post(handle_forwarded_write),
         )
-        .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/raft/admin/add-learner", post(add_learner))
         .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
         .route(
             "/repl/raft/admin/change-membership",
             post(change_membership),
         )
-        .route("/repl/raft/admin/initialize", post(initialize))
-        .route("/repl/health", get(health))
+        .route("/repl/raft/admin/initialize", post(initialize));
+
+    if let Some(secret) = &cfg.cluster.secret {
+        authenticated = authenticated
+            .layer(axum::middleware::from_fn(authenticate))
+            .layer(Extension(RaftSecret::new(secret)));
+    }
+
+    let unauthenticated = axum::Router::new()
+        .route("/repl/raft/admin/metrics", get(metrics))
+        .route("/repl/discover", get(discover))
+        .route("/repl/health", get(health));
+
+    authenticated.merge(unauthenticated)
 }
 
 // Helpers
@@ -204,6 +242,7 @@ async fn upgrade_learner(
     Extension(raft_state): Extension<RaftState>,
     MsgPack(request): MsgPack<UpgradeLearnerRequest>,
 ) -> impl IntoResponse {
+    tracing::debug!(node_id=?request.node_id, "upgrading learner to follower");
     let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
     rpc_response(raft_state.raft.change_membership(request, true).await)
 }
