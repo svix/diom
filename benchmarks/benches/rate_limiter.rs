@@ -35,7 +35,7 @@ fn bench_rate_limiter<'a, M: Measurement>(
                         "method": "token_bucket",
                         "config": {
                             "capacity": 1_000_000,
-                            "refill_amount": 500_00,
+                            "refill_amount": 50_000,
                             "refill_interval_seconds": 1
                         }
                     })))
