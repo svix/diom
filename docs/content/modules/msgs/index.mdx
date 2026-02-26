@@ -6,25 +6,26 @@ asIndexPage: true
 
 The `msgs` module is Coyote's message broker module. It supports three delivery modes: `stream`, `queue`, and `FIFO`.
 
+Coyote is backed by an ordered-stream, which provides a variety benefits, including: efficient writing, ordering, parallel-processing, and time-travel (restart processing for a specific point in time).
+
+## Quickstart
+
+If you've previously used a message broker (RabbitMQ, SQS, etc.) or an event streaming platform (Kafka) the `msgs` module will feel very familiar.
+
+Things to know to get started:
+- [Topics](#topics) are created implicitly on first-use (configure, produce, or consume).
+- You can consume messages in a few different [delivery modes](#delivery-modes).
+- You can have parallel consumers consuming the same topic using [consumer groups](#consumer-groups).
+
+That's all you need to know to get started.
+
+## How the `msgs` module works
+
 Publishing is done to `topic`s that are shared across all delivery methods, with the different delivery methods only applying at consumption time. This means that you can consume the same messages in multiple different modes in parallel.
 
 For example, let's say you built a hotel booking product and it has a stream of booking events for every time someone books. You may want to have a log of these events persisted to S3, but also have two different systems that need to act on each message: the email notification system, and the inventory processing system.
 
 With Coyote, you can publish all of these to the `bookings` topic, and consume *the same messages* in parallel like this: (1) `stream` for S3 for a strictly ordered log, (2) `queue` consumer for the email notification system, and (3) `queue` consumer for the inventory processing system. Each consuming the same messages at their own pace, and every message consumed once by each different system.
-
-Additionally, because Coyote is stream-backed in the background, you get all the benefits of a stream-backed system including: efficient writing, ordering, parallel-processing, and time-travel (acked `queue` messages aren't immediately deleted).
-
-## Quickstart
-
-You don't need to bla bla
-
-Just send messages
-
-delivery modes
-
-Topics
-
-Namespace
 
 ## Core concepts
 
@@ -42,7 +43,7 @@ Topics are created implicitly on first use, and you can have infinitely many.
 
 A consumer group tracks how a set of consumers has progressed through a topic. When multiple consumers share a group, Coyote coordinates between them so each message is processed by exactly one member of the group; letting you scale out processing by adding more consumers without duplicating work.
 
-Consumer groups are created implicitly on first use and are scoped to a topic + delivery mode combination.
+Consumer groups are created implicitly on first use and are unique for each topic + delivery mode combination.
 Each delivery mode uses consumer groups slightly differently, so please refer to each delivery mode for how information on how to use them.
 
 ### Message group keys
@@ -52,6 +53,10 @@ Messages with the same `group_key` are processed in order for delivery modes tha
 ### Namespaces
 
 A namespace groups topics together with shared retention and persistence settings.
+
+### Partitions
+
+Coyote abstracts away the concept of partitions; for all except stream. So please refer to [the stream partitions docs](./msgs/stream.mdx#partitions) for more information.
 
 ## Delivery modes
 
@@ -63,7 +68,7 @@ Queue mode is at-least-once delivery with configurable retry schedules and dead 
 
 Use a queue when you need a simple unordered task queue.
 
-For more information, read [the queue docs](./queue.mdx).
+For more information, read [the queue docs](./msgs/queue.mdx).
 
 ### FIFO
 
@@ -71,7 +76,7 @@ FIFO is queue mode with per-key ordering: only one consumer can process each key
 
 Use FIFO when you need ordered delivery that can scale to an arbitrary number of consumers.
 
-For more information, read [the FIFO docs](./fifo.mdx).
+For more information, read [the FIFO docs](./msgs/fifo.mdx).
 
 ### Stream
 
@@ -79,195 +84,29 @@ Stream mode is designed for globally ordered consumption with head-of-line block
 
 Use Stream when you need Kafka-like stream processing behavior which can't be achieved using FIFO. Otherwise, FIFO is probably preferred.
 
-For more information, read [the stream docs](./stream.mdx).
+For more information, read [the stream docs](./msgs/stream.mdx).
 
 ## Configuration
 
-- namespace
-- topic
-- Mention partitions are mentioned under stream.
+### Namespaces
 
+[Namespaces](/namespaces.mdx) allow for different configurations for groups of topics.
 
----------------
+You can create a namespace using the `coyote.msgs.namespace.create` API.
 
-This means the group `G1` on `orders` via `queue` is independent from `G1` on `orders` via `stream`, and both are independent from `G1` on `payments`. You can reuse the same logical name freely across topics and modes.
-
-The `group_key` behaves differently depending on the module:
-- `stream`: messages with the same `group_key` are assigned to the same partition, which are in-turn always processed in order.
-- `fifo`: messages with the same `group_key` are processed in order within the same consumer group, which means that if one consumer is currently processing a message with a specific key, no order consumers are going to get a message with the same key.
-- `queue`: ignored, as queue has no notion of ordering.
-
-## API reference
-
-### Publishing
-
-Publishing is the same across all delivery modes.
-
+In addition to the common set of namespace configurations, `msgs` supports:
 ```json
-// coyote.msgs.publish
 {
-  "topic": "orders",
-  "msgs": [
-    {
-      "value": "the payload",
-      "key": "user-123",
-      "headers": { "content-type": "application/json" }
-    },
-    "a headerless message"
-  ],
-  "idempotency_key": "req-abc-123"
+   "retention": {
+      "global_bytes": 40_834_194_304, // the maximum size for all topics in this namespace
+      "topic_bytes": 1_000_000_000, // the maximum size for each topic in this namespace
+      "msg_age_ms": 600_000 // maximum message age for each topic
+   }
 }
 ```
 
-### Stream
+### Topics
 
-#### coyote.msgs.stream.receive
+Using the `coyote.msgs.topic.configure` API, you can configure the number of partitions per topic.
 
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "batch_size": 100,
-  "batch_wait_millis": 10000,
-  "lease_duration_millis": 300000
-}
-```
-
-Returns messages with their offsets and partition. The `topic` field in each message reflects the specific partition (e.g. `orders~0`), which you'll use when committing.
-
-```json
-{
-  "msgs": [
-    {
-      "offset": 1,
-      "topic": "orders~0",
-      "value": "the payload",
-      "headers": { "content-type": "application/json" },
-      "timestamp": "..."
-    }
-  ]
-}
-```
-
-#### coyote.msgs.stream.commit
-
-Commits all messages up to and including the given offset for a partition.
-
-```json
-{
-  "topic": "orders~0",
-  "consumer_group": "G1",
-  "offset": 42
-}
-```
-
-#### coyote.msgs.stream.seek
-
-Repositions a consumer group by timestamp or named position.
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "position": "earliest"
-}
-```
-
-Accepts `timestamp` XOR `position` (`"earliest"` or `"latest"`). Seeking by offset requires targeting a specific partition (e.g. `orders~0`).
-
-### Queue and FIFO
-
-Queue and FIFO share the same API shape — substitute `fifo` for `queue` to use FIFO mode.
-
-#### coyote.msgs.queue.receive
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "batch_size": 10,
-  "lease_duration_millis": 30000
-}
-```
-
-#### coyote.msgs.queue.ack
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "msg_id": "msg-abc"
-}
-```
-
-#### coyote.msgs.queue.nack
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "msg_id": "msg-abc"
-}
-```
-
-#### coyote.msgs.queue.extend-lease
-
-Extends the processing lease on a message you haven't finished yet. Use this when you know you'll exceed the original lease duration.
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "msg_id": "msg-abc",
-  "lease_duration_millis": 10000
-}
-```
-
-#### coyote.msgs.queue.reset
-
-Repositions a consumer group by timestamp or named position.
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "position": "earliest"
-}
-```
-
-#### coyote.msgs.queue.redrive-dlq
-
-Moves all messages from the DLQ back to the main topic for reprocessing.
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1"
-}
-```
-
-### Configuration
-
-#### coyote.msgs.topic.configure
-
-```json
-{
-  "topic": "orders",
-  "partitions": 8
-}
-```
-
-#### coyote.msgs.queue.configure
-
-Configure a retry schedule and DLQ for a specific topic and consumer group.
-
-```json
-{
-  "topic": "orders",
-  "consumer_group": "G1",
-  "retry_schedule": [1000, 5000, 30000],
-  "dlq": "orders-dlq"
-}
-```
-
-If no consumer group configuration is set, a `nack` after all retries behaves like an `ack` (message is dropped).
+As mentioned above, you don't need to think about partitions unless you use stream. If you do, please refer to [the stream partitions docs](./msgs/stream.mdx#partitions) for more information.

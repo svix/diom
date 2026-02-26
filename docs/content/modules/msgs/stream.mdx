@@ -1,3 +1,11 @@
 # Stream
 
 Bla
+
+
+---------------
+
+The `group_key` behaves differently depending on the module:
+- `stream`: messages with the same `group_key` are assigned to the same partition, which are in-turn always processed in order.
+- `fifo`: messages with the same `group_key` are processed in order within the same consumer group, which means that if one consumer is currently processing a message with a specific key, no order consumers are going to get a message with the same key.
+- `queue`: ignored, as queue has no notion of ordering.
