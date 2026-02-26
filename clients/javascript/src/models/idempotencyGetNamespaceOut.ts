@@ -4,15 +4,15 @@
 
 
 
-export interface IdempotencyGetGroupOut {
+export interface IdempotencyGetNamespaceOut {
     createdAt: Date;
 maxStorageBytes?: number | null;
 name: string;
 updatedAt: Date;
 }
 
-export const IdempotencyGetGroupOutSerializer = {
-    _fromJsonObject(object: any): IdempotencyGetGroupOut {
+export const IdempotencyGetNamespaceOutSerializer = {
+    _fromJsonObject(object: any): IdempotencyGetNamespaceOut {
         return {
             createdAt: new Date(object['created_at']),
             maxStorageBytes: object['max_storage_bytes'],
@@ -21,7 +21,7 @@ export const IdempotencyGetGroupOutSerializer = {
             };
     },
 
-    _toJsonObject(self: IdempotencyGetGroupOut): any {
+    _toJsonObject(self: IdempotencyGetNamespaceOut): any {
         return {
             'created_at': self.createdAt,
             'max_storage_bytes': self.maxStorageBytes,

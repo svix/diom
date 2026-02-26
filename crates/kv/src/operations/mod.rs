@@ -34,6 +34,6 @@ raft_module_operations!(
     CreateKvOp {
         CreateKv(CreateKvOperation) -> CreateKvResponseData,
     },
-    state = &coyote_configgroup::State,
+    state = &coyote_namespace::State,
     response = CreateKvOperationResponse,
 );

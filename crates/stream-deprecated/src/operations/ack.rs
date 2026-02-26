@@ -1,6 +1,6 @@
 use super::{AckResponse, StreamRaftState, StreamRequest};
-use coyote_configgroup::entities::ConfigGroupId;
 use coyote_error::{HttpError, Result};
+use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -33,7 +33,7 @@ fn validate_ack_bounds(leases: &[LeaseRow], max_msg_id: MsgId) -> Result<()> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AckOperation {
-    group_id: ConfigGroupId,
+    namespace_id: NamespaceId,
     cg: ConsumerGroup,
     min_msg_id: MsgId,
     max_msg_id: MsgId,
@@ -41,13 +41,13 @@ pub struct AckOperation {
 
 impl AckOperation {
     pub fn new(
-        group_id: ConfigGroupId,
+        namespace_id: NamespaceId,
         cg: ConsumerGroup,
         min_msg_id: MsgId,
         max_msg_id: MsgId,
     ) -> Self {
         Self {
-            group_id,
+            namespace_id,
             cg,
             min_msg_id,
             max_msg_id,
@@ -56,7 +56,7 @@ impl AckOperation {
 
     fn apply_real(self, state: &State) -> coyote_operations::Result<AckResponseData> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, self.group_id, &self.cg)?;
+        let leases = LeaseRow::fetch_all(state, self.namespace_id, &self.cg)?;
         validate_ack_bounds(&leases, self.max_msg_id)?;
 
         let mut lease_diff = LeaseRow::cull_and_compact(leases.clone(), now);
@@ -73,7 +73,7 @@ impl AckOperation {
         // This new lease is potentially redundant with an extant lease.
         // However, any redundancy will be removed by future calls to `cull_and_compact`.
         lease_diff.to_insert.push(LeaseRow {
-            group_id: self.group_id,
+            namespace_id: self.namespace_id,
             cg: self.cg,
             block_start: self.min_msg_id,
             block_end: self.max_msg_id,

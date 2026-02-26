@@ -19,9 +19,9 @@ pub enum KvCommands {
     Get {
         kv_get_in: crate::json::JsonOf<coyote_client::models::KvGetIn>,
     },
-    /// Get KV store
-    GetGroup {
-        kv_get_group_in: crate::json::JsonOf<coyote_client::models::KvGetGroupIn>,
+    /// Get KV namespace
+    GetNamespace {
+        kv_get_namespace_in: crate::json::JsonOf<coyote_client::models::KvGetNamespaceIn>,
     },
     /// KV Delete
     Delete {
@@ -44,8 +44,13 @@ impl KvCommands {
                 let resp = client.kv().get(kv_get_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::GetGroup { kv_get_group_in } => {
-                let resp = client.kv().get_group(kv_get_group_in.into_inner()).await?;
+            Self::GetNamespace {
+                kv_get_namespace_in,
+            } => {
+                let resp = client
+                    .kv()
+                    .get_namespace(kv_get_namespace_in.into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::Delete { kv_delete_in } => {

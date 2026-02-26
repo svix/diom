@@ -6,7 +6,7 @@ use std::{
 
 use crate::{cfg::Configuration as AppConfig, core::cluster::RaftState};
 use anyhow::Context;
-use coyote_configgroup::entities::{EvictionPolicy, StorageType};
+use coyote_namespace::entities::{EvictionPolicy, StorageType};
 use serde::Deserialize;
 
 #[derive(Debug, Default, Deserialize)]
@@ -44,7 +44,7 @@ impl From<EvictionPolicyIn> for EvictionPolicy {
 }
 
 #[derive(Debug, Default, Deserialize)]
-struct ConfigGroupIn<C> {
+struct NamespaceIn<C> {
     #[serde(default)]
     pub storage_type: StorageTypeIn,
     pub max_storage_bytes: Option<NonZeroU64>,
@@ -71,10 +71,10 @@ struct StreamConfigIn {
 
 #[derive(Debug, Default, Deserialize)]
 struct BootstrapConfig {
-    cache: Option<HashMap<String, ConfigGroupIn<CacheConfigIn>>>,
-    idempotency: Option<HashMap<String, ConfigGroupIn<IdempotencyConfigIn>>>,
-    kv: Option<HashMap<String, ConfigGroupIn<KeyValueConfigIn>>>,
-    stream: Option<HashMap<String, ConfigGroupIn<StreamConfigIn>>>,
+    cache: Option<HashMap<String, NamespaceIn<CacheConfigIn>>>,
+    idempotency: Option<HashMap<String, NamespaceIn<IdempotencyConfigIn>>>,
+    kv: Option<HashMap<String, NamespaceIn<KeyValueConfigIn>>>,
+    stream: Option<HashMap<String, NamespaceIn<StreamConfigIn>>>,
 }
 
 impl BootstrapConfig {
@@ -87,31 +87,31 @@ impl BootstrapConfig {
             None => BootstrapConfig::default(),
         };
 
-        // Configure default config group for cache, if not part of the config file
+        // Configure default namespace for cache, if not part of the config file
         if let Entry::Vacant(v) = config
             .cache
             .get_or_insert_default()
             .entry("default".to_owned())
         {
-            v.insert(ConfigGroupIn::default());
+            v.insert(NamespaceIn::default());
         }
 
-        // Configure default config group for idempotency, if not part of the config file
+        // Configure default namespace for idempotency, if not part of the config file
         if let Entry::Vacant(v) = config
             .idempotency
             .get_or_insert_default()
             .entry("default".to_owned())
         {
-            v.insert(ConfigGroupIn::default());
+            v.insert(NamespaceIn::default());
         }
 
-        // Configure default config group for kv, if not part of the config file
+        // Configure default namespace for kv, if not part of the config file
         if let Entry::Vacant(v) = config
             .kv
             .get_or_insert_default()
             .entry("default".to_owned())
         {
-            v.insert(ConfigGroupIn::default());
+            v.insert(NamespaceIn::default());
         }
 
         Ok(config)

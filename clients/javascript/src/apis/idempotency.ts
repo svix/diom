@@ -9,13 +9,13 @@ import {
     IdempotencyAbortOutSerializer,
 } from '../models/idempotencyAbortOut';
 import {
-    type IdempotencyGetGroupIn,
-    IdempotencyGetGroupInSerializer,
-} from '../models/idempotencyGetGroupIn';
+    type IdempotencyGetNamespaceIn,
+    IdempotencyGetNamespaceInSerializer,
+} from '../models/idempotencyGetNamespaceIn';
 import {
-    type IdempotencyGetGroupOut,
-    IdempotencyGetGroupOutSerializer,
-} from '../models/idempotencyGetGroupOut';
+    type IdempotencyGetNamespaceOut,
+    IdempotencyGetNamespaceOutSerializer,
+} from '../models/idempotencyGetNamespaceOut';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
 export class Idempotency {
@@ -41,21 +41,21 @@ export class Idempotency {
 
         
 
-    /** Get idempotency group */
-        public getGroup(
-            idempotencyGetGroupIn: IdempotencyGetGroupIn,
-            ): Promise<IdempotencyGetGroupOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/get-group");
+    /** Get idempotency namespace */
+        public getNamespace(
+            idempotencyGetNamespaceIn: IdempotencyGetNamespaceIn,
+            ): Promise<IdempotencyGetNamespaceOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/get-namespace");
 
             request.setBody(
-                    IdempotencyGetGroupInSerializer._toJsonObject(
-                        idempotencyGetGroupIn,
+                    IdempotencyGetNamespaceInSerializer._toJsonObject(
+                        idempotencyGetNamespaceIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    IdempotencyGetGroupOutSerializer._fromJsonObject,
+                    IdempotencyGetNamespaceOutSerializer._fromJsonObject,
                 );
             }
 

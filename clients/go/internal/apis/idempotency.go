@@ -33,18 +33,18 @@ func (idempotency Idempotency) Abort(
 	)
 }
 
-// Get idempotency group
-func (idempotency Idempotency) GetGroup(
+// Get idempotency namespace
+func (idempotency Idempotency) GetNamespace(
 	ctx context.Context,
-	idempotencyGetGroupIn coyote_models.IdempotencyGetGroupIn,
-) (*coyote_models.IdempotencyGetGroupOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyGetGroupIn, coyote_models.IdempotencyGetGroupOut](
+	idempotencyGetNamespaceIn coyote_models.IdempotencyGetNamespaceIn,
+) (*coyote_models.IdempotencyGetNamespaceOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyGetNamespaceIn, coyote_models.IdempotencyGetNamespaceOut](
 		ctx,
 		idempotency.client,
 		"POST",
-		"/api/v1/idempotency/get-group",
+		"/api/v1/idempotency/get-namespace",
 		nil,
 		nil,
-		&idempotencyGetGroupIn,
+		&idempotencyGetNamespaceIn,
 	)
 }

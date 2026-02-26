@@ -1,4 +1,4 @@
-use coyote_configgroup::entities::StorageType;
+use coyote_namespace::entities::StorageType;
 use fjall::Database;
 use fjall_utils::ReadonlyDatabase;
 

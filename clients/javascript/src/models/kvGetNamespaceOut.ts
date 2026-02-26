@@ -1,9 +1,5 @@
 // this file is @generated
 import {
-    type EvictionPolicy,
-    EvictionPolicySerializer,
-} from './evictionPolicy';
-import {
     type StorageType,
     StorageTypeSerializer,
 } from './storageType';
@@ -12,20 +8,18 @@ import {
 
 
 
-export interface CacheGetGroupOut {
+export interface KvGetNamespaceOut {
     createdAt: Date;
-evictionPolicy: EvictionPolicy;
 maxStorageBytes?: number | null;
 name: string;
 storageType: StorageType;
 updatedAt: Date;
 }
 
-export const CacheGetGroupOutSerializer = {
-    _fromJsonObject(object: any): CacheGetGroupOut {
+export const KvGetNamespaceOutSerializer = {
+    _fromJsonObject(object: any): KvGetNamespaceOut {
         return {
             createdAt: new Date(object['created_at']),
-            evictionPolicy: EvictionPolicySerializer._fromJsonObject(object['eviction_policy']),
             maxStorageBytes: object['max_storage_bytes'],
             name: object['name'],
             storageType: StorageTypeSerializer._fromJsonObject(object['storage_type']),
@@ -33,10 +27,9 @@ export const CacheGetGroupOutSerializer = {
             };
     },
 
-    _toJsonObject(self: CacheGetGroupOut): any {
+    _toJsonObject(self: KvGetNamespaceOut): any {
         return {
             'created_at': self.createdAt,
-            'eviction_policy': EvictionPolicySerializer._toJsonObject(self.evictionPolicy),
             'max_storage_bytes': self.maxStorageBytes,
             'name': self.name,
             'storage_type': StorageTypeSerializer._toJsonObject(self.storageType),

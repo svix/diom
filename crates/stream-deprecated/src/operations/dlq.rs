@@ -4,8 +4,8 @@ use crate::{
     entities::{ConsumerGroup, MsgId},
     tables::LeaseRow,
 };
-use coyote_configgroup::entities::ConfigGroupId;
 use coyote_error::HttpError;
+use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -32,15 +32,15 @@ fn validate_dlq_bounds(leases: &[LeaseRow], msg_id: MsgId) -> coyote_error::Resu
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DlqOperation {
-    group_id: ConfigGroupId,
+    namespace_id: NamespaceId,
     cg: ConsumerGroup,
     msg_id: MsgId,
 }
 
 impl DlqOperation {
-    pub fn new(group_id: ConfigGroupId, cg: ConsumerGroup, msg_id: MsgId) -> Self {
+    pub fn new(namespace_id: NamespaceId, cg: ConsumerGroup, msg_id: MsgId) -> Self {
         Self {
-            group_id,
+            namespace_id,
             cg,
             msg_id,
         }
@@ -48,7 +48,7 @@ impl DlqOperation {
 
     fn apply_real(self, state: &State) -> coyote_operations::Result<DlqResponseData> {
         let now = Timestamp::now();
-        let leases = LeaseRow::fetch_all(state, self.group_id, &self.cg)?;
+        let leases = LeaseRow::fetch_all(state, self.namespace_id, &self.cg)?;
 
         validate_dlq_bounds(&leases, self.msg_id)?;
 
@@ -64,7 +64,7 @@ impl DlqOperation {
         );
 
         lease_diff.to_insert.push(LeaseRow {
-            group_id: self.group_id,
+            namespace_id: self.namespace_id,
             cg: self.cg,
             block_start: self.msg_id,
             block_end: self.msg_id,

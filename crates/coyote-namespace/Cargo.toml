@@ -1,5 +1,5 @@
 [package]
-name = "coyote-configgroup"
+name = "coyote-namespace"
 edition = "2024"
 license.workspace = true
 version.workspace = true

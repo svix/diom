@@ -5,9 +5,9 @@ use std::num::{NonZeroU16, NonZeroU64};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use coyote_configgroup::entities::StorageType;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, Result, ResultExt};
+use coyote_namespace::entities::StorageType;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -76,12 +76,12 @@ async fn append_to_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AppendToStreamIn>,
 ) -> Result<MsgPackOrJson<AppendToStreamOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = stream_deprecated::operations::AppendOperation::new(group.id, data.msgs);
+    let operation = stream_deprecated::operations::AppendOperation::new(namespace.id, data.msgs);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(AppendToStreamOut {
@@ -116,13 +116,13 @@ async fn locking_fetch_from_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = stream_deprecated::operations::FetchLockingOperation::new(
-        group.id,
+        namespace.id,
         data.consumer_group,
         data.batch_size,
         data.visibility_timeout_seconds,
@@ -145,13 +145,13 @@ async fn fetch_from_stream(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<FetchFromStreamIn>,
 ) -> Result<MsgPackOrJson<FetchFromStreamOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = stream_deprecated::operations::FetchOperation::new(
-        group.id,
+        namespace.id,
         data.consumer_group,
         data.batch_size,
         data.visibility_timeout_seconds,
@@ -181,13 +181,13 @@ async fn ack_range(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AckMsgRangeIn>,
 ) -> Result<MsgPackOrJson<AckMsgRangeOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = stream_deprecated::operations::AckOperation::new(
-        group.id,
+        namespace.id,
         data.consumer_group,
         data.min_msg_id.unwrap_or(MsgId::MIN),
         data.max_msg_id,
@@ -211,13 +211,13 @@ async fn ack(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<Ack>,
 ) -> Result<MsgPackOrJson<AckOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = stream_deprecated::operations::AckOperation::new(
-        group.id,
+        namespace.id,
         data.consumer_group,
         data.msg_id,
         data.msg_id,
@@ -247,13 +247,13 @@ async fn dlq(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<DlqIn>,
 ) -> Result<MsgPackOrJson<DlqOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = stream_deprecated::operations::DlqOperation::new(
-        group.id,
+        namespace.id,
         data.consumer_group,
         data.msg_id,
     );
@@ -278,13 +278,13 @@ async fn redrive(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RedriveIn>,
 ) -> Result<MsgPackOrJson<RedriveOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation =
-        stream_deprecated::operations::RedriveOperation::new(group.id, data.consumer_group);
+        stream_deprecated::operations::RedriveOperation::new(namespace.id, data.consumer_group);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RedriveOut {}))
@@ -311,18 +311,18 @@ async fn get_stream(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<GetStreamIn>,
 ) -> Result<MsgPackOrJson<GetStreamOut>> {
-    let group = state
-        .configgroup_state
-        .fetch_stream_group(&data.name)?
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     Ok(MsgPackOrJson(GetStreamOut {
-        name: group.name,
-        retention_period_seconds: group.config.retention_period_seconds,
-        max_byte_size: group.max_storage_bytes,
-        storage_type: group.storage_type,
-        created_at: group.created_at,
-        updated_at: group.updated_at,
+        name: namespace.name,
+        retention_period_seconds: namespace.config.retention_period_seconds,
+        max_byte_size: namespace.max_storage_bytes,
+        storage_type: namespace.storage_type,
+        created_at: namespace.created_at,
+        updated_at: namespace.updated_at,
     }))
 }
 
@@ -336,7 +336,7 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/stream/get-group",
+            "/stream/get-namespace",
             post_with(get_stream, get_stream_operation),
             &tag,
         )

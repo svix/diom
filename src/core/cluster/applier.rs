@@ -18,10 +18,10 @@ pub(super) async fn apply_request(
             Response::Kv(req.apply(&mut store))
         }
         Request::CreateKv(req) => {
-            Response::CreateKv(req.apply(&state_machine.state.configgroup_state))
+            Response::CreateKv(req.apply(&state_machine.state.namespace_state))
         }
         Request::RateLimiter(req) => {
-            // Rate limiter neither needs nor uses config groups for now
+            // Rate limiter neither needs nor uses namespaces for now
             Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))
         }
         Request::Idempotency(req) => {
@@ -31,20 +31,20 @@ pub(super) async fn apply_request(
             Response::Idempotency(req.apply(&mut store))
         }
         Request::CreateIdempotency(req) => {
-            Response::CreateIdempotency(req.apply(&state_machine.state.configgroup_state))
+            Response::CreateIdempotency(req.apply(&state_machine.state.namespace_state))
         }
         Request::Cache(req) => {
             let mut store = state_machine.state.get_cache_store_by_key(req.key_name())?;
             Response::Cache(req.apply(&mut store))
         }
         Request::CreateCache(req) => {
-            Response::CreateCache(req.apply(&state_machine.state.configgroup_state))
+            Response::CreateCache(req.apply(&state_machine.state.namespace_state))
         }
         Request::Stream(req) => {
             let stores = state_machine.db_handle();
             let state = stream_deprecated::operations::StreamRaftState {
                 stream: &stores.stream_state,
-                configgroup: &state_machine.state.configgroup_state,
+                namespace: &state_machine.state.namespace_state,
             };
             Response::Stream(req.apply(state))
         }

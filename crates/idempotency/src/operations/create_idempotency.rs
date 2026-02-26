@@ -1,8 +1,8 @@
 use std::num::NonZeroU64;
 
-use coyote_configgroup::{
+use coyote_namespace::{
     entities::{IdempotencyConfig, StorageType},
-    operations::create_configgroup::{CreateConfigGroup, CreateConfigGroupOutput},
+    operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -16,9 +16,9 @@ pub struct CreateIdempotencyOperation {
     max_storage_bytes: Option<NonZeroU64>,
 }
 
-impl From<CreateIdempotencyOperation> for CreateConfigGroup<IdempotencyConfig> {
+impl From<CreateIdempotencyOperation> for CreateNamespace<IdempotencyConfig> {
     fn from(value: CreateIdempotencyOperation) -> Self {
-        CreateConfigGroup::new(
+        CreateNamespace::new(
             value.name,
             IdempotencyConfig {},
             value.storage_type,
@@ -42,10 +42,10 @@ impl CreateIdempotencyOperation {
 
     fn apply_real(
         self,
-        configgroup_state: &coyote_configgroup::State,
+        namespace_state: &coyote_namespace::State,
     ) -> coyote_operations::Result<CreateIdempotencyResponseData> {
-        let op: CreateConfigGroup<IdempotencyConfig> = self.into();
-        let out = op.apply_operation(configgroup_state)?;
+        let op: CreateNamespace<IdempotencyConfig> = self.into();
+        let out = op.apply_operation(namespace_state)?;
         Ok(out.into())
     }
 }
@@ -59,8 +59,8 @@ pub struct CreateIdempotencyResponseData {
     pub updated_at: Timestamp,
 }
 
-impl From<CreateConfigGroupOutput<IdempotencyConfig>> for CreateIdempotencyResponseData {
-    fn from(value: CreateConfigGroupOutput<IdempotencyConfig>) -> Self {
+impl From<CreateNamespaceOutput<IdempotencyConfig>> for CreateIdempotencyResponseData {
+    fn from(value: CreateNamespaceOutput<IdempotencyConfig>) -> Self {
         Self {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
@@ -72,7 +72,7 @@ impl From<CreateConfigGroupOutput<IdempotencyConfig>> for CreateIdempotencyRespo
 }
 
 impl CreateIdempotencyRequest for CreateIdempotencyOperation {
-    fn apply(self, state: &coyote_configgroup::State) -> CreateIdempotencyResponse {
+    fn apply(self, state: &coyote_namespace::State) -> CreateIdempotencyResponse {
         CreateIdempotencyResponse(self.apply_real(state))
     }
 }

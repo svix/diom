@@ -6,8 +6,8 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-coyote-configgroup.workspace = true
 coyote-error.workspace = true
+coyote-namespace.workspace = true
 coyote-operations.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true

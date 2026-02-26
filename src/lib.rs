@@ -13,13 +13,13 @@ use std::{
 use aide::axum::ApiRouter;
 use axum::{Extension, middleware};
 use cfg::ConfigurationInner;
-use coyote_configgroup::{
-    BothDatabases,
-    entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
-    group_name,
-};
 use coyote_error::{Error, Result};
 use coyote_kv::KvStore;
+use coyote_namespace::{
+    BothDatabases,
+    entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
+    namespace_name,
+};
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -116,7 +116,7 @@ pub struct AppState {
     cfg: Configuration,
     rate_limiter: crate::v1::modules::rate_limiter::RateLimiter,
 
-    configgroup_state: coyote_configgroup::State,
+    namespace_state: coyote_namespace::State,
 
     #[allow(dead_code)]
     ro_dbs: ReadonlyDatabases,
@@ -167,11 +167,11 @@ impl AppState {
 
         let ro_dbs = Databases::new(persistent_db.clone(), ephemeral_db.clone()).readonly();
 
-        let configgroup_state = coyote_configgroup::State::init(BothDatabases {
+        let namespace_state = coyote_namespace::State::init(BothDatabases {
             persistent_db: persistent_db.clone(),
             ephemeral_db,
         })
-        .expect("initializing configgroup state");
+        .expect("initializing namespace state");
 
         AppState {
             cfg,
@@ -179,23 +179,23 @@ impl AppState {
                 "rate_limiter_default",
                 persistent_db,
             ),
-            configgroup_state,
+            namespace_state,
             ro_dbs,
         }
     }
 
     fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
-        let group_name = group_name(key_name);
+        let ns_name = namespace_name(key_name);
 
-        let group = self
-            .configgroup_state
-            .fetch_group_with_default::<C>(group_name.to_string())?
-            .ok_or_else(|| Error::generic(format!("group {group_name} not found")))?;
+        let namespace = self
+            .namespace_state
+            .fetch_namespace_with_default::<C>(ns_name.to_string())?
+            .ok_or_else(|| Error::generic(format!("namespace {ns_name} not found")))?;
 
-        let policy = group.config.eviction_policy();
+        let policy = namespace.config.eviction_policy();
         let kv_store = KvStore::new(
             KeyValueConfig::NAMESPACE,
-            self.configgroup_state.give_me_the_right_db(&group),
+            self.namespace_state.give_me_the_right_db(&namespace),
             policy,
             None,
         );

@@ -93,7 +93,7 @@ export class Stream {
         public get(
             getStreamIn: GetStreamIn,
             ): Promise<GetStreamOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/stream/get-group");
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/stream/get-namespace");
 
             request.setBody(
                     GetStreamInSerializer._toJsonObject(

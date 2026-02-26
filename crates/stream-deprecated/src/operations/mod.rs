@@ -17,7 +17,7 @@ use coyote_operations::raft_module_operations;
 
 pub struct StreamRaftState<'a> {
     pub stream: &'a State,
-    pub configgroup: &'a coyote_configgroup::State,
+    pub namespace: &'a coyote_namespace::State,
 }
 
 raft_module_operations!(

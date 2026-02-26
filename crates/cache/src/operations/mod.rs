@@ -34,6 +34,6 @@ raft_module_operations!(
     CreateCacheOp {
         CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
     },
-    state = &coyote_configgroup::State,
+    state = &coyote_namespace::State,
     response = CreateCacheOperationResponse,
 );
