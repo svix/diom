@@ -68,16 +68,16 @@ pub(super) fn cluster_connection_timeout() -> Duration {
     Duration::from_millis(3100)
 }
 
-pub(super) fn cluster_heartbeat_interval_ms() -> u64 {
-    500
+pub(super) fn cluster_heartbeat_interval() -> Duration {
+    Duration::from_millis(500)
 }
 
-pub(super) fn cluster_election_timeout_min_ms() -> u64 {
-    1500
+pub(super) fn cluster_election_timeout_min() -> Duration {
+    Duration::from_millis(1500)
 }
 
-pub(super) fn cluster_election_timeout_max_ms() -> u64 {
-    3000
+pub(super) fn cluster_election_timeout_max() -> Duration {
+    Duration::from_millis(3500)
 }
 
 pub(super) fn cluster_auto_initialize() -> bool {

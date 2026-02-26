@@ -70,9 +70,9 @@ pub async fn initialize_raft(
         .await
         .context("reading node ID from logs")?;
     let config = openraft::Config {
-        heartbeat_interval: cfg.cluster.heartbeat_interval_ms,
-        election_timeout_min: cfg.cluster.election_timeout_min_ms,
-        election_timeout_max: cfg.cluster.election_timeout_max_ms,
+        heartbeat_interval: cfg.cluster.heartbeat_interval.as_millis() as u64,
+        election_timeout_min: cfg.cluster.election_timeout_min.as_millis() as u64,
+        election_timeout_max: cfg.cluster.election_timeout_max.as_millis() as u64,
         cluster_name: cfg.cluster.name.clone(),
         ..Default::default()
     };

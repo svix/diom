@@ -161,14 +161,26 @@ pub struct ClusterConfiguration {
     )]
     pub connection_timeout: Duration,
 
-    #[serde(default = "defaults::cluster_heartbeat_interval_ms")]
-    pub heartbeat_interval_ms: u64,
+    #[serde(
+        rename = "heartbeat_interval_ms",
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_heartbeat_interval"
+    )]
+    pub heartbeat_interval: Duration,
 
-    #[serde(default = "defaults::cluster_election_timeout_min_ms")]
-    pub election_timeout_min_ms: u64,
+    #[serde(
+        rename = "election_timeout_min_ms",
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_election_timeout_min"
+    )]
+    pub election_timeout_min: Duration,
 
-    #[serde(default = "defaults::cluster_election_timeout_max_ms")]
-    pub election_timeout_max_ms: u64,
+    #[serde(
+        rename = "election_timeout_max_ms",
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_election_timeout_max"
+    )]
+    pub election_timeout_max: Duration,
 
     /// Address that other nodes should use to communicate with this one. If not passed, we'll
     /// attempt to discover it at boot time. This cannot currently be changed after cluster
@@ -369,6 +381,16 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         };
     }
 
+    macro_rules! env_ms_overrides {
+        ( $( $field:ident: $env_var:literal ),* $(,)? ) => {
+            $(
+                if let Some(value) = env_var_ms($env_var)? {
+                    *$field = value;
+                }
+            )*
+        };
+    }
+
     let ConfigurationInner {
         listen_address,
         persistent_db:
@@ -401,9 +423,9 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
                 replication_request_timeout: cluster_replication_request_timeout,
                 discovery_request_timeout: cluster_discovery_request_timeout,
                 connection_timeout: cluster_connection_timeout,
-                heartbeat_interval_ms: cluster_heartbeat_interval_ms,
-                election_timeout_min_ms: cluster_election_timeout_min_ms,
-                election_timeout_max_ms: cluster_election_timeout_max_ms,
+                heartbeat_interval: cluster_heartbeat_interval,
+                election_timeout_min: cluster_election_timeout_min,
+                election_timeout_max: cluster_election_timeout_max,
                 seed_nodes: cluster_seed_nodes,
                 auto_initialize: cluster_auto_initialize,
                 discovery_timeout: cluster_discovery_timeout,
@@ -426,10 +448,19 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         cluster_name: "DIOM_CLUSTER_NAME",
         cluster_snapshot_path: "DIOM_CLUSTER_SNAPSHOT_PATH",
         cluster_log_path: "DIOM_CLUSTER_LOG_PATH",
-        cluster_heartbeat_interval_ms: "DIOM_CLUSTER_HEARTBEAT_INTERVAL_MS",
-        cluster_election_timeout_min_ms: "DIOM_CLUSTER_ELECTION_TIMEOUT_MIN_MS",
-        cluster_election_timeout_max_ms: "DIOM_CLUSTER_ELECTION_TIMEOUT_MAX_MS",
         cluster_auto_initialize: "DIOM_CLUSTER_AUTO_INITIALIZE",
+    );
+
+    env_ms_overrides!(
+        cluster_heartbeat_interval: "DIOM_CLUSTER_HEARTBEAT_INTERVAL_MS",
+        cluster_election_timeout_min: "DIOM_CLUSTER_ELECTION_TIMEOUT_MIN_MS",
+        cluster_election_timeout_max: "DIOM_CLUSTER_ELECTION_TIMEOUT_MAX_MS",
+        cluster_replication_request_timeout: "DIOM_CLUSTER_REPLICATION_REQUEST_TIMEOUT_MS",
+        cluster_discovery_request_timeout: "DIOM_CLUSTER_DISCOVERY_REQUEST_TIMEOUT_MS",
+        cluster_connection_timeout: "DIOM_CLUSTER_CONNECTION_TIMEOUT_MS",
+        cluster_discovery_timeout: "DIOM_CLUSTER_DISCOVERY_TIMEOUT_MS",
+        cluster_startup_discovery_delay: "DIOM_CLUSTER_STARTUP_DISCOVERY_DELAY_MS",
+        cluster_log_index_interval: "DIOM_LOG_INDEX_INTERVAL_MS",
     );
 
     // Option fields not supported by the simple macro above.
@@ -458,24 +489,6 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     // Fields that require different parsing
     if let Some(value) = env_var_comma_separated("DIOM_CLUSTER_SEED_NODES")? {
         *cluster_seed_nodes = value;
-    }
-    if let Some(value) = env_var_ms("DIOM_CLUSTER_REPLICATION_REQUEST_TIMEOUT_MS")? {
-        *cluster_replication_request_timeout = value;
-    }
-    if let Some(value) = env_var_ms("DIOM_CLUSTER_DISCOVERY_REQUEST_TIMEOUT_MS")? {
-        *cluster_discovery_request_timeout = value;
-    }
-    if let Some(value) = env_var_ms("DIOM_CLUSTER_CONNECTION_TIMEOUT_MS")? {
-        *cluster_connection_timeout = value;
-    }
-    if let Some(value) = env_var_ms("DIOM_CLUSTER_DISCOVERY_TIMEOUT_MS")? {
-        *cluster_discovery_timeout = value;
-    }
-    if let Some(value) = env_var_ms("DIOM_CLUSTER_STARTUP_DISCOVERY_DELAY_MS")? {
-        *cluster_startup_discovery_delay = value;
-    };
-    if let Some(value) = env_var_ms("DIOM_LOG_INDEX_INTERVAL_MS")? {
-        *cluster_log_index_interval = value;
     }
 
     Ok(Arc::from(config))
