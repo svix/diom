@@ -3,5 +3,5 @@
 from .common import BaseModel
 
 
-class GetStreamIn(BaseModel):
+class GetMsgTopicIn(BaseModel):
     name: str

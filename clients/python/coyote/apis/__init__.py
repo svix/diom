@@ -6,6 +6,8 @@ from .idempotency import Idempotency
 from .idempotency import IdempotencyAsync
 from .kv import Kv
 from .kv import KvAsync
+from .msgs_topic import MsgsTopic
+from .msgs_topic import MsgsTopicAsync
 from .rate_limiter import RateLimiter
 from .rate_limiter import RateLimiterAsync
 from .stream import Stream
@@ -27,15 +29,15 @@ from ..models import (
     CacheGetOut,
     CacheSetIn,
     CacheSetOut,
-    CreateStreamIn,
-    CreateStreamOut,
+    CreateMsgTopicIn,
+    CreateMsgTopicOut,
     DlqIn,
     DlqOut,
     EvictionPolicy,
     FetchFromStreamIn,
     FetchFromStreamOut,
-    GetStreamIn,
-    GetStreamOut,
+    GetMsgTopicIn,
+    GetMsgTopicOut,
     IdempotencyAbortIn,
     IdempotencyAbortOut,
     IdempotencyGetNamespaceIn,
@@ -61,6 +63,7 @@ from ..models import (
     RateLimiterTokenBucketConfig,
     RedriveIn,
     RedriveOut,
+    Retention,
     StorageType,
 )
 
@@ -76,6 +79,8 @@ __all__ = [
     "IdempotencyAsync",
     "Kv",
     "KvAsync",
+    "MsgsTopic",
+    "MsgsTopicAsync",
     "RateLimiter",
     "RateLimiterAsync",
     "Stream",
@@ -94,15 +99,15 @@ __all__ = [
     "CacheGetOut",
     "CacheSetIn",
     "CacheSetOut",
-    "CreateStreamIn",
-    "CreateStreamOut",
+    "CreateMsgTopicIn",
+    "CreateMsgTopicOut",
     "DlqIn",
     "DlqOut",
     "EvictionPolicy",
     "FetchFromStreamIn",
     "FetchFromStreamOut",
-    "GetStreamIn",
-    "GetStreamOut",
+    "GetMsgTopicIn",
+    "GetMsgTopicOut",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",
     "IdempotencyGetNamespaceIn",
@@ -128,5 +133,6 @@ __all__ = [
     "RateLimiterTokenBucketConfig",
     "RedriveIn",
     "RedriveOut",
+    "Retention",
     "StorageType",
 ]

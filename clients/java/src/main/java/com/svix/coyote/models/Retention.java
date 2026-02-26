@@ -27,42 +27,62 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
-public class GetStreamIn {
-@JsonProperty private String name;
-public GetStreamIn () {}
+public class Retention {
+@JsonProperty private Long bytes;
+@JsonProperty private Long millis;
+public Retention () {}
 
- public GetStreamIn name(String name) {
-        this.name = name;
+ public Retention bytes(Long bytes) {
+        this.bytes = bytes;
         return this;
     }
 
     /**
-    * Get name
+    * Get bytes
     *
-     * @return name
+     * @return bytes
      */
-    @javax.annotation.Nonnull
-     public String getName() {
-        return name;
+    @javax.annotation.Nullable
+     public Long getBytes() {
+        return bytes;
     }
 
-     public void setName(String name) {
-        this.name = name;
+     public void setBytes(Long bytes) {
+        this.bytes = bytes;
+    }
+
+     public Retention millis(Long millis) {
+        this.millis = millis;
+        return this;
     }
 
     /**
-     * Create an instance of GetStreamIn given an JSON string
+    * Get millis
+    *
+     * @return millis
+     */
+    @javax.annotation.Nullable
+     public Long getMillis() {
+        return millis;
+    }
+
+     public void setMillis(Long millis) {
+        this.millis = millis;
+    }
+
+    /**
+     * Create an instance of Retention given an JSON string
      *
      * @param jsonString JSON string
-     * @return An instance of GetStreamIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to GetStreamIn
+     * @return An instance of Retention
+     * @throws JsonProcessingException if the JSON string is invalid with respect to Retention
      */
-    public static GetStreamIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, GetStreamIn.class);
+    public static Retention fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, Retention.class);
     }
 
     /**
-     * Convert an instance of GetStreamIn to an JSON string
+     * Convert an instance of Retention to an JSON string
      *
      * @return JSON string
      */

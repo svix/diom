@@ -5,12 +5,14 @@ mod cache;
 mod health;
 mod idempotency;
 mod kv;
+mod msgs;
+mod msgs_topic;
 mod rate_limiter;
 mod stream;
 
 pub use self::{
-    cache::Cache, health::Health, idempotency::Idempotency, kv::Kv, rate_limiter::RateLimiter,
-    stream::Stream,
+    cache::Cache, health::Health, idempotency::Idempotency, kv::Kv, msgs::Msgs,
+    msgs_topic::MsgsTopic, rate_limiter::RateLimiter, stream::Stream,
 };
 
 impl CoyoteClient {
@@ -28,6 +30,10 @@ impl CoyoteClient {
 
     pub fn kv(&self) -> Kv<'_> {
         Kv::new(&self.cfg)
+    }
+
+    pub fn msgs(&self) -> Msgs<'_> {
+        Msgs::new(&self.cfg)
     }
 
     pub fn rate_limiter(&self) -> RateLimiter<'_> {
