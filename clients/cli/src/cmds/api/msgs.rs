@@ -2,7 +2,7 @@
 use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
-use super::msgs_topic::MsgsTopicArgs;
+use super::MsgsTopicArgs;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
