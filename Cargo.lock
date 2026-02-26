@@ -713,6 +713,7 @@ dependencies = [
  "futures-lite",
  "openapi-codegen",
  "serde_json",
+ "tracing",
  "tracing-subscriber",
  "which",
 ]
