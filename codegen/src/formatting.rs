@@ -21,16 +21,6 @@ pub(crate) fn run() -> ExitCode {
 }
 
 async fn format_rust_clients() -> io::Result<()> {
-    exec(
-        "cargo",
-        [
-            "+nightly",
-            "fmt",
-            "--package=coyote-client",
-            "--package=coyote-cli",
-        ],
-    )
-    .await?;
     for manifest in ["clients/cli/Cargo.toml", "clients/rust/Cargo.toml"] {
         exec(
             "cargo",
@@ -46,6 +36,16 @@ async fn format_rust_clients() -> io::Result<()> {
         )
         .await?;
     }
+    exec(
+        "cargo",
+        [
+            "+nightly",
+            "fmt",
+            "--package=coyote-client",
+            "--package=coyote-cli",
+        ],
+    )
+    .await?;
     Ok(())
 }
 
