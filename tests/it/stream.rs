@@ -16,7 +16,7 @@ async fn create_stream_upserts() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 },
@@ -40,7 +40,7 @@ async fn create_stream_upserts() -> TestResult {
     );
 
     let update = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream"
         }))
@@ -71,7 +71,7 @@ async fn stream_append_and_locking_consumption() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -180,7 +180,7 @@ async fn stream_visibility_timeout() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -264,7 +264,7 @@ async fn queue_fetch_with_queue_semantics() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -354,7 +354,7 @@ async fn queue_fetch_concurrent_consumers() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -450,7 +450,7 @@ async fn queue_fetch_mixed_visibility_timeouts() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -583,7 +583,7 @@ async fn queue_fetch_partial_ack_across_blocks() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -692,7 +692,7 @@ async fn queue_fetch_single_ack() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -786,7 +786,7 @@ async fn queue_dlq_and_redrive() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -919,7 +919,7 @@ async fn queue_dlq_with_partial_ack_and_redrive() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
@@ -1025,7 +1025,7 @@ async fn queue_ack_dlqd_message_prevents_redrive() -> TestResult {
     } = start_server().await;
 
     let _stream = client
-        .post("msgs/topic/create")
+        .post("msgs/namespace/create")
         .json(json!({
             "name": "test-stream",
             "retention": { "bytes": 1024, "millis": 9999 }
