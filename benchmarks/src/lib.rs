@@ -33,7 +33,7 @@ pub fn setup_single_server() -> BenchmarkContext {
 
     let server_url = Some(format!("http://{}", server.addr));
 
-    let client = diom_client::DiomClient::new(
+    let client = DiomClient::new(
         server.token.clone(),
         Some(DiomOptions {
             debug: false,
@@ -86,7 +86,7 @@ async fn make_sure_cluster_sane_and_get_client(
         anyhow::bail!("Expected {expected_followers} servers, got {followers}");
     }
 
-    let client = diom_client::DiomClient::new(
+    let client = DiomClient::new(
         servers[0].token.clone(),
         Some(DiomOptions {
             debug: false,

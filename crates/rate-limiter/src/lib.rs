@@ -5,7 +5,7 @@ pub mod tables;
 use std::time::Duration;
 
 use diom_error::Result;
-use fjall::{Database, KeyspaceCreateOptions};
+use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -32,7 +32,7 @@ pub enum RateLimitStatus {
 }
 
 impl RateLimiter {
-    pub fn new(path: &str, db: Database) -> Self {
+    pub fn new(path: &str, db: fjall::Database) -> Self {
         let rate_limiter_keyspace = format!("_diom_rate_limiter_{path}");
 
         let tables = {
@@ -189,7 +189,7 @@ where
         }
         // FIXME(@svix-lucho): add background cleanup task. Cleanup logic depends on the algorithm.
         // Delete the expired/non-rate-limited entries first.
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }
 
@@ -201,7 +201,10 @@ mod tests {
 
     fn create_test_limiter() -> (RateLimiter, tempfile::TempDir) {
         let dir = tempdir().unwrap();
-        let db = Database::builder(&dir).temporary(true).open().unwrap();
+        let db = fjall::Database::builder(&dir)
+            .temporary(true)
+            .open()
+            .unwrap();
         let limiter = RateLimiter::new("rate-limiter", db);
         (limiter, dir)
     }

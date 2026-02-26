@@ -12,7 +12,7 @@ use tower_http::{
     classify::ServerErrorsFailureClass,
     trace::{MakeSpan, OnFailure, OnResponse},
 };
-use tracing::field::{Empty, debug};
+use tracing::field::debug;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 use uuid::Uuid;
 
@@ -68,18 +68,18 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
 
         let span = tracing::error_span!(
             "HTTP request",
-            grpc.code = Empty,
+            grpc.code = tracing::field::Empty,
             http.client_ip = client_ip,
             http.versions = ?request.version(),
             http.host = host,
             http.method = ?request.method(),
             http.route = http_route,
             http.scheme = request.uri().scheme().map(debug),
-            http.status_code = Empty,
+            http.status_code = tracing::field::Empty,
             http.target = request.uri().path_and_query().map(|p| p.as_str()),
             http.user_agent = user_agent,
             otel.kind = "server",
-            otel.status_code = Empty,
+            otel.status_code = tracing::field::Empty,
             request_id,
             trace_id,
             org_id = tracing::field::Empty,

@@ -216,6 +216,7 @@ trivial_numeric_casts = "warn"
 # emitted by #[tokio::main(flavor = "local")]
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(tokio_unstable)"] }
 unreachable_pub = "warn"
+unused_qualifications = "warn"
 
 [workspace.lints.clippy]
 await_holding_lock = "warn"

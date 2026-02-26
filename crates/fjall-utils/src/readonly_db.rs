@@ -59,7 +59,7 @@ pub trait ReadableKeyspace {
     fn prefix<K: AsRef<[u8]>>(&self, prefix: K) -> fjall::Iter;
 }
 
-impl ReadableKeyspace for fjall::Keyspace {
+impl ReadableKeyspace for Keyspace {
     fn get<K: AsRef<[u8]>>(&self, key: K) -> fjall::Result<Option<fjall::UserValue>> {
         self.get(key)
     }

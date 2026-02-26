@@ -1,5 +1,5 @@
 use diom_error::Result;
-use fjall::{Database, Error, KeyspaceCreateOptions};
+use fjall::{Error, KeyspaceCreateOptions};
 
 use crate::entities::{CacheConfig, KeyValueConfig, ModuleConfig, StorageType, StreamConfig};
 
@@ -130,7 +130,10 @@ impl State {
         Namespace::fetch_all(&self.keyspace)
     }
 
-    pub fn give_me_the_right_db<C: ModuleConfig>(&self, namespace: &Namespace<C>) -> Database {
+    pub fn give_me_the_right_db<C: ModuleConfig>(
+        &self,
+        namespace: &Namespace<C>,
+    ) -> fjall::Database {
         match namespace.storage_type {
             StorageType::Persistent => self.both_dbs.persistent_db.clone(),
             StorageType::Ephemeral => self.both_dbs.ephemeral_db.clone(),

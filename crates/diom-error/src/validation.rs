@@ -30,8 +30,8 @@ pub struct ValidationErrorItem {
 /// Helper function to simplify the somewhat egregious API for creating a ValidationError
 pub fn validation_error(code: Option<&'static str>, msg: Option<&'static str>) -> ValidationError {
     ValidationError {
-        code: std::borrow::Cow::from(code.unwrap_or("validation")),
-        message: msg.map(std::borrow::Cow::from),
+        code: Cow::from(code.unwrap_or("validation")),
+        message: msg.map(Cow::from),
         params: std::collections::HashMap::new(),
     }
 }

@@ -124,15 +124,14 @@ async fn kv_get(
 ) -> Result<MsgPackOrJson<KvGetOut>> {
     let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
 
-    let model = kv_store
-        .get(&data.key.0)
-        .map_err(|e| crate::error::Error::generic(e))?;
+    let model = kv_store.get(&data.key.0).map_err(|e| Error::generic(e))?;
     let ret = match model {
         Some(m) => KvGetOut::from_model(Arc::new(data.key), m),
         None => {
-            return Err(crate::error::Error::http(
-                crate::error::HttpError::not_found(None, Some("Key not found".to_string())),
-            ));
+            return Err(Error::http(HttpError::not_found(
+                None,
+                Some("Key not found".to_string()),
+            )));
         }
     };
     Ok(MsgPackOrJson(ret))

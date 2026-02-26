@@ -2,62 +2,16 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
-    ops::Deref,
     sync::LazyLock,
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use aide::{
-    OperationInput,
-    transform::{TransformOperation, TransformPathItem},
-};
-use axum::extract::{FromRequestParts, Query};
-use diom_error::{validation_error, validation_errors};
-use http::request::Parts;
+use aide::transform::{TransformOperation, TransformPathItem};
+use diom_error::validation_error;
 use regex::Regex;
-use schemars::JsonSchema;
-use serde::de::DeserializeOwned;
-use validator::{Validate, ValidationError};
+use validator::ValidationError;
 
-use crate::error::{Error, HttpError, Result};
-
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ValidatedQuery<T>(pub T);
-
-impl<T, S> FromRequestParts<S> for ValidatedQuery<T>
-where
-    T: DeserializeOwned + Validate,
-    S: Send + Sync,
-{
-    type Rejection = Error;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self> {
-        let Query(value) = Query::<T>::from_request_parts(parts, state)
-            .await
-            .map_err(|err| HttpError::bad_request(None, Some(err.to_string())))?;
-        value.validate().map_err(|e| {
-            HttpError::unprocessable_entity(validation_errors(vec!["query".to_owned()], e))
-        })?;
-        Ok(ValidatedQuery(value))
-    }
-}
-
-impl<T> Deref for ValidatedQuery<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T: JsonSchema> OperationInput for ValidatedQuery<T> {
-    fn operation_input(
-        ctx: &mut aide::generate::GenContext,
-        operation: &mut aide::openapi::Operation,
-    ) {
-        axum::extract::Query::<T>::operation_input(ctx, operation)
-    }
-}
+use crate::error::{HttpError, Result};
 
 pub async fn api_not_implemented() -> Result<()> {
     Err(HttpError::not_implemented(None, None).into())
@@ -95,9 +49,10 @@ pub fn get_unix_timestamp() -> u64 {
 
 #[cfg(test)]
 mod tests {
+    use diom_error::validation_errors;
     use validator::Validate;
 
-    use super::{validate_no_control_characters, validation_errors};
+    use super::validate_no_control_characters;
     use crate::error::ValidationErrorItem;
 
     #[derive(Debug, Validate)]

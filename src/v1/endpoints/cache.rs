@@ -111,7 +111,7 @@ async fn cache_get(
     let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
     let model = cache_store
         .get(&data.key)?
-        .ok_or_else(|| crate::error::HttpError::not_found(None, None))?;
+        .ok_or_else(|| HttpError::not_found(None, None))?;
     Ok(MsgPackOrJson(CacheGetOut::from_model(data.key, model)))
 }
 

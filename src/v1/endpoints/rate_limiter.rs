@@ -169,9 +169,7 @@ async fn rate_limiter_limit(
     Ok(MsgPackOrJson(RateLimiterCheckOut {
         status: response.status,
         remaining: response.remaining,
-        retry_after: response
-            .retry_after
-            .map(|t: std::time::Duration| t.as_millis() as u64),
+        retry_after: response.retry_after.map(|t: Duration| t.as_millis() as u64),
     }))
 }
 

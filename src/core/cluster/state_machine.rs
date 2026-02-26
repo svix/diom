@@ -219,7 +219,7 @@ impl Store {
         let data = tokio::task::spawn_blocking(move || -> anyhow::Result<LastSnapshot> {
             let db = &handle.read().databases.persistent;
             LAST_SNAPSHOT.store(&keyspace, &data)?;
-            db.persist(fjall::PersistMode::SyncAll)?;
+            db.persist(PersistMode::SyncAll)?;
             Ok(data)
         })
         .await??;
@@ -275,7 +275,7 @@ impl Store {
 
     async fn install_snapshot_(
         &mut self,
-        meta: &openraft::SnapshotMeta<NodeId, Node>,
+        meta: &SnapshotMeta<NodeId, Node>,
         snapshot: Box<StoredSnapshot>,
     ) -> anyhow::Result<()> {
         tracing::debug!("starting snapshot installation");
@@ -358,9 +358,7 @@ impl Store {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn get_current_snapshot_(
-        &mut self,
-    ) -> StorageResult<Option<openraft::Snapshot<TypeConfig>>> {
+    async fn get_current_snapshot_(&mut self) -> StorageResult<Option<Snapshot<TypeConfig>>> {
         // clone to avoid holding a lock over an await point
         let last_snapshot = self.last_snapshot.read().clone();
         if let Some(last_snapshot) = last_snapshot {
@@ -381,7 +379,7 @@ impl Store {
         }
     }
 
-    async fn build_snapshot_(&mut self) -> StorageResult<openraft::Snapshot<TypeConfig>> {
+    async fn build_snapshot_(&mut self) -> StorageResult<Snapshot<TypeConfig>> {
         let last_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
 
@@ -462,21 +460,21 @@ impl tokio::io::AsyncWrite for StoredSnapshot {
     }
 
     fn poll_flush(
-        mut self: std::pin::Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<std::io::Result<()>> {
         Pin::new(&mut self.file).poll_flush(cx)
     }
 
     fn poll_shutdown(
-        mut self: std::pin::Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<std::io::Result<()>> {
         Pin::new(&mut self.file).poll_shutdown(cx)
     }
 
     fn poll_write(
-        mut self: std::pin::Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
         buf: &[u8],
     ) -> std::task::Poll<std::io::Result<usize>> {
@@ -484,7 +482,7 @@ impl tokio::io::AsyncWrite for StoredSnapshot {
     }
 
     fn poll_write_vectored(
-        mut self: std::pin::Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
         bufs: &[std::io::IoSlice<'_>],
     ) -> std::task::Poll<std::io::Result<usize>> {
@@ -494,7 +492,7 @@ impl tokio::io::AsyncWrite for StoredSnapshot {
 
 impl tokio::io::AsyncRead for StoredSnapshot {
     fn poll_read(
-        mut self: std::pin::Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
         buf: &mut tokio::io::ReadBuf<'_>,
     ) -> std::task::Poll<std::io::Result<()>> {
@@ -504,13 +502,13 @@ impl tokio::io::AsyncRead for StoredSnapshot {
 
 impl tokio::io::AsyncSeek for StoredSnapshot {
     fn poll_complete(
-        mut self: std::pin::Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<std::io::Result<u64>> {
         Pin::new(&mut self.file).poll_complete(cx)
     }
 
-    fn start_seek(mut self: std::pin::Pin<&mut Self>, position: SeekFrom) -> std::io::Result<()> {
+    fn start_seek(mut self: Pin<&mut Self>, position: SeekFrom) -> std::io::Result<()> {
         Pin::new(&mut self.file).start_seek(position)
     }
 }
@@ -538,7 +536,7 @@ impl StoredSnapshot {
 }
 
 impl RaftSnapshotBuilder<TypeConfig> for StoreHandle {
-    async fn build_snapshot(&mut self) -> StorageResult<openraft::Snapshot<TypeConfig>> {
+    async fn build_snapshot(&mut self) -> StorageResult<Snapshot<TypeConfig>> {
         self.0.write().await.build_snapshot_().await
     }
 }
@@ -573,16 +571,14 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn get_current_snapshot(
-        &mut self,
-    ) -> StorageResult<Option<openraft::Snapshot<TypeConfig>>> {
+    async fn get_current_snapshot(&mut self) -> StorageResult<Option<Snapshot<TypeConfig>>> {
         self.0.write().await.get_current_snapshot_().await
     }
 
     #[tracing::instrument(skip(self, meta))]
     async fn install_snapshot(
         &mut self,
-        meta: &openraft::SnapshotMeta<NodeId, Node>,
+        meta: &SnapshotMeta<NodeId, Node>,
         snapshot: Box<StoredSnapshot>,
     ) -> StorageResult<()> {
         self.0
