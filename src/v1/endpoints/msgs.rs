@@ -94,6 +94,64 @@ async fn get_namespace(
     }))
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct PublishIn {
+    pub name: String,
+    pub topic: String,
+    pub msgs: Vec<coyote_msgs::entities::MsgIn>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct PublishOutMsg {
+    pub partition: u16,
+    pub offset: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct PublishOut {
+    pub msgs: Vec<PublishOutMsg>,
+}
+
+/// Publishes messages to a topic within a namespace.
+#[aide_annotate(op_id = "v1.msgs.publish")]
+async fn publish(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<PublishIn>,
+) -> Result<MsgPackOrJson<PublishOut>> {
+    if data.topic.contains('~') {
+        return Err(Error::http(HttpError::bad_request(
+            Some("invalid_topic".to_owned()),
+            Some("Topic name must not contain '~'. Use the partition key to route messages to a specific partition.".to_owned()),
+        )));
+    }
+
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let keyless_partition = coyote_msgs::entities::random_partition();
+    let operation = coyote_msgs::operations::PublishOperation::new(
+        namespace.id,
+        data.topic,
+        data.msgs,
+        keyless_partition,
+    );
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(PublishOut {
+        msgs: response
+            .msgs
+            .into_iter()
+            .map(|m| PublishOutMsg {
+                partition: m.partition.get(),
+                offset: m.offset,
+            })
+            .collect(),
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Msgs");
 
@@ -108,4 +166,5 @@ pub fn router() -> ApiRouter<AppState> {
             post_with(get_namespace, get_namespace_operation),
             &tag,
         )
+        .api_route_with("/msgs/publish", post_with(publish, publish_operation), &tag)
 }

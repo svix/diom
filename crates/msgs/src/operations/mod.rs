@@ -1,6 +1,7 @@
 mod create_namespace;
+mod publish;
 
-pub use self::create_namespace::*;
+pub use self::{create_namespace::*, publish::*};
 
 use crate::State;
 use serde::{Deserialize, Serialize};
@@ -16,6 +17,7 @@ raft_module_operations!(
     MsgsRequest,
     MsgsOperation {
         CreateNamespace(CreateNamespaceOperation) -> CreateNamespaceResponseData,
+        Publish(PublishOperation) -> PublishResponseData,
     },
     state = MsgsRaftState<'_>,
 );

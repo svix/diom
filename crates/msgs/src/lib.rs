@@ -5,12 +5,13 @@ use fjall::{KeyspaceCreateOptions, compaction::Fifo};
 
 pub mod entities;
 pub mod operations;
+pub(crate) mod tables;
 
-// FIXME(@svix-gabriel): These fields will be used once publish/receive operations are added.
-#[allow(dead_code)]
 #[derive(Clone)]
 pub struct State {
     pub(crate) db: fjall::Database,
+    // FIXME(@svix-gabriel): Will be used for lease/offset storage.
+    #[allow(dead_code)]
     pub(crate) metadata_tables: fjall::Keyspace,
     pub(crate) msg_table: fjall::Keyspace,
 }
