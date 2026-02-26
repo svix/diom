@@ -883,6 +883,7 @@ dependencies = [
  "diom-error",
  "diom-idempotency",
  "diom-kv",
+ "diom-msgs",
  "diom-namespace",
  "diom-operations",
  "diom-proto",
@@ -1068,6 +1069,21 @@ dependencies = [
  "tempfile",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "diom-msgs"
+version = "0.0.1"
+dependencies = [
+ "diom-error",
+ "diom-namespace",
+ "diom-operations",
+ "fjall",
+ "jiff",
+ "schemars 1.2.0",
+ "serde",
+ "stream-internals",
+ "validator",
 ]
 
 [[package]]
@@ -4119,7 +4135,6 @@ dependencies = [
  "rmp-serde",
  "schemars 1.2.0",
  "serde",
- "stream-internals",
  "validator",
 ]
 

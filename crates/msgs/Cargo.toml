@@ -1,5 +1,5 @@
 [package]
-name = "stream-deprecated"
+name = "diom-msgs"
 edition = "2024"
 license.workspace = true
 version.workspace = true
@@ -10,11 +10,10 @@ diom-error.workspace = true
 diom-namespace.workspace = true
 diom-operations.workspace = true
 fjall.workspace = true
-fjall-utils.workspace = true
 jiff.workspace = true
-rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
+stream-internals.workspace = true
 validator.workspace = true
 
 [lints]

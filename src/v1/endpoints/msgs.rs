@@ -36,7 +36,7 @@ async fn create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CreateNamespaceIn>,
 ) -> Result<MsgPackOrJson<CreateNamespaceOut>> {
-    let operation = stream_deprecated::operations::CreateMsgTopicOperation::new(
+    let operation = diom_msgs::operations::CreateNamespaceOperation::new(
         data.name,
         data.retention,
         data.storage_type,
@@ -47,8 +47,8 @@ async fn create_namespace(
         name: response.name,
         retention: response.retention,
         storage_type: response.storage_type,
-        created: response.created_at,
-        updated: response.updated_at,
+        created: response.created,
+        updated: response.updated,
     }))
 }
 
