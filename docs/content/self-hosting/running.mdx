@@ -2,6 +2,7 @@
 
 Coyote works out of the box using the default configuration and supports a variety of deployment options.
 
+
 ## Docker
 
 Make sure you have Docker installed, and run:
@@ -9,6 +10,7 @@ Make sure you have Docker installed, and run:
 ```sh
 docker run --ulimit memlock=-1 --mount type=volume,src=coyote-storage,dst=/storage svix/coyote
 ```
+
 
 ## Docker Compose
 
@@ -22,18 +24,27 @@ curl -O https://raw.githubusercontent.com/svix/coyote/refs/heads/main/docker-com
 docker compose up
 ```
 
+
 ## Kubernetes Operator
 
 The k8s operator is not yet released, please contact us to test early versions.
+
 
 ## Kubernetes Helm Chart
 
 The k8s helm chart is not yet released, please contact us to test early versions.
 
+
 ## Binary and packages
 
 Coyote is a single binary and can be run directly as well. We don't currently publish binaries, but please let us know if you require ones, we would be happy to help.
 
-## Coyote Cloud
 
-Easiest.
+## Coyote Cloud, Managed On-Prem, and Enterprise Edition
+
+Coyote is also available in the following offerings:
+* Coyote Cloud: a fully managed Coyote deployment in the Coyote cloud environment.
+* Managed On-Prem: a fully managed Coyote deployment in your own Kubernetes or cloud environment.
+* Enterprise Edition: self-managed Coyote deployment with additional enterprise functionality.
+
+Coyote is easy to run and operate yourself, but the managed offerings make it even easier; and the enterprise functionality unlocks even more capabilities.
