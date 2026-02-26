@@ -99,7 +99,7 @@ impl TestServerBuilder {
 
         let cfg = {
             cfg.listen_address = addr;
-            cfg.cluster.listen_address = repl_addr;
+            cfg.cluster.listen_address = Some(repl_addr);
             Arc::new(cfg)
         };
 
@@ -224,10 +224,10 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         environment: Environment::Dev,
         cluster: ClusterConfiguration {
             advertised_address: None,
-            listen_address: cluster_addr,
+            listen_address: Some(cluster_addr),
             name: "diom-test".to_string(),
-            snapshot_path,
-            log_path,
+            snapshot_path: Some(snapshot_path),
+            log_path: Some(log_path),
             connection_timeout: Duration::from_millis(50),
             heartbeat_interval: Duration::from_millis(50),
             election_timeout_min: Duration::from_millis(100),

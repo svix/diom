@@ -64,7 +64,8 @@ pub async fn initialize_raft(
     cfg: &Configuration,
     app_state: AppState,
 ) -> anyhow::Result<RaftState> {
-    let mut logs = super::DiomLogs::new(&cfg.cluster.log_path).context("setting up log store")?;
+    let mut logs =
+        super::DiomLogs::new(cfg.cluster.log_path(cfg)).context("setting up log store")?;
     let id = logs
         .get_node_id()
         .await
@@ -85,7 +86,7 @@ pub async fn initialize_raft(
     let state_machine = super::state_machine::Store::new(
         db,
         edb,
-        cfg.cluster.snapshot_path.clone(),
+        cfg.cluster.snapshot_path(cfg).into_owned(),
         app_state,
         logs.clone(),
     )

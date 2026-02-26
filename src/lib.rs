@@ -129,7 +129,7 @@ async fn run_interserver(
     listener: Option<TcpListener>,
     bind_barrier: Arc<Barrier>,
 ) {
-    let listen_address = cfg.cluster.listen_address;
+    let listen_address = cfg.cluster.listen_address(&cfg);
     let listener = match listener {
         Some(l) => l,
         None => TcpListener::bind(listen_address)

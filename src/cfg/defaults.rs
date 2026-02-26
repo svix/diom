@@ -1,6 +1,5 @@
 use std::{
     net::{Ipv4Addr, SocketAddr},
-    path::PathBuf,
     time::Duration,
 };
 
@@ -28,10 +27,6 @@ pub(super) fn opentelemetry_service_name() -> String {
     "diom".into()
 }
 
-pub(super) fn cluster_listen_address() -> SocketAddr {
-    (Ipv4Addr::UNSPECIFIED, 18050).into()
-}
-
 pub(super) fn opentelemetry_metrics_period() -> u64 {
     60
 }
@@ -40,20 +35,12 @@ pub(super) fn cluster_name() -> String {
     "diom".to_owned()
 }
 
-pub(super) fn cluster_snapshot_path() -> PathBuf {
-    "./snapshots".into()
-}
-
-pub(super) fn cluster_log_path() -> PathBuf {
-    "./logs".into()
-}
-
 pub(super) fn cluster_replication_request_timeout() -> Duration {
-    Duration::from_secs(30)
+    Duration::from_millis(100)
 }
 
 pub(super) fn cluster_discovery_request_timeout() -> Duration {
-    Duration::from_secs(10)
+    Duration::from_millis(100)
 }
 
 pub(super) fn cluster_discovery_timeout() -> Duration {
