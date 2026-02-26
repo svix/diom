@@ -6,7 +6,12 @@ use concolor_clap::{Color, ColorChoice};
 use coyote_client::{CoyoteClient, CoyoteOptions};
 
 use self::{
-    cmds::api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs},
+    cmds::{
+        api::{
+            CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs,
+        },
+        benchmark::BenchmarkArgs,
+    },
     config::Config,
 };
 
@@ -66,6 +71,8 @@ enum RootCommands {
     Msgs(MsgsArgs),
     RateLimit(RateLimiterArgs),
     Health(HealthArgs),
+    /// Benchmark module throughput
+    Benchmark(BenchmarkArgs),
     /// Get the version of the Svix CLI
     Version,
     /// Generate the autocompletion script for the specified shell
@@ -124,6 +131,10 @@ async fn main() -> Result<()> {
         RootCommands::Health(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;
+        }
+        RootCommands::Benchmark(args) => {
+            let client = get_client(&cfg?)?;
+            args.exec(&client).await?;
         }
     }
 
