@@ -44,7 +44,12 @@ jobs:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: cargo clippy --workspace --all-features --all-targets
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-workspaces
+      - run: |
+          # shellcheck disable=SC2046
+          cargo clippy --all-features --all-targets $(cargo workspaces list | grep -v '^\(coyote-cli\|coyote-client\)$' | sed -e 's/^/--package=/' | tr '\n' ' ')
   prek:
     name: Validate prek
     runs-on: ubuntu-24.04
