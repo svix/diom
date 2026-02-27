@@ -1,15 +1,15 @@
 // this file is @generated
 import {
-    type MsgIn2,
-    MsgIn2Serializer,
-} from './msgIn2';
+    type MsgIn,
+    MsgInSerializer,
+} from './msgIn';
 
 
 
 
 
 export interface PublishIn {
-    msgs: MsgIn2[];
+    msgs: MsgIn[];
 name: string;
 topic: string;
 }
@@ -17,7 +17,7 @@ topic: string;
 export const PublishInSerializer = {
     _fromJsonObject(object: any): PublishIn {
         return {
-            msgs: object['msgs'].map((item: MsgIn2) => MsgIn2Serializer._fromJsonObject(item)),
+            msgs: object['msgs'].map((item: MsgIn) => MsgInSerializer._fromJsonObject(item)),
             name: object['name'],
             topic: object['topic'],
             };
@@ -25,7 +25,7 @@ export const PublishInSerializer = {
 
     _toJsonObject(self: PublishIn): any {
         return {
-            'msgs': self.msgs.map((item) => MsgIn2Serializer._toJsonObject(item)),
+            'msgs': self.msgs.map((item) => MsgInSerializer._toJsonObject(item)),
             'name': self.name,
             'topic': self.topic,
             };

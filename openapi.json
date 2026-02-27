@@ -555,265 +555,6 @@
         ]
       }
     },
-    "/api/v1/stream/append": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Append To Stream",
-        "description": "Appends messages to the stream.",
-        "operationId": "v1.stream.append",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AppendToStreamIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AppendToStreamOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/fetch": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Fetch From Stream",
-        "description": "Fetches messages from the stream, while allowing concurrent access from other consumers in the same group.\n\nUnlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading\nmessages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held\nuntil the visibility timeout expires, or the messages are acked.",
-        "operationId": "v1.stream.fetch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FetchFromStreamIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FetchFromStreamOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/fetch-locking": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Locking Fetch From Stream",
-        "description": "Fetches messages from the stream, locking over the consumer group.\n\nThis call prevents other consumers within the same consumer group from reading from the stream\nuntil either the visibility timeout expires, or the last message in the batch is acknowledged.",
-        "operationId": "v1.stream.fetch-locking",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FetchFromStreamIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FetchFromStreamOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/ack-range": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Ack Range",
-        "description": "Acks the messages for the consumer group, allowing more messages to be consumed.",
-        "operationId": "v1.stream.ack-range",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AckMsgRangeIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AckMsgRangeOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/ack": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Ack",
-        "description": "Acks a single message.",
-        "operationId": "v1.stream.ack",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Ack"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AckOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/dlq": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Dlq",
-        "description": "Moves a message to the dead letter queue.",
-        "operationId": "v1.stream.dlq",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DlqIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DlqOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/stream/redrive-dlq": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Redrive",
-        "description": "Redrives messages from the dead letter queue back to the stream.",
-        "operationId": "v1.stream.redrive",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RedriveIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RedriveOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/api/v1/msgs/namespace/create": {
       "post": {
         "tags": [
@@ -972,94 +713,6 @@
       }
     },
     "schemas": {
-      "Ack": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "consumer_group": {
-            "type": "string"
-          },
-          "msg_id": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "name",
-          "consumer_group",
-          "msg_id"
-        ]
-      },
-      "AckMsgRangeIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "consumer_group": {
-            "type": "string"
-          },
-          "min_msg_id": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "nullable": true
-          },
-          "max_msg_id": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "name",
-          "consumer_group",
-          "max_msg_id"
-        ]
-      },
-      "AckMsgRangeOut": {
-        "type": "object"
-      },
-      "AckOut": {
-        "type": "object"
-      },
-      "AppendToStreamIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "msgs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MsgIn"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "msgs"
-        ]
-      },
-      "AppendToStreamOut": {
-        "type": "object",
-        "properties": {
-          "msg_ids": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0
-            }
-          }
-        },
-        "required": [
-          "msg_ids"
-        ]
-      },
       "CacheDeleteIn": {
         "type": "object",
         "properties": {
@@ -1267,79 +920,11 @@
           "updated"
         ]
       },
-      "DlqIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "consumer_group": {
-            "type": "string"
-          },
-          "msg_id": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "name",
-          "consumer_group",
-          "msg_id"
-        ]
-      },
-      "DlqOut": {
-        "type": "object"
-      },
       "EvictionPolicy": {
         "type": "string",
         "enum": [
           "NoEviction",
           "LeastRecentlyUsed"
-        ]
-      },
-      "FetchFromStreamIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "consumer_group": {
-            "type": "string"
-          },
-          "batch_size": {
-            "description": "How many messages to read from the stream.",
-            "type": "integer",
-            "format": "uint16",
-            "minimum": 1,
-            "maximum": 65535
-          },
-          "visibility_timeout_seconds": {
-            "description": "How long messages are locked by the consumer.",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "name",
-          "consumer_group",
-          "batch_size",
-          "visibility_timeout_seconds"
-        ]
-      },
-      "FetchFromStreamOut": {
-        "type": "object",
-        "properties": {
-          "msgs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MsgOut"
-            }
-          }
-        },
-        "required": [
-          "msgs"
         ]
       },
       "GetNamespaceIn": {
@@ -1704,30 +1289,6 @@
       "MsgIn": {
         "type": "object",
         "properties": {
-          "payload": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "uint8",
-              "minimum": 0,
-              "maximum": 255
-            }
-          },
-          "headers": {
-            "type": "object",
-            "default": {},
-            "additionalProperties": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "payload"
-        ]
-      },
-      "MsgIn2": {
-        "type": "object",
-        "properties": {
           "value": {
             "type": "array",
             "items": {
@@ -1752,41 +1313,6 @@
         },
         "required": [
           "value"
-        ]
-      },
-      "MsgOut": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
-          "payload": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "uint8",
-              "minimum": 0,
-              "maximum": 255
-            }
-          },
-          "headers": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "payload",
-          "headers",
-          "timestamp"
         ]
       },
       "OperationBehavior": {
@@ -1820,7 +1346,7 @@
           "msgs": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/MsgIn2"
+              "$ref": "#/components/schemas/MsgIn"
             }
           }
         },
@@ -2077,24 +1603,6 @@
           "capacity",
           "refill_amount"
         ]
-      },
-      "RedriveIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "consumer_group": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "consumer_group"
-        ]
-      },
-      "RedriveOut": {
-        "type": "object"
       },
       "Retention": {
         "type": "object",

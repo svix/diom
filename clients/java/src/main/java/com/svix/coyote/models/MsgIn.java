@@ -29,7 +29,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgIn {
 @JsonProperty private Map<String,String> headers;
-@JsonProperty private List<Byte> payload;
+@JsonProperty private String key;
+@JsonProperty private List<Byte> value;
 public MsgIn () {}
 
  public MsgIn headers(Map<String,String> headers) {
@@ -58,30 +59,49 @@ public MsgIn () {}
         this.headers = headers;
     }
 
-     public MsgIn payload(List<Byte> payload) {
-        this.payload = payload;
+     public MsgIn key(String key) {
+        this.key = key;
         return this;
     }
 
-     public MsgIn addPayloadItem(Byte payloadItem) {
-        if (this.payload == null) {
-            this.payload = new ArrayList<>();
+    /**
+    * Optional partition key. Messages with the same key are routed to the same partition.
+    *
+     * @return key
+     */
+    @javax.annotation.Nullable
+     public String getKey() {
+        return key;
+    }
+
+     public void setKey(String key) {
+        this.key = key;
+    }
+
+     public MsgIn value(List<Byte> value) {
+        this.value = value;
+        return this;
+    }
+
+     public MsgIn addValueItem(Byte valueItem) {
+        if (this.value == null) {
+            this.value = new ArrayList<>();
         }
-        this.payload.add(payloadItem);
+        this.value.add(valueItem);
         return this;
     }
     /**
-    * Get payload
+    * Get value
     *
-     * @return payload
+     * @return value
      */
     @javax.annotation.Nonnull
-     public List<Byte> getPayload() {
-        return payload;
+     public List<Byte> getValue() {
+        return value;
     }
 
-     public void setPayload(List<Byte> payload) {
-        this.payload = payload;
+     public void setValue(List<Byte> value) {
+        this.value = value;
     }
 
     /**

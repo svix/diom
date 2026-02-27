@@ -10,7 +10,6 @@ import com.svix.coyote.apis.Idempotency;
 import com.svix.coyote.apis.Kv;
 import com.svix.coyote.apis.Msgs;
 import com.svix.coyote.apis.RateLimiter;
-import com.svix.coyote.apis.Stream;
 
 import okhttp3.HttpUrl;
 
@@ -61,9 +60,5 @@ public class Coyote {
 
     public RateLimiter getRateLimiter() {
         return new RateLimiter(this.httpClient);
-    }
-
-    public Stream getStream() {
-        return new Stream(this.httpClient);
     }
 }
