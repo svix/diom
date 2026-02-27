@@ -2,7 +2,7 @@ import typing as t
 from pydantic import Field
 from datetime import datetime
 
-from .common import BaseModel
+from ..internal.base_model import BaseModel
 
 {% for c in referenced_components -%}
 from . {{ c | to_snake_case }} import {{ c | to_upper_camel_case }}

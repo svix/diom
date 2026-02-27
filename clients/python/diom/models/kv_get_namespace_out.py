@@ -3,7 +3,7 @@ import typing as t
 from pydantic import Field
 from datetime import datetime
 
-from .common import BaseModel
+from ..internal.base_model import BaseModel
 
 from .storage_type import StorageType
 
