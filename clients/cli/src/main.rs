@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use clap_complete::Shell;
@@ -133,8 +135,13 @@ async fn main() -> Result<()> {
             args.command.exec(&client, color_mode).await?;
         }
         RootCommands::Benchmark(args) => {
-            let client = get_client(&cfg?)?;
-            args.exec(&client).await?;
+            let cfg = cfg?;
+            let mut opts = get_client_options(&cfg)?;
+            if let Some(url) = args.server_url.clone() {
+                opts.server_url = Some(url.into());
+            }
+            let client = Arc::new(CoyoteClient::new("xxx".to_owned(), Some(opts)));
+            args.exec(client).await?;
         }
     }
 
