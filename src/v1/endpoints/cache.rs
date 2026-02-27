@@ -7,7 +7,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_cache::{
     CacheModel,
-    operations::{DeleteOperation, SetOperation},
+    operations::{CreateCacheOperation, DeleteOperation, SetOperation},
 };
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, ResultExt};
@@ -95,6 +95,38 @@ pub struct CacheDeleteOut {
     pub deleted: bool,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct CacheGetNamespaceOut {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub eviction_policy: EvictionPolicy,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct CacheCreateNamespaceIn {
+    pub name: String,
+    #[serde(default)]
+    pub storage_type: StorageType,
+    pub max_storage_bytes: Option<NonZeroU64>,
+    #[serde(default)]
+    pub eviction_policy: EvictionPolicy,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct CacheCreateNamespaceOut {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub eviction_policy: EvictionPolicy,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
 /// Cache Set
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
@@ -145,18 +177,31 @@ struct CacheGetNamespaceIn {
     pub name: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CacheGetNamespaceOut {
-    pub name: String,
-    pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
-    pub eviction_policy: EvictionPolicy,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+/// Create cache namespace
+#[aide_annotate(op_id = "v1.cache.namespace.create")]
+async fn cache_create_namespace(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<CacheCreateNamespaceIn>,
+) -> Result<MsgPackOrJson<CacheCreateNamespaceOut>> {
+    let operation = CreateCacheOperation::new(
+        data.name,
+        data.eviction_policy,
+        data.storage_type,
+        data.max_storage_bytes,
+    );
+    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    Ok(MsgPackOrJson(CacheCreateNamespaceOut {
+        name: resp.name,
+        max_storage_bytes: resp.max_storage_bytes,
+        storage_type: resp.storage_type,
+        eviction_policy: resp.eviction_policy,
+        created: resp.created,
+        updated: resp.updated,
+    }))
 }
 
 /// Get cache namespace
-#[aide_annotate(op_id = "v1.cache.get_namespace")]
+#[aide_annotate(op_id = "v1.cache.namespace.get")]
 async fn cache_get_namespace(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetNamespaceIn>,
@@ -171,8 +216,8 @@ async fn cache_get_namespace(
         max_storage_bytes: namespace.max_storage_bytes,
         storage_type: namespace.storage_type,
         eviction_policy: namespace.config.eviction_policy,
-        created_at: namespace.created_at,
-        updated_at: namespace.updated_at,
+        created: namespace.created_at,
+        updated: namespace.updated_at,
     }))
 }
 
@@ -191,7 +236,12 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/cache/get-namespace",
+            "/cache/namespace/create",
+            post_with(cache_create_namespace, cache_create_namespace_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/cache/namespace/get",
             post_with(cache_get_namespace, cache_get_namespace_operation),
             &tag,
         )

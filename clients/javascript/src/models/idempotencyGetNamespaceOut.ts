@@ -1,4 +1,8 @@
 // this file is @generated
+import {
+    type StorageType,
+    StorageTypeSerializer,
+} from './storageType';
 
 
 
@@ -7,8 +11,9 @@
 export interface IdempotencyGetNamespaceOut {
     name: string;
 maxStorageBytes?: number | null;
-createdAt: Date;
-updatedAt: Date;
+storageType: StorageType;
+created: Date;
+updated: Date;
 }
 
 export const IdempotencyGetNamespaceOutSerializer = {
@@ -16,8 +21,9 @@ export const IdempotencyGetNamespaceOutSerializer = {
         return {
             name: object['name'],
             maxStorageBytes: object['max_storage_bytes'],
-            createdAt: new Date(object['created_at']),
-            updatedAt: new Date(object['updated_at']),
+            storageType: StorageTypeSerializer._fromJsonObject(object['storage_type']),
+            created: new Date(object['created']),
+            updated: new Date(object['updated']),
             };
     },
 
@@ -25,8 +31,9 @@ export const IdempotencyGetNamespaceOutSerializer = {
         return {
             'name': self.name,
             'max_storage_bytes': self.maxStorageBytes,
-            'created_at': self.createdAt,
-            'updated_at': self.updatedAt,
+            'storage_type': StorageTypeSerializer._toJsonObject(self.storageType),
+            'created': self.created,
+            'updated': self.updated,
             };
     }
 }

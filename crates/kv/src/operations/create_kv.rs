@@ -55,8 +55,8 @@ pub struct CreateKvResponseData {
     pub name: String,
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
 impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
@@ -65,8 +65,8 @@ impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
             storage_type: value.storage_type,
-            created_at: value.created_at,
-            updated_at: value.updated_at,
+            created: value.created_at,
+            updated: value.updated_at,
         }
     }
 }

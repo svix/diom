@@ -10,7 +10,8 @@ import (
 )
 
 type Idempotency struct {
-	client *coyote_proto.HttpClient
+	client    *coyote_proto.HttpClient
+	Namespace *IdempotencyNamespace
 }
 
 func NewIdempotency(client *coyote_proto.HttpClient) Idempotency {
@@ -30,21 +31,5 @@ func (idempotency Idempotency) Abort(
 		nil,
 		nil,
 		&idempotencyAbortIn,
-	)
-}
-
-// Get idempotency namespace
-func (idempotency Idempotency) GetNamespace(
-	ctx context.Context,
-	idempotencyGetNamespaceIn coyote_models.IdempotencyGetNamespaceIn,
-) (*coyote_models.IdempotencyGetNamespaceOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyGetNamespaceIn, coyote_models.IdempotencyGetNamespaceOut](
-		ctx,
-		idempotency.client,
-		"POST",
-		"/api/v1/idempotency/get-namespace",
-		nil,
-		nil,
-		&idempotencyGetNamespaceIn,
 	)
 }

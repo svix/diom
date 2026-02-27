@@ -17,8 +17,8 @@ export interface CacheGetNamespaceOut {
 maxStorageBytes?: number | null;
 storageType: StorageType;
 evictionPolicy: EvictionPolicy;
-createdAt: Date;
-updatedAt: Date;
+created: Date;
+updated: Date;
 }
 
 export const CacheGetNamespaceOutSerializer = {
@@ -28,8 +28,8 @@ export const CacheGetNamespaceOutSerializer = {
             maxStorageBytes: object['max_storage_bytes'],
             storageType: StorageTypeSerializer._fromJsonObject(object['storage_type']),
             evictionPolicy: EvictionPolicySerializer._fromJsonObject(object['eviction_policy']),
-            createdAt: new Date(object['created_at']),
-            updatedAt: new Date(object['updated_at']),
+            created: new Date(object['created']),
+            updated: new Date(object['updated']),
             };
     },
 
@@ -39,8 +39,8 @@ export const CacheGetNamespaceOutSerializer = {
             'max_storage_bytes': self.maxStorageBytes,
             'storage_type': StorageTypeSerializer._toJsonObject(self.storageType),
             'eviction_policy': EvictionPolicySerializer._toJsonObject(self.evictionPolicy),
-            'created_at': self.createdAt,
-            'updated_at': self.updatedAt,
+            'created': self.created,
+            'updated': self.updated,
             };
     }
 }

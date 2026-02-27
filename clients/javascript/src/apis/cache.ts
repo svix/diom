@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type CacheCreateNamespaceIn,
+    CacheCreateNamespaceInSerializer,
+} from '../models/cacheCreateNamespaceIn';
+import {
+    type CacheCreateNamespaceOut,
+    CacheCreateNamespaceOutSerializer,
+} from '../models/cacheCreateNamespaceOut';
+import {
     type CacheDeleteIn,
     CacheDeleteInSerializer,
 } from '../models/cacheDeleteIn';
@@ -32,10 +40,15 @@ import {
     type CacheSetOut,
     CacheSetOutSerializer,
 } from '../models/cacheSetOut';
+import { CacheNamespace } from './cacheNamespace';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
 export class Cache {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}
+
+    public get namespace() {
+        return new CacheNamespace(this.requestCtx);
+    }
 
     /** Cache Set */
         public set(
@@ -72,26 +85,6 @@ export class Cache {
                 return request.send(
                     this.requestCtx,
                     CacheGetOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /** Get cache namespace */
-        public getNamespace(
-            cacheGetNamespaceIn: CacheGetNamespaceIn,
-            ): Promise<CacheGetNamespaceOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/get-namespace");
-
-            request.setBody(
-                    CacheGetNamespaceInSerializer._toJsonObject(
-                        cacheGetNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    CacheGetNamespaceOutSerializer._fromJsonObject,
                 );
             }
 
