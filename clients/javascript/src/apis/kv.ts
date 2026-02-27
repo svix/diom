@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type KvCreateNamespaceIn,
+    KvCreateNamespaceInSerializer,
+} from '../models/kvCreateNamespaceIn';
+import {
+    type KvCreateNamespaceOut,
+    KvCreateNamespaceOutSerializer,
+} from '../models/kvCreateNamespaceOut';
+import {
     type KvDeleteIn,
     KvDeleteInSerializer,
 } from '../models/kvDeleteIn';
@@ -32,10 +40,15 @@ import {
     type KvSetOut,
     KvSetOutSerializer,
 } from '../models/kvSetOut';
+import { KvNamespace } from './kvNamespace';
 import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
 
 export class Kv {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
+
+    public get namespace() {
+        return new KvNamespace(this.requestCtx);
+    }
 
     /** KV Set */
         public set(
@@ -72,26 +85,6 @@ export class Kv {
                 return request.send(
                     this.requestCtx,
                     KvGetOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /** Get KV namespace */
-        public getNamespace(
-            kvGetNamespaceIn: KvGetNamespaceIn,
-            ): Promise<KvGetNamespaceOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/get-namespace");
-
-            request.setBody(
-                    KvGetNamespaceInSerializer._toJsonObject(
-                        kvGetNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    KvGetNamespaceOutSerializer._fromJsonObject,
                 );
             }
 

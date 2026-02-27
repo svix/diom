@@ -5,11 +5,13 @@ from ..models import (
     CacheDeleteIn,
     CacheDeleteOut,
     CacheGetIn,
-    CacheGetNamespaceIn,
-    CacheGetNamespaceOut,
     CacheGetOut,
     CacheSetIn,
     CacheSetOut,
+)
+from .cache_namespace import (
+    CacheNamespace,
+    CacheNamespaceAsync,
 )
 
 from ..models.cache_set_in import _CacheSetIn
@@ -17,6 +19,10 @@ from ..models.cache_get_in import _CacheGetIn
 
 
 class CacheAsync(ApiBase):
+    @property
+    def namespace(self) -> CacheNamespaceAsync:
+        return CacheNamespaceAsync(self._client)
+
     async def set(
         self,
         key: str,
@@ -53,20 +59,6 @@ class CacheAsync(ApiBase):
             response_type=CacheGetOut,
         )
 
-    async def get_namespace(
-        self,
-        cache_get_namespace_in: CacheGetNamespaceIn,
-    ) -> CacheGetNamespaceOut:
-        """Get cache namespace"""
-        body = cache_get_namespace_in.model_dump(exclude_none=True)
-
-        return await self._request_asyncio(
-            method="post",
-            path="/api/v1/cache/get-namespace",
-            body=body,
-            response_type=CacheGetNamespaceOut,
-        )
-
     async def delete(
         self,
         cache_delete_in: CacheDeleteIn,
@@ -83,6 +75,10 @@ class CacheAsync(ApiBase):
 
 
 class Cache(ApiBase):
+    @property
+    def namespace(self) -> CacheNamespace:
+        return CacheNamespace(self._client)
+
     def set(
         self,
         key: str,
@@ -117,20 +113,6 @@ class Cache(ApiBase):
             path="/api/v1/cache/get",
             body=body,
             response_type=CacheGetOut,
-        )
-
-    def get_namespace(
-        self,
-        cache_get_namespace_in: CacheGetNamespaceIn,
-    ) -> CacheGetNamespaceOut:
-        """Get cache namespace"""
-        body = cache_get_namespace_in.model_dump(exclude_none=True)
-
-        return self._request_sync(
-            method="post",
-            path="/api/v1/cache/get-namespace",
-            body=body,
-            response_type=CacheGetNamespaceOut,
         )
 
     def delete(

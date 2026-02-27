@@ -5,15 +5,21 @@ from ..models import (
     KvDeleteIn,
     KvDeleteOut,
     KvGetIn,
-    KvGetNamespaceIn,
-    KvGetNamespaceOut,
     KvGetOut,
     KvSetIn,
     KvSetOut,
 )
+from .kv_namespace import (
+    KvNamespace,
+    KvNamespaceAsync,
+)
 
 
 class KvAsync(ApiBase):
+    @property
+    def namespace(self) -> KvNamespaceAsync:
+        return KvNamespaceAsync(self._client)
+
     async def set(
         self,
         kv_set_in: KvSetIn,
@@ -42,20 +48,6 @@ class KvAsync(ApiBase):
             response_type=KvGetOut,
         )
 
-    async def get_namespace(
-        self,
-        kv_get_namespace_in: KvGetNamespaceIn,
-    ) -> KvGetNamespaceOut:
-        """Get KV namespace"""
-        body = kv_get_namespace_in.model_dump(exclude_none=True)
-
-        return await self._request_asyncio(
-            method="post",
-            path="/api/v1/kv/get-namespace",
-            body=body,
-            response_type=KvGetNamespaceOut,
-        )
-
     async def delete(
         self,
         kv_delete_in: KvDeleteIn,
@@ -72,6 +64,10 @@ class KvAsync(ApiBase):
 
 
 class Kv(ApiBase):
+    @property
+    def namespace(self) -> KvNamespace:
+        return KvNamespace(self._client)
+
     def set(
         self,
         kv_set_in: KvSetIn,
@@ -98,20 +94,6 @@ class Kv(ApiBase):
             path="/api/v1/kv/get",
             body=body,
             response_type=KvGetOut,
-        )
-
-    def get_namespace(
-        self,
-        kv_get_namespace_in: KvGetNamespaceIn,
-    ) -> KvGetNamespaceOut:
-        """Get KV namespace"""
-        body = kv_get_namespace_in.model_dump(exclude_none=True)
-
-        return self._request_sync(
-            method="post",
-            path="/api/v1/kv/get-namespace",
-            body=body,
-            response_type=KvGetNamespaceOut,
         )
 
     def delete(

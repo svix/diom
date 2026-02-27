@@ -4,12 +4,18 @@ from ..internal.api_common import ApiBase
 from ..models import (
     IdempotencyAbortIn,
     IdempotencyAbortOut,
-    IdempotencyGetNamespaceIn,
-    IdempotencyGetNamespaceOut,
+)
+from .idempotency_namespace import (
+    IdempotencyNamespace,
+    IdempotencyNamespaceAsync,
 )
 
 
 class IdempotencyAsync(ApiBase):
+    @property
+    def namespace(self) -> IdempotencyNamespaceAsync:
+        return IdempotencyNamespaceAsync(self._client)
+
     async def abort(
         self,
         idempotency_abort_in: IdempotencyAbortIn,
@@ -24,22 +30,12 @@ class IdempotencyAsync(ApiBase):
             response_type=IdempotencyAbortOut,
         )
 
-    async def get_namespace(
-        self,
-        idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
-    ) -> IdempotencyGetNamespaceOut:
-        """Get idempotency namespace"""
-        body = idempotency_get_namespace_in.model_dump(exclude_none=True)
-
-        return await self._request_asyncio(
-            method="post",
-            path="/api/v1/idempotency/get-namespace",
-            body=body,
-            response_type=IdempotencyGetNamespaceOut,
-        )
-
 
 class Idempotency(ApiBase):
+    @property
+    def namespace(self) -> IdempotencyNamespace:
+        return IdempotencyNamespace(self._client)
+
     def abort(
         self,
         idempotency_abort_in: IdempotencyAbortIn,
@@ -52,18 +48,4 @@ class Idempotency(ApiBase):
             path="/api/v1/idempotency/abort",
             body=body,
             response_type=IdempotencyAbortOut,
-        )
-
-    def get_namespace(
-        self,
-        idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
-    ) -> IdempotencyGetNamespaceOut:
-        """Get idempotency namespace"""
-        body = idempotency_get_namespace_in.model_dump(exclude_none=True)
-
-        return self._request_sync(
-            method="post",
-            path="/api/v1/idempotency/get-namespace",
-            body=body,
-            response_type=IdempotencyGetNamespaceOut,
         )

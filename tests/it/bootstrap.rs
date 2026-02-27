@@ -15,7 +15,7 @@ async fn test_bootstrap() -> TestResult {
     let client = test_server.client;
 
     let default_kv_namespace = client
-        .post("kv/get-namespace")
+        .post("kv/namespace/get")
         .json(json!({
             "name": "default",
         }))
@@ -27,7 +27,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(default_kv_namespace["storage_type"], "Ephemeral");
 
     let default_cache_namespace = client
-        .post("cache/get-namespace")
+        .post("cache/namespace/get")
         .json(json!({
             "name": "default",
         }))
@@ -39,7 +39,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(default_cache_namespace["eviction_policy"], "NoEviction");
 
     let default_idempotency_namespace = client
-        .post("idempotency/get-namespace")
+        .post("idempotency/namespace/get")
         .json(json!({
             "name": "default",
         }))
@@ -49,7 +49,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(default_idempotency_namespace["name"], "default");
 
     let kv1 = client
-        .post("kv/get-namespace")
+        .post("kv/namespace/get")
         .json(json!({
             "name": "kv1",
         }))
@@ -61,7 +61,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(kv1["storage_type"], "Ephemeral");
 
     let kv2 = client
-        .post("kv/get-namespace")
+        .post("kv/namespace/get")
         .json(json!({
             "name": "kv2",
         }))
@@ -72,7 +72,7 @@ async fn test_bootstrap() -> TestResult {
     assert_eq!(kv2["max_storage_bytes"], 3000);
 
     let cache1 = client
-        .post("cache/get-namespace")
+        .post("cache/namespace/get")
         .json(json!({
             "name": "cache1",
         }))
