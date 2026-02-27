@@ -6,9 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{
-        ConsumerGroup, DEFAULT_PARTITION_COUNT, Offset, PartitionIndex, partition_topic_name,
-    },
+    entities::{ConsumerGroup, Offset, PartitionIndex, partition_topic_name},
     tables::{LeaseDiff, LeaseRow, MsgRow, OffsetRow},
 };
 
@@ -98,12 +96,15 @@ impl StreamReceiveOperation {
         let mut remaining = usize::from(self.batch_size.get());
         let mut any_partition_locked = false;
 
-        for p in 0..DEFAULT_PARTITION_COUNT {
+        let partition_count =
+            crate::tables::topic_partition_count(state, self.namespace_id, &self.topic)?;
+
+        for p in 0..partition_count {
             if remaining == 0 {
                 break;
             }
-            let partition = PartitionIndex::new(p)
-                .expect("already validated the partition number is in the valid range.");
+            let partition =
+                PartitionIndex::new(p).expect("partition index is within MAX_PARTITION_COUNT");
 
             let start_offset = OffsetRow::fetch(state, self.namespace_id, partition, &self.cg)?
                 .unwrap_or(Offset::MIN);

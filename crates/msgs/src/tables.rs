@@ -527,8 +527,70 @@ impl OffsetRow {
     }
 }
 
+// ---------------------------------------------------------------------------
+// TopicConfigRow — per (namespace, topic) configuration (e.g. partition count)
+// ---------------------------------------------------------------------------
+
+const TOPIC_CONFIG_PREFIX: &[u8] = b"_MSGTOPICCONF_\0";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct TopicConfig {
+    pub partition_count: u16,
+}
+
+fn topic_config_key(ns_id: NamespaceId, topic: &str) -> Vec<u8> {
+    let mut key = Vec::with_capacity(TOPIC_CONFIG_PREFIX.len() + 16 + 1 + topic.len());
+    key.extend_from_slice(TOPIC_CONFIG_PREFIX);
+    key.extend_from_slice(&ns_id.as_u128().to_be_bytes());
+    key.extend_from_slice(b"\0");
+    key.extend_from_slice(topic.as_bytes());
+    key
+}
+
+pub(crate) struct TopicConfigRow;
+
+impl TopicConfigRow {
+    pub(crate) fn fetch(
+        state: &State,
+        ns_id: NamespaceId,
+        topic: &str,
+    ) -> Result<Option<TopicConfig>> {
+        let key = topic_config_key(ns_id, topic);
+        match state.metadata_tables.get(&key)? {
+            Some(val) => {
+                let config: TopicConfig = rmp_serde::from_slice(&val).map_err(Error::generic)?;
+                Ok(Some(config))
+            }
+            None => Ok(None),
+        }
+    }
+
+    pub(crate) fn store(
+        batch: &mut OwnedWriteBatch,
+        state: &State,
+        ns_id: NamespaceId,
+        topic: &str,
+        config: &TopicConfig,
+    ) -> Result<()> {
+        let key = topic_config_key(ns_id, topic);
+        let val: Vec<u8> = rmp_serde::to_vec_named(config).map_err(Error::generic)?;
+        let val: fjall::UserValue = val.into();
+        batch.insert(&state.metadata_tables, key, val);
+        Ok(())
+    }
+}
+
+/// Returns the configured partition count for a topic, or `DEFAULT_PARTITION_COUNT` if not set.
+pub(crate) fn topic_partition_count(state: &State, ns_id: NamespaceId, topic: &str) -> Result<u16> {
+    match TopicConfigRow::fetch(state, ns_id, topic)? {
+        Some(config) => Ok(config.partition_count),
+        None => Ok(crate::entities::DEFAULT_PARTITION_COUNT),
+    }
+}
+
 // Compile-time check that table prefixes used in the metadata keyspace are unique.
 static_assertions::const_assert!(fjall_utils::are_all_unique(&[
     LeaseRow::TABLE_PREFIX,
     "_MSGOFFSET_",
+    "_MSGTOPICCONF_",
 ]));
