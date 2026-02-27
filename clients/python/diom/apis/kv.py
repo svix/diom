@@ -1,6 +1,6 @@
 # This file is @generated
 
-from .common import ApiBase
+from ..internal.api_common import ApiBase
 from ..models import (
     KvDeleteIn,
     KvDeleteOut,

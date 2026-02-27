@@ -1,7 +1,7 @@
 # this file is @generated
 import typing as t
 
-from .common import BaseModel
+from ..internal.base_model import BaseModel
 
 
 class MsgIn(BaseModel):

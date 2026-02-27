@@ -2,7 +2,7 @@
 import typing as t
 from typing_extensions import Self
 from pydantic import ModelWrapValidatorHandler, model_validator
-from .common import BaseModel
+from ..internal.base_model import BaseModel
 
 
 from .rate_limiter_fixed_window_config import RateLimiterFixedWindowConfig

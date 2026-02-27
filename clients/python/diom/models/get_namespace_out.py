@@ -2,7 +2,7 @@
 from pydantic import Field
 from datetime import datetime
 
-from .common import BaseModel
+from ..internal.base_model import BaseModel
 
 from .retention import Retention
 from .storage_type import StorageType
