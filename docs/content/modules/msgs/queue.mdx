@@ -99,9 +99,23 @@ coyote.msgs.queue.extend-lease(
 
 ## Dead letter queue (DLQ)
 
+A dead letter queue (DLQ) is a holding queue where messages that fail to be processed successfully (after retries) are redirected for later inspection and debugging.
+
 ### Message retry schedule
 
-### Redrive
+You can [configure](#configuration) a retry schedule for a specific topic + consumer group combination, letting you manage how many times a message to retry, and whether to add a delay between retries.
+
+Once a retry schedule is exhausted messages are sent to the DLQ if one is configured, otherwise they are just marked as processed and skipped. If no retry schedule is configured, messages are sent directly to the DLQ on failure.
+
+### Redriving the DLQ
+
+You can consume the DLQ like any other topic, or alternatively you can automatically redrive all the messages back to the original queue:
+```
+coyote.msgs.queue.redrive-dlq(
+    topic="topic-123",
+    consumer_group="group1",
+)
+```
 
 ## Configuration
 
