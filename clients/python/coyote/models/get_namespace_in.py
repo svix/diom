@@ -3,5 +3,5 @@
 from .common import BaseModel
 
 
-class GetMsgTopicIn(BaseModel):
+class GetNamespaceIn(BaseModel):
     name: str

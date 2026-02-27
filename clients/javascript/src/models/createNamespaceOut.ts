@@ -12,7 +12,7 @@ import {
 
 
 
-export interface CreateMsgTopicOut {
+export interface CreateNamespaceOut {
     created: Date;
 name: string;
 retention: Retention;
@@ -20,8 +20,8 @@ storageType: StorageType;
 updated: Date;
 }
 
-export const CreateMsgTopicOutSerializer = {
-    _fromJsonObject(object: any): CreateMsgTopicOut {
+export const CreateNamespaceOutSerializer = {
+    _fromJsonObject(object: any): CreateNamespaceOut {
         return {
             created: new Date(object['created']),
             name: object['name'],
@@ -31,7 +31,7 @@ export const CreateMsgTopicOutSerializer = {
             };
     },
 
-    _toJsonObject(self: CreateMsgTopicOut): any {
+    _toJsonObject(self: CreateNamespaceOut): any {
         return {
             'created': self.created,
             'name': self.name,

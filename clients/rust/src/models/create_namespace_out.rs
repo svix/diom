@@ -5,7 +5,7 @@ use super::{retention::Retention, storage_type::StorageType};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CreateMsgTopicOut {
+pub struct CreateNamespaceOut {
     pub created: jiff::Timestamp,
 
     pub name: String,
@@ -17,7 +17,7 @@ pub struct CreateMsgTopicOut {
     pub updated: jiff::Timestamp,
 }
 
-impl CreateMsgTopicOut {
+impl CreateNamespaceOut {
     pub fn new(
         created: jiff::Timestamp,
         name: String,

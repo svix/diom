@@ -14,10 +14,10 @@ import java.util.Set;
 import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.coyote.models.CreateMsgTopicIn;
-import com.svix.coyote.models.CreateMsgTopicOut;
-import com.svix.coyote.models.GetMsgTopicIn;
-import com.svix.coyote.models.GetMsgTopicOut;
+import com.svix.coyote.models.CreateNamespaceIn;
+import com.svix.coyote.models.CreateNamespaceOut;
+import com.svix.coyote.models.GetNamespaceIn;
+import com.svix.coyote.models.GetNamespaceOut;
 
 public class Msgs {
     private final HttpClient client;

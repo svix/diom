@@ -27,11 +27,11 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
-public class GetMsgTopicIn {
+public class GetNamespaceIn {
 @JsonProperty private String name;
-public GetMsgTopicIn () {}
+public GetNamespaceIn () {}
 
- public GetMsgTopicIn name(String name) {
+ public GetNamespaceIn name(String name) {
         this.name = name;
         return this;
     }
@@ -51,18 +51,18 @@ public GetMsgTopicIn () {}
     }
 
     /**
-     * Create an instance of GetMsgTopicIn given an JSON string
+     * Create an instance of GetNamespaceIn given an JSON string
      *
      * @param jsonString JSON string
-     * @return An instance of GetMsgTopicIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to GetMsgTopicIn
+     * @return An instance of GetNamespaceIn
+     * @throws JsonProcessingException if the JSON string is invalid with respect to GetNamespaceIn
      */
-    public static GetMsgTopicIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, GetMsgTopicIn.class);
+    public static GetNamespaceIn fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, GetNamespaceIn.class);
     }
 
     /**
-     * Convert an instance of GetMsgTopicIn to an JSON string
+     * Convert an instance of GetNamespaceIn to an JSON string
      *
      * @return JSON string
      */

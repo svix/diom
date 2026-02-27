@@ -27,34 +27,13 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
-public class GetMsgTopicOut {
-@JsonProperty private OffsetDateTime created;
+public class CreateNamespaceIn {
 @JsonProperty private String name;
 @JsonProperty private Retention retention;
 @JsonProperty("storage_type") private StorageType storageType;
-@JsonProperty private OffsetDateTime updated;
-public GetMsgTopicOut () {}
+public CreateNamespaceIn () {}
 
- public GetMsgTopicOut created(OffsetDateTime created) {
-        this.created = created;
-        return this;
-    }
-
-    /**
-    * Get created
-    *
-     * @return created
-     */
-    @javax.annotation.Nonnull
-     public OffsetDateTime getCreated() {
-        return created;
-    }
-
-     public void setCreated(OffsetDateTime created) {
-        this.created = created;
-    }
-
-     public GetMsgTopicOut name(String name) {
+ public CreateNamespaceIn name(String name) {
         this.name = name;
         return this;
     }
@@ -73,7 +52,7 @@ public GetMsgTopicOut () {}
         this.name = name;
     }
 
-     public GetMsgTopicOut retention(Retention retention) {
+     public CreateNamespaceIn retention(Retention retention) {
         this.retention = retention;
         return this;
     }
@@ -83,7 +62,7 @@ public GetMsgTopicOut () {}
     *
      * @return retention
      */
-    @javax.annotation.Nonnull
+    @javax.annotation.Nullable
      public Retention getRetention() {
         return retention;
     }
@@ -92,7 +71,7 @@ public GetMsgTopicOut () {}
         this.retention = retention;
     }
 
-     public GetMsgTopicOut storageType(StorageType storageType) {
+     public CreateNamespaceIn storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -102,7 +81,7 @@ public GetMsgTopicOut () {}
     *
      * @return storageType
      */
-    @javax.annotation.Nonnull
+    @javax.annotation.Nullable
      public StorageType getStorageType() {
         return storageType;
     }
@@ -111,38 +90,19 @@ public GetMsgTopicOut () {}
         this.storageType = storageType;
     }
 
-     public GetMsgTopicOut updated(OffsetDateTime updated) {
-        this.updated = updated;
-        return this;
-    }
-
     /**
-    * Get updated
-    *
-     * @return updated
-     */
-    @javax.annotation.Nonnull
-     public OffsetDateTime getUpdated() {
-        return updated;
-    }
-
-     public void setUpdated(OffsetDateTime updated) {
-        this.updated = updated;
-    }
-
-    /**
-     * Create an instance of GetMsgTopicOut given an JSON string
+     * Create an instance of CreateNamespaceIn given an JSON string
      *
      * @param jsonString JSON string
-     * @return An instance of GetMsgTopicOut
-     * @throws JsonProcessingException if the JSON string is invalid with respect to GetMsgTopicOut
+     * @return An instance of CreateNamespaceIn
+     * @throws JsonProcessingException if the JSON string is invalid with respect to CreateNamespaceIn
      */
-    public static GetMsgTopicOut fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, GetMsgTopicOut.class);
+    public static CreateNamespaceIn fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, CreateNamespaceIn.class);
     }
 
     /**
-     * Convert an instance of GetMsgTopicOut to an JSON string
+     * Convert an instance of CreateNamespaceIn to an JSON string
      *
      * @return JSON string
      */

@@ -6,8 +6,8 @@ from .idempotency import Idempotency
 from .idempotency import IdempotencyAsync
 from .kv import Kv
 from .kv import KvAsync
-from .msgs_topic import MsgsTopic
-from .msgs_topic import MsgsTopicAsync
+from .msgs_namespace import MsgsNamespace
+from .msgs_namespace import MsgsNamespaceAsync
 from .rate_limiter import RateLimiter
 from .rate_limiter import RateLimiterAsync
 from .stream import Stream
@@ -29,15 +29,15 @@ from ..models import (
     CacheGetOut,
     CacheSetIn,
     CacheSetOut,
-    CreateMsgTopicIn,
-    CreateMsgTopicOut,
+    CreateNamespaceIn,
+    CreateNamespaceOut,
     DlqIn,
     DlqOut,
     EvictionPolicy,
     FetchFromStreamIn,
     FetchFromStreamOut,
-    GetMsgTopicIn,
-    GetMsgTopicOut,
+    GetNamespaceIn,
+    GetNamespaceOut,
     IdempotencyAbortIn,
     IdempotencyAbortOut,
     IdempotencyGetNamespaceIn,
@@ -79,8 +79,8 @@ __all__ = [
     "IdempotencyAsync",
     "Kv",
     "KvAsync",
-    "MsgsTopic",
-    "MsgsTopicAsync",
+    "MsgsNamespace",
+    "MsgsNamespaceAsync",
     "RateLimiter",
     "RateLimiterAsync",
     "Stream",
@@ -99,15 +99,15 @@ __all__ = [
     "CacheGetOut",
     "CacheSetIn",
     "CacheSetOut",
-    "CreateMsgTopicIn",
-    "CreateMsgTopicOut",
+    "CreateNamespaceIn",
+    "CreateNamespaceOut",
     "DlqIn",
     "DlqOut",
     "EvictionPolicy",
     "FetchFromStreamIn",
     "FetchFromStreamOut",
-    "GetMsgTopicIn",
-    "GetMsgTopicOut",
+    "GetNamespaceIn",
+    "GetNamespaceOut",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",
     "IdempotencyGetNamespaceIn",

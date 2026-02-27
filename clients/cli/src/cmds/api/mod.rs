@@ -4,11 +4,11 @@ mod health;
 mod idempotency;
 mod kv;
 mod msgs;
-mod msgs_topic;
+mod msgs_namespace;
 mod rate_limiter;
 mod stream;
 
 pub(crate) use self::{
     cache::CacheArgs, health::HealthArgs, idempotency::IdempotencyArgs, kv::KvArgs, msgs::MsgsArgs,
-    rate_limiter::RateLimiterArgs, stream::StreamArgs,
+    msgs_namespace::MsgsNamespaceArgs, rate_limiter::RateLimiterArgs, stream::StreamArgs,
 };
