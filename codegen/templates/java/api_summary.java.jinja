@@ -1,0 +1,45 @@
+{% do set_summary_filename("Coyote.java") -%}
+// this file is @generated
+package com.svix.coyote;
+
+import java.util.Map;
+import java.util.TreeMap;
+
+{% for resource in api.resources -%}
+import com.svix.coyote.apis.{{ resource.name | to_upper_camel_case }};
+{% endfor %}
+import okhttp3.HttpUrl;
+
+public class Coyote {
+    private final HttpClient httpClient;
+
+    public Coyote(String token) {
+        this(token, new CoyoteOptions());
+    }
+
+    public Coyote(String token, CoyoteOptions options) {
+        if (options.getServerUrl() == null) {
+            options.setServerUrl(CoyoteOptions.DEFAULT_URL);
+        }
+
+        HttpUrl parsedUrl = HttpUrl.parse(options.getServerUrl());
+        if (parsedUrl == null) {
+            throw new IllegalArgumentException("Invalid base url");
+        }
+
+        Map<String, String> defaultHeaders = new TreeMap<>();
+        defaultHeaders.put("user-agent", "coyote-libs/0.1.0/java");
+        defaultHeaders.put("Authorization", "Bearer " + token);
+
+        this.httpClient
+                = new HttpClient(parsedUrl, defaultHeaders, options.getRetrySchedule());
+    }
+
+    {%- for resource in api.resources %}
+
+    {% set resource_name = resource.name | to_upper_camel_case -%}
+    public {{ resource_name }} get{{ resource_name }}() {
+        return new {{ resource_name }}(this.httpClient);
+    }
+    {%- endfor %}
+}
