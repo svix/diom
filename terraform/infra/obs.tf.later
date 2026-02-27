@@ -1,0 +1,48 @@
+module "obs" {
+  source = "./modules/observability"
+  providers = {
+    aws    = aws,
+    local  = local,
+    tls    = tls,
+    random = random,
+    # datadog = datadog
+  }
+
+  env                     = var.env
+  aws_region              = data.aws_region.current.region
+  account_id              = data.aws_caller_identity.current.account_id
+  elb_service_account_arn = data.aws_elb_service_account.main.arn
+  name_prefix             = random_pet.client_prefix.id
+
+  # dns
+  use_existing_route53_zone = var.use_existing_route53_zone
+  customer_domain           = var.zone_name
+  api_domain_prefix         = var.api_domain_prefix
+  frontend_domain_prefix    = var.frontend_domain_prefix
+  alb_log_expiration_days   = var.alb_log_expiration_days
+
+  # network
+  k8s_version = var.k8s_version
+  vpc_cidr    = var.vpc_cidr
+
+  # auth
+  admin_users = var.admin_users
+  admin_roles = var.admin_roles
+
+  # eks managed node groups
+  system_instance_types     = var.system_instance_types
+  system_min_node_count     = var.system_min_node_count
+  system_max_node_count     = var.system_max_node_count
+  system_desired_node_count = var.system_desired_node_count
+  system_ami_type           = var.system_ami_type
+
+  app_instance_types     = var.app_instance_types
+  app_min_node_count     = var.app_min_node_count
+  app_max_node_count     = var.app_max_node_count
+  app_desired_node_count = var.app_desired_node_count
+  app_ami_type           = var.app_ami_type
+
+  pagerduty_service = var.pagerduty_service
+
+  tags = local.tags
+}
