@@ -18,11 +18,27 @@ import com.svix.coyote.models.CreateNamespaceIn;
 import com.svix.coyote.models.CreateNamespaceOut;
 import com.svix.coyote.models.GetNamespaceIn;
 import com.svix.coyote.models.GetNamespaceOut;
+import com.svix.coyote.models.PublishIn;
+import com.svix.coyote.models.PublishOut;
 
 public class Msgs {
     private final HttpClient client;
 
     public Msgs(HttpClient client) {
         this.client = client;
+    }
+
+    /** Publishes messages to a topic within a namespace. */
+    public PublishOut publish(
+        final PublishIn publishIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/publish");
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            publishIn,
+            PublishOut.class
+            );
     }
 }
