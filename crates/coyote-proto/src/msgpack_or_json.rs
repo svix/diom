@@ -164,14 +164,19 @@ where
 
         let mut buf = BytesMut::with_capacity(128).writer();
         let (content_type, res) = match res_content_type {
-            SupportedContentType::MsgPack => (
-                &mime::APPLICATION_MSGPACK,
-                rmp_serde::encode::write_named(&mut buf, &self.0).map_err_generic(),
-            ),
-            SupportedContentType::Json => (
-                &mime::APPLICATION_JSON,
-                serde_json::to_writer(&mut buf, &self.0).map_err_generic(),
-            ),
+            SupportedContentType::MsgPack => {
+                let mut serializer = rmp_serde::Serializer::new(&mut buf)
+                    .with_struct_map()
+                    .with_bytes(rmp_serde::config::BytesMode::ForceAll);
+                let serialize_result = self.0.serialize(&mut serializer).map_err_generic();
+
+                (&mime::APPLICATION_MSGPACK, serialize_result)
+            }
+            SupportedContentType::Json => {
+                let serialize_result = serde_json::to_writer(&mut buf, &self.0).map_err_generic();
+
+                (&mime::APPLICATION_JSON, serialize_result)
+            }
         };
         make_response(buf.into_inner(), content_type, res)
     }
