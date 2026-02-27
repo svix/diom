@@ -11,4 +11,4 @@ class KvGetOut(BaseModel):
 
     key: str
 
-    value: t.List[int]
+    value: bytes

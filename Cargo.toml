@@ -172,7 +172,7 @@ itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
 mime = "0.3"
 num_enum = "0.7.2"
-openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "0a51d3898dab5943404890c31788f81e2f07f22e" }
+openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "f03cc8b696131f199f373fe1e3aa4b9e04ef57a4" }
 openraft = { version = "0.9.21", features = ["tracing-log", "anyhow", "serde", "storage-v2"] }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"
