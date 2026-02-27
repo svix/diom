@@ -17,6 +17,7 @@ from .apis import (
     StreamAsync,
 )
 from .client_base import ClientBase
+from .options import DiomOptions
 
 
 class Diom(ClientBase):
@@ -79,4 +80,4 @@ class DiomAsync(ClientBase):
         return StreamAsync(self._client)
 
 
-__all__ = ["Diom", "DiomAsync"]
+__all__ = ["Diom", "DiomAsync", "DiomOptions"]
