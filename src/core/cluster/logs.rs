@@ -17,7 +17,7 @@ use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tracing::{Instrument as _, Span};
 
 use super::{NodeId, errors::*, raft::TypeConfig};
-use crate::cfg::Dir;
+use crate::cfg::{Dir, FsyncMode};
 
 // This is an implementation of an openraft Logs store backed by fjall
 
@@ -30,6 +30,7 @@ pub struct CoyoteLogs {
     db: Database,
     meta_keyspace: Keyspace,
     log_keyspace: Keyspace,
+    flush_tx: tokio::sync::mpsc::Sender<LogFlushed<TypeConfig>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -161,16 +162,120 @@ static LAST_PURGED_LOG_ID: FjallFixedKey<LogId<NodeId>> = FjallFixedKey::new("la
 static VOTE: FjallFixedKey<Vote<NodeId>> = FjallFixedKey::new("vote");
 static COMMITTED: FjallFixedKey<Option<LogId<NodeId>>> = FjallFixedKey::new("committed");
 
+#[derive(Debug, Clone)]
+pub(super) struct BackgroundFsyncFailedError(String);
+
+impl std::fmt::Display for BackgroundFsyncFailedError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "background fsync failed: {}", self.0)
+    }
+}
+
+impl std::error::Error for BackgroundFsyncFailedError {
+    fn description(&self) -> &str {
+        "background fsync failed"
+    }
+}
+
+async fn flush_every_commit(
+    db: Database,
+    mut channel: tokio::sync::mpsc::Receiver<LogFlushed<TypeConfig>>,
+) {
+    // coalesce requests to flush the database; this doesn't actually do anything in openraft 0.9,
+    // but in v0.10, we will be able to coalesce
+    let mut buf = Vec::with_capacity(10);
+    while channel.recv_many(&mut buf, 10).await > 0 {
+        let mut new_buf = Vec::with_capacity(10);
+        let db = db.clone();
+        std::mem::swap(&mut buf, &mut new_buf);
+        tokio::task::spawn_blocking(move || {
+            let result = db
+                .persist(PersistMode::SyncAll)
+                // fjall::Error inn't Clone
+                .map_err(|err| {
+                    tracing::error!(?err, "error flushing fjall in background");
+                    BackgroundFsyncFailedError(err.to_string())
+                });
+            for callback in new_buf.drain(..) {
+                callback.log_io_completed(result.clone().map_err(std::io::Error::other));
+            }
+        })
+        .instrument(tracing::info_span!("logs:flush_every_commit"))
+        .await
+        .expect("failed joining blocking task");
+    }
+}
+
+async fn flush_every_second(
+    db: Database,
+    mut channel: tokio::sync::mpsc::Receiver<LogFlushed<TypeConfig>>,
+) {
+    let mut has_changes = false;
+    let mut done = false;
+    let shutting_down = crate::shutting_down_token();
+    let mut ticker = tokio::time::interval(std::time::Duration::from_secs(1));
+    while !done {
+        tokio::select! {
+            message = channel.recv() => {
+                has_changes = true;
+                if let Some(callback) = message {
+                    let db = db.clone();
+                    tokio::task::spawn_blocking(move || {
+                        let result = db.persist(PersistMode::Buffer)
+                            // fjall::Error isn't Clone
+                            .map_err(|err| {
+                                tracing::error!(?err, "error flushing fjall in background");
+                                BackgroundFsyncFailedError(err.to_string())
+                            });
+                        callback.log_io_completed(result.map_err(std::io::Error::other));
+                    }).instrument(tracing::info_span!("logs:flush_every_second:buffer"))
+                    .await
+                    .expect("failed joining blocking task");
+                } else {
+                    done = true;
+                }
+            },
+            _ = shutting_down.cancelled() => {
+                done = true
+            },
+            _ = ticker.tick() => {
+                if has_changes {
+                    let db = db.clone();
+                    tokio::task::spawn_blocking(move || {
+                        tracing::debug!("running periodic sync of logs");
+                        if let Err(err) = db.persist(PersistMode::SyncAll) {
+                            tracing::error!(?err, "error flushing fjall");
+                        }
+                    }).instrument(tracing::info_span!("logs:flush_every_second:flush")).await.expect("failed joining blocking task");
+                    has_changes = false
+                } else {
+                    tracing::trace!("no changes in the last interval, doing nothing");
+                }
+            }
+        }
+    }
+    if let Err(err) = db.persist(PersistMode::SyncAll) {
+        tracing::error!(?err, "error flushing fjall at shutdown");
+    }
+}
+
 impl CoyoteLogs {
-    pub fn new(path: Dir) -> anyhow::Result<Self> {
+    pub fn new(path: Dir, fsync_mode: FsyncMode) -> anyhow::Result<Self> {
         let pb: std::path::PathBuf = path.into();
         let db = Database::builder(&pb).worker_threads(1).open()?;
         let log_keyspace = db.keyspace("cluster:logs", KeyspaceCreateOptions::default)?;
         let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
+        let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(1000);
+        if fsync_mode == FsyncMode::EveryCommit {
+            tokio::spawn(flush_every_commit(db.clone(), flush_rx));
+        } else {
+            tokio::spawn(flush_every_second(db.clone(), flush_rx));
+        }
         Ok(Self {
             db,
             log_keyspace,
             meta_keyspace,
+            flush_tx,
         })
     }
 
@@ -214,13 +319,17 @@ impl CoyoteLogs {
         .await?
     }
 
+    #[tracing::instrument(skip_all, fields(num_entries))]
     async fn append_entries_(
         &mut self,
         entries: Vec<Entry<TypeConfig>>,
         callback: LogFlushed<TypeConfig>,
     ) -> anyhow::Result<()> {
+        Span::current().record("num_entries", entries.len());
+
         let keyspace = self.log_keyspace.clone();
-        let mut batch = self.db.batch().durability(Some(PersistMode::Buffer));
+        let mut batch = fjall::OwnedWriteBatch::with_capacity(self.db.clone(), entries.len())
+            .durability(Some(PersistMode::Buffer));
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
             let keys = entries.iter().map(|entry| entry.log_id).collect::<Vec<_>>();
             tracing::trace!(?keys, "appending some entries");
@@ -231,13 +340,13 @@ impl CoyoteLogs {
             batch.commit()?;
             Ok(())
         })
+        .instrument(tracing::info_span!("append:write_entries"))
         .await??;
 
-        // callback should be called after writing the entries but before syncing them; ok
-        callback.log_io_completed(Ok(()));
-
-        let db = self.db.clone();
-        tokio::task::spawn_blocking(move || db.persist(PersistMode::SyncAll)).await??;
+        self.flush_tx
+            .send(callback)
+            .await
+            .context("requesting background fsync")?;
 
         Ok(())
     }
@@ -334,9 +443,11 @@ impl CoyoteLogs {
         let meta_keyspace = self.meta_keyspace.clone();
         tokio::task::spawn_blocking(move || {
             VOTE.store(&meta_keyspace, &vote)?;
-            db.persist(PersistMode::SyncAll)?;
+            tracing::info_span!("save_vote:persist")
+                .in_scope(|| db.persist(PersistMode::SyncAll))?;
             Ok(())
         })
+        .instrument(Span::current())
         .await?
     }
 
@@ -416,7 +527,7 @@ mod tests {
         fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
             let logdir = Dir::new(&workdir).unwrap();
-            let logs = CoyoteLogs::new(logdir).unwrap();
+            let logs = CoyoteLogs::new(logdir, crate::cfg::FsyncMode::default()).unwrap();
             Self {
                 _workdir: workdir,
                 logs,
