@@ -39,15 +39,15 @@ pip install coyote
 </CodeTab>
 <CodeTab>
 
-```shell
-go get github.com/svix/coyote/go
+```toml
+cargo add coyote
 ```
 
 </CodeTab>
 <CodeTab>
 
-```toml
-cargo add coyote
+```shell
+go get github.com/svix/coyote/go
 ```
 
 </CodeTab>
@@ -155,18 +155,6 @@ app = coyote.kv.create("key", b"value")
 </CodeTab>
 <CodeTab>
 
-```go
-import (
-	coyote "github.com/coyote/coyote-webhooks"
-)
-
-coyoteClient := coyote.New("AUTH_TOKEN", nil)
-app, err := coyoteClient.Kv.Set(ctx, "key", b"value", nil)
-```
-
-</CodeTab>
-<CodeTab>
-
 ```rust
 use coyote::api::Coyote;
 
@@ -179,6 +167,18 @@ coyote
         None,
     )
     .await?;
+```
+
+</CodeTab>
+<CodeTab>
+
+```go
+import (
+	coyote "github.com/coyote/coyote-webhooks"
+)
+
+coyoteClient := coyote.New("AUTH_TOKEN", nil)
+app, err := coyoteClient.Kv.Set(ctx, "key", b"value", nil)
 ```
 
 </CodeTab>
