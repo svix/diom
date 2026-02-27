@@ -8,7 +8,7 @@ from .retention import Retention
 from .storage_type import StorageType
 
 
-class CreateMsgTopicOut(BaseModel):
+class CreateNamespaceOut(BaseModel):
     created: datetime
 
     name: str

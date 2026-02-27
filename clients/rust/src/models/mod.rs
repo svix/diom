@@ -15,15 +15,15 @@ mod cache_get_namespace_out;
 mod cache_get_out;
 mod cache_set_in;
 mod cache_set_out;
-mod create_msg_topic_in;
-mod create_msg_topic_out;
+mod create_namespace_in;
+mod create_namespace_out;
 mod dlq_in;
 mod dlq_out;
 mod eviction_policy;
 mod fetch_from_stream_in;
 mod fetch_from_stream_out;
-mod get_msg_topic_in;
-mod get_msg_topic_out;
+mod get_namespace_in;
+mod get_namespace_out;
 mod idempotency_abort_in;
 mod idempotency_abort_out;
 mod idempotency_get_namespace_in;
@@ -67,15 +67,15 @@ pub use self::{
     cache_get_out::CacheGetOut,
     cache_set_in::CacheSetIn,
     cache_set_out::CacheSetOut,
-    create_msg_topic_in::CreateMsgTopicIn,
-    create_msg_topic_out::CreateMsgTopicOut,
+    create_namespace_in::CreateNamespaceIn,
+    create_namespace_out::CreateNamespaceOut,
     dlq_in::DlqIn,
     dlq_out::DlqOut,
     eviction_policy::EvictionPolicy,
     fetch_from_stream_in::FetchFromStreamIn,
     fetch_from_stream_out::FetchFromStreamOut,
-    get_msg_topic_in::GetMsgTopicIn,
-    get_msg_topic_out::GetMsgTopicOut,
+    get_namespace_in::GetNamespaceIn,
+    get_namespace_out::GetNamespaceOut,
     idempotency_abort_in::IdempotencyAbortIn,
     idempotency_abort_out::IdempotencyAbortOut,
     idempotency_get_namespace_in::IdempotencyGetNamespaceIn,

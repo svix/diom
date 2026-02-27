@@ -5,7 +5,7 @@ use super::{retention::Retention, storage_type::StorageType};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CreateMsgTopicIn {
+pub struct CreateNamespaceIn {
     pub name: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -15,7 +15,7 @@ pub struct CreateMsgTopicIn {
     pub storage_type: Option<StorageType>,
 }
 
-impl CreateMsgTopicIn {
+impl CreateNamespaceIn {
     pub fn new(name: String) -> Self {
         Self {
             name,

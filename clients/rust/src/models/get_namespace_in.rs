@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct GetMsgTopicIn {
+pub struct GetNamespaceIn {
     pub name: String,
 }
 
-impl GetMsgTopicIn {
+impl GetNamespaceIn {
     pub fn new(name: String) -> Self {
         Self { name }
     }

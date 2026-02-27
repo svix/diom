@@ -12,14 +12,14 @@ import {
 
 
 
-export interface CreateMsgTopicIn {
+export interface CreateNamespaceIn {
     name: string;
 retention?: Retention;
 storageType?: StorageType;
 }
 
-export const CreateMsgTopicInSerializer = {
-    _fromJsonObject(object: any): CreateMsgTopicIn {
+export const CreateNamespaceInSerializer = {
+    _fromJsonObject(object: any): CreateNamespaceIn {
         return {
             name: object['name'],
             retention: object['retention'] != null ? RetentionSerializer._fromJsonObject(object['retention']): undefined,
@@ -27,7 +27,7 @@ export const CreateMsgTopicInSerializer = {
             };
     },
 
-    _toJsonObject(self: CreateMsgTopicIn): any {
+    _toJsonObject(self: CreateNamespaceIn): any {
         return {
             'name': self.name,
             'retention': self.retention != null ? RetentionSerializer._toJsonObject(self.retention) : undefined,

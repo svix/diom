@@ -8,7 +8,7 @@ from .retention import Retention
 from .storage_type import StorageType
 
 
-class CreateMsgTopicIn(BaseModel):
+class CreateNamespaceIn(BaseModel):
     name: str
 
     retention: t.Optional[Retention] = None

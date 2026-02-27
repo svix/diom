@@ -1,5 +1,5 @@
 // this file is @generated
-use super::MsgsTopic;
+use super::MsgsNamespace;
 use crate::Configuration;
 
 pub struct Msgs<'a> {
@@ -11,7 +11,7 @@ impl<'a> Msgs<'a> {
         Self { cfg }
     }
 
-    pub fn topic(&self) -> MsgsTopic<'a> {
-        MsgsTopic::new(self.cfg)
+    pub fn namespace(&self) -> MsgsNamespace<'a> {
+        MsgsNamespace::new(self.cfg)
     }
 }
