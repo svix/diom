@@ -11,36 +11,34 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.diom.models.CreateNamespaceIn;
-import com.svix.diom.models.CreateNamespaceOut;
-import com.svix.diom.models.GetNamespaceIn;
-import com.svix.diom.models.GetNamespaceOut;
-import com.svix.diom.models.PublishIn;
-import com.svix.diom.models.PublishOut;
 import com.svix.diom.models.StreamReceiveIn;
 import com.svix.diom.models.StreamReceiveOut;
 
-public class Msgs {
+public class MsgsStream {
     private final HttpClient client;
 
-    public Msgs(HttpClient client) {
+    public MsgsStream(HttpClient client) {
         this.client = client;
     }
 
-    /** Publishes messages to a topic within a namespace. */
-    public PublishOut publish(
-        final PublishIn publishIn
+    /**
+* Receives messages from a topic using a consumer group.
+* 
+* Each consumer in the group reads from all partitions. Messages are locked by leases for the
+* specified duration to prevent duplicate delivery within the same consumer group.
+*/
+    public StreamReceiveOut receive(
+        final StreamReceiveIn streamReceiveIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/publish");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/receive");
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            publishIn,
-            PublishOut.class
+            streamReceiveIn,
+            StreamReceiveOut.class
             );
     }
 }

@@ -1081,11 +1081,13 @@ dependencies = [
  "diom-namespace",
  "diom-operations",
  "fjall",
+ "fjall-utils",
  "jiff",
  "rand 0.9.2",
  "rmp-serde",
  "schemars 1.2.0",
  "serde",
+ "static_assertions",
  "stream-internals",
  "validator",
 ]

@@ -10,8 +10,6 @@ pub(crate) mod tables;
 #[derive(Clone)]
 pub struct State {
     pub(crate) db: fjall::Database,
-    // FIXME(@svix-gabriel): Will be used for lease/offset storage.
-    #[allow(dead_code)]
     pub(crate) metadata_tables: fjall::Keyspace,
     pub(crate) msg_table: fjall::Keyspace,
 }

@@ -59,4 +59,7 @@ type (
 	RedriveOut                   = diom_models.RedriveOut
 	Retention                    = diom_models.Retention
 	StorageType                  = diom_models.StorageType
+	StreamMsgOut                 = diom_models.StreamMsgOut
+	StreamReceiveIn              = diom_models.StreamReceiveIn
+	StreamReceiveOut             = diom_models.StreamReceiveOut
 )

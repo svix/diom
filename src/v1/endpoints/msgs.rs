@@ -1,3 +1,5 @@
+use std::num::NonZeroU16;
+
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_derive::aide_annotate;
@@ -152,6 +154,73 @@ async fn publish(
     }))
 }
 
+// ---------------------------------------------------------------------------
+// stream/receive
+// ---------------------------------------------------------------------------
+
+fn default_batch_size() -> NonZeroU16 {
+    NonZeroU16::new(10).unwrap()
+}
+
+fn default_lease_duration_millis() -> u64 {
+    300_000 // 5 minutes
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct StreamReceiveIn {
+    pub name: String,
+    pub topic: String,
+    pub consumer_group: diom_msgs::entities::ConsumerGroup,
+    #[serde(default = "default_batch_size")]
+    pub batch_size: NonZeroU16,
+    #[serde(default = "default_lease_duration_millis")]
+    pub lease_duration_millis: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct StreamReceiveOut {
+    pub msgs: Vec<diom_msgs::entities::StreamMsgOut>,
+}
+
+/// Receives messages from a topic using a consumer group.
+///
+/// Each consumer in the group reads from all partitions. Messages are locked by leases for the
+/// specified duration to prevent duplicate delivery within the same consumer group.
+#[aide_annotate(op_id = "v1.msgs.stream.receive")]
+async fn stream_receive(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<StreamReceiveIn>,
+) -> Result<MsgPackOrJson<StreamReceiveOut>> {
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = diom_msgs::operations::StreamReceiveOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group,
+        data.batch_size,
+        data.lease_duration_millis,
+    );
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(StreamReceiveOut {
+        msgs: response
+            .msgs
+            .into_iter()
+            .map(|m| diom_msgs::entities::StreamMsgOut {
+                offset: m.offset,
+                topic: m.topic,
+                value: m.value,
+                headers: m.headers,
+                timestamp: m.timestamp,
+            })
+            .collect(),
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Msgs");
 
@@ -167,4 +236,9 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with("/msgs/publish", post_with(publish, publish_operation), &tag)
+        .api_route_with(
+            "/msgs/stream/receive",
+            post_with(stream_receive, stream_receive_operation),
+            &tag,
+        )
 }

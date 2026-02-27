@@ -2,7 +2,7 @@
 use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
-use super::MsgsNamespaceArgs;
+use super::{MsgsNamespaceArgs, MsgsStreamArgs};
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -14,6 +14,7 @@ pub struct MsgsArgs {
 #[derive(Subcommand)]
 pub enum MsgsCommands {
     Namespace(MsgsNamespaceArgs),
+    Stream(MsgsStreamArgs),
     /// Publishes messages to a topic within a namespace.
     Publish {
         publish_in: crate::json::JsonOf<diom_client::models::PublishIn>,
@@ -28,6 +29,9 @@ impl MsgsCommands {
     ) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
+                args.command.exec(client, color_mode).await?;
+            }
+            Self::Stream(args) => {
                 args.command.exec(client, color_mode).await?;
             }
             Self::Publish { publish_in } => {

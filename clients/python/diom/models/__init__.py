@@ -53,6 +53,9 @@ from .redrive_in import RedriveIn
 from .redrive_out import RedriveOut
 from .retention import Retention
 from .storage_type import StorageType
+from .stream_msg_out import StreamMsgOut
+from .stream_receive_in import StreamReceiveIn
+from .stream_receive_out import StreamReceiveOut
 
 
 __all__ = [
@@ -110,4 +113,7 @@ __all__ = [
     "RedriveOut",
     "Retention",
     "StorageType",
+    "StreamMsgOut",
+    "StreamReceiveIn",
+    "StreamReceiveOut",
 ]

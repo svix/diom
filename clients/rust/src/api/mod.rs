@@ -7,12 +7,14 @@ mod idempotency;
 mod kv;
 mod msgs;
 mod msgs_namespace;
+mod msgs_stream;
 mod rate_limiter;
 mod stream;
 
 pub use self::{
     cache::Cache, health::Health, idempotency::Idempotency, kv::Kv, msgs::Msgs,
-    msgs_namespace::MsgsNamespace, rate_limiter::RateLimiter, stream::Stream,
+    msgs_namespace::MsgsNamespace, msgs_stream::MsgsStream, rate_limiter::RateLimiter,
+    stream::Stream,
 };
 
 impl DiomClient {

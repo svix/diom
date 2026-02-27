@@ -12,6 +12,7 @@ import (
 type Msgs struct {
 	client    *diom_proto.HttpClient
 	Namespace *MsgsNamespace
+	Stream    *MsgsStream
 }
 
 func NewMsgs(client *diom_proto.HttpClient) Msgs {
