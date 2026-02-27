@@ -110,7 +110,8 @@ Once a retry schedule is exhausted messages are sent to the DLQ if one is config
 ### Redriving the DLQ
 
 You can consume the DLQ like any other topic, or alternatively you can automatically redrive all the messages back to the original queue:
-```
+
+```js
 coyote.msgs.queue.redrive-dlq(
     topic="topic-123",
     consumer_group="group1",
@@ -128,4 +129,20 @@ coyote.msgs.queue.configure(
     retry_schedule_ms=[0, 5_000, 10_000, 10_000],
     dlq="dlq-for-topic-123",
 )
+```
+
+## Advanced functionality
+
+### Time travel (`reset`)
+
+Thanks to how topics and consumer groups work, Coyote supports resetting a consumer group so that it behaves as if it started consuming a topic at a previous point in time.
+
+```js
+coyote.msgs.queue.reset(
+    topic="topic-123",
+    consumer_group="group1",
+    // Can only set either timestamp or position, not both.
+    "timestamp": Date(...),
+    "position": "earliest" | "latest",
+}
 ```
