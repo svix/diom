@@ -6,12 +6,16 @@ const withNextra = nextra({
   // ... Add Nextra-specific options here
 })
 
-const nextConfig: NextConfig = {
-  devIndicators: false,
+const ciExportConfig: NextConfig = {
   output: "export",
   images: {
-    "unoptimized": true,
+    unoptimized: true,
   },
+};
+
+const nextConfig: NextConfig = {
+  devIndicators: false,
+  ...(process.env.CI && ciExportConfig),
 }
 
 export default withNextra(nextConfig)
