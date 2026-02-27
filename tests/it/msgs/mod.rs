@@ -1,1 +1,2 @@
 mod namespace;
+mod publish;

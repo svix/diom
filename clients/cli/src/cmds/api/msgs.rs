@@ -14,6 +14,10 @@ pub struct MsgsArgs {
 #[derive(Subcommand)]
 pub enum MsgsCommands {
     Namespace(MsgsNamespaceArgs),
+    /// Publishes messages to a topic within a namespace.
+    Publish {
+        publish_in: crate::json::JsonOf<coyote_client::models::PublishIn>,
+    },
 }
 
 impl MsgsCommands {
@@ -25,6 +29,10 @@ impl MsgsCommands {
         match self {
             Self::Namespace(args) => {
                 args.command.exec(client, color_mode).await?;
+            }
+            Self::Publish { publish_in } => {
+                let resp = client.msgs().publish(publish_in.into_inner()).await?;
+                crate::json::print_json_output(&resp, color_mode)?;
             }
         }
 

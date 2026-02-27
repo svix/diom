@@ -41,9 +41,13 @@ type (
 	KvSetIn                      = coyote_models.KvSetIn
 	KvSetOut                     = coyote_models.KvSetOut
 	MsgIn                        = coyote_models.MsgIn
+	MsgIn2                       = coyote_models.MsgIn2
 	MsgOut                       = coyote_models.MsgOut
 	OperationBehavior            = coyote_models.OperationBehavior
 	PingOut                      = coyote_models.PingOut
+	PublishIn                    = coyote_models.PublishIn
+	PublishOut                   = coyote_models.PublishOut
+	PublishOutMsg                = coyote_models.PublishOutMsg
 	RateLimitStatus              = coyote_models.RateLimitStatus
 	RateLimiterCheckIn           = coyote_models.RateLimiterCheckIn
 	RateLimiterCheckOut          = coyote_models.RateLimiterCheckOut

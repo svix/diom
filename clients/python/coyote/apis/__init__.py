@@ -6,6 +6,8 @@ from .idempotency import Idempotency
 from .idempotency import IdempotencyAsync
 from .kv import Kv
 from .kv import KvAsync
+from .msgs import Msgs
+from .msgs import MsgsAsync
 from .msgs_namespace import MsgsNamespace
 from .msgs_namespace import MsgsNamespaceAsync
 from .rate_limiter import RateLimiter
@@ -51,9 +53,13 @@ from ..models import (
     KvSetIn,
     KvSetOut,
     MsgIn,
+    MsgIn2,
     MsgOut,
     OperationBehavior,
     PingOut,
+    PublishIn,
+    PublishOut,
+    PublishOutMsg,
     RateLimitStatus,
     RateLimiterCheckIn,
     RateLimiterCheckOut,
@@ -79,6 +85,8 @@ __all__ = [
     "IdempotencyAsync",
     "Kv",
     "KvAsync",
+    "Msgs",
+    "MsgsAsync",
     "MsgsNamespace",
     "MsgsNamespaceAsync",
     "RateLimiter",
@@ -121,9 +129,13 @@ __all__ = [
     "KvSetIn",
     "KvSetOut",
     "MsgIn",
+    "MsgIn2",
     "MsgOut",
     "OperationBehavior",
     "PingOut",
+    "PublishIn",
+    "PublishOut",
+    "PublishOutMsg",
     "RateLimitStatus",
     "RateLimiterCheckIn",
     "RateLimiterCheckOut",

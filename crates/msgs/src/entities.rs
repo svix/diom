@@ -10,7 +10,7 @@ pub type Offset = u64;
 // FIXME(@svix-gabriel): Make partition count configurable per-namespace.
 pub const DEFAULT_PARTITION_COUNT: u16 = 16;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct PartitionIndex(u16);
 
@@ -44,6 +44,10 @@ pub fn parse_partition_topic(s: &str) -> Result<(&str, PartitionIndex), &'static
     PartitionIndex::new(idx)
         .map(|p| (topic, p))
         .ok_or("partition index out of range")
+}
+
+pub fn random_partition() -> PartitionIndex {
+    PartitionIndex(rand::random_range(..DEFAULT_PARTITION_COUNT))
 }
 
 /// Deterministically maps a key to a partition via hash.
