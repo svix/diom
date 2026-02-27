@@ -7,7 +7,6 @@ import { Idempotency } from "./apis/idempotency";
 import { Kv } from "./apis/kv";
 import { Msgs } from "./apis/msgs";
 import { RateLimiter } from "./apis/rateLimiter";
-import { Stream } from "./apis/stream";
 
 export {
   Cache,
@@ -16,7 +15,6 @@ export {
   Kv,
   Msgs,
   RateLimiter,
-  Stream,
 };
 
 export class Diom {
@@ -48,9 +46,5 @@ export class Diom {
 
   public get rateLimiter(){
     return new RateLimiter(this.requestCtx);
-  }
-
-  public get stream(){
-    return new Stream(this.requestCtx);
   }
 }

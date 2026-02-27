@@ -13,8 +13,6 @@ from .apis import (
     MsgsAsync,
     RateLimiter,
     RateLimiterAsync,
-    Stream,
-    StreamAsync,
 )
 from .client_base import ClientBase
 from .options import DiomOptions
@@ -45,10 +43,6 @@ class Diom(ClientBase):
     def rate_limiter(self) -> RateLimiter:
         return RateLimiter(self._client)
 
-    @property
-    def stream(self) -> Stream:
-        return Stream(self._client)
-
 
 class DiomAsync(ClientBase):
     @property
@@ -74,10 +68,6 @@ class DiomAsync(ClientBase):
     @property
     def rate_limiter(self) -> RateLimiterAsync:
         return RateLimiterAsync(self._client)
-
-    @property
-    def stream(self) -> StreamAsync:
-        return StreamAsync(self._client)
 
 
 __all__ = ["Diom", "DiomAsync", "DiomOptions"]

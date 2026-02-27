@@ -41,9 +41,3 @@ type RateLimiter = diom_apis.RateLimiter
 func (diom Diom) RateLimiter() RateLimiter {
 	return diom_apis.NewRateLimiter(&diom.inner)
 }
-
-type Stream = diom_apis.Stream
-
-func (diom Diom) Stream() Stream {
-	return diom_apis.NewStream(&diom.inner)
-}

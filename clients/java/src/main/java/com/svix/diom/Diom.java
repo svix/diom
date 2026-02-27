@@ -10,7 +10,6 @@ import com.svix.diom.apis.Idempotency;
 import com.svix.diom.apis.Kv;
 import com.svix.diom.apis.Msgs;
 import com.svix.diom.apis.RateLimiter;
-import com.svix.diom.apis.Stream;
 
 import okhttp3.HttpUrl;
 
@@ -61,9 +60,5 @@ public class Diom {
 
     public RateLimiter getRateLimiter() {
         return new RateLimiter(this.httpClient);
-    }
-
-    public Stream getStream() {
-        return new Stream(this.httpClient);
     }
 }
