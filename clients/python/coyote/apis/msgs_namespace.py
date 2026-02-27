@@ -15,30 +15,24 @@ class MsgsNamespaceAsync(ApiBase):
         create_namespace_in: CreateNamespaceIn,
     ) -> CreateNamespaceOut:
         """Creates or updates a msgs namespace with the given name."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/msgs/namespace/create",
-            path_params={},
-            json_body=create_namespace_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=create_namespace_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=CreateNamespaceOut,
         )
-        return CreateNamespaceOut.model_validate(response.json())
 
     async def get(
         self,
         get_namespace_in: GetNamespaceIn,
     ) -> GetNamespaceOut:
         """Gets a msgs namespace by name."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/msgs/namespace/get",
-            path_params={},
-            json_body=get_namespace_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=get_namespace_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=GetNamespaceOut,
         )
-        return GetNamespaceOut.model_validate(response.json())
 
 
 class MsgsNamespace(ApiBase):
@@ -47,27 +41,21 @@ class MsgsNamespace(ApiBase):
         create_namespace_in: CreateNamespaceIn,
     ) -> CreateNamespaceOut:
         """Creates or updates a msgs namespace with the given name."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/msgs/namespace/create",
-            path_params={},
-            json_body=create_namespace_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=create_namespace_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=CreateNamespaceOut,
         )
-        return CreateNamespaceOut.model_validate(response.json())
 
     def get(
         self,
         get_namespace_in: GetNamespaceIn,
     ) -> GetNamespaceOut:
         """Gets a msgs namespace by name."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/msgs/namespace/get",
-            path_params={},
-            json_body=get_namespace_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=get_namespace_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=GetNamespaceOut,
         )
-        return GetNamespaceOut.model_validate(response.json())
