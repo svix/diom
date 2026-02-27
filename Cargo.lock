@@ -991,6 +991,7 @@ dependencies = [
 name = "coyote-client"
 version = "0.0.1"
 dependencies = [
+ "form_urlencoded",
  "http",
  "http-body-util",
  "hyper",
@@ -1007,7 +1008,6 @@ dependencies = [
  "tokio",
  "tower-service",
  "tracing",
- "url",
 ]
 
 [[package]]
