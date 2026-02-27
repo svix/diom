@@ -69,6 +69,7 @@ pub struct StreamReceiveOperation {
     cg: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
+    now: Timestamp,
 }
 
 impl StreamReceiveOperation {
@@ -85,11 +86,12 @@ impl StreamReceiveOperation {
             cg,
             batch_size,
             lease_duration_millis,
+            now: Timestamp::now(),
         }
     }
 
     fn apply_real(self, state: &State) -> coyote_operations::Result<StreamReceiveResponseData> {
-        let now = Timestamp::now();
+        let now = self.now;
         let lease_duration = std::time::Duration::from_millis(self.lease_duration_millis);
         let mut all_msgs = Vec::new();
         let mut all_lease_diffs = Vec::new();

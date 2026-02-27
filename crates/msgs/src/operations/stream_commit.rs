@@ -16,6 +16,7 @@ pub struct StreamCommitOperation {
     partition: PartitionIndex,
     cg: ConsumerGroup,
     offset: Offset,
+    now: Timestamp,
 }
 
 impl StreamCommitOperation {
@@ -30,11 +31,12 @@ impl StreamCommitOperation {
             partition,
             cg,
             offset,
+            now: Timestamp::now(),
         }
     }
 
     fn apply_real(self, state: &State) -> coyote_operations::Result<StreamCommitResponseData> {
-        let now = Timestamp::now();
+        let now = self.now;
         let mut batch = state.db.batch();
 
         // Store next-to-read offset (committed offset + 1)
