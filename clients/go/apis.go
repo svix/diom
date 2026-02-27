@@ -41,9 +41,3 @@ type RateLimiter = coyote_apis.RateLimiter
 func (coyote Coyote) RateLimiter() RateLimiter {
 	return coyote_apis.NewRateLimiter(&coyote.inner)
 }
-
-type Stream = coyote_apis.Stream
-
-func (coyote Coyote) Stream() Stream {
-	return coyote_apis.NewStream(&coyote.inner)
-}

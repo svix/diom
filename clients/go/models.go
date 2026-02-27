@@ -5,12 +5,6 @@ package coyote
 import coyote_models "github.com/svix/coyote/clients/go/internal/models"
 
 type (
-	Ack                          = coyote_models.Ack
-	AckMsgRangeIn                = coyote_models.AckMsgRangeIn
-	AckMsgRangeOut               = coyote_models.AckMsgRangeOut
-	AckOut                       = coyote_models.AckOut
-	AppendToStreamIn             = coyote_models.AppendToStreamIn
-	AppendToStreamOut            = coyote_models.AppendToStreamOut
 	CacheDeleteIn                = coyote_models.CacheDeleteIn
 	CacheDeleteOut               = coyote_models.CacheDeleteOut
 	CacheGetIn                   = coyote_models.CacheGetIn
@@ -21,11 +15,7 @@ type (
 	CacheSetOut                  = coyote_models.CacheSetOut
 	CreateNamespaceIn            = coyote_models.CreateNamespaceIn
 	CreateNamespaceOut           = coyote_models.CreateNamespaceOut
-	DlqIn                        = coyote_models.DlqIn
-	DlqOut                       = coyote_models.DlqOut
 	EvictionPolicy               = coyote_models.EvictionPolicy
-	FetchFromStreamIn            = coyote_models.FetchFromStreamIn
-	FetchFromStreamOut           = coyote_models.FetchFromStreamOut
 	GetNamespaceIn               = coyote_models.GetNamespaceIn
 	GetNamespaceOut              = coyote_models.GetNamespaceOut
 	IdempotencyAbortIn           = coyote_models.IdempotencyAbortIn
@@ -41,8 +31,6 @@ type (
 	KvSetIn                      = coyote_models.KvSetIn
 	KvSetOut                     = coyote_models.KvSetOut
 	MsgIn                        = coyote_models.MsgIn
-	MsgIn2                       = coyote_models.MsgIn2
-	MsgOut                       = coyote_models.MsgOut
 	OperationBehavior            = coyote_models.OperationBehavior
 	PingOut                      = coyote_models.PingOut
 	PublishIn                    = coyote_models.PublishIn
@@ -55,8 +43,6 @@ type (
 	RateLimiterGetRemainingIn    = coyote_models.RateLimiterGetRemainingIn
 	RateLimiterGetRemainingOut   = coyote_models.RateLimiterGetRemainingOut
 	RateLimiterTokenBucketConfig = coyote_models.RateLimiterTokenBucketConfig
-	RedriveIn                    = coyote_models.RedriveIn
-	RedriveOut                   = coyote_models.RedriveOut
 	Retention                    = coyote_models.Retention
 	StorageType                  = coyote_models.StorageType
 	StreamMsgOut                 = coyote_models.StreamMsgOut

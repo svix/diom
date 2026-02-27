@@ -3,11 +3,11 @@ import typing as t
 
 from ..internal.base_model import BaseModel
 
-from .msg_in2 import MsgIn2
+from .msg_in import MsgIn
 
 
 class PublishIn(BaseModel):
-    msgs: t.List[MsgIn2]
+    msgs: t.List[MsgIn]
 
     name: str
 

@@ -6,9 +6,7 @@ use concolor_clap::{Color, ColorChoice};
 use coyote_client::{CoyoteClient, CoyoteOptions};
 
 use self::{
-    cmds::api::{
-        CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs, StreamArgs,
-    },
+    cmds::api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs},
     config::Config,
 };
 
@@ -67,7 +65,6 @@ enum RootCommands {
     Kv(KvArgs),
     Msgs(MsgsArgs),
     RateLimit(RateLimiterArgs),
-    Stream(StreamArgs),
     Health(HealthArgs),
     /// Get the version of the Svix CLI
     Version,
@@ -121,10 +118,6 @@ async fn main() -> Result<()> {
             args.command.exec(&client, color_mode).await?;
         }
         RootCommands::RateLimit(args) => {
-            let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
-        }
-        RootCommands::Stream(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;
         }

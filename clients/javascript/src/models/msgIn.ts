@@ -6,21 +6,25 @@
 
 export interface MsgIn {
     headers?: { [key: string]: string };
-payload: number[];
+/** Optional partition key. Messages with the same key are routed to the same partition. */
+    key?: string | null;
+value: number[];
 }
 
 export const MsgInSerializer = {
     _fromJsonObject(object: any): MsgIn {
         return {
             headers: object['headers'],
-            payload: object['payload'],
+            key: object['key'],
+            value: object['value'],
             };
     },
 
     _toJsonObject(self: MsgIn): any {
         return {
             'headers': self.headers,
-            'payload': self.payload,
+            'key': self.key,
+            'value': self.value,
             };
     }
 }

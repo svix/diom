@@ -4,5 +4,6 @@ package coyote_models
 
 type MsgIn struct {
 	Headers *map[string]string `json:"headers,omitempty"`
-	Payload []uint8            `json:"payload"`
+	Key     *string            `json:"key,omitempty"` // Optional partition key. Messages with the same key are routed to the same partition.
+	Value   []uint8            `json:"value"`
 }

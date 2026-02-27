@@ -1,9 +1,8 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
+#![allow(dead_code)]
 
 use std::num::NonZeroU16;
 
-use aide::axum::{ApiRouter, routing::post_with};
+use aide::axum::ApiRouter;
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, Result, ResultExt};
@@ -13,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use stream_deprecated::entities::{ConsumerGroup, MsgId, MsgIn, MsgOut, StreamName};
 use validator::Validate;
 
-use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
+use crate::{AppState, core::cluster::RaftState};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AppendToStreamIn {
@@ -248,37 +247,37 @@ async fn redrive(
 }
 
 pub fn router() -> ApiRouter<AppState> {
-    let tag = openapi_tag("Stream");
+    // let tag = openapi_tag("Stream");
 
     ApiRouter::new()
-        .api_route_with(
-            "/stream/append",
-            post_with(append_to_stream, append_to_stream_operation),
-            &tag,
-        )
-        .api_route_with(
-            "/stream/fetch",
-            post_with(fetch_from_stream, fetch_from_stream_operation),
-            &tag,
-        )
-        .api_route_with(
-            "/stream/fetch-locking",
-            post_with(
-                locking_fetch_from_stream,
-                locking_fetch_from_stream_operation,
-            ),
-            &tag,
-        )
-        .api_route_with(
-            "/stream/ack-range",
-            post_with(ack_range, ack_range_operation),
-            &tag,
-        )
-        .api_route_with("/stream/ack", post_with(ack, ack_operation), &tag)
-        .api_route_with("/stream/dlq", post_with(dlq, dlq_operation), &tag)
-        .api_route_with(
-            "/stream/redrive-dlq",
-            post_with(redrive, redrive_operation),
-            &tag,
-        )
+    // .api_route_with(
+    //     "/stream/append",
+    //     post_with(append_to_stream, append_to_stream_operation),
+    //     &tag,
+    // )
+    // .api_route_with(
+    //     "/stream/fetch",
+    //     post_with(fetch_from_stream, fetch_from_stream_operation),
+    //     &tag,
+    // )
+    // .api_route_with(
+    //     "/stream/fetch-locking",
+    //     post_with(
+    //         locking_fetch_from_stream,
+    //         locking_fetch_from_stream_operation,
+    //     ),
+    //     &tag,
+    // )
+    // .api_route_with(
+    //     "/stream/ack-range",
+    //     post_with(ack_range, ack_range_operation),
+    //     &tag,
+    // )
+    // .api_route_with("/stream/ack", post_with(ack, ack_operation), &tag)
+    // .api_route_with("/stream/dlq", post_with(dlq, dlq_operation), &tag)
+    // .api_route_with(
+    //     "/stream/redrive-dlq",
+    //     post_with(redrive, redrive_operation),
+    //     &tag,
+    // )
 }
