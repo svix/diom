@@ -60,6 +60,9 @@ class HttpError(Exception):
     def additional_keys(self) -> List[str]:
         return list(self.additional_properties.keys())
 
+    def __str__(self) -> str:
+        return f"HttpError(code={self.code}, detail={self.detail})"
+
     def __getitem__(self, key: str) -> Any:
         return self.additional_properties[key]
 
