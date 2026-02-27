@@ -20,6 +20,8 @@ import com.svix.diom.models.GetNamespaceIn;
 import com.svix.diom.models.GetNamespaceOut;
 import com.svix.diom.models.PublishIn;
 import com.svix.diom.models.PublishOut;
+import com.svix.diom.models.StreamCommitIn;
+import com.svix.diom.models.StreamCommitOut;
 import com.svix.diom.models.StreamReceiveIn;
 import com.svix.diom.models.StreamReceiveOut;
 

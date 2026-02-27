@@ -45,6 +45,8 @@ type (
 	RateLimiterTokenBucketConfig = diom_models.RateLimiterTokenBucketConfig
 	Retention                    = diom_models.Retention
 	StorageType                  = diom_models.StorageType
+	StreamCommitIn               = diom_models.StreamCommitIn
+	StreamCommitOut              = diom_models.StreamCommitOut
 	StreamMsgOut                 = diom_models.StreamMsgOut
 	StreamReceiveIn              = diom_models.StreamReceiveIn
 	StreamReceiveOut             = diom_models.StreamReceiveOut

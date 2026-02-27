@@ -702,6 +702,43 @@
           }
         ]
       }
+    },
+    "/api/v1/msgs/stream/commit": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Stream Commit",
+        "description": "Commits an offset for a consumer group on a specific partition.\n\nThe topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last\nsuccessfully processed offset; future receives will start after it.",
+        "operationId": "v1.msgs.stream.commit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamCommitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamCommitOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1627,6 +1664,34 @@
           "Persistent",
           "Ephemeral"
         ]
+      },
+      "StreamCommitIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "name",
+          "topic",
+          "consumer_group",
+          "offset"
+        ]
+      },
+      "StreamCommitOut": {
+        "type": "object"
       },
       "StreamMsgOut": {
         "type": "object",

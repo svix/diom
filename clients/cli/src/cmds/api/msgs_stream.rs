@@ -18,6 +18,13 @@ pub enum MsgsStreamCommands {
     Receive {
         stream_receive_in: crate::json::JsonOf<diom_client::models::StreamReceiveIn>,
     },
+    /// Commits an offset for a consumer group on a specific partition.
+    ///
+    /// The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+    /// successfully processed offset; future receives will start after it.
+    Commit {
+        stream_commit_in: crate::json::JsonOf<diom_client::models::StreamCommitIn>,
+    },
 }
 
 impl MsgsStreamCommands {
@@ -32,6 +39,14 @@ impl MsgsStreamCommands {
                     .msgs()
                     .stream()
                     .receive(stream_receive_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Commit { stream_commit_in } => {
+                let resp = client
+                    .msgs()
+                    .stream()
+                    .commit(stream_commit_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

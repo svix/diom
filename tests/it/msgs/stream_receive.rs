@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use serde_json::json;
 use test_utils::{
     StatusCode, TestResult,
@@ -105,8 +107,8 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
         .json();
     assert_eq!(r1["msgs"].as_array().unwrap().len(), 2);
 
-    // Second receive with the same CG should get nothing (messages are leased)
-    let r2 = client
+    // Second receive with the same CG — partition is locked
+    client
         .post("msgs/stream/receive")
         .json(json!({
             "name": "ns-nodup",
@@ -114,9 +116,23 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::OK)
-        .json();
-    assert_eq!(r2["msgs"].as_array().unwrap().len(), 0);
+        .expect(StatusCode::BAD_REQUEST);
+
+    // Commit the first batch to unlock the partition
+    let msgs = r1["msgs"].as_array().unwrap();
+    let partition_topic = msgs[0]["topic"].as_str().unwrap().to_owned();
+    let last_offset = msgs[1]["offset"].as_u64().unwrap();
+
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "name": "ns-nodup",
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+            "offset": last_offset,
+        }))
+        .await?
+        .expect(StatusCode::OK);
 
     // Publish more messages
     client
@@ -275,6 +291,345 @@ async fn stream_receive_with_defaults() -> TestResult {
 
     let msgs = response["msgs"].as_array().unwrap();
     assert_eq!(msgs.len(), 1);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-lock" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "name": "ns-lock",
+            "topic": "t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+                { "value": "c".as_bytes(), "key": "k1" },
+                { "value": "d".as_bytes(), "key": "k1" },
+                { "value": "e".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Consumer A receives a small batch — leases the partition
+    let r_a = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-lock",
+            "topic": "t1",
+            "consumer_group": "cg1",
+            "batch_size": 2,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(r_a["msgs"].as_array().unwrap().len(), 2);
+
+    // Consumer B (same CG) — partition is locked, should be rejected
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-lock",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    // Consumer A commits — unlocks the partition
+    let msgs_a = r_a["msgs"].as_array().unwrap();
+    let partition_topic = msgs_a[0]["topic"].as_str().unwrap().to_owned();
+    let last_offset = msgs_a[1]["offset"].as_u64().unwrap();
+
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "name": "ns-lock",
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+            "offset": last_offset,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Now consumer B can receive the remaining messages
+    let r_b = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-lock",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(
+        r_b["msgs"].as_array().unwrap().len(),
+        3,
+        "after commit, remaining messages should be available"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn concurrent_consumers_receive_from_different_partitions() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-concurrent" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // "k1" and "k2" hash to different partitions (1 and 2 respectively via djb2)
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "name": "ns-concurrent",
+            "topic": "t1",
+            "msgs": [
+                { "value": "a1".as_bytes(), "key": "k1" },
+                { "value": "a2".as_bytes(), "key": "k1" },
+                { "value": "a3".as_bytes(), "key": "k1" },
+                { "value": "a4".as_bytes(), "key": "k1" },
+                { "value": "a5".as_bytes(), "key": "k1" },
+                { "value": "b1".as_bytes(), "key": "k2" },
+                { "value": "b2".as_bytes(), "key": "k2" },
+                { "value": "b3".as_bytes(), "key": "k2" },
+                { "value": "b4".as_bytes(), "key": "k2" },
+                { "value": "b5".as_bytes(), "key": "k2" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Consumer A: receives with batch_size=5, should get one partition's worth
+    let r_a = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-concurrent",
+            "topic": "t1",
+            "consumer_group": "cg1",
+            "batch_size": 5,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs_a = r_a["msgs"].as_array().unwrap();
+    assert_eq!(msgs_a.len(), 5);
+
+    // Consumer B: same CG, should get the other partition
+    let r_b = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-concurrent",
+            "topic": "t1",
+            "consumer_group": "cg1",
+            "batch_size": 10,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs_b = r_b["msgs"].as_array().unwrap();
+    assert_eq!(msgs_b.len(), 5);
+
+    // Each consumer should have messages from a single (different) partition
+    let topics_a: HashSet<&str> = msgs_a
+        .iter()
+        .map(|m| m["topic"].as_str().unwrap())
+        .collect();
+    let topics_b: HashSet<&str> = msgs_b
+        .iter()
+        .map(|m| m["topic"].as_str().unwrap())
+        .collect();
+
+    assert_eq!(
+        topics_a.len(),
+        1,
+        "consumer A should read from one partition"
+    );
+    assert_eq!(
+        topics_b.len(),
+        1,
+        "consumer B should read from one partition"
+    );
+    assert!(
+        topics_a.is_disjoint(&topics_b),
+        "consumers must read from different partitions"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn commit_then_receive_no_duplicates() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-commit" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "name": "ns-commit",
+            "topic": "t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+                { "value": "c".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive all 3 messages
+    let r1 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-commit",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = r1["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 3);
+
+    // Extract partition-level topic and last offset in the batch
+    let partition_topic = msgs[0]["topic"].as_str().unwrap().to_owned();
+    let last_offset = msgs[2]["offset"].as_u64().unwrap();
+
+    // Commit the last offset we processed
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "name": "ns-commit",
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+            "offset": last_offset,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive again — should get nothing (all committed past leases)
+    let r2 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-commit",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(r2["msgs"].as_array().unwrap().len(), 0);
+
+    // Publish more
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "name": "ns-commit",
+            "topic": "t1",
+            "msgs": [
+                { "value": "d".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive — only the new message
+    let r3 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "name": "ns-commit",
+            "topic": "t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(r3["msgs"].as_array().unwrap().len(), 1);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn commit_requires_partition_topic() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-commit-pt" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Base topic (no ~partition suffix) should be rejected
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "name": "ns-commit-pt",
+            "topic": "t1",
+            "consumer_group": "cg1",
+            "offset": 0,
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn commit_nonexistent_namespace() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "name": "does-not-exist",
+            "topic": "t1~0",
+            "consumer_group": "cg1",
+            "offset": 0,
+        }))
+        .await?
+        .expect(StatusCode::NOT_FOUND);
 
     Ok(())
 }

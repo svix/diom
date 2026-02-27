@@ -35,3 +35,22 @@ func (msgsStream MsgsStream) Receive(
 		&streamReceiveIn,
 	)
 }
+
+// Commits an offset for a consumer group on a specific partition.
+//
+// The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+// successfully processed offset; future receives will start after it.
+func (msgsStream MsgsStream) Commit(
+	ctx context.Context,
+	streamCommitIn diom_models.StreamCommitIn,
+) (*diom_models.StreamCommitOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.StreamCommitIn, diom_models.StreamCommitOut](
+		ctx,
+		msgsStream.client,
+		"POST",
+		"/api/v1/msgs/stream/commit",
+		nil,
+		nil,
+		&streamCommitIn,
+	)
+}

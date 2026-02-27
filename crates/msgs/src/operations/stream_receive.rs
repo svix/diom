@@ -41,7 +41,7 @@ fn create_leases_for_msgs(
     offsets: &[Offset],
     namespace_id: NamespaceId,
     partition: PartitionIndex,
-    cg: ConsumerGroup,
+    cg: &ConsumerGroup,
     now: Timestamp,
     lease_duration: std::time::Duration,
     lease_diff: &mut LeaseDiff,
@@ -69,6 +69,7 @@ pub struct StreamReceiveOperation {
     cg: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
+    now: Timestamp,
 }
 
 impl StreamReceiveOperation {
@@ -85,15 +86,17 @@ impl StreamReceiveOperation {
             cg,
             batch_size,
             lease_duration_millis,
+            now: Timestamp::now(),
         }
     }
 
     fn apply_real(self, state: &State) -> diom_operations::Result<StreamReceiveResponseData> {
-        let now = Timestamp::now();
+        let now = self.now;
         let lease_duration = std::time::Duration::from_millis(self.lease_duration_millis);
         let mut all_msgs = Vec::new();
         let mut all_lease_diffs = Vec::new();
         let mut remaining = usize::from(self.batch_size.get());
+        let mut any_partition_locked = false;
 
         for p in 0..DEFAULT_PARTITION_COUNT {
             if remaining == 0 {
@@ -107,9 +110,15 @@ impl StreamReceiveOperation {
 
             let leases = LeaseRow::fetch_all(state, self.namespace_id, partition, &self.cg)?;
 
-            let blocked_leases = leases
-                .iter()
-                .filter(|l| l.acked_at.is_some() || l.is_dlq() || l.is_active(now));
+            // If any active lease exists on this partition, skip it entirely
+            let has_active_lease = leases.iter().any(|l| l.is_active(now));
+            if has_active_lease {
+                any_partition_locked = true;
+                all_lease_diffs.push(LeaseRow::cull_and_compact(leases, now));
+                continue;
+            }
+
+            let blocked_leases = leases.iter().filter(|l| l.acked_at.is_some() || l.is_dlq());
 
             let batch_size = remaining;
             let msgs = MsgRow::fetch_available(
@@ -128,7 +137,7 @@ impl StreamReceiveOperation {
                 &offsets,
                 self.namespace_id,
                 partition,
-                self.cg.clone(),
+                &self.cg,
                 now,
                 lease_duration,
                 &mut lease_diff,
@@ -154,6 +163,15 @@ impl StreamReceiveOperation {
             diff.apply_diff(state, &mut batch)?;
         }
         batch.commit().map_err(diom_error::Error::from)?;
+
+        // If we got no messages and at least one partition was locked, return an error
+        // so the caller knows to retry after committing or waiting for lease expiry.
+        if all_msgs.is_empty() && any_partition_locked {
+            return Err(diom_error::Error::http(diom_error::HttpError::bad_request(
+                Some("partition_locked".to_owned()),
+                Some("All partitions with pending messages are locked by active leases. Commit offsets or wait for lease expiry.".to_owned()),
+            )).into());
+        }
 
         Ok(StreamReceiveResponseData { msgs: all_msgs })
     }

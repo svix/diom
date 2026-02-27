@@ -221,6 +221,55 @@ async fn stream_receive(
     }))
 }
 
+// ---------------------------------------------------------------------------
+// stream/commit
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct StreamCommitIn {
+    pub name: String,
+    pub topic: String,
+    pub consumer_group: diom_msgs::entities::ConsumerGroup,
+    pub offset: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct StreamCommitOut {}
+
+/// Commits an offset for a consumer group on a specific partition.
+///
+/// The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+/// successfully processed offset; future receives will start after it.
+#[aide_annotate(op_id = "v1.msgs.stream.commit")]
+async fn stream_commit(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<StreamCommitIn>,
+) -> Result<MsgPackOrJson<StreamCommitOut>> {
+    let (_topic, partition) =
+        diom_msgs::entities::parse_partition_topic(&data.topic).map_err(|msg| {
+            Error::http(HttpError::bad_request(
+                Some("invalid_topic".to_owned()),
+                Some(msg.to_owned()),
+            ))
+        })?;
+
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = diom_msgs::operations::StreamCommitOperation::new(
+        namespace.id,
+        partition,
+        data.consumer_group,
+        data.offset,
+    );
+    repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(StreamCommitOut {}))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Msgs");
 
@@ -239,6 +288,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/msgs/stream/receive",
             post_with(stream_receive, stream_receive_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/stream/commit",
+            post_with(stream_commit, stream_commit_operation),
             &tag,
         )
 }
