@@ -14,4 +14,4 @@ class StreamMsgOut(BaseModel):
 
     topic: str
 
-    value: t.List[int]
+    value: bytes

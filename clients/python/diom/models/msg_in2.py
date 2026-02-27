@@ -10,4 +10,4 @@ class MsgIn2(BaseModel):
     key: t.Optional[str] = None
     """Optional partition key. Messages with the same key are routed to the same partition."""
 
-    value: t.List[int]
+    value: bytes

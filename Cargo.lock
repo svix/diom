@@ -2671,7 +2671,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 [[package]]
 name = "openapi-codegen"
 version = "0.1.0"
-source = "git+https://github.com/svix/openapi-codegen?rev=0a51d3898dab5943404890c31788f81e2f07f22e#0a51d3898dab5943404890c31788f81e2f07f22e"
+source = "git+https://github.com/svix/openapi-codegen?rev=f03cc8b696131f199f373fe1e3aa4b9e04ef57a4#f03cc8b696131f199f373fe1e3aa4b9e04ef57a4"
 dependencies = [
  "aide 0.14.2",
  "anyhow",
