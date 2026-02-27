@@ -1,11 +1,11 @@
 use std::{
-    io::{ErrorKind, Seek, SeekFrom},
+    io::{Seek, SeekFrom},
     path::{Path, PathBuf},
     pin::Pin,
     sync::Arc,
 };
 
-use crate::core::db::Databases;
+use crate::{cfg::Dir, core::db::Databases};
 use anyhow::Context;
 use diom_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
@@ -114,15 +114,10 @@ impl Store {
     pub async fn new(
         persistent_db: Database,
         ephemeral_db: Database,
-        snapshot_directory: PathBuf,
+        snapshot_directory: Dir,
         app_state: AppState,
         logs: DiomLogs,
     ) -> anyhow::Result<Self> {
-        if let Err(e) = tokio::fs::create_dir_all(&snapshot_directory).await
-            && e.kind() != ErrorKind::AlreadyExists
-        {
-            return Err(e.into());
-        }
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
 
@@ -142,7 +137,7 @@ impl Store {
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
             state: app_state,
-            snapshot_directory,
+            snapshot_directory: snapshot_directory.into(),
             readonly_meta_keyspace: ReadonlyKeyspace::from(meta_keyspace.clone()),
             meta_keyspace,
             last_snapshot: Arc::new(RwLock::new(None)),

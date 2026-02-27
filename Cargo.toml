@@ -43,6 +43,7 @@ diom-proto.workspace = true
 diom-rate-limiter.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
+fs-err.workspace = true
 futures-util.workspace = true
 headers.workspace = true
 http.workspace = true

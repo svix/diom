@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     fmt::Debug,
     ops::{Bound, RangeBounds},
-    path::Path,
 };
 
 use anyhow::Context;
@@ -18,6 +17,7 @@ use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tracing::{Instrument as _, Span};
 
 use super::{NodeId, errors::*, raft::TypeConfig};
+use crate::cfg::Dir;
 
 // This is an implementation of an openraft Logs store backed by fjall
 
@@ -162,8 +162,9 @@ static VOTE: FjallFixedKey<Vote<NodeId>> = FjallFixedKey::new("vote");
 static COMMITTED: FjallFixedKey<Option<LogId<NodeId>>> = FjallFixedKey::new("committed");
 
 impl DiomLogs {
-    pub fn new(path: impl AsRef<Path>) -> anyhow::Result<Self> {
-        let db = Database::builder(path).worker_threads(1).open()?;
+    pub fn new(path: Dir) -> anyhow::Result<Self> {
+        let pb: std::path::PathBuf = path.into();
+        let db = Database::builder(&pb).worker_threads(1).open()?;
         let log_keyspace = db.keyspace("cluster:logs", KeyspaceCreateOptions::default)?;
         let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
         Ok(Self {
@@ -401,6 +402,7 @@ impl DiomLogs {
 #[cfg(test)]
 mod tests {
     use super::DiomLogs;
+    use crate::cfg::Dir;
     use jiff::{Span, Timestamp};
     use tempfile::TempDir;
     use test_utils::TestResult;
@@ -413,7 +415,8 @@ mod tests {
     impl TestContext {
         fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
-            let logs = DiomLogs::new(&workdir).unwrap();
+            let logdir = Dir::new(&workdir).unwrap();
+            let logs = DiomLogs::new(logdir).unwrap();
             Self {
                 _workdir: workdir,
                 logs,

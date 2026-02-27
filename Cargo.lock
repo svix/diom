@@ -891,6 +891,7 @@ dependencies = [
  "ctor",
  "fjall",
  "fjall-utils",
+ "fs-err",
  "futures-util",
  "headers",
  "http",
