@@ -41,6 +41,8 @@ mod rate_limiter_get_remaining_out;
 mod rate_limiter_token_bucket_config;
 mod retention;
 mod storage_type;
+mod stream_commit_in;
+mod stream_commit_out;
 mod stream_msg_out;
 mod stream_receive_in;
 mod stream_receive_out;
@@ -86,6 +88,8 @@ pub use self::{
     rate_limiter_token_bucket_config::RateLimiterTokenBucketConfig,
     retention::Retention,
     storage_type::StorageType,
+    stream_commit_in::StreamCommitIn,
+    stream_commit_out::StreamCommitOut,
     stream_msg_out::StreamMsgOut,
     stream_receive_in::StreamReceiveIn,
     stream_receive_out::StreamReceiveOut,

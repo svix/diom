@@ -25,6 +25,14 @@ import {
     PublishOutSerializer,
 } from '../models/publishOut';
 import {
+    type StreamCommitIn,
+    StreamCommitInSerializer,
+} from '../models/streamCommitIn';
+import {
+    type StreamCommitOut,
+    StreamCommitOutSerializer,
+} from '../models/streamCommitOut';
+import {
     type StreamReceiveIn,
     StreamReceiveInSerializer,
 } from '../models/streamReceiveIn';
