@@ -53,15 +53,15 @@ pub fn random_partition() -> PartitionIndex {
 /// Deterministically maps a key to a partition via hash.
 pub fn partition_for_key(key: &[u8]) -> PartitionIndex {
     let hash = djb2_hash(key);
-    PartitionIndex(hash % DEFAULT_PARTITION_COUNT)
+    PartitionIndex((hash % u32::from(DEFAULT_PARTITION_COUNT)) as u16)
 }
 
-fn djb2_hash(data: &[u8]) -> u16 {
+fn djb2_hash(data: &[u8]) -> u32 {
     let mut hash: u32 = 5381;
     for &b in data {
         hash = hash.wrapping_mul(33).wrapping_add(u32::from(b));
     }
-    (hash % u32::from(DEFAULT_PARTITION_COUNT)) as u16
+    hash
 }
 
 /// An opaque message ID that internally encodes `(partition, offset)`.

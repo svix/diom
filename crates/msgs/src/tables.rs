@@ -256,12 +256,18 @@ impl TableRow for LeaseRow {
     }
 }
 
+#[derive(Default)]
 pub(crate) struct LeaseDiff {
     pub to_delete: Vec<LeaseRow>,
     pub to_insert: Vec<LeaseRow>,
 }
 
 impl LeaseDiff {
+    pub(crate) fn extend(&mut self, other: Self) {
+        self.to_delete.extend(other.to_delete);
+        self.to_insert.extend(other.to_insert);
+    }
+
     pub(crate) fn apply_diff(self, state: &State, batch: &mut OwnedWriteBatch) -> Result<()> {
         for lease in self.to_delete {
             let key = LeaseRow::make_fjall_key(lease.get_key().as_ref());
@@ -396,8 +402,6 @@ impl LeaseRow {
     }
 
     /// Shrinks or splits active leases to exclude a range of offsets.
-    // FIXME(@svix-gabriel): Used by stream.commit / queue.ack (PRs 4-5).
-    #[allow(dead_code)]
     pub(crate) fn shrink_active_leases_for_range(
         leases: &[Self],
         min_offset: Offset,
@@ -507,8 +511,6 @@ impl OffsetRow {
         }
     }
 
-    // FIXME(@svix-gabriel): Used by stream.commit (PR 4).
-    #[allow(dead_code)]
     pub(crate) fn store(
         batch: &mut OwnedWriteBatch,
         state: &State,
