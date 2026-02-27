@@ -39,15 +39,15 @@ pip install diom
 </CodeTab>
 <CodeTab>
 
-```shell
-go get github.com/svix/diom/go
+```toml
+cargo add diom
 ```
 
 </CodeTab>
 <CodeTab>
 
-```toml
-cargo add diom
+```shell
+go get github.com/svix/diom/go
 ```
 
 </CodeTab>
@@ -155,18 +155,6 @@ app = diom.kv.create("key", b"value")
 </CodeTab>
 <CodeTab>
 
-```go
-import (
-	diom "github.com/diom/diom-webhooks"
-)
-
-diomClient := diom.New("AUTH_TOKEN", nil)
-app, err := diomClient.Kv.Set(ctx, "key", b"value", nil)
-```
-
-</CodeTab>
-<CodeTab>
-
 ```rust
 use diom::api::Diom;
 
@@ -179,6 +167,18 @@ diom
         None,
     )
     .await?;
+```
+
+</CodeTab>
+<CodeTab>
+
+```go
+import (
+	diom "github.com/diom/diom-webhooks"
+)
+
+diomClient := diom.New("AUTH_TOKEN", nil)
+app, err := diomClient.Kv.Set(ctx, "key", b"value", nil)
 ```
 
 </CodeTab>
