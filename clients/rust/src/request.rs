@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, time::Duration};
 
-use http::header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HeaderValue, USER_AGENT};
+use http::header::{ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HeaderValue, USER_AGENT};
 use http_body_util::{BodyExt as _, Full};
 use hyper::body::Bytes;
 use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
@@ -11,6 +11,8 @@ use rand::Rng;
 use serde::de::DeserializeOwned;
 
 use crate::{Configuration, error::Error};
+
+const APPLICATION_MSGPACK: HeaderValue = HeaderValue::from_static("application/msgpack");
 
 #[allow(dead_code)]
 pub(crate) enum Auth {
@@ -29,8 +31,7 @@ pub(crate) struct Request {
     no_return_type: bool,
     path_params: HashMap<&'static str, String>,
     header_params: HashMap<&'static str, String>,
-    // TODO: multiple body params are possible technically, but not supported here.
-    serialized_body: Option<String>,
+    serialized_body: Option<Vec<u8>>,
 }
 
 impl Request {
@@ -46,8 +47,8 @@ impl Request {
         }
     }
 
-    pub(crate) fn with_body_param<T: serde::Serialize>(mut self, param: T) -> Self {
-        self.serialized_body = Some(serde_json::to_string(&param).unwrap());
+    pub(crate) fn with_body<T: serde::Serialize>(mut self, param: T) -> Self {
+        self.serialized_body = Some(rmp_serde::to_vec_named(&param).unwrap());
         self
     }
 
@@ -56,14 +57,14 @@ impl Request {
         conf: &Configuration,
     ) -> Result<T, Error> {
         match self.execute_with_backoff(conf).await? {
-            // This is a hack; if there's no_ret_type, T is (), but serde_json gives an
-            // error when deserializing "" into (), so deserialize 'null' into it
-            // instead.
+            // This is a hack; if there's no_ret_type, T is (), but rmp_serde gives an
+            // error when deserializing b"" into (), so deserialize a msgpack null into
+            // it instead.
             // An alternate option would be to require T: Default, and then return
             // T::default() here instead since () implements that, but then we'd
             // need to impl default for all models.
-            None => Ok(serde_json::from_str("null").expect("serde null value")),
-            Some(bytes) => Ok(serde_json::from_slice(&bytes).map_err(Error::generic)?),
+            None => Ok(rmp_serde::from_slice(&[0xc0]).expect("serde null value")),
+            Some(bytes) => Ok(rmp_serde::from_slice(&bytes).map_err(Error::generic)?),
         }
     }
 
@@ -171,7 +172,7 @@ impl Request {
 
         let mut request = if let Some(body) = self.serialized_body {
             let req_headers = req_builder.headers_mut().unwrap();
-            req_headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+            req_headers.insert(CONTENT_TYPE, APPLICATION_MSGPACK);
             req_headers.insert(CONTENT_LENGTH, body.len().into());
             req_builder.body(Full::from(body)).map_err(Error::generic)?
         } else {
@@ -179,6 +180,7 @@ impl Request {
         };
 
         let request_headers = request.headers_mut();
+        request_headers.insert(ACCEPT, APPLICATION_MSGPACK);
 
         // Detect the authorization type if it hasn't been set.
         let auth = if conf.bearer_access_token.is_some() {

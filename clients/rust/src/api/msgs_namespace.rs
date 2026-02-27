@@ -16,7 +16,7 @@ impl<'a> MsgsNamespace<'a> {
         create_namespace_in: CreateNamespaceIn,
     ) -> Result<CreateNamespaceOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/namespace/create")
-            .with_body_param(create_namespace_in)
+            .with_body(create_namespace_in)
             .execute(self.cfg)
             .await
     }
@@ -24,7 +24,7 @@ impl<'a> MsgsNamespace<'a> {
     /// Gets a msgs namespace by name.
     pub async fn get(&self, get_namespace_in: GetNamespaceIn) -> Result<GetNamespaceOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/namespace/get")
-            .with_body_param(get_namespace_in)
+            .with_body(get_namespace_in)
             .execute(self.cfg)
             .await
     }

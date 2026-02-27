@@ -66,7 +66,7 @@ impl<'a> {{ resource_type_name }}<'a> {
         {% endfor -%}
 
         {% if op.request_body_schema_name is defined -%}
-            .with_body_param({{ op.request_body_schema_name | to_snake_case }})
+            .with_body({{ op.request_body_schema_name | to_snake_case }})
         {% endif -%}
 
         {% if op.response_body_schema_name is undefined -%}

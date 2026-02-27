@@ -13,7 +13,7 @@ impl<'a> Stream<'a> {
     /// Appends messages to the stream.
     pub async fn append(&self, append_to_stream_in: AppendToStreamIn) -> Result<AppendToStreamOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/append")
-            .with_body_param(append_to_stream_in)
+            .with_body(append_to_stream_in)
             .execute(self.cfg)
             .await
     }
@@ -28,7 +28,7 @@ impl<'a> Stream<'a> {
         fetch_from_stream_in: FetchFromStreamIn,
     ) -> Result<FetchFromStreamOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/fetch")
-            .with_body_param(fetch_from_stream_in)
+            .with_body(fetch_from_stream_in)
             .execute(self.cfg)
             .await
     }
@@ -42,7 +42,7 @@ impl<'a> Stream<'a> {
         fetch_from_stream_in: FetchFromStreamIn,
     ) -> Result<FetchFromStreamOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/fetch-locking")
-            .with_body_param(fetch_from_stream_in)
+            .with_body(fetch_from_stream_in)
             .execute(self.cfg)
             .await
     }
@@ -50,7 +50,7 @@ impl<'a> Stream<'a> {
     /// Acks the messages for the consumer group, allowing more messages to be consumed.
     pub async fn ack_range(&self, ack_msg_range_in: AckMsgRangeIn) -> Result<AckMsgRangeOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack-range")
-            .with_body_param(ack_msg_range_in)
+            .with_body(ack_msg_range_in)
             .execute(self.cfg)
             .await
     }
@@ -58,7 +58,7 @@ impl<'a> Stream<'a> {
     /// Acks a single message.
     pub async fn ack(&self, ack: Ack) -> Result<AckOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/ack")
-            .with_body_param(ack)
+            .with_body(ack)
             .execute(self.cfg)
             .await
     }
@@ -66,7 +66,7 @@ impl<'a> Stream<'a> {
     /// Moves a message to the dead letter queue.
     pub async fn dlq(&self, dlq_in: DlqIn) -> Result<DlqOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/dlq")
-            .with_body_param(dlq_in)
+            .with_body(dlq_in)
             .execute(self.cfg)
             .await
     }
@@ -74,7 +74,7 @@ impl<'a> Stream<'a> {
     /// Redrives messages from the dead letter queue back to the stream.
     pub async fn redrive(&self, redrive_in: RedriveIn) -> Result<RedriveOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/stream/redrive-dlq")
-            .with_body_param(redrive_in)
+            .with_body(redrive_in)
             .execute(self.cfg)
             .await
     }

@@ -16,7 +16,7 @@ impl<'a> RateLimiter<'a> {
         rate_limiter_check_in: RateLimiterCheckIn,
     ) -> Result<RateLimiterCheckOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/rate-limiter/limit")
-            .with_body_param(rate_limiter_check_in)
+            .with_body(rate_limiter_check_in)
             .execute(self.cfg)
             .await
     }
@@ -27,7 +27,7 @@ impl<'a> RateLimiter<'a> {
         rate_limiter_get_remaining_in: RateLimiterGetRemainingIn,
     ) -> Result<RateLimiterGetRemainingOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/rate-limiter/get-remaining")
-            .with_body_param(rate_limiter_get_remaining_in)
+            .with_body(rate_limiter_get_remaining_in)
             .execute(self.cfg)
             .await
     }
