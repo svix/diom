@@ -5,6 +5,7 @@ from .idempotency import Idempotency, IdempotencyAsync
 from .kv import Kv, KvAsync
 from .msgs import Msgs, MsgsAsync
 from .msgs_namespace import MsgsNamespace, MsgsNamespaceAsync
+from .msgs_stream import MsgsStream, MsgsStreamAsync
 from .rate_limiter import RateLimiter, RateLimiterAsync
 from .stream import Stream, StreamAsync
 
@@ -22,6 +23,8 @@ __all__ = [
     "MsgsAsync",
     "MsgsNamespace",
     "MsgsNamespaceAsync",
+    "MsgsStream",
+    "MsgsStreamAsync",
     "RateLimiter",
     "RateLimiterAsync",
     "Stream",

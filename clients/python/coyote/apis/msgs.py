@@ -9,12 +9,20 @@ from .msgs_namespace import (
     MsgsNamespace,
     MsgsNamespaceAsync,
 )
+from .msgs_stream import (
+    MsgsStream,
+    MsgsStreamAsync,
+)
 
 
 class MsgsAsync(ApiBase):
     @property
     def namespace(self) -> MsgsNamespaceAsync:
         return MsgsNamespaceAsync(self._client)
+
+    @property
+    def stream(self) -> MsgsStreamAsync:
+        return MsgsStreamAsync(self._client)
 
     async def publish(
         self,
@@ -33,6 +41,10 @@ class Msgs(ApiBase):
     @property
     def namespace(self) -> MsgsNamespace:
         return MsgsNamespace(self._client)
+
+    @property
+    def stream(self) -> MsgsStream:
+        return MsgsStream(self._client)
 
     def publish(
         self,

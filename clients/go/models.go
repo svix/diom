@@ -59,4 +59,7 @@ type (
 	RedriveOut                   = coyote_models.RedriveOut
 	Retention                    = coyote_models.Retention
 	StorageType                  = coyote_models.StorageType
+	StreamMsgOut                 = coyote_models.StreamMsgOut
+	StreamReceiveIn              = coyote_models.StreamReceiveIn
+	StreamReceiveOut             = coyote_models.StreamReceiveOut
 )

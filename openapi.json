@@ -924,6 +924,43 @@
           }
         ]
       }
+    },
+    "/api/v1/msgs/stream/receive": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Stream Receive",
+        "description": "Receives messages from a topic using a consumer group.\n\nEach consumer in the group reads from all partitions. Messages are locked by leases for the\nspecified duration to prevent duplicate delivery within the same consumer group.",
+        "operationId": "v1.msgs.stream.receive",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamReceiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamReceiveOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2081,6 +2118,91 @@
         "enum": [
           "Persistent",
           "Ephemeral"
+        ]
+      },
+      "StreamMsgOut": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "topic": {
+            "type": "string"
+          },
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "headers": {
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "offset",
+          "topic",
+          "value",
+          "timestamp"
+        ]
+      },
+      "StreamReceiveIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "batch_size": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 1,
+            "maximum": 65535,
+            "default": 10
+          },
+          "lease_duration_millis": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "default": 300000
+          }
+        },
+        "required": [
+          "name",
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "StreamReceiveOut": {
+        "type": "object",
+        "properties": {
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StreamMsgOut"
+            }
+          }
+        },
+        "required": [
+          "msgs"
         ]
       }
     }

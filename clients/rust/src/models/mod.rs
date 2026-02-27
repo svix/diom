@@ -55,6 +55,9 @@ mod redrive_in;
 mod redrive_out;
 mod retention;
 mod storage_type;
+mod stream_msg_out;
+mod stream_receive_in;
+mod stream_receive_out;
 
 pub use self::{
     ack::Ack,
@@ -111,4 +114,7 @@ pub use self::{
     redrive_out::RedriveOut,
     retention::Retention,
     storage_type::StorageType,
+    stream_msg_out::StreamMsgOut,
+    stream_receive_in::StreamReceiveIn,
+    stream_receive_out::StreamReceiveOut,
 };

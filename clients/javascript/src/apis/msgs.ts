@@ -24,7 +24,16 @@ import {
     type PublishOut,
     PublishOutSerializer,
 } from '../models/publishOut';
+import {
+    type StreamReceiveIn,
+    StreamReceiveInSerializer,
+} from '../models/streamReceiveIn';
+import {
+    type StreamReceiveOut,
+    StreamReceiveOutSerializer,
+} from '../models/streamReceiveOut';
 import { MsgsNamespace } from './msgsNamespace';
+import { MsgsStream } from './msgsStream';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
 export class Msgs {
@@ -32,6 +41,10 @@ export class Msgs {
 
     public get namespace() {
         return new MsgsNamespace(this.requestCtx);
+    }
+
+    public get stream() {
+        return new MsgsStream(this.requestCtx);
     }
 
     /** Publishes messages to a topic within a namespace. */
