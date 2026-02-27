@@ -2,7 +2,7 @@
 import typing as t
 from datetime import datetime
 
-from .common import BaseModel
+from ..internal.base_model import BaseModel
 
 
 class KvGetOut(BaseModel):

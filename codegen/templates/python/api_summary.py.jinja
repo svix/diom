@@ -1,41 +1,16 @@
 # this file is @generated
-{% set excluded_resources = ["environment", "health", "ingest"] -%}
-
-{%- for resource in api.resources -%}
-    {%- if resource.name not in excluded_resources -%}
-        {%- if resource.operations | length > 0 -%}
-            {% include 'api_summary/resource_import.py.jinja' %}
-        {%- endif -%}
-        {%- for _resource_name, resource in resource.subresources | items %}
-            {%- include 'api_summary/resource_import.py.jinja' %}
-        {%- endfor -%}
-    {%- endif -%}
+{% for resource in api.resources -%}
+    {% include 'api_summary/resource_import.py.jinja' %}
+{% for _resource_name, resource in resource.subresources | items -%}
+    {% include 'api_summary/resource_import.py.jinja' %}
+{% endfor -%}
 {% endfor %}
-
-from .coyote import Coyote, CoyoteAsync, CoyoteOptions, DEFAULT_SERVER_URL
-from ..models import (
-    {%- for t in api.types %}
-    {{ t | to_upper_camel_case }},
-    {%- endfor %}
-)
-
 
 __all__ = [
-    "Coyote",
-    "CoyoteAsync",
-    "CoyoteOptions",
-    "DEFAULT_SERVER_URL",
-{%- for resource in api.resources %}
-    {%- if resource.name not in excluded_resources -%}
-        {%- if resource.operations | length > 0 -%}
+    {% for resource in api.resources -%}
+        {% include 'api_summary/resource_export.py.jinja' %}
+        {% for _resource_name, resource in resource.subresources | items -%}
             {% include 'api_summary/resource_export.py.jinja' %}
-        {%- endif -%}
-        {%- for _resource_name, resource in resource.subresources | items %}
-            {%- include 'api_summary/resource_export.py.jinja' %}
         {%- endfor -%}
-    {%- endif -%}
-{% endfor %}
-{% for type in api.types -%}
-    "{{ type | to_upper_camel_case }}",
-{% endfor -%}
+    {% endfor %}
 ]

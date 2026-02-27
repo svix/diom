@@ -2,7 +2,7 @@
 import typing as t
 from pydantic import Field
 
-from .common import BaseModel
+from ..internal.base_model import BaseModel
 
 from .rate_limit_status import RateLimitStatus
 
