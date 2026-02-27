@@ -12,6 +12,7 @@ import (
 type Msgs struct {
 	client    *coyote_proto.HttpClient
 	Namespace *MsgsNamespace
+	Stream    *MsgsStream
 }
 
 func NewMsgs(client *coyote_proto.HttpClient) Msgs {
