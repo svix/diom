@@ -14,4 +14,4 @@ class KvSetIn(BaseModel):
     ttl: t.Optional[int] = None
     """Time to live in milliseconds"""
 
-    value: t.List[int]
+    value: bytes
