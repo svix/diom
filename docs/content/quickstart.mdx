@@ -1,0 +1,250 @@
+# Quickstart
+
+Coyote is composed of a set of well integrated infrastructure primitives for backend and data engineers. For more information on each module, please refer to their respective documentation section.
+
+The focus of this page is to help you get started with using the Coyote API.
+
+## Modules
+
+The main concept you need to know when using Coyote is `module`, which is how we call the types of infrastructure primitives in Coyote such as `cache`, `kv-store`, `rate-limiting`, and `stream`.
+
+All modules support having multiple entities under them, each addressed with its own `key`. For example the cache module may have multiple items, the rate-limiter may have multiple different rate-limiters, and the queue module may have many different queues; each with their own key identifying the specific resource.
+
+Coyote also support [`namespace`s](./namespaces.mdx), which is a way of having different configurations (such as persistence) for a group of keys within the same module. So you can, for example, have one cache store with a maximum size of 50 GB that is persisted to disk, and a different cache store with a maximum size of 1 GB that is ephemeral. If not set explicitly, the default namespace is used.
+
+## Getting an authentication token
+
+You can get an authentication token from the dashboard, or if self-hosting refer to the [self-hosting section](./self-hosting/).
+
+## Using the SDKs
+
+You can install the SDKs as follows:
+
+<CodeTabGroup>
+<CodeTab>
+
+```js
+npm install coyote
+// Or
+yarn add coyote
+```
+
+</CodeTab>
+<CodeTab>
+
+```shell
+pip install coyote
+```
+
+</CodeTab>
+<CodeTab>
+
+```shell
+go get github.com/svix/coyote/go
+```
+
+</CodeTab>
+<CodeTab>
+
+```toml
+cargo add coyote
+```
+
+</CodeTab>
+<CodeTab>
+
+Gradle: Add this dependency to your project's build file:
+
+```groovy
+implementation "com.svix:coyote:0.x.y"
+```
+
+Maven: Add this dependency to your project's POM:
+
+```xml
+<dependency>
+  <groupId>com.svix</groupId>
+  <artifactId>coyote</artifactId>
+  <version>0.x.y</version>
+</dependency>
+```
+
+</CodeTab>
+<CodeTab>
+
+Gradle: Add this dependency to your project's build file:
+
+```groovy
+implementation "com.svix.kotlin:coyote-kotlin:0.x.y"
+```
+
+Maven: Add this dependency to your project's POM:
+
+```xml
+<dependency>
+  <groupId>com.svix.kotlin</groupId>
+  <artifactId>coyote-kotlin</artifactId>
+  <version>0.x.y</version>
+</dependency>
+```
+
+</CodeTab>
+<CodeTab>
+
+```sh
+gem install coyote
+```
+
+</CodeTab>
+<CodeTab>
+
+```shell
+dotnet add package Svix
+```
+
+</CodeTab>
+<CodeTab>
+
+```shell
+composer require svix/coyote
+```
+
+</CodeTab>
+<CodeTab>
+
+On macOS install via <a href="https://brew.sh/">Homebrew</a>:
+
+```sh
+brew install svix/coyote/coyote-cli
+```
+
+On Windows install via <a href="https://scoop.sh/">Scoop</a>:
+
+```sh
+scoop bucket add coyote https://github.com/svix/scoop-coyote.git
+scoop install coyote
+```
+
+For other platforms, such as linux, checkout the <a href="https://github.com/svix/coyote#CLI">CLI docs</a> on Github.
+
+</CodeTab>
+</CodeTabGroup>
+
+Example usage (setting a KV key):
+
+<CodeTabGroup>
+<CodeTab>
+
+```js
+import { Coyote } from "coyote";
+
+const coyote = new Coyote("AUTH_TOKEN");
+const app = await coyote.kv.set("key", "value");
+```
+
+</CodeTab>
+<CodeTab>
+
+```python
+from coyote import Coyote
+
+coyote = Coyote("AUTH_TOKEN")
+app = coyote.kv.create("key", b"value")
+```
+
+</CodeTab>
+<CodeTab>
+
+```go
+import (
+	coyote "github.com/coyote/coyote-webhooks"
+)
+
+coyoteClient := coyote.New("AUTH_TOKEN", nil)
+app, err := coyoteClient.Kv.Set(ctx, "key", b"value", nil)
+```
+
+</CodeTab>
+<CodeTab>
+
+```rust
+use coyote::api::Coyote;
+
+let coyote = Coyote::new("AUTH_TOKEN".to_string(), None);
+coyote
+    .kv()
+    .set(
+        "key",
+        b"value",
+        None,
+    )
+    .await?;
+```
+
+</CodeTab>
+<CodeTab>
+
+```java
+import com.svix.Coyote;
+
+Coyote coyote = new Coyote("AUTH_TOKEN");
+coyote.getKv().set("key", b"value")
+```
+
+</CodeTab>
+<CodeTab>
+
+```kotlin
+import com.svix.kotlin.Coyote
+
+val coyote = Coyote("AUTH_TOKEN")
+coyote.kv.set("key", b"value")
+```
+
+</CodeTab>
+<CodeTab>
+
+```ruby
+require "coyote"
+
+coyote = Coyote::Client.new("AUTH_TOKEN")
+coyote.kv.set("key", b"value", null)
+```
+
+</CodeTab>
+<CodeTab>
+
+```csharp
+var coyote = new CoyoteClient("AUTH_TOKEN");
+await coyote.Kv.CreateAsync("key", "value");
+```
+
+</CodeTab>
+<CodeTab>
+
+```php
+$coyote = new Coyote('AUTH_TOKEN');
+
+$app = $coyote->kv->set("key", "value");
+```
+
+</CodeTab>
+<CodeTab>
+
+```shell
+export COYOTE_AUTH_TOKEN='AUTH_TOKEN'
+coyote kv set '{ "key": "key", "value": "value" }'
+```
+
+</CodeTab>
+</CodeTabGroup>
+
+Please refer to [each module's documentation](./modules/) for more information on how to use each one.
+
+## Self-hosting
+
+As mentioned above, this page is focused on using Coyote, for information on running it, please refer to the [self-hosting section](./self-hosting/) of the docs.
+
+## Closing words
+
+That's really all there is to it. All you need is to get an API key, install an SDK, and you can start using Coyote!

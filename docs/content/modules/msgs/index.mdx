@@ -1,0 +1,131 @@
+---
+asIndexPage: true
+---
+
+# Message Broker (`msgs`)
+
+The `msgs` module is Coyote's message broker module. It supports three delivery modes: `stream`, `queue`, and `FIFO`.
+
+Coyote is backed by an ordered-stream, which provides a variety benefits, including: efficient writing, ordering, parallel-processing, and time-travel (restart processing for a specific point in time).
+
+## Quickstart
+
+If you've previously used a message broker (RabbitMQ, SQS, etc.) or an event streaming platform (Kafka) the `msgs` module will feel very familiar.
+
+Things to know to get started:
+- [Topics](#topics) are created implicitly on first-use (configure, produce, or consume).
+- You can consume messages in a few different [delivery modes](#delivery-modes).
+- You can have parallel consumers consuming the same topic using [consumer groups](#consumer-groups).
+
+That's all you need to know to get started.
+
+## How the `msgs` module works
+
+Publishing is done to `topic`s that are shared across all delivery methods, with the different delivery methods only applying at consumption time. This means that you can consume the same messages in multiple different modes in parallel.
+
+For example, let's say you built a hotel booking product and it has a stream of booking events for every time someone books. You may want to have a log of these events persisted to S3, but also have two different systems that need to act on each message: the email notification system, and the inventory processing system.
+
+With Coyote, you can publish all of these to the `bookings` topic, and consume *the same messages* in parallel like this: (1) `stream` for S3 for a strictly ordered log, (2) `queue` consumer for the email notification system, and (3) `queue` consumer for the inventory processing system. Each consuming the same messages at their own pace, and every message consumed once by each different system.
+
+## Core concepts
+
+### Messages
+
+Message is the name of the basic unit that's sent over a topic. Each message has an associated payload (called `value`), a creation timestamp created by Coyote (`timestamp`), optional key-value headers (`headers`), and an optional `group_key` which is explained below.
+Messages have an associated `timestamp` and.
+
+### Topics
+
+A `topic` is an ordered set of messages. This is where messages are published to.
+Topics are created implicitly on first use, and you can have infinitely many.
+
+### Consumer groups
+
+A consumer group tracks how a set of consumers has progressed through a topic. When multiple consumers share a group, Coyote coordinates between them so each message is processed by exactly one member of the group; letting you scale out processing by adding more consumers without duplicating work.
+
+Consumer groups are created implicitly on first use and are unique for each topic + delivery mode combination.
+Each delivery mode uses consumer groups slightly differently, so please refer to each delivery mode for how information on how to use them.
+
+### Message group keys
+
+Messages with the same `group_key` are processed in order for delivery modes that support it. So always set a key if ordering matters.
+
+### Namespaces
+
+A namespace groups topics together with shared retention and persistence settings.
+
+### Partitions
+
+Coyote abstracts away the concept of partitions; for all except stream. So please refer to [the stream partitions docs](./msgs/stream.mdx#partitions) for more information.
+
+## Delivery modes
+
+As mentioned above, publishing is shared across all delivery methods, and the delivery methods only apply at consumption time.
+
+### Queue
+
+Queue mode is at-least-once delivery with configurable retry schedules and dead letter queues (DLQs).
+
+Use a queue when you need an unordered task queue.
+
+For more information, read [the queue docs](./msgs/queue.mdx).
+
+### FIFO
+
+FIFO is queue mode with per-key ordering: only one consumer can process each key at a time.
+
+Use FIFO when you need ordered delivery that can scale to an arbitrary number of consumers.
+
+For more information, read [the FIFO docs](./msgs/fifo.mdx).
+
+### Stream
+
+Stream mode is designed for globally ordered consumption with head-of-line blocking.
+
+Use Stream when you need Kafka-like stream processing behavior which can't be achieved using FIFO. Otherwise, FIFO is probably preferred.
+
+For more information, read [the stream docs](./msgs/stream.mdx).
+
+## Publishing messages
+
+Publishing messages to a topic is done using the `coyote.msgs.publish` API as follows:
+
+```js
+coyote.msgs.publish(
+    topic="topic-123",
+    msgs=[
+        b"msg-payload1",
+        b"msg-payload2",
+        // You can also attach arbitrary headers to messages.
+        {
+            "value": b"msg-payload3",
+            "headers": { "h1": "v1" },
+        },
+    ]
+)
+```
+
+## Configuration
+
+### Namespaces
+
+[Namespaces](/namespaces.mdx) allow for different configurations for groups of topics.
+
+You can create a namespace using the `coyote.msgs.namespace.create` API.
+
+In addition to the common set of namespace configurations, `msgs` supports:
+```json
+{
+   "retention": {
+      "global_bytes": 40_834_194_304, // the maximum size for all topics in this namespace
+      "topic_bytes": 1_000_000_000, // the maximum size for each topic in this namespace
+      "msg_age_ms": 600_000 // maximum message age for each topic
+   }
+}
+```
+
+### Topics
+
+Using the `coyote.msgs.topic.configure` API, you can configure the number of partitions per topic.
+
+As mentioned above, you don't need to think about partitions unless you use stream. If you do, please refer to [the stream partitions docs](./msgs/stream.mdx#partitions) for more information.
