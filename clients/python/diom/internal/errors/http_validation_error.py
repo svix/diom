@@ -1,15 +1,13 @@
 # TODO - remove this special case when we fix the generated code for empty openapi structs
-from typing import Any, Dict, List, Type, TypeVar
+from typing import Any, Dict, List
 
 import attr
 
 from .validation_error import ValidationError
 
-T = TypeVar("T", bound="HTTPValidationError")
-
 
 @attr.s(auto_attribs=True)
-class HTTPValidationError(Exception):
+class HttpValidationError(Exception):
     """
     Attributes:
         detail (List['ValidationError']):
@@ -21,7 +19,9 @@ class HTTPValidationError(Exception):
     status_code: int = 0
 
     @classmethod
-    def init_exception(cls: Type[T], response: Dict[str, str], status_code: int) -> T:
+    def init_exception(
+        cls, response: Dict[str, str], status_code: int
+    ) -> "HttpValidationError":
         ret = cls.from_dict(response)
         ret.status_code = status_code
         return ret
@@ -44,7 +44,7 @@ class HTTPValidationError(Exception):
         return field_dict
 
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
+    def from_dict(cls, src_dict: Dict[str, Any]) -> "HttpValidationError":
         d = src_dict.copy()
         detail = []
         _detail = d.pop("detail", "")
@@ -63,6 +63,9 @@ class HTTPValidationError(Exception):
     @property
     def additional_keys(self) -> List[str]:
         return list(self.additional_properties.keys())
+
+    def __str__(self) -> str:
+        return f"HttpValidationError(detail={self.detail})"
 
     def __getitem__(self, key: str) -> Any:
         return self.additional_properties[key]

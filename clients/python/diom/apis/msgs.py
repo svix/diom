@@ -21,13 +21,12 @@ class MsgsAsync(ApiBase):
         publish_in: PublishIn,
     ) -> PublishOut:
         """Publishes messages to a topic within a namespace."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/msgs/publish",
-            path_params={},
-            json_body=publish_in.model_dump_json(exclude_unset=True, by_alias=True),
+            body=publish_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=PublishOut,
         )
-        return PublishOut.model_validate(response.json())
 
 
 class Msgs(ApiBase):
@@ -40,10 +39,9 @@ class Msgs(ApiBase):
         publish_in: PublishIn,
     ) -> PublishOut:
         """Publishes messages to a topic within a namespace."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/msgs/publish",
-            path_params={},
-            json_body=publish_in.model_dump_json(exclude_unset=True, by_alias=True),
+            body=publish_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=PublishOut,
         )
-        return PublishOut.model_validate(response.json())

@@ -23,15 +23,12 @@ class StreamAsync(ApiBase):
         append_to_stream_in: AppendToStreamIn,
     ) -> AppendToStreamOut:
         """Appends messages to the stream."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/stream/append",
-            path_params={},
-            json_body=append_to_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=append_to_stream_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=AppendToStreamOut,
         )
-        return AppendToStreamOut.model_validate(response.json())
 
     async def fetch(
         self,
@@ -42,15 +39,12 @@ class StreamAsync(ApiBase):
         Unlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading
         messages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held
         until the visibility timeout expires, or the messages are acked."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/stream/fetch",
-            path_params={},
-            json_body=fetch_from_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=fetch_from_stream_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=FetchFromStreamOut,
         )
-        return FetchFromStreamOut.model_validate(response.json())
 
     async def fetch_locking(
         self,
@@ -60,69 +54,60 @@ class StreamAsync(ApiBase):
 
         This call prevents other consumers within the same consumer group from reading from the stream
         until either the visibility timeout expires, or the last message in the batch is acknowledged."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/stream/fetch-locking",
-            path_params={},
-            json_body=fetch_from_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=fetch_from_stream_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=FetchFromStreamOut,
         )
-        return FetchFromStreamOut.model_validate(response.json())
 
     async def ack_range(
         self,
         ack_msg_range_in: AckMsgRangeIn,
     ) -> AckMsgRangeOut:
         """Acks the messages for the consumer group, allowing more messages to be consumed."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/stream/ack-range",
-            path_params={},
-            json_body=ack_msg_range_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=ack_msg_range_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=AckMsgRangeOut,
         )
-        return AckMsgRangeOut.model_validate(response.json())
 
     async def ack(
         self,
         ack: Ack,
     ) -> AckOut:
         """Acks a single message."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/stream/ack",
-            path_params={},
-            json_body=ack.model_dump_json(exclude_unset=True, by_alias=True),
+            body=ack.model_dump(exclude_unset=True, by_alias=True),
+            response_type=AckOut,
         )
-        return AckOut.model_validate(response.json())
 
     async def dlq(
         self,
         dlq_in: DlqIn,
     ) -> DlqOut:
         """Moves a message to the dead letter queue."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/stream/dlq",
-            path_params={},
-            json_body=dlq_in.model_dump_json(exclude_unset=True, by_alias=True),
+            body=dlq_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=DlqOut,
         )
-        return DlqOut.model_validate(response.json())
 
     async def redrive(
         self,
         redrive_in: RedriveIn,
     ) -> RedriveOut:
         """Redrives messages from the dead letter queue back to the stream."""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/stream/redrive-dlq",
-            path_params={},
-            json_body=redrive_in.model_dump_json(exclude_unset=True, by_alias=True),
+            body=redrive_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=RedriveOut,
         )
-        return RedriveOut.model_validate(response.json())
 
 
 class Stream(ApiBase):
@@ -131,15 +116,12 @@ class Stream(ApiBase):
         append_to_stream_in: AppendToStreamIn,
     ) -> AppendToStreamOut:
         """Appends messages to the stream."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/stream/append",
-            path_params={},
-            json_body=append_to_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=append_to_stream_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=AppendToStreamOut,
         )
-        return AppendToStreamOut.model_validate(response.json())
 
     def fetch(
         self,
@@ -150,15 +132,12 @@ class Stream(ApiBase):
         Unlike `stream.fetch-locking`, this does not block other consumers within the same consumer group from reading
         messages from the Stream. The consumer will still take an exclusive lock on the messages fetched, and that lock is held
         until the visibility timeout expires, or the messages are acked."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/stream/fetch",
-            path_params={},
-            json_body=fetch_from_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=fetch_from_stream_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=FetchFromStreamOut,
         )
-        return FetchFromStreamOut.model_validate(response.json())
 
     def fetch_locking(
         self,
@@ -168,66 +147,57 @@ class Stream(ApiBase):
 
         This call prevents other consumers within the same consumer group from reading from the stream
         until either the visibility timeout expires, or the last message in the batch is acknowledged."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/stream/fetch-locking",
-            path_params={},
-            json_body=fetch_from_stream_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=fetch_from_stream_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=FetchFromStreamOut,
         )
-        return FetchFromStreamOut.model_validate(response.json())
 
     def ack_range(
         self,
         ack_msg_range_in: AckMsgRangeIn,
     ) -> AckMsgRangeOut:
         """Acks the messages for the consumer group, allowing more messages to be consumed."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/stream/ack-range",
-            path_params={},
-            json_body=ack_msg_range_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=ack_msg_range_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=AckMsgRangeOut,
         )
-        return AckMsgRangeOut.model_validate(response.json())
 
     def ack(
         self,
         ack: Ack,
     ) -> AckOut:
         """Acks a single message."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/stream/ack",
-            path_params={},
-            json_body=ack.model_dump_json(exclude_unset=True, by_alias=True),
+            body=ack.model_dump(exclude_unset=True, by_alias=True),
+            response_type=AckOut,
         )
-        return AckOut.model_validate(response.json())
 
     def dlq(
         self,
         dlq_in: DlqIn,
     ) -> DlqOut:
         """Moves a message to the dead letter queue."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/stream/dlq",
-            path_params={},
-            json_body=dlq_in.model_dump_json(exclude_unset=True, by_alias=True),
+            body=dlq_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=DlqOut,
         )
-        return DlqOut.model_validate(response.json())
 
     def redrive(
         self,
         redrive_in: RedriveIn,
     ) -> RedriveOut:
         """Redrives messages from the dead letter queue back to the stream."""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/stream/redrive-dlq",
-            path_params={},
-            json_body=redrive_in.model_dump_json(exclude_unset=True, by_alias=True),
+            body=redrive_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=RedriveOut,
         )
-        return RedriveOut.model_validate(response.json())
