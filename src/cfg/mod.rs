@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
-    borrow::Cow,
-    fmt, fs,
+    fmt,
+    io::ErrorKind,
     net::SocketAddr,
     path::{Path, PathBuf},
     str::FromStr,
@@ -12,11 +12,12 @@ use std::{
 };
 
 use anyhow::{Context, anyhow};
+use fs_err as fs;
 use serde::{Deserialize, de::DeserializeOwned};
 use tap::Pipe;
 use tracing::Level;
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 mod defaults;
 
@@ -100,10 +101,51 @@ pub struct DatabaseConfig {
     pub filename: Option<String>,
 }
 
+/// Wrapper around a path that we know to be an extant dir
+#[derive(Clone)]
+pub struct Dir {
+    inner: PathBuf,
+}
+
+impl Dir {
+    /// Construct a new Dir from a path, returning an error if it is not valid.
+    /// Note that this does filesystem metadata operations and can be blocking, particularly
+    /// if your filesystem is slow (i.e., NFS).
+    pub fn new<P: AsRef<Path>>(candidate: P) -> Result<Self> {
+        let dir = candidate.as_ref();
+        if !dir.exists()
+            && let Err(e) = fs::create_dir_all(dir)
+            && e.kind() != ErrorKind::AlreadyExists
+        {
+            return Err(Error::generic(e));
+        }
+        if !dir.is_dir() {
+            return Err(Error::generic(format!(
+                "database directory {} exists but is not a directory",
+                dir.display()
+            )));
+        }
+        Ok(Self {
+            inner: dir.to_path_buf(),
+        })
+    }
+
+    /// Adjoin a path to this one; wrapper around `Path::join`.
+    pub fn join<P: AsRef<Path>>(&self, path: P) -> PathBuf {
+        self.inner.join(path.as_ref())
+    }
+}
+
+impl From<Dir> for PathBuf {
+    fn from(value: Dir) -> Self {
+        value.inner
+    }
+}
+
 impl DatabaseConfig {
     fn database(dir: &Path, file: &str) -> Result<fjall::Database> {
-        let mut path = PathBuf::from(dir);
-        path.push(file);
+        let dir = Dir::new(dir)?;
+        let path = dir.join(file);
         fjall::Database::builder(path).open().map_err(|e| e.into())
     }
 
@@ -240,19 +282,19 @@ pub struct ClusterConfiguration {
 }
 
 impl ClusterConfiguration {
-    pub fn log_path(&self, root: &ConfigurationInner) -> Cow<'_, Path> {
+    pub fn log_path(&self, root: &ConfigurationInner) -> Result<Dir> {
         if let Some(path) = &self.log_path {
-            Cow::Borrowed(path)
+            Dir::new(path)
         } else {
-            Cow::Owned(root.persistent_db.path.join("cluster_logs"))
+            Dir::new(root.persistent_db.path.join("cluster_logs"))
         }
     }
 
-    pub fn snapshot_path(&self, root: &ConfigurationInner) -> Cow<'_, Path> {
+    pub fn snapshot_path(&self, root: &ConfigurationInner) -> Result<Dir> {
         if let Some(path) = &self.snapshot_path {
-            Cow::Borrowed(path)
+            Dir::new(path)
         } else {
-            Cow::Owned(root.persistent_db.path.join("cluster_snapshots"))
+            Dir::new(root.persistent_db.path.join("cluster_snapshots"))
         }
     }
 

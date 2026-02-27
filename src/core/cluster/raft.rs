@@ -65,7 +65,7 @@ pub async fn initialize_raft(
     app_state: AppState,
 ) -> anyhow::Result<RaftState> {
     let mut logs =
-        super::CoyoteLogs::new(cfg.cluster.log_path(cfg)).context("setting up log store")?;
+        super::CoyoteLogs::new(cfg.cluster.log_path(cfg)?).context("setting up log store")?;
     let id = logs
         .get_node_id()
         .await
@@ -86,7 +86,7 @@ pub async fn initialize_raft(
     let state_machine = super::state_machine::Store::new(
         db,
         edb,
-        cfg.cluster.snapshot_path(cfg).into_owned(),
+        cfg.cluster.snapshot_path(cfg)?,
         app_state,
         logs.clone(),
     )
@@ -134,23 +134,22 @@ mod tests {
         },
         NodeId, TypeConfig,
     };
+    use crate::cfg::Dir;
 
     struct CoyoteStoreBuilder;
 
     impl CoyoteStoreBuilder {
         async fn setup() -> anyhow::Result<(TempDir, CoyoteLogs, StoreHandle)> {
             let workdir = tempfile::tempdir()?;
-            let mut log_path = workdir.path().to_path_buf();
-            log_path.push("logs");
+            let log_path = workdir.path().to_path_buf().join("logs");
+            let log_path = Dir::new(log_path)?;
             let logs = CoyoteLogs::new(log_path)?;
 
-            let mut data_path = workdir.path().to_path_buf();
-            data_path.push("data");
-            let mut e_data_path = workdir.path().to_path_buf();
-            e_data_path.push("edata");
+            let data_path = workdir.path().join("data");
+            let e_data_path = workdir.path().join("edata");
 
-            let mut snapshot_path = workdir.path().to_path_buf();
-            snapshot_path.push("snapshots");
+            let snapshot_path = workdir.path().join("snapshots");
+            let snapshot_path = Dir::new(snapshot_path)?;
 
             let mut cfg = ConfigurationInner::default();
             cfg.ephemeral_db.path = e_data_path.clone();
