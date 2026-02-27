@@ -5,6 +5,7 @@
 .TODO.md
 logs
 .data/
+__pycache__/
 
 # vacuum HTML report
 /report.html

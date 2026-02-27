@@ -7,7 +7,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from deprecated import deprecated
 
-from .common import ApiBase, BaseOptions, serialize_params
+from ..internal.api_common import ApiBase, BaseOptions, serialize_params
 from ..models import (
     {%- for c in referenced_components %}
     {{ c | to_upper_camel_case }},
