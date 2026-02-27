@@ -10,7 +10,7 @@ The main concept you need to know when using Coyote is `module`, which is how we
 
 All modules support having multiple entities under them, each addressed with its own `key`. For example the cache module may have multiple items, the rate-limiter may have multiple different rate-limiters, and the queue module may have many different queues; each with their own key identifying the specific resource.
 
-Coyote also support `namespace`s, which is a way of having different configurations (such as persistence) for a group of keys within the same module. So you can, for example, have one cache store with a maximum size of 50 GB that is persisted to disk, and a different cache store with a maximum size of 1 GB that is ephemeral. If not set explicitly, the `default` namespace is used.
+Coyote also support [`namespace`s](./namespaces.mdx), which is a way of having different configurations (such as persistence) for a group of keys within the same module. So you can, for example, have one cache store with a maximum size of 50 GB that is persisted to disk, and a different cache store with a maximum size of 1 GB that is ephemeral. If not set explicitly, the default namespace is used.
 
 ## Getting an API key
 
