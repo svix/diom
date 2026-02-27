@@ -1,16 +1,21 @@
 package com.svix.coyote;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.svix.coyote.ApiException;
-
-import okhttp3.*;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.LockSupport;
-import java.util.UUID;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class HttpClient {
     private final HttpUrl baseUrl;
@@ -42,9 +47,8 @@ public class HttpClient {
         Request.Builder reqBuilder = new Request.Builder().url(url);
 
         // Handle request body
-        String jsonBody = "";
         if (reqBody != null) {
-            jsonBody = objectMapper.writeValueAsString(reqBody);
+            String jsonBody = objectMapper.writeValueAsString(reqBody);
             RequestBody body = RequestBody.create(jsonBody, MediaType.parse("application/json"));
             reqBuilder.method(method, body);
         } else {
@@ -69,7 +73,7 @@ public class HttpClient {
                 String.valueOf(ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE)));
 
         Request request = reqBuilder.build();
-        Response response = executeRequestWithRetry(request, jsonBody);
+        Response response = executeRequestWithRetry(request);
 
         if (response.body() == null) {
             throw new ApiException("Body is null", response.code(), "");
@@ -89,7 +93,7 @@ public class HttpClient {
                 "Non 200 status code: `" + response.code() + "`", response.code(), bodyString);
     }
 
-    private Response executeRequestWithRetry(Request request, String body) throws IOException {
+    private Response executeRequestWithRetry(Request request) throws IOException {
         Response response = client.newCall(request).execute();
 
         int retryCount = 0;
