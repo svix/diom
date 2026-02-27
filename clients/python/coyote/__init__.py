@@ -17,6 +17,7 @@ from .apis import (
     StreamAsync,
 )
 from .client_base import ClientBase
+from .options import CoyoteOptions
 
 
 class Coyote(ClientBase):
@@ -79,4 +80,4 @@ class CoyoteAsync(ClientBase):
         return StreamAsync(self._client)
 
 
-__all__ = ["Coyote", "CoyoteAsync"]
+__all__ = ["Coyote", "CoyoteAsync", "CoyoteOptions"]

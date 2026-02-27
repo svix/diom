@@ -6,6 +6,7 @@ from .apis import (
     {%- endfor %}
 )
 from .client_base import ClientBase
+from .options import CoyoteOptions
 
 
 class Coyote(ClientBase):
@@ -22,4 +23,4 @@ class CoyoteAsync(ClientBase):
         return {{ resource.name | to_upper_camel_case }}Async(self._client)
 {% endfor %}
 
-__all__ = ["Coyote", "CoyoteAsync"]
+__all__ = ["Coyote", "CoyoteAsync", "CoyoteOptions"]
