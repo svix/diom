@@ -11,10 +11,11 @@ class HealthAsync(ApiBase):
         self,
     ) -> PingOut:
         """Verify the server is up and running."""
-        response = await self._request_asyncio(
-            method="get", path="/api/v1/health/ping", path_params={}
+        return await self._request_asyncio(
+            method="get",
+            path="/api/v1/health/ping",
+            response_type=PingOut,
         )
-        return PingOut.model_validate(response.json())
 
 
 class Health(ApiBase):
@@ -22,7 +23,8 @@ class Health(ApiBase):
         self,
     ) -> PingOut:
         """Verify the server is up and running."""
-        response = self._request_sync(
-            method="get", path="/api/v1/health/ping", path_params={}
+        return self._request_sync(
+            method="get",
+            path="/api/v1/health/ping",
+            response_type=PingOut,
         )
-        return PingOut.model_validate(response.json())

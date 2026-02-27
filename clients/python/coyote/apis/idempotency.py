@@ -15,30 +15,26 @@ class IdempotencyAsync(ApiBase):
         idempotency_abort_in: IdempotencyAbortIn,
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/idempotency/abort",
-            path_params={},
-            json_body=idempotency_abort_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=idempotency_abort_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=IdempotencyAbortOut,
         )
-        return IdempotencyAbortOut.model_validate(response.json())
 
     async def get_namespace(
         self,
         idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
     ) -> IdempotencyGetNamespaceOut:
         """Get idempotency namespace"""
-        response = await self._request_asyncio(
+        return await self._request_asyncio(
             method="post",
             path="/api/v1/idempotency/get-namespace",
-            path_params={},
-            json_body=idempotency_get_namespace_in.model_dump_json(
+            body=idempotency_get_namespace_in.model_dump(
                 exclude_unset=True, by_alias=True
             ),
+            response_type=IdempotencyGetNamespaceOut,
         )
-        return IdempotencyGetNamespaceOut.model_validate(response.json())
 
 
 class Idempotency(ApiBase):
@@ -47,27 +43,23 @@ class Idempotency(ApiBase):
         idempotency_abort_in: IdempotencyAbortIn,
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/idempotency/abort",
-            path_params={},
-            json_body=idempotency_abort_in.model_dump_json(
-                exclude_unset=True, by_alias=True
-            ),
+            body=idempotency_abort_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=IdempotencyAbortOut,
         )
-        return IdempotencyAbortOut.model_validate(response.json())
 
     def get_namespace(
         self,
         idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
     ) -> IdempotencyGetNamespaceOut:
         """Get idempotency namespace"""
-        response = self._request_sync(
+        return self._request_sync(
             method="post",
             path="/api/v1/idempotency/get-namespace",
-            path_params={},
-            json_body=idempotency_get_namespace_in.model_dump_json(
+            body=idempotency_get_namespace_in.model_dump(
                 exclude_unset=True, by_alias=True
             ),
+            response_type=IdempotencyGetNamespaceOut,
         )
-        return IdempotencyGetNamespaceOut.model_validate(response.json())
