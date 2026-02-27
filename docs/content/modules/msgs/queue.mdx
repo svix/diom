@@ -1,11 +1,117 @@
 # Queue
 
-Bla
+The `queue` delivery method lets you consume a topic as an unordered set of messages.
 
+Messages are delivered in parallel across all consumers of a consumer group, and any given message is delivered to only one consumer.
 
----------------
+## Publishing messages
 
-The `group_key` behaves differently depending on the module:
-- `stream`: messages with the same `group_key` are assigned to the same partition, which are in-turn always processed in order.
-- `fifo`: messages with the same `group_key` are processed in order within the same consumer group, which means that if one consumer is currently processing a message with a specific key, no order consumers are going to get a message with the same key.
-- `queue`: ignored, as queue has no notion of ordering.
+In the `msgs` module, publishing is done to `topic`s that are shared across all delivery methods, with the different delivery methods only applying at consumption time. Please refer to [the topic publishing API](../msgs#publishing-messages) for information on how to publish messages to a topic.
+
+## Receiving messages
+
+Receiving messages is done using the `coyote.msgs.queue.receive` API as follows:
+
+```js
+coyote.msgs.queue.receive(
+    topic="topic-123",  // Topic to consume from
+    consumer_group: "group1", // The consumer group to use
+    // Wait until batch_size messgaes are available,
+    // or batch_wait_millis has passed (whichever comes first).
+    batch_size: 100,
+    batch_wait_ms: 10_000,
+    // How long a consumer owns a message before it goes back to the queue if unacknowledged.
+    lease_duration_ms: 30_000
+}
+```
+
+Which returns:
+```js
+{
+    msgs: [
+        {
+            "msg_id": "msg1",
+            "topic": "topic-123",
+            "value": b"msg-payload-1",
+            "timestamp": Date(...),
+        },
+        {
+            "msg_id": "msg2",
+            "topic": "topic-123",
+            "value": b"msg-payload-2",
+            "headers": {},
+            "timestamp": Date(...),
+        },
+        {
+            "msg_id": "msg3",
+            "topic": "topic-123",
+            "value": b"msg-payload-3",
+            "headers": { "h1": "v1" },
+            "timestamp": Date(...),
+        }
+    ]
+}
+```
+
+## Processing messages
+
+When calling `receive`, the consumers own a message for the lease duration within which they need to finish processing the message and either acknowledge its processing (`ack`), or report an error (`nack`). If the lease expires before either is done, the message is treated as if there was an explicit `nack`.
+
+### Acknowledging messages (`ack`)
+
+Acknowledging a message is how you mark a message processing as successful which means it won't be returned again using the `receive` API.
+
+```js
+coyote.msgs.queue.ack(
+    topic="topic-123",
+    consumer_group="group1",
+    msg_id="msg2"
+)
+```
+
+### Rejecting messages (`nack`)
+
+Rejecting a message is how you report an error in the processing of the message. Rejecting a message immediately releases the lease and the message will become available for consumption again based on the configured retry schedule.
+
+```js
+coyote.msgs.queue.ack(
+    topic="topic-123",
+    consumer_group="group1",
+    msg_id="msg2",
+    // Setting terminal=true skips the retry_schedule and sends a message directly to the DLQ
+    terminal=false
+)
+```
+
+### Extending message lease
+
+If you need more time when processing a message, you can extend the message lease like so:
+
+```js
+coyote.msgs.queue.extend-lease(
+    topic="topic-123",
+    consumer_group="group1",
+    msg_id="msg3",
+    // New lease duration starting from this moment
+    lease_duration=10_000
+)
+```
+
+## Dead letter queue (DLQ)
+
+### Message retry schedule
+
+### Redrive
+
+## Configuration
+
+You can configure the behavior of consumer groups for a specific topic using the `coyote.msgs.queue.configure` API as follows:
+
+```js
+coyote.msgs.queue.configure(
+    topic="topic-123",
+    consumer_group="group1",
+    retry_schedule_ms=[0, 5_000, 10_000, 10_000],
+    dlq="dlq-for-topic-123",
+)
+```

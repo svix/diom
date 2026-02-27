@@ -66,7 +66,7 @@ As mentioned above, publishing is shared across all delivery methods, and the de
 
 Queue mode is at-least-once delivery with configurable retry schedules and dead letter queues (DLQs).
 
-Use a queue when you need a simple unordered task queue.
+Use a queue when you need an unordered task queue.
 
 For more information, read [the queue docs](./msgs/queue.mdx).
 
@@ -85,6 +85,25 @@ Stream mode is designed for globally ordered consumption with head-of-line block
 Use Stream when you need Kafka-like stream processing behavior which can't be achieved using FIFO. Otherwise, FIFO is probably preferred.
 
 For more information, read [the stream docs](./msgs/stream.mdx).
+
+## Publishing messages
+
+Publishing messages to a topic is done using the `coyote.msgs.publish` API as follows:
+
+```js
+coyote.msgs.publish(
+    topic="topic-123",
+    msgs=[
+        b"msg-payload1",
+        b"msg-payload2",
+        // You can also attach arbitrary headers to messages.
+        {
+            "value": b"msg-payload3",
+            "headers": { "h1": "v1" },
+        },
+    ]
+)
+```
 
 ## Configuration
 
