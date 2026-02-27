@@ -13,6 +13,7 @@ type Msgs struct {
 	client    *coyote_proto.HttpClient
 	Namespace *MsgsNamespace
 	Stream    *MsgsStream
+	Topic     *MsgsTopic
 }
 
 func NewMsgs(client *coyote_proto.HttpClient) Msgs {
