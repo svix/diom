@@ -10,6 +10,6 @@ class MsgOut(BaseModel):
 
     id: int
 
-    payload: t.List[int]
+    payload: bytes
 
     timestamp: datetime
