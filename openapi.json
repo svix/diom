@@ -555,80 +555,6 @@
         ]
       }
     },
-    "/api/v1/msgs/topic/create": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Create Msg Topic",
-        "description": "Upserts a new message topic with the given name.",
-        "operationId": "v1.msgs.topic.create",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMsgTopicIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateMsgTopicOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/msgs/topic/get": {
-      "post": {
-        "tags": [
-          "Stream"
-        ],
-        "summary": "Get Msg Topic",
-        "description": "Get message topic with given name.",
-        "operationId": "v1.msgs.topic.get",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetMsgTopicIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetMsgTopicOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/api/v1/stream/append": {
       "post": {
         "tags": [
@@ -876,6 +802,80 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RedriveOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/msgs/namespace/create": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Create Namespace",
+        "description": "Creates or updates a msgs namespace with the given name.",
+        "operationId": "v1.msgs.namespace.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNamespaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNamespaceOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/msgs/namespace/get": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Get Namespace",
+        "description": "Gets a msgs namespace by name.",
+        "operationId": "v1.msgs.namespace.get",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetNamespaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetNamespaceOut"
                 }
               }
             }
@@ -1142,7 +1142,7 @@
       "CacheSetOut": {
         "type": "object"
       },
-      "CreateMsgTopicIn": {
+      "CreateNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -1164,7 +1164,7 @@
           "name"
         ]
       },
-      "CreateMsgTopicOut": {
+      "CreateNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -1268,7 +1268,7 @@
           "msgs"
         ]
       },
-      "GetMsgTopicIn": {
+      "GetNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -1279,7 +1279,7 @@
           "name"
         ]
       },
-      "GetMsgTopicOut": {
+      "GetNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {

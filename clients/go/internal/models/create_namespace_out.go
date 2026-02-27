@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type GetMsgTopicOut struct {
+type CreateNamespaceOut struct {
 	Created     time.Time   `json:"created"`
 	Name        string      `json:"name"`
 	Retention   Retention   `json:"retention"`

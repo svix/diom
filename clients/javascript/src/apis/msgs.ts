@@ -1,29 +1,29 @@
 // this file is @generated
 
 import {
-    type CreateMsgTopicIn,
-    CreateMsgTopicInSerializer,
-} from '../models/createMsgTopicIn';
+    type CreateNamespaceIn,
+    CreateNamespaceInSerializer,
+} from '../models/createNamespaceIn';
 import {
-    type CreateMsgTopicOut,
-    CreateMsgTopicOutSerializer,
-} from '../models/createMsgTopicOut';
+    type CreateNamespaceOut,
+    CreateNamespaceOutSerializer,
+} from '../models/createNamespaceOut';
 import {
-    type GetMsgTopicIn,
-    GetMsgTopicInSerializer,
-} from '../models/getMsgTopicIn';
+    type GetNamespaceIn,
+    GetNamespaceInSerializer,
+} from '../models/getNamespaceIn';
 import {
-    type GetMsgTopicOut,
-    GetMsgTopicOutSerializer,
-} from '../models/getMsgTopicOut';
-import { MsgsTopic } from './msgsTopic';
+    type GetNamespaceOut,
+    GetNamespaceOutSerializer,
+} from '../models/getNamespaceOut';
+import { MsgsNamespace } from './msgsNamespace';
 import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
 
 export class Msgs {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
-    public get topic() {
-        return new MsgsTopic(this.requestCtx);
+    public get namespace() {
+        return new MsgsNamespace(this.requestCtx);
     }
 
     }

@@ -27,15 +27,15 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
-public class CreateMsgTopicOut {
+public class CreateNamespaceOut {
 @JsonProperty private OffsetDateTime created;
 @JsonProperty private String name;
 @JsonProperty private Retention retention;
 @JsonProperty("storage_type") private StorageType storageType;
 @JsonProperty private OffsetDateTime updated;
-public CreateMsgTopicOut () {}
+public CreateNamespaceOut () {}
 
- public CreateMsgTopicOut created(OffsetDateTime created) {
+ public CreateNamespaceOut created(OffsetDateTime created) {
         this.created = created;
         return this;
     }
@@ -54,7 +54,7 @@ public CreateMsgTopicOut () {}
         this.created = created;
     }
 
-     public CreateMsgTopicOut name(String name) {
+     public CreateNamespaceOut name(String name) {
         this.name = name;
         return this;
     }
@@ -73,7 +73,7 @@ public CreateMsgTopicOut () {}
         this.name = name;
     }
 
-     public CreateMsgTopicOut retention(Retention retention) {
+     public CreateNamespaceOut retention(Retention retention) {
         this.retention = retention;
         return this;
     }
@@ -92,7 +92,7 @@ public CreateMsgTopicOut () {}
         this.retention = retention;
     }
 
-     public CreateMsgTopicOut storageType(StorageType storageType) {
+     public CreateNamespaceOut storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -111,7 +111,7 @@ public CreateMsgTopicOut () {}
         this.storageType = storageType;
     }
 
-     public CreateMsgTopicOut updated(OffsetDateTime updated) {
+     public CreateNamespaceOut updated(OffsetDateTime updated) {
         this.updated = updated;
         return this;
     }
@@ -131,18 +131,18 @@ public CreateMsgTopicOut () {}
     }
 
     /**
-     * Create an instance of CreateMsgTopicOut given an JSON string
+     * Create an instance of CreateNamespaceOut given an JSON string
      *
      * @param jsonString JSON string
-     * @return An instance of CreateMsgTopicOut
-     * @throws JsonProcessingException if the JSON string is invalid with respect to CreateMsgTopicOut
+     * @return An instance of CreateNamespaceOut
+     * @throws JsonProcessingException if the JSON string is invalid with respect to CreateNamespaceOut
      */
-    public static CreateMsgTopicOut fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, CreateMsgTopicOut.class);
+    public static CreateNamespaceOut fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, CreateNamespaceOut.class);
     }
 
     /**
-     * Convert an instance of CreateMsgTopicOut to an JSON string
+     * Convert an instance of CreateNamespaceOut to an JSON string
      *
      * @return JSON string
      */

@@ -13,15 +13,15 @@ from .cache_get_namespace_out import CacheGetNamespaceOut
 from .cache_get_out import CacheGetOut
 from .cache_set_in import CacheSetIn
 from .cache_set_out import CacheSetOut
-from .create_msg_topic_in import CreateMsgTopicIn
-from .create_msg_topic_out import CreateMsgTopicOut
+from .create_namespace_in import CreateNamespaceIn
+from .create_namespace_out import CreateNamespaceOut
 from .dlq_in import DlqIn
 from .dlq_out import DlqOut
 from .eviction_policy import EvictionPolicy
 from .fetch_from_stream_in import FetchFromStreamIn
 from .fetch_from_stream_out import FetchFromStreamOut
-from .get_msg_topic_in import GetMsgTopicIn
-from .get_msg_topic_out import GetMsgTopicOut
+from .get_namespace_in import GetNamespaceIn
+from .get_namespace_out import GetNamespaceOut
 from .idempotency_abort_in import IdempotencyAbortIn
 from .idempotency_abort_out import IdempotencyAbortOut
 from .idempotency_get_namespace_in import IdempotencyGetNamespaceIn
@@ -66,15 +66,15 @@ __all__ = [
     "CacheGetOut",
     "CacheSetIn",
     "CacheSetOut",
-    "CreateMsgTopicIn",
-    "CreateMsgTopicOut",
+    "CreateNamespaceIn",
+    "CreateNamespaceOut",
     "DlqIn",
     "DlqOut",
     "EvictionPolicy",
     "FetchFromStreamIn",
     "FetchFromStreamOut",
-    "GetMsgTopicIn",
-    "GetMsgTopicOut",
+    "GetNamespaceIn",
+    "GetNamespaceOut",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",
     "IdempotencyGetNamespaceIn",

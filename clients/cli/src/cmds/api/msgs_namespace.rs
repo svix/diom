@@ -4,45 +4,45 @@ use diom_client::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct MsgsTopicArgs {
+pub struct MsgsNamespaceArgs {
     #[command(subcommand)]
-    pub command: MsgsTopicCommands,
+    pub command: MsgsNamespaceCommands,
 }
 
 #[derive(Subcommand)]
-pub enum MsgsTopicCommands {
-    /// Upserts a new message topic with the given name.
+pub enum MsgsNamespaceCommands {
+    /// Creates or updates a msgs namespace with the given name.
     Create {
-        create_msg_topic_in: crate::json::JsonOf<diom_client::models::CreateMsgTopicIn>,
+        create_namespace_in: crate::json::JsonOf<diom_client::models::CreateNamespaceIn>,
     },
-    /// Get message topic with given name.
+    /// Gets a msgs namespace by name.
     Get {
-        get_msg_topic_in: crate::json::JsonOf<diom_client::models::GetMsgTopicIn>,
+        get_namespace_in: crate::json::JsonOf<diom_client::models::GetNamespaceIn>,
     },
 }
 
-impl MsgsTopicCommands {
-    pub async fn _exec(
+impl MsgsNamespaceCommands {
+    pub async fn exec(
         self,
         client: &DiomClient,
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
             Self::Create {
-                create_msg_topic_in,
+                create_namespace_in,
             } => {
                 let resp = client
                     .msgs()
-                    .topic()
-                    .create(create_msg_topic_in.into_inner())
+                    .namespace()
+                    .create(create_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Get { get_msg_topic_in } => {
+            Self::Get { get_namespace_in } => {
                 let resp = client
                     .msgs()
-                    .topic()
-                    .get(get_msg_topic_in.into_inner())
+                    .namespace()
+                    .get(get_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

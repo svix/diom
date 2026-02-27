@@ -7,7 +7,7 @@ import (
 )
 
 type Msgs struct {
-	Topic *MsgsTopic
+	Namespace *MsgsNamespace
 }
 
 func NewMsgs(client *diom_proto.HttpClient) Msgs {
