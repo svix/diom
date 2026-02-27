@@ -20,6 +20,8 @@ import com.svix.coyote.models.GetNamespaceIn;
 import com.svix.coyote.models.GetNamespaceOut;
 import com.svix.coyote.models.PublishIn;
 import com.svix.coyote.models.PublishOut;
+import com.svix.coyote.models.StreamCommitIn;
+import com.svix.coyote.models.StreamCommitOut;
 import com.svix.coyote.models.StreamReceiveIn;
 import com.svix.coyote.models.StreamReceiveOut;
 

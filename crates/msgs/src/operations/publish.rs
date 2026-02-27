@@ -21,6 +21,7 @@ pub struct PublishOperation {
     ///
     /// Chosen randomly by the caller so the Raft state machine stays deterministic.
     keyless_partition: PartitionIndex,
+    created_at: Timestamp,
 }
 
 impl PublishOperation {
@@ -35,6 +36,7 @@ impl PublishOperation {
             topic,
             msgs,
             keyless_partition,
+            created_at: Timestamp::now(),
         }
     }
 
@@ -52,7 +54,7 @@ impl PublishOperation {
         }
 
         let mut batch = state.db.batch();
-        let created_at = Timestamp::now();
+        let created_at = self.created_at;
         let total_msgs = by_partition.values().map(|v| v.len()).sum();
         let mut results: Vec<(usize, PublishedMsg)> = Vec::with_capacity(total_msgs);
 

@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type StreamCommitIn,
+    StreamCommitInSerializer,
+} from '../models/streamCommitIn';
+import {
+    type StreamCommitOut,
+    StreamCommitOutSerializer,
+} from '../models/streamCommitOut';
+import {
     type StreamReceiveIn,
     StreamReceiveInSerializer,
 } from '../models/streamReceiveIn';
@@ -33,6 +41,31 @@ export class MsgsStream {
                 return request.send(
                     this.requestCtx,
                     StreamReceiveOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /**
+* Commits an offset for a consumer group on a specific partition.
+* 
+* The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+* successfully processed offset; future receives will start after it.
+*/
+        public commit(
+            streamCommitIn: StreamCommitIn,
+            ): Promise<StreamCommitOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/commit");
+
+            request.setBody(
+                    StreamCommitInSerializer._toJsonObject(
+                        streamCommitIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    StreamCommitOutSerializer._fromJsonObject,
                 );
             }
 

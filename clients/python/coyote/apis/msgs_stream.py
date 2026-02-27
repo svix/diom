@@ -2,6 +2,8 @@
 
 from ..internal.api_common import ApiBase
 from ..models import (
+    StreamCommitIn,
+    StreamCommitOut,
     StreamReceiveIn,
     StreamReceiveOut,
 )
@@ -23,6 +25,21 @@ class MsgsStreamAsync(ApiBase):
             response_type=StreamReceiveOut,
         )
 
+    async def commit(
+        self,
+        stream_commit_in: StreamCommitIn,
+    ) -> StreamCommitOut:
+        """Commits an offset for a consumer group on a specific partition.
+
+        The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+        successfully processed offset; future receives will start after it."""
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1/msgs/stream/commit",
+            body=stream_commit_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=StreamCommitOut,
+        )
+
 
 class MsgsStream(ApiBase):
     def receive(
@@ -38,4 +55,19 @@ class MsgsStream(ApiBase):
             path="/api/v1/msgs/stream/receive",
             body=stream_receive_in.model_dump(exclude_unset=True, by_alias=True),
             response_type=StreamReceiveOut,
+        )
+
+    def commit(
+        self,
+        stream_commit_in: StreamCommitIn,
+    ) -> StreamCommitOut:
+        """Commits an offset for a consumer group on a specific partition.
+
+        The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+        successfully processed offset; future receives will start after it."""
+        return self._request_sync(
+            method="post",
+            path="/api/v1/msgs/stream/commit",
+            body=stream_commit_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=StreamCommitOut,
         )

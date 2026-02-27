@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.coyote.models.StreamCommitIn;
+import com.svix.coyote.models.StreamCommitOut;
 import com.svix.coyote.models.StreamReceiveIn;
 import com.svix.coyote.models.StreamReceiveOut;
 
@@ -39,6 +41,25 @@ public class MsgsStream {
             null,
             streamReceiveIn,
             StreamReceiveOut.class
+            );
+    }
+
+    /**
+* Commits an offset for a consumer group on a specific partition.
+* 
+* The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+* successfully processed offset; future receives will start after it.
+*/
+    public StreamCommitOut commit(
+        final StreamCommitIn streamCommitIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/commit");
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            streamCommitIn,
+            StreamCommitOut.class
             );
     }
 }

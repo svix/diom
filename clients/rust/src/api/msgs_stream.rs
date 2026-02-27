@@ -20,4 +20,15 @@ impl<'a> MsgsStream<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Commits an offset for a consumer group on a specific partition.
+    ///
+    /// The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+    /// successfully processed offset; future receives will start after it.
+    pub async fn commit(&self, stream_commit_in: StreamCommitIn) -> Result<StreamCommitOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1/msgs/stream/commit")
+            .with_body(stream_commit_in)
+            .execute(self.cfg)
+            .await
+    }
 }

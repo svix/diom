@@ -45,6 +45,8 @@ type (
 	RateLimiterTokenBucketConfig = coyote_models.RateLimiterTokenBucketConfig
 	Retention                    = coyote_models.Retention
 	StorageType                  = coyote_models.StorageType
+	StreamCommitIn               = coyote_models.StreamCommitIn
+	StreamCommitOut              = coyote_models.StreamCommitOut
 	StreamMsgOut                 = coyote_models.StreamMsgOut
 	StreamReceiveIn              = coyote_models.StreamReceiveIn
 	StreamReceiveOut             = coyote_models.StreamReceiveOut

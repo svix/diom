@@ -39,6 +39,8 @@ from .rate_limiter_get_remaining_out import RateLimiterGetRemainingOut
 from .rate_limiter_token_bucket_config import RateLimiterTokenBucketConfig
 from .retention import Retention
 from .storage_type import StorageType
+from .stream_commit_in import StreamCommitIn
+from .stream_commit_out import StreamCommitOut
 from .stream_msg_out import StreamMsgOut
 from .stream_receive_in import StreamReceiveIn
 from .stream_receive_out import StreamReceiveOut
@@ -85,6 +87,8 @@ __all__ = [
     "RateLimiterTokenBucketConfig",
     "Retention",
     "StorageType",
+    "StreamCommitIn",
+    "StreamCommitOut",
     "StreamMsgOut",
     "StreamReceiveIn",
     "StreamReceiveOut",
