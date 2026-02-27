@@ -1,0 +1,50 @@
+# Running Diom
+
+Diom works out of the box using the default configuration and supports a variety of deployment options.
+
+
+## Docker
+
+Make sure you have Docker installed, and run:
+
+```sh
+docker run --ulimit memlock=-1 --mount type=volume,src=diom-storage,dst=/storage svix/diom
+```
+
+
+## Docker Compose
+
+Make sure you have both Docker and Docker Compose installed, and run:
+
+```sh
+# Download the Diom Docker Compose file
+curl -O https://raw.githubusercontent.com/svix/diom/refs/heads/main/docker-compose.yml
+
+# Run Diom in the foreground
+docker compose up
+```
+
+
+## Kubernetes Operator
+
+The k8s operator is not yet released, please contact us to test early versions.
+
+
+## Kubernetes Helm Chart
+
+The k8s helm chart is not yet released, please contact us to test early versions.
+
+
+## Binary and packages
+
+Diom is a single binary and can be run directly as well. We don't currently publish binaries, but please let us know if you require ones, we would be happy to help.
+
+
+## Diom Cloud, Managed On-Prem, and Enterprise Edition
+
+Diom is also available in the following offerings:
+* Diom Cloud: a fully managed Diom deployment in the Diom cloud environment.
+* Managed On-Prem: a fully managed Diom deployment in your own Kubernetes or cloud environment.
+* Enterprise Edition: self-managed Diom deployment with additional enterprise functionality.
+
+Diom is easy to run and operate yourself, but the managed offerings make it even easier; and the enterprise functionality unlocks even more capabilities.

@@ -6,6 +6,8 @@ import 'nextra-theme-docs/style.css'
 const siteData = {
   name: "Diom",
   url: 'https://www.svix.com/diom',
+  repo: 'https://github.com/svix/diom',
+  docsSource: 'https://github.com/svix/diom/tree/main/docs',
 }
 
 export const metadata = {
@@ -29,6 +31,7 @@ export const metadata = {
 const navbar = (
   <Navbar
     logo={<b>Diom</b>}
+    projectLink={siteData.repo}
   />
 )
 const footer = <Footer>Copyright © Diom.</Footer>
@@ -51,9 +54,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           // banner={banner}
           navbar={navbar}
           pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/shuding/nextra/tree/main/docs"
-          editLink={null}
-          feedback={{content: null}}
+          docsRepositoryBase={siteData.docsSource}
+          feedback={{labels: "docs"}}
           footer={footer}
         >
           {children}

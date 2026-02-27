@@ -1,0 +1,60 @@
+import { Callout } from 'nextra/components'
+
+# Namespaces
+
+Namespaces let you run multiple independent configurations within a single Diom cluster.
+
+For example, you can have two cache namespaces one with 4GB capacity that's backed by disk, and another with 1GB capacity and backed by RAM; without needing separate clusters.
+
+## Creating namespaces
+
+A namespace has to be created before used, and each module has its own namespace API
+
+```
+diom.cache.namespace.create
+diom.kv.namespace.create
+...
+```
+
+The create API is an `upsert` it creates the namespace if it doesn't exist, or updates it if it does. Some properties are immutable after creation; attempting to change them returns an error.
+
+All configuration values are optional and fall back to the `default` namespace's values if unset.
+
+Namespaces are scoped per module type. A `cache` namespace named `payments` is independent from a `kv` namespace named `payments`. Using a namespace that doesn't exist returns an error.
+
+
+## Using namespaces
+
+A namespace is identified by a prefix on your key (e.g. a cache key and stream topic), separated by a colon:
+
+```
+foo/bar          # uses the default namespace
+payments:foo/bar # uses the "payments" namespace
+```
+
+Keys without a prefix belong to the default namespace for each module.
+
+## Configuration
+
+Each namespace can be configured with:
+
+| Option | Description |
+|--------|-------------|
+| `storage_type` | Where data is stored: `ephemeral` (RAM or flash) or `disk` |
+| `durability`   | Durability behavior: `fsync`, `async`, etc. |
+
+As well as additional module specific configuration options. For the full set of configurations, please refer to each module's `namespace.create` function.
+
+
+## Bootstrapping namespaces
+
+Diom supports automatically running a bootstrap script that lets you automatically create and configure you wanted namespaces.
+
+The bootstrapping processes runs on every node, so non-immutable settings stay in sync with your configuration.
+
+<Callout type="info">Namespaces are not automatically removed if you remove them from the bootstrap script; delete them explicitly if needed.</Callout>
+
+
+## Default namespace
+
+Every module type has a `default` namespace with sensible defaults. You can either create them yourself, with your own configurations, or let Diom create them for you.

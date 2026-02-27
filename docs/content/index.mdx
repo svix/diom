@@ -1,3 +1,22 @@
-# Welcome to Nextra
+# Introduction
 
-Hello, world!
+Diom is the backend survival toolkit. It's a set of well integrated infrastructure primitives for backend and data engineers such as caching, kv-store, rate-limiting, idempotency, queue, and stream.
+
+Key highlights:
+- **High-availability (HA)** setups using Raft powered clusters.
+- **Configurable durability** on a per module and namespace basis.
+- **Great developer experience** including SDKs for most popular languages.
+- **Easy to operate**: easy setup, replaces multiple services, self-healing, built-in backups, and more.
+- **Low latency** setups on a per module and namespace basis.
+- **HTTP based API**: works in every environment, and with the wider ecosystem.
+- **Fine grain authorization** enabling per-tenant and per-user data isolation at the data layer.
+- **LSM-tree-based storage** (similar to `RocksDB`).
+- Written in **100% safe and async Rust**.
+
+## Why Diom exists
+
+Developers have been building web applications for long enough that the most common patterns are known, and great implementations to support these patterns can be built. This is why Diom exists, so that engineers will no longer need to build fragile, slow, and hard-to-maintain solutions over Redis, Postgres, or other such data stores. They can instead rely on Diom which includes powerful, performant, and well-tested solutions built to solve these exact problems.
+
+In addition to replacing custom code, Diom can also replace Redis, RabbitMQ, Kafka, for most use-cases, meaning that developers can run with only one service dependency for most workloads. Having just one service, instead of many, means it's easier to maintain, monitor, backup (including testing backups), and configure; as well as reducing deployment costs and complexity.
+
+Diom's design goals are: reliability, developer experience, ease of operation, and performance; in this order. Unlike many other tools, Diom doesn't focus on performance and benchmarks at all costs. It instead focuses on being the best choice for 95% of the products and developers, who don't process multiple terabytes and billions of events per second.
