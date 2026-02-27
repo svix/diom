@@ -39,3 +39,7 @@ harness = false
 [[bench]]
 name = "rate_limiter"
 harness = false
+
+[[bench]]
+name = "msgs"
+harness = false
