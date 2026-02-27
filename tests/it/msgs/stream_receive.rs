@@ -644,3 +644,79 @@ async fn commit_nonexistent_namespace() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 10)]
+async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-race" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Single partition (default) — all messages land on partition 0.
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "name": "ns-race",
+            "topic": "t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+                { "value": "c".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fire 20 concurrent receives for the same consumer group.
+    let mut handles = Vec::new();
+    for _ in 0..20 {
+        let c = client.clone();
+        handles.push(tokio::spawn(async move {
+            c.post("msgs/stream/receive")
+                .json(json!({
+                    "name": "ns-race",
+                    "topic": "t1",
+                    "consumer_group": "cg1",
+                }))
+                .await
+                .unwrap()
+        }));
+    }
+
+    let mut total_msgs = 0usize;
+    let mut ok_count = 0usize;
+    for handle in handles {
+        let resp = handle.await.unwrap();
+        match resp.status() {
+            StatusCode::OK => {
+                let body = resp.json();
+                let msgs = body["msgs"].as_array().unwrap();
+                total_msgs += msgs.len();
+                ok_count += 1;
+            }
+            StatusCode::BAD_REQUEST => {
+                // Partition locked — expected for losers of the race.
+            }
+            other => panic!("unexpected status: {other}"),
+        }
+    }
+
+    // Exactly one consumer should have received the 3 messages.
+    assert_eq!(
+        total_msgs, 3,
+        "messages must not be duplicated across consumers"
+    );
+    assert_eq!(
+        ok_count, 1,
+        "exactly one consumer should win the single partition"
+    );
+
+    Ok(())
+}
