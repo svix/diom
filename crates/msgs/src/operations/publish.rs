@@ -17,8 +17,9 @@ pub struct PublishOperation {
     namespace_id: NamespaceId,
     topic: String,
     msgs: Vec<MsgIn>,
-    /// Partition assigned to messages without a key. Chosen randomly by the
-    /// caller so the Raft state machine stays deterministic.
+    /// Partition assigned to messages without a key.
+    ///
+    /// Chosen randomly by the caller so the Raft state machine stays deterministic.
     keyless_partition: PartitionIndex,
 }
 
