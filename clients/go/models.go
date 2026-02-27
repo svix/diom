@@ -41,9 +41,13 @@ type (
 	KvSetIn                      = diom_models.KvSetIn
 	KvSetOut                     = diom_models.KvSetOut
 	MsgIn                        = diom_models.MsgIn
+	MsgIn2                       = diom_models.MsgIn2
 	MsgOut                       = diom_models.MsgOut
 	OperationBehavior            = diom_models.OperationBehavior
 	PingOut                      = diom_models.PingOut
+	PublishIn                    = diom_models.PublishIn
+	PublishOut                   = diom_models.PublishOut
+	PublishOutMsg                = diom_models.PublishOutMsg
 	RateLimitStatus              = diom_models.RateLimitStatus
 	RateLimiterCheckIn           = diom_models.RateLimiterCheckIn
 	RateLimiterCheckOut          = diom_models.RateLimiterCheckOut

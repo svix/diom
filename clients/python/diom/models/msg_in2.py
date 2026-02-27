@@ -1,0 +1,13 @@
+# this file is @generated
+import typing as t
+
+from .common import BaseModel
+
+
+class MsgIn2(BaseModel):
+    headers: t.Optional[t.Dict[str, str]] = None
+
+    key: t.Optional[str] = None
+    """Optional partition key. Messages with the same key are routed to the same partition."""
+
+    value: t.List[int]

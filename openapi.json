@@ -887,6 +887,43 @@
           }
         ]
       }
+    },
+    "/api/v1/msgs/publish": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Publish",
+        "description": "Publishes messages to a topic within a namespace.",
+        "operationId": "v1.msgs.publish",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1651,6 +1688,35 @@
           "payload"
         ]
       },
+      "MsgIn2": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "headers": {
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "key": {
+            "description": "Optional partition key. Messages with the same key are routed to the same partition.",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
       "MsgOut": {
         "type": "object",
         "properties": {
@@ -1703,6 +1769,62 @@
         },
         "required": [
           "ok"
+        ]
+      },
+      "PublishIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MsgIn2"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "topic",
+          "msgs"
+        ]
+      },
+      "PublishOut": {
+        "type": "object",
+        "properties": {
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishOutMsg"
+            }
+          }
+        },
+        "required": [
+          "msgs"
+        ]
+      },
+      "PublishOutMsg": {
+        "type": "object",
+        "properties": {
+          "partition": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "offset": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "partition",
+          "offset"
         ]
       },
       "RateLimitStatus": {
