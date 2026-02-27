@@ -156,7 +156,7 @@ impl Request {
 
         let mut uri = format!("{}{}", conf.base_path, path);
 
-        let mut query_string = url::form_urlencoded::Serializer::new("".to_owned());
+        let mut query_string = form_urlencoded::Serializer::new("".to_owned());
         for (key, val) in self.query_params {
             query_string.append_pair(key, &val);
         }
