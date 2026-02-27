@@ -19,6 +19,10 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     ),
     OutputDirectory::managed_dir("clients/go/internal/apis", &["go/api_resource.go.jinja"]),
     // Java
+    OutputDirectory::unmanaged_dir(
+        "clients/java/src/main/java/com/svix/diom",
+        &["java/api_summary.java.jinja"],
+    ),
     OutputDirectory::managed_dir(
         "clients/java/src/main/java/com/svix/diom/apis",
         &["java/api_resource.java.jinja"],
