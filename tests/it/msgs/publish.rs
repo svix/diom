@@ -21,8 +21,7 @@ async fn publish_to_topic() -> TestResult {
     let response = client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns1",
-            "topic": "my-topic",
+            "topic": "ns1:my-topic",
             "msgs": [
                 { "value": "hello".as_bytes() },
                 { "value": "world".as_bytes() },
@@ -35,9 +34,9 @@ async fn publish_to_topic() -> TestResult {
     let msgs = response["msgs"].as_array().unwrap();
     assert_eq!(msgs.len(), 2);
 
-    // Each message should have a topic (with partition) and offset
+    // Each message should have a namespaced topic (with partition) and offset
     for m in msgs {
-        assert!(m["topic"].as_str().unwrap().starts_with("my-topic~"));
+        assert!(m["topic"].as_str().unwrap().starts_with("ns1:my-topic~"));
         assert!(m["offset"].is_u64());
     }
 
@@ -61,8 +60,7 @@ async fn publish_with_partition_key() -> TestResult {
     let response = client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-key",
-            "topic": "keyed-topic",
+            "topic": "ns-key:keyed-topic",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "user-123" },
                 { "value": "b".as_bytes(), "key": "user-123" },
@@ -78,7 +76,7 @@ async fn publish_with_partition_key() -> TestResult {
 
     // All messages with the same key must land in the same partition topic
     let topic = msgs[0]["topic"].as_str().unwrap();
-    assert!(topic.starts_with("keyed-topic~"));
+    assert!(topic.starts_with("ns-key:keyed-topic~"));
     for m in msgs {
         assert_eq!(m["topic"].as_str().unwrap(), topic);
     }
@@ -108,15 +106,14 @@ async fn publish_directly_to_partition() -> TestResult {
     // Configure the topic to have 4 partitions.
     client
         .post("msgs/topic/configure")
-        .json(json!({ "name": "ns-direct", "topic": "my-topic", "partitions": 4 }))
+        .json(json!({ "topic": "ns-direct:my-topic", "partitions": 4 }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-direct",
-            "topic": "my-topic~2",
+            "topic": "ns-direct:my-topic~2",
             "msgs": [
                 { "value": "a".as_bytes() },
                 { "value": "b".as_bytes() },
@@ -130,7 +127,7 @@ async fn publish_directly_to_partition() -> TestResult {
     assert_eq!(msgs.len(), 2);
 
     for m in msgs {
-        assert_eq!(m["topic"].as_str().unwrap(), "my-topic~2");
+        assert_eq!(m["topic"].as_str().unwrap(), "ns-direct:my-topic~2");
     }
 
     let offsets: Vec<u64> = msgs.iter().map(|m| m["offset"].as_u64().unwrap()).collect();
@@ -158,8 +155,7 @@ async fn publish_rejects_out_of_range_partition() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-range",
-            "topic": "my-topic~1",
+            "topic": "ns-range:my-topic~1",
             "msgs": [{ "value": "a".as_bytes() }],
         }))
         .await?
@@ -185,8 +181,7 @@ async fn publish_rejects_malformed_partition_topic() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-bad",
-            "topic": "my-topic~abc",
+            "topic": "ns-bad:my-topic~abc",
             "msgs": [{ "value": "a".as_bytes() }],
         }))
         .await?
@@ -206,8 +201,7 @@ async fn publish_to_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "does-not-exist",
-            "topic": "topic",
+            "topic": "does-not-exist:topic",
             "msgs": [{ "value": "x".as_bytes() }],
         }))
         .await?
@@ -233,8 +227,7 @@ async fn publish_keyless_same_partition() -> TestResult {
     let response = client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-kl",
-            "topic": "keyless-topic",
+            "topic": "ns-kl:keyless-topic",
             "msgs": [
                 { "value": "a".as_bytes() },
                 { "value": "b".as_bytes() },
@@ -250,7 +243,7 @@ async fn publish_keyless_same_partition() -> TestResult {
 
     // All keyless messages in a single publish call land on the same partition topic
     let topic = msgs[0]["topic"].as_str().unwrap();
-    assert!(topic.starts_with("keyless-topic~"));
+    assert!(topic.starts_with("ns-kl:keyless-topic~"));
     for m in msgs {
         assert_eq!(m["topic"].as_str().unwrap(), topic);
     }
