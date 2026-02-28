@@ -9,11 +9,7 @@ mod cache_get_namespace_out;
 mod cache_get_out;
 mod cache_set_in;
 mod cache_set_out;
-mod create_namespace_in;
-mod create_namespace_out;
 mod eviction_policy;
-mod get_namespace_in;
-mod get_namespace_out;
 mod idempotency_abort_in;
 mod idempotency_abort_out;
 mod idempotency_get_namespace_in;
@@ -27,11 +23,21 @@ mod kv_get_out;
 mod kv_set_in;
 mod kv_set_out;
 mod msg_in;
+mod msg_namespace_create_in;
+mod msg_namespace_create_out;
+mod msg_namespace_get_in;
+mod msg_namespace_get_out;
+mod msg_publish_in;
+mod msg_publish_out;
+mod msg_publish_out_msg;
+mod msg_stream_commit_in;
+mod msg_stream_commit_out;
+mod msg_stream_receive_in;
+mod msg_stream_receive_out;
+mod msg_topic_configure_in;
+mod msg_topic_configure_out;
 mod operation_behavior;
 mod ping_out;
-mod publish_in;
-mod publish_out;
-mod publish_out_msg;
 mod rate_limit_status;
 mod rate_limiter_check_in;
 mod rate_limiter_check_out;
@@ -41,13 +47,7 @@ mod rate_limiter_get_remaining_out;
 mod rate_limiter_token_bucket_config;
 mod retention;
 mod storage_type;
-mod stream_commit_in;
-mod stream_commit_out;
 mod stream_msg_out;
-mod stream_receive_in;
-mod stream_receive_out;
-mod topic_configure_in;
-mod topic_configure_out;
 
 pub use self::{
     cache_delete_in::CacheDeleteIn,
@@ -58,11 +58,7 @@ pub use self::{
     cache_get_out::CacheGetOut,
     cache_set_in::CacheSetIn,
     cache_set_out::CacheSetOut,
-    create_namespace_in::CreateNamespaceIn,
-    create_namespace_out::CreateNamespaceOut,
     eviction_policy::EvictionPolicy,
-    get_namespace_in::GetNamespaceIn,
-    get_namespace_out::GetNamespaceOut,
     idempotency_abort_in::IdempotencyAbortIn,
     idempotency_abort_out::IdempotencyAbortOut,
     idempotency_get_namespace_in::IdempotencyGetNamespaceIn,
@@ -76,11 +72,21 @@ pub use self::{
     kv_set_in::KvSetIn,
     kv_set_out::KvSetOut,
     msg_in::MsgIn,
+    msg_namespace_create_in::MsgNamespaceCreateIn,
+    msg_namespace_create_out::MsgNamespaceCreateOut,
+    msg_namespace_get_in::MsgNamespaceGetIn,
+    msg_namespace_get_out::MsgNamespaceGetOut,
+    msg_publish_in::MsgPublishIn,
+    msg_publish_out::MsgPublishOut,
+    msg_publish_out_msg::MsgPublishOutMsg,
+    msg_stream_commit_in::MsgStreamCommitIn,
+    msg_stream_commit_out::MsgStreamCommitOut,
+    msg_stream_receive_in::MsgStreamReceiveIn,
+    msg_stream_receive_out::MsgStreamReceiveOut,
+    msg_topic_configure_in::MsgTopicConfigureIn,
+    msg_topic_configure_out::MsgTopicConfigureOut,
     operation_behavior::OperationBehavior,
     ping_out::PingOut,
-    publish_in::PublishIn,
-    publish_out::PublishOut,
-    publish_out_msg::PublishOutMsg,
     rate_limit_status::RateLimitStatus,
     rate_limiter_check_in::{RateLimiterCheckIn, RateLimiterCheckInConfig},
     rate_limiter_check_out::RateLimiterCheckOut,
@@ -90,11 +96,5 @@ pub use self::{
     rate_limiter_token_bucket_config::RateLimiterTokenBucketConfig,
     retention::Retention,
     storage_type::StorageType,
-    stream_commit_in::StreamCommitIn,
-    stream_commit_out::StreamCommitOut,
     stream_msg_out::StreamMsgOut,
-    stream_receive_in::StreamReceiveIn,
-    stream_receive_out::StreamReceiveOut,
-    topic_configure_in::TopicConfigureIn,
-    topic_configure_out::TopicConfigureOut,
 };

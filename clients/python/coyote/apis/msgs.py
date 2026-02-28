@@ -2,8 +2,8 @@
 
 from ..internal.api_common import ApiBase
 from ..models import (
-    PublishIn,
-    PublishOut,
+    MsgPublishIn,
+    MsgPublishOut,
 )
 from .msgs_namespace import (
     MsgsNamespace,
@@ -34,14 +34,14 @@ class MsgsAsync(ApiBase):
 
     async def publish(
         self,
-        publish_in: PublishIn,
-    ) -> PublishOut:
+        msg_publish_in: MsgPublishIn,
+    ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
         return await self._request_asyncio(
             method="post",
             path="/api/v1/msgs/publish",
-            body=publish_in.model_dump(exclude_unset=True, by_alias=True),
-            response_type=PublishOut,
+            body=msg_publish_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=MsgPublishOut,
         )
 
 
@@ -60,12 +60,12 @@ class Msgs(ApiBase):
 
     def publish(
         self,
-        publish_in: PublishIn,
-    ) -> PublishOut:
+        msg_publish_in: MsgPublishIn,
+    ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
         return self._request_sync(
             method="post",
             path="/api/v1/msgs/publish",
-            body=publish_in.model_dump(exclude_unset=True, by_alias=True),
-            response_type=PublishOut,
+            body=msg_publish_in.model_dump(exclude_unset=True, by_alias=True),
+            response_type=MsgPublishOut,
         )

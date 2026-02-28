@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.coyote.models.StreamCommitIn;
-import com.svix.coyote.models.StreamCommitOut;
-import com.svix.coyote.models.StreamReceiveIn;
-import com.svix.coyote.models.StreamReceiveOut;
+import com.svix.coyote.models.MsgStreamCommitIn;
+import com.svix.coyote.models.MsgStreamCommitOut;
+import com.svix.coyote.models.MsgStreamReceiveIn;
+import com.svix.coyote.models.MsgStreamReceiveOut;
 
 public class MsgsStream {
     private final HttpClient client;
@@ -31,16 +31,16 @@ public class MsgsStream {
 * Each consumer in the group reads from all partitions. Messages are locked by leases for the
 * specified duration to prevent duplicate delivery within the same consumer group.
 */
-    public StreamReceiveOut receive(
-        final StreamReceiveIn streamReceiveIn
+    public MsgStreamReceiveOut receive(
+        final MsgStreamReceiveIn msgStreamReceiveIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/receive");
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            streamReceiveIn,
-            StreamReceiveOut.class
+            msgStreamReceiveIn,
+            MsgStreamReceiveOut.class
             );
     }
 
@@ -50,16 +50,16 @@ public class MsgsStream {
 * The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
 * successfully processed offset; future receives will start after it.
 */
-    public StreamCommitOut commit(
-        final StreamCommitIn streamCommitIn
+    public MsgStreamCommitOut commit(
+        final MsgStreamCommitIn msgStreamCommitIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/commit");
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            streamCommitIn,
-            StreamCommitOut.class
+            msgStreamCommitIn,
+            MsgStreamCommitOut.class
             );
     }
 }

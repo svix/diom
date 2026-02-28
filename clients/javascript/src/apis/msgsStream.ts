@@ -1,21 +1,21 @@
 // this file is @generated
 
 import {
-    type StreamCommitIn,
-    StreamCommitInSerializer,
-} from '../models/streamCommitIn';
+    type MsgStreamCommitIn,
+    MsgStreamCommitInSerializer,
+} from '../models/msgStreamCommitIn';
 import {
-    type StreamCommitOut,
-    StreamCommitOutSerializer,
-} from '../models/streamCommitOut';
+    type MsgStreamCommitOut,
+    MsgStreamCommitOutSerializer,
+} from '../models/msgStreamCommitOut';
 import {
-    type StreamReceiveIn,
-    StreamReceiveInSerializer,
-} from '../models/streamReceiveIn';
+    type MsgStreamReceiveIn,
+    MsgStreamReceiveInSerializer,
+} from '../models/msgStreamReceiveIn';
 import {
-    type StreamReceiveOut,
-    StreamReceiveOutSerializer,
-} from '../models/streamReceiveOut';
+    type MsgStreamReceiveOut,
+    MsgStreamReceiveOutSerializer,
+} from '../models/msgStreamReceiveOut';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
 export class MsgsStream {
@@ -28,19 +28,19 @@ export class MsgsStream {
 * specified duration to prevent duplicate delivery within the same consumer group.
 */
         public receive(
-            streamReceiveIn: StreamReceiveIn,
-            ): Promise<StreamReceiveOut> {
+            msgStreamReceiveIn: MsgStreamReceiveIn,
+            ): Promise<MsgStreamReceiveOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/receive");
 
             request.setBody(
-                    StreamReceiveInSerializer._toJsonObject(
-                        streamReceiveIn,
+                    MsgStreamReceiveInSerializer._toJsonObject(
+                        msgStreamReceiveIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    StreamReceiveOutSerializer._fromJsonObject,
+                    MsgStreamReceiveOutSerializer._fromJsonObject,
                 );
             }
 
@@ -53,19 +53,19 @@ export class MsgsStream {
 * successfully processed offset; future receives will start after it.
 */
         public commit(
-            streamCommitIn: StreamCommitIn,
-            ): Promise<StreamCommitOut> {
+            msgStreamCommitIn: MsgStreamCommitIn,
+            ): Promise<MsgStreamCommitOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/commit");
 
             request.setBody(
-                    StreamCommitInSerializer._toJsonObject(
-                        streamCommitIn,
+                    MsgStreamCommitInSerializer._toJsonObject(
+                        msgStreamCommitIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    StreamCommitOutSerializer._fromJsonObject,
+                    MsgStreamCommitOutSerializer._fromJsonObject,
                 );
             }
 

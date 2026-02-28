@@ -24,9 +24,9 @@ impl<'a> Msgs<'a> {
     }
 
     /// Publishes messages to a topic within a namespace.
-    pub async fn publish(&self, publish_in: PublishIn) -> Result<PublishOut> {
+    pub async fn publish(&self, msg_publish_in: MsgPublishIn) -> Result<MsgPublishOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/publish")
-            .with_body(publish_in)
+            .with_body(msg_publish_in)
             .execute(self.cfg)
             .await
     }

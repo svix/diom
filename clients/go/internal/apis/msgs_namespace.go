@@ -20,31 +20,31 @@ func NewMsgsNamespace(client *coyote_proto.HttpClient) MsgsNamespace {
 // Creates or updates a msgs namespace with the given name.
 func (msgsNamespace MsgsNamespace) Create(
 	ctx context.Context,
-	createNamespaceIn coyote_models.CreateNamespaceIn,
-) (*coyote_models.CreateNamespaceOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.CreateNamespaceIn, coyote_models.CreateNamespaceOut](
+	msgNamespaceCreateIn coyote_models.MsgNamespaceCreateIn,
+) (*coyote_models.MsgNamespaceCreateOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgNamespaceCreateIn, coyote_models.MsgNamespaceCreateOut](
 		ctx,
 		msgsNamespace.client,
 		"POST",
 		"/api/v1/msgs/namespace/create",
 		nil,
 		nil,
-		&createNamespaceIn,
+		&msgNamespaceCreateIn,
 	)
 }
 
 // Gets a msgs namespace by name.
 func (msgsNamespace MsgsNamespace) Get(
 	ctx context.Context,
-	getNamespaceIn coyote_models.GetNamespaceIn,
-) (*coyote_models.GetNamespaceOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.GetNamespaceIn, coyote_models.GetNamespaceOut](
+	msgNamespaceGetIn coyote_models.MsgNamespaceGetIn,
+) (*coyote_models.MsgNamespaceGetOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgNamespaceGetIn, coyote_models.MsgNamespaceGetOut](
 		ctx,
 		msgsNamespace.client,
 		"POST",
 		"/api/v1/msgs/namespace/get",
 		nil,
 		nil,
-		&getNamespaceIn,
+		&msgNamespaceGetIn,
 	)
 }

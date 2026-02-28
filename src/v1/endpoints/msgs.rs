@@ -22,7 +22,7 @@ use stream_internals::entities::{Retention, default_retention_bytes, default_ret
 use validator::Validate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CreateNamespaceIn {
+struct MsgNamespaceCreateIn {
     pub name: String,
     #[serde(default)]
     pub retention: Retention,
@@ -31,7 +31,7 @@ struct CreateNamespaceIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CreateNamespaceOut {
+struct MsgNamespaceCreateOut {
     pub name: String,
     pub retention: Retention,
     pub storage_type: StorageType,
@@ -43,8 +43,8 @@ struct CreateNamespaceOut {
 #[aide_annotate(op_id = "v1.msgs.namespace.create")]
 async fn create_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<CreateNamespaceIn>,
-) -> Result<MsgPackOrJson<CreateNamespaceOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceCreateIn>,
+) -> Result<MsgPackOrJson<MsgNamespaceCreateOut>> {
     let operation = coyote_msgs::operations::CreateNamespaceOperation::new(
         data.name,
         data.retention,
@@ -52,7 +52,7 @@ async fn create_namespace(
     );
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(CreateNamespaceOut {
+    Ok(MsgPackOrJson(MsgNamespaceCreateOut {
         name: response.name,
         retention: response.retention,
         storage_type: response.storage_type,
@@ -62,12 +62,12 @@ async fn create_namespace(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct GetNamespaceIn {
+struct MsgNamespaceGetIn {
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct GetNamespaceOut {
+struct MsgNamespaceGetOut {
     pub name: String,
     pub retention: Retention,
     pub storage_type: StorageType,
@@ -79,8 +79,8 @@ struct GetNamespaceOut {
 #[aide_annotate(op_id = "v1.msgs.namespace.get")]
 async fn get_namespace(
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<GetNamespaceIn>,
-) -> Result<MsgPackOrJson<GetNamespaceOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceGetIn>,
+) -> Result<MsgPackOrJson<MsgNamespaceGetOut>> {
     let namespace = state
         .namespace_state
         .fetch_stream_namespace(&data.name)?
@@ -94,7 +94,7 @@ async fn get_namespace(
         .max_storage_bytes
         .unwrap_or_else(default_retention_bytes);
 
-    Ok(MsgPackOrJson(GetNamespaceOut {
+    Ok(MsgPackOrJson(MsgNamespaceGetOut {
         name: namespace.name,
         retention: Retention { millis, bytes },
         storage_type: namespace.storage_type,
@@ -104,20 +104,20 @@ async fn get_namespace(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
-struct PublishIn {
+struct MsgPublishIn {
     pub topic: TopicIn,
     pub msgs: Vec<coyote_msgs::entities::MsgIn>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct PublishOutMsg {
+struct MsgPublishOutMsg {
     pub topic: Topic,
     pub offset: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct PublishOut {
-    pub msgs: Vec<PublishOutMsg>,
+struct MsgPublishOut {
+    pub msgs: Vec<MsgPublishOutMsg>,
 }
 
 /// Publishes messages to a topic within a namespace.
@@ -125,8 +125,8 @@ struct PublishOut {
 async fn publish(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<PublishIn>,
-) -> Result<MsgPackOrJson<PublishOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<MsgPublishIn>,
+) -> Result<MsgPackOrJson<MsgPublishOut>> {
     let namespace = state
         .namespace_state
         .fetch_stream_namespace(data.topic.namespace())?
@@ -136,11 +136,11 @@ async fn publish(
     let operation = PublishOperation::new(&ro_db, namespace.id, data.topic, data.msgs)?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(PublishOut {
+    Ok(MsgPackOrJson(MsgPublishOut {
         msgs: response
             .msgs
             .into_iter()
-            .map(|m| PublishOutMsg {
+            .map(|m| MsgPublishOutMsg {
                 topic: m.topic,
                 offset: m.offset,
             })
@@ -161,7 +161,7 @@ fn default_lease_duration_millis() -> u64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
-struct StreamReceiveIn {
+struct MsgStreamReceiveIn {
     pub topic: TopicIn,
     pub consumer_group: coyote_msgs::entities::ConsumerGroup,
     #[serde(default = "default_batch_size")]
@@ -171,7 +171,7 @@ struct StreamReceiveIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct StreamReceiveOut {
+struct MsgStreamReceiveOut {
     pub msgs: Vec<coyote_msgs::entities::StreamMsgOut>,
 }
 
@@ -183,8 +183,8 @@ struct StreamReceiveOut {
 async fn stream_receive(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<StreamReceiveIn>,
-) -> Result<MsgPackOrJson<StreamReceiveOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<MsgStreamReceiveIn>,
+) -> Result<MsgPackOrJson<MsgStreamReceiveOut>> {
     let namespace = state
         .namespace_state
         .fetch_stream_namespace(data.topic.namespace())?
@@ -201,7 +201,7 @@ async fn stream_receive(
     )?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(StreamReceiveOut {
+    Ok(MsgPackOrJson(MsgStreamReceiveOut {
         msgs: response
             .msgs
             .into_iter()
@@ -221,14 +221,14 @@ async fn stream_receive(
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
-struct StreamCommitIn {
+struct MsgStreamCommitIn {
     pub topic: Topic,
     pub consumer_group: coyote_msgs::entities::ConsumerGroup,
     pub offset: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct StreamCommitOut {}
+struct MsgStreamCommitOut {}
 
 /// Commits an offset for a consumer group on a specific partition.
 ///
@@ -238,8 +238,8 @@ struct StreamCommitOut {}
 async fn stream_commit(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<StreamCommitIn>,
-) -> Result<MsgPackOrJson<StreamCommitOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<MsgStreamCommitIn>,
+) -> Result<MsgPackOrJson<MsgStreamCommitOut>> {
     let namespace = state
         .namespace_state
         .fetch_stream_namespace(data.topic.namespace())?
@@ -253,7 +253,7 @@ async fn stream_commit(
     );
     repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(StreamCommitOut {}))
+    Ok(MsgPackOrJson(MsgStreamCommitOut {}))
 }
 
 // ---------------------------------------------------------------------------
@@ -261,13 +261,13 @@ async fn stream_commit(
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
-struct TopicConfigureIn {
+struct MsgTopicConfigureIn {
     pub topic: RawTopic,
     pub partitions: u16,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct TopicConfigureOut {
+struct MsgTopicConfigureOut {
     pub partitions: u16,
 }
 
@@ -278,8 +278,8 @@ struct TopicConfigureOut {
 async fn topic_configure(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<TopicConfigureIn>,
-) -> Result<MsgPackOrJson<TopicConfigureOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<MsgTopicConfigureIn>,
+) -> Result<MsgPackOrJson<MsgTopicConfigureOut>> {
     if data.partitions == 0 || data.partitions > MAX_PARTITION_COUNT {
         return Err(Error::http(HttpError::bad_request(
             Some("invalid_partition_count".to_owned()),
@@ -301,7 +301,7 @@ async fn topic_configure(
     );
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
-    Ok(MsgPackOrJson(TopicConfigureOut {
+    Ok(MsgPackOrJson(MsgTopicConfigureOut {
         partitions: response.partitions,
     }))
 }

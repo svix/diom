@@ -14,18 +14,18 @@ import java.util.Set;
 import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.coyote.models.CreateNamespaceIn;
-import com.svix.coyote.models.CreateNamespaceOut;
-import com.svix.coyote.models.GetNamespaceIn;
-import com.svix.coyote.models.GetNamespaceOut;
-import com.svix.coyote.models.PublishIn;
-import com.svix.coyote.models.PublishOut;
-import com.svix.coyote.models.StreamCommitIn;
-import com.svix.coyote.models.StreamCommitOut;
-import com.svix.coyote.models.StreamReceiveIn;
-import com.svix.coyote.models.StreamReceiveOut;
-import com.svix.coyote.models.TopicConfigureIn;
-import com.svix.coyote.models.TopicConfigureOut;
+import com.svix.coyote.models.MsgNamespaceCreateIn;
+import com.svix.coyote.models.MsgNamespaceCreateOut;
+import com.svix.coyote.models.MsgNamespaceGetIn;
+import com.svix.coyote.models.MsgNamespaceGetOut;
+import com.svix.coyote.models.MsgPublishIn;
+import com.svix.coyote.models.MsgPublishOut;
+import com.svix.coyote.models.MsgStreamCommitIn;
+import com.svix.coyote.models.MsgStreamCommitOut;
+import com.svix.coyote.models.MsgStreamReceiveIn;
+import com.svix.coyote.models.MsgStreamReceiveOut;
+import com.svix.coyote.models.MsgTopicConfigureIn;
+import com.svix.coyote.models.MsgTopicConfigureOut;
 
 public class Msgs {
     private final HttpClient client;
@@ -35,16 +35,16 @@ public class Msgs {
     }
 
     /** Publishes messages to a topic within a namespace. */
-    public PublishOut publish(
-        final PublishIn publishIn
+    public MsgPublishOut publish(
+        final MsgPublishIn msgPublishIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/publish");
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            publishIn,
-            PublishOut.class
+            msgPublishIn,
+            MsgPublishOut.class
             );
     }
 }
