@@ -89,6 +89,18 @@ async fn test_kv_set_and_get() -> TestResult {
             < 50 // tolerance
     );
 
+    // set should fail if namespace doesn't exist:
+    client
+        .post("kv/set")
+        .json(json!({
+            "key": "nonexistentnamespace:key1",
+            "ttl": Some(expires_in),
+            "value": "123".as_bytes(),
+            "behavior": "upsert",
+        }))
+        .await?
+        .ensure(StatusCode::NOT_FOUND)?;
+
     Ok(())
 }
 

@@ -41,7 +41,7 @@ macro_rules! enum_wrapper {
 
 fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {
     const MAX_LENGTH: usize = 256;
-    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-_.]+$").unwrap());
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-_.:]+$").unwrap());
     let mut errors = ValidationErrors::new();
     if s.is_empty() {
         errors.add(
@@ -61,7 +61,7 @@ fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {
             ALL_ERROR,
             validation_error(
                 Some("illegal_string_pattern"),
-                Some("String must match the following pattern: [a-zA-Z0-9\\-_.]."),
+                Some("String must match the following pattern: [a-zA-Z0-9\\-_.:]."),
             ),
         );
     }
@@ -279,7 +279,7 @@ string_wrapper!(
     StringSchema {
         string_validation: Some(json_schema!({
             "maxLength": 256,
-            "pattern": r"^[a-zA-Z0-9\-_.]+$",
+            "pattern": r"^[a-zA-Z0-9\-_.:]+$",
         })),
         example: Some("some_key".to_string()),
     }
