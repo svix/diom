@@ -1,11 +1,18 @@
 use std::num::NonZeroU16;
 
-use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
+use crate::{
+    AppState,
+    core::{cluster::RaftState, db::ReadonlyConnection},
+    v1::utils::openapi_tag,
+};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, Result, ResultExt};
-use diom_msgs::entities::MAX_PARTITION_COUNT;
+use diom_msgs::{
+    entities::{MAX_PARTITION_COUNT, RawTopic, Topic, TopicIn},
+    operations::{PublishOperation, StreamReceiveOperation},
+};
 use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -96,16 +103,16 @@ async fn get_namespace(
     }))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct PublishIn {
     pub name: String,
-    pub topic: String,
+    pub topic: TopicIn,
     pub msgs: Vec<diom_msgs::entities::MsgIn>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct PublishOutMsg {
-    pub partition: u16,
+    pub topic: Topic,
     pub offset: u64,
 }
 
@@ -121,25 +128,13 @@ async fn publish(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<PublishIn>,
 ) -> Result<MsgPackOrJson<PublishOut>> {
-    if data.topic.contains('~') {
-        return Err(Error::http(HttpError::bad_request(
-            Some("invalid_topic".to_owned()),
-            Some("Topic name must not contain '~'. Use the partition key to route messages to a specific partition.".to_owned()),
-        )));
-    }
-
     let namespace = state
         .namespace_state
         .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let keyless_partition = diom_msgs::entities::random_partition(MAX_PARTITION_COUNT);
-    let operation = diom_msgs::operations::PublishOperation::new(
-        namespace.id,
-        data.topic,
-        data.msgs,
-        keyless_partition,
-    );
+    let ro_db = state.ro_dbs.db_for(namespace.storage_type);
+    let operation = PublishOperation::new(&ro_db, namespace.id, data.topic, data.msgs)?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(PublishOut {
@@ -147,7 +142,7 @@ async fn publish(
             .msgs
             .into_iter()
             .map(|m| PublishOutMsg {
-                partition: m.partition.get(),
+                topic: m.topic,
                 offset: m.offset,
             })
             .collect(),
@@ -166,10 +161,10 @@ fn default_lease_duration_millis() -> u64 {
     300_000 // 5 minutes
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct StreamReceiveIn {
     pub name: String,
-    pub topic: String,
+    pub topic: TopicIn,
     pub consumer_group: diom_msgs::entities::ConsumerGroup,
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
@@ -197,13 +192,15 @@ async fn stream_receive(
         .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = diom_msgs::operations::StreamReceiveOperation::new(
+    let ro_db = state.ro_dbs.db_for(namespace.storage_type);
+    let operation = StreamReceiveOperation::new(
+        &ro_db,
         namespace.id,
         data.topic,
         data.consumer_group,
         data.batch_size,
         data.lease_duration_millis,
-    );
+    )?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(StreamReceiveOut {
@@ -225,10 +222,10 @@ async fn stream_receive(
 // stream/commit
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct StreamCommitIn {
     pub name: String,
-    pub topic: String,
+    pub topic: Topic,
     pub consumer_group: diom_msgs::entities::ConsumerGroup,
     pub offset: u64,
 }
@@ -246,14 +243,6 @@ async fn stream_commit(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<StreamCommitIn>,
 ) -> Result<MsgPackOrJson<StreamCommitOut>> {
-    let (_topic, partition) =
-        diom_msgs::entities::parse_partition_topic(&data.topic).map_err(|msg| {
-            Error::http(HttpError::bad_request(
-                Some("invalid_topic".to_owned()),
-                Some(msg.to_owned()),
-            ))
-        })?;
-
     let namespace = state
         .namespace_state
         .fetch_stream_namespace(&data.name)?
@@ -261,7 +250,7 @@ async fn stream_commit(
 
     let operation = diom_msgs::operations::StreamCommitOperation::new(
         namespace.id,
-        partition,
+        data.topic.partition,
         data.consumer_group,
         data.offset,
     );
@@ -274,10 +263,10 @@ async fn stream_commit(
 // topic/configure
 // ---------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct TopicConfigureIn {
     pub name: String,
-    pub topic: String,
+    pub topic: RawTopic,
     pub partitions: u16,
 }
 
@@ -295,13 +284,6 @@ async fn topic_configure(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<TopicConfigureIn>,
 ) -> Result<MsgPackOrJson<TopicConfigureOut>> {
-    if data.topic.contains('~') {
-        return Err(Error::http(HttpError::bad_request(
-            Some("invalid_topic".to_owned()),
-            Some("Topic name must not contain '~'.".to_owned()),
-        )));
-    }
-
     if data.partitions == 0 || data.partitions > MAX_PARTITION_COUNT {
         return Err(Error::http(HttpError::bad_request(
             Some("invalid_partition_count".to_owned()),

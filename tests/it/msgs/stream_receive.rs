@@ -107,8 +107,8 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
         .json();
     assert_eq!(r1["msgs"].as_array().unwrap().len(), 2);
 
-    // Second receive with the same CG — partition is locked
-    client
+    // Second receive with the same CG — partition is locked, returns empty
+    let r2 = client
         .post("msgs/stream/receive")
         .json(json!({
             "name": "ns-nodup",
@@ -116,7 +116,9 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(r2["msgs"].as_array().unwrap().len(), 0);
 
     // Commit the first batch to unlock the partition
     let msgs = r1["msgs"].as_array().unwrap();
@@ -339,8 +341,8 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
         .json();
     assert_eq!(r_a["msgs"].as_array().unwrap().len(), 2);
 
-    // Consumer B (same CG) — partition is locked, should be rejected
-    client
+    // Consumer B (same CG) — partition is locked, returns empty
+    let r_b_locked = client
         .post("msgs/stream/receive")
         .json(json!({
             "name": "ns-lock",
@@ -348,7 +350,9 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(r_b_locked["msgs"].as_array().unwrap().len(), 0);
 
     // Consumer A commits — unlocks the partition
     let msgs_a = r_a["msgs"].as_array().unwrap();
@@ -608,7 +612,7 @@ async fn commit_requires_partition_topic() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    // Base topic (no ~partition suffix) should be rejected
+    // Base topic (no ~partition suffix) should be rejected at deserialization
     client
         .post("msgs/stream/commit")
         .json(json!({
@@ -618,7 +622,7 @@ async fn commit_requires_partition_topic() -> TestResult {
             "offset": 0,
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::UNPROCESSABLE_ENTITY);
 
     Ok(())
 }

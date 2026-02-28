@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class PublishOutMsg {
 @JsonProperty private Long offset;
-@JsonProperty private Short partition;
+@JsonProperty private String topic;
 public PublishOutMsg () {}
 
  public PublishOutMsg offset(Long offset) {
@@ -51,23 +51,23 @@ public PublishOutMsg () {}
         this.offset = offset;
     }
 
-     public PublishOutMsg partition(Short partition) {
-        this.partition = partition;
+     public PublishOutMsg topic(String topic) {
+        this.topic = topic;
         return this;
     }
 
     /**
-    * Get partition
+    * Get topic
     *
-     * @return partition
+     * @return topic
      */
     @javax.annotation.Nonnull
-     public Short getPartition() {
-        return partition;
+     public String getTopic() {
+        return topic;
     }
 
-     public void setPartition(Short partition) {
-        this.partition = partition;
+     public void setTopic(String topic) {
+        this.topic = topic;
     }
 
     /**

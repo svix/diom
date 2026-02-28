@@ -118,8 +118,7 @@ pub struct AppState {
 
     namespace_state: diom_namespace::State,
 
-    #[allow(dead_code)]
-    ro_dbs: ReadonlyDatabases,
+    pub(crate) ro_dbs: ReadonlyDatabases,
 }
 
 async fn run_interserver(
