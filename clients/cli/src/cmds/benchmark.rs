@@ -184,6 +184,30 @@ impl BenchmarkArgs {
 
 // ── kv ────────────────────────────────────────────────────────────────────────
 
+trait BenchShard {
+    fn iterations(&self) -> u64;
+
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration>;
+
+    async fn bench_shard(
+        self: Self,
+        client: Arc<CoyoteClient>,
+        pb: ProgressBar,
+    ) -> Result<BenchResult> where Self: Sized {
+        let mut hist = BenchHistogram::new(3)?;
+        let mut total_time = Duration::from_secs(0);
+        let mut rng = StdRng::seed_from_u64(0);
+
+        for i in 0..self.iterations() {
+            let t = self.run(&client, &mut rng, i).await?;
+            hist.record(t.as_micros() as u64)?;
+            total_time += t;
+            pb.set_position(i);
+        }
+        Ok(BenchResult { hist, total_time })
+    }
+}
+
 #[derive(Clone)]
 struct TomBenchKvSet {
     keys: Arc<Vec<String>>,
@@ -195,7 +219,9 @@ impl TomBenchKvSet {
             keys,
         }
     }
+}
 
+impl BenchShard for TomBenchKvSet {
     fn iterations(&self) -> u64 {
         self.keys.len() as u64
     }
@@ -210,24 +236,35 @@ impl TomBenchKvSet {
         client.kv().set(KvSetIn::new(key.clone(), value)).await?;
         Ok(t.elapsed())
     }
+}
 
-    /// Runs the benchmark of one shard (shard is the unit of concurrency)
-    async fn bench_shard(
-        self,
-        client: Arc<CoyoteClient>,
-        pb: ProgressBar,
-    ) -> Result<BenchResult> {
-        let mut hist = BenchHistogram::new(3)?;
-        let mut total_time = Duration::from_secs(0);
-        let mut rng = StdRng::seed_from_u64(0);
+#[derive(Clone)]
+struct TomBenchKvGet {
+    keys: Arc<Vec<String>>,
+}
 
-        for i in 0..self.iterations() {
-            let t = self.run(&client, &mut rng, i).await?;
-            hist.record(t.as_micros() as u64)?;
-            total_time += t;
-            pb.set_position(i);
+impl TomBenchKvGet {
+    fn setup(keys: Arc<Vec<String>>) -> Self {
+        Self {
+            keys,
         }
-        Ok(BenchResult { hist, total_time })
+    }
+}
+
+impl BenchShard for TomBenchKvGet {
+    fn iterations(&self) -> u64 {
+        self.keys.len() as u64
+    }
+
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
+        let key = self.keys.get(i as usize).unwrap();
+        let mut value = vec![0u8; 256];
+        rng.fill(&mut value[..]);
+
+        // Start of real code
+        let t = quanta::Instant::now();
+        client.kv().get(KvGetIn::new(key.clone())).await?;
+        Ok(t.elapsed())
     }
 }
 
@@ -262,7 +299,7 @@ impl TomModuleKv {
                     .collect(),
             );
             all_kv_set.push(TomBenchKvSet::setup(keys.clone()));
-            all_kv_get.push(TomBenchKvSet::setup(keys.clone()));
+            all_kv_get.push(TomBenchKvGet::setup(keys.clone()));
         }
 
         self.bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, all_stats).await?;
@@ -270,7 +307,7 @@ impl TomModuleKv {
         Ok(())
     }
 
-    async fn bench_shards_concurrent(&self, client: Arc<CoyoteClient>, test_name: &str, all_instances: Vec<TomBenchKvSet>, all_stats: &mut Vec<Stats>) -> Result<()> {
+    async fn bench_shards_concurrent(&self, client: Arc<CoyoteClient>, test_name: &str, all_instances: Vec<impl BenchShard>, all_stats: &mut Vec<Stats>) -> Result<()> {
         let iterations = self.iterations;
         let concurrency = self.concurrency;
 
