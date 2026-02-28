@@ -49,7 +49,7 @@ jobs:
         run: npm ci
         working-directory: docs
       - name: Build with Next.js
-        run: npx --no-install next build
+        run: npm run build
         working-directory: docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
