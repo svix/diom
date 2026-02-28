@@ -9,9 +9,7 @@ use coyote_client::{CoyoteClient, CoyoteOptions};
 
 use self::{
     cmds::{
-        api::{
-            CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs,
-        },
+        api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs},
         benchmark::BenchmarkArgs,
     },
     config::Config,
@@ -138,7 +136,7 @@ async fn main() -> Result<()> {
             let cfg = cfg?;
             let mut opts = get_client_options(&cfg)?;
             if let Some(url) = args.server_url.clone() {
-                opts.server_url = Some(url.into());
+                opts.server_url = Some(url);
             }
             let client = Arc::new(CoyoteClient::new("xxx".to_owned(), Some(opts)));
             args.exec(client).await?;
