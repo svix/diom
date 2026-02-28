@@ -158,10 +158,8 @@ impl BenchmarkArgs {
             match module {
                 BenchmarkModule::Kv => {
                     eprintln!("[kv]");
-                    let module = TomBenchKvSet::setup(concurrency, iterations);
-                    module
-                        .bench(Arc::clone(&client), &mut all_stats)
-                        .await?;
+                    let module = TomModuleKv::setup(concurrency, iterations);
+                    module.bench(Arc::clone(&client), &mut all_stats).await?;
                 }
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
@@ -185,38 +183,6 @@ impl BenchmarkArgs {
 }
 
 // ── kv ────────────────────────────────────────────────────────────────────────
-
-trait BenchmarkTest {
-    fn name(&self) -> &'static str;
-
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng) -> Result<Duration>;
-}
-
-#[derive(Clone)]
-struct BenchSetKv {
-    instances: Arc<Vec<TomBenchKvSetInstance>>,
-}
-
-impl BenchSetKv {
-    fn module(&self) -> &'static str {
-        "kv"
-    }
-
-    fn setup(concurrency: u64, iterations: u64) -> Self {
-        let mut rng = StdRng::seed_from_u64(0);
-        Self {
-            instances: Arc::new(
-                (0..concurrency)
-                    .map(|_| TomBenchKvSetInstance::setup(&mut rng, iterations))
-                    .collect(),
-            ),
-        }
-    }
-
-    fn get_test(&self, index: u64) -> TomBenchKvSetInstance {
-        self.instances.get(index as usize).unwrap().clone()
-    }
-}
 
 #[derive(Clone)]
 struct TomBenchKvSetInstance {
@@ -272,76 +238,41 @@ impl TomBenchKvSetInstance {
     }
 }
 
-#[derive(Clone)]
-struct BenchKvSet {}
-
-impl BenchKvSet {
-    fn new() -> Self {
-        Self {}
-    }
-}
-
-impl BenchmarkTest for BenchKvSet {
-    fn name(&self) -> &'static str {
-        "kv.set"
-    }
-
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng) -> Result<Duration> {
-        let key = Alphanumeric.sample_string(rng, 16);
-        let mut value = vec![0u8; 256];
-        rng.fill(&mut value[..]);
-
-        // Start of real code
-        let t = quanta::Instant::now();
-        client.kv().set(KvSetIn::new(key.clone(), value)).await?;
-        Ok(t.elapsed())
-    }
-}
-
-#[derive(Clone)]
-struct BenchKvGet {}
-
-impl BenchKvGet {
-    fn new() -> Self {
-        Self {}
-    }
-}
-
-impl BenchmarkTest for BenchKvGet {
-    fn name(&self) -> &'static str {
-        "kv.get"
-    }
-
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng) -> Result<Duration> {
-        let key = Alphanumeric.sample_string(rng, 16);
-
-        // Start of real code
-        let t = quanta::Instant::now();
-        client.kv().get(KvGetIn::new(key.clone())).await?;
-        Ok(t.elapsed())
-    }
-}
-
 struct BenchResult {
     hist: BenchHistogram,
     total_time: Duration,
 }
 
-struct TomModule {
+struct TomModuleKv {
     concurrency: u64,
     iterations: u64,
 }
 
-impl TomModule {
+impl TomModuleKv {
+    fn setup(concurrency: u64, iterations: u64) -> Self {
+        Self {
+            concurrency,
+            iterations,
+        }
+    }
+
+    /// Runs the full benchmark for the module
+    async fn bench(&self, client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>) -> Result<()> {
+        let kv_set = ToBeDeleted::setup(self.concurrency, self.iterations);
+        kv_set.bench(Arc::clone(&client), all_stats).await?;
+        let kv_get = ToBeDeleted::setup(self.concurrency, self.iterations);
+        kv_get.bench(Arc::clone(&client), all_stats).await?;
+        Ok(())
+    }
 }
 
-struct TomBenchKvSet {
+struct ToBeDeleted {
     instances: Arc<Vec<TomBenchKvSetInstance>>,
     concurrency: u64,
     iterations: u64,
 }
 
-impl TomBenchKvSet {
+impl ToBeDeleted {
     fn name(&self) -> &'static str {
         "kv.set"
     }
@@ -364,11 +295,7 @@ impl TomBenchKvSet {
     }
 
     /// Runs the full benchmark for the module
-    async fn bench(
-        &self,
-        client: Arc<CoyoteClient>,
-        all_stats: &mut Vec<Stats>,
-    ) -> Result<()> {
+    async fn bench(&self, client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>) -> Result<()> {
         let iterations = self.iterations;
         let concurrency = self.concurrency;
 
@@ -377,6 +304,7 @@ impl TomBenchKvSet {
             let client = Arc::clone(&client);
             let pb = pb.clone();
             let test = self.get_test(shard_id);
+            let keys = test.keys.clone();
             test.bench_shard(client, shard_id, pb)
         });
         pb.finish();
@@ -401,3 +329,6 @@ impl TomBenchKvSet {
         Ok(())
     }
 }
+
+
+
