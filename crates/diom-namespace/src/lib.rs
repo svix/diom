@@ -12,12 +12,12 @@ pub use self::tables::Namespace;
 pub const DEFAULT_NAMESPACE_NAME: &str = "default";
 
 pub fn namespace_name(key: &str) -> &str {
-    if !key.contains('/') {
+    if !key.contains(':') {
         return DEFAULT_NAMESPACE_NAME;
     }
-    match key.split("/").next() {
-        Some(k) => k,
-        None => DEFAULT_NAMESPACE_NAME,
+    match key.split(":").next() {
+        Some(k) if !k.is_empty() => k,
+        _ => DEFAULT_NAMESPACE_NAME,
     }
 }
 
@@ -108,22 +108,6 @@ impl State {
         Namespace::fetch(&self.keyspace, namespace_name)
     }
 
-    pub fn fetch_namespace_with_default<C: ModuleConfig>(
-        &self,
-        namespace_name: String,
-    ) -> Result<Option<Namespace<C>>> {
-        let fetch = self.fetch_namespace(&namespace_name)?;
-        if fetch.is_some() {
-            return Ok(fetch);
-        }
-        tracing::trace!(
-            namespace_name,
-            "cannot find namespace, falling back to default namespace"
-        );
-
-        Namespace::fetch(&self.keyspace, DEFAULT_NAMESPACE_NAME)
-    }
-
     pub fn fetch_all_namespaces<C: ModuleConfig>(
         &self,
     ) -> Result<impl Iterator<Item = Result<Namespace<C>>>> {
@@ -147,8 +131,13 @@ mod tests {
 
     #[test]
     fn test_namespace_name() {
-        assert_eq!(namespace_name("tom/bar"), "tom");
-        assert_eq!(namespace_name("tom/bar/baz"), "tom");
+        assert_eq!(namespace_name("tom:bar"), "tom");
+        assert_eq!(namespace_name("tom:bar/baz"), "tom");
         assert_eq!(namespace_name("bill"), DEFAULT_NAMESPACE_NAME);
+        assert_eq!(namespace_name(":bar"), DEFAULT_NAMESPACE_NAME);
+        assert_eq!(
+            namespace_name(&format!("{DEFAULT_NAMESPACE_NAME}:bar")),
+            DEFAULT_NAMESPACE_NAME
+        );
     }
 }
