@@ -1,0 +1,36 @@
+name: Coyote CI
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  benchmark:
+    name: Benchmark
+    timeout-minutes: 15
+    runs-on: ubuntu-latest-8-cores
+    defaults:
+      run:
+        working-directory: ./benchmarks
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-criterion
+        run: cargo install cargo-criterion
+      - name: Run benchmarks
+        # For some weird reason, it seems to log test output
+        # to stderr:
+        run: cargo criterion --output-format bencher 2>&1 | tee output.txt
+      - name: Download previous benchmark data
+        uses: actions/cache@v4
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: ./benchmarks/output.txt
+          external-data-json-path: ./cache/benchmark-data.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          summary-always: true
+          fail-on-alert: true

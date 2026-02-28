@@ -55,6 +55,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     env:
       RUST_LOG: debug
       "COYOTE_LOG_LEVEL": debug
