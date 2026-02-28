@@ -3,13 +3,13 @@ use std::{borrow::Cow, collections::HashMap, ops::RangeInclusive};
 use coyote_error::{Error, Result};
 use coyote_namespace::entities::NamespaceId;
 use fjall::OwnedWriteBatch;
-use fjall_utils::{TableKey, TableRow};
+use fjall_utils::{ReadableKeyspace, TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Offset, PartitionIndex},
+    entities::{ConsumerGroup, Offset, Partition},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -23,11 +23,7 @@ const MSG_KEY_LEN: usize = size_of::<NamespaceId>() + size_of::<u16>() + size_of
 
 type MsgRowKey = [u8; MSG_KEY_LEN];
 
-pub(crate) fn msg_row_key(
-    ns_id: NamespaceId,
-    partition: PartitionIndex,
-    offset: Offset,
-) -> MsgRowKey {
+pub(crate) fn msg_row_key(ns_id: NamespaceId, partition: Partition, offset: Offset) -> MsgRowKey {
     let mut key = [0u8; MSG_KEY_LEN];
     let ns_bytes = ns_id.as_u128().to_be_bytes();
     key[..16].copy_from_slice(&ns_bytes);
@@ -43,7 +39,7 @@ fn parse_msg_offset(key: MsgRowKey) -> Result<Offset> {
 
 pub(crate) fn msg_row_key_range(
     ns_id: NamespaceId,
-    partition: PartitionIndex,
+    partition: Partition,
     offsets: RangeInclusive<Offset>,
 ) -> RangeInclusive<MsgRowKey> {
     msg_row_key(ns_id, partition, *offsets.start())..=msg_row_key(ns_id, partition, *offsets.end())
@@ -53,7 +49,7 @@ impl MsgRow {
     pub(crate) fn max_offset(
         state: &State,
         ns_id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
     ) -> Result<Option<Offset>> {
         let range = msg_row_key_range(ns_id, partition, Offset::MIN..=Offset::MAX);
 
@@ -74,7 +70,7 @@ impl MsgRow {
     pub(crate) fn next_offset(
         state: &State,
         ns_id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
     ) -> Result<Offset> {
         match Self::max_offset(state, ns_id, partition)? {
             None => Ok(Offset::MIN),
@@ -91,7 +87,7 @@ impl MsgRow {
     fn fetch_in_range(
         state: &State,
         ns_id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
         offsets: RangeInclusive<Offset>,
         buf: &mut Vec<(Offset, MsgRow)>,
         batch_size: usize,
@@ -116,7 +112,7 @@ impl MsgRow {
     pub(crate) fn fetch_available<'a>(
         state: &State,
         ns_id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
         start_offset: Offset,
         blocked_leases: impl IntoIterator<Item = &'a LeaseRow>,
         batch_size: usize,
@@ -172,7 +168,7 @@ impl MsgRow {
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub(crate) struct LeaseRow {
     pub namespace_id: NamespaceId,
-    pub partition: PartitionIndex,
+    pub partition: Partition,
     pub cg: ConsumerGroup,
     pub block_start: Offset,
     pub block_end: Offset,
@@ -191,7 +187,7 @@ pub(crate) struct LeaseKey(Vec<u8>);
 impl LeaseKey {
     pub(crate) fn new(
         id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
         cg: &ConsumerGroup,
         block_end: Offset,
     ) -> Self {
@@ -212,7 +208,7 @@ impl LeaseKey {
         Self(key)
     }
 
-    fn prefix(id: NamespaceId, partition: PartitionIndex, cg: &ConsumerGroup) -> Vec<u8> {
+    fn prefix(id: NamespaceId, partition: Partition, cg: &ConsumerGroup) -> Vec<u8> {
         let id_bytes = id.as_u128().to_be_bytes();
         let part_bytes = partition.get().to_be_bytes();
 
@@ -287,7 +283,7 @@ impl LeaseRow {
     pub(crate) fn fetch_all(
         state: &State,
         id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
         cg: &ConsumerGroup,
     ) -> Result<Vec<Self>> {
         let prefix = LeaseKey::prefix(id, partition, cg);
@@ -300,6 +296,24 @@ impl LeaseRow {
                 Self::from_fjall_value(value)
             })
             .collect()
+    }
+
+    pub(crate) fn has_active_lease_in(
+        keyspace: &impl ReadableKeyspace,
+        id: NamespaceId,
+        partition: Partition,
+        cg: &ConsumerGroup,
+        now: Timestamp,
+    ) -> Result<bool> {
+        let prefix = LeaseKey::prefix(id, partition, cg);
+        for entry in keyspace.prefix(prefix) {
+            let value = entry.value()?;
+            let lease = Self::from_fjall_value(value)?;
+            if lease.is_active(now) {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
     /// Cull expired leases and compact adjacent acked/DLQ'd leases.
@@ -482,7 +496,7 @@ fn merge_lease_ranges<'a>(leases: impl Iterator<Item = &'a LeaseRow>) -> Vec<Blo
 
 const OFFSET_PREFIX: &[u8] = b"_MSGOFFSET_\0";
 
-fn offset_key(ns_id: NamespaceId, partition: PartitionIndex, cg: &ConsumerGroup) -> Vec<u8> {
+fn offset_key(ns_id: NamespaceId, partition: Partition, cg: &ConsumerGroup) -> Vec<u8> {
     let mut key = Vec::with_capacity(OFFSET_PREFIX.len() + 16 + 2 + 1 + cg.len());
     key.extend_from_slice(OFFSET_PREFIX);
     key.extend_from_slice(&ns_id.as_u128().to_be_bytes());
@@ -498,7 +512,7 @@ impl OffsetRow {
     pub(crate) fn fetch(
         state: &State,
         ns_id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
         cg: &ConsumerGroup,
     ) -> Result<Option<Offset>> {
         let key = offset_key(ns_id, partition, cg);
@@ -515,7 +529,7 @@ impl OffsetRow {
         batch: &mut OwnedWriteBatch,
         state: &State,
         ns_id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
         cg: &ConsumerGroup,
         offset: Offset,
     ) -> Result<()> {
@@ -538,7 +552,7 @@ pub(crate) struct TopicConfig {
     pub partition_count: u16,
 }
 
-fn topic_config_key(ns_id: NamespaceId, topic: &str) -> Vec<u8> {
+pub(crate) fn topic_config_key(ns_id: NamespaceId, topic: &str) -> Vec<u8> {
     let mut key = Vec::with_capacity(TOPIC_CONFIG_PREFIX.len() + 16 + 1 + topic.len());
     key.extend_from_slice(TOPIC_CONFIG_PREFIX);
     key.extend_from_slice(&ns_id.as_u128().to_be_bytes());

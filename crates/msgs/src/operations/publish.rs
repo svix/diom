@@ -4,9 +4,13 @@ use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+use fjall_utils::ReadableDatabase;
+
 use crate::{
     State,
-    entities::{MsgIn, Offset, PartitionIndex, partition_for_key},
+    entities::{
+        MsgIn, Offset, Partition, RawTopic, Topic, TopicIn, partition_for_key, random_partition,
+    },
     tables::{MsgRow, msg_row_key},
 };
 
@@ -15,48 +19,60 @@ use super::{MsgsRaftState, MsgsRequest, PublishResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishOperation {
     namespace_id: NamespaceId,
-    topic: String,
+    topic: RawTopic,
+    partition_count: u16,
+    /// The partition used for messages without a key.
+    fallback_partition: Partition,
     msgs: Vec<MsgIn>,
-    /// Partition assigned to messages without a key.
-    ///
-    /// Chosen randomly by the caller so the Raft state machine stays deterministic.
-    keyless_partition: PartitionIndex,
     created_at: Timestamp,
 }
 
 impl PublishOperation {
     pub fn new(
+        db: &impl ReadableDatabase,
         namespace_id: NamespaceId,
-        topic: String,
+        topic: TopicIn,
         msgs: Vec<MsgIn>,
-        keyless_partition: PartitionIndex,
-    ) -> Self {
-        Self {
+    ) -> coyote_error::Result<Self> {
+        let partition_count = crate::topic_partition_count(db, namespace_id, topic.raw_topic())?;
+
+        let (topic, fallback_partition) = match topic {
+            TopicIn::WithPartition(t) => (t.raw, t.partition),
+            TopicIn::Raw(raw) => (raw, random_partition(partition_count)),
+        };
+
+        if fallback_partition.get() >= partition_count {
+            return Err(coyote_error::Error::http(
+                coyote_error::HttpError::bad_request(
+                    Some("partition_out_of_range".to_owned()),
+                    Some(format!(
+                        "Partition {} is out of range. Topic has {} partition(s). \
+                         Use topic/configure to increase the partition count.",
+                        fallback_partition.get(),
+                        partition_count,
+                    )),
+                ),
+            ));
+        }
+
+        Ok(Self {
             namespace_id,
             topic,
+            partition_count,
+            fallback_partition,
             msgs,
-            keyless_partition,
             created_at: Timestamp::now(),
-        }
+        })
     }
 
     fn apply_real(self, state: &State) -> coyote_operations::Result<PublishResponseData> {
-        let partition_count =
-            crate::tables::topic_partition_count(state, self.namespace_id, &self.topic)?;
-
-        // Clamp the pre-chosen keyless partition to the topic's actual count.
-        let keyless_partition = PartitionIndex::new(self.keyless_partition.get() % partition_count)
-            .expect("clamped value is always in range");
-
-        let mut by_partition: BTreeMap<PartitionIndex, Vec<(usize, MsgIn)>> = BTreeMap::new();
-
+        let mut by_partition: BTreeMap<Partition, Vec<(usize, MsgIn)>> = BTreeMap::new();
         for (idx, msg) in self.msgs.into_iter().enumerate() {
             let partition = if let Some(key) = &msg.key {
-                partition_for_key(key.as_bytes(), partition_count)
+                partition_for_key(key.as_bytes(), self.partition_count)
             } else {
-                keyless_partition
+                self.fallback_partition
             };
-
             by_partition.entry(partition).or_default().push((idx, msg));
         }
 
@@ -77,7 +93,13 @@ impl PublishOperation {
                 };
                 let key = msg_row_key(self.namespace_id, partition, offset);
                 batch.insert(&state.msg_table, key, row.to_fjall_value()?);
-                results.push((original_idx, PublishedMsg { partition, offset }));
+                results.push((
+                    original_idx,
+                    PublishedMsg {
+                        topic: Topic::new(self.topic.clone(), partition),
+                        offset,
+                    },
+                ));
             }
         }
 
@@ -93,7 +115,7 @@ impl PublishOperation {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishedMsg {
-    pub partition: PartitionIndex,
+    pub topic: Topic,
     pub offset: Offset,
 }
 

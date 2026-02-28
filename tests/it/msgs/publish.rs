@@ -35,9 +35,9 @@ async fn publish_to_topic() -> TestResult {
     let msgs = response["msgs"].as_array().unwrap();
     assert_eq!(msgs.len(), 2);
 
-    // Each message should have a partition and offset
+    // Each message should have a topic (with partition) and offset
     for m in msgs {
-        assert!(m["partition"].is_u64());
+        assert!(m["topic"].as_str().unwrap().starts_with("my-topic~"));
         assert!(m["offset"].is_u64());
     }
 
@@ -76,10 +76,11 @@ async fn publish_with_partition_key() -> TestResult {
     let msgs = response["msgs"].as_array().unwrap();
     assert_eq!(msgs.len(), 3);
 
-    // All messages with the same key must land in the same partition
-    let partition = msgs[0]["partition"].as_u64().unwrap();
+    // All messages with the same key must land in the same partition topic
+    let topic = msgs[0]["topic"].as_str().unwrap();
+    assert!(topic.starts_with("keyed-topic~"));
     for m in msgs {
-        assert_eq!(m["partition"].as_u64().unwrap(), partition);
+        assert_eq!(m["topic"].as_str().unwrap(), topic);
     }
 
     // Offsets should be sequential within the partition
@@ -91,7 +92,7 @@ async fn publish_with_partition_key() -> TestResult {
 }
 
 #[tokio::test]
-async fn publish_rejects_partition_topic() -> TestResult {
+async fn publish_directly_to_partition() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -100,19 +101,96 @@ async fn publish_rejects_partition_topic() -> TestResult {
 
     client
         .post("msgs/namespace/create")
-        .json(json!({ "name": "ns-part" }))
+        .json(json!({ "name": "ns-direct" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Configure the topic to have 4 partitions.
+    client
+        .post("msgs/topic/configure")
+        .json(json!({ "name": "ns-direct", "topic": "my-topic", "partitions": 4 }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = client
+        .post("msgs/publish")
+        .json(json!({
+            "name": "ns-direct",
+            "topic": "my-topic~2",
+            "msgs": [
+                { "value": "a".as_bytes() },
+                { "value": "b".as_bytes() },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 2);
+
+    for m in msgs {
+        assert_eq!(m["topic"].as_str().unwrap(), "my-topic~2");
+    }
+
+    let offsets: Vec<u64> = msgs.iter().map(|m| m["offset"].as_u64().unwrap()).collect();
+    assert_eq!(offsets[1], offsets[0] + 1);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn publish_rejects_out_of_range_partition() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-range" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Default topic has 1 partition (index 0 only).
+    // Publishing to partition 1 should fail.
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "name": "ns-range",
+            "topic": "my-topic~1",
+            "msgs": [{ "value": "a".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn publish_rejects_malformed_partition_topic() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-bad" }))
         .await?
         .expect(StatusCode::OK);
 
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-part",
-            "topic": "mytopic~3",
+            "name": "ns-bad",
+            "topic": "my-topic~abc",
             "msgs": [{ "value": "a".as_bytes() }],
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::UNPROCESSABLE_ENTITY);
 
     Ok(())
 }
@@ -170,10 +248,11 @@ async fn publish_keyless_same_partition() -> TestResult {
     let msgs = response["msgs"].as_array().unwrap();
     assert_eq!(msgs.len(), 3);
 
-    // All keyless messages in a single publish call land on the same partition
-    let partition = msgs[0]["partition"].as_u64().unwrap();
+    // All keyless messages in a single publish call land on the same partition topic
+    let topic = msgs[0]["topic"].as_str().unwrap();
+    assert!(topic.starts_with("keyless-topic~"));
     for m in msgs {
-        assert_eq!(m["partition"].as_u64().unwrap(), partition);
+        assert_eq!(m["topic"].as_str().unwrap(), topic);
     }
 
     // Offsets should be sequential
