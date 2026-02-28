@@ -257,20 +257,18 @@ trait BenchShard {
 
 // KV module
 
-#[derive(Clone)]
-struct BenchKvSet {
-    keys: Arc<Vec<String>>,
+fn kv_generate_key(shard_id: u64, iteration: u64) -> String {
+    // Assumes shard_id is no larger than u16::MAX
+    let mut rng = StdRng::seed_from_u64(iteration << 16 + shard_id);
+    Alphanumeric.sample_string(&mut rng, 16)
 }
 
-impl BenchKvSet {
-    fn setup(keys: Arc<Vec<String>>) -> Self {
-        Self { keys }
-    }
-}
+#[derive(Clone)]
+struct BenchKvSet { }
 
 impl BenchShard for BenchKvSet {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _shard_id: u64, iteration: u64) -> Result<Duration> {
-        let key = self.keys.get(iteration as usize).unwrap();
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, iteration: u64) -> Result<Duration> {
+        let key = kv_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -282,19 +280,11 @@ impl BenchShard for BenchKvSet {
 }
 
 #[derive(Clone)]
-struct BenchKvGet {
-    keys: Arc<Vec<String>>,
-}
-
-impl BenchKvGet {
-    fn setup(keys: Arc<Vec<String>>) -> Self {
-        Self { keys }
-    }
-}
+struct BenchKvGet { }
 
 impl BenchShard for BenchKvGet {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _shard_id: u64, iteration: u64) -> Result<Duration> {
-        let key = self.keys.get(iteration as usize).unwrap();
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, iteration: u64) -> Result<Duration> {
+        let key = kv_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -313,15 +303,9 @@ async fn bench_kv(
 ) -> Result<()> {
     let mut all_kv_set: Vec<_> = Vec::with_capacity(concurrency as usize);
     let mut all_kv_get: Vec<_> = Vec::with_capacity(concurrency as usize);
-    for shard_id in 0..concurrency {
-        let mut rng = StdRng::seed_from_u64(shard_id);
-        let keys: Arc<Vec<_>> = Arc::new(
-            (0..iterations)
-                .map(|_| Alphanumeric.sample_string(&mut rng, 16))
-                .collect(),
-        );
-        all_kv_set.push(BenchKvSet::setup(keys.clone()));
-        all_kv_get.push(BenchKvGet::setup(keys.clone()));
+    for _ in 0..concurrency {
+        all_kv_set.push(BenchKvSet {});
+        all_kv_get.push(BenchKvGet {});
     }
 
     bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats).await?;
