@@ -209,7 +209,7 @@ toml = { version = "1.0.3", default-features = false, features = ["parse", "serd
 tower = "0.5.1"
 tower-http = { version = "0.6.1", features = ["cors", "normalize-path", "request-id", "trace", "util"] }
 tower-service = "0.3.3"
-tracing = "0.1.35"
+tracing = { version = "0.1.35", features = ["release_max_level_debug"] }
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "local-time", "fmt", "registry", "std"] }
 url = { version = "2.2.2", features = ["serde"] }
