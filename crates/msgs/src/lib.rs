@@ -21,12 +21,12 @@ impl State {
         const MSG_TABLE_KEYSPACE: &str = "_coyote_msgs";
 
         let metadata_tables = {
-            let opts = KeyspaceCreateOptions::default();
+            let opts = KeyspaceCreateOptions::default().expect_point_read_hits(true);
             db.keyspace(METADATA_KEYSPACE, || opts)?
         };
 
         let msg_table = {
-            let opts = KeyspaceCreateOptions::default();
+            let opts = KeyspaceCreateOptions::default().expect_point_read_hits(true);
             db.keyspace(MSG_TABLE_KEYSPACE, || opts)?
         };
 
