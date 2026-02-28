@@ -19,18 +19,20 @@ doctest = false
 
 [dependencies]
 anyhow.workspace = true
-comfy-table = "7"
-governor = "0.7"
-indicatif = "0.17"
-quanta = "0.12"
 clap.workspace = true
 clap_complete.workspace = true
 colored_json.workspace = true
+comfy-table = "7"
 concolor-clap.workspace = true
 config.workspace = true
 coyote-client.workspace = true
 dirs.workspace = true
+futures = "0.3.32"
+governor = "0.7"
+hdrhistogram = "7.5.4"
 idna_adapter.workspace = true
+indicatif = "0.17"
+quanta = "0.12"
 rand.workspace = true
 rustls.workspace = true
 serde.workspace = true
@@ -38,5 +40,3 @@ serde_json.workspace = true
 tokio = { workspace = true, features = ["macros", "time", "rt-multi-thread"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
-hdrhistogram = "7.5.4"
-futures = "0.3.32"
