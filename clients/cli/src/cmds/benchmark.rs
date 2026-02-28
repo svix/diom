@@ -294,12 +294,14 @@ async fn bench_kv(
         combined.add(res.hist)?;
         total_time_ms += res.total_time.as_millis() as u64;
     }
+    // Get the average time per run
+    total_time_ms = total_time_ms / concurrency;
+
     pb.finish();
     all_stats.push(hist_compute_stats(
         test.name(),
         combined,
-        // Get the average time per run
-        total_time_ms / concurrency,
+        total_time_ms,
         iterations * concurrency,
     ));
 
