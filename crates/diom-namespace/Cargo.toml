@@ -13,7 +13,6 @@ jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
 stream-internals.workspace = true
-tracing.workspace = true
 uuid.workspace = true
 
 [lints]

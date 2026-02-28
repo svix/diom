@@ -93,10 +93,18 @@ pub struct CacheDeleteOut {
 /// Cache Set
 #[aide_annotate(op_id = "v1.cache.set")]
 async fn cache_set(
+    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
     let key_str = data.key.to_string();
+    // TODO: Presumably this should only need to happen in
+    // the consensus layer, but currently raft seems to
+    // break if an operation with a non-existent namespace is attempted,
+    // so do this here for now as a quick check that the namespace
+    // exists:
+    let _cache_store = state.get_cache_store_by_key(&key_str)?;
+
     let operation = SetOperation::new(key_str, data.into_model());
     repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
