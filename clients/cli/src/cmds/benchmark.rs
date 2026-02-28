@@ -193,7 +193,7 @@ async fn bench_shards_concurrent(
     let handles = all_instances.into_iter().map(|test| {
         let client = Arc::clone(&client);
         let pb = pb.clone();
-        test.bench_shard(client, pb)
+        test.bench_shard(client, iterations, pb)
     });
 
     let mut combined = BenchHistogram::new(3).unwrap();
@@ -223,11 +223,9 @@ struct BenchResult {
 }
 
 trait BenchShard {
-    fn iterations(&self) -> u64;
-
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration>;
 
-    async fn bench_shard(self, client: Arc<CoyoteClient>, pb: ProgressBar) -> Result<BenchResult>
+    async fn bench_shard(self, client: Arc<CoyoteClient>, iterations: u64, pb: ProgressBar) -> Result<BenchResult>
     where
         Self: Sized,
     {
@@ -235,7 +233,7 @@ trait BenchShard {
         let mut total_time = Duration::from_secs(0);
         let mut rng = StdRng::seed_from_u64(0);
 
-        for i in 0..self.iterations() {
+        for i in 0..iterations {
             let t = self.run(&client, &mut rng, i).await?;
             hist.record(t.as_micros() as u64)?;
             total_time += t;
@@ -259,10 +257,6 @@ impl BenchKvSet {
 }
 
 impl BenchShard for BenchKvSet {
-    fn iterations(&self) -> u64 {
-        self.keys.len() as u64
-    }
-
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
         let key = self.keys.get(i as usize).unwrap();
         let mut value = vec![0u8; 256];
@@ -287,10 +281,6 @@ impl BenchKvGet {
 }
 
 impl BenchShard for BenchKvGet {
-    fn iterations(&self) -> u64 {
-        self.keys.len() as u64
-    }
-
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
         let key = self.keys.get(i as usize).unwrap();
         let mut value = vec![0u8; 256];
@@ -341,10 +331,6 @@ impl BenchCacheSet {
 }
 
 impl BenchShard for BenchCacheSet {
-    fn iterations(&self) -> u64 {
-        self.keys.len() as u64
-    }
-
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
         let ttl_bench_ms = 300_000; // 5 minutes
         let key = self.keys.get(i as usize).unwrap();
@@ -370,10 +356,6 @@ impl BenchCacheGet {
 }
 
 impl BenchShard for BenchCacheGet {
-    fn iterations(&self) -> u64 {
-        self.keys.len() as u64
-    }
-
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
         let key = self.keys.get(i as usize).unwrap();
         let mut value = vec![0u8; 256];
