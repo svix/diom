@@ -228,7 +228,7 @@ struct BenchResult {
 }
 
 trait BenchShard {
-    fn name(&self) -> &'static str;
+    fn name(&self) -> String;
 
     async fn run(
         &self,
@@ -274,8 +274,8 @@ fn bench_generate_key(shard_id: u64, iteration: u64) -> String {
 struct BenchKvSet {}
 
 impl BenchShard for BenchKvSet {
-    fn name(&self) -> &'static str {
-        "kv.set"
+    fn name(&self) -> String {
+        "kv.set".to_owned()
     }
 
     async fn run(
@@ -300,8 +300,8 @@ impl BenchShard for BenchKvSet {
 struct BenchKvGet {}
 
 impl BenchShard for BenchKvGet {
-    fn name(&self) -> &'static str {
-        "kv.get"
+    fn name(&self) -> String {
+        "kv.get".to_owned()
     }
 
     async fn run(
@@ -353,8 +353,8 @@ async fn bench_kv(
 struct BenchCacheSet {}
 
 impl BenchShard for BenchCacheSet {
-    fn name(&self) -> &'static str {
-        "cache.set"
+    fn name(&self) -> String {
+        "cache.set".to_owned()
     }
 
     async fn run(
@@ -383,8 +383,8 @@ impl BenchShard for BenchCacheSet {
 struct BenchCacheGet {}
 
 impl BenchShard for BenchCacheGet {
-    fn name(&self) -> &'static str {
-        "cache.get"
+    fn name(&self) -> String {
+        "cache.get".to_owned()
     }
 
     async fn run(
@@ -442,8 +442,8 @@ impl BenchMsgsPublish {
 }
 
 impl BenchShard for BenchMsgsPublish {
-    fn name(&self) -> &'static str {
-        "msg.publish"
+    fn name(&self) -> String {
+        "msg.publish".to_owned()
     }
 
     async fn run(
@@ -482,8 +482,8 @@ impl BenchMsgsStreamReceive {
 }
 
 impl BenchShard for BenchMsgsStreamReceive {
-    fn name(&self) -> &'static str {
-        "msg.stream.receive"
+    fn name(&self) -> String {
+        "msg.stream.receive".to_owned()
     }
 
     async fn run(
