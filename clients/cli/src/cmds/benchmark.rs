@@ -9,8 +9,8 @@ use comfy_table::{modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL_CONDENSED, T
 use coyote_client::{
     CoyoteClient,
     models::{
-        Ack, AppendToStreamIn, CacheGetIn, CacheSetIn, CreateNamespaceIn, FetchFromStreamIn,
-        KvGetIn, KvSetIn, MsgIn,
+        CacheGetIn, CacheSetIn,
+        KvGetIn, KvSetIn,
     },
 };
 use governor::{DefaultDirectRateLimiter, Quota, RateLimiter};
@@ -32,7 +32,6 @@ type BenchHistogram = Histogram<u64>;
 pub enum BenchmarkModule {
     Kv,
     Cache,
-    Stream,
 }
 
 #[derive(Args)]
@@ -222,7 +221,6 @@ impl BenchmarkArgs {
             vec![
                 BenchmarkModule::Kv,
                 BenchmarkModule::Cache,
-                BenchmarkModule::Stream,
             ]
         } else {
             self.modules
@@ -259,19 +257,6 @@ impl BenchmarkArgs {
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
                     bench_cache(
-                        Arc::clone(&client),
-                        duration,
-                        rounds,
-                        concurrency,
-                        rate,
-                        wall_clock_secs,
-                        &mut all_stats,
-                    )
-                    .await?;
-                }
-                BenchmarkModule::Stream => {
-                    eprintln!("[stream]");
-                    bench_stream(
                         Arc::clone(&client),
                         duration,
                         rounds,
@@ -516,137 +501,6 @@ async fn bench_cache(
     }
     if !get_samples.is_empty() {
         all_stats.push(compute_stats("cache get", get_samples, wall_clock_secs));
-    }
-    Ok(())
-}
-
-// ── stream ────────────────────────────────────────────────────────────────────
-
-async fn bench_stream(
-    client: Arc<CoyoteClient>,
-    duration_secs: u64,
-    rounds: usize,
-    concurrency: usize,
-    rate: u32,
-    wall_clock_secs: f64,
-    all_stats: &mut Vec<Stats>,
-) -> Result<()> {
-    // Each measurement round uses its own namespace so consumer groups start fresh.
-
-    let mut append_samples: Vec<Duration> = Vec::new();
-    let mut fetch_samples: Vec<Duration> = Vec::new();
-
-    for round in 1..=rounds {
-        let mut rng = StdRng::seed_from_u64(round as u64);
-        let ns = format!(
-            "__bench_r{}_{}", round,
-            Alphanumeric.sample_string(&mut rng, 8)
-        );
-        client
-            .msgs()
-            .namespace()
-            .create(CreateNamespaceIn::new(ns.clone()))
-            .await?;
-
-        // Append phase
-        let pb = new_bar(format!("append    {round}/{rounds}"), duration_secs);
-        let ticker = start_ticker(pb.clone(), duration_secs);
-        let handles: Vec<_> = (0..concurrency)
-            .map(|i| {
-                let client = Arc::clone(&client);
-                let ns = ns.clone();
-                let limiter = make_limiter(rate);
-                tokio::spawn(async move {
-                    let mut rng = StdRng::seed_from_u64((i * round) as u64);
-                    let mut samples = Vec::new();
-                    let deadline = Instant::now() + Duration::from_secs(duration_secs);
-                    while Instant::now() < deadline {
-                        maybe_wait(limiter.as_deref()).await;
-                        let mut payload = vec![0u8; 256];
-                        rng.fill(&mut payload[..]);
-                        let t = quanta::Instant::now();
-                        client
-                            .stream()
-                            .append(AppendToStreamIn::new(
-                                vec![MsgIn::new(payload)],
-                                ns.clone(),
-                            ))
-                            .await?;
-                        samples.push(t.elapsed());
-                    }
-                    Ok::<Vec<Duration>, anyhow::Error>(samples)
-                })
-            })
-            .collect();
-        for handle in handles {
-            append_samples.extend(handle.await??);
-        }
-        ticker.abort();
-        pb.set_position(duration_secs);
-        pb.finish();
-
-        // Fetch/ack phase: each task gets its own consumer group so they
-        // independently drain all messages in the namespace.
-        let pb = new_bar(format!("fetch/ack {round}/{rounds}"), duration_secs);
-        let ticker = start_ticker(pb.clone(), duration_secs);
-        let handles: Vec<_> = (0..concurrency)
-            .map(|task_idx| {
-                let client = Arc::clone(&client);
-                let ns = ns.clone();
-                let consumer_group = format!("__bench_consumer_{task_idx}");
-                let limiter = make_limiter(rate);
-                tokio::spawn(async move {
-                    let mut samples = Vec::new();
-                    let deadline = Instant::now() + Duration::from_secs(duration_secs);
-                    while Instant::now() < deadline {
-                        maybe_wait(limiter.as_deref()).await;
-                        let t = quanta::Instant::now();
-                        let out = client
-                            .stream()
-                            .fetch(FetchFromStreamIn::new(
-                                1,
-                                consumer_group.clone(),
-                                ns.clone(),
-                                30,
-                            ))
-                            .await?;
-                        if out.msgs.is_empty() {
-                            // Stream exhausted for this consumer group
-                            break;
-                        }
-                        for msg in out.msgs {
-                            client
-                                .stream()
-                                .ack(Ack::new(
-                                    consumer_group.clone(),
-                                    msg.id,
-                                    ns.clone(),
-                                ))
-                                .await?;
-                            samples.push(t.elapsed());
-                        }
-                    }
-                    Ok::<Vec<Duration>, anyhow::Error>(samples)
-                })
-            })
-            .collect();
-        for handle in handles {
-            fetch_samples.extend(handle.await??);
-        }
-        ticker.abort();
-        pb.set_position(duration_secs);
-        pb.finish();
-    }
-
-    if !append_samples.is_empty() {
-        all_stats.push(compute_stats("stream append", append_samples, wall_clock_secs));
-    }
-    if !fetch_samples.is_empty() {
-        all_stats.push(compute_stats(
-            "stream fetch/ack",
-            fetch_samples,
-            wall_clock_secs,
-        ));
     }
     Ok(())
 }
