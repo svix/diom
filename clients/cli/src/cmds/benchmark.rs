@@ -196,14 +196,10 @@ impl TomBenchKvSet {
         "kv.set"
     }
 
-    fn setup(rng: &mut StdRng, iterations: u64) -> Self {
+    fn setup(keys: Arc<Vec<String>>) -> Self {
         Self {
-            keys: Arc::new(
-                (0..iterations)
-                    .map(|_| Alphanumeric.sample_string(rng, 16))
-                    .collect(),
-            ),
-            iterations,
+            iterations: keys.len() as u64,
+            keys,
         }
     }
 
@@ -259,6 +255,17 @@ impl TomModuleKv {
 
     /// Runs the full benchmark for the module
     async fn bench(&self, client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>) -> Result<()> {
+        let iterations = self.iterations;
+        for shard_id in 0..self.concurrency {
+            let mut rng = StdRng::seed_from_u64(shard_id);
+            let keys: Arc<Vec<_>> = Arc::new(
+                (0..iterations)
+                    .map(|_| Alphanumeric.sample_string(&mut rng, 16))
+                    .collect(),
+            );
+            let kv_set = TomBenchKvSet::setup(keys.clone());
+        }
+
         let kv_set = ToBeDeleted::setup(self.concurrency, self.iterations);
         kv_set.bench(Arc::clone(&client), all_stats).await?;
         let kv_get = ToBeDeleted::setup(self.concurrency, self.iterations);
@@ -281,11 +288,8 @@ impl ToBeDeleted {
     fn setup(concurrency: u64, iterations: u64) -> Self {
         let mut rng = StdRng::seed_from_u64(0);
         Self {
-            instances: Arc::new(
-                (0..concurrency)
-                    .map(|_| TomBenchKvSet::setup(&mut rng, iterations))
-                    .collect(),
-            ),
+            // FIXME: kill this
+            instances: Arc::new(Vec::new()),
             concurrency,
             iterations,
         }
