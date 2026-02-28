@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class PublishIn {
 @JsonProperty private List<MsgIn> msgs;
-@JsonProperty private String name;
 @JsonProperty private String topic;
 public PublishIn () {}
 
@@ -57,25 +56,6 @@ public PublishIn () {}
 
      public void setMsgs(List<MsgIn> msgs) {
         this.msgs = msgs;
-    }
-
-     public PublishIn name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-     public String getName() {
-        return name;
-    }
-
-     public void setName(String name) {
-        this.name = name;
     }
 
      public PublishIn topic(String topic) {

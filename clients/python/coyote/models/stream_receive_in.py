@@ -14,6 +14,4 @@ class StreamReceiveIn(BaseModel):
         default=None, alias="lease_duration_millis"
     )
 
-    name: str
-
     topic: str

@@ -20,7 +20,7 @@ pub enum MsgsStreamCommands {
     },
     /// Commits an offset for a consumer group on a specific partition.
     ///
-    /// The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+    /// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
     /// successfully processed offset; future receives will start after it.
     Commit {
         stream_commit_in: crate::json::JsonOf<coyote_client::models::StreamCommitIn>,

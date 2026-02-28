@@ -23,8 +23,7 @@ async fn stream_receive_returns_published_messages() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-recv",
-            "topic": "my-topic",
+            "topic": "ns-recv:my-topic",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "user-1" },
                 { "value": "b".as_bytes(), "key": "user-1" },
@@ -37,8 +36,7 @@ async fn stream_receive_returns_published_messages() -> TestResult {
     let response = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-recv",
-            "topic": "my-topic",
+            "topic": "ns-recv:my-topic",
             "consumer_group": "cg1",
         }))
         .await?
@@ -52,7 +50,7 @@ async fn stream_receive_returns_published_messages() -> TestResult {
         assert!(m["offset"].is_u64());
         let topic = m["topic"].as_str().unwrap();
         assert!(
-            topic.starts_with("my-topic~"),
+            topic.starts_with("ns-recv:my-topic~"),
             "topic should be partition-level: {topic}"
         );
         assert!(!m["value"].is_null());
@@ -84,8 +82,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-nodup",
-            "topic": "t1",
+            "topic": "ns-nodup:t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -98,8 +95,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     let r1 = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-nodup",
-            "topic": "t1",
+            "topic": "ns-nodup:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -111,8 +107,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     let r2 = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-nodup",
-            "topic": "t1",
+            "topic": "ns-nodup:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -120,15 +115,15 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
         .json();
     assert_eq!(r2["msgs"].as_array().unwrap().len(), 0);
 
-    // Commit the first batch to unlock the partition
+    // Commit the first batch to unlock the partition.
+    // The response topic already includes the namespace, so we can pass it directly.
     let msgs = r1["msgs"].as_array().unwrap();
-    let partition_topic = msgs[0]["topic"].as_str().unwrap().to_owned();
+    let partition_topic = msgs[0]["topic"].as_str().unwrap();
     let last_offset = msgs[1]["offset"].as_u64().unwrap();
 
     client
         .post("msgs/stream/commit")
         .json(json!({
-            "name": "ns-nodup",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -140,8 +135,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-nodup",
-            "topic": "t1",
+            "topic": "ns-nodup:t1",
             "msgs": [
                 { "value": "c".as_bytes(), "key": "k1" },
             ],
@@ -153,8 +147,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     let r3 = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-nodup",
-            "topic": "t1",
+            "topic": "ns-nodup:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -182,8 +175,7 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-cg",
-            "topic": "t1",
+            "topic": "ns-cg:t1",
             "msgs": [
                 { "value": "x".as_bytes(), "key": "k1" },
                 { "value": "y".as_bytes(), "key": "k1" },
@@ -195,8 +187,7 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     let r_a = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-cg",
-            "topic": "t1",
+            "topic": "ns-cg:t1",
             "consumer_group": "group-a",
         }))
         .await?
@@ -206,8 +197,7 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     let r_b = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-cg",
-            "topic": "t1",
+            "topic": "ns-cg:t1",
             "consumer_group": "group-b",
         }))
         .await?
@@ -245,8 +235,7 @@ async fn stream_receive_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "does-not-exist",
-            "topic": "t1",
+            "topic": "does-not-exist:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -272,8 +261,7 @@ async fn stream_receive_with_defaults() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-def",
-            "topic": "t1",
+            "topic": "ns-def:t1",
             "msgs": [{ "value": "hello".as_bytes(), "key": "k1" }],
         }))
         .await?
@@ -283,8 +271,7 @@ async fn stream_receive_with_defaults() -> TestResult {
     let response = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-def",
-            "topic": "t1",
+            "topic": "ns-def:t1",
             "consumer_group": "cg-default",
         }))
         .await?
@@ -314,8 +301,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-lock",
-            "topic": "t1",
+            "topic": "ns-lock:t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -331,8 +317,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     let r_a = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-lock",
-            "topic": "t1",
+            "topic": "ns-lock:t1",
             "consumer_group": "cg1",
             "batch_size": 2,
         }))
@@ -345,8 +330,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     let r_b_locked = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-lock",
-            "topic": "t1",
+            "topic": "ns-lock:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -354,15 +338,15 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
         .json();
     assert_eq!(r_b_locked["msgs"].as_array().unwrap().len(), 0);
 
-    // Consumer A commits — unlocks the partition
+    // Consumer A commits — unlocks the partition.
+    // The response topic already includes the namespace.
     let msgs_a = r_a["msgs"].as_array().unwrap();
-    let partition_topic = msgs_a[0]["topic"].as_str().unwrap().to_owned();
+    let partition_topic = msgs_a[0]["topic"].as_str().unwrap();
     let last_offset = msgs_a[1]["offset"].as_u64().unwrap();
 
     client
         .post("msgs/stream/commit")
         .json(json!({
-            "name": "ns-lock",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -374,8 +358,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     let r_b = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-lock",
-            "topic": "t1",
+            "topic": "ns-lock:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -408,8 +391,7 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     client
         .post("msgs/topic/configure")
         .json(json!({
-            "name": "ns-concurrent",
-            "topic": "t1",
+            "topic": "ns-concurrent:t1",
             "partitions": 16,
         }))
         .await?
@@ -419,8 +401,7 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-concurrent",
-            "topic": "t1",
+            "topic": "ns-concurrent:t1",
             "msgs": [
                 { "value": "a1".as_bytes(), "key": "k1" },
                 { "value": "a2".as_bytes(), "key": "k1" },
@@ -441,8 +422,7 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     let r_a = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-concurrent",
-            "topic": "t1",
+            "topic": "ns-concurrent:t1",
             "consumer_group": "cg1",
             "batch_size": 5,
         }))
@@ -457,8 +437,7 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     let r_b = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-concurrent",
-            "topic": "t1",
+            "topic": "ns-concurrent:t1",
             "consumer_group": "cg1",
             "batch_size": 10,
         }))
@@ -514,8 +493,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-commit",
-            "topic": "t1",
+            "topic": "ns-commit:t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -529,8 +507,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let r1 = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-commit",
-            "topic": "t1",
+            "topic": "ns-commit:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -540,15 +517,15 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let msgs = r1["msgs"].as_array().unwrap();
     assert_eq!(msgs.len(), 3);
 
-    // Extract partition-level topic and last offset in the batch
-    let partition_topic = msgs[0]["topic"].as_str().unwrap().to_owned();
+    // Extract partition-level topic and last offset in the batch.
+    // The response topic already includes the namespace.
+    let partition_topic = msgs[0]["topic"].as_str().unwrap();
     let last_offset = msgs[2]["offset"].as_u64().unwrap();
 
     // Commit the last offset we processed
     client
         .post("msgs/stream/commit")
         .json(json!({
-            "name": "ns-commit",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -560,8 +537,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let r2 = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-commit",
-            "topic": "t1",
+            "topic": "ns-commit:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -573,8 +549,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-commit",
-            "topic": "t1",
+            "topic": "ns-commit:t1",
             "msgs": [
                 { "value": "d".as_bytes(), "key": "k1" },
             ],
@@ -586,8 +561,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let r3 = client
         .post("msgs/stream/receive")
         .json(json!({
-            "name": "ns-commit",
-            "topic": "t1",
+            "topic": "ns-commit:t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -616,8 +590,7 @@ async fn commit_requires_partition_topic() -> TestResult {
     client
         .post("msgs/stream/commit")
         .json(json!({
-            "name": "ns-commit-pt",
-            "topic": "t1",
+            "topic": "ns-commit-pt:t1",
             "consumer_group": "cg1",
             "offset": 0,
         }))
@@ -638,8 +611,7 @@ async fn commit_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/stream/commit")
         .json(json!({
-            "name": "does-not-exist",
-            "topic": "t1~0",
+            "topic": "does-not-exist:t1~0",
             "consumer_group": "cg1",
             "offset": 0,
         }))
@@ -667,8 +639,7 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "name": "ns-race",
-            "topic": "t1",
+            "topic": "ns-race:t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -685,8 +656,7 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
         handles.push(tokio::spawn(async move {
             c.post("msgs/stream/receive")
                 .json(json!({
-                    "name": "ns-race",
-                    "topic": "t1",
+                    "topic": "ns-race:t1",
                     "consumer_group": "cg1",
                 }))
                 .await

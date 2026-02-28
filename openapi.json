@@ -709,7 +709,7 @@
           "Msgs"
         ],
         "summary": "Stream Commit",
-        "description": "Commits an offset for a consumer group on a specific partition.\n\nThe topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last\nsuccessfully processed offset; future receives will start after it.",
+        "description": "Commits an offset for a consumer group on a specific partition.\n\nThe topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last\nsuccessfully processed offset; future receives will start after it.",
         "operationId": "v1.msgs.stream.commit",
         "requestBody": {
           "content": {
@@ -793,7 +793,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           }
         },
@@ -818,7 +818,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           }
         },
@@ -881,7 +881,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
           "expiry": {
@@ -911,7 +911,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
           "ttl": {
@@ -1047,7 +1047,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           }
         },
@@ -1064,7 +1064,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
           "response": {
@@ -1137,7 +1137,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
           "ttl": {
@@ -1217,7 +1217,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           }
         },
@@ -1242,7 +1242,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           }
         },
@@ -1298,7 +1298,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
           "expiry": {
@@ -1328,7 +1328,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
           "ttl": {
@@ -1411,9 +1411,6 @@
       "PublishIn": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
-          },
           "topic": {
             "type": "string"
           },
@@ -1425,7 +1422,6 @@
           }
         },
         "required": [
-          "name",
           "topic",
           "msgs"
         ]
@@ -1474,7 +1470,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
           "tokens": {
@@ -1580,7 +1576,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-_.]+$",
+            "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           }
         },
@@ -1702,9 +1698,6 @@
       "StreamCommitIn": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
-          },
           "topic": {
             "type": "string"
           },
@@ -1718,7 +1711,6 @@
           }
         },
         "required": [
-          "name",
           "topic",
           "consumer_group",
           "offset"
@@ -1769,9 +1761,6 @@
       "StreamReceiveIn": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
-          },
           "topic": {
             "type": "string"
           },
@@ -1793,7 +1782,6 @@
           }
         },
         "required": [
-          "name",
           "topic",
           "consumer_group"
         ]
@@ -1815,9 +1803,6 @@
       "TopicConfigureIn": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
-          },
           "topic": {
             "type": "string"
           },
@@ -1829,7 +1814,6 @@
           }
         },
         "required": [
-          "name",
           "topic",
           "partitions"
         ]

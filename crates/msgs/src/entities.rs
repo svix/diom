@@ -15,6 +15,8 @@ pub const MAX_PARTITION_COUNT: u16 = 64;
 
 pub const TOPIC_PARTITION_DELIMITER: &str = "~";
 
+pub const NAMESPACE_DELIMITER: char = ':';
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Partition(u16);
@@ -36,35 +38,64 @@ impl Partition {
 }
 
 /// A topic identifier without the partition.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct RawTopic(String);
+///
+/// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RawTopic {
+    namespace: String,
+    topic: String,
+}
 
 impl RawTopic {
-    pub fn new(s: String) -> Result<Self, Error> {
-        if s.contains(TOPIC_PARTITION_DELIMITER) {
+    pub fn new(namespace: String, topic: String) -> Result<Self, Error> {
+        if topic.contains(TOPIC_PARTITION_DELIMITER) {
             Err(Error::generic("invalid topic"))
-        } else if s.len() > 64 {
-            // arbitrary limit for now. If you want to change this, just do it.
-            // No need to tag me or make a ticket or something.
+        } else if topic.len() > 64 {
             Err(Error::generic("topic cannot exceed 64 bytes"))
         } else {
-            Ok(Self(s))
+            Ok(Self { namespace, topic })
         }
+    }
+
+    pub fn namespace(&self) -> &str {
+        &self.namespace
     }
 }
 
+/// Derefs to the topic name (without namespace or partition).
 impl Deref for RawTopic {
     type Target = str;
 
     fn deref(&self) -> &str {
-        &self.0
+        &self.topic
     }
 }
 
 impl fmt::Display for RawTopic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        write!(f, "{}{}{}", self.namespace, NAMESPACE_DELIMITER, self.topic)
+    }
+}
+
+impl Serialize for RawTopic {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.collect_str(self)
+    }
+}
+
+impl<'de> Deserialize<'de> for RawTopic {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let (ns, topic) = s
+            .split_once(NAMESPACE_DELIMITER)
+            .ok_or_else(|| serde::de::Error::custom("missing ':' namespace delimiter"))?;
+        Self::new(ns.to_owned(), topic.to_owned()).map_err(serde::de::Error::custom)
     }
 }
 
@@ -92,20 +123,27 @@ impl Topic {
     pub fn new(raw: RawTopic, partition: Partition) -> Self {
         Self { raw, partition }
     }
+
+    pub fn namespace(&self) -> &str {
+        self.raw.namespace()
+    }
 }
 
 impl TryFrom<String> for Topic {
     type Error = Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let (topic, idx_str) = value
+        let (ns, rest) = value
+            .split_once(NAMESPACE_DELIMITER)
+            .ok_or_else(|| Error::generic("missing ':' namespace delimiter in topic"))?;
+        let (topic, idx_str) = rest
             .rsplit_once(TOPIC_PARTITION_DELIMITER)
             .ok_or_else(|| Error::generic("missing '~' separator in topic"))?;
         let idx: u16 = idx_str
             .parse()
             .map_err(|_| Error::generic("invalid partition index in topic"))?;
         let partition = Partition::new(idx)?;
-        let raw = RawTopic::new(topic.to_owned())?;
+        let raw = RawTopic::new(ns.to_owned(), topic.to_owned())?;
         Ok(Self { raw, partition })
     }
 }
@@ -115,7 +153,7 @@ impl fmt::Display for Topic {
         write!(
             f,
             "{}{}{}",
-            self.raw.0, TOPIC_PARTITION_DELIMITER, self.partition.0
+            self.raw, TOPIC_PARTITION_DELIMITER, self.partition.0
         )
     }
 }
@@ -170,6 +208,10 @@ impl TopicIn {
             TopicIn::WithPartition(topic) => &topic.raw,
         }
     }
+
+    pub fn namespace(&self) -> &str {
+        self.raw_topic().namespace()
+    }
 }
 
 impl<'de> Deserialize<'de> for TopicIn {
@@ -178,12 +220,16 @@ impl<'de> Deserialize<'de> for TopicIn {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        if s.contains(TOPIC_PARTITION_DELIMITER) {
+        let (ns, rest) = s
+            .split_once(NAMESPACE_DELIMITER)
+            .ok_or_else(|| serde::de::Error::custom("missing ':' namespace delimiter"))?;
+        if rest.contains(TOPIC_PARTITION_DELIMITER) {
+            // Re-parse the full string via Topic::try_from (it also splits on ':')
             Topic::try_from(s)
                 .map(TopicIn::WithPartition)
                 .map_err(serde::de::Error::custom)
         } else {
-            RawTopic::new(s)
+            RawTopic::new(ns.to_owned(), rest.to_owned())
                 .map(TopicIn::Raw)
                 .map_err(serde::de::Error::custom)
         }

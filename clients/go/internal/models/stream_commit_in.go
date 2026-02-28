@@ -4,7 +4,6 @@ package coyote_models
 
 type StreamCommitIn struct {
 	ConsumerGroup string `json:"consumer_group"`
-	Name          string `json:"name"`
 	Offset        uint64 `json:"offset"`
 	Topic         string `json:"topic"`
 }

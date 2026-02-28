@@ -429,8 +429,7 @@ impl BenchShard for BenchMsgsPublish {
         shard_id: u64,
         _iteration: u64,
     ) -> Result<Duration> {
-        let ns_name = "bench";
-        let topic = format!("bench/topic/{shard_id}");
+        let topic = format!("bench:bench/topic/{shard_id}");
         let msgs: Vec<_> = (0..self.batch_size)
             .map(|_| {
                 let mut payload = vec![0u8; 256];
@@ -443,7 +442,7 @@ impl BenchShard for BenchMsgsPublish {
         let t = Instant::now();
         client
             .msgs()
-            .publish(PublishIn::new(msgs, ns_name.to_string(), topic.to_owned()))
+            .publish(PublishIn::new(msgs, topic.clone()))
             .await?;
         Ok(t.elapsed())
     }
@@ -467,18 +466,13 @@ impl BenchShard for BenchMsgsStreamReceive {
         _iteration: u64,
     ) -> Result<Duration> {
         let consumer_group = "consumer";
-        let ns_name = "bench";
-        let topic = format!("bench/topic/{shard_id}");
+        let topic = format!("bench:bench/topic/{shard_id}");
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
         // Start of real code
         let t = Instant::now();
-        let mut recv = StreamReceiveIn::new(
-            consumer_group.to_owned(),
-            ns_name.to_owned(),
-            topic.to_owned(),
-        );
+        let mut recv = StreamReceiveIn::new(consumer_group.to_owned(), topic.clone());
         recv.batch_size = Some(self.batch_size);
         let out = client.msgs().stream().receive(recv).await?;
         for msg in out.msgs {
@@ -487,7 +481,6 @@ impl BenchShard for BenchMsgsStreamReceive {
                 .stream()
                 .commit(StreamCommitIn::new(
                     consumer_group.to_owned(),
-                    ns_name.to_owned(),
                     msg.offset,
                     msg.topic.clone(),
                 ))
