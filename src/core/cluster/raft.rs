@@ -64,8 +64,8 @@ pub async fn initialize_raft(
     cfg: &Configuration,
     app_state: AppState,
 ) -> anyhow::Result<RaftState> {
-    let mut logs =
-        super::CoyoteLogs::new(cfg.cluster.log_path(cfg)?).context("setting up log store")?;
+    let mut logs = super::CoyoteLogs::new(cfg.cluster.log_path(cfg)?, cfg.cluster.log_sync)
+        .context("setting up log store")?;
     let id = logs
         .get_node_id()
         .await
@@ -143,7 +143,7 @@ mod tests {
             let workdir = tempfile::tempdir()?;
             let log_path = workdir.path().to_path_buf().join("logs");
             let log_path = Dir::new(log_path)?;
-            let logs = CoyoteLogs::new(log_path)?;
+            let logs = CoyoteLogs::new(log_path, crate::cfg::FsyncMode::default())?;
 
             let data_path = workdir.path().join("data");
             let e_data_path = workdir.path().join("edata");
