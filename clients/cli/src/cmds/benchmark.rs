@@ -256,6 +256,8 @@ impl TomModuleKv {
     /// Runs the full benchmark for the module
     async fn bench(&self, client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>) -> Result<()> {
         let iterations = self.iterations;
+        let mut all_kv_set: Vec<_> = Vec::with_capacity(self.concurrency as usize);
+        let mut all_kv_get: Vec<_> = Vec::with_capacity(self.concurrency as usize);
         for shard_id in 0..self.concurrency {
             let mut rng = StdRng::seed_from_u64(shard_id);
             let keys: Arc<Vec<_>> = Arc::new(
@@ -263,7 +265,8 @@ impl TomModuleKv {
                     .map(|_| Alphanumeric.sample_string(&mut rng, 16))
                     .collect(),
             );
-            let kv_set = TomBenchKvSet::setup(keys.clone());
+            all_kv_set.push(TomBenchKvSet::setup(keys.clone()));
+            all_kv_get.push(TomBenchKvSet::setup(keys.clone()));
         }
 
         let kv_set = ToBeDeleted::setup(self.concurrency, self.iterations);
