@@ -75,6 +75,7 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
     let unauthenticated = axum::Router::new()
         .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/discover", get(discover))
+        .route("/repl/raft/admin/force-snapshot", post(force_snapshot)) // TODO: should this be unauth?
         .route("/repl/health", get(health));
 
     authenticated.merge(unauthenticated)
@@ -273,6 +274,10 @@ async fn initialize(
     super::raft::initialize_cluster(&state.raft, nodes)
         .await
         .pipe(admin_response)
+}
+
+async fn force_snapshot(Extension(state): Extension<RaftState>) -> impl IntoResponse {
+    state.trigger_snapshot().await.pipe(admin_response)
 }
 
 async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {

@@ -102,7 +102,7 @@ pub struct DatabaseConfig {
 }
 
 /// Wrapper around a path that we know to be an extant dir
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Dir {
     inner: PathBuf,
 }
@@ -294,6 +294,17 @@ pub struct ClusterConfiguration {
     /// corruption.
     #[serde(default)]
     pub log_sync: FsyncMode,
+
+    /// Trigger a background snapshot after this many writes
+    pub snapshot_after_writes: Option<u32>,
+
+    /// Trigger a background snapshot after this many milliseconds
+    #[serde(
+        rename = "snapshot_after_ms",
+        with = "crate::serde::duration::opt_millis",
+        default = "defaults::cluster_snapshot_after_time"
+    )]
+    pub snapshot_after_time: Option<Duration>,
 }
 
 impl ClusterConfiguration {
@@ -544,6 +555,8 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
                 startup_discovery_delay: cluster_startup_discovery_delay,
                 log_index_interval: cluster_log_index_interval,
                 log_sync: _cluster_log_sync, // TODO: impl FromStr for this
+                snapshot_after_writes: cluster_snapshot_after_writes,
+                snapshot_after_time: cluster_snapshot_after_time,
             },
     } = &mut config;
 
@@ -572,6 +585,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         cluster_snapshot_path: "COYOTE_CLUSTER_SNAPSHOT_PATH",
         cluster_log_path: "COYOTE_CLUSTER_LOG_PATH",
         cluster_secret: "COYOTE_CLUSTER_SECRET",
+        cluster_snapshot_after_writes: "COYOTE_SNAPSHOT_AFTER_WRITES"
     );
 
     env_ms_overrides!(
@@ -589,6 +603,9 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     // Fields that require different parsing
     if let Some(value) = env_var_comma_separated("COYOTE_CLUSTER_SEED_NODES")? {
         *cluster_seed_nodes = value;
+    }
+    if let Some(value) = env_var_ms("COYOTE_CLUSTER_SNAPSHOT_AFTER_MS")? {
+        *cluster_snapshot_after_time = Some(value);
     }
 
     Ok(Arc::from(config))

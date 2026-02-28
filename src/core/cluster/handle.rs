@@ -13,6 +13,7 @@ use anyhow::Context;
 use coyote_operations::{OperationRequest, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc::Sender;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResponseParseError {
@@ -251,12 +252,18 @@ impl TryFrom<Response> for InternalResponse {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BackgroundCommand {
+    Snapshot,
+}
+
 #[derive(Clone)]
 pub struct RaftState {
     pub raft: Raft,
     pub node_id: NodeId,
     pub state_machine: StoreHandle,
     pub(super) network: NetworkFactory,
+    pub background_channel: Sender<BackgroundCommand>,
 }
 
 impl RaftState {
@@ -358,5 +365,12 @@ impl RaftState {
             })
             .await
             .unwrap_or(false)
+    }
+
+    pub(crate) async fn trigger_snapshot(&self) -> anyhow::Result<()> {
+        self.background_channel
+            .send(BackgroundCommand::Snapshot)
+            .await
+            .context("attempting to send background command to trigger snapshot")
     }
 }
