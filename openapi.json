@@ -567,7 +567,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateNamespaceIn"
+                "$ref": "#/components/schemas/MsgNamespaceCreateIn"
               }
             }
           },
@@ -579,7 +579,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateNamespaceOut"
+                  "$ref": "#/components/schemas/MsgNamespaceCreateOut"
                 }
               }
             }
@@ -604,7 +604,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GetNamespaceIn"
+                "$ref": "#/components/schemas/MsgNamespaceGetIn"
               }
             }
           },
@@ -616,7 +616,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetNamespaceOut"
+                  "$ref": "#/components/schemas/MsgNamespaceGetOut"
                 }
               }
             }
@@ -641,7 +641,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PublishIn"
+                "$ref": "#/components/schemas/MsgPublishIn"
               }
             }
           },
@@ -653,7 +653,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublishOut"
+                  "$ref": "#/components/schemas/MsgPublishOut"
                 }
               }
             }
@@ -678,7 +678,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StreamReceiveIn"
+                "$ref": "#/components/schemas/MsgStreamReceiveIn"
               }
             }
           },
@@ -690,7 +690,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StreamReceiveOut"
+                  "$ref": "#/components/schemas/MsgStreamReceiveOut"
                 }
               }
             }
@@ -715,7 +715,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StreamCommitIn"
+                "$ref": "#/components/schemas/MsgStreamCommitIn"
               }
             }
           },
@@ -727,7 +727,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StreamCommitOut"
+                  "$ref": "#/components/schemas/MsgStreamCommitOut"
                 }
               }
             }
@@ -752,7 +752,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TopicConfigureIn"
+                "$ref": "#/components/schemas/MsgTopicConfigureIn"
               }
             }
           },
@@ -764,7 +764,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TopicConfigureOut"
+                  "$ref": "#/components/schemas/MsgTopicConfigureOut"
                 }
               }
             }
@@ -943,102 +943,11 @@
       "CacheSetOut": {
         "type": "object"
       },
-      "CreateNamespaceIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "retention": {
-            "default": {
-              "millis": 2592000000,
-              "bytes": 1000000000000
-            },
-            "$ref": "#/components/schemas/Retention"
-          },
-          "storage_type": {
-            "default": "Persistent",
-            "$ref": "#/components/schemas/StorageType"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "CreateNamespaceOut": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "retention": {
-            "$ref": "#/components/schemas/Retention"
-          },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
-          "created": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "name",
-          "retention",
-          "storage_type",
-          "created",
-          "updated"
-        ]
-      },
       "EvictionPolicy": {
         "type": "string",
         "enum": [
           "NoEviction",
           "LeastRecentlyUsed"
-        ]
-      },
-      "GetNamespaceIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "GetNamespaceOut": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "retention": {
-            "$ref": "#/components/schemas/Retention"
-          },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
-          "created": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "name",
-          "retention",
-          "storage_type",
-          "created",
-          "updated"
         ]
       },
       "IdempotencyAbortIn": {
@@ -1389,26 +1298,98 @@
           "value"
         ]
       },
-      "OperationBehavior": {
-        "type": "string",
-        "enum": [
-          "upsert",
-          "insert",
-          "update"
-        ]
-      },
-      "PingOut": {
+      "MsgNamespaceCreateIn": {
         "type": "object",
         "properties": {
-          "ok": {
-            "type": "boolean"
+          "name": {
+            "type": "string"
+          },
+          "retention": {
+            "default": {
+              "millis": 2592000000,
+              "bytes": 1000000000000
+            },
+            "$ref": "#/components/schemas/Retention"
+          },
+          "storage_type": {
+            "default": "Persistent",
+            "$ref": "#/components/schemas/StorageType"
           }
         },
         "required": [
-          "ok"
+          "name"
         ]
       },
-      "PublishIn": {
+      "MsgNamespaceCreateOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "retention": {
+            "$ref": "#/components/schemas/Retention"
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "retention",
+          "storage_type",
+          "created",
+          "updated"
+        ]
+      },
+      "MsgNamespaceGetIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "MsgNamespaceGetOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "retention": {
+            "$ref": "#/components/schemas/Retention"
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "retention",
+          "storage_type",
+          "created",
+          "updated"
+        ]
+      },
+      "MsgPublishIn": {
         "type": "object",
         "properties": {
           "topic": {
@@ -1426,13 +1407,13 @@
           "msgs"
         ]
       },
-      "PublishOut": {
+      "MsgPublishOut": {
         "type": "object",
         "properties": {
           "msgs": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PublishOutMsg"
+              "$ref": "#/components/schemas/MsgPublishOutMsg"
             }
           }
         },
@@ -1440,7 +1421,7 @@
           "msgs"
         ]
       },
-      "PublishOutMsg": {
+      "MsgPublishOutMsg": {
         "type": "object",
         "properties": {
           "topic": {
@@ -1455,6 +1436,123 @@
         "required": [
           "topic",
           "offset"
+        ]
+      },
+      "MsgStreamCommitIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "offset"
+        ]
+      },
+      "MsgStreamCommitOut": {
+        "type": "object"
+      },
+      "MsgStreamReceiveIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "batch_size": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 1,
+            "maximum": 65535,
+            "default": 10
+          },
+          "lease_duration_millis": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "default": 300000
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgStreamReceiveOut": {
+        "type": "object",
+        "properties": {
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StreamMsgOut"
+            }
+          }
+        },
+        "required": [
+          "msgs"
+        ]
+      },
+      "MsgTopicConfigureIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "partitions": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "topic",
+          "partitions"
+        ]
+      },
+      "MsgTopicConfigureOut": {
+        "type": "object",
+        "properties": {
+          "partitions": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "partitions"
+        ]
+      },
+      "OperationBehavior": {
+        "type": "string",
+        "enum": [
+          "upsert",
+          "insert",
+          "update"
+        ]
+      },
+      "PingOut": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "RateLimitStatus": {
@@ -1695,30 +1793,6 @@
           "Ephemeral"
         ]
       },
-      "StreamCommitIn": {
-        "type": "object",
-        "properties": {
-          "topic": {
-            "type": "string"
-          },
-          "consumer_group": {
-            "type": "string"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "topic",
-          "consumer_group",
-          "offset"
-        ]
-      },
-      "StreamCommitOut": {
-        "type": "object"
-      },
       "StreamMsgOut": {
         "type": "object",
         "properties": {
@@ -1756,80 +1830,6 @@
           "topic",
           "value",
           "timestamp"
-        ]
-      },
-      "StreamReceiveIn": {
-        "type": "object",
-        "properties": {
-          "topic": {
-            "type": "string"
-          },
-          "consumer_group": {
-            "type": "string"
-          },
-          "batch_size": {
-            "type": "integer",
-            "format": "uint16",
-            "minimum": 1,
-            "maximum": 65535,
-            "default": 10
-          },
-          "lease_duration_millis": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "default": 300000
-          }
-        },
-        "required": [
-          "topic",
-          "consumer_group"
-        ]
-      },
-      "StreamReceiveOut": {
-        "type": "object",
-        "properties": {
-          "msgs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StreamMsgOut"
-            }
-          }
-        },
-        "required": [
-          "msgs"
-        ]
-      },
-      "TopicConfigureIn": {
-        "type": "object",
-        "properties": {
-          "topic": {
-            "type": "string"
-          },
-          "partitions": {
-            "type": "integer",
-            "format": "uint16",
-            "minimum": 0,
-            "maximum": 65535
-          }
-        },
-        "required": [
-          "topic",
-          "partitions"
-        ]
-      },
-      "TopicConfigureOut": {
-        "type": "object",
-        "properties": {
-          "partitions": {
-            "type": "integer",
-            "format": "uint16",
-            "minimum": 0,
-            "maximum": 65535
-          }
-        },
-        "required": [
-          "partitions"
         ]
       }
     }

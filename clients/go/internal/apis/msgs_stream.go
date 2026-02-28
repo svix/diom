@@ -23,16 +23,16 @@ func NewMsgsStream(client *diom_proto.HttpClient) MsgsStream {
 // specified duration to prevent duplicate delivery within the same consumer group.
 func (msgsStream MsgsStream) Receive(
 	ctx context.Context,
-	streamReceiveIn diom_models.StreamReceiveIn,
-) (*diom_models.StreamReceiveOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.StreamReceiveIn, diom_models.StreamReceiveOut](
+	msgStreamReceiveIn diom_models.MsgStreamReceiveIn,
+) (*diom_models.MsgStreamReceiveOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.MsgStreamReceiveIn, diom_models.MsgStreamReceiveOut](
 		ctx,
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/receive",
 		nil,
 		nil,
-		&streamReceiveIn,
+		&msgStreamReceiveIn,
 	)
 }
 
@@ -42,15 +42,15 @@ func (msgsStream MsgsStream) Receive(
 // successfully processed offset; future receives will start after it.
 func (msgsStream MsgsStream) Commit(
 	ctx context.Context,
-	streamCommitIn diom_models.StreamCommitIn,
-) (*diom_models.StreamCommitOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.StreamCommitIn, diom_models.StreamCommitOut](
+	msgStreamCommitIn diom_models.MsgStreamCommitIn,
+) (*diom_models.MsgStreamCommitOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.MsgStreamCommitIn, diom_models.MsgStreamCommitOut](
 		ctx,
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/commit",
 		nil,
 		nil,
-		&streamCommitIn,
+		&msgStreamCommitIn,
 	)
 }

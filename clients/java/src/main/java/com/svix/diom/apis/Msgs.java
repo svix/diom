@@ -14,18 +14,18 @@ import java.util.Set;
 import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.diom.models.CreateNamespaceIn;
-import com.svix.diom.models.CreateNamespaceOut;
-import com.svix.diom.models.GetNamespaceIn;
-import com.svix.diom.models.GetNamespaceOut;
-import com.svix.diom.models.PublishIn;
-import com.svix.diom.models.PublishOut;
-import com.svix.diom.models.StreamCommitIn;
-import com.svix.diom.models.StreamCommitOut;
-import com.svix.diom.models.StreamReceiveIn;
-import com.svix.diom.models.StreamReceiveOut;
-import com.svix.diom.models.TopicConfigureIn;
-import com.svix.diom.models.TopicConfigureOut;
+import com.svix.diom.models.MsgNamespaceCreateIn;
+import com.svix.diom.models.MsgNamespaceCreateOut;
+import com.svix.diom.models.MsgNamespaceGetIn;
+import com.svix.diom.models.MsgNamespaceGetOut;
+import com.svix.diom.models.MsgPublishIn;
+import com.svix.diom.models.MsgPublishOut;
+import com.svix.diom.models.MsgStreamCommitIn;
+import com.svix.diom.models.MsgStreamCommitOut;
+import com.svix.diom.models.MsgStreamReceiveIn;
+import com.svix.diom.models.MsgStreamReceiveOut;
+import com.svix.diom.models.MsgTopicConfigureIn;
+import com.svix.diom.models.MsgTopicConfigureOut;
 
 public class Msgs {
     private final HttpClient client;
@@ -35,16 +35,16 @@ public class Msgs {
     }
 
     /** Publishes messages to a topic within a namespace. */
-    public PublishOut publish(
-        final PublishIn publishIn
+    public MsgPublishOut publish(
+        final MsgPublishIn msgPublishIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/publish");
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            publishIn,
-            PublishOut.class
+            msgPublishIn,
+            MsgPublishOut.class
             );
     }
 }

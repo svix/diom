@@ -9,8 +9,8 @@ use comfy_table::{Table, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL_CONDE
 use diom_client::{
     DiomClient,
     models::{
-        CacheGetIn, CacheSetIn, CreateNamespaceIn, KvGetIn, KvSetIn, MsgIn, PublishIn,
-        StreamCommitIn, StreamReceiveIn,
+        CacheGetIn, CacheSetIn, KvGetIn, KvSetIn, MsgIn, MsgNamespaceCreateIn, MsgPublishIn,
+        MsgStreamCommitIn, MsgStreamReceiveIn,
     },
 };
 use futures_util::future::try_join_all;
@@ -442,7 +442,7 @@ impl BenchShard for BenchMsgsPublish {
         let t = Instant::now();
         client
             .msgs()
-            .publish(PublishIn::new(msgs, topic.clone()))
+            .publish(MsgPublishIn::new(msgs, topic.clone()))
             .await?;
         Ok(t.elapsed())
     }
@@ -472,14 +472,14 @@ impl BenchShard for BenchMsgsStreamReceive {
 
         // Start of real code
         let t = Instant::now();
-        let mut recv = StreamReceiveIn::new(consumer_group.to_owned(), topic.clone());
+        let mut recv = MsgStreamReceiveIn::new(consumer_group.to_owned(), topic.clone());
         recv.batch_size = Some(self.batch_size);
         let out = client.msgs().stream().receive(recv).await?;
         for msg in out.msgs {
             client
                 .msgs()
                 .stream()
-                .commit(StreamCommitIn::new(
+                .commit(MsgStreamCommitIn::new(
                     consumer_group.to_owned(),
                     msg.offset,
                     msg.topic.clone(),
@@ -496,7 +496,7 @@ async fn bench_msgs(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result
     cfg.client
         .msgs()
         .namespace()
-        .create(CreateNamespaceIn::new(ns_name.to_string()))
+        .create(MsgNamespaceCreateIn::new(ns_name.to_string()))
         .await?;
 
     bench_shards_concurrent(

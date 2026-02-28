@@ -1,21 +1,21 @@
 // this file is @generated
 
 import {
-    type CreateNamespaceIn,
-    CreateNamespaceInSerializer,
-} from '../models/createNamespaceIn';
+    type MsgNamespaceCreateIn,
+    MsgNamespaceCreateInSerializer,
+} from '../models/msgNamespaceCreateIn';
 import {
-    type CreateNamespaceOut,
-    CreateNamespaceOutSerializer,
-} from '../models/createNamespaceOut';
+    type MsgNamespaceCreateOut,
+    MsgNamespaceCreateOutSerializer,
+} from '../models/msgNamespaceCreateOut';
 import {
-    type GetNamespaceIn,
-    GetNamespaceInSerializer,
-} from '../models/getNamespaceIn';
+    type MsgNamespaceGetIn,
+    MsgNamespaceGetInSerializer,
+} from '../models/msgNamespaceGetIn';
 import {
-    type GetNamespaceOut,
-    GetNamespaceOutSerializer,
-} from '../models/getNamespaceOut';
+    type MsgNamespaceGetOut,
+    MsgNamespaceGetOutSerializer,
+} from '../models/msgNamespaceGetOut';
 import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
 
 export class MsgsNamespace {
@@ -23,19 +23,19 @@ export class MsgsNamespace {
 
     /** Creates or updates a msgs namespace with the given name. */
         public create(
-            createNamespaceIn: CreateNamespaceIn,
-            ): Promise<CreateNamespaceOut> {
+            msgNamespaceCreateIn: MsgNamespaceCreateIn,
+            ): Promise<MsgNamespaceCreateOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/namespace/create");
 
             request.setBody(
-                    CreateNamespaceInSerializer._toJsonObject(
-                        createNamespaceIn,
+                    MsgNamespaceCreateInSerializer._toJsonObject(
+                        msgNamespaceCreateIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    CreateNamespaceOutSerializer._fromJsonObject,
+                    MsgNamespaceCreateOutSerializer._fromJsonObject,
                 );
             }
 
@@ -43,19 +43,19 @@ export class MsgsNamespace {
 
     /** Gets a msgs namespace by name. */
         public get(
-            getNamespaceIn: GetNamespaceIn,
-            ): Promise<GetNamespaceOut> {
+            msgNamespaceGetIn: MsgNamespaceGetIn,
+            ): Promise<MsgNamespaceGetOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/namespace/get");
 
             request.setBody(
-                    GetNamespaceInSerializer._toJsonObject(
-                        getNamespaceIn,
+                    MsgNamespaceGetInSerializer._toJsonObject(
+                        msgNamespaceGetIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    GetNamespaceOutSerializer._fromJsonObject,
+                    MsgNamespaceGetOutSerializer._fromJsonObject,
                 );
             }
 

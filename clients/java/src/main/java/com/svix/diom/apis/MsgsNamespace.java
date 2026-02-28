@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.diom.models.CreateNamespaceIn;
-import com.svix.diom.models.CreateNamespaceOut;
-import com.svix.diom.models.GetNamespaceIn;
-import com.svix.diom.models.GetNamespaceOut;
+import com.svix.diom.models.MsgNamespaceCreateIn;
+import com.svix.diom.models.MsgNamespaceCreateOut;
+import com.svix.diom.models.MsgNamespaceGetIn;
+import com.svix.diom.models.MsgNamespaceGetOut;
 
 public class MsgsNamespace {
     private final HttpClient client;
@@ -26,30 +26,30 @@ public class MsgsNamespace {
     }
 
     /** Creates or updates a msgs namespace with the given name. */
-    public CreateNamespaceOut create(
-        final CreateNamespaceIn createNamespaceIn
+    public MsgNamespaceCreateOut create(
+        final MsgNamespaceCreateIn msgNamespaceCreateIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/namespace/create");
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            createNamespaceIn,
-            CreateNamespaceOut.class
+            msgNamespaceCreateIn,
+            MsgNamespaceCreateOut.class
             );
     }
 
     /** Gets a msgs namespace by name. */
-    public GetNamespaceOut get(
-        final GetNamespaceIn getNamespaceIn
+    public MsgNamespaceGetOut get(
+        final MsgNamespaceGetIn msgNamespaceGetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/namespace/get");
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            getNamespaceIn,
-            GetNamespaceOut.class
+            msgNamespaceGetIn,
+            MsgNamespaceGetOut.class
             );
     }
 }

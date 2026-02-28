@@ -1,53 +1,53 @@
 // this file is @generated
 
 import {
-    type CreateNamespaceIn,
-    CreateNamespaceInSerializer,
-} from '../models/createNamespaceIn';
+    type MsgNamespaceCreateIn,
+    MsgNamespaceCreateInSerializer,
+} from '../models/msgNamespaceCreateIn';
 import {
-    type CreateNamespaceOut,
-    CreateNamespaceOutSerializer,
-} from '../models/createNamespaceOut';
+    type MsgNamespaceCreateOut,
+    MsgNamespaceCreateOutSerializer,
+} from '../models/msgNamespaceCreateOut';
 import {
-    type GetNamespaceIn,
-    GetNamespaceInSerializer,
-} from '../models/getNamespaceIn';
+    type MsgNamespaceGetIn,
+    MsgNamespaceGetInSerializer,
+} from '../models/msgNamespaceGetIn';
 import {
-    type GetNamespaceOut,
-    GetNamespaceOutSerializer,
-} from '../models/getNamespaceOut';
+    type MsgNamespaceGetOut,
+    MsgNamespaceGetOutSerializer,
+} from '../models/msgNamespaceGetOut';
 import {
-    type PublishIn,
-    PublishInSerializer,
-} from '../models/publishIn';
+    type MsgPublishIn,
+    MsgPublishInSerializer,
+} from '../models/msgPublishIn';
 import {
-    type PublishOut,
-    PublishOutSerializer,
-} from '../models/publishOut';
+    type MsgPublishOut,
+    MsgPublishOutSerializer,
+} from '../models/msgPublishOut';
 import {
-    type StreamCommitIn,
-    StreamCommitInSerializer,
-} from '../models/streamCommitIn';
+    type MsgStreamCommitIn,
+    MsgStreamCommitInSerializer,
+} from '../models/msgStreamCommitIn';
 import {
-    type StreamCommitOut,
-    StreamCommitOutSerializer,
-} from '../models/streamCommitOut';
+    type MsgStreamCommitOut,
+    MsgStreamCommitOutSerializer,
+} from '../models/msgStreamCommitOut';
 import {
-    type StreamReceiveIn,
-    StreamReceiveInSerializer,
-} from '../models/streamReceiveIn';
+    type MsgStreamReceiveIn,
+    MsgStreamReceiveInSerializer,
+} from '../models/msgStreamReceiveIn';
 import {
-    type StreamReceiveOut,
-    StreamReceiveOutSerializer,
-} from '../models/streamReceiveOut';
+    type MsgStreamReceiveOut,
+    MsgStreamReceiveOutSerializer,
+} from '../models/msgStreamReceiveOut';
 import {
-    type TopicConfigureIn,
-    TopicConfigureInSerializer,
-} from '../models/topicConfigureIn';
+    type MsgTopicConfigureIn,
+    MsgTopicConfigureInSerializer,
+} from '../models/msgTopicConfigureIn';
 import {
-    type TopicConfigureOut,
-    TopicConfigureOutSerializer,
-} from '../models/topicConfigureOut';
+    type MsgTopicConfigureOut,
+    MsgTopicConfigureOutSerializer,
+} from '../models/msgTopicConfigureOut';
 import { MsgsNamespace } from './msgsNamespace';
 import { MsgsStream } from './msgsStream';
 import { MsgsTopic } from './msgsTopic';
@@ -70,19 +70,19 @@ export class Msgs {
 
     /** Publishes messages to a topic within a namespace. */
         public publish(
-            publishIn: PublishIn,
-            ): Promise<PublishOut> {
+            msgPublishIn: MsgPublishIn,
+            ): Promise<MsgPublishOut> {
             const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/publish");
 
             request.setBody(
-                    PublishInSerializer._toJsonObject(
-                        publishIn,
+                    MsgPublishInSerializer._toJsonObject(
+                        msgPublishIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    PublishOutSerializer._fromJsonObject,
+                    MsgPublishOutSerializer._fromJsonObject,
                 );
             }
 

@@ -13,18 +13,18 @@ impl<'a> MsgsNamespace<'a> {
     /// Creates or updates a msgs namespace with the given name.
     pub async fn create(
         &self,
-        create_namespace_in: CreateNamespaceIn,
-    ) -> Result<CreateNamespaceOut> {
+        msg_namespace_create_in: MsgNamespaceCreateIn,
+    ) -> Result<MsgNamespaceCreateOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/namespace/create")
-            .with_body(create_namespace_in)
+            .with_body(msg_namespace_create_in)
             .execute(self.cfg)
             .await
     }
 
     /// Gets a msgs namespace by name.
-    pub async fn get(&self, get_namespace_in: GetNamespaceIn) -> Result<GetNamespaceOut> {
+    pub async fn get(&self, msg_namespace_get_in: MsgNamespaceGetIn) -> Result<MsgNamespaceGetOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/namespace/get")
-            .with_body(get_namespace_in)
+            .with_body(msg_namespace_get_in)
             .execute(self.cfg)
             .await
     }

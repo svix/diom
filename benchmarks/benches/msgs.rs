@@ -1,5 +1,7 @@
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use diom_client::models::{CreateNamespaceIn, MsgIn, PublishIn, StreamCommitIn, StreamReceiveIn};
+use diom_client::models::{
+    MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
+};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
@@ -21,7 +23,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
             client
                 .msgs()
                 .namespace()
-                .create(CreateNamespaceIn::new(ns.to_owned()))
+                .create(MsgNamespaceCreateIn::new(ns.to_owned()))
                 .await
                 .unwrap();
         });
@@ -51,7 +53,9 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                 |msgs| {
                     rt.block_on(async {
                         std::hint::black_box(
-                            client.msgs().publish(PublishIn::new(msgs, topic.clone())),
+                            client
+                                .msgs()
+                                .publish(MsgPublishIn::new(msgs, topic.clone())),
                         )
                         .await
                         .unwrap();
@@ -75,7 +79,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
             for _ in 0..100 {
                 client
                     .msgs()
-                    .publish(PublishIn::new(make_msg_batch(1000), topic.clone()))
+                    .publish(MsgPublishIn::new(make_msg_batch(1000), topic.clone()))
                     .await
                     .unwrap();
             }
@@ -86,7 +90,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
         group.bench_function("msgs_stream_receive_commit_batch_100", |b| {
             b.iter(|| {
                 rt.block_on(async {
-                    let mut input = StreamReceiveIn::new(consumer_group.clone(), topic.clone());
+                    let mut input = MsgStreamReceiveIn::new(consumer_group.clone(), topic.clone());
                     input.batch_size = Some(100);
                     let out =
                         std::hint::black_box(client.msgs().stream().receive(input).await.unwrap());
@@ -96,7 +100,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                         client
                             .msgs()
                             .stream()
-                            .commit(StreamCommitIn::new(
+                            .commit(MsgStreamCommitIn::new(
                                 consumer_group.clone(),
                                 last.offset,
                                 last.topic.clone(),

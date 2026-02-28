@@ -20,31 +20,31 @@ func NewMsgsNamespace(client *diom_proto.HttpClient) MsgsNamespace {
 // Creates or updates a msgs namespace with the given name.
 func (msgsNamespace MsgsNamespace) Create(
 	ctx context.Context,
-	createNamespaceIn diom_models.CreateNamespaceIn,
-) (*diom_models.CreateNamespaceOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.CreateNamespaceIn, diom_models.CreateNamespaceOut](
+	msgNamespaceCreateIn diom_models.MsgNamespaceCreateIn,
+) (*diom_models.MsgNamespaceCreateOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.MsgNamespaceCreateIn, diom_models.MsgNamespaceCreateOut](
 		ctx,
 		msgsNamespace.client,
 		"POST",
 		"/api/v1/msgs/namespace/create",
 		nil,
 		nil,
-		&createNamespaceIn,
+		&msgNamespaceCreateIn,
 	)
 }
 
 // Gets a msgs namespace by name.
 func (msgsNamespace MsgsNamespace) Get(
 	ctx context.Context,
-	getNamespaceIn diom_models.GetNamespaceIn,
-) (*diom_models.GetNamespaceOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.GetNamespaceIn, diom_models.GetNamespaceOut](
+	msgNamespaceGetIn diom_models.MsgNamespaceGetIn,
+) (*diom_models.MsgNamespaceGetOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.MsgNamespaceGetIn, diom_models.MsgNamespaceGetOut](
 		ctx,
 		msgsNamespace.client,
 		"POST",
 		"/api/v1/msgs/namespace/get",
 		nil,
 		nil,
-		&getNamespaceIn,
+		&msgNamespaceGetIn,
 	)
 }
