@@ -102,10 +102,19 @@ pub struct KvDeleteOut {
 /// KV Set
 #[aide_annotate(op_id = "v1.kv.set")]
 async fn kv_set(
+    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
 ) -> Result<MsgPackOrJson<KvSetOut>> {
     let key = data.key.0.clone();
+
+    // TODO: Presumably this should only need to happen in
+    // the consensus layer, but currently raft seems to
+    // break if an operation with a non-existent namespace is attempted,
+    // so do this here for now as a quick check that the namespace
+    // exists:
+    let _kv_store = state.get_kv_store_by_key(&key)?;
+
     let behavior = data.behavior.clone();
     let model = data.into_model();
 

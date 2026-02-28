@@ -46,6 +46,18 @@ async fn test_cache_set_and_get() -> TestResult {
     assert_eq!(response["value"], json!("test-value-123".as_bytes()));
     assert!(response["expiry"].is_string());
 
+    // set should fail if namespace doesn't exist:
+    client
+        .post("cache/set")
+        .json(json!({
+            "key": "nonexistentnamespace:key1",
+            "ttl": 1,
+            "value": "123".as_bytes(),
+            "behavior": "upsert",
+        }))
+        .await?
+        .ensure(StatusCode::NOT_FOUND)?;
+
     Ok(())
 }
 

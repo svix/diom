@@ -13,7 +13,7 @@ use std::{
 use aide::axum::ApiRouter;
 use axum::{Extension, middleware};
 use cfg::ConfigurationInner;
-use coyote_error::{Error, Result};
+use coyote_error::{Error, HttpError, Result};
 use coyote_kv::KvStore;
 use coyote_namespace::{
     BothDatabases,
@@ -188,8 +188,8 @@ impl AppState {
 
         let namespace = self
             .namespace_state
-            .fetch_namespace_with_default::<C>(ns_name.to_string())?
-            .ok_or_else(|| Error::generic(format!("namespace {ns_name} not found")))?;
+            .fetch_namespace::<C>(ns_name)?
+            .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
         let policy = namespace.config.eviction_policy();
         let kv_store = KvStore::new(

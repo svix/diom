@@ -1103,7 +1103,6 @@ dependencies = [
  "schemars 1.2.0",
  "serde",
  "stream-internals",
- "tracing",
  "uuid",
 ]
 
