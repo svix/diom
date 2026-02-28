@@ -185,12 +185,13 @@ impl BenchmarkArgs {
 // ── kv ────────────────────────────────────────────────────────────────────────
 
 #[derive(Clone)]
-struct TomBenchKvSetInstance {
+struct TomBenchKvSet {
     keys: Arc<Vec<String>>,
+    // FIXME: remove from here.
     iterations: u64,
 }
 
-impl TomBenchKvSetInstance {
+impl TomBenchKvSet {
     fn name(&self) -> &'static str {
         "kv.set"
     }
@@ -267,7 +268,7 @@ impl TomModuleKv {
 }
 
 struct ToBeDeleted {
-    instances: Arc<Vec<TomBenchKvSetInstance>>,
+    instances: Arc<Vec<TomBenchKvSet>>,
     concurrency: u64,
     iterations: u64,
 }
@@ -282,7 +283,7 @@ impl ToBeDeleted {
         Self {
             instances: Arc::new(
                 (0..concurrency)
-                    .map(|_| TomBenchKvSetInstance::setup(&mut rng, iterations))
+                    .map(|_| TomBenchKvSet::setup(&mut rng, iterations))
                     .collect(),
             ),
             concurrency,
@@ -290,7 +291,7 @@ impl ToBeDeleted {
         }
     }
 
-    fn get_test(&self, index: u64) -> TomBenchKvSetInstance {
+    fn get_test(&self, index: u64) -> TomBenchKvSet {
         self.instances.get(index as usize).unwrap().clone()
     }
 
