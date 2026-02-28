@@ -185,7 +185,14 @@ impl BenchmarkArgs {
 // ── kv ────────────────────────────────────────────────────────────────────────
 
 trait BenchModule {
-    async fn bench_shards_concurrent(&self, client: Arc<CoyoteClient>, test_name: &str, all_instances: Vec<impl BenchShard>, iterations: u64, all_stats: &mut Vec<Stats>) -> Result<()> {
+    async fn bench_shards_concurrent(
+        &self,
+        client: Arc<CoyoteClient>,
+        test_name: &str,
+        all_instances: Vec<impl BenchShard>,
+        iterations: u64,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
         let concurrency = all_instances.len() as u64;
 
         let pb = new_bar(test_name.to_string(), iterations);
@@ -204,7 +211,7 @@ trait BenchModule {
             total_time_ms += res.total_time.as_millis() as u64;
         }
         // Get the average time per run
-        total_time_ms = total_time_ms / concurrency;
+        total_time_ms /= concurrency;
 
         all_stats.push(hist_compute_stats(
             test_name,
@@ -222,11 +229,10 @@ trait BenchShard {
 
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration>;
 
-    async fn bench_shard(
-        self: Self,
-        client: Arc<CoyoteClient>,
-        pb: ProgressBar,
-    ) -> Result<BenchResult> where Self: Sized {
+    async fn bench_shard(self, client: Arc<CoyoteClient>, pb: ProgressBar) -> Result<BenchResult>
+    where
+        Self: Sized,
+    {
         let mut hist = BenchHistogram::new(3)?;
         let mut total_time = Duration::from_secs(0);
         let mut rng = StdRng::seed_from_u64(0);
@@ -248,9 +254,7 @@ struct TomBenchKvSet {
 
 impl TomBenchKvSet {
     fn setup(keys: Arc<Vec<String>>) -> Self {
-        Self {
-            keys,
-        }
+        Self { keys }
     }
 }
 
@@ -278,9 +282,7 @@ struct TomBenchKvGet {
 
 impl TomBenchKvGet {
     fn setup(keys: Arc<Vec<String>>) -> Self {
-        Self {
-            keys,
-        }
+        Self { keys }
     }
 }
 
@@ -335,11 +337,12 @@ impl TomModuleKv {
             all_kv_get.push(TomBenchKvGet::setup(keys.clone()));
         }
 
-        self.bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats).await?;
-        self.bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats).await?;
+        self.bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats)
+            .await?;
+        self.bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats)
+            .await?;
         Ok(())
     }
 }
 
-impl BenchModule for TomModuleKv {
-}
+impl BenchModule for TomModuleKv {}
