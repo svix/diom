@@ -190,11 +190,7 @@ struct TomBenchKvSet {
 }
 
 impl TomBenchKvSet {
-    fn name(&self) -> &'static str {
-        "kv.set"
-    }
-
-    fn setup(keys: Arc<Vec<String>>, iterations: u64) -> Self {
+    fn setup(keys: Arc<Vec<String>>) -> Self {
         Self {
             keys,
         }
@@ -265,8 +261,8 @@ impl TomModuleKv {
                     .map(|_| Alphanumeric.sample_string(&mut rng, 16))
                     .collect(),
             );
-            all_kv_set.push(TomBenchKvSet::setup(keys.clone(), iterations));
-            all_kv_get.push(TomBenchKvSet::setup(keys.clone(), iterations));
+            all_kv_set.push(TomBenchKvSet::setup(keys.clone()));
+            all_kv_get.push(TomBenchKvSet::setup(keys.clone()));
         }
 
         self.bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, all_stats).await?;
