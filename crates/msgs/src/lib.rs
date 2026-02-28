@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
-use fjall::KeyspaceCreateOptions;
+use fjall::{KeyspaceCreateOptions, compaction::Fifo};
 use fjall_utils::{ReadableDatabase, ReadableKeyspace};
 
 pub mod entities;
@@ -26,7 +28,12 @@ impl State {
         };
 
         let msg_table = {
-            let opts = KeyspaceCreateOptions::default().expect_point_read_hits(true);
+            let opts = KeyspaceCreateOptions::default()
+                .expect_point_read_hits(true)
+                .compaction_strategy(Arc::new(Fifo {
+                    limit: u64::MAX,
+                    ttl_seconds: None,
+                }));
             db.keyspace(MSG_TABLE_KEYSPACE, || opts)?
         };
 
