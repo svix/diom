@@ -10,7 +10,7 @@ use coyote_client::{
         StreamCommitIn, StreamReceiveIn,
     },
 };
-use futures::future::try_join_all;
+use futures_util::future::try_join_all;
 use hdrhistogram::Histogram;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::{
