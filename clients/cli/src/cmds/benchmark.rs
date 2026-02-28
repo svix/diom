@@ -158,7 +158,7 @@ impl BenchmarkArgs {
             match module {
                 BenchmarkModule::Kv => {
                     eprintln!("[kv]");
-                    let module = TomModule::setup(concurrency, iterations);
+                    let module = TomBenchKvSet::setup(concurrency, iterations);
                     module
                         .bench(Arc::clone(&client), &mut all_stats)
                         .await?;
@@ -306,14 +306,22 @@ struct BenchResult {
 }
 
 struct TomModule {
-    instances: Arc<Vec<BenchSetKvInstance>>,
     concurrency: u64,
     iterations: u64,
 }
 
 impl TomModule {
+}
+
+struct TomBenchKvSet {
+    instances: Arc<Vec<BenchSetKvInstance>>,
+    concurrency: u64,
+    iterations: u64,
+}
+
+impl TomBenchKvSet {
     fn name(&self) -> &'static str {
-        "kv"
+        "kv.set"
     }
 
     fn setup(concurrency: u64, iterations: u64) -> Self {
@@ -362,9 +370,8 @@ impl TomModule {
     ) -> Result<()> {
         let iterations = self.iterations;
         let concurrency = self.concurrency;
-        let test = BenchKvSet::new();
 
-        let pb = new_bar(test.name().to_string(), iterations);
+        let pb = new_bar(self.name().to_string(), iterations);
         let handles = (0..concurrency).map(|shard_id| {
             let client = Arc::clone(&client);
             let pb = pb.clone();
@@ -383,7 +390,7 @@ impl TomModule {
         total_time_ms = total_time_ms / concurrency;
 
         all_stats.push(hist_compute_stats(
-            test.name(),
+            self.name(),
             combined,
             total_time_ms,
             iterations * concurrency,
