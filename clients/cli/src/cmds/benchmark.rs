@@ -751,13 +751,13 @@ impl BenchShard for BenchMsgsStreamReceive {
             .unzip();
         BenchResult::finalize_result_stats(
             Arc::clone(&cfg),
-            rcv_results.into_iter(),
+            rcv_results,
             format!("{} - receive", self.test_name()),
             all_stats,
         )?;
         BenchResult::finalize_result_stats(
             Arc::clone(&cfg),
-            commit_results.into_iter(),
+            commit_results,
             format!("{} - commit", self.test_name()),
             all_stats,
         )?;
