@@ -518,7 +518,7 @@ async fn bench_msgs(
 
     bench_shards_concurrent(
         client.clone(),
-        "msgs.publish (topic=1)",
+        "msgs.publish (batch=1)",
         all_cache_set,
         iterations,
         all_stats,
@@ -527,7 +527,7 @@ async fn bench_msgs(
     // bench_shards_concurrent(client.clone(), "msgs.publish (topic=500)", all_cache_set, iterations, all_stats).await?;
     bench_shards_concurrent(
         client.clone(),
-        "msgs.stream.receive (topic=1, batch=1)",
+        "msgs.stream.receive (batch=1)",
         all_cache_get,
         iterations,
         all_stats,
