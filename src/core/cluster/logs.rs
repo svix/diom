@@ -263,7 +263,11 @@ impl DiomLogs {
     pub fn new(path: Dir, fsync_mode: FsyncMode) -> anyhow::Result<Self> {
         let pb: std::path::PathBuf = path.into();
         let db = Database::builder(&pb).worker_threads(1).open()?;
-        let log_keyspace = db.keyspace("cluster:logs", KeyspaceCreateOptions::default)?;
+        let log_keyspace = db.keyspace("cluster:logs", || {
+            KeyspaceCreateOptions::default()
+                .manual_journal_persist(true)
+                .expect_point_read_hits(true)
+        })?;
         let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
         let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(1000);
         if fsync_mode == FsyncMode::EveryCommit {
@@ -354,7 +358,7 @@ impl DiomLogs {
     /// Truncate logs since log_id, inclusive
     async fn truncate_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
         let log_keyspace = self.log_keyspace.clone();
-        let mut tx = self.db.batch().durability(Some(PersistMode::SyncAll));
+        let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
             for key in Log::keys_in_range(&log_keyspace, log_id.index..)? {
                 tx.remove(&log_keyspace, key);
@@ -369,7 +373,7 @@ impl DiomLogs {
     async fn purge_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
         let meta_keyspace = self.meta_keyspace.clone();
         let log_keyspace = self.log_keyspace.clone();
-        let mut tx = self.db.batch().durability(Some(PersistMode::SyncAll));
+        let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
         tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
             for key in Log::keys_in_range(&log_keyspace, ..=log_id.index)? {
                 tx.remove(&log_keyspace, key);
