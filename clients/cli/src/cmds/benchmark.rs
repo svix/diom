@@ -139,7 +139,11 @@ impl BenchmarkArgs {
         let concurrency = self.concurrency;
 
         let modules = if self.modules.is_empty() {
-            vec![BenchmarkModule::Kv, BenchmarkModule::Cache, BenchmarkModule::Msgs]
+            vec![
+                BenchmarkModule::Kv,
+                BenchmarkModule::Cache,
+                BenchmarkModule::Msgs,
+            ]
         } else {
             self.modules
         };
@@ -154,8 +158,10 @@ impl BenchmarkArgs {
             match module {
                 BenchmarkModule::Kv => {
                     eprintln!("[kv]");
-                    let module = TomModule::new();
-                    module.bench(Arc::clone(&client), iterations, concurrency, &mut all_stats).await?;
+                    let module = TomModule::setup(concurrency, iterations);
+                    module
+                        .bench(Arc::clone(&client), &mut all_stats)
+                        .await?;
                 }
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
@@ -199,7 +205,11 @@ impl BenchSetKv {
     fn setup(concurrency: u64, iterations: u64) -> Self {
         let mut rng = StdRng::seed_from_u64(0);
         Self {
-            instances: Arc::new((0..concurrency).map(|_| BenchSetKvInstance::setup(&mut rng, iterations)).collect())
+            instances: Arc::new(
+                (0..concurrency)
+                    .map(|_| BenchSetKvInstance::setup(&mut rng, iterations))
+                    .collect(),
+            ),
         }
     }
 
@@ -220,7 +230,11 @@ impl BenchSetKvInstance {
 
     fn setup(rng: &mut StdRng, iterations: u64) -> Self {
         Self {
-            keys: Arc::new((0..iterations).map(|_| Alphanumeric.sample_string(rng, 16)).collect())
+            keys: Arc::new(
+                (0..iterations)
+                    .map(|_| Alphanumeric.sample_string(rng, 16))
+                    .collect(),
+            ),
         }
     }
 
@@ -237,12 +251,11 @@ impl BenchSetKvInstance {
 }
 
 #[derive(Clone)]
-struct BenchKvSet {
-}
+struct BenchKvSet {}
 
 impl BenchKvSet {
     fn new() -> Self {
-        Self { }
+        Self {}
     }
 }
 
@@ -287,63 +300,81 @@ impl BenchmarkTest for BenchKvGet {
     }
 }
 
-
-
 struct BenchResult {
     hist: BenchHistogram,
     total_time: Duration,
 }
 
-
 struct TomModule {
+    instances: Arc<Vec<BenchSetKvInstance>>,
+    concurrency: u64,
+    iterations: u64,
 }
 
 impl TomModule {
-    fn new() -> Self {
-        Self {}
-    }
-
     fn name(&self) -> &'static str {
         "kv"
     }
 
-    async fn bench_concurrent() {
+    fn setup(concurrency: u64, iterations: u64) -> Self {
+        let mut rng = StdRng::seed_from_u64(0);
+        Self {
+            instances: Arc::new(
+                (0..concurrency)
+                    .map(|_| BenchSetKvInstance::setup(&mut rng, iterations))
+                    .collect(),
+            ),
+            concurrency,
+            iterations,
+        }
     }
 
+    fn get_test(&self, index: u64) -> BenchSetKvInstance {
+        self.instances.get(index as usize).unwrap().clone()
+    }
+
+    /// Runs the benchmark of one shard (shard is the unit of concurrency)
+    async fn bench_shard(
+        &self,
+        client: Arc<CoyoteClient>,
+        concurrency_i: u64,
+        pb: ProgressBar,
+    ) -> Result<BenchResult> {
+        let mut hist = BenchHistogram::new(3)?;
+        let mut total_time = Duration::from_secs(0);
+        let mut rng = StdRng::seed_from_u64(concurrency_i);
+        let test = self.get_test(concurrency_i);
+
+        for i in 0..self.iterations {
+            let t = test.run(&client, &mut rng, i).await?;
+            hist.record(t.as_micros() as u64)?;
+            total_time += t;
+            pb.set_position(i);
+        }
+        Ok(BenchResult { hist, total_time })
+    }
+
+    /// Runs the full benchmark for the module
     async fn bench(
         &self,
         client: Arc<CoyoteClient>,
-        iterations: u64,
-        concurrency: u64,
         all_stats: &mut Vec<Stats>,
     ) -> Result<()> {
+        let iterations = self.iterations;
+        let concurrency = self.concurrency;
         let test = BenchKvSet::new();
-        let test_set = BenchSetKv::setup(concurrency, iterations);
 
         let pb = new_bar(test.name().to_string(), iterations);
-        let handles = (0..concurrency).map(|concurrency_i| {
+        let handles = (0..concurrency).map(|shard_id| {
             let client = Arc::clone(&client);
-            let mut rng = StdRng::seed_from_u64(concurrency_i);
-            let test = test_set.get_test(concurrency_i);
             let pb = pb.clone();
-            async move {
-                let mut hist = BenchHistogram::new(3)?;
-                let mut total_time = Duration::from_secs(0);
-                for i in 0..iterations {
-                    let t = test.run(&client, &mut rng, i).await?;
-                    hist.record(t.as_micros() as u64)?;
-                    total_time += t;
-                    pb.set_position(i);
-                }
-                Ok::<BenchResult, anyhow::Error>(BenchResult { hist, total_time })
-            }
+            self.bench_shard(client, shard_id, pb)
         });
+        pb.finish();
 
         let mut combined = BenchHistogram::new(3).unwrap();
         let mut total_time_ms = 0;
-        let joined_handles = try_join_all(handles)
-            .await?
-            .into_iter();
+        let joined_handles = try_join_all(handles).await?.into_iter();
         for res in joined_handles {
             combined.add(res.hist)?;
             total_time_ms += res.total_time.as_millis() as u64;
@@ -351,7 +382,6 @@ impl TomModule {
         // Get the average time per run
         total_time_ms = total_time_ms / concurrency;
 
-        pb.finish();
         all_stats.push(hist_compute_stats(
             test.name(),
             combined,
