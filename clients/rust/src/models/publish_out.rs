@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::publish_out_msg::PublishOutMsg;
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PublishOut {
     pub msgs: Vec<PublishOutMsg>,

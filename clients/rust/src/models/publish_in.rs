@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::msg_in::MsgIn;
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PublishIn {
     pub msgs: Vec<MsgIn>,
