@@ -433,9 +433,9 @@ impl BenchMsgsPublish {
 }
 
 impl BenchShard for BenchMsgsPublish {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _shard_id: u64, _iteration: u64) -> Result<Duration> {
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, _iteration: u64) -> Result<Duration> {
         let ns_name = "bench";
-        let topic = "bench/topic";
+        let topic = format!("bench/topic/{shard_id}");
         let mut payload = vec![0u8; 256];
         rng.fill(&mut payload[..]);
 
@@ -463,10 +463,10 @@ impl BenchMsgsStreamReceive {
 }
 
 impl BenchShard for BenchMsgsStreamReceive {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _shard_id: u64, _iteration: u64) -> Result<Duration> {
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, _iteration: u64) -> Result<Duration> {
         let consumer_group = "consumer";
         let ns_name = "bench";
-        let topic = "bench/topic";
+        let topic = format!("bench/topic/{shard_id}");
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
