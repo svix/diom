@@ -334,6 +334,10 @@ impl LeaseRow {
             }
         }
 
+        if to_delete.is_empty() && acked_leases.is_empty() && dlq_leases.is_empty() {
+            return LeaseDiff::default();
+        }
+
         Self::compact_adjacent(acked_leases, &mut to_delete, &mut to_insert);
         Self::compact_adjacent(dlq_leases, &mut to_delete, &mut to_insert);
 
