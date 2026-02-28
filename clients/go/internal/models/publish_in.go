@@ -4,6 +4,5 @@ package diom_models
 
 type PublishIn struct {
 	Msgs  []MsgIn `json:"msgs"`
-	Name  string  `json:"name"`
 	Topic string  `json:"topic"`
 }

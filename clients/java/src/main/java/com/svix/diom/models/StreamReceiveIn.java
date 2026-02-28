@@ -31,7 +31,6 @@ public class StreamReceiveIn {
 @JsonProperty("batch_size") private Short batchSize;
 @JsonProperty("consumer_group") private String consumerGroup;
 @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
-@JsonProperty private String name;
 @JsonProperty private String topic;
 public StreamReceiveIn () {}
 
@@ -90,25 +89,6 @@ public StreamReceiveIn () {}
 
      public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
-    }
-
-     public StreamReceiveIn name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-     public String getName() {
-        return name;
-    }
-
-     public void setName(String name) {
-        this.name = name;
     }
 
      public StreamReceiveIn topic(String topic) {

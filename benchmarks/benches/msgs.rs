@@ -42,7 +42,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
 
     {
         let ns_name = "bench-publish";
-        let topic = "bench-topic";
+        let topic = format!("{ns_name}:bench-topic");
         make_test_namespace(ns_name);
 
         group.bench_function("msgs_publish_batch_100", |b| {
@@ -50,11 +50,9 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                 || make_msg_batch(100),
                 |msgs| {
                     rt.block_on(async {
-                        std::hint::black_box(client.msgs().publish(PublishIn::new(
-                            msgs,
-                            ns_name.to_owned(),
-                            topic.to_owned(),
-                        )))
+                        std::hint::black_box(
+                            client.msgs().publish(PublishIn::new(msgs, topic.clone())),
+                        )
                         .await
                         .unwrap();
                     })
@@ -69,7 +67,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
     // any issues with long msgs streams to show up.
     {
         let ns_name = "bench-publish";
-        let topic = "bench-topic";
+        let topic = format!("{ns_name}:bench-topic");
         make_test_namespace(ns_name);
 
         // Start with 100_000 messages
@@ -77,11 +75,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
             for _ in 0..100 {
                 client
                     .msgs()
-                    .publish(PublishIn::new(
-                        make_msg_batch(1000),
-                        ns_name.to_owned(),
-                        topic.to_owned(),
-                    ))
+                    .publish(PublishIn::new(make_msg_batch(1000), topic.clone()))
                     .await
                     .unwrap();
             }
@@ -92,22 +86,18 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
         group.bench_function("msgs_stream_receive_commit_batch_100", |b| {
             b.iter(|| {
                 rt.block_on(async {
-                    let mut input = StreamReceiveIn::new(
-                        consumer_group.clone(),
-                        ns_name.to_owned(),
-                        topic.to_owned(),
-                    );
+                    let mut input = StreamReceiveIn::new(consumer_group.clone(), topic.clone());
                     input.batch_size = Some(100);
                     let out =
                         std::hint::black_box(client.msgs().stream().receive(input).await.unwrap());
                     let last = out.msgs.last().unwrap();
+                    // Response topic already includes namespace, pass directly to commit
                     std::hint::black_box(
                         client
                             .msgs()
                             .stream()
                             .commit(StreamCommitIn::new(
                                 consumer_group.clone(),
-                                ns_name.to_owned(),
                                 last.offset,
                                 last.topic.clone(),
                             ))

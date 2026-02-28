@@ -105,7 +105,6 @@ async fn get_namespace(
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct PublishIn {
-    pub name: String,
     pub topic: TopicIn,
     pub msgs: Vec<diom_msgs::entities::MsgIn>,
 }
@@ -130,7 +129,7 @@ async fn publish(
 ) -> Result<MsgPackOrJson<PublishOut>> {
     let namespace = state
         .namespace_state
-        .fetch_stream_namespace(&data.name)?
+        .fetch_stream_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let ro_db = state.ro_dbs.db_for(namespace.storage_type);
@@ -163,7 +162,6 @@ fn default_lease_duration_millis() -> u64 {
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct StreamReceiveIn {
-    pub name: String,
     pub topic: TopicIn,
     pub consumer_group: diom_msgs::entities::ConsumerGroup,
     #[serde(default = "default_batch_size")]
@@ -189,7 +187,7 @@ async fn stream_receive(
 ) -> Result<MsgPackOrJson<StreamReceiveOut>> {
     let namespace = state
         .namespace_state
-        .fetch_stream_namespace(&data.name)?
+        .fetch_stream_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let ro_db = state.ro_dbs.db_for(namespace.storage_type);
@@ -224,7 +222,6 @@ async fn stream_receive(
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct StreamCommitIn {
-    pub name: String,
     pub topic: Topic,
     pub consumer_group: diom_msgs::entities::ConsumerGroup,
     pub offset: u64,
@@ -235,7 +232,7 @@ struct StreamCommitOut {}
 
 /// Commits an offset for a consumer group on a specific partition.
 ///
-/// The topic must be a partition-level topic (e.g. `my-topic~3`). The offset is the last
+/// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
 /// successfully processed offset; future receives will start after it.
 #[aide_annotate(op_id = "v1.msgs.stream.commit")]
 async fn stream_commit(
@@ -245,7 +242,7 @@ async fn stream_commit(
 ) -> Result<MsgPackOrJson<StreamCommitOut>> {
     let namespace = state
         .namespace_state
-        .fetch_stream_namespace(&data.name)?
+        .fetch_stream_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = diom_msgs::operations::StreamCommitOperation::new(
@@ -265,7 +262,6 @@ async fn stream_commit(
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct TopicConfigureIn {
-    pub name: String,
     pub topic: RawTopic,
     pub partitions: u16,
 }
@@ -295,7 +291,7 @@ async fn topic_configure(
 
     let namespace = state
         .namespace_state
-        .fetch_stream_namespace(&data.name)?
+        .fetch_stream_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = diom_msgs::operations::TopicConfigureOperation::new(

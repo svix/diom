@@ -7,13 +7,11 @@ use super::msg_in::MsgIn;
 pub struct PublishIn {
     pub msgs: Vec<MsgIn>,
 
-    pub name: String,
-
     pub topic: String,
 }
 
 impl PublishIn {
-    pub fn new(msgs: Vec<MsgIn>, name: String, topic: String) -> Self {
-        Self { msgs, name, topic }
+    pub fn new(msgs: Vec<MsgIn>, topic: String) -> Self {
+        Self { msgs, topic }
     }
 }

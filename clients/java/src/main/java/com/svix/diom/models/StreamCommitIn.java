@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class StreamCommitIn {
 @JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty private String name;
 @JsonProperty private Long offset;
 @JsonProperty private String topic;
 public StreamCommitIn () {}
@@ -51,25 +50,6 @@ public StreamCommitIn () {}
 
      public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
-    }
-
-     public StreamCommitIn name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-     public String getName() {
-        return name;
-    }
-
-     public void setName(String name) {
-        this.name = name;
     }
 
      public StreamCommitIn offset(Long offset) {
