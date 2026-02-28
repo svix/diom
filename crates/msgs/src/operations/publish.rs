@@ -11,7 +11,7 @@ use crate::{
     entities::{
         MsgIn, Offset, Partition, RawTopic, Topic, TopicIn, partition_for_key, random_partition,
     },
-    tables::{MsgRow, msg_row_key},
+    tables::{MsgRow, NextWriteOffsetRow, msg_row_key},
 };
 
 use super::{MsgsRaftState, MsgsRequest, PublishResponse};
@@ -83,6 +83,7 @@ impl PublishOperation {
 
         for (partition, msgs) in by_partition {
             let start_offset = MsgRow::next_offset(state, self.namespace_id, partition)?;
+            let msg_count = msgs.len();
 
             for (i, (original_idx, msg)) in msgs.into_iter().enumerate() {
                 let offset = start_offset + i as Offset;
@@ -101,6 +102,15 @@ impl PublishOperation {
                     },
                 ));
             }
+
+            let next_offset = start_offset + msg_count as Offset;
+            NextWriteOffsetRow::store(
+                &mut batch,
+                state,
+                self.namespace_id,
+                partition,
+                next_offset,
+            )?;
         }
 
         batch.commit().map_err(coyote_error::Error::from)?;

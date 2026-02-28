@@ -72,6 +72,15 @@ impl MsgRow {
         ns_id: NamespaceId,
         partition: Partition,
     ) -> Result<Offset> {
+        NextWriteOffsetRow::fetch_or_scan(state, ns_id, partition)
+    }
+
+    /// Fallback: compute next offset via reverse range scan of msg_table.
+    fn next_offset_from_scan(
+        state: &State,
+        ns_id: NamespaceId,
+        partition: Partition,
+    ) -> Result<Offset> {
         match Self::max_offset(state, ns_id, partition)? {
             None => Ok(Offset::MIN),
             Some(id) => Ok(id + 1),
@@ -606,9 +615,59 @@ pub(crate) fn topic_partition_count(state: &State, ns_id: NamespaceId, topic: &s
     }
 }
 
+// ---------------------------------------------------------------------------
+// NextWriteOffsetRow — tracks the next write offset per (namespace, partition)
+// Eliminates the reverse range scan in max_offset() on every publish.
+// ---------------------------------------------------------------------------
+
+const NEXT_WRITE_OFFSET_PREFIX: &[u8] = b"_MSGNEXTOFF_\0";
+
+fn next_write_offset_key(ns_id: NamespaceId, partition: Partition) -> Vec<u8> {
+    let mut key = Vec::with_capacity(NEXT_WRITE_OFFSET_PREFIX.len() + 16 + 2);
+    key.extend_from_slice(NEXT_WRITE_OFFSET_PREFIX);
+    key.extend_from_slice(&ns_id.as_u128().to_be_bytes());
+    key.extend_from_slice(&partition.get().to_be_bytes());
+    key
+}
+
+pub(crate) struct NextWriteOffsetRow;
+
+impl NextWriteOffsetRow {
+    /// Fetch the cached next-write offset, or fall back to a reverse range scan.
+    pub(crate) fn fetch_or_scan(
+        state: &State,
+        ns_id: NamespaceId,
+        partition: Partition,
+    ) -> Result<Offset> {
+        let key = next_write_offset_key(ns_id, partition);
+        match state.metadata_tables.get(&key)? {
+            Some(val) => {
+                let offset: Offset = rmp_serde::from_slice(&val).map_err(Error::generic)?;
+                Ok(offset)
+            }
+            None => MsgRow::next_offset_from_scan(state, ns_id, partition),
+        }
+    }
+
+    pub(crate) fn store(
+        batch: &mut OwnedWriteBatch,
+        state: &State,
+        ns_id: NamespaceId,
+        partition: Partition,
+        offset: Offset,
+    ) -> Result<()> {
+        let key = next_write_offset_key(ns_id, partition);
+        let val: Vec<u8> = rmp_serde::to_vec(&offset).map_err(Error::generic)?;
+        let val: fjall::UserValue = val.into();
+        batch.insert(&state.metadata_tables, key, val);
+        Ok(())
+    }
+}
+
 // Compile-time check that table prefixes used in the metadata keyspace are unique.
 static_assertions::const_assert!(fjall_utils::are_all_unique(&[
     LeaseRow::TABLE_PREFIX,
     "_MSGOFFSET_",
     "_MSGTOPICCONF_",
+    "_MSGNEXTOFF_",
 ]));
