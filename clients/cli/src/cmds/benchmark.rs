@@ -7,6 +7,7 @@ use coyote_client::{
     CoyoteClient,
     models::{KvGetIn, KvSetIn},
 };
+use futures::future::try_join_all;
 use hdrhistogram::Histogram;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::{
@@ -153,7 +154,8 @@ impl BenchmarkArgs {
             match module {
                 BenchmarkModule::Kv => {
                     eprintln!("[kv]");
-                    bench_kv(Arc::clone(&client), iterations, concurrency, &mut all_stats).await?;
+                    let module = TomModule::new();
+                    module.bench(Arc::clone(&client), iterations, concurrency, &mut all_stats).await?;
                 }
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
@@ -186,7 +188,24 @@ trait BenchmarkTest {
 
 #[derive(Clone)]
 struct BenchSetKv {
-    instances: Arc<Vec<String>>,
+    instances: Arc<Vec<BenchSetKvInstance>>,
+}
+
+impl BenchSetKv {
+    fn module(&self) -> &'static str {
+        "kv"
+    }
+
+    fn setup(concurrency: u64, iterations: u64) -> Self {
+        let mut rng = StdRng::seed_from_u64(0);
+        Self {
+            instances: Arc::new((0..concurrency).map(|_| BenchSetKvInstance::setup(&mut rng, iterations)).collect())
+        }
+    }
+
+    fn get_test(&self, index: u64) -> BenchSetKvInstance {
+        self.instances.get(index as usize).unwrap().clone()
+    }
 }
 
 #[derive(Clone)]
@@ -195,11 +214,25 @@ struct BenchSetKvInstance {
 }
 
 impl BenchSetKvInstance {
+    fn name(&self) -> &'static str {
+        "kv.set"
+    }
 
     fn setup(rng: &mut StdRng, iterations: u64) -> Self {
         Self {
             keys: Arc::new((0..iterations).map(|_| Alphanumeric.sample_string(rng, 16)).collect())
         }
+    }
+
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
+        let key = self.keys.get(i as usize).unwrap();
+        let mut value = vec![0u8; 256];
+        rng.fill(&mut value[..]);
+
+        // Start of real code
+        let t = quanta::Instant::now();
+        client.kv().set(KvSetIn::new(key.clone(), value)).await?;
+        Ok(t.elapsed())
     }
 }
 
@@ -254,56 +287,78 @@ impl BenchmarkTest for BenchKvGet {
     }
 }
 
+
+
 struct BenchResult {
     hist: BenchHistogram,
     total_time: Duration,
 }
 
-async fn bench_kv(
-    client: Arc<CoyoteClient>,
-    iterations: u64,
-    concurrency: u64,
-    all_stats: &mut Vec<Stats>,
-) -> Result<()> {
-    let test = BenchKvSet::new();
 
-    let mut join_set = tokio::task::JoinSet::new();
-    let pb = new_bar(test.name().to_string(), iterations);
-    for concurrency_i in 0..concurrency {
-        let client = Arc::clone(&client);
-        let test = test.clone();
-        let pb = pb.clone();
-        join_set.spawn(async move {
-            let mut hist = BenchHistogram::new(3)?;
+struct TomModule {
+}
+
+impl TomModule {
+    fn new() -> Self {
+        Self {}
+    }
+
+    fn name(&self) -> &'static str {
+        "kv"
+    }
+
+    async fn bench_concurrent() {
+    }
+
+    async fn bench(
+        &self,
+        client: Arc<CoyoteClient>,
+        iterations: u64,
+        concurrency: u64,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        let test = BenchKvSet::new();
+        let test_set = BenchSetKv::setup(concurrency, iterations);
+
+        let pb = new_bar(test.name().to_string(), iterations);
+        let handles = (0..concurrency).map(|concurrency_i| {
+            let client = Arc::clone(&client);
             let mut rng = StdRng::seed_from_u64(concurrency_i);
-            let mut total_time = Duration::from_secs(0);
-            for i in 0..iterations {
-                let t = test.run(&client, &mut rng).await?;
-                hist.record(t.as_micros() as u64).unwrap();
-                total_time += t;
-                pb.set_position(i);
+            let test = test_set.get_test(concurrency_i);
+            let pb = pb.clone();
+            async move {
+                let mut hist = BenchHistogram::new(3)?;
+                let mut total_time = Duration::from_secs(0);
+                for i in 0..iterations {
+                    let t = test.run(&client, &mut rng, i).await?;
+                    hist.record(t.as_micros() as u64)?;
+                    total_time += t;
+                    pb.set_position(i);
+                }
+                Ok::<BenchResult, anyhow::Error>(BenchResult { hist, total_time })
             }
-            Ok::<BenchResult, anyhow::Error>(BenchResult { hist, total_time })
         });
+
+        let mut combined = BenchHistogram::new(3).unwrap();
+        let mut total_time_ms = 0;
+        let joined_handles = try_join_all(handles)
+            .await?
+            .into_iter();
+        for res in joined_handles {
+            combined.add(res.hist)?;
+            total_time_ms += res.total_time.as_millis() as u64;
+        }
+        // Get the average time per run
+        total_time_ms = total_time_ms / concurrency;
+
+        pb.finish();
+        all_stats.push(hist_compute_stats(
+            test.name(),
+            combined,
+            total_time_ms,
+            iterations * concurrency,
+        ));
+
+        Ok(())
     }
-
-    let mut combined = BenchHistogram::new(3).unwrap();
-    let mut total_time_ms = 0;
-    for handle in join_set.join_all().await {
-        let res = handle?;
-        combined.add(res.hist)?;
-        total_time_ms += res.total_time.as_millis() as u64;
-    }
-    // Get the average time per run
-    total_time_ms = total_time_ms / concurrency;
-
-    pb.finish();
-    all_stats.push(hist_compute_stats(
-        test.name(),
-        combined,
-        total_time_ms,
-        iterations * concurrency,
-    ));
-
-    Ok(())
 }
