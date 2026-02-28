@@ -28,7 +28,6 @@ config.workspace = true
 coyote-client.workspace = true
 dirs.workspace = true
 futures = "0.3.32"
-governor = "0.7"
 hdrhistogram = "7.5.4"
 idna_adapter.workspace = true
 indicatif = "0.17"
