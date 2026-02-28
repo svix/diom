@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -91,7 +92,6 @@ impl BenchmarkArgs {
                 client: Arc::clone(&client),
                 concurrency,
                 iterations,
-                batch_size: self.batch_size,
             });
 
             match module {
@@ -202,90 +202,133 @@ fn new_bar(prefix: impl Into<String>, iterations: u64) -> ProgressBar {
 
 // Benchmark helpers
 
-async fn bench_shards_concurrent(
-    cfg: Arc<BenchConfig>,
-    bench: impl BenchShard + Clone,
-    all_stats: &mut Vec<Stats>,
-) -> Result<()> {
-    let concurrency = cfg.concurrency;
-    let iterations = cfg.iterations;
-    let test_name = bench.name();
-    let pb = new_bar(test_name.to_string(), iterations);
-    let barrier = Arc::new(Barrier::new(concurrency as usize));
-    let handles = (0..concurrency).map(|shard_id| {
-        let pb = pb.clone();
-        bench
-            .clone()
-            .bench_shard(Arc::clone(&cfg), Arc::clone(&barrier), pb, shard_id)
-    });
-
-    let mut combined = BenchHistogram::new(3).unwrap();
-    let mut total_time_ms = 0;
-    let joined_handles = try_join_all(handles).await?.into_iter();
-    pb.finish();
-    for res in joined_handles {
-        combined.add(res.hist)?;
-        total_time_ms += res.total_time.as_millis() as u64;
-    }
-    // Get the average time per run
-    total_time_ms /= concurrency;
-
-    all_stats.push(hist_compute_stats(
-        test_name,
-        combined,
-        total_time_ms,
-        iterations * concurrency,
-    ));
-
-    Ok(())
-}
-
 struct BenchConfig {
     client: Arc<DiomClient>,
     concurrency: u64,
     iterations: u64,
-    batch_size: u16,
 }
 
+#[derive(Clone)]
 struct BenchResult {
     hist: BenchHistogram,
     total_time: Duration,
+    batch_size: u16,
+}
+
+impl BenchResult {
+    fn new() -> Self {
+        Self {
+            hist: BenchHistogram::new(3).expect("can never fail"),
+            total_time: Duration::from_secs(0),
+            batch_size: 1,
+        }
+    }
+
+    fn set_batch_size(mut self, batch_size: u16) -> Self {
+        self.batch_size = batch_size;
+        self
+    }
+
+    fn process(&mut self, t: Duration) -> Result<()> {
+        self.hist.record(t.as_micros() as u64)?;
+        self.total_time += t;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        op: impl Into<String>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        let mut combined = BenchHistogram::new(3).unwrap();
+        let mut total_time_ms = 0;
+        let mut batch_size = 0;
+        for res in results {
+            combined.add(&res.hist)?;
+            total_time_ms += res.total_time.as_millis() as u64;
+            batch_size = res.batch_size;
+        }
+        // Get the average time per run
+        total_time_ms /= cfg.concurrency;
+
+        all_stats.push(hist_compute_stats(
+            op,
+            combined,
+            total_time_ms,
+            cfg.iterations * cfg.concurrency * (batch_size as u64),
+        ));
+
+        Ok(())
+    }
 }
 
 trait BenchShard {
-    fn name(&self) -> String;
+    fn test_name(&self) -> String;
 
     async fn run(
-        &self,
+        &mut self,
         client: &DiomClient,
         rng: &mut StdRng,
         shard_id: u64,
         iteration: u64,
-    ) -> Result<Duration>;
+    ) -> Result<()>;
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()>;
 
     async fn bench_shard(
-        self,
+        mut self,
         cfg: Arc<BenchConfig>,
         barrier: Arc<Barrier>,
         pb: ProgressBar,
         shard_id: u64,
-    ) -> Result<BenchResult>
+    ) -> Result<Self>
     where
         Self: Sized,
     {
-        let mut hist = BenchHistogram::new(3)?;
-        let mut total_time = Duration::from_secs(0);
         let mut rng = StdRng::seed_from_u64(0);
 
         barrier.wait().await;
 
         for iteration in 0..cfg.iterations {
-            let t = self.run(&cfg.client, &mut rng, shard_id, iteration).await?;
-            hist.record(t.as_micros() as u64)?;
-            total_time += t;
+            self.run(&cfg.client, &mut rng, shard_id, iteration).await?;
             pb.set_position(iteration);
         }
-        Ok(BenchResult { hist, total_time })
+        Ok(self)
+    }
+
+    async fn bench_shards_concurrent(
+        &self,
+        cfg: Arc<BenchConfig>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()>
+    where
+        Self: Sized + Clone,
+    {
+        let concurrency = cfg.concurrency;
+        let iterations = cfg.iterations;
+        let test_name = self.test_name();
+        let pb = new_bar(test_name.to_string(), iterations);
+        let barrier = Arc::new(Barrier::new(concurrency as usize));
+        let handles = (0..concurrency).map(|shard_id| {
+            let pb = pb.clone();
+            self.clone()
+                .bench_shard(Arc::clone(&cfg), Arc::clone(&barrier), pb, shard_id)
+        });
+
+        let joined_handles = try_join_all(handles).await?.into_iter();
+        pb.finish();
+        self.finalize_result_stats(Arc::clone(&cfg), joined_handles, all_stats)?;
+
+        // Sleep for 1 second between tests to give the server time to catch up.
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        Ok(())
     }
 }
 
@@ -298,20 +341,30 @@ fn bench_generate_key(shard_id: u64, iteration: u64) -> String {
 // KV module
 
 #[derive(Clone)]
-struct BenchKvSet {}
+struct BenchKvSet {
+    bench_result: BenchResult,
+}
+
+impl BenchKvSet {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
 
 impl BenchShard for BenchKvSet {
-    fn name(&self) -> String {
+    fn test_name(&self) -> String {
         "kv.set".to_owned()
     }
 
     async fn run(
-        &self,
+        &mut self,
         client: &DiomClient,
         rng: &mut StdRng,
         shard_id: u64,
         iteration: u64,
-    ) -> Result<Duration> {
+    ) -> Result<()> {
         let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
@@ -319,25 +372,50 @@ impl BenchShard for BenchKvSet {
         // Start of real code
         let t = Instant::now();
         client.kv().set(KvSetIn::new(key.clone(), value)).await?;
-        Ok(t.elapsed())
+        self.bench_result.process(t.elapsed())?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
     }
 }
 
 #[derive(Clone)]
-struct BenchKvGet {}
+struct BenchKvGet {
+    bench_result: BenchResult,
+}
+
+impl BenchKvGet {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
 
 impl BenchShard for BenchKvGet {
-    fn name(&self) -> String {
+    fn test_name(&self) -> String {
         "kv.get".to_owned()
     }
 
     async fn run(
-        &self,
+        &mut self,
         client: &DiomClient,
         rng: &mut StdRng,
         shard_id: u64,
         iteration: u64,
-    ) -> Result<Duration> {
+    ) -> Result<()> {
         let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
@@ -345,33 +423,62 @@ impl BenchShard for BenchKvGet {
         // Start of real code
         let t = Instant::now();
         client.kv().get(KvGetIn::new(key.clone())).await?;
-        Ok(t.elapsed())
+        self.bench_result.process(t.elapsed())?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
     }
 }
 
 async fn bench_kv(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
-    bench_shards_concurrent(Arc::clone(&cfg), BenchKvSet {}, all_stats).await?;
-    bench_shards_concurrent(Arc::clone(&cfg), BenchKvGet {}, all_stats).await?;
+    BenchKvSet::new()
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
+    BenchKvGet::new()
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
     Ok(())
 }
 
 // Cache module
 
 #[derive(Clone)]
-struct BenchCacheSet {}
+struct BenchCacheSet {
+    bench_result: BenchResult,
+}
+
+impl BenchCacheSet {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
 
 impl BenchShard for BenchCacheSet {
-    fn name(&self) -> String {
+    fn test_name(&self) -> String {
         "cache.set".to_owned()
     }
 
     async fn run(
-        &self,
+        &mut self,
         client: &DiomClient,
         rng: &mut StdRng,
         shard_id: u64,
         iteration: u64,
-    ) -> Result<Duration> {
+    ) -> Result<()> {
         let ttl_bench_ms = 300_000; // 5 minutes
         let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
@@ -383,25 +490,50 @@ impl BenchShard for BenchCacheSet {
             .cache()
             .set(CacheSetIn::new(key.clone(), ttl_bench_ms, value))
             .await?;
-        Ok(t.elapsed())
+        self.bench_result.process(t.elapsed())?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
     }
 }
 
 #[derive(Clone)]
-struct BenchCacheGet {}
+struct BenchCacheGet {
+    bench_result: BenchResult,
+}
+
+impl BenchCacheGet {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
 
 impl BenchShard for BenchCacheGet {
-    fn name(&self) -> String {
+    fn test_name(&self) -> String {
         "cache.get".to_owned()
     }
 
     async fn run(
-        &self,
+        &mut self,
         client: &DiomClient,
         rng: &mut StdRng,
         shard_id: u64,
         iteration: u64,
-    ) -> Result<Duration> {
+    ) -> Result<()> {
         let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
@@ -409,13 +541,32 @@ impl BenchShard for BenchCacheGet {
         // Start of real code
         let t = Instant::now();
         client.cache().get(CacheGetIn::new(key.clone())).await?;
-        Ok(t.elapsed())
+        self.bench_result.process(t.elapsed())?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
     }
 }
 
 async fn bench_cache(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
-    bench_shards_concurrent(Arc::clone(&cfg), BenchCacheSet {}, all_stats).await?;
-    bench_shards_concurrent(Arc::clone(&cfg), BenchCacheGet {}, all_stats).await?;
+    BenchCacheSet::new()
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
+    BenchCacheGet::new()
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
     Ok(())
 }
 
@@ -423,21 +574,31 @@ async fn bench_cache(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Resul
 
 #[derive(Clone)]
 struct BenchMsgsPublish {
+    bench_result: BenchResult,
     batch_size: u16,
 }
 
+impl BenchMsgsPublish {
+    fn new(batch_size: u16) -> Self {
+        Self {
+            bench_result: BenchResult::new().set_batch_size(batch_size),
+            batch_size,
+        }
+    }
+}
+
 impl BenchShard for BenchMsgsPublish {
-    fn name(&self) -> String {
+    fn test_name(&self) -> String {
         format!("publish (batch={})", self.batch_size)
     }
 
     async fn run(
-        &self,
+        &mut self,
         client: &DiomClient,
         rng: &mut StdRng,
         shard_id: u64,
         _iteration: u64,
-    ) -> Result<Duration> {
+    ) -> Result<()> {
         let topic = format!("bench:bench/topic/{shard_id}");
         let msgs: Vec<_> = (0..self.batch_size)
             .map(|_| {
@@ -453,27 +614,54 @@ impl BenchShard for BenchMsgsPublish {
             .msgs()
             .publish(MsgPublishIn::new(msgs, topic.clone()))
             .await?;
-        Ok(t.elapsed())
+        self.bench_result.process(t.elapsed())?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
     }
 }
 
 #[derive(Clone)]
 struct BenchMsgsStreamReceive {
+    bench_result_rcv: BenchResult,
+    bench_result_commit: BenchResult,
     batch_size: u16,
 }
 
+impl BenchMsgsStreamReceive {
+    fn new(batch_size: u16) -> Self {
+        Self {
+            bench_result_rcv: BenchResult::new().set_batch_size(batch_size),
+            bench_result_commit: BenchResult::new().set_batch_size(batch_size),
+            batch_size,
+        }
+    }
+}
+
 impl BenchShard for BenchMsgsStreamReceive {
-    fn name(&self) -> String {
+    fn test_name(&self) -> String {
         format!("receive (batch={})", self.batch_size)
     }
 
     async fn run(
-        &self,
+        &mut self,
         client: &DiomClient,
         rng: &mut StdRng,
         shard_id: u64,
         _iteration: u64,
-    ) -> Result<Duration> {
+    ) -> Result<()> {
         let consumer_group = "consumer";
         let topic = format!("bench:bench/topic/{shard_id}");
         let mut value = vec![0u8; 256];
@@ -484,18 +672,55 @@ impl BenchShard for BenchMsgsStreamReceive {
         let mut recv = MsgStreamReceiveIn::new(consumer_group.to_owned(), topic.clone());
         recv.batch_size = Some(self.batch_size);
         let out = client.msgs().stream().receive(recv).await?;
-        for msg in out.msgs {
+        self.bench_result_rcv.process(t.elapsed())?;
+
+        let latest_by_topic = out.msgs.into_iter().fold(HashMap::new(), |mut map, msg| {
+            map.entry(msg.topic)
+                .and_modify(|offset: &mut u64| *offset = (*offset).max(msg.offset))
+                .or_insert(msg.offset);
+            map
+        });
+
+        let t = Instant::now();
+        for (topic, offset) in latest_by_topic {
             client
                 .msgs()
                 .stream()
                 .commit(MsgStreamCommitIn::new(
                     consumer_group.to_owned(),
-                    msg.offset,
-                    msg.topic.clone(),
+                    offset,
+                    topic,
                 ))
                 .await?;
         }
-        Ok(t.elapsed())
+        self.bench_result_commit.process(t.elapsed())?;
+
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        let (rcv_results, commit_results): (Vec<_>, Vec<_>) = results
+            .into_iter()
+            .map(|x| (x.bench_result_rcv, x.bench_result_commit))
+            .unzip();
+        BenchResult::finalize_result_stats(
+            Arc::clone(&cfg),
+            rcv_results.into_iter(),
+            format!("{} - receive", self.test_name()),
+            all_stats,
+        )?;
+        BenchResult::finalize_result_stats(
+            Arc::clone(&cfg),
+            commit_results.into_iter(),
+            format!("{} - commit", self.test_name()),
+            all_stats,
+        )?;
+        Ok(())
     }
 }
 
@@ -508,21 +733,18 @@ async fn bench_msgs(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result
         .create(MsgNamespaceCreateIn::new(ns_name.to_string()))
         .await?;
 
-    bench_shards_concurrent(
-        Arc::clone(&cfg),
-        BenchMsgsPublish {
-            batch_size: cfg.batch_size,
-        },
-        all_stats,
-    )
-    .await?;
-    bench_shards_concurrent(
-        Arc::clone(&cfg),
-        BenchMsgsStreamReceive {
-            batch_size: cfg.batch_size,
-        },
-        all_stats,
-    )
-    .await?;
+    BenchMsgsPublish::new(1)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
+    BenchMsgsStreamReceive::new(1)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
+
+    BenchMsgsPublish::new(10)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
+    BenchMsgsStreamReceive::new(10)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .await?;
     Ok(())
 }
