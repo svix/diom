@@ -164,7 +164,7 @@ impl BenchmarkArgs {
             }
         }
 
-        eprintln!();
+        eprintln!("\n");
 
         if self.json {
             println!("{}", serde_json::to_string_pretty(&all_stats)?);
