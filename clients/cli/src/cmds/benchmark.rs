@@ -159,7 +159,7 @@ impl BenchmarkArgs {
                 BenchmarkModule::Kv => {
                     eprintln!("[kv]");
                     let module = TomModuleKv::setup(concurrency, iterations);
-                    module.bench(Arc::clone(&client), &mut all_stats).await?;
+                    module.bench(Arc::clone(&client), &mut all_stats, ).await?;
                 }
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
@@ -184,44 +184,41 @@ impl BenchmarkArgs {
 
 // ── kv ────────────────────────────────────────────────────────────────────────
 
-trait BenchModule {
-    async fn bench_shards_concurrent(
-        &self,
-        client: Arc<CoyoteClient>,
-        test_name: &str,
-        all_instances: Vec<impl BenchShard>,
-        iterations: u64,
-        all_stats: &mut Vec<Stats>,
-    ) -> Result<()> {
-        let concurrency = all_instances.len() as u64;
+async fn bench_shards_concurrent(
+    client: Arc<CoyoteClient>,
+    test_name: &str,
+    all_instances: Vec<impl BenchShard>,
+    iterations: u64,
+    all_stats: &mut Vec<Stats>,
+) -> Result<()> {
+    let concurrency = all_instances.len() as u64;
 
-        let pb = new_bar(test_name.to_string(), iterations);
-        let handles = all_instances.into_iter().map(|test| {
-            let client = Arc::clone(&client);
-            let pb = pb.clone();
-            test.bench_shard(client, pb)
-        });
+    let pb = new_bar(test_name.to_string(), iterations);
+    let handles = all_instances.into_iter().map(|test| {
+        let client = Arc::clone(&client);
+        let pb = pb.clone();
+        test.bench_shard(client, pb)
+    });
 
-        let mut combined = BenchHistogram::new(3).unwrap();
-        let mut total_time_ms = 0;
-        let joined_handles = try_join_all(handles).await?.into_iter();
-        pb.finish();
-        for res in joined_handles {
-            combined.add(res.hist)?;
-            total_time_ms += res.total_time.as_millis() as u64;
-        }
-        // Get the average time per run
-        total_time_ms /= concurrency;
-
-        all_stats.push(hist_compute_stats(
-            test_name,
-            combined,
-            total_time_ms,
-            iterations * concurrency,
-        ));
-
-        Ok(())
+    let mut combined = BenchHistogram::new(3).unwrap();
+    let mut total_time_ms = 0;
+    let joined_handles = try_join_all(handles).await?.into_iter();
+    pb.finish();
+    for res in joined_handles {
+        combined.add(res.hist)?;
+        total_time_ms += res.total_time.as_millis() as u64;
     }
+    // Get the average time per run
+    total_time_ms /= concurrency;
+
+    all_stats.push(hist_compute_stats(
+        test_name,
+        combined,
+        total_time_ms,
+        iterations * concurrency,
+    ));
+
+    Ok(())
 }
 
 trait BenchShard {
@@ -337,12 +334,10 @@ impl TomModuleKv {
             all_kv_get.push(TomBenchKvGet::setup(keys.clone()));
         }
 
-        self.bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats)
+        bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats)
             .await?;
-        self.bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats)
+        bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats)
             .await?;
         Ok(())
     }
 }
-
-impl BenchModule for TomModuleKv {}
