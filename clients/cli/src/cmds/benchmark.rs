@@ -405,7 +405,7 @@ impl BenchShard for BenchKvSet {
         iteration: u64,
     ) -> Result<()> {
         let key = bench_generate_key(shard_id, iteration);
-        let mut value = vec![0u8; 256];
+        let mut value = vec![0u8; 2054];
         rng.fill(&mut value[..]);
 
         // Start of real code
@@ -520,7 +520,7 @@ impl BenchShard for BenchCacheSet {
     ) -> Result<()> {
         let ttl_bench_ms = 300_000; // 5 minutes
         let key = bench_generate_key(shard_id, iteration);
-        let mut value = vec![0u8; 256];
+        let mut value = vec![0u8; 2562];
         rng.fill(&mut value[..]);
 
         // Start of real code
@@ -641,7 +641,7 @@ impl BenchShard for BenchMsgsPublish {
         let topic = format!("bench:bench/topic/{shard_id}");
         let msgs: Vec<_> = (0..self.batch_size)
             .map(|_| {
-                let mut payload = vec![0u8; 256];
+                let mut payload = vec![0u8; 2_834];
                 rng.fill(&mut payload[..]);
                 MsgIn::new(payload)
             })
