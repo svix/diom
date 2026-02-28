@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::MAX_PARTITION_COUNT,
+    entities::{MAX_PARTITION_COUNT, RawTopic},
     tables::{TopicConfig, TopicConfigRow, topic_partition_count},
 };
 
@@ -12,12 +12,12 @@ use super::{MsgsRaftState, MsgsRequest, TopicConfigureResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TopicConfigureOperation {
     namespace_id: NamespaceId,
-    topic: String,
+    topic: RawTopic,
     partitions: u16,
 }
 
 impl TopicConfigureOperation {
-    pub fn new(namespace_id: NamespaceId, topic: String, partitions: u16) -> Self {
+    pub fn new(namespace_id: NamespaceId, topic: RawTopic, partitions: u16) -> Self {
         Self {
             namespace_id,
             topic,

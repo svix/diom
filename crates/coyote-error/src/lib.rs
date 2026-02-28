@@ -49,6 +49,19 @@ impl Error {
     }
 
     #[track_caller]
+    pub fn invalid_user_input(s: impl fmt::Display) -> Self {
+        // We'll probably change _how_ invalid user input is displayed later on,
+        // but having a universal error function to capture user errors is ideal
+        Self::new(ErrorType::Http(HttpError {
+            status: StatusCode::BAD_REQUEST,
+            body: HttpErrorBody::Standard(StandardHttpError {
+                code: "invalid_input".to_owned(),
+                detail: s.to_string(),
+            }),
+        }))
+    }
+
+    #[track_caller]
     pub fn validation(s: impl fmt::Display) -> Self {
         Self::new(ErrorType::Validation(s.to_string()))
     }

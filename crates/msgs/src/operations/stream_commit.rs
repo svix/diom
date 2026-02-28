@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Offset, PartitionIndex},
+    entities::{ConsumerGroup, Offset, Partition},
     tables::{LeaseDiff, LeaseRow, OffsetRow},
 };
 
@@ -13,7 +13,7 @@ use super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamCommitOperation {
     namespace_id: NamespaceId,
-    partition: PartitionIndex,
+    partition: Partition,
     cg: ConsumerGroup,
     offset: Offset,
     now: Timestamp,
@@ -22,7 +22,7 @@ pub struct StreamCommitOperation {
 impl StreamCommitOperation {
     pub fn new(
         namespace_id: NamespaceId,
-        partition: PartitionIndex,
+        partition: Partition,
         cg: ConsumerGroup,
         offset: Offset,
     ) -> Self {

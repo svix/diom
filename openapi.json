@@ -1447,11 +1447,8 @@
       "PublishOutMsg": {
         "type": "object",
         "properties": {
-          "partition": {
-            "type": "integer",
-            "format": "uint16",
-            "minimum": 0,
-            "maximum": 65535
+          "topic": {
+            "type": "string"
           },
           "offset": {
             "type": "integer",
@@ -1460,7 +1457,7 @@
           }
         },
         "required": [
-          "partition",
+          "topic",
           "offset"
         ]
       },
