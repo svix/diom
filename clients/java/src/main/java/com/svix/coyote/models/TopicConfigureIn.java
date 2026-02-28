@@ -28,31 +28,11 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class TopicConfigureIn {
-@JsonProperty private String name;
 @JsonProperty private Short partitions;
 @JsonProperty private String topic;
 public TopicConfigureIn () {}
 
- public TopicConfigureIn name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-     public String getName() {
-        return name;
-    }
-
-     public void setName(String name) {
-        this.name = name;
-    }
-
-     public TopicConfigureIn partitions(Short partitions) {
+ public TopicConfigureIn partitions(Short partitions) {
         this.partitions = partitions;
         return this;
     }

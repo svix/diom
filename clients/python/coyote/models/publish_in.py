@@ -9,6 +9,4 @@ from .msg_in import MsgIn
 class PublishIn(BaseModel):
     msgs: t.List[MsgIn]
 
-    name: str
-
     topic: str
