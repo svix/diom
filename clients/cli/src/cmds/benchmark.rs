@@ -67,12 +67,12 @@ struct Stats {
 fn hist_compute_stats(
     op: impl Into<String>,
     hist: BenchHistogram,
-    total_time: Duration,
+    total_time_ms: u64,
     operations: u64,
 ) -> Stats {
     Stats {
         op: op.into(),
-        ops_per_sec: (operations * 1_000) / total_time.as_millis() as u64,
+        ops_per_sec: (operations * 1_000) / total_time_ms,
         mean_us: hist.mean() as u64,
         std_dev_us: hist.stdev() as u64,
         p50_us: hist.value_at_quantile(0.50),
@@ -185,11 +185,31 @@ trait BenchmarkTest {
 }
 
 #[derive(Clone)]
-struct BenchKvSet {}
+struct BenchSetKv {
+    instances: Arc<Vec<String>>,
+}
+
+#[derive(Clone)]
+struct BenchSetKvInstance {
+    keys: Arc<Vec<String>>,
+}
+
+impl BenchSetKvInstance {
+
+    fn setup(rng: &mut StdRng, iterations: u64) -> Self {
+        Self {
+            keys: Arc::new((0..iterations).map(|_| Alphanumeric.sample_string(rng, 16)).collect())
+        }
+    }
+}
+
+#[derive(Clone)]
+struct BenchKvSet {
+}
 
 impl BenchKvSet {
     fn new() -> Self {
-        Self {}
+        Self { }
     }
 }
 
@@ -268,18 +288,18 @@ async fn bench_kv(
     }
 
     let mut combined = BenchHistogram::new(3).unwrap();
-    let mut total_time = Duration::from_secs(0);
+    let mut total_time_ms = 0;
     for handle in join_set.join_all().await {
         let res = handle?;
         combined.add(res.hist)?;
-        // FIXME: currently just taking the last, should probably be smarter about it.
-        total_time = res.total_time;
+        total_time_ms += res.total_time.as_millis() as u64;
     }
     pb.finish();
     all_stats.push(hist_compute_stats(
         test.name(),
         combined,
-        total_time,
+        // Get the average time per run
+        total_time_ms / concurrency,
         iterations * concurrency,
     ));
 
