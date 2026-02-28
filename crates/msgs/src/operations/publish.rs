@@ -41,13 +41,20 @@ impl PublishOperation {
     }
 
     fn apply_real(self, state: &State) -> diom_operations::Result<PublishResponseData> {
+        let partition_count =
+            crate::tables::topic_partition_count(state, self.namespace_id, &self.topic)?;
+
+        // Clamp the pre-chosen keyless partition to the topic's actual count.
+        let keyless_partition = PartitionIndex::new(self.keyless_partition.get() % partition_count)
+            .expect("clamped value is always in range");
+
         let mut by_partition: BTreeMap<PartitionIndex, Vec<(usize, MsgIn)>> = BTreeMap::new();
 
         for (idx, msg) in self.msgs.into_iter().enumerate() {
             let partition = if let Some(key) = &msg.key {
-                partition_for_key(key.as_bytes())
+                partition_for_key(key.as_bytes(), partition_count)
             } else {
-                self.keyless_partition
+                keyless_partition
             };
 
             by_partition.entry(partition).or_default().push((idx, msg));

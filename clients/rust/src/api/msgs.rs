@@ -1,5 +1,5 @@
 // this file is @generated
-use super::{MsgsNamespace, MsgsStream};
+use super::{MsgsNamespace, MsgsStream, MsgsTopic};
 use crate::{Configuration, error::Result, models::*};
 
 pub struct Msgs<'a> {
@@ -17,6 +17,10 @@ impl<'a> Msgs<'a> {
 
     pub fn stream(&self) -> MsgsStream<'a> {
         MsgsStream::new(self.cfg)
+    }
+
+    pub fn topic(&self) -> MsgsTopic<'a> {
+        MsgsTopic::new(self.cfg)
     }
 
     /// Publishes messages to a topic within a namespace.

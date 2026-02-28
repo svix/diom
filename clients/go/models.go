@@ -50,4 +50,6 @@ type (
 	StreamMsgOut                 = diom_models.StreamMsgOut
 	StreamReceiveIn              = diom_models.StreamReceiveIn
 	StreamReceiveOut             = diom_models.StreamReceiveOut
+	TopicConfigureIn             = diom_models.TopicConfigureIn
+	TopicConfigureOut            = diom_models.TopicConfigureOut
 )

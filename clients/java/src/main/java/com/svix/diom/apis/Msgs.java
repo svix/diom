@@ -24,6 +24,8 @@ import com.svix.diom.models.StreamCommitIn;
 import com.svix.diom.models.StreamCommitOut;
 import com.svix.diom.models.StreamReceiveIn;
 import com.svix.diom.models.StreamReceiveOut;
+import com.svix.diom.models.TopicConfigureIn;
+import com.svix.diom.models.TopicConfigureOut;
 
 public class Msgs {
     private final HttpClient client;
