@@ -51,88 +51,6 @@ pub struct BenchmarkArgs {
     pub modules: Vec<BenchmarkModule>,
 }
 
-// ── Statistics ────────────────────────────────────────────────────────────────
-
-#[derive(Debug, Serialize)]
-struct Stats {
-    op: String,
-    ops_per_sec: u64,
-    mean_us: u64,
-    std_dev_us: u64,
-    p50_us: u64,
-    p99_us: u64,
-    p999_us: u64,
-    max_us: u64,
-}
-
-fn hist_compute_stats(
-    op: impl Into<String>,
-    hist: BenchHistogram,
-    total_time_ms: u64,
-    operations: u64,
-) -> Stats {
-    Stats {
-        op: op.into(),
-        ops_per_sec: (operations * 1_000) / total_time_ms,
-        mean_us: hist.mean() as u64,
-        std_dev_us: hist.stdev() as u64,
-        p50_us: hist.value_at_quantile(0.50),
-        p99_us: hist.value_at_quantile(0.99),
-        p999_us: hist.value_at_quantile(0.999),
-        max_us: hist.max(),
-    }
-}
-
-// ── Formatting helpers ────────────────────────────────────────────────────────
-
-fn fmt_us(us: u64) -> String {
-    if us >= 1_000_000 {
-        format!("{:.2}s", us as f64 / 1_000_000.0)
-    } else if us >= 1_000 {
-        format!("{:.2}ms", us as f64 / 1_000.0)
-    } else {
-        format!("{:.2}µs", us)
-    }
-}
-
-fn print_table(all_stats: &[Stats]) {
-    let mut table = Table::new();
-    table
-        .load_preset(UTF8_FULL_CONDENSED)
-        .apply_modifier(UTF8_ROUND_CORNERS)
-        .set_header(vec![
-            "op", "ops/sec", "mean", "±", "p50", "p99", "p99.9", "max",
-        ]);
-    for s in all_stats {
-        table.add_row(vec![
-            s.op.clone(),
-            format!("{:.0}", s.ops_per_sec),
-            fmt_us(s.mean_us),
-            fmt_us(s.std_dev_us),
-            fmt_us(s.p50_us),
-            fmt_us(s.p99_us),
-            fmt_us(s.p999_us),
-            fmt_us(s.max_us),
-        ]);
-    }
-    println!("{table}");
-}
-
-// ── Progress bar helpers ──────────────────────────────────────────────────────
-
-fn new_bar(prefix: impl Into<String>, iterations: u64) -> ProgressBar {
-    let pb = ProgressBar::new(iterations);
-    pb.set_style(
-        ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] {prefix:.bold} [{bar:40.cyan/blue}] {pos:>7}/{len:7} {msg}")
-            .unwrap()
-            .progress_chars("#>-"),
-    );
-    pb.set_prefix(prefix.into());
-    pb
-}
-
-// ── Entry point ───────────────────────────────────────────────────────────────
-
 impl BenchmarkArgs {
     pub async fn exec(self, client: Arc<CoyoteClient>) -> Result<()> {
         let iterations = self.iterations;
@@ -179,6 +97,84 @@ impl BenchmarkArgs {
 
         Ok(())
     }
+}
+
+// Statistics
+
+#[derive(Debug, Serialize)]
+struct Stats {
+    op: String,
+    ops_per_sec: u64,
+    mean_us: u64,
+    std_dev_us: u64,
+    p50_us: u64,
+    p99_us: u64,
+    p999_us: u64,
+    max_us: u64,
+}
+
+fn hist_compute_stats(
+    op: impl Into<String>,
+    hist: BenchHistogram,
+    total_time_ms: u64,
+    operations: u64,
+) -> Stats {
+    Stats {
+        op: op.into(),
+        ops_per_sec: (operations * 1_000) / total_time_ms,
+        mean_us: hist.mean() as u64,
+        std_dev_us: hist.stdev() as u64,
+        p50_us: hist.value_at_quantile(0.50),
+        p99_us: hist.value_at_quantile(0.99),
+        p999_us: hist.value_at_quantile(0.999),
+        max_us: hist.max(),
+    }
+}
+
+// Formatting helpers
+
+fn fmt_us(us: u64) -> String {
+    if us >= 1_000_000 {
+        format!("{:.2}s", us as f64 / 1_000_000.0)
+    } else if us >= 1_000 {
+        format!("{:.2}ms", us as f64 / 1_000.0)
+    } else {
+        format!("{:.2}µs", us)
+    }
+}
+
+fn print_table(all_stats: &[Stats]) {
+    let mut table = Table::new();
+    table
+        .load_preset(UTF8_FULL_CONDENSED)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_header(vec![
+            "op", "ops/sec", "mean", "±", "p50", "p99", "p99.9", "max",
+        ]);
+    for s in all_stats {
+        table.add_row(vec![
+            s.op.clone(),
+            format!("{:.0}", s.ops_per_sec),
+            fmt_us(s.mean_us),
+            fmt_us(s.std_dev_us),
+            fmt_us(s.p50_us),
+            fmt_us(s.p99_us),
+            fmt_us(s.p999_us),
+            fmt_us(s.max_us),
+        ]);
+    }
+    println!("{table}");
+}
+
+fn new_bar(prefix: impl Into<String>, iterations: u64) -> ProgressBar {
+    let pb = ProgressBar::new(iterations);
+    pb.set_style(
+        ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] {prefix:.bold} [{bar:40.cyan/blue}] {pos:>7}/{len:7} {msg}")
+            .unwrap()
+            .progress_chars("#>-"),
+    );
+    pb.set_prefix(prefix.into());
+    pb
 }
 
 // Benchmark helpers
