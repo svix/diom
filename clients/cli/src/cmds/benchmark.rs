@@ -22,6 +22,7 @@ use rand::{
     rngs::StdRng,
 };
 use serde::Serialize;
+use tokio::sync::Barrier;
 
 // TODO(238): Idempotency/Rate-limit does not currently work in SDK
 
@@ -198,10 +199,13 @@ async fn bench_shards_concurrent(
 ) -> Result<()> {
     let test_name = bench.name();
     let pb = new_bar(test_name.to_string(), iterations);
+    let barrier = Arc::new(Barrier::new(concurrency as usize));
     let handles = (0..concurrency).map(|shard_id| {
         let client = Arc::clone(&client);
         let pb = pb.clone();
-        bench.clone().bench_shard(client, iterations, pb, shard_id)
+        bench
+            .clone()
+            .bench_shard(client, Arc::clone(&barrier), iterations, pb, shard_id)
     });
 
     let mut combined = BenchHistogram::new(3).unwrap();
@@ -244,6 +248,7 @@ trait BenchShard {
     async fn bench_shard(
         self,
         client: Arc<CoyoteClient>,
+        barrier: Arc<Barrier>,
         iterations: u64,
         pb: ProgressBar,
         shard_id: u64,
@@ -254,6 +259,8 @@ trait BenchShard {
         let mut hist = BenchHistogram::new(3)?;
         let mut total_time = Duration::from_secs(0);
         let mut rng = StdRng::seed_from_u64(0);
+
+        barrier.wait().await;
 
         for iteration in 0..iterations {
             let t = self.run(&client, &mut rng, shard_id, iteration).await?;
