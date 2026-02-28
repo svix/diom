@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::stream_msg_out::StreamMsgOut;
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StreamReceiveOut {
     pub msgs: Vec<StreamMsgOut>,

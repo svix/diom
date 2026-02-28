@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::{retention::Retention, storage_type::StorageType};
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CreateNamespaceIn {
     pub name: String,

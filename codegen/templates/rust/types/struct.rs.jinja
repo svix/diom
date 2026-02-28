@@ -11,7 +11,6 @@ use super::{
 };
 
 {{ doc_comment }}
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct {{ type.name | to_upper_camel_case }} {
     {% include "types/struct_fields.rs.jinja" -%}

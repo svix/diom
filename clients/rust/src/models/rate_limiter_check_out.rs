@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::rate_limit_status::RateLimitStatus;
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RateLimiterCheckOut {
     /// Number of tokens remaining

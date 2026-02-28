@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::storage_type::StorageType;
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KvGetNamespaceOut {
     pub created_at: jiff::Timestamp,

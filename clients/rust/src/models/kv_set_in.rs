@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::operation_behavior::OperationBehavior;
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KvSetIn {
     #[serde(skip_serializing_if = "Option::is_none")]
