@@ -739,6 +739,43 @@
           }
         ]
       }
+    },
+    "/api/v1/msgs/topic/configure": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Topic Configure",
+        "description": "Configures the number of partitions for a topic.\n\nPartition count can only be increased, never decreased. The default for a new topic is 1.",
+        "operationId": "v1.msgs.topic.configure",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicConfigureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicConfigureOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1776,6 +1813,42 @@
         },
         "required": [
           "msgs"
+        ]
+      },
+      "TopicConfigureIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "partitions": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "name",
+          "topic",
+          "partitions"
+        ]
+      },
+      "TopicConfigureOut": {
+        "type": "object",
+        "properties": {
+          "partitions": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "partitions"
         ]
       }
     }

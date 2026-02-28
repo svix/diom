@@ -13,6 +13,10 @@ from .msgs_stream import (
     MsgsStream,
     MsgsStreamAsync,
 )
+from .msgs_topic import (
+    MsgsTopic,
+    MsgsTopicAsync,
+)
 
 
 class MsgsAsync(ApiBase):
@@ -23,6 +27,10 @@ class MsgsAsync(ApiBase):
     @property
     def stream(self) -> MsgsStreamAsync:
         return MsgsStreamAsync(self._client)
+
+    @property
+    def topic(self) -> MsgsTopicAsync:
+        return MsgsTopicAsync(self._client)
 
     async def publish(
         self,
@@ -45,6 +53,10 @@ class Msgs(ApiBase):
     @property
     def stream(self) -> MsgsStream:
         return MsgsStream(self._client)
+
+    @property
+    def topic(self) -> MsgsTopic:
+        return MsgsTopic(self._client)
 
     def publish(
         self,

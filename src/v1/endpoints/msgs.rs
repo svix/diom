@@ -1,9 +1,11 @@
 use std::num::NonZeroU16;
 
+use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, Result, ResultExt};
+use coyote_msgs::entities::MAX_PARTITION_COUNT;
 use coyote_namespace::entities::StorageType;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -11,8 +13,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use stream_internals::entities::{Retention, default_retention_bytes, default_retention_millis};
 use validator::Validate;
-
-use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CreateNamespaceIn {
@@ -133,7 +133,7 @@ async fn publish(
         .fetch_stream_namespace(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let keyless_partition = coyote_msgs::entities::random_partition();
+    let keyless_partition = coyote_msgs::entities::random_partition(MAX_PARTITION_COUNT);
     let operation = coyote_msgs::operations::PublishOperation::new(
         namespace.id,
         data.topic,
@@ -270,6 +270,64 @@ async fn stream_commit(
     Ok(MsgPackOrJson(StreamCommitOut {}))
 }
 
+// ---------------------------------------------------------------------------
+// topic/configure
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct TopicConfigureIn {
+    pub name: String,
+    pub topic: String,
+    pub partitions: u16,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct TopicConfigureOut {
+    pub partitions: u16,
+}
+
+/// Configures the number of partitions for a topic.
+///
+/// Partition count can only be increased, never decreased. The default for a new topic is 1.
+#[aide_annotate(op_id = "v1.msgs.topic.configure")]
+async fn topic_configure(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<TopicConfigureIn>,
+) -> Result<MsgPackOrJson<TopicConfigureOut>> {
+    if data.topic.contains('~') {
+        return Err(Error::http(HttpError::bad_request(
+            Some("invalid_topic".to_owned()),
+            Some("Topic name must not contain '~'.".to_owned()),
+        )));
+    }
+
+    if data.partitions == 0 || data.partitions > MAX_PARTITION_COUNT {
+        return Err(Error::http(HttpError::bad_request(
+            Some("invalid_partition_count".to_owned()),
+            Some(format!(
+                "Partition count must be between 1 and {MAX_PARTITION_COUNT}."
+            )),
+        )));
+    }
+
+    let namespace = state
+        .namespace_state
+        .fetch_stream_namespace(&data.name)?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = coyote_msgs::operations::TopicConfigureOperation::new(
+        namespace.id,
+        data.topic,
+        data.partitions,
+    );
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(TopicConfigureOut {
+        partitions: response.partitions,
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Msgs");
 
@@ -293,6 +351,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/msgs/stream/commit",
             post_with(stream_commit, stream_commit_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/topic/configure",
+            post_with(topic_configure, topic_configure_operation),
             &tag,
         )
 }

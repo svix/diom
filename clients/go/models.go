@@ -50,4 +50,6 @@ type (
 	StreamMsgOut                 = coyote_models.StreamMsgOut
 	StreamReceiveIn              = coyote_models.StreamReceiveIn
 	StreamReceiveOut             = coyote_models.StreamReceiveOut
+	TopicConfigureIn             = coyote_models.TopicConfigureIn
+	TopicConfigureOut            = coyote_models.TopicConfigureOut
 )

@@ -24,6 +24,8 @@ import com.svix.coyote.models.StreamCommitIn;
 import com.svix.coyote.models.StreamCommitOut;
 import com.svix.coyote.models.StreamReceiveIn;
 import com.svix.coyote.models.StreamReceiveOut;
+import com.svix.coyote.models.TopicConfigureIn;
+import com.svix.coyote.models.TopicConfigureOut;
 
 public class Msgs {
     private final HttpClient client;

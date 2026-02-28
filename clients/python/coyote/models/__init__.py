@@ -44,6 +44,8 @@ from .stream_commit_out import StreamCommitOut
 from .stream_msg_out import StreamMsgOut
 from .stream_receive_in import StreamReceiveIn
 from .stream_receive_out import StreamReceiveOut
+from .topic_configure_in import TopicConfigureIn
+from .topic_configure_out import TopicConfigureOut
 
 
 __all__ = [
@@ -92,4 +94,6 @@ __all__ = [
     "StreamMsgOut",
     "StreamReceiveIn",
     "StreamReceiveOut",
+    "TopicConfigureIn",
+    "TopicConfigureOut",
 ]

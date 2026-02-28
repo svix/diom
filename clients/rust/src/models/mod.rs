@@ -46,6 +46,8 @@ mod stream_commit_out;
 mod stream_msg_out;
 mod stream_receive_in;
 mod stream_receive_out;
+mod topic_configure_in;
+mod topic_configure_out;
 
 pub use self::{
     cache_delete_in::CacheDeleteIn,
@@ -93,4 +95,6 @@ pub use self::{
     stream_msg_out::StreamMsgOut,
     stream_receive_in::StreamReceiveIn,
     stream_receive_out::StreamReceiveOut,
+    topic_configure_in::TopicConfigureIn,
+    topic_configure_out::TopicConfigureOut,
 };

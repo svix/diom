@@ -7,8 +7,10 @@ use validator::Validate;
 
 pub type Offset = u64;
 
-// FIXME(@svix-gabriel): Make partition count configurable per-namespace.
-pub const DEFAULT_PARTITION_COUNT: u16 = 16;
+pub const DEFAULT_PARTITION_COUNT: u16 = 1;
+
+/// Hard ceiling on partition count per topic. Arbitrary for now — may be raised later.
+pub const MAX_PARTITION_COUNT: u16 = 64;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -16,7 +18,7 @@ pub struct PartitionIndex(u16);
 
 impl PartitionIndex {
     pub fn new(index: u16) -> Option<Self> {
-        if index < DEFAULT_PARTITION_COUNT {
+        if index < MAX_PARTITION_COUNT {
             Some(Self(index))
         } else {
             None
@@ -46,14 +48,14 @@ pub fn parse_partition_topic(s: &str) -> Result<(&str, PartitionIndex), &'static
         .ok_or("partition index out of range")
 }
 
-pub fn random_partition() -> PartitionIndex {
-    PartitionIndex(rand::random_range(..DEFAULT_PARTITION_COUNT))
+pub fn random_partition(partition_count: u16) -> PartitionIndex {
+    PartitionIndex(rand::random_range(..partition_count))
 }
 
 /// Deterministically maps a key to a partition via hash.
-pub fn partition_for_key(key: &[u8]) -> PartitionIndex {
+pub fn partition_for_key(key: &[u8], partition_count: u16) -> PartitionIndex {
     let hash = djb2_hash(key);
-    PartitionIndex((hash % u32::from(DEFAULT_PARTITION_COUNT)) as u16)
+    PartitionIndex((hash % u32::from(partition_count)) as u16)
 }
 
 fn djb2_hash(data: &[u8]) -> u32 {

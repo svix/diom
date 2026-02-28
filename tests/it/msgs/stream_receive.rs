@@ -400,7 +400,18 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
         .await?
         .expect(StatusCode::OK);
 
-    // "k1" and "k2" hash to different partitions (1 and 2 respectively via djb2)
+    // Default is 1 partition; configure more so "k1" and "k2" hash to different ones.
+    client
+        .post("msgs/topic/configure")
+        .json(json!({
+            "name": "ns-concurrent",
+            "topic": "t1",
+            "partitions": 16,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // "k1" and "k2" hash to different partitions via djb2
     client
         .post("msgs/publish")
         .json(json!({

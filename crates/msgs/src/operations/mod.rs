@@ -2,8 +2,11 @@ mod create_namespace;
 mod publish;
 mod stream_commit;
 mod stream_receive;
+mod topic_configure;
 
-pub use self::{create_namespace::*, publish::*, stream_commit::*, stream_receive::*};
+pub use self::{
+    create_namespace::*, publish::*, stream_commit::*, stream_receive::*, topic_configure::*,
+};
 
 use crate::State;
 use serde::{Deserialize, Serialize};
@@ -22,6 +25,7 @@ raft_module_operations!(
         Publish(PublishOperation) -> PublishResponseData,
         StreamCommit(StreamCommitOperation) -> StreamCommitResponseData,
         StreamReceive(StreamReceiveOperation) -> StreamReceiveResponseData,
+        TopicConfigure(TopicConfigureOperation) -> TopicConfigureResponseData,
     },
     state = MsgsRaftState<'_>,
 );

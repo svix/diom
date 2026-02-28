@@ -1,0 +1,25 @@
+// this file is @generated
+use crate::{Configuration, error::Result, models::*};
+
+pub struct MsgsTopic<'a> {
+    cfg: &'a Configuration,
+}
+
+impl<'a> MsgsTopic<'a> {
+    pub(super) fn new(cfg: &'a Configuration) -> Self {
+        Self { cfg }
+    }
+
+    /// Configures the number of partitions for a topic.
+    ///
+    /// Partition count can only be increased, never decreased. The default for a new topic is 1.
+    pub async fn configure(
+        &self,
+        topic_configure_in: TopicConfigureIn,
+    ) -> Result<TopicConfigureOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1/msgs/topic/configure")
+            .with_body(topic_configure_in)
+            .execute(self.cfg)
+            .await
+    }
+}
