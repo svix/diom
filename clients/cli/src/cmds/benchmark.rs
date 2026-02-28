@@ -349,6 +349,9 @@ trait BenchShard {
     where
         Self: Sized + Clone,
     {
+        // Sleep for 1 second before tests to give fjall time to catch up.
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
         let concurrency = cfg.concurrency;
         let iterations = cfg.iterations;
         let test_name = self.test_name();
@@ -363,9 +366,6 @@ trait BenchShard {
         let joined_handles = try_join_all(handles).await?.into_iter();
         pb.finish();
         self.finalize_result_stats(Arc::clone(&cfg), joined_handles, all_stats)?;
-
-        // Sleep for 1 second between tests to give the server time to catch up.
-        tokio::time::sleep(Duration::from_secs(1)).await;
 
         Ok(())
     }
