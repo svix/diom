@@ -6,11 +6,11 @@ use serde::{Deserialize, Serialize};
 pub struct PublishOutMsg {
     pub offset: u64,
 
-    pub partition: u16,
+    pub topic: String,
 }
 
 impl PublishOutMsg {
-    pub fn new(offset: u64, partition: u16) -> Self {
-        Self { offset, partition }
+    pub fn new(offset: u64, topic: String) -> Self {
+        Self { offset, topic }
     }
 }
