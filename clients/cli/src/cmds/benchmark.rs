@@ -80,20 +80,24 @@ impl BenchmarkArgs {
 
         for module in &modules {
             eprintln!();
+            let bench_cfg = Arc::new(BenchConfig {
+                client: Arc::clone(&client),
+                concurrency,
+                iterations,
+            });
+
             match module {
                 BenchmarkModule::Kv => {
                     eprintln!("[kv]");
-                    bench_kv(Arc::clone(&client), &mut all_stats, concurrency, iterations).await?;
+                    bench_kv(bench_cfg, &mut all_stats).await?;
                 }
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
-                    bench_cache(Arc::clone(&client), &mut all_stats, concurrency, iterations)
-                        .await?;
+                    bench_cache(bench_cfg, &mut all_stats).await?;
                 }
                 BenchmarkModule::Msgs => {
                     eprintln!("[msgs]");
-                    bench_msgs(Arc::clone(&client), &mut all_stats, concurrency, iterations)
-                        .await?;
+                    bench_msgs(bench_cfg, &mut all_stats).await?;
                 }
             }
         }
@@ -191,21 +195,20 @@ fn new_bar(prefix: impl Into<String>, iterations: u64) -> ProgressBar {
 // Benchmark helpers
 
 async fn bench_shards_concurrent(
-    client: Arc<CoyoteClient>,
+    cfg: Arc<BenchConfig>,
     bench: impl BenchShard + Clone,
-    concurrency: u64,
-    iterations: u64,
     all_stats: &mut Vec<Stats>,
 ) -> Result<()> {
+    let concurrency = cfg.concurrency;
+    let iterations = cfg.iterations;
     let test_name = bench.name();
     let pb = new_bar(test_name.to_string(), iterations);
     let barrier = Arc::new(Barrier::new(concurrency as usize));
     let handles = (0..concurrency).map(|shard_id| {
-        let client = Arc::clone(&client);
         let pb = pb.clone();
         bench
             .clone()
-            .bench_shard(client, Arc::clone(&barrier), iterations, pb, shard_id)
+            .bench_shard(Arc::clone(&cfg), Arc::clone(&barrier), pb, shard_id)
     });
 
     let mut combined = BenchHistogram::new(3).unwrap();
@@ -229,6 +232,12 @@ async fn bench_shards_concurrent(
     Ok(())
 }
 
+struct BenchConfig {
+    client: Arc<CoyoteClient>,
+    concurrency: u64,
+    iterations: u64,
+}
+
 struct BenchResult {
     hist: BenchHistogram,
     total_time: Duration,
@@ -247,9 +256,8 @@ trait BenchShard {
 
     async fn bench_shard(
         self,
-        client: Arc<CoyoteClient>,
+        cfg: Arc<BenchConfig>,
         barrier: Arc<Barrier>,
-        iterations: u64,
         pb: ProgressBar,
         shard_id: u64,
     ) -> Result<BenchResult>
@@ -262,8 +270,8 @@ trait BenchShard {
 
         barrier.wait().await;
 
-        for iteration in 0..iterations {
-            let t = self.run(&client, &mut rng, shard_id, iteration).await?;
+        for iteration in 0..cfg.iterations {
+            let t = self.run(&cfg.client, &mut rng, shard_id, iteration).await?;
             hist.record(t.as_micros() as u64)?;
             total_time += t;
             pb.set_position(iteration);
@@ -333,24 +341,18 @@ impl BenchShard for BenchKvGet {
 }
 
 async fn bench_kv(
-    client: Arc<CoyoteClient>,
+    cfg: Arc<BenchConfig>,
     all_stats: &mut Vec<Stats>,
-    concurrency: u64,
-    iterations: u64,
 ) -> Result<()> {
     bench_shards_concurrent(
-        client.clone(),
+        Arc::clone(&cfg),
         BenchKvSet {},
-        concurrency,
-        iterations,
         all_stats,
     )
     .await?;
     bench_shards_concurrent(
-        client.clone(),
+        Arc::clone(&cfg),
         BenchKvGet {},
-        concurrency,
-        iterations,
         all_stats,
     )
     .await?;
@@ -416,24 +418,18 @@ impl BenchShard for BenchCacheGet {
 }
 
 async fn bench_cache(
-    client: Arc<CoyoteClient>,
+    cfg: Arc<BenchConfig>,
     all_stats: &mut Vec<Stats>,
-    concurrency: u64,
-    iterations: u64,
 ) -> Result<()> {
     bench_shards_concurrent(
-        client.clone(),
+        Arc::clone(&cfg),
         BenchCacheSet {},
-        concurrency,
-        iterations,
         all_stats,
     )
     .await?;
     bench_shards_concurrent(
-        client.clone(),
+        Arc::clone(&cfg),
         BenchCacheGet {},
-        concurrency,
-        iterations,
         all_stats,
     )
     .await?;
@@ -528,32 +524,26 @@ impl BenchShard for BenchMsgsStreamReceive {
 }
 
 async fn bench_msgs(
-    client: Arc<CoyoteClient>,
+    cfg: Arc<BenchConfig>,
     all_stats: &mut Vec<Stats>,
-    concurrency: u64,
-    iterations: u64,
 ) -> Result<()> {
     let ns_name = "bench";
 
-    client
+    cfg.client
         .msgs()
         .namespace()
         .create(CreateNamespaceIn::new(ns_name.to_string()))
         .await?;
 
     bench_shards_concurrent(
-        client.clone(),
+        Arc::clone(&cfg),
         BenchMsgsPublish { batch_size: 1 },
-        concurrency,
-        iterations,
         all_stats,
     )
     .await?;
     bench_shards_concurrent(
-        client.clone(),
+        Arc::clone(&cfg),
         BenchMsgsStreamReceive { batch_size: 1 },
-        concurrency,
-        iterations,
         all_stats,
     )
     .await?;
