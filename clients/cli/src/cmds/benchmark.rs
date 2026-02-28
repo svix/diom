@@ -187,8 +187,6 @@ impl BenchmarkArgs {
 #[derive(Clone)]
 struct TomBenchKvSet {
     keys: Arc<Vec<String>>,
-    // FIXME: remove from here.
-    iterations: u64,
 }
 
 impl TomBenchKvSet {
@@ -196,11 +194,14 @@ impl TomBenchKvSet {
         "kv.set"
     }
 
-    fn setup(keys: Arc<Vec<String>>) -> Self {
+    fn setup(keys: Arc<Vec<String>>, iterations: u64) -> Self {
         Self {
-            iterations: keys.len() as u64,
             keys,
         }
+    }
+
+    fn iterations(&self) -> u64 {
+        self.keys.len() as u64
     }
 
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
@@ -218,14 +219,13 @@ impl TomBenchKvSet {
     async fn bench_shard(
         self,
         client: Arc<CoyoteClient>,
-        shard_id: u64,
         pb: ProgressBar,
     ) -> Result<BenchResult> {
         let mut hist = BenchHistogram::new(3)?;
         let mut total_time = Duration::from_secs(0);
-        let mut rng = StdRng::seed_from_u64(shard_id);
+        let mut rng = StdRng::seed_from_u64(0);
 
-        for i in 0..self.iterations {
+        for i in 0..self.iterations() {
             let t = self.run(&client, &mut rng, i).await?;
             hist.record(t.as_micros() as u64)?;
             total_time += t;
@@ -265,61 +265,30 @@ impl TomModuleKv {
                     .map(|_| Alphanumeric.sample_string(&mut rng, 16))
                     .collect(),
             );
-            all_kv_set.push(TomBenchKvSet::setup(keys.clone()));
-            all_kv_get.push(TomBenchKvSet::setup(keys.clone()));
+            all_kv_set.push(TomBenchKvSet::setup(keys.clone(), iterations));
+            all_kv_get.push(TomBenchKvSet::setup(keys.clone(), iterations));
         }
 
-        let kv_set = ToBeDeleted::setup(self.concurrency, self.iterations);
-        kv_set.bench(Arc::clone(&client), all_stats).await?;
-        let kv_get = ToBeDeleted::setup(self.concurrency, self.iterations);
-        kv_get.bench(Arc::clone(&client), all_stats).await?;
+        self.bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, all_stats).await?;
+        self.bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, all_stats).await?;
         Ok(())
     }
-}
 
-struct ToBeDeleted {
-    instances: Arc<Vec<TomBenchKvSet>>,
-    concurrency: u64,
-    iterations: u64,
-}
-
-impl ToBeDeleted {
-    fn name(&self) -> &'static str {
-        "kv.set"
-    }
-
-    fn setup(concurrency: u64, iterations: u64) -> Self {
-        let mut rng = StdRng::seed_from_u64(0);
-        Self {
-            // FIXME: kill this
-            instances: Arc::new(Vec::new()),
-            concurrency,
-            iterations,
-        }
-    }
-
-    fn get_test(&self, index: u64) -> TomBenchKvSet {
-        self.instances.get(index as usize).unwrap().clone()
-    }
-
-    /// Runs the full benchmark for the module
-    async fn bench(&self, client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>) -> Result<()> {
+    async fn bench_shards_concurrent(&self, client: Arc<CoyoteClient>, test_name: &str, all_instances: Vec<TomBenchKvSet>, all_stats: &mut Vec<Stats>) -> Result<()> {
         let iterations = self.iterations;
         let concurrency = self.concurrency;
 
-        let pb = new_bar(self.name().to_string(), iterations);
-        let handles = (0..concurrency).map(|shard_id| {
+        let pb = new_bar(test_name.to_string(), iterations);
+        let handles = all_instances.into_iter().map(|test| {
             let client = Arc::clone(&client);
             let pb = pb.clone();
-            let test = self.get_test(shard_id);
-            let keys = test.keys.clone();
-            test.bench_shard(client, shard_id, pb)
+            test.bench_shard(client, pb)
         });
-        pb.finish();
 
         let mut combined = BenchHistogram::new(3).unwrap();
         let mut total_time_ms = 0;
         let joined_handles = try_join_all(handles).await?.into_iter();
+        pb.finish();
         for res in joined_handles {
             combined.add(res.hist)?;
             total_time_ms += res.total_time.as_millis() as u64;
@@ -328,7 +297,7 @@ impl ToBeDeleted {
         total_time_ms = total_time_ms / concurrency;
 
         all_stats.push(hist_compute_stats(
-            self.name(),
+            test_name,
             combined,
             total_time_ms,
             iterations * concurrency,
@@ -337,6 +306,3 @@ impl ToBeDeleted {
         Ok(())
     }
 }
-
-
-
