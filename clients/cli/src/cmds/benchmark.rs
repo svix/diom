@@ -302,8 +302,12 @@ impl BenchShard for TomBenchKvGet {
     }
 }
 
-async fn bench_kv(client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>, concurrency: u64, iterations: u64) -> Result<()> {
-    let iterations = iterations;
+async fn bench_kv(
+    client: Arc<CoyoteClient>,
+    all_stats: &mut Vec<Stats>,
+    concurrency: u64,
+    iterations: u64,
+) -> Result<()> {
     let mut all_kv_set: Vec<_> = Vec::with_capacity(concurrency as usize);
     let mut all_kv_get: Vec<_> = Vec::with_capacity(concurrency as usize);
     for shard_id in 0..concurrency {
@@ -317,9 +321,7 @@ async fn bench_kv(client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>, concurr
         all_kv_get.push(TomBenchKvGet::setup(keys.clone()));
     }
 
-    bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats)
-        .await?;
-    bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats)
-        .await?;
+    bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats).await?;
+    bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats).await?;
     Ok(())
 }
