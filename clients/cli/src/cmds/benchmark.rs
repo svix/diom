@@ -24,6 +24,7 @@ type BenchHistogram = Histogram<u64>;
 pub enum BenchmarkModule {
     Kv,
     Cache,
+    Msgs,
 }
 
 #[derive(Args)]
@@ -135,10 +136,9 @@ impl BenchmarkArgs {
     pub async fn exec(self, client: Arc<CoyoteClient>) -> Result<()> {
         let iterations = self.iterations;
         let concurrency = self.concurrency;
-        let json = self.json;
 
         let modules = if self.modules.is_empty() {
-            vec![BenchmarkModule::Kv, BenchmarkModule::Cache]
+            vec![BenchmarkModule::Kv, BenchmarkModule::Cache, BenchmarkModule::Msgs]
         } else {
             self.modules
         };
@@ -158,12 +158,15 @@ impl BenchmarkArgs {
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
                 }
+                BenchmarkModule::Msgs => {
+                    eprintln!("[msgs]");
+                }
             }
         }
 
         eprintln!();
 
-        if json {
+        if self.json {
             println!("{}", serde_json::to_string_pretty(&all_stats)?);
         } else {
             print_table(&all_stats);
