@@ -2,7 +2,7 @@
 /target
 .claude
 .vscode
-.TODO.md
+.NOTES
 logs
 .data/
 __pycache__/
