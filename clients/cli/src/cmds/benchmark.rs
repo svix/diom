@@ -247,17 +247,17 @@ trait BenchShard {
 // KV module
 
 #[derive(Clone)]
-struct TomBenchKvSet {
+struct BenchKvSet {
     keys: Arc<Vec<String>>,
 }
 
-impl TomBenchKvSet {
+impl BenchKvSet {
     fn setup(keys: Arc<Vec<String>>) -> Self {
         Self { keys }
     }
 }
 
-impl BenchShard for TomBenchKvSet {
+impl BenchShard for BenchKvSet {
     fn iterations(&self) -> u64 {
         self.keys.len() as u64
     }
@@ -275,17 +275,17 @@ impl BenchShard for TomBenchKvSet {
 }
 
 #[derive(Clone)]
-struct TomBenchKvGet {
+struct BenchKvGet {
     keys: Arc<Vec<String>>,
 }
 
-impl TomBenchKvGet {
+impl BenchKvGet {
     fn setup(keys: Arc<Vec<String>>) -> Self {
         Self { keys }
     }
 }
 
-impl BenchShard for TomBenchKvGet {
+impl BenchShard for BenchKvGet {
     fn iterations(&self) -> u64 {
         self.keys.len() as u64
     }
@@ -317,8 +317,8 @@ async fn bench_kv(
                 .map(|_| Alphanumeric.sample_string(&mut rng, 16))
                 .collect(),
         );
-        all_kv_set.push(TomBenchKvSet::setup(keys.clone()));
-        all_kv_get.push(TomBenchKvGet::setup(keys.clone()));
+        all_kv_set.push(BenchKvSet::setup(keys.clone()));
+        all_kv_get.push(BenchKvGet::setup(keys.clone()));
     }
 
     bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats).await?;
