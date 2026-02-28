@@ -340,22 +340,9 @@ impl BenchShard for BenchKvGet {
     }
 }
 
-async fn bench_kv(
-    cfg: Arc<BenchConfig>,
-    all_stats: &mut Vec<Stats>,
-) -> Result<()> {
-    bench_shards_concurrent(
-        Arc::clone(&cfg),
-        BenchKvSet {},
-        all_stats,
-    )
-    .await?;
-    bench_shards_concurrent(
-        Arc::clone(&cfg),
-        BenchKvGet {},
-        all_stats,
-    )
-    .await?;
+async fn bench_kv(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
+    bench_shards_concurrent(Arc::clone(&cfg), BenchKvSet {}, all_stats).await?;
+    bench_shards_concurrent(Arc::clone(&cfg), BenchKvGet {}, all_stats).await?;
     Ok(())
 }
 
@@ -417,22 +404,9 @@ impl BenchShard for BenchCacheGet {
     }
 }
 
-async fn bench_cache(
-    cfg: Arc<BenchConfig>,
-    all_stats: &mut Vec<Stats>,
-) -> Result<()> {
-    bench_shards_concurrent(
-        Arc::clone(&cfg),
-        BenchCacheSet {},
-        all_stats,
-    )
-    .await?;
-    bench_shards_concurrent(
-        Arc::clone(&cfg),
-        BenchCacheGet {},
-        all_stats,
-    )
-    .await?;
+async fn bench_cache(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
+    bench_shards_concurrent(Arc::clone(&cfg), BenchCacheSet {}, all_stats).await?;
+    bench_shards_concurrent(Arc::clone(&cfg), BenchCacheGet {}, all_stats).await?;
     Ok(())
 }
 
@@ -523,10 +497,7 @@ impl BenchShard for BenchMsgsStreamReceive {
     }
 }
 
-async fn bench_msgs(
-    cfg: Arc<BenchConfig>,
-    all_stats: &mut Vec<Stats>,
-) -> Result<()> {
+async fn bench_msgs(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
     let ns_name = "bench";
 
     cfg.client
