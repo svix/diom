@@ -41,6 +41,10 @@ pub struct CoyoteOptions {
     /// between the last two is that DNS resolution also goes through the proxy
     /// for `socks5h`, but not for `socks5`.
     pub proxy_address: Option<String>,
+
+    /// Force the use of HTTP/2, even on plaintext connections
+    #[cfg(feature = "http2")]
+    pub http2_only: bool,
 }
 
 impl Default for CoyoteOptions {
@@ -52,6 +56,7 @@ impl Default for CoyoteOptions {
             num_retries: None,
             retry_schedule: None,
             proxy_address: None,
+            http2_only: false,
         }
     }
 }
@@ -67,10 +72,14 @@ impl CoyoteClient {
     pub fn new(token: String, options: Option<CoyoteOptions>) -> Self {
         let options = options.unwrap_or_default();
 
+        let mut builder = HyperClient::builder(TokioExecutor::new());
+
+        #[cfg(feature = "http2")]
+        builder.http2_only(options.http2_only);
+
         let cfg = Arc::new(Configuration {
             user_agent: Some(format!("coyote-client/{CRATE_VERSION}/rust")),
-            client: HyperClient::builder(TokioExecutor::new())
-                .build(make_connector(options.proxy_address)),
+            client: builder.build(make_connector(options.proxy_address)),
             timeout: options.timeout,
             // These fields will be set by `with_token` below
             base_path: String::new(),

@@ -12,6 +12,14 @@ ignored = [
     "idna_adapter",
 ]
 
+[features]
+default = ["http1", "http2", "rustls-tls"]
+
+http1 = ["coyote-client/http1"]
+http2 = ["coyote-client/http2"]
+native-tls = ["coyote-client/native-tls"]
+rustls-tls = ["coyote-client/rustls-tls"]
+
 [[bin]]
 name = "coyote"
 path = "src/main.rs"

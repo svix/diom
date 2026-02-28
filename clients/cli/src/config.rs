@@ -10,6 +10,9 @@ pub struct Config {
     pub auth_token: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     server_url: Option<String>,
+    #[cfg(feature = "http2")]
+    #[serde(default)]
+    pub force_http2: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     debug_url: Option<String>,
 }
