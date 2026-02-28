@@ -435,12 +435,6 @@ async fn bench_cache(
 #[derive(Clone)]
 struct BenchMsgsPublish {}
 
-impl BenchMsgsPublish {
-    fn setup() -> Self {
-        Self {}
-    }
-}
-
 impl BenchShard for BenchMsgsPublish {
     fn name(&self) -> String {
         "msg.publish".to_owned()
@@ -474,12 +468,6 @@ impl BenchShard for BenchMsgsPublish {
 
 #[derive(Clone)]
 struct BenchMsgsStreamReceive {}
-
-impl BenchMsgsStreamReceive {
-    fn setup() -> Self {
-        Self {}
-    }
-}
 
 impl BenchShard for BenchMsgsStreamReceive {
     fn name(&self) -> String {
@@ -537,13 +525,6 @@ async fn bench_msgs(
         .namespace()
         .create(CreateNamespaceIn::new(ns_name.to_string()))
         .await?;
-
-    let mut all_cache_set: Vec<_> = Vec::with_capacity(concurrency as usize);
-    let mut all_cache_get: Vec<_> = Vec::with_capacity(concurrency as usize);
-    for _shard_id in 0..concurrency {
-        all_cache_set.push(BenchMsgsPublish::setup());
-        all_cache_get.push(BenchMsgsStreamReceive::setup());
-    }
 
     bench_shards_concurrent(
         client.clone(),
