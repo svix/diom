@@ -1,4 +1,7 @@
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use anyhow::Result;
 use clap::Args;
@@ -290,7 +293,7 @@ impl BenchShard for BenchKvSet {
         rng.fill(&mut value[..]);
 
         // Start of real code
-        let t = quanta::Instant::now();
+        let t = Instant::now();
         client.kv().set(KvSetIn::new(key.clone(), value)).await?;
         Ok(t.elapsed())
     }
@@ -316,7 +319,7 @@ impl BenchShard for BenchKvGet {
         rng.fill(&mut value[..]);
 
         // Start of real code
-        let t = quanta::Instant::now();
+        let t = Instant::now();
         client.kv().get(KvGetIn::new(key.clone())).await?;
         Ok(t.elapsed())
     }
@@ -370,7 +373,7 @@ impl BenchShard for BenchCacheSet {
         rng.fill(&mut value[..]);
 
         // Start of real code
-        let t = quanta::Instant::now();
+        let t = Instant::now();
         client
             .cache()
             .set(CacheSetIn::new(key.clone(), ttl_bench_ms, value))
@@ -399,7 +402,7 @@ impl BenchShard for BenchCacheGet {
         rng.fill(&mut value[..]);
 
         // Start of real code
-        let t = quanta::Instant::now();
+        let t = Instant::now();
         client.cache().get(CacheGetIn::new(key.clone())).await?;
         Ok(t.elapsed())
     }
@@ -460,7 +463,7 @@ impl BenchShard for BenchMsgsPublish {
             .collect();
 
         // Start of real code
-        let t = quanta::Instant::now();
+        let t = Instant::now();
         client
             .msgs()
             .publish(PublishIn::new(msgs, ns_name.to_string(), topic.to_owned()))
@@ -493,7 +496,7 @@ impl BenchShard for BenchMsgsStreamReceive {
         rng.fill(&mut value[..]);
 
         // Start of real code
-        let t = quanta::Instant::now();
+        let t = Instant::now();
         let mut recv = StreamReceiveIn::new(
             consumer_group.to_owned(),
             ns_name.to_owned(),

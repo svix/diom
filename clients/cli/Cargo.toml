@@ -31,7 +31,6 @@ futures-util.workspace = true
 hdrhistogram = "7.5.4"
 idna_adapter.workspace = true
 indicatif = "0.17"
-quanta = "0.12"
 rand.workspace = true
 rustls.workspace = true
 serde.workspace = true
