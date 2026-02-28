@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::{retention::Retention, storage_type::StorageType};
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GetNamespaceOut {
     pub created: jiff::Timestamp,

@@ -14,7 +14,6 @@ use super::{
     {% set enum_type_name %}{{ type_name }}{{ type.content_field | to_upper_camel_case }}{% endset -%}
 
     {{ doc_comment }}
-    #[non_exhaustive]
     #[derive(Clone, Debug, Deserialize, Serialize)]
     pub struct {{ type_name }} {
         {% include "types/struct_fields.rs.jinja" %}

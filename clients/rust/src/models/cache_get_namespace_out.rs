@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use super::{eviction_policy::EvictionPolicy, storage_type::StorageType};
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CacheGetNamespaceOut {
     pub created_at: jiff::Timestamp,
