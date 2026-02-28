@@ -188,18 +188,17 @@ fn new_bar(prefix: impl Into<String>, iterations: u64) -> ProgressBar {
 
 async fn bench_shards_concurrent(
     client: Arc<CoyoteClient>,
-    test_name: &str,
-    all_instances: Vec<impl BenchShard>,
+    bench: impl BenchShard + Clone,
+    concurrency: u64,
     iterations: u64,
     all_stats: &mut Vec<Stats>,
 ) -> Result<()> {
-    let concurrency = all_instances.len() as u64;
-
+    let test_name = bench.name();
     let pb = new_bar(test_name.to_string(), iterations);
-    let handles = all_instances.into_iter().enumerate().map(|(shard_id, test)| {
+    let handles = (0..concurrency).map(|shard_id| {
         let client = Arc::clone(&client);
         let pb = pb.clone();
-        test.bench_shard(client, iterations, pb, shard_id as u64)
+        bench.clone().bench_shard(client, iterations, pb, shard_id as u64)
     });
 
     let mut combined = BenchHistogram::new(3).unwrap();
@@ -229,6 +228,8 @@ struct BenchResult {
 }
 
 trait BenchShard {
+    fn name(&self) -> &'static str;
+
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, iteration: u64) -> Result<Duration>;
 
     async fn bench_shard(
@@ -239,7 +240,7 @@ trait BenchShard {
         shard_id: u64,
     ) -> Result<BenchResult>
     where
-        Self: Sized,
+        Self: Sized
     {
         let mut hist = BenchHistogram::new(3)?;
         let mut total_time = Duration::from_secs(0);
@@ -255,20 +256,24 @@ trait BenchShard {
     }
 }
 
-// KV module
-
-fn kv_generate_key(shard_id: u64, iteration: u64) -> String {
+fn bench_generate_key(shard_id: u64, iteration: u64) -> String {
     // Assumes shard_id is no larger than u16::MAX
     let mut rng = StdRng::seed_from_u64(iteration << 16 + shard_id);
     Alphanumeric.sample_string(&mut rng, 16)
 }
 
+// KV module
+
 #[derive(Clone)]
 struct BenchKvSet { }
 
 impl BenchShard for BenchKvSet {
+    fn name(&self) -> &'static str {
+        "kv.set"
+    }
+
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, iteration: u64) -> Result<Duration> {
-        let key = kv_generate_key(shard_id, iteration);
+        let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -283,8 +288,12 @@ impl BenchShard for BenchKvSet {
 struct BenchKvGet { }
 
 impl BenchShard for BenchKvGet {
+    fn name(&self) -> &'static str {
+        "kv.get"
+    }
+
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, iteration: u64) -> Result<Duration> {
-        let key = kv_generate_key(shard_id, iteration);
+        let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -301,35 +310,24 @@ async fn bench_kv(
     concurrency: u64,
     iterations: u64,
 ) -> Result<()> {
-    let mut all_kv_set: Vec<_> = Vec::with_capacity(concurrency as usize);
-    let mut all_kv_get: Vec<_> = Vec::with_capacity(concurrency as usize);
-    for _ in 0..concurrency {
-        all_kv_set.push(BenchKvSet {});
-        all_kv_get.push(BenchKvGet {});
-    }
-
-    bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats).await?;
-    bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats).await?;
+    bench_shards_concurrent(client.clone(), BenchKvSet {}, concurrency, iterations, all_stats).await?;
+    bench_shards_concurrent(client.clone(), BenchKvGet {}, concurrency, iterations, all_stats).await?;
     Ok(())
 }
 
 // Cache module
 
 #[derive(Clone)]
-struct BenchCacheSet {
-    keys: Arc<Vec<String>>,
-}
-
-impl BenchCacheSet {
-    fn setup(keys: Arc<Vec<String>>) -> Self {
-        Self { keys }
-    }
-}
+struct BenchCacheSet { }
 
 impl BenchShard for BenchCacheSet {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _shard_id: u64, iteration: u64) -> Result<Duration> {
+    fn name(&self) -> &'static str {
+        "cache.set"
+    }
+
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, iteration: u64) -> Result<Duration> {
         let ttl_bench_ms = 300_000; // 5 minutes
-        let key = self.keys.get(iteration as usize).unwrap();
+        let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -344,19 +342,15 @@ impl BenchShard for BenchCacheSet {
 }
 
 #[derive(Clone)]
-struct BenchCacheGet {
-    keys: Arc<Vec<String>>,
-}
-
-impl BenchCacheGet {
-    fn setup(keys: Arc<Vec<String>>) -> Self {
-        Self { keys }
-    }
-}
+struct BenchCacheGet { }
 
 impl BenchShard for BenchCacheGet {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _shard_id: u64, iteration: u64) -> Result<Duration> {
-        let key = self.keys.get(iteration as usize).unwrap();
+    fn name(&self) -> &'static str {
+        "cache.get"
+    }
+
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, iteration: u64) -> Result<Duration> {
+        let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -373,35 +367,8 @@ async fn bench_cache(
     concurrency: u64,
     iterations: u64,
 ) -> Result<()> {
-    let mut all_cache_set: Vec<_> = Vec::with_capacity(concurrency as usize);
-    let mut all_cache_get: Vec<_> = Vec::with_capacity(concurrency as usize);
-    for shard_id in 0..concurrency {
-        let mut rng = StdRng::seed_from_u64(shard_id);
-        let keys: Arc<Vec<_>> = Arc::new(
-            (0..iterations)
-                .map(|_| Alphanumeric.sample_string(&mut rng, 16))
-                .collect(),
-        );
-        all_cache_set.push(BenchCacheSet::setup(keys.clone()));
-        all_cache_get.push(BenchCacheGet::setup(keys.clone()));
-    }
-
-    bench_shards_concurrent(
-        client.clone(),
-        "cache.set",
-        all_cache_set,
-        iterations,
-        all_stats,
-    )
-    .await?;
-    bench_shards_concurrent(
-        client.clone(),
-        "cache.get",
-        all_cache_get,
-        iterations,
-        all_stats,
-    )
-    .await?;
+    bench_shards_concurrent(client.clone(), BenchCacheSet {}, concurrency, iterations, all_stats).await?;
+    bench_shards_concurrent(client.clone(), BenchCacheGet {}, concurrency, iterations, all_stats).await?;
     Ok(())
 }
 
@@ -417,6 +384,10 @@ impl BenchMsgsPublish {
 }
 
 impl BenchShard for BenchMsgsPublish {
+    fn name(&self) -> &'static str {
+        "msg.publish"
+    }
+
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, _iteration: u64) -> Result<Duration> {
         let ns_name = "bench";
         let topic = format!("bench/topic/{shard_id}");
@@ -447,6 +418,10 @@ impl BenchMsgsStreamReceive {
 }
 
 impl BenchShard for BenchMsgsStreamReceive {
+    fn name(&self) -> &'static str {
+        "msg.stream.receive"
+    }
+
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, shard_id: u64, _iteration: u64) -> Result<Duration> {
         let consumer_group = "consumer";
         let ns_name = "bench";
@@ -500,22 +475,7 @@ async fn bench_msgs(
         all_cache_get.push(BenchMsgsStreamReceive::setup());
     }
 
-    bench_shards_concurrent(
-        client.clone(),
-        "msgs.publish (batch=1)",
-        all_cache_set,
-        iterations,
-        all_stats,
-    )
-    .await?;
-    // bench_shards_concurrent(client.clone(), "msgs.publish (topic=500)", all_cache_set, iterations, all_stats).await?;
-    bench_shards_concurrent(
-        client.clone(),
-        "msgs.stream.receive (batch=1)",
-        all_cache_get,
-        iterations,
-        all_stats,
-    )
-    .await?;
+    bench_shards_concurrent(client.clone(), BenchMsgsPublish {}, concurrency, iterations, all_stats).await?;
+    bench_shards_concurrent(client.clone(), BenchMsgsStreamReceive {}, concurrency, iterations, all_stats).await?;
     Ok(())
 }
