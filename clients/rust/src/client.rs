@@ -56,6 +56,7 @@ impl Default for CoyoteOptions {
             num_retries: None,
             retry_schedule: None,
             proxy_address: None,
+            #[cfg(feature = "http2")]
             http2_only: false,
         }
     }
@@ -73,6 +74,7 @@ impl CoyoteClient {
         let options = options.unwrap_or_default();
 
         let mut builder = HyperClient::builder(TokioExecutor::new());
+        builder.pool_idle_timeout(Duration::from_secs(10));
 
         #[cfg(feature = "http2")]
         builder.http2_only(options.http2_only);
