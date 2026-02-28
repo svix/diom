@@ -5,7 +5,7 @@ use clap::Args;
 use comfy_table::{Table, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL_CONDENSED};
 use coyote_client::{
     CoyoteClient,
-    models::{KvGetIn, KvSetIn},
+    models::{CacheGetIn, CacheSetIn, KvGetIn, KvSetIn},
 };
 use futures::future::try_join_all;
 use hdrhistogram::Histogram;
@@ -80,6 +80,7 @@ impl BenchmarkArgs {
                 }
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
+                    bench_cache(Arc::clone(&client), &mut all_stats, concurrency, iterations).await?;
                 }
                 BenchmarkModule::Msgs => {
                     eprintln!("[msgs]");
@@ -323,5 +324,88 @@ async fn bench_kv(
 
     bench_shards_concurrent(client.clone(), "kv.set", all_kv_set, iterations, all_stats).await?;
     bench_shards_concurrent(client.clone(), "kv.get", all_kv_get, iterations, all_stats).await?;
+    Ok(())
+}
+
+// Cache module
+
+#[derive(Clone)]
+struct BenchCacheSet {
+    keys: Arc<Vec<String>>,
+}
+
+impl BenchCacheSet {
+    fn setup(keys: Arc<Vec<String>>) -> Self {
+        Self { keys }
+    }
+}
+
+impl BenchShard for BenchCacheSet {
+    fn iterations(&self) -> u64 {
+        self.keys.len() as u64
+    }
+
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
+        let ttl_bench_ms = 300_000; // 5 minutes
+        let key = self.keys.get(i as usize).unwrap();
+        let mut value = vec![0u8; 256];
+        rng.fill(&mut value[..]);
+
+        // Start of real code
+        let t = quanta::Instant::now();
+        client.cache().set(CacheSetIn::new(key.clone(), ttl_bench_ms, value)).await?;
+        Ok(t.elapsed())
+    }
+}
+
+#[derive(Clone)]
+struct BenchCacheGet {
+    keys: Arc<Vec<String>>,
+}
+
+impl BenchCacheGet {
+    fn setup(keys: Arc<Vec<String>>) -> Self {
+        Self { keys }
+    }
+}
+
+impl BenchShard for BenchCacheGet {
+    fn iterations(&self) -> u64 {
+        self.keys.len() as u64
+    }
+
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
+        let key = self.keys.get(i as usize).unwrap();
+        let mut value = vec![0u8; 256];
+        rng.fill(&mut value[..]);
+
+        // Start of real code
+        let t = quanta::Instant::now();
+        client.cache().get(CacheGetIn::new(key.clone())).await?;
+        Ok(t.elapsed())
+    }
+}
+
+async fn bench_cache(
+    client: Arc<CoyoteClient>,
+    all_stats: &mut Vec<Stats>,
+    concurrency: u64,
+    iterations: u64,
+) -> Result<()> {
+    let mut all_cache_set: Vec<_> = Vec::with_capacity(concurrency as usize);
+    let mut all_cache_get: Vec<_> = Vec::with_capacity(concurrency as usize);
+    for shard_id in 0..concurrency {
+        let mut rng = StdRng::seed_from_u64(shard_id);
+        let keys: Arc<Vec<_>> = Arc::new(
+            (0..iterations)
+                .map(|_| Alphanumeric.sample_string(&mut rng, 16))
+                .collect(),
+        );
+        all_cache_set.push(BenchCacheSet::setup(keys.clone()));
+        all_cache_get.push(BenchCacheGet::setup(keys.clone()));
+    }
+
+    bench_shards_concurrent(client.clone(), "cache.set", all_cache_set, iterations, all_stats).await?;
+    bench_shards_concurrent(client.clone(), "cache.get", all_cache_get, iterations, all_stats).await?;
     Ok(())
 }
