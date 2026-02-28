@@ -9,7 +9,7 @@ use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{FjallFixedKey, MonotonicTableRowExt, TableRow};
 use jiff::Timestamp;
 use openraft::{
-    Entry, LogId, OptionalSend, RaftLogId, RaftLogReader, RaftTypeConfig, StorageError, Vote,
+    Entry, LogId, OptionalSend, RaftLogReader, RaftTypeConfig, StorageError, Vote,
     storage::{LogFlushed, RaftLogStorage},
 };
 use serde::{Deserialize, Serialize};
@@ -62,7 +62,7 @@ impl TableRow for LogIndex {
 }
 
 impl RaftLogReader<TypeConfig> for CoyoteLogs {
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip(self), fields(num_entries_found))]
     async fn try_get_log_entries<RB: RangeBounds<u64> + Clone + Debug + OptionalSend>(
         &mut self,
         range: RB,
@@ -71,8 +71,7 @@ impl RaftLogReader<TypeConfig> for CoyoteLogs {
             .read_log_entries::<RB>(range.clone())
             .await
             .map_err(read_logs_err)?;
-        let output_keys = output.iter().map(|e| e.get_log_id());
-        tracing::trace!(?range, ?output_keys, "read log entries");
+        Span::current().record("num_entries_found", output.len());
         Ok(output)
     }
 }
@@ -94,7 +93,6 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
     #[tracing::instrument(skip(self))]
     async fn save_vote(&mut self, vote: &Vote<NodeId>) -> Result<(), StorageError<NodeId>> {
         self.save_vote_(vote.to_owned())
-            .instrument(Span::current())
             .await
             .map_err(write_vote_err)?;
         Ok(())
@@ -102,10 +100,7 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
 
     #[tracing::instrument(skip(self))]
     async fn read_vote(&mut self) -> Result<Option<Vote<NodeId>>, StorageError<NodeId>> {
-        self.read_vote_()
-            .instrument(Span::current())
-            .await
-            .map_err(read_vote_err)
+        self.read_vote_().await.map_err(read_vote_err)
     }
 
     #[tracing::instrument(skip_all)]
@@ -118,7 +113,6 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
         // is that I is Send, but isn't 'static, so it can't be sent over with tokio::task::spawn_blocking...
         let entries = entries.into_iter().collect();
         self.append_entries_(entries, callback)
-            .instrument(Span::current())
             .await
             .map_err(write_logs_err)?;
         Ok(())
@@ -126,34 +120,22 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
 
     #[tracing::instrument(skip(self))]
     async fn truncate(&mut self, log_id: LogId<NodeId>) -> Result<(), StorageError<NodeId>> {
-        self.truncate_entries_(log_id)
-            .instrument(Span::current())
-            .await
-            .map_err(write_logs_err)
+        self.truncate_entries_(log_id).await.map_err(write_logs_err)
     }
 
     #[tracing::instrument(skip(self))]
     async fn purge(&mut self, log_id: LogId<NodeId>) -> Result<(), StorageError<NodeId>> {
-        self.purge_entries_(log_id)
-            .instrument(Span::current())
-            .await
-            .map_err(write_logs_err)
+        self.purge_entries_(log_id).await.map_err(write_logs_err)
     }
 
     #[tracing::instrument(skip(self))]
     async fn save_committed(&mut self, committed: Option<LogId<NodeId>>) -> StorageResult<()> {
-        self.save_committed_(committed)
-            .instrument(Span::current())
-            .await
-            .map_err(write_err)
+        self.save_committed_(committed).await.map_err(write_err)
     }
 
     #[tracing::instrument(skip(self))]
     async fn read_committed(&mut self) -> Result<Option<LogId<NodeId>>, StorageError<NodeId>> {
-        self.read_committed_()
-            .instrument(Span::current())
-            .await
-            .map_err(write_err)
+        self.read_committed_().await.map_err(write_err)
     }
 }
 
@@ -382,6 +364,7 @@ impl CoyoteLogs {
             tx.commit()?;
             Ok(())
         })
+        .instrument(Span::current())
         .await?
     }
 
@@ -401,6 +384,7 @@ impl CoyoteLogs {
                 last_log_id,
             })
         })
+        .instrument(Span::current())
         .await?
         .tap(|state| tracing::trace!(?state, "read initial log state"))
     }
@@ -438,6 +422,7 @@ impl CoyoteLogs {
             }
             Ok(output)
         })
+        .instrument(Span::current())
         .await?
     }
 
@@ -469,6 +454,7 @@ impl CoyoteLogs {
         let meta_keyspace = self.meta_keyspace.clone();
         tracing::trace!(?committed, "saving committed state");
         tokio::task::spawn_blocking(move || COMMITTED.store(&meta_keyspace, &committed))
+            .instrument(Span::current())
             .await?
             .context("saving committed state")
     }
@@ -482,6 +468,7 @@ impl CoyoteLogs {
                 .flatten()
                 .pipe(Ok)
         })
+        .instrument(Span::current())
         .await?
     }
 
@@ -496,6 +483,7 @@ impl CoyoteLogs {
                 Ok(None)
             }
         })
+        .instrument(Span::current())
         .await?
     }
 
@@ -510,6 +498,7 @@ impl CoyoteLogs {
                 Ok(None)
             }
         })
+        .instrument(Span::current())
         .await?
     }
 }
