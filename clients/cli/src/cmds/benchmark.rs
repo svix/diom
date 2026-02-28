@@ -121,9 +121,9 @@ fn print_table(all_stats: &[Stats]) {
 fn new_bar(prefix: impl Into<String>, iterations: u64) -> ProgressBar {
     let pb = ProgressBar::new(iterations);
     pb.set_style(
-        ProgressStyle::with_template("  {prefix:.bold} [{bar:40.cyan/blue}] {iterations}")
+        ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] {prefix:.bold} [{bar:40.cyan/blue}] {pos:>7}/{len:7} {msg}")
             .unwrap()
-            .progress_chars("=>-"),
+            .progress_chars("#>-"),
     );
     pb.set_prefix(prefix.into());
     pb
