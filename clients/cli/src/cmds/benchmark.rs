@@ -367,32 +367,29 @@ async fn bench_kv(
 
     for round in 1..=rounds {
         // Set phase
+        let mut join_set = tokio::task::JoinSet::new();
         let test = test.clone();
         let pb = new_bar(format!("{} {round}/{rounds}", test.name()), duration_secs);
         let ticker = start_ticker(pb.clone(), duration_secs);
-        let handles = (0..concurrency)
-            .map(|i| {
-                let client = Arc::clone(&client);
-                let limiter = make_limiter(rate);
-                let test = test.clone();
-                tokio::spawn(async move {
-                    let mut hist = BenchHistogram::new(3)?;
-                    let mut rng = StdRng::seed_from_u64((i * round) as u64);
-                    let deadline = Instant::now() + Duration::from_secs(duration_secs);
-                    while Instant::now() < deadline {
-                        maybe_wait(limiter.as_deref()).await;
-                        let t = test.run(&client, &mut rng).await?;
-                        hist.record(t.as_micros() as u64).unwrap();
-                    }
-                    Ok::<BenchHistogram, anyhow::Error>(hist)
-                })
+        for i in 0..concurrency {
+            let client = Arc::clone(&client);
+            let limiter = make_limiter(rate);
+            let test = test.clone();
+            join_set.spawn(async move {
+                let mut hist = BenchHistogram::new(3)?;
+                let mut rng = StdRng::seed_from_u64((i * round) as u64);
+                let deadline = Instant::now() + Duration::from_secs(duration_secs);
+                while Instant::now() < deadline {
+                    maybe_wait(limiter.as_deref()).await;
+                    let t = test.run(&client, &mut rng).await?;
+                    hist.record(t.as_micros() as u64).unwrap();
+                }
+                Ok::<BenchHistogram, anyhow::Error>(hist)
             });
-        let joined_handles = try_join_all(handles)
-            .await?
-            .into_iter();
+        }
 
         let mut combined = BenchHistogram::new(3).unwrap();
-        for handle in joined_handles {
+        for handle in join_set.join_all().await {
             let hist = handle?;
             combined.add(hist)?;
         }
