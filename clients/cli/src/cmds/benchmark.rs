@@ -434,7 +434,7 @@ async fn bench_cache(
 
 #[derive(Clone)]
 struct BenchMsgsPublish {
-    batch_size: u16
+    batch_size: u16,
 }
 
 impl BenchShard for BenchMsgsPublish {
@@ -451,21 +451,19 @@ impl BenchShard for BenchMsgsPublish {
     ) -> Result<Duration> {
         let ns_name = "bench";
         let topic = format!("bench/topic/{shard_id}");
-        let msgs: Vec<_> = (0..self.batch_size).map(|_| {
-            let mut payload = vec![0u8; 256];
-            rng.fill(&mut payload[..]);
-            MsgIn::new(payload)
-        }).collect();
+        let msgs: Vec<_> = (0..self.batch_size)
+            .map(|_| {
+                let mut payload = vec![0u8; 256];
+                rng.fill(&mut payload[..]);
+                MsgIn::new(payload)
+            })
+            .collect();
 
         // Start of real code
         let t = quanta::Instant::now();
         client
             .msgs()
-            .publish(PublishIn::new(
-                msgs,
-                ns_name.to_string(),
-                topic.to_owned(),
-            ))
+            .publish(PublishIn::new(msgs, ns_name.to_string(), topic.to_owned()))
             .await?;
         Ok(t.elapsed())
     }
@@ -473,7 +471,7 @@ impl BenchShard for BenchMsgsPublish {
 
 #[derive(Clone)]
 struct BenchMsgsStreamReceive {
-    batch_size: u16
+    batch_size: u16,
 }
 
 impl BenchShard for BenchMsgsStreamReceive {
