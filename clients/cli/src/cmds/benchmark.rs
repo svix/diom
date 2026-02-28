@@ -337,13 +337,13 @@ impl TomModule {
     async fn bench_shard(
         &self,
         client: Arc<CoyoteClient>,
-        concurrency_i: u64,
+        shard_id: u64,
         pb: ProgressBar,
     ) -> Result<BenchResult> {
         let mut hist = BenchHistogram::new(3)?;
         let mut total_time = Duration::from_secs(0);
-        let mut rng = StdRng::seed_from_u64(concurrency_i);
-        let test = self.get_test(concurrency_i);
+        let mut rng = StdRng::seed_from_u64(shard_id);
+        let test = self.get_test(shard_id);
 
         for i in 0..self.iterations {
             let t = test.run(&client, &mut rng, i).await?;
