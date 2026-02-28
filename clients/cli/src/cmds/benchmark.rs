@@ -181,7 +181,7 @@ impl BenchmarkArgs {
     }
 }
 
-// ── kv ────────────────────────────────────────────────────────────────────────
+// Benchmark helpers
 
 async fn bench_shards_concurrent(
     client: Arc<CoyoteClient>,
@@ -220,6 +220,11 @@ async fn bench_shards_concurrent(
     Ok(())
 }
 
+struct BenchResult {
+    hist: BenchHistogram,
+    total_time: Duration,
+}
+
 trait BenchShard {
     fn iterations(&self) -> u64;
 
@@ -242,6 +247,8 @@ trait BenchShard {
         Ok(BenchResult { hist, total_time })
     }
 }
+
+// KV module
 
 #[derive(Clone)]
 struct TomBenchKvSet {
@@ -299,12 +306,6 @@ impl BenchShard for TomBenchKvGet {
     }
 }
 
-struct BenchResult {
-    hist: BenchHistogram,
-    total_time: Duration,
-}
-
-/// Runs the full benchmark for the module
 async fn bench_kv(client: Arc<CoyoteClient>, all_stats: &mut Vec<Stats>, concurrency: u64, iterations: u64) -> Result<()> {
     let iterations = iterations;
     let mut all_kv_set: Vec<_> = Vec::with_capacity(concurrency as usize);
