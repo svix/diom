@@ -1,7 +1,5 @@
-use std::sync::Arc;
-
 use diom_error::Error;
-use fjall::{KeyspaceCreateOptions, compaction::Fifo};
+use fjall::KeyspaceCreateOptions;
 
 pub mod entities;
 pub mod operations;
@@ -25,10 +23,7 @@ impl State {
         };
 
         let msg_table = {
-            let opts = KeyspaceCreateOptions::default().compaction_strategy(Arc::new(Fifo {
-                limit: u64::MAX,
-                ttl_seconds: None,
-            }));
+            let opts = KeyspaceCreateOptions::default();
             db.keyspace(MSG_TABLE_KEYSPACE, || opts)?
         };
 
