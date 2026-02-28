@@ -23,16 +23,16 @@ func NewMsgsStream(client *coyote_proto.HttpClient) MsgsStream {
 // specified duration to prevent duplicate delivery within the same consumer group.
 func (msgsStream MsgsStream) Receive(
 	ctx context.Context,
-	streamReceiveIn coyote_models.StreamReceiveIn,
-) (*coyote_models.StreamReceiveOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.StreamReceiveIn, coyote_models.StreamReceiveOut](
+	msgStreamReceiveIn coyote_models.MsgStreamReceiveIn,
+) (*coyote_models.MsgStreamReceiveOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamReceiveIn, coyote_models.MsgStreamReceiveOut](
 		ctx,
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/receive",
 		nil,
 		nil,
-		&streamReceiveIn,
+		&msgStreamReceiveIn,
 	)
 }
 
@@ -42,15 +42,15 @@ func (msgsStream MsgsStream) Receive(
 // successfully processed offset; future receives will start after it.
 func (msgsStream MsgsStream) Commit(
 	ctx context.Context,
-	streamCommitIn coyote_models.StreamCommitIn,
-) (*coyote_models.StreamCommitOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.StreamCommitIn, coyote_models.StreamCommitOut](
+	msgStreamCommitIn coyote_models.MsgStreamCommitIn,
+) (*coyote_models.MsgStreamCommitOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamCommitIn, coyote_models.MsgStreamCommitOut](
 		ctx,
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/commit",
 		nil,
 		nil,
-		&streamCommitIn,
+		&msgStreamCommitIn,
 	)
 }

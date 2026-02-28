@@ -14,9 +14,12 @@ impl<'a> MsgsStream<'a> {
     ///
     /// Each consumer in the group reads from all partitions. Messages are locked by leases for the
     /// specified duration to prevent duplicate delivery within the same consumer group.
-    pub async fn receive(&self, stream_receive_in: StreamReceiveIn) -> Result<StreamReceiveOut> {
+    pub async fn receive(
+        &self,
+        msg_stream_receive_in: MsgStreamReceiveIn,
+    ) -> Result<MsgStreamReceiveOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/stream/receive")
-            .with_body(stream_receive_in)
+            .with_body(msg_stream_receive_in)
             .execute(self.cfg)
             .await
     }
@@ -25,9 +28,12 @@ impl<'a> MsgsStream<'a> {
     ///
     /// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
     /// successfully processed offset; future receives will start after it.
-    pub async fn commit(&self, stream_commit_in: StreamCommitIn) -> Result<StreamCommitOut> {
+    pub async fn commit(
+        &self,
+        msg_stream_commit_in: MsgStreamCommitIn,
+    ) -> Result<MsgStreamCommitOut> {
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/stream/commit")
-            .with_body(stream_commit_in)
+            .with_body(msg_stream_commit_in)
             .execute(self.cfg)
             .await
     }

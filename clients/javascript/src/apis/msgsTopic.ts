@@ -1,13 +1,13 @@
 // this file is @generated
 
 import {
-    type TopicConfigureIn,
-    TopicConfigureInSerializer,
-} from '../models/topicConfigureIn';
+    type MsgTopicConfigureIn,
+    MsgTopicConfigureInSerializer,
+} from '../models/msgTopicConfigureIn';
 import {
-    type TopicConfigureOut,
-    TopicConfigureOutSerializer,
-} from '../models/topicConfigureOut';
+    type MsgTopicConfigureOut,
+    MsgTopicConfigureOutSerializer,
+} from '../models/msgTopicConfigureOut';
 import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
 
 export class MsgsTopic {
@@ -19,19 +19,19 @@ export class MsgsTopic {
 * Partition count can only be increased, never decreased. The default for a new topic is 1.
 */
         public configure(
-            topicConfigureIn: TopicConfigureIn,
-            ): Promise<TopicConfigureOut> {
+            msgTopicConfigureIn: MsgTopicConfigureIn,
+            ): Promise<MsgTopicConfigureOut> {
             const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/topic/configure");
 
             request.setBody(
-                    TopicConfigureInSerializer._toJsonObject(
-                        topicConfigureIn,
+                    MsgTopicConfigureInSerializer._toJsonObject(
+                        msgTopicConfigureIn,
                     )
                 );
             
                 return request.send(
                     this.requestCtx,
-                    TopicConfigureOutSerializer._fromJsonObject,
+                    MsgTopicConfigureOutSerializer._fromJsonObject,
                 );
             }
 

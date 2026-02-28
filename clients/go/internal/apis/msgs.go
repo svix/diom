@@ -23,15 +23,15 @@ func NewMsgs(client *coyote_proto.HttpClient) Msgs {
 // Publishes messages to a topic within a namespace.
 func (msgs Msgs) Publish(
 	ctx context.Context,
-	publishIn coyote_models.PublishIn,
-) (*coyote_models.PublishOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.PublishIn, coyote_models.PublishOut](
+	msgPublishIn coyote_models.MsgPublishIn,
+) (*coyote_models.MsgPublishOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgPublishIn, coyote_models.MsgPublishOut](
 		ctx,
 		msgs.client,
 		"POST",
 		"/api/v1/msgs/publish",
 		nil,
 		nil,
-		&publishIn,
+		&msgPublishIn,
 	)
 }
