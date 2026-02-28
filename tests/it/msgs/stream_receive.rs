@@ -681,3 +681,79 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn default_namespace_receive_and_commit() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // No namespace creation — default namespace is auto-created.
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "def-topic",
+            "msgs": [
+                { "value": "a".as_bytes() },
+                { "value": "b".as_bytes() },
+                { "value": "c".as_bytes() },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive using unprefixed topic
+    let response = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "def-topic",
+            "consumer_group": "cg-def",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 3);
+
+    for m in msgs {
+        let topic = m["topic"].as_str().unwrap();
+        assert!(
+            topic.starts_with("def-topic~"),
+            "default namespace response topics should not have a namespace prefix: {topic}"
+        );
+    }
+
+    // Commit using the response topic directly
+    let last = msgs.last().unwrap();
+    let partition_topic = last["topic"].as_str().unwrap();
+    let last_offset = last["offset"].as_u64().unwrap();
+
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "topic": partition_topic,
+            "consumer_group": "cg-def",
+            "offset": last_offset,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive again — should get nothing since we committed past all messages
+    let response = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "def-topic",
+            "consumer_group": "cg-def",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 0, "all messages should be committed");
+
+    Ok(())
+}

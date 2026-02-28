@@ -65,7 +65,7 @@ struct CacheConfigIn {
     pub eviction_policy: Option<EvictionPolicyIn>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 struct StreamConfigIn {
     pub retention_period_ms: Option<NonZeroU64>,
 }
@@ -109,6 +109,15 @@ impl BootstrapConfig {
         // Configure default namespace for kv, if not part of the config file
         if let Entry::Vacant(v) = config
             .kv
+            .get_or_insert_default()
+            .entry("default".to_owned())
+        {
+            v.insert(NamespaceIn::default());
+        }
+
+        // Configure default namespace for stream (msgs), if not part of the config file
+        if let Entry::Vacant(v) = config
+            .stream
             .get_or_insert_default()
             .entry("default".to_owned())
         {

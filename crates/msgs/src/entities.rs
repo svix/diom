@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fmt, ops::Deref};
 
 use diom_error::Error;
+use diom_namespace::{DEFAULT_NAMESPACE_NAME, namespace_name};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -39,7 +40,8 @@ impl Partition {
 
 /// A topic identifier without the partition.
 ///
-/// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`.
+/// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`, or just
+/// `"topic"` when the namespace is the default.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RawTopic {
     namespace: String,
@@ -73,7 +75,11 @@ impl Deref for RawTopic {
 
 impl fmt::Display for RawTopic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}{}", self.namespace, NAMESPACE_DELIMITER, self.topic)
+        if self.namespace == DEFAULT_NAMESPACE_NAME {
+            write!(f, "{}", self.topic)
+        } else {
+            write!(f, "{}{}{}", self.namespace, NAMESPACE_DELIMITER, self.topic)
+        }
     }
 }
 
@@ -92,9 +98,10 @@ impl<'de> Deserialize<'de> for RawTopic {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let (ns, topic) = s
-            .split_once(NAMESPACE_DELIMITER)
-            .ok_or_else(|| serde::de::Error::custom("missing ':' namespace delimiter"))?;
+        let (ns, topic) = match s.split_once(NAMESPACE_DELIMITER) {
+            Some((ns, topic)) => (ns, topic),
+            None => (namespace_name(&s), s.as_str()),
+        };
         Self::new(ns.to_owned(), topic.to_owned()).map_err(serde::de::Error::custom)
     }
 }
@@ -133,9 +140,10 @@ impl TryFrom<String> for Topic {
     type Error = Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let (ns, rest) = value
-            .split_once(NAMESPACE_DELIMITER)
-            .ok_or_else(|| Error::generic("missing ':' namespace delimiter in topic"))?;
+        let (ns, rest) = match value.split_once(NAMESPACE_DELIMITER) {
+            Some((ns, rest)) => (ns, rest),
+            None => (namespace_name(&value), value.as_str()),
+        };
         let (topic, idx_str) = rest
             .rsplit_once(TOPIC_PARTITION_DELIMITER)
             .ok_or_else(|| Error::generic("missing '~' separator in topic"))?;
@@ -220,11 +228,12 @@ impl<'de> Deserialize<'de> for TopicIn {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let (ns, rest) = s
-            .split_once(NAMESPACE_DELIMITER)
-            .ok_or_else(|| serde::de::Error::custom("missing ':' namespace delimiter"))?;
+        let (ns, rest) = match s.split_once(NAMESPACE_DELIMITER) {
+            Some((ns, rest)) => (ns, rest),
+            None => (namespace_name(&s), s.as_str()),
+        };
         if rest.contains(TOPIC_PARTITION_DELIMITER) {
-            // Re-parse the full string via Topic::try_from (it also splits on ':')
+            // Re-parse the full string via Topic::try_from (it handles default namespace too)
             Topic::try_from(s)
                 .map(TopicIn::WithPartition)
                 .map_err(serde::de::Error::custom)

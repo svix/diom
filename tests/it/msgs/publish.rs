@@ -255,3 +255,119 @@ async fn publish_keyless_same_partition() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn publish_to_default_namespace() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // No namespace creation — default namespace is auto-created.
+    let response = client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "my-topic",
+            "msgs": [
+                { "value": "hello".as_bytes() },
+                { "value": "world".as_bytes() },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 2);
+
+    for m in msgs {
+        let topic = m["topic"].as_str().unwrap();
+        assert!(
+            topic.starts_with("my-topic~"),
+            "default namespace response topics should not have a namespace prefix: {topic}"
+        );
+        assert!(m["offset"].is_u64());
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn default_namespace_isolated_from_named() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "other" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish to default namespace (no prefix)
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "shared-name",
+            "msgs": [{ "value": "default-msg".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish to "other" namespace
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "other:shared-name",
+            "msgs": [{ "value": "other-msg".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive from default — should only see 1 message
+    let response = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "shared-name",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let default_msgs = response["msgs"].as_array().unwrap();
+    assert_eq!(default_msgs.len(), 1);
+    assert!(
+        default_msgs[0]["topic"]
+            .as_str()
+            .unwrap()
+            .starts_with("shared-name~"),
+        "default namespace response topics should not have a namespace prefix"
+    );
+
+    // Receive from "other" — should only see 1 message
+    let response = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "other:shared-name",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let other_msgs = response["msgs"].as_array().unwrap();
+    assert_eq!(other_msgs.len(), 1);
+    assert!(
+        other_msgs[0]["topic"]
+            .as_str()
+            .unwrap()
+            .starts_with("other:shared-name~"),
+        "other namespace messages should have other: prefix"
+    );
+
+    Ok(())
+}

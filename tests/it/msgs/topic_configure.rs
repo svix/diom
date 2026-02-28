@@ -305,3 +305,64 @@ async fn receive_respects_configured_partitions() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn configure_default_namespace_topic() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // No namespace creation — default namespace is auto-created.
+    let response = client
+        .post("msgs/topic/configure")
+        .json(json!({
+            "topic": "def-t1",
+            "partitions": 4,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(response["partitions"].as_u64().unwrap(), 4);
+
+    // Publish with different keys to spread across partitions
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "def-t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "alpha" },
+                { "value": "b".as_bytes(), "key": "beta" },
+                { "value": "c".as_bytes(), "key": "gamma" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "def-t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 3);
+
+    for m in msgs {
+        let topic = m["topic"].as_str().unwrap();
+        assert!(
+            topic.starts_with("def-t1~"),
+            "default namespace topic should not have namespace prefix: {topic}"
+        );
+        let partition: u16 = topic.strip_prefix("def-t1~").unwrap().parse().unwrap();
+        assert!(partition < 4, "partition {partition} should be < 4");
+    }
+
+    Ok(())
+}
