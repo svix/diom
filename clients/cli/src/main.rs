@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use clap_complete::Shell;
@@ -6,7 +8,10 @@ use concolor_clap::{Color, ColorChoice};
 use diom_client::{DiomClient, DiomOptions};
 
 use self::{
-    cmds::api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs},
+    cmds::{
+        api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs},
+        benchmark::BenchmarkArgs,
+    },
     config::Config,
 };
 
@@ -66,6 +71,8 @@ enum RootCommands {
     Msgs(MsgsArgs),
     RateLimit(RateLimiterArgs),
     Health(HealthArgs),
+    /// Benchmark module throughput
+    Benchmark(BenchmarkArgs),
     /// Get the version of the Svix CLI
     Version,
     /// Generate the autocompletion script for the specified shell
@@ -124,6 +131,15 @@ async fn main() -> Result<()> {
         RootCommands::Health(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;
+        }
+        RootCommands::Benchmark(args) => {
+            let cfg = cfg?;
+            let mut opts = get_client_options(&cfg)?;
+            if let Some(url) = args.server_url.clone() {
+                opts.server_url = Some(url);
+            }
+            let client = Arc::new(DiomClient::new("xxx".to_owned(), Some(opts)));
+            args.exec(client).await?;
         }
     }
 
