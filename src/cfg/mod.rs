@@ -142,6 +142,14 @@ impl From<Dir> for PathBuf {
     }
 }
 
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum FsyncMode {
+    EveryCommit,
+    #[default]
+    EverySecond,
+}
+
 impl DatabaseConfig {
     fn database(dir: &Path, file: &str) -> Result<fjall::Database> {
         let dir = Dir::new(dir)?;
@@ -279,6 +287,13 @@ pub struct ClusterConfiguration {
         default = "defaults::log_index_interval"
     )]
     pub log_index_interval: Duration,
+
+    /// How often to sync logs. If this is set to "every second" and you experience a catastrophic
+    /// failure of a node (e.g., an unsafe shutdown of the OS), you should remove that node from
+    /// the cluster and then restore it from another surviving node to avoid potential data
+    /// corruption.
+    #[serde(default)]
+    pub log_sync: FsyncMode,
 }
 
 impl ClusterConfiguration {
@@ -528,6 +543,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
                 discovery_timeout: cluster_discovery_timeout,
                 startup_discovery_delay: cluster_startup_discovery_delay,
                 log_index_interval: cluster_log_index_interval,
+                log_sync: _cluster_log_sync, // TODO: impl FromStr for this
             },
     } = &mut config;
 
