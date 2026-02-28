@@ -53,6 +53,10 @@ pub struct BenchmarkArgs {
     #[arg(long)]
     pub json: bool,
 
+    /// Batch size for msgs publish/receive operations
+    #[arg(short, long, default_value_t = 1)]
+    pub batch_size: u16,
+
     /// Modules to benchmark (default: all)
     #[arg(short, long, value_delimiter = ',')]
     pub modules: Vec<BenchmarkModule>,
@@ -73,7 +77,10 @@ impl BenchmarkArgs {
             self.modules
         };
 
-        eprintln!("Running benchmark: {iterations} iterations · {concurrency} concurrent",);
+        let batch_size = self.batch_size;
+        eprintln!(
+            "Running benchmark: {iterations} iterations · {concurrency} concurrent · batch_size {batch_size}",
+        );
 
         // Each op type's wall-clock time: rounds run sequentially, tasks within a round run concurrently.
         let mut all_stats: Vec<Stats> = Vec::new();
@@ -84,6 +91,7 @@ impl BenchmarkArgs {
                 client: Arc::clone(&client),
                 concurrency,
                 iterations,
+                batch_size: self.batch_size,
             });
 
             match module {
@@ -236,6 +244,7 @@ struct BenchConfig {
     client: Arc<CoyoteClient>,
     concurrency: u64,
     iterations: u64,
+    batch_size: u16,
 }
 
 struct BenchResult {
@@ -501,13 +510,17 @@ async fn bench_msgs(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result
 
     bench_shards_concurrent(
         Arc::clone(&cfg),
-        BenchMsgsPublish { batch_size: 1 },
+        BenchMsgsPublish {
+            batch_size: cfg.batch_size,
+        },
         all_stats,
     )
     .await?;
     bench_shards_concurrent(
         Arc::clone(&cfg),
-        BenchMsgsStreamReceive { batch_size: 1 },
+        BenchMsgsStreamReceive {
+            batch_size: cfg.batch_size,
+        },
         all_stats,
     )
     .await?;
