@@ -74,3 +74,7 @@ pub(super) fn cluster_auto_initialize() -> bool {
 pub(super) fn log_index_interval() -> Duration {
     Duration::from_mins(10)
 }
+
+pub(super) fn cluster_snapshot_after_time() -> Option<Duration> {
+    Some(Duration::from_mins(15))
+}
