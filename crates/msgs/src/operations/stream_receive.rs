@@ -126,6 +126,16 @@ impl StreamReceiveOperation {
                 .unwrap_or(Offset::MIN);
 
             let leases = LeaseRow::fetch_all(state, self.namespace_id, partition, &self.cg)?;
+
+            // Check for active leases inside apply_real (Raft state machine) to
+            // prevent races — the pre-Raft check in the constructor is only an
+            // optimistic fast-path.
+            let has_active_lease = leases.iter().any(|l| l.is_active(now));
+            if has_active_lease {
+                all_lease_diffs.push(LeaseRow::cull_and_compact(leases, now));
+                continue;
+            }
+
             let blocked_leases = leases.iter().filter(|l| l.acked_at.is_some() || l.is_dlq());
 
             let batch_size = remaining;

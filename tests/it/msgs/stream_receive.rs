@@ -695,31 +695,18 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
     }
 
     let mut total_msgs = 0usize;
-    let mut ok_count = 0usize;
     for handle in handles {
         let resp = handle.await.unwrap();
-        match resp.status() {
-            StatusCode::OK => {
-                let body = resp.json();
-                let msgs = body["msgs"].as_array().unwrap();
-                total_msgs += msgs.len();
-                ok_count += 1;
-            }
-            StatusCode::BAD_REQUEST => {
-                // Partition locked — expected for losers of the race.
-            }
-            other => panic!("unexpected status: {other}"),
-        }
+        assert_eq!(resp.status(), StatusCode::OK);
+        let body = resp.json();
+        let msgs = body["msgs"].as_array().unwrap();
+        total_msgs += msgs.len();
     }
 
-    // Exactly one consumer should have received the 3 messages.
+    // Exactly 3 messages total — the winner gets them, losers get empty responses.
     assert_eq!(
         total_msgs, 3,
         "messages must not be duplicated across consumers"
-    );
-    assert_eq!(
-        ok_count, 1,
-        "exactly one consumer should win the single partition"
     );
 
     Ok(())
