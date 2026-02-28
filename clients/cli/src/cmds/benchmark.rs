@@ -433,11 +433,13 @@ async fn bench_cache(
 // Msgs module
 
 #[derive(Clone)]
-struct BenchMsgsPublish {}
+struct BenchMsgsPublish {
+    batch_size: u16
+}
 
 impl BenchShard for BenchMsgsPublish {
     fn name(&self) -> String {
-        "msg.publish".to_owned()
+        format!("publish (batch={})", self.batch_size)
     }
 
     async fn run(
@@ -449,15 +451,18 @@ impl BenchShard for BenchMsgsPublish {
     ) -> Result<Duration> {
         let ns_name = "bench";
         let topic = format!("bench/topic/{shard_id}");
-        let mut payload = vec![0u8; 256];
-        rng.fill(&mut payload[..]);
+        let msgs: Vec<_> = (0..self.batch_size).map(|_| {
+            let mut payload = vec![0u8; 256];
+            rng.fill(&mut payload[..]);
+            MsgIn::new(payload)
+        }).collect();
 
         // Start of real code
         let t = quanta::Instant::now();
         client
             .msgs()
             .publish(PublishIn::new(
-                vec![MsgIn::new(payload)],
+                msgs,
                 ns_name.to_string(),
                 topic.to_owned(),
             ))
@@ -467,11 +472,13 @@ impl BenchShard for BenchMsgsPublish {
 }
 
 #[derive(Clone)]
-struct BenchMsgsStreamReceive {}
+struct BenchMsgsStreamReceive {
+    batch_size: u16
+}
 
 impl BenchShard for BenchMsgsStreamReceive {
     fn name(&self) -> String {
-        "msg.stream.receive".to_owned()
+        format!("receive (batch={})", self.batch_size)
     }
 
     async fn run(
@@ -494,7 +501,7 @@ impl BenchShard for BenchMsgsStreamReceive {
             ns_name.to_owned(),
             topic.to_owned(),
         );
-        recv.batch_size = Some(1);
+        recv.batch_size = Some(self.batch_size);
         let out = client.msgs().stream().receive(recv).await?;
         for msg in out.msgs {
             client
@@ -528,7 +535,7 @@ async fn bench_msgs(
 
     bench_shards_concurrent(
         client.clone(),
-        BenchMsgsPublish {},
+        BenchMsgsPublish { batch_size: 1 },
         concurrency,
         iterations,
         all_stats,
@@ -536,7 +543,7 @@ async fn bench_msgs(
     .await?;
     bench_shards_concurrent(
         client.clone(),
-        BenchMsgsStreamReceive {},
+        BenchMsgsStreamReceive { batch_size: 1 },
         concurrency,
         iterations,
         all_stats,
