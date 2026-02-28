@@ -5,7 +5,10 @@ use clap::Args;
 use comfy_table::{Table, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL_CONDENSED};
 use coyote_client::{
     CoyoteClient,
-    models::{CacheGetIn, CacheSetIn, KvGetIn, KvSetIn},
+    models::{
+        CacheGetIn, CacheSetIn, CreateNamespaceIn, KvGetIn, KvSetIn, MsgIn, PublishIn,
+        StreamCommitIn, StreamReceiveIn,
+    },
 };
 use futures::future::try_join_all;
 use hdrhistogram::Histogram;
@@ -80,11 +83,13 @@ impl BenchmarkArgs {
                 }
                 BenchmarkModule::Cache => {
                     eprintln!("[cache]");
-                    bench_cache(Arc::clone(&client), &mut all_stats, concurrency, iterations).await?;
+                    bench_cache(Arc::clone(&client), &mut all_stats, concurrency, iterations)
+                        .await?;
                 }
                 BenchmarkModule::Msgs => {
                     eprintln!("[msgs]");
-                    bench_msgs(Arc::clone(&client), &mut all_stats, concurrency, iterations).await?;
+                    bench_msgs(Arc::clone(&client), &mut all_stats, concurrency, iterations)
+                        .await?;
                 }
             }
         }
@@ -226,7 +231,12 @@ struct BenchResult {
 trait BenchShard {
     async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration>;
 
-    async fn bench_shard(self, client: Arc<CoyoteClient>, iterations: u64, pb: ProgressBar) -> Result<BenchResult>
+    async fn bench_shard(
+        self,
+        client: Arc<CoyoteClient>,
+        iterations: u64,
+        pb: ProgressBar,
+    ) -> Result<BenchResult>
     where
         Self: Sized,
     {
@@ -340,7 +350,10 @@ impl BenchShard for BenchCacheSet {
 
         // Start of real code
         let t = quanta::Instant::now();
-        client.cache().set(CacheSetIn::new(key.clone(), ttl_bench_ms, value)).await?;
+        client
+            .cache()
+            .set(CacheSetIn::new(key.clone(), ttl_bench_ms, value))
+            .await?;
         Ok(t.elapsed())
     }
 }
@@ -388,56 +401,95 @@ async fn bench_cache(
         all_cache_get.push(BenchCacheGet::setup(keys.clone()));
     }
 
-    bench_shards_concurrent(client.clone(), "cache.set", all_cache_set, iterations, all_stats).await?;
-    bench_shards_concurrent(client.clone(), "cache.get", all_cache_get, iterations, all_stats).await?;
+    bench_shards_concurrent(
+        client.clone(),
+        "cache.set",
+        all_cache_set,
+        iterations,
+        all_stats,
+    )
+    .await?;
+    bench_shards_concurrent(
+        client.clone(),
+        "cache.get",
+        all_cache_get,
+        iterations,
+        all_stats,
+    )
+    .await?;
     Ok(())
 }
 
 // Msgs module
 
 #[derive(Clone)]
-struct BenchMsgsPublish {
-}
+struct BenchMsgsPublish {}
 
 impl BenchMsgsPublish {
     fn setup() -> Self {
-        Self { }
+        Self {}
     }
 }
 
 impl BenchShard for BenchMsgsPublish {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
-        let ttl_bench_ms = 300_000; // 5 minutes
-        let key = "a".to_string();
-        let mut value = vec![0u8; 256];
-        rng.fill(&mut value[..]);
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _i: u64) -> Result<Duration> {
+        let ns_name = "bench";
+        let topic = "bench/topic";
+        let mut payload = vec![0u8; 256];
+        rng.fill(&mut payload[..]);
 
         // Start of real code
         let t = quanta::Instant::now();
-        client.cache().set(CacheSetIn::new(key.clone(), ttl_bench_ms, value)).await?;
+        client
+            .msgs()
+            .publish(PublishIn::new(
+                vec![MsgIn::new(payload)],
+                ns_name.to_string(),
+                topic.to_owned(),
+            ))
+            .await?;
         Ok(t.elapsed())
     }
 }
 
 #[derive(Clone)]
-struct BenchMsgsStreamReceive {
-}
+struct BenchMsgsStreamReceive {}
 
 impl BenchMsgsStreamReceive {
     fn setup() -> Self {
-        Self { }
+        Self {}
     }
 }
 
 impl BenchShard for BenchMsgsStreamReceive {
-    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, i: u64) -> Result<Duration> {
-        let key = "a".to_string();
+    async fn run(&self, client: &CoyoteClient, rng: &mut StdRng, _i: u64) -> Result<Duration> {
+        let consumer_group = "consumer";
+        let ns_name = "bench";
+        let topic = "bench/topic";
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
         // Start of real code
         let t = quanta::Instant::now();
-        client.cache().get(CacheGetIn::new(key.clone())).await?;
+        let mut recv = StreamReceiveIn::new(
+            consumer_group.to_owned(),
+            ns_name.to_owned(),
+            topic.to_owned(),
+        );
+        recv.batch_size = Some(1);
+        let out = client.msgs().stream().receive(recv).await?;
+        for msg in out.msgs {
+            client
+                .msgs()
+                .stream()
+                .commit(StreamCommitIn::new(
+                    consumer_group.to_owned(),
+                    ns_name.to_owned(),
+                    msg.offset,
+                    msg.topic.clone(),
+                ))
+                .await?;
+        }
         Ok(t.elapsed())
     }
 }
@@ -448,20 +500,37 @@ async fn bench_msgs(
     concurrency: u64,
     iterations: u64,
 ) -> Result<()> {
+    let ns_name = "bench";
+
+    client
+        .msgs()
+        .namespace()
+        .create(CreateNamespaceIn::new(ns_name.to_string()))
+        .await?;
+
     let mut all_cache_set: Vec<_> = Vec::with_capacity(concurrency as usize);
     let mut all_cache_get: Vec<_> = Vec::with_capacity(concurrency as usize);
-    for shard_id in 0..concurrency {
-        let mut rng = StdRng::seed_from_u64(shard_id);
-        let keys: Arc<Vec<_>> = Arc::new(
-            (0..iterations)
-                .map(|_| Alphanumeric.sample_string(&mut rng, 16))
-                .collect(),
-        );
+    for _shard_id in 0..concurrency {
         all_cache_set.push(BenchMsgsPublish::setup());
         all_cache_get.push(BenchMsgsStreamReceive::setup());
     }
 
-    bench_shards_concurrent(client.clone(), "msgs.publish", all_cache_set, iterations, all_stats).await?;
-    bench_shards_concurrent(client.clone(), "msgs.stream.receive", all_cache_get, iterations, all_stats).await?;
+    bench_shards_concurrent(
+        client.clone(),
+        "msgs.publish (topic=1)",
+        all_cache_set,
+        iterations,
+        all_stats,
+    )
+    .await?;
+    // bench_shards_concurrent(client.clone(), "msgs.publish (topic=500)", all_cache_set, iterations, all_stats).await?;
+    bench_shards_concurrent(
+        client.clone(),
+        "msgs.stream.receive (topic=1, batch=1)",
+        all_cache_get,
+        iterations,
+        all_stats,
+    )
+    .await?;
     Ok(())
 }
