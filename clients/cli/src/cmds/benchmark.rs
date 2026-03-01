@@ -128,12 +128,14 @@ impl BenchmarkArgs {
 struct Stats {
     op: String,
     ops_per_sec: u64,
+    op_batch_size: u16,
     mean_us: u64,
     std_dev_us: u64,
     p50_us: u64,
     p99_us: u64,
     p999_us: u64,
     max_us: u64,
+    bytes_per_sec: u64,
 }
 
 fn hist_compute_stats(
@@ -141,16 +143,20 @@ fn hist_compute_stats(
     hist: BenchHistogram,
     total_time_ms: u64,
     operations: u64,
+    total_bytes: u64,
+    batch_size: u16,
 ) -> Stats {
     Stats {
         op: op.into(),
         ops_per_sec: (operations * 1_000) / total_time_ms,
+        op_batch_size: batch_size,
         mean_us: hist.mean() as u64,
         std_dev_us: hist.stdev() as u64,
         p50_us: hist.value_at_quantile(0.50),
         p99_us: hist.value_at_quantile(0.99),
         p999_us: hist.value_at_quantile(0.999),
         max_us: hist.max(),
+        bytes_per_sec: (total_bytes * 1_000) / total_time_ms,
     }
 }
 
@@ -166,24 +172,50 @@ fn fmt_us(us: u64) -> String {
     }
 }
 
+fn format_bytes(n: u64) -> String {
+    if n == 0 {
+        return "--".to_string();
+    }
+
+    let mut n = n as f64;
+    for unit in &["B", "KB", "MB", "GB", "TB", "PB"] {
+        if n.abs() < 1000.0 {
+            return format!("{:.2} {}", n, unit);
+        }
+        n /= 1000.0;
+    }
+    format!("{:.1} EB", n)
+}
+
 fn print_table(all_stats: &[Stats]) {
     let mut table = Table::new();
     table
         .load_preset(UTF8_FULL_CONDENSED)
         .apply_modifier(UTF8_ROUND_CORNERS)
         .set_header(vec![
-            "op", "ops/sec", "mean", "±", "p50", "p99", "p99.9", "max",
+            "op",
+            "ops/sec",
+            "mean",
+            "±",
+            "p50",
+            "p99",
+            "p99.9",
+            "max",
+            "bytes/sec",
+            "entities/sec",
         ]);
     for s in all_stats {
         table.add_row(vec![
             s.op.clone(),
-            format!("{:.0}", s.ops_per_sec),
+            format!("{}", s.ops_per_sec),
             fmt_us(s.mean_us),
             fmt_us(s.std_dev_us),
             fmt_us(s.p50_us),
             fmt_us(s.p99_us),
             fmt_us(s.p999_us),
             fmt_us(s.max_us),
+            format_bytes(s.bytes_per_sec),
+            format!("{}", s.ops_per_sec * (s.op_batch_size as u64)),
         ]);
     }
     println!("{table}");
@@ -212,6 +244,7 @@ struct BenchConfig {
 struct BenchResult {
     hist: BenchHistogram,
     total_time: Duration,
+    total_bytes: u64,
     batch_size: u16,
 }
 
@@ -220,6 +253,7 @@ impl BenchResult {
         Self {
             hist: BenchHistogram::new(3).expect("can never fail"),
             total_time: Duration::from_secs(0),
+            total_bytes: 0,
             batch_size: 1,
         }
     }
@@ -229,9 +263,10 @@ impl BenchResult {
         self
     }
 
-    fn process(&mut self, t: Duration) -> Result<()> {
+    fn process(&mut self, t: Duration, bytes: u64) -> Result<()> {
         self.hist.record(t.as_micros() as u64)?;
         self.total_time += t;
+        self.total_bytes += bytes;
         Ok(())
     }
 
@@ -243,10 +278,12 @@ impl BenchResult {
     ) -> Result<()> {
         let mut combined = BenchHistogram::new(3).unwrap();
         let mut total_time_ms = 0;
+        let mut total_bytes = 0;
         let mut batch_size = 0;
         for res in results {
             combined.add(&res.hist)?;
             total_time_ms += res.total_time.as_millis() as u64;
+            total_bytes += res.total_bytes;
             batch_size = res.batch_size;
         }
         // Get the average time per run
@@ -256,7 +293,9 @@ impl BenchResult {
             op,
             combined,
             total_time_ms,
-            cfg.iterations * cfg.concurrency * (batch_size as u64),
+            cfg.iterations * cfg.concurrency,
+            total_bytes,
+            batch_size,
         ));
 
         Ok(())
@@ -310,6 +349,9 @@ trait BenchShard {
     where
         Self: Sized + Clone,
     {
+        // Sleep for 1 second before tests to give fjall time to catch up.
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
         let concurrency = cfg.concurrency;
         let iterations = cfg.iterations;
         let test_name = self.test_name();
@@ -324,9 +366,6 @@ trait BenchShard {
         let joined_handles = try_join_all(handles).await?.into_iter();
         pb.finish();
         self.finalize_result_stats(Arc::clone(&cfg), joined_handles, all_stats)?;
-
-        // Sleep for 1 second between tests to give the server time to catch up.
-        tokio::time::sleep(Duration::from_secs(1)).await;
 
         Ok(())
     }
@@ -366,13 +405,14 @@ impl BenchShard for BenchKvSet {
         iteration: u64,
     ) -> Result<()> {
         let key = bench_generate_key(shard_id, iteration);
-        let mut value = vec![0u8; 256];
+        let mut value = vec![0u8; 2054];
         rng.fill(&mut value[..]);
 
         // Start of real code
+        let bytes = value.len() as u64;
         let t = Instant::now();
         client.kv().set(KvSetIn::new(key.clone(), value)).await?;
-        self.bench_result.process(t.elapsed())?;
+        self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
 
@@ -412,18 +452,17 @@ impl BenchShard for BenchKvGet {
     async fn run(
         &mut self,
         client: &DiomClient,
-        rng: &mut StdRng,
+        _rng: &mut StdRng,
         shard_id: u64,
         iteration: u64,
     ) -> Result<()> {
         let key = bench_generate_key(shard_id, iteration);
-        let mut value = vec![0u8; 256];
-        rng.fill(&mut value[..]);
 
         // Start of real code
         let t = Instant::now();
-        client.kv().get(KvGetIn::new(key.clone())).await?;
-        self.bench_result.process(t.elapsed())?;
+        let ret = client.kv().get(KvGetIn::new(key.clone())).await?;
+        let bytes = ret.value.len() as u64;
+        self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
 
@@ -481,16 +520,17 @@ impl BenchShard for BenchCacheSet {
     ) -> Result<()> {
         let ttl_bench_ms = 300_000; // 5 minutes
         let key = bench_generate_key(shard_id, iteration);
-        let mut value = vec![0u8; 256];
+        let mut value = vec![0u8; 2562];
         rng.fill(&mut value[..]);
 
         // Start of real code
+        let bytes = value.len() as u64;
         let t = Instant::now();
         client
             .cache()
             .set(CacheSetIn::new(key.clone(), ttl_bench_ms, value))
             .await?;
-        self.bench_result.process(t.elapsed())?;
+        self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
 
@@ -530,18 +570,17 @@ impl BenchShard for BenchCacheGet {
     async fn run(
         &mut self,
         client: &DiomClient,
-        rng: &mut StdRng,
+        _rng: &mut StdRng,
         shard_id: u64,
         iteration: u64,
     ) -> Result<()> {
         let key = bench_generate_key(shard_id, iteration);
-        let mut value = vec![0u8; 256];
-        rng.fill(&mut value[..]);
 
         // Start of real code
         let t = Instant::now();
-        client.cache().get(CacheGetIn::new(key.clone())).await?;
-        self.bench_result.process(t.elapsed())?;
+        let ret = client.cache().get(CacheGetIn::new(key.clone())).await?;
+        let bytes = ret.value.len() as u64;
+        self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
 
@@ -602,19 +641,20 @@ impl BenchShard for BenchMsgsPublish {
         let topic = format!("bench:bench/topic/{shard_id}");
         let msgs: Vec<_> = (0..self.batch_size)
             .map(|_| {
-                let mut payload = vec![0u8; 256];
+                let mut payload = vec![0u8; 2_834];
                 rng.fill(&mut payload[..]);
                 MsgIn::new(payload)
             })
             .collect();
 
         // Start of real code
+        let bytes = msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
         let t = Instant::now();
         client
             .msgs()
             .publish(MsgPublishIn::new(msgs, topic.clone()))
             .await?;
-        self.bench_result.process(t.elapsed())?;
+        self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
 
@@ -672,7 +712,8 @@ impl BenchShard for BenchMsgsStreamReceive {
         let mut recv = MsgStreamReceiveIn::new(consumer_group.to_owned(), topic.clone());
         recv.batch_size = Some(self.batch_size);
         let out = client.msgs().stream().receive(recv).await?;
-        self.bench_result_rcv.process(t.elapsed())?;
+        let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
+        self.bench_result_rcv.process(t.elapsed(), rcv_bytes)?;
 
         let latest_by_topic = out.msgs.into_iter().fold(HashMap::new(), |mut map, msg| {
             map.entry(msg.topic)
@@ -693,7 +734,7 @@ impl BenchShard for BenchMsgsStreamReceive {
                 ))
                 .await?;
         }
-        self.bench_result_commit.process(t.elapsed())?;
+        self.bench_result_commit.process(t.elapsed(), 0)?;
 
         Ok(())
     }
