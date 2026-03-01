@@ -10,7 +10,7 @@ pub struct Config {
     pub auth_token: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     server_url: Option<String>,
-    #[cfg(feature = "http1")]
+    #[cfg(all(feature = "http1", feature = "http2"))]
     #[serde(default)]
     pub http1: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
