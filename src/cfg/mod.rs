@@ -151,10 +151,29 @@ pub enum FsyncMode {
 }
 
 impl DatabaseConfig {
+    fn default_cache_size() -> u64 {
+        let mut sys = sysinfo::System::new_all();
+        sys.refresh_all();
+
+        let ret = sys.total_memory();
+        if ret == 0 {
+            // Default to fjall's current default (32 MiB)
+            32 * 1024 * 1024
+        } else {
+            // Fjall recommends 20-25% of the memory for cache.
+            // We can probably do more, but let's start with that.
+            ret / 5
+        }
+    }
+
     fn database(dir: &Path, file: &str) -> Result<fjall::Database> {
         let dir = Dir::new(dir)?;
         let path = dir.join(file);
-        fjall::Database::builder(path).open().map_err(|e| e.into())
+        // FIXME: we should probably make the cache size a config.
+        fjall::Database::builder(path)
+            .cache_size(Self::default_cache_size())
+            .open()
+            .map_err(|e| e.into())
     }
 
     pub fn persistent(db_config: &DatabaseConfig) -> Result<fjall::Database> {
