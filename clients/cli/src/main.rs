@@ -6,6 +6,10 @@ use clap_complete::Shell;
 use colored_json::{ColorMode, Output};
 use concolor_clap::{Color, ColorChoice};
 use diom_client::{DiomClient, DiomOptions};
+use mimalloc::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 use self::{
     cmds::{

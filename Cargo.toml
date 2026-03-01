@@ -171,6 +171,7 @@ idna_adapter = "=1.1.0"
 indexmap = "2.6.0"
 itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
+mimalloc = "0.1.48"
 mime = "0.3"
 num_enum = "0.7.2"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "f03cc8b696131f199f373fe1e3aa4b9e04ef57a4" }
