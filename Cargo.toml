@@ -51,6 +51,7 @@ idna_adapter.workspace = true
 indexmap.workspace = true
 itertools.workspace = true
 jiff.workspace = true
+lru.workspace = true
 openraft.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true
@@ -171,6 +172,7 @@ idna_adapter = "=1.1.0"
 indexmap = "2.6.0"
 itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
+lru = "0.16.3"
 mimalloc = "0.1.48"
 mime = "0.3"
 num_enum = "0.7.2"
