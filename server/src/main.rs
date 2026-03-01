@@ -7,7 +7,11 @@
 use clap::{Parser, Subcommand};
 use diom::{cfg, run, setup_tracing};
 use dotenvy::dotenv;
+use mimalloc::MiMalloc;
 use tracing_subscriber::util::SubscriberInitExt;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 #[derive(Parser)]
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
