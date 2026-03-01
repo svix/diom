@@ -31,13 +31,22 @@ async fn publish_to_topic() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
-    assert_eq!(msgs.len(), 2);
+    let topics = response["topics"].as_array().unwrap();
+    assert_eq!(topics.len(), 1);
+    let topic = &topics[0];
+    assert_eq!(
+        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        2
+    );
 
-    // Each message should have a namespaced topic (with partition) and offset
-    for m in msgs {
-        assert!(m["topic"].as_str().unwrap().starts_with("ns1:my-topic~"));
-        assert!(m["offset"].is_u64());
+    // Each topic should have a partition
+    for topic in topics {
+        assert!(
+            topic["topic"]
+                .as_str()
+                .unwrap()
+                .starts_with("ns1:my-topic~")
+        );
     }
 
     Ok(())
@@ -71,20 +80,23 @@ async fn publish_with_partition_key() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
-    assert_eq!(msgs.len(), 3);
+    let topics = response["topics"].as_array().unwrap();
+    assert_eq!(topics.len(), 1);
+    let topic = &topics[0];
+    assert_eq!(
+        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        3
+    );
 
-    // All messages with the same key must land in the same partition topic
-    let topic = msgs[0]["topic"].as_str().unwrap();
-    assert!(topic.starts_with("ns-key:keyed-topic~"));
-    for m in msgs {
-        assert_eq!(m["topic"].as_str().unwrap(), topic);
+    // Each topic should have a partition
+    for topic in topics {
+        assert!(
+            topic["topic"]
+                .as_str()
+                .unwrap()
+                .starts_with("ns-key:keyed-topic~")
+        );
     }
-
-    // Offsets should be sequential within the partition
-    let offsets: Vec<u64> = msgs.iter().map(|m| m["offset"].as_u64().unwrap()).collect();
-    assert_eq!(offsets[1], offsets[0] + 1);
-    assert_eq!(offsets[2], offsets[1] + 1);
 
     Ok(())
 }
@@ -123,15 +135,23 @@ async fn publish_directly_to_partition() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
-    assert_eq!(msgs.len(), 2);
+    let topics = response["topics"].as_array().unwrap();
+    assert_eq!(topics.len(), 1);
+    let topic = &topics[0];
+    assert_eq!(
+        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        2
+    );
 
-    for m in msgs {
-        assert_eq!(m["topic"].as_str().unwrap(), "ns-direct:my-topic~2");
+    // Each topic should have a partition
+    for topic in topics {
+        assert!(
+            topic["topic"]
+                .as_str()
+                .unwrap()
+                .starts_with("ns-direct:my-topic~2")
+        );
     }
-
-    let offsets: Vec<u64> = msgs.iter().map(|m| m["offset"].as_u64().unwrap()).collect();
-    assert_eq!(offsets[1], offsets[0] + 1);
 
     Ok(())
 }
@@ -238,20 +258,23 @@ async fn publish_keyless_same_partition() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
-    assert_eq!(msgs.len(), 3);
+    let topics = response["topics"].as_array().unwrap();
+    assert_eq!(topics.len(), 1);
+    let topic = &topics[0];
+    assert_eq!(
+        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        3
+    );
 
-    // All keyless messages in a single publish call land on the same partition topic
-    let topic = msgs[0]["topic"].as_str().unwrap();
-    assert!(topic.starts_with("ns-kl:keyless-topic~"));
-    for m in msgs {
-        assert_eq!(m["topic"].as_str().unwrap(), topic);
+    // Each topic should have a partition
+    for topic in topics {
+        assert!(
+            topic["topic"]
+                .as_str()
+                .unwrap()
+                .starts_with("ns-kl:keyless-topic~")
+        );
     }
-
-    // Offsets should be sequential
-    let offsets: Vec<u64> = msgs.iter().map(|m| m["offset"].as_u64().unwrap()).collect();
-    assert_eq!(offsets[1], offsets[0] + 1);
-    assert_eq!(offsets[2], offsets[1] + 1);
 
     Ok(())
 }
@@ -278,16 +301,17 @@ async fn publish_to_default_namespace() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
-    assert_eq!(msgs.len(), 2);
+    let topics = response["topics"].as_array().unwrap();
+    assert_eq!(topics.len(), 1);
+    let topic = &topics[0];
+    assert_eq!(
+        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        2
+    );
 
-    for m in msgs {
-        let topic = m["topic"].as_str().unwrap();
-        assert!(
-            topic.starts_with("my-topic~"),
-            "default namespace response topics should not have a namespace prefix: {topic}"
-        );
-        assert!(m["offset"].is_u64());
+    // Each topic should have a partition
+    for topic in topics {
+        assert!(topic["topic"].as_str().unwrap().starts_with("my-topic~"));
     }
 
     Ok(())

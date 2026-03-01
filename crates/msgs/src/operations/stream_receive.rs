@@ -1,72 +1,23 @@
 use std::num::NonZeroU16;
 
 use coyote_namespace::entities::NamespaceId;
-use fjall_utils::ReadableDatabase;
 use jiff::Timestamp;
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Offset, Partition, RawTopic, Topic, TopicIn},
-    tables::{LeaseDiff, LeaseRow, MsgRow, OffsetRow},
+    entities::{ConsumerGroup, Offset, Partition, TopicIn, TopicPartition},
+    tables::{MsgRow, StreamLeaseRow, TableRow, TopicRow},
 };
 
 use super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
 
-fn group_into_contiguous_ranges(offsets: &[Offset]) -> Vec<(Offset, Offset)> {
-    if offsets.is_empty() {
-        return Vec::new();
-    }
-
-    let mut ranges = Vec::new();
-    let mut range_start = offsets[0];
-    let mut range_end = offsets[0];
-
-    for &offset in &offsets[1..] {
-        if offset == range_end + 1 {
-            range_end = offset;
-        } else {
-            ranges.push((range_start, range_end));
-            range_start = offset;
-            range_end = offset;
-        }
-    }
-    ranges.push((range_start, range_end));
-
-    ranges
-}
-
-fn create_leases_for_msgs(
-    offsets: &[Offset],
-    namespace_id: NamespaceId,
-    partition: Partition,
-    cg: &ConsumerGroup,
-    now: Timestamp,
-    lease_duration: std::time::Duration,
-    lease_diff: &mut LeaseDiff,
-) {
-    let ranges = group_into_contiguous_ranges(offsets);
-    for (block_start, block_end) in ranges {
-        lease_diff.to_insert.push(LeaseRow {
-            namespace_id,
-            partition,
-            cg: cg.clone(),
-            block_start,
-            block_end,
-            leased_at: now,
-            expires_at: now + lease_duration,
-            acked_at: None,
-            dlq_at: None,
-        });
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamReceiveOperation {
     namespace_id: NamespaceId,
-    topic: RawTopic,
-    partitions: Vec<Partition>,
-    cg: ConsumerGroup,
+    topic: TopicIn,
+    consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
     now: Timestamp,
@@ -74,113 +25,136 @@ pub struct StreamReceiveOperation {
 
 impl StreamReceiveOperation {
     pub fn new(
-        db: &impl ReadableDatabase,
         namespace_id: NamespaceId,
         topic: TopicIn,
-        cg: ConsumerGroup,
+        consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
         lease_duration_millis: u64,
     ) -> coyote_error::Result<Self> {
         let now = Timestamp::now();
-        let raw_topic = topic.raw_topic().clone();
-        let partition_count = crate::topic_partition_count(db, namespace_id, &raw_topic)?;
-
-        let all_partitions: Vec<Partition> = match topic {
-            TopicIn::WithPartition(t) => vec![t.partition],
-            TopicIn::Raw(_) => (0..partition_count)
-                .map(|p| Partition::new(p).expect("partition index is within MAX_PARTITION_COUNT"))
-                .collect(),
-        };
-
-        let mut partitions = Vec::with_capacity(all_partitions.len());
-        for p in all_partitions {
-            if !crate::partition_has_active_lease(db, namespace_id, p, &cg, now)? {
-                partitions.push(p);
-            }
-        }
 
         Ok(Self {
             namespace_id,
-            topic: raw_topic,
-            partitions,
-            cg,
+            topic,
+            consumer_group,
             batch_size,
             lease_duration_millis,
             now,
         })
     }
 
+    #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
     fn apply_real(self, state: &State) -> coyote_operations::Result<StreamReceiveResponseData> {
-        let now = self.now;
         let lease_duration = std::time::Duration::from_millis(self.lease_duration_millis);
-        let mut all_msgs = Vec::new();
-        let mut all_lease_diffs = Vec::new();
-        let mut remaining = usize::from(self.batch_size.get());
+        let mut remaining = self.batch_size.get();
+        let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
+        let expiry = self.now + lease_duration;
 
-        for partition in self.partitions {
-            if remaining == 0 {
-                break;
+        let mut batch = state.db.batch();
+
+        let topic_row = match TopicRow::fetch(
+            &state.metadata_tables,
+            self.namespace_id,
+            self.topic.topic_name(),
+        )? {
+            Some(topic_row) => topic_row,
+            None => {
+                let topic_row = TopicRow::new(self.topic.topic_name().clone(), self.now)?;
+                batch.insert(
+                    &state.metadata_tables,
+                    TopicRow::construct_key(self.namespace_id, self.topic.topic_name()),
+                    topic_row.to_fjall_value()?,
+                );
+                topic_row
             }
+        };
 
-            let start_offset = OffsetRow::fetch(state, self.namespace_id, partition, &self.cg)?
-                .unwrap_or(Offset::MIN);
+        tracing::Span::current().record("partition_count", topic_row.partitions);
 
-            let leases = LeaseRow::fetch_all(state, self.namespace_id, partition, &self.cg)?;
+        // Create a list of partitions to fetch from
+        let partitions =
+            if let TopicIn::TopicPartition(TopicPartition { partition, .. }) = self.topic {
+                vec![partition.get()]
+            } else {
+                // Create a shuffled list of all the partitions, so we distribute fetches
+                let mut partition_list: Vec<u16> = (0..topic_row.partitions).collect();
+                partition_list.shuffle(&mut rand::rng());
+                partition_list
+            };
 
-            // Check for active leases inside apply_real (Raft state machine) to
-            // prevent races — the pre-Raft check in the constructor is only an
-            // optimistic fast-path.
-            let has_active_lease = leases.iter().any(|l| l.is_active(now));
-            if has_active_lease {
-                all_lease_diffs.push(LeaseRow::cull_and_compact(leases, now));
+        let mut no_lease_available = true;
+
+        for partition in partitions {
+            let topic =
+                TopicPartition::new(self.topic.topic_name().clone(), Partition::new(partition)?);
+            let mut lease = match StreamLeaseRow::fetch(
+                &state.metadata_tables,
+                topic_row.id,
+                topic.partition,
+                &self.consumer_group,
+            )? {
+                Some(lease) => lease,
+                None => StreamLeaseRow::new()?,
+            };
+
+            // No lease available, error.
+            if lease.expiry > self.now {
+                continue;
+            }
+            no_lease_available = false;
+
+            lease.expiry = expiry;
+
+            let msgs = MsgRow::fetch_range(
+                &state.msg_table,
+                topic_row.id,
+                topic.partition,
+                lease.offset,
+                remaining,
+            )?;
+            // We don't need to take a lease if there are no items.
+            if msgs.is_empty() {
                 continue;
             }
 
-            let blocked_leases = leases.iter().filter(|l| l.acked_at.is_some() || l.is_dlq());
+            remaining -= msgs.len() as u16;
 
-            let batch_size = remaining;
-            let msgs = MsgRow::fetch_available(
-                state,
-                self.namespace_id,
-                partition,
-                start_offset,
-                blocked_leases,
-                batch_size,
-            )?;
-
-            let mut lease_diff = LeaseRow::cull_and_compact(leases, now);
-
-            let offsets: Vec<Offset> = msgs.iter().map(|(offset, _)| *offset).collect();
-            create_leases_for_msgs(
-                &offsets,
-                self.namespace_id,
-                partition,
-                &self.cg,
-                now,
-                lease_duration,
-                &mut lease_diff,
+            all_msgs.extend(
+                msgs.into_iter()
+                    .enumerate()
+                    .map(|(i, msg)| StreamReceiveMsg {
+                        value: msg.value,
+                        timestamp: msg.timestamp,
+                        headers: msg.headers,
+                        offset: lease.offset + i as u64,
+                        topic: topic.clone(),
+                    }),
             );
 
-            remaining -= msgs.len();
+            batch.insert(
+                &state.metadata_tables,
+                StreamLeaseRow::construct_key(topic_row.id, topic.partition, &self.consumer_group),
+                lease.to_fjall_value()?,
+            );
 
-            for (offset, msg) in msgs {
-                all_msgs.push(StreamReceiveMsg {
-                    offset,
-                    topic: Topic::new(self.topic.clone(), partition),
-                    value: msg.value,
-                    headers: msg.headers,
-                    timestamp: msg.created_at,
-                });
+            if remaining == 0 {
+                break;
             }
-
-            all_lease_diffs.push(lease_diff);
         }
 
-        let mut batch = state.db.batch();
-        for diff in all_lease_diffs {
-            diff.apply_diff(state, &mut batch)?;
+        if no_lease_available {
+            return Err(
+                coyote_error::Error::http(coyote_error::HttpError::bad_request(
+                    Some("no_lease_available".to_owned()),
+                    None,
+                ))
+                .into(),
+            );
         }
+
         batch.commit().map_err(coyote_error::Error::from)?;
+
+        tracing::Span::current().record("msgs_returned", all_msgs.len());
 
         Ok(StreamReceiveResponseData { msgs: all_msgs })
     }
@@ -189,7 +163,7 @@ impl StreamReceiveOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamReceiveMsg {
     pub offset: Offset,
-    pub topic: Topic,
+    pub topic: TopicPartition,
     pub value: Vec<u8>,
     pub headers: std::collections::HashMap<String, String>,
     pub timestamp: Timestamp,

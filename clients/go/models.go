@@ -33,7 +33,7 @@ type (
 	MsgNamespaceGetOut           = coyote_models.MsgNamespaceGetOut
 	MsgPublishIn                 = coyote_models.MsgPublishIn
 	MsgPublishOut                = coyote_models.MsgPublishOut
-	MsgPublishOutMsg             = coyote_models.MsgPublishOutMsg
+	MsgPublishOutTopic           = coyote_models.MsgPublishOutTopic
 	MsgStreamCommitIn            = coyote_models.MsgStreamCommitIn
 	MsgStreamCommitOut           = coyote_models.MsgStreamCommitOut
 	MsgStreamReceiveIn           = coyote_models.MsgStreamReceiveIn

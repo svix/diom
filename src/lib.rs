@@ -118,6 +118,7 @@ pub struct AppState {
 
     namespace_state: coyote_namespace::State,
 
+    // FIXME: do we need this?
     pub(crate) ro_dbs: ReadonlyDatabases,
 }
 
@@ -188,7 +189,7 @@ impl AppState {
 
         let namespace = self
             .namespace_state
-            .fetch_namespace::<C>(ns_name)?
+            .fetch_namespace::<C>(Some(ns_name))?
             .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
         let policy = namespace.config.eviction_policy();
@@ -335,6 +336,7 @@ pub fn setup_tracing(
         let var = [
             format!("{CRATE_NAME}={level}"),
             format!("coyote_kv={level}"),
+            format!("coyote_msgs={level}"),
             format!("fjall_utils={level}"),
             format!("tower_http={level}"),
             "opentelemetry_sdk=ERROR".to_string(),

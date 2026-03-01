@@ -1410,22 +1410,27 @@
       "MsgPublishOut": {
         "type": "object",
         "properties": {
-          "msgs": {
+          "topics": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/MsgPublishOutMsg"
+              "$ref": "#/components/schemas/MsgPublishOutTopic"
             }
           }
         },
         "required": [
-          "msgs"
+          "topics"
         ]
       },
-      "MsgPublishOutMsg": {
+      "MsgPublishOutTopic": {
         "type": "object",
         "properties": {
           "topic": {
             "type": "string"
+          },
+          "start_offset": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
           },
           "offset": {
             "type": "integer",
@@ -1435,6 +1440,7 @@
         },
         "required": [
           "topic",
+          "start_offset",
           "offset"
         ]
       },
