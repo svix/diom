@@ -6,6 +6,10 @@ use clap_complete::Shell;
 use colored_json::{ColorMode, Output};
 use concolor_clap::{Color, ColorChoice};
 use coyote_client::{CoyoteClient, CoyoteOptions};
+use mimalloc::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 use self::{
     cmds::{
