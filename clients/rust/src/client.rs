@@ -42,9 +42,10 @@ pub struct CoyoteOptions {
     /// for `socks5h`, but not for `socks5`.
     pub proxy_address: Option<String>,
 
-    /// Force the use of HTTP/2, even on plaintext connections
-    #[cfg(feature = "http2")]
-    pub http2_only: bool,
+    /// Use HTTP/1.1 on plaintext connections (otherwise forces HTTP/2 on plaintext,
+    /// and uses standard ALPN on secure connections)
+    #[cfg(all(feature = "http1", feature = "http2"))]
+    pub http1: bool,
 }
 
 impl Default for CoyoteOptions {
@@ -56,8 +57,8 @@ impl Default for CoyoteOptions {
             num_retries: None,
             retry_schedule: None,
             proxy_address: None,
-            #[cfg(feature = "http2")]
-            http2_only: false,
+            #[cfg(all(feature = "http1", feature = "http2"))]
+            http1: false,
         }
     }
 }
@@ -76,8 +77,10 @@ impl CoyoteClient {
         let mut builder = HyperClient::builder(TokioExecutor::new());
         builder.pool_idle_timeout(Duration::from_secs(10));
 
-        #[cfg(feature = "http2")]
-        builder.http2_only(options.http2_only);
+        #[cfg(all(feature = "http2", not(feature = "http1")))]
+        builder.http2_only(true);
+        #[cfg(all(feature = "http1", feature = "http2"))]
+        builder.http2_only(!options.http1);
 
         let cfg = Arc::new(Configuration {
             user_agent: Some(format!("coyote-client/{CRATE_VERSION}/rust")),

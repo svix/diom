@@ -160,8 +160,8 @@ fn get_client_options(cfg: &Config) -> Result<CoyoteOptions> {
         debug: false,
         server_url: cfg.server_url().map(Into::into),
         timeout: None,
-        #[cfg(feature = "http2")]
-        http2_only: cfg.force_http2,
+        #[cfg(all(feature = "http1", feature = "http2"))]
+        http1: cfg.http1,
         ..CoyoteOptions::default()
     })
 }
