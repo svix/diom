@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MsgPublishOutMsg {
-    pub offset: u64,
-
     pub topic: String,
+
+    pub offset: u64,
 }
 
 impl MsgPublishOutMsg {
-    pub fn new(offset: u64, topic: String) -> Self {
-        Self { offset, topic }
+    pub fn new(topic: String, offset: u64) -> Self {
+        Self { topic, offset }
     }
 }

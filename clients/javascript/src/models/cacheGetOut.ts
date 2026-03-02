@@ -5,25 +5,25 @@
 
 
 export interface CacheGetOut {
-    /** Time of expiry */
+    key: string;
+/** Time of expiry */
     expiry?: Date | null;
-key: string;
 value: number[];
 }
 
 export const CacheGetOutSerializer = {
     _fromJsonObject(object: any): CacheGetOut {
         return {
-            expiry: object['expiry'] ? new Date(object['expiry']) : null,
             key: object['key'],
+            expiry: object['expiry'] ? new Date(object['expiry']) : null,
             value: object['value'],
             };
     },
 
     _toJsonObject(self: CacheGetOut): any {
         return {
-            'expiry': self.expiry,
             'key': self.key,
+            'expiry': self.expiry,
             'value': self.value,
             };
     }

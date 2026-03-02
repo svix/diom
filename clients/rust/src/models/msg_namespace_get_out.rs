@@ -5,30 +5,30 @@ use super::{retention::Retention, storage_type::StorageType};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MsgNamespaceGetOut {
-    pub created: jiff::Timestamp,
-
     pub name: String,
 
     pub retention: Retention,
 
     pub storage_type: StorageType,
 
+    pub created: jiff::Timestamp,
+
     pub updated: jiff::Timestamp,
 }
 
 impl MsgNamespaceGetOut {
     pub fn new(
-        created: jiff::Timestamp,
         name: String,
         retention: Retention,
         storage_type: StorageType,
+        created: jiff::Timestamp,
         updated: jiff::Timestamp,
     ) -> Self {
         Self {
-            created,
             name,
             retention,
             storage_type,
+            created,
             updated,
         }
     }

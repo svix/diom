@@ -5,24 +5,24 @@
 
 
 export interface RateLimiterFixedWindowConfig {
-    /** Maximum number of requests allowed within the window */
-    maxRequests: number;
-/** Window size in seconds */
+    /** Window size in seconds */
     windowSize: number;
+/** Maximum number of requests allowed within the window */
+    maxRequests: number;
 }
 
 export const RateLimiterFixedWindowConfigSerializer = {
     _fromJsonObject(object: any): RateLimiterFixedWindowConfig {
         return {
-            maxRequests: object['max_requests'],
             windowSize: object['window_size'],
+            maxRequests: object['max_requests'],
             };
     },
 
     _toJsonObject(self: RateLimiterFixedWindowConfig): any {
         return {
-            'max_requests': self.maxRequests,
             'window_size': self.windowSize,
+            'max_requests': self.maxRequests,
             };
     }
 }

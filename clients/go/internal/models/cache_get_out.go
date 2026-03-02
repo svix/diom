@@ -7,7 +7,7 @@ import (
 )
 
 type CacheGetOut struct {
-	Expiry *time.Time `json:"expiry,omitempty"` // Time of expiry
 	Key    string     `json:"key"`
+	Expiry *time.Time `json:"expiry,omitempty"` // Time of expiry
 	Value  []uint8    `json:"value"`
 }

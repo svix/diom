@@ -5,27 +5,27 @@
 
 
 export interface IdempotencyGetNamespaceOut {
-    createdAt: Date;
+    name: string;
 maxStorageBytes?: number | null;
-name: string;
+createdAt: Date;
 updatedAt: Date;
 }
 
 export const IdempotencyGetNamespaceOutSerializer = {
     _fromJsonObject(object: any): IdempotencyGetNamespaceOut {
         return {
-            createdAt: new Date(object['created_at']),
-            maxStorageBytes: object['max_storage_bytes'],
             name: object['name'],
+            maxStorageBytes: object['max_storage_bytes'],
+            createdAt: new Date(object['created_at']),
             updatedAt: new Date(object['updated_at']),
             };
     },
 
     _toJsonObject(self: IdempotencyGetNamespaceOut): any {
         return {
-            'created_at': self.createdAt,
-            'max_storage_bytes': self.maxStorageBytes,
             'name': self.name,
+            'max_storage_bytes': self.maxStorageBytes,
+            'created_at': self.createdAt,
             'updated_at': self.updatedAt,
             };
     }

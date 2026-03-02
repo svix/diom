@@ -653,7 +653,7 @@ impl BenchShard for BenchMsgsPublish {
         let t = Instant::now();
         client
             .msgs()
-            .publish(MsgPublishIn::new(msgs, topic.clone()))
+            .publish(MsgPublishIn::new(topic.clone(), msgs))
             .await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
@@ -730,8 +730,8 @@ impl BenchShard for BenchMsgsStreamReceive {
                 .stream()
                 .commit(MsgStreamCommitIn::new(
                     consumer_group.to_owned(),
-                    offset,
                     topic,
+                    offset,
                 ))
                 .await?;
         }

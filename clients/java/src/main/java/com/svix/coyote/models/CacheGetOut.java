@@ -28,31 +28,12 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class CacheGetOut {
-@JsonProperty private OffsetDateTime expiry;
 @JsonProperty private String key;
+@JsonProperty private OffsetDateTime expiry;
 @JsonProperty private List<Byte> value;
 public CacheGetOut () {}
 
- public CacheGetOut expiry(OffsetDateTime expiry) {
-        this.expiry = expiry;
-        return this;
-    }
-
-    /**
-    * Time of expiry
-    *
-     * @return expiry
-     */
-    @javax.annotation.Nullable
-     public OffsetDateTime getExpiry() {
-        return expiry;
-    }
-
-     public void setExpiry(OffsetDateTime expiry) {
-        this.expiry = expiry;
-    }
-
-     public CacheGetOut key(String key) {
+ public CacheGetOut key(String key) {
         this.key = key;
         return this;
     }
@@ -69,6 +50,25 @@ public CacheGetOut () {}
 
      public void setKey(String key) {
         this.key = key;
+    }
+
+     public CacheGetOut expiry(OffsetDateTime expiry) {
+        this.expiry = expiry;
+        return this;
+    }
+
+    /**
+    * Time of expiry
+    *
+     * @return expiry
+     */
+    @javax.annotation.Nullable
+     public OffsetDateTime getExpiry() {
+        return expiry;
+    }
+
+     public void setExpiry(OffsetDateTime expiry) {
+        this.expiry = expiry;
     }
 
      public CacheGetOut value(List<Byte> value) {

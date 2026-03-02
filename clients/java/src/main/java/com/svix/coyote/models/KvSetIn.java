@@ -28,32 +28,13 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class KvSetIn {
-@JsonProperty private OperationBehavior behavior;
 @JsonProperty private String key;
 @JsonProperty private Long ttl;
+@JsonProperty private OperationBehavior behavior;
 @JsonProperty private List<Byte> value;
 public KvSetIn () {}
 
- public KvSetIn behavior(OperationBehavior behavior) {
-        this.behavior = behavior;
-        return this;
-    }
-
-    /**
-    * Get behavior
-    *
-     * @return behavior
-     */
-    @javax.annotation.Nullable
-     public OperationBehavior getBehavior() {
-        return behavior;
-    }
-
-     public void setBehavior(OperationBehavior behavior) {
-        this.behavior = behavior;
-    }
-
-     public KvSetIn key(String key) {
+ public KvSetIn key(String key) {
         this.key = key;
         return this;
     }
@@ -89,6 +70,25 @@ public KvSetIn () {}
 
      public void setTtl(Long ttl) {
         this.ttl = ttl;
+    }
+
+     public KvSetIn behavior(OperationBehavior behavior) {
+        this.behavior = behavior;
+        return this;
+    }
+
+    /**
+    * Get behavior
+    *
+     * @return behavior
+     */
+    @javax.annotation.Nullable
+     public OperationBehavior getBehavior() {
+        return behavior;
+    }
+
+     public void setBehavior(OperationBehavior behavior) {
+        this.behavior = behavior;
     }
 
      public KvSetIn value(List<Byte> value) {

@@ -5,31 +5,31 @@
 
 
 export interface StreamMsgOut {
-    headers?: { [key: string]: string };
-offset: number;
-timestamp: Date;
+    offset: number;
 topic: string;
 value: number[];
+headers?: { [key: string]: string };
+timestamp: Date;
 }
 
 export const StreamMsgOutSerializer = {
     _fromJsonObject(object: any): StreamMsgOut {
         return {
-            headers: object['headers'],
             offset: object['offset'],
-            timestamp: new Date(object['timestamp']),
             topic: object['topic'],
             value: object['value'],
+            headers: object['headers'],
+            timestamp: new Date(object['timestamp']),
             };
     },
 
     _toJsonObject(self: StreamMsgOut): any {
         return {
-            'headers': self.headers,
             'offset': self.offset,
-            'timestamp': self.timestamp,
             'topic': self.topic,
             'value': self.value,
+            'headers': self.headers,
+            'timestamp': self.timestamp,
             };
     }
 }

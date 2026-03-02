@@ -5,22 +5,22 @@
 
 
 export interface MsgTopicConfigureIn {
-    partitions: number;
-topic: string;
+    topic: string;
+partitions: number;
 }
 
 export const MsgTopicConfigureInSerializer = {
     _fromJsonObject(object: any): MsgTopicConfigureIn {
         return {
-            partitions: object['partitions'],
             topic: object['topic'],
+            partitions: object['partitions'],
             };
     },
 
     _toJsonObject(self: MsgTopicConfigureIn): any {
         return {
-            'partitions': self.partitions,
             'topic': self.topic,
+            'partitions': self.partitions,
             };
     }
 }

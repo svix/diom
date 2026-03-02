@@ -5,26 +5,26 @@
 
 
 export interface MsgIn {
-    headers?: { [key: string]: string };
+    value: number[];
+headers?: { [key: string]: string };
 /** Optional partition key. Messages with the same key are routed to the same partition. */
     key?: string | null;
-value: number[];
 }
 
 export const MsgInSerializer = {
     _fromJsonObject(object: any): MsgIn {
         return {
+            value: object['value'],
             headers: object['headers'],
             key: object['key'],
-            value: object['value'],
             };
     },
 
     _toJsonObject(self: MsgIn): any {
         return {
+            'value': self.value,
             'headers': self.headers,
             'key': self.key,
-            'value': self.value,
             };
     }
 }

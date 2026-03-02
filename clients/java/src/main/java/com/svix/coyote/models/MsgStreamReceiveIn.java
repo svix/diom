@@ -28,29 +28,29 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgStreamReceiveIn {
-@JsonProperty("batch_size") private Short batchSize;
-@JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
 @JsonProperty private String topic;
+@JsonProperty("consumer_group") private String consumerGroup;
+@JsonProperty("batch_size") private Short batchSize;
+@JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
 public MsgStreamReceiveIn () {}
 
- public MsgStreamReceiveIn batchSize(Short batchSize) {
-        this.batchSize = batchSize;
+ public MsgStreamReceiveIn topic(String topic) {
+        this.topic = topic;
         return this;
     }
 
     /**
-    * Get batchSize
+    * Get topic
     *
-     * @return batchSize
+     * @return topic
      */
-    @javax.annotation.Nullable
-     public Short getBatchSize() {
-        return batchSize;
+    @javax.annotation.Nonnull
+     public String getTopic() {
+        return topic;
     }
 
-     public void setBatchSize(Short batchSize) {
-        this.batchSize = batchSize;
+     public void setTopic(String topic) {
+        this.topic = topic;
     }
 
      public MsgStreamReceiveIn consumerGroup(String consumerGroup) {
@@ -72,6 +72,25 @@ public MsgStreamReceiveIn () {}
         this.consumerGroup = consumerGroup;
     }
 
+     public MsgStreamReceiveIn batchSize(Short batchSize) {
+        this.batchSize = batchSize;
+        return this;
+    }
+
+    /**
+    * Get batchSize
+    *
+     * @return batchSize
+     */
+    @javax.annotation.Nullable
+     public Short getBatchSize() {
+        return batchSize;
+    }
+
+     public void setBatchSize(Short batchSize) {
+        this.batchSize = batchSize;
+    }
+
      public MsgStreamReceiveIn leaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
         return this;
@@ -89,25 +108,6 @@ public MsgStreamReceiveIn () {}
 
      public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
-    }
-
-     public MsgStreamReceiveIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-     public String getTopic() {
-        return topic;
-    }
-
-     public void setTopic(String topic) {
-        this.topic = topic;
     }
 
     /**

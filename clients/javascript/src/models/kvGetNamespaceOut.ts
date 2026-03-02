@@ -9,30 +9,30 @@ import {
 
 
 export interface KvGetNamespaceOut {
-    createdAt: Date;
+    name: string;
 maxStorageBytes?: number | null;
-name: string;
 storageType: StorageType;
+createdAt: Date;
 updatedAt: Date;
 }
 
 export const KvGetNamespaceOutSerializer = {
     _fromJsonObject(object: any): KvGetNamespaceOut {
         return {
-            createdAt: new Date(object['created_at']),
-            maxStorageBytes: object['max_storage_bytes'],
             name: object['name'],
+            maxStorageBytes: object['max_storage_bytes'],
             storageType: StorageTypeSerializer._fromJsonObject(object['storage_type']),
+            createdAt: new Date(object['created_at']),
             updatedAt: new Date(object['updated_at']),
             };
     },
 
     _toJsonObject(self: KvGetNamespaceOut): any {
         return {
-            'created_at': self.createdAt,
-            'max_storage_bytes': self.maxStorageBytes,
             'name': self.name,
+            'max_storage_bytes': self.maxStorageBytes,
             'storage_type': StorageTypeSerializer._toJsonObject(self.storageType),
+            'created_at': self.createdAt,
             'updated_at': self.updatedAt,
             };
     }
