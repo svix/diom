@@ -7,8 +7,11 @@ use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, Result, ResultExt};
 use diom_msgs::{
     MsgsNamespace,
-    entities::{Offset, TopicIn, TopicName, TopicPartition},
-    operations::{PublishOperation, StreamReceiveOperation},
+    entities::{ConsumerGroup, Offset, StreamMsgOut, TopicIn, TopicName, TopicPartition},
+    operations::{
+        CreateNamespaceOperation, PublishOperation, StreamCommitOperation, StreamReceiveOperation,
+        TopicConfigureOperation,
+    },
 };
 use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
@@ -42,11 +45,7 @@ async fn create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceCreateIn>,
 ) -> Result<MsgPackOrJson<MsgNamespaceCreateOut>> {
-    let operation = diom_msgs::operations::CreateNamespaceOperation::new(
-        data.name,
-        data.retention,
-        data.storage_type,
-    );
+    let operation = CreateNamespaceOperation::new(data.name, data.retention, data.storage_type);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(MsgNamespaceCreateOut {
@@ -161,7 +160,7 @@ fn default_lease_duration_millis() -> u64 {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct MsgStreamReceiveIn {
     pub topic: TopicIn,
-    pub consumer_group: diom_msgs::entities::ConsumerGroup,
+    pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
     #[serde(default = "default_lease_duration_millis")]
@@ -170,7 +169,7 @@ struct MsgStreamReceiveIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgStreamReceiveOut {
-    pub msgs: Vec<diom_msgs::entities::StreamMsgOut>,
+    pub msgs: Vec<StreamMsgOut>,
 }
 
 /// Receives messages from a topic using a consumer group.
@@ -201,7 +200,7 @@ async fn stream_receive(
         msgs: response
             .msgs
             .into_iter()
-            .map(|m| diom_msgs::entities::StreamMsgOut {
+            .map(|m| StreamMsgOut {
                 offset: m.offset,
                 topic: m.topic,
                 value: m.value,
@@ -219,7 +218,7 @@ async fn stream_receive(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct MsgStreamCommitIn {
     pub topic: TopicPartition,
-    pub consumer_group: diom_msgs::entities::ConsumerGroup,
+    pub consumer_group: ConsumerGroup,
     pub offset: u64,
 }
 
@@ -241,12 +240,8 @@ async fn stream_commit(
         .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = diom_msgs::operations::StreamCommitOperation::new(
-        namespace.id,
-        data.topic,
-        data.consumer_group,
-        data.offset,
-    );
+    let operation =
+        StreamCommitOperation::new(namespace.id, data.topic, data.consumer_group, data.offset);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(MsgStreamCommitOut {}))
@@ -281,11 +276,7 @@ async fn topic_configure(
         .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = diom_msgs::operations::TopicConfigureOperation::new(
-        namespace.id,
-        data.topic,
-        data.partitions,
-    );
+    let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(MsgTopicConfigureOut {

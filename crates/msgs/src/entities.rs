@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt, ops::Deref, str::FromStr};
 
 use diom_error::Error;
-use diom_namespace::parse_namespace;
+use diom_namespace::{entities::NamespaceName, parse_namespace};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{
@@ -59,12 +59,12 @@ impl FromStr for Partition {
 /// `"topic"` when the namespace is the default.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TopicName {
-    namespace: Option<String>,
+    namespace: Option<NamespaceName>,
     topic: String,
 }
 
 impl TopicName {
-    pub fn new(namespace: Option<String>, topic: String) -> Result<Self, Error> {
+    pub fn new(namespace: Option<NamespaceName>, topic: String) -> Result<Self, Error> {
         if topic.contains(TOPIC_PARTITION_DELIMITER) {
             Err(Error::generic("invalid topic"))
         } else if topic.len() > 64 {

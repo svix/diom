@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use diom_namespace::{
-    entities::{StorageType, StreamConfig},
+    entities::{NamespaceName, StorageType, StreamConfig},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 
@@ -13,13 +13,13 @@ use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNamespaceOperation {
-    pub name: String,
+    pub name: NamespaceName,
     pub retention: Retention,
     pub storage_type: StorageType,
 }
 
 impl CreateNamespaceOperation {
-    pub fn new(name: String, retention: Retention, storage_type: StorageType) -> Self {
+    pub fn new(name: NamespaceName, retention: Retention, storage_type: StorageType) -> Self {
         Self {
             name,
             retention,
@@ -46,7 +46,7 @@ impl CreateNamespaceOperation {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNamespaceResponseData {
-    pub name: String,
+    pub name: NamespaceName,
     pub retention: Retention,
     pub storage_type: StorageType,
     pub created: Timestamp,
