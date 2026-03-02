@@ -29,9 +29,9 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class KvSetIn {
 @JsonProperty private String key;
+@JsonProperty private List<Byte> value;
 @JsonProperty private Long ttl;
 @JsonProperty private OperationBehavior behavior;
-@JsonProperty private List<Byte> value;
 public KvSetIn () {}
 
  public KvSetIn key(String key) {
@@ -51,6 +51,32 @@ public KvSetIn () {}
 
      public void setKey(String key) {
         this.key = key;
+    }
+
+     public KvSetIn value(List<Byte> value) {
+        this.value = value;
+        return this;
+    }
+
+     public KvSetIn addValueItem(Byte valueItem) {
+        if (this.value == null) {
+            this.value = new ArrayList<>();
+        }
+        this.value.add(valueItem);
+        return this;
+    }
+    /**
+    * Get value
+    *
+     * @return value
+     */
+    @javax.annotation.Nonnull
+     public List<Byte> getValue() {
+        return value;
+    }
+
+     public void setValue(List<Byte> value) {
+        this.value = value;
     }
 
      public KvSetIn ttl(Long ttl) {
@@ -89,32 +115,6 @@ public KvSetIn () {}
 
      public void setBehavior(OperationBehavior behavior) {
         this.behavior = behavior;
-    }
-
-     public KvSetIn value(List<Byte> value) {
-        this.value = value;
-        return this;
-    }
-
-     public KvSetIn addValueItem(Byte valueItem) {
-        if (this.value == null) {
-            this.value = new ArrayList<>();
-        }
-        this.value.add(valueItem);
-        return this;
-    }
-    /**
-    * Get value
-    *
-     * @return value
-     */
-    @javax.annotation.Nonnull
-     public List<Byte> getValue() {
-        return value;
-    }
-
-     public void setValue(List<Byte> value) {
-        this.value = value;
     }
 
     /**
