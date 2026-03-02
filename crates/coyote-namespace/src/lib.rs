@@ -50,7 +50,7 @@ pub struct BothDatabases {
 
 impl State {
     pub fn init(both_dbs: BothDatabases) -> Result<Self, Error> {
-        const NAMESPACE_KEYSPACE: &str = "_coyote_cfggroup";
+        const NAMESPACE_KEYSPACE: &str = "mgmt_namespace";
 
         let db = both_dbs.persistent_db.clone();
         let keyspace = {
