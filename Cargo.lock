@@ -3741,6 +3741,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-util",
+ "h2",
  "hickory-resolver",
  "http",
  "http-body",
