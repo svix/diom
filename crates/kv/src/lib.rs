@@ -63,7 +63,7 @@ impl KvStore {
         policy: EvictionPolicy,
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
-        let kv_keyspace = format!("_diom_kv_{namespace}");
+        let kv_keyspace = format!("mod_kv_{namespace}");
 
         let tables = {
             let opts = KeyspaceCreateOptions::default();
