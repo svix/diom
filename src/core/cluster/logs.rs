@@ -74,7 +74,7 @@ impl LogCacheInner {
     }
 
     fn get(&self, log_index: &u64) -> Option<&LogEntry> {
-        self.inner.get(&log_index)
+        self.inner.get(log_index)
     }
 }
 
@@ -99,7 +99,7 @@ impl LogCache {
     }
 
     fn get(&self, log_index: &u64) -> Option<LogEntry> {
-        self.0.lock().get(log_index).map(|e| e.clone())
+        self.0.lock().get(log_index).cloned()
     }
 }
 
