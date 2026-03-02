@@ -9,3 +9,7 @@ variable "datadog_app_key" {
   sensitive = true
   default   = ""
 }
+
+variable "env" {
+  type = string
+}
