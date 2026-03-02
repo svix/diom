@@ -19,7 +19,7 @@ use coyote_kv::KvStore;
 use coyote_namespace::{
     BothDatabases,
     entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
-    namespace_parse_key,
+    parse_namespace,
 };
 use lru::LruCache;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
@@ -197,7 +197,7 @@ impl AppState {
     }
 
     async fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
-        let (ns_name, _) = namespace_parse_key(key_name);
+        let (ns_name, _) = parse_namespace(key_name);
 
         let mut cache = self.kv_stores.lock().await;
 

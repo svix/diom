@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt, ops::Deref, str::FromStr};
 
 use coyote_error::Error;
-use coyote_namespace::namespace_parse_key;
+use coyote_namespace::parse_namespace;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{
@@ -113,7 +113,7 @@ impl<'de> Deserialize<'de> for TopicName {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let (ns, topic) = namespace_parse_key(&s);
+        let (ns, topic) = parse_namespace(&s);
         Self::new(ns.map(|x| x.to_owned()), topic.to_owned()).map_err(de::Error::custom)
     }
 }
@@ -152,7 +152,7 @@ impl TryFrom<String> for TopicPartition {
     type Error = Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let (ns, rest) = namespace_parse_key(&value);
+        let (ns, rest) = parse_namespace(&value);
         let (topic, idx_str) = rest
             .rsplit_once(TOPIC_PARTITION_DELIMITER)
             .ok_or_else(|| Error::generic("missing '~' separator in topic"))?;
@@ -237,7 +237,7 @@ impl<'de> Deserialize<'de> for TopicIn {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let (ns, rest) = namespace_parse_key(&s);
+        let (ns, rest) = parse_namespace(&s);
         if rest.contains(TOPIC_PARTITION_DELIMITER) {
             // Re-parse the full string via Topic::try_from (it handles default namespace too)
             TopicPartition::try_from(s)
