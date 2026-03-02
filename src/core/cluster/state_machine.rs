@@ -52,7 +52,6 @@ pub struct StoreHandle(Arc<TokioRwLock<Store>>);
 /// and any number of module states
 pub struct Stores {
     pub databases: Databases,
-    pub stream_state: stream_deprecated::State,
     pub msgs_state: coyote_msgs::State,
 }
 
@@ -121,8 +120,6 @@ impl Store {
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
 
-        let stream_state = stream_deprecated::State::init(persistent_db.clone())
-            .context("initializing stream state")?;
         let msgs_state =
             coyote_msgs::State::init(persistent_db.clone()).context("initializing msgs state")?;
 
@@ -130,7 +127,6 @@ impl Store {
 
         let stores = Stores {
             databases,
-            stream_state,
             msgs_state,
         };
 

@@ -68,7 +68,6 @@ schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 stream-internals.workspace = true
-stream_deprecated.workspace = true
 sysinfo = "0.38.2"
 tap.workspace = true
 tokio.workspace = true

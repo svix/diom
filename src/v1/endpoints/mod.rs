@@ -11,7 +11,6 @@ pub mod kv;
 pub mod msgs;
 pub mod queue;
 pub mod rate_limiter;
-pub mod stream;
 
 pub fn router() -> ApiRouter<AppState> {
     ApiRouter::new()
@@ -21,6 +20,5 @@ pub fn router() -> ApiRouter<AppState> {
         .merge(rate_limiter::router())
         .merge(idempotency::router())
         .merge(queue::router())
-        .merge(stream::router())
         .merge(msgs::router())
 }
