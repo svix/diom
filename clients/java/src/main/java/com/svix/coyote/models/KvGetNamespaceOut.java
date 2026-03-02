@@ -28,30 +28,30 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class KvGetNamespaceOut {
-@JsonProperty("created_at") private OffsetDateTime createdAt;
-@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
 @JsonProperty private String name;
+@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
 @JsonProperty("storage_type") private StorageType storageType;
+@JsonProperty("created_at") private OffsetDateTime createdAt;
 @JsonProperty("updated_at") private OffsetDateTime updatedAt;
 public KvGetNamespaceOut () {}
 
- public KvGetNamespaceOut createdAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+ public KvGetNamespaceOut name(String name) {
+        this.name = name;
         return this;
     }
 
     /**
-    * Get createdAt
+    * Get name
     *
-     * @return createdAt
+     * @return name
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreatedAt() {
-        return createdAt;
+     public String getName() {
+        return name;
     }
 
-     public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+     public void setName(String name) {
+        this.name = name;
     }
 
      public KvGetNamespaceOut maxStorageBytes(Long maxStorageBytes) {
@@ -73,25 +73,6 @@ public KvGetNamespaceOut () {}
         this.maxStorageBytes = maxStorageBytes;
     }
 
-     public KvGetNamespaceOut name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-     public String getName() {
-        return name;
-    }
-
-     public void setName(String name) {
-        this.name = name;
-    }
-
      public KvGetNamespaceOut storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
@@ -109,6 +90,25 @@ public KvGetNamespaceOut () {}
 
      public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
+    }
+
+     public KvGetNamespaceOut createdAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+        return this;
+    }
+
+    /**
+    * Get createdAt
+    *
+     * @return createdAt
+     */
+    @javax.annotation.Nonnull
+     public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+     public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
      public KvGetNamespaceOut updatedAt(OffsetDateTime updatedAt) {

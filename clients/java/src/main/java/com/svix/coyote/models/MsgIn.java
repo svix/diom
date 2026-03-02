@@ -28,12 +28,38 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgIn {
+@JsonProperty private List<Byte> value;
 @JsonProperty private Map<String,String> headers;
 @JsonProperty private String key;
-@JsonProperty private List<Byte> value;
 public MsgIn () {}
 
- public MsgIn headers(Map<String,String> headers) {
+ public MsgIn value(List<Byte> value) {
+        this.value = value;
+        return this;
+    }
+
+     public MsgIn addValueItem(Byte valueItem) {
+        if (this.value == null) {
+            this.value = new ArrayList<>();
+        }
+        this.value.add(valueItem);
+        return this;
+    }
+    /**
+    * Get value
+    *
+     * @return value
+     */
+    @javax.annotation.Nonnull
+     public List<Byte> getValue() {
+        return value;
+    }
+
+     public void setValue(List<Byte> value) {
+        this.value = value;
+    }
+
+     public MsgIn headers(Map<String,String> headers) {
         this.headers = headers;
         return this;
     }
@@ -76,32 +102,6 @@ public MsgIn () {}
 
      public void setKey(String key) {
         this.key = key;
-    }
-
-     public MsgIn value(List<Byte> value) {
-        this.value = value;
-        return this;
-    }
-
-     public MsgIn addValueItem(Byte valueItem) {
-        if (this.value == null) {
-            this.value = new ArrayList<>();
-        }
-        this.value.add(valueItem);
-        return this;
-    }
-    /**
-    * Get value
-    *
-     * @return value
-     */
-    @javax.annotation.Nonnull
-     public List<Byte> getValue() {
-        return value;
-    }
-
-     public void setValue(List<Byte> value) {
-        this.value = value;
     }
 
     /**

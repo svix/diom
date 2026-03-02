@@ -28,30 +28,11 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgPublishOutMsg {
-@JsonProperty private Long offset;
 @JsonProperty private String topic;
+@JsonProperty private Long offset;
 public MsgPublishOutMsg () {}
 
- public MsgPublishOutMsg offset(Long offset) {
-        this.offset = offset;
-        return this;
-    }
-
-    /**
-    * Get offset
-    *
-     * @return offset
-     */
-    @javax.annotation.Nonnull
-     public Long getOffset() {
-        return offset;
-    }
-
-     public void setOffset(Long offset) {
-        this.offset = offset;
-    }
-
-     public MsgPublishOutMsg topic(String topic) {
+ public MsgPublishOutMsg topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -68,6 +49,25 @@ public MsgPublishOutMsg () {}
 
      public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+     public MsgPublishOutMsg offset(Long offset) {
+        this.offset = offset;
+        return this;
+    }
+
+    /**
+    * Get offset
+    *
+     * @return offset
+     */
+    @javax.annotation.Nonnull
+     public Long getOffset() {
+        return offset;
+    }
+
+     public void setOffset(Long offset) {
+        this.offset = offset;
     }
 
     /**

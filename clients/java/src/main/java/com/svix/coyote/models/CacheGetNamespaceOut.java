@@ -28,50 +28,31 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class CacheGetNamespaceOut {
-@JsonProperty("created_at") private OffsetDateTime createdAt;
-@JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
-@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
 @JsonProperty private String name;
+@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
 @JsonProperty("storage_type") private StorageType storageType;
+@JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
+@JsonProperty("created_at") private OffsetDateTime createdAt;
 @JsonProperty("updated_at") private OffsetDateTime updatedAt;
 public CacheGetNamespaceOut () {}
 
- public CacheGetNamespaceOut createdAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+ public CacheGetNamespaceOut name(String name) {
+        this.name = name;
         return this;
     }
 
     /**
-    * Get createdAt
+    * Get name
     *
-     * @return createdAt
+     * @return name
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreatedAt() {
-        return createdAt;
+     public String getName() {
+        return name;
     }
 
-     public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-     public CacheGetNamespaceOut evictionPolicy(EvictionPolicy evictionPolicy) {
-        this.evictionPolicy = evictionPolicy;
-        return this;
-    }
-
-    /**
-    * Get evictionPolicy
-    *
-     * @return evictionPolicy
-     */
-    @javax.annotation.Nonnull
-     public EvictionPolicy getEvictionPolicy() {
-        return evictionPolicy;
-    }
-
-     public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
-        this.evictionPolicy = evictionPolicy;
+     public void setName(String name) {
+        this.name = name;
     }
 
      public CacheGetNamespaceOut maxStorageBytes(Long maxStorageBytes) {
@@ -93,25 +74,6 @@ public CacheGetNamespaceOut () {}
         this.maxStorageBytes = maxStorageBytes;
     }
 
-     public CacheGetNamespaceOut name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-     public String getName() {
-        return name;
-    }
-
-     public void setName(String name) {
-        this.name = name;
-    }
-
      public CacheGetNamespaceOut storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
@@ -129,6 +91,44 @@ public CacheGetNamespaceOut () {}
 
      public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
+    }
+
+     public CacheGetNamespaceOut evictionPolicy(EvictionPolicy evictionPolicy) {
+        this.evictionPolicy = evictionPolicy;
+        return this;
+    }
+
+    /**
+    * Get evictionPolicy
+    *
+     * @return evictionPolicy
+     */
+    @javax.annotation.Nonnull
+     public EvictionPolicy getEvictionPolicy() {
+        return evictionPolicy;
+    }
+
+     public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
+        this.evictionPolicy = evictionPolicy;
+    }
+
+     public CacheGetNamespaceOut createdAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+        return this;
+    }
+
+    /**
+    * Get createdAt
+    *
+     * @return createdAt
+     */
+    @javax.annotation.Nonnull
+     public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+     public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
      public CacheGetNamespaceOut updatedAt(OffsetDateTime updatedAt) {

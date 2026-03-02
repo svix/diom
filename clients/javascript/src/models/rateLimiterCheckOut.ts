@@ -9,28 +9,28 @@ import {
 
 
 export interface RateLimiterCheckOut {
-    /** Number of tokens remaining */
+    /** Whether the request is allowed */
+    status: RateLimitStatus;
+/** Number of tokens remaining */
     remaining: number;
 /** Seconds until enough tokens are available (only present when allowed is false) */
     retryAfter?: number | null;
-/** Whether the request is allowed */
-    status: RateLimitStatus;
 }
 
 export const RateLimiterCheckOutSerializer = {
     _fromJsonObject(object: any): RateLimiterCheckOut {
         return {
+            status: RateLimitStatusSerializer._fromJsonObject(object['status']),
             remaining: object['remaining'],
             retryAfter: object['retry_after'],
-            status: RateLimitStatusSerializer._fromJsonObject(object['status']),
             };
     },
 
     _toJsonObject(self: RateLimiterCheckOut): any {
         return {
+            'status': RateLimitStatusSerializer._toJsonObject(self.status),
             'remaining': self.remaining,
             'retry_after': self.retryAfter,
-            'status': RateLimitStatusSerializer._toJsonObject(self.status),
             };
     }
 }

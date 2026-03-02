@@ -7,6 +7,6 @@ from .msg_in import MsgIn
 
 
 class MsgPublishIn(BaseModel):
-    msgs: t.List[MsgIn]
-
     topic: str
+
+    msgs: t.List[MsgIn]
