@@ -90,7 +90,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
         group.bench_function("msgs_stream_receive_commit_batch_100", |b| {
             b.iter(|| {
                 rt.block_on(async {
-                    let mut input = MsgStreamReceiveIn::new(consumer_group.clone(), topic.clone());
+                    let mut input = MsgStreamReceiveIn::new(topic.clone(), consumer_group.clone());
                     input.batch_size = Some(100);
                     let out =
                         std::hint::black_box(client.msgs().stream().receive(input).await.unwrap());
@@ -101,8 +101,8 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                             .msgs()
                             .stream()
                             .commit(MsgStreamCommitIn::new(
-                                consumer_group.clone(),
                                 last.topic.clone(),
+                                consumer_group.clone(),
                                 last.offset,
                             ))
                             .await

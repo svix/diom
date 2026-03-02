@@ -710,7 +710,7 @@ impl BenchShard for BenchMsgsStreamReceive {
 
         // Start of real code
         let t = Instant::now();
-        let mut recv = MsgStreamReceiveIn::new(consumer_group.to_owned(), topic.clone());
+        let mut recv = MsgStreamReceiveIn::new(topic.clone(), consumer_group.to_owned());
         recv.batch_size = Some(self.batch_size);
         let out = client.msgs().stream().receive(recv).await?;
         let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
@@ -729,8 +729,8 @@ impl BenchShard for BenchMsgsStreamReceive {
                 .msgs()
                 .stream()
                 .commit(MsgStreamCommitIn::new(
-                    consumer_group.to_owned(),
                     topic,
+                    consumer_group.to_owned(),
                     offset,
                 ))
                 .await?;
