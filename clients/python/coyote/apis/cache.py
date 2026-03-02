@@ -12,14 +12,22 @@ from ..models import (
     CacheSetOut,
 )
 
+from ..models.cache_set_in import _CacheSetIn
+from ..models.cache_get_in import _CacheGetIn
+
 
 class CacheAsync(ApiBase):
     async def set(
         self,
+        key: str,
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
-        body = cache_set_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _CacheSetIn(
+            key=key,
+            value=cache_set_in.value,
+            ttl=cache_set_in.ttl,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
             method="post",
@@ -30,10 +38,13 @@ class CacheAsync(ApiBase):
 
     async def get(
         self,
+        key: str,
         cache_get_in: CacheGetIn,
     ) -> CacheGetOut:
         """Cache Get"""
-        body = cache_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _CacheGetIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
             method="post",
@@ -74,10 +85,15 @@ class CacheAsync(ApiBase):
 class Cache(ApiBase):
     def set(
         self,
+        key: str,
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
-        body = cache_set_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _CacheSetIn(
+            key=key,
+            value=cache_set_in.value,
+            ttl=cache_set_in.ttl,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
             method="post",
@@ -88,10 +104,13 @@ class Cache(ApiBase):
 
     def get(
         self,
+        key: str,
         cache_get_in: CacheGetIn,
     ) -> CacheGetOut:
         """Cache Get"""
-        body = cache_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _CacheGetIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
             method="post",
