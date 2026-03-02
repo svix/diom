@@ -1012,6 +1012,7 @@ dependencies = [
  "coyote-client",
  "dirs",
  "futures-util",
+ "glob",
  "hdrhistogram",
  "idna_adapter",
  "indicatif",
