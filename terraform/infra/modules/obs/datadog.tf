@@ -38,6 +38,8 @@ resource "kubernetes_secret" "datadog-secret" {
 resource "kubectl_manifest" "datadog" {
   count = local.datadogEnabled ? 1 : 0
 
+  version = "~> 2.18"
+
   depends_on = [
     kubernetes_secret.datadog-secret,
     helm_release.datadog-operator
