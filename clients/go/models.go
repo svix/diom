@@ -33,7 +33,7 @@ type (
 	MsgNamespaceGetOut           = diom_models.MsgNamespaceGetOut
 	MsgPublishIn                 = diom_models.MsgPublishIn
 	MsgPublishOut                = diom_models.MsgPublishOut
-	MsgPublishOutMsg             = diom_models.MsgPublishOutMsg
+	MsgPublishOutTopic           = diom_models.MsgPublishOutTopic
 	MsgStreamCommitIn            = diom_models.MsgStreamCommitIn
 	MsgStreamCommitOut           = diom_models.MsgStreamCommitOut
 	MsgStreamReceiveIn           = diom_models.MsgStreamReceiveIn

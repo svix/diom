@@ -29,7 +29,7 @@ impl CreateNamespaceOperation {
 
     fn apply_real(
         self,
-        configgroup_state: &diom_namespace::State,
+        namespace_state: &diom_namespace::State,
     ) -> diom_operations::Result<CreateNamespaceResponseData> {
         let op = CreateNamespace::new(
             self.name,
@@ -39,7 +39,7 @@ impl CreateNamespaceOperation {
             self.storage_type,
             Some(self.retention.bytes),
         );
-        let out = op.apply_operation(configgroup_state)?;
+        let out = op.apply_operation(namespace_state)?;
         Ok(out.into())
     }
 }

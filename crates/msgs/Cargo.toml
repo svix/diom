@@ -6,19 +6,19 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+byteorder.workspace = true
 diom-error.workspace = true
 diom-namespace.workspace = true
 diom-operations.workspace = true
 fjall.workspace = true
-fjall-utils.workspace = true
 jiff.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
-static_assertions.workspace = true
 stream-internals.workspace = true
 tracing.workspace = true
+uuid.workspace = true
 validator.workspace = true
 
 [lints]

@@ -11,12 +11,23 @@ pub use self::tables::Namespace;
 
 pub const DEFAULT_NAMESPACE_NAME: &str = "default";
 
-pub fn namespace_name(key: &str) -> &str {
-    if !key.contains(':') {
-        return DEFAULT_NAMESPACE_NAME;
+pub fn namespace_parse_key(key: &str) -> (Option<&str>, &str) {
+    match key.split_once(":") {
+        Some((ns, key)) => (
+            if !ns.is_empty() && ns != DEFAULT_NAMESPACE_NAME {
+                Some(ns)
+            } else {
+                None
+            },
+            key,
+        ),
+        None => (None, key),
     }
-    match key.split(":").next() {
-        Some(k) if !k.is_empty() => k,
+}
+
+pub fn namespace_name(key: &str) -> &str {
+    match namespace_parse_key(key) {
+        (Some(ns), _) => ns,
         _ => DEFAULT_NAMESPACE_NAME,
     }
 }
@@ -75,9 +86,20 @@ impl State {
 
     pub fn fetch_namespace<C: ModuleConfig>(
         &self,
-        namespace_name: &str,
+        namespace_name: Option<&str>,
     ) -> Result<Option<Namespace<C>>> {
-        Namespace::fetch(&self.keyspace, namespace_name)
+        if let Some(ns) = namespace_name
+            && ns == DEFAULT_NAMESPACE_NAME
+        {
+            return Err(diom_error::Error::generic(
+                "Explicitly setting the \"default\" namespace is not allowed.",
+            ));
+        }
+
+        Namespace::fetch(
+            &self.keyspace,
+            namespace_name.unwrap_or(DEFAULT_NAMESPACE_NAME),
+        )
     }
 
     pub fn fetch_kv_namespace(

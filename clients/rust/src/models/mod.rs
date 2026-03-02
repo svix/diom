@@ -29,7 +29,7 @@ mod msg_namespace_get_in;
 mod msg_namespace_get_out;
 mod msg_publish_in;
 mod msg_publish_out;
-mod msg_publish_out_msg;
+mod msg_publish_out_topic;
 mod msg_stream_commit_in;
 mod msg_stream_commit_out;
 mod msg_stream_receive_in;
@@ -78,7 +78,7 @@ pub use self::{
     msg_namespace_get_out::MsgNamespaceGetOut,
     msg_publish_in::MsgPublishIn,
     msg_publish_out::MsgPublishOut,
-    msg_publish_out_msg::MsgPublishOutMsg,
+    msg_publish_out_topic::MsgPublishOutTopic,
     msg_stream_commit_in::MsgStreamCommitIn,
     msg_stream_commit_out::MsgStreamCommitOut,
     msg_stream_receive_in::MsgStreamReceiveIn,

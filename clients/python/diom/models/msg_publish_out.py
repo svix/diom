@@ -3,8 +3,8 @@ import typing as t
 
 from ..internal.base_model import BaseModel
 
-from .msg_publish_out_msg import MsgPublishOutMsg
+from .msg_publish_out_topic import MsgPublishOutTopic
 
 
 class MsgPublishOut(BaseModel):
-    msgs: t.List[MsgPublishOutMsg]
+    topics: t.List[MsgPublishOutTopic]

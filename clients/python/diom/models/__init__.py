@@ -27,7 +27,7 @@ from .msg_namespace_get_in import MsgNamespaceGetIn
 from .msg_namespace_get_out import MsgNamespaceGetOut
 from .msg_publish_in import MsgPublishIn
 from .msg_publish_out import MsgPublishOut
-from .msg_publish_out_msg import MsgPublishOutMsg
+from .msg_publish_out_topic import MsgPublishOutTopic
 from .msg_stream_commit_in import MsgStreamCommitIn
 from .msg_stream_commit_out import MsgStreamCommitOut
 from .msg_stream_receive_in import MsgStreamReceiveIn
@@ -77,7 +77,7 @@ __all__ = [
     "MsgNamespaceGetOut",
     "MsgPublishIn",
     "MsgPublishOut",
-    "MsgPublishOutMsg",
+    "MsgPublishOutTopic",
     "MsgStreamCommitIn",
     "MsgStreamCommitOut",
     "MsgStreamReceiveIn",

@@ -28,33 +28,33 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgPublishOut {
-@JsonProperty private List<MsgPublishOutMsg> msgs;
+@JsonProperty private List<MsgPublishOutTopic> topics;
 public MsgPublishOut () {}
 
- public MsgPublishOut msgs(List<MsgPublishOutMsg> msgs) {
-        this.msgs = msgs;
+ public MsgPublishOut topics(List<MsgPublishOutTopic> topics) {
+        this.topics = topics;
         return this;
     }
 
-     public MsgPublishOut addMsgsItem(MsgPublishOutMsg msgsItem) {
-        if (this.msgs == null) {
-            this.msgs = new ArrayList<>();
+     public MsgPublishOut addTopicsItem(MsgPublishOutTopic topicsItem) {
+        if (this.topics == null) {
+            this.topics = new ArrayList<>();
         }
-        this.msgs.add(msgsItem);
+        this.topics.add(topicsItem);
         return this;
     }
     /**
-    * Get msgs
+    * Get topics
     *
-     * @return msgs
+     * @return topics
      */
     @javax.annotation.Nonnull
-     public List<MsgPublishOutMsg> getMsgs() {
-        return msgs;
+     public List<MsgPublishOutTopic> getTopics() {
+        return topics;
     }
 
-     public void setMsgs(List<MsgPublishOutMsg> msgs) {
-        this.msgs = msgs;
+     public void setTopics(List<MsgPublishOutTopic> topics) {
+        this.topics = topics;
     }
 
     /**

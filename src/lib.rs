@@ -18,7 +18,7 @@ use diom_kv::KvStore;
 use diom_namespace::{
     BothDatabases,
     entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
-    namespace_name,
+    namespace_parse_key,
 };
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
@@ -118,6 +118,7 @@ pub struct AppState {
 
     namespace_state: diom_namespace::State,
 
+    // FIXME: do we need this?
     pub(crate) ro_dbs: ReadonlyDatabases,
 }
 
@@ -184,7 +185,7 @@ impl AppState {
     }
 
     fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
-        let ns_name = namespace_name(key_name);
+        let (ns_name, _) = namespace_parse_key(key_name);
 
         let namespace = self
             .namespace_state
@@ -335,6 +336,7 @@ pub fn setup_tracing(
         let var = [
             format!("{CRATE_NAME}={level}"),
             format!("diom_kv={level}"),
+            format!("diom_msgs={level}"),
             format!("fjall_utils={level}"),
             format!("tower_http={level}"),
             "opentelemetry_sdk=ERROR".to_string(),

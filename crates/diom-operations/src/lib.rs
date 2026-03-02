@@ -35,12 +35,15 @@ pub trait ModuleRequest: Serialize + DeserializeOwned + Clone + Debug {
 pub struct OperationError {
     #[serde(with = "http_serde::status_code")]
     status: http::StatusCode,
+    msg: String,
 }
 
 impl From<diom_error::Error> for OperationError {
     fn from(value: diom_error::Error) -> Self {
+        let msg = value.to_string();
         Self {
             status: value.into_response().status(),
+            msg,
         }
     }
 }
