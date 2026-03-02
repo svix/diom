@@ -12,7 +12,7 @@ variable "aws_region" {
 variable "k8s_version" {
   type        = string
   description = "The version of Kubernetes to deploy"
-  default     = "1.34"
+  default     = "1.35"
 }
 
 variable "vpc_cidr" {
