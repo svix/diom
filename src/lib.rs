@@ -18,7 +18,7 @@ use coyote_kv::KvStore;
 use coyote_namespace::{
     BothDatabases,
     entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
-    namespace_name,
+    namespace_parse_key,
 };
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
@@ -185,11 +185,11 @@ impl AppState {
     }
 
     fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
-        let ns_name = namespace_name(key_name);
+        let (ns_name, _) = namespace_parse_key(key_name);
 
         let namespace = self
             .namespace_state
-            .fetch_namespace::<C>(Some(ns_name))?
+            .fetch_namespace::<C>(ns_name)?
             .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
         let policy = namespace.config.eviction_policy();

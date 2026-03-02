@@ -14,7 +14,7 @@ pub const DEFAULT_NAMESPACE_NAME: &str = "default";
 pub fn namespace_parse_key(key: &str) -> (Option<&str>, &str) {
     match key.split_once(":") {
         Some((ns, key)) => (
-            if ns != DEFAULT_NAMESPACE_NAME {
+            if !ns.is_empty() && ns != DEFAULT_NAMESPACE_NAME {
                 Some(ns)
             } else {
                 None
