@@ -92,7 +92,7 @@ impl State {
             && ns == DEFAULT_NAMESPACE_NAME
         {
             return Err(coyote_error::Error::generic(
-                "Explicity setting the \"default\" namespace is not allowed.",
+                "Explicitly setting the \"default\" namespace is not allowed.",
             ));
         }
 
