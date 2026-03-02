@@ -15,10 +15,12 @@ class MsgsNamespaceAsync(ApiBase):
         msg_namespace_create_in: MsgNamespaceCreateIn,
     ) -> MsgNamespaceCreateOut:
         """Creates or updates a msgs namespace with the given name."""
+        body = msg_namespace_create_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/msgs/namespace/create",
-            body=msg_namespace_create_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=MsgNamespaceCreateOut,
         )
 
@@ -27,10 +29,12 @@ class MsgsNamespaceAsync(ApiBase):
         msg_namespace_get_in: MsgNamespaceGetIn,
     ) -> MsgNamespaceGetOut:
         """Gets a msgs namespace by name."""
+        body = msg_namespace_get_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/msgs/namespace/get",
-            body=msg_namespace_get_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=MsgNamespaceGetOut,
         )
 
@@ -41,10 +45,12 @@ class MsgsNamespace(ApiBase):
         msg_namespace_create_in: MsgNamespaceCreateIn,
     ) -> MsgNamespaceCreateOut:
         """Creates or updates a msgs namespace with the given name."""
+        body = msg_namespace_create_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/msgs/namespace/create",
-            body=msg_namespace_create_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=MsgNamespaceCreateOut,
         )
 
@@ -53,9 +59,11 @@ class MsgsNamespace(ApiBase):
         msg_namespace_get_in: MsgNamespaceGetIn,
     ) -> MsgNamespaceGetOut:
         """Gets a msgs namespace by name."""
+        body = msg_namespace_get_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/msgs/namespace/get",
-            body=msg_namespace_get_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=MsgNamespaceGetOut,
         )

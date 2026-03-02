@@ -70,6 +70,10 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
             _request_sync
             {%- endif -%}
         {%- endset %}
+        {%- if op.request_body_schema_name is defined %}
+        body = {{ op.request_body_schema_name | to_snake_case }}.model_dump(exclude_unset=True, by_alias=True)
+        {%- endif %}
+
         {% if op.response_body_schema_name is defined -%}return {% endif -%}
         {%- if is_async %}await {% endif -%}
         self.{{ internal_func_name }}(
@@ -83,7 +87,7 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
             }
             {%- endif %}
             {%- if op.request_body_schema_name is defined %}
-            body={{ op.request_body_schema_name | to_snake_case }}.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             {%- endif %}
             {%- if op.response_body_schema_name is defined %}
             response_type={{ op.response_body_schema_name | to_upper_camel_case }},
