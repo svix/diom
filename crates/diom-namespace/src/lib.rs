@@ -1,7 +1,7 @@
 use diom_error::Result;
 use fjall::{Error, KeyspaceCreateOptions};
 
-use crate::entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig, StorageType, StreamConfig};
+use crate::entities::{ModuleConfig, StorageType, StreamConfig};
 
 pub mod entities;
 pub mod operations;
@@ -102,27 +102,7 @@ impl State {
         )
     }
 
-    pub fn fetch_kv_namespace(
-        &self,
-        namespace_name: &str,
-    ) -> Result<Option<Namespace<KeyValueConfig>>> {
-        Namespace::fetch(&self.keyspace, namespace_name)
-    }
-
-    pub fn fetch_cache_namespace(
-        &self,
-        namespace_name: &str,
-    ) -> Result<Option<Namespace<CacheConfig>>> {
-        Namespace::fetch(&self.keyspace, namespace_name)
-    }
-
-    pub fn fetch_idempotency_namespace(
-        &self,
-        namespace_name: &str,
-    ) -> Result<Option<Namespace<IdempotencyConfig>>> {
-        Namespace::fetch(&self.keyspace, namespace_name)
-    }
-
+    // FIXME: this module is being removed.
     pub fn fetch_stream_namespace(
         &self,
         namespace_name: &str,

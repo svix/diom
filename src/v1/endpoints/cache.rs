@@ -11,7 +11,10 @@ use diom_cache::{
 };
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, ResultExt};
-use diom_namespace::entities::{EvictionPolicy, StorageType};
+use diom_namespace::{
+    Namespace,
+    entities::{CacheConfig, EvictionPolicy, StorageType},
+};
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -24,6 +27,8 @@ use crate::{
     error::Result,
     v1::utils::openapi_tag,
 };
+
+pub type CacheNamespace = Namespace<CacheConfig>;
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
@@ -156,9 +161,9 @@ async fn cache_get_namespace(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<CacheGetNamespaceOut>> {
-    let namespace = state
+    let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_cache_namespace(&data.name)?
+        .fetch_namespace(Some(&data.name))?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
