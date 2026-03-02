@@ -122,7 +122,6 @@ struct MsgPublishOut {
 
 /// Publishes messages to a topic within a namespace.
 #[aide_annotate(op_id = "v1.msgs.publish")]
-#[tracing::instrument(skip_all, level = "debug", fields(topic = %data.topic.raw_topic(), msg_count = data.msgs.len()))]
 async fn publish(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -181,7 +180,6 @@ struct MsgStreamReceiveOut {
 /// Each consumer in the group reads from all partitions. Messages are locked by leases for the
 /// specified duration to prevent duplicate delivery within the same consumer group.
 #[aide_annotate(op_id = "v1.msgs.stream.receive")]
-#[tracing::instrument(skip_all, level = "debug", fields(topic = %data.topic.raw_topic(), consumer_group = %data.consumer_group, batch_size = data.batch_size.get()))]
 async fn stream_receive(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -237,7 +235,6 @@ struct MsgStreamCommitOut {}
 /// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
 /// successfully processed offset; future receives will start after it.
 #[aide_annotate(op_id = "v1.msgs.stream.commit")]
-#[tracing::instrument(skip_all, level = "debug", fields(topic = %data.topic, consumer_group = %data.consumer_group, offset = data.offset))]
 async fn stream_commit(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,

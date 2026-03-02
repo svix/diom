@@ -35,7 +35,6 @@ impl StreamCommitOperation {
         }
     }
 
-    #[tracing::instrument(skip_all, level = "debug", fields(partition = self.partition.get(), consumer_group = %self.cg, offset = self.offset))]
     fn apply_real(self, state: &State) -> coyote_operations::Result<StreamCommitResponseData> {
         let now = self.now;
         let mut batch = state.db.batch();

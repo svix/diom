@@ -4,7 +4,6 @@ use coyote_namespace::entities::NamespaceId;
 use fjall_utils::ReadableDatabase;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use tracing::Span;
 
 use crate::{
     State,
@@ -74,7 +73,6 @@ pub struct StreamReceiveOperation {
 }
 
 impl StreamReceiveOperation {
-    #[tracing::instrument(skip_all, level = "debug", fields(topic = %topic.raw_topic(), partition_count, partitions_eligible))]
     pub fn new(
         db: &impl ReadableDatabase,
         namespace_id: NamespaceId,
@@ -101,10 +99,6 @@ impl StreamReceiveOperation {
             }
         }
 
-        Span::current()
-            .record("partition_count", partition_count)
-            .record("partitions_eligible", partitions.len());
-
         Ok(Self {
             namespace_id,
             topic: raw_topic,
@@ -116,7 +110,6 @@ impl StreamReceiveOperation {
         })
     }
 
-    #[tracing::instrument(skip_all, level = "debug", fields(topic = %self.topic, partitions = self.partitions.len(), batch_size = self.batch_size.get(), msgs_returned))]
     fn apply_real(self, state: &State) -> coyote_operations::Result<StreamReceiveResponseData> {
         let now = self.now;
         let lease_duration = std::time::Duration::from_millis(self.lease_duration_millis);
@@ -129,19 +122,57 @@ impl StreamReceiveOperation {
                 break;
             }
 
-            let (msgs, lease_diff) = receive_partition(
+            let start_offset = OffsetRow::fetch(state, self.namespace_id, partition, &self.cg)?
+                .unwrap_or(Offset::MIN);
+
+            let leases = LeaseRow::fetch_all(state, self.namespace_id, partition, &self.cg)?;
+
+            // Check for active leases inside apply_real (Raft state machine) to
+            // prevent races — the pre-Raft check in the constructor is only an
+            // optimistic fast-path.
+            let has_active_lease = leases.iter().any(|l| l.is_active(now));
+            if has_active_lease {
+                all_lease_diffs.push(LeaseRow::cull_and_compact(leases, now));
+                continue;
+            }
+
+            let blocked_leases = leases.iter().filter(|l| l.acked_at.is_some() || l.is_dlq());
+
+            let batch_size = remaining;
+            let msgs = MsgRow::fetch_available(
                 state,
                 self.namespace_id,
-                &self.topic,
+                partition,
+                start_offset,
+                blocked_leases,
+                batch_size,
+            )?;
+
+            let mut lease_diff = LeaseRow::cull_and_compact(leases, now);
+
+            let offsets: Vec<Offset> = msgs.iter().map(|(offset, _)| *offset).collect();
+            create_leases_for_msgs(
+                &offsets,
+                self.namespace_id,
                 partition,
                 &self.cg,
                 now,
                 lease_duration,
-                remaining,
-            )?;
+                &mut lease_diff,
+            );
 
             remaining -= msgs.len();
-            all_msgs.extend(msgs);
+
+            for (offset, msg) in msgs {
+                all_msgs.push(StreamReceiveMsg {
+                    offset,
+                    topic: Topic::new(self.topic.clone(), partition),
+                    value: msg.value,
+                    headers: msg.headers,
+                    timestamp: msg.created_at,
+                });
+            }
+
             all_lease_diffs.push(lease_diff);
         }
 
@@ -151,73 +182,8 @@ impl StreamReceiveOperation {
         }
         batch.commit().map_err(coyote_error::Error::from)?;
 
-        Span::current().record("msgs_returned", all_msgs.len());
         Ok(StreamReceiveResponseData { msgs: all_msgs })
     }
-}
-
-#[allow(clippy::too_many_arguments)]
-#[tracing::instrument(skip_all, level = "debug", fields(partition = partition.get(), has_active_lease, msgs_fetched))]
-fn receive_partition(
-    state: &State,
-    namespace_id: NamespaceId,
-    topic: &RawTopic,
-    partition: Partition,
-    cg: &ConsumerGroup,
-    now: Timestamp,
-    lease_duration: std::time::Duration,
-    remaining: usize,
-) -> coyote_operations::Result<(Vec<StreamReceiveMsg>, LeaseDiff)> {
-    let start_offset = OffsetRow::fetch(state, namespace_id, partition, cg)?.unwrap_or(Offset::MIN);
-
-    let leases = LeaseRow::fetch_all(state, namespace_id, partition, cg)?;
-
-    // Check for active leases inside apply_real (Raft state machine) to
-    // prevent races — the pre-Raft check in the constructor is only an
-    // optimistic fast-path.
-    let has_active_lease = leases.iter().any(|l| l.is_active(now));
-    Span::current().record("has_active_lease", has_active_lease);
-    if has_active_lease {
-        return Ok((Vec::new(), LeaseRow::cull_and_compact(leases, now)));
-    }
-
-    let blocked_leases = leases.iter().filter(|l| l.acked_at.is_some() || l.is_dlq());
-
-    let msgs = MsgRow::fetch_available(
-        state,
-        namespace_id,
-        partition,
-        start_offset,
-        blocked_leases,
-        remaining,
-    )?;
-
-    let mut lease_diff = LeaseRow::cull_and_compact(leases, now);
-
-    let offsets: Vec<Offset> = msgs.iter().map(|(offset, _)| *offset).collect();
-    create_leases_for_msgs(
-        &offsets,
-        namespace_id,
-        partition,
-        cg,
-        now,
-        lease_duration,
-        &mut lease_diff,
-    );
-
-    let receive_msgs: Vec<StreamReceiveMsg> = msgs
-        .into_iter()
-        .map(|(offset, msg)| StreamReceiveMsg {
-            offset,
-            topic: Topic::new(topic.clone(), partition),
-            value: msg.value,
-            headers: msg.headers,
-            timestamp: msg.created_at,
-        })
-        .collect();
-
-    Span::current().record("msgs_fetched", receive_msgs.len());
-    Ok((receive_msgs, lease_diff))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
