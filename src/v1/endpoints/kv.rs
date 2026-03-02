@@ -187,7 +187,7 @@ async fn kv_get_namespace(
 ) -> Result<MsgPackOrJson<KvGetNamespaceOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(Some(&data.name))?
+        .fetch_namespace_admin(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     Ok(MsgPackOrJson(KvGetNamespaceOut {

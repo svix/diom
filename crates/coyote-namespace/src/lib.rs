@@ -84,8 +84,11 @@ impl State {
         if let Some(ns) = namespace_name
             && ns == DEFAULT_NAMESPACE_NAME
         {
-            return Err(coyote_error::Error::generic(
-                "Explicitly setting the \"default\" namespace is not allowed.",
+            return Err(coyote_error::Error::http(
+                coyote_error::HttpError::bad_request(
+                    Some("no_explicit_default_namespace".to_owned()),
+                    Some("Explicitly setting the \"default\" namespace is not allowed.".to_owned()),
+                ),
             ));
         }
 
