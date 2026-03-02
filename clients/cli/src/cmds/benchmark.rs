@@ -15,6 +15,7 @@ use coyote_client::{
     },
 };
 use futures_util::future::try_join_all;
+use glob::Pattern;
 use hdrhistogram::Histogram;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::{
@@ -28,13 +29,6 @@ use tokio::sync::Barrier;
 // TODO(238): Idempotency/Rate-limit does not currently work in SDK
 
 type BenchHistogram = Histogram<u64>;
-
-#[derive(Clone, Debug, PartialEq, clap::ValueEnum)]
-pub enum BenchmarkModule {
-    Kv,
-    Cache,
-    Msgs,
-}
 
 #[derive(Args)]
 pub struct BenchmarkArgs {
@@ -58,57 +52,45 @@ pub struct BenchmarkArgs {
     #[arg(short, long, default_value_t = 1)]
     pub batch_size: u16,
 
-    /// Modules to benchmark (default: all)
-    #[arg(short, long, value_delimiter = ',')]
-    pub modules: Vec<BenchmarkModule>,
+    /// Glob filter: only run benchmarks whose name matches
+    #[arg(long)]
+    pub filter: Option<String>,
 }
 
 impl BenchmarkArgs {
     pub async fn exec(self, client: Arc<CoyoteClient>) -> Result<()> {
         let iterations = self.iterations;
         let concurrency = self.concurrency;
-
-        let modules = if self.modules.is_empty() {
-            vec![
-                BenchmarkModule::Kv,
-                BenchmarkModule::Cache,
-                BenchmarkModule::Msgs,
-            ]
-        } else {
-            self.modules
-        };
-
         let batch_size = self.batch_size;
         eprintln!(
             "Running benchmark: {iterations} iterations · {concurrency} concurrent · batch_size {batch_size}",
         );
 
+        let filter = self
+            .filter
+            .as_deref()
+            .map(|f| {
+                if f.contains('*') {
+                    Pattern::new(f)
+                } else {
+                    Pattern::new(&format!("{f}*"))
+                }
+            })
+            .transpose()?;
+
         // Each op type's wall-clock time: rounds run sequentially, tasks within a round run concurrently.
         let mut all_stats: Vec<Stats> = Vec::new();
 
-        for module in &modules {
-            eprintln!();
-            let bench_cfg = Arc::new(BenchConfig {
-                client: Arc::clone(&client),
-                concurrency,
-                iterations,
-            });
+        let bench_cfg = Arc::new(BenchConfig {
+            client: Arc::clone(&client),
+            concurrency,
+            iterations,
+        });
 
-            match module {
-                BenchmarkModule::Kv => {
-                    eprintln!("[kv]");
-                    bench_kv(bench_cfg, &mut all_stats).await?;
-                }
-                BenchmarkModule::Cache => {
-                    eprintln!("[cache]");
-                    bench_cache(bench_cfg, &mut all_stats).await?;
-                }
-                BenchmarkModule::Msgs => {
-                    eprintln!("[msgs]");
-                    bench_msgs(bench_cfg, &mut all_stats).await?;
-                }
-            }
-        }
+        eprintln!();
+        bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+        bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+        bench_msgs(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
 
         eprintln!("\n");
 
@@ -345,10 +327,17 @@ trait BenchShard {
         &self,
         cfg: Arc<BenchConfig>,
         all_stats: &mut Vec<Stats>,
+        filter: Option<&Pattern>,
     ) -> Result<()>
     where
         Self: Sized + Clone,
     {
+        if let Some(pat) = filter
+            && !pat.matches(&self.test_name())
+        {
+            return Ok(());
+        }
+
         // Sleep for 1 second before tests to give fjall time to catch up.
         tokio::time::sleep(Duration::from_secs(1)).await;
 
@@ -481,12 +470,16 @@ impl BenchShard for BenchKvGet {
     }
 }
 
-async fn bench_kv(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
+async fn bench_kv(
+    cfg: Arc<BenchConfig>,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
     BenchKvSet::new()
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     BenchKvGet::new()
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
 }
@@ -599,12 +592,16 @@ impl BenchShard for BenchCacheGet {
     }
 }
 
-async fn bench_cache(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
+async fn bench_cache(
+    cfg: Arc<BenchConfig>,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
     BenchCacheSet::new()
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     BenchCacheGet::new()
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
 }
@@ -628,7 +625,7 @@ impl BenchMsgsPublish {
 
 impl BenchShard for BenchMsgsPublish {
     fn test_name(&self) -> String {
-        format!("publish (batch={})", self.batch_size)
+        format!("msgs.publish (batch={})", self.batch_size)
     }
 
     async fn run(
@@ -692,7 +689,7 @@ impl BenchMsgsStreamReceive {
 
 impl BenchShard for BenchMsgsStreamReceive {
     fn test_name(&self) -> String {
-        format!("receive (batch={})", self.batch_size)
+        format!("msgs.receive (batch={})", self.batch_size)
     }
 
     async fn run(
@@ -765,7 +762,11 @@ impl BenchShard for BenchMsgsStreamReceive {
     }
 }
 
-async fn bench_msgs(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result<()> {
+async fn bench_msgs(
+    cfg: Arc<BenchConfig>,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
     let ns_name = "bench";
 
     cfg.client
@@ -775,17 +776,17 @@ async fn bench_msgs(cfg: Arc<BenchConfig>, all_stats: &mut Vec<Stats>) -> Result
         .await?;
 
     BenchMsgsPublish::new(1)
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     BenchMsgsStreamReceive::new(1)
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
 
     BenchMsgsPublish::new(10)
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     BenchMsgsStreamReceive::new(10)
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
 }
