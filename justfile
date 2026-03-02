@@ -3,8 +3,8 @@ set quiet := true
 HERE := justfile_directory()
 
 lint:
-    cargo +nightly clippy --workspace --fix --allow-dirty --all-features --all-targets
-    cargo +nightly fmt
+    cargo +beta clippy --workspace --fix --allow-dirty --all-features --all-targets
+    cargo +beta fmt
     cargo sort --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
 
 # Test the backend
