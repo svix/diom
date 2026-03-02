@@ -13,7 +13,7 @@ use crate::{
     AppState,
     cfg::Configuration,
     core::cluster::{
-        operations::InternalRequest,
+        operations::SetClusterUuidOperation,
         state_machine::{ClusterId, StoreHandle},
     },
 };
@@ -51,9 +51,9 @@ pub(super) async fn initialize_cluster(
         .await?;
     let new_id = ClusterId::generate();
     tracing::debug!(cluster_id=?new_id, "cluster initialized, setting cluster_id");
-    raft.client_write(Request::ClusterInternal(InternalRequest::SetClusterId(
-        new_id,
-    )))
+    raft.client_write(Request::ClusterInternal(
+        SetClusterUuidOperation(new_id).into(),
+    ))
     .await
     .tap_err(|err| tracing::error!(?err, "failed to set initial cluster id"))?;
     tracing::debug!(elapsed=?start.elapsed(), "initialization finished");

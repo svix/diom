@@ -3,10 +3,7 @@ use std::fmt;
 use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
 
 use super::{
-    NodeId,
-    discovery::Discovery,
-    network::NetworkFactory,
-    operations::{InternalRequest, InternalResponse},
+    NodeId, discovery::Discovery, network::NetworkFactory, operations::InternalOperation,
     raft::Raft,
 };
 use anyhow::Context;
@@ -38,7 +35,7 @@ impl std::error::Error for ResponseParseError {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Request {
-    ClusterInternal(InternalRequest),
+    ClusterInternal(InternalOperation),
     Kv(coyote_kv::operations::KvOperation),
     CreateKv(coyote_kv::operations::CreateKvOp),
     RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
@@ -121,8 +118,8 @@ impl From<coyote_msgs::operations::MsgsOperation> for Request {
     }
 }
 
-impl From<InternalRequest> for Request {
-    fn from(value: InternalRequest) -> Self {
+impl From<InternalOperation> for Request {
+    fn from(value: InternalOperation) -> Self {
         Self::ClusterInternal(value)
     }
 }
@@ -130,7 +127,7 @@ impl From<InternalRequest> for Request {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Response {
     Blank,
-    ClusterInternal(InternalResponse),
+    ClusterInternal(super::operations::Response),
     CreateCache(coyote_cache::operations::CreateCacheOperationResponse),
     CreateIdempotency(coyote_idempotency::operations::CreateIdempotencyOperationResponse),
     CreateKv(coyote_kv::operations::CreateKvOperationResponse),
@@ -241,7 +238,7 @@ impl TryFrom<Response> for coyote_msgs::operations::Response {
     }
 }
 
-impl TryFrom<Response> for InternalResponse {
+impl TryFrom<Response> for super::operations::Response {
     type Error = ResponseParseError;
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
