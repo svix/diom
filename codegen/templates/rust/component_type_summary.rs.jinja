@@ -16,3 +16,11 @@ pub use self::{
         },
     {% endfor -%}
 };
+
+pub(crate) use self::{
+{% for _, type in api.types | items -%}
+    {% if type.fields | selectattr("positional") | length > 0 -%}
+    {{ type.name | to_snake_case }}::{{ type.name | to_upper_camel_case }}_,
+    {% endif -%}
+{% endfor -%}
+};

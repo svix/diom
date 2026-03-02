@@ -13,10 +13,12 @@ pub struct CacheArgs {
 pub enum CacheCommands {
     /// Cache Set
     Set {
+        key: String,
         cache_set_in: crate::json::JsonOf<diom_client::models::CacheSetIn>,
     },
     /// Cache Get
     Get {
+        key: String,
         cache_get_in: crate::json::JsonOf<diom_client::models::CacheGetIn>,
     },
     /// Get cache namespace
@@ -36,12 +38,12 @@ impl CacheCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
-            Self::Set { cache_set_in } => {
-                let resp = client.cache().set(cache_set_in.into_inner()).await?;
+            Self::Set { key, cache_set_in } => {
+                let resp = client.cache().set(key, cache_set_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Get { cache_get_in } => {
-                let resp = client.cache().get(cache_get_in.into_inner()).await?;
+            Self::Get { key, cache_get_in } => {
+                let resp = client.cache().get(key, cache_get_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::GetNamespace {

@@ -11,7 +11,13 @@ impl<'a> Cache<'a> {
     }
 
     /// Cache Set
-    pub async fn set(&self, cache_set_in: CacheSetIn) -> Result<CacheSetOut> {
+    pub async fn set(&self, key: String, cache_set_in: CacheSetIn) -> Result<CacheSetOut> {
+        let cache_set_in = CacheSetIn_ {
+            key,
+            value: cache_set_in.value,
+            ttl: cache_set_in.ttl,
+        };
+
         crate::request::Request::new(http::Method::POST, "/api/v1/cache/set")
             .with_body(cache_set_in)
             .execute(self.cfg)
@@ -19,7 +25,10 @@ impl<'a> Cache<'a> {
     }
 
     /// Cache Get
-    pub async fn get(&self, cache_get_in: CacheGetIn) -> Result<CacheGetOut> {
+    pub async fn get(&self, key: String, cache_get_in: CacheGetIn) -> Result<CacheGetOut> {
+        let _unused = cache_get_in;
+        let cache_get_in = CacheGetIn_ { key };
+
         crate::request::Request::new(http::Method::POST, "/api/v1/cache/get")
             .with_body(cache_get_in)
             .execute(self.cfg)

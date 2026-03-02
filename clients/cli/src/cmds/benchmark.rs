@@ -525,7 +525,7 @@ impl BenchShard for BenchCacheSet {
         let t = Instant::now();
         client
             .cache()
-            .set(CacheSetIn::new(key.clone(), ttl_bench_ms, value))
+            .set(key, CacheSetIn::new(value, ttl_bench_ms))
             .await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
@@ -575,7 +575,7 @@ impl BenchShard for BenchCacheGet {
 
         // Start of real code
         let t = Instant::now();
-        let ret = client.cache().get(CacheGetIn::new(key.clone())).await?;
+        let ret = client.cache().get(key.clone(), CacheGetIn::new()).await?;
         let bytes = ret.value.len() as u64;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())

@@ -35,6 +35,7 @@ impl<'a> {{ resource_type_name }}<'a> {
     {% if op.query_params | length > 0 -%}
         {% do panic("we don't do query parameters in this API") %}
     {% endif -%}
+    {% set req_body_schema_name = op.request_body_schema_name | to_snake_case -%}
     {% if op.description is defined -%}
         {{ op.description | to_doc_comment(style="rust") }}
     {% endif -%}
@@ -44,17 +45,43 @@ impl<'a> {{ resource_type_name }}<'a> {
     pub async fn {{ op.name | to_snake_case }}(
         &self,
 
-        {#- path parameters -#}
+        {#- path parameters #}
         {% for p in op.path_params -%}
             {{ p }}: String,
         {% endfor -%}
 
-        {# body parameter struct -#}
         {% if op.request_body_schema_name is defined -%}
-            {{ op.request_body_schema_name | to_snake_case }}: {{ op.request_body_schema_name }},
+            {# positional body parameters -#}
+            {% set body_schema = api.types[op.request_body_schema_name] -%}
+            {% set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 -%}
+            {% set has_non_positional_fields = body_schema.fields | selectattr("positional", "false") | length > 0 -%}
+            {% for field in body_schema.fields -%}
+            {% if field.positional -%}
+                {% if field.description is defined -%}
+                    {{ field.description | to_doc_comment(style="rust") }}
+                {% endif -%}
+                {{ field.name | to_snake_case }}: {{ field.type.to_rust() }},
+            {% endif -%}
+            {% endfor -%}
+
+            {#- body parameter struct -#}
+            {{ req_body_schema_name }}: {{ op.request_body_schema_name }},
         {% endif -%}
     ) -> Result<{{ op.response_body_schema_name | default("()") | replace("_", "") }}> {
-        {# make the request #}
+        {%- if op.request_body_schema_name is defined and not has_non_positional_fields %}
+        let _unused = {{ req_body_schema_name }};
+        {%- endif %}
+        {%- if has_positional_fields %}
+        let {{ req_body_schema_name }} = {{ op.request_body_schema_name }}_{
+            {% for field in body_schema.fields -%}
+                {% set field_name = field.name | to_snake_case -%}
+                {{ field_name }}
+                {%- if not field.positional %}: {{ req_body_schema_name }}.{{ field_name }}{% endif %},
+            {% endfor -%}
+        };
+        {%- endif %}
+
+        {# make the request -#}
         crate::request::Request::new(http::Method::{{ op.method | upper }}, "{{ op.path }}")
 
         {% for p in op.path_params -%}
