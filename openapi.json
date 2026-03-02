@@ -914,12 +914,6 @@
             "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
-          "ttl": {
-            "description": "Time to live in milliseconds",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
           "value": {
             "type": "array",
             "items": {
@@ -928,16 +922,21 @@
               "minimum": 0,
               "maximum": 255
             }
+          },
+          "ttl": {
+            "description": "Time to live in milliseconds",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
           }
         },
         "required": [
           "key",
-          "ttl",
-          "value"
+          "value",
+          "ttl"
         ],
         "x-positional": [
-          "key",
-          "value"
+          "key"
         ]
       },
       "CacheSetOut": {

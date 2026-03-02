@@ -4,6 +4,6 @@ package coyote_models
 
 type CacheSetIn struct {
 	Key   string  `json:"key"`
-	Ttl   uint64  `json:"ttl"` // Time to live in milliseconds
 	Value []uint8 `json:"value"`
+	Ttl   uint64  `json:"ttl"` // Time to live in milliseconds
 }
