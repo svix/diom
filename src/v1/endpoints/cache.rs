@@ -26,7 +26,7 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
-#[schemars(extend("x-positional" = ["key"]))]
+#[schemars(extend("x-positional" = ["key", "value", "ttl"]))]
 pub struct CacheSetIn {
     #[validate(nested)]
     pub key: EntityKey,
@@ -80,6 +80,7 @@ impl CacheGetOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheDeleteIn {
     #[validate(nested)]
     pub key: EntityKey,

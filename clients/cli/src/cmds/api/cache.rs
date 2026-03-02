@@ -14,6 +14,9 @@ pub enum CacheCommands {
     /// Cache Set
     Set {
         key: String,
+        value: String,
+        /// Time to live in milliseconds
+        ttl: u64,
         cache_set_in: crate::json::JsonOf<coyote_client::models::CacheSetIn>,
     },
     /// Cache Get
@@ -27,6 +30,7 @@ pub enum CacheCommands {
     },
     /// Cache Delete
     Delete {
+        key: String,
         cache_delete_in: crate::json::JsonOf<coyote_client::models::CacheDeleteIn>,
     },
 }
@@ -38,8 +42,16 @@ impl CacheCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
-            Self::Set { key, cache_set_in } => {
-                let resp = client.cache().set(key, cache_set_in.into_inner()).await?;
+            Self::Set {
+                key,
+                value,
+                ttl,
+                cache_set_in,
+            } => {
+                let resp = client
+                    .cache()
+                    .set(key, value.into(), ttl, cache_set_in.into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::Get { key, cache_get_in } => {
@@ -55,8 +67,14 @@ impl CacheCommands {
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Delete { cache_delete_in } => {
-                let resp = client.cache().delete(cache_delete_in.into_inner()).await?;
+            Self::Delete {
+                key,
+                cache_delete_in,
+            } => {
+                let resp = client
+                    .cache()
+                    .delete(key, cache_delete_in.into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
         }

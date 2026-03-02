@@ -16,8 +16,17 @@ impl<'a> MsgsStream<'a> {
     /// specified duration to prevent duplicate delivery within the same consumer group.
     pub async fn receive(
         &self,
+        topic: String,
+        consumer_group: String,
         msg_stream_receive_in: MsgStreamReceiveIn,
     ) -> Result<MsgStreamReceiveOut> {
+        let msg_stream_receive_in = MsgStreamReceiveIn_ {
+            topic,
+            consumer_group,
+            batch_size: msg_stream_receive_in.batch_size,
+            lease_duration_millis: msg_stream_receive_in.lease_duration_millis,
+        };
+
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/stream/receive")
             .with_body(msg_stream_receive_in)
             .execute(self.cfg)
@@ -30,8 +39,18 @@ impl<'a> MsgsStream<'a> {
     /// successfully processed offset; future receives will start after it.
     pub async fn commit(
         &self,
+        topic: String,
+        consumer_group: String,
+        offset: u64,
         msg_stream_commit_in: MsgStreamCommitIn,
     ) -> Result<MsgStreamCommitOut> {
+        let _unused = msg_stream_commit_in;
+        let msg_stream_commit_in = MsgStreamCommitIn_ {
+            topic,
+            consumer_group,
+            offset,
+        };
+
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/stream/commit")
             .with_body(msg_stream_commit_in)
             .execute(self.cfg)

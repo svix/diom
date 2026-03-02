@@ -14,19 +14,22 @@ from ..models import (
 
 from ..models.cache_set_in import _CacheSetIn
 from ..models.cache_get_in import _CacheGetIn
+from ..models.cache_delete_in import _CacheDeleteIn
 
 
 class CacheAsync(ApiBase):
     async def set(
         self,
         key: str,
+        value: bytes,
+        ttl: int,
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
         body = _CacheSetIn(
             key=key,
-            value=cache_set_in.value,
-            ttl=cache_set_in.ttl,
+            value=value,
+            ttl=ttl,
         ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
@@ -69,10 +72,13 @@ class CacheAsync(ApiBase):
 
     async def delete(
         self,
+        key: str,
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
-        body = cache_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _CacheDeleteIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
             method="post",
@@ -86,13 +92,15 @@ class Cache(ApiBase):
     def set(
         self,
         key: str,
+        value: bytes,
+        ttl: int,
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
         body = _CacheSetIn(
             key=key,
-            value=cache_set_in.value,
-            ttl=cache_set_in.ttl,
+            value=value,
+            ttl=ttl,
         ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
@@ -135,10 +143,13 @@ class Cache(ApiBase):
 
     def delete(
         self,
+        key: str,
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
-        body = cache_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _CacheDeleteIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
             method="post",

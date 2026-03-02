@@ -99,4 +99,11 @@ pub use self::{
     stream_msg_out::StreamMsgOut,
 };
 
-pub(crate) use self::{cache_get_in::CacheGetIn_, cache_set_in::CacheSetIn_};
+pub(crate) use self::{
+    cache_delete_in::CacheDeleteIn_, cache_get_in::CacheGetIn_, cache_set_in::CacheSetIn_,
+    idempotency_abort_in::IdempotencyAbortIn_, kv_delete_in::KvDeleteIn_, kv_get_in::KvGetIn_,
+    kv_set_in::KvSetIn_, msg_namespace_create_in::MsgNamespaceCreateIn_,
+    msg_namespace_get_in::MsgNamespaceGetIn_, msg_publish_in::MsgPublishIn_,
+    msg_stream_commit_in::MsgStreamCommitIn_, msg_stream_receive_in::MsgStreamReceiveIn_,
+    msg_topic_configure_in::MsgTopicConfigureIn_,
+};

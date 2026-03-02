@@ -23,7 +23,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
             client
                 .msgs()
                 .namespace()
-                .create(MsgNamespaceCreateIn::new(ns.to_owned()))
+                .create(ns.to_owned(), MsgNamespaceCreateIn::new())
                 .await
                 .unwrap();
         });
@@ -55,7 +55,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                         std::hint::black_box(
                             client
                                 .msgs()
-                                .publish(MsgPublishIn::new(topic.clone(), msgs)),
+                                .publish(topic.clone(), MsgPublishIn::new(msgs)),
                         )
                         .await
                         .unwrap();
@@ -79,7 +79,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
             for _ in 0..100 {
                 client
                     .msgs()
-                    .publish(MsgPublishIn::new(topic.clone(), make_msg_batch(1000)))
+                    .publish(topic.clone(), MsgPublishIn::new(make_msg_batch(1000)))
                     .await
                     .unwrap();
             }
@@ -90,21 +90,33 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
         group.bench_function("msgs_stream_receive_commit_batch_100", |b| {
             b.iter(|| {
                 rt.block_on(async {
-                    let mut input = MsgStreamReceiveIn::new(topic.clone(), consumer_group.clone());
-                    input.batch_size = Some(100);
-                    let out =
-                        std::hint::black_box(client.msgs().stream().receive(input).await.unwrap());
+                    let out = std::hint::black_box(
+                        client
+                            .msgs()
+                            .stream()
+                            .receive(
+                                topic.clone(),
+                                consumer_group.clone(),
+                                MsgStreamReceiveIn {
+                                    batch_size: Some(100),
+                                    ..MsgStreamReceiveIn::new()
+                                },
+                            )
+                            .await
+                            .unwrap(),
+                    );
                     let last = out.msgs.last().unwrap();
                     // Response topic already includes namespace, pass directly to commit
                     std::hint::black_box(
                         client
                             .msgs()
                             .stream()
-                            .commit(MsgStreamCommitIn::new(
+                            .commit(
                                 last.topic.clone(),
                                 consumer_group.clone(),
                                 last.offset,
-                            ))
+                                MsgStreamCommitIn::new(),
+                            )
                             .await
                             .unwrap(),
                     );

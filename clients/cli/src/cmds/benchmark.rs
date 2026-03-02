@@ -404,7 +404,7 @@ impl BenchShard for BenchKvSet {
         // Start of real code
         let bytes = value.len() as u64;
         let t = Instant::now();
-        client.kv().set(KvSetIn::new(key.clone(), value)).await?;
+        client.kv().set(key.clone(), value, KvSetIn::new()).await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
@@ -453,7 +453,7 @@ impl BenchShard for BenchKvGet {
 
         // Start of real code
         let t = Instant::now();
-        let ret = client.kv().get(KvGetIn::new(key.clone())).await?;
+        let ret = client.kv().get(key.clone(), KvGetIn::new()).await?;
         let bytes = ret.value.len() as u64;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
@@ -525,7 +525,7 @@ impl BenchShard for BenchCacheSet {
         let t = Instant::now();
         client
             .cache()
-            .set(key, CacheSetIn::new(value, ttl_bench_ms))
+            .set(key, value, ttl_bench_ms, CacheSetIn::new())
             .await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
@@ -653,7 +653,7 @@ impl BenchShard for BenchMsgsPublish {
         let t = Instant::now();
         client
             .msgs()
-            .publish(MsgPublishIn::new(topic.clone(), msgs))
+            .publish(topic.clone(), MsgPublishIn::new(msgs))
             .await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
@@ -710,9 +710,18 @@ impl BenchShard for BenchMsgsStreamReceive {
 
         // Start of real code
         let t = Instant::now();
-        let mut recv = MsgStreamReceiveIn::new(topic.clone(), consumer_group.to_owned());
-        recv.batch_size = Some(self.batch_size);
-        let out = client.msgs().stream().receive(recv).await?;
+        let out = client
+            .msgs()
+            .stream()
+            .receive(
+                topic.clone(),
+                consumer_group.to_owned(),
+                MsgStreamReceiveIn {
+                    batch_size: Some(self.batch_size),
+                    ..MsgStreamReceiveIn::new()
+                },
+            )
+            .await?;
         let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
         self.bench_result_rcv.process(t.elapsed(), rcv_bytes)?;
 
@@ -728,11 +737,12 @@ impl BenchShard for BenchMsgsStreamReceive {
             client
                 .msgs()
                 .stream()
-                .commit(MsgStreamCommitIn::new(
+                .commit(
                     topic,
                     consumer_group.to_owned(),
                     offset,
-                ))
+                    MsgStreamCommitIn::new(),
+                )
                 .await?;
         }
         self.bench_result_commit.process(t.elapsed(), 0)?;
@@ -776,7 +786,7 @@ async fn bench_msgs(
     cfg.client
         .msgs()
         .namespace()
-        .create(MsgNamespaceCreateIn::new(ns_name.to_string()))
+        .create(ns_name.to_owned(), MsgNamespaceCreateIn::new())
         .await?;
 
     BenchMsgsPublish::new(1)

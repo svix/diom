@@ -19,6 +19,7 @@ use stream_internals::entities::{Retention, default_retention_bytes, default_ret
 use validator::Validate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["name"]))]
 struct MsgNamespaceCreateIn {
     pub name: String,
     #[serde(default)]
@@ -59,6 +60,7 @@ async fn create_namespace(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["name"]))]
 struct MsgNamespaceGetIn {
     pub name: String,
 }
@@ -101,6 +103,7 @@ async fn get_namespace(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic"]))]
 struct MsgPublishIn {
     pub topic: TopicIn,
     pub msgs: Vec<coyote_msgs::entities::MsgIn>,
@@ -159,6 +162,7 @@ fn default_lease_duration_millis() -> u64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamReceiveIn {
     pub topic: TopicIn,
     pub consumer_group: coyote_msgs::entities::ConsumerGroup,
@@ -217,6 +221,7 @@ async fn stream_receive(
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group", "offset"]))]
 struct MsgStreamCommitIn {
     pub topic: TopicPartition,
     pub consumer_group: coyote_msgs::entities::ConsumerGroup,
@@ -257,6 +262,7 @@ async fn stream_commit(
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "partitions"]))]
 struct MsgTopicConfigureIn {
     pub topic: TopicName,
     pub partitions: u16,

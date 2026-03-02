@@ -12,14 +12,25 @@ from ..models import (
     KvSetOut,
 )
 
+from ..models.kv_set_in import _KvSetIn
+from ..models.kv_get_in import _KvGetIn
+from ..models.kv_delete_in import _KvDeleteIn
+
 
 class KvAsync(ApiBase):
     async def set(
         self,
+        key: str,
+        value: bytes,
         kv_set_in: KvSetIn,
     ) -> KvSetOut:
         """KV Set"""
-        body = kv_set_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _KvSetIn(
+            key=key,
+            value=value,
+            ttl=kv_set_in.ttl,
+            behavior=kv_set_in.behavior,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
             method="post",
@@ -30,10 +41,13 @@ class KvAsync(ApiBase):
 
     async def get(
         self,
+        key: str,
         kv_get_in: KvGetIn,
     ) -> KvGetOut:
         """KV Get"""
-        body = kv_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _KvGetIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
             method="post",
@@ -58,10 +72,13 @@ class KvAsync(ApiBase):
 
     async def delete(
         self,
+        key: str,
         kv_delete_in: KvDeleteIn,
     ) -> KvDeleteOut:
         """KV Delete"""
-        body = kv_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _KvDeleteIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
             method="post",
@@ -74,10 +91,17 @@ class KvAsync(ApiBase):
 class Kv(ApiBase):
     def set(
         self,
+        key: str,
+        value: bytes,
         kv_set_in: KvSetIn,
     ) -> KvSetOut:
         """KV Set"""
-        body = kv_set_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _KvSetIn(
+            key=key,
+            value=value,
+            ttl=kv_set_in.ttl,
+            behavior=kv_set_in.behavior,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
             method="post",
@@ -88,10 +112,13 @@ class Kv(ApiBase):
 
     def get(
         self,
+        key: str,
         kv_get_in: KvGetIn,
     ) -> KvGetOut:
         """KV Get"""
-        body = kv_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _KvGetIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
             method="post",
@@ -116,10 +143,13 @@ class Kv(ApiBase):
 
     def delete(
         self,
+        key: str,
         kv_delete_in: KvDeleteIn,
     ) -> KvDeleteOut:
         """KV Delete"""
-        body = kv_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _KvDeleteIn(
+            key=key,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
             method="post",

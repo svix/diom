@@ -4,6 +4,10 @@ from ..internal.base_model import BaseModel
 
 
 class MsgTopicConfigureIn(BaseModel):
+    pass
+
+
+class _MsgTopicConfigureIn(BaseModel):
     topic: str
 
     partitions: int

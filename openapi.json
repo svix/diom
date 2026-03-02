@@ -799,6 +799,9 @@
         },
         "required": [
           "key"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "CacheDeleteOut": {
@@ -936,7 +939,9 @@
           "ttl"
         ],
         "x-positional": [
-          "key"
+          "key",
+          "value",
+          "ttl"
         ]
       },
       "CacheSetOut": {
@@ -960,6 +965,9 @@
           }
         },
         "required": [
+          "key"
+        ],
+        "x-positional": [
           "key"
         ]
       },
@@ -993,6 +1001,11 @@
           }
         },
         "required": [
+          "key",
+          "response",
+          "ttl"
+        ],
+        "x-positional": [
           "key",
           "response",
           "ttl"
@@ -1056,6 +1069,10 @@
           }
         },
         "required": [
+          "key",
+          "ttl"
+        ],
+        "x-positional": [
           "key",
           "ttl"
         ]
@@ -1131,6 +1148,9 @@
         },
         "required": [
           "key"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "KvDeleteOut": {
@@ -1155,6 +1175,9 @@
           }
         },
         "required": [
+          "key"
+        ],
+        "x-positional": [
           "key"
         ]
       },
@@ -1263,6 +1286,10 @@
         "required": [
           "key",
           "value"
+        ],
+        "x-positional": [
+          "key",
+          "value"
         ]
       },
       "KvSetOut": {
@@ -1317,6 +1344,9 @@
         },
         "required": [
           "name"
+        ],
+        "x-positional": [
+          "name"
         ]
       },
       "MsgNamespaceCreateOut": {
@@ -1356,6 +1386,9 @@
           }
         },
         "required": [
+          "name"
+        ],
+        "x-positional": [
           "name"
         ]
       },
@@ -1404,6 +1437,9 @@
         "required": [
           "topic",
           "msgs"
+        ],
+        "x-positional": [
+          "topic"
         ]
       },
       "MsgPublishOut": {
@@ -1462,6 +1498,11 @@
           "topic",
           "consumer_group",
           "offset"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group",
+          "offset"
         ]
       },
       "MsgStreamCommitOut": {
@@ -1491,6 +1532,10 @@
           }
         },
         "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
           "topic",
           "consumer_group"
         ]
@@ -1523,6 +1568,10 @@
           }
         },
         "required": [
+          "topic",
+          "partitions"
+        ],
+        "x-positional": [
           "topic",
           "partitions"
         ]

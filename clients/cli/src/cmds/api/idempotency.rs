@@ -13,6 +13,7 @@ pub struct IdempotencyArgs {
 pub enum IdempotencyCommands {
     /// Abandon an idempotent request (remove lock without saving response)
     Abort {
+        key: String,
         idempotency_abort_in: crate::json::JsonOf<coyote_client::models::IdempotencyAbortIn>,
     },
     /// Get idempotency namespace
@@ -30,11 +31,12 @@ impl IdempotencyCommands {
     ) -> anyhow::Result<()> {
         match self {
             Self::Abort {
+                key,
                 idempotency_abort_in,
             } => {
                 let resp = client
                     .idempotency()
-                    .abort(idempotency_abort_in.into_inner())
+                    .abort(key, idempotency_abort_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

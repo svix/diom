@@ -4,10 +4,7 @@ from ..internal.base_model import BaseModel
 
 
 class CacheSetIn(BaseModel):
-    value: bytes
-
-    ttl: int
-    """Time to live in milliseconds"""
+    pass
 
 
 class _CacheSetIn(BaseModel):

@@ -15,8 +15,13 @@ impl<'a> MsgsTopic<'a> {
     /// Partition count can only be increased, never decreased. The default for a new topic is 1.
     pub async fn configure(
         &self,
+        topic: String,
+        partitions: u16,
         msg_topic_configure_in: MsgTopicConfigureIn,
     ) -> Result<MsgTopicConfigureOut> {
+        let _unused = msg_topic_configure_in;
+        let msg_topic_configure_in = MsgTopicConfigureIn_ { topic, partitions };
+
         crate::request::Request::new(http::Method::POST, "/api/v1/msgs/topic/configure")
             .with_body(msg_topic_configure_in)
             .execute(self.cfg)

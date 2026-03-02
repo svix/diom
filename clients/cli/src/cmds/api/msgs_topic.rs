@@ -15,6 +15,8 @@ pub enum MsgsTopicCommands {
     ///
     /// Partition count can only be increased, never decreased. The default for a new topic is 1.
     Configure {
+        topic: String,
+        partitions: u16,
         msg_topic_configure_in: crate::json::JsonOf<coyote_client::models::MsgTopicConfigureIn>,
     },
 }
@@ -27,12 +29,14 @@ impl MsgsTopicCommands {
     ) -> anyhow::Result<()> {
         match self {
             Self::Configure {
+                topic,
+                partitions,
                 msg_topic_configure_in,
             } => {
                 let resp = client
                     .msgs()
                     .topic()
-                    .configure(msg_topic_configure_in.into_inner())
+                    .configure(topic, partitions, msg_topic_configure_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

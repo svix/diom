@@ -6,16 +6,23 @@ from ..models import (
     MsgTopicConfigureOut,
 )
 
+from ..models.msg_topic_configure_in import _MsgTopicConfigureIn
+
 
 class MsgsTopicAsync(ApiBase):
     async def configure(
         self,
+        topic: str,
+        partitions: int,
         msg_topic_configure_in: MsgTopicConfigureIn,
     ) -> MsgTopicConfigureOut:
         """Configures the number of partitions for a topic.
 
         Partition count can only be increased, never decreased. The default for a new topic is 1."""
-        body = msg_topic_configure_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _MsgTopicConfigureIn(
+            topic=topic,
+            partitions=partitions,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return await self._request_asyncio(
             method="post",
@@ -28,12 +35,17 @@ class MsgsTopicAsync(ApiBase):
 class MsgsTopic(ApiBase):
     def configure(
         self,
+        topic: str,
+        partitions: int,
         msg_topic_configure_in: MsgTopicConfigureIn,
     ) -> MsgTopicConfigureOut:
         """Configures the number of partitions for a topic.
 
         Partition count can only be increased, never decreased. The default for a new topic is 1."""
-        body = msg_topic_configure_in.model_dump(exclude_unset=True, by_alias=True)
+        body = _MsgTopicConfigureIn(
+            topic=topic,
+            partitions=partitions,
+        ).model_dump(exclude_unset=True, by_alias=True)
 
         return self._request_sync(
             method="post",

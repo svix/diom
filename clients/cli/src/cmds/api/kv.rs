@@ -13,10 +13,13 @@ pub struct KvArgs {
 pub enum KvCommands {
     /// KV Set
     Set {
+        key: String,
+        value: String,
         kv_set_in: crate::json::JsonOf<coyote_client::models::KvSetIn>,
     },
     /// KV Get
     Get {
+        key: String,
         kv_get_in: crate::json::JsonOf<coyote_client::models::KvGetIn>,
     },
     /// Get KV namespace
@@ -25,6 +28,7 @@ pub enum KvCommands {
     },
     /// KV Delete
     Delete {
+        key: String,
         kv_delete_in: crate::json::JsonOf<coyote_client::models::KvDeleteIn>,
     },
 }
@@ -36,12 +40,19 @@ impl KvCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
-            Self::Set { kv_set_in } => {
-                let resp = client.kv().set(kv_set_in.into_inner()).await?;
+            Self::Set {
+                key,
+                value,
+                kv_set_in,
+            } => {
+                let resp = client
+                    .kv()
+                    .set(key, value.into(), kv_set_in.into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Get { kv_get_in } => {
-                let resp = client.kv().get(kv_get_in.into_inner()).await?;
+            Self::Get { key, kv_get_in } => {
+                let resp = client.kv().get(key, kv_get_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::GetNamespace {
@@ -53,8 +64,8 @@ impl KvCommands {
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Delete { kv_delete_in } => {
-                let resp = client.kv().delete(kv_delete_in.into_inner()).await?;
+            Self::Delete { key, kv_delete_in } => {
+                let resp = client.kv().delete(key, kv_delete_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
         }
