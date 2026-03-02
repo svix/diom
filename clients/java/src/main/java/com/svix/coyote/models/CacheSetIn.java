@@ -29,8 +29,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class CacheSetIn {
 @JsonProperty private String key;
-@JsonProperty private Long ttl;
 @JsonProperty private List<Byte> value;
+@JsonProperty private Long ttl;
 public CacheSetIn () {}
 
  public CacheSetIn key(String key) {
@@ -50,25 +50,6 @@ public CacheSetIn () {}
 
      public void setKey(String key) {
         this.key = key;
-    }
-
-     public CacheSetIn ttl(Long ttl) {
-        this.ttl = ttl;
-        return this;
-    }
-
-    /**
-    * Time to live in milliseconds
-    *
-     * @return ttl
-     */
-    @javax.annotation.Nonnull
-     public Long getTtl() {
-        return ttl;
-    }
-
-     public void setTtl(Long ttl) {
-        this.ttl = ttl;
     }
 
      public CacheSetIn value(List<Byte> value) {
@@ -95,6 +76,25 @@ public CacheSetIn () {}
 
      public void setValue(List<Byte> value) {
         this.value = value;
+    }
+
+     public CacheSetIn ttl(Long ttl) {
+        this.ttl = ttl;
+        return this;
+    }
+
+    /**
+    * Time to live in milliseconds
+    *
+     * @return ttl
+     */
+    @javax.annotation.Nonnull
+     public Long getTtl() {
+        return ttl;
+    }
+
+     public void setTtl(Long ttl) {
+        this.ttl = ttl;
     }
 
     /**

@@ -26,15 +26,15 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
-#[schemars(extend("x-positional" = ["key", "value"]))]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheSetIn {
     #[validate(nested)]
     pub key: EntityKey,
 
+    pub value: Vec<u8>,
+
     /// Time to live in milliseconds
     pub ttl: u64,
-
-    pub value: Vec<u8>,
 }
 
 impl CacheSetIn {

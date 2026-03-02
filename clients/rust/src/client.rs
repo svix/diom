@@ -138,11 +138,10 @@ mod tests {
 
         let client = CoyoteClient::new(String::new(), None);
         let cache_api = client.cache();
-        let fut = cache_api.set(CacheSetIn::new(
+        let fut = cache_api.set(
             "key".to_owned(),
-            0,
-            "value".as_bytes().to_vec(),
-        ));
+            CacheSetIn::new("value".as_bytes().to_vec(), 0),
+        );
         require_send_sync(fut);
     }
 }
