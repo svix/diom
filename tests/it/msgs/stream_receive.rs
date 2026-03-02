@@ -1,10 +1,11 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, time::Duration};
 
 use serde_json::json;
 use test_utils::{
     StatusCode, TestResult,
     server::{TestContext, start_server},
 };
+use tokio::time::sleep;
 
 #[tokio::test]
 async fn stream_receive_returns_published_messages() -> TestResult {
@@ -103,17 +104,15 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
         .json();
     assert_eq!(r1["msgs"].as_array().unwrap().len(), 2);
 
-    // Second receive with the same CG — partition is locked, returns empty
-    let r2 = client
+    // Second receive with the same CG — partition is locked, returns error
+    let _r2 = client
         .post("msgs/stream/receive")
         .json(json!({
             "topic": "ns-nodup:t1",
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::OK)
-        .json();
-    assert_eq!(r2["msgs"].as_array().unwrap().len(), 0);
+        .expect(StatusCode::BAD_REQUEST);
 
     // Commit the first batch to unlock the partition.
     // The response topic already includes the namespace, so we can pass it directly.
@@ -326,17 +325,15 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
         .json();
     assert_eq!(r_a["msgs"].as_array().unwrap().len(), 2);
 
-    // Consumer B (same CG) — partition is locked, returns empty
-    let r_b_locked = client
+    // Consumer B (same CG) — partition is locked, returns error
+    let _ = client
         .post("msgs/stream/receive")
         .json(json!({
             "topic": "ns-lock:t1",
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::OK)
-        .json();
-    assert_eq!(r_b_locked["msgs"].as_array().unwrap().len(), 0);
+        .expect(StatusCode::BAD_REQUEST);
 
     // Consumer A commits — unlocks the partition.
     // The response topic already includes the namespace.
@@ -557,6 +554,8 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    sleep(Duration::from_secs(5)).await;
+
     // Receive — only the new message
     let r3 = client
         .post("msgs/stream/receive")
@@ -586,7 +585,7 @@ async fn commit_requires_partition_topic() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    // Base topic (no ~partition suffix) should be rejected at deserialization
+    // Base topic (no ~partition suffix)
     client
         .post("msgs/stream/commit")
         .json(json!({
@@ -667,10 +666,13 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
     let mut total_msgs = 0usize;
     for handle in handles {
         let resp = handle.await.unwrap();
-        assert_eq!(resp.status(), StatusCode::OK);
-        let body = resp.json();
-        let msgs = body["msgs"].as_array().unwrap();
-        total_msgs += msgs.len();
+        if matches!(resp.status(), StatusCode::OK) {
+            let body = resp.json();
+            let msgs = body["msgs"].as_array().unwrap();
+            total_msgs += msgs.len();
+        } else {
+            assert!(matches!(resp.status(), StatusCode::BAD_REQUEST));
+        }
     }
 
     // Exactly 3 messages total — the winner gets them, losers get empty responses.

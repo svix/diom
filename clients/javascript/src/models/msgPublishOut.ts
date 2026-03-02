@@ -1,27 +1,27 @@
 // this file is @generated
 import {
-    type MsgPublishOutMsg,
-    MsgPublishOutMsgSerializer,
-} from './msgPublishOutMsg';
+    type MsgPublishOutTopic,
+    MsgPublishOutTopicSerializer,
+} from './msgPublishOutTopic';
 
 
 
 
 
 export interface MsgPublishOut {
-    msgs: MsgPublishOutMsg[];
+    topics: MsgPublishOutTopic[];
 }
 
 export const MsgPublishOutSerializer = {
     _fromJsonObject(object: any): MsgPublishOut {
         return {
-            msgs: object['msgs'].map((item: MsgPublishOutMsg) => MsgPublishOutMsgSerializer._fromJsonObject(item)),
+            topics: object['topics'].map((item: MsgPublishOutTopic) => MsgPublishOutTopicSerializer._fromJsonObject(item)),
             };
     },
 
     _toJsonObject(self: MsgPublishOut): any {
         return {
-            'msgs': self.msgs.map((item) => MsgPublishOutMsgSerializer._toJsonObject(item)),
+            'topics': self.topics.map((item) => MsgPublishOutTopicSerializer._toJsonObject(item)),
             };
     }
 }

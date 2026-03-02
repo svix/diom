@@ -1,10 +1,14 @@
-use std::{collections::HashMap, fmt, ops::Deref};
+use std::{collections::HashMap, fmt, ops::Deref, str::FromStr};
 
 use coyote_error::Error;
-use coyote_namespace::{DEFAULT_NAMESPACE_NAME, namespace_name};
+use coyote_namespace::namespace_parse_key;
 use jiff::Timestamp;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{self},
+};
+use uuid::Uuid;
 use validator::Validate;
 
 pub type Offset = u64;
@@ -38,18 +42,29 @@ impl Partition {
     }
 }
 
+impl FromStr for Partition {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let index = s
+            .parse::<u16>()
+            .map_err(|e| Error::invalid_user_input(e.to_string()))?;
+        Self::new(index)
+    }
+}
+
 /// A topic identifier without the partition.
 ///
 /// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`, or just
 /// `"topic"` when the namespace is the default.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RawTopic {
-    namespace: String,
+pub struct TopicName {
+    namespace: Option<String>,
     topic: String,
 }
 
-impl RawTopic {
-    pub fn new(namespace: String, topic: String) -> Result<Self, Error> {
+impl TopicName {
+    pub fn new(namespace: Option<String>, topic: String) -> Result<Self, Error> {
         if topic.contains(TOPIC_PARTITION_DELIMITER) {
             Err(Error::generic("invalid topic"))
         } else if topic.len() > 64 {
@@ -59,13 +74,13 @@ impl RawTopic {
         }
     }
 
-    pub fn namespace(&self) -> &str {
-        &self.namespace
+    pub fn namespace(&self) -> Option<&str> {
+        self.namespace.as_ref().map(|x| &x[..])
     }
 }
 
 /// Derefs to the topic name (without namespace or partition).
-impl Deref for RawTopic {
+impl Deref for TopicName {
     type Target = str;
 
     fn deref(&self) -> &str {
@@ -73,40 +88,37 @@ impl Deref for RawTopic {
     }
 }
 
-impl fmt::Display for RawTopic {
+impl fmt::Display for TopicName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.namespace == DEFAULT_NAMESPACE_NAME {
-            write!(f, "{}", self.topic)
+        if let Some(namespace) = &self.namespace {
+            write!(f, "{}{}{}", namespace, NAMESPACE_DELIMITER, self.topic)
         } else {
-            write!(f, "{}{}{}", self.namespace, NAMESPACE_DELIMITER, self.topic)
+            write!(f, "{}", self.topic)
         }
     }
 }
 
-impl Serialize for RawTopic {
+impl Serialize for TopicName {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         serializer.collect_str(self)
     }
 }
 
-impl<'de> Deserialize<'de> for RawTopic {
+impl<'de> Deserialize<'de> for TopicName {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let (ns, topic) = match s.split_once(NAMESPACE_DELIMITER) {
-            Some((ns, topic)) => (ns, topic),
-            None => (namespace_name(&s), s.as_str()),
-        };
-        Self::new(ns.to_owned(), topic.to_owned()).map_err(serde::de::Error::custom)
+        let (ns, topic) = namespace_parse_key(&s);
+        Self::new(ns.map(|x| x.to_owned()), topic.to_owned()).map_err(de::Error::custom)
     }
 }
 
-impl JsonSchema for RawTopic {
+impl JsonSchema for TopicName {
     fn schema_name() -> std::borrow::Cow<'static, str> {
         String::schema_name()
     }
@@ -121,29 +133,26 @@ impl JsonSchema for RawTopic {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Topic {
-    pub raw: RawTopic,
+pub struct TopicPartition {
+    pub raw: TopicName,
     pub partition: Partition,
 }
 
-impl Topic {
-    pub fn new(raw: RawTopic, partition: Partition) -> Self {
+impl TopicPartition {
+    pub fn new(raw: TopicName, partition: Partition) -> Self {
         Self { raw, partition }
     }
 
-    pub fn namespace(&self) -> &str {
+    pub fn namespace(&self) -> Option<&str> {
         self.raw.namespace()
     }
 }
 
-impl TryFrom<String> for Topic {
+impl TryFrom<String> for TopicPartition {
     type Error = Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let (ns, rest) = match value.split_once(NAMESPACE_DELIMITER) {
-            Some((ns, rest)) => (ns, rest),
-            None => (namespace_name(&value), value.as_str()),
-        };
+        let (ns, rest) = namespace_parse_key(&value);
         let (topic, idx_str) = rest
             .rsplit_once(TOPIC_PARTITION_DELIMITER)
             .ok_or_else(|| Error::generic("missing '~' separator in topic"))?;
@@ -151,12 +160,12 @@ impl TryFrom<String> for Topic {
             .parse()
             .map_err(|_| Error::generic("invalid partition index in topic"))?;
         let partition = Partition::new(idx)?;
-        let raw = RawTopic::new(ns.to_owned(), topic.to_owned())?;
+        let raw = TopicName::new(ns.map(|x| x.to_owned()), topic.to_owned())?;
         Ok(Self { raw, partition })
     }
 }
 
-impl fmt::Display for Topic {
+impl fmt::Display for TopicPartition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -166,26 +175,26 @@ impl fmt::Display for Topic {
     }
 }
 
-impl Serialize for Topic {
+impl Serialize for TopicPartition {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         serializer.collect_str(self)
     }
 }
 
-impl<'de> Deserialize<'de> for Topic {
+impl<'de> Deserialize<'de> for TopicPartition {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Topic::try_from(s).map_err(serde::de::Error::custom)
+        TopicPartition::try_from(s).map_err(de::Error::custom)
     }
 }
 
-impl JsonSchema for Topic {
+impl JsonSchema for TopicPartition {
     fn schema_name() -> std::borrow::Cow<'static, str> {
         String::schema_name()
     }
@@ -204,43 +213,40 @@ impl JsonSchema for Topic {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(untagged)]
 pub enum TopicIn {
-    Raw(RawTopic),
-    WithPartition(Topic),
+    TopicName(TopicName),
+    TopicPartition(TopicPartition),
 }
 
 impl TopicIn {
     /// Returns the raw topic name (without partition suffix).
-    pub fn raw_topic(&self) -> &RawTopic {
+    pub fn topic_name(&self) -> &TopicName {
         match self {
-            TopicIn::Raw(raw) => raw,
-            TopicIn::WithPartition(topic) => &topic.raw,
+            TopicIn::TopicName(topic_name) => topic_name,
+            TopicIn::TopicPartition(topic_partition) => &topic_partition.raw,
         }
     }
 
-    pub fn namespace(&self) -> &str {
-        self.raw_topic().namespace()
+    pub fn namespace(&self) -> Option<&str> {
+        self.topic_name().namespace()
     }
 }
 
 impl<'de> Deserialize<'de> for TopicIn {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let (ns, rest) = match s.split_once(NAMESPACE_DELIMITER) {
-            Some((ns, rest)) => (ns, rest),
-            None => (namespace_name(&s), s.as_str()),
-        };
+        let (ns, rest) = namespace_parse_key(&s);
         if rest.contains(TOPIC_PARTITION_DELIMITER) {
             // Re-parse the full string via Topic::try_from (it handles default namespace too)
-            Topic::try_from(s)
-                .map(TopicIn::WithPartition)
-                .map_err(serde::de::Error::custom)
+            TopicPartition::try_from(s)
+                .map(TopicIn::TopicPartition)
+                .map_err(de::Error::custom)
         } else {
-            RawTopic::new(ns.to_owned(), rest.to_owned())
-                .map(TopicIn::Raw)
-                .map_err(serde::de::Error::custom)
+            TopicName::new(ns.map(|x| x.to_owned()), rest.to_owned())
+                .map(TopicIn::TopicName)
+                .map_err(de::Error::custom)
         }
     }
 }
@@ -259,13 +265,20 @@ impl JsonSchema for TopicIn {
     }
 }
 
-pub fn random_partition(partition_count: u16) -> Partition {
+pub fn partition_for_key(key: Option<&str>, partition_count: u16) -> Partition {
+    match key {
+        Some(key) => partition_for_key_hash(key, partition_count),
+        None => random_partition(partition_count),
+    }
+}
+
+fn random_partition(partition_count: u16) -> Partition {
     Partition(rand::random_range(..partition_count))
 }
 
 /// Deterministically maps a key to a partition via hash.
-pub fn partition_for_key(key: &[u8], partition_count: u16) -> Partition {
-    let hash = djb2_hash(key);
+fn partition_for_key_hash(key: &str, partition_count: u16) -> Partition {
+    let hash = djb2_hash(key.as_bytes());
     Partition((hash % u32::from(partition_count)) as u16)
 }
 
@@ -299,7 +312,7 @@ impl fmt::Display for MsgId {
 impl Serialize for MsgId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         serializer.collect_str(self)
     }
@@ -308,15 +321,15 @@ impl Serialize for MsgId {
 impl<'de> Deserialize<'de> for MsgId {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
         let (part_str, off_str) = s
             .split_once(':')
-            .ok_or_else(|| serde::de::Error::custom("Invalid MsgId"))?;
-        let partition: u16 = part_str.parse().map_err(serde::de::Error::custom)?;
-        let offset: Offset = off_str.parse().map_err(serde::de::Error::custom)?;
-        let partition = Partition::new(partition).map_err(serde::de::Error::custom)?;
+            .ok_or_else(|| de::Error::custom("Invalid MsgId"))?;
+        let partition: u16 = part_str.parse().map_err(de::Error::custom)?;
+        let offset: Offset = off_str.parse().map_err(de::Error::custom)?;
+        let partition = Partition::new(partition).map_err(de::Error::custom)?;
         Ok(MsgId { partition, offset })
     }
 }
@@ -347,7 +360,7 @@ pub struct MsgIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct StreamMsgOut {
     pub offset: Offset,
-    pub topic: Topic,
+    pub topic: TopicPartition,
     pub value: Vec<u8>,
     #[serde(default)]
     pub headers: HashMap<String, String>,
@@ -368,7 +381,7 @@ pub struct QueueMsgOut {
 /// Must be at most 64 bytes and only contain ASCII alphanumeric characters, `_`, or `-`.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize)]
 #[serde(transparent)]
-pub struct ConsumerGroup(String);
+pub struct ConsumerGroup(pub(crate) String);
 
 impl ConsumerGroup {
     const MAX_LEN: usize = 64;
@@ -424,10 +437,10 @@ impl fmt::Display for ConsumerGroup {
 impl<'de> Deserialize<'de> for ConsumerGroup {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Self::validate_str(&s).map_err(serde::de::Error::custom)?;
+        Self::validate_str(&s).map_err(de::Error::custom)?;
         Ok(ConsumerGroup(s))
     }
 }
@@ -445,3 +458,6 @@ impl JsonSchema for ConsumerGroup {
         String::json_schema(generator)
     }
 }
+
+// FIXME: should be a newtype
+pub type TopicId = Uuid;

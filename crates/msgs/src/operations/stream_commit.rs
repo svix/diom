@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Offset, Partition},
-    tables::{LeaseDiff, LeaseRow, OffsetRow},
+    entities::{ConsumerGroup, Offset, TopicPartition},
+    tables::{StreamLeaseRow, TableRow, TopicRow},
 };
 
 use super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
@@ -13,8 +13,8 @@ use super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamCommitOperation {
     namespace_id: NamespaceId,
-    partition: Partition,
-    cg: ConsumerGroup,
+    topic: TopicPartition,
+    consumer_group: ConsumerGroup,
     offset: Offset,
     now: Timestamp,
 }
@@ -22,46 +22,53 @@ pub struct StreamCommitOperation {
 impl StreamCommitOperation {
     pub fn new(
         namespace_id: NamespaceId,
-        partition: Partition,
-        cg: ConsumerGroup,
+        topic: TopicPartition,
+        consumer_group: ConsumerGroup,
         offset: Offset,
     ) -> Self {
         Self {
             namespace_id,
-            partition,
-            cg,
+            topic,
+            consumer_group,
             offset,
             now: Timestamp::now(),
         }
     }
 
-    #[tracing::instrument(skip_all, level = "debug", fields(partition = self.partition.get(), consumer_group = %self.cg, offset = self.offset))]
+    #[tracing::instrument(skip_all, level = "debug")]
     fn apply_real(self, state: &State) -> coyote_operations::Result<StreamCommitResponseData> {
-        let now = self.now;
         let mut batch = state.db.batch();
+        let topic = self.topic;
 
-        // Store next-to-read offset (committed offset + 1)
-        OffsetRow::store(
-            &mut batch,
-            state,
-            self.namespace_id,
-            self.partition,
-            &self.cg,
-            self.offset.saturating_add(1),
-        )?;
+        let topic_row = TopicRow::fetch(&state.metadata_tables, self.namespace_id, &topic.raw)?
+            .ok_or_else(|| {
+                coyote_error::Error::http(coyote_error::HttpError::bad_request(
+                    Some("partition_must_exist".to_owned()),
+                    None,
+                ))
+            })?;
 
-        // Shrink active leases at or below the committed offset, then cull expired ones
-        let leases = LeaseRow::fetch_all(state, self.namespace_id, self.partition, &self.cg)?;
-        let mut lease_diff = LeaseDiff::default();
-        LeaseRow::shrink_active_leases_for_range(
-            &leases,
-            Offset::MIN,
-            self.offset,
-            now,
-            &mut lease_diff,
+        let mut lease = StreamLeaseRow::fetch(
+            &state.metadata_tables,
+            topic_row.id,
+            topic.partition,
+            &self.consumer_group,
+        )?
+        .ok_or_else(|| {
+            coyote_error::Error::http(coyote_error::HttpError::bad_request(
+                Some("lease_not_found".to_owned()),
+                None,
+            ))
+        })?;
+
+        lease.offset = self.offset + 1;
+        lease.expiry = Timestamp::MIN;
+
+        batch.insert(
+            &state.metadata_tables,
+            StreamLeaseRow::construct_key(topic_row.id, topic.partition, &self.consumer_group),
+            lease.to_fjall_value()?,
         );
-        lease_diff.extend(LeaseRow::cull_and_compact(leases, now));
-        lease_diff.apply_diff(state, &mut batch)?;
 
         batch.commit().map_err(coyote_error::Error::from)?;
 

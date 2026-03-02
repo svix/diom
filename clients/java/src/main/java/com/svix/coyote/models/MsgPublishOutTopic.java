@@ -27,12 +27,13 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
-public class MsgPublishOutMsg {
+public class MsgPublishOutTopic {
 @JsonProperty private String topic;
+@JsonProperty("start_offset") private Long startOffset;
 @JsonProperty private Long offset;
-public MsgPublishOutMsg () {}
+public MsgPublishOutTopic () {}
 
- public MsgPublishOutMsg topic(String topic) {
+ public MsgPublishOutTopic topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -51,7 +52,26 @@ public MsgPublishOutMsg () {}
         this.topic = topic;
     }
 
-     public MsgPublishOutMsg offset(Long offset) {
+     public MsgPublishOutTopic startOffset(Long startOffset) {
+        this.startOffset = startOffset;
+        return this;
+    }
+
+    /**
+    * Get startOffset
+    *
+     * @return startOffset
+     */
+    @javax.annotation.Nonnull
+     public Long getStartOffset() {
+        return startOffset;
+    }
+
+     public void setStartOffset(Long startOffset) {
+        this.startOffset = startOffset;
+    }
+
+     public MsgPublishOutTopic offset(Long offset) {
         this.offset = offset;
         return this;
     }
@@ -71,18 +91,18 @@ public MsgPublishOutMsg () {}
     }
 
     /**
-     * Create an instance of MsgPublishOutMsg given an JSON string
+     * Create an instance of MsgPublishOutTopic given an JSON string
      *
      * @param jsonString JSON string
-     * @return An instance of MsgPublishOutMsg
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgPublishOutMsg
+     * @return An instance of MsgPublishOutTopic
+     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgPublishOutTopic
      */
-    public static MsgPublishOutMsg fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgPublishOutMsg.class);
+    public static MsgPublishOutTopic fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, MsgPublishOutTopic.class);
     }
 
     /**
-     * Convert an instance of MsgPublishOutMsg to an JSON string
+     * Convert an instance of MsgPublishOutTopic to an JSON string
      *
      * @return JSON string
      */

@@ -1,16 +1,13 @@
 use std::num::NonZeroU16;
 
-use crate::{
-    AppState,
-    core::{cluster::RaftState, db::ReadonlyConnection},
-    v1::utils::openapi_tag,
-};
+use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, Result, ResultExt};
 use coyote_msgs::{
-    entities::{MAX_PARTITION_COUNT, RawTopic, Topic, TopicIn},
+    MsgsNamespace,
+    entities::{Offset, TopicIn, TopicName, TopicPartition},
     operations::{PublishOperation, StreamReceiveOperation},
 };
 use coyote_namespace::entities::StorageType;
@@ -81,9 +78,9 @@ async fn get_namespace(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceGetIn>,
 ) -> Result<MsgPackOrJson<MsgNamespaceGetOut>> {
-    let namespace = state
+    let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_stream_namespace(&data.name)?
+        .fetch_namespace(Some(&data.name))?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let millis = u64::try_from(namespace.config.retention_period.as_millis())
@@ -110,39 +107,39 @@ struct MsgPublishIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct MsgPublishOutMsg {
-    pub topic: Topic,
-    pub offset: u64,
+struct MsgPublishOutTopic {
+    pub topic: TopicPartition,
+    pub start_offset: Offset,
+    pub offset: Offset,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgPublishOut {
-    pub msgs: Vec<MsgPublishOutMsg>,
+    pub topics: Vec<MsgPublishOutTopic>,
 }
 
 /// Publishes messages to a topic within a namespace.
 #[aide_annotate(op_id = "v1.msgs.publish")]
-#[tracing::instrument(skip_all, level = "debug", fields(topic = %data.topic.raw_topic(), msg_count = data.msgs.len()))]
 async fn publish(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgPublishIn>,
 ) -> Result<MsgPackOrJson<MsgPublishOut>> {
-    let namespace = state
+    let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_stream_namespace(data.topic.namespace())?
+        .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let ro_db = state.ro_dbs.db_for(namespace.storage_type);
-    let operation = PublishOperation::new(&ro_db, namespace.id, data.topic, data.msgs)?;
+    let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(MsgPublishOut {
-        msgs: response
-            .msgs
+        topics: response
+            .topics
             .into_iter()
-            .map(|m| MsgPublishOutMsg {
+            .map(|m| MsgPublishOutTopic {
                 topic: m.topic,
+                start_offset: m.start_offset,
                 offset: m.offset,
             })
             .collect(),
@@ -181,20 +178,17 @@ struct MsgStreamReceiveOut {
 /// Each consumer in the group reads from all partitions. Messages are locked by leases for the
 /// specified duration to prevent duplicate delivery within the same consumer group.
 #[aide_annotate(op_id = "v1.msgs.stream.receive")]
-#[tracing::instrument(skip_all, level = "debug", fields(topic = %data.topic.raw_topic(), consumer_group = %data.consumer_group, batch_size = data.batch_size.get()))]
 async fn stream_receive(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgStreamReceiveIn>,
 ) -> Result<MsgPackOrJson<MsgStreamReceiveOut>> {
-    let namespace = state
+    let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_stream_namespace(data.topic.namespace())?
+        .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let ro_db = state.ro_dbs.db_for(namespace.storage_type);
     let operation = StreamReceiveOperation::new(
-        &ro_db,
         namespace.id,
         data.topic,
         data.consumer_group,
@@ -224,7 +218,7 @@ async fn stream_receive(
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct MsgStreamCommitIn {
-    pub topic: Topic,
+    pub topic: TopicPartition,
     pub consumer_group: coyote_msgs::entities::ConsumerGroup,
     pub offset: u64,
 }
@@ -237,20 +231,19 @@ struct MsgStreamCommitOut {}
 /// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
 /// successfully processed offset; future receives will start after it.
 #[aide_annotate(op_id = "v1.msgs.stream.commit")]
-#[tracing::instrument(skip_all, level = "debug", fields(topic = %data.topic, consumer_group = %data.consumer_group, offset = data.offset))]
 async fn stream_commit(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgStreamCommitIn>,
 ) -> Result<MsgPackOrJson<MsgStreamCommitOut>> {
-    let namespace = state
+    let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_stream_namespace(data.topic.namespace())?
+        .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = coyote_msgs::operations::StreamCommitOperation::new(
         namespace.id,
-        data.topic.partition,
+        data.topic,
         data.consumer_group,
         data.offset,
     );
@@ -265,7 +258,7 @@ async fn stream_commit(
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 struct MsgTopicConfigureIn {
-    pub topic: RawTopic,
+    pub topic: TopicName,
     pub partitions: u16,
 }
 
@@ -283,18 +276,9 @@ async fn topic_configure(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgTopicConfigureIn>,
 ) -> Result<MsgPackOrJson<MsgTopicConfigureOut>> {
-    if data.partitions == 0 || data.partitions > MAX_PARTITION_COUNT {
-        return Err(Error::http(HttpError::bad_request(
-            Some("invalid_partition_count".to_owned()),
-            Some(format!(
-                "Partition count must be between 1 and {MAX_PARTITION_COUNT}."
-            )),
-        )));
-    }
-
-    let namespace = state
+    let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_stream_namespace(data.topic.namespace())?
+        .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation = coyote_msgs::operations::TopicConfigureOperation::new(
