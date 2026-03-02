@@ -1,12 +1,8 @@
 {% for field in type.fields -%}
     {% set f_name = field.name | to_upper_camel_case -%}
     {% set f_type = field.type.to_go() -%}
-    {% set use_nullable = type.name is endingwith "Patch" and field.nullable -%}
     {% set json_annotation = "" -%}
-    {% if use_nullable -%}
-        {% set f_type %}diom_proto.Nullable[{{ f_type }}]{% endset -%}
-    {% endif -%}
-    {% if (not field.required or field.nullable) and not use_nullable -%}
+    {% if (not field.required or field.nullable) -%}
         {% set json_annotation = ",omitempty" -%}
         {% if not field.type.is_set() and not field.type.is_list() -%}
             {% set f_type %}*{{ f_type }}{% endset -%}
