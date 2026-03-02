@@ -46,7 +46,6 @@ pub enum Request {
     Cache(diom_cache::operations::CacheOperation),
     CreateCache(diom_cache::operations::CreateCacheOp),
     CreateIdempotency(diom_idempotency::operations::CreateIdempotencyOp),
-    Stream(stream_deprecated::operations::StreamOperation),
     Msgs(diom_msgs::operations::MsgsOperation),
 }
 
@@ -61,7 +60,6 @@ impl fmt::Display for Request {
             Request::Cache(_) => write!(f, "cache"),
             Request::CreateCache(_) => write!(f, "create_cache"),
             Request::CreateIdempotency(_) => write!(f, "create_idempotency"),
-            Request::Stream(_) => write!(f, "stream"),
             Request::Msgs(_) => write!(f, "msgs"),
         }
     }
@@ -109,12 +107,6 @@ impl From<diom_kv::operations::CreateKvOp> for Request {
     }
 }
 
-impl From<stream_deprecated::operations::StreamOperation> for Request {
-    fn from(value: stream_deprecated::operations::StreamOperation) -> Self {
-        Request::Stream(value)
-    }
-}
-
 impl From<diom_msgs::operations::MsgsOperation> for Request {
     fn from(value: diom_msgs::operations::MsgsOperation) -> Self {
         Request::Msgs(value)
@@ -138,7 +130,6 @@ pub enum Response {
     RateLimiter(diom_rate_limiter::operations::Response),
     Idempotency(diom_idempotency::operations::Response),
     Cache(diom_cache::operations::Response),
-    Stream(stream_deprecated::operations::Response),
     Msgs(diom_msgs::operations::Response),
 }
 
@@ -214,17 +205,6 @@ impl TryFrom<Response> for diom_kv::operations::CreateKvOperationResponse {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::CreateKv(v) => Ok(v),
-            _ => Err(ResponseParseError::InvalidVariant),
-        }
-    }
-}
-
-impl TryFrom<Response> for stream_deprecated::operations::Response {
-    type Error = ResponseParseError;
-
-    fn try_from(value: Response) -> Result<Self, Self::Error> {
-        match value {
-            Response::Stream(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

@@ -40,14 +40,6 @@ pub(super) async fn apply_request(
         Request::CreateCache(req) => {
             Response::CreateCache(req.apply(&state_machine.state.namespace_state))
         }
-        Request::Stream(req) => {
-            let stores = state_machine.db_handle();
-            let state = stream_deprecated::operations::StreamRaftState {
-                stream: &stores.stream_state,
-                namespace: &state_machine.state.namespace_state,
-            };
-            Response::Stream(req.apply(state))
-        }
         Request::Msgs(req) => {
             let stores = state_machine.db_handle();
             let state = diom_msgs::operations::MsgsRaftState {
