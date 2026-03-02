@@ -1,7 +1,7 @@
 use coyote_error::Result;
 use fjall::{Error, KeyspaceCreateOptions};
 
-use crate::entities::{CacheConfig, KeyValueConfig, ModuleConfig, StorageType, StreamConfig};
+use crate::entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig, StorageType, StreamConfig};
 
 pub mod entities;
 pub mod operations;
@@ -119,7 +119,7 @@ impl State {
     pub fn fetch_idempotency_namespace(
         &self,
         namespace_name: &str,
-    ) -> Result<Option<Namespace<KeyValueConfig>>> {
+    ) -> Result<Option<Namespace<IdempotencyConfig>>> {
         Namespace::fetch(&self.keyspace, namespace_name)
     }
 
