@@ -33,7 +33,7 @@ pub enum RateLimitStatus {
 
 impl RateLimiter {
     pub fn new(path: &str, db: fjall::Database) -> Self {
-        let rate_limiter_keyspace = format!("_diom_rate_limiter_{path}");
+        let rate_limiter_keyspace = format!("mod_rate_limit_{path}");
 
         let tables = {
             let opts = KeyspaceCreateOptions::default();
