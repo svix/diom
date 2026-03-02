@@ -11,7 +11,7 @@ pub use self::tables::Namespace;
 
 pub const DEFAULT_NAMESPACE_NAME: &str = "default";
 
-pub fn namespace_parse_key(key: &str) -> (Option<&str>, &str) {
+pub fn parse_namespace(key: &str) -> (Option<&str>, &str) {
     match key.split_once(":") {
         Some((ns, key)) => (
             if !ns.is_empty() && ns != DEFAULT_NAMESPACE_NAME {
@@ -129,12 +129,12 @@ mod tests {
 
     #[test]
     fn test_namespace_parse_key() {
-        assert_eq!(namespace_parse_key("tom:bar"), (Some("tom"), "bar"));
-        assert_eq!(namespace_parse_key("tom:bar/baz"), (Some("tom"), "bar/baz"));
-        assert_eq!(namespace_parse_key("bill"), (None, "bill"));
-        assert_eq!(namespace_parse_key(":bar"), (None, "bar"));
+        assert_eq!(parse_namespace("tom:bar"), (Some("tom"), "bar"));
+        assert_eq!(parse_namespace("tom:bar/baz"), (Some("tom"), "bar/baz"));
+        assert_eq!(parse_namespace("bill"), (None, "bill"));
+        assert_eq!(parse_namespace(":bar"), (None, "bar"));
         assert_eq!(
-            namespace_parse_key(&format!("{DEFAULT_NAMESPACE_NAME}:bar")),
+            parse_namespace(&format!("{DEFAULT_NAMESPACE_NAME}:bar")),
             (None, "bar")
         );
     }
