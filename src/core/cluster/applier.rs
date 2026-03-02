@@ -1,17 +1,35 @@
+use crate::core::cluster::handle::Request;
+
 use super::{
     NodeId,
-    handle::{Request, Response},
+    handle::{RequestWithContext, Response},
     state_machine::Store,
 };
 use openraft::LogId;
+use opentelemetry::{Value, propagation::TextMapPropagator};
+use opentelemetry_sdk::propagation::TraceContextPropagator;
+use tracing::info_span;
+use tracing_opentelemetry::OpenTelemetrySpanExt;
 
-#[tracing::instrument(skip_all, fields(request = %request))]
 pub(super) async fn apply_request(
-    request: Request,
+    request: RequestWithContext,
     state_machine: &mut Store,
     log_id: LogId<NodeId>,
 ) -> anyhow::Result<Response> {
-    Ok(match request {
+    let child_span = info_span!("apply_request");
+    let trace_ctx = request
+        .context
+        .as_ref()
+        .and_then(|x| x.trace_context.as_ref());
+    if let Some(ctx) = trace_ctx {
+        let propagator = TraceContextPropagator::new();
+        // This should only fail if OTEL is not enabled:
+        let _ = child_span.set_parent(propagator.extract(ctx));
+    }
+    child_span.set_attribute("request", Value::String(request.to_string().into()));
+    let _exit = child_span.enter();
+
+    Ok(match request.inner {
         Request::Kv(req) => {
             // TODO: this shouldn't be mut but KvStore currently requires it
             let mut store = state_machine

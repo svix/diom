@@ -1149,6 +1149,7 @@ dependencies = [
  "coyote-error",
  "http",
  "http-serde",
+ "opentelemetry",
  "paste",
  "serde",
 ]

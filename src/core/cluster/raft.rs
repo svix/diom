@@ -5,7 +5,7 @@ use openraft::error::{InitializeError, RaftError};
 use tap::TapFallible;
 
 use super::{
-    handle::{RaftState, Request, Response},
+    handle::{RaftState, Request, RequestWithContext, Response},
     node::{Node, NodeId},
     state_machine::StoredSnapshot,
 };
@@ -20,7 +20,7 @@ use crate::{
 
 openraft::declare_raft_types!(
     pub TypeConfig:
-        D = Request,
+        D = RequestWithContext,
         R = Response,
         Node = Node,
         NodeId = NodeId,
@@ -51,8 +51,9 @@ pub(super) async fn initialize_cluster(
         .await?;
     let new_id = ClusterId::generate();
     tracing::debug!(cluster_id=?new_id, "cluster initialized, setting cluster_id");
-    raft.client_write(Request::ClusterInternal(
-        SetClusterUuidOperation(new_id).into(),
+    raft.client_write(RequestWithContext::new(
+        Request::ClusterInternal(SetClusterUuidOperation(new_id).into()),
+        None,
     ))
     .await
     .tap_err(|err| tracing::error!(?err, "failed to set initial cluster id"))?;
