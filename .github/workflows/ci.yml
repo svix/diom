@@ -54,7 +54,7 @@ jobs:
       - uses: j178/prek-action@v1
   test:
     name: Test
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-8-cores
     timeout-minutes: 15
     env:
       RUST_LOG: debug
