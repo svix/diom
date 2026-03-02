@@ -57,9 +57,6 @@ impl<'a> {{ resource_type_name }}<'a> {
             {% set has_non_positional_fields = body_schema.fields | selectattr("positional", "false") | length > 0 -%}
             {% for field in body_schema.fields -%}
             {% if field.positional -%}
-                {% if field.description is defined -%}
-                    {{ field.description | to_doc_comment(style="rust") }}
-                {% endif -%}
                 {{ field.name | to_snake_case }}: {{ field.type.to_rust() }},
             {% endif -%}
             {% endfor -%}
