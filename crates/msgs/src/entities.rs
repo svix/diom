@@ -216,9 +216,7 @@ impl JsonSchema for TopicPartition {
 }
 
 /// Topic input from the user, which may or may not contain the partition.
-// TODO: remove Serialize — only needed temporarily for Raft operation serialization.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-#[serde(untagged)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TopicIn {
     TopicName(TopicName),
     TopicPartition(TopicPartition),

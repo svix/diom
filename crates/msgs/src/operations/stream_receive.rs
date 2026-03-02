@@ -1,13 +1,15 @@
-use std::num::NonZeroU16;
+use std::{num::NonZeroU16, time::Duration};
 
+use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
+use tracing::Span;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Offset, Partition, TopicIn, TopicPartition},
+    entities::{ConsumerGroup, Offset, Partition, TopicIn, TopicName, TopicPartition},
     tables::{MsgRow, StreamLeaseRow, TableRow, TopicRow},
 };
 
@@ -16,7 +18,8 @@ use super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamReceiveOperation {
     namespace_id: NamespaceId,
-    topic: TopicIn,
+    topic: TopicName,
+    partition: Option<Partition>,
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
@@ -31,62 +34,60 @@ impl StreamReceiveOperation {
         batch_size: NonZeroU16,
         lease_duration_millis: u64,
     ) -> coyote_error::Result<Self> {
-        let now = Timestamp::now();
-
+        let (topic, partition) = match topic {
+            TopicIn::TopicPartition(tp) => (tp.raw, Some(tp.partition)),
+            TopicIn::TopicName(tn) => (tn, None),
+        };
         Ok(Self {
             namespace_id,
             topic,
+            partition,
             consumer_group,
             batch_size,
             lease_duration_millis,
-            now,
+            now: Timestamp::now(),
         })
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
     fn apply_real(self, state: &State) -> coyote_operations::Result<StreamReceiveResponseData> {
-        let lease_duration = std::time::Duration::from_millis(self.lease_duration_millis);
+        let lease_duration = Duration::from_millis(self.lease_duration_millis);
         let mut remaining = self.batch_size.get();
         let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
         let expiry = self.now + lease_duration;
 
         let mut batch = state.db.batch();
 
-        let topic_row = match TopicRow::fetch(
-            &state.metadata_tables,
-            self.namespace_id,
-            self.topic.topic_name(),
-        )? {
-            Some(topic_row) => topic_row,
-            None => {
-                let topic_row = TopicRow::new(self.topic.topic_name().clone(), self.now)?;
-                batch.insert(
-                    &state.metadata_tables,
-                    TopicRow::construct_key(self.namespace_id, self.topic.topic_name()),
-                    topic_row.to_fjall_value()?,
-                );
-                topic_row
-            }
-        };
+        let topic_row =
+            match TopicRow::fetch(&state.metadata_tables, self.namespace_id, &self.topic)? {
+                Some(topic_row) => topic_row,
+                None => {
+                    let topic_row = TopicRow::new(self.topic.clone(), self.now);
+                    batch.insert(
+                        &state.metadata_tables,
+                        TopicRow::construct_key(self.namespace_id, &self.topic),
+                        topic_row.to_fjall_value()?,
+                    );
+                    topic_row
+                }
+            };
 
-        tracing::Span::current().record("partition_count", topic_row.partitions);
+        Span::current().record("partition_count", topic_row.partitions);
 
         // Create a list of partitions to fetch from
-        let partitions =
-            if let TopicIn::TopicPartition(TopicPartition { partition, .. }) = self.topic {
-                vec![partition.get()]
-            } else {
-                // Create a shuffled list of all the partitions, so we distribute fetches
-                let mut partition_list: Vec<u16> = (0..topic_row.partitions).collect();
-                partition_list.shuffle(&mut rand::rng());
-                partition_list
-            };
+        let partitions = if let Some(partition) = self.partition {
+            vec![partition.get()]
+        } else {
+            // Create a shuffled list of all the partitions, so we distribute fetches
+            let mut partition_list: Vec<u16> = (0..topic_row.partitions).collect();
+            partition_list.shuffle(&mut rand::rng());
+            partition_list
+        };
 
         let mut no_lease_available = true;
 
         for partition in partitions {
-            let topic =
-                TopicPartition::new(self.topic.topic_name().clone(), Partition::new(partition)?);
+            let topic = TopicPartition::new(self.topic.clone(), Partition::new(partition)?);
             let mut lease = match StreamLeaseRow::fetch(
                 &state.metadata_tables,
                 topic_row.id,
@@ -97,7 +98,6 @@ impl StreamReceiveOperation {
                 None => StreamLeaseRow::new()?,
             };
 
-            // No lease available, error.
             if lease.expiry > self.now {
                 continue;
             }
@@ -112,6 +112,7 @@ impl StreamReceiveOperation {
                 lease.offset,
                 remaining,
             )?;
+
             // We don't need to take a lease if there are no items.
             if msgs.is_empty() {
                 continue;
@@ -143,18 +144,12 @@ impl StreamReceiveOperation {
         }
 
         if no_lease_available {
-            return Err(
-                coyote_error::Error::http(coyote_error::HttpError::bad_request(
-                    Some("no_lease_available".to_owned()),
-                    None,
-                ))
-                .into(),
-            );
+            return Err(Error::invalid_user_input("no available leases").into());
         }
 
-        batch.commit().map_err(coyote_error::Error::from)?;
+        batch.commit().map_err(Error::from)?;
 
-        tracing::Span::current().record("msgs_returned", all_msgs.len());
+        Span::current().record("msgs_returned", all_msgs.len());
 
         Ok(StreamReceiveResponseData { msgs: all_msgs })
     }
