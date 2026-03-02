@@ -14,7 +14,7 @@ use openraft::{
 };
 use serde::{Deserialize, Serialize};
 use tap::{Pipe, Tap, TapFallible, TapOptional};
-use tracing::{Instrument as _, Span};
+use tracing::Span;
 
 use super::{NodeId, errors::*, raft::TypeConfig};
 use crate::cfg::{Dir, FsyncMode};
@@ -171,9 +171,11 @@ async fn flush_every_commit(
         let db = db.clone();
         std::mem::swap(&mut buf, &mut new_buf);
         tokio::task::spawn_blocking(move || {
+            let _guard = tracing::info_span!("logs:flush_every_commit").entered();
+
             let result = db
                 .persist(PersistMode::SyncAll)
-                // fjall::Error inn't Clone
+                // fjall::Error isn't Clone
                 .map_err(|err| {
                     tracing::error!(?err, "error flushing fjall in background");
                     BackgroundFsyncFailedError(err.to_string())
@@ -182,7 +184,6 @@ async fn flush_every_commit(
                 callback.log_io_completed(result.clone().map_err(std::io::Error::other));
             }
         })
-        .instrument(tracing::info_span!("logs:flush_every_commit"))
         .await
         .expect("failed joining blocking task");
     }
@@ -203,6 +204,8 @@ async fn flush_every_second(
                 if let Some(callback) = message {
                     let db = db.clone();
                     tokio::task::spawn_blocking(move || {
+                        let _guard =
+                            tracing::info_span!("logs:flush_every_second:buffer").entered();
                         let result = db.persist(PersistMode::Buffer)
                             // fjall::Error isn't Clone
                             .map_err(|err| {
@@ -210,7 +213,7 @@ async fn flush_every_second(
                                 BackgroundFsyncFailedError(err.to_string())
                             });
                         callback.log_io_completed(result.map_err(std::io::Error::other));
-                    }).instrument(tracing::info_span!("logs:flush_every_second:buffer"))
+                    })
                     .await
                     .expect("failed joining blocking task");
                 } else {
@@ -224,11 +227,15 @@ async fn flush_every_second(
                 if has_changes {
                     let db = db.clone();
                     tokio::task::spawn_blocking(move || {
+                        let _guard =
+                            tracing::info_span!("logs:flush_every_second:flush").entered();
                         tracing::debug!("running periodic sync of logs");
                         if let Err(err) = db.persist(PersistMode::SyncAll) {
                             tracing::error!(?err, "error flushing fjall");
                         }
-                    }).instrument(tracing::info_span!("logs:flush_every_second:flush")).await.expect("failed joining blocking task");
+                    })
+                    .await
+                    .expect("failed joining blocking task");
                     has_changes = false
                 } else {
                     tracing::trace!("no changes in the last interval, doing nothing");
@@ -278,7 +285,7 @@ impl CoyoteLogs {
         tracing::debug!(?rec, "recording log/timestamp checkpoint");
         let (k, v) = rec.to_fjall_entry()?;
         let keyspace = self.log_keyspace.clone();
-        tokio::task::spawn_blocking(move || -> fjall::Result<()> { keyspace.insert(k, v) })
+        spawn_blocking_in_current_span(move || -> fjall::Result<()> { keyspace.insert(k, v) })
             .await??;
         Ok(())
     }
@@ -287,7 +294,7 @@ impl CoyoteLogs {
     pub async fn get_node_id(&mut self) -> anyhow::Result<NodeId> {
         let db = self.db.clone();
         let meta_keyspace = self.meta_keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             if let Some(node_id) = NODE_ID.get(&meta_keyspace)? {
                 tracing::debug!(?node_id, "starting up with existing node ID");
                 node_id
@@ -316,7 +323,8 @@ impl CoyoteLogs {
         let keyspace = self.log_keyspace.clone();
         let mut batch = fjall::OwnedWriteBatch::with_capacity(self.db.clone(), entries.len())
             .durability(Some(PersistMode::Buffer));
-        tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
+            let _guard = tracing::info_span!("append:write_entries").entered();
             let keys = entries.iter().map(|entry| entry.log_id).collect::<Vec<_>>();
             tracing::trace!(?keys, "appending some entries");
             for entry in entries {
@@ -326,7 +334,6 @@ impl CoyoteLogs {
             batch.commit()?;
             Ok(())
         })
-        .instrument(tracing::info_span!("append:write_entries"))
         .await??;
 
         self.flush_tx
@@ -341,7 +348,7 @@ impl CoyoteLogs {
     async fn truncate_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
         let log_keyspace = self.log_keyspace.clone();
         let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
-        tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             for key in Log::keys_in_range(&log_keyspace, log_id.index..)? {
                 tx.remove(&log_keyspace, key);
             }
@@ -356,7 +363,7 @@ impl CoyoteLogs {
         let meta_keyspace = self.meta_keyspace.clone();
         let log_keyspace = self.log_keyspace.clone();
         let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
-        tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             for key in Log::keys_in_range(&log_keyspace, ..=log_id.index)? {
                 tx.remove(&log_keyspace, key);
             }
@@ -364,14 +371,13 @@ impl CoyoteLogs {
             tx.commit()?;
             Ok(())
         })
-        .instrument(Span::current())
         .await?
     }
 
     async fn get_log_state_(&mut self) -> anyhow::Result<openraft::LogState<TypeConfig>> {
         let log_keyspace = self.log_keyspace.clone();
         let meta_keyspace = self.meta_keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let last_purged_log_id = LAST_PURGED_LOG_ID.get(&meta_keyspace)?;
             let last_log_id =
                 if let Some(Ok(last_guard)) = Log::range(&log_keyspace, ..).next_back() {
@@ -384,7 +390,6 @@ impl CoyoteLogs {
                 last_log_id,
             })
         })
-        .instrument(Span::current())
         .await?
         .tap(|state| tracing::trace!(?state, "read initial log state"))
     }
@@ -407,7 +412,7 @@ impl CoyoteLogs {
             Bound::Included(i) => Some(*i + 1),
             Bound::Excluded(i) => Some(*i),
         };
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let mut output = vec![];
             for row in Log::range(&log_keyspace, send_range) {
                 let (key, value) =
@@ -422,7 +427,6 @@ impl CoyoteLogs {
             }
             Ok(output)
         })
-        .instrument(Span::current())
         .await?
     }
 
@@ -430,19 +434,18 @@ impl CoyoteLogs {
         tracing::trace!(?vote, "saving a vote");
         let db = self.db.clone();
         let meta_keyspace = self.meta_keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             VOTE.store(&meta_keyspace, &vote)?;
             tracing::info_span!("save_vote:persist")
                 .in_scope(|| db.persist(PersistMode::SyncAll))?;
             Ok(())
         })
-        .instrument(Span::current())
         .await?
     }
 
     async fn read_vote_(&self) -> anyhow::Result<Option<Vote<NodeId>>> {
         let keyspace = self.meta_keyspace.clone();
-        let Some(vote) = tokio::task::spawn_blocking(move || VOTE.get(&keyspace)).await?? else {
+        let Some(vote) = spawn_blocking_in_current_span(move || VOTE.get(&keyspace)).await?? else {
             tracing::trace!("couldn't find a vote");
             return Ok(None);
         };
@@ -453,22 +456,20 @@ impl CoyoteLogs {
     async fn save_committed_(&self, committed: Option<LogId<NodeId>>) -> anyhow::Result<()> {
         let meta_keyspace = self.meta_keyspace.clone();
         tracing::trace!(?committed, "saving committed state");
-        tokio::task::spawn_blocking(move || COMMITTED.store(&meta_keyspace, &committed))
-            .instrument(Span::current())
+        spawn_blocking_in_current_span(move || COMMITTED.store(&meta_keyspace, &committed))
             .await?
             .context("saving committed state")
     }
 
     async fn read_committed_(&self) -> anyhow::Result<Option<LogId<NodeId>>> {
         let meta_keyspace = self.meta_keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             COMMITTED
                 .get(&meta_keyspace)?
                 .tap_some(|committed| tracing::trace!(?committed, "read committed state"))
                 .flatten()
                 .pipe(Ok)
         })
-        .instrument(Span::current())
         .await?
     }
 
@@ -476,14 +477,13 @@ impl CoyoteLogs {
     pub async fn log_index_before(&self, ts: Timestamp) -> anyhow::Result<Option<u64>> {
         let log_keyspace = self.log_keyspace.clone();
         let range = ..(ts.as_millisecond() as u64);
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             if let Some(row) = LogIndex::range(&log_keyspace, range).next_back() {
                 Ok(Some(row?.1.log_id))
             } else {
                 Ok(None)
             }
         })
-        .instrument(Span::current())
         .await?
     }
 
@@ -491,16 +491,22 @@ impl CoyoteLogs {
     pub async fn log_index_after(&self, ts: Timestamp) -> anyhow::Result<Option<u64>> {
         let log_keyspace = self.log_keyspace.clone();
         let range = (ts.as_millisecond() as u64)..;
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             if let Some(row) = LogIndex::range(&log_keyspace, range).next() {
                 Ok(Some(row?.1.log_id))
             } else {
                 Ok(None)
             }
         })
-        .instrument(Span::current())
         .await?
     }
+}
+
+fn spawn_blocking_in_current_span<T: Send + 'static>(
+    f: impl FnOnce() -> T + Send + 'static,
+) -> tokio::task::JoinHandle<T> {
+    let current_span = Span::current();
+    tokio::task::spawn_blocking(move || current_span.in_scope(f))
 }
 
 #[cfg(test)]
