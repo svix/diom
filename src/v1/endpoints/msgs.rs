@@ -80,7 +80,7 @@ async fn get_namespace(
 ) -> Result<MsgPackOrJson<MsgNamespaceGetOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(Some(&data.name))?
+        .fetch_namespace_admin(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let millis = u64::try_from(namespace.config.retention_period.as_millis())
