@@ -11,6 +11,7 @@ use coyote_idempotency::{
     IdempotencyStartResult,
     operations::{AbortOperation, CompleteOperation, TryStartOperation},
 };
+use coyote_namespace::{Namespace, entities::IdempotencyConfig};
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -26,6 +27,8 @@ use crate::{
 
 // Re-export types that are used in AppState
 pub use coyote_idempotency::IdempotencyStore;
+
+pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 
 // ============================================================================
 // API Types
@@ -151,9 +154,9 @@ async fn idempotency_get_namespace(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<IdempotencyGetNamespaceOut>> {
-    let namespace = state
+    let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_idempotency_namespace(&data.name)?
+        .fetch_namespace(Some(&data.name))?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {

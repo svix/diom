@@ -7,6 +7,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::ResultExt;
+use coyote_namespace::Namespace;
 use coyote_proto::MsgPackOrJson;
 use coyote_rate_limiter::RateLimiter;
 use jiff::Timestamp;
@@ -23,6 +24,8 @@ use crate::{
 
 // Re-export types that are used in AppState
 use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};
+
+pub type RateLimitNamespace = Namespace<RateLimitConfig>;
 
 // FIXME(@svix-lucho): Not fully convinced about 'method' and 'config'
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
