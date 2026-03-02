@@ -119,6 +119,8 @@ pub struct AppState {
     namespace_state: diom_namespace::State,
 
     // FIXME: do we need this?
+    // OTHERFIXME: yes, I think so.
+    #[allow(unused)]
     pub(crate) ro_dbs: ReadonlyDatabases,
 }
 
