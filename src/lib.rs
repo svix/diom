@@ -6,6 +6,7 @@
 #[cfg(test)]
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
+    num::NonZero,
     sync::{Arc, LazyLock},
     time::Duration,
 };
@@ -20,6 +21,7 @@ use diom_namespace::{
     entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
     namespace_parse_key,
 };
+use lru::LruCache;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -30,7 +32,10 @@ use opentelemetry_sdk::{
         span_processor_with_async_runtime::BatchSpanProcessor,
     },
 };
-use tokio::{net::TcpListener, sync::Barrier};
+use tokio::{
+    net::TcpListener,
+    sync::{Barrier, Mutex},
+};
 use tokio_util::sync::CancellationToken;
 use tower_http::{
     ServiceExt,
@@ -122,6 +127,8 @@ pub struct AppState {
     // OTHERFIXME: yes, I think so.
     #[allow(unused)]
     pub(crate) ro_dbs: ReadonlyDatabases,
+
+    kv_stores: Arc<Mutex<LruCache<Option<String>, KvStore>>>,
 }
 
 async fn run_interserver(
@@ -175,6 +182,8 @@ impl AppState {
         })
         .expect("initializing namespace state");
 
+        const KV_CACHE: NonZero<usize> = NonZero::new(100).unwrap();
+
         AppState {
             cfg,
             rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
@@ -183,39 +192,47 @@ impl AppState {
             ),
             namespace_state,
             ro_dbs,
+            kv_stores: Arc::new(Mutex::new(LruCache::new(KV_CACHE))),
         }
     }
 
-    fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
+    async fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
         let (ns_name, _) = namespace_parse_key(key_name);
 
-        let namespace = self
-            .namespace_state
-            .fetch_namespace::<C>(ns_name)?
-            .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        let mut cache = self.kv_stores.lock().await;
 
-        let policy = namespace.config.eviction_policy();
-        let kv_store = KvStore::new(
-            KeyValueConfig::NAMESPACE,
-            self.namespace_state.give_me_the_right_db(&namespace),
-            policy,
-            None,
-        );
+        // TODO: make sure to invalidate the LruCache when we change any namespace
+        // properties; right now, there aren't any endpoints to create or
+        // edit Kv/etc namespaces.
+        cache
+            .try_get_or_insert(ns_name.map(|s| s.to_string()), || -> Result<KvStore> {
+                let namespace = self
+                    .namespace_state
+                    .fetch_namespace::<C>(ns_name)?
+                    .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-        Ok(kv_store)
+                let policy = namespace.config.eviction_policy();
+                Ok(KvStore::new(
+                    KeyValueConfig::NAMESPACE,
+                    self.namespace_state.give_me_the_right_db(&namespace),
+                    policy,
+                    None,
+                ))
+            })
+            .cloned()
     }
 
-    pub fn get_kv_store_by_key(&self, key_name: &str) -> Result<KvStore> {
-        self.get_store_by_key::<KeyValueConfig>(key_name)
+    pub async fn get_kv_store_by_key(&self, key_name: &str) -> Result<KvStore> {
+        self.get_store_by_key::<KeyValueConfig>(key_name).await
     }
 
-    pub fn get_cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
-        let kv_store = self.get_store_by_key::<CacheConfig>(key_name)?;
+    pub async fn get_cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
+        let kv_store = self.get_store_by_key::<CacheConfig>(key_name).await?;
         Ok(CacheStore::new(kv_store))
     }
 
-    pub fn get_idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
-        let kv_store = self.get_store_by_key::<IdempotencyConfig>(key_name)?;
+    pub async fn get_idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
+        let kv_store = self.get_store_by_key::<IdempotencyConfig>(key_name).await?;
         Ok(IdempotencyStore::new(kv_store))
     }
 }

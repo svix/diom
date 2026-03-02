@@ -113,7 +113,7 @@ async fn kv_set(
     // break if an operation with a non-existent namespace is attempted,
     // so do this here for now as a quick check that the namespace
     // exists:
-    let _kv_store = state.get_kv_store_by_key(&key)?;
+    let _kv_store = state.get_kv_store_by_key(&key).await?;
 
     let behavior = data.behavior.clone();
     let model = data.into_model();
@@ -131,7 +131,7 @@ async fn kv_get(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
 ) -> Result<MsgPackOrJson<KvGetOut>> {
-    let mut kv_store = state.get_kv_store_by_key(&data.key.0)?;
+    let mut kv_store = state.get_kv_store_by_key(&data.key.0).await?;
 
     let model = kv_store.get(&data.key.0).map_err(|e| Error::generic(e))?;
     let ret = match model {
