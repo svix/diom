@@ -22,15 +22,8 @@
     {% set field_ty = field.type.to_rust() -%}
 
     {% if not field.required or field.nullable -%}
-        {# only for patch requests, if the field is both non-required
-            and nullable, use JsOption -#}
-        {% if type.name is endingwith "Patch" and field.nullable -%}
-            {% set field_ty %}JsOption<{{ field_ty }}>{% endset -%}
-            #[serde(default, skip_serializing_if = "JsOption::is_undefined")]
-        {% else -%}
-            {% set field_ty %}Option<{{ field_ty }}>{% endset -%}
-            #[serde(skip_serializing_if = "Option::is_none")]
-        {% endif -%}
+        {% set field_ty %}Option<{{ field_ty }}>{% endset -%}
+        #[serde(skip_serializing_if = "Option::is_none")]
     {% endif -%}
 
     pub {{ field_name(field.name | to_snake_case) }}: {{ field_ty }},
