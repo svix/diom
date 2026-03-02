@@ -103,7 +103,7 @@ async fn cache_set(
     // break if an operation with a non-existent namespace is attempted,
     // so do this here for now as a quick check that the namespace
     // exists:
-    let _cache_store = state.get_cache_store_by_key(&key_str)?;
+    let _cache_store = state.get_cache_store_by_key(&key_str).await?;
 
     let operation = SetOperation::new(key_str, data.into_model());
     repl.client_write(operation).await.map_err_generic()?.0?;
@@ -116,7 +116,7 @@ async fn cache_get(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
-    let mut cache_store = state.get_cache_store_by_key(&data.key.0)?;
+    let mut cache_store = state.get_cache_store_by_key(&data.key.0).await?;
     let model = cache_store
         .get(&data.key)?
         .ok_or_else(|| HttpError::not_found(None, None))?;

@@ -14,7 +14,10 @@ pub(super) async fn apply_request(
     Ok(match request {
         Request::Kv(req) => {
             // TODO: this shouldn't be mut but KvStore currently requires it
-            let mut store = state_machine.state.get_kv_store_by_key(req.key_name())?;
+            let mut store = state_machine
+                .state
+                .get_kv_store_by_key(req.key_name())
+                .await?;
             Response::Kv(req.apply(&mut store))
         }
         Request::CreateKv(req) => {
@@ -27,14 +30,18 @@ pub(super) async fn apply_request(
         Request::Idempotency(req) => {
             let mut store = state_machine
                 .state
-                .get_idempotency_store_by_key(req.key_name())?;
+                .get_idempotency_store_by_key(req.key_name())
+                .await?;
             Response::Idempotency(req.apply(&mut store))
         }
         Request::CreateIdempotency(req) => {
             Response::CreateIdempotency(req.apply(&state_machine.state.namespace_state))
         }
         Request::Cache(req) => {
-            let mut store = state_machine.state.get_cache_store_by_key(req.key_name())?;
+            let mut store = state_machine
+                .state
+                .get_cache_store_by_key(req.key_name())
+                .await?;
             Response::Cache(req.apply(&mut store))
         }
         Request::CreateCache(req) => {
