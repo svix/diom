@@ -28,30 +28,11 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class RateLimiterFixedWindowConfig {
-@JsonProperty("max_requests") private Long maxRequests;
 @JsonProperty("window_size") private Long windowSize;
+@JsonProperty("max_requests") private Long maxRequests;
 public RateLimiterFixedWindowConfig () {}
 
- public RateLimiterFixedWindowConfig maxRequests(Long maxRequests) {
-        this.maxRequests = maxRequests;
-        return this;
-    }
-
-    /**
-    * Maximum number of requests allowed within the window
-    *
-     * @return maxRequests
-     */
-    @javax.annotation.Nonnull
-     public Long getMaxRequests() {
-        return maxRequests;
-    }
-
-     public void setMaxRequests(Long maxRequests) {
-        this.maxRequests = maxRequests;
-    }
-
-     public RateLimiterFixedWindowConfig windowSize(Long windowSize) {
+ public RateLimiterFixedWindowConfig windowSize(Long windowSize) {
         this.windowSize = windowSize;
         return this;
     }
@@ -68,6 +49,25 @@ public RateLimiterFixedWindowConfig () {}
 
      public void setWindowSize(Long windowSize) {
         this.windowSize = windowSize;
+    }
+
+     public RateLimiterFixedWindowConfig maxRequests(Long maxRequests) {
+        this.maxRequests = maxRequests;
+        return this;
+    }
+
+    /**
+    * Maximum number of requests allowed within the window
+    *
+     * @return maxRequests
+     */
+    @javax.annotation.Nonnull
+     public Long getMaxRequests() {
+        return maxRequests;
+    }
+
+     public void setMaxRequests(Long maxRequests) {
+        this.maxRequests = maxRequests;
     }
 
     /**

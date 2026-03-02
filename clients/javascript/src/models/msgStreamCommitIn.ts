@@ -5,25 +5,25 @@
 
 
 export interface MsgStreamCommitIn {
-    consumerGroup: string;
+    topic: string;
+consumerGroup: string;
 offset: number;
-topic: string;
 }
 
 export const MsgStreamCommitInSerializer = {
     _fromJsonObject(object: any): MsgStreamCommitIn {
         return {
+            topic: object['topic'],
             consumerGroup: object['consumer_group'],
             offset: object['offset'],
-            topic: object['topic'],
             };
     },
 
     _toJsonObject(self: MsgStreamCommitIn): any {
         return {
+            'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'offset': self.offset,
-            'topic': self.topic,
             };
     }
 }

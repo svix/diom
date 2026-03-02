@@ -55,7 +55,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                         std::hint::black_box(
                             client
                                 .msgs()
-                                .publish(MsgPublishIn::new(msgs, topic.clone())),
+                                .publish(MsgPublishIn::new(topic.clone(), msgs)),
                         )
                         .await
                         .unwrap();
@@ -79,7 +79,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
             for _ in 0..100 {
                 client
                     .msgs()
-                    .publish(MsgPublishIn::new(make_msg_batch(1000), topic.clone()))
+                    .publish(MsgPublishIn::new(topic.clone(), make_msg_batch(1000)))
                     .await
                     .unwrap();
             }
@@ -102,8 +102,8 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                             .stream()
                             .commit(MsgStreamCommitIn::new(
                                 consumer_group.clone(),
-                                last.offset,
                                 last.topic.clone(),
+                                last.offset,
                             ))
                             .await
                             .unwrap(),

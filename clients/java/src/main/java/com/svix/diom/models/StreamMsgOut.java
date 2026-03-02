@@ -28,40 +28,14 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class StreamMsgOut {
-@JsonProperty private Map<String,String> headers;
 @JsonProperty private Long offset;
-@JsonProperty private OffsetDateTime timestamp;
 @JsonProperty private String topic;
 @JsonProperty private List<Byte> value;
+@JsonProperty private Map<String,String> headers;
+@JsonProperty private OffsetDateTime timestamp;
 public StreamMsgOut () {}
 
- public StreamMsgOut headers(Map<String,String> headers) {
-        this.headers = headers;
-        return this;
-    }
-
-     public StreamMsgOut putHeadersItem(String key, String headersItem) {
-        if (this.headers == null) {
-            this.headers = new HashMap<>();
-        }
-        this.headers.put(key, headersItem);
-        return this;
-    }
-    /**
-    * Get headers
-    *
-     * @return headers
-     */
-    @javax.annotation.Nullable
-     public Map<String,String> getHeaders() {
-        return headers;
-    }
-
-     public void setHeaders(Map<String,String> headers) {
-        this.headers = headers;
-    }
-
-     public StreamMsgOut offset(Long offset) {
+ public StreamMsgOut offset(Long offset) {
         this.offset = offset;
         return this;
     }
@@ -78,25 +52,6 @@ public StreamMsgOut () {}
 
      public void setOffset(Long offset) {
         this.offset = offset;
-    }
-
-     public StreamMsgOut timestamp(OffsetDateTime timestamp) {
-        this.timestamp = timestamp;
-        return this;
-    }
-
-    /**
-    * Get timestamp
-    *
-     * @return timestamp
-     */
-    @javax.annotation.Nonnull
-     public OffsetDateTime getTimestamp() {
-        return timestamp;
-    }
-
-     public void setTimestamp(OffsetDateTime timestamp) {
-        this.timestamp = timestamp;
     }
 
      public StreamMsgOut topic(String topic) {
@@ -142,6 +97,51 @@ public StreamMsgOut () {}
 
      public void setValue(List<Byte> value) {
         this.value = value;
+    }
+
+     public StreamMsgOut headers(Map<String,String> headers) {
+        this.headers = headers;
+        return this;
+    }
+
+     public StreamMsgOut putHeadersItem(String key, String headersItem) {
+        if (this.headers == null) {
+            this.headers = new HashMap<>();
+        }
+        this.headers.put(key, headersItem);
+        return this;
+    }
+    /**
+    * Get headers
+    *
+     * @return headers
+     */
+    @javax.annotation.Nullable
+     public Map<String,String> getHeaders() {
+        return headers;
+    }
+
+     public void setHeaders(Map<String,String> headers) {
+        this.headers = headers;
+    }
+
+     public StreamMsgOut timestamp(OffsetDateTime timestamp) {
+        this.timestamp = timestamp;
+        return this;
+    }
+
+    /**
+    * Get timestamp
+    *
+     * @return timestamp
+     */
+    @javax.annotation.Nonnull
+     public OffsetDateTime getTimestamp() {
+        return timestamp;
+    }
+
+     public void setTimestamp(OffsetDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 
     /**

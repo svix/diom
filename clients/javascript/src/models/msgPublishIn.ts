@@ -9,22 +9,22 @@ import {
 
 
 export interface MsgPublishIn {
-    msgs: MsgIn[];
-topic: string;
+    topic: string;
+msgs: MsgIn[];
 }
 
 export const MsgPublishInSerializer = {
     _fromJsonObject(object: any): MsgPublishIn {
         return {
-            msgs: object['msgs'].map((item: MsgIn) => MsgInSerializer._fromJsonObject(item)),
             topic: object['topic'],
+            msgs: object['msgs'].map((item: MsgIn) => MsgInSerializer._fromJsonObject(item)),
             };
     },
 
     _toJsonObject(self: MsgPublishIn): any {
         return {
-            'msgs': self.msgs.map((item) => MsgInSerializer._toJsonObject(item)),
             'topic': self.topic,
+            'msgs': self.msgs.map((item) => MsgInSerializer._toJsonObject(item)),
             };
     }
 }

@@ -5,22 +5,22 @@
 
 
 export interface MsgPublishOutMsg {
-    offset: number;
-topic: string;
+    topic: string;
+offset: number;
 }
 
 export const MsgPublishOutMsgSerializer = {
     _fromJsonObject(object: any): MsgPublishOutMsg {
         return {
-            offset: object['offset'],
             topic: object['topic'],
+            offset: object['offset'],
             };
     },
 
     _toJsonObject(self: MsgPublishOutMsg): any {
         return {
-            'offset': self.offset,
             'topic': self.topic,
+            'offset': self.offset,
             };
     }
 }

@@ -28,11 +28,30 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgPublishIn {
-@JsonProperty private List<MsgIn> msgs;
 @JsonProperty private String topic;
+@JsonProperty private List<MsgIn> msgs;
 public MsgPublishIn () {}
 
- public MsgPublishIn msgs(List<MsgIn> msgs) {
+ public MsgPublishIn topic(String topic) {
+        this.topic = topic;
+        return this;
+    }
+
+    /**
+    * Get topic
+    *
+     * @return topic
+     */
+    @javax.annotation.Nonnull
+     public String getTopic() {
+        return topic;
+    }
+
+     public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
+     public MsgPublishIn msgs(List<MsgIn> msgs) {
         this.msgs = msgs;
         return this;
     }
@@ -56,25 +75,6 @@ public MsgPublishIn () {}
 
      public void setMsgs(List<MsgIn> msgs) {
         this.msgs = msgs;
-    }
-
-     public MsgPublishIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-     public String getTopic() {
-        return topic;
-    }
-
-     public void setTopic(String topic) {
-        this.topic = topic;
     }
 
     /**

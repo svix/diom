@@ -28,30 +28,11 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgTopicConfigureIn {
-@JsonProperty private Short partitions;
 @JsonProperty private String topic;
+@JsonProperty private Short partitions;
 public MsgTopicConfigureIn () {}
 
- public MsgTopicConfigureIn partitions(Short partitions) {
-        this.partitions = partitions;
-        return this;
-    }
-
-    /**
-    * Get partitions
-    *
-     * @return partitions
-     */
-    @javax.annotation.Nonnull
-     public Short getPartitions() {
-        return partitions;
-    }
-
-     public void setPartitions(Short partitions) {
-        this.partitions = partitions;
-    }
-
-     public MsgTopicConfigureIn topic(String topic) {
+ public MsgTopicConfigureIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -68,6 +49,25 @@ public MsgTopicConfigureIn () {}
 
      public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+     public MsgTopicConfigureIn partitions(Short partitions) {
+        this.partitions = partitions;
+        return this;
+    }
+
+    /**
+    * Get partitions
+    *
+     * @return partitions
+     */
+    @javax.annotation.Nonnull
+     public Short getPartitions() {
+        return partitions;
+    }
+
+     public void setPartitions(Short partitions) {
+        this.partitions = partitions;
     }
 
     /**

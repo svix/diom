@@ -6,12 +6,12 @@ from ..internal.base_model import BaseModel
 
 
 class StreamMsgOut(BaseModel):
-    headers: t.Optional[t.Dict[str, str]] = None
-
     offset: int
-
-    timestamp: datetime
 
     topic: str
 
     value: bytes
+
+    headers: t.Optional[t.Dict[str, str]] = None
+
+    timestamp: datetime

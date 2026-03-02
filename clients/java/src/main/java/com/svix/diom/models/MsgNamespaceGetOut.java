@@ -28,33 +28,14 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgNamespaceGetOut {
-@JsonProperty private OffsetDateTime created;
 @JsonProperty private String name;
 @JsonProperty private Retention retention;
 @JsonProperty("storage_type") private StorageType storageType;
+@JsonProperty private OffsetDateTime created;
 @JsonProperty private OffsetDateTime updated;
 public MsgNamespaceGetOut () {}
 
- public MsgNamespaceGetOut created(OffsetDateTime created) {
-        this.created = created;
-        return this;
-    }
-
-    /**
-    * Get created
-    *
-     * @return created
-     */
-    @javax.annotation.Nonnull
-     public OffsetDateTime getCreated() {
-        return created;
-    }
-
-     public void setCreated(OffsetDateTime created) {
-        this.created = created;
-    }
-
-     public MsgNamespaceGetOut name(String name) {
+ public MsgNamespaceGetOut name(String name) {
         this.name = name;
         return this;
     }
@@ -109,6 +90,25 @@ public MsgNamespaceGetOut () {}
 
      public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
+    }
+
+     public MsgNamespaceGetOut created(OffsetDateTime created) {
+        this.created = created;
+        return this;
+    }
+
+    /**
+    * Get created
+    *
+     * @return created
+     */
+    @javax.annotation.Nonnull
+     public OffsetDateTime getCreated() {
+        return created;
+    }
+
+     public void setCreated(OffsetDateTime created) {
+        this.created = created;
     }
 
      public MsgNamespaceGetOut updated(OffsetDateTime updated) {

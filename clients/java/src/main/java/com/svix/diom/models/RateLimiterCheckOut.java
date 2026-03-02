@@ -28,12 +28,31 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class RateLimiterCheckOut {
+@JsonProperty private RateLimitStatus status;
 @JsonProperty private Long remaining;
 @JsonProperty("retry_after") private Long retryAfter;
-@JsonProperty private RateLimitStatus status;
 public RateLimiterCheckOut () {}
 
- public RateLimiterCheckOut remaining(Long remaining) {
+ public RateLimiterCheckOut status(RateLimitStatus status) {
+        this.status = status;
+        return this;
+    }
+
+    /**
+    * Whether the request is allowed
+    *
+     * @return status
+     */
+    @javax.annotation.Nonnull
+     public RateLimitStatus getStatus() {
+        return status;
+    }
+
+     public void setStatus(RateLimitStatus status) {
+        this.status = status;
+    }
+
+     public RateLimiterCheckOut remaining(Long remaining) {
         this.remaining = remaining;
         return this;
     }
@@ -69,25 +88,6 @@ public RateLimiterCheckOut () {}
 
      public void setRetryAfter(Long retryAfter) {
         this.retryAfter = retryAfter;
-    }
-
-     public RateLimiterCheckOut status(RateLimitStatus status) {
-        this.status = status;
-        return this;
-    }
-
-    /**
-    * Whether the request is allowed
-    *
-     * @return status
-     */
-    @javax.annotation.Nonnull
-     public RateLimitStatus getStatus() {
-        return status;
-    }
-
-     public void setStatus(RateLimitStatus status) {
-        this.status = status;
     }
 
     /**

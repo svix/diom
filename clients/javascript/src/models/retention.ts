@@ -5,22 +5,22 @@
 
 
 export interface Retention {
-    bytes?: number;
-millis?: number;
+    millis?: number;
+bytes?: number;
 }
 
 export const RetentionSerializer = {
     _fromJsonObject(object: any): Retention {
         return {
-            bytes: object['bytes'],
             millis: object['millis'],
+            bytes: object['bytes'],
             };
     },
 
     _toJsonObject(self: Retention): any {
         return {
-            'bytes': self.bytes,
             'millis': self.millis,
+            'bytes': self.bytes,
             };
     }
 }

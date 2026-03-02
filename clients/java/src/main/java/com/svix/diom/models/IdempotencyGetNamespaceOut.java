@@ -28,29 +28,29 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class IdempotencyGetNamespaceOut {
-@JsonProperty("created_at") private OffsetDateTime createdAt;
-@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
 @JsonProperty private String name;
+@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
+@JsonProperty("created_at") private OffsetDateTime createdAt;
 @JsonProperty("updated_at") private OffsetDateTime updatedAt;
 public IdempotencyGetNamespaceOut () {}
 
- public IdempotencyGetNamespaceOut createdAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+ public IdempotencyGetNamespaceOut name(String name) {
+        this.name = name;
         return this;
     }
 
     /**
-    * Get createdAt
+    * Get name
     *
-     * @return createdAt
+     * @return name
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreatedAt() {
-        return createdAt;
+     public String getName() {
+        return name;
     }
 
-     public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+     public void setName(String name) {
+        this.name = name;
     }
 
      public IdempotencyGetNamespaceOut maxStorageBytes(Long maxStorageBytes) {
@@ -72,23 +72,23 @@ public IdempotencyGetNamespaceOut () {}
         this.maxStorageBytes = maxStorageBytes;
     }
 
-     public IdempotencyGetNamespaceOut name(String name) {
-        this.name = name;
+     public IdempotencyGetNamespaceOut createdAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
         return this;
     }
 
     /**
-    * Get name
+    * Get createdAt
     *
-     * @return name
+     * @return createdAt
      */
     @javax.annotation.Nonnull
-     public String getName() {
-        return name;
+     public OffsetDateTime getCreatedAt() {
+        return createdAt;
     }
 
-     public void setName(String name) {
-        this.name = name;
+     public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
      public IdempotencyGetNamespaceOut updatedAt(OffsetDateTime updatedAt) {
