@@ -130,7 +130,7 @@ fn hist_compute_stats(
 ) -> Stats {
     Stats {
         op: op.into(),
-        ops_per_sec: (operations * 1_000) / total_time_ms,
+        ops_per_sec: calculate_per_sec(operations, total_time_ms),
         op_batch_size: batch_size,
         mean_us: hist.mean() as u64,
         std_dev_us: hist.stdev() as u64,
@@ -138,8 +138,12 @@ fn hist_compute_stats(
         p99_us: hist.value_at_quantile(0.99),
         p999_us: hist.value_at_quantile(0.999),
         max_us: hist.max(),
-        bytes_per_sec: (total_bytes * 1_000) / total_time_ms,
+        bytes_per_sec: calculate_per_sec(total_bytes, total_time_ms),
     }
+}
+
+fn calculate_per_sec(count: u64, total_time_ms: u64) -> u64 {
+    (count * 1_000).checked_div(total_time_ms).unwrap_or(0)
 }
 
 // Formatting helpers
