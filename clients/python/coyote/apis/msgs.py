@@ -37,10 +37,12 @@ class MsgsAsync(ApiBase):
         msg_publish_in: MsgPublishIn,
     ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
+        body = msg_publish_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/msgs/publish",
-            body=msg_publish_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=MsgPublishOut,
         )
 
@@ -63,9 +65,11 @@ class Msgs(ApiBase):
         msg_publish_in: MsgPublishIn,
     ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
+        body = msg_publish_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/msgs/publish",
-            body=msg_publish_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=MsgPublishOut,
         )

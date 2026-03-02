@@ -15,10 +15,12 @@ class IdempotencyAsync(ApiBase):
         idempotency_abort_in: IdempotencyAbortIn,
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
+        body = idempotency_abort_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/idempotency/abort",
-            body=idempotency_abort_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=IdempotencyAbortOut,
         )
 
@@ -27,12 +29,14 @@ class IdempotencyAsync(ApiBase):
         idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
     ) -> IdempotencyGetNamespaceOut:
         """Get idempotency namespace"""
+        body = idempotency_get_namespace_in.model_dump(
+            exclude_unset=True, by_alias=True
+        )
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/idempotency/get-namespace",
-            body=idempotency_get_namespace_in.model_dump(
-                exclude_unset=True, by_alias=True
-            ),
+            body=body,
             response_type=IdempotencyGetNamespaceOut,
         )
 
@@ -43,10 +47,12 @@ class Idempotency(ApiBase):
         idempotency_abort_in: IdempotencyAbortIn,
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
+        body = idempotency_abort_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/idempotency/abort",
-            body=idempotency_abort_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=IdempotencyAbortOut,
         )
 
@@ -55,11 +61,13 @@ class Idempotency(ApiBase):
         idempotency_get_namespace_in: IdempotencyGetNamespaceIn,
     ) -> IdempotencyGetNamespaceOut:
         """Get idempotency namespace"""
+        body = idempotency_get_namespace_in.model_dump(
+            exclude_unset=True, by_alias=True
+        )
+
         return self._request_sync(
             method="post",
             path="/api/v1/idempotency/get-namespace",
-            body=idempotency_get_namespace_in.model_dump(
-                exclude_unset=True, by_alias=True
-            ),
+            body=body,
             response_type=IdempotencyGetNamespaceOut,
         )

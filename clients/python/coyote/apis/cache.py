@@ -19,10 +19,12 @@ class CacheAsync(ApiBase):
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
+        body = cache_set_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/cache/set",
-            body=cache_set_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheSetOut,
         )
 
@@ -31,10 +33,12 @@ class CacheAsync(ApiBase):
         cache_get_in: CacheGetIn,
     ) -> CacheGetOut:
         """Cache Get"""
+        body = cache_get_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/cache/get",
-            body=cache_get_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheGetOut,
         )
 
@@ -43,10 +47,12 @@ class CacheAsync(ApiBase):
         cache_get_namespace_in: CacheGetNamespaceIn,
     ) -> CacheGetNamespaceOut:
         """Get cache namespace"""
+        body = cache_get_namespace_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/cache/get-namespace",
-            body=cache_get_namespace_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheGetNamespaceOut,
         )
 
@@ -55,10 +61,12 @@ class CacheAsync(ApiBase):
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
+        body = cache_delete_in.model_dump(exclude_unset=True, by_alias=True)
+
         return await self._request_asyncio(
             method="post",
             path="/api/v1/cache/delete",
-            body=cache_delete_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheDeleteOut,
         )
 
@@ -69,10 +77,12 @@ class Cache(ApiBase):
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
+        body = cache_set_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/cache/set",
-            body=cache_set_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheSetOut,
         )
 
@@ -81,10 +91,12 @@ class Cache(ApiBase):
         cache_get_in: CacheGetIn,
     ) -> CacheGetOut:
         """Cache Get"""
+        body = cache_get_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/cache/get",
-            body=cache_get_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheGetOut,
         )
 
@@ -93,10 +105,12 @@ class Cache(ApiBase):
         cache_get_namespace_in: CacheGetNamespaceIn,
     ) -> CacheGetNamespaceOut:
         """Get cache namespace"""
+        body = cache_get_namespace_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/cache/get-namespace",
-            body=cache_get_namespace_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheGetNamespaceOut,
         )
 
@@ -105,9 +119,11 @@ class Cache(ApiBase):
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
+        body = cache_delete_in.model_dump(exclude_unset=True, by_alias=True)
+
         return self._request_sync(
             method="post",
             path="/api/v1/cache/delete",
-            body=cache_delete_in.model_dump(exclude_unset=True, by_alias=True),
+            body=body,
             response_type=CacheDeleteOut,
         )
