@@ -156,7 +156,7 @@ async fn idempotency_get_namespace(
 ) -> Result<MsgPackOrJson<IdempotencyGetNamespaceOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(Some(&data.name))?
+        .fetch_namespace_admin(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {

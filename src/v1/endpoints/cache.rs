@@ -163,7 +163,7 @@ async fn cache_get_namespace(
 ) -> Result<MsgPackOrJson<CacheGetNamespaceOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(Some(&data.name))?
+        .fetch_namespace_admin(&data.name)?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
