@@ -38,7 +38,7 @@ terraform {
     # organization = ""
     # organization = ""
     workspaces {
-      prefix = "svix-diom-"
+      prefix = "diom-"
     }
   }
 }
