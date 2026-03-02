@@ -6,6 +6,7 @@ use fjall::OwnedWriteBatch;
 use fjall_utils::{ReadableKeyspace, TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+use tracing::Span;
 
 use crate::{
     State,
@@ -67,6 +68,7 @@ impl MsgRow {
         Ok(Some(offset))
     }
 
+    #[tracing::instrument(skip_all, level = "debug", fields(partition = partition.get()))]
     pub(crate) fn next_offset(
         state: &State,
         ns_id: NamespaceId,
@@ -109,6 +111,7 @@ impl MsgRow {
 
     /// Fetch up to `batch_size` available messages from a single partition, starting from
     /// `start_offset`. Messages covered by the given leases are excluded.
+    #[tracing::instrument(skip_all, level = "debug", fields(partition = partition.get(), start_offset, batch_size, msgs_found))]
     pub(crate) fn fetch_available<'a>(
         state: &State,
         ns_id: NamespaceId,
@@ -139,6 +142,7 @@ impl MsgRow {
                 )?;
                 msgs_left -= n;
                 if msgs_left == 0 {
+                    Span::current().record("msgs_found", results.len());
                     return Ok(results);
                 }
             }
@@ -156,6 +160,7 @@ impl MsgRow {
             )?;
         }
 
+        Span::current().record("msgs_found", results.len());
         Ok(results)
     }
 }
@@ -280,6 +285,7 @@ impl LeaseDiff {
 }
 
 impl LeaseRow {
+    #[tracing::instrument(skip_all, level = "debug", fields(partition = partition.get(), lease_count))]
     pub(crate) fn fetch_all(
         state: &State,
         id: NamespaceId,
@@ -288,14 +294,17 @@ impl LeaseRow {
     ) -> Result<Vec<Self>> {
         let prefix = LeaseKey::prefix(id, partition, cg);
 
-        state
+        let leases: Vec<Self> = state
             .metadata_tables
             .prefix(prefix)
             .map(|entry| {
                 let value = entry.value()?;
                 Self::from_fjall_value(value)
             })
-            .collect()
+            .collect::<Result<_>>()?;
+
+        Span::current().record("lease_count", leases.len());
+        Ok(leases)
     }
 
     pub(crate) fn has_active_lease_in(
@@ -509,6 +518,7 @@ fn offset_key(ns_id: NamespaceId, partition: Partition, cg: &ConsumerGroup) -> V
 pub(crate) struct OffsetRow;
 
 impl OffsetRow {
+    #[tracing::instrument(skip_all, level = "debug", fields(partition = partition.get()))]
     pub(crate) fn fetch(
         state: &State,
         ns_id: NamespaceId,
