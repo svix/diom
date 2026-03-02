@@ -8,7 +8,10 @@ use axum::{Extension, extract::State};
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, ResultExt};
 use diom_kv::KvStore;
-use diom_namespace::entities::StorageType;
+use diom_namespace::{
+    Namespace,
+    entities::{KeyValueConfig, StorageType},
+};
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -27,6 +30,8 @@ use crate::{
 
 // Re-export types that are used in AppState
 pub use crate::v1::modules::kv::{KvStore as KvStoreType, worker};
+
+pub type KvNamespace = Namespace<KeyValueConfig>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetIn {
@@ -180,9 +185,9 @@ async fn kv_get_namespace(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<KvGetNamespaceOut>> {
-    let namespace = state
+    let namespace: KvNamespace = state
         .namespace_state
-        .fetch_kv_namespace(&data.name)?
+        .fetch_namespace(Some(&data.name))?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     Ok(MsgPackOrJson(KvGetNamespaceOut {
