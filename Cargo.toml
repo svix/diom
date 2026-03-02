@@ -175,7 +175,7 @@ lru = "0.16.3"
 mimalloc = "0.1.48"
 mime = "0.3"
 num_enum = "0.7.2"
-openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "5bad797d6d505038c7f595dcda69bbed4dcf8f1a" }
+openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "a4aaca8f999c71713963301b289289b0662840c1" }
 openraft = { version = "0.9.21", features = ["tracing-log", "anyhow", "serde", "storage-v2"] }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"

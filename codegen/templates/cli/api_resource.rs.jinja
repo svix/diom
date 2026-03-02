@@ -49,7 +49,11 @@ pub enum {{ resource_type_name }}Commands {
                     {% if field.description is defined -%}
                         {{ field.description | to_doc_comment(style="rust") }}
                     {% endif -%}
-                    {{ field.name | to_snake_case }}: {{ field.type.to_rust() }},
+                    {% set field_ty = field.type.to_rust() -%}
+                    {% if field.type.is_bytes() -%}
+                        {% set field_ty = "String" -%}
+                    {% endif -%}
+                    {{ field.name | to_snake_case }}: {{ field_ty }},
                 {% endif -%}
                 {% endfor -%}
 
@@ -123,7 +127,8 @@ impl {{ resource_type_name }}Commands {
                                 {% set body_schema = api.types[op.request_body_schema_name] -%}
                                 {% for field in body_schema.fields -%}
                                 {% if field.positional -%}
-                                    {{ field.name | to_snake_case }},
+                                    {{ field.name | to_snake_case }}
+                                    {%- if field.type.is_bytes() %}.into(){% endif -%},
                                 {% endif -%}
                                 {% endfor -%}
 
