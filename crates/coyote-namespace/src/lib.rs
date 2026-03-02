@@ -25,13 +25,6 @@ pub fn namespace_parse_key(key: &str) -> (Option<&str>, &str) {
     }
 }
 
-pub fn namespace_name(key: &str) -> &str {
-    match namespace_parse_key(key) {
-        (Some(ns), _) => ns,
-        _ => DEFAULT_NAMESPACE_NAME,
-    }
-}
-
 #[derive(Clone)]
 pub struct State {
     db: fjall::Database,
@@ -132,14 +125,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_namespace_name() {
-        assert_eq!(namespace_name("tom:bar"), "tom");
-        assert_eq!(namespace_name("tom:bar/baz"), "tom");
-        assert_eq!(namespace_name("bill"), DEFAULT_NAMESPACE_NAME);
-        assert_eq!(namespace_name(":bar"), DEFAULT_NAMESPACE_NAME);
+    fn test_namespace_parse_key() {
+        assert_eq!(namespace_parse_key("tom:bar"), (Some("tom"), "bar"));
+        assert_eq!(namespace_parse_key("tom:bar/baz"), (Some("tom"), "bar/baz"));
+        assert_eq!(namespace_parse_key("bill"), (None, "bill"));
+        assert_eq!(namespace_parse_key(":bar"), (None, "bar"));
         assert_eq!(
-            namespace_name(&format!("{DEFAULT_NAMESPACE_NAME}:bar")),
-            DEFAULT_NAMESPACE_NAME
+            namespace_parse_key(&format!("{DEFAULT_NAMESPACE_NAME}:bar")),
+            (None, "bar")
         );
     }
 }
