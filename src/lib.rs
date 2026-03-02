@@ -17,7 +17,7 @@ use cfg::ConfigurationInner;
 use coyote_error::{Error, HttpError, Result};
 use coyote_kv::KvStore;
 use coyote_namespace::{
-    BothDatabases,
+    BothDatabases, DEFAULT_NAMESPACE_NAME,
     entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
     parse_namespace,
 };
@@ -217,7 +217,7 @@ impl AppState {
             .try_get_or_insert(ns_name.map(|s| s.to_string()), || -> Result<KvStore> {
                 let namespace = self
                     .namespace_state
-                    .fetch_namespace::<C>(ns_name)?
+                    .fetch_namespace::<C>(ns_name.unwrap_or(DEFAULT_NAMESPACE_NAME))?
                     .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
                 let policy = namespace.config.eviction_policy();
