@@ -18,6 +18,7 @@ schemars.workspace = true
 serde.workspace = true
 static_assertions.workspace = true
 stream-internals.workspace = true
+tracing.workspace = true
 validator.workspace = true
 
 [lints]
