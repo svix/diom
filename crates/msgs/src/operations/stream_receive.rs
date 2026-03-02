@@ -101,9 +101,9 @@ impl StreamReceiveOperation {
             }
         }
 
-        let span = Span::current();
-        span.record("partition_count", partition_count);
-        span.record("partitions_eligible", partitions.len());
+        Span::current()
+            .record("partition_count", partition_count)
+            .record("partitions_eligible", partitions.len());
 
         Ok(Self {
             namespace_id,
