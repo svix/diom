@@ -1,7 +1,9 @@
 use std::{
     borrow::Cow,
+    collections::BTreeMap,
     fmt::Debug,
     ops::{Bound, RangeBounds},
+    sync::Arc,
 };
 
 use anyhow::Context;
@@ -12,6 +14,7 @@ use openraft::{
     Entry, LogId, OptionalSend, RaftLogReader, RaftTypeConfig, StorageError, Vote,
     storage::{LogFlushed, RaftLogStorage},
 };
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tracing::Span;
@@ -25,12 +28,88 @@ type StorageResult<T> = Result<T, StorageError<NodeId>>;
 
 type LogEntry = <TypeConfig as RaftTypeConfig>::Entry;
 
+#[derive(Debug)]
+struct LogCacheInner {
+    inner: BTreeMap<u64, LogEntry>,
+    capacity: usize,
+}
+
+impl LogCacheInner {
+    fn new(capacity: usize) -> Self {
+        Self {
+            inner: BTreeMap::new(),
+            capacity,
+        }
+    }
+
+    fn push(&mut self, entry: LogEntry) {
+        while self.inner.len() >= self.capacity {
+            self.inner.pop_first();
+        }
+        self.inner.insert(entry.log_id.index, entry);
+    }
+
+    fn purge(&mut self, log_index: u64) {
+        // https://github.com/rust-lang/rust/issues/81074
+        let keys = self
+            .inner
+            .range(..=log_index)
+            .map(|(k, _v)| *k)
+            .collect::<Vec<_>>();
+        for key in keys {
+            self.inner.remove(&key);
+        }
+    }
+
+    fn truncate(&mut self, log_index: u64) {
+        // https://github.com/rust-lang/rust/issues/81074
+        let keys = self
+            .inner
+            .range(log_index..)
+            .map(|(k, _v)| *k)
+            .collect::<Vec<_>>();
+        for key in keys {
+            self.inner.remove(&key);
+        }
+    }
+
+    fn get(&self, log_index: &u64) -> Option<&LogEntry> {
+        self.inner.get(&log_index)
+    }
+}
+
+#[derive(Clone)]
+struct LogCache(Arc<Mutex<LogCacheInner>>);
+
+impl LogCache {
+    fn new(capacity: usize) -> Self {
+        Self(Arc::new(Mutex::new(LogCacheInner::new(capacity))))
+    }
+
+    fn push(&self, entry: LogEntry) {
+        self.0.lock().push(entry)
+    }
+
+    fn purge(&self, log_index: u64) {
+        self.0.lock().purge(log_index)
+    }
+
+    fn truncate(&self, log_index: u64) {
+        self.0.lock().truncate(log_index);
+    }
+
+    fn get(&self, log_index: &u64) -> Option<LogEntry> {
+        self.0.lock().get(log_index).map(|e| e.clone())
+    }
+}
+
 #[derive(Clone)]
 pub struct DiomLogs {
     db: Database,
     meta_keyspace: Keyspace,
     log_keyspace: Keyspace,
     flush_tx: tokio::sync::mpsc::Sender<LogFlushed<TypeConfig>>,
+    log_cache: LogCache,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -269,6 +348,7 @@ impl DiomLogs {
             log_keyspace,
             meta_keyspace,
             flush_tx,
+            log_cache: LogCache::new(100),
         })
     }
 
@@ -323,11 +403,10 @@ impl DiomLogs {
         let keyspace = self.log_keyspace.clone();
         let mut batch = fjall::OwnedWriteBatch::with_capacity(self.db.clone(), entries.len())
             .durability(Some(PersistMode::Buffer));
+        let persisted_entries = entries.clone();
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             let _guard = tracing::info_span!("append:write_entries").entered();
-            let keys = entries.iter().map(|entry| entry.log_id).collect::<Vec<_>>();
-            tracing::trace!(?keys, "appending some entries");
-            for entry in entries {
+            for entry in persisted_entries {
                 let (k, v) = Log(entry).to_fjall_entry()?;
                 batch.insert(&keyspace, k, v);
             }
@@ -341,11 +420,16 @@ impl DiomLogs {
             .await
             .context("requesting background fsync")?;
 
+        for entry in entries {
+            self.log_cache.push(entry);
+        }
+
         Ok(())
     }
 
     /// Truncate logs since log_id, inclusive
     async fn truncate_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
+        self.log_cache.truncate(log_id.index);
         let log_keyspace = self.log_keyspace.clone();
         let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
@@ -360,6 +444,7 @@ impl DiomLogs {
 
     /// Purge logs upto log_id, inclusive
     async fn purge_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
+        self.log_cache.purge(log_id.index);
         let meta_keyspace = self.meta_keyspace.clone();
         let log_keyspace = self.log_keyspace.clone();
         let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
@@ -399,6 +484,18 @@ impl DiomLogs {
         RB: RangeBounds<u64> + Clone + Debug + OptionalSend,
     {
         let log_keyspace = self.log_keyspace.clone();
+        // the most common case is that we just wrote a log entry in append_entries_ and now we're
+        // reading it out to apply it. we don't need to go to disk for that!
+        match (range.start_bound(), range.end_bound()) {
+            (Bound::Included(i), Bound::Excluded(j)) if i + 1 == *j => {
+                tracing::trace!("short-circuiting for single-log read");
+                if let Some(entry) = self.log_cache.get(i) {
+                    return Ok(vec![entry]);
+                }
+            }
+            _ => {}
+        }
+
         // For some reason, RB isn't specified as Send in the trait, so we can't
         // use it directly across the boundary. ARGH!
         let send_range = match range.start_bound() {
