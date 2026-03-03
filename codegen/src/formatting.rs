@@ -1,8 +1,8 @@
-use std::{io, process::ExitCode};
+use std::process::ExitCode;
 
 use futures_lite::future;
 
-use crate::utils::{ContainerizedFormatter, exec};
+use crate::{go::format_go_client, python::format_python_client, rust::format_rust_clients};
 
 pub(crate) fn run() -> ExitCode {
     let (r1, (r2, r3)) = async_io::block_on(future::zip(
@@ -18,42 +18,4 @@ pub(crate) fn run() -> ExitCode {
     }
 
     exit_code
-}
-
-async fn format_rust_clients() -> io::Result<()> {
-    exec(
-        "cargo",
-        [
-            "+nightly",
-            "fmt",
-            "--package=coyote-client",
-            "--package=coyote-cli",
-        ],
-    )
-    .await?;
-    Ok(())
-}
-
-async fn format_go_client() -> io::Result<()> {
-    ContainerizedFormatter {
-        container: "goimports",
-        mounts: &[("clients/go", "/go/coyote")],
-        cmd: &["goimports", "-w", "/go/coyote"],
-    }
-    .run()
-    .await
-}
-
-async fn format_python_client() -> io::Result<()> {
-    ContainerizedFormatter {
-        container: "ruff",
-        mounts: &[("clients/python", "/clients/python")],
-        cmd: &[
-            "sh",
-            "-c",
-            "ruff check --fix /clients/python/coyote && ruff format /clients/python/coyote",
-        ],
-    }
-    .run()
-    .await
 }
