@@ -18,6 +18,7 @@ module "edge" {
   aws_region    = module.net.aws_region
   vpc_id        = module.net.vpc_id
   dns_zone_arns = module.net.dns_zone_arns
+  dns_zone_name = module.net.dns_zone_name
 
   k8s_cluster_name      = module.eks.cluster_name
   k8s_cluster_endpoint  = module.eks.cluster_endpoint

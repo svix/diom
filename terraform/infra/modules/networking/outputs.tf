@@ -35,3 +35,7 @@ output "eks_subnet_ids" {
 output "dns_zone_arns" {
   value = local.zone_arns
 }
+
+output "dns_zone_name" {
+  value = aws_route53_zone.ep_zone.name
+}

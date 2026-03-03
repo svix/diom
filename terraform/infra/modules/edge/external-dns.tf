@@ -48,9 +48,25 @@ resource "helm_release" "external_dns" {
 
   values = [
     yamlencode({
+      fullnameOverride = "${var.name_prefix}-external-dns"
+
+      txtOwnerId = "${var.name_prefix}-ext-dns"
+
+      sources = [
+        "ingress",
+        "service"
+      ]
+
+      provider = {
+        name = "aws"
+      }
+
       domainFilters = [
         var.k8s_cluster_name
       ]
+
+      logLevel = "debug"
+
 
       serviceAccount = {
         create = false,
