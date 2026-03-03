@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::BTreeMap,
     fmt::Debug,
     ops::{Bound, RangeBounds},
@@ -120,25 +119,16 @@ struct Log(LogEntry);
 impl TableRow for Log {
     const TABLE_PREFIX: &str = "log";
     type Key = u64;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Owned(self.0.log_id.index)
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LogIndex {
-    unix_timestamp_millis: u64,
     log_id: u64,
 }
 
 impl TableRow for LogIndex {
     const TABLE_PREFIX: &str = "timestamps";
     type Key = u64;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Owned(self.unix_timestamp_millis)
-    }
 }
 
 impl RaftLogReader<TypeConfig> for CoyoteLogs {
@@ -309,7 +299,7 @@ async fn flush_worker(
                     done = true
                 },
                 _ = ticker.tick() => {
-                    sync_now = pending.len() > 0
+                    sync_now = !pending.is_empty()
                 }
             }
 
@@ -330,10 +320,8 @@ async fn flush_worker(
                 .await
                 .expect("failed joining blocking task");
                 tracing::info_span!("logs:flush_worker:drain").in_scope(|| {
-                    for item in pending.drain(..) {
-                        if let Some(callback) = item {
-                            callback.log_io_completed(result.clone().map_err(std::io::Error::other))
-                        }
+                    for callback in pending.drain(..).flatten() {
+                        callback.log_io_completed(result.clone().map_err(std::io::Error::other))
                     }
                 });
             }
@@ -388,12 +376,11 @@ impl CoyoteLogs {
         timestamp: Timestamp,
         log_index: u64,
     ) -> anyhow::Result<()> {
-        let rec = LogIndex {
-            unix_timestamp_millis: timestamp.as_millisecond() as u64,
-            log_id: log_index,
-        };
+        let ts_millis = timestamp.as_millisecond() as u64;
+        let rec = LogIndex { log_id: log_index };
         tracing::debug!(?rec, "recording log/timestamp checkpoint");
-        let (k, v) = rec.to_fjall_entry()?;
+        let k = LogIndex::make_fjall_key(&ts_millis);
+        let v = rec.to_fjall_value()?;
         let keyspace = self.log_keyspace.clone();
         spawn_blocking_in_current_span(move || -> fjall::Result<()> { keyspace.insert(k, v) })
             .await??;
@@ -438,7 +425,9 @@ impl CoyoteLogs {
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             let _guard = tracing::info_span!("append:write_entries").entered();
             for entry in persisted_entries {
-                let (k, v) = Log(entry).to_fjall_entry()?;
+                let log = Log(entry);
+                let k = Log::make_fjall_key(&log.0.log_id.index);
+                let v = log.to_fjall_value()?;
                 batch.insert(&keyspace, k, v);
             }
             batch.commit()?;

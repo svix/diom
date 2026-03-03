@@ -3,11 +3,12 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use coyote_error::Error;
+use fjall_utils::{TableRow, WriteBatchExt};
 
 use crate::{
     State,
     entities::{ConsumerGroup, Offset, TopicPartition},
-    tables::{StreamLeaseRow, TableRow, TopicRow},
+    tables::{StreamLeaseRow, TopicRow},
 };
 
 use super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
@@ -42,25 +43,19 @@ impl StreamCommitOperation {
         let mut batch = state.db.batch();
         let topic = self.topic;
 
-        let topic_row = TopicRow::fetch(&state.metadata_tables, self.namespace_id, &topic.raw)?
+        let topic_key = TopicRow::key_for(self.namespace_id, &topic.raw);
+        let topic_row = TopicRow::fetch(&state.metadata_tables, &topic_key)?
             .ok_or_else(|| Error::invalid_user_input("partition must exist"))?;
 
-        let mut lease = StreamLeaseRow::fetch(
-            &state.metadata_tables,
-            topic_row.id,
-            topic.partition,
-            &self.consumer_group,
-        )?
-        .ok_or_else(|| Error::invalid_user_input("lease not found"))?;
+        let lease_key =
+            StreamLeaseRow::key_for(topic_row.id, topic.partition, &self.consumer_group);
+        let mut lease = StreamLeaseRow::fetch(&state.metadata_tables, &lease_key)?
+            .ok_or_else(|| Error::invalid_user_input("lease not found"))?;
 
         lease.offset = self.offset + 1;
         lease.expiry = Timestamp::MIN;
 
-        batch.insert(
-            &state.metadata_tables,
-            StreamLeaseRow::construct_key(topic_row.id, topic.partition, &self.consumer_group),
-            lease.to_fjall_value()?,
-        );
+        batch.insert_row(&state.metadata_tables, &lease_key, &lease)?;
 
         batch.commit().map_err(Error::from)?;
 

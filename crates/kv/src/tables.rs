@@ -13,7 +13,6 @@ static_assertions::const_assert!(fjall_utils::are_all_unique(&[
 
 #[derive(Serialize, Deserialize)]
 pub struct KvPairRow {
-    pub key: String,
     pub value: Vec<u8>,
     pub expiry: Option<Timestamp>,
 }
@@ -21,28 +20,17 @@ pub struct KvPairRow {
 impl TableRow for KvPairRow {
     const TABLE_PREFIX: &'static str = "_KV_PAIR_";
     type Key = String;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
-    }
 }
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ExpirationRow {
     pub expiry: Timestamp,
     pub key: String,
-
-    #[serde(skip)]
-    computed_key: ExpirationKey,
 }
 
 impl ExpirationRow {
     pub(crate) fn new(expiry: Timestamp, key: String) -> Self {
-        Self {
-            computed_key: ExpirationKey::from(expiry, key.clone()),
-            expiry,
-            key,
-        }
+        Self { expiry, key }
     }
 }
 
@@ -74,10 +62,5 @@ impl TableKey for ExpirationKey {
 
 impl TableRow for ExpirationRow {
     const TABLE_PREFIX: &'static str = "_KV_EXP_";
-
     type Key = ExpirationKey;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.computed_key)
-    }
 }

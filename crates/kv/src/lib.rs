@@ -18,7 +18,7 @@ pub mod operations;
 
 use crate::{
     operations::{DeleteOperation, SetOperation},
-    tables::{ExpirationRow, KvPairRow},
+    tables::{ExpirationKey, ExpirationRow, KvPairRow},
 };
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
@@ -115,16 +115,16 @@ impl KvStore {
         let mut batch = self.db.batch();
 
         let row = KvPairRow {
-            key: key.to_string(),
             value: model.value.clone(),
             expiry: model.expiry,
         };
 
-        batch.insert_row(&self.tables, &row)?;
+        batch.insert_row(&self.tables, &key.to_string(), &row)?;
 
         if let Some(expiry) = model.expiry {
+            let exp_key = ExpirationKey::from(expiry, key.to_string());
             let expiration_row = ExpirationRow::new(expiry, key.to_string());
-            batch.insert_row(&self.tables, &expiration_row)?;
+            batch.insert_row(&self.tables, &exp_key, &expiration_row)?;
         }
 
         batch.commit()?;
@@ -181,8 +181,8 @@ impl KvStore {
         if let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? {
             // Delete from the expiration keyspace
             if let Some(expiry) = data.expiry {
-                let r = ExpirationRow::new(expiry, key.to_string());
-                batch.remove_row::<ExpirationRow>(&self.tables, r.get_key().as_ref())?;
+                let exp_key = ExpirationKey::from(expiry, key.to_string());
+                batch.remove_row::<ExpirationRow>(&self.tables, &exp_key)?;
             }
             batch.remove_row::<KvPairRow>(&self.tables, &key.to_string())?;
         }

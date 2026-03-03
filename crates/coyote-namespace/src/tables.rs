@@ -1,4 +1,4 @@
-use std::{borrow::Cow, num::NonZeroU64};
+use std::num::NonZeroU64;
 
 use coyote_error::Result;
 use fjall::Keyspace;
@@ -27,10 +27,6 @@ pub struct Namespace<C: ModuleConfig> {
 impl<C: ModuleConfig> TableRow for Namespace<C> {
     const TABLE_PREFIX: &'static str = "";
     type Key = Vec<u8>;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Owned(Self::key(&self.name))
-    }
 }
 
 impl<C: ModuleConfig> Namespace<C> {

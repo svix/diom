@@ -77,9 +77,6 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
 
     type Key: TableKey;
 
-    /// Return the field used for indexing into the table.
-    fn get_key(&self) -> Cow<'_, Self::Key>;
-
     fn make_fjall_key(key: &Self::Key) -> fjall::UserKey {
         let raw_key_bytes = key.as_bytes();
         let mut key_bytes = if Self::TABLE_PREFIX.is_empty() {
@@ -96,14 +93,10 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         key_bytes.into()
     }
 
-    fn to_fjall_entry(&self) -> Result<(fjall::UserKey, fjall::UserValue)> {
-        let key = Self::make_fjall_key(self.get_key().as_ref());
-        // FIXME(@svix-gabriel) - it's not clear if we're committed to using msgpack
-        // for internal serialization. Using messagepack for now, but this
-        // should be easy to change later.
-        let value = rmp_serde::to_vec_named(&self).map_err(Error::generic)?;
-
-        Ok((key, value.into()))
+    fn to_fjall_value(&self) -> Result<fjall::UserValue> {
+        rmp_serde::to_vec_named(&self)
+            .map(|bytes| bytes.into())
+            .map_err(Error::generic)
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
@@ -115,9 +108,10 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         keyspace.get(&key)?.map(Self::from_fjall_value).transpose()
     }
 
-    fn insert(keyspace: &fjall::Keyspace, row: &Self) -> Result<()> {
-        let (key, value) = row.to_fjall_entry()?;
-        keyspace.insert(key, value)?;
+    fn insert(keyspace: &fjall::Keyspace, key: &Self::Key, row: &Self) -> Result<()> {
+        let fjall_key = Self::make_fjall_key(key);
+        let value = row.to_fjall_value()?;
+        keyspace.insert(fjall_key, value)?;
         Ok(())
     }
 
@@ -257,34 +251,28 @@ where
     }
 }
 
-/// Adds convenient methods to fjall's Keyspace to work with TableRow
-pub trait KeyspaceExt {
-    fn ingest_rows<T: TableRow, I: Iterator<Item = T>>(&self, rows: I) -> Result<()>;
-}
-
-impl KeyspaceExt for fjall::Keyspace {
-    fn ingest_rows<T: TableRow, I: Iterator<Item = T>>(&self, rows: I) -> Result<()> {
-        let mut i = self.start_ingestion()?;
-        for row in rows {
-            let (k, v) = row.to_fjall_entry()?;
-            i.write(k, v)?;
-        }
-        i.finish()?;
-        Ok(())
-    }
-}
-
 /// Adds convenience methods to fjall's WriteBatch that work with TableRow
 pub trait WriteBatchExt {
-    fn insert_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, row: &T) -> Result<()>;
+    fn insert_row<T: TableRow>(
+        &mut self,
+        keyspace: &fjall::Keyspace,
+        key: &T::Key,
+        row: &T,
+    ) -> Result<()>;
 
     fn remove_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, key: &T::Key) -> Result<()>;
 }
 
 impl WriteBatchExt for fjall::OwnedWriteBatch {
-    fn insert_row<T: TableRow>(&mut self, keyspace: &fjall::Keyspace, row: &T) -> Result<()> {
-        let (key, value) = row.to_fjall_entry()?;
-        self.insert(keyspace, key, value);
+    fn insert_row<T: TableRow>(
+        &mut self,
+        keyspace: &fjall::Keyspace,
+        key: &T::Key,
+        row: &T,
+    ) -> Result<()> {
+        let fjall_key = T::make_fjall_key(key);
+        let value = row.to_fjall_value()?;
+        self.insert(keyspace, fjall_key, value);
         Ok(())
     }
 

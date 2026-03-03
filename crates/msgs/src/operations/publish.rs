@@ -5,11 +5,11 @@ use crate::{
     entities::{
         MsgIn, Offset, Partition, TopicId, TopicIn, TopicName, TopicPartition, partition_for_key,
     },
-    tables::{MsgRow, TableRow, TopicRow},
+    tables::{MsgRow, TopicRow},
 };
 use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
-use fjall::OwnedWriteBatch;
+use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
@@ -54,7 +54,8 @@ impl PublishOperation {
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
     fn apply_real(self, state: &State) -> coyote_operations::Result<PublishResponseData> {
-        let topic_row = TopicRow::fetch(&state.metadata_tables, self.namespace_id, &self.topic)?;
+        let topic_key = TopicRow::key_for(self.namespace_id, &self.topic);
+        let topic_row = TopicRow::fetch(&state.metadata_tables, &topic_key)?;
         let mut batch = state.db.batch();
 
         let topic_row = match (topic_row, self.partition) {
@@ -67,12 +68,8 @@ impl PublishOperation {
                 return Err(Error::invalid_user_input("topic does not exist").into());
             }
             (None, None) => {
-                let row = TopicRow::new(self.topic.clone(), self.now);
-                batch.insert(
-                    &state.metadata_tables,
-                    TopicRow::construct_key(self.namespace_id, &self.topic),
-                    row.to_fjall_value()?,
-                );
+                let row = TopicRow::new(self.now);
+                batch.insert_row(&state.metadata_tables, &topic_key, &row)?;
                 row
             }
         };
@@ -134,7 +131,7 @@ fn group_msgs_by_partition(
 }
 
 fn write_msg_batch(
-    batch: &mut OwnedWriteBatch,
+    batch: &mut fjall::OwnedWriteBatch,
     msg_table: &fjall::Keyspace,
     topic_name: &TopicName,
     topic_id: TopicId,
@@ -154,11 +151,8 @@ fn write_msg_batch(
                 headers: msg.headers,
                 timestamp: now,
             };
-            batch.insert(
-                msg_table,
-                MsgRow::construct_key(topic_id, partition, offset),
-                msg.to_fjall_value()?,
-            );
+            let msg_key = MsgRow::raw_key(topic_id, partition, offset);
+            batch.insert_row(msg_table, &msg_key, &msg)?;
             offset += 1;
         }
 

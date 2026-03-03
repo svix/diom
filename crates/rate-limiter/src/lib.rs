@@ -70,7 +70,6 @@ impl RateLimiter {
                 let identifier_key = identifier.to_string();
                 let mut state = FixedWindowState::fetch(&self.tables, &identifier_key)?.unwrap_or(
                     FixedWindowState {
-                        key: identifier_key.clone(),
                         count: 0,
                         window_start,
                     },
@@ -93,7 +92,7 @@ impl RateLimiter {
                 };
 
                 if update {
-                    FixedWindowState::insert(&self.tables, &state)?;
+                    FixedWindowState::insert(&self.tables, &identifier_key, &state)?;
                 }
 
                 Ok((result, remaining, retry_after))
@@ -103,7 +102,6 @@ impl RateLimiter {
                 let identifier_key = identifier.to_string();
                 let mut bucket = TokenBucketState::fetch(&self.tables, &identifier_key)?.unwrap_or(
                     TokenBucketState {
-                        key: identifier_key.clone(),
                         tokens: tb_config.bucket_size,
                         last_refill: now,
                     },
@@ -128,7 +126,7 @@ impl RateLimiter {
                 bucket.tokens = capacity - delta;
 
                 if update {
-                    TokenBucketState::insert(&self.tables, &bucket)?;
+                    TokenBucketState::insert(&self.tables, &identifier_key, &bucket)?;
                 }
 
                 Ok((RateLimitStatus::Ok, bucket.tokens, None))

@@ -6,9 +6,7 @@ mod table_row;
 pub use self::{
     fixed_key::FjallFixedKey,
     readonly_db::{ReadableDatabase, ReadableKeyspace, ReadonlyDatabase, ReadonlyKeyspace},
-    table_row::{
-        KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt,
-    },
+    table_row::{MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt},
 };
 
 /// Useful for verifying all table prefixes for a given keyspace are unique,

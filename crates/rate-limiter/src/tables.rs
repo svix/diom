@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -12,7 +10,6 @@ static_assertions::const_assert!(fjall_utils::are_all_unique(&[
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct FixedWindowState {
-    pub key: String,
     pub count: u64,
     pub window_start: Timestamp,
 }
@@ -20,15 +17,10 @@ pub struct FixedWindowState {
 impl TableRow for FixedWindowState {
     const TABLE_PREFIX: &'static str = "_FIXED_WINDOW_";
     type Key = String;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
-    }
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct TokenBucketState {
-    pub key: String,
     pub tokens: u64,
     pub last_refill: Timestamp,
 }
@@ -36,8 +28,4 @@ pub struct TokenBucketState {
 impl TableRow for TokenBucketState {
     const TABLE_PREFIX: &'static str = "_TOKEN_BUCKET_";
     type Key = String;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
-    }
 }

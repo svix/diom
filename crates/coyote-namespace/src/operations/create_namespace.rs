@@ -76,7 +76,9 @@ impl<C: ModuleConfig> CreateNamespace<C> {
         };
 
         {
-            let (k1, v1) = namespace.to_fjall_entry()?;
+            let ns_key = Namespace::<C>::key(&namespace.name);
+            let k1 = Namespace::<C>::make_fjall_key(&ns_key);
+            let v1 = namespace.to_fjall_value()?;
             let mut batch = db.batch().durability(Some(fjall::PersistMode::SyncAll));
             batch.insert(keyspace, k1, v1);
             batch.commit()?;
