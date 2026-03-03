@@ -1,5 +1,6 @@
 use axum::response::IntoResponse;
-use std::fmt::Debug;
+use opentelemetry::{Context, trace::TraceContextExt};
+use std::{collections::HashMap, fmt::Debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
@@ -26,6 +27,27 @@ pub trait ModuleResponse: Serialize + DeserializeOwned + Clone + Debug {}
 
 pub trait ModuleRequest: Serialize + DeserializeOwned + Clone + Debug {
     type Response: ModuleResponse;
+}
+
+#[derive(Default, Serialize, Deserialize, Clone, Debug)]
+pub struct OperationRequestMetadata {
+    pub trace_context: Option<HashMap<String, String>>,
+}
+
+impl From<Context> for OperationRequestMetadata {
+    fn from(ctx: Context) -> Self {
+        let span = ctx.span();
+        let span_ctx = span.span_context();
+        let traceparent = format!(
+            "00-{}-{}-{}",
+            span_ctx.trace_id(),
+            span_ctx.span_id(),
+            span_ctx.trace_flags().to_u8(),
+        );
+        OperationRequestMetadata {
+            trace_context: Some(HashMap::from([("traceparent".to_string(), traceparent)])),
+        }
+    }
 }
 
 /// diom_error::Error isn't Serialize or Deserialize, and can contain arbitrary
