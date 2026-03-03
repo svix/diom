@@ -47,7 +47,7 @@ class KvAsync(ApiBase):
     async def get(
         self,
         key: str,
-        kv_get_in: KvGetIn,
+        kv_get_in: KvGetIn = KvGetIn(),
     ) -> KvGetOut:
         """KV Get"""
         body = _KvGetIn(
@@ -64,7 +64,7 @@ class KvAsync(ApiBase):
     async def delete(
         self,
         key: str,
-        kv_delete_in: KvDeleteIn,
+        kv_delete_in: KvDeleteIn = KvDeleteIn(),
     ) -> KvDeleteOut:
         """KV Delete"""
         body = _KvDeleteIn(
@@ -107,7 +107,7 @@ class Kv(ApiBase):
     def get(
         self,
         key: str,
-        kv_get_in: KvGetIn,
+        kv_get_in: KvGetIn = KvGetIn(),
     ) -> KvGetOut:
         """KV Get"""
         body = _KvGetIn(
@@ -124,7 +124,7 @@ class Kv(ApiBase):
     def delete(
         self,
         key: str,
-        kv_delete_in: KvDeleteIn,
+        kv_delete_in: KvDeleteIn = KvDeleteIn(),
     ) -> KvDeleteOut:
         """KV Delete"""
         body = _KvDeleteIn(

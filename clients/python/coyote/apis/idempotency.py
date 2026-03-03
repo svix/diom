@@ -21,7 +21,7 @@ class IdempotencyAsync(ApiBase):
     async def abort(
         self,
         key: str,
-        idempotency_abort_in: IdempotencyAbortIn,
+        idempotency_abort_in: IdempotencyAbortIn = IdempotencyAbortIn(),
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
         body = _IdempotencyAbortIn(
@@ -44,7 +44,7 @@ class Idempotency(ApiBase):
     def abort(
         self,
         key: str,
-        idempotency_abort_in: IdempotencyAbortIn,
+        idempotency_abort_in: IdempotencyAbortIn = IdempotencyAbortIn(),
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
         body = _IdempotencyAbortIn(
