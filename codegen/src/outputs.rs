@@ -1,3 +1,5 @@
+use crate::utils::OutputDirectory;
+
 /// Map of output directory => list of templates that should write there.
 pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     // CLI
@@ -73,30 +75,3 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
         ],
     ),
 ];
-
-pub(crate) struct OutputDirectory {
-    pub path: &'static str,
-    pub templates: &'static [&'static str],
-    /// Whether the directory is managed by codegen.
-    ///
-    /// If this is `true`, the directory will be emptied before generating code.
-    pub managed: bool,
-}
-
-impl OutputDirectory {
-    const fn managed_dir(path: &'static str, templates: &'static [&'static str]) -> Self {
-        Self {
-            path,
-            templates,
-            managed: true,
-        }
-    }
-
-    const fn unmanaged_dir(path: &'static str, templates: &'static [&'static str]) -> Self {
-        Self {
-            path,
-            templates,
-            managed: false,
-        }
-    }
-}
