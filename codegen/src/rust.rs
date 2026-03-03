@@ -1,6 +1,6 @@
-use std::io;
+use openapi_codegen::api::Api;
 
-use crate::utils::{OutputDirectory, exec};
+use crate::utils::{OutputDirectory, exec, generate_outputs};
 
 /// Map of output directory => list of templates that should write there.
 pub(crate) const OUTPUTS: &[OutputDirectory] = &[
@@ -23,7 +23,9 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     ),
 ];
 
-pub(crate) async fn format_rust_clients() -> io::Result<()> {
+pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {
+    generate_outputs(api, OUTPUTS)?;
+
     exec(
         "cargo",
         [
@@ -34,5 +36,6 @@ pub(crate) async fn format_rust_clients() -> io::Result<()> {
         ],
     )
     .await?;
+
     Ok(())
 }

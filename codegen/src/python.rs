@@ -1,6 +1,6 @@
-use std::io;
+use openapi_codegen::api::Api;
 
-use crate::utils::{ContainerizedFormatter, OutputDirectory};
+use crate::utils::{ContainerizedFormatter, OutputDirectory, generate_outputs};
 
 /// Map of output directory => list of templates that should write there.
 pub(crate) const OUTPUTS: &[OutputDirectory] = &[
@@ -21,7 +21,9 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     ),
 ];
 
-pub(crate) async fn format_python_client() -> io::Result<()> {
+pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {
+    generate_outputs(api, OUTPUTS)?;
+
     ContainerizedFormatter {
         container: "ruff",
         mounts: &[("clients/python", "/clients/python")],
@@ -32,5 +34,7 @@ pub(crate) async fn format_python_client() -> io::Result<()> {
         ],
     }
     .run()
-    .await
+    .await?;
+
+    Ok(())
 }

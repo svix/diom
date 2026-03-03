@@ -1,6 +1,6 @@
-use std::io;
+use openapi_codegen::api::Api;
 
-use crate::utils::{ContainerizedFormatter, OutputDirectory};
+use crate::utils::{ContainerizedFormatter, OutputDirectory, generate_outputs};
 
 /// Map of output directory => list of templates that should write there.
 pub(crate) const OUTPUTS: &[OutputDirectory] = &[
@@ -18,12 +18,16 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     OutputDirectory::managed_dir("clients/go/internal/apis", &["go/api_resource.go.jinja"]),
 ];
 
-pub(crate) async fn format_go_client() -> io::Result<()> {
+pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {
+    generate_outputs(api, OUTPUTS)?;
+
     ContainerizedFormatter {
         container: "goimports",
         mounts: &[("clients/go", "/go/coyote")],
         cmd: &["goimports", "-w", "/go/coyote"],
     }
     .run()
-    .await
+    .await?;
+
+    Ok(())
 }

@@ -1,15 +1,15 @@
-use std::{collections::BTreeSet, fs, io, path::Path, process::ExitCode};
+use std::{collections::BTreeSet, fs, path::Path, process::ExitCode};
 
-use anyhow::{Context as _, anyhow};
+use anyhow::Context as _;
 use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
-mod formatting;
 mod go;
 mod java;
 mod javascript;
 mod python;
 mod rust;
+#[macro_use]
 mod utils;
 
 fn main() -> anyhow::Result<ExitCode> {
@@ -64,33 +64,21 @@ fn main() -> anyhow::Result<ExitCode> {
         &BTreeSet::new(),
     )?;
 
-    for output_dir in [
-        go::OUTPUTS,
-        java::OUTPUTS,
-        javascript::OUTPUTS,
-        python::OUTPUTS,
-        rust::OUTPUTS,
-    ]
-    .into_iter()
-    .flatten()
-    {
-        if output_dir.managed {
-            let res = fs::remove_dir_all(output_dir.path);
-            if let Err(e) = res
-                && e.kind() != io::ErrorKind::NotFound
-            {
-                let context = format!("clearing managed directory `{}`", output_dir.path);
-                return Err(anyhow!(e).context(context));
-            }
-        }
-
-        for &template in output_dir.templates {
-            let tpl_name = format!("codegen/templates/{template}");
-            openapi_codegen::generate(&api, tpl_name, output_dir.path.into(), true)?;
+    let results = async_io::block_on(future_zip!(
+        go::generate(&api),
+        java::generate(&api),
+        javascript::generate(&api),
+        python::generate(&api),
+        rust::generate(&api),
+    ));
+    let mut exit_code = ExitCode::SUCCESS;
+    for result in results {
+        if let Err(e) = result {
+            eprintln!("{e}\n");
+            exit_code = ExitCode::FAILURE;
         }
     }
 
-    let exit_code = formatting::run();
     Ok(exit_code)
 }
 
