@@ -8,14 +8,22 @@ from ..models import (
     MsgNamespaceGetOut,
 )
 
+from ..models.msg_namespace_create_in import _MsgNamespaceCreateIn
+from ..models.msg_namespace_get_in import _MsgNamespaceGetIn
+
 
 class MsgsNamespaceAsync(ApiBase):
     async def create(
         self,
-        msg_namespace_create_in: MsgNamespaceCreateIn,
+        name: str,
+        msg_namespace_create_in: MsgNamespaceCreateIn = MsgNamespaceCreateIn(),
     ) -> MsgNamespaceCreateOut:
         """Creates or updates a msgs namespace with the given name."""
-        body = msg_namespace_create_in.model_dump(exclude_none=True)
+        body = _MsgNamespaceCreateIn(
+            name=name,
+            retention=msg_namespace_create_in.retention,
+            storage_type=msg_namespace_create_in.storage_type,
+        ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -26,10 +34,13 @@ class MsgsNamespaceAsync(ApiBase):
 
     async def get(
         self,
-        msg_namespace_get_in: MsgNamespaceGetIn,
+        name: str,
+        msg_namespace_get_in: MsgNamespaceGetIn = MsgNamespaceGetIn(),
     ) -> MsgNamespaceGetOut:
         """Gets a msgs namespace by name."""
-        body = msg_namespace_get_in.model_dump(exclude_none=True)
+        body = _MsgNamespaceGetIn(
+            name=name,
+        ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -42,10 +53,15 @@ class MsgsNamespaceAsync(ApiBase):
 class MsgsNamespace(ApiBase):
     def create(
         self,
-        msg_namespace_create_in: MsgNamespaceCreateIn,
+        name: str,
+        msg_namespace_create_in: MsgNamespaceCreateIn = MsgNamespaceCreateIn(),
     ) -> MsgNamespaceCreateOut:
         """Creates or updates a msgs namespace with the given name."""
-        body = msg_namespace_create_in.model_dump(exclude_none=True)
+        body = _MsgNamespaceCreateIn(
+            name=name,
+            retention=msg_namespace_create_in.retention,
+            storage_type=msg_namespace_create_in.storage_type,
+        ).model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -56,10 +72,13 @@ class MsgsNamespace(ApiBase):
 
     def get(
         self,
-        msg_namespace_get_in: MsgNamespaceGetIn,
+        name: str,
+        msg_namespace_get_in: MsgNamespaceGetIn = MsgNamespaceGetIn(),
     ) -> MsgNamespaceGetOut:
         """Gets a msgs namespace by name."""
-        body = msg_namespace_get_in.model_dump(exclude_none=True)
+        body = _MsgNamespaceGetIn(
+            name=name,
+        ).model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",

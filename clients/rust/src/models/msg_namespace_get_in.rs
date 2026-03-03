@@ -1,13 +1,16 @@
 // this file is @generated
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct MsgNamespaceGetIn {
-    pub name: String,
-}
+#[derive(Clone, Debug, Deserialize)]
+pub struct MsgNamespaceGetIn {}
 
 impl MsgNamespaceGetIn {
-    pub fn new(name: String) -> Self {
-        Self { name }
+    pub fn new() -> Self {
+        Self {}
     }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub(crate) struct MsgNamespaceGetIn_ {
+    pub name: String,
 }

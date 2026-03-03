@@ -18,6 +18,8 @@ from .msgs_topic import (
     MsgsTopicAsync,
 )
 
+from ..models.msg_publish_in import _MsgPublishIn
+
 
 class MsgsAsync(ApiBase):
     @property
@@ -34,10 +36,14 @@ class MsgsAsync(ApiBase):
 
     async def publish(
         self,
+        topic: str,
         msg_publish_in: MsgPublishIn,
     ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
-        body = msg_publish_in.model_dump(exclude_none=True)
+        body = _MsgPublishIn(
+            topic=topic,
+            msgs=msg_publish_in.msgs,
+        ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -62,10 +68,14 @@ class Msgs(ApiBase):
 
     def publish(
         self,
+        topic: str,
         msg_publish_in: MsgPublishIn,
     ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
-        body = msg_publish_in.model_dump(exclude_none=True)
+        body = _MsgPublishIn(
+            topic=topic,
+            msgs=msg_publish_in.msgs,
+        ).model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",

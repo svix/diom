@@ -10,6 +10,8 @@ from .idempotency_namespace import (
     IdempotencyNamespaceAsync,
 )
 
+from ..models.idempotency_abort_in import _IdempotencyAbortIn
+
 
 class IdempotencyAsync(ApiBase):
     @property
@@ -18,10 +20,13 @@ class IdempotencyAsync(ApiBase):
 
     async def abort(
         self,
-        idempotency_abort_in: IdempotencyAbortIn,
+        key: str,
+        idempotency_abort_in: IdempotencyAbortIn = IdempotencyAbortIn(),
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
-        body = idempotency_abort_in.model_dump(exclude_none=True)
+        body = _IdempotencyAbortIn(
+            key=key,
+        ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -38,10 +43,13 @@ class Idempotency(ApiBase):
 
     def abort(
         self,
-        idempotency_abort_in: IdempotencyAbortIn,
+        key: str,
+        idempotency_abort_in: IdempotencyAbortIn = IdempotencyAbortIn(),
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
-        body = idempotency_abort_in.model_dump(exclude_none=True)
+        body = _IdempotencyAbortIn(
+            key=key,
+        ).model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",

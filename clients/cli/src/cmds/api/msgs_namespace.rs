@@ -13,10 +13,12 @@ pub struct MsgsNamespaceArgs {
 pub enum MsgsNamespaceCommands {
     /// Creates or updates a msgs namespace with the given name.
     Create {
+        name: String,
         msg_namespace_create_in: crate::json::JsonOf<coyote_client::models::MsgNamespaceCreateIn>,
     },
     /// Gets a msgs namespace by name.
     Get {
+        name: String,
         msg_namespace_get_in: crate::json::JsonOf<coyote_client::models::MsgNamespaceGetIn>,
     },
 }
@@ -29,22 +31,24 @@ impl MsgsNamespaceCommands {
     ) -> anyhow::Result<()> {
         match self {
             Self::Create {
+                name,
                 msg_namespace_create_in,
             } => {
                 let resp = client
                     .msgs()
                     .namespace()
-                    .create(msg_namespace_create_in.into_inner())
+                    .create(name, msg_namespace_create_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::Get {
+                name,
                 msg_namespace_get_in,
             } => {
                 let resp = client
                     .msgs()
                     .namespace()
-                    .get(msg_namespace_get_in.into_inner())
+                    .get(name, msg_namespace_get_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

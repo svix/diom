@@ -16,14 +16,17 @@ pub enum KvCommands {
     Namespace(KvNamespaceArgs),
     /// KV Set
     Set {
+        key: String,
         kv_set_in: crate::json::JsonOf<coyote_client::models::KvSetIn>,
     },
     /// KV Get
     Get {
+        key: String,
         kv_get_in: crate::json::JsonOf<coyote_client::models::KvGetIn>,
     },
     /// KV Delete
     Delete {
+        key: String,
         kv_delete_in: crate::json::JsonOf<coyote_client::models::KvDeleteIn>,
     },
 }
@@ -38,16 +41,16 @@ impl KvCommands {
             Self::Namespace(args) => {
                 args.command.exec(client, color_mode).await?;
             }
-            Self::Set { kv_set_in } => {
-                let resp = client.kv().set(kv_set_in.into_inner()).await?;
+            Self::Set { key, kv_set_in } => {
+                let resp = client.kv().set(key, kv_set_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Get { kv_get_in } => {
-                let resp = client.kv().get(kv_get_in.into_inner()).await?;
+            Self::Get { key, kv_get_in } => {
+                let resp = client.kv().get(key, kv_get_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
-            Self::Delete { kv_delete_in } => {
-                let resp = client.kv().delete(kv_delete_in.into_inner()).await?;
+            Self::Delete { key, kv_delete_in } => {
+                let resp = client.kv().delete(key, kv_delete_in.into_inner()).await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
         }
