@@ -6,6 +6,7 @@ use std::{
 use super::{
     Node, NodeId,
     handle::{BackgroundCommand, RaftState},
+    operations::RecordLogTimestampOperation,
 };
 use crate::cfg::Configuration;
 use openraft::error::{ClientWriteError, RaftError};
@@ -28,10 +29,7 @@ impl BackgroundJob for RecordLogTimestamps {
             tracing::debug!("recording log timestamps");
             let now = jiff::Timestamp::now();
             self.handle
-                .raft
-                .client_write(super::handle::Request::ClusterInternal(
-                    super::operations::InternalRequest::RecordLogTimestamp(now),
-                ))
+                .client_write(RecordLogTimestampOperation { timestamp: now })
                 .await?;
             ticker.tick().await;
         }
