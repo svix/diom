@@ -1,7 +1,9 @@
 use std::{fmt::Write as _, io};
 
+use anyhow::anyhow;
 use async_process::{Command, Stdio};
-use fs_err as fs;
+use fs_err as fs; // FIXME: switch to async fs access?
+use openapi_codegen::api::Api;
 
 pub(crate) struct OutputDirectory {
     pub path: &'static str,
@@ -34,6 +36,27 @@ impl OutputDirectory {
             managed: false,
         }
     }
+}
+
+pub(crate) fn generate_outputs(api: &Api, directories: &[OutputDirectory]) -> anyhow::Result<()> {
+    for output_dir in directories {
+        if output_dir.managed {
+            let res = fs::remove_dir_all(output_dir.path);
+            if let Err(e) = res
+                && e.kind() != io::ErrorKind::NotFound
+            {
+                let context = format!("clearing managed directory `{}`", output_dir.path);
+                return Err(anyhow!(e).context(context));
+            }
+        }
+
+        for &template in output_dir.templates {
+            let tpl_name = format!("codegen/templates/{template}");
+            openapi_codegen::generate(api, tpl_name, output_dir.path.into(), true)?;
+        }
+    }
+
+    Ok(())
 }
 
 pub(crate) struct ContainerizedFormatter<'a> {
@@ -133,3 +156,56 @@ fn add_cmd_output(msg: &mut String, arg: &str, output: &[u8]) {
         writeln!(msg, "| {line}").unwrap();
     }
 }
+
+#[macro_export]
+macro_rules! future_zip {
+    ( $( $futures:expr ),+ $(,)? ) => {{
+        let fut = future_zip!(@zip $( $futures ),+);
+        async move {
+            $crate::utils::NestedTuple::to_array(fut.await)
+        }
+    }};
+    ( @zip $first:expr ) => { $first };
+    ( @zip $first:expr, $( $rest:expr ),+ ) => {
+        futures_lite::future::zip($first, future_zip!(@zip $($rest),+))
+    };
+}
+
+pub(crate) trait NestedTuple: Sized {
+    type Array;
+    fn to_array(self) -> Self::Array;
+}
+
+macro_rules! impl_nested_tuple {
+    ( $E1:ident: $T1:ident ) => {};
+    ( $E1:ident: $T1:ident, $( $E:ident: $T:ident ),+ $(,)? ) => {
+        impl<$T1> NestedTuple for impl_nested_tuple!(@tup $T1, $( $T ),+) {
+            type Array = [$T1; impl_nested_tuple!(@count $E1, $( $E ),+)];
+            fn to_array(self) -> Self::Array {
+                let impl_nested_tuple!(@tup $E1, $( $E ),+) = self;
+                [$E1, $( $E ),+]
+            }
+        }
+
+        impl_nested_tuple!($( $E: $T ),+);
+    };
+    ( @count $E1:ident ) => { 1 };
+    ( @count $E1:ident, $( $E:ident ),+ ) => { 1 + impl_nested_tuple!(@count $( $E ),+) };
+    ( @tup $E1:ident, $E2:ident ) => { ($E1, $E2) };
+    ( @tup $E1:ident, $( $T:ident ),+ ) => { ($E1, impl_nested_tuple!(@tup $( $T ),+)) };
+}
+
+impl_nested_tuple!(
+    e1: T,
+    e2: T,
+    e3: T,
+    e4: T,
+    e5: T,
+    e6: T,
+    e7: T,
+    e8: T,
+    e9: T,
+    e10: T,
+    e11: T,
+    e12: T,
+);

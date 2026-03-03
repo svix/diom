@@ -1,4 +1,6 @@
-use crate::utils::OutputDirectory;
+use openapi_codegen::api::Api;
+
+use crate::utils::{OutputDirectory, generate_outputs};
 
 /// Map of output directory => list of templates that should write there.
 pub(crate) const OUTPUTS: &[OutputDirectory] = &[
@@ -15,3 +17,8 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
         &["javascript/component_type.ts.jinja"],
     ),
 ];
+
+pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {
+    generate_outputs(api, OUTPUTS)?;
+    Ok(())
+}
