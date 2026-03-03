@@ -15,7 +15,7 @@ class RateLimiterAsync(ApiBase):
         rate_limiter_check_in: RateLimiterCheckIn,
     ) -> RateLimiterCheckOut:
         """Rate Limiter Check and Consume"""
-        body = rate_limiter_check_in.model_dump(exclude_unset=True, by_alias=True)
+        body = rate_limiter_check_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -29,9 +29,7 @@ class RateLimiterAsync(ApiBase):
         rate_limiter_get_remaining_in: RateLimiterGetRemainingIn,
     ) -> RateLimiterGetRemainingOut:
         """Rate Limiter Get Remaining"""
-        body = rate_limiter_get_remaining_in.model_dump(
-            exclude_unset=True, by_alias=True
-        )
+        body = rate_limiter_get_remaining_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -47,7 +45,7 @@ class RateLimiter(ApiBase):
         rate_limiter_check_in: RateLimiterCheckIn,
     ) -> RateLimiterCheckOut:
         """Rate Limiter Check and Consume"""
-        body = rate_limiter_check_in.model_dump(exclude_unset=True, by_alias=True)
+        body = rate_limiter_check_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -61,9 +59,7 @@ class RateLimiter(ApiBase):
         rate_limiter_get_remaining_in: RateLimiterGetRemainingIn,
     ) -> RateLimiterGetRemainingOut:
         """Rate Limiter Get Remaining"""
-        body = rate_limiter_get_remaining_in.model_dump(
-            exclude_unset=True, by_alias=True
-        )
+        body = rate_limiter_get_remaining_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",

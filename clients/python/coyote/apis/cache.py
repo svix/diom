@@ -27,7 +27,7 @@ class CacheAsync(ApiBase):
             key=key,
             value=cache_set_in.value,
             ttl=cache_set_in.ttl,
-        ).model_dump(exclude_unset=True, by_alias=True)
+        ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -44,7 +44,7 @@ class CacheAsync(ApiBase):
         """Cache Get"""
         body = _CacheGetIn(
             key=key,
-        ).model_dump(exclude_unset=True, by_alias=True)
+        ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -58,7 +58,7 @@ class CacheAsync(ApiBase):
         cache_get_namespace_in: CacheGetNamespaceIn,
     ) -> CacheGetNamespaceOut:
         """Get cache namespace"""
-        body = cache_get_namespace_in.model_dump(exclude_unset=True, by_alias=True)
+        body = cache_get_namespace_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -72,7 +72,7 @@ class CacheAsync(ApiBase):
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
-        body = cache_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = cache_delete_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -93,7 +93,7 @@ class Cache(ApiBase):
             key=key,
             value=cache_set_in.value,
             ttl=cache_set_in.ttl,
-        ).model_dump(exclude_unset=True, by_alias=True)
+        ).model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -110,7 +110,7 @@ class Cache(ApiBase):
         """Cache Get"""
         body = _CacheGetIn(
             key=key,
-        ).model_dump(exclude_unset=True, by_alias=True)
+        ).model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -124,7 +124,7 @@ class Cache(ApiBase):
         cache_get_namespace_in: CacheGetNamespaceIn,
     ) -> CacheGetNamespaceOut:
         """Get cache namespace"""
-        body = cache_get_namespace_in.model_dump(exclude_unset=True, by_alias=True)
+        body = cache_get_namespace_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -138,7 +138,7 @@ class Cache(ApiBase):
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
-        body = cache_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = cache_delete_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
