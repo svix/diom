@@ -2,7 +2,7 @@
 # EKS
 ################################################################################
 
-data "aws_subnet" "cayote_subnet" {
+data "aws_subnet" "diom_subnet" {
   id = var.database_subnet_ids[0]
 }
 
@@ -106,7 +106,7 @@ module "eks" {
       ami_type                       = var.app_ami_type,
       enable_efa_only                = false, # this is enabled by default and might not allow common instance types?
       use_latest_ami_release_version = true,
-      subnet_ids                     = var.database_subnet_ids
+      subnet_ids                     = [data.aws_subnet.diom_subnet.id]
 
       #ToDo: Do we want the nodes to be created close to each other in an availability zone?
       # create_placement_group         = true
