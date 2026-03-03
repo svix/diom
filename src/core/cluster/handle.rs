@@ -7,7 +7,7 @@ use super::{
     raft::Raft,
 };
 use anyhow::Context;
-use coyote_operations::{OperationRequest, OperationResponse};
+use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::Sender;
@@ -46,9 +46,16 @@ pub enum Request {
     Msgs(coyote_msgs::operations::MsgsOperation),
 }
 
-impl fmt::Display for Request {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RequestWithContext {
+    pub inner: Request,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<OperationRequestMetadata>,
+}
+
+impl fmt::Display for RequestWithContext {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
+        match self.inner {
             Request::ClusterInternal(_) => write!(f, "cluster_internal"),
             Request::Kv(_) => write!(f, "kv"),
             Request::CreateKv(_) => write!(f, "create_kv"),
@@ -58,6 +65,15 @@ impl fmt::Display for Request {
             Request::CreateCache(_) => write!(f, "create_cache"),
             Request::CreateIdempotency(_) => write!(f, "create_idempotency"),
             Request::Msgs(_) => write!(f, "msgs"),
+        }
+    }
+}
+
+impl RequestWithContext {
+    pub(crate) fn new(req: Request, ctx: Option<OperationRequestMetadata>) -> Self {
+        Self {
+            inner: req,
+            context: ctx,
         }
     }
 }
@@ -258,7 +274,9 @@ impl RaftState {
             <O as OperationRequest>::Response,
         >>::Error: fmt::Debug,
     {
-        let request = op.into().into();
+        let inner: Request = op.into().into();
+        let request =
+            RequestWithContext::new(inner, Some(opentelemetry::Context::current().into()));
         let response = match self.raft.client_write(request.clone()).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");

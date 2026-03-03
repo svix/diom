@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use openraft::{LogId, ServerState};
 use serde::{Deserialize, Serialize};
 
-use super::handle::{Request, Response};
+use super::handle::{RequestWithContext, Response};
 use crate::{cfg::PeerAddr, core::cluster::state_machine::ClusterId};
 
 use super::NodeId;
@@ -59,7 +59,7 @@ pub struct HealthResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ForwardedWriteRequest {
     pub source_node_id: NodeId,
-    pub request: Request,
+    pub request: RequestWithContext,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

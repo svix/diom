@@ -17,7 +17,7 @@ mod state_machine;
 
 pub use self::{
     app::router,
-    handle::{RaftState, Request},
+    handle::{RaftState, RequestWithContext},
     logs::CoyoteLogs,
     raft::{Raft, TypeConfig, initialize_raft},
     state_machine::Stores,
