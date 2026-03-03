@@ -11,6 +11,15 @@ terraform {
       version = "~> 3.0"
     }
 
+    kubectl = {
+      source  = "alekc/kubectl"
+      version = "~> 2.1"
+    }
+
+    helm = {
+      version = "~> 3.1"
+    }
+
     tfe = {
       version = "~> 0.73"
     }
