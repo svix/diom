@@ -120,7 +120,7 @@ variable "system_desired_node_count" {
 
 variable "app_instance_types" {
   type    = list(string)
-  default = ["t3.medium"]
+  default = ["t3.micro"]
 }
 
 variable "app_min_node_count" {
@@ -139,6 +139,31 @@ variable "app_ami_type" {
 }
 
 variable "app_desired_node_count" {
+  type    = number
+  default = 1
+}
+
+variable "db_instance_types" {
+  type    = list(string)
+  default = ["t3.medium"]
+}
+
+variable "db_min_node_count" {
+  type    = number
+  default = 1
+}
+
+variable "db_max_node_count" {
+  type    = number
+  default = 3
+}
+
+variable "db_ami_type" {
+  type    = string
+  default = "AL2023_x86_64_STANDARD" # [valid values](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType)
+}
+
+variable "db_desired_node_count" {
   type    = number
   default = 1
 }

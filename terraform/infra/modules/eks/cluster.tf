@@ -106,12 +106,12 @@ module "eks" {
       subnet_ids                     = var.private_subnet_ids
     }
     "diom-node-group-az0" = {
-      instance_types                 = var.app_instance_types,
-      min_size                       = var.app_min_node_count,
-      max_size                       = var.app_max_node_count,
-      desired_size                   = var.app_desired_node_count,
+      instance_types                 = var.db_instance_types,
+      min_size                       = var.db_min_node_count,
+      max_size                       = var.db_max_node_count,
+      desired_size                   = var.db_desired_node_count,
       kubernetes_version             = var.k8s_version
-      ami_type                       = var.app_ami_type,
+      ami_type                       = var.db_ami_type,
       enable_efa_only                = false, # this is enabled by default and might not allow common instance types?
       use_latest_ami_release_version = true,
       subnet_ids                     = [data.aws_subnet.diom_subnet.id]
@@ -200,9 +200,8 @@ data "aws_iam_policy_document" "alb_iam_policy" {
 
     resources = [
       aws_s3_bucket.alb_log_bucket.arn,
-      "${aws_s3_bucket.alb_log_bucket.arn}/api/AWSLogs/${var.account_id}/*",
-      "${aws_s3_bucket.alb_log_bucket.arn}/app/AWSLogs/${var.account_id}/*",
-      "${aws_s3_bucket.alb_log_bucket.arn}/frontend/AWSLogs/${var.account_id}/*",
+      "${aws_s3_bucket.alb_log_bucket.arn}/db/AWSLogs/${var.account_id}/*",
+      "${aws_s3_bucket.alb_log_bucket.arn}/app/AWSLogs/${var.account_id}/*"
     ]
   }
 }

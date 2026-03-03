@@ -38,6 +38,12 @@ module "eks" {
   app_desired_node_count = var.app_desired_node_count
   app_ami_type           = var.app_ami_type
 
+  db_instance_types     = var.db_instance_types
+  db_min_node_count     = var.db_min_node_count
+  db_max_node_count     = var.db_max_node_count
+  db_desired_node_count = var.db_desired_node_count
+  db_ami_type           = var.db_ami_type
+
   alb_log_expiration_days = var.alb_log_expiration_days
 
   pagerduty_service = var.pagerduty_service

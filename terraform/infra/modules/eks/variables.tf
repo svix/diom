@@ -77,6 +77,10 @@ variable "system_desired_node_count" {
   type = number
 }
 
+variable "system_ami_type" {
+  type = string
+}
+
 variable "app_instance_types" {
   type = list(string)
 }
@@ -93,15 +97,31 @@ variable "app_desired_node_count" {
   type = number
 }
 
-variable "pagerduty_service" {
-  type = string
-}
-
-variable "system_ami_type" {
-  type = string
-}
-
 variable "app_ami_type" {
+  type = string
+}
+
+variable "db_instance_types" {
+  type = list(string)
+}
+
+variable "db_min_node_count" {
+  type = number
+}
+
+variable "db_max_node_count" {
+  type = number
+}
+
+variable "db_desired_node_count" {
+  type = number
+}
+
+variable "db_ami_type" {
+  type = string
+}
+
+variable "pagerduty_service" {
   type = string
 }
 
