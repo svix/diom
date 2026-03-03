@@ -1,6 +1,9 @@
 use std::{
     collections::HashMap,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
     time::{Duration, Instant},
 };
 
@@ -311,6 +314,7 @@ trait BenchShard {
         cfg: Arc<BenchConfig>,
         barrier: Arc<Barrier>,
         pb: ProgressBar,
+        progress: Arc<AtomicU64>,
         shard_id: u64,
     ) -> Result<Self>
     where
@@ -322,7 +326,7 @@ trait BenchShard {
 
         for iteration in 0..cfg.iterations {
             self.run(&cfg.client, &mut rng, shard_id, iteration).await?;
-            pb.set_position(iteration);
+            pb.set_position(progress.fetch_add(1, Ordering::Relaxed) + 1);
         }
         Ok(self)
     }
@@ -348,12 +352,19 @@ trait BenchShard {
         let concurrency = cfg.concurrency;
         let iterations = cfg.iterations;
         let test_name = self.test_name();
-        let pb = new_bar(test_name.to_string(), iterations);
+        let pb = new_bar(test_name.to_string(), concurrency * iterations);
         let barrier = Arc::new(Barrier::new(concurrency as usize));
+        let progress = Arc::new(AtomicU64::new(0));
         let handles = (0..concurrency).map(|shard_id| {
             let pb = pb.clone();
-            self.clone()
-                .bench_shard(Arc::clone(&cfg), Arc::clone(&barrier), pb, shard_id)
+            let progress = Arc::clone(&progress);
+            self.clone().bench_shard(
+                Arc::clone(&cfg),
+                Arc::clone(&barrier),
+                pb,
+                progress,
+                shard_id,
+            )
         });
 
         let joined_handles = try_join_all(handles).await?.into_iter();
