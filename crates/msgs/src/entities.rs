@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt, ops::Deref, str::FromStr};
 
 use diom_error::Error;
-use diom_namespace::{entities::NamespaceName, parse_namespace};
+use diom_namespace::{DEFAULT_NAMESPACE_NAME, entities::NamespaceName, parse_namespace};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{
@@ -59,12 +59,12 @@ impl FromStr for Partition {
 /// `"topic"` when the namespace is the default.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TopicName {
-    namespace: Option<NamespaceName>,
+    namespace: NamespaceName,
     topic: String,
 }
 
 impl TopicName {
-    pub fn new(namespace: Option<NamespaceName>, topic: String) -> Result<Self, Error> {
+    pub fn new(namespace: NamespaceName, topic: String) -> Result<Self, Error> {
         if topic.contains(TOPIC_PARTITION_DELIMITER) {
             Err(Error::generic("invalid topic"))
         } else if topic.len() > 64 {
@@ -74,8 +74,8 @@ impl TopicName {
         }
     }
 
-    pub fn namespace(&self) -> Option<&str> {
-        self.namespace.as_ref().map(|x| &x[..])
+    pub fn namespace(&self) -> &str {
+        &self.namespace
     }
 }
 
@@ -90,8 +90,8 @@ impl Deref for TopicName {
 
 impl fmt::Display for TopicName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(namespace) = &self.namespace {
-            write!(f, "{}{}{}", namespace, NAMESPACE_DELIMITER, self.topic)
+        if self.namespace != DEFAULT_NAMESPACE_NAME {
+            write!(f, "{}{}{}", self.namespace, NAMESPACE_DELIMITER, self.topic)
         } else {
             write!(f, "{}", self.topic)
         }
@@ -114,7 +114,11 @@ impl<'de> Deserialize<'de> for TopicName {
     {
         let s = String::deserialize(deserializer)?;
         let (ns, topic) = parse_namespace(&s);
-        Self::new(ns.map(|x| x.to_owned()), topic.to_owned()).map_err(de::Error::custom)
+        Self::new(
+            ns.unwrap_or(DEFAULT_NAMESPACE_NAME).to_owned(),
+            topic.to_owned(),
+        )
+        .map_err(de::Error::custom)
     }
 }
 
@@ -143,7 +147,7 @@ impl TopicPartition {
         Self { raw, partition }
     }
 
-    pub fn namespace(&self) -> Option<&str> {
+    pub fn namespace(&self) -> &str {
         self.raw.namespace()
     }
 }
@@ -160,7 +164,10 @@ impl TryFrom<String> for TopicPartition {
             .parse()
             .map_err(|_| Error::generic("invalid partition index in topic"))?;
         let partition = Partition::new(idx)?;
-        let raw = TopicName::new(ns.map(|x| x.to_owned()), topic.to_owned())?;
+        let raw = TopicName::new(
+            ns.unwrap_or(DEFAULT_NAMESPACE_NAME).to_owned(),
+            topic.to_owned(),
+        )?;
         Ok(Self { raw, partition })
     }
 }
@@ -209,9 +216,7 @@ impl JsonSchema for TopicPartition {
 }
 
 /// Topic input from the user, which may or may not contain the partition.
-// TODO: remove Serialize — only needed temporarily for Raft operation serialization.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-#[serde(untagged)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TopicIn {
     TopicName(TopicName),
     TopicPartition(TopicPartition),
@@ -226,7 +231,7 @@ impl TopicIn {
         }
     }
 
-    pub fn namespace(&self) -> Option<&str> {
+    pub fn namespace(&self) -> &str {
         self.topic_name().namespace()
     }
 }
@@ -244,9 +249,12 @@ impl<'de> Deserialize<'de> for TopicIn {
                 .map(TopicIn::TopicPartition)
                 .map_err(de::Error::custom)
         } else {
-            TopicName::new(ns.map(|x| x.to_owned()), rest.to_owned())
-                .map(TopicIn::TopicName)
-                .map_err(de::Error::custom)
+            TopicName::new(
+                ns.unwrap_or(DEFAULT_NAMESPACE_NAME).to_owned(),
+                rest.to_owned(),
+            )
+            .map(TopicIn::TopicName)
+            .map_err(de::Error::custom)
         }
     }
 }

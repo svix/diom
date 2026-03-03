@@ -282,7 +282,7 @@ async fn topic_configure(
         .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions);
+    let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions)?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(MsgTopicConfigureOut {

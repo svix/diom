@@ -49,8 +49,8 @@ impl TopicRow {
         construct_key(&parts)
     }
 
-    pub(crate) fn new(name: TopicName, now: Timestamp) -> Result<Self> {
-        Ok(Self {
+    pub(crate) fn new(name: TopicName, now: Timestamp) -> Self {
+        Self {
             id: uuid::Uuid::new_v7(uuid::Timestamp::from_unix(
                 uuid::NoContext,
                 now.as_second() as u64,
@@ -58,7 +58,7 @@ impl TopicRow {
             )),
             name,
             partitions: 1,
-        })
+        }
     }
 
     pub(crate) fn fetch(

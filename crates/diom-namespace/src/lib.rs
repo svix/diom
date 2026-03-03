@@ -79,23 +79,9 @@ impl State {
 
     pub fn fetch_namespace<C: ModuleConfig>(
         &self,
-        namespace_name: Option<&str>,
+        namespace_name: &str,
     ) -> Result<Option<Namespace<C>>> {
-        if let Some(ns) = namespace_name
-            && ns == DEFAULT_NAMESPACE_NAME
-        {
-            return Err(diom_error::Error::http(
-                diom_error::HttpError::bad_request(
-                    Some("no_explicit_default_namespace".to_owned()),
-                    Some("Explicitly setting the \"default\" namespace is not allowed.".to_owned()),
-                ),
-            ));
-        }
-
-        Namespace::fetch(
-            &self.keyspace,
-            namespace_name.unwrap_or(DEFAULT_NAMESPACE_NAME),
-        )
+        Namespace::fetch(&self.keyspace, namespace_name)
     }
 
     /// Like `fetch_namespace` but allows passing `default` explicitly for admin purposes.
