@@ -40,6 +40,7 @@ pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 // ============================================================================
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyStartIn {
     #[validate(nested)]
     pub key: EntityKey,
@@ -73,6 +74,7 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyCompleteIn {
     #[validate(nested)]
     pub key: EntityKey,
@@ -89,6 +91,7 @@ pub struct IdempotencyCompleteIn {
 pub struct IdempotencyCompleteOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyAbortIn {
     #[validate(nested)]
     pub key: EntityKey,

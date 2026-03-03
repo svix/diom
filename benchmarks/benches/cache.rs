@@ -142,7 +142,7 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                     std::hint::black_box(client.cache().set(key1, CacheSetIn::new(val, 60_000)))
                         .await
                         .unwrap();
-                    std::hint::black_box(client.cache().delete(CacheDeleteIn::new(key2)))
+                    std::hint::black_box(client.cache().delete(key2, CacheDeleteIn::new()))
                         .await
                         .unwrap();
                 })
