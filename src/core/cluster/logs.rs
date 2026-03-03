@@ -249,6 +249,7 @@ async fn flush_every_worker(
     while let Some(callback) = channel.recv().await {
         let db = db.clone();
         let result = tokio::task::spawn_blocking(move || {
+            let _guard = tracing::info_span!("logs:flush_worker:every").entered();
             tracing::trace!("fsyncing logs to disk");
             db.persist(PersistMode::SyncAll)
                 // fjall::Error isn't Clone
@@ -257,7 +258,6 @@ async fn flush_every_worker(
                     BackgroundFsyncFailedError(err.to_string())
                 })
         })
-        .instrument(tracing::info_span!("logs:flush_worker:every"))
         .await
         .expect("failed joining blocking task");
         callback.log_io_completed(result.map_err(std::io::Error::other));
@@ -277,60 +277,69 @@ async fn flush_worker(
     let shutting_down = crate::shutting_down_token();
     let mut ticker = tokio::time::interval(duration_before_fsync);
     while !done {
-        let mut sync_now = false;
+        async {
+            let mut sync_now = false;
 
-        tokio::select! {
-            message = channel.recv() => {
-                if let Some(callback) = message {
-                    let db = db.clone();
-                    let result = tokio::task::spawn_blocking(move || {
-                        db.persist(PersistMode::Buffer)
-                            // fjall::Error isn't Clone
-                            .map_err(|err| {
-                                tracing::error!(?err, "error flushing fjall in background");
-                                BackgroundFsyncFailedError(err.to_string())
-                            })
-                    })
-                    .instrument(tracing::info_span!("logs:flush_worker:buffer"))
-                    .await
-                    .expect("failed joining blocking task");
-                    if ack_immediately {
-                        callback.log_io_completed(result.map_err(std::io::Error::other));
-                        pending.push(None);
+            tokio::select! {
+                message = channel.recv() => {
+                    if let Some(callback) = message {
+                        let db = db.clone();
+                        let result = spawn_blocking_in_current_span(move || {
+                            let _guard = tracing::info_span!("logs:flush_worker:buffer").entered();
+                            db.persist(PersistMode::Buffer)
+                                // fjall::Error isn't Clone
+                                .map_err(|err| {
+                                    tracing::error!(?err, "error flushing fjall in background");
+                                    BackgroundFsyncFailedError(err.to_string())
+                                })
+                        })
+                        .await
+                        .expect("failed joining blocking task");
+                        if ack_immediately {
+                            callback.log_io_completed(result.map_err(std::io::Error::other));
+                            pending.push(None);
+                        } else {
+                            pending.push(Some(callback))
+                        }
                     } else {
-                        pending.push(Some(callback))
+                        done = true;
                     }
-                } else {
-                    done = true;
+                },
+                _ = shutting_down.cancelled() => {
+                    done = true
+                },
+                _ = ticker.tick() => {
+                    sync_now = pending.len() > 0
                 }
-            },
-            _ = shutting_down.cancelled() => {
-                done = true
-            },
-            _ = ticker.tick() => {
-                sync_now = pending.len() > 0
             }
-        }
 
-        if sync_now || (commits_before_fsync > 0 && pending.len() >= commits_before_fsync) {
-            let db = db.clone();
-            let result =
-                tokio::task::spawn_blocking(move || -> Result<(), BackgroundFsyncFailedError> {
-                    tracing::trace!("flushing logs to disk");
-                    db.persist(PersistMode::SyncAll).map_err(|err| {
-                        tracing::error!(?err, "error flushing fjall");
-                        BackgroundFsyncFailedError(err.to_string())
-                    })
-                })
-                .instrument(tracing::info_span!("logs:flush_worker:flush"))
+            if sync_now || (commits_before_fsync > 0 && pending.len() >= commits_before_fsync) {
+                let db = db.clone();
+                let num_commits = pending.len();
+                let result = spawn_blocking_in_current_span(
+                    move || -> Result<(), BackgroundFsyncFailedError> {
+                        let _guard =
+                            tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
+                        tracing::trace!("flushing logs to disk");
+                        db.persist(PersistMode::SyncAll).map_err(|err| {
+                            tracing::error!(?err, "error flushing fjall");
+                            BackgroundFsyncFailedError(err.to_string())
+                        })
+                    },
+                )
                 .await
                 .expect("failed joining blocking task");
-            for item in pending.drain(..) {
-                if let Some(callback) = item {
-                    callback.log_io_completed(result.clone().map_err(std::io::Error::other))
-                }
+                tracing::info_span!("logs:flush_worker:drain").in_scope(|| {
+                    for item in pending.drain(..) {
+                        if let Some(callback) = item {
+                            callback.log_io_completed(result.clone().map_err(std::io::Error::other))
+                        }
+                    }
+                });
             }
         }
+        .instrument(tracing::info_span!("logs:flush_worker"))
+        .await
     }
     if let Err(err) = db.persist(PersistMode::SyncAll) {
         tracing::error!(?err, "error flushing fjall at shutdown");
@@ -427,6 +436,7 @@ impl CoyoteLogs {
         let mut batch =
             fjall::OwnedWriteBatch::with_capacity(self.db.clone(), entries.len()).durability(None);
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
+            let _guard = tracing::info_span!("append:write_entries").entered();
             for entry in persisted_entries {
                 let (k, v) = Log(entry).to_fjall_entry()?;
                 batch.insert(&keyspace, k, v);
@@ -434,7 +444,6 @@ impl CoyoteLogs {
             batch.commit()?;
             Ok(())
         })
-        .instrument(tracing::info_span!("append:write_entries"))
         .await??;
 
         self.flush_tx
