@@ -5,6 +5,10 @@ use std::{
 
 use super::DatabaseConfig;
 
+pub(super) fn default_true() -> bool {
+    true
+}
+
 pub(super) fn listen_address() -> SocketAddr {
     (Ipv4Addr::UNSPECIFIED, 8050).into()
 }
@@ -77,4 +81,12 @@ pub(super) fn log_index_interval() -> Duration {
 
 pub(super) fn cluster_snapshot_after_time() -> Option<Duration> {
     Some(Duration::from_mins(15))
+}
+
+pub(super) fn cluster_log_sync_interval_commits() -> usize {
+    0
+}
+
+pub(super) fn cluster_log_sync_interval_duration() -> Duration {
+    Duration::from_secs(10)
 }

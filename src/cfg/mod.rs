@@ -16,10 +16,12 @@ use fs_err as fs;
 use serde::{Deserialize, de::DeserializeOwned};
 use tap::Pipe;
 use tracing::Level;
+use validator::Validate;
 
 use crate::error::{Error, Result};
 
 mod defaults;
+mod validators;
 
 pub type Configuration = Arc<ConfigurationInner>;
 
@@ -142,14 +144,6 @@ impl From<Dir> for PathBuf {
     }
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Default)]
-#[serde(rename_all = "kebab-case")]
-pub enum FsyncMode {
-    EveryCommit,
-    #[default]
-    EverySecond,
-}
-
 impl DatabaseConfig {
     fn default_cache_size() -> u64 {
         let mut sys = sysinfo::System::new_all();
@@ -191,7 +185,11 @@ impl DatabaseConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Validate)]
+#[validate(schema(
+    function = "validators::validate_cluster_configuration",
+    skip_on_field_errors = true
+))]
 pub struct ClusterConfiguration {
     /// The address to listen on for replication. Defaults to the main listen address,
     /// but with the port incremented by 10000
@@ -307,12 +305,31 @@ pub struct ClusterConfiguration {
     )]
     pub log_index_interval: Duration,
 
-    /// How often to sync logs. If this is set to "every second" and you experience a catastrophic
-    /// failure of a node (e.g., an unsafe shutdown of the OS), you should remove that node from
-    /// the cluster and then restore it from another surviving node to avoid potential data
-    /// corruption.
-    #[serde(default)]
-    pub log_sync: FsyncMode,
+    /// Interval (in transactions) between fsyncing the commit log. This should be set to 1
+    /// for full ACID compliance; at any other value, data may be lost in the event of catastrophic
+    /// hardware failure. If you are using a multi-node cluster and set this to a value other than
+    /// 1, if a node experiences catastrophic failure and the OS shuts down uncleanly, that node
+    /// should be removed from the cluster and rebuilt. If set to 0, logs will only be fsynced on a
+    /// timer
+    #[validate(range(min = 0, max = 1024))]
+    #[serde(default = "defaults::cluster_log_sync_interval_commits")]
+    pub log_sync_interval_commits: usize,
+
+    /// Interval (in milliseconds) between fsyncing the commit log.
+    #[validate(custom(function = "validators::validate_log_sync_interval_duration"))]
+    #[serde(
+        default = "defaults::cluster_log_sync_interval_duration",
+        rename = "log_sync_interval_ms",
+        with = "crate::serde::duration::millis"
+    )]
+    pub log_sync_interval_duration: Duration,
+
+    /// Commit logs to the cluster immediately, before fsyncing them to persistent storage. This
+    /// should be set to `false` for full ACID compliance, but can be set to `true` to enable
+    /// higher throughput than your fsync rate. Note that we always flush to the OS buffers before
+    /// acking, so data will only be lost of the OS crashes.
+    #[serde(default = "defaults::default_true")]
+    pub log_ack_immediately: bool,
 
     /// Trigger a background snapshot after this many writes
     pub snapshot_after_writes: Option<u32>,
@@ -363,7 +380,7 @@ fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Erro
     T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Validate)]
 pub struct ConfigurationInner {
     /// The address to listen on
     #[serde(default = "defaults::listen_address")]
@@ -408,6 +425,7 @@ pub struct ConfigurationInner {
     #[serde(default)]
     pub environment: Environment,
 
+    #[validate(nested)]
     #[serde(default)]
     pub cluster: ClusterConfiguration,
 
@@ -573,7 +591,9 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
                 discovery_timeout: cluster_discovery_timeout,
                 startup_discovery_delay: cluster_startup_discovery_delay,
                 log_index_interval: cluster_log_index_interval,
-                log_sync: _cluster_log_sync, // TODO: impl FromStr for this
+                log_sync_interval_commits: cluster_log_sync_interval_commits,
+                log_sync_interval_duration: cluster_log_sync_interval_duration,
+                log_ack_immediately: cluster_log_ack_immediately,
                 snapshot_after_writes: cluster_snapshot_after_writes,
                 snapshot_after_time: cluster_snapshot_after_time,
             },
@@ -591,6 +611,8 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         environment: "DIOM_ENVIRONMENT",
         cluster_name: "DIOM_CLUSTER_NAME",
         cluster_auto_initialize: "DIOM_CLUSTER_AUTO_INITIALIZE",
+        cluster_log_sync_interval_commits: "DIOM_CLUSTER_LOG_SYNC_INTERVAL_COMMITS",
+        cluster_log_ack_immediately: "DIOM_CLUSTER_LOG_ACK_IMMEDIATELY"
     );
 
     opt_env_overrides!(
@@ -617,6 +639,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         cluster_discovery_timeout: "DIOM_CLUSTER_DISCOVERY_TIMEOUT_MS",
         cluster_startup_discovery_delay: "DIOM_CLUSTER_STARTUP_DISCOVERY_DELAY_MS",
         cluster_log_index_interval: "DIOM_LOG_INDEX_INTERVAL_MS",
+        cluster_log_sync_interval_duration: "DIOM_CLUSTER_LOG_SYNC_INTERVAL_MS"
     );
 
     // Fields that require different parsing
@@ -626,6 +649,8 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     if let Some(value) = env_var_ms("DIOM_CLUSTER_SNAPSHOT_AFTER_MS")? {
         *cluster_snapshot_after_time = Some(value);
     }
+
+    config.validate()?;
 
     Ok(Arc::from(config))
 }

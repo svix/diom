@@ -8,4 +8,6 @@ opentelemetry_address="http://localhost:4317"
 opentelemetry_sample_ratio=1
 
 [cluster]
-log_sync = "every-second"
+log_sync_interval_commits = 0
+log_sync_interval_ms = 10000
+log_ack_immediately = true

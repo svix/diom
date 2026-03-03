@@ -240,9 +240,11 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             replication_request_timeout: Duration::from_millis(50),
             startup_discovery_delay: Duration::from_millis(0),
             log_index_interval: Duration::from_millis(500),
-            log_sync: diom::cfg::FsyncMode::EverySecond,
             snapshot_after_writes: None,
             snapshot_after_time: None,
+            log_sync_interval_commits: 0,
+            log_sync_interval_duration: Duration::from_secs(30),
+            log_ack_immediately: true,
         },
         bootstrap_cfg_path: None,
     }
