@@ -38,14 +38,14 @@ pub struct KvSetIn {
     #[validate(nested)]
     pub key: Arc<EntityKey>,
 
+    pub value: Vec<u8>,
+
     /// Time to live in milliseconds
     #[validate(range(min = 1))]
     pub ttl: Option<u64>,
 
     #[serde(default)]
     pub behavior: OperationBehavior,
-
-    pub value: Vec<u8>,
 }
 
 impl KvSetIn {
