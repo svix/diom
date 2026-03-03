@@ -29,7 +29,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
             || (test_key.clone(), test_val.clone()),
             |(key, val)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.kv().set(KvSetIn::new(key, val)))
+                    std::hint::black_box(client.kv().set(key, KvSetIn::new(val)))
                         .await
                         .unwrap();
                 })
@@ -48,7 +48,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.kv().set(KvSetIn::new(k, v)))
+                    std::hint::black_box(client.kv().set(k, KvSetIn::new(v)))
                         .await
                         .unwrap();
                 })
@@ -67,7 +67,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.kv().set(KvSetIn::new(k, v)))
+                    std::hint::black_box(client.kv().set(k, KvSetIn::new(v)))
                         .await
                         .unwrap();
                 })
@@ -86,7 +86,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.kv().set(KvSetIn::new(k, v)))
+                    std::hint::black_box(client.kv().set(k, KvSetIn::new(v)))
                         .await
                         .unwrap();
                 })
@@ -100,7 +100,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
         std::hint::black_box(
             client
                 .kv()
-                .set(KvSetIn::new(test_key.clone(), test_val.clone())),
+                .set(test_key.clone(), KvSetIn::new(test_val.clone())),
         )
         .await
         .unwrap();
@@ -111,7 +111,7 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
             || test_key.clone(),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.kv().get(KvGetIn::new(key)))
+                    std::hint::black_box(client.kv().get(key, KvGetIn::new()))
                         .await
                         .unwrap();
                 })
@@ -125,10 +125,10 @@ fn bench_kv<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGrou
             || (test_key.clone(), test_key.clone(), test_val.clone()),
             |(key1, key2, test_val)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.kv().set(KvSetIn::new(key1, test_val)))
+                    std::hint::black_box(client.kv().set(key1, KvSetIn::new(test_val)))
                         .await
                         .unwrap();
-                    std::hint::black_box(client.kv().delete(KvDeleteIn::new(key2)))
+                    std::hint::black_box(client.kv().delete(key2, KvDeleteIn::new()))
                         .await
                         .unwrap();
                 })

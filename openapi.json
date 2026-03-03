@@ -970,6 +970,9 @@
         },
         "required": [
           "key"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "CacheDeleteOut": {
@@ -1132,6 +1135,9 @@
         },
         "required": [
           "key"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "IdempotencyAbortOut": {
@@ -1167,6 +1173,9 @@
           "key",
           "response",
           "ttl"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "IdempotencyCompleteOut": {
@@ -1285,6 +1294,9 @@
         "required": [
           "key",
           "ttl"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "IdempotencyStartOut": {
@@ -1410,6 +1422,9 @@
         },
         "required": [
           "key"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "KvDeleteOut": {
@@ -1434,6 +1449,9 @@
           }
         },
         "required": [
+          "key"
+        ],
+        "x-positional": [
           "key"
         ]
       },
@@ -1542,6 +1560,9 @@
         "required": [
           "key",
           "value"
+        ],
+        "x-positional": [
+          "key"
         ]
       },
       "KvSetOut": {
@@ -1596,6 +1617,9 @@
         },
         "required": [
           "name"
+        ],
+        "x-positional": [
+          "name"
         ]
       },
       "MsgNamespaceCreateOut": {
@@ -1635,6 +1659,9 @@
           }
         },
         "required": [
+          "name"
+        ],
+        "x-positional": [
           "name"
         ]
       },
@@ -1683,6 +1710,9 @@
         "required": [
           "topic",
           "msgs"
+        ],
+        "x-positional": [
+          "topic"
         ]
       },
       "MsgPublishOut": {
@@ -1741,6 +1771,10 @@
           "topic",
           "consumer_group",
           "offset"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
         ]
       },
       "MsgStreamCommitOut": {
@@ -1770,6 +1804,10 @@
           }
         },
         "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
           "topic",
           "consumer_group"
         ]
@@ -1804,6 +1842,9 @@
         "required": [
           "topic",
           "partitions"
+        ],
+        "x-positional": [
+          "topic"
         ]
       },
       "MsgTopicConfigureOut": {

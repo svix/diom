@@ -85,6 +85,7 @@ impl CacheGetOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheDeleteIn {
     #[validate(nested)]
     pub key: EntityKey,
