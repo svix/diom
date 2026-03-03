@@ -18,7 +18,7 @@ class MsgsStreamAsync(ApiBase):
 
         Each consumer in the group reads from all partitions. Messages are locked by leases for the
         specified duration to prevent duplicate delivery within the same consumer group."""
-        body = msg_stream_receive_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_stream_receive_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -35,7 +35,7 @@ class MsgsStreamAsync(ApiBase):
 
         The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
         successfully processed offset; future receives will start after it."""
-        body = msg_stream_commit_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_stream_commit_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -54,7 +54,7 @@ class MsgsStream(ApiBase):
 
         Each consumer in the group reads from all partitions. Messages are locked by leases for the
         specified duration to prevent duplicate delivery within the same consumer group."""
-        body = msg_stream_receive_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_stream_receive_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -71,7 +71,7 @@ class MsgsStream(ApiBase):
 
         The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
         successfully processed offset; future receives will start after it."""
-        body = msg_stream_commit_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_stream_commit_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
