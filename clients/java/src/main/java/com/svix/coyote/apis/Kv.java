@@ -11,8 +11,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.coyote.models.KvCreateNamespaceIn;
+import com.svix.coyote.models.KvCreateNamespaceOut;
 import com.svix.coyote.models.KvDeleteIn;
 import com.svix.coyote.models.KvDeleteOut;
 import com.svix.coyote.models.KvGetIn;
@@ -54,20 +57,6 @@ public class Kv {
             null,
             kvGetIn,
             KvGetOut.class
-            );
-    }
-
-    /** Get KV namespace */
-    public KvGetNamespaceOut getNamespace(
-        final KvGetNamespaceIn kvGetNamespaceIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/get-namespace");
-        return this.client.executeRequest(
-            "POST",
-            url.build(),
-            null,
-            kvGetNamespaceIn,
-            KvGetNamespaceOut.class
             );
     }
 

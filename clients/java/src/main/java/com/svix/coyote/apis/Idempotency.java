@@ -11,10 +11,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.coyote.models.IdempotencyAbortIn;
 import com.svix.coyote.models.IdempotencyAbortOut;
+import com.svix.coyote.models.IdempotencyCreateNamespaceIn;
+import com.svix.coyote.models.IdempotencyCreateNamespaceOut;
 import com.svix.coyote.models.IdempotencyGetNamespaceIn;
 import com.svix.coyote.models.IdempotencyGetNamespaceOut;
 
@@ -36,20 +39,6 @@ public class Idempotency {
             null,
             idempotencyAbortIn,
             IdempotencyAbortOut.class
-            );
-    }
-
-    /** Get idempotency namespace */
-    public IdempotencyGetNamespaceOut getNamespace(
-        final IdempotencyGetNamespaceIn idempotencyGetNamespaceIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/get-namespace");
-        return this.client.executeRequest(
-            "POST",
-            url.build(),
-            null,
-            idempotencyGetNamespaceIn,
-            IdempotencyGetNamespaceOut.class
             );
     }
 }

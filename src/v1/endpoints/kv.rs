@@ -7,7 +7,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, ResultExt};
-use coyote_kv::KvStore;
+use coyote_kv::{KvStore, operations::CreateKvOperation};
 use coyote_namespace::{
     Namespace,
     entities::{KeyValueConfig, StorageType},
@@ -173,14 +173,50 @@ struct KvGetNamespaceIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceOut {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct KvCreateNamespaceIn {
+    pub name: String,
+    #[serde(default)]
+    pub storage_type: StorageType,
+    pub max_storage_bytes: Option<NonZeroU64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct KvCreateNamespaceOut {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
+/// Create KV namespace
+#[aide_annotate(op_id = "v1.kv.namespace.create")]
+async fn kv_create_namespace(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<KvCreateNamespaceIn>,
+) -> Result<MsgPackOrJson<KvCreateNamespaceOut>> {
+    let operation = CreateKvOperation::new(data.name, data.storage_type, data.max_storage_bytes);
+    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    Ok(MsgPackOrJson(KvCreateNamespaceOut {
+        name: resp.name,
+        max_storage_bytes: resp.max_storage_bytes,
+        storage_type: resp.storage_type,
+        created: resp.created,
+        updated: resp.updated,
+    }))
 }
 
 /// Get KV namespace
-#[aide_annotate(op_id = "v1.kv.get_namespace")]
+#[aide_annotate(op_id = "v1.kv.namespace.get")]
 async fn kv_get_namespace(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetNamespaceIn>,
@@ -194,8 +230,8 @@ async fn kv_get_namespace(
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
         storage_type: namespace.storage_type,
-        created_at: namespace.created_at,
-        updated_at: namespace.updated_at,
+        created: namespace.created_at,
+        updated: namespace.updated_at,
     }))
 }
 
@@ -206,7 +242,12 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with("/kv/set", post_with(kv_set, kv_set_operation), &tag)
         .api_route_with("/kv/get", post_with(kv_get, kv_get_operation), &tag)
         .api_route_with(
-            "/kv/get-namespace",
+            "/kv/namespace/create",
+            post_with(kv_create_namespace, kv_create_namespace_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/kv/namespace/get",
             post_with(kv_get_namespace, kv_get_namespace_operation),
             &tag,
         )

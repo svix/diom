@@ -211,3 +211,160 @@ async fn test_idempotency_validation() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn create_namespace_with_defaults() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let response = client
+        .post("idempotency/namespace/create")
+        .json(json!({
+            "name": "my-namespace",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(response["name"], "my-namespace");
+    assert_eq!(response["storage_type"], "Persistent");
+    assert!(response["created"].is_string());
+    assert!(response["updated"].is_string());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn create_namespace_with_custom_config() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let response = client
+        .post("idempotency/namespace/create")
+        .json(json!({
+            "name": "custom-ns",
+            "storage_type": "Ephemeral",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let ts = &response["created"];
+
+    assert_eq!(
+        response,
+        json!({
+            "name": "custom-ns",
+            "storage_type": "Ephemeral",
+            "created": ts,
+            "updated": ts,
+        })
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn create_namespace_upserts() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let first = client
+        .post("idempotency/namespace/create")
+        .json(json!({
+            "name": "upsert-ns",
+            "storage_type": "Ephemeral",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let created_ts = first["created"].as_str().unwrap().to_owned();
+    assert_eq!(first["name"], "upsert-ns");
+    assert_eq!(first["storage_type"], "Ephemeral");
+
+    // Upsert
+    let second = client
+        .post("idempotency/namespace/create")
+        .json(json!({
+            "name": "upsert-ns",
+            "storage_type": "Persistent",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(second["name"], "upsert-ns");
+    assert_eq!(second["storage_type"], "Persistent");
+    // created timestamp should remain the same
+    assert_eq!(second["created"], created_ts);
+    // updated timestamp should change
+    assert_ne!(second["updated"], first["updated"]);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn get_namespace() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // Create a namespace first
+    let created = client
+        .post("idempotency/namespace/create")
+        .json(json!({
+            "name": "get-test-ns",
+            "storage_type": "Ephemeral",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    // Get it back
+    let response = client
+        .post("idempotency/namespace/get")
+        .json(json!({
+            "name": "get-test-ns",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(response["name"], "get-test-ns");
+    assert_eq!(response["storage_type"], "Ephemeral");
+    assert_eq!(response["created"], created["created"]);
+    assert_eq!(response["updated"], created["updated"]);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn get_namespace_not_found() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("idempotency/namespace/get")
+        .json(json!({
+            "name": "nonexistent-ns",
+        }))
+        .await?
+        .expect(StatusCode::NOT_FOUND);
+
+    Ok(())
+}

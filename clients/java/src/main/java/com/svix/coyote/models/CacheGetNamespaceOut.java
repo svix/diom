@@ -32,8 +32,8 @@ public class CacheGetNamespaceOut {
 @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
 @JsonProperty("storage_type") private StorageType storageType;
 @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
-@JsonProperty("created_at") private OffsetDateTime createdAt;
-@JsonProperty("updated_at") private OffsetDateTime updatedAt;
+@JsonProperty private OffsetDateTime created;
+@JsonProperty private OffsetDateTime updated;
 public CacheGetNamespaceOut () {}
 
  public CacheGetNamespaceOut name(String name) {
@@ -112,42 +112,42 @@ public CacheGetNamespaceOut () {}
         this.evictionPolicy = evictionPolicy;
     }
 
-     public CacheGetNamespaceOut createdAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+     public CacheGetNamespaceOut created(OffsetDateTime created) {
+        this.created = created;
         return this;
     }
 
     /**
-    * Get createdAt
+    * Get created
     *
-     * @return createdAt
+     * @return created
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreatedAt() {
-        return createdAt;
+     public OffsetDateTime getCreated() {
+        return created;
     }
 
-     public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+     public void setCreated(OffsetDateTime created) {
+        this.created = created;
     }
 
-     public CacheGetNamespaceOut updatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+     public CacheGetNamespaceOut updated(OffsetDateTime updated) {
+        this.updated = updated;
         return this;
     }
 
     /**
-    * Get updatedAt
+    * Get updated
     *
-     * @return updatedAt
+     * @return updated
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
+     public OffsetDateTime getUpdated() {
+        return updated;
     }
 
-     public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+     public void setUpdated(OffsetDateTime updated) {
+        this.updated = updated;
     }
 
     /**

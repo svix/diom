@@ -111,14 +111,51 @@
         ]
       }
     },
-    "/api/v1/cache/get-namespace": {
+    "/api/v1/cache/namespace/create": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Create Namespace",
+        "description": "Create cache namespace",
+        "operationId": "v1.cache.namespace.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CacheCreateNamespaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheCreateNamespaceOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/cache/namespace/get": {
       "post": {
         "tags": [
           "Cache"
         ],
         "summary": "Cache Get Namespace",
         "description": "Get cache namespace",
-        "operationId": "v1.cache.get_namespace",
+        "operationId": "v1.cache.namespace.get",
         "requestBody": {
           "content": {
             "application/json": {
@@ -259,14 +296,51 @@
         ]
       }
     },
-    "/api/v1/kv/get-namespace": {
+    "/api/v1/kv/namespace/create": {
+      "post": {
+        "tags": [
+          "Key Value Store"
+        ],
+        "summary": "Kv Create Namespace",
+        "description": "Create KV namespace",
+        "operationId": "v1.kv.namespace.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KvCreateNamespaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KvCreateNamespaceOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/kv/namespace/get": {
       "post": {
         "tags": [
           "Key Value Store"
         ],
         "summary": "Kv Get Namespace",
         "description": "Get KV namespace",
-        "operationId": "v1.kv.get_namespace",
+        "operationId": "v1.kv.namespace.get",
         "requestBody": {
           "content": {
             "application/json": {
@@ -518,14 +592,51 @@
         ]
       }
     },
-    "/api/v1/idempotency/get-namespace": {
+    "/api/v1/idempotency/namespace/create": {
+      "post": {
+        "tags": [
+          "Idempotency"
+        ],
+        "summary": "Idempotency Create Namespace",
+        "description": "Create idempotency namespace",
+        "operationId": "v1.idempotency.namespace.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdempotencyCreateNamespaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdempotencyCreateNamespaceOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/idempotency/namespace/get": {
       "post": {
         "tags": [
           "Idempotency"
         ],
         "summary": "Idempotency Get Namespace",
         "description": "Get idempotency namespace",
-        "operationId": "v1.idempotency.get_namespace",
+        "operationId": "v1.idempotency.namespace.get",
         "requestBody": {
           "content": {
             "application/json": {
@@ -787,6 +898,66 @@
       }
     },
     "schemas": {
+      "CacheCreateNamespaceIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "storage_type": {
+            "default": "Persistent",
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "eviction_policy": {
+            "default": "NoEviction",
+            "$ref": "#/components/schemas/EvictionPolicy"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CacheCreateNamespaceOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "eviction_policy": {
+            "$ref": "#/components/schemas/EvictionPolicy"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "eviction_policy",
+          "created",
+          "updated"
+        ]
+      },
       "CacheDeleteIn": {
         "type": "object",
         "properties": {
@@ -858,11 +1029,11 @@
           "eviction_policy": {
             "$ref": "#/components/schemas/EvictionPolicy"
           },
-          "created_at": {
+          "created": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updated": {
             "type": "string",
             "format": "date-time"
           }
@@ -871,8 +1042,8 @@
           "name",
           "storage_type",
           "eviction_policy",
-          "created_at",
-          "updated_at"
+          "created",
+          "updated"
         ]
       },
       "CacheGetOut": {
@@ -1001,6 +1172,58 @@
       "IdempotencyCompleteOut": {
         "type": "object"
       },
+      "IdempotencyCreateNamespaceIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "storage_type": {
+            "default": "Persistent",
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "IdempotencyCreateNamespaceOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "created",
+          "updated"
+        ]
+      },
       "IdempotencyGetNamespaceIn": {
         "type": "object",
         "properties": {
@@ -1024,19 +1247,23 @@
             "minimum": 1,
             "nullable": true
           },
-          "created_at": {
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updated": {
             "type": "string",
             "format": "date-time"
           }
         },
         "required": [
           "name",
-          "created_at",
-          "updated_at"
+          "storage_type",
+          "created",
+          "updated"
         ]
       },
       "IdempotencyStartIn": {
@@ -1119,6 +1346,58 @@
           }
         ]
       },
+      "KvCreateNamespaceIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "storage_type": {
+            "default": "Persistent",
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "KvCreateNamespaceOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "created",
+          "updated"
+        ]
+      },
       "KvDeleteIn": {
         "type": "object",
         "properties": {
@@ -1184,11 +1463,11 @@
           "storage_type": {
             "$ref": "#/components/schemas/StorageType"
           },
-          "created_at": {
+          "created": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updated": {
             "type": "string",
             "format": "date-time"
           }
@@ -1196,8 +1475,8 @@
         "required": [
           "name",
           "storage_type",
-          "created_at",
-          "updated_at"
+          "created",
+          "updated"
         ]
       },
       "KvGetOut": {

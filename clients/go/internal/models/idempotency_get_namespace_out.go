@@ -7,8 +7,9 @@ import (
 )
 
 type IdempotencyGetNamespaceOut struct {
-	Name            string    `json:"name"`
-	MaxStorageBytes *uint64   `json:"max_storage_bytes,omitempty"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	Name            string      `json:"name"`
+	MaxStorageBytes *uint64     `json:"max_storage_bytes,omitempty"`
+	StorageType     StorageType `json:"storage_type"`
+	Created         time.Time   `json:"created"`
+	Updated         time.Time   `json:"updated"`
 }

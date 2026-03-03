@@ -10,7 +10,8 @@ import (
 )
 
 type Cache struct {
-	client *coyote_proto.HttpClient
+	client    *coyote_proto.HttpClient
+	Namespace *CacheNamespace
 }
 
 func NewCache(client *coyote_proto.HttpClient) Cache {
@@ -46,22 +47,6 @@ func (cache Cache) Get(
 		nil,
 		nil,
 		&cacheGetIn,
-	)
-}
-
-// Get cache namespace
-func (cache Cache) GetNamespace(
-	ctx context.Context,
-	cacheGetNamespaceIn coyote_models.CacheGetNamespaceIn,
-) (*coyote_models.CacheGetNamespaceOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.CacheGetNamespaceIn, coyote_models.CacheGetNamespaceOut](
-		ctx,
-		cache.client,
-		"POST",
-		"/api/v1/cache/get-namespace",
-		nil,
-		nil,
-		&cacheGetNamespaceIn,
 	)
 }
 
