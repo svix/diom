@@ -56,7 +56,7 @@ pub(super) async fn apply_request(
             Response::Msgs(req.apply(state))
         }
         Request::ClusterInternal(req) => {
-            Response::ClusterInternal(req.apply(state_machine, log_id).await?)
+            Response::ClusterInternal(req.apply((state_machine, log_id)).await)
         }
     })
 }
