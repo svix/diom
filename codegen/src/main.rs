@@ -6,6 +6,7 @@ use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberI
 
 mod formatting;
 mod outputs;
+mod utils;
 
 use self::outputs::OUTPUTS;
 
