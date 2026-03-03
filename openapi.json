@@ -1239,6 +1239,15 @@
             "pattern": "^[a-zA-Z0-9\\-_.:]+$",
             "example": "some_key"
           },
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
           "ttl": {
             "description": "Time to live in milliseconds",
             "type": "integer",
@@ -1249,15 +1258,6 @@
           "behavior": {
             "default": "upsert",
             "$ref": "#/components/schemas/OperationBehavior"
-          },
-          "value": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "uint8",
-              "minimum": 0,
-              "maximum": 255
-            }
           }
         },
         "required": [
