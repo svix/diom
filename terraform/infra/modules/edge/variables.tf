@@ -7,14 +7,14 @@ variable "env" {
   description = "The environment to deploy"
 }
 
+variable "vpc_id" {
+  type        = string
+  description = "VPC ID of the aws network"
+}
+
 variable "account_id" {
   type        = string
   description = "AWS Account ID"
-}
-
-variable "name_prefix" {
-  type        = string
-  description = "The name prefix"
 }
 
 variable "k8s_cluster_name" {
@@ -37,14 +37,12 @@ variable "k8s_oidc_provider_arn" {
   description = "The EKS OIDC provider ARN"
 }
 
-variable "pagerduty_service" {
-  type = string
+variable "name_prefix" {
+  type        = string
+  description = "The name prefix"
 }
 
-variable "datadog_api_key" {
-  type = string
-}
-
-variable "datadog_app_key" {
-  type = string
+variable "dns_zone_arns" {
+  type        = list(string)
+  description = "Route53 zone arns for external dns to manage"
 }

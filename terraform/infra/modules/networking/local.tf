@@ -9,8 +9,8 @@ locals {
 
   diom_namespace = "svix-diom"
 
-  zone_id   = try(data.aws_route53_zone.ep_zone[0].zone_id, aws_route53_zone.ep_zone[0].zone_id)
-  zone_arns = [try(data.aws_route53_zone.ep_zone[0].arn, aws_route53_zone.ep_zone[0].arn)]
+  zone_id   = aws_route53_zone.ep_zone.zone_id
+  zone_arns = [aws_route53_zone.ep_zone.arn]
 
   api_domain      = "${var.api_domain_prefix}.${trimsuffix(var.diom_domain, ".")}"
   frontend_domain = "${var.frontend_domain_prefix}.${trimsuffix(var.diom_domain, ".")}"

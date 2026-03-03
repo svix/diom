@@ -9,11 +9,11 @@ module "eks" {
   }
 
   env                     = var.env
-  aws_region              = data.aws_region.current.region
   account_id              = data.aws_caller_identity.current.account_id
   elb_service_account_arn = data.aws_elb_service_account.main.arn
   name_prefix             = random_pet.client_prefix.id
 
+  aws_region               = module.net.aws_region
   vpc_id                   = module.net.vpc_id
   private_subnet_ids       = module.net.private_subnet_ids
   database_subnet_ids      = module.net.database_subnet_ids

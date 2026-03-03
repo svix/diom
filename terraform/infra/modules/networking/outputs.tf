@@ -1,5 +1,9 @@
 # network
 
+output "aws_region" {
+  value = var.aws_region
+}
+
 output "vpc_id" {
   value = module.vpc.vpc_id
 }
@@ -26,4 +30,8 @@ output "intra_subnet_ids" {
 
 output "eks_subnet_ids" {
   value = local.eks_subnet_create ? aws_subnet.eks_system.*.id : []
+}
+
+output "dns_zone_arns" {
+  value = local.zone_arns
 }
