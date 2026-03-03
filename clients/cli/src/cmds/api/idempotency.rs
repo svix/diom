@@ -2,6 +2,8 @@
 use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
+use super::IdempotencyNamespaceArgs;
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct IdempotencyArgs {
@@ -11,14 +13,10 @@ pub struct IdempotencyArgs {
 
 #[derive(Subcommand)]
 pub enum IdempotencyCommands {
+    Namespace(IdempotencyNamespaceArgs),
     /// Abandon an idempotent request (remove lock without saving response)
     Abort {
         idempotency_abort_in: crate::json::JsonOf<diom_client::models::IdempotencyAbortIn>,
-    },
-    /// Get idempotency namespace
-    GetNamespace {
-        idempotency_get_namespace_in:
-            crate::json::JsonOf<diom_client::models::IdempotencyGetNamespaceIn>,
     },
 }
 
@@ -29,21 +27,15 @@ impl IdempotencyCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
+            Self::Namespace(args) => {
+                args.command.exec(client, color_mode).await?;
+            }
             Self::Abort {
                 idempotency_abort_in,
             } => {
                 let resp = client
                     .idempotency()
                     .abort(idempotency_abort_in.into_inner())
-                    .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
-            }
-            Self::GetNamespace {
-                idempotency_get_namespace_in,
-            } => {
-                let resp = client
-                    .idempotency()
-                    .get_namespace(idempotency_get_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

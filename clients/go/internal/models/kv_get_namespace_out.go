@@ -10,6 +10,6 @@ type KvGetNamespaceOut struct {
 	Name            string      `json:"name"`
 	MaxStorageBytes *uint64     `json:"max_storage_bytes,omitempty"`
 	StorageType     StorageType `json:"storage_type"`
-	CreatedAt       time.Time   `json:"created_at"`
-	UpdatedAt       time.Time   `json:"updated_at"`
+	Created         time.Time   `json:"created"`
+	Updated         time.Time   `json:"updated"`
 }

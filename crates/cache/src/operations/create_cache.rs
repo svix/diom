@@ -61,8 +61,8 @@ pub struct CreateCacheResponseData {
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
     pub eviction_policy: EvictionPolicy,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
 impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
@@ -72,8 +72,8 @@ impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
             max_storage_bytes: value.max_storage_bytes,
             storage_type: value.storage_type,
             eviction_policy: value.config.eviction_policy,
-            created_at: value.created_at,
-            updated_at: value.updated_at,
+            created: value.created_at,
+            updated: value.updated_at,
         }
     }
 }

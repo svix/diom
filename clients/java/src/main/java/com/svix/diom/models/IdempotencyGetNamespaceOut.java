@@ -30,8 +30,9 @@ import lombok.ToString;
 public class IdempotencyGetNamespaceOut {
 @JsonProperty private String name;
 @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-@JsonProperty("created_at") private OffsetDateTime createdAt;
-@JsonProperty("updated_at") private OffsetDateTime updatedAt;
+@JsonProperty("storage_type") private StorageType storageType;
+@JsonProperty private OffsetDateTime created;
+@JsonProperty private OffsetDateTime updated;
 public IdempotencyGetNamespaceOut () {}
 
  public IdempotencyGetNamespaceOut name(String name) {
@@ -72,42 +73,61 @@ public IdempotencyGetNamespaceOut () {}
         this.maxStorageBytes = maxStorageBytes;
     }
 
-     public IdempotencyGetNamespaceOut createdAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+     public IdempotencyGetNamespaceOut storageType(StorageType storageType) {
+        this.storageType = storageType;
         return this;
     }
 
     /**
-    * Get createdAt
+    * Get storageType
     *
-     * @return createdAt
+     * @return storageType
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreatedAt() {
-        return createdAt;
+     public StorageType getStorageType() {
+        return storageType;
     }
 
-     public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+     public void setStorageType(StorageType storageType) {
+        this.storageType = storageType;
     }
 
-     public IdempotencyGetNamespaceOut updatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+     public IdempotencyGetNamespaceOut created(OffsetDateTime created) {
+        this.created = created;
         return this;
     }
 
     /**
-    * Get updatedAt
+    * Get created
     *
-     * @return updatedAt
+     * @return created
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
+     public OffsetDateTime getCreated() {
+        return created;
     }
 
-     public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+     public void setCreated(OffsetDateTime created) {
+        this.created = created;
+    }
+
+     public IdempotencyGetNamespaceOut updated(OffsetDateTime updated) {
+        this.updated = updated;
+        return this;
+    }
+
+    /**
+    * Get updated
+    *
+     * @return updated
+     */
+    @javax.annotation.Nonnull
+     public OffsetDateTime getUpdated() {
+        return updated;
+    }
+
+     public void setUpdated(OffsetDateTime updated) {
+        this.updated = updated;
     }
 
     /**

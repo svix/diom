@@ -12,24 +12,24 @@ pub struct KvGetNamespaceOut {
 
     pub storage_type: StorageType,
 
-    pub created_at: jiff::Timestamp,
+    pub created: jiff::Timestamp,
 
-    pub updated_at: jiff::Timestamp,
+    pub updated: jiff::Timestamp,
 }
 
 impl KvGetNamespaceOut {
     pub fn new(
         name: String,
         storage_type: StorageType,
-        created_at: jiff::Timestamp,
-        updated_at: jiff::Timestamp,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
     ) -> Self {
         Self {
             name,
             max_storage_bytes: None,
             storage_type,
-            created_at,
-            updated_at,
+            created,
+            updated,
         }
     }
 }

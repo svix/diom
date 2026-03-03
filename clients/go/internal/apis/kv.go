@@ -10,7 +10,8 @@ import (
 )
 
 type Kv struct {
-	client *diom_proto.HttpClient
+	client    *diom_proto.HttpClient
+	Namespace *KvNamespace
 }
 
 func NewKv(client *diom_proto.HttpClient) Kv {
@@ -46,22 +47,6 @@ func (kv Kv) Get(
 		nil,
 		nil,
 		&kvGetIn,
-	)
-}
-
-// Get KV namespace
-func (kv Kv) GetNamespace(
-	ctx context.Context,
-	kvGetNamespaceIn diom_models.KvGetNamespaceIn,
-) (*diom_models.KvGetNamespaceOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.KvGetNamespaceIn, diom_models.KvGetNamespaceOut](
-		ctx,
-		kv.client,
-		"POST",
-		"/api/v1/kv/get-namespace",
-		nil,
-		nil,
-		&kvGetNamespaceIn,
 	)
 }
 

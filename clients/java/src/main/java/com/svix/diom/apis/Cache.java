@@ -11,8 +11,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.diom.models.CacheCreateNamespaceIn;
+import com.svix.diom.models.CacheCreateNamespaceOut;
 import com.svix.diom.models.CacheDeleteIn;
 import com.svix.diom.models.CacheDeleteOut;
 import com.svix.diom.models.CacheGetIn;
@@ -54,20 +57,6 @@ public class Cache {
             null,
             cacheGetIn,
             CacheGetOut.class
-            );
-    }
-
-    /** Get cache namespace */
-    public CacheGetNamespaceOut getNamespace(
-        final CacheGetNamespaceIn cacheGetNamespaceIn
-    ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/get-namespace");
-        return this.client.executeRequest(
-            "POST",
-            url.build(),
-            null,
-            cacheGetNamespaceIn,
-            CacheGetNamespaceOut.class
             );
     }
 

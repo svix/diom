@@ -9,9 +9,14 @@ use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, ResultExt};
 use diom_idempotency::{
     IdempotencyStartResult,
-    operations::{AbortOperation, CompleteOperation, TryStartOperation},
+    operations::{
+        AbortOperation, CompleteOperation, CreateIdempotencyOperation, TryStartOperation,
+    },
 };
-use diom_namespace::{Namespace, entities::IdempotencyConfig};
+use diom_namespace::{
+    Namespace,
+    entities::{IdempotencyConfig, StorageType},
+};
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -143,13 +148,51 @@ struct IdempotencyGetNamespaceIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub storage_type: StorageType,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct IdempotencyCreateNamespaceIn {
+    pub name: String,
+    #[serde(default)]
+    pub storage_type: StorageType,
+    pub max_storage_bytes: Option<NonZeroU64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct IdempotencyCreateNamespaceOut {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
+/// Create idempotency namespace
+#[aide_annotate(op_id = "v1.idempotency.namespace.create")]
+async fn idempotency_create_namespace(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyCreateNamespaceIn>,
+) -> Result<MsgPackOrJson<IdempotencyCreateNamespaceOut>> {
+    let operation =
+        CreateIdempotencyOperation::new(data.name, data.storage_type, data.max_storage_bytes);
+    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    Ok(MsgPackOrJson(IdempotencyCreateNamespaceOut {
+        name: resp.name,
+        max_storage_bytes: resp.max_storage_bytes,
+        storage_type: resp.storage_type,
+        created: resp.created,
+        updated: resp.updated,
+    }))
 }
 
 /// Get idempotency namespace
-#[aide_annotate(op_id = "v1.idempotency.get_namespace")]
+#[aide_annotate(op_id = "v1.idempotency.namespace.get")]
 async fn idempotency_get_namespace(
     State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyGetNamespaceIn>,
@@ -162,8 +205,9 @@ async fn idempotency_get_namespace(
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
-        created_at: namespace.created_at,
-        updated_at: namespace.updated_at,
+        storage_type: namespace.storage_type,
+        created: namespace.created_at,
+        updated: namespace.updated_at,
     }))
 }
 
@@ -191,7 +235,15 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/idempotency/get-namespace",
+            "/idempotency/namespace/create",
+            post_with(
+                idempotency_create_namespace,
+                idempotency_create_namespace_operation,
+            ),
+            &tag,
+        )
+        .api_route_with(
+            "/idempotency/namespace/get",
             post_with(
                 idempotency_get_namespace,
                 idempotency_get_namespace_operation,
