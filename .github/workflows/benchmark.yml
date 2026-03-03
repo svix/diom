@@ -6,7 +6,7 @@ jobs:
   benchmark:
     name: Benchmark
     timeout-minutes: 15
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubicloud-standard-8-ubuntu-2404
     defaults:
       run:
         working-directory: ./benchmarks
