@@ -19,7 +19,7 @@ class KvAsync(ApiBase):
         kv_set_in: KvSetIn,
     ) -> KvSetOut:
         """KV Set"""
-        body = kv_set_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_set_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -33,7 +33,7 @@ class KvAsync(ApiBase):
         kv_get_in: KvGetIn,
     ) -> KvGetOut:
         """KV Get"""
-        body = kv_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_get_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -47,7 +47,7 @@ class KvAsync(ApiBase):
         kv_get_namespace_in: KvGetNamespaceIn,
     ) -> KvGetNamespaceOut:
         """Get KV namespace"""
-        body = kv_get_namespace_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_get_namespace_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -61,7 +61,7 @@ class KvAsync(ApiBase):
         kv_delete_in: KvDeleteIn,
     ) -> KvDeleteOut:
         """KV Delete"""
-        body = kv_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_delete_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -77,7 +77,7 @@ class Kv(ApiBase):
         kv_set_in: KvSetIn,
     ) -> KvSetOut:
         """KV Set"""
-        body = kv_set_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_set_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -91,7 +91,7 @@ class Kv(ApiBase):
         kv_get_in: KvGetIn,
     ) -> KvGetOut:
         """KV Get"""
-        body = kv_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_get_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -105,7 +105,7 @@ class Kv(ApiBase):
         kv_get_namespace_in: KvGetNamespaceIn,
     ) -> KvGetNamespaceOut:
         """Get KV namespace"""
-        body = kv_get_namespace_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_get_namespace_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -119,7 +119,7 @@ class Kv(ApiBase):
         kv_delete_in: KvDeleteIn,
     ) -> KvDeleteOut:
         """KV Delete"""
-        body = kv_delete_in.model_dump(exclude_unset=True, by_alias=True)
+        body = kv_delete_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",

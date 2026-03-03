@@ -15,7 +15,7 @@ class MsgsNamespaceAsync(ApiBase):
         msg_namespace_create_in: MsgNamespaceCreateIn,
     ) -> MsgNamespaceCreateOut:
         """Creates or updates a msgs namespace with the given name."""
-        body = msg_namespace_create_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_namespace_create_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -29,7 +29,7 @@ class MsgsNamespaceAsync(ApiBase):
         msg_namespace_get_in: MsgNamespaceGetIn,
     ) -> MsgNamespaceGetOut:
         """Gets a msgs namespace by name."""
-        body = msg_namespace_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_namespace_get_in.model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -45,7 +45,7 @@ class MsgsNamespace(ApiBase):
         msg_namespace_create_in: MsgNamespaceCreateIn,
     ) -> MsgNamespaceCreateOut:
         """Creates or updates a msgs namespace with the given name."""
-        body = msg_namespace_create_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_namespace_create_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",
@@ -59,7 +59,7 @@ class MsgsNamespace(ApiBase):
         msg_namespace_get_in: MsgNamespaceGetIn,
     ) -> MsgNamespaceGetOut:
         """Gets a msgs namespace by name."""
-        body = msg_namespace_get_in.model_dump(exclude_unset=True, by_alias=True)
+        body = msg_namespace_get_in.model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",

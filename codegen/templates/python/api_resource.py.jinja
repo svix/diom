@@ -102,7 +102,7 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
         {%- else -%}
         {{ req_body_schema_snake }}
         {%- endif -%}
-        .model_dump(exclude_unset=True, by_alias=True)
+        .model_dump(exclude_none=True)
         {%- endif %}
 
         {% if op.response_body_schema_name is defined -%}return {% endif -%}
