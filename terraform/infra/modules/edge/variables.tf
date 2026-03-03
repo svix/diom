@@ -47,6 +47,11 @@ variable "dns_zone_arns" {
   description = "Route53 zone arns for external dns to manage"
 }
 
+variable "diom_namespace" {
+  type        = string
+  description = "Diom namespace"
+}
+
 variable "dns_zone_name" {
   type        = string
   description = "DNS Zone name"

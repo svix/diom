@@ -67,6 +67,9 @@ resource "helm_release" "external_dns" {
 
       logLevel = "debug"
 
+      extraArgs = [
+        "--namespace=${var.diom_namespace}"
+      ]
 
       serviceAccount = {
         create = false,

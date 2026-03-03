@@ -11,9 +11,10 @@ module "edge" {
     # datadog = datadog
   }
 
-  env         = var.env
-  account_id  = data.aws_caller_identity.current.account_id
-  name_prefix = random_pet.client_prefix.id
+  env              = var.env
+  account_id       = data.aws_caller_identity.current.account_id
+  name_prefix      = random_pet.client_prefix.id
+  diom_namespace = var.diom_namespace
 
   aws_region    = module.net.aws_region
   vpc_id        = module.net.vpc_id

@@ -172,3 +172,8 @@ variable "alb_log_expiration_days" {
   type    = number
   default = 31
 }
+
+variable "diom_namespace" {
+  type    = string
+  default = "diom-db"
+}
