@@ -2,6 +2,8 @@ use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+use coyote_error::Error;
+
 use crate::{
     State,
     entities::{ConsumerGroup, Offset, TopicPartition},
@@ -41,12 +43,7 @@ impl StreamCommitOperation {
         let topic = self.topic;
 
         let topic_row = TopicRow::fetch(&state.metadata_tables, self.namespace_id, &topic.raw)?
-            .ok_or_else(|| {
-                coyote_error::Error::http(coyote_error::HttpError::bad_request(
-                    Some("partition_must_exist".to_owned()),
-                    None,
-                ))
-            })?;
+            .ok_or_else(|| Error::invalid_user_input("partition must exist"))?;
 
         let mut lease = StreamLeaseRow::fetch(
             &state.metadata_tables,
@@ -54,12 +51,7 @@ impl StreamCommitOperation {
             topic.partition,
             &self.consumer_group,
         )?
-        .ok_or_else(|| {
-            coyote_error::Error::http(coyote_error::HttpError::bad_request(
-                Some("lease_not_found".to_owned()),
-                None,
-            ))
-        })?;
+        .ok_or_else(|| Error::invalid_user_input("lease not found"))?;
 
         lease.offset = self.offset + 1;
         lease.expiry = Timestamp::MIN;
@@ -70,7 +62,7 @@ impl StreamCommitOperation {
             lease.to_fjall_value()?,
         );
 
-        batch.commit().map_err(coyote_error::Error::from)?;
+        batch.commit().map_err(Error::from)?;
 
         Ok(StreamCommitResponseData {})
     }

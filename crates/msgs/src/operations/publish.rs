@@ -1,21 +1,26 @@
-use std::{collections::BTreeMap, time::Instant};
-
-use coyote_namespace::entities::NamespaceId;
-use jiff::Timestamp;
-use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 use crate::{
     State,
-    entities::{MsgIn, Offset, Partition, TopicIn, TopicPartition, partition_for_key},
+    entities::{
+        MsgIn, Offset, Partition, TopicId, TopicIn, TopicName, TopicPartition, partition_for_key,
+    },
     tables::{MsgRow, TableRow, TopicRow},
 };
+use coyote_error::Error;
+use coyote_namespace::entities::NamespaceId;
+use fjall::OwnedWriteBatch;
+use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
+use tracing::Span;
 
 use super::{MsgsRaftState, MsgsRequest, PublishResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishOperation {
     namespace_id: NamespaceId,
-    topic: TopicIn,
+    topic: TopicName,
+    partition: Option<Partition>,
     msgs: Vec<MsgIn>,
     now: Timestamp,
 }
@@ -26,9 +31,22 @@ impl PublishOperation {
         topic: TopicIn,
         msgs: Vec<MsgIn>,
     ) -> coyote_error::Result<Self> {
+        let (topic, partition) = match topic {
+            TopicIn::TopicPartition(tp) => {
+                if msgs.iter().any(|m| m.key.is_some()) {
+                    return Err(Error::invalid_user_input(
+                        "msg key cannot be specified alongside a specific partition",
+                    ));
+                }
+                (tp.raw, Some(tp.partition))
+            }
+            TopicIn::TopicName(tn) => (tn, None),
+        };
+
         Ok(Self {
             namespace_id,
             topic,
+            partition,
             msgs,
             now: Timestamp::now(),
         })
@@ -36,109 +54,44 @@ impl PublishOperation {
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
     fn apply_real(self, state: &State) -> coyote_operations::Result<PublishResponseData> {
-        let topic_row = TopicRow::fetch(
-            &state.metadata_tables,
-            self.namespace_id,
-            self.topic.topic_name(),
-        )?;
+        let topic_row = TopicRow::fetch(&state.metadata_tables, self.namespace_id, &self.topic)?;
         let mut batch = state.db.batch();
 
-        let topic_row = match (topic_row, &self.topic) {
-            (Some(topic_row), TopicIn::TopicPartition(topic)) => {
-                if !(0..topic_row.partitions).contains(&topic.partition.get()) {
-                    return Err(
-                        coyote_error::Error::http(coyote_error::HttpError::bad_request(
-                            Some("partition_out_of_range".to_owned()),
-                            None,
-                        ))
-                        .into(),
-                    );
-                }
-
-                topic_row
+        let topic_row = match (topic_row, self.partition) {
+            (Some(row), Some(partition)) if (0..row.partitions).contains(&partition.get()) => row,
+            (Some(_), Some(_)) => {
+                return Err(Error::invalid_user_input("partition out of range").into());
             }
-            (Some(topic_row), TopicIn::TopicName(_)) => {
-                // If there isn't a partition, need to use the key or round-robin choose the right one.
-                topic_row
+            (Some(row), None) => row,
+            (None, Some(_)) => {
+                return Err(Error::invalid_user_input("topic does not exist").into());
             }
-            (None, TopicIn::TopicPartition(_)) => {
-                // Topic has to exist if passing a specific partition
-                return Err(
-                    coyote_error::Error::http(coyote_error::HttpError::bad_request(
-                        Some("partition_must_exist".to_owned()),
-                        None,
-                    ))
-                    .into(),
-                );
-            }
-            (None, TopicIn::TopicName(topic)) => {
-                // Need to create the topic with default settings
-                let topic_row = TopicRow::new(topic.clone(), self.now)?;
+            (None, None) => {
+                let row = TopicRow::new(self.topic.clone(), self.now);
                 batch.insert(
                     &state.metadata_tables,
-                    TopicRow::construct_key(self.namespace_id, topic),
-                    topic_row.to_fjall_value()?,
+                    TopicRow::construct_key(self.namespace_id, &self.topic),
+                    row.to_fjall_value()?,
                 );
-                topic_row
+                row
             }
         };
 
-        tracing::Span::current().record("partition_count", topic_row.partitions);
+        Span::current().record("partition_count", topic_row.partitions);
 
-        // Group the messages by partitions
-        let mut by_partition: BTreeMap<Partition, Vec<MsgIn>> = BTreeMap::new();
-        for msg in self.msgs.into_iter() {
-            let partition =
-                if let TopicIn::TopicPartition(TopicPartition { partition, .. }) = self.topic {
-                    if msg.key.is_some() {
-                        // We currently don't allow setting a key + sending to a specific partition
-                        // We should probably allow it, just need to think about the right way of doing it.
-                        return Err(coyote_error::Error::http(
-                            coyote_error::HttpError::bad_request(
-                                Some("both_key_and_partition_are_set".to_owned()),
-                                None,
-                            ),
-                        )
-                        .into());
-                    }
-                    partition
-                } else {
-                    partition_for_key(msg.key.as_deref(), topic_row.partitions)
-                };
-            by_partition.entry(partition).or_default().push(msg);
-        }
+        let msgs_by_partition =
+            group_msgs_by_partition(self.msgs, self.partition, topic_row.partitions);
 
-        // Write the messages to the db
-        let t = Instant::now();
-        let mut results: Vec<PublishedTopic> = Vec::with_capacity(by_partition.keys().len());
-        for (partition, msgs) in by_partition {
-            let topic = TopicPartition::new(self.topic.topic_name().clone(), partition);
-            let mut offset = MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?;
-            let start_offset = offset;
+        let results = write_msg_batch(
+            &mut batch,
+            &state.msg_table,
+            &self.topic,
+            topic_row.id,
+            msgs_by_partition,
+            self.now,
+        )?;
 
-            for msg in msgs.into_iter() {
-                let msg = MsgRow {
-                    value: msg.value,
-                    headers: msg.headers,
-                    timestamp: self.now + t.elapsed(),
-                };
-                batch.insert(
-                    &state.msg_table,
-                    MsgRow::construct_key(topic_row.id, partition, offset),
-                    msg.to_fjall_value()?,
-                );
-
-                offset += 1;
-            }
-
-            results.push(PublishedTopic {
-                start_offset,
-                topic,
-                offset,
-            });
-        }
-
-        batch.commit().map_err(coyote_error::Error::from)?;
+        batch.commit().map_err(Error::from)?;
 
         Ok(PublishResponseData { topics: results })
     }
@@ -162,4 +115,59 @@ impl MsgsRequest for PublishOperation {
     fn apply(self, state: MsgsRaftState<'_>) -> PublishResponse {
         PublishResponse(self.apply_real(state.msgs))
     }
+}
+
+fn group_msgs_by_partition(
+    msgs: Vec<MsgIn>,
+    partition: Option<Partition>,
+    num_partitions: u16,
+) -> BTreeMap<Partition, Vec<MsgIn>> {
+    let mut msgs_by_partition: BTreeMap<Partition, Vec<MsgIn>> = BTreeMap::new();
+    for msg in msgs {
+        let p = match partition {
+            Some(p) => p,
+            None => partition_for_key(msg.key.as_deref(), num_partitions),
+        };
+        msgs_by_partition.entry(p).or_default().push(msg);
+    }
+    msgs_by_partition
+}
+
+fn write_msg_batch(
+    batch: &mut OwnedWriteBatch,
+    msg_table: &fjall::Keyspace,
+    topic_name: &TopicName,
+    topic_id: TopicId,
+    msgs_by_partition: BTreeMap<Partition, Vec<MsgIn>>,
+    now: Timestamp,
+) -> coyote_operations::Result<Vec<PublishedTopic>> {
+    let mut results: Vec<PublishedTopic> = Vec::with_capacity(msgs_by_partition.len());
+
+    for (partition, msgs) in msgs_by_partition {
+        let topic = TopicPartition::new(topic_name.clone(), partition);
+        let mut offset = MsgRow::next_offset(msg_table, topic_id, partition)?;
+        let start_offset = offset;
+
+        for msg in msgs {
+            let msg = MsgRow {
+                value: msg.value,
+                headers: msg.headers,
+                timestamp: now,
+            };
+            batch.insert(
+                msg_table,
+                MsgRow::construct_key(topic_id, partition, offset),
+                msg.to_fjall_value()?,
+            );
+            offset += 1;
+        }
+
+        results.push(PublishedTopic {
+            start_offset,
+            topic,
+            offset,
+        });
+    }
+
+    Ok(results)
 }
