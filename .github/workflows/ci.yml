@@ -32,14 +32,14 @@ jobs:
       - run: cargo machete
   clippy:
     name: Clippy
-    runs-on: ubuntu-24.04
+    runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
       - uses: actions/checkout@v6
       # Use beta toolchain for a middle ground between effective caching and the latest lints
       - uses: dtolnay/rust-toolchain@beta
         with:
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: ubicloud/rust-cache@v2
         with:
           # only save the cache on the main branch
           # cf https://github.com/Swatinem/rust-cache/issues/95
@@ -54,7 +54,7 @@ jobs:
       - uses: j178/prek-action@v1
   test:
     name: Test
-    runs-on: ubuntu-24.04
+    runs-on: ubicloud-standard-4-ubuntu-2404
     timeout-minutes: 15
     env:
       RUST_LOG: debug
@@ -64,7 +64,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: taiki-e/install-action@cargo-nextest
-      - uses: Swatinem/rust-cache@v2
+      - uses: ubicloud/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run tests
@@ -104,6 +104,8 @@ jobs:
   # FUCKING LINTS AS THE REST OF THE REPO.
   # THE INCONSISTENCIES ARE DRIVING ME CRAZY, AND I'M SPENDING HALF MY FUCKING
   # TIME FIGHTING CI BECAUSE THIS SHIT PRODUCES OUTPUT THAT FAILS TO COMPILE OR LINT
+  #
+  # Also enable the Ubicloud workers if relevant
   # check-codegen:
   #   name: Check openapi.json and SDK freshness
   #   runs-on: ubuntu-24.04
