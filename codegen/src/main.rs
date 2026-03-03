@@ -5,10 +5,12 @@ use openapi_codegen::{IncludeMode, api::Api, schemars::schema::Schema};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
 mod formatting;
-mod outputs;
+mod go;
+mod java;
+mod javascript;
+mod python;
+mod rust;
 mod utils;
-
-use self::outputs::OUTPUTS;
 
 fn main() -> anyhow::Result<ExitCode> {
     anyhow::ensure!(
@@ -62,7 +64,16 @@ fn main() -> anyhow::Result<ExitCode> {
         &BTreeSet::new(),
     )?;
 
-    for output_dir in OUTPUTS {
+    for output_dir in [
+        go::OUTPUTS,
+        java::OUTPUTS,
+        javascript::OUTPUTS,
+        python::OUTPUTS,
+        rust::OUTPUTS,
+    ]
+    .into_iter()
+    .flatten()
+    {
         if output_dir.managed {
             let res = fs::remove_dir_all(output_dir.path);
             if let Err(e) = res
