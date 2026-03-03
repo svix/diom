@@ -108,7 +108,7 @@ module "eks" {
       use_latest_ami_release_version = true,
       subnet_ids                     = var.database_subnet_ids
 
-      #ToDo: Do we want the nodes to be created close to each other in a availability zone?
+      #ToDo: Do we want the nodes to be created close to each other in an availability zone?
       # create_placement_group         = true
       # placement = {
       #   availability_zone = data.aws_subnet.cayote_subnet.availability_zone
