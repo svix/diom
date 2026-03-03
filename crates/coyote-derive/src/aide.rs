@@ -95,6 +95,12 @@ pub(crate) fn expand_aide_annotate(
         }
     });
 
+    let record_op_id: syn::Stmt = syn::parse_quote! {
+        ::tracing::Span::current().record("op_id", #operation_id);
+    };
+    let mut item = item;
+    item.block.stmts.insert(0, record_op_id);
+
     Ok(quote! {
         #item
 

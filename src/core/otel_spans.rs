@@ -82,6 +82,7 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
             otel.status_code = tracing::field::Empty,
             request_id,
             trace_id,
+            op_id = tracing::field::Empty,
             org_id = tracing::field::Empty,
             app_id = tracing::field::Empty,
         );
