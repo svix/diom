@@ -41,12 +41,20 @@ module "eks" {
 
   addons = {
     coredns = {
+      most_recent = true
       configuration_values = jsonencode({
         computeType = "Fargate"
       })
     }
-    kube-proxy = {}
-    vpc-cni    = {}
+
+    kube-proxy = {
+      most_recent = true
+    }
+
+    vpc-cni = {
+      most_recent = true
+    }
+
     aws-ebs-csi-driver = {
       most_recent              = true
       service_account_role_arn = module.ebs_csi_irsa.arn

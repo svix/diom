@@ -29,7 +29,7 @@ variable "api_domain_prefix" {
   type = string
 }
 
-variable "customer_domain" {
+variable "diom_domain" {
   type = string
 }
 

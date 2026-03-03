@@ -12,10 +12,9 @@ locals {
   zone_id   = try(data.aws_route53_zone.ep_zone[0].zone_id, aws_route53_zone.ep_zone[0].zone_id)
   zone_arns = [try(data.aws_route53_zone.ep_zone[0].arn, aws_route53_zone.ep_zone[0].arn)]
 
-  api_domain       = "${var.api_domain_prefix}.${trimsuffix(var.customer_domain, ".")}"
-  frontend_domain  = "${var.frontend_domain_prefix}.${trimsuffix(var.customer_domain, ".")}"
-  frontend2_domain = "frontend.${trimsuffix(var.customer_domain, ".")}"
-  cert_domain      = [local.api_domain, local.frontend_domain, local.frontend2_domain]
+  api_domain      = "${var.api_domain_prefix}.${trimsuffix(var.diom_domain, ".")}"
+  frontend_domain = "${var.frontend_domain_prefix}.${trimsuffix(var.diom_domain, ".")}"
+  cert_domain     = [local.api_domain, local.frontend_domain]
 
   # network eks
   eks_subnet_create  = true

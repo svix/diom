@@ -15,7 +15,6 @@ terraform {
       source  = "alekc/kubectl"
       version = "~> 2.1"
     }
-
     helm = {
       version = "~> 2.9"
     }
@@ -40,14 +39,5 @@ terraform {
     #   source  = "datadog/datadog"
     #   version = "~> 3.86"
     # }
-  }
-
-  backend "remote" {
-    organization = "svix-development"
-    # organization = ""
-    # organization = ""
-    workspaces {
-      prefix = "diom-infra"
-    }
   }
 }

@@ -14,7 +14,7 @@ module "net" {
 
   # dns
   use_existing_route53_zone = var.use_existing_route53_zone
-  customer_domain           = var.zone_name
+  diom_domain             = var.zone_name
   api_domain_prefix         = var.api_domain_prefix
   frontend_domain_prefix    = var.frontend_domain_prefix
   alb_log_expiration_days   = var.alb_log_expiration_days

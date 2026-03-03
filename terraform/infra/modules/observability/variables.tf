@@ -17,6 +17,26 @@ variable "name_prefix" {
   description = "The name prefix"
 }
 
+variable "cluster_name" {
+  type        = string
+  description = "The EKS cluster name"
+}
+
+variable "cluster_endpoint" {
+  type        = string
+  description = "The EKS Cluster endpoint"
+}
+
+variable "cluster_version" {
+  type        = string
+  description = "The EKS Cluster version"
+}
+
+variable "oidc_provider_arn" {
+  type        = string
+  description = "The EKS OIDC provider ARN"
+}
+
 variable "pagerduty_service" {
   type = string
 }
