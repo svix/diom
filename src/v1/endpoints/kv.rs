@@ -34,6 +34,7 @@ pub use crate::v1::modules::kv::{KvStore as KvStoreType, worker};
 pub type KvNamespace = Namespace<KeyValueConfig>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct KvSetIn {
     #[validate(nested)]
     pub key: Arc<EntityKey>,
@@ -67,6 +68,7 @@ impl KvSetIn {
 pub struct KvSetOut {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct KvGetIn {
     #[validate(nested)]
     pub key: EntityKey,
@@ -94,6 +96,7 @@ impl KvGetOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["key"]))]
 pub struct KvDeleteIn {
     #[validate(nested)]
     pub key: Arc<EntityKey>,

@@ -7,6 +7,10 @@ from .msg_in import MsgIn
 
 
 class MsgPublishIn(BaseModel):
+    msgs: t.List[MsgIn]
+
+
+class _MsgPublishIn(BaseModel):
     topic: str
 
     msgs: t.List[MsgIn]

@@ -16,6 +16,7 @@ from .cache_namespace import (
 
 from ..models.cache_set_in import _CacheSetIn
 from ..models.cache_get_in import _CacheGetIn
+from ..models.cache_delete_in import _CacheDeleteIn
 
 
 class CacheAsync(ApiBase):
@@ -61,10 +62,13 @@ class CacheAsync(ApiBase):
 
     async def delete(
         self,
+        key: str,
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
-        body = cache_delete_in.model_dump(exclude_none=True)
+        body = _CacheDeleteIn(
+            key=key,
+        ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
             method="post",
@@ -117,10 +121,13 @@ class Cache(ApiBase):
 
     def delete(
         self,
+        key: str,
         cache_delete_in: CacheDeleteIn,
     ) -> CacheDeleteOut:
         """Cache Delete"""
-        body = cache_delete_in.model_dump(exclude_none=True)
+        body = _CacheDeleteIn(
+            key=key,
+        ).model_dump(exclude_none=True)
 
         return self._request_sync(
             method="post",

@@ -18,6 +18,7 @@ pub enum MsgsCommands {
     Topic(MsgsTopicArgs),
     /// Publishes messages to a topic within a namespace.
     Publish {
+        topic: String,
         msg_publish_in: crate::json::JsonOf<diom_client::models::MsgPublishIn>,
     },
 }
@@ -38,8 +39,14 @@ impl MsgsCommands {
             Self::Topic(args) => {
                 args.command.exec(client, color_mode).await?;
             }
-            Self::Publish { msg_publish_in } => {
-                let resp = client.msgs().publish(msg_publish_in.into_inner()).await?;
+            Self::Publish {
+                topic,
+                msg_publish_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .publish(topic, msg_publish_in.into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
         }
