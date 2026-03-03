@@ -30,6 +30,7 @@ pub(super) fn build_client(
     }
     let client = reqwest::Client::builder()
         .connect_timeout(cfg.cluster.connection_timeout)
+        .http2_prior_knowledge()
         .default_headers(headers)
         .build()
         .context("building raft network client")?;
