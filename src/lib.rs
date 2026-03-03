@@ -36,6 +36,8 @@ use tokio::{
     net::TcpListener,
     sync::{Barrier, Mutex},
 };
+use tower_http::trace::TraceLayer;
+
 use tokio_util::sync::CancellationToken;
 use tower_http::{
     ServiceExt,
@@ -50,6 +52,7 @@ use crate::{
     core::{
         cluster::RaftState,
         db::{Databases, ReadonlyDatabases},
+        otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
 use diom_cache::CacheStore;
@@ -154,7 +157,13 @@ async fn run_interserver(
     let app = core::cluster::router(&cfg)
         .with_state(state.clone())
         .layer(Extension(raft.clone()))
-        .layer(middleware::from_fn(diom_proto::capture_accept_hdr));
+        .layer(middleware::from_fn(diom_proto::capture_accept_hdr))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(AxumOtelSpanCreator)
+                .on_response(AxumOtelOnResponse)
+                .on_failure(AxumOtelOnFailure),
+        );
     let svc = tower::make::Shared::new(
         // It is important that this service wraps the router instead of being
         // applied via `Router::layer`, as it would run after routing then.
