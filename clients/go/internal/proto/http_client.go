@@ -49,14 +49,14 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	client *HttpClient,
 	method string,
 	path string,
-	jsonBody *ReqBody,
+	reqBody *ReqBody,
 ) (*ResBody, error) {
 	urlStr := client.BaseURL + path
 
 	var req *http.Request
 	var err error
-	if jsonBody != nil {
-		encodedBody, err := msgpack.Marshal(jsonBody)
+	if reqBody != nil {
+		encodedBody, err := msgpack.Marshal(reqBody)
 		if err != nil {
 			return nil, err
 		}
