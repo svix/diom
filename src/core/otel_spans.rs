@@ -84,6 +84,7 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
             trace_id,
             org_id = tracing::field::Empty,
             app_id = tracing::field::Empty,
+            hashed_key = tracing::field::Empty,
         );
 
         if span.set_parent(remote_context).is_err() {

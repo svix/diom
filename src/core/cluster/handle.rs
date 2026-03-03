@@ -10,6 +10,7 @@ use anyhow::Context;
 use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use tokio::sync::mpsc::Sender;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -75,6 +76,21 @@ impl RequestWithContext {
             inner: req,
             context: ctx,
         }
+    }
+
+    pub(crate) fn hashed_key(&self) -> Option<String> {
+        let digest = match &self.inner {
+            Request::Kv(op) => Sha256::digest(op.key_name()),
+            Request::RateLimiter(op) => Sha256::digest(op.key_name()),
+            Request::Idempotency(op) => Sha256::digest(op.key_name()),
+            Request::Cache(op) => Sha256::digest(op.key_name()),
+            Request::Msgs(op) => Sha256::digest(op.key_name()),
+            Request::CreateCache(op) => Sha256::digest(op.key_name()),
+            Request::CreateIdempotency(op) => Sha256::digest(op.key_name()),
+            Request::CreateKv(op) => Sha256::digest(op.key_name()),
+            Request::ClusterInternal(_) => return None,
+        };
+        Some(hex::encode(digest))
     }
 }
 

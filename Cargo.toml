@@ -46,6 +46,7 @@ fjall-utils.workspace = true
 fs-err.workspace = true
 futures-util.workspace = true
 headers.workspace = true
+hex.workspace = true
 http.workspace = true
 idna_adapter.workspace = true
 indexmap.workspace = true
@@ -68,6 +69,7 @@ rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 stream-internals.workspace = true
 sysinfo = "0.38.2"
 tap.workspace = true
@@ -199,6 +201,7 @@ schemars = { version = "1.2.0", features = ["jiff02", "uuid1"] }
 serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["preserve_order", "raw_value"] }
 serde_path_to_error = "0.1.7"
+sha2 = "0.10.2"
 static_assertions = "1.1"
 stream-internals = { path = "crates/stream-internals" }
 stream_deprecated = { path = "crates/stream-deprecated", package = "stream-deprecated" }

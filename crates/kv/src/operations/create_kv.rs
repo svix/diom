@@ -11,7 +11,7 @@ use crate::operations::{CreateKvRequest, CreateKvResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateKvOperation {
-    name: String,
+    pub(crate) name: String,
     storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
 }
