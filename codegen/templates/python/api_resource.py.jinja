@@ -1,7 +1,4 @@
 # This file is @generated
-{% set api_mod_name %}{{ resource.name | to_snake_case }}_api{% endset -%}
-{% set resource_class_name = resource.name | to_upper_camel_case -%}
-{% set resource_type_name = resource.name | to_upper_camel_case -%}
 import typing as t
 from datetime import datetime
 from dataclasses import dataclass
