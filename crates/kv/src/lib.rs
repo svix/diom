@@ -3,9 +3,8 @@ pub mod tables;
 use std::num::NonZeroU64;
 
 use coyote_error::Result;
-use coyote_namespace::{
-    Namespace,
-    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig},
+use coyote_namespace::entities::{
+    CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig,
 };
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -97,7 +96,7 @@ impl KvStore {
 
     // FIXME(@svix-lucho): needs to be passed now() from the caller!
     fn fetch_non_expired(&mut self, key: &str) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? else {
+        let Some(data) = KvPairRow::fetch(&self.tables, KvPairRow::key_for(key))? else {
             return Ok(None);
         };
 
@@ -120,11 +119,15 @@ impl KvStore {
             expiry: model.expiry,
         };
 
-        batch.insert_row(&self.tables, &row)?;
+        batch.insert_row(&self.tables, KvPairRow::key_for(key), &row)?;
 
         if let Some(expiry) = model.expiry {
             let expiration_row = ExpirationRow::new(expiry, key.to_string());
-            batch.insert_row(&self.tables, &expiration_row)?;
+            batch.insert_row(
+                &self.tables,
+                ExpirationRow::key_for(expiry, key),
+                &expiration_row,
+            )?;
         }
 
         batch.commit()?;
@@ -178,13 +181,12 @@ impl KvStore {
     pub fn delete(&mut self, key: &str) -> Result<()> {
         let mut batch = self.db.batch();
 
-        if let Some(data) = KvPairRow::fetch(&self.tables, &key.to_string())? {
+        if let Some(data) = KvPairRow::fetch(&self.tables, KvPairRow::key_for(key))? {
             // Delete from the expiration keyspace
             if let Some(expiry) = data.expiry {
-                let r = ExpirationRow::new(expiry, key.to_string());
-                batch.remove_row::<ExpirationRow>(&self.tables, r.get_key().as_ref())?;
+                batch.remove_row(&self.tables, ExpirationRow::key_for(expiry, key))?;
             }
-            batch.remove_row::<KvPairRow>(&self.tables, &key.to_string())?;
+            batch.remove_row(&self.tables, KvPairRow::key_for(key))?;
         }
 
         batch.commit()?;
@@ -274,7 +276,7 @@ where
 
         timer.tick().await;
 
-        let kv_namespaces = match namespace_state.fetch_all_namespaces() {
+        let kv_namespaces = match namespace_state.fetch_all_namespaces::<KeyValueConfig>() {
             Ok(namespaces) => namespaces,
             Err(e) => {
                 tracing::error!(error = ?e, "Failed to get KV namespaces.");
@@ -283,13 +285,6 @@ where
         };
 
         for namespace in kv_namespaces {
-            let namespace: Namespace<KeyValueConfig> = match namespace {
-                Ok(g) => g,
-                Err(e) => {
-                    tracing::error!(error = ?e, "Failed to parse KV namespace.");
-                    continue;
-                }
-            };
             let db = namespace_state.give_me_the_right_db(&namespace);
             let policy = namespace.config.eviction_policy();
             let store = KvStore::new(
@@ -302,7 +297,7 @@ where
             clean_up(store);
         }
 
-        let cache_namespaces = match namespace_state.fetch_all_namespaces() {
+        let cache_namespaces = match namespace_state.fetch_all_namespaces::<CacheConfig>() {
             Ok(namespaces) => namespaces,
             Err(e) => {
                 tracing::error!(error = ?e, "Failed to get Cache namespaces.");
@@ -311,13 +306,6 @@ where
         };
 
         for namespace in cache_namespaces {
-            let namespace: Namespace<CacheConfig> = match namespace {
-                Ok(g) => g,
-                Err(e) => {
-                    tracing::error!(error = ?e, "Failed to process Cache namespace.");
-                    continue;
-                }
-            };
             let db = namespace_state.give_me_the_right_db(&namespace);
             let policy = namespace.config.eviction_policy();
             let store = KvStore::new(
@@ -330,22 +318,16 @@ where
             clean_up(store);
         }
 
-        let idempotency_namespaces = match namespace_state.fetch_all_namespaces() {
-            Ok(namespaces) => namespaces,
-            Err(e) => {
-                tracing::error!(error = ?e, "Failed to get Idempotency namespaces.");
-                continue;
-            }
-        };
-
-        for namespace in idempotency_namespaces {
-            let namespace: Namespace<IdempotencyConfig> = match namespace {
-                Ok(g) => g,
+        let idempotency_namespaces =
+            match namespace_state.fetch_all_namespaces::<IdempotencyConfig>() {
+                Ok(namespaces) => namespaces,
                 Err(e) => {
-                    tracing::error!(error = ?e, "Failed to process Idempotency namespace.");
+                    tracing::error!(error = ?e, "Failed to get Idempotency namespaces.");
                     continue;
                 }
             };
+
+        for namespace in idempotency_namespaces {
             let db = namespace_state.give_me_the_right_db(&namespace);
             let policy = namespace.config.eviction_policy();
             let store = KvStore::new(
