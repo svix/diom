@@ -91,7 +91,7 @@ pub type TableKeyType = u8;
 
 pub struct TableKey<Tag: TableRow> {
     key: fjall::UserKey,
-    _unit: PhantomData<Tag>,
+    _table: PhantomData<Tag>,
 }
 
 impl<'a, Tag: TableRow> TableKey<Tag> {
@@ -123,14 +123,14 @@ impl<'a, Tag: TableRow> TableKey<Tag> {
 
         Self {
             key: ret.into(),
-            _unit: PhantomData,
+            _table: PhantomData,
         }
     }
 
     pub fn init_from_bytes(key: &'a [u8]) -> Self {
         Self {
             key: key.into(),
-            _unit: PhantomData,
+            _table: PhantomData,
         }
     }
 
