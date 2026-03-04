@@ -19,7 +19,6 @@ serde.workspace = true
 static_assertions.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-uuid.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

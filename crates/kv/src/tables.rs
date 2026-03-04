@@ -4,31 +4,6 @@ use diom_error::ResultExt;
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-#[repr(u8)]
-enum RowType {
-    Data = 0,
-    Expiration = 1
-}
-
-/// Construct the key to be used for fjall
-///
-/// In the future: should probably just have a big enough key on the stack and use that.
-fn construct_key(row_type: u8, fixed_parts: &[uuid::Bytes], nul_delimited_parts: &[&str]) -> Vec<u8> {
-    let len = 1 /* u8 */
-        + fixed_parts.iter().fold(0, |acc, e| acc + e.len()) /* all the fixed parts */
-        + nul_delimited_parts.iter().fold(0, |acc, e| acc + e.len()) /* The parts that are nul delimited */;
-    let mut ret = Vec::with_capacity(len);
-    ret.push(row_type);
-    for part in fixed_parts {
-        ret.extend_from_slice(part);
-    }
-    for part in nul_delimited_parts {
-        ret.extend_from_slice(part.as_bytes());
-    }
-    ret
-}
 
 // IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
 static_assertions::const_assert!(fjall_utils::are_all_unique(&[
