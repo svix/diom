@@ -685,6 +685,102 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
 }
 
 #[tokio::test]
+async fn partial_commit_preserves_lease() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-partial" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish 10 messages
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-partial:t1",
+            "msgs": (0..10)
+                .map(|i| json!({ "value": format!("msg-{i}").as_bytes(), "key": "k1" }))
+                .collect::<Vec<_>>(),
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive only 5 of the 10 messages
+    let r1 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-partial:t1",
+            "consumer_group": "cg1",
+            "batch_size": 5,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = r1["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 5);
+
+    let partition_topic = msgs[0]["topic"].as_str().unwrap();
+    let first_offset = msgs[0]["offset"].as_u64().unwrap();
+    let last_offset = msgs[4]["offset"].as_u64().unwrap();
+
+    // Partial commit: only commit the first message
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+            "offset": first_offset,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Lease should still be held — second receive must fail
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-partial:t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    // Commit the last offset in the batch — should release the lease
+    client
+        .post("msgs/stream/commit")
+        .json(json!({
+            "topic": partition_topic,
+            "consumer_group": "cg1",
+            "offset": last_offset,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Lease is now released — receive should succeed with the remaining 5 messages
+    let r2 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-partial:t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(
+        r2["msgs"].as_array().unwrap().len(),
+        5,
+        "remaining messages should be available after lease release"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn default_namespace_receive_and_commit() -> TestResult {
     let TestContext {
         client,
