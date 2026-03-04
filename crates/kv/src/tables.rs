@@ -1,6 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, marker::PhantomData};
 
 use diom_error::ResultExt;
+use diom_namespace::entities::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -79,5 +80,69 @@ impl TableRow for ExpirationRow {
 
     fn get_key(&self) -> Cow<'_, Self::Key> {
         Cow::Borrowed(&self.computed_key)
+    }
+}
+
+// Move to fjall-utils
+
+struct MyTableKey<'a, Tag: TableRow> {
+    key: Cow<'a, [u8]>,
+    _unit: PhantomData<Tag>,
+}
+
+impl<'a, Tag: TableRow> MyTableKey<'a, Tag> {
+    /// Construct the key to be used for fjall
+    ///
+    /// In the future: should probably just have a big enough key on the stack and use that.
+    fn init_key(row_type: u8, fixed_parts: &[uuid::Bytes], nul_delimited_parts: &[&str]) -> Self {
+        let len = 1 /* u8 */
+            + fixed_parts.iter().fold(0, |acc, e| acc + e.len()) /* all the fixed parts */
+            + nul_delimited_parts.iter().fold(0, |acc, e| acc + e.len()) /* The parts that are nul delimited */
+            + nul_delimited_parts.len().saturating_sub(0); /* the nul delimiters for the parts */
+        let mut ret = Vec::with_capacity(len);
+        ret.push(row_type);
+        for part in fixed_parts {
+            ret.extend_from_slice(part);
+        }
+
+        let nul_delimited_parts = itertools::Itertools::intersperse(
+            nul_delimited_parts.iter().map(|x| x.as_bytes()),
+            b"\0",
+        );
+        for part in nul_delimited_parts {
+            ret.extend_from_slice(part);
+        }
+
+        Self {
+            key: Cow::Owned(ret),
+            _unit: PhantomData,
+        }
+    }
+
+    fn init_from_bytes(key: &'a [u8]) -> Self {
+        Self {
+            key: Cow::Borrowed(key),
+            _unit: PhantomData,
+        }
+    }
+}
+
+// Module specific
+
+#[repr(u8)]
+enum RowType {
+    Pair = 0,
+    Expiration = 1,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MyKvPairRow {
+    pub value: Vec<u8>,
+    pub expiry: Option<Timestamp>,
+}
+
+impl KvPairRow {
+    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> MyTableKey<'_, Self> {
+        MyTableKey::init_key(RowType::Pair as u8, &[*namespace_id.as_bytes()], &[key])
     }
 }
