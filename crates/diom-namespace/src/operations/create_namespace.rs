@@ -1,7 +1,7 @@
 use diom_error::Result;
 use std::num::NonZeroU64;
 
-use fjall_utils::TableRow;
+use fjall_utils::WriteBatchExt;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -76,9 +76,9 @@ impl<C: ModuleConfig> CreateNamespace<C> {
         };
 
         {
-            let (k1, v1) = namespace.to_fjall_entry()?;
+            let k1 = Namespace::<C>::key_for(&namespace.name);
             let mut batch = db.batch().durability(Some(fjall::PersistMode::SyncAll));
-            batch.insert(keyspace, k1, v1);
+            batch.insert_row(keyspace, k1, &namespace)?;
             batch.commit()?;
         }
 

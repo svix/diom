@@ -1,15 +1,14 @@
-use std::borrow::Cow;
-
-use diom_error::ResultExt;
-use fjall_utils::{TableKey, TableRow};
+use diom_error::{Result, ResultExt};
+use fjall_utils::{TableKey, TableKeyFromFjall, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-// IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
-static_assertions::const_assert!(fjall_utils::are_all_unique(&[
-    KvPairRow::TABLE_PREFIX,
-    ExpirationRow::TABLE_PREFIX,
-]));
+/// These values can never change. Only additions are allowed.
+#[repr(u8)]
+enum RowType {
+    Pair = 0,
+    Expiration = 1,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct KvPairRow {
@@ -19,11 +18,12 @@ pub struct KvPairRow {
 }
 
 impl TableRow for KvPairRow {
-    const TABLE_PREFIX: &'static str = "_KV_PAIR_";
-    type Key = String;
+    const ROW_TYPE: u8 = RowType::Pair as u8;
+}
 
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
+impl KvPairRow {
+    pub(crate) fn key_for(key: &str) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[], &[key])
     }
 }
 
@@ -31,53 +31,29 @@ impl TableRow for KvPairRow {
 pub(crate) struct ExpirationRow {
     pub expiry: Timestamp,
     pub key: String,
-
-    #[serde(skip)]
-    computed_key: ExpirationKey,
 }
 
 impl ExpirationRow {
     pub(crate) fn new(expiry: Timestamp, key: String) -> Self {
-        Self {
-            computed_key: ExpirationKey::from(expiry, key.clone()),
-            expiry,
-            key,
-        }
+        Self { expiry, key }
     }
-}
 
-#[derive(Clone, Serialize, Deserialize, Default)]
-pub struct ExpirationKey(String);
-
-impl ExpirationKey {
-    pub(crate) fn from(expiration_time: Timestamp, key: String) -> Self {
+    pub(crate) fn key_for(expiration_time: Timestamp, key: &str) -> TableKey<Self> {
         let ts_ms = expiration_time.as_millisecond();
         let ts_bytes = ts_ms.to_be_bytes();
-        let ts_hex = hex::encode(ts_bytes);
-        let computed_key = format!("{ts_hex}\0{key}");
 
-        Self(computed_key)
+        TableKey::init_key(Self::ROW_TYPE, &[&ts_bytes], &[key])
     }
 }
 
-impl TableKey for ExpirationKey {
-    fn as_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Borrowed(self.0.as_bytes())
-    }
+impl TableKeyFromFjall for ExpirationRow {
+    type Key = String;
 
-    fn try_from_bytes(bytes: &[u8]) -> diom_error::Result<Self> {
-        String::from_utf8(bytes.to_owned())
-            .map(Self)
-            .map_err_generic()
+    fn key_from_fjall_key(key: fjall::UserKey) -> Result<Self::Key> {
+        String::from_utf8(key.to_vec()).map_err_generic()
     }
 }
 
 impl TableRow for ExpirationRow {
-    const TABLE_PREFIX: &'static str = "_KV_EXP_";
-
-    type Key = ExpirationKey;
-
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.computed_key)
-    }
+    const ROW_TYPE: u8 = RowType::Expiration as u8;
 }

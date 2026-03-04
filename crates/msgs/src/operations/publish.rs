@@ -5,11 +5,12 @@ use crate::{
     entities::{
         MsgIn, Offset, Partition, TopicId, TopicIn, TopicName, TopicPartition, partition_for_key,
     },
-    tables::{MsgRow, TableRow, TopicRow},
+    tables::{MsgRow, TopicRow},
 };
 use diom_error::Error;
 use diom_namespace::entities::NamespaceId;
 use fjall::OwnedWriteBatch;
+use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
@@ -54,7 +55,10 @@ impl PublishOperation {
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
     fn apply_real(self, state: &State) -> diom_operations::Result<PublishResponseData> {
-        let topic_row = TopicRow::fetch(&state.metadata_tables, self.namespace_id, &self.topic)?;
+        let topic_row = TopicRow::fetch(
+            &state.metadata_tables,
+            TopicRow::key_for(self.namespace_id, &self.topic),
+        )?;
         let mut batch = state.db.batch();
 
         let topic_row = match (topic_row, self.partition) {
@@ -68,11 +72,11 @@ impl PublishOperation {
             }
             (None, None) => {
                 let row = TopicRow::new(self.topic.clone(), self.now);
-                batch.insert(
+                batch.insert_row(
                     &state.metadata_tables,
-                    TopicRow::construct_key(self.namespace_id, &self.topic),
-                    row.to_fjall_value()?,
-                );
+                    TopicRow::key_for(self.namespace_id, &self.topic),
+                    &row,
+                )?;
                 row
             }
         };
@@ -154,11 +158,11 @@ fn write_msg_batch(
                 headers: msg.headers,
                 timestamp: now,
             };
-            batch.insert(
+            batch.insert_row(
                 msg_table,
-                MsgRow::construct_key(topic_id, partition, offset),
-                msg.to_fjall_value()?,
-            );
+                MsgRow::key_for(topic_id, partition, offset),
+                &msg,
+            )?;
             offset += 1;
         }
 

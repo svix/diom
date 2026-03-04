@@ -13,7 +13,6 @@ fjall-utils.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
-static_assertions.workspace = true
 tokio.workspace = true
 
 [dev-dependencies]

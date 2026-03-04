@@ -94,7 +94,7 @@ impl State {
 
     pub fn fetch_all_namespaces<C: ModuleConfig>(
         &self,
-    ) -> Result<impl Iterator<Item = Result<Namespace<C>>>> {
+    ) -> Result<impl Iterator<Item = Namespace<C>>> {
         Namespace::fetch_all(&self.keyspace)
     }
 
