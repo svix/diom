@@ -1,11 +1,17 @@
 package com.svix.coyote;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.locks.LockSupport;
+import javax.net.SocketFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,6 +22,51 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.Protocol;
+
+class HelpImTrappedInANagleFactory extends SocketFactory {
+    public Socket createSocket()
+        throws SocketException
+    {
+        Socket socket = new Socket();
+        socket.setTcpNoDelay(true);
+        return socket;
+    }
+
+    public Socket createSocket(String host, int port)
+    throws IOException, UnknownHostException, SocketException
+    {
+        Socket socket = new Socket(host, port);
+        socket.setTcpNoDelay(true);
+        return socket;
+    }
+
+    public Socket createSocket(InetAddress address, int port)
+    throws IOException, SocketException
+    {
+        Socket socket = new Socket(address, port);
+        socket.setTcpNoDelay(true);
+        return socket;
+    }
+
+    public Socket createSocket(String host, int port,
+        InetAddress clientAddress, int clientPort)
+    throws IOException, UnknownHostException, SocketException
+    {
+        Socket socket = new Socket(host, port, clientAddress, clientPort);
+        socket.setTcpNoDelay(true);
+        return socket;
+    }
+
+    public Socket createSocket(InetAddress address, int port,
+        InetAddress clientAddress, int clientPort)
+    throws IOException, SocketException
+    {
+        Socket socket = new Socket(address, port, clientAddress, clientPort);
+        socket.setTcpNoDelay(true);
+        return socket;
+    }
+}
 
 public class HttpClient {
     private final HttpUrl baseUrl;
@@ -29,7 +80,10 @@ public class HttpClient {
         this.baseUrl = baseUrl;
         this.defaultHeaders = defaultHeaders;
         this.retrySchedule = retrySchedule;
-        this.client = new OkHttpClient();
+        this.client = new OkHttpClient.Builder()
+            .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .socketFactory(new HelpImTrappedInANagleFactory())
+            .build();
 
         this.objectMapper = Utils.getObjectMapper();
     }
