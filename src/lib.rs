@@ -12,7 +12,7 @@ use std::{
 };
 
 use aide::axum::ApiRouter;
-use axum::{Extension, middleware};
+use axum::{Extension, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
 use diom_error::{Error, HttpError, Result};
 use diom_kv::KvStore;
@@ -169,6 +169,12 @@ async fn run_interserver(
         // applied via `Router::layer`, as it would run after routing then.
         NormalizePath::trim_trailing_slash(app),
     );
+
+    let listener = listener.tap_io(|tcp_stream| {
+        if let Err(err) = tcp_stream.set_nodelay(true) {
+            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
+        }
+    });
 
     axum::serve(listener, svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
