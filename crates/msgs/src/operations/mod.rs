@@ -67,17 +67,7 @@ mod tests {
         let op = PublishOperation::new(
             Uuid::nil(),
             TopicIn::TopicName(
-                TopicName::new("default".to_string(), "my-topic".to_string()).unwrap(),
-            ),
-            vec![],
-        )
-        .unwrap();
-        assert_eq!(MsgsOperation::Publish(op).key_name(), "my-topic");
-
-        let op = PublishOperation::new(
-            Uuid::nil(),
-            TopicIn::TopicName(
-                TopicName::new("my-ns".to_string(), "my-topic".to_string()).unwrap(),
+                TopicName::new(Some("my-ns".to_string()), "my-topic".to_string()).unwrap(),
             ),
             vec![],
         )
