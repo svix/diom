@@ -77,6 +77,9 @@ impl TableRow for TopicRow {}
 pub(crate) struct StreamLeaseRow {
     pub offset: u64,
     pub expiry: Timestamp,
+    /// Last offset in the current leased batch. The lease is only released
+    /// when the committed offset reaches this value.
+    pub end_offset: Offset,
 }
 
 impl StreamLeaseRow {
@@ -103,6 +106,7 @@ impl StreamLeaseRow {
         Ok(Self {
             offset: 0,
             expiry: Timestamp::MIN,
+            end_offset: 0,
         })
     }
 
