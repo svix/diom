@@ -94,7 +94,7 @@ impl<'a, Tag: TableRow> MyTableKey<'a, Tag> {
     /// Construct the key to be used for fjall
     ///
     /// In the future: should probably just have a big enough key on the stack and use that.
-    fn init_key(row_type: u8, fixed_parts: &[uuid::Bytes], nul_delimited_parts: &[&str]) -> Self {
+    fn init_key(row_type: u8, fixed_parts: &[&[u8]], nul_delimited_parts: &[&str]) -> Self {
         let len = 1 /* u8 */
             + fixed_parts.iter().fold(0, |acc, e| acc + e.len()) /* all the fixed parts */
             + nul_delimited_parts.iter().fold(0, |acc, e| acc + e.len()) /* The parts that are nul delimited */
@@ -143,6 +143,6 @@ pub struct MyKvPairRow {
 
 impl KvPairRow {
     pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> MyTableKey<'_, Self> {
-        MyTableKey::init_key(RowType::Pair as u8, &[*namespace_id.as_bytes()], &[key])
+        MyTableKey::init_key(RowType::Pair as u8, &[namespace_id.as_bytes()], &[key])
     }
 }
