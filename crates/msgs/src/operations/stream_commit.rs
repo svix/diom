@@ -54,7 +54,9 @@ impl StreamCommitOperation {
         .ok_or_else(|| Error::invalid_user_input("lease not found"))?;
 
         lease.offset = self.offset + 1;
-        lease.expiry = Timestamp::MIN;
+        if self.offset >= lease.end_offset {
+            lease.expiry = Timestamp::MIN;
+        }
 
         batch.insert(
             &state.metadata_tables,

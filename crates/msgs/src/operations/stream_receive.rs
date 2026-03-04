@@ -118,6 +118,9 @@ impl StreamReceiveOperation {
                 continue;
             }
 
+            // FIXME(@svix-gabriel) - I should just be able to reference msgs.last.offset.
+            // this'll require a larger change though.
+            lease.end_offset = lease.offset + msgs.len() as u64 - 1;
             remaining -= msgs.len() as u16;
 
             all_msgs.extend(
