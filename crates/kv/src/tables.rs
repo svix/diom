@@ -49,7 +49,7 @@ impl ExpirationRow {
 impl TableKeyFromFjall for ExpirationRow {
     type Key = String;
 
-    fn key_from_key(key: fjall::UserKey) -> Result<Self::Key> {
+    fn key_from_fjall_key(key: fjall::UserKey) -> Result<Self::Key> {
         String::from_utf8(key.to_vec()).map_err_generic()
     }
 }

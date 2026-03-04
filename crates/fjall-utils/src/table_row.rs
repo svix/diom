@@ -142,5 +142,5 @@ impl<'a, Tag: TableRow> TableKey<Tag> {
 pub trait TableKeyFromFjall {
     type Key;
 
-    fn key_from_key(key: fjall::UserKey) -> Result<Self::Key>;
+    fn key_from_fjall_key(key: fjall::UserKey) -> Result<Self::Key>;
 }
