@@ -17,14 +17,6 @@ name = "diom"
 path = "src/main.rs"
 doctest = false
 
-[features]
-default = ["http1", "http2", "rustls-tls"]
-
-http1 = ["diom-client/http1"]
-http2 = ["diom-client/http2"]
-native-tls = ["diom-client/native-tls"]
-rustls-tls = ["diom-client/rustls-tls"]
-
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true

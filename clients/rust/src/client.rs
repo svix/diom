@@ -41,11 +41,6 @@ pub struct DiomOptions {
     /// between the last two is that DNS resolution also goes through the proxy
     /// for `socks5h`, but not for `socks5`.
     pub proxy_address: Option<String>,
-
-    /// Use HTTP/1.1 on plaintext connections (otherwise forces HTTP/2 on plaintext,
-    /// and uses standard ALPN on secure connections)
-    #[cfg(all(feature = "http1", feature = "http2"))]
-    pub http1: bool,
 }
 
 impl Default for DiomOptions {
@@ -57,8 +52,6 @@ impl Default for DiomOptions {
             num_retries: None,
             retry_schedule: None,
             proxy_address: None,
-            #[cfg(all(feature = "http1", feature = "http2"))]
-            http1: false,
         }
     }
 }
@@ -74,17 +67,10 @@ impl DiomClient {
     pub fn new(token: String, options: Option<DiomOptions>) -> Self {
         let options = options.unwrap_or_default();
 
-        let mut builder = HyperClient::builder(TokioExecutor::new());
-        builder.pool_idle_timeout(Duration::from_secs(10));
-
-        #[cfg(all(feature = "http2", not(feature = "http1")))]
-        builder.http2_only(true);
-        #[cfg(all(feature = "http1", feature = "http2"))]
-        builder.http2_only(!options.http1);
-
         let cfg = Arc::new(Configuration {
             user_agent: Some(format!("diom-client/{CRATE_VERSION}/rust")),
-            client: builder.build(make_connector(options.proxy_address)),
+            client: HyperClient::builder(TokioExecutor::new())
+                .build(make_connector(options.proxy_address)),
             timeout: options.timeout,
             // These fields will be set by `with_token` below
             base_path: String::new(),
