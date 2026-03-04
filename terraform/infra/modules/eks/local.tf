@@ -1,7 +1,7 @@
 locals {
   is_prod_env = !(startswith(var.env, "staging") || startswith(var.env, "dev"))
 
-  eks_cluster_name = "${var.name_prefix}-k8s"
+  eks_cluster_name = "${var.name_prefix}-k8s-diom"
 
   diom_namespace = "svix-diom"
 
