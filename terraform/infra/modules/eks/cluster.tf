@@ -59,6 +59,10 @@ module "eks" {
       most_recent              = true
       service_account_role_arn = module.ebs_csi_irsa.arn
     }
+
+    eks-pod-identity-agent = {
+      most_recent = true
+    }
   }
 
   encryption_config = {
