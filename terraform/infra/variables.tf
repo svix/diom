@@ -18,7 +18,7 @@ variable "k8s_version" {
 variable "vpc_cidr" {
   type        = string
   description = "The CIDR block for the VPC. Expects a 16 byte mask"
-  default     = "10.0.0.0/16"
+  default     = "10.87.0.0/16"
 }
 
 variable "admin_users" {
