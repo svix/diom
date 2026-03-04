@@ -2,7 +2,7 @@ use std::num::NonZeroU64;
 
 use coyote_error::Result;
 use coyote_namespace::entities::{
-    CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig,
+    CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig, NamespaceId,
 };
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -16,8 +16,8 @@ pub mod operations;
 pub mod tables;
 
 use crate::{
-    operations::{DeleteOperation, SetOperation},
-    tables::{ExpirationRow, KvPairRow},
+    kvcontroller::KvController,
+    tables::{KvPairRow, OldExpirationRow},
 };
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
@@ -34,10 +34,25 @@ impl From<KvPairRow> for KvModel {
         }
     }
 }
+
+#[derive(Clone)]
+pub struct State {
+    pub(crate) controller: KvController,
+}
+
+impl State {
+    pub fn init(db: fjall::Database) -> Result<Self> {
+        Ok(Self {
+            controller: KvController::new(db, "mod_kv"),
+        })
+    }
+}
+
 #[derive(Clone)]
 pub struct KvStore {
     db: fjall::Database,
     tables: fjall::Keyspace,
+    namespace_id: NamespaceId,
     policy: EvictionPolicy,
     lru: LinkedHashMap<String, Option<Timestamp>>,
     max_storage_bytes: Option<NonZeroU64>,
@@ -72,6 +87,7 @@ impl KvStore {
         Self {
             db,
             tables,
+            namespace_id: NamespaceId::nil(), // FIXME: we'll soon kill kvstore.
             policy,
             lru: LinkedHashMap::new(),
             max_storage_bytes,
@@ -96,7 +112,9 @@ impl KvStore {
 
     // FIXME(@svix-lucho): needs to be passed now() from the caller!
     fn fetch_non_expired(&mut self, key: &str) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.tables, KvPairRow::key_for(key))? else {
+        let Some(data) =
+            KvPairRow::fetch(&self.tables, KvPairRow::key_for(self.namespace_id, key))?
+        else {
             return Ok(None);
         };
 
@@ -119,13 +137,17 @@ impl KvStore {
             expiry: model.expiry,
         };
 
-        batch.insert_row(&self.tables, KvPairRow::key_for(key), &row)?;
+        batch.insert_row(
+            &self.tables,
+            KvPairRow::key_for(self.namespace_id, key),
+            &row,
+        )?;
 
         if let Some(expiry) = model.expiry {
-            let expiration_row = ExpirationRow::new(expiry, key.to_string());
+            let expiration_row = OldExpirationRow::new(expiry, key.to_string());
             batch.insert_row(
                 &self.tables,
-                ExpirationRow::key_for(expiry, key),
+                OldExpirationRow::key_for(expiry, key),
                 &expiration_row,
             )?;
         }
@@ -135,14 +157,6 @@ impl KvStore {
         self.update_lru(key, model.expiry);
 
         Ok(())
-    }
-
-    pub fn set_operation(key: String, model: KvModel, behavior: OperationBehavior) -> SetOperation {
-        SetOperation::new(key, model, behavior)
-    }
-
-    pub fn delete_operation(key: String) -> DeleteOperation {
-        DeleteOperation::new(key)
     }
 
     pub fn set(&mut self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
@@ -181,12 +195,14 @@ impl KvStore {
     pub fn delete(&mut self, key: &str) -> Result<()> {
         let mut batch = self.db.batch();
 
-        if let Some(data) = KvPairRow::fetch(&self.tables, KvPairRow::key_for(key))? {
+        if let Some(data) =
+            KvPairRow::fetch(&self.tables, KvPairRow::key_for(self.namespace_id, key))?
+        {
             // Delete from the expiration keyspace
             if let Some(expiry) = data.expiry {
-                batch.remove_row(&self.tables, ExpirationRow::key_for(expiry, key))?;
+                batch.remove_row(&self.tables, OldExpirationRow::key_for(expiry, key))?;
             }
-            batch.remove_row(&self.tables, KvPairRow::key_for(key))?;
+            batch.remove_row(&self.tables, KvPairRow::key_for(self.namespace_id, key))?;
         }
 
         batch.commit()?;
@@ -229,7 +245,7 @@ impl KvStore {
         let now_ms = now.as_millisecond();
         let mut expired_keys = Vec::new();
 
-        for item in ExpirationRow::values(&self.tables)? {
+        for item in OldExpirationRow::values(&self.tables)? {
             if item.expiry.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
                 expired_keys.push(item.key);
                 removed += 1;

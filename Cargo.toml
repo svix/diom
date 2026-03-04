@@ -32,6 +32,7 @@ axum-extra.workspace = true
 byteorder.workspace = true
 constant_time_eq.workspace = true
 coyote-cache.workspace = true
+coyote-core = { version = "0.0.1", path = "crates/coyote-core" }
 coyote-derive.workspace = true
 coyote-error.workspace = true
 coyote-idempotency.workspace = true

@@ -34,12 +34,12 @@ pub(super) async fn apply_request(
 
     Ok(match request.inner {
         Request::Kv(req) => {
-            // TODO: this shouldn't be mut but KvStore currently requires it
-            let mut store = state_machine
-                .state
-                .get_kv_store_by_key(req.key_name())
-                .await?;
-            Response::Kv(req.apply(&mut store))
+            let stores = state_machine.db_handle();
+            let state = coyote_kv::operations::KvRaftState {
+                state: &stores.kv_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::Kv(req.apply(state))
         }
         Request::CreateKv(req) => {
             Response::CreateKv(req.apply(&state_machine.state.namespace_state))

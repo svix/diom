@@ -9,6 +9,7 @@ use coyote_cache::{
     CacheModel,
     operations::{CreateCacheOperation, DeleteOperation, SetOperation},
 };
+use coyote_core::types::EntityKey;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, ResultExt};
 use coyote_namespace::{
@@ -21,19 +22,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::{cluster::RaftState, types::EntityKey},
-    error::Result,
-    v1::utils::openapi_tag,
-};
+use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 pub type CacheNamespace = Namespace<CacheConfig>;
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheSetIn {
-    #[validate(nested)]
     pub key: EntityKey,
 
     pub value: Vec<u8>,

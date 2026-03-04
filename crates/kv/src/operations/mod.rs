@@ -1,15 +1,21 @@
-use super::KvStore;
+use crate::State;
+
 use serde::{Deserialize, Serialize};
 
-mod create_kv;
+mod create_namespace;
 mod delete;
 mod set;
 
-pub use create_kv::{CreateKvOperation, CreateKvResponseData};
+pub use create_namespace::{CreateKvOperation, CreateKvResponseData};
 pub use delete::DeleteOperation;
 pub use set::SetOperation;
 
 use coyote_operations::raft_module_operations;
+
+pub struct KvRaftState<'a> {
+    pub state: &'a State,
+    pub namespace: &'a coyote_namespace::State,
+}
 
 raft_module_operations!(
     KvRequest,
@@ -17,7 +23,7 @@ raft_module_operations!(
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> (),
     },
-    state = &mut KvStore,
+    state = KvRaftState<'_>,
 );
 
 impl KvOperation {

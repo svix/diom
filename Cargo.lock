@@ -905,6 +905,7 @@ dependencies = [
  "constant_time_eq 0.4.2",
  "coyote-cache",
  "coyote-client",
+ "coyote-core",
  "coyote-derive",
  "coyote-error",
  "coyote-idempotency",
@@ -1048,6 +1049,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "coyote-core"
+version = "0.0.1"
+dependencies = [
+ "coyote-error",
+ "coyote-namespace",
+ "regex",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "validator",
+]
+
+[[package]]
 name = "coyote-derive"
 version = "0.0.1"
 dependencies = [
@@ -1093,6 +1107,7 @@ dependencies = [
 name = "coyote-kv"
 version = "0.0.1"
 dependencies = [
+ "coyote-core",
  "coyote-error",
  "coyote-namespace",
  "coyote-operations",

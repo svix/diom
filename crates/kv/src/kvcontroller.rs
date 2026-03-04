@@ -1,23 +1,26 @@
-use std::num::NonZeroU64;
-
 use coyote_error::Result;
-use coyote_namespace::{
-    Namespace,
-    entities::{CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig},
-};
-use fjall::KeyspaceCreateOptions;
+use coyote_namespace::entities::NamespaceId;
+use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{TableRow, WriteBatchExt};
-use hashlink::{LinkedHashMap, linked_hash_map::RawEntryMut};
 use itertools::Itertools;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{OperationBehavior, tables::{ExpirationRow, KvPairRow}};
-
+use crate::tables::{ExpirationRow, KvPairRow};
 
 const EXPIRATION_BATCH_SIZE: usize = 1_000; // FIXME(@svix-lucho): make this configurable? Probably
-                                            // much larger too?
+// much larger too?
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[derive(Default)]
+pub enum OperationBehavior {
+    #[default]
+    Upsert,
+    Insert,
+    Update,
+}
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct KvModel {
@@ -37,59 +40,63 @@ impl From<KvPairRow> for KvModel {
 #[derive(Clone)]
 pub struct KvController {
     db: fjall::Database,
-    tables: fjall::Keyspace,
+    keyspace: fjall::Keyspace,
 }
 
 impl KvController {
-    pub fn new(
-        db: fjall::Database,
-        keyspace_name: &str,
-    ) -> Self {
+    pub fn new(db: fjall::Database, keyspace_name: &str) -> Self {
         let tables = {
-            let opts = KeyspaceCreateOptions::default();
+            let opts = KeyspaceCreateOptions::default()
+                .with_kv_separation(Some(KvSeparationOptions::default()));
             db.keyspace(keyspace_name, || opts).unwrap()
         };
 
         Self {
             db,
-            tables,
+            keyspace: tables,
         }
     }
 
-    pub fn get(&mut self, key: &str) -> Result<Option<KvModel>> {
-        self.fetch_non_expired(key)
-    }
-
-    // FIXME(@svix-lucho): needs to be passed now() from the caller!
-    fn fetch_non_expired(&mut self, key: &str) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.tables, KvPairRow::key_for(key))? else {
+    pub fn fetch(
+        &self,
+        namespace_id: NamespaceId,
+        key: &str,
+        now: Timestamp,
+    ) -> Result<Option<KvModel>> {
+        let Some(data) = KvPairRow::fetch(&self.keyspace, KvPairRow::key_for(namespace_id, key))?
+        else {
             return Ok(None);
         };
 
-        if data.expiry.is_some_and(|exp| exp < Timestamp::now()) {
-            let _ = self.delete(key);
+        if data.expiry.is_some_and(|exp| exp < now) {
             return Ok(None);
         }
 
         Ok(Some(data.into()))
     }
 
-    fn insert_with_expiration(&mut self, key: &str, model: &KvModel) -> Result<()> {
+    fn insert_with_expiration(
+        &self,
+        namespace_id: NamespaceId,
+        key: &str,
+        value: Vec<u8>,
+        expiry: Option<Timestamp>,
+    ) -> Result<()> {
         let mut batch = self.db.batch();
 
         let row = KvPairRow {
             key: key.to_string(),
-            value: model.value.clone(),
-            expiry: model.expiry,
+            value,
+            expiry,
         };
 
-        batch.insert_row(&self.tables, KvPairRow::key_for(key), &row)?;
+        batch.insert_row(&self.keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
 
-        if let Some(expiry) = model.expiry {
-            let expiration_row = ExpirationRow::new(expiry, key.to_string());
+        if let Some(expiry) = expiry {
+            let expiration_row = ExpirationRow::new();
             batch.insert_row(
-                &self.tables,
-                ExpirationRow::key_for(expiry, key),
+                &self.keyspace,
+                ExpirationRow::key_for(namespace_id, expiry, key),
                 &expiration_row,
             )?;
         }
@@ -99,30 +106,32 @@ impl KvController {
         Ok(())
     }
 
-    pub fn set(&mut self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
-        // TODO: remove this method
-        tracing::error!("unsafe method KvStore::set called!");
-        self.set_(key, model, behavior)
-    }
-
-    fn set_(&mut self, key: &str, model: &KvModel, behavior: OperationBehavior) -> Result<()> {
+    pub fn set(
+        &self,
+        namespace_id: NamespaceId,
+        key: &str,
+        value: Vec<u8>,
+        expiry: Option<Timestamp>,
+        behavior: OperationBehavior,
+        now: Timestamp,
+    ) -> Result<()> {
         match behavior {
             OperationBehavior::Upsert => {
-                self.insert_with_expiration(key, model)?;
+                self.insert_with_expiration(namespace_id, key, value, expiry)?;
             }
             OperationBehavior::Insert => {
-                let exists = self.fetch_non_expired(key)?.is_some();
+                let exists = self.fetch(namespace_id, key, now)?.is_some();
 
                 if !exists {
-                    self.insert_with_expiration(key, model)?;
+                    self.insert_with_expiration(namespace_id, key, value, expiry)?;
                 } else {
                     // FIXME(@svix-lucho): Do nothing?
                 }
             }
             OperationBehavior::Update => {
-                let exists = self.fetch_non_expired(key)?.is_some();
+                let exists = self.fetch(namespace_id, key, now)?.is_some();
                 if exists {
-                    self.insert_with_expiration(key, model)?;
+                    self.insert_with_expiration(namespace_id, key, value, expiry)?;
                 } else {
                     // FIXME(@svix-lucho): Do nothing?
                 }
@@ -132,15 +141,19 @@ impl KvController {
         Ok(())
     }
 
-    pub fn delete(&self, key: &str) -> Result<()> {
+    pub fn delete(&self, namespace_id: NamespaceId, key: &str) -> Result<()> {
         let mut batch = self.db.batch();
 
-        if let Some(data) = KvPairRow::fetch(&self.tables, KvPairRow::key_for(key))? {
+        if let Some(data) = KvPairRow::fetch(&self.keyspace, KvPairRow::key_for(namespace_id, key))?
+        {
             // Delete from the expiration keyspace
             if let Some(expiry) = data.expiry {
-                batch.remove_row(&self.tables, ExpirationRow::key_for(expiry, key))?;
+                batch.remove_row(
+                    &self.keyspace,
+                    ExpirationRow::key_for(namespace_id, expiry, key),
+                )?;
             }
-            batch.remove_row(&self.tables, KvPairRow::key_for(key))?;
+            batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, key))?;
         }
 
         batch.commit()?;
@@ -149,18 +162,25 @@ impl KvController {
     }
 
     pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
-        KvPairRow::values(&self.tables)
+        KvPairRow::values(&self.keyspace)
     }
 
     pub fn clear_expired(&mut self, now: Timestamp) -> Result<()> {
-        let start = ExpirationRow::key_for(Timestamp::MIN, "").into_fjall_key();
-        let end= ExpirationRow::key_for(now, "").into_fjall_key();
+        let start = ExpirationRow::key_for(NamespaceId::nil(), Timestamp::MIN, "").into_fjall_key();
+        let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
-        for chunk in &self.tables.range(start..=end).chunks(EXPIRATION_BATCH_SIZE) {
+        for chunk in &self
+            .keyspace
+            .range(start..=end)
+            .chunks(EXPIRATION_BATCH_SIZE)
+        {
             let mut batch = self.db.batch();
             for item in chunk {
                 let k = item.key()?;
-                batch.remove(&self.tables, k);
+                let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
+                batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, main_key))?;
+
+                batch.remove(&self.keyspace, k);
             }
             batch.commit()?;
         }

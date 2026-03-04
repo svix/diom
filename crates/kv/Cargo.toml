@@ -6,6 +6,7 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+coyote-core = { version = "0.0.1", path = "../coyote-core" }
 coyote-error.workspace = true
 coyote-namespace.workspace = true
 coyote-operations.workspace = true

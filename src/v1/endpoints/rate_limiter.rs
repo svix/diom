@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use coyote_core::types::EntityKey;
 use coyote_derive::aide_annotate;
 use coyote_error::ResultExt;
 use coyote_namespace::Namespace;
@@ -15,12 +16,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::{cluster::RaftState, types::EntityKey},
-    error::Result,
-    v1::utils::openapi_tag,
-};
+use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
 use coyote_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};

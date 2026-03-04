@@ -131,6 +131,9 @@ pub struct AppState {
     #[allow(unused)]
     pub(crate) ro_dbs: ReadonlyDatabases,
 
+    // FIXME: temporarily here until we make ro_dbs usable.
+    pub(crate) do_not_use_persistent_db: fjall::Database,
+
     kv_stores: Arc<Mutex<LruCache<Option<String>, KvStore>>>,
 
     pub meter: Meter,
@@ -207,10 +210,11 @@ impl AppState {
             cfg,
             rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
                 "rate_limiter_default",
-                persistent_db,
+                persistent_db.clone(),
             ),
             namespace_state,
             ro_dbs,
+            do_not_use_persistent_db: persistent_db,
             kv_stores: Arc::new(Mutex::new(LruCache::new(KV_CACHE))),
             meter,
         }
@@ -240,10 +244,6 @@ impl AppState {
                 ))
             })
             .cloned()
-    }
-
-    pub async fn get_kv_store_by_key(&self, key_name: &str) -> Result<KvStore> {
-        self.get_store_by_key::<KeyValueConfig>(key_name).await
     }
 
     pub async fn get_cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
