@@ -21,6 +21,16 @@ async fn stream_receive_returns_published_messages() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-recv:my-topic",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     client
         .post("msgs/publish")
         .json(json!({
@@ -77,6 +87,16 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     client
         .post("msgs/namespace/create")
         .json(json!({ "name": "ns-nodup" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-nodup:t1",
+            "consumer_group": "cg1",
+        }))
         .await?
         .expect(StatusCode::OK);
 
@@ -171,6 +191,25 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    // Register both consumer groups before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-cg:t1",
+            "consumer_group": "group-a",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-cg:t1",
+            "consumer_group": "group-b",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     client
         .post("msgs/publish")
         .json(json!({
@@ -257,6 +296,16 @@ async fn stream_receive_with_defaults() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-def:t1",
+            "consumer_group": "cg-default",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     client
         .post("msgs/publish")
         .json(json!({
@@ -294,6 +343,16 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     client
         .post("msgs/namespace/create")
         .json(json!({ "name": "ns-lock" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-lock:t1",
+            "consumer_group": "cg1",
+        }))
         .await?
         .expect(StatusCode::OK);
 
@@ -394,6 +453,16 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
         .await?
         .expect(StatusCode::OK);
 
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-concurrent:t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     // "k1" and "k2" hash to different partitions via djb2
     client
         .post("msgs/publish")
@@ -484,6 +553,16 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     client
         .post("msgs/namespace/create")
         .json(json!({ "name": "ns-commit" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-commit:t1",
+            "consumer_group": "cg1",
+        }))
         .await?
         .expect(StatusCode::OK);
 
@@ -634,6 +713,16 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-race:t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     // Single partition (default) — all messages land on partition 0.
     client
         .post("msgs/publish")
@@ -695,6 +784,16 @@ async fn partial_commit_preserves_lease() -> TestResult {
     client
         .post("msgs/namespace/create")
         .json(json!({ "name": "ns-partial" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-partial:t1",
+            "consumer_group": "cg1",
+        }))
         .await?
         .expect(StatusCode::OK);
 
@@ -781,6 +880,79 @@ async fn partial_commit_preserves_lease() -> TestResult {
 }
 
 #[tokio::test]
+async fn new_consumer_group_starts_from_latest() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-latest" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish 5 messages before any consumer group exists
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-latest:t1",
+            "msgs": (0..5)
+                .map(|i| json!({ "value": format!("old-{i}").as_bytes(), "key": "k1" }))
+                .collect::<Vec<_>>(),
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // First receive with a brand-new CG — should get 0 messages (starts from "now")
+    let r1 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-latest:t1",
+            "consumer_group": "cg-new",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(
+        r1["msgs"].as_array().unwrap().len(),
+        0,
+        "new consumer group should not see pre-existing messages"
+    );
+
+    // Publish 3 more messages
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-latest:t1",
+            "msgs": (0..3)
+                .map(|i| json!({ "value": format!("new-{i}").as_bytes(), "key": "k1" }))
+                .collect::<Vec<_>>(),
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Second receive — should get only the 3 new messages
+    let r2 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-latest:t1",
+            "consumer_group": "cg-new",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(
+        r2["msgs"].as_array().unwrap().len(),
+        3,
+        "consumer group should only see messages published after registration"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn default_namespace_receive_and_commit() -> TestResult {
     let TestContext {
         client,
@@ -789,6 +961,17 @@ async fn default_namespace_receive_and_commit() -> TestResult {
     } = start_server().await;
 
     // No namespace creation — default namespace is auto-created.
+
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "def-topic",
+            "consumer_group": "cg-def",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     client
         .post("msgs/publish")
         .json(json!({
