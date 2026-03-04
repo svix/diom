@@ -1,4 +1,8 @@
 module "edge" {
+  depends_on = [
+    module.eks
+  ]
+
   source = "./modules/edge"
   providers = {
     aws        = aws,

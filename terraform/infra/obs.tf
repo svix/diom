@@ -1,4 +1,8 @@
 module "obs" {
+  depends_on = [
+    module.eks
+  ]
+
   source = "./modules/observability"
   providers = {
     aws        = aws,
