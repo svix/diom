@@ -62,21 +62,11 @@ impl Error {
     }
 
     #[track_caller]
-    pub fn validation(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Validation(s.to_string()))
-    }
-
-    #[track_caller]
     pub fn http(h: HttpError) -> Self {
         Self {
             trace: Vec::with_capacity(0), // no debugging necessary
             typ: ErrorType::Http(h),
         }
-    }
-
-    #[track_caller]
-    pub fn timeout(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Timeout(s.to_string()))
     }
 
     #[track_caller]
@@ -162,12 +152,8 @@ impl From<PathRejection> for Error {
 pub enum ErrorType {
     /// A generic error
     Generic(String),
-    /// Database error
-    Validation(String),
     /// Any kind of HttpError
     Http(HttpError),
-    /// Timeout error
-    Timeout(String),
     /// An error from an Operation application
     Operation {
         code: StatusCode,
@@ -178,7 +164,7 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Generic(s) | Self::Validation(s) | Self::Timeout(s) => s.fmt(f),
+            Self::Generic(s) => s.fmt(f),
             Self::Http(s) => s.fmt(f),
             Self::Operation { detail, code } => {
                 if let Some(detail) = detail {
