@@ -331,6 +331,25 @@ async fn default_namespace_isolated_from_named() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    // Register consumer groups before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "shared-name",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "other:shared-name",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     // Publish to default namespace (no prefix)
     client
         .post("msgs/publish")
