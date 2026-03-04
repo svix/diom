@@ -1,0 +1,190 @@
+name: Coyote Docker Build
+
+on:
+  workflow_call:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: svix/coyote-server
+
+jobs:
+  build-and-push-image:
+    permissions:
+      actions: read
+      packages: write
+      contents: read
+      security-events: write
+    runs-on: ${{ matrix.os.runner }}
+    strategy:
+      matrix:
+        os:
+          - {arch: linux/amd64, runner: ubuntu-24.04-8-cores}
+          - {arch: linux/arm64, runner: ubuntu-24.04-arm-8-cores}
+    outputs:
+      docker_image_tag: ${{ github.sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: '0'
+
+      - name: Prepare
+        id: prepare
+        run: |
+          platform=${{ matrix.os.arch }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
+          echo "version=$(date --utc +%Y%m%d)-$(git rev-list ${{ github.sha }} --count)-dev" >> "$GITHUB_OUTPUT"
+
+      - name: Install Docker
+        if: matrix.os.arch == 'linux/arm64'
+        run: |
+          bash ./scripts/install-docker.sh
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to the GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+
+      - name: Build ${{ matrix.os.arch }} Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.os.arch }}
+          tags: "${{ matrix.os.arch }}:${{ github.sha }}"
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            RELEASE_VERSION=${{ steps.prepare.outputs.version }}
+          load: true
+
+      - name: Scan image with Grype for only fixable
+        id: scan
+        uses: anchore/scan-action@v6
+        with:
+          image: "${{ matrix.os.arch }}:${{ github.sha }}"
+          fail-build: true
+          severity-cutoff: high
+          only-fixed: true
+          output-file: grype.sarif
+
+      - name: Inspect action SARIF report
+        if: ${{ always() && hashFiles('grype.sarif') != '' }}
+        run: cat ${{ steps.scan.outputs.sarif }}
+
+      - name: Scan image with Grype for all
+        id: scan-all
+        uses: anchore/scan-action@v6
+        with:
+          image: "${{ matrix.os.arch }}:${{ github.sha }}"
+          fail-build: false
+          severity-cutoff: negligible
+          only-fixed: false
+          output-file: grype-all.sarif
+
+      - name: Inspect action SARIF report for all CVEs
+        if: ${{ !cancelled() && hashFiles('grype-all.sarif') != '' }}
+        run: cat ${{ steps.scan-all.outputs.sarif }}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: prod
+          push: true
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ matrix.os.arch }}
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            RELEASE_VERSION=${{ steps.prepare.outputs.version }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          echo "Digest: $digest"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v6
+        with:
+          name: digests-nonfips-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    # Do NOT use an external provider like ubicloud for this
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    needs:
+      - build-and-push-image
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-nonfips-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+
+      - name: Login to the GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        shell: bash
+        run: |
+          set -x
+          mapfile -t tags < <(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          args=()
+          for tag in "${tags[@]}"; do
+              args+=("-t" "$tag")
+          done
+          for digest in *; do
+              args+=("${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:$digest")
+          done
+          docker buildx imagetools create "${args[@]}"
+
+      - name: Inspect image
+        shell: bash
+        run: |
+          set -x
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
