@@ -88,22 +88,25 @@ impl StreamReceiveOperation {
 
         for partition in partitions {
             let topic = TopicPartition::new(self.topic.clone(), Partition::new(partition)?);
-            let mut lease = match StreamLeaseRow::fetch(
+            let (mut lease, is_new) = match StreamLeaseRow::fetch(
                 &state.metadata_tables,
                 topic_row.id,
                 topic.partition,
                 &self.consumer_group,
             )? {
-                Some(lease) => lease,
-                None => StreamLeaseRow::new()?,
+                Some(lease) => (lease, false),
+                None => {
+                    let mut lease = StreamLeaseRow::new()?;
+                    lease.offset =
+                        MsgRow::next_offset(&state.msg_table, topic_row.id, topic.partition)?;
+                    (lease, true)
+                }
             };
 
             if lease.expiry > self.now {
                 continue;
             }
             no_lease_available = false;
-
-            lease.expiry = expiry;
 
             let msgs = MsgRow::fetch_range(
                 &state.msg_table,
@@ -113,10 +116,22 @@ impl StreamReceiveOperation {
                 remaining,
             )?;
 
-            // We don't need to take a lease if there are no items.
             if msgs.is_empty() {
+                if is_new {
+                    batch.insert(
+                        &state.metadata_tables,
+                        StreamLeaseRow::construct_key(
+                            topic_row.id,
+                            topic.partition,
+                            &self.consumer_group,
+                        ),
+                        lease.to_fjall_value()?,
+                    );
+                }
                 continue;
             }
+
+            lease.expiry = expiry;
 
             // FIXME(@svix-gabriel) - I should just be able to reference msgs.last.offset.
             // this'll require a larger change though.

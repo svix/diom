@@ -20,6 +20,16 @@ async fn default_is_one_partition() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-def-part:t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     // Publish messages with different keys — with 1 partition they all land on the same one.
     client
         .post("msgs/publish")
@@ -83,6 +93,16 @@ async fn configure_topic_partitions() -> TestResult {
         .json();
 
     assert_eq!(response["partitions"].as_u64().unwrap(), 4);
+
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-conf:t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
 
     // Publish messages with different keys to spread across partitions
     client
@@ -256,6 +276,16 @@ async fn receive_respects_configured_partitions() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
+    // Register consumer group after configure so we can receive from the start of the stream
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-recv-conf:t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
     // "k1" and "k2" hash to different partitions with 16 partitions
     client
         .post("msgs/publish")
@@ -326,6 +356,16 @@ async fn configure_default_namespace_topic() -> TestResult {
         .json();
 
     assert_eq!(response["partitions"].as_u64().unwrap(), 4);
+
+    // Register consumer group before publishing
+    client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "def-t1",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
 
     // Publish with different keys to spread across partitions
     client
