@@ -309,7 +309,7 @@ async fn flush_worker(
                     done = true
                 },
                 _ = ticker.tick() => {
-                    sync_now = pending.len() > 0
+                    sync_now = !pending.is_empty()
                 }
             }
 
@@ -330,10 +330,8 @@ async fn flush_worker(
                 .await
                 .expect("failed joining blocking task");
                 tracing::info_span!("logs:flush_worker:drain").in_scope(|| {
-                    for item in pending.drain(..) {
-                        if let Some(callback) = item {
-                            callback.log_io_completed(result.clone().map_err(std::io::Error::other))
-                        }
+                    for callback in pending.drain(..).flatten() {
+                        callback.log_io_completed(result.clone().map_err(std::io::Error::other))
                     }
                 });
             }
