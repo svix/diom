@@ -9,3 +9,6 @@ jobs:
   benchmark:
     uses: ./.github/workflows/benchmark.yml
     secrets: inherit
+  docker_publish:
+    uses: ./.github/workflows/docker-publish.yml
+    secrets: inherit
