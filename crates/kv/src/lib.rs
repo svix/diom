@@ -1,5 +1,3 @@
-pub mod tables;
-
 use std::num::NonZeroU64;
 
 use coyote_error::Result;
@@ -13,7 +11,9 @@ use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub mod kvcontroller;
 pub mod operations;
+pub mod tables;
 
 use crate::{
     operations::{DeleteOperation, SetOperation},
