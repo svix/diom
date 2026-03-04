@@ -1,14 +1,13 @@
-use std::borrow::Cow;
-
-use fjall_utils::TableRow;
+use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-// IMPORTANT. Since these are all shared in the same fjall::Keyspace, the table prefixes must be unique.
-static_assertions::const_assert!(fjall_utils::are_all_unique(&[
-    FixedWindowState::TABLE_PREFIX,
-    TokenBucketState::TABLE_PREFIX,
-]));
+/// These values can never change. Only additions are allowed.
+#[repr(u8)]
+enum RowType {
+    FixedWindow = 0,
+    TokenBucket = 1,
+}
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct FixedWindowState {
@@ -18,11 +17,12 @@ pub struct FixedWindowState {
 }
 
 impl TableRow for FixedWindowState {
-    const TABLE_PREFIX: &'static str = "_FIXED_WINDOW_";
-    type Key = String;
+    const ROW_TYPE: u8 = RowType::FixedWindow as u8;
+}
 
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
+impl FixedWindowState {
+    pub(crate) fn key_for(key: &str) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[], &[key])
     }
 }
 
@@ -34,10 +34,11 @@ pub struct TokenBucketState {
 }
 
 impl TableRow for TokenBucketState {
-    const TABLE_PREFIX: &'static str = "_TOKEN_BUCKET_";
-    type Key = String;
+    const ROW_TYPE: u8 = RowType::TokenBucket as u8;
+}
 
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Borrowed(&self.key)
+impl TokenBucketState {
+    pub(crate) fn key_for(key: &str) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[], &[key])
     }
 }

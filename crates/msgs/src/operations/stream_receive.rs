@@ -2,6 +2,7 @@ use std::{num::NonZeroU16, time::Duration};
 
 use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
+use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
@@ -10,7 +11,7 @@ use tracing::Span;
 use crate::{
     State,
     entities::{ConsumerGroup, Offset, Partition, TopicIn, TopicName, TopicPartition},
-    tables::{MsgRow, StreamLeaseRow, TableRow, TopicRow},
+    tables::{MsgRow, StreamLeaseRow, TopicRow},
 };
 
 use super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
@@ -58,19 +59,21 @@ impl StreamReceiveOperation {
 
         let mut batch = state.db.batch();
 
-        let topic_row =
-            match TopicRow::fetch(&state.metadata_tables, self.namespace_id, &self.topic)? {
-                Some(topic_row) => topic_row,
-                None => {
-                    let topic_row = TopicRow::new(self.topic.clone(), self.now);
-                    batch.insert(
-                        &state.metadata_tables,
-                        TopicRow::construct_key(self.namespace_id, &self.topic),
-                        topic_row.to_fjall_value()?,
-                    );
-                    topic_row
-                }
-            };
+        let topic_row = match TopicRow::fetch(
+            &state.metadata_tables,
+            TopicRow::key_for(self.namespace_id, &self.topic),
+        )? {
+            Some(topic_row) => topic_row,
+            None => {
+                let topic_row = TopicRow::new(self.topic.clone(), self.now);
+                batch.insert_row(
+                    &state.metadata_tables,
+                    TopicRow::key_for(self.namespace_id, &self.topic),
+                    &topic_row,
+                )?;
+                topic_row
+            }
+        };
 
         Span::current().record("partition_count", topic_row.partitions);
 
@@ -90,9 +93,7 @@ impl StreamReceiveOperation {
             let topic = TopicPartition::new(self.topic.clone(), Partition::new(partition)?);
             let (mut lease, is_new) = match StreamLeaseRow::fetch(
                 &state.metadata_tables,
-                topic_row.id,
-                topic.partition,
-                &self.consumer_group,
+                StreamLeaseRow::key_for(topic_row.id, topic.partition, &self.consumer_group),
             )? {
                 Some(lease) => (lease, false),
                 None => {
@@ -118,15 +119,15 @@ impl StreamReceiveOperation {
 
             if msgs.is_empty() {
                 if is_new {
-                    batch.insert(
+                    batch.insert_row(
                         &state.metadata_tables,
-                        StreamLeaseRow::construct_key(
+                        StreamLeaseRow::key_for(
                             topic_row.id,
                             topic.partition,
                             &self.consumer_group,
                         ),
-                        lease.to_fjall_value()?,
-                    );
+                        &lease,
+                    )?;
                 }
                 continue;
             }
@@ -150,11 +151,11 @@ impl StreamReceiveOperation {
                     }),
             );
 
-            batch.insert(
+            batch.insert_row(
                 &state.metadata_tables,
-                StreamLeaseRow::construct_key(topic_row.id, topic.partition, &self.consumer_group),
-                lease.to_fjall_value()?,
-            );
+                StreamLeaseRow::key_for(topic_row.id, topic.partition, &self.consumer_group),
+                &lease,
+            )?;
 
             if remaining == 0 {
                 break;

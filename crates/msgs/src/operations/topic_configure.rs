@@ -1,4 +1,5 @@
 use coyote_namespace::entities::NamespaceId;
+use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +8,7 @@ use coyote_error::Error;
 use crate::{
     State,
     entities::{MAX_PARTITION_COUNT, TopicName},
-    tables::{TableRow, TopicRow},
+    tables::TopicRow,
 };
 
 use super::{MsgsRaftState, MsgsRequest, TopicConfigureResponse};
@@ -40,11 +41,13 @@ impl TopicConfigureOperation {
     }
 
     fn apply_real(self, state: &State) -> coyote_operations::Result<TopicConfigureResponseData> {
-        let mut topic_row =
-            match TopicRow::fetch(&state.metadata_tables, self.namespace_id, &self.topic)? {
-                Some(topic_row) => topic_row,
-                None => TopicRow::new(self.topic.clone(), self.now),
-            };
+        let mut topic_row = match TopicRow::fetch(
+            &state.metadata_tables,
+            TopicRow::key_for(self.namespace_id, &self.topic),
+        )? {
+            Some(topic_row) => topic_row,
+            None => TopicRow::new(self.topic.clone(), self.now),
+        };
 
         if self.partitions < topic_row.partitions {
             return Err(Error::invalid_user_input(
@@ -56,11 +59,11 @@ impl TopicConfigureOperation {
         topic_row.partitions = self.partitions;
 
         let mut batch = state.db.batch();
-        batch.insert(
+        batch.insert_row(
             &state.metadata_tables,
-            TopicRow::construct_key(self.namespace_id, &self.topic),
-            topic_row.to_fjall_value()?,
-        );
+            TopicRow::key_for(self.namespace_id, &self.topic),
+            &topic_row,
+        )?;
         batch.commit().map_err(Error::from)?;
 
         Ok(TopicConfigureResponseData {

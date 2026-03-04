@@ -9,7 +9,10 @@ use std::{
 
 use anyhow::Context;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
-use fjall_utils::{FjallFixedKey, MonotonicTableRowExt, TableRow};
+use fjall_utils::{
+    FjallFixedKey,
+    table_row2::{MonotonicTableRowExt, TableRow},
+};
 use jiff::Timestamp;
 use openraft::{
     Entry, LogId, OptionalSend, RaftLogReader, RaftTypeConfig, StorageError, Vote,
