@@ -15,7 +15,7 @@ use super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamCommitOperation {
     namespace_id: NamespaceId,
-    topic: TopicPartition,
+    pub(crate) topic: TopicPartition,
     consumer_group: ConsumerGroup,
     offset: Offset,
     now: Timestamp,

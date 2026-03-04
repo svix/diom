@@ -19,7 +19,7 @@ use super::{MsgsRaftState, MsgsRequest, PublishResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishOperation {
     namespace_id: NamespaceId,
-    topic: TopicName,
+    pub(crate) topic: TopicName,
     partition: Option<Partition>,
     msgs: Vec<MsgIn>,
     now: Timestamp,

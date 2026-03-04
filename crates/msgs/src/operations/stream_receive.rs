@@ -18,7 +18,7 @@ use super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamReceiveOperation {
     namespace_id: NamespaceId,
-    topic: TopicName,
+    pub(crate) topic: TopicName,
     partition: Option<Partition>,
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,

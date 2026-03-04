@@ -27,6 +27,9 @@ pub(super) async fn apply_request(
         let _ = child_span.set_parent(propagator.extract(ctx));
     }
     child_span.set_attribute("request", Value::String(request.to_string().into()));
+    if let Some(hash) = request.hashed_key() {
+        child_span.set_attribute("hashed_key", Value::String(hash.into()));
+    }
     let _exit = child_span.enter();
 
     Ok(match request.inner {
