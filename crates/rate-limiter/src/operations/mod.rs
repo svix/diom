@@ -17,3 +17,12 @@ raft_module_operations!(
     },
     state = &RateLimiter,
 );
+
+impl RateLimiterOperation {
+    pub fn key_name(&self) -> &str {
+        match self {
+            RateLimiterOperation::Limit(limit_operation) => &limit_operation.key,
+            RateLimiterOperation::Reset(reset_operation) => &reset_operation.key,
+        }
+    }
+}

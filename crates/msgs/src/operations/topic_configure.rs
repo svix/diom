@@ -15,7 +15,7 @@ use super::{MsgsRaftState, MsgsRequest, TopicConfigureResponse};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TopicConfigureOperation {
     namespace_id: NamespaceId,
-    topic: TopicName,
+    pub(crate) topic: TopicName,
     partitions: u16,
     now: Timestamp,
 }

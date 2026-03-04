@@ -27,9 +27,9 @@ raft_module_operations!(
 impl IdempotencyOperation {
     pub fn key_name(&self) -> &str {
         match self {
-            Self::TryStart(req) => req.key.as_ref(),
-            Self::Complete(req) => req.key.as_ref(),
-            Self::Abort(req) => req.key.as_ref(),
+            Self::TryStart(op) => &op.key,
+            Self::Complete(op) => &op.key,
+            Self::Abort(op) => &op.key,
         }
     }
 }
@@ -42,3 +42,11 @@ raft_module_operations!(
     state = &coyote_namespace::State,
     response = CreateIdempotencyOperationResponse,
 );
+
+impl CreateIdempotencyOp {
+    pub fn key_name(&self) -> &str {
+        match self {
+            CreateIdempotencyOp::CreateIdempotency(op) => &op.name,
+        }
+    }
+}

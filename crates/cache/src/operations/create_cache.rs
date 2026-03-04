@@ -11,7 +11,7 @@ use crate::operations::{CreateCacheRequest, CreateCacheResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateCacheOperation {
-    name: String,
+    pub(crate) name: String,
     eviction_policy: EvictionPolicy,
     storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,

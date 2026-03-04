@@ -11,7 +11,7 @@ use crate::operations::{CreateIdempotencyRequest, CreateIdempotencyResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateIdempotencyOperation {
-    name: String,
+    pub(crate) name: String,
     storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
 }

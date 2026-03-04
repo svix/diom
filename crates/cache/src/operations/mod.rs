@@ -23,8 +23,8 @@ raft_module_operations!(
 impl CacheOperation {
     pub fn key_name(&self) -> &str {
         match self {
-            Self::Set(req) => req.key.as_ref(),
-            Self::Delete(req) => req.key.as_ref(),
+            Self::Set(op) => &op.key,
+            Self::Delete(op) => &op.key,
         }
     }
 }
@@ -37,3 +37,11 @@ raft_module_operations!(
     state = &coyote_namespace::State,
     response = CreateCacheOperationResponse,
 );
+
+impl CreateCacheOp {
+    pub fn key_name(&self) -> &str {
+        match self {
+            CreateCacheOp::CreateCache(op) => &op.name,
+        }
+    }
+}
