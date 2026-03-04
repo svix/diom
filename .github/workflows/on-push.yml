@@ -12,3 +12,7 @@ jobs:
   docker_publish:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
+    permissions:
+      actions: read
+      packages: write
+      security-events: write
