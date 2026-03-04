@@ -8,6 +8,7 @@ use coyote_namespace::{
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::{TableRow, WriteBatchExt};
 use hashlink::{LinkedHashMap, linked_hash_map::RawEntryMut};
+use itertools::Itertools;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -152,23 +153,16 @@ impl KvController {
     }
 
     pub fn clear_expired(&mut self, now: Timestamp) -> Result<()> {
-        let mut removed = 0;
-        let now_ms = now.as_millisecond();
-        let mut expired_keys = Vec::new();
+        let start = ExpirationRow::key_for(Timestamp::MIN, "").into_fjall_key();
+        let end= ExpirationRow::key_for(now, "").into_fjall_key();
 
-        for item in ExpirationRow::values(&self.tables)? {
-            if item.expiry.as_millisecond() < now_ms && removed < EXPIRATION_BATCH_SIZE {
-                expired_keys.push(item.key);
-                removed += 1;
-            } else if item.expiry.as_millisecond() >= now_ms {
-                // expiration rows are ordered, so we can break early
-                break;
+        for chunk in &self.tables.range(start..=end).chunks(EXPIRATION_BATCH_SIZE) {
+            let mut batch = self.db.batch();
+            for item in chunk {
+                let k = item.key()?;
+                batch.remove(&self.tables, k);
             }
-        }
-
-        // FIXME(@svix-lucho): we can batch removes here to make this more efficient
-        for key in expired_keys {
-            let _ = self.delete(&key);
+            batch.commit()?;
         }
 
         Ok(())
