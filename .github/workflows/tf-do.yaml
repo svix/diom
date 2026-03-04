@@ -1,0 +1,142 @@
+---
+
+name: Common TF Deployer
+on:
+  workflow_call:
+    inputs:
+      tf_org:
+        required: false
+        type: string
+        default: "svix"
+      tf_ws:
+        required: true
+        type: string
+      tf_lock_timout:
+        required: false
+        type: string
+        default: "90m"
+      github_env:
+        required: true
+        type: string
+      ch_dir:
+        required: true
+        type: string
+      svix_module:
+        required: true
+        type: string
+      cloud_name:
+        required: true
+        type: string
+      client_name:
+        required: true
+        type: string
+      copy_helm:
+        required: true
+        type: boolean
+      tf_do:
+        required: true
+        type: string
+    outputs:
+      tf_do_output:
+        description: "Output of tf-do Workflow"
+        value: ${{jobs.tf_deploy.outputs.tf_plan_exitcode}}
+jobs:
+    tf_deploy:
+      name: ${{inputs.github_env}}
+      runs-on: ubuntu-latest
+      environment: ${{inputs.github_env}}
+      outputs:
+        tf_plan_exitcode: ${{ steps.tf_plan.outputs.exit_code }}
+      steps:
+
+        - name: Git clone the repository
+          uses: actions/checkout@v3
+
+        - name:  Setup Hashicorp Terraform
+          uses: hashicorp/setup-terraform@v2
+          with:
+            cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+            terraform_wrapper: false
+
+        - name: Copy Customer Env tfvars file if exist
+          run: |
+            echo "Copying Env tfvars file if exist"
+            if [ -f env/${{ inputs.client_name}}/tf/*.auto.tfvars ]; then
+                cp env/${{ inputs.client_name}}/tf/*.auto.tfvars ${{ inputs.ch_dir}}/
+            fi
+            echo "Copying image tag auto.tfvars"
+            if [ -f aaa-image-tags.auto.tfvars ]; then
+                cp aaa-image-tags.auto.tfvars ${{ inputs.ch_dir}}/
+            fi
+
+            echo "Copying bbb auto.tfvars with image tags"
+            if [ -f bbb-image-tags.auto.tfvars ]; then
+                cat bbb-image-tags.auto.tfvars
+                cp -av bbb-image-tags.auto.tfvars ${{ inputs.ch_dir}}/
+            else
+              echo "Could not find bbb-image-tags.auto.tfvars"
+              exit 1
+            fi
+
+        - name: Copy svix helm values for client ${{inputs.client_name}}
+          if: inputs.copy_helm == true
+          run: |
+            echo "Copying svix helm values for client ${{inputs.client_name}}"
+
+            export VALUES_DIR=${{ inputs.ch_dir}}/modules/k8s/helm-values/
+
+            mkdir -p $VALUES_DIR
+            cp -av env/${{inputs.client_name}}/helm-values/values-svix-transformations.yaml $VALUES_DIR/${{inputs.client_name}}-values-svix-transformations.yaml
+            cp -av env/${{inputs.client_name}}/helm-values/values-svix-static.yaml $VALUES_DIR/${{inputs.client_name}}-values-svix-static.yaml
+            cp -av env/${{inputs.client_name}}/helm-values/values-svix.yaml $VALUES_DIR/${{inputs.client_name}}-values-svix.yaml
+
+        - name: Terraform Init
+          run: |
+            terraform -chdir=${{ inputs.ch_dir }} init -backend-config="organization=${{ inputs.tf_org }}"
+          env:
+            TF_WORKSPACE: ${{ inputs.tf_ws }}
+
+        - name: Terraform Select
+          run: |
+            terraform -chdir=${{ inputs.ch_dir }} workspace select ${{ inputs.tf_ws }} || terraform -chdir=${{ inputs.ch_dir }} workspace new ${{ inputs.tf_ws }}
+
+        - name: Terraform Validate
+          run: |
+            terraform -chdir=${{ inputs.ch_dir }} validate -no-color
+
+        - name: Terraform Format
+          run: |
+            terraform -chdir=${{ inputs.ch_dir }}/../../../ fmt -check -recursive
+
+        - name: Check Tfsec
+          uses: aquasecurity/tfsec-action@v1.0.0
+          with:
+            working_directory: ${{ inputs.ch_dir }}
+            additional_args: -m MEDIUM
+
+        - name: "Terraform Plan: org: ${{ inputs.tf_org }} , ws: ${{inputs.tf_ws}}, svix_mod: ${{inputs.svix_module}}"
+          id: tf_plan
+          if: inputs.tf_do == 'plan'
+          run: |
+            set +e
+            terraform  -chdir=${{ inputs.ch_dir }}/ plan -lock=false -lock-timeout=${{inputs.tf_lock_timout}} -detailed-exitcode -no-color
+            echo "exit_code=$?" >> $GITHUB_OUTPUT
+          continue-on-error: true
+
+        - name: "Terraform Plan: Check exit status"
+          if: inputs.tf_do == 'plan'
+          run: |
+            echo Received Exit Code: ${{steps.tf_plan.outputs.exit_code}}
+            if [[ "${{steps.tf_plan.outputs.exit_code}}" == "1" ]]; then
+              echo "Terraform plan failed, exiting..."
+              exit 1
+            fi
+
+        - name: "Terraform Apply: org: ${{ inputs.tf_org }} , ws: ${{inputs.tf_ws}}, svix_mod: ${{inputs.svix_module}}"
+          if: inputs.tf_do == 'apply'
+          run: |
+            terraform  -chdir=${{ inputs.ch_dir }}/ apply -lock-timeout=${{inputs.tf_lock_timout}} -auto-approve -no-color
+
+        - name: Cleanup operation
+          run: |
+            exit 0

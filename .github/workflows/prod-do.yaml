@@ -1,0 +1,76 @@
+---
+
+name: Customer Do
+on:
+  workflow_call:
+    inputs:
+      client_name:
+        required: true
+        type: string
+      svix_module:
+        required: true
+        type: string
+      copy_helm:
+        required: true
+        type: boolean
+jobs:
+  print_deploy_param:
+      if: ${{inputs.client_name != ''}}
+      runs-on: ubuntu-latest
+      outputs:
+          deploy_flag: ${{ steps.print_step.outputs.deploy_flag }}
+          image_uri: ${{ steps.print_step.outputs.image_uri }}
+          image_tag: ${{ steps.print_step.outputs.image_tag }}
+          github_env: ${{ steps.print_step.outputs.github_env }}
+          cloud_type: ${{ steps.print_step.outputs.cloud_type }}
+          cloud_name: ${{ steps.print_step.outputs.cloud_name }}
+          tf_org: ${{ steps.print_step.outputs.tf_org }}
+      steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+      - name: Print Deploy Flag that controls the deployment
+        id: print_step
+        run: |
+          echo "Sourcing client details"
+          source env/${{inputs.client_name}}/workflow/env-vars.sh
+          echo ""
+          echo "Setting up Github outputs"
+          echo "deploy_flag=$DEPLOY" >> $GITHUB_OUTPUT
+          echo "github_env=$GITHUB_ENV" >> $GITHUB_OUTPUT
+          echo "cloud_type=$CLOUD_TYPE" >> $GITHUB_OUTPUT
+          echo "cloud_name=$CLOUD_NAME" >> $GITHUB_OUTPUT
+          echo "tf_org=$TF_ORG" >> $GITHUB_OUTPUT
+          echo ""
+          echo "Starting deployment.."
+
+  plan_prod:
+    if: ${{ needs.print_deploy_param.outputs.deploy_flag == 'true' }}
+    needs: [print_deploy_param]
+    uses: ./.github/workflows/tf-do.yaml
+    with:
+      tf_org: ${{ needs.print_deploy_param.outputs.tf_org  }}
+      tf_ws: ${{inputs.client_name}}-${{inputs.svix_module}}
+      github_env:  ${{inputs.client_name}}-plan
+      ch_dir: ./terraform/${{ needs.print_deploy_param.outputs.cloud_type }}/${{inputs.svix_module}}
+      cloud_name: ${{ needs.print_deploy_param.outputs.cloud_name }}
+      svix_module: ${{inputs.svix_module}}
+      client_name: ${{inputs.client_name}}
+      copy_helm:  ${{inputs.copy_helm}}
+      tf_do: plan
+    secrets: inherit
+
+  deploy_prod:
+    needs: [print_deploy_param, plan_prod]
+    if: ${{needs.plan_prod.outputs.tf_do_output == '2'}}
+    uses: ./.github/workflows/tf-do.yaml
+    with:
+      tf_org: ${{ needs.print_deploy_param.outputs.tf_org  }}
+      tf_ws: ${{inputs.client_name}}-${{inputs.svix_module}}
+      github_env:  ${{inputs.client_name}}-apply
+      ch_dir: ./terraform/${{ needs.print_deploy_param.outputs.cloud_type }}/${{inputs.svix_module}}
+      cloud_name: ${{ needs.print_deploy_param.outputs.cloud_name }}
+      svix_module: ${{ inputs.svix_module }}
+      client_name: ${{inputs.client_name}}
+      copy_helm: true
+      tf_do: apply
+    secrets: inherit

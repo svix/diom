@@ -1,0 +1,42 @@
+---
+name: Staging Do
+on:
+    workflow_call:
+      inputs:
+        svix_module:
+          required: true
+          type: string
+        copy_helm:
+          required: true
+          type: boolean
+        tf_do:
+          required: true
+          type: string
+jobs:
+    staging_az:
+        uses: ./.github/workflows/tf-do.yaml
+        with:
+          tf_org: svix-staging
+          tf_ws: staging-az-${{inputs.svix_module}}
+          github_env:  staging-az-${{inputs.tf_do}}
+          ch_dir: ./terraform/az-aks/${{inputs.svix_module}}
+          cloud_name: az
+          svix_module: ${{inputs.svix_module}}
+          client_name: staging-az
+          copy_helm:  ${{inputs.copy_helm}}
+          tf_do: ${{inputs.tf_do}}
+        secrets: inherit
+
+    staging_aws:
+        uses: ./.github/workflows/tf-do.yaml
+        with:
+          tf_org: svix-staging
+          tf_ws: staging-aws-${{inputs.svix_module}}
+          github_env:  staging-aws-${{inputs.tf_do}}
+          ch_dir: ./terraform/aws-eks/${{inputs.svix_module}}
+          cloud_name: aws
+          svix_module: ${{inputs.svix_module}}
+          client_name: staging-aws
+          copy_helm:  ${{inputs.copy_helm}}
+          tf_do: ${{inputs.tf_do}}
+        secrets: inherit

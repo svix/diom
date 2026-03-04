@@ -1,0 +1,21 @@
+---
+
+name: Staging PR EE Core to TF Cloud
+
+on:
+  pull_request:
+    paths:
+    - "**"
+    - "!terraform/*/peripheral/**"
+    - "!terraform/common/dd_log_alerts/**"
+    - "!terraform/common/k8s-app-alerts/**"
+    - ".github/workflows/core-staging-pr.yml"
+
+jobs:
+  run_staging_core:
+    uses: ./.github/workflows/staging-do.yaml
+    with:
+      svix_module: core
+      copy_helm: false
+      tf_do: plan
+    secrets: inherit

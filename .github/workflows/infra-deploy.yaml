@@ -1,0 +1,51 @@
+---
+
+name: Deploy EE Core to TF Cloud
+
+on:
+  workflow_dispatch:
+
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths:
+#       - "**"
+#       - "!terraform/*/peripheral/**"
+#       - ".github/workflows/core-deploy.yml"
+
+jobs:
+  run_staging_core:
+    uses: ./.github/workflows/staging-do.yaml
+    with:
+      svix_module: core
+      copy_helm: true
+      tf_do: apply
+    secrets: inherit
+
+  deploy_customers_core_aws:
+    needs: [run_staging_core]
+    uses: ./.github/workflows/customer-do.yaml
+    strategy:
+      fail-fast: true
+      matrix:
+        client_name: ["tenovos-aws"]
+    with:
+      copy_helm: false
+      client_name: ${{matrix.client_name}}
+      svix_module: core
+    secrets: inherit
+
+
+  deploy_customers_core_az:
+    needs: [run_staging_core]
+    uses: ./.github/workflows/customer-do.yaml
+    strategy:
+      fail-fast: true
+      matrix:
+        client_name: ["codat"]
+    with:
+      copy_helm: false
+      client_name: ${{matrix.client_name}}
+      svix_module: core
+    secrets: inherit

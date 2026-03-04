@@ -1,0 +1,19 @@
+---
+
+name: Staging PR EE Peripheral to TF Cloud
+
+on:
+  pull_request:
+    paths:
+    - "**"
+    - "!terraform/*/core/**"
+    - ".github/workflows/peripheral-staging-pr.yml"
+
+jobs:
+  run_staging_peripheral:
+    uses: ./.github/workflows/staging-do.yaml
+    with:
+      svix_module: peripheral
+      copy_helm: true
+      tf_do: plan
+    secrets: inherit
