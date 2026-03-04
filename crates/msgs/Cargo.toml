@@ -11,6 +11,7 @@ diom-error.workspace = true
 diom-namespace.workspace = true
 diom-operations.workspace = true
 fjall.workspace = true
+fjall-utils.workspace = true
 jiff.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true

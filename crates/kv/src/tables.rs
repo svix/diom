@@ -2,7 +2,7 @@ use std::{borrow::Cow, marker::PhantomData};
 
 use diom_error::ResultExt;
 use diom_namespace::entities::NamespaceId;
-use fjall_utils::{TableKey, TableRow};
+use fjall_utils::{TableKey, TableKey2, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -83,50 +83,6 @@ impl TableRow for ExpirationRow {
     }
 }
 
-// Move to fjall-utils
-
-struct MyTableKey<Tag: TableRow> {
-    key: fjall::UserKey,
-    _unit: PhantomData<Tag>,
-}
-
-impl<'a, Tag: TableRow> MyTableKey<Tag> {
-    /// Construct the key to be used for fjall
-    ///
-    /// In the future: should probably just have a big enough key on the stack and use that.
-    fn init_key(row_type: u8, fixed_parts: &[&[u8]], nul_delimited_parts: &[&str]) -> Self {
-        let len = 1 /* u8 */
-            + fixed_parts.iter().fold(0, |acc, e| acc + e.len()) /* all the fixed parts */
-            + nul_delimited_parts.iter().fold(0, |acc, e| acc + e.len()) /* The parts that are nul delimited */
-            + nul_delimited_parts.len().saturating_sub(0); /* the nul delimiters for the parts */
-        let mut ret = Vec::with_capacity(len);
-        ret.push(row_type);
-        for part in fixed_parts {
-            ret.extend_from_slice(part);
-        }
-
-        let nul_delimited_parts = itertools::Itertools::intersperse(
-            nul_delimited_parts.iter().map(|x| x.as_bytes()),
-            b"\0",
-        );
-        for part in nul_delimited_parts {
-            ret.extend_from_slice(part);
-        }
-
-        Self {
-            key: ret.into(),
-            _unit: PhantomData,
-        }
-    }
-
-    fn init_from_bytes(key: &'a [u8]) -> Self {
-        Self {
-            key: key.into(),
-            _unit: PhantomData,
-        }
-    }
-}
-
 // Module specific
 
 #[repr(u8)]
@@ -142,7 +98,7 @@ pub struct MyKvPairRow {
 }
 
 impl KvPairRow {
-    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> MyTableKey<Self> {
-        MyTableKey::init_key(RowType::Pair as u8, &[namespace_id.as_bytes()], &[key])
+    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> TableKey2<Self> {
+        TableKey2::init_key(RowType::Pair as u8, &[namespace_id.as_bytes()], &[key])
     }
 }

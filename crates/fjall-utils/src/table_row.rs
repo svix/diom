@@ -2,6 +2,7 @@ use byteorder::{BigEndian, ByteOrder};
 use fjall::Guard;
 use std::{
     borrow::Cow,
+    marker::PhantomData,
     ops::{Bound, RangeBounds},
 };
 use uuid::Uuid;
@@ -73,13 +74,6 @@ pub trait MonotonicTableKey {}
 ///
 /// This is useful for having logical "tables" within the same keyspace.
 pub trait TableRow: Sized + Serialize + DeserializeOwned {
-    const TABLE_PREFIX: &'static str;
-
-    type Key: TableKey;
-
-    /// Return the field used for indexing into the table.
-    fn get_key(&self) -> Cow<'_, Self::Key>;
-
     fn make_fjall_key(key: &Self::Key) -> fjall::UserKey {
         let raw_key_bytes = key.as_bytes();
         let mut key_bytes = if Self::TABLE_PREFIX.is_empty() {
@@ -96,14 +90,10 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         key_bytes.into()
     }
 
-    fn to_fjall_entry(&self) -> Result<(fjall::UserKey, fjall::UserValue)> {
-        let key = Self::make_fjall_key(self.get_key().as_ref());
-        // FIXME(@svix-gabriel) - it's not clear if we're committed to using msgpack
-        // for internal serialization. Using messagepack for now, but this
-        // should be easy to change later.
-        let value = rmp_serde::to_vec_named(&self).map_err(Error::generic)?;
-
-        Ok((key, value.into()))
+    fn to_fjall_value(&self) -> Result<fjall::UserValue> {
+        rmp_serde::to_vec_named(&self)
+            .map(|bytes| bytes.into())
+            .map_err(Error::generic)
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
@@ -115,9 +105,10 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         keyspace.get(&key)?.map(Self::from_fjall_value).transpose()
     }
 
-    fn insert(keyspace: &fjall::Keyspace, row: &Self) -> Result<()> {
-        let (key, value) = row.to_fjall_entry()?;
-        keyspace.insert(key, value)?;
+    fn insert(keyspace: &fjall::Keyspace, key: TableKey2<Self>, row: &Self) -> Result<()> {
+        let fjall_key = key.key;
+        let value = row.to_fjall_value()?;
+        keyspace.insert(fjall_key, value)?;
         Ok(())
     }
 
@@ -292,5 +283,52 @@ impl WriteBatchExt for fjall::OwnedWriteBatch {
         let key = T::make_fjall_key(key);
         self.remove(keyspace, key);
         Ok(())
+    }
+}
+
+/// Will replace TableKey
+pub struct TableKey2<Tag: TableRow> {
+    key: fjall::UserKey,
+    _unit: PhantomData<Tag>,
+}
+
+impl<'a, Tag: TableRow> TableKey2<Tag> {
+    /// Construct the key to be used for fjall
+    ///
+    /// In the future: should probably just have a big enough key on the stack and use that.
+    pub fn init_key(row_type: u8, fixed_parts: &[&[u8]], nul_delimited_parts: &[&str]) -> Self {
+        let len = 1 /* u8 */
+            + fixed_parts.iter().fold(0, |acc, e| acc + e.len()) /* all the fixed parts */
+            + nul_delimited_parts.iter().fold(0, |acc, e| acc + e.len()) /* The parts that are nul delimited */
+            + nul_delimited_parts.len().saturating_sub(0); /* the nul delimiters for the parts */
+        let mut ret = Vec::with_capacity(len);
+        ret.push(row_type);
+        for part in fixed_parts {
+            ret.extend_from_slice(part);
+        }
+
+        let nul_delimited_parts = itertools::Itertools::intersperse(
+            nul_delimited_parts.iter().map(|x| x.as_bytes()),
+            b"\0",
+        );
+        for part in nul_delimited_parts {
+            ret.extend_from_slice(part);
+        }
+
+        Self {
+            key: ret.into(),
+            _unit: PhantomData,
+        }
+    }
+
+    pub fn init_from_bytes(key: &'a [u8]) -> Self {
+        Self {
+            key: key.into(),
+            _unit: PhantomData,
+        }
+    }
+
+    pub fn fjall_key(self) -> fjall::UserKey {
+        self.key
     }
 }

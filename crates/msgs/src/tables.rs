@@ -3,37 +3,20 @@ use diom_namespace::entities::NamespaceId;
 use std::collections::HashMap;
 
 use diom_error::{Error, Result};
+use fjall_utils::{TableKey, TableKey2, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConsumerGroup, Offset, Partition, TopicId, TopicName};
 
+#[repr(u8)]
+enum RowType {
+    Topic = 0,
+    StreamLease = 1,
+    Msg = 2,
+}
+
 const SIZE_U64: usize = size_of::<u64>();
-
-fn construct_key(parts: &[&[u8]]) -> Vec<u8> {
-    let len = parts.iter().fold(0, |acc, e| acc + e.len());
-    let mut ret = Vec::with_capacity(len);
-    for part in parts {
-        ret.extend_from_slice(part);
-    }
-    ret
-}
-
-pub(crate) trait TableRow: serde::de::DeserializeOwned + Serialize {
-    fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
-        rmp_serde::from_slice(&value).map_err(Error::generic)
-    }
-
-    fn to_fjall_value(&self) -> Result<fjall::UserValue> {
-        rmp_serde::to_vec(&self)
-            .map(fjall::UserValue::from)
-            .map_err(Error::generic)
-    }
-
-    fn fjall_fetch(keyspace: &fjall::Keyspace, key: &[u8]) -> Result<Option<Self>> {
-        keyspace.get(key)?.map(Self::from_fjall_value).transpose()
-    }
-}
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct TopicRow {
@@ -42,11 +25,11 @@ pub(crate) struct TopicRow {
     pub partitions: u16,
 }
 
-impl TopicRow {
-    pub(crate) fn construct_key(namespace_id: NamespaceId, topic: &TopicName) -> Vec<u8> {
-        let parts = ["top".as_bytes(), namespace_id.as_bytes(), topic.as_bytes()];
+impl TableRow for TopicRow {}
 
-        construct_key(&parts)
+impl TopicRow {
+    pub(crate) fn key_for(namespace_id: NamespaceId, topic: &TopicName) -> TableKey2<Self> {
+        TableKey2::init_key(RowType::Topic as u8, &[namespace_id.as_bytes()], &[key])
     }
 
     pub(crate) fn new(name: TopicName, now: Timestamp) -> Self {
@@ -60,15 +43,6 @@ impl TopicRow {
             partitions: 1,
         }
     }
-
-    pub(crate) fn fetch(
-        keyspace: &fjall::Keyspace,
-        namespace_id: NamespaceId,
-        topic: &TopicName,
-    ) -> Result<Option<Self>> {
-        let key = Self::construct_key(namespace_id, topic);
-        Self::fjall_fetch(keyspace, &key)
-    }
 }
 
 impl TableRow for TopicRow {}
@@ -80,23 +54,16 @@ pub(crate) struct StreamLeaseRow {
 }
 
 impl StreamLeaseRow {
-    fn construct_key_(topic_id: TopicId, partition: Partition, consumer_group: &str) -> Vec<u8> {
-        let parts = [
-            "strmleas".as_bytes(),
-            topic_id.as_bytes(),
-            &partition.get().to_be_bytes(),
-            consumer_group.as_bytes(),
-        ];
-
-        construct_key(&parts)
-    }
-
-    pub(crate) fn construct_key(
+    pub(crate) fn key_for(
         topic_id: TopicId,
         partition: Partition,
         consumer_group: &ConsumerGroup,
-    ) -> Vec<u8> {
-        Self::construct_key_(topic_id, partition, &consumer_group.0)
+    ) -> TableKey2<Self> {
+        TableKey2::init_key(
+            RowType::StreamLease as u8,
+            &[topic_id.as_bytes(), &partition.get().to_be_bytes()],
+            &[consumer_group.as_str()],
+        )
     }
 
     pub(crate) fn new() -> Result<Self> {
@@ -104,16 +71,6 @@ impl StreamLeaseRow {
             offset: 0,
             expiry: Timestamp::MIN,
         })
-    }
-
-    pub(crate) fn fetch(
-        keyspace: &fjall::Keyspace,
-        topic_id: TopicId,
-        partition: Partition,
-        consumer_group: &ConsumerGroup,
-    ) -> Result<Option<Self>> {
-        let key = Self::construct_key(topic_id, partition, consumer_group);
-        Self::fjall_fetch(keyspace, &key)
     }
 }
 
@@ -127,22 +84,20 @@ pub(crate) struct MsgRow {
 }
 
 impl MsgRow {
-    pub(crate) fn construct_key(
+    pub(crate) fn key_for(
         topic_id: TopicId,
         partition: Partition,
         offset: Offset,
-    ) -> Vec<u8> {
-        let mut offset_buf = [0u8; SIZE_U64];
-        BigEndian::write_u64(&mut offset_buf, offset);
-
-        let parts = [
-            "msg".as_bytes(),
-            topic_id.as_bytes(),
-            &partition.get().to_be_bytes(),
-            &offset_buf,
-        ];
-
-        construct_key(&parts)
+    ) -> TableKey2<Self> {
+        TableKey2::init_key(
+            RowType::Msg as u8,
+            &[
+                topic_id.as_bytes(),
+                &partition.get().to_be_bytes(),
+                offset.to_be_bytes(),
+            ],
+            &[],
+        )
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
@@ -151,8 +106,8 @@ impl MsgRow {
         topic_id: TopicId,
         partition: Partition,
     ) -> Result<Offset> {
-        let start = Self::construct_key(topic_id, partition, Offset::MIN);
-        let end = Self::construct_key(topic_id, partition, Offset::MAX);
+        let start = Self::key_for(topic_id, partition, Offset::MIN).fjall_key();
+        let end = Self::key_for(topic_id, partition, Offset::MAX).fjall_key();
         let item = keyspace.range(start..=end).next_back();
         match item {
             Some(kv) => {
@@ -177,8 +132,8 @@ impl MsgRow {
         batch_size: u16,
     ) -> Result<Vec<Self>> {
         let mut results = Vec::with_capacity(batch_size as usize);
-        let start = Self::construct_key(topic_id, partition, offset);
-        let end = Self::construct_key(topic_id, partition, offset + batch_size as u64);
+        let start = Self::key_for(topic_id, partition, offset).fjall_key();
+        let end = Self::key_for(topic_id, partition, offset + batch_size).fjall_key();
         for entry in keyspace.range(start..end) {
             let val = entry.value()?;
             let msg = rmp_serde::from_slice(&val).map_err(Error::generic)?;

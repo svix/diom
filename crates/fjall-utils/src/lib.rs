@@ -7,7 +7,8 @@ pub use self::{
     fixed_key::FjallFixedKey,
     readonly_db::{ReadableDatabase, ReadableKeyspace, ReadonlyDatabase, ReadonlyKeyspace},
     table_row::{
-        KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableRow, WriteBatchExt,
+        KeyspaceExt, MonotonicTableKey, MonotonicTableRowExt, TableKey, TableKey2, TableRow,
+        WriteBatchExt,
     },
 };
 
