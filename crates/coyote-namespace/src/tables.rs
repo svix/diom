@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::{ModuleConfig, NamespaceId, NamespaceName, StorageType};
 
+/// These values can never change. Only additions are allowed.
 #[repr(u8)]
 enum RowType {
     Namespace = 0,

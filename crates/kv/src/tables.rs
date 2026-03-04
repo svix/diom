@@ -3,6 +3,7 @@ use fjall_utils::{TableKey, TableKeyFromFjall, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+/// These values can never change. Only additions are allowed.
 #[repr(u8)]
 enum RowType {
     Pair = 0,

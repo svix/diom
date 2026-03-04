@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConsumerGroup, Offset, Partition, TopicId, TopicName};
 
+/// These values can never change. Only additions are allowed.
 #[repr(u8)]
 enum RowType {
     Topic = 0,

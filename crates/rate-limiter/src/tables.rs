@@ -2,6 +2,7 @@ use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+/// These values can never change. Only additions are allowed.
 #[repr(u8)]
 enum RowType {
     FixedWindow = 0,
