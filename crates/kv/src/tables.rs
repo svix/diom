@@ -85,12 +85,12 @@ impl TableRow for ExpirationRow {
 
 // Move to fjall-utils
 
-struct MyTableKey<'a, Tag: TableRow> {
-    key: Cow<'a, [u8]>,
+struct MyTableKey<Tag: TableRow> {
+    key: fjall::UserKey,
     _unit: PhantomData<Tag>,
 }
 
-impl<'a, Tag: TableRow> MyTableKey<'a, Tag> {
+impl<'a, Tag: TableRow> MyTableKey<Tag> {
     /// Construct the key to be used for fjall
     ///
     /// In the future: should probably just have a big enough key on the stack and use that.
@@ -114,14 +114,14 @@ impl<'a, Tag: TableRow> MyTableKey<'a, Tag> {
         }
 
         Self {
-            key: Cow::Owned(ret),
+            key: ret.into(),
             _unit: PhantomData,
         }
     }
 
     fn init_from_bytes(key: &'a [u8]) -> Self {
         Self {
-            key: Cow::Borrowed(key),
+            key: key.into(),
             _unit: PhantomData,
         }
     }
@@ -142,7 +142,7 @@ pub struct MyKvPairRow {
 }
 
 impl KvPairRow {
-    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> MyTableKey<'_, Self> {
+    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> MyTableKey<Self> {
         MyTableKey::init_key(RowType::Pair as u8, &[namespace_id.as_bytes()], &[key])
     }
 }
