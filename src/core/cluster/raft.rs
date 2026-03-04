@@ -12,9 +12,12 @@ use super::{
 use crate::{
     AppState,
     cfg::Configuration,
-    core::cluster::{
-        operations::SetClusterUuidOperation,
-        state_machine::{ClusterId, StoreHandle},
+    core::{
+        cluster::{
+            operations::SetClusterUuidOperation,
+            state_machine::{ClusterId, StoreHandle},
+        },
+        metrics::LogMetrics,
     },
 };
 
@@ -94,11 +97,15 @@ pub async fn initialize_raft(
         db,
         edb,
         cfg.cluster.snapshot_path(cfg)?,
-        app_state,
+        app_state.clone(),
         logs.clone(),
+        id,
     )
     .await?;
     let state_machine: StoreHandle = state_machine.into();
+
+    logs.start_metrics(LogMetrics::new(&app_state.meter, id));
+
     let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone())
         .await
         .context("initializing openraft")?;
@@ -191,7 +198,8 @@ mod tests {
 
             let app_state: AppState = AppState::new(cfg);
 
-            let store = Store::new(db, edb, snapshot_path, app_state, logs.clone()).await?;
+            let store =
+                Store::new(db, edb, snapshot_path, app_state, logs.clone(), 1.into()).await?;
 
             Ok((workdir, logs, store.into()))
         }

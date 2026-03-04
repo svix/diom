@@ -22,7 +22,7 @@ use coyote_namespace::{
     parse_namespace,
 };
 use lru::LruCache;
-use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
+use opentelemetry::{InstrumentationScope, metrics::Meter, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
     metrics::{SdkMeterProvider, periodic_reader_with_async_runtime::PeriodicReader},
@@ -132,6 +132,8 @@ pub struct AppState {
     pub(crate) ro_dbs: ReadonlyDatabases,
 
     kv_stores: Arc<Mutex<LruCache<Option<String>, KvStore>>>,
+
+    pub meter: Meter,
 }
 
 async fn run_interserver(
@@ -199,6 +201,8 @@ impl AppState {
 
         const KV_CACHE: NonZero<usize> = NonZero::new(100).unwrap();
 
+        let meter = opentelemetry::global::meter("coyote.svix.com");
+
         AppState {
             cfg,
             rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
@@ -208,6 +212,7 @@ impl AppState {
             namespace_state,
             ro_dbs,
             kv_stores: Arc::new(Mutex::new(LruCache::new(KV_CACHE))),
+            meter,
         }
     }
 
@@ -466,7 +471,11 @@ pub fn setup_tracing(
 }
 
 pub fn setup_metrics(cfg: &ConfigurationInner) {
-    if let Some(addr) = &cfg.opentelemetry_address {
+    if let Some(addr) = cfg
+        .opentelemetry_metrics_address
+        .as_ref()
+        .or(cfg.opentelemetry_address.as_ref())
+    {
         let exporter = if cfg.opentelemetry_metrics_use_http {
             tracing::debug!("sending http otel metrics to {addr}");
 

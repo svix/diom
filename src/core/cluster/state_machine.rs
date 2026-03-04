@@ -3,9 +3,16 @@ use std::{
     path::{Path, PathBuf},
     pin::Pin,
     sync::Arc,
+    time::Duration,
 };
 
-use crate::{cfg::Dir, core::db::Databases};
+use crate::{
+    cfg::Dir,
+    core::{
+        db::Databases,
+        metrics::{DbMetrics, DbType},
+    },
+};
 use anyhow::Context;
 use coyote_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
@@ -116,6 +123,7 @@ impl Store {
         snapshot_directory: Dir,
         app_state: AppState,
         logs: CoyoteLogs,
+        node_id: NodeId,
     ) -> anyhow::Result<Self> {
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
@@ -144,6 +152,7 @@ impl Store {
             logs,
         };
         this.load_information().await?;
+        this.start_metrics(DbMetrics::new(&this.state.meter, node_id));
         Ok(this)
     }
 
@@ -153,6 +162,39 @@ impl Store {
 
     pub fn db_handle(&self) -> impl std::ops::Deref<Target = Stores> {
         self.stores.read_arc()
+    }
+
+    pub fn start_metrics(&self, metrics: DbMetrics) {
+        let stores = Arc::clone(&self.stores);
+        let shutdown = crate::shutting_down_token();
+        tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(Duration::from_secs(60));
+            loop {
+                tokio::select! {
+                    _ = ticker.tick() => {}
+                    _ = shutdown.cancelled() => break,
+                }
+
+                match tokio::task::spawn_blocking({
+                    let stores = Arc::clone(&stores);
+                    move || {
+                        let guard = stores.read();
+                        let persistent_bytes = guard.databases.persistent.disk_space()?;
+                        let ephemeral_bytes = guard.databases.ephemeral.disk_space()?;
+                        Ok::<_, fjall::Error>((persistent_bytes, ephemeral_bytes))
+                    }
+                })
+                .await
+                .expect("Failed joining blocking task")
+                {
+                    Ok((persistent_bytes, ephemeral_bytes)) => {
+                        metrics.bytes_used(persistent_bytes, DbType::Persistent);
+                        metrics.bytes_used(ephemeral_bytes, DbType::Ephemeral);
+                    }
+                    Err(err) => tracing::info!(?err, "failed to read db disk space"),
+                }
+            }
+        });
     }
 
     pub(super) async fn set_cluster_id(&mut self, id: ClusterId) -> anyhow::Result<()> {
