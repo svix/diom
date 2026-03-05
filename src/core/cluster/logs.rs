@@ -24,7 +24,7 @@ use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tracing::{Instrument, Span};
 
 use super::{NodeId, errors::*, raft::TypeConfig};
-use crate::cfg::Dir;
+use crate::{cfg::Dir, core::metrics::LogMetrics};
 
 // This is an implementation of an openraft Logs store backed by fjall
 
@@ -600,6 +600,41 @@ impl DiomLogs {
                 .pipe(Ok)
         })
         .await?
+    }
+
+    pub fn start_metrics(&self, metrics: LogMetrics) {
+        let mut logs = self.clone();
+        let db = self.db.clone();
+        let shutdown = crate::shutting_down_token();
+        tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(Duration::from_secs(60));
+            loop {
+                tokio::select! {
+                    _ = ticker.tick() => {}
+                    _ = shutdown.cancelled() => break,
+                }
+
+                match tokio::task::spawn_blocking({
+                    let db = db.clone();
+                    move || db.disk_space()
+                })
+                .await
+                .expect("Failed joining blocking task")
+                {
+                    Ok(bytes) => metrics.bytes_used(bytes),
+                    Err(err) => tracing::info!(?err, "failed to read log disk space"),
+                }
+
+                match logs.get_log_state_().await {
+                    Ok(state) => {
+                        let last = state.last_log_id.map(|id| id.index).unwrap_or(0);
+                        let purged = state.last_purged_log_id.map(|id| id.index).unwrap_or(0);
+                        metrics.entry_count(last.saturating_sub(purged));
+                    }
+                    Err(err) => tracing::info!(?err, "failed to read log state for metrics"),
+                }
+            }
+        });
     }
 
     /// Return the highest log index that we know occurred before the given timestamp,

@@ -402,6 +402,12 @@ pub struct ConfigurationInner {
     /// The OpenTelemetry address to send events to if given.
     pub opentelemetry_address: Option<String>,
 
+    /// The OpenTelemetry address to send metrics to if given.
+    ///
+    /// If not specified, the server will attempt to fall back
+    /// to `opentelemetry_address`
+    pub opentelemetry_metrics_address: Option<String>,
+
     /// By default, `opentelemetry_address` is expected to be a GRPC server.
     ///
     /// When this is set to true, HTTP is used instead.
@@ -566,6 +572,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         log_level,
         log_format,
         opentelemetry_address,
+        opentelemetry_metrics_address,
         opentelemetry_metrics_use_http,
         opentelemetry_metrics_period_seconds,
         opentelemetry_sample_ratio,
@@ -619,6 +626,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         persistent_db_filename: "DIOM_PERSISTENT_DB_FILENAME",
         ephemeral_db_filename: "DIOM_EPHEMERAL_DB_FILENAME",
         opentelemetry_address: "DIOM_OPENTELEMETRY_ADDRESS",
+        opentelemetry_metrics_address: "DIOM_OPENTELEMETRY_METRICS_ADDRESS",
         opentelemetry_sample_ratio: "DIOM_OPENTELEMETRY_SAMPLE_RATIO",
         bootstrap_cfg_path: "DIOM_BOOTSTRAP_CFG_PATH",
         cluster_listen_address: "DIOM_CLUSTER_LISTEN_ADDRESS",
