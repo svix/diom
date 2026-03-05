@@ -290,6 +290,8 @@ pub async fn run_with_listeners(
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
+            tokio::spawn(v1::modules::cache::worker(app_state.clone())),
+            tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
         );
         tracing::debug!("workers died");

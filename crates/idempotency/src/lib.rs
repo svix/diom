@@ -19,6 +19,8 @@ use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+const IDEMPOTENCY_KEYSPACE: &str = "mod_idempotency";
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub(crate) enum IdempotencyState {
@@ -56,7 +58,7 @@ pub struct State {
 impl State {
     pub fn init(db: fjall::Database) -> Result<Self> {
         Ok(Self {
-            controller: KvController::new(db, "mod_idempotency"),
+            controller: KvController::new(db, IDEMPOTENCY_KEYSPACE),
         })
     }
 }
@@ -127,6 +129,32 @@ impl IdempotencyStore {
     /// Abandon a request (remove the lock without saving response)
     pub fn abort(&self, key: &str) -> Result<()> {
         self.controller.delete(self.namespace_id, key)
+    }
+}
+
+/// This is the worker function for this module, it does background cleanup and accounting.
+/// It deletes expired entries from the database.
+pub async fn worker<F>(db: fjall::Database, is_shutting_down: F)
+where
+    F: Fn() -> bool,
+{
+    let mut timer = tokio::time::interval(Duration::from_secs(1));
+    let controller = KvController::new(db, IDEMPOTENCY_KEYSPACE);
+
+    loop {
+        if is_shutting_down() {
+            break;
+        }
+
+        timer.tick().await;
+
+        let now = Timestamp::now();
+        match controller.clear_expired(now) {
+            Ok(()) => {}
+            Err(e) => {
+                tracing::error!(error = ?e, "Failed to clean.");
+            }
+        };
     }
 }
 
