@@ -22,7 +22,7 @@ mod validation;
 
 pub use self::{
     result_ext::ResultExt,
-    validation::{ValidationErrorItem, ValidationHttpError, validation_error, validation_errors},
+    validation::{ValidationErrorBody, ValidationErrorItem, validation_error, validation_errors},
 };
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Diom'es [Error].
@@ -54,7 +54,7 @@ impl Error {
         // but having a universal error function to capture user errors is ideal
         Self::new(ErrorType::Http(HttpError {
             status: StatusCode::BAD_REQUEST,
-            body: HttpErrorBody::Standard(StandardHttpError {
+            body: HttpErrorBody::Standard(StandardErrorBody {
                 code: "invalid_input".to_owned(),
                 detail: s.to_string(),
             }),
@@ -178,7 +178,7 @@ impl fmt::Display for ErrorType {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct StandardHttpError {
+pub struct StandardErrorBody {
     code: String,
     detail: String,
 }
@@ -186,8 +186,8 @@ pub struct StandardHttpError {
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum HttpErrorBody {
-    Standard(StandardHttpError),
-    Validation(ValidationHttpError),
+    Standard(StandardErrorBody),
+    Validation(ValidationErrorBody),
 }
 
 #[derive(Debug, Clone)]
@@ -200,7 +200,7 @@ impl HttpError {
     fn new_standard(status: StatusCode, code: String, detail: String) -> Self {
         Self {
             status,
-            body: HttpErrorBody::Standard(StandardHttpError { code, detail }),
+            body: HttpErrorBody::Standard(StandardErrorBody { code, detail }),
         }
     }
 
@@ -247,7 +247,7 @@ impl HttpError {
     pub fn unprocessable_entity(detail: Vec<ValidationErrorItem>) -> Self {
         Self {
             status: StatusCode::UNPROCESSABLE_ENTITY,
-            body: HttpErrorBody::Validation(ValidationHttpError { detail }),
+            body: HttpErrorBody::Validation(ValidationErrorBody { detail }),
         }
     }
 
@@ -277,13 +277,13 @@ impl From<HttpError> for Error {
 impl fmt::Display for HttpError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.body {
-            HttpErrorBody::Standard(StandardHttpError { code, detail }) => write!(
+            HttpErrorBody::Standard(StandardErrorBody { code, detail }) => write!(
                 f,
                 "status={} code=\"{code}\" detail=\"{detail}\"",
                 self.status
             ),
 
-            HttpErrorBody::Validation(ValidationHttpError { detail }) => {
+            HttpErrorBody::Validation(ValidationErrorBody { detail }) => {
                 write!(
                     f,
                     "status={} detail={}",
