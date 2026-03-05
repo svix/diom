@@ -45,7 +45,12 @@ impl CacheStore {
     pub fn get(&self, key: &str) -> Result<Option<CacheModel>> {
         self.controller
             .fetch(self.namespace_id, key, Timestamp::now())
-            .map(|m| m.map(|m| CacheModel { value: m.value, expiry: m.expiry }))
+            .map(|m| {
+                m.map(|m| CacheModel {
+                    value: m.value,
+                    expiry: m.expiry,
+                })
+            })
     }
 }
 

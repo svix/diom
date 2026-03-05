@@ -1,4 +1,5 @@
-use crate::IdempotencyStore;
+use crate::State;
+
 use serde::{Deserialize, Serialize};
 
 mod abort;
@@ -14,6 +15,11 @@ pub use create_idempotency::{CreateIdempotencyOperation, CreateIdempotencyRespon
 
 use coyote_operations::raft_module_operations;
 
+pub struct IdempotencyRaftState<'a> {
+    pub state: &'a State,
+    pub namespace: &'a coyote_namespace::State,
+}
+
 raft_module_operations!(
     IdempotencyRequest,
     IdempotencyOperation {
@@ -21,7 +27,7 @@ raft_module_operations!(
         Complete(CompleteOperation) -> (),
         Abort(AbortOperation) -> (),
     },
-    state = &mut IdempotencyStore,
+    state = IdempotencyRaftState<'_>,
 );
 
 impl IdempotencyOperation {

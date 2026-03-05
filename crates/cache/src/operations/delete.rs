@@ -17,7 +17,10 @@ impl DeleteOperation {
 
 impl DeleteOperation {
     fn apply_real(self, state: &CacheRaftState<'_>) -> Result<()> {
-        state.state.controller.delete(self.namespace_id, &self.key)?;
+        state
+            .state
+            .controller
+            .delete(self.namespace_id, &self.key)?;
         Ok(())
     }
 }

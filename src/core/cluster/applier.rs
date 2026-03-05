@@ -49,11 +49,12 @@ pub(super) async fn apply_request(
             Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))
         }
         Request::Idempotency(req) => {
-            let mut store = state_machine
-                .state
-                .get_idempotency_store_by_key(req.key_name())
-                .await?;
-            Response::Idempotency(req.apply(&mut store))
+            let stores = state_machine.db_handle();
+            let state = coyote_idempotency::operations::IdempotencyRaftState {
+                state: &stores.idempotency_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::Idempotency(req.apply(state))
         }
         Request::CreateIdempotency(req) => {
             Response::CreateIdempotency(req.apply(&state_machine.state.namespace_state))

@@ -6,7 +6,6 @@
 #[cfg(test)]
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
-    num::NonZero,
     sync::{Arc, LazyLock},
     time::Duration,
 };
@@ -15,13 +14,7 @@ use aide::axum::ApiRouter;
 use axum::{Extension, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
 use coyote_error::{Error, HttpError, Result};
-use coyote_kv::KvStore;
-use coyote_namespace::{
-    BothDatabases,
-    entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
-    parse_namespace,
-};
-use lru::LruCache;
+use coyote_namespace::{BothDatabases, entities::CacheConfig, parse_namespace};
 use opentelemetry::{InstrumentationScope, metrics::Meter, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -32,10 +25,7 @@ use opentelemetry_sdk::{
         span_processor_with_async_runtime::BatchSpanProcessor,
     },
 };
-use tokio::{
-    net::TcpListener,
-    sync::{Barrier, Mutex},
-};
+use tokio::{net::TcpListener, sync::Barrier};
 use tower_http::trace::TraceLayer;
 
 use tokio_util::sync::CancellationToken;
@@ -56,7 +46,6 @@ use crate::{
     },
 };
 use coyote_cache::CacheStore;
-use coyote_idempotency::IdempotencyStore;
 
 pub mod bootstrap;
 pub mod cfg;
@@ -133,8 +122,6 @@ pub struct AppState {
 
     // FIXME: temporarily here until we make ro_dbs usable.
     pub(crate) do_not_use_persistent_db: fjall::Database,
-
-    kv_stores: Arc<Mutex<LruCache<Option<String>, KvStore>>>,
 
     pub meter: Meter,
 }
@@ -215,35 +202,8 @@ impl AppState {
             namespace_state,
             ro_dbs,
             do_not_use_persistent_db: persistent_db,
-            kv_stores: Arc::new(Mutex::new(LruCache::new(KV_CACHE))),
             meter,
         }
-    }
-
-    async fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
-        let (ns_name, _) = parse_namespace(key_name);
-
-        let mut cache = self.kv_stores.lock().await;
-
-        // TODO: make sure to invalidate the LruCache when we change any namespace
-        // properties; right now, there aren't any endpoints to create or
-        // edit Kv/etc namespaces.
-        cache
-            .try_get_or_insert(ns_name.map(|s| s.to_string()), || -> Result<KvStore> {
-                let namespace = self
-                    .namespace_state
-                    .fetch_namespace::<C>(ns_name)?
-                    .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
-
-                let policy = namespace.config.eviction_policy();
-                Ok(KvStore::new(
-                    KeyValueConfig::NAMESPACE,
-                    self.namespace_state.give_me_the_right_db(&namespace),
-                    policy,
-                    None,
-                ))
-            })
-            .cloned()
     }
 
     pub async fn get_cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
@@ -257,11 +217,6 @@ impl AppState {
             "mod_cache",
         );
         Ok(CacheStore::new(controller, namespace.id))
-    }
-
-    pub async fn get_idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
-        let kv_store = self.get_store_by_key::<IdempotencyConfig>(key_name).await?;
-        Ok(IdempotencyStore::new(kv_store))
     }
 }
 
