@@ -3,6 +3,7 @@ use crate::{State, operations::KvRaftState};
 use diom_core::types::EntityKey;
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
+use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,7 +20,9 @@ impl DeleteOperation {
 
 impl DeleteOperation {
     fn apply_real(self, state: &State) -> Result<()> {
-        state.controller.delete(self.namespace_id, &self.key)?;
+        state
+            .controller(StorageType::Persistent)
+            .delete(self.namespace_id, &self.key)?;
         Ok(())
     }
 }

@@ -121,8 +121,9 @@ async fn kv_get(
 
     repl.raft.ensure_linearizable().await.map_err_generic()?;
 
-    // FIXME: support more than just persistent, etc.
-    let controller = diom_kv::State::init(state.do_not_use_persistent_db.clone())?.controller;
+    // FIXME: this state should be passed, not created every time.
+    let kv_state = diom_kv::State::init(state.do_not_use_dbs.clone())?;
+    let controller = kv_state.controller(namespace.storage_type);
 
     let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
 

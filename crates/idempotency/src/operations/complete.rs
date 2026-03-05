@@ -5,6 +5,7 @@ use crate::IdempotencyState;
 use diom_kv::kvcontroller::OperationBehavior;
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
+use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -37,7 +38,7 @@ impl CompleteOperation {
 impl CompleteOperation {
     fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
         let expiry = self.now + Duration::from_secs(self.ttl_seconds);
-        state.state.controller.set(
+        state.state.controller(StorageType::Persistent).set(
             self.namespace_id,
             &self.key,
             IdempotencyState::Completed {

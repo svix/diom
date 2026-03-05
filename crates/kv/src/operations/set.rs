@@ -6,6 +6,7 @@ use super::{KvRequest, SetResponse};
 use diom_core::types::EntityKey;
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
+use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -40,7 +41,7 @@ impl SetOperation {
 
 impl SetOperation {
     fn apply_real(self, state: &State) -> Result<()> {
-        state.controller.set(
+        state.controller(StorageType::Persistent).set(
             self.namespace_id,
             &self.key,
             self.value,

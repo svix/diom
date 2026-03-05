@@ -16,6 +16,7 @@ use std::time::Duration;
 use diom_error::Result;
 use diom_kv::kvcontroller::{KvController, OperationBehavior};
 use diom_namespace::entities::NamespaceId;
+use fjall_utils::{Databases, StorageType};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -52,14 +53,23 @@ impl From<Vec<u8>> for IdempotencyState {
 
 #[derive(Clone)]
 pub struct State {
-    pub(crate) controller: KvController,
+    persistent_controller: KvController,
+    ephemeral_controller: KvController,
 }
 
 impl State {
-    pub fn init(db: fjall::Database) -> Result<Self> {
+    pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            controller: KvController::new(db, IDEMPOTENCY_KEYSPACE),
+            persistent_controller: KvController::new(dbs.persistent, IDEMPOTENCY_KEYSPACE),
+            ephemeral_controller: KvController::new(dbs.ephemeral, IDEMPOTENCY_KEYSPACE),
         })
+    }
+
+    pub fn controller(&self, storage_type: StorageType) -> &KvController {
+        match storage_type {
+            StorageType::Persistent => &self.persistent_controller,
+            StorageType::Ephemeral => &self.ephemeral_controller,
+        }
     }
 }
 
@@ -134,12 +144,13 @@ impl IdempotencyStore {
 
 /// This is the worker function for this module, it does background cleanup and accounting.
 /// It deletes expired entries from the database.
-pub async fn worker<F>(db: fjall::Database, is_shutting_down: F)
+pub async fn worker<F>(dbs: Databases, is_shutting_down: F)
 where
     F: Fn() -> bool,
 {
     let mut timer = tokio::time::interval(Duration::from_secs(1));
-    let controller = KvController::new(db, IDEMPOTENCY_KEYSPACE);
+    // FIXME: handle both!
+    let controller = KvController::new(dbs.persistent, IDEMPOTENCY_KEYSPACE);
 
     loop {
         if is_shutting_down() {
