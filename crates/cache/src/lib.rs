@@ -9,6 +9,7 @@ pub mod operations;
 
 use coyote_error::Result;
 use coyote_kv::kvcontroller::KvController;
+use fjall_utils::{Databases, StorageType};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -18,25 +19,34 @@ const CACHE_KEYSPACE: &str = "mod_cache";
 
 #[derive(Clone)]
 pub struct State {
-    pub controller: KvController,
+    persistent_controller: KvController,
+    ephemeral_controller: KvController,
 }
 
 impl State {
-    pub fn init(db: fjall::Database) -> Result<Self> {
+    pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            controller: KvController::new(db, CACHE_KEYSPACE),
+            persistent_controller: KvController::new(dbs.persistent, CACHE_KEYSPACE),
+            ephemeral_controller: KvController::new(dbs.ephemeral, CACHE_KEYSPACE),
         })
+    }
+
+    pub fn controller(&self, storage_type: StorageType) -> &KvController {
+        match storage_type {
+            StorageType::Persistent => &self.persistent_controller,
+            StorageType::Ephemeral => &self.ephemeral_controller,
+        }
     }
 }
 
 /// This is the worker function for this module, it does background cleanup and accounting.
 /// It deletes expired entries from the database and evicts entries if the Cache is configured to do so.
-pub async fn worker<F>(db: fjall::Database, is_shutting_down: F)
+pub async fn worker<F>(dbs: Databases, is_shutting_down: F)
 where
     F: Fn() -> bool,
 {
     let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
-    let controller = KvController::new(db, CACHE_KEYSPACE);
+    let controller = KvController::new(dbs.persistent, CACHE_KEYSPACE);
 
     loop {
         if is_shutting_down() {

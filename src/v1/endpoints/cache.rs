@@ -156,7 +156,8 @@ async fn cache_get(
     repl.raft.ensure_linearizable().await.map_err_generic()?;
 
     // FIXME: support more than just persistent, etc.
-    let controller = coyote_cache::State::init(state.do_not_use_persistent_db.clone())?.controller;
+    let cache_state = coyote_cache::State::init(state.do_not_use_dbs.clone())?;
+    let controller = cache_state.controller(namespace.storage_type);
 
     let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
 

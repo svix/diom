@@ -1,6 +1,7 @@
 use super::{CacheRaftState, CacheRequest, DeleteResponse};
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
+use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,7 +20,7 @@ impl DeleteOperation {
     fn apply_real(self, state: &CacheRaftState<'_>) -> Result<()> {
         state
             .state
-            .controller
+            .controller(StorageType::Persistent)
             .delete(self.namespace_id, &self.key)?;
         Ok(())
     }

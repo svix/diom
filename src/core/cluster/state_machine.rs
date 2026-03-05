@@ -131,14 +131,13 @@ impl Store {
         let databases = Databases::new(persistent_db.clone(), ephemeral_db);
 
         let stores = Stores {
-            databases,
+            databases: databases.clone(),
             msgs_state: coyote_msgs::State::init(persistent_db.clone())
                 .context("initializing msgs state")?,
-            kv_state: coyote_kv::State::init(persistent_db.clone())
-                .context("initializing kv state")?,
-            cache_state: coyote_cache::State::init(persistent_db.clone())
+            kv_state: coyote_kv::State::init(databases.clone()).context("initializing kv state")?,
+            cache_state: coyote_cache::State::init(databases.clone())
                 .context("initializing cache state")?,
-            idempotency_state: coyote_idempotency::State::init(persistent_db.clone())
+            idempotency_state: coyote_idempotency::State::init(databases.clone())
                 .context("initializing idempotency state")?,
         };
 

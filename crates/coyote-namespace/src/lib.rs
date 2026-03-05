@@ -1,5 +1,6 @@
 use coyote_error::Result;
 use fjall::{Error, KeyspaceCreateOptions};
+use fjall_utils::Databases;
 
 use crate::entities::{ModuleConfig, StorageType};
 
@@ -30,22 +31,14 @@ pub struct State {
     db: fjall::Database,
     keyspace: fjall::Keyspace,
     // TODO(jbrown|2026-02-20) this needs to live in the SerializedStateMachine, not here
-    pub both_dbs: BothDatabases,
-}
-
-// Yeah this is dumb AF. I don't care
-// right now.
-#[derive(Clone)]
-pub struct BothDatabases {
-    pub ephemeral_db: fjall::Database,
-    pub persistent_db: fjall::Database,
+    pub both_dbs: Databases,
 }
 
 impl State {
-    pub fn init(both_dbs: BothDatabases) -> Result<Self, Error> {
+    pub fn init(both_dbs: Databases) -> Result<Self, Error> {
         const NAMESPACE_KEYSPACE: &str = "mgmt_namespace";
 
-        let db = both_dbs.persistent_db.clone();
+        let db = both_dbs.persistent.clone();
         let keyspace = {
             let opts = KeyspaceCreateOptions::default();
             db.keyspace(NAMESPACE_KEYSPACE, || opts)?
@@ -69,10 +62,10 @@ impl State {
     pub fn flush_and_sync(&self) -> Result<(), Error> {
         self.db.persist(fjall::PersistMode::SyncAll)?;
         self.both_dbs
-            .persistent_db
+            .persistent
             .persist(fjall::PersistMode::SyncAll)?;
         self.both_dbs
-            .ephemeral_db
+            .ephemeral
             .persist(fjall::PersistMode::SyncAll)?;
         Ok(())
     }
@@ -117,8 +110,8 @@ impl State {
         namespace: &Namespace<C>,
     ) -> fjall::Database {
         match namespace.storage_type {
-            StorageType::Persistent => self.both_dbs.persistent_db.clone(),
-            StorageType::Ephemeral => self.both_dbs.ephemeral_db.clone(),
+            StorageType::Persistent => self.both_dbs.persistent.clone(),
+            StorageType::Ephemeral => self.both_dbs.ephemeral.clone(),
         }
     }
 }
