@@ -1,35 +1,59 @@
-use crate::{KvModel, KvStore, OperationBehavior};
+use std::time::Duration;
+
+use crate::{State, kvcontroller::OperationBehavior, operations::KvRaftState};
 
 use super::{KvRequest, SetResponse};
+use coyote_core::types::EntityKey;
+use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
-    pub(crate) key: String,
-    pub(crate) model: KvModel,
-    pub(crate) behavior: OperationBehavior,
+    namespace_id: NamespaceId,
+    pub(crate) key: EntityKey,
+    expiry: Option<Timestamp>,
+    value: Vec<u8>,
+    behavior: OperationBehavior,
+    now: Timestamp,
 }
 
 impl SetOperation {
-    pub fn new(key: String, model: KvModel, behavior: OperationBehavior) -> Self {
+    pub fn new(
+        namespace_id: NamespaceId,
+        key: EntityKey,
+        value: Vec<u8>,
+        ttl: Option<u64>,
+        behavior: OperationBehavior,
+    ) -> Self {
         Self {
+            namespace_id,
             key,
-            model,
+            expiry: ttl.map(|ttl| Timestamp::now() + Duration::from_millis(ttl)),
+            value,
             behavior,
+            now: Timestamp::now(),
         }
     }
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &mut KvStore) -> Result<()> {
-        state.set_(&self.key, &self.model, self.behavior)?;
+    fn apply_real(self, state: &State) -> Result<()> {
+        state.controller.set(
+            self.namespace_id,
+            &self.key,
+            self.value,
+            self.expiry,
+            self.behavior,
+            self.now,
+        )?;
         Ok(())
     }
 }
 
 impl KvRequest for SetOperation {
-    fn apply(self, state: &mut KvStore) -> SetResponse {
-        SetResponse(self.apply_real(state))
+    fn apply(self, state: KvRaftState<'_>) -> SetResponse {
+        SetResponse(self.apply_real(state.state))
     }
 }

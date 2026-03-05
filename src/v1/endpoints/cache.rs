@@ -9,8 +9,10 @@ use coyote_cache::{
     CacheModel,
     operations::{CreateCacheOperation, DeleteOperation, SetOperation},
 };
+use coyote_core::types::EntityKey;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, ResultExt};
+use coyote_kv::kvcontroller::KvModel;
 use coyote_namespace::{
     Namespace,
     entities::{CacheConfig, EvictionPolicy, StorageType},
@@ -21,19 +23,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::{cluster::RaftState, types::EntityKey},
-    error::Result,
-    v1::utils::openapi_tag,
-};
+use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 pub type CacheNamespace = Namespace<CacheConfig>;
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheSetIn {
-    #[validate(nested)]
     pub key: EntityKey,
 
     pub value: Vec<u8>,
@@ -75,7 +71,7 @@ pub struct CacheGetOut {
 }
 
 impl CacheGetOut {
-    fn from_model(key: EntityKey, model: CacheModel) -> Self {
+    fn from_model(key: EntityKey, model: KvModel) -> Self {
         Self {
             key,
             expiry: model.expiry,
@@ -135,15 +131,12 @@ async fn cache_set(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheSetIn>,
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
-    let key_str = data.key.to_string();
-    // TODO: Presumably this should only need to happen in
-    // the consensus layer, but currently raft seems to
-    // break if an operation with a non-existent namespace is attempted,
-    // so do this here for now as a quick check that the namespace
-    // exists:
-    let _cache_store = state.get_cache_store_by_key(&key_str).await?;
+    let namespace: CacheNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = SetOperation::new(key_str, data.into_model());
+    let operation = SetOperation::new(namespace.id, data.key.to_string(), data.into_model());
     repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
@@ -152,23 +145,46 @@ async fn cache_set(
 #[aide_annotate(op_id = "v1.cache.get")]
 async fn cache_get(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
-    let mut cache_store = state.get_cache_store_by_key(&data.key.0).await?;
-    let model = cache_store
-        .get(&data.key)?
-        .ok_or_else(|| HttpError::not_found(None, None))?;
-    Ok(MsgPackOrJson(CacheGetOut::from_model(data.key, model)))
+    let namespace: CacheNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    repl.raft.ensure_linearizable().await.map_err_generic()?;
+
+    // FIXME: support more than just persistent, etc.
+    let controller = coyote_cache::State::init(state.do_not_use_persistent_db.clone())?.controller;
+
+    let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
+
+    let ret = match model {
+        Some(m) => CacheGetOut::from_model(data.key, m),
+        None => {
+            return Err(Error::http(HttpError::not_found(
+                None,
+                Some("Key not found".to_string()),
+            )));
+        }
+    };
+    Ok(MsgPackOrJson(ret))
 }
 
 /// Cache Delete
 #[aide_annotate(op_id = "v1.cache.delete")]
 async fn cache_del(
+    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheDeleteIn>,
 ) -> Result<MsgPackOrJson<CacheDeleteOut>> {
-    let key_str = data.key.to_string();
-    let operation = DeleteOperation::new(key_str);
+    let namespace: CacheNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = DeleteOperation::new(namespace.id, data.key.to_string());
     repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }

@@ -5,6 +5,7 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use coyote_core::types::EntityKey;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, ResultExt};
 use coyote_idempotency::{
@@ -23,15 +24,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::{cluster::RaftState, types::EntityKey},
-    error::Result,
-    v1::utils::openapi_tag,
-};
-
-// Re-export types that are used in AppState
-pub use coyote_idempotency::IdempotencyStore;
+use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 
@@ -107,11 +100,16 @@ pub struct IdempotencyAbortOut {}
 /// Start an idempotent request
 #[aide_annotate(op_id = "v1.idempotency.start")]
 async fn idempotency_start(
+    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyStartIn>,
 ) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
-    let key_str = data.key.to_string();
-    let operation = TryStartOperation::new(key_str, data.ttl);
+    let namespace: IdempotencyNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = TryStartOperation::new(namespace.id, data.key.to_string(), data.ttl);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
@@ -120,11 +118,17 @@ async fn idempotency_start(
 /// Complete an idempotent request with a response
 #[aide_annotate(op_id = "v1.idempotency.complete")]
 async fn idempotency_complete(
+    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyCompleteIn>,
 ) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
-    let key_str = data.key.to_string();
-    let operation = CompleteOperation::new(key_str, data.response, data.ttl);
+    let namespace: IdempotencyNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation =
+        CompleteOperation::new(namespace.id, data.key.to_string(), data.response, data.ttl);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
@@ -133,11 +137,16 @@ async fn idempotency_complete(
 /// Abandon an idempotent request (remove lock without saving response)
 #[aide_annotate(op_id = "v1.idempotency.abort")]
 async fn idempotency_abort(
+    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyAbortIn>,
 ) -> Result<MsgPackOrJson<IdempotencyAbortOut>> {
-    let key_str = data.key.to_string();
-    let operation = AbortOperation::new(key_str);
+    let namespace: IdempotencyNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = AbortOperation::new(namespace.id, data.key.to_string());
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyAbortOut {}))

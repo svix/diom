@@ -127,6 +127,15 @@ impl<'a, Tag: TableRow> TableKey<Tag> {
         }
     }
 
+    /// Helper function for parsing a key
+    pub fn parse_key<const N: usize>(source: &[u8], part: &mut [u8; N], cursor: &mut usize) {
+        let start = *cursor;
+        let end = *cursor + N;
+
+        part.copy_from_slice(&source[start..end]);
+        *cursor = end;
+    }
+
     pub fn init_from_bytes(key: &'a [u8]) -> Self {
         Self {
             key: key.into(),

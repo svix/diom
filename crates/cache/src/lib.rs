@@ -8,32 +8,52 @@
 pub mod operations;
 
 use coyote_error::Result;
-use coyote_kv::{KvModel, KvStore, OperationBehavior};
+use coyote_kv::kvcontroller::KvController;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+const CACHE_KEYSPACE: &str = "mod_cache";
+
 #[derive(Clone)]
-pub struct CacheStore {
-    pub(crate) kv: KvStore,
+pub struct State {
+    pub controller: KvController,
 }
 
-impl CacheStore {
-    pub fn new(kv: KvStore) -> Self {
-        Self { kv }
+impl State {
+    pub fn init(db: fjall::Database) -> Result<Self> {
+        Ok(Self {
+            controller: KvController::new(db, CACHE_KEYSPACE),
+        })
     }
+}
 
-    pub fn set(&mut self, key: &str, model: CacheModel) -> Result<()> {
-        self.kv.set(key, &model.into(), OperationBehavior::Upsert)
-    }
+/// This is the worker function for this module, it does background cleanup and accounting.
+/// It deletes expired entries from the database and evicts entries if the Cache is configured to do so.
+pub async fn worker<F>(db: fjall::Database, is_shutting_down: F)
+where
+    F: Fn() -> bool,
+{
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+    let controller = KvController::new(db, CACHE_KEYSPACE);
 
-    pub fn get(&mut self, key: &str) -> Result<Option<CacheModel>> {
-        self.kv.get(key).map(|m| m.map(Into::into))
-    }
+    loop {
+        if is_shutting_down() {
+            break;
+        }
 
-    pub fn delete(&mut self, key: &str) -> Result<()> {
-        self.kv.delete(key)
+        timer.tick().await;
+
+        let now = Timestamp::now();
+        match controller.clear_expired(now) {
+            Ok(()) => {}
+            Err(e) => {
+                tracing::error!(error = ?e, "Failed to clean.");
+            }
+        };
+
+        // FIXME: also do cache eviction once that's implemented
     }
 }
 
@@ -42,22 +62,4 @@ pub struct CacheModel {
     pub expiry: Option<Timestamp>,
 
     pub value: Vec<u8>,
-}
-
-impl From<CacheModel> for KvModel {
-    fn from(model: CacheModel) -> Self {
-        KvModel {
-            value: model.value,
-            expiry: model.expiry,
-        }
-    }
-}
-
-impl From<KvModel> for CacheModel {
-    fn from(model: KvModel) -> Self {
-        CacheModel {
-            value: model.value,
-            expiry: model.expiry,
-        }
-    }
 }

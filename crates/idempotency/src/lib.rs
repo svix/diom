@@ -14,13 +14,16 @@ pub mod operations;
 use std::time::Duration;
 
 use coyote_error::Result;
-use coyote_kv::{KvModel, KvStore, OperationBehavior};
+use coyote_kv::kvcontroller::{KvController, OperationBehavior};
+use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+const IDEMPOTENCY_KEYSPACE: &str = "mod_idempotency";
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
-enum IdempotencyState {
+pub(crate) enum IdempotencyState {
     /// Request is in progress (locked)
     InProgress,
     /// Request completed successfully with a response
@@ -48,28 +51,48 @@ impl From<Vec<u8>> for IdempotencyState {
 }
 
 #[derive(Clone)]
+pub struct State {
+    pub(crate) controller: KvController,
+}
+
+impl State {
+    pub fn init(db: fjall::Database) -> Result<Self> {
+        Ok(Self {
+            controller: KvController::new(db, IDEMPOTENCY_KEYSPACE),
+        })
+    }
+}
+
+#[derive(Clone)]
 pub struct IdempotencyStore {
-    kv: KvStore,
+    pub(crate) controller: KvController,
+    pub(crate) namespace_id: NamespaceId,
 }
 
 impl IdempotencyStore {
-    pub fn new(kv: KvStore) -> Self {
-        Self { kv }
+    pub fn new(controller: KvController, namespace_id: NamespaceId) -> Self {
+        Self {
+            controller,
+            namespace_id,
+        }
     }
 
     /// Try to acquire the lock for a request.
-    pub fn try_start(&mut self, key: &str, ttl_seconds: u64) -> Result<IdempotencyStartResult> {
+    pub fn try_start(&self, key: &str, ttl_seconds: u64) -> Result<IdempotencyStartResult> {
         let now = Timestamp::now();
         let expiry = now + Duration::from_secs(ttl_seconds);
 
-        match self.kv.get(key)? {
+        match self.controller.fetch(self.namespace_id, key, now)? {
             None => {
                 // No existing entry - acquire lock
-                let kv_model = KvModel {
-                    value: IdempotencyState::InProgress.into(),
-                    expiry: Some(expiry),
-                };
-                self.kv.set(key, &kv_model, OperationBehavior::Insert)?;
+                self.controller.set(
+                    self.namespace_id,
+                    key,
+                    IdempotencyState::InProgress.into(),
+                    Some(expiry),
+                    OperationBehavior::Insert,
+                    now,
+                )?;
                 Ok(IdempotencyStartResult::Started)
             }
             Some(kv_model) => {
@@ -89,22 +112,49 @@ impl IdempotencyStore {
     }
 
     /// Complete a request with a successful response
-    pub fn complete(&mut self, key: &str, response: Vec<u8>, ttl_seconds: u64) -> Result<()> {
+    pub fn complete(&self, key: &str, response: Vec<u8>, ttl_seconds: u64) -> Result<()> {
         let now = Timestamp::now();
         let expiry = now + Duration::from_secs(ttl_seconds);
 
-        let kv_model = KvModel {
-            value: IdempotencyState::Completed { response }.into(),
-            expiry: Some(expiry),
-        };
-        self.kv.set(key, &kv_model, OperationBehavior::Upsert)?;
-
-        Ok(())
+        self.controller.set(
+            self.namespace_id,
+            key,
+            IdempotencyState::Completed { response }.into(),
+            Some(expiry),
+            OperationBehavior::Upsert,
+            now,
+        )
     }
 
     /// Abandon a request (remove the lock without saving response)
-    pub fn abort(&mut self, key: &str) -> Result<()> {
-        self.kv.delete(key)
+    pub fn abort(&self, key: &str) -> Result<()> {
+        self.controller.delete(self.namespace_id, key)
+    }
+}
+
+/// This is the worker function for this module, it does background cleanup and accounting.
+/// It deletes expired entries from the database.
+pub async fn worker<F>(db: fjall::Database, is_shutting_down: F)
+where
+    F: Fn() -> bool,
+{
+    let mut timer = tokio::time::interval(Duration::from_secs(1));
+    let controller = KvController::new(db, IDEMPOTENCY_KEYSPACE);
+
+    loop {
+        if is_shutting_down() {
+            break;
+        }
+
+        timer.tick().await;
+
+        let now = Timestamp::now();
+        match controller.clear_expired(now) {
+            Ok(()) => {}
+            Err(e) => {
+                tracing::error!(error = ?e, "Failed to clean.");
+            }
+        };
     }
 }
 
@@ -112,7 +162,7 @@ impl IdempotencyStore {
 mod tests {
     use std::time::Duration;
 
-    use coyote_namespace::entities::EvictionPolicy;
+    use coyote_namespace::entities::NamespaceId;
     use fjall::Database;
     use test_utils::TestResult;
 
@@ -126,8 +176,8 @@ mod tests {
         fn new() -> TestResult<Self> {
             let workdir = tempfile::tempdir()?;
             let db = Database::builder(workdir.as_ref()).temporary(true).open()?;
-            let kv = KvStore::new("test", db, EvictionPolicy::NoEviction, None);
-            let store = IdempotencyStore::new(kv);
+            let controller = KvController::new(db, "test");
+            let store = IdempotencyStore::new(controller, NamespaceId::nil());
             Ok(Self { store })
         }
     }
@@ -152,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_idempotency_try_start() -> TestResult {
-        let mut store = SetupFixture::new()?.store;
+        let store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
         let result = store.try_start("test", 10)?;
         assert_eq!(result, IdempotencyStartResult::Started);
@@ -177,7 +227,7 @@ mod tests {
 
     #[test]
     fn test_idempotency_missing() -> TestResult {
-        let mut store = SetupFixture::new()?.store;
+        let store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
 
         // Can complete a request without starting it first
@@ -199,7 +249,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_idempotency_ttl() -> TestResult {
-        let mut store = SetupFixture::new()?.store;
+        let store = SetupFixture::new()?.store;
         let value = vec![1, 2, 3];
 
         store.try_start("test", 1)?;

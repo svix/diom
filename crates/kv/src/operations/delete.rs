@@ -1,28 +1,31 @@
 use super::{DeleteResponse, KvRequest};
-use crate::KvStore;
+use crate::{State, operations::KvRaftState};
+use coyote_core::types::EntityKey;
+use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteOperation {
-    pub(crate) key: String,
+    namespace_id: NamespaceId,
+    pub(crate) key: EntityKey,
 }
 
 impl DeleteOperation {
-    pub fn new(key: String) -> Self {
-        Self { key }
+    pub fn new(namespace_id: NamespaceId, key: EntityKey) -> Self {
+        Self { key, namespace_id }
     }
 }
 
 impl DeleteOperation {
-    fn apply_real(self, state: &mut KvStore) -> Result<()> {
-        state.delete(&self.key)?;
+    fn apply_real(self, state: &State) -> Result<()> {
+        state.controller.delete(self.namespace_id, &self.key)?;
         Ok(())
     }
 }
 
 impl KvRequest for DeleteOperation {
-    fn apply(self, state: &mut KvStore) -> DeleteResponse {
-        DeleteResponse(self.apply_real(state))
+    fn apply(self, state: KvRaftState<'_>) -> DeleteResponse {
+        DeleteResponse(self.apply_real(state.state))
     }
 }

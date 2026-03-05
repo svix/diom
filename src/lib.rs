@@ -6,7 +6,6 @@
 #[cfg(test)]
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
-    num::NonZero,
     sync::{Arc, LazyLock},
     time::Duration,
 };
@@ -14,14 +13,8 @@ use std::{
 use aide::axum::ApiRouter;
 use axum::{Extension, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
-use coyote_error::{Error, HttpError, Result};
-use coyote_kv::KvStore;
-use coyote_namespace::{
-    BothDatabases,
-    entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, ModuleConfig},
-    parse_namespace,
-};
-use lru::LruCache;
+use coyote_error::Error;
+use coyote_namespace::BothDatabases;
 use opentelemetry::{InstrumentationScope, metrics::Meter, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -32,10 +25,7 @@ use opentelemetry_sdk::{
         span_processor_with_async_runtime::BatchSpanProcessor,
     },
 };
-use tokio::{
-    net::TcpListener,
-    sync::{Barrier, Mutex},
-};
+use tokio::{net::TcpListener, sync::Barrier};
 use tower_http::trace::TraceLayer;
 
 use tokio_util::sync::CancellationToken;
@@ -55,8 +45,6 @@ use crate::{
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
-use coyote_cache::CacheStore;
-use coyote_idempotency::IdempotencyStore;
 
 pub mod bootstrap;
 pub mod cfg;
@@ -131,7 +119,8 @@ pub struct AppState {
     #[allow(unused)]
     pub(crate) ro_dbs: ReadonlyDatabases,
 
-    kv_stores: Arc<Mutex<LruCache<Option<String>, KvStore>>>,
+    // FIXME: temporarily here until we make ro_dbs usable.
+    pub(crate) do_not_use_persistent_db: fjall::Database,
 
     pub meter: Meter,
 }
@@ -199,61 +188,19 @@ impl AppState {
         })
         .expect("initializing namespace state");
 
-        const KV_CACHE: NonZero<usize> = NonZero::new(100).unwrap();
-
         let meter = opentelemetry::global::meter("coyote.svix.com");
 
         AppState {
             cfg,
             rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
                 "rate_limiter_default",
-                persistent_db,
+                persistent_db.clone(),
             ),
             namespace_state,
             ro_dbs,
-            kv_stores: Arc::new(Mutex::new(LruCache::new(KV_CACHE))),
+            do_not_use_persistent_db: persistent_db,
             meter,
         }
-    }
-
-    async fn get_store_by_key<C: ModuleConfig>(&self, key_name: &str) -> Result<KvStore> {
-        let (ns_name, _) = parse_namespace(key_name);
-
-        let mut cache = self.kv_stores.lock().await;
-
-        // TODO: make sure to invalidate the LruCache when we change any namespace
-        // properties; right now, there aren't any endpoints to create or
-        // edit Kv/etc namespaces.
-        cache
-            .try_get_or_insert(ns_name.map(|s| s.to_string()), || -> Result<KvStore> {
-                let namespace = self
-                    .namespace_state
-                    .fetch_namespace::<C>(ns_name)?
-                    .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
-
-                let policy = namespace.config.eviction_policy();
-                Ok(KvStore::new(
-                    KeyValueConfig::NAMESPACE,
-                    self.namespace_state.give_me_the_right_db(&namespace),
-                    policy,
-                    None,
-                ))
-            })
-            .cloned()
-    }
-
-    pub async fn get_kv_store_by_key(&self, key_name: &str) -> Result<KvStore> {
-        self.get_store_by_key::<KeyValueConfig>(key_name).await
-    }
-
-    pub async fn get_cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
-        let kv_store = self.get_store_by_key::<CacheConfig>(key_name).await?;
-        Ok(CacheStore::new(kv_store))
-    }
-
-    pub async fn get_idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {
-        let kv_store = self.get_store_by_key::<IdempotencyConfig>(key_name).await?;
-        Ok(IdempotencyStore::new(kv_store))
     }
 }
 
@@ -341,6 +288,8 @@ pub async fn run_with_listeners(
         // FIXME: gotta do actual error handling...
         let _ = tokio::join!(
             tokio::spawn(v1::modules::kv::worker(app_state.clone())),
+            tokio::spawn(v1::modules::cache::worker(app_state.clone())),
+            tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
             tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
         );
         tracing::debug!("workers died");
