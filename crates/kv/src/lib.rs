@@ -1,9 +1,7 @@
 use std::num::NonZeroU64;
 
 use coyote_error::Result;
-use coyote_namespace::entities::{
-    CacheConfig, EvictionPolicy, IdempotencyConfig, KeyValueConfig, ModuleConfig, NamespaceId,
-};
+use coyote_namespace::entities::{EvictionPolicy, NamespaceId};
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::{TableRow, WriteBatchExt};
 use hashlink::{LinkedHashMap, linked_hash_map::RawEntryMut};
@@ -35,6 +33,8 @@ impl From<KvPairRow> for KvModel {
     }
 }
 
+const KV_KEYSPACE: &str = "mod_kv";
+
 #[derive(Clone)]
 pub struct State {
     pub controller: KvController,
@@ -43,7 +43,7 @@ pub struct State {
 impl State {
     pub fn init(db: fjall::Database) -> Result<Self> {
         Ok(Self {
-            controller: KvController::new(db, "mod_kv"),
+            controller: KvController::new(db, KV_KEYSPACE),
         })
     }
 }
@@ -266,24 +266,12 @@ impl KvStore {
 
 /// This is the worker function for this module, it does background cleanup and accounting.
 /// It deletes expired entries from the database and evicts entries if the KvStore is configured to do so.
-pub async fn worker<F>(namespace_state: &coyote_namespace::State, is_shutting_down: F)
+pub async fn worker<F>(db: fjall::Database, is_shutting_down: F)
 where
     F: Fn() -> bool,
 {
     let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
-
-    let clean_up = |mut store: KvStore| {
-        let now = Timestamp::now();
-        // Expiration cleanup
-        let _ = store.clear_expired(now);
-
-        // Eviction
-        if store.disk_space_exceeds_capacity() && store.policy == EvictionPolicy::LeastRecentlyUsed
-        {
-            // FIXME(@svix-lucho): we can add smarter eviction instead of just doing one at a time
-            let _ = store.evict_lru(1);
-        }
-    };
+    let controller = KvController::new(db, KV_KEYSPACE);
 
     loop {
         if is_shutting_down() {
@@ -292,68 +280,12 @@ where
 
         timer.tick().await;
 
-        let kv_namespaces = match namespace_state.fetch_all_namespaces::<KeyValueConfig>() {
-            Ok(namespaces) => namespaces,
+        let now = Timestamp::now();
+        match controller.clear_expired(now) {
+            Ok(()) => {}
             Err(e) => {
-                tracing::error!(error = ?e, "Failed to get KV namespaces.");
-                continue;
+                tracing::error!(error = ?e, "Failed to clean.");
             }
         };
-
-        for namespace in kv_namespaces {
-            let db = namespace_state.give_me_the_right_db(&namespace);
-            let policy = namespace.config.eviction_policy();
-            let store = KvStore::new(
-                KeyValueConfig::NAMESPACE,
-                db,
-                policy,
-                namespace.max_storage_bytes,
-            );
-
-            clean_up(store);
-        }
-
-        let cache_namespaces = match namespace_state.fetch_all_namespaces::<CacheConfig>() {
-            Ok(namespaces) => namespaces,
-            Err(e) => {
-                tracing::error!(error = ?e, "Failed to get Cache namespaces.");
-                continue;
-            }
-        };
-
-        for namespace in cache_namespaces {
-            let db = namespace_state.give_me_the_right_db(&namespace);
-            let policy = namespace.config.eviction_policy();
-            let store = KvStore::new(
-                CacheConfig::NAMESPACE,
-                db,
-                policy,
-                namespace.max_storage_bytes,
-            );
-
-            clean_up(store);
-        }
-
-        let idempotency_namespaces =
-            match namespace_state.fetch_all_namespaces::<IdempotencyConfig>() {
-                Ok(namespaces) => namespaces,
-                Err(e) => {
-                    tracing::error!(error = ?e, "Failed to get Idempotency namespaces.");
-                    continue;
-                }
-            };
-
-        for namespace in idempotency_namespaces {
-            let db = namespace_state.give_me_the_right_db(&namespace);
-            let policy = namespace.config.eviction_policy();
-            let store = KvStore::new(
-                CacheConfig::NAMESPACE,
-                db,
-                policy,
-                namespace.max_storage_bytes,
-            );
-
-            clean_up(store);
-        }
     }
 }

@@ -165,7 +165,7 @@ impl KvController {
         KvPairRow::values(&self.keyspace)
     }
 
-    pub fn clear_expired(&mut self, now: Timestamp) -> Result<()> {
+    pub fn clear_expired(&self, now: Timestamp) -> Result<()> {
         let start = ExpirationRow::key_for(NamespaceId::nil(), Timestamp::MIN, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
@@ -353,7 +353,7 @@ mod tests {
     #[test]
     fn test_clear_expired_removes_expired_entries() {
         let setup = SetupFixture::new();
-        let mut controller = setup.controller;
+        let controller = setup.controller;
 
         let now = Timestamp::now();
 
