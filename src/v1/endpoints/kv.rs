@@ -209,8 +209,12 @@ async fn kv_create_namespace(
 #[aide_annotate(op_id = "v1.kv.namespace.get")]
 async fn kv_get_namespace(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<KvGetNamespaceOut>> {
+    // Ensure we have the latest version of namespace
+    repl.raft.ensure_linearizable().await.map_err_generic()?;
+
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
