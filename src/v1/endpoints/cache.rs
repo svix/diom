@@ -148,7 +148,6 @@ async fn cache_get(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetIn>,
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
-    // FIXME: gotta do this route!
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?

@@ -114,7 +114,6 @@ async fn kv_get(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
 ) -> Result<MsgPackOrJson<KvGetOut>> {
-    // FIXME: gotta do this route!
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
