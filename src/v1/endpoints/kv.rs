@@ -9,7 +9,7 @@ use coyote_core::types::EntityKey;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, ResultExt};
 use coyote_kv::{
-    kvcontroller::{KvController, KvModel, OperationBehavior},
+    kvcontroller::{KvModel, OperationBehavior},
     operations::{CreateKvOperation, DeleteOperation, SetOperation},
 };
 use coyote_namespace::{
@@ -122,8 +122,8 @@ async fn kv_get(
 
     repl.raft.ensure_linearizable().await.map_err_generic()?;
 
-    // FIXME: support more than just persistent, don't copy-paste the mod_kv here, etc.
-    let controller = KvController::new(state.do_not_use_persistent_db.clone(), "mod_kv");
+    // FIXME: support more than just persistent, etc.
+    let controller = coyote_kv::State::init(state.do_not_use_persistent_db.clone())?.controller;
 
     let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
 

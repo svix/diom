@@ -37,7 +37,7 @@ impl From<KvPairRow> for KvModel {
 
 #[derive(Clone)]
 pub struct State {
-    pub(crate) controller: KvController,
+    pub controller: KvController,
 }
 
 impl State {

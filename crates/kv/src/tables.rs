@@ -65,6 +65,11 @@ impl ExpirationRow {
 
 impl TableRow for ExpirationRow {
     const ROW_TYPE: u8 = RowType::Expiration as u8;
+
+    // We only store data in the keys
+    fn to_fjall_value(&self) -> Result<fjall::UserValue> {
+        Ok(b"".into())
+    }
 }
 
 #[derive(Serialize, Deserialize)]
