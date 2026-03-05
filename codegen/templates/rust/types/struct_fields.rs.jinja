@@ -1,4 +1,4 @@
-{% from "types/macros.rs.jinja" import field_name -%}
+{% from "types/macros.rs.jinja" import ident -%}
 {% for field in type.fields %}
     {% if field.description is defined -%}
         {{ field.description | to_doc_comment(style="rust") }}
@@ -26,5 +26,5 @@
         #[serde(skip_serializing_if = "Option::is_none")]
     {% endif -%}
 
-    pub {{ field_name(field.name | to_snake_case) }}: {{ field_ty }},
+    pub {{ ident(field.name | to_snake_case) }}: {{ field_ty }},
 {% endfor %}

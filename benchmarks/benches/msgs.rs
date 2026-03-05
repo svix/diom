@@ -97,10 +97,7 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                             .receive(
                                 topic.clone(),
                                 consumer_group.clone(),
-                                MsgStreamReceiveIn {
-                                    batch_size: Some(100),
-                                    ..MsgStreamReceiveIn::new()
-                                },
+                                MsgStreamReceiveIn::new().with_batch_size(100),
                             )
                             .await
                             .unwrap(),
