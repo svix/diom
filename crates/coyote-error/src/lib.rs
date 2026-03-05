@@ -177,12 +177,6 @@ impl fmt::Display for ErrorType {
     }
 }
 
-impl From<HttpError> for ErrorType {
-    fn from(e: HttpError) -> Self {
-        Self::Http(e)
-    }
-}
-
 #[derive(Debug, Clone, Serialize)]
 pub struct StandardHttpError {
     code: String,
@@ -305,12 +299,6 @@ impl fmt::Display for HttpError {
 impl IntoResponse for HttpError {
     fn into_response(self) -> Response {
         (self.status, Json(self.body)).into_response()
-    }
-}
-
-impl From<ErrorType> for Error {
-    fn from(typ: ErrorType) -> Self {
-        Self { trace: vec![], typ }
     }
 }
 
