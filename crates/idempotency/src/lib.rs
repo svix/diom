@@ -15,10 +15,15 @@ use std::time::Duration;
 
 use coyote_error::Result;
 use coyote_kv::kvcontroller::{KvController, OperationBehavior};
-use coyote_namespace::entities::NamespaceId;
+use coyote_namespace::{
+    Namespace,
+    entities::{IdempotencyConfig, NamespaceId},
+};
 use fjall_utils::{Databases, StorageType};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+
+pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 
 const IDEMPOTENCY_KEYSPACE: &str = "mod_idempotency";
 

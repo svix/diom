@@ -109,7 +109,7 @@ async fn idempotency_start(
         .fetch_namespace(data.key.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = TryStartOperation::new(namespace.id, data.key.to_string(), data.ttl);
+    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
@@ -128,7 +128,7 @@ async fn idempotency_complete(
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let operation =
-        CompleteOperation::new(namespace.id, data.key.to_string(), data.response, data.ttl);
+        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
@@ -146,7 +146,7 @@ async fn idempotency_abort(
         .fetch_namespace(data.key.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = AbortOperation::new(namespace.id, data.key.to_string());
+    let operation = AbortOperation::new(namespace, data.key.to_string());
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyAbortOut {}))

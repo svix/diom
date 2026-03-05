@@ -1,5 +1,5 @@
 use super::{DeleteResponse, KvRequest};
-use crate::{State, operations::KvRaftState};
+use crate::{KvNamespace, State, operations::KvRaftState};
 use coyote_core::types::EntityKey;
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
@@ -9,12 +9,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: EntityKey,
 }
 
 impl DeleteOperation {
-    pub fn new(namespace_id: NamespaceId, key: EntityKey) -> Self {
-        Self { key, namespace_id }
+    pub fn new(namespace: KvNamespace, key: EntityKey) -> Self {
+        Self {
+            key,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
+        }
     }
 }
 

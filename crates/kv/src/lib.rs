@@ -1,4 +1,5 @@
 use coyote_error::Result;
+use coyote_namespace::{Namespace, entities::KeyValueConfig};
 use fjall_utils::{Databases, StorageType};
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -25,6 +26,7 @@ impl From<KvPairRow> for KvModel {
     }
 }
 
+pub type KvNamespace = Namespace<KeyValueConfig>;
 const KV_KEYSPACE: &str = "mod_kv";
 
 #[derive(Clone)]

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::{State, kvcontroller::OperationBehavior, operations::KvRaftState};
+use crate::{KvNamespace, State, kvcontroller::OperationBehavior, operations::KvRaftState};
 
 use super::{KvRequest, SetResponse};
 use coyote_core::types::EntityKey;
@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: EntityKey,
     expiry: Option<Timestamp>,
     value: Vec<u8>,
@@ -22,14 +23,15 @@ pub struct SetOperation {
 
 impl SetOperation {
     pub fn new(
-        namespace_id: NamespaceId,
+        namespace: KvNamespace,
         key: EntityKey,
         value: Vec<u8>,
         ttl: Option<u64>,
         behavior: OperationBehavior,
     ) -> Self {
         Self {
-            namespace_id,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
             key,
             expiry: ttl.map(|ttl| Timestamp::now() + Duration::from_millis(ttl)),
             value,
