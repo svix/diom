@@ -9,8 +9,6 @@ use serde::{Deserialize, Serialize};
 enum RowType {
     Pair = 0,
     Expiration = 1,
-    // FIXME: delete these two:
-    OldExpiration = 2,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -70,27 +68,4 @@ impl TableRow for ExpirationRow {
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
         Ok(b"".into())
     }
-}
-
-#[derive(Serialize, Deserialize)]
-pub(crate) struct OldExpirationRow {
-    pub expiry: Timestamp,
-    pub key: String,
-}
-
-impl OldExpirationRow {
-    pub(crate) fn new(expiry: Timestamp, key: String) -> Self {
-        Self { expiry, key }
-    }
-
-    pub(crate) fn key_for(expiration_time: Timestamp, key: &str) -> TableKey<Self> {
-        let ts_ms = expiration_time.as_millisecond();
-        let ts_bytes = ts_ms.to_be_bytes();
-
-        TableKey::init_key(Self::ROW_TYPE, &[&ts_bytes], &[key])
-    }
-}
-
-impl TableRow for OldExpirationRow {
-    const ROW_TYPE: u8 = RowType::OldExpiration as u8;
 }
