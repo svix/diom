@@ -8,15 +8,12 @@ use std::{
 
 use crate::{
     cfg::Dir,
-    core::{
-        db::Databases,
-        metrics::{DbMetrics, DbType},
-    },
+    core::metrics::{DbMetrics, DbType},
 };
 use anyhow::Context;
 use diom_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
-use fjall_utils::{FjallFixedKey, ReadonlyKeyspace};
+use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
     StorageIOError, StoredMembership, storage::RaftStateMachine,

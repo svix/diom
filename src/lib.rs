@@ -15,6 +15,7 @@ use axum::{Extension, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
 use diom_error::Error;
 use diom_namespace::BothDatabases;
+use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::{InstrumentationScope, metrics::Meter, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -41,7 +42,6 @@ use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
         cluster::RaftState,
-        db::{Databases, ReadonlyDatabases},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };

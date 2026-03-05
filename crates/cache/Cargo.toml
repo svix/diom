@@ -11,6 +11,7 @@ diom-kv.workspace = true
 diom-namespace.workspace = true
 diom-operations.workspace = true
 fjall.workspace = true
+fjall-utils.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
