@@ -272,5 +272,18 @@ debug = 0
 opt-level = 3
 strip = true
 
+[profile.dev.package]
+# always optimize some dependencies that make a difference for the CLI benchmark
+# command. it still makes sense to use a release build to measure maximum
+# performance for some given hardware, but these optimizations make the
+# debug-build results close enough to production that useful before / after
+# comparisons can be made.
+coyote-client.opt-level = 2
+coyote-cli.opt-level = 2
+h2.opt-level = 2
+hyper.opt-level = 2
+tokio.opt-level = 2
+rand_chacha.opt-level = 2
+
 [patch.crates-io]
 dotenvy = { git = "https://github.com/svix-jbrown/dotenvy.git", rev = "ffa0aa149e2c6da57113859001257f0d99b43431" }
