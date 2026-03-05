@@ -7,7 +7,7 @@ use coyote_namespace::{
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::operations::{CreateCacheRequest, CreateCacheResponse};
+use crate::operations::{CacheRaftState, CacheRequest, CreateCacheResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateCacheOperation {
@@ -78,8 +78,8 @@ impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
     }
 }
 
-impl CreateCacheRequest for CreateCacheOperation {
-    fn apply(self, state: &coyote_namespace::State) -> CreateCacheResponse {
-        CreateCacheResponse(self.apply_real(state))
+impl CacheRequest for CreateCacheOperation {
+    fn apply(self, state: CacheRaftState<'_>) -> CreateCacheResponse {
+        CreateCacheResponse(self.apply_real(state.namespace))
     }
 }

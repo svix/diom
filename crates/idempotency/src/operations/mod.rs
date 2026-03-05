@@ -26,6 +26,7 @@ raft_module_operations!(
         TryStart(TryStartOperation) -> TryStartResponseData,
         Complete(CompleteOperation) -> (),
         Abort(AbortOperation) -> (),
+        CreateIdempotency(CreateIdempotencyOperation) -> CreateIdempotencyResponseData,
     },
     state = IdempotencyRaftState<'_>,
 );
@@ -36,23 +37,7 @@ impl IdempotencyOperation {
             Self::TryStart(op) => &op.key,
             Self::Complete(op) => &op.key,
             Self::Abort(op) => &op.key,
-        }
-    }
-}
-
-raft_module_operations!(
-    CreateIdempotencyRequest,
-    CreateIdempotencyOp {
-        CreateIdempotency(CreateIdempotencyOperation) -> CreateIdempotencyResponseData,
-    },
-    state = &coyote_namespace::State,
-    response = CreateIdempotencyOperationResponse,
-);
-
-impl CreateIdempotencyOp {
-    pub fn key_name(&self) -> &str {
-        match self {
-            CreateIdempotencyOp::CreateIdempotency(op) => &op.name,
+            Self::CreateIdempotency(op) => &op.name,
         }
     }
 }

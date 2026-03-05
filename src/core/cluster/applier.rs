@@ -53,9 +53,6 @@ pub(super) async fn apply_request(
             };
             Response::Idempotency(req.apply(state))
         }
-        Request::CreateIdempotency(req) => {
-            Response::CreateIdempotency(req.apply(&state_machine.state.namespace_state))
-        }
         Request::Cache(req) => {
             let stores = state_machine.db_handle();
             let state = coyote_cache::operations::CacheRaftState {
@@ -63,9 +60,6 @@ pub(super) async fn apply_request(
                 namespace: &state_machine.state.namespace_state,
             };
             Response::Cache(req.apply(state))
-        }
-        Request::CreateCache(req) => {
-            Response::CreateCache(req.apply(&state_machine.state.namespace_state))
         }
         Request::Msgs(req) => {
             let stores = state_machine.db_handle();
