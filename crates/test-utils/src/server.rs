@@ -217,6 +217,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         log_level: LogLevel::Debug,
         log_format: LogFormat::Default,
         opentelemetry_address: None,
+        opentelemetry_metrics_address: None,
         opentelemetry_metrics_use_http: false,
         opentelemetry_metrics_period_seconds: 60,
         opentelemetry_sample_ratio: None,
