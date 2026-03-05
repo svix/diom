@@ -2,11 +2,11 @@ use crate::State;
 
 use serde::{Deserialize, Serialize};
 
-mod create_cache;
+mod create_namespace;
 mod delete;
 mod set;
 
-pub use create_cache::{CreateCacheOperation, CreateCacheResponseData};
+pub use create_namespace::{CreateCacheOperation, CreateCacheResponseData};
 pub use delete::DeleteOperation;
 pub use set::SetOperation;
 
