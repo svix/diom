@@ -5,7 +5,7 @@ use serde::Serialize;
 use validator::ValidationError;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ValidationHttpError {
+pub struct ValidationErrorBody {
     pub(crate) detail: Vec<ValidationErrorItem>,
 }
 
