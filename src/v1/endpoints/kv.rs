@@ -25,7 +25,7 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::kv::{KvStore as KvStoreType, worker};
+pub use crate::v1::modules::kv::worker;
 
 pub type KvNamespace = Namespace<KeyValueConfig>;
 

@@ -9,7 +9,6 @@ pub mod operations;
 
 use coyote_error::Result;
 use coyote_kv::kvcontroller::KvController;
-use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,32 +24,6 @@ impl State {
         Ok(Self {
             controller: KvController::new(db, "mod_cache"),
         })
-    }
-}
-
-#[derive(Clone)]
-pub struct CacheStore {
-    pub(crate) controller: KvController,
-    pub(crate) namespace_id: NamespaceId,
-}
-
-impl CacheStore {
-    pub fn new(controller: KvController, namespace_id: NamespaceId) -> Self {
-        Self {
-            controller,
-            namespace_id,
-        }
-    }
-
-    pub fn get(&self, key: &str) -> Result<Option<CacheModel>> {
-        self.controller
-            .fetch(self.namespace_id, key, Timestamp::now())
-            .map(|m| {
-                m.map(|m| CacheModel {
-                    value: m.value,
-                    expiry: m.expiry,
-                })
-            })
     }
 }
 

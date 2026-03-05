@@ -13,8 +13,8 @@ use std::{
 use aide::axum::ApiRouter;
 use axum::{Extension, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
-use coyote_error::{Error, HttpError, Result};
-use coyote_namespace::{BothDatabases, entities::CacheConfig, parse_namespace};
+use coyote_error::Error;
+use coyote_namespace::BothDatabases;
 use opentelemetry::{InstrumentationScope, metrics::Meter, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -45,7 +45,6 @@ use crate::{
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
-use coyote_cache::CacheStore;
 
 pub mod bootstrap;
 pub mod cfg;
