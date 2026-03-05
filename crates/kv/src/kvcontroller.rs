@@ -175,6 +175,11 @@ impl KvController {
             .chunks(EXPIRATION_BATCH_SIZE)
         {
             let mut batch = self.db.batch();
+            // FIXME: there's a race condition because the item key is first read and only then
+            // acted upon.
+            // Essentially: (1) key read here, (2) key + expiry updated elsewhere, (3) new key
+            // is deleted here even though it's not expired.
+            // See https://svixhq.slack.com/archives/C0A72988962/p1772685631571679
             for item in chunk {
                 let k = item.key()?;
                 let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
