@@ -188,8 +188,6 @@ impl AppState {
         })
         .expect("initializing namespace state");
 
-        const KV_CACHE: NonZero<usize> = NonZero::new(100).unwrap();
-
         let meter = opentelemetry::global::meter("coyote.svix.com");
 
         AppState {
