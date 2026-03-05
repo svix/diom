@@ -403,6 +403,7 @@ pub struct ConfigurationInner {
     pub opentelemetry_address: Option<String>,
 
     /// The OpenTelemetry address to send metrics to if given.
+    ///
     /// If not specified, the server will attempt to fall back
     /// to `opentelemetry_address`
     pub opentelemetry_metrics_address: Option<String>,
