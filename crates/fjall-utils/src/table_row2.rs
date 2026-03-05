@@ -101,13 +101,13 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         // FIXME(@svix-gabriel) - it's not clear if we're committed to using msgpack
         // for internal serialization. Using messagepack for now, but this
         // should be easy to change later.
-        let value = rmp_serde::to_vec_named(&self).map_err(Error::generic)?;
+        let value = rmp_serde::to_vec_named(&self).map_err_generic()?;
 
         Ok((key, value.into()))
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
-        rmp_serde::from_slice(&value).map_err(Error::generic)
+        rmp_serde::from_slice(&value).map_err_generic()
     }
 
     fn fetch<K: ReadableKeyspace>(keyspace: &K, key: &Self::Key) -> Result<Option<Self>> {

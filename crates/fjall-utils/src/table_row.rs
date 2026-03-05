@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use super::readonly_db::ReadableKeyspace;
-use diom_error::{Error, Result};
+use diom_error::{Result, ResultExt};
 use serde::{Serialize, de::DeserializeOwned};
 
 /// A trait for types that can be stored as rows in a fjall keyspace.
@@ -14,11 +14,11 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
         rmp_serde::to_vec_named(&self)
             .map(|bytes| bytes.into())
-            .map_err(Error::generic)
+            .map_err_generic()
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
-        rmp_serde::from_slice(&value).map_err(Error::generic)
+        rmp_serde::from_slice(&value).map_err_generic()
     }
 
     fn fetch<K: ReadableKeyspace>(keyspace: &K, key: TableKey<Self>) -> Result<Option<Self>> {

@@ -1,7 +1,7 @@
 use diom_namespace::entities::NamespaceId;
 use std::collections::HashMap;
 
-use diom_error::{Error, Result};
+use diom_error::{Result, ResultExt as _};
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -142,7 +142,7 @@ impl MsgRow {
         let end = Self::key_for(topic_id, partition, offset + batch_size as u64).into_fjall_key();
         for entry in keyspace.range(start..end) {
             let val = entry.value()?;
-            let msg = rmp_serde::from_slice(&val).map_err(Error::generic)?;
+            let msg = rmp_serde::from_slice(&val).map_err_generic()?;
             results.push(msg);
         }
 
