@@ -1,11 +1,14 @@
 mod create_namespace;
 mod publish;
+mod queue_ack;
+mod queue_receive;
 mod stream_commit;
 mod stream_receive;
 mod topic_configure;
 
 pub use self::{
-    create_namespace::*, publish::*, stream_commit::*, stream_receive::*, topic_configure::*,
+    create_namespace::*, publish::*, queue_ack::*, queue_receive::*, stream_commit::*,
+    stream_receive::*, topic_configure::*,
 };
 
 use crate::State;
@@ -23,6 +26,8 @@ raft_module_operations!(
     MsgsOperation {
         CreateNamespace(CreateNamespaceOperation) -> CreateNamespaceResponseData,
         Publish(PublishOperation) -> PublishResponseData,
+        QueueAck(QueueAckOperation) -> QueueAckResponseData,
+        QueueReceive(QueueReceiveOperation) -> QueueReceiveResponseData,
         StreamCommit(StreamCommitOperation) -> StreamCommitResponseData,
         StreamReceive(StreamReceiveOperation) -> StreamReceiveResponseData,
         TopicConfigure(TopicConfigureOperation) -> TopicConfigureResponseData,
@@ -35,6 +40,8 @@ impl MsgsOperation {
         match self {
             MsgsOperation::CreateNamespace(op) => op.name.to_string(),
             MsgsOperation::Publish(op) => op.topic.to_string(),
+            MsgsOperation::QueueAck(op) => op.topic.to_string(),
+            MsgsOperation::QueueReceive(op) => op.topic.to_string(),
             MsgsOperation::StreamCommit(op) => op.topic.to_string(),
             MsgsOperation::StreamReceive(op) => op.topic.to_string(),
             MsgsOperation::TopicConfigure(op) => op.topic.to_string(),

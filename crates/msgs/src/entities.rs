@@ -381,8 +381,15 @@ pub struct QueueMsgOut {
 #[serde(transparent)]
 pub struct ConsumerGroup(pub(crate) String);
 
+// FIXME: change ConsumerGroup inner type to Cow<'static, str> to avoid allocating for
+// the static `__queue__` sentinel.
 impl ConsumerGroup {
     const MAX_LEN: usize = 64;
+
+    /// Synthetic consumer group used internally by queue operations.
+    pub(crate) fn queue() -> Self {
+        Self("__queue__".to_owned())
+    }
 
     fn validate_str(s: &str) -> Result<(), &'static str> {
         if s.len() > Self::MAX_LEN {

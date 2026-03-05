@@ -6,7 +6,7 @@ use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{ConsumerGroup, Offset, Partition, TopicId, TopicName};
+use crate::entities::{ConsumerGroup, MsgId, Offset, Partition, TopicId, TopicName};
 
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]
@@ -14,6 +14,7 @@ enum RowType {
     Topic = 0,
     StreamLease = 1,
     Msg = 2,
+    QueueLease = 3,
 }
 
 const SIZE_U64: usize = size_of::<u64>();
@@ -80,6 +81,45 @@ impl StreamLeaseRow {
 
 impl TableRow for StreamLeaseRow {
     const ROW_TYPE: u8 = RowType::StreamLease as u8;
+}
+
+/// Per-message lease/ack tracking for queue semantics.
+///
+/// - `expiry > now` → message is leased (in-flight to a consumer)
+/// - `expiry == Timestamp::MAX` → message is permanently acked
+/// - `expiry <= now` → lease expired, message is available again
+/// - No row → message was never leased, available
+///
+/// Rows below the queue cursor are deleted during cursor compaction to prevent unbounded growth.
+#[derive(Serialize, Deserialize)]
+pub(crate) struct QueueLeaseRow {
+    pub expiry: Timestamp,
+}
+
+impl QueueLeaseRow {
+    pub(crate) fn key_for(topic_id: TopicId, msg_id: &MsgId) -> TableKey<Self> {
+        TableKey::init_key(
+            Self::ROW_TYPE,
+            &[
+                topic_id.as_bytes(),
+                &msg_id.partition.get().to_be_bytes(),
+                &msg_id.offset.to_be_bytes(),
+            ],
+            &[],
+        )
+    }
+
+    pub(crate) fn is_available(&self, now: Timestamp) -> bool {
+        self.expiry <= now
+    }
+
+    pub(crate) fn is_acked(&self) -> bool {
+        self.expiry == Timestamp::MAX
+    }
+}
+
+impl TableRow for QueueLeaseRow {
+    const ROW_TYPE: u8 = RowType::QueueLease as u8;
 }
 
 #[derive(Serialize, Deserialize)]
