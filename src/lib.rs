@@ -345,6 +345,12 @@ pub async fn run_with_prefix(
         .await
         .expect("bootstrapping failed");
 
+    let listener = listener.tap_io(|tcp_stream| {
+        if let Err(err) = tcp_stream.set_nodelay(true) {
+            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
+        }
+    });
+
     axum::serve(listener, make_svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
         .await
