@@ -6,7 +6,7 @@ use diom::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, LogFormat, LogLevel,
     },
     core::cluster::proto::HealthResponse,
-    run_with_prefix,
+    run_with_listeners,
 };
 use tempfile::TempDir;
 use tokio::{
@@ -108,7 +108,7 @@ impl TestServerBuilder {
         let server_handle = tokio::spawn({
             let cfg = cfg.clone();
             async move {
-                run_with_prefix(cfg, Some(listener), Some(repl_listener)).await;
+                run_with_listeners(cfg, Some(listener), Some(repl_listener)).await;
             }
         });
 

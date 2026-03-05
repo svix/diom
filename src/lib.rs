@@ -116,7 +116,7 @@ async fn graceful_shutdown_handler() {
 
 pub async fn run(cfg: Configuration) {
     setup_metrics(&cfg);
-    run_with_prefix(cfg, None, None).await
+    run_with_listeners(cfg, None, None).await
 }
 
 #[derive(Clone)]
@@ -254,7 +254,7 @@ impl AppState {
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
 // consuming from each others' queues
-pub async fn run_with_prefix(
+pub async fn run_with_listeners(
     cfg: Configuration,
     listener: Option<TcpListener>,
     interserver_listener: Option<TcpListener>,
