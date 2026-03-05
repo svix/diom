@@ -9,7 +9,7 @@ mod tables;
 
 pub use self::tables::Namespace;
 
-pub const DEFAULT_NAMESPACE_NAME: &str = "default";
+pub(crate) const DEFAULT_NAMESPACE_NAME: &str = "default";
 
 pub fn parse_namespace(key: &str) -> (Option<&str>, &str) {
     match key.split_once(":") {
@@ -79,9 +79,23 @@ impl State {
 
     pub fn fetch_namespace<C: ModuleConfig>(
         &self,
-        namespace_name: &str,
+        namespace_name: Option<&str>,
     ) -> Result<Option<Namespace<C>>> {
-        Namespace::fetch(&self.keyspace, namespace_name)
+        if let Some(ns) = namespace_name
+            && ns == DEFAULT_NAMESPACE_NAME
+        {
+            return Err(diom_error::Error::http(
+                diom_error::HttpError::bad_request(
+                    Some("no_explicit_default_namespace".to_owned()),
+                    Some("Explicitly setting the \"default\" namespace is not allowed.".to_owned()),
+                ),
+            ));
+        }
+
+        Namespace::fetch(
+            &self.keyspace,
+            namespace_name.unwrap_or(DEFAULT_NAMESPACE_NAME),
+        )
     }
 
     /// Like `fetch_namespace` but allows passing `default` explicitly for admin purposes.
