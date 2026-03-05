@@ -1,7 +1,4 @@
-{% macro field_name(name) -%}
-    {%- if name == "type" -%}
-        r#type
-    {%- else -%}
-        {{ name }}
-    {%- endif -%}
-{% endmacro -%}
+{% macro ident(name) -%}
+    {%- if name in ["ref", "type"] %}r#{% endif -%}
+    {{ name }}
+{%- endmacro -%}

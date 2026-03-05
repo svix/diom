@@ -1,4 +1,4 @@
-{% from "types/macros.rs.jinja" import field_name -%}
+{% from "types/macros.rs.jinja" import ident -%}
 {% set type_name = type.name | to_upper_camel_case -%}
 {% set has_positional_fields = type.fields | selectattr("positional") | length > 0 -%}
 use serde::{Deserialize, Serialize};
@@ -47,7 +47,7 @@ pub struct {{ type_name }} {
         #[serde(skip_serializing_if = "Option::is_none")]
     {% endif -%}
 
-    pub {{ field_name(field.name | to_snake_case) }}: {{ field_ty }},
+    pub {{ ident(field.name | to_snake_case) }}: {{ field_ty }},
     {%- endif %}
 {% endfor %}
 }
@@ -58,7 +58,7 @@ impl {{ type_name }} {
         {% if not field.positional -%}
             {% set field_ty = field.type.to_rust() -%}
             {% if field.required and not field.nullable -%}
-                {{ field_name(field.name | to_snake_case) }}: {{ field_ty }},
+                {{ ident(field.name | to_snake_case) }}: {{ field_ty }},
             {% endif -%}
         {% endif -%}
         {% endfor -%}
@@ -70,9 +70,9 @@ impl {{ type_name }} {
             {% for field in type.fields -%}
             {% if not field.positional -%}
                 {% if field.required and not field.nullable -%}
-                    {{ field_name(field.name | to_snake_case) }},
+                    {{ ident(field.name | to_snake_case) }},
                 {% else -%}
-                    {{ field_name(field.name | to_snake_case) }}: None,
+                    {{ ident(field.name | to_snake_case) }}: None,
                 {% endif -%}
             {% endif -%}
             {% endfor -%}
@@ -81,11 +81,11 @@ impl {{ type_name }} {
 
     {% for field in type.fields -%}
     {% if not field.required -%}
-    pub fn with_{{ field_name(field.name | to_snake_case) }}(
+    pub fn with_{{ ident(field.name | to_snake_case) }}(
         mut self,
         value: impl Into<Option<{{ field.type.to_rust() }}>>,
     ) -> Self {
-        self.{{ field_name(field.name | to_snake_case) }} = value.into();
+        self.{{ ident(field.name | to_snake_case) }} = value.into();
         self
     }
 
