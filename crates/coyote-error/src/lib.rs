@@ -54,11 +54,16 @@ impl Error {
         // but having a universal error function to capture user errors is ideal
         Self::new(ErrorType::Http(HttpError {
             status: StatusCode::BAD_REQUEST,
-            body: HttpErrorBody::Standard(StandardErrorBody {
+            body: StandardErrorBody {
                 code: "invalid_input".to_owned(),
                 detail: s.to_string(),
-            }),
+            },
         }))
+    }
+
+    #[track_caller]
+    pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
+        Self::new(ErrorType::Validation(ValidationErrorBody::new(detail)))
     }
 
     #[track_caller]
@@ -95,19 +100,23 @@ impl error::Error for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        let stringified: Vec<String> = self.trace.into_iter().map(ToString::to_string).collect();
+        let location: Vec<String> = self.trace.into_iter().map(ToString::to_string).collect();
         match self.typ {
             ErrorType::Http(s) => {
-                tracing::debug!("{:?}, location: {:?}", &s, stringified);
+                tracing::debug!(?location, error = %s, "http error");
                 s.into_response()
+            }
+            ErrorType::Validation(body) => {
+                tracing::debug!(?location, error = %body, "validation error");
+                (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
             }
             ErrorType::Operation {
                 code,
                 detail: Some(detail),
             } => (code, detail).into_response(),
             ErrorType::Operation { code, detail: _ } => code.into_response(),
-            s => {
-                tracing::error!("type: {:?}, location: {:?}", s, stringified);
+            ErrorType::Generic(_) => {
+                tracing::error!(?location, error = %self.typ, "generic error");
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({}))).into_response()
             }
         }
@@ -154,6 +163,8 @@ pub enum ErrorType {
     Generic(String),
     /// Any kind of HttpError
     Http(HttpError),
+    /// An error from validating a request
+    Validation(ValidationErrorBody),
     /// An error from an Operation application
     Operation {
         code: StatusCode,
@@ -166,6 +177,7 @@ impl fmt::Display for ErrorType {
         match self {
             Self::Generic(s) => s.fmt(f),
             Self::Http(s) => s.fmt(f),
+            Self::Validation(s) => s.fmt(f),
             Self::Operation { detail, code } => {
                 if let Some(detail) = detail {
                     detail.fmt(f)
@@ -183,24 +195,17 @@ pub struct StandardErrorBody {
     detail: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(untagged)]
-pub enum HttpErrorBody {
-    Standard(StandardErrorBody),
-    Validation(ValidationErrorBody),
-}
-
 #[derive(Debug, Clone)]
 pub struct HttpError {
     pub status: StatusCode,
-    body: HttpErrorBody,
+    body: StandardErrorBody,
 }
 
 impl HttpError {
     fn new_standard(status: StatusCode, code: String, detail: String) -> Self {
         Self {
             status,
-            body: HttpErrorBody::Standard(StandardErrorBody { code, detail }),
+            body: StandardErrorBody { code, detail },
         }
     }
 
@@ -244,13 +249,6 @@ impl HttpError {
         )
     }
 
-    pub fn unprocessable_entity(detail: Vec<ValidationErrorItem>) -> Self {
-        Self {
-            status: StatusCode::UNPROCESSABLE_ENTITY,
-            body: HttpErrorBody::Validation(ValidationErrorBody { detail }),
-        }
-    }
-
     pub fn internal_server_error(code: Option<String>, detail: Option<String>) -> Self {
         Self::new_standard(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -276,23 +274,11 @@ impl From<HttpError> for Error {
 
 impl fmt::Display for HttpError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.body {
-            HttpErrorBody::Standard(StandardErrorBody { code, detail }) => write!(
-                f,
-                "status={} code=\"{code}\" detail=\"{detail}\"",
-                self.status
-            ),
-
-            HttpErrorBody::Validation(ValidationErrorBody { detail }) => {
-                write!(
-                    f,
-                    "status={} detail={}",
-                    self.status,
-                    serde_json::to_string(&detail)
-                        .unwrap_or_else(|e| format!("\"unserializable error for {e}\""))
-                )
-            }
-        }
+        write!(
+            f,
+            "status={} code=\"{}\" detail=\"{}\"",
+            self.status, self.body.code, self.body.detail,
+        )
     }
 }
 
