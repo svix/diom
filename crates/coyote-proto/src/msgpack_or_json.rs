@@ -90,7 +90,7 @@ where
                 }
             }
         }
-        fn make_serde_error(e: serde_path_to_error::Error<impl std::error::Error>) -> HttpError {
+        fn make_serde_error(e: serde_path_to_error::Error<impl std::error::Error>) -> Error {
             let mut path = e
                 .path()
                 .to_string()
@@ -101,7 +101,7 @@ where
 
             let mut loc = vec!["body".to_owned()];
             loc.append(&mut path);
-            HttpError::unprocessable_entity(vec![ValidationErrorItem {
+            Error::validation(vec![ValidationErrorItem {
                 loc,
                 msg: inner
                     .source()
@@ -110,8 +110,8 @@ where
                 ty: "value_error.jsondecode".to_owned(),
             }])
         }
-        fn make_validation_error(e: validator::ValidationErrors) -> HttpError {
-            HttpError::unprocessable_entity(validation_errors(vec!["body".to_owned()], e))
+        fn make_validation_error(e: validator::ValidationErrors) -> Error {
+            Error::validation(validation_errors(vec!["body".to_owned()], e))
         }
 
         let content_type = classify_content_type(req.headers())?;

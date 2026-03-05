@@ -9,7 +9,6 @@ use aide::OperationOutput;
 #[expect(clippy::disallowed_types)]
 use axum::{
     Json,
-    extract::rejection::{ExtensionRejection, PathRejection},
     response::{IntoResponse, Response},
 };
 use hyper::StatusCode;
@@ -22,7 +21,7 @@ mod validation;
 
 pub use self::{
     result_ext::ResultExt,
-    validation::{ValidationErrorItem, ValidationHttpError, validation_error, validation_errors},
+    validation::{ValidationErrorBody, ValidationErrorItem, validation_error, validation_errors},
 };
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Coyote'es [Error].
@@ -54,11 +53,16 @@ impl Error {
         // but having a universal error function to capture user errors is ideal
         Self::new(ErrorType::Http(HttpError {
             status: StatusCode::BAD_REQUEST,
-            body: HttpErrorBody::Standard(StandardHttpError {
+            body: StandardErrorBody {
                 code: "invalid_input".to_owned(),
                 detail: s.to_string(),
-            }),
+            },
         }))
+    }
+
+    #[track_caller]
+    pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
+        Self::new(ErrorType::Validation(ValidationErrorBody::new(detail)))
     }
 
     #[track_caller]
@@ -95,19 +99,23 @@ impl error::Error for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        let stringified: Vec<String> = self.trace.into_iter().map(ToString::to_string).collect();
+        let location: Vec<String> = self.trace.into_iter().map(ToString::to_string).collect();
         match self.typ {
             ErrorType::Http(s) => {
-                tracing::debug!("{:?}, location: {:?}", &s, stringified);
+                tracing::debug!(?location, error = %s, "http error");
                 s.into_response()
+            }
+            ErrorType::Validation(body) => {
+                tracing::debug!(?location, error = %body, "validation error");
+                (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
             }
             ErrorType::Operation {
                 code,
                 detail: Some(detail),
             } => (code, detail).into_response(),
             ErrorType::Operation { code, detail: _ } => code.into_response(),
-            s => {
-                tracing::error!("type: {:?}, location: {:?}", s, stringified);
+            ErrorType::Generic(_) => {
+                tracing::error!(?location, error = %self.typ, "generic error");
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({}))).into_response()
             }
         }
@@ -134,26 +142,14 @@ impl<T> Traceable<T> for Result<T> {
     }
 }
 
-impl From<ExtensionRejection> for Error {
-    #[track_caller]
-    fn from(value: ExtensionRejection) -> Self {
-        Error::generic(value)
-    }
-}
-
-impl From<PathRejection> for Error {
-    #[track_caller]
-    fn from(value: PathRejection) -> Self {
-        Error::generic(value)
-    }
-}
-
 #[derive(Debug)]
 pub enum ErrorType {
     /// A generic error
     Generic(String),
     /// Any kind of HttpError
     Http(HttpError),
+    /// An error from validating a request
+    Validation(ValidationErrorBody),
     /// An error from an Operation application
     Operation {
         code: StatusCode,
@@ -166,6 +162,7 @@ impl fmt::Display for ErrorType {
         match self {
             Self::Generic(s) => s.fmt(f),
             Self::Http(s) => s.fmt(f),
+            Self::Validation(s) => s.fmt(f),
             Self::Operation { detail, code } => {
                 if let Some(detail) = detail {
                     detail.fmt(f)
@@ -177,36 +174,23 @@ impl fmt::Display for ErrorType {
     }
 }
 
-impl From<HttpError> for ErrorType {
-    fn from(e: HttpError) -> Self {
-        Self::Http(e)
-    }
-}
-
 #[derive(Debug, Clone, Serialize)]
-pub struct StandardHttpError {
+pub struct StandardErrorBody {
     code: String,
     detail: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(untagged)]
-pub enum HttpErrorBody {
-    Standard(StandardHttpError),
-    Validation(ValidationHttpError),
 }
 
 #[derive(Debug, Clone)]
 pub struct HttpError {
     pub status: StatusCode,
-    body: HttpErrorBody,
+    body: StandardErrorBody,
 }
 
 impl HttpError {
     fn new_standard(status: StatusCode, code: String, detail: String) -> Self {
         Self {
             status,
-            body: HttpErrorBody::Standard(StandardHttpError { code, detail }),
+            body: StandardErrorBody { code, detail },
         }
     }
 
@@ -250,26 +234,11 @@ impl HttpError {
         )
     }
 
-    pub fn unprocessable_entity(detail: Vec<ValidationErrorItem>) -> Self {
-        Self {
-            status: StatusCode::UNPROCESSABLE_ENTITY,
-            body: HttpErrorBody::Validation(ValidationHttpError { detail }),
-        }
-    }
-
     pub fn internal_server_error(code: Option<String>, detail: Option<String>) -> Self {
         Self::new_standard(
             StatusCode::INTERNAL_SERVER_ERROR,
             code.unwrap_or_else(|| "server_error".to_owned()),
             detail.unwrap_or_else(|| "Internal Server Error".to_owned()),
-        )
-    }
-
-    pub fn not_implemented(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::NOT_IMPLEMENTED,
-            code.unwrap_or_else(|| "not_implemented".to_owned()),
-            detail.unwrap_or_else(|| "This API endpoint is not yet implemented.".to_owned()),
         )
     }
 
@@ -290,35 +259,17 @@ impl From<HttpError> for Error {
 
 impl fmt::Display for HttpError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.body {
-            HttpErrorBody::Standard(StandardHttpError { code, detail }) => write!(
-                f,
-                "status={} code=\"{code}\" detail=\"{detail}\"",
-                self.status
-            ),
-
-            HttpErrorBody::Validation(ValidationHttpError { detail }) => {
-                write!(
-                    f,
-                    "status={} detail={}",
-                    self.status,
-                    serde_json::to_string(&detail)
-                        .unwrap_or_else(|e| format!("\"unserializable error for {e}\""))
-                )
-            }
-        }
+        write!(
+            f,
+            "status={} code=\"{}\" detail=\"{}\"",
+            self.status, self.body.code, self.body.detail,
+        )
     }
 }
 
 impl IntoResponse for HttpError {
     fn into_response(self) -> Response {
         (self.status, Json(self.body)).into_response()
-    }
-}
-
-impl From<ErrorType> for Error {
-    fn from(typ: ErrorType) -> Self {
-        Self { trace: vec![], typ }
     }
 }
 
