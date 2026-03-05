@@ -1090,7 +1090,6 @@ dependencies = [
  "diom-kv",
  "diom-namespace",
  "diom-operations",
- "fjall",
  "fjall-utils",
  "jiff",
  "rmp-serde",
