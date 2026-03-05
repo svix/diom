@@ -7,7 +7,7 @@ use diom_namespace::{
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::operations::{CreateIdempotencyRequest, CreateIdempotencyResponse};
+use crate::operations::{CreateIdempotencyResponse, IdempotencyRaftState, IdempotencyRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateIdempotencyOperation {
@@ -71,8 +71,8 @@ impl From<CreateNamespaceOutput<IdempotencyConfig>> for CreateIdempotencyRespons
     }
 }
 
-impl CreateIdempotencyRequest for CreateIdempotencyOperation {
-    fn apply(self, state: &diom_namespace::State) -> CreateIdempotencyResponse {
-        CreateIdempotencyResponse(self.apply_real(state))
+impl IdempotencyRequest for CreateIdempotencyOperation {
+    fn apply(self, state: IdempotencyRaftState<'_>) -> CreateIdempotencyResponse {
+        CreateIdempotencyResponse(self.apply_real(state.namespace))
     }
 }

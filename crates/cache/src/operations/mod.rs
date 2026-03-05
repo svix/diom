@@ -1,4 +1,5 @@
-use crate::CacheStore;
+use crate::State;
+
 use serde::{Deserialize, Serialize};
 
 mod create_cache;
@@ -11,13 +12,19 @@ pub use set::SetOperation;
 
 use diom_operations::raft_module_operations;
 
+pub struct CacheRaftState<'a> {
+    pub state: &'a State,
+    pub namespace: &'a diom_namespace::State,
+}
+
 raft_module_operations!(
     CacheRequest,
     CacheOperation {
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> (),
+        CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
     },
-    state = &mut CacheStore,
+    state = CacheRaftState<'_>,
 );
 
 impl CacheOperation {
@@ -25,23 +32,7 @@ impl CacheOperation {
         match self {
             Self::Set(op) => &op.key,
             Self::Delete(op) => &op.key,
-        }
-    }
-}
-
-raft_module_operations!(
-    CreateCacheRequest,
-    CreateCacheOp {
-        CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
-    },
-    state = &diom_namespace::State,
-    response = CreateCacheOperationResponse,
-);
-
-impl CreateCacheOp {
-    pub fn key_name(&self) -> &str {
-        match self {
-            CreateCacheOp::CreateCache(op) => &op.name,
+            Self::CreateCache(op) => &op.name,
         }
     }
 }

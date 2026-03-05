@@ -47,6 +47,10 @@ impl<C: ModuleConfig> Namespace<C> {
     }
 
     pub(crate) fn fetch_all(keyspace: &Keyspace) -> Result<impl Iterator<Item = Self>> {
-        Self::values(keyspace)
+        let prefix = Self::key_for("");
+        Ok(keyspace.prefix(prefix.into_fjall_key()).map(|g| {
+            let v = g.value().expect("iter error?");
+            Self::from_fjall_value(v).expect("deserialize error?")
+        }))
     }
 }

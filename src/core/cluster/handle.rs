@@ -38,12 +38,9 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalOperation),
     Kv(diom_kv::operations::KvOperation),
-    CreateKv(diom_kv::operations::CreateKvOp),
     RateLimiter(diom_rate_limiter::operations::RateLimiterOperation),
     Idempotency(diom_idempotency::operations::IdempotencyOperation),
     Cache(diom_cache::operations::CacheOperation),
-    CreateCache(diom_cache::operations::CreateCacheOp),
-    CreateIdempotency(diom_idempotency::operations::CreateIdempotencyOp),
     Msgs(diom_msgs::operations::MsgsOperation),
 }
 
@@ -59,12 +56,9 @@ impl fmt::Display for RequestWithContext {
         match self.inner {
             Request::ClusterInternal(_) => write!(f, "cluster_internal"),
             Request::Kv(_) => write!(f, "kv"),
-            Request::CreateKv(_) => write!(f, "create_kv"),
             Request::RateLimiter(_) => write!(f, "ratelimiter"),
             Request::Idempotency(_) => write!(f, "idempotency"),
             Request::Cache(_) => write!(f, "cache"),
-            Request::CreateCache(_) => write!(f, "create_cache"),
-            Request::CreateIdempotency(_) => write!(f, "create_idempotency"),
             Request::Msgs(_) => write!(f, "msgs"),
         }
     }
@@ -85,9 +79,6 @@ impl RequestWithContext {
             Request::Idempotency(op) => Sha256::digest(op.key_name()),
             Request::Cache(op) => Sha256::digest(op.key_name()),
             Request::Msgs(op) => Sha256::digest(op.key_name()),
-            Request::CreateCache(op) => Sha256::digest(op.key_name()),
-            Request::CreateIdempotency(op) => Sha256::digest(op.key_name()),
-            Request::CreateKv(op) => Sha256::digest(op.key_name()),
             Request::ClusterInternal(_) => return None,
         };
         Some(hex::encode(digest))
@@ -118,24 +109,6 @@ impl From<diom_cache::operations::CacheOperation> for Request {
     }
 }
 
-impl From<diom_cache::operations::CreateCacheOp> for Request {
-    fn from(value: diom_cache::operations::CreateCacheOp) -> Self {
-        Request::CreateCache(value)
-    }
-}
-
-impl From<diom_idempotency::operations::CreateIdempotencyOp> for Request {
-    fn from(value: diom_idempotency::operations::CreateIdempotencyOp) -> Self {
-        Request::CreateIdempotency(value)
-    }
-}
-
-impl From<diom_kv::operations::CreateKvOp> for Request {
-    fn from(value: diom_kv::operations::CreateKvOp) -> Self {
-        Request::CreateKv(value)
-    }
-}
-
 impl From<diom_msgs::operations::MsgsOperation> for Request {
     fn from(value: diom_msgs::operations::MsgsOperation) -> Self {
         Request::Msgs(value)
@@ -152,9 +125,6 @@ impl From<InternalOperation> for Request {
 pub enum Response {
     Blank,
     ClusterInternal(super::operations::Response),
-    CreateCache(diom_cache::operations::CreateCacheOperationResponse),
-    CreateIdempotency(diom_idempotency::operations::CreateIdempotencyOperationResponse),
-    CreateKv(diom_kv::operations::CreateKvOperationResponse),
     Kv(diom_kv::operations::Response),
     RateLimiter(diom_rate_limiter::operations::Response),
     Idempotency(diom_idempotency::operations::Response),
@@ -201,39 +171,6 @@ impl TryFrom<Response> for diom_cache::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::Cache(v) => Ok(v),
-            _ => Err(ResponseParseError::InvalidVariant),
-        }
-    }
-}
-
-impl TryFrom<Response> for diom_cache::operations::CreateCacheOperationResponse {
-    type Error = ResponseParseError;
-
-    fn try_from(value: Response) -> Result<Self, Self::Error> {
-        match value {
-            Response::CreateCache(v) => Ok(v),
-            _ => Err(ResponseParseError::InvalidVariant),
-        }
-    }
-}
-
-impl TryFrom<Response> for diom_idempotency::operations::CreateIdempotencyOperationResponse {
-    type Error = ResponseParseError;
-
-    fn try_from(value: Response) -> Result<Self, Self::Error> {
-        match value {
-            Response::CreateIdempotency(v) => Ok(v),
-            _ => Err(ResponseParseError::InvalidVariant),
-        }
-    }
-}
-
-impl TryFrom<Response> for diom_kv::operations::CreateKvOperationResponse {
-    type Error = ResponseParseError;
-
-    fn try_from(value: Response) -> Result<Self, Self::Error> {
-        match value {
-            Response::CreateKv(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

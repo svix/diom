@@ -1,13 +1,17 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{num::NonZeroU64, sync::Arc, time::Duration};
+use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use diom_core::types::EntityKey;
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, ResultExt};
-use diom_kv::{KvStore, operations::CreateKvOperation};
+use diom_kv::{
+    kvcontroller::{KvModel, OperationBehavior},
+    operations::{CreateKvOperation, DeleteOperation, SetOperation},
+};
 use diom_namespace::{
     Namespace,
     entities::{KeyValueConfig, StorageType},
@@ -18,18 +22,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::{
-    AppState,
-    core::{cluster::RaftState, types::EntityKey},
-    error::Result,
-    v1::{
-        modules::kv::{KvModel, OperationBehavior},
-        utils::openapi_tag,
-    },
-};
+use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
-pub use crate::v1::modules::kv::{KvStore as KvStoreType, worker};
+pub use crate::v1::modules::kv::worker;
 
 pub type KvNamespace = Namespace<KeyValueConfig>;
 
@@ -37,7 +33,7 @@ pub type KvNamespace = Namespace<KeyValueConfig>;
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvSetIn {
     #[validate(nested)]
-    pub key: Arc<EntityKey>,
+    pub key: EntityKey,
 
     pub value: Vec<u8>,
 
@@ -47,21 +43,6 @@ pub struct KvSetIn {
 
     #[serde(default)]
     pub behavior: OperationBehavior,
-}
-
-impl KvSetIn {
-    fn into_model(self) -> KvModel {
-        let KvSetIn {
-            key: _,
-            ttl: expire_in,
-            value,
-            behavior: _,
-        } = self;
-
-        let expiry = expire_in.map(|expire_in| Timestamp::now() + Duration::from_millis(expire_in));
-
-        KvModel { expiry, value }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -77,7 +58,7 @@ pub struct KvGetIn {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvGetOut {
     #[validate(nested)]
-    pub key: Arc<EntityKey>,
+    pub key: EntityKey,
 
     /// Time of expiry
     pub expiry: Option<Timestamp>,
@@ -86,7 +67,7 @@ pub struct KvGetOut {
 }
 
 impl KvGetOut {
-    fn from_model(key: Arc<EntityKey>, model: KvModel) -> Self {
+    fn from_model(key: EntityKey, model: KvModel) -> Self {
         Self {
             key,
             expiry: model.expiry,
@@ -99,7 +80,7 @@ impl KvGetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvDeleteIn {
     #[validate(nested)]
-    pub key: Arc<EntityKey>,
+    pub key: EntityKey,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -114,19 +95,12 @@ async fn kv_set(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
 ) -> Result<MsgPackOrJson<KvSetOut>> {
-    let key = data.key.0.clone();
+    let namespace: KvNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    // TODO: Presumably this should only need to happen in
-    // the consensus layer, but currently raft seems to
-    // break if an operation with a non-existent namespace is attempted,
-    // so do this here for now as a quick check that the namespace
-    // exists:
-    let _kv_store = state.get_kv_store_by_key(&key).await?;
-
-    let behavior = data.behavior.clone();
-    let model = data.into_model();
-
-    let operation = KvStore::set_operation(key, model, behavior);
+    let operation = SetOperation::new(namespace.id, data.key, data.value, data.ttl, data.behavior);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     let ret = KvSetOut {};
@@ -137,13 +111,23 @@ async fn kv_set(
 #[aide_annotate(op_id = "v1.kv.get")]
 async fn kv_get(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvGetIn>,
 ) -> Result<MsgPackOrJson<KvGetOut>> {
-    let mut kv_store = state.get_kv_store_by_key(&data.key.0).await?;
+    let namespace: KvNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let model = kv_store.get(&data.key.0).map_err(|e| Error::generic(e))?;
+    repl.raft.ensure_linearizable().await.map_err_generic()?;
+
+    // FIXME: support more than just persistent, etc.
+    let controller = diom_kv::State::init(state.do_not_use_persistent_db.clone())?.controller;
+
+    let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
+
     let ret = match model {
-        Some(m) => KvGetOut::from_model(Arc::new(data.key), m),
+        Some(m) => KvGetOut::from_model(data.key, m),
         None => {
             return Err(Error::http(HttpError::not_found(
                 None,
@@ -157,11 +141,17 @@ async fn kv_get(
 /// KV Delete
 #[aide_annotate(op_id = "v1.kv.delete")]
 async fn kv_del(
+    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvDeleteIn>,
 ) -> Result<MsgPackOrJson<KvDeleteOut>> {
-    let key = data.key.0.clone();
-    let operation = KvStore::delete_operation(key);
+    let namespace: KvNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let key = data.key;
+    let operation = DeleteOperation::new(namespace.id, key);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     let ret = KvDeleteOut { deleted: true };

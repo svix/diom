@@ -34,39 +34,32 @@ pub(super) async fn apply_request(
 
     Ok(match request.inner {
         Request::Kv(req) => {
-            // TODO: this shouldn't be mut but KvStore currently requires it
-            let mut store = state_machine
-                .state
-                .get_kv_store_by_key(req.key_name())
-                .await?;
-            Response::Kv(req.apply(&mut store))
-        }
-        Request::CreateKv(req) => {
-            Response::CreateKv(req.apply(&state_machine.state.namespace_state))
+            let stores = state_machine.db_handle();
+            let state = diom_kv::operations::KvRaftState {
+                state: &stores.kv_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::Kv(req.apply(state))
         }
         Request::RateLimiter(req) => {
             // Rate limiter neither needs nor uses namespaces for now
             Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))
         }
         Request::Idempotency(req) => {
-            let mut store = state_machine
-                .state
-                .get_idempotency_store_by_key(req.key_name())
-                .await?;
-            Response::Idempotency(req.apply(&mut store))
-        }
-        Request::CreateIdempotency(req) => {
-            Response::CreateIdempotency(req.apply(&state_machine.state.namespace_state))
+            let stores = state_machine.db_handle();
+            let state = diom_idempotency::operations::IdempotencyRaftState {
+                state: &stores.idempotency_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::Idempotency(req.apply(state))
         }
         Request::Cache(req) => {
-            let mut store = state_machine
-                .state
-                .get_cache_store_by_key(req.key_name())
-                .await?;
-            Response::Cache(req.apply(&mut store))
-        }
-        Request::CreateCache(req) => {
-            Response::CreateCache(req.apply(&state_machine.state.namespace_state))
+            let stores = state_machine.db_handle();
+            let state = diom_cache::operations::CacheRaftState {
+                state: &stores.cache_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::Cache(req.apply(state))
         }
         Request::Msgs(req) => {
             let stores = state_machine.db_handle();

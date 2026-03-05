@@ -60,6 +60,9 @@ pub struct StoreHandle(Arc<TokioRwLock<Store>>);
 pub struct Stores {
     pub databases: Databases,
     pub msgs_state: diom_msgs::State,
+    pub kv_state: diom_kv::State,
+    pub cache_state: diom_cache::State,
+    pub idempotency_state: diom_idempotency::State,
 }
 
 impl From<Store> for StoreHandle {
@@ -128,14 +131,18 @@ impl Store {
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
 
-        let msgs_state =
-            diom_msgs::State::init(persistent_db.clone()).context("initializing msgs state")?;
-
-        let databases = Databases::new(persistent_db, ephemeral_db);
+        let databases = Databases::new(persistent_db.clone(), ephemeral_db);
 
         let stores = Stores {
             databases,
-            msgs_state,
+            msgs_state: diom_msgs::State::init(persistent_db.clone())
+                .context("initializing msgs state")?,
+            kv_state: diom_kv::State::init(persistent_db.clone())
+                .context("initializing kv state")?,
+            cache_state: diom_cache::State::init(persistent_db.clone())
+                .context("initializing cache state")?,
+            idempotency_state: diom_idempotency::State::init(persistent_db.clone())
+                .context("initializing idempotency state")?,
         };
 
         let mut this = Self {

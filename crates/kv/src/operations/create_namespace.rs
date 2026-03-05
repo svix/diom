@@ -7,7 +7,7 @@ use diom_namespace::{
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::operations::{CreateKvRequest, CreateKvResponse};
+use crate::operations::{CreateKvResponse, KvRaftState, KvRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateKvOperation {
@@ -71,8 +71,8 @@ impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
     }
 }
 
-impl CreateKvRequest for CreateKvOperation {
-    fn apply(self, state: &diom_namespace::State) -> CreateKvResponse {
-        CreateKvResponse(self.apply_real(state))
+impl KvRequest for CreateKvOperation {
+    fn apply(self, state: KvRaftState<'_>) -> CreateKvResponse {
+        CreateKvResponse(self.apply_real(state.namespace))
     }
 }

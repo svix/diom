@@ -1,23 +1,30 @@
-use super::KvStore;
+use crate::State;
+
 use serde::{Deserialize, Serialize};
 
-mod create_kv;
+mod create_namespace;
 mod delete;
 mod set;
 
-pub use create_kv::{CreateKvOperation, CreateKvResponseData};
+pub use create_namespace::{CreateKvOperation, CreateKvResponseData};
 pub use delete::DeleteOperation;
 pub use set::SetOperation;
 
 use diom_operations::raft_module_operations;
+
+pub struct KvRaftState<'a> {
+    pub state: &'a State,
+    pub namespace: &'a diom_namespace::State,
+}
 
 raft_module_operations!(
     KvRequest,
     KvOperation {
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> (),
+        CreateKv(CreateKvOperation) -> CreateKvResponseData,
     },
-    state = &mut KvStore,
+    state = KvRaftState<'_>,
 );
 
 impl KvOperation {
@@ -25,23 +32,7 @@ impl KvOperation {
         match self {
             Self::Set(op) => &op.key,
             Self::Delete(op) => &op.key,
-        }
-    }
-}
-
-raft_module_operations!(
-    CreateKvRequest,
-    CreateKvOp {
-        CreateKv(CreateKvOperation) -> CreateKvResponseData,
-    },
-    state = &diom_namespace::State,
-    response = CreateKvOperationResponse,
-);
-
-impl CreateKvOp {
-    pub fn key_name(&self) -> &str {
-        match self {
-            CreateKvOp::CreateKv(op) => &op.name,
+            Self::CreateKv(op) => &op.name,
         }
     }
 }
