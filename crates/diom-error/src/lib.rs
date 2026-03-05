@@ -9,7 +9,6 @@ use aide::OperationOutput;
 #[expect(clippy::disallowed_types)]
 use axum::{
     Json,
-    extract::rejection::{ExtensionRejection, PathRejection},
     response::{IntoResponse, Response},
 };
 use hyper::StatusCode;
@@ -140,20 +139,6 @@ impl<T> Traceable<T> for Result<T> {
             Err(e) => Err(e.trace()),
             ok => ok,
         }
-    }
-}
-
-impl From<ExtensionRejection> for Error {
-    #[track_caller]
-    fn from(value: ExtensionRejection) -> Self {
-        Error::generic(value)
-    }
-}
-
-impl From<PathRejection> for Error {
-    #[track_caller]
-    fn from(value: PathRejection) -> Self {
-        Error::generic(value)
     }
 }
 
