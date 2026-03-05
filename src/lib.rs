@@ -247,8 +247,16 @@ impl AppState {
     }
 
     pub async fn get_cache_store_by_key(&self, key_name: &str) -> Result<CacheStore> {
-        let kv_store = self.get_store_by_key::<CacheConfig>(key_name).await?;
-        Ok(CacheStore::new(kv_store))
+        let (ns_name, _) = parse_namespace(key_name);
+        let namespace = self
+            .namespace_state
+            .fetch_namespace::<CacheConfig>(ns_name)?
+            .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        let controller = coyote_kv::kvcontroller::KvController::new(
+            self.do_not_use_persistent_db.clone(),
+            "mod_cache",
+        );
+        Ok(CacheStore::new(controller, namespace.id))
     }
 
     pub async fn get_idempotency_store_by_key(&self, key_name: &str) -> Result<IdempotencyStore> {

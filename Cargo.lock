@@ -991,6 +991,7 @@ dependencies = [
  "coyote-kv",
  "coyote-namespace",
  "coyote-operations",
+ "fjall",
  "jiff",
  "schemars 1.2.1",
  "serde",

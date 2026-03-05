@@ -59,11 +59,12 @@ pub(super) async fn apply_request(
             Response::CreateIdempotency(req.apply(&state_machine.state.namespace_state))
         }
         Request::Cache(req) => {
-            let mut store = state_machine
-                .state
-                .get_cache_store_by_key(req.key_name())
-                .await?;
-            Response::Cache(req.apply(&mut store))
+            let stores = state_machine.db_handle();
+            let state = coyote_cache::operations::CacheRaftState {
+                state: &stores.cache_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::Cache(req.apply(state))
         }
         Request::CreateCache(req) => {
             Response::CreateCache(req.apply(&state_machine.state.namespace_state))

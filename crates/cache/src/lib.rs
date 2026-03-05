@@ -8,32 +8,44 @@
 pub mod operations;
 
 use coyote_error::Result;
-use coyote_kv::{KvModel, KvStore, OperationBehavior};
+use coyote_kv::kvcontroller::KvController;
+use coyote_namespace::entities::NamespaceId;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 #[derive(Clone)]
+pub struct State {
+    pub controller: KvController,
+}
+
+impl State {
+    pub fn init(db: fjall::Database) -> Result<Self> {
+        Ok(Self {
+            controller: KvController::new(db, "mod_cache"),
+        })
+    }
+}
+
+#[derive(Clone)]
 pub struct CacheStore {
-    pub(crate) kv: KvStore,
+    pub(crate) controller: KvController,
+    pub(crate) namespace_id: NamespaceId,
 }
 
 impl CacheStore {
-    pub fn new(kv: KvStore) -> Self {
-        Self { kv }
+    pub fn new(controller: KvController, namespace_id: NamespaceId) -> Self {
+        Self {
+            controller,
+            namespace_id,
+        }
     }
 
-    pub fn set(&mut self, key: &str, model: CacheModel) -> Result<()> {
-        self.kv.set(key, &model.into(), OperationBehavior::Upsert)
-    }
-
-    pub fn get(&mut self, key: &str) -> Result<Option<CacheModel>> {
-        self.kv.get(key).map(|m| m.map(Into::into))
-    }
-
-    pub fn delete(&mut self, key: &str) -> Result<()> {
-        self.kv.delete(key)
+    pub fn get(&self, key: &str) -> Result<Option<CacheModel>> {
+        self.controller
+            .fetch(self.namespace_id, key, Timestamp::now())
+            .map(|m| m.map(|m| CacheModel { value: m.value, expiry: m.expiry }))
     }
 }
 
@@ -42,22 +54,4 @@ pub struct CacheModel {
     pub expiry: Option<Timestamp>,
 
     pub value: Vec<u8>,
-}
-
-impl From<CacheModel> for KvModel {
-    fn from(model: CacheModel) -> Self {
-        KvModel {
-            value: model.value,
-            expiry: model.expiry,
-        }
-    }
-}
-
-impl From<KvModel> for CacheModel {
-    fn from(model: KvModel) -> Self {
-        CacheModel {
-            value: model.value,
-            expiry: model.expiry,
-        }
-    }
 }

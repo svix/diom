@@ -61,6 +61,7 @@ pub struct Stores {
     pub databases: Databases,
     pub msgs_state: coyote_msgs::State,
     pub kv_state: coyote_kv::State,
+    pub cache_state: coyote_cache::State,
 }
 
 impl From<Store> for StoreHandle {
@@ -137,6 +138,8 @@ impl Store {
                 .context("initializing msgs state")?,
             kv_state: coyote_kv::State::init(persistent_db.clone())
                 .context("initializing kv state")?,
+            cache_state: coyote_cache::State::init(persistent_db.clone())
+                .context("initializing cache state")?,
         };
 
         let mut this = Self {

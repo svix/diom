@@ -1,4 +1,5 @@
-use crate::CacheStore;
+use crate::State;
+
 use serde::{Deserialize, Serialize};
 
 mod create_cache;
@@ -11,13 +12,18 @@ pub use set::SetOperation;
 
 use coyote_operations::raft_module_operations;
 
+pub struct CacheRaftState<'a> {
+    pub state: &'a State,
+    pub namespace: &'a coyote_namespace::State,
+}
+
 raft_module_operations!(
     CacheRequest,
     CacheOperation {
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> (),
     },
-    state = &mut CacheStore,
+    state = CacheRaftState<'_>,
 );
 
 impl CacheOperation {
