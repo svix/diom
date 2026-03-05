@@ -15,6 +15,7 @@ pub enum StorageType {
 
 /// A handle to both of the databases. Should only ever be accessed while holding
 /// a read lock on the raft StateMachine
+#[derive(Clone)]
 pub struct Databases {
     pub persistent: Database,
     pub ephemeral: Database,

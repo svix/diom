@@ -5,6 +5,7 @@ use crate::{IdempotencyStartResult, IdempotencyState};
 use coyote_kv::kvcontroller::OperationBehavior;
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
+use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -37,13 +38,11 @@ impl TryStartOperation {
         let now = self.now;
         let expiry = now + Duration::from_secs(self.ttl_seconds);
 
-        match state
-            .state
-            .controller
-            .fetch(self.namespace_id, &self.key, now)?
-        {
+        let controller = state.state.controller(StorageType::Persistent);
+
+        match controller.fetch(self.namespace_id, &self.key, now)? {
             None => {
-                state.state.controller.set(
+                controller.set(
                     self.namespace_id,
                     &self.key,
                     IdempotencyState::InProgress.into(),
