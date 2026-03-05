@@ -265,14 +265,6 @@ impl HttpError {
         )
     }
 
-    pub fn not_implemented(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::NOT_IMPLEMENTED,
-            code.unwrap_or_else(|| "not_implemented".to_owned()),
-            detail.unwrap_or_else(|| "This API endpoint is not yet implemented.".to_owned()),
-        )
-    }
-
     pub fn too_large(code: Option<String>, detail: Option<String>) -> Self {
         Self::new_standard(
             StatusCode::PAYLOAD_TOO_LARGE,
