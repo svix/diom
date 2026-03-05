@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
-use crate::IdempotencyState;
+use crate::{IdempotencyNamespace, IdempotencyState};
 use diom_kv::kvcontroller::OperationBehavior;
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: String,
     pub(crate) response: Vec<u8>,
     pub(crate) ttl_seconds: u64,
@@ -20,13 +21,14 @@ pub struct CompleteOperation {
 
 impl CompleteOperation {
     pub fn new(
-        namespace_id: NamespaceId,
+        namespace: IdempotencyNamespace,
         key: String,
         response: Vec<u8>,
         ttl_seconds: u64,
     ) -> Self {
         Self {
-            namespace_id,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
             key,
             response,
             ttl_seconds,

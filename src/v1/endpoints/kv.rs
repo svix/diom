@@ -9,13 +9,11 @@ use diom_core::types::EntityKey;
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, ResultExt};
 use diom_kv::{
+    KvNamespace,
     kvcontroller::{KvModel, OperationBehavior},
     operations::{CreateKvOperation, DeleteOperation, SetOperation},
 };
-use diom_namespace::{
-    Namespace,
-    entities::{KeyValueConfig, StorageType},
-};
+use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -26,8 +24,6 @@ use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openap
 
 // Re-export types that are used in AppState
 pub use crate::v1::modules::kv::worker;
-
-pub type KvNamespace = Namespace<KeyValueConfig>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
@@ -100,7 +96,7 @@ async fn kv_set(
         .fetch_namespace(data.key.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = SetOperation::new(namespace.id, data.key, data.value, data.ttl, data.behavior);
+    let operation = SetOperation::new(namespace, data.key, data.value, data.ttl, data.behavior);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     let ret = KvSetOut {};
@@ -152,7 +148,7 @@ async fn kv_del(
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
     let key = data.key;
-    let operation = DeleteOperation::new(namespace.id, key);
+    let operation = DeleteOperation::new(namespace, key);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     let ret = KvDeleteOut { deleted: true };

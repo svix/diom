@@ -136,7 +136,7 @@ async fn cache_set(
         .fetch_namespace(data.key.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = SetOperation::new(namespace.id, data.key.to_string(), data.into_model());
+    let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model());
     repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
@@ -185,7 +185,7 @@ async fn cache_del(
         .fetch_namespace(data.key.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = DeleteOperation::new(namespace.id, data.key.to_string());
+    let operation = DeleteOperation::new(namespace, data.key.to_string());
     repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }

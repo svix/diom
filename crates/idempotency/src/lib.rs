@@ -15,10 +15,15 @@ use std::time::Duration;
 
 use diom_error::Result;
 use diom_kv::kvcontroller::{KvController, OperationBehavior};
-use diom_namespace::entities::NamespaceId;
+use diom_namespace::{
+    Namespace,
+    entities::{IdempotencyConfig, NamespaceId},
+};
 use fjall_utils::{Databases, StorageType};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+
+pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 
 const IDEMPOTENCY_KEYSPACE: &str = "mod_idempotency";
 
