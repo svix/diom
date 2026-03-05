@@ -732,10 +732,7 @@ impl BenchShard for BenchMsgsStreamReceive {
             .receive(
                 topic.clone(),
                 consumer_group.to_owned(),
-                MsgStreamReceiveIn {
-                    batch_size: Some(self.batch_size),
-                    ..MsgStreamReceiveIn::new()
-                },
+                MsgStreamReceiveIn::new().with_batch_size(self.batch_size),
             )
             .await?;
         let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
