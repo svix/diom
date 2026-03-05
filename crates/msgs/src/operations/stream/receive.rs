@@ -14,7 +14,7 @@ use crate::{
     tables::{MsgRow, StreamLeaseRow, TopicRow},
 };
 
-use super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
+use super::super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamReceiveOperation {

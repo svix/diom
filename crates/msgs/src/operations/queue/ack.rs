@@ -10,7 +10,10 @@ use crate::{
     tables::{QueueLeaseRow, StreamLeaseRow, TopicRow},
 };
 
-use super::{MsgsRaftState, MsgsRequest, QueueAckResponse, queue_receive::compact_cursor};
+use super::{
+    super::{MsgsRaftState, MsgsRequest, QueueAckResponse},
+    receive::compact_cursor,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueueAckOperation {

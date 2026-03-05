@@ -1,15 +1,10 @@
 mod create_namespace;
 mod publish;
-mod queue_ack;
-mod queue_receive;
-mod stream_commit;
-mod stream_receive;
+mod queue;
+mod stream;
 mod topic_configure;
 
-pub use self::{
-    create_namespace::*, publish::*, queue_ack::*, queue_receive::*, stream_commit::*,
-    stream_receive::*, topic_configure::*,
-};
+pub use self::{create_namespace::*, publish::*, queue::*, stream::*, topic_configure::*};
 
 use crate::State;
 use serde::{Deserialize, Serialize};

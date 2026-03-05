@@ -14,7 +14,7 @@ use crate::{
     tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow},
 };
 
-use super::{MsgsRaftState, MsgsRequest, QueueReceiveResponse};
+use super::super::{MsgsRaftState, MsgsRequest, QueueReceiveResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueueReceiveOperation {
