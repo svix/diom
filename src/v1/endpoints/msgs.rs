@@ -77,8 +77,12 @@ struct MsgNamespaceGetOut {
 #[aide_annotate(op_id = "v1.msgs.namespace.get")]
 async fn get_namespace(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceGetIn>,
 ) -> Result<MsgPackOrJson<MsgNamespaceGetOut>> {
+    // Ensure we have the latest version of namespace
+    repl.raft.ensure_linearizable().await.map_err_generic()?;
+
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
