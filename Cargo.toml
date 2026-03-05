@@ -53,7 +53,6 @@ idna_adapter.workspace = true
 indexmap.workspace = true
 itertools.workspace = true
 jiff.workspace = true
-lru.workspace = true
 openraft.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true
@@ -160,7 +159,6 @@ futures-util = "0.3"
 hashlink = "0.11"
 headers = "0.4.1"
 hex = "0.4.3"
-hickory-resolver = "0.25.2"
 http = "1.1.0"
 http-body-util = "0.1.2"
 http-serde = "2"
@@ -174,16 +172,13 @@ idna_adapter = "=1.1.0"
 indexmap = "2.6.0"
 itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
-lru = "0.16.3"
 mimalloc = "0.1.48"
 mime = "0.3"
-num_enum = "0.7.2"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "5bad797d6d505038c7f595dcda69bbed4dcf8f1a" }
 openraft = { version = "0.9.21", features = ["tracing-log", "anyhow", "serde", "storage-v2"] }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"
 opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto", "reqwest-client"] }
-opentelemetry-proto = { version = "0.31.0", default-features = false, features = ["internal-logs", "gen-tonic", "trace", "with-serde"] }
 opentelemetry-semantic-conventions = "0.31.0"
 opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
 parking_lot = { version = "0.12", features = ["arc_lock"] }
@@ -203,9 +198,7 @@ serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["preserve_order", "raw_value"] }
 serde_path_to_error = "0.1.7"
 sha2 = "0.10.2"
-static_assertions = "1.1"
 stream-internals = { path = "crates/stream-internals" }
-stream_deprecated = { path = "crates/stream-deprecated", package = "stream-deprecated" }
 syn = "2.0.48"
 tap = "1"
 tempfile = "3.24.0"
