@@ -22,6 +22,7 @@ raft_module_operations!(
     KvOperation {
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> (),
+        CreateKv(CreateKvOperation) -> CreateKvResponseData,
     },
     state = KvRaftState<'_>,
 );
@@ -31,23 +32,7 @@ impl KvOperation {
         match self {
             Self::Set(op) => &op.key,
             Self::Delete(op) => &op.key,
-        }
-    }
-}
-
-raft_module_operations!(
-    CreateKvRequest,
-    CreateKvOp {
-        CreateKv(CreateKvOperation) -> CreateKvResponseData,
-    },
-    state = &coyote_namespace::State,
-    response = CreateKvOperationResponse,
-);
-
-impl CreateKvOp {
-    pub fn key_name(&self) -> &str {
-        match self {
-            CreateKvOp::CreateKv(op) => &op.name,
+            Self::CreateKv(op) => &op.name,
         }
     }
 }

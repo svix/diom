@@ -41,9 +41,6 @@ pub(super) async fn apply_request(
             };
             Response::Kv(req.apply(state))
         }
-        Request::CreateKv(req) => {
-            Response::CreateKv(req.apply(&state_machine.state.namespace_state))
-        }
         Request::RateLimiter(req) => {
             // Rate limiter neither needs nor uses namespaces for now
             Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))

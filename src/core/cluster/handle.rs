@@ -38,7 +38,6 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalOperation),
     Kv(coyote_kv::operations::KvOperation),
-    CreateKv(coyote_kv::operations::CreateKvOp),
     RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
     Idempotency(coyote_idempotency::operations::IdempotencyOperation),
     Cache(coyote_cache::operations::CacheOperation),
@@ -59,7 +58,6 @@ impl fmt::Display for RequestWithContext {
         match self.inner {
             Request::ClusterInternal(_) => write!(f, "cluster_internal"),
             Request::Kv(_) => write!(f, "kv"),
-            Request::CreateKv(_) => write!(f, "create_kv"),
             Request::RateLimiter(_) => write!(f, "ratelimiter"),
             Request::Idempotency(_) => write!(f, "idempotency"),
             Request::Cache(_) => write!(f, "cache"),
@@ -87,7 +85,6 @@ impl RequestWithContext {
             Request::Msgs(op) => Sha256::digest(op.key_name()),
             Request::CreateCache(op) => Sha256::digest(op.key_name()),
             Request::CreateIdempotency(op) => Sha256::digest(op.key_name()),
-            Request::CreateKv(op) => Sha256::digest(op.key_name()),
             Request::ClusterInternal(_) => return None,
         };
         Some(hex::encode(digest))
@@ -130,12 +127,6 @@ impl From<coyote_idempotency::operations::CreateIdempotencyOp> for Request {
     }
 }
 
-impl From<coyote_kv::operations::CreateKvOp> for Request {
-    fn from(value: coyote_kv::operations::CreateKvOp) -> Self {
-        Request::CreateKv(value)
-    }
-}
-
 impl From<coyote_msgs::operations::MsgsOperation> for Request {
     fn from(value: coyote_msgs::operations::MsgsOperation) -> Self {
         Request::Msgs(value)
@@ -154,7 +145,6 @@ pub enum Response {
     ClusterInternal(super::operations::Response),
     CreateCache(coyote_cache::operations::CreateCacheOperationResponse),
     CreateIdempotency(coyote_idempotency::operations::CreateIdempotencyOperationResponse),
-    CreateKv(coyote_kv::operations::CreateKvOperationResponse),
     Kv(coyote_kv::operations::Response),
     RateLimiter(coyote_rate_limiter::operations::Response),
     Idempotency(coyote_idempotency::operations::Response),
@@ -223,17 +213,6 @@ impl TryFrom<Response> for coyote_idempotency::operations::CreateIdempotencyOper
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::CreateIdempotency(v) => Ok(v),
-            _ => Err(ResponseParseError::InvalidVariant),
-        }
-    }
-}
-
-impl TryFrom<Response> for coyote_kv::operations::CreateKvOperationResponse {
-    type Error = ResponseParseError;
-
-    fn try_from(value: Response) -> Result<Self, Self::Error> {
-        match value {
-            Response::CreateKv(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }
