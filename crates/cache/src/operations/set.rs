@@ -1,5 +1,5 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
-use crate::CacheModel;
+use crate::{CacheModel, CacheNamespace};
 use coyote_kv::kvcontroller::OperationBehavior;
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
@@ -10,15 +10,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: String,
     model: CacheModel,
     now: Timestamp,
 }
 
 impl SetOperation {
-    pub fn new(namespace_id: NamespaceId, key: String, model: CacheModel) -> Self {
+    pub fn new(namespace: CacheNamespace, key: String, model: CacheModel) -> Self {
         Self {
-            namespace_id,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
             key,
             model,
             now: Timestamp::now(),

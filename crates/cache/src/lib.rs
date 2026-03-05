@@ -9,11 +9,14 @@ pub mod operations;
 
 use coyote_error::Result;
 use coyote_kv::kvcontroller::KvController;
+use coyote_namespace::{Namespace, entities::CacheConfig};
 use fjall_utils::{Databases, StorageType};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
+
+pub type CacheNamespace = Namespace<CacheConfig>;
 
 const CACHE_KEYSPACE: &str = "mod_cache";
 
