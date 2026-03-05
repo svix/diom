@@ -1,12 +1,29 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt};
 
 use schemars::JsonSchema;
 use serde::Serialize;
 use validator::ValidationError;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ValidationHttpError {
+pub struct ValidationErrorBody {
     pub(crate) detail: Vec<ValidationErrorItem>,
+}
+
+impl ValidationErrorBody {
+    pub fn new(detail: Vec<ValidationErrorItem>) -> Self {
+        Self { detail }
+    }
+}
+
+impl fmt::Display for ValidationErrorBody {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "validation error {}",
+            serde_json::to_string(&self.detail)
+                .unwrap_or_else(|e| format!("\"unserializable error for {e}\""))
+        )
+    }
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, JsonSchema)]

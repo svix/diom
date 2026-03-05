@@ -11,11 +11,7 @@ use diom_error::validation_error;
 use regex::Regex;
 use validator::ValidationError;
 
-use crate::error::{HttpError, Result};
-
-pub async fn api_not_implemented() -> Result<()> {
-    Err(HttpError::not_implemented(None, None).into())
-}
+use crate::error::Result;
 
 pub fn validate_no_control_characters(str: &str) -> Result<(), ValidationError> {
     static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\x00-\x08]").unwrap());
