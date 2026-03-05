@@ -3,11 +3,11 @@ use std::{
     io::{Read, Seek, Write},
 };
 
-use crate::core::db::Databases;
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use coyote_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, Readable};
+use fjall_utils::Databases;
 use serde::{Deserialize, Serialize};
 use zip::{ZipArchive, write::SimpleFileOptions};
 
@@ -229,9 +229,9 @@ mod tests {
     use std::io::Cursor;
 
     use fjall::{Database, KeyspaceCreateOptions, Slice};
+    use fjall_utils::Databases;
 
     use super::{load_from_file, serialize_to_file};
-    use crate::core::db::Databases;
     use coyote_namespace::entities::StorageType;
 
     #[test]
