@@ -116,7 +116,7 @@ async fn graceful_shutdown_handler() {
 
 pub async fn run(cfg: Configuration) {
     setup_metrics(&cfg);
-    run_with_prefix(cfg, None, None).await
+    run_with_listeners(cfg, None, None).await
 }
 
 #[derive(Clone)]
@@ -254,7 +254,7 @@ impl AppState {
 
 // Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
 // consuming from each others' queues
-pub async fn run_with_prefix(
+pub async fn run_with_listeners(
     cfg: Configuration,
     listener: Option<TcpListener>,
     interserver_listener: Option<TcpListener>,
@@ -344,6 +344,12 @@ pub async fn run_with_prefix(
     bootstrap::run(cfg, raft_state)
         .await
         .expect("bootstrapping failed");
+
+    let listener = listener.tap_io(|tcp_stream| {
+        if let Err(err) = tcp_stream.set_nodelay(true) {
+            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
+        }
+    });
 
     axum::serve(listener, make_svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
