@@ -3,9 +3,14 @@
 
 //! Module defining utilities for crating `tracing` spans compatible with OpenTelemetry's
 //! conventions.
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Instant};
 
-use axum::extract::{ConnectInfo, MatchedPath};
+use axum::{
+    Extension,
+    extract::{ConnectInfo, MatchedPath, Request, State},
+    middleware::Next,
+    response::Response,
+};
 use http::header;
 use opentelemetry::trace::TraceContextExt;
 use tower_http::{
@@ -15,6 +20,35 @@ use tower_http::{
 use tracing::field::debug;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 use uuid::Uuid;
+
+pub(crate) async fn request_metrics_middleware(
+    State(state): State<crate::AppState>,
+    Extension(raft_state): Extension<super::cluster::RaftState>,
+    matched_path: Option<MatchedPath>,
+    req: Request,
+    next: Next,
+) -> Response {
+    let route = matched_path
+        .map(|p| p.as_str().to_owned())
+        .unwrap_or_else(|| "unknown".to_owned());
+    let content_length = req
+        .headers()
+        .get(header::CONTENT_LENGTH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u64>().ok());
+    let start = Instant::now();
+    let response = next.run(req).await;
+    let duration = start.elapsed().as_millis() as _;
+
+    state.request_metrics.record(
+        &route,
+        raft_state.node_id,
+        response.status(),
+        duration,
+        content_length,
+    );
+    response
+}
 
 /// An implementor of [`MakeSpan`] which creates `tracing` spans populated with information about
 /// the request received by an `axum` web server.
@@ -66,6 +100,12 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
             .is_valid()
             .then(|| span_context.trace_id().to_string());
 
+        let content_length = request
+            .headers()
+            .get(header::CONTENT_LENGTH)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.parse::<u64>().ok());
+
         let span = tracing::error_span!(
             "HTTP request",
             grpc.code = tracing::field::Empty,
@@ -78,6 +118,7 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
             http.status_code = tracing::field::Empty,
             http.target = request.uri().path_and_query().map(|p| p.as_str()),
             http.user_agent = user_agent,
+            http.content_length = content_length,
             otel.kind = "server",
             otel.status_code = tracing::field::Empty,
             request_id,

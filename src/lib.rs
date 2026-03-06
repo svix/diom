@@ -10,6 +10,8 @@ use std::{
     time::Duration,
 };
 
+use core::metrics::RequestMetrics;
+
 use aide::axum::ApiRouter;
 use axum::{Extension, extract::DefaultBodyLimit, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
@@ -41,6 +43,7 @@ use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
         cluster::RaftState,
+        metrics::{ConnectionMetrics, ConnectionType},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
@@ -122,6 +125,8 @@ pub struct AppState {
     pub(crate) do_not_use_dbs: Databases,
 
     pub meter: Meter,
+    pub request_metrics: Arc<RequestMetrics>,
+    pub conn_metrics: Arc<ConnectionMetrics>,
 }
 
 async fn run_interserver(
@@ -146,6 +151,10 @@ async fn run_interserver(
 
     let app = core::cluster::router(&cfg)
         .with_state(state.clone())
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            core::otel_spans::request_metrics_middleware,
+        ))
         .layer(Extension(raft.clone()))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(coyote_proto::capture_accept_hdr))
@@ -161,10 +170,14 @@ async fn run_interserver(
         NormalizePath::trim_trailing_slash(app),
     );
 
-    let listener = listener.tap_io(|tcp_stream| {
+    let node_id = raft.node_id;
+    let listener = listener.tap_io(move |tcp_stream| {
         if let Err(err) = tcp_stream.set_nodelay(true) {
             tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
         }
+        state
+            .conn_metrics
+            .accepted(node_id, ConnectionType::Internal);
     });
 
     axum::serve(listener, svc)
@@ -188,6 +201,9 @@ impl AppState {
 
         let meter = opentelemetry::global::meter("coyote.svix.com");
 
+        let request_metrics = Arc::new(RequestMetrics::new(&meter));
+        let conn_metrics = Arc::new(ConnectionMetrics::new(&meter));
+
         AppState {
             cfg,
             rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
@@ -198,6 +214,8 @@ impl AppState {
             ro_dbs,
             do_not_use_dbs: dbs,
             meter,
+            request_metrics,
+            conn_metrics,
         }
     }
 }
@@ -220,8 +238,9 @@ pub async fn run_with_listeners(
     let raft_state = core::cluster::initialize_raft(&cfg, app_state.clone())
         .await
         .expect("failed to initialize cluster");
+    let node_id = raft_state.node_id;
 
-    let v1_router = v1::router()
+    let v1_router = v1::router(Some(app_state.clone()))
         .with_state::<()>(app_state.clone())
         .layer(Extension(raft_state.clone()));
 
@@ -281,26 +300,32 @@ pub async fn run_with_listeners(
     tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
     // Spawn background workers for each module
-    let workers = tokio::spawn(async move {
-        tracing::debug!("spawned workers");
-        // FIXME: gotta do actual error handling...
-        let _ = tokio::join!(
-            tokio::spawn(v1::modules::kv::worker(app_state.clone())),
-            tokio::spawn(v1::modules::cache::worker(app_state.clone())),
-            tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
-            tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
-        );
-        tracing::debug!("workers died");
+    let workers = tokio::spawn({
+        let app_state = app_state.clone();
+        async move {
+            tracing::debug!("spawned workers");
+            // FIXME: gotta do actual error handling...
+            let _ = tokio::join!(
+                tokio::spawn(v1::modules::kv::worker(app_state.clone())),
+                tokio::spawn(v1::modules::cache::worker(app_state.clone())),
+                tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
+                tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
+            );
+            tracing::debug!("workers died");
+        }
     });
 
     bootstrap::run(cfg, raft_state)
         .await
         .expect("bootstrapping failed");
 
-    let listener = listener.tap_io(|tcp_stream| {
+    let listener = listener.tap_io(move |tcp_stream| {
         if let Err(err) = tcp_stream.set_nodelay(true) {
             tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
         }
+        app_state
+            .conn_metrics
+            .accepted(node_id, ConnectionType::External);
     });
 
     axum::serve(listener, make_svc)
