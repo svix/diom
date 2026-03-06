@@ -13,8 +13,6 @@ ignored = [
     "anyerror",
     # not a direct dependency, but we want to pin its version
     "idna_adapter",
-    # required by aide::OperationIo derive macro
-    "schemars",
 ]
 
 [features]
@@ -56,8 +54,6 @@ jiff.workspace = true
 openraft.workspace = true
 opentelemetry.workspace = true
 opentelemetry-http.workspace = true
-opentelemetry-otlp.workspace = true
-opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
 parking_lot.workspace = true
 paste.workspace = true
