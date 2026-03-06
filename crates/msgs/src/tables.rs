@@ -2,7 +2,7 @@ use coyote_namespace::entities::NamespaceId;
 use std::collections::HashMap;
 
 use coyote_error::{Result, ResultExt as _};
-use fjall_utils::{TableKey, TableRow};
+use fjall_utils::{TableKey, TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -45,6 +45,22 @@ impl TopicRow {
             name,
             partitions: 1,
         }
+    }
+
+    /// Returns the existing row, or creates a new one and inserts it into the batch.
+    pub(crate) fn fetch_or_create(
+        metadata_tables: &fjall::Keyspace,
+        batch: &mut fjall::OwnedWriteBatch,
+        namespace_id: NamespaceId,
+        topic: &TopicName,
+        now: Timestamp,
+    ) -> Result<Self> {
+        if let Some(row) = Self::fetch(metadata_tables, Self::key_for(namespace_id, topic))? {
+            return Ok(row);
+        }
+        let row = Self::new(topic.clone(), now);
+        batch.insert_row(metadata_tables, Self::key_for(namespace_id, topic), &row)?;
+        Ok(row)
     }
 }
 

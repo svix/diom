@@ -59,21 +59,13 @@ impl StreamReceiveOperation {
 
         let mut batch = state.db.batch();
 
-        let topic_row = match TopicRow::fetch(
+        let topic_row = TopicRow::fetch_or_create(
             &state.metadata_tables,
-            TopicRow::key_for(self.namespace_id, &self.topic),
-        )? {
-            Some(topic_row) => topic_row,
-            None => {
-                let topic_row = TopicRow::new(self.topic.clone(), self.now);
-                batch.insert_row(
-                    &state.metadata_tables,
-                    TopicRow::key_for(self.namespace_id, &self.topic),
-                    &topic_row,
-                )?;
-                topic_row
-            }
-        };
+            &mut batch,
+            self.namespace_id,
+            &self.topic,
+            self.now,
+        )?;
 
         Span::current().record("partition_count", topic_row.partitions);
 
