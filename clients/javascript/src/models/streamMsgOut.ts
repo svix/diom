@@ -6,10 +6,10 @@
 
 export interface StreamMsgOut {
     offset: number;
-topic: string;
-value: number[];
-headers?: { [key: string]: string };
-timestamp: Date;
+    topic: string;
+    value: number[];
+    headers?: { [key: string]: string };
+    timestamp: Date;
 }
 
 export const StreamMsgOutSerializer = {

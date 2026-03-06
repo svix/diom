@@ -6,8 +6,8 @@
 
 export interface MsgIn {
     value: number[];
-headers?: { [key: string]: string };
-/** Optional partition key. Messages with the same key are routed to the same partition. */
+    headers?: { [key: string]: string };
+    /** Optional partition key. Messages with the same key are routed to the same partition. */
     key?: string | null;
 }
 

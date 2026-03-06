@@ -6,8 +6,8 @@
 
 export interface MsgPublishOutTopic {
     topic: string;
-startOffset: number;
-offset: number;
+    startOffset: number;
+    offset: number;
 }
 
 export const MsgPublishOutTopicSerializer = {

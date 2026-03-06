@@ -10,7 +10,7 @@ import {
 
 export interface MsgPublishIn {
     topic: string;
-msgs: MsgIn[];
+    msgs: MsgIn[];
 }
 
 export const MsgPublishInSerializer = {

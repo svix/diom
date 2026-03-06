@@ -14,8 +14,8 @@ import {
 
 export interface MsgNamespaceCreateIn {
     name: string;
-retention?: Retention;
-storageType?: StorageType;
+    retention?: Retention;
+    storageType?: StorageType;
 }
 
 export const MsgNamespaceCreateInSerializer = {

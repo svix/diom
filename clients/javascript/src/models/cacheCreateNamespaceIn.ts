@@ -14,9 +14,9 @@ import {
 
 export interface CacheCreateNamespaceIn {
     name: string;
-storageType?: StorageType;
-maxStorageBytes?: number | null;
-evictionPolicy?: EvictionPolicy;
+    storageType?: StorageType;
+    maxStorageBytes?: number | null;
+    evictionPolicy?: EvictionPolicy;
 }
 
 export const CacheCreateNamespaceInSerializer = {

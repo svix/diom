@@ -6,9 +6,9 @@
 
 export interface CacheGetOut {
     key: string;
-/** Time of expiry */
+    /** Time of expiry */
     expiry?: Date | null;
-value: number[];
+    value: number[];
 }
 
 export const CacheGetOutSerializer = {

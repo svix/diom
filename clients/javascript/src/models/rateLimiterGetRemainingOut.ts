@@ -7,7 +7,7 @@
 export interface RateLimiterGetRemainingOut {
     /** Number of tokens remaining */
     remaining: number;
-/** Seconds until at least one token is available (only present when remaining is 0) */
+    /** Seconds until at least one token is available (only present when remaining is 0) */
     retryAfter?: number | null;
 }
 

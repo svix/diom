@@ -6,8 +6,8 @@
 
 export interface CacheSetIn {
     key: string;
-value: number[];
-/** Time to live in milliseconds */
+    value: number[];
+    /** Time to live in milliseconds */
     ttl: number;
 }
 

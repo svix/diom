@@ -6,9 +6,9 @@
 
 export interface MsgStreamReceiveIn {
     topic: string;
-consumerGroup: string;
-batchSize?: number;
-leaseDurationMillis?: number;
+    consumerGroup: string;
+    batchSize?: number;
+    leaseDurationMillis?: number;
 }
 
 export const MsgStreamReceiveInSerializer = {

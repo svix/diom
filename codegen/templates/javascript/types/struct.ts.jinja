@@ -11,7 +11,7 @@ import {
 
 {{ doc_comment }}
 export interface {{ type_name }} {
-    {% include "types/struct_fields.ts.jinja" -%}
+    {%- include "types/struct_fields.ts.jinja" %}
 }
 
 export const {{ type_name }}Serializer = {

@@ -7,9 +7,9 @@
 export interface RateLimiterTokenBucketConfig {
     /** Maximum capacity of the bucket */
     capacity: number;
-/** Number of tokens to add per refill interval */
+    /** Number of tokens to add per refill interval */
     refillAmount: number;
-/** Interval in seconds between refills (minimum 1 second) */
+    /** Interval in seconds between refills (minimum 1 second) */
     refillInterval?: number;
 }
 

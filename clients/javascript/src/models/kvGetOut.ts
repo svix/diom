@@ -6,9 +6,9 @@
 
 export interface KvGetOut {
     key: string;
-/** Time of expiry */
+    /** Time of expiry */
     expiry?: Date | null;
-value: number[];
+    value: number[];
 }
 
 export const KvGetOutSerializer = {

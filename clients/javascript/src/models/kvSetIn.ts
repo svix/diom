@@ -10,10 +10,10 @@ import {
 
 export interface KvSetIn {
     key: string;
-value: number[];
-/** Time to live in milliseconds */
+    value: number[];
+    /** Time to live in milliseconds */
     ttl?: number | null;
-behavior?: OperationBehavior;
+    behavior?: OperationBehavior;
 }
 
 export const KvSetInSerializer = {

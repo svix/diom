@@ -11,9 +11,9 @@ import {
 export interface RateLimiterCheckOut {
     /** Whether the request is allowed */
     status: RateLimitStatus;
-/** Number of tokens remaining */
+    /** Number of tokens remaining */
     remaining: number;
-/** Seconds until enough tokens are available (only present when allowed is false) */
+    /** Seconds until enough tokens are available (only present when allowed is false) */
     retryAfter?: number | null;
 }
 

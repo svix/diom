@@ -10,10 +10,10 @@ import {
 
 export interface KvCreateNamespaceOut {
     name: string;
-maxStorageBytes?: number | null;
-storageType: StorageType;
-created: Date;
-updated: Date;
+    maxStorageBytes?: number | null;
+    storageType: StorageType;
+    created: Date;
+    updated: Date;
 }
 
 export const KvCreateNamespaceOutSerializer = {

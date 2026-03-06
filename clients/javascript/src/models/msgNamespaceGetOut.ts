@@ -14,10 +14,10 @@ import {
 
 export interface MsgNamespaceGetOut {
     name: string;
-retention: Retention;
-storageType: StorageType;
-created: Date;
-updated: Date;
+    retention: Retention;
+    storageType: StorageType;
+    created: Date;
+    updated: Date;
 }
 
 export const MsgNamespaceGetOutSerializer = {

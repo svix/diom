@@ -5,7 +5,7 @@
 
 
 export interface CacheSetOut {
-    }
+}
 
 export const CacheSetOutSerializer = {
     _fromJsonObject(_object: any): CacheSetOut {

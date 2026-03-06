@@ -5,7 +5,7 @@
 
 
 export interface IdempotencyAbortOut {
-    }
+}
 
 export const IdempotencyAbortOutSerializer = {
     _fromJsonObject(_object: any): IdempotencyAbortOut {

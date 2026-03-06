@@ -10,10 +10,10 @@ import {
 
 export interface IdempotencyCreateNamespaceOut {
     name: string;
-maxStorageBytes?: number | null;
-storageType: StorageType;
-created: Date;
-updated: Date;
+    maxStorageBytes?: number | null;
+    storageType: StorageType;
+    created: Date;
+    updated: Date;
 }
 
 export const IdempotencyCreateNamespaceOutSerializer = {

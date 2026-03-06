@@ -6,8 +6,8 @@
 
 export interface MsgStreamCommitIn {
     topic: string;
-consumerGroup: string;
-offset: number;
+    consumerGroup: string;
+    offset: number;
 }
 
 export const MsgStreamCommitInSerializer = {

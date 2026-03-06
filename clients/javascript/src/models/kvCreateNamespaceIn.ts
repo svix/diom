@@ -10,8 +10,8 @@ import {
 
 export interface KvCreateNamespaceIn {
     name: string;
-storageType?: StorageType;
-maxStorageBytes?: number | null;
+    storageType?: StorageType;
+    maxStorageBytes?: number | null;
 }
 
 export const KvCreateNamespaceInSerializer = {

@@ -10,8 +10,8 @@ import {
 
 export interface IdempotencyCreateNamespaceIn {
     name: string;
-storageType?: StorageType;
-maxStorageBytes?: number | null;
+    storageType?: StorageType;
+    maxStorageBytes?: number | null;
 }
 
 export const IdempotencyCreateNamespaceInSerializer = {

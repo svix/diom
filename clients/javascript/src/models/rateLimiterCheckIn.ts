@@ -9,9 +9,8 @@ import {
 } from './rateLimiterTokenBucketConfig';
 interface _RateLimiterCheckInFields {
     key: string;
-/** Number of tokens to consume (default: 1) */
-    tokens?: number;
-}
+    /** Number of tokens to consume (default: 1) */
+    tokens?: number;}
 
 
     

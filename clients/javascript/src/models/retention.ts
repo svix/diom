@@ -6,7 +6,7 @@
 
 export interface Retention {
     millis?: number;
-bytes?: number;
+    bytes?: number;
 }
 
 export const RetentionSerializer = {

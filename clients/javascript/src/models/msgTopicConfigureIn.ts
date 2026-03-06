@@ -6,7 +6,7 @@
 
 export interface MsgTopicConfigureIn {
     topic: string;
-partitions: number;
+    partitions: number;
 }
 
 export const MsgTopicConfigureInSerializer = {

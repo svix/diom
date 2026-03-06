@@ -5,7 +5,7 @@
 
 
 export interface MsgStreamCommitOut {
-    }
+}
 
 export const MsgStreamCommitOutSerializer = {
     _fromJsonObject(_object: any): MsgStreamCommitOut {

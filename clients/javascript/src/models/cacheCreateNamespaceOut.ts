@@ -14,11 +14,11 @@ import {
 
 export interface CacheCreateNamespaceOut {
     name: string;
-maxStorageBytes?: number | null;
-storageType: StorageType;
-evictionPolicy: EvictionPolicy;
-created: Date;
-updated: Date;
+    maxStorageBytes?: number | null;
+    storageType: StorageType;
+    evictionPolicy: EvictionPolicy;
+    created: Date;
+    updated: Date;
 }
 
 export const CacheCreateNamespaceOutSerializer = {

@@ -7,7 +7,7 @@
 export interface RateLimiterFixedWindowConfig {
     /** Window size in seconds */
     windowSize: number;
-/** Maximum number of requests allowed within the window */
+    /** Maximum number of requests allowed within the window */
     maxRequests: number;
 }
 

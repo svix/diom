@@ -5,7 +5,7 @@
 
 
 export interface KvSetOut {
-    }
+}
 
 export const KvSetOutSerializer = {
     _fromJsonObject(_object: any): KvSetOut {
