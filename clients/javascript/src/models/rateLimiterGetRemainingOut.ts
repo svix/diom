@@ -12,13 +12,13 @@ export const RateLimiterGetRemainingOutSerializer = {
         return {
             remaining: object['remaining'],
             retryAfter: object['retry_after'],
-            };
+        };
     },
 
     _toJsonObject(self: RateLimiterGetRemainingOut): any {
         return {
             'remaining': self.remaining,
             'retry_after': self.retryAfter,
-            };
+        };
     }
 }

@@ -12,7 +12,7 @@ export const MsgPublishOutTopicSerializer = {
             topic: object['topic'],
             startOffset: object['start_offset'],
             offset: object['offset'],
-            };
+        };
     },
 
     _toJsonObject(self: MsgPublishOutTopic): any {
@@ -20,6 +20,6 @@ export const MsgPublishOutTopicSerializer = {
             'topic': self.topic,
             'start_offset': self.startOffset,
             'offset': self.offset,
-            };
+        };
     }
 }

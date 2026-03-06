@@ -15,7 +15,7 @@ export const RateLimiterTokenBucketConfigSerializer = {
             capacity: object['capacity'],
             refillAmount: object['refill_amount'],
             refillInterval: object['refill_interval'],
-            };
+        };
     },
 
     _toJsonObject(self: RateLimiterTokenBucketConfig): any {
@@ -23,6 +23,6 @@ export const RateLimiterTokenBucketConfigSerializer = {
             'capacity': self.capacity,
             'refill_amount': self.refillAmount,
             'refill_interval': self.refillInterval,
-            };
+        };
     }
 }

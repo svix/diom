@@ -10,13 +10,13 @@ export const MsgTopicConfigureInSerializer = {
         return {
             topic: object['topic'],
             partitions: object['partitions'],
-            };
+        };
     },
 
     _toJsonObject(self: MsgTopicConfigureIn): any {
         return {
             'topic': self.topic,
             'partitions': self.partitions,
-            };
+        };
     }
 }

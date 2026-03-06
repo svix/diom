@@ -13,7 +13,7 @@ export const CacheSetInSerializer = {
             key: object['key'],
             value: object['value'],
             ttl: object['ttl'],
-            };
+        };
     },
 
     _toJsonObject(self: CacheSetIn): any {
@@ -21,6 +21,6 @@ export const CacheSetInSerializer = {
             'key': self.key,
             'value': self.value,
             'ttl': self.ttl,
-            };
+        };
     }
 }

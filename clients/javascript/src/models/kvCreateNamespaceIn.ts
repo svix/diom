@@ -16,7 +16,7 @@ export const KvCreateNamespaceInSerializer = {
             name: object['name'],
             storageType: object['storage_type'] != null ? StorageTypeSerializer._fromJsonObject(object['storage_type']): undefined,
             maxStorageBytes: object['max_storage_bytes'],
-            };
+        };
     },
 
     _toJsonObject(self: KvCreateNamespaceIn): any {
@@ -24,6 +24,6 @@ export const KvCreateNamespaceInSerializer = {
             'name': self.name,
             'storage_type': self.storageType != null ? StorageTypeSerializer._toJsonObject(self.storageType) : undefined,
             'max_storage_bytes': self.maxStorageBytes,
-            };
+        };
     }
 }

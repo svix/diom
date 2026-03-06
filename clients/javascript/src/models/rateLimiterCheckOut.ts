@@ -19,7 +19,7 @@ export const RateLimiterCheckOutSerializer = {
             status: RateLimitStatusSerializer._fromJsonObject(object['status']),
             remaining: object['remaining'],
             retryAfter: object['retry_after'],
-            };
+        };
     },
 
     _toJsonObject(self: RateLimiterCheckOut): any {
@@ -27,6 +27,6 @@ export const RateLimiterCheckOutSerializer = {
             'status': RateLimitStatusSerializer._toJsonObject(self.status),
             'remaining': self.remaining,
             'retry_after': self.retryAfter,
-            };
+        };
     }
 }

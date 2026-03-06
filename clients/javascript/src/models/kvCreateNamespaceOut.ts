@@ -20,7 +20,7 @@ export const KvCreateNamespaceOutSerializer = {
             storageType: StorageTypeSerializer._fromJsonObject(object['storage_type']),
             created: new Date(object['created']),
             updated: new Date(object['updated']),
-            };
+        };
     },
 
     _toJsonObject(self: KvCreateNamespaceOut): any {
@@ -30,6 +30,6 @@ export const KvCreateNamespaceOutSerializer = {
             'storage_type': StorageTypeSerializer._toJsonObject(self.storageType),
             'created': self.created,
             'updated': self.updated,
-            };
+        };
     }
 }

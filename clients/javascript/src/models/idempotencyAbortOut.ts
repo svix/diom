@@ -7,11 +7,11 @@ export interface IdempotencyAbortOut {
 export const IdempotencyAbortOutSerializer = {
     _fromJsonObject(_object: any): IdempotencyAbortOut {
         return {
-            };
+        };
     },
 
     _toJsonObject(_self: IdempotencyAbortOut): any {
         return {
-            };
+        };
     }
 }

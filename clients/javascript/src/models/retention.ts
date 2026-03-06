@@ -10,13 +10,13 @@ export const RetentionSerializer = {
         return {
             millis: object['millis'],
             bytes: object['bytes'],
-            };
+        };
     },
 
     _toJsonObject(self: Retention): any {
         return {
             'millis': self.millis,
             'bytes': self.bytes,
-            };
+        };
     }
 }

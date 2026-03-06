@@ -13,7 +13,7 @@ export const KvGetOutSerializer = {
             key: object['key'],
             expiry: object['expiry'] ? new Date(object['expiry']) : null,
             value: object['value'],
-            };
+        };
     },
 
     _toJsonObject(self: KvGetOut): any {
@@ -21,6 +21,6 @@ export const KvGetOutSerializer = {
             'key': self.key,
             'expiry': self.expiry,
             'value': self.value,
-            };
+        };
     }
 }

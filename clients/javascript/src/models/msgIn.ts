@@ -13,7 +13,7 @@ export const MsgInSerializer = {
             value: object['value'],
             headers: object['headers'],
             key: object['key'],
-            };
+        };
     },
 
     _toJsonObject(self: MsgIn): any {
@@ -21,6 +21,6 @@ export const MsgInSerializer = {
             'value': self.value,
             'headers': self.headers,
             'key': self.key,
-            };
+        };
     }
 }

@@ -16,7 +16,7 @@ export const StreamMsgOutSerializer = {
             value: object['value'],
             headers: object['headers'],
             timestamp: new Date(object['timestamp']),
-            };
+        };
     },
 
     _toJsonObject(self: StreamMsgOut): any {
@@ -26,6 +26,6 @@ export const StreamMsgOutSerializer = {
             'value': self.value,
             'headers': self.headers,
             'timestamp': self.timestamp,
-            };
+        };
     }
 }

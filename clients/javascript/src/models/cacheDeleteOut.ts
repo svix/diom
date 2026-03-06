@@ -8,12 +8,12 @@ export const CacheDeleteOutSerializer = {
     _fromJsonObject(object: any): CacheDeleteOut {
         return {
             deleted: object['deleted'],
-            };
+        };
     },
 
     _toJsonObject(self: CacheDeleteOut): any {
         return {
             'deleted': self.deleted,
-            };
+        };
     }
 }

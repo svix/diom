@@ -13,7 +13,7 @@ export const CacheGetOutSerializer = {
             key: object['key'],
             expiry: object['expiry'] ? new Date(object['expiry']) : null,
             value: object['value'],
-            };
+        };
     },
 
     _toJsonObject(self: CacheGetOut): any {
@@ -21,6 +21,6 @@ export const CacheGetOutSerializer = {
             'key': self.key,
             'expiry': self.expiry,
             'value': self.value,
-            };
+        };
     }
 }

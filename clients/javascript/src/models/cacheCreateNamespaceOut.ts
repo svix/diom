@@ -26,7 +26,7 @@ export const CacheCreateNamespaceOutSerializer = {
             evictionPolicy: EvictionPolicySerializer._fromJsonObject(object['eviction_policy']),
             created: new Date(object['created']),
             updated: new Date(object['updated']),
-            };
+        };
     },
 
     _toJsonObject(self: CacheCreateNamespaceOut): any {
@@ -37,6 +37,6 @@ export const CacheCreateNamespaceOutSerializer = {
             'eviction_policy': EvictionPolicySerializer._toJsonObject(self.evictionPolicy),
             'created': self.created,
             'updated': self.updated,
-            };
+        };
     }
 }

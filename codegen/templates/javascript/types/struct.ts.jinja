@@ -20,19 +20,19 @@ export const {{ type_name }}Serializer = {
     {% set underscore_prefix %}{% if type.fields | length == 0%}_{% endif %}{% endset -%}
     _fromJsonObject({{ underscore_prefix }}object: any): {{ type_name }} {
         return {
-            {% for field in type.fields -%}
-                {% set field_expr %}object['{{ field.name }}']{% endset -%}
-                {{ field.name | to_lower_camel_case }}: {{ field_from_json(field_expr, field.type, field.required) }},
-            {% endfor -%}
+        {%- for field in type.fields %}
+            {% set field_expr %}object['{{ field.name }}']{% endset -%}
+            {{ field.name | to_lower_camel_case }}: {{ field_from_json(field_expr, field.type, field.required) }},
+        {%- endfor %}
         };
     },
 
     _toJsonObject({{ underscore_prefix }}self: {{ type_name }}): any {
         return {
-            {% for field in type.fields -%}
-                {% set field_expr %}self.{{ field.name | to_lower_camel_case }}{% endset -%}
-                '{{ field.name }}': {{ field_to_json(field_expr, field.type, field.required) }},
-            {% endfor -%}
+        {%- for field in type.fields %}
+            {% set field_expr %}self.{{ field.name | to_lower_camel_case }}{% endset -%}
+            '{{ field.name }}': {{ field_to_json(field_expr, field.type, field.required) }},
+        {%- endfor %}
         };
     }
 }

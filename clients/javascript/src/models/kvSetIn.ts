@@ -19,7 +19,7 @@ export const KvSetInSerializer = {
             value: object['value'],
             ttl: object['ttl'],
             behavior: object['behavior'] != null ? OperationBehaviorSerializer._fromJsonObject(object['behavior']): undefined,
-            };
+        };
     },
 
     _toJsonObject(self: KvSetIn): any {
@@ -28,6 +28,6 @@ export const KvSetInSerializer = {
             'value': self.value,
             'ttl': self.ttl,
             'behavior': self.behavior != null ? OperationBehaviorSerializer._toJsonObject(self.behavior) : undefined,
-            };
+        };
     }
 }
