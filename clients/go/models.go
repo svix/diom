@@ -40,6 +40,10 @@ type (
 	MsgPublishIn                  = coyote_models.MsgPublishIn
 	MsgPublishOut                 = coyote_models.MsgPublishOut
 	MsgPublishOutTopic            = coyote_models.MsgPublishOutTopic
+	MsgQueueAckIn                 = coyote_models.MsgQueueAckIn
+	MsgQueueAckOut                = coyote_models.MsgQueueAckOut
+	MsgQueueReceiveIn             = coyote_models.MsgQueueReceiveIn
+	MsgQueueReceiveOut            = coyote_models.MsgQueueReceiveOut
 	MsgStreamCommitIn             = coyote_models.MsgStreamCommitIn
 	MsgStreamCommitOut            = coyote_models.MsgStreamCommitOut
 	MsgStreamReceiveIn            = coyote_models.MsgStreamReceiveIn
@@ -48,6 +52,7 @@ type (
 	MsgTopicConfigureOut          = coyote_models.MsgTopicConfigureOut
 	OperationBehavior             = coyote_models.OperationBehavior
 	PingOut                       = coyote_models.PingOut
+	QueueMsgOut                   = coyote_models.QueueMsgOut
 	RateLimitStatus               = coyote_models.RateLimitStatus
 	RateLimiterCheckIn            = coyote_models.RateLimiterCheckIn
 	RateLimiterCheckOut           = coyote_models.RateLimiterCheckOut

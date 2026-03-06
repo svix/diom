@@ -12,6 +12,7 @@ import (
 type Msgs struct {
 	client    *coyote_proto.HttpClient
 	Namespace *MsgsNamespace
+	Queue     *MsgsQueue
 	Stream    *MsgsStream
 	Topic     *MsgsTopic
 }
