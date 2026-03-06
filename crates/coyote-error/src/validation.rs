@@ -38,8 +38,10 @@ pub struct ValidationErrorItem {
     /// The message accompanying the validation error item.
     pub msg: String,
 
-    /// The type of error, often "type_error" or "value_error", but sometimes with more context like
-    /// as "value_error.number.not_ge"
+    /// The type of error.
+    ///
+    /// Often "type_error" or "value_error", but sometimes with more context like
+    /// "value_error.number.not_ge".
     #[serde(rename = "type")]
     pub ty: String,
 }
