@@ -10,7 +10,6 @@ coyote-error.workspace = true
 coyote-kv.workspace = true
 coyote-namespace.workspace = true
 coyote-operations.workspace = true
-fjall.workspace = true
 fjall-utils.workspace = true
 jiff.workspace = true
 rmp-serde.workspace = true

@@ -1090,7 +1090,6 @@ dependencies = [
  "coyote-kv",
  "coyote-namespace",
  "coyote-operations",
- "fjall",
  "fjall-utils",
  "jiff",
  "rmp-serde",

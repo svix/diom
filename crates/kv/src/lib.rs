@@ -9,22 +9,7 @@ pub mod kvcontroller;
 pub mod operations;
 pub mod tables;
 
-use crate::{kvcontroller::KvController, tables::KvPairRow};
-
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
-pub struct KvModel {
-    pub expiry: Option<Timestamp>,
-    pub value: Vec<u8>,
-}
-
-impl From<KvPairRow> for KvModel {
-    fn from(row: KvPairRow) -> Self {
-        Self {
-            expiry: row.expiry,
-            value: row.value,
-        }
-    }
-}
+use crate::kvcontroller::KvController;
 
 pub type KvNamespace = Namespace<KeyValueConfig>;
 const KV_KEYSPACE: &str = "mod_kv";
