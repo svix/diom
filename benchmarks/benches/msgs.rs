@@ -1,6 +1,7 @@
 use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use coyote_client::models::{
-    MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
+    MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn,
+    MsgStreamCommitIn, MsgStreamReceiveIn,
 };
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
@@ -102,7 +103,9 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                             .await
                             .unwrap(),
                     );
-                    let last = out.msgs.last().unwrap();
+                    let Some(last) = out.msgs.last() else {
+                        return;
+                    };
                     // Response topic already includes namespace, pass directly to commit
                     std::hint::black_box(
                         client
@@ -112,6 +115,81 @@ fn bench_msgs<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGr
                                 last.topic.clone(),
                                 consumer_group.clone(),
                                 MsgStreamCommitIn::new(last.offset),
+                            )
+                            .await
+                            .unwrap(),
+                    );
+                })
+            })
+        });
+    }
+
+    // Benchmark queue `receive` + `ack` done serially.
+    // Reuses the same topic that already has ~100k messages from the stream benchmark setup.
+    {
+        let topic = "bench-publish:bench-topic".to_owned();
+
+        group.bench_function("msgs_queue_receive_ack_batch_100", |b| {
+            b.iter(|| {
+                rt.block_on(async {
+                    let out = std::hint::black_box(
+                        client
+                            .msgs()
+                            .queue()
+                            .receive(
+                                topic.clone(),
+                                MsgQueueReceiveIn::new().with_batch_size(100u16),
+                            )
+                            .await
+                            .unwrap(),
+                    );
+                    if out.msgs.is_empty() {
+                        return;
+                    }
+                    let msg_ids: Vec<String> =
+                        out.msgs.into_iter().map(|m| m.msg_id).collect();
+                    std::hint::black_box(
+                        client
+                            .msgs()
+                            .queue()
+                            .ack(topic.clone(), MsgQueueAckIn::new(msg_ids))
+                            .await
+                            .unwrap(),
+                    );
+                })
+            })
+        });
+    }
+
+    // Benchmark queue `receive` in isolation (no ack). Uses a short lease so messages
+    // cycle back and the benchmark can run indefinitely against a fixed message set.
+    {
+        let ns_name = "bench-queue-receive";
+        let topic = format!("{ns_name}:bench-topic");
+        make_test_namespace(ns_name);
+
+        rt.block_on(async {
+            for _ in 0..100 {
+                client
+                    .msgs()
+                    .publish(topic.clone(), MsgPublishIn::new(make_msg_batch(1000)))
+                    .await
+                    .unwrap();
+            }
+        });
+
+        group.bench_function("msgs_queue_receive_only_batch_100", |b| {
+            b.iter(|| {
+                rt.block_on(async {
+                    std::hint::black_box(
+                        client
+                            .msgs()
+                            .queue()
+                            .receive(
+                                topic.clone(),
+                                MsgQueueReceiveIn::new()
+                                    .with_batch_size(100u16)
+                                    .with_lease_duration_millis(100u64),
                             )
                             .await
                             .unwrap(),
