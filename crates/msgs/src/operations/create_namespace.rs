@@ -5,9 +5,9 @@ use diom_namespace::{
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 
+use crate::entities::{Retention, default_retention_bytes, default_retention_millis};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use stream_internals::entities::{Retention, default_retention_bytes, default_retention_millis};
 
 use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
 

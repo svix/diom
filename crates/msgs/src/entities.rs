@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt, ops::Deref, str::FromStr};
+use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr, time::Duration};
 
 use diom_error::Error;
 use diom_namespace::{entities::NamespaceName, parse_namespace};
@@ -466,3 +466,30 @@ impl JsonSchema for ConsumerGroup {
 
 // FIXME: should be a newtype
 pub type TopicId = Uuid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+pub struct Retention {
+    #[serde(default = "default_retention_millis")]
+    pub millis: NonZeroU64,
+    #[serde(default = "default_retention_bytes")]
+    pub bytes: NonZeroU64,
+}
+
+impl Default for Retention {
+    fn default() -> Self {
+        Self {
+            millis: default_retention_millis(),
+            bytes: default_retention_bytes(),
+        }
+    }
+}
+
+pub fn default_retention_millis() -> NonZeroU64 {
+    (Duration::from_hours(24 * 30).as_millis() as u64)
+        .try_into()
+        .unwrap()
+}
+
+pub fn default_retention_bytes() -> NonZeroU64 {
+    NonZeroU64::new(1_000_000_000_000).expect("constant is non-zero")
+}

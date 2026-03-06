@@ -1,7 +1,6 @@
 use diom_error::Error;
-use diom_namespace::Namespace;
+use diom_namespace::{Namespace, entities::StreamConfig};
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
-use stream_internals::entities::StreamConfig;
 
 pub mod entities;
 pub mod operations;
