@@ -13,7 +13,6 @@ enum RowType {
 
 #[derive(Serialize, Deserialize)]
 pub struct KvPairRow {
-    pub key: String,
     pub value: Vec<u8>,
     pub expiry: Option<Timestamp>,
 }
