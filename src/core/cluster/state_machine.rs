@@ -8,15 +8,12 @@ use std::{
 
 use crate::{
     cfg::Dir,
-    core::{
-        db::Databases,
-        metrics::{DbMetrics, DbType},
-    },
+    core::metrics::{DbMetrics, DbType},
 };
 use anyhow::Context;
 use diom_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
-use fjall_utils::{FjallFixedKey, ReadonlyKeyspace};
+use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
     StorageIOError, StoredMembership, storage::RaftStateMachine,
@@ -134,14 +131,13 @@ impl Store {
         let databases = Databases::new(persistent_db.clone(), ephemeral_db);
 
         let stores = Stores {
-            databases,
+            databases: databases.clone(),
             msgs_state: diom_msgs::State::init(persistent_db.clone())
                 .context("initializing msgs state")?,
-            kv_state: diom_kv::State::init(persistent_db.clone())
-                .context("initializing kv state")?,
-            cache_state: diom_cache::State::init(persistent_db.clone())
+            kv_state: diom_kv::State::init(databases.clone()).context("initializing kv state")?,
+            cache_state: diom_cache::State::init(databases.clone())
                 .context("initializing cache state")?,
-            idempotency_state: diom_idempotency::State::init(persistent_db.clone())
+            idempotency_state: diom_idempotency::State::init(databases.clone())
                 .context("initializing idempotency state")?,
         };
 

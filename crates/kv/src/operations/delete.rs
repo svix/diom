@@ -1,25 +1,33 @@
 use super::{DeleteResponse, KvRequest};
-use crate::{State, operations::KvRaftState};
+use crate::{KvNamespace, State, operations::KvRaftState};
 use diom_core::types::EntityKey;
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
+use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: EntityKey,
 }
 
 impl DeleteOperation {
-    pub fn new(namespace_id: NamespaceId, key: EntityKey) -> Self {
-        Self { key, namespace_id }
+    pub fn new(namespace: KvNamespace, key: EntityKey) -> Self {
+        Self {
+            key,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
+        }
     }
 }
 
 impl DeleteOperation {
     fn apply_real(self, state: &State) -> Result<()> {
-        state.controller.delete(self.namespace_id, &self.key)?;
+        state
+            .controller(StorageType::Persistent)
+            .delete(self.namespace_id, &self.key)?;
         Ok(())
     }
 }

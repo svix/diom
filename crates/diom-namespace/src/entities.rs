@@ -4,6 +4,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use uuid::Uuid;
 
+pub use fjall_utils::StorageType;
+
 pub type NamespaceId = Uuid;
 pub type NamespaceName = String;
 
@@ -29,15 +31,6 @@ impl Display for Module {
         };
         write!(f, "{value}")
     }
-}
-
-#[derive(
-    Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PartialOrd, Ord,
-)]
-pub enum StorageType {
-    #[default]
-    Persistent = 0,
-    Ephemeral = 1,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]

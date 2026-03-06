@@ -1,23 +1,26 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
-use crate::CacheModel;
+use crate::{CacheModel, CacheNamespace};
 use diom_kv::kvcontroller::OperationBehavior;
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
+use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: String,
     model: CacheModel,
     now: Timestamp,
 }
 
 impl SetOperation {
-    pub fn new(namespace_id: NamespaceId, key: String, model: CacheModel) -> Self {
+    pub fn new(namespace: CacheNamespace, key: String, model: CacheModel) -> Self {
         Self {
-            namespace_id,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
             key,
             model,
             now: Timestamp::now(),
@@ -27,7 +30,7 @@ impl SetOperation {
 
 impl SetOperation {
     fn apply_real(self, state: &CacheRaftState<'_>) -> Result<()> {
-        state.state.controller.set(
+        state.state.controller(StorageType::Persistent).set(
             self.namespace_id,
             &self.key,
             self.model.value,

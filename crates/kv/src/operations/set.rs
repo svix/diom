@@ -1,17 +1,19 @@
 use std::time::Duration;
 
-use crate::{State, kvcontroller::OperationBehavior, operations::KvRaftState};
+use crate::{KvNamespace, State, kvcontroller::OperationBehavior, operations::KvRaftState};
 
 use super::{KvRequest, SetResponse};
 use diom_core::types::EntityKey;
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
+use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: EntityKey,
     expiry: Option<Timestamp>,
     value: Vec<u8>,
@@ -21,14 +23,15 @@ pub struct SetOperation {
 
 impl SetOperation {
     pub fn new(
-        namespace_id: NamespaceId,
+        namespace: KvNamespace,
         key: EntityKey,
         value: Vec<u8>,
         ttl: Option<u64>,
         behavior: OperationBehavior,
     ) -> Self {
         Self {
-            namespace_id,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
             key,
             expiry: ttl.map(|ttl| Timestamp::now() + Duration::from_millis(ttl)),
             value,
@@ -40,7 +43,7 @@ impl SetOperation {
 
 impl SetOperation {
     fn apply_real(self, state: &State) -> Result<()> {
-        state.controller.set(
+        state.controller(StorageType::Persistent).set(
             self.namespace_id,
             &self.key,
             self.value,
