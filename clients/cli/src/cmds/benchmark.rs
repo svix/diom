@@ -641,23 +641,25 @@ async fn bench_cache(
 // Msgs module
 
 #[derive(Clone)]
-struct BenchMsgsPublish {
+struct BenchMsgsPublish<'a> {
     bench_result: BenchResult,
     batch_size: u16,
     label: String,
+    topics: &'a [String],
 }
 
-impl BenchMsgsPublish {
-    fn new(batch_size: u16, label: &str) -> Self {
+impl<'a> BenchMsgsPublish<'a> {
+    fn new(topics: &'a [String], label: &str, batch_size: u16) -> Self {
         Self {
             bench_result: BenchResult::new().set_batch_size(batch_size),
             batch_size,
             label: label.to_owned(),
+            topics,
         }
     }
 }
 
-impl BenchShard for BenchMsgsPublish {
+impl<'a> BenchShard for BenchMsgsPublish<'a> {
     fn test_name(&self) -> String {
         format!("msgs.{}.publish (batch={})", self.label, self.batch_size)
     }
@@ -669,7 +671,7 @@ impl BenchShard for BenchMsgsPublish {
         shard_id: u64,
         _iteration: u64,
     ) -> Result<()> {
-        let topic = format!("bench:bench-{}/topic/{shard_id}", self.label);
+        let topic = self.topics[shard_id as usize].clone();
         let msgs: Vec<_> = (0..self.batch_size)
             .map(|_| {
                 let mut payload = vec![0u8; 2_834];
@@ -705,23 +707,27 @@ impl BenchShard for BenchMsgsPublish {
 }
 
 #[derive(Clone)]
-struct BenchMsgsStreamReceive {
+struct BenchMsgsStreamReceive<'a> {
     bench_result_rcv: BenchResult,
     bench_result_commit: BenchResult,
     batch_size: u16,
+    topics: &'a [String],
+    consumer_group: &'a str,
 }
 
-impl BenchMsgsStreamReceive {
-    fn new(batch_size: u16) -> Self {
+impl<'a> BenchMsgsStreamReceive<'a> {
+    fn new(topics: &'a [String], consumer_group: &'a str, batch_size: u16) -> Self {
         Self {
             bench_result_rcv: BenchResult::new().set_batch_size(batch_size),
             bench_result_commit: BenchResult::new().set_batch_size(batch_size),
             batch_size,
+            topics,
+            consumer_group,
         }
     }
 }
 
-impl BenchShard for BenchMsgsStreamReceive {
+impl<'a> BenchShard for BenchMsgsStreamReceive<'a> {
     fn test_name(&self) -> String {
         format!("msgs.stream.receive (batch={})", self.batch_size)
     }
@@ -733,8 +739,8 @@ impl BenchShard for BenchMsgsStreamReceive {
         shard_id: u64,
         _iteration: u64,
     ) -> Result<()> {
-        let consumer_group = "consumer";
-        let topic = format!("bench:bench-stream/topic/{shard_id}");
+        let consumer_group = self.consumer_group;
+        let topic = self.topics[shard_id as usize].clone();
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -807,23 +813,27 @@ impl BenchShard for BenchMsgsStreamReceive {
 }
 
 #[derive(Clone)]
-struct BenchMsgsQueueReceive {
+struct BenchMsgsQueueReceive<'a> {
     bench_result_rcv: BenchResult,
     bench_result_ack: BenchResult,
     batch_size: u16,
+    topics: &'a [String],
+    _consumer_group: &'a str,
 }
 
-impl BenchMsgsQueueReceive {
-    fn new(batch_size: u16) -> Self {
+impl<'a> BenchMsgsQueueReceive<'a> {
+    fn new(topics: &'a [String], consumer_group: &'a str, batch_size: u16) -> Self {
         Self {
             bench_result_rcv: BenchResult::new().set_batch_size(batch_size),
             bench_result_ack: BenchResult::new().set_batch_size(batch_size),
             batch_size,
+            topics,
+            _consumer_group: consumer_group,
         }
     }
 }
 
-impl BenchShard for BenchMsgsQueueReceive {
+impl<'a> BenchShard for BenchMsgsQueueReceive<'a> {
     fn test_name(&self) -> String {
         format!("msgs.queue.receive (batch={})", self.batch_size)
     }
@@ -835,7 +845,7 @@ impl BenchShard for BenchMsgsQueueReceive {
         shard_id: u64,
         _iteration: u64,
     ) -> Result<()> {
-        let topic = format!("bench:bench-queue/topic/{shard_id}");
+        let topic = self.topics[shard_id as usize].clone();
 
         let t = Instant::now();
         let out = client
@@ -901,10 +911,28 @@ async fn bench_msgs_stream(
         .create("bench".to_string(), MsgNamespaceCreateIn::new())
         .await?;
 
-    BenchMsgsPublish::new(batch_size, "stream")
+    let topics: Vec<String> = (0..cfg.concurrency)
+        .map(|shard_id| format!("bench:bench-stream/topic/{shard_id}"))
+        .collect();
+    let consumer_group = Alphanumeric.sample_string(&mut rand::rng(), 16);
+
+    // Reset the consumer group on all the topics (TODO use `seek` once implemented)
+    for topic in topics.iter() {
+        cfg.client
+            .msgs()
+            .stream()
+            .receive(
+                topic.clone(),
+                consumer_group.clone(),
+                MsgStreamReceiveIn::new().with_batch_size(1),
+            )
+            .await?;
+    }
+
+    BenchMsgsPublish::new(&topics, "stream", batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
-    BenchMsgsStreamReceive::new(batch_size)
+    BenchMsgsStreamReceive::new(&topics, &consumer_group, batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
@@ -922,10 +950,15 @@ async fn bench_msgs_queue(
         .create("bench".to_string(), MsgNamespaceCreateIn::new())
         .await?;
 
-    BenchMsgsPublish::new(batch_size, "queue")
+    let topics: Vec<String> = (0..cfg.concurrency)
+        .map(|shard_id| format!("bench:bench-queue/topic/{shard_id}"))
+        .collect();
+    let consumer_group = Alphanumeric.sample_string(&mut rand::rng(), 16);
+
+    BenchMsgsPublish::new(&topics, "queue", batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
-    BenchMsgsQueueReceive::new(batch_size)
+    BenchMsgsQueueReceive::new(&topics, &consumer_group, batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
