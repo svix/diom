@@ -924,8 +924,6 @@ dependencies = [
  "openraft",
  "opentelemetry",
  "opentelemetry-http",
- "opentelemetry-otlp",
- "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
  "parking_lot",
  "paste",
@@ -1212,8 +1210,14 @@ dependencies = [
  "coyote",
  "dotenvy",
  "mimalloc",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry-semantic-conventions",
+ "opentelemetry_sdk",
  "reqwest 0.13.2",
  "tokio",
+ "tracing",
+ "tracing-opentelemetry",
  "tracing-subscriber",
 ]
 
