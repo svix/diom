@@ -12,7 +12,6 @@ fjall-utils.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
-stream-internals.workspace = true
 uuid.workspace = true
 
 [lints]

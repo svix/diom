@@ -1,4 +1,7 @@
-use std::fmt::{self, Debug, Display, Formatter};
+use std::{
+    fmt::{self, Debug, Display, Formatter},
+    time::Duration,
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -80,7 +83,11 @@ impl ModuleConfig for CacheConfig {
     }
 }
 
-pub use stream_internals::entities::StreamConfig;
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct StreamConfig {
+    #[serde(with = "fjall_utils::duration_millis")]
+    pub retention_period: Duration,
+}
 
 impl ModuleConfig for StreamConfig {
     fn module() -> Module {

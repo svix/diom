@@ -937,7 +937,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "stream-internals",
  "sysinfo",
  "tap",
  "tempfile",
@@ -1131,7 +1130,6 @@ dependencies = [
  "rmp-serde",
  "schemars 1.2.1",
  "serde",
- "stream-internals",
  "tracing",
  "uuid",
  "validator",
@@ -1147,7 +1145,6 @@ dependencies = [
  "jiff",
  "schemars 1.2.1",
  "serde",
- "stream-internals",
  "uuid",
 ]
 
@@ -4327,15 +4324,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 dependencies = [
  "lock_api",
-]
-
-[[package]]
-name = "stream-internals"
-version = "0.0.1"
-dependencies = [
- "fjall-utils",
- "schemars 1.2.1",
- "serde",
 ]
 
 [[package]]

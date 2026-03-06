@@ -1,7 +1,6 @@
 use coyote_error::Error;
-use coyote_namespace::Namespace;
+use coyote_namespace::{Namespace, entities::StreamConfig};
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
-use stream_internals::entities::StreamConfig;
 
 pub mod entities;
 pub mod operations;
