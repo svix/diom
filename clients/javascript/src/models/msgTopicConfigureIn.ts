@@ -1,12 +1,8 @@
 // this file is @generated
 
-
-
-
-
 export interface MsgTopicConfigureIn {
     topic: string;
-partitions: number;
+    partitions: number;
 }
 
 export const MsgTopicConfigureInSerializer = {
@@ -14,13 +10,13 @@ export const MsgTopicConfigureInSerializer = {
         return {
             topic: object['topic'],
             partitions: object['partitions'],
-            };
+        };
     },
 
     _toJsonObject(self: MsgTopicConfigureIn): any {
         return {
             'topic': self.topic,
             'partitions': self.partitions,
-            };
+        };
     }
 }

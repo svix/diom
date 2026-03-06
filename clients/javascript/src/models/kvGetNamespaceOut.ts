@@ -4,16 +4,12 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface KvGetNamespaceOut {
     name: string;
-maxStorageBytes?: number | null;
-storageType: StorageType;
-created: Date;
-updated: Date;
+    maxStorageBytes?: number | null;
+    storageType: StorageType;
+    created: Date;
+    updated: Date;
 }
 
 export const KvGetNamespaceOutSerializer = {
@@ -24,7 +20,7 @@ export const KvGetNamespaceOutSerializer = {
             storageType: StorageTypeSerializer._fromJsonObject(object['storage_type']),
             created: new Date(object['created']),
             updated: new Date(object['updated']),
-            };
+        };
     },
 
     _toJsonObject(self: KvGetNamespaceOut): any {
@@ -34,6 +30,6 @@ export const KvGetNamespaceOutSerializer = {
             'storage_type': StorageTypeSerializer._toJsonObject(self.storageType),
             'created': self.created,
             'updated': self.updated,
-            };
+        };
     }
 }

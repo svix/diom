@@ -1,13 +1,9 @@
 // this file is @generated
 
-
-
-
-
 export interface CacheSetIn {
     key: string;
-value: number[];
-/** Time to live in milliseconds */
+    value: number[];
+    /** Time to live in milliseconds */
     ttl: number;
 }
 
@@ -17,7 +13,7 @@ export const CacheSetInSerializer = {
             key: object['key'],
             value: object['value'],
             ttl: object['ttl'],
-            };
+        };
     },
 
     _toJsonObject(self: CacheSetIn): any {
@@ -25,6 +21,6 @@ export const CacheSetInSerializer = {
             'key': self.key,
             'value': self.value,
             'ttl': self.ttl,
-            };
+        };
     }
 }

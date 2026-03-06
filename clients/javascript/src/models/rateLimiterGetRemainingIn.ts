@@ -8,8 +8,7 @@ import {
     RateLimiterTokenBucketConfigSerializer,
 } from './rateLimiterTokenBucketConfig';
 interface _RateLimiterGetRemainingInFields {
-    key: string;
-}
+    key: string;}
 
 
     

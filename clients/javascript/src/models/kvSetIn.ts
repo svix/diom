@@ -4,16 +4,12 @@ import {
     OperationBehaviorSerializer,
 } from './operationBehavior';
 
-
-
-
-
 export interface KvSetIn {
     key: string;
-value: number[];
-/** Time to live in milliseconds */
+    value: number[];
+    /** Time to live in milliseconds */
     ttl?: number | null;
-behavior?: OperationBehavior;
+    behavior?: OperationBehavior;
 }
 
 export const KvSetInSerializer = {
@@ -23,7 +19,7 @@ export const KvSetInSerializer = {
             value: object['value'],
             ttl: object['ttl'],
             behavior: object['behavior'] != null ? OperationBehaviorSerializer._fromJsonObject(object['behavior']): undefined,
-            };
+        };
     },
 
     _toJsonObject(self: KvSetIn): any {
@@ -32,6 +28,6 @@ export const KvSetInSerializer = {
             'value': self.value,
             'ttl': self.ttl,
             'behavior': self.behavior != null ? OperationBehaviorSerializer._toJsonObject(self.behavior) : undefined,
-            };
+        };
     }
 }

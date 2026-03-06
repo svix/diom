@@ -1,13 +1,9 @@
 // this file is @generated
 
-
-
-
-
 export interface MsgStreamCommitIn {
     topic: string;
-consumerGroup: string;
-offset: number;
+    consumerGroup: string;
+    offset: number;
 }
 
 export const MsgStreamCommitInSerializer = {
@@ -16,7 +12,7 @@ export const MsgStreamCommitInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             offset: object['offset'],
-            };
+        };
     },
 
     _toJsonObject(self: MsgStreamCommitIn): any {
@@ -24,6 +20,6 @@ export const MsgStreamCommitInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'offset': self.offset,
-            };
+        };
     }
 }

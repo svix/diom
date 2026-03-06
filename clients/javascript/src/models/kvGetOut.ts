@@ -1,14 +1,10 @@
 // this file is @generated
 
-
-
-
-
 export interface KvGetOut {
     key: string;
-/** Time of expiry */
+    /** Time of expiry */
     expiry?: Date | null;
-value: number[];
+    value: number[];
 }
 
 export const KvGetOutSerializer = {
@@ -17,7 +13,7 @@ export const KvGetOutSerializer = {
             key: object['key'],
             expiry: object['expiry'] ? new Date(object['expiry']) : null,
             value: object['value'],
-            };
+        };
     },
 
     _toJsonObject(self: KvGetOut): any {
@@ -25,6 +21,6 @@ export const KvGetOutSerializer = {
             'key': self.key,
             'expiry': self.expiry,
             'value': self.value,
-            };
+        };
     }
 }

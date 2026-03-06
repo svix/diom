@@ -1,13 +1,9 @@
 // this file is @generated
 
-
-
-
-
 export interface MsgIn {
     value: number[];
-headers?: { [key: string]: string };
-/** Optional partition key. Messages with the same key are routed to the same partition. */
+    headers?: { [key: string]: string };
+    /** Optional partition key. Messages with the same key are routed to the same partition. */
     key?: string | null;
 }
 
@@ -17,7 +13,7 @@ export const MsgInSerializer = {
             value: object['value'],
             headers: object['headers'],
             key: object['key'],
-            };
+        };
     },
 
     _toJsonObject(self: MsgIn): any {
@@ -25,6 +21,6 @@ export const MsgInSerializer = {
             'value': self.value,
             'headers': self.headers,
             'key': self.key,
-            };
+        };
     }
 }
