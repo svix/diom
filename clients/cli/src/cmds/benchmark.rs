@@ -753,12 +753,15 @@ impl BenchShard for BenchMsgsStreamReceive {
         let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
         self.bench_result_rcv.process(t.elapsed(), rcv_bytes)?;
 
+        assert_eq!(out.msgs.len(), self.batch_size as usize);
+
         let latest_by_topic = out.msgs.into_iter().fold(HashMap::new(), |mut map, msg| {
             map.entry(msg.topic)
                 .and_modify(|offset: &mut u64| *offset = (*offset).max(msg.offset))
                 .or_insert(msg.offset);
             map
         });
+        assert_ne!(latest_by_topic.len(), 0);
 
         let t = Instant::now();
         for (topic, offset) in latest_by_topic {
