@@ -47,6 +47,13 @@ impl TopicRow {
         }
     }
 
+    pub(crate) fn partitions_shuffled(&self) -> Vec<u16> {
+        use rand::seq::SliceRandom;
+        let mut list: Vec<u16> = (0..self.partitions).collect();
+        list.shuffle(&mut rand::rng());
+        list
+    }
+
     /// Returns the existing row, or creates a new one and inserts it into the batch.
     pub(crate) fn fetch_or_create(
         metadata_tables: &fjall::Keyspace,

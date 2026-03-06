@@ -4,7 +4,6 @@ use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
-use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
@@ -67,13 +66,10 @@ impl QueueReceiveOperation {
 
         Span::current().record("partition_count", topic_row.partitions);
 
-        let partitions = if let Some(partition) = self.partition {
-            vec![partition.get()]
-        } else {
-            let mut partition_list: Vec<u16> = (0..topic_row.partitions).collect();
-            partition_list.shuffle(&mut rand::rng());
-            partition_list
-        };
+        let partitions = self
+            .partition
+            .map(|p| vec![p.get()])
+            .unwrap_or_else(|| topic_row.partitions_shuffled());
 
         for partition_idx in partitions {
             let partition = Partition::new(partition_idx)?;

@@ -4,7 +4,6 @@ use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
-use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
@@ -69,15 +68,10 @@ impl StreamReceiveOperation {
 
         Span::current().record("partition_count", topic_row.partitions);
 
-        // Create a list of partitions to fetch from
-        let partitions = if let Some(partition) = self.partition {
-            vec![partition.get()]
-        } else {
-            // Create a shuffled list of all the partitions, so we distribute fetches
-            let mut partition_list: Vec<u16> = (0..topic_row.partitions).collect();
-            partition_list.shuffle(&mut rand::rng());
-            partition_list
-        };
+        let partitions = self
+            .partition
+            .map(|p| vec![p.get()])
+            .unwrap_or_else(|| topic_row.partitions_shuffled());
 
         let mut no_lease_available = true;
 
