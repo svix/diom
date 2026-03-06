@@ -33,7 +33,7 @@ impl DeleteOperation {
 }
 
 impl KvRequest for DeleteOperation {
-    fn apply(self, state: KvRaftState<'_>) -> DeleteResponse {
+    fn apply(self, state: KvRaftState<'_>, _timestamp: jiff::Timestamp) -> DeleteResponse {
         DeleteResponse(self.apply_real(state.state))
     }
 }

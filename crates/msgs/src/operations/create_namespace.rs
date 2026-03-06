@@ -30,6 +30,7 @@ impl CreateNamespaceOperation {
     fn apply_real(
         self,
         namespace_state: &coyote_namespace::State,
+        now: Timestamp,
     ) -> coyote_operations::Result<CreateNamespaceResponseData> {
         let op = CreateNamespace::new(
             self.name,
@@ -39,7 +40,7 @@ impl CreateNamespaceOperation {
             self.storage_type,
             Some(self.retention.bytes),
         );
-        let out = op.apply_operation(namespace_state)?;
+        let out = op.apply_operation(namespace_state, now)?;
         Ok(out.into())
     }
 }
@@ -74,7 +75,7 @@ impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
 }
 
 impl MsgsRequest for CreateNamespaceOperation {
-    fn apply(self, state: MsgsRaftState<'_>) -> CreateNamespaceResponse {
-        CreateNamespaceResponse(self.apply_real(state.namespace))
+    fn apply(self, state: MsgsRaftState<'_>, now: Timestamp) -> CreateNamespaceResponse {
+        CreateNamespaceResponse(self.apply_real(state.namespace, now))
     }
 }

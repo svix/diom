@@ -27,9 +27,8 @@ impl BackgroundJob for RecordLogTimestamps {
         let mut ticker = tokio::time::interval(self.cfg.cluster.log_index_interval);
         loop {
             tracing::debug!("recording log timestamps");
-            let now = jiff::Timestamp::now();
             self.handle
-                .client_write(RecordLogTimestampOperation { timestamp: now })
+                .client_write(RecordLogTimestampOperation {})
                 .await?;
             ticker.tick().await;
         }

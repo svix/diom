@@ -174,8 +174,7 @@ impl RateLimiter {
     }
 
     pub fn limit_operation(key: String, units: u64, method: RateLimitConfig) -> LimitOperation {
-        let now = Timestamp::now();
-        LimitOperation::new(key, now, units, method)
+        LimitOperation::new(key, units, method)
     }
 
     pub fn reset_operation(key: String, method: RateLimitConfig) -> ResetOperation {

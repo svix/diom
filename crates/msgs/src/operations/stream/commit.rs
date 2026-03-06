@@ -19,7 +19,6 @@ pub struct StreamCommitOperation {
     pub(crate) topic: TopicPartition,
     consumer_group: ConsumerGroup,
     offset: Offset,
-    now: Timestamp,
 }
 
 impl StreamCommitOperation {
@@ -34,7 +33,6 @@ impl StreamCommitOperation {
             topic,
             consumer_group,
             offset,
-            now: Timestamp::now(),
         }
     }
 
@@ -76,7 +74,7 @@ impl StreamCommitOperation {
 pub struct StreamCommitResponseData {}
 
 impl MsgsRequest for StreamCommitOperation {
-    fn apply(self, state: MsgsRaftState<'_>) -> StreamCommitResponse {
+    fn apply(self, state: MsgsRaftState<'_>, _timestamp: Timestamp) -> StreamCommitResponse {
         StreamCommitResponse(self.apply_real(state.msgs))
     }
 }

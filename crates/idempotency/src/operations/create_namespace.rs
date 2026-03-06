@@ -43,9 +43,10 @@ impl CreateIdempotencyOperation {
     fn apply_real(
         self,
         namespace_state: &coyote_namespace::State,
+        now: Timestamp,
     ) -> coyote_operations::Result<CreateIdempotencyResponseData> {
         let op: CreateNamespace<IdempotencyConfig> = self.into();
-        let out = op.apply_operation(namespace_state)?;
+        let out = op.apply_operation(namespace_state, now)?;
         Ok(out.into())
     }
 }
@@ -72,7 +73,7 @@ impl From<CreateNamespaceOutput<IdempotencyConfig>> for CreateIdempotencyRespons
 }
 
 impl IdempotencyRequest for CreateIdempotencyOperation {
-    fn apply(self, state: IdempotencyRaftState<'_>) -> CreateIdempotencyResponse {
-        CreateIdempotencyResponse(self.apply_real(state.namespace))
+    fn apply(self, state: IdempotencyRaftState<'_>, now: Timestamp) -> CreateIdempotencyResponse {
+        CreateIdempotencyResponse(self.apply_real(state.namespace, now))
     }
 }

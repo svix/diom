@@ -30,16 +30,21 @@ impl Monotime {
     }
 
     /// Get a monotonic version of the current time as the number of millis since epoch, updating our internal knowledge about time.
-    pub fn now_raw(&self) -> i64 {
+    fn now_raw(&self) -> i64 {
         let now = Timestamp::now().as_millisecond();
-        self.bump(now)
+        self.bump_raw(now)
     }
 
-    pub fn bump(&self, other: i64) -> i64 {
+    /// Ingest another timestamp
+    pub fn bump(&self, other: Timestamp) {
+        self.bump_raw(other.as_millisecond());
+    }
+
+    fn bump_raw(&self, other: i64) -> i64 {
         self.0.fetch_max(other, Ordering::AcqRel).max(other)
     }
 
-    pub fn as_i64(&self) -> i64 {
+    fn as_i64(&self) -> i64 {
         self.0.load(Ordering::Acquire)
     }
 }

@@ -16,7 +16,6 @@ pub struct CompleteOperation {
     pub(crate) key: String,
     pub(crate) response: Vec<u8>,
     pub(crate) ttl_seconds: u64,
-    now: Timestamp,
 }
 
 impl CompleteOperation {
@@ -32,14 +31,13 @@ impl CompleteOperation {
             key,
             response,
             ttl_seconds,
-            now: Timestamp::now(),
         }
     }
 }
 
 impl CompleteOperation {
-    fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
-        let expiry = self.now + Duration::from_secs(self.ttl_seconds);
+    fn apply_real(self, state: &IdempotencyRaftState<'_>, now: Timestamp) -> Result<()> {
+        let expiry = now + Duration::from_secs(self.ttl_seconds);
         state.state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
@@ -49,7 +47,7 @@ impl CompleteOperation {
             .into(),
             Some(expiry),
             OperationBehavior::Upsert,
-            self.now,
+            now,
         )?;
 
         Ok(())
@@ -57,7 +55,7 @@ impl CompleteOperation {
 }
 
 impl IdempotencyRequest for CompleteOperation {
-    fn apply(self, state: IdempotencyRaftState<'_>) -> CompleteResponse {
-        CompleteResponse(self.apply_real(&state))
+    fn apply(self, state: IdempotencyRaftState<'_>, now: Timestamp) -> CompleteResponse {
+        CompleteResponse(self.apply_real(&state, now))
     }
 }
