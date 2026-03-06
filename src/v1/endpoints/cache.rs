@@ -222,8 +222,12 @@ async fn cache_create_namespace(
 #[aide_annotate(op_id = "v1.cache.namespace.get")]
 async fn cache_get_namespace(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<CacheGetNamespaceOut>> {
+    // Ensure we have the latest version of namespace
+    repl.raft.ensure_linearizable().await.map_err_generic()?;
+
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?

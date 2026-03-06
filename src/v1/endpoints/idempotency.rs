@@ -207,8 +207,12 @@ async fn idempotency_create_namespace(
 #[aide_annotate(op_id = "v1.idempotency.namespace.get")]
 async fn idempotency_get_namespace(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<IdempotencyGetNamespaceOut>> {
+    // Ensure we have the latest version of namespace
+    repl.raft.ensure_linearizable().await.map_err_generic()?;
+
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?

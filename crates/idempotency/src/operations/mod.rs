@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 
 mod abort;
 mod complete;
-mod create_idempotency;
+mod create_namespace;
 mod try_start;
 
 pub use abort::AbortOperation;
 pub use complete::CompleteOperation;
 pub use try_start::{TryStartOperation, TryStartResponseData};
 
-pub use create_idempotency::{CreateIdempotencyOperation, CreateIdempotencyResponseData};
+pub use create_namespace::{CreateIdempotencyOperation, CreateIdempotencyResponseData};
 
 use diom_operations::raft_module_operations;
 

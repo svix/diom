@@ -62,7 +62,11 @@ impl<C: ModuleConfig> CreateNamespace<C> {
                 namespace
             }
             None => {
-                let id = NamespaceId::new_v4();
+                let id = NamespaceId::new_v7(uuid::Timestamp::from_unix(
+                    uuid::NoContext,
+                    self.timestamp.as_second() as u64,
+                    self.timestamp.subsec_nanosecond() as u32,
+                ));
                 Namespace {
                     id,
                     name: self.name,
