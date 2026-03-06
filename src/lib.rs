@@ -14,7 +14,7 @@ use aide::axum::ApiRouter;
 use axum::{Extension, extract::DefaultBodyLimit, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
 use coyote_error::Error;
-use coyote_namespace::BothDatabases;
+use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::{InstrumentationScope, metrics::Meter, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -41,7 +41,6 @@ use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
         cluster::RaftState,
-        db::{Databases, ReadonlyDatabases},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
@@ -120,7 +119,7 @@ pub struct AppState {
     pub(crate) ro_dbs: ReadonlyDatabases,
 
     // FIXME: temporarily here until we make ro_dbs usable.
-    pub(crate) do_not_use_persistent_db: fjall::Database,
+    pub(crate) do_not_use_dbs: Databases,
 
     pub meter: Meter,
 }
@@ -181,13 +180,11 @@ impl AppState {
         let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
         let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
 
-        let ro_dbs = Databases::new(persistent_db.clone(), ephemeral_db.clone()).readonly();
+        let dbs = Databases::new(persistent_db.clone(), ephemeral_db);
+        let ro_dbs = dbs.readonly();
 
-        let namespace_state = coyote_namespace::State::init(BothDatabases {
-            persistent_db: persistent_db.clone(),
-            ephemeral_db,
-        })
-        .expect("initializing namespace state");
+        let namespace_state =
+            coyote_namespace::State::init(dbs.clone()).expect("initializing namespace state");
 
         let meter = opentelemetry::global::meter("coyote.svix.com");
 
@@ -195,11 +192,11 @@ impl AppState {
             cfg,
             rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
                 "rate_limiter_default",
-                persistent_db.clone(),
+                persistent_db,
             ),
             namespace_state,
             ro_dbs,
-            do_not_use_persistent_db: persistent_db,
+            do_not_use_dbs: dbs,
             meter,
         }
     }

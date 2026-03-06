@@ -1,16 +1,18 @@
 use std::time::Duration;
 
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
-use crate::IdempotencyState;
+use crate::{IdempotencyNamespace, IdempotencyState};
 use coyote_kv::kvcontroller::OperationBehavior;
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
+use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteOperation {
     namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: String,
     pub(crate) response: Vec<u8>,
     pub(crate) ttl_seconds: u64,
@@ -19,13 +21,14 @@ pub struct CompleteOperation {
 
 impl CompleteOperation {
     pub fn new(
-        namespace_id: NamespaceId,
+        namespace: IdempotencyNamespace,
         key: String,
         response: Vec<u8>,
         ttl_seconds: u64,
     ) -> Self {
         Self {
-            namespace_id,
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
             key,
             response,
             ttl_seconds,
@@ -37,7 +40,7 @@ impl CompleteOperation {
 impl CompleteOperation {
     fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
         let expiry = self.now + Duration::from_secs(self.ttl_seconds);
-        state.state.controller.set(
+        state.state.controller(StorageType::Persistent).set(
             self.namespace_id,
             &self.key,
             IdempotencyState::Completed {

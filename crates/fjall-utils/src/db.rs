@@ -1,12 +1,24 @@
-use coyote_namespace::entities::StorageType;
 use fjall::Database;
-use fjall_utils::ReadonlyDatabase;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use crate::ReadonlyDatabase;
+
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PartialOrd, Ord,
+)]
+pub enum StorageType {
+    #[default]
+    Persistent = 0,
+    Ephemeral = 1,
+}
 
 /// A handle to both of the databases. Should only ever be accessed while holding
 /// a read lock on the raft StateMachine
+#[derive(Clone)]
 pub struct Databases {
-    pub(super) persistent: Database,
-    pub(super) ephemeral: Database,
+    pub persistent: Database,
+    pub ephemeral: Database,
 }
 
 impl Databases {

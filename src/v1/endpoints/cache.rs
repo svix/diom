@@ -136,7 +136,7 @@ async fn cache_set(
         .fetch_namespace(data.key.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = SetOperation::new(namespace.id, data.key.to_string(), data.into_model());
+    let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model());
     repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
@@ -156,7 +156,8 @@ async fn cache_get(
     repl.raft.ensure_linearizable().await.map_err_generic()?;
 
     // FIXME: support more than just persistent, etc.
-    let controller = coyote_cache::State::init(state.do_not_use_persistent_db.clone())?.controller;
+    let cache_state = coyote_cache::State::init(state.do_not_use_dbs.clone())?;
+    let controller = cache_state.controller(namespace.storage_type);
 
     let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
 
@@ -184,7 +185,7 @@ async fn cache_del(
         .fetch_namespace(data.key.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = DeleteOperation::new(namespace.id, data.key.to_string());
+    let operation = DeleteOperation::new(namespace, data.key.to_string());
     repl.client_write(operation).await.map_err_generic()?.0?;
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }
