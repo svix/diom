@@ -4,16 +4,12 @@ import {
     RateLimitStatusSerializer,
 } from './rateLimitStatus';
 
-
-
-
-
 export interface RateLimiterCheckOut {
     /** Whether the request is allowed */
     status: RateLimitStatus;
-/** Number of tokens remaining */
+    /** Number of tokens remaining */
     remaining: number;
-/** Seconds until enough tokens are available (only present when allowed is false) */
+    /** Seconds until enough tokens are available (only present when allowed is false) */
     retryAfter?: number | null;
 }
 
@@ -23,7 +19,7 @@ export const RateLimiterCheckOutSerializer = {
             status: RateLimitStatusSerializer._fromJsonObject(object['status']),
             remaining: object['remaining'],
             retryAfter: object['retry_after'],
-            };
+        };
     },
 
     _toJsonObject(self: RateLimiterCheckOut): any {
@@ -31,6 +27,6 @@ export const RateLimiterCheckOutSerializer = {
             'status': RateLimitStatusSerializer._toJsonObject(self.status),
             'remaining': self.remaining,
             'retry_after': self.retryAfter,
-            };
+        };
     }
 }

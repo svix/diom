@@ -8,16 +8,12 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface MsgNamespaceGetOut {
     name: string;
-retention: Retention;
-storageType: StorageType;
-created: Date;
-updated: Date;
+    retention: Retention;
+    storageType: StorageType;
+    created: Date;
+    updated: Date;
 }
 
 export const MsgNamespaceGetOutSerializer = {
@@ -28,7 +24,7 @@ export const MsgNamespaceGetOutSerializer = {
             storageType: StorageTypeSerializer._fromJsonObject(object['storage_type']),
             created: new Date(object['created']),
             updated: new Date(object['updated']),
-            };
+        };
     },
 
     _toJsonObject(self: MsgNamespaceGetOut): any {
@@ -38,6 +34,6 @@ export const MsgNamespaceGetOutSerializer = {
             'storage_type': StorageTypeSerializer._toJsonObject(self.storageType),
             'created': self.created,
             'updated': self.updated,
-            };
+        };
     }
 }
