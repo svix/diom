@@ -27,7 +27,7 @@ fn main() -> anyhow::Result<ExitCode> {
 
     let mut openapi = diom::openapi::initialize_openapi();
 
-    let router = diom::v1::router();
+    let router = diom::v1::router(None);
     _ = aide::axum::ApiRouter::new()
         .nest("/api/v1", router)
         .finish_api_with(&mut openapi, diom::openapi::add_security_scheme);

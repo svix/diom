@@ -1,6 +1,6 @@
 use openraft::RaftTypeConfig;
 
-mod app;
+pub(crate) mod app;
 mod applier;
 mod background;
 mod discovery;

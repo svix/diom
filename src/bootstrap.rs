@@ -2,6 +2,7 @@ use std::{
     collections::{HashMap, hash_map::Entry},
     fs::File,
     num::NonZeroU64,
+    time::Instant,
 };
 
 use crate::{cfg::Configuration as AppConfig, core::cluster::RaftState};
@@ -129,6 +130,7 @@ impl BootstrapConfig {
 }
 
 pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result<()> {
+    let t = Instant::now();
     // FIXME: Do something smarter here:
     let mut retries = 100;
     let shutdown = crate::shutting_down_token();
@@ -211,7 +213,10 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
         }
     }
 
-    tracing::info!("Finished bootstrapping.");
+    tracing::info!(
+        duration_millis = (Instant::now() - t).as_millis(),
+        "Finished bootstrapping."
+    );
 
     Ok(())
 }
