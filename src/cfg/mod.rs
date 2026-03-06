@@ -111,6 +111,7 @@ pub struct Dir {
 
 impl Dir {
     /// Construct a new Dir from a path, returning an error if it is not valid.
+    ///
     /// Note that this does filesystem metadata operations and can be blocking, particularly
     /// if your filesystem is slow (i.e., NFS).
     pub fn new<P: AsRef<Path>>(candidate: P) -> Result<Self> {
@@ -199,13 +200,16 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::cluster_name")]
     pub name: String,
 
-    /// Location to store snapshots. This volume must have at least as much space as the
-    /// persistent DB path and ephemeral DB path combined. Defaults to a subdirectory under the
+    /// Location to store snapshots.
+    ///
+    /// This volume must have at least as much space as the persistent DB path
+    /// and ephemeral DB path combined. Defaults to a subdirectory under the
     /// persistent DB path if not passed.
     #[serde(default)]
     pub snapshot_path: Option<PathBuf>,
 
     /// Location to store logs. For high-throughput systems, this should be a separate volume.
+    ///
     /// Defaults to a subdirectory under the persistent DB path if not passed.
     #[serde(default)]
     pub log_path: Option<PathBuf>,
@@ -213,8 +217,9 @@ pub struct ClusterConfiguration {
     #[serde(default)]
     pub secret: Option<String>,
 
-    /// Timeout for replication requests. This should be set to approximately 2X the RTT of your
-    /// farthest-apart nodes.
+    /// Timeout for replication requests.
+    ///
+    /// This should be set to approximately 2X the RTT of your farthest-apart nodes.
     #[serde(
         rename = "replication_request_timeout_ms",
         with = "crate::serde::duration::millis",
@@ -222,8 +227,9 @@ pub struct ClusterConfiguration {
     )]
     pub replication_request_timeout: Duration,
 
-    /// Timeout for discovery requests. This should be set to approximately 2X the RTT of your
-    /// farthest-apart nodes.
+    /// Timeout for discovery requests.
+    ///
+    /// This should be set to approximately 2X the RTT of your farthest-apart nodes.
     #[serde(
         rename = "discovery_request_timeout_ms",
         with = "crate::serde::duration::millis",
@@ -231,9 +237,11 @@ pub struct ClusterConfiguration {
     )]
     pub discovery_request_timeout: Duration,
 
-    /// Timeout for new connections. If you want to be tolerant of dropped packets, this should be
-    /// set to at least TO + ε, where TO is the initial TCP retransmission timer (typically
-    /// either 1s or 3s, depending on your operating system).
+    /// Timeout for new connections.
+    ///
+    /// If you want to be tolerant of dropped packets, this should be set to at least TO + ε,
+    /// where TO is the initial TCP retransmission timer (typically either 1s or 3s,
+    /// depending on your operating system).
     #[serde(
         rename = "connection_timeout_ms",
         with = "crate::serde::duration::millis",
@@ -241,8 +249,10 @@ pub struct ClusterConfiguration {
     )]
     pub connection_timeout: Duration,
 
-    /// How often to send heartbeats. This controls how fast lost leaders can be detected. Must not be
-    /// less than `replication_request_timeout`.
+    /// How often to send heartbeats.
+    ///
+    /// This controls how fast lost leaders can be detected.
+    /// Must not be less than `replication_request_timeout`.
     #[serde(
         rename = "heartbeat_interval_ms",
         with = "crate::serde::duration::millis",
@@ -250,8 +260,10 @@ pub struct ClusterConfiguration {
     )]
     pub heartbeat_interval: Duration,
 
-    /// The minimum time to let an election run for. This should be set to at least 4x the RTT of
-    /// your farthest-apart nodes, and must not be less than `heartbeat_interval_ms`.
+    /// The minimum time to let an election run for.
+    ///
+    /// This should be set to at least 4x the RTT of your farthest-apart nodes,
+    /// and must not be less than `heartbeat_interval_ms`.
     #[serde(
         rename = "election_timeout_min_ms",
         with = "crate::serde::duration::millis",
@@ -259,8 +271,10 @@ pub struct ClusterConfiguration {
     )]
     pub election_timeout_min: Duration,
 
-    /// The minimum time to let an election run for. This should be set to at least 5x the RTT of
-    /// your farthest-apart nodes and must not be less than `cluster_election_timeout_max`.
+    /// The minimum time to let an election run for.
+    ///
+    /// This should be set to at least 5x the RTT of your farthest-apart nodes
+    /// and must not be less than `cluster_election_timeout_max`.
     #[serde(
         rename = "election_timeout_max_ms",
         with = "crate::serde::duration::millis",
@@ -268,9 +282,10 @@ pub struct ClusterConfiguration {
     )]
     pub election_timeout_max: Duration,
 
-    /// Address that other nodes should use to communicate with this one. If not passed, we'll
-    /// attempt to discover it at boot time. This cannot currently be changed after cluster
-    /// initialization.
+    /// Address that other nodes should use to communicate with this one.
+    ///
+    /// If not passed, we'll attempt to discover it at boot time.
+    /// This cannot currently be changed after cluster initialization.
     #[serde(default)]
     pub advertised_address: Option<PeerAddr>,
 
@@ -279,8 +294,9 @@ pub struct ClusterConfiguration {
     pub seed_nodes: Vec<PeerAddr>,
 
     /// Automatically initialize the cluster on bootup if we can't discover any
-    /// peers and we don't have any existing state. If you initialize all peers
-    /// at exactly the same time, this can potentially cause errors.
+    /// peers and we don't have any existing state.
+    ///
+    /// If you initialize all peers at exactly the same time, this can potentially cause errors.
     #[serde(default = "defaults::cluster_auto_initialize")]
     pub auto_initialize: bool,
 
@@ -305,9 +321,11 @@ pub struct ClusterConfiguration {
     )]
     pub log_index_interval: Duration,
 
-    /// Interval (in transactions) between fsyncing the commit log. This should be set to 1
-    /// for full ACID compliance; at any other value, data may be lost in the event of catastrophic
-    /// hardware failure. If you are using a multi-node cluster and set this to a value other than
+    /// Interval (in transactions) between fsyncing the commit log.
+    ///
+    /// This should be set to 1 for full ACID compliance; at any other value,
+    /// data may be lost in the event of catastrophic hardware failure.
+    /// If you are using a multi-node cluster and set this to a value other than
     /// 1, if a node experiences catastrophic failure and the OS shuts down uncleanly, that node
     /// should be removed from the cluster and rebuilt. If set to 0, logs will only be fsynced on a
     /// timer
@@ -324,8 +342,9 @@ pub struct ClusterConfiguration {
     )]
     pub log_sync_interval_duration: Duration,
 
-    /// Commit logs to the cluster immediately, before fsyncing them to persistent storage. This
-    /// should be set to `false` for full ACID compliance, but can be set to `true` to enable
+    /// Commit logs to the cluster immediately, before fsyncing them to persistent storage.
+    ///
+    /// This should be set to `false` for full ACID compliance, but can be set to `true` to enable
     /// higher throughput than your fsync rate. Note that we always flush to the OS buffers before
     /// acking, so data will only be lost of the OS crashes.
     #[serde(default = "defaults::default_true")]
