@@ -11,7 +11,7 @@ use std::{
 };
 
 use aide::axum::ApiRouter;
-use axum::{Extension, middleware, serve::ListenerExt as _};
+use axum::{Extension, extract::DefaultBodyLimit, middleware, serve::ListenerExt as _};
 use cfg::ConfigurationInner;
 use coyote_error::Error;
 use coyote_namespace::BothDatabases;
@@ -148,6 +148,7 @@ async fn run_interserver(
     let app = core::cluster::router(&cfg)
         .with_state(state.clone())
         .layer(Extension(raft.clone()))
+        .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(coyote_proto::capture_accept_hdr))
         .layer(
             TraceLayer::new_for_http()
