@@ -12,6 +12,7 @@ import (
 type Msgs struct {
 	client    *diom_proto.HttpClient
 	Namespace *MsgsNamespace
+	Queue     *MsgsQueue
 	Stream    *MsgsStream
 	Topic     *MsgsTopic
 }

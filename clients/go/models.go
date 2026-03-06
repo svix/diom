@@ -40,6 +40,10 @@ type (
 	MsgPublishIn                  = diom_models.MsgPublishIn
 	MsgPublishOut                 = diom_models.MsgPublishOut
 	MsgPublishOutTopic            = diom_models.MsgPublishOutTopic
+	MsgQueueAckIn                 = diom_models.MsgQueueAckIn
+	MsgQueueAckOut                = diom_models.MsgQueueAckOut
+	MsgQueueReceiveIn             = diom_models.MsgQueueReceiveIn
+	MsgQueueReceiveOut            = diom_models.MsgQueueReceiveOut
 	MsgStreamCommitIn             = diom_models.MsgStreamCommitIn
 	MsgStreamCommitOut            = diom_models.MsgStreamCommitOut
 	MsgStreamReceiveIn            = diom_models.MsgStreamReceiveIn
@@ -48,6 +52,7 @@ type (
 	MsgTopicConfigureOut          = diom_models.MsgTopicConfigureOut
 	OperationBehavior             = diom_models.OperationBehavior
 	PingOut                       = diom_models.PingOut
+	QueueMsgOut                   = diom_models.QueueMsgOut
 	RateLimitStatus               = diom_models.RateLimitStatus
 	RateLimiterCheckIn            = diom_models.RateLimiterCheckIn
 	RateLimiterCheckOut           = diom_models.RateLimiterCheckOut

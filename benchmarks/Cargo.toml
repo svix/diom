@@ -41,5 +41,9 @@ name = "rate_limiter"
 harness = false
 
 [[bench]]
-name = "msgs"
+name = "stream"
+harness = false
+
+[[bench]]
+name = "queue"
 harness = false

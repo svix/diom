@@ -25,6 +25,22 @@ import {
     MsgPublishOutSerializer,
 } from '../models/msgPublishOut';
 import {
+    type MsgQueueAckIn,
+    MsgQueueAckInSerializer,
+} from '../models/msgQueueAckIn';
+import {
+    type MsgQueueAckOut,
+    MsgQueueAckOutSerializer,
+} from '../models/msgQueueAckOut';
+import {
+    type MsgQueueReceiveIn,
+    MsgQueueReceiveInSerializer,
+} from '../models/msgQueueReceiveIn';
+import {
+    type MsgQueueReceiveOut,
+    MsgQueueReceiveOutSerializer,
+} from '../models/msgQueueReceiveOut';
+import {
     type MsgStreamCommitIn,
     MsgStreamCommitInSerializer,
 } from '../models/msgStreamCommitIn';
@@ -49,6 +65,7 @@ import {
     MsgTopicConfigureOutSerializer,
 } from '../models/msgTopicConfigureOut';
 import { MsgsNamespace } from './msgsNamespace';
+import { MsgsQueue } from './msgsQueue';
 import { MsgsStream } from './msgsStream';
 import { MsgsTopic } from './msgsTopic';
 import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
@@ -58,6 +75,10 @@ export class Msgs {
 
     public get namespace() {
         return new MsgsNamespace(this.requestCtx);
+    }
+
+    public get queue() {
+        return new MsgsQueue(this.requestCtx);
     }
 
     public get stream() {

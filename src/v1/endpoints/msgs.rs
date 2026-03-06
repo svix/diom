@@ -7,10 +7,12 @@ use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, Result, ResultExt};
 use diom_msgs::{
     MsgsNamespace,
-    entities::{ConsumerGroup, Offset, StreamMsgOut, TopicIn, TopicName, TopicPartition},
+    entities::{
+        ConsumerGroup, MsgId, Offset, QueueMsgOut, StreamMsgOut, TopicIn, TopicName, TopicPartition,
+    },
     operations::{
-        CreateNamespaceOperation, PublishOperation, StreamCommitOperation, StreamReceiveOperation,
-        TopicConfigureOperation,
+        CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueReceiveOperation,
+        StreamCommitOperation, StreamReceiveOperation, TopicConfigureOperation,
     },
 };
 use diom_namespace::entities::StorageType;
@@ -253,6 +255,101 @@ async fn stream_commit(
 }
 
 // ---------------------------------------------------------------------------
+// queue/receive
+// ---------------------------------------------------------------------------
+
+fn default_queue_lease_duration_millis() -> u64 {
+    30_000 // 30 seconds
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic"]))]
+struct MsgQueueReceiveIn {
+    pub topic: TopicIn,
+    #[serde(default = "default_batch_size")]
+    pub batch_size: NonZeroU16,
+    #[serde(default = "default_queue_lease_duration_millis")]
+    pub lease_duration_millis: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct MsgQueueReceiveOut {
+    pub msgs: Vec<QueueMsgOut>,
+}
+
+/// Receives messages from a topic as competing consumers.
+///
+/// Messages are individually leased for the specified duration. Multiple consumers can receive
+/// different messages from the same topic concurrently. Leased messages are skipped until they
+/// are acked or their lease expires.
+#[aide_annotate(op_id = "v1.msgs.queue.receive")]
+async fn queue_receive(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgQueueReceiveIn>,
+) -> Result<MsgPackOrJson<MsgQueueReceiveOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.topic.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = QueueReceiveOperation::new(
+        namespace.id,
+        data.topic,
+        data.batch_size,
+        data.lease_duration_millis,
+    )?;
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(MsgQueueReceiveOut {
+        msgs: response
+            .msgs
+            .into_iter()
+            .map(|m| QueueMsgOut {
+                msg_id: m.msg_id,
+                value: m.value,
+                headers: m.headers,
+                timestamp: m.timestamp,
+            })
+            .collect(),
+    }))
+}
+
+// ---------------------------------------------------------------------------
+// queue/ack
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic"]))]
+struct MsgQueueAckIn {
+    pub topic: TopicName,
+    pub msg_ids: Vec<MsgId>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct MsgQueueAckOut {}
+
+/// Acknowledges messages by their opaque msg_ids.
+///
+/// Acked messages are permanently removed from the queue and will never be re-delivered.
+#[aide_annotate(op_id = "v1.msgs.queue.ack")]
+async fn queue_ack(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgQueueAckIn>,
+) -> Result<MsgPackOrJson<MsgQueueAckOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.topic.namespace())?
+        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+
+    let operation = QueueAckOperation::new(namespace.id, data.topic, data.msg_ids);
+    repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(MsgQueueAckOut {}))
+}
+
+// ---------------------------------------------------------------------------
 // topic/configure
 // ---------------------------------------------------------------------------
 
@@ -313,6 +410,16 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/msgs/stream/commit",
             post_with(stream_commit, stream_commit_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/queue/receive",
+            post_with(queue_receive, queue_receive_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/queue/ack",
+            post_with(queue_ack, queue_ack_operation),
             &tag,
         )
         .api_route_with(

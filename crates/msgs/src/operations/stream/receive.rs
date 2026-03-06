@@ -4,7 +4,6 @@ use diom_error::Error;
 use diom_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
-use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
@@ -14,7 +13,7 @@ use crate::{
     tables::{MsgRow, StreamLeaseRow, TopicRow},
 };
 
-use super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
+use super::super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamReceiveOperation {
@@ -59,33 +58,20 @@ impl StreamReceiveOperation {
 
         let mut batch = state.db.batch();
 
-        let topic_row = match TopicRow::fetch(
+        let topic_row = TopicRow::fetch_or_create(
             &state.metadata_tables,
-            TopicRow::key_for(self.namespace_id, &self.topic),
-        )? {
-            Some(topic_row) => topic_row,
-            None => {
-                let topic_row = TopicRow::new(self.topic.clone(), self.now);
-                batch.insert_row(
-                    &state.metadata_tables,
-                    TopicRow::key_for(self.namespace_id, &self.topic),
-                    &topic_row,
-                )?;
-                topic_row
-            }
-        };
+            &mut batch,
+            self.namespace_id,
+            &self.topic,
+            self.now,
+        )?;
 
         Span::current().record("partition_count", topic_row.partitions);
 
-        // Create a list of partitions to fetch from
-        let partitions = if let Some(partition) = self.partition {
-            vec![partition.get()]
-        } else {
-            // Create a shuffled list of all the partitions, so we distribute fetches
-            let mut partition_list: Vec<u16> = (0..topic_row.partitions).collect();
-            partition_list.shuffle(&mut rand::rng());
-            partition_list
-        };
+        let partitions = self
+            .partition
+            .map(|p| vec![p.get()])
+            .unwrap_or_else(|| topic_row.partitions_shuffled());
 
         let mut no_lease_available = true;
 

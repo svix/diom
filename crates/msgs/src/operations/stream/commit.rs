@@ -11,7 +11,7 @@ use crate::{
     tables::{StreamLeaseRow, TopicRow},
 };
 
-use super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
+use super::super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamCommitOperation {
