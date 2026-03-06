@@ -84,11 +84,7 @@ impl KvController {
     ) -> Result<()> {
         let mut batch = self.db.batch();
 
-        let row = KvPairRow {
-            key: key.to_string(),
-            value,
-            expiry,
-        };
+        let row = KvPairRow { value, expiry };
 
         batch.insert_row(&self.keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
 
