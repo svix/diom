@@ -42,8 +42,9 @@ pub struct CoyoteOptions {
     /// for `socks5h`, but not for `socks5`.
     pub proxy_address: Option<String>,
 
-    /// Use HTTP/1.1 on plaintext connections (otherwise forces HTTP/2 on plaintext,
-    /// and uses standard ALPN on secure connections)
+    /// Use HTTP/1.1 on plaintext connections.
+    ///
+    /// Otherwise forces HTTP/2 on plaintext, and uses standard ALPN on secure connections.
     #[cfg(all(feature = "http1", feature = "http2"))]
     pub http1: bool,
 }
