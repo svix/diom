@@ -4,7 +4,7 @@ use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
-use coyote_error::{Error, HttpError, Result, ResultExt};
+use coyote_error::{OptionExt as _, Result, ResultExt};
 use coyote_msgs::{
     MsgsNamespace,
     entities::{
@@ -88,7 +88,7 @@ async fn get_namespace(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let millis = u64::try_from(namespace.config.retention_period.as_millis())
         .ok()
@@ -136,7 +136,7 @@ async fn publish(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.topic.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
@@ -195,7 +195,7 @@ async fn stream_receive(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.topic.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = StreamReceiveOperation::new(
         namespace.id,
@@ -249,7 +249,7 @@ async fn stream_commit(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.topic.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation =
         StreamCommitOperation::new(namespace.id, data.topic, data.consumer_group, data.offset);
@@ -295,7 +295,7 @@ async fn queue_receive(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.topic.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = QueueReceiveOperation::new(
         namespace.id,
@@ -345,7 +345,7 @@ async fn queue_ack(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.topic.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = QueueAckOperation::new(namespace.id, data.topic, data.msg_ids);
     repl.client_write(operation).await.map_err_generic()?.0?;
@@ -381,7 +381,7 @@ async fn topic_configure(
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.topic.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions)?;
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
