@@ -4,10 +4,6 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface IdempotencyCreateNamespaceIn {
     name: string;
     storageType?: StorageType;

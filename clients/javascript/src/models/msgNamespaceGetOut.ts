@@ -8,10 +8,6 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface MsgNamespaceGetOut {
     name: string;
     retention: Retention;

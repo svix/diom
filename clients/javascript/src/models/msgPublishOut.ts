@@ -4,10 +4,6 @@ import {
     MsgPublishOutTopicSerializer,
 } from './msgPublishOutTopic';
 
-
-
-
-
 export interface MsgPublishOut {
     topics: MsgPublishOutTopic[];
 }

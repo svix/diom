@@ -4,10 +4,6 @@ import {
     OperationBehaviorSerializer,
 } from './operationBehavior';
 
-
-
-
-
 export interface KvSetIn {
     key: string;
     value: number[];

@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface RateLimiterFixedWindowConfig {
     /** Window size in seconds */
     windowSize: number;

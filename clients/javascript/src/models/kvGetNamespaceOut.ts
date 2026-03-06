@@ -4,10 +4,6 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface KvGetNamespaceOut {
     name: string;
     maxStorageBytes?: number | null;

@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface MsgIn {
     value: number[];
     headers?: { [key: string]: string };

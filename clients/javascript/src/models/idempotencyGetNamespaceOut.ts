@@ -4,10 +4,6 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface IdempotencyGetNamespaceOut {
     name: string;
     maxStorageBytes?: number | null;

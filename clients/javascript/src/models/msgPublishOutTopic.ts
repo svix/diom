@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface MsgPublishOutTopic {
     topic: string;
     startOffset: number;

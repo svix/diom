@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface RateLimiterGetRemainingOut {
     /** Number of tokens remaining */
     remaining: number;

@@ -4,10 +4,6 @@ import {
     StreamMsgOutSerializer,
 } from './streamMsgOut';
 
-
-
-
-
 export interface MsgStreamReceiveOut {
     msgs: StreamMsgOut[];
 }

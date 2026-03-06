@@ -4,10 +4,6 @@ import {
     MsgInSerializer,
 } from './msgIn';
 
-
-
-
-
 export interface MsgPublishIn {
     topic: string;
     msgs: MsgIn[];

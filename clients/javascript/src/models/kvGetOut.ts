@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface KvGetOut {
     key: string;
     /** Time of expiry */

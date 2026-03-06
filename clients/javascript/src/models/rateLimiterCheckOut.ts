@@ -4,10 +4,6 @@ import {
     RateLimitStatusSerializer,
 } from './rateLimitStatus';
 
-
-
-
-
 export interface RateLimiterCheckOut {
     /** Whether the request is allowed */
     status: RateLimitStatus;

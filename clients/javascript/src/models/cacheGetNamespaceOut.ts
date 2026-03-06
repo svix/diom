@@ -8,10 +8,6 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface CacheGetNamespaceOut {
     name: string;
     maxStorageBytes?: number | null;

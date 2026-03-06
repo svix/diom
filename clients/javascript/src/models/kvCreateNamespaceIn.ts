@@ -4,10 +4,6 @@ import {
     StorageTypeSerializer,
 } from './storageType';
 
-
-
-
-
 export interface KvCreateNamespaceIn {
     name: string;
     storageType?: StorageType;

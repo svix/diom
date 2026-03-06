@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface RateLimiterTokenBucketConfig {
     /** Maximum capacity of the bucket */
     capacity: number;

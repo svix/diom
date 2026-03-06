@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface KvGetIn {
     key: string;
 }

@@ -1,9 +1,5 @@
 // this file is @generated
 
-
-
-
-
 export interface StreamMsgOut {
     offset: number;
     topic: string;
