@@ -51,6 +51,8 @@ struct Manifest {
 
 struct KeyspaceSerializer<'a, B: Write + Seek> {
     file: &'a mut zip::ZipWriter<B>,
+    dir: String,
+    storage_type: StorageType,
     keyspace_name: &'a str,
     current_buffer: Vec<u8>,
     current_index: u32,
@@ -62,11 +64,22 @@ struct KeyspaceSerializer<'a, B: Write + Seek> {
 impl<'a, B: Write + Seek> KeyspaceSerializer<'a, B> {
     const MAX_BYTES_PER_CHUNK: usize = 10_000_000;
 
-    fn new(file: &'a mut zip::ZipWriter<B>, keyspace_name: &'a str) -> anyhow::Result<Self> {
+    fn new(
+        file: &'a mut zip::ZipWriter<B>,
+        storage_type: StorageType,
+        keyspace_name: &'a str,
+    ) -> anyhow::Result<Self> {
         let options = SimpleFileOptions::default().unix_permissions(0o755);
-        file.add_directory(keyspace_name, options)?;
+        let storage_type_label = match storage_type {
+            StorageType::Persistent => "per",
+            StorageType::Ephemeral => "eph",
+        };
+        let dir = format!("{storage_type_label}-{keyspace_name}");
+        file.add_directory(&dir, options)?;
         Ok(Self {
             file,
+            dir,
+            storage_type,
             keyspace_name,
             current_buffer: vec![],
             chunk_metadata: vec![],
@@ -80,7 +93,7 @@ impl<'a, B: Write + Seek> KeyspaceSerializer<'a, B> {
         if self.current_buffer.is_empty() {
             return Ok(());
         }
-        let name = format!("{}/part{}", self.keyspace_name, self.current_index);
+        let name = format!("{}/part{}", self.dir, self.current_index);
         self.current_index += 1;
         self.chunk_metadata.push(Chunk {
             num_records: self.current_count,
@@ -101,7 +114,7 @@ impl<'a, B: Write + Seek> KeyspaceSerializer<'a, B> {
         snapshot: &R,
         keyspace: &Keyspace,
     ) -> anyhow::Result<Vec<Chunk>> {
-        tracing::trace!(keyspace_name = self.keyspace_name, "serializing keyspace");
+        tracing::trace!(storage_type = ?self.storage_type, keyspace_name = self.keyspace_name, "serializing keyspace");
         for guard in snapshot.iter(keyspace) {
             let (k, v) = guard.into_inner()?;
             if self.current_buffer.len() > Self::MAX_BYTES_PER_CHUNK {
@@ -171,8 +184,10 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
         let mut keyspace_manifests = KeyspaceManifest::default();
         for keyspace_name in keyspaces {
             tracing::debug!(keyspace=%keyspace_name, "serializing a keyspce");
+            // TODO: we should be copying keyspace create options from the source;
+            // see https://github.com/fjall-rs/fjall/issues/262
             let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
-            let serializer = KeyspaceSerializer::new(&mut zip, &keyspace_name)?;
+            let serializer = KeyspaceSerializer::new(&mut zip, db_name, &keyspace_name)?;
             let chunks = serializer.serialize_keyspace(&snapshot, &keyspace)?;
             keyspace_manifests.keyspaces.insert(keyspace_name, chunks);
         }
@@ -303,6 +318,81 @@ mod tests {
         assert_eq!(
             keyspace2.get("key4")?.as_ref(),
             Some(&Slice::new(b"value4"))
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_serialize_multiple_dbs() -> anyhow::Result<()> {
+        let workdir = tempfile::tempdir()?;
+        let persistent_db_path = workdir.path().join("persistent");
+        let ephemeral_db_path = workdir.path().join("ephemral");
+
+        let persistent = Database::builder(persistent_db_path)
+            .temporary(true)
+            .open()?;
+        let ks1 = persistent.keyspace("keyspace1", KeyspaceCreateOptions::default)?;
+        ks1.insert("which", b"persistent")?;
+        persistent.persist(fjall::PersistMode::SyncAll)?;
+
+        let ephemeral = Database::builder(ephemeral_db_path)
+            .temporary(true)
+            .open()?;
+        let ks1 = ephemeral.keyspace("keyspace1", KeyspaceCreateOptions::default)?;
+        ks1.insert("which", b"ephemeral")?;
+        ephemeral.persist(fjall::PersistMode::SyncAll)?;
+
+        let persistent_snapshot = persistent.snapshot();
+        let ephemeral_snapshot = ephemeral.snapshot();
+
+        let targets = vec![
+            (
+                StorageType::Persistent,
+                persistent,
+                persistent_snapshot,
+                vec!["keyspace1".to_owned()],
+            ),
+            (
+                StorageType::Ephemeral,
+                ephemeral,
+                ephemeral_snapshot,
+                vec!["keyspace1".to_owned()],
+            ),
+        ];
+
+        let mut cursor = Cursor::new(vec![]);
+        serialize_to_file(targets, &mut cursor)?;
+
+        let out = cursor.into_inner();
+
+        let persistent_load_path = workdir.path().join("persistent_loaded");
+        let persistent_load = Database::builder(persistent_load_path).open()?;
+
+        let ephemeral_load_path = workdir.path().join("ephemeral_loaded");
+        let ephemeral_load = Database::builder(ephemeral_load_path).open()?;
+
+        let databases = Databases::new(persistent_load, ephemeral_load);
+
+        let mut cursor = Cursor::new(out);
+
+        load_from_file(&databases, &mut cursor)?;
+
+        assert_eq!(
+            databases
+                .persistent
+                .keyspace("keyspace1", KeyspaceCreateOptions::default)?
+                .get("which")?
+                .expect("should be present"),
+            b"persistent"
+        );
+        assert_eq!(
+            databases
+                .ephemeral
+                .keyspace("keyspace1", KeyspaceCreateOptions::default)?
+                .get("which")?
+                .expect("should be present"),
+            b"ephemeral"
         );
 
         Ok(())
