@@ -5,13 +5,15 @@
 #![forbid(unsafe_code)]
 
 use clap::{Parser, Subcommand};
-use coyote::{cfg, run, setup_tracing};
+use coyote::{cfg, run_with_listeners};
 use dotenvy::dotenv;
 use mimalloc::MiMalloc;
 use tracing_subscriber::util::SubscriberInitExt;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
+
+mod otel;
 
 #[derive(Parser)]
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
@@ -63,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
     let cfg = cfg::load(args.config_path.as_deref())?;
 
     let (tracing_subscriber, otel_tracer_provider) =
-        setup_tracing(&cfg, /* for_test = */ false);
+        otel::setup_tracing(&cfg, /* for_test = */ false);
     tracing_subscriber.init();
 
     match args.command {
@@ -71,7 +73,8 @@ async fn main() -> anyhow::Result<()> {
             unreachable!("Healthcheck command should be handled before config loading")
         }
         Some(Commands::Server) | None => {
-            run(cfg).await;
+            otel::setup_metrics(&cfg);
+            run_with_listeners(cfg, None, None).await
         }
     };
 
