@@ -1,6 +1,11 @@
 // this file is @generated
 
 export interface MsgStreamSeekIn {
+    offset?: number | null;
+    position?: string | null;
+}
+
+export interface MsgStreamSeekIn_ {
     topic: string;
     consumerGroup: string;
     offset?: number | null;
@@ -9,7 +14,7 @@ export interface MsgStreamSeekIn {
 
 export const MsgStreamSeekInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(object: any): MsgStreamSeekIn {
+    _fromJsonObject(object: any): MsgStreamSeekIn_ {
         return {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
@@ -19,7 +24,7 @@ export const MsgStreamSeekInSerializer = {
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(self: MsgStreamSeekIn): any {
+    _toJsonObject(self: MsgStreamSeekIn_): any {
         return {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,

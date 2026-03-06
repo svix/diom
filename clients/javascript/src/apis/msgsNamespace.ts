@@ -23,30 +23,36 @@ export class MsgsNamespace {
 
     /** Creates or updates a msgs namespace with the given name. */
     public create(
+        name: string,
         msgNamespaceCreateIn: MsgNamespaceCreateIn,
-        ): Promise<MsgNamespaceCreateOut> {
+    ): Promise<MsgNamespaceCreateOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/namespace/create");
 
         request.setBody(
-            MsgNamespaceCreateInSerializer._toJsonObject(
-                msgNamespaceCreateIn,
-            )
+            MsgNamespaceCreateInSerializer._toJsonObject({
+                ...msgNamespaceCreateIn,
+                name,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgNamespaceCreateOutSerializer._fromJsonObject,
         );
     }/** Gets a msgs namespace by name. */
     public get(
+        name: string,
         msgNamespaceGetIn: MsgNamespaceGetIn,
-        ): Promise<MsgNamespaceGetOut> {
+    ): Promise<MsgNamespaceGetOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/namespace/get");
 
         request.setBody(
-            MsgNamespaceGetInSerializer._toJsonObject(
-                msgNamespaceGetIn,
-            )
+            MsgNamespaceGetInSerializer._toJsonObject({
+                ...msgNamespaceGetIn,
+                name,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgNamespaceGetOutSerializer._fromJsonObject,

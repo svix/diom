@@ -36,45 +36,54 @@ export class Kv {
 
     /** KV Set */
     public set(
+        key: string,
         kvSetIn: KvSetIn,
-        ): Promise<KvSetOut> {
+    ): Promise<KvSetOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/set");
 
         request.setBody(
-            KvSetInSerializer._toJsonObject(
-                kvSetIn,
-            )
+            KvSetInSerializer._toJsonObject({
+                ...kvSetIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             KvSetOutSerializer._fromJsonObject,
         );
     }/** KV Get */
     public get(
+        key: string,
         kvGetIn: KvGetIn,
-        ): Promise<KvGetOut> {
+    ): Promise<KvGetOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/get");
 
         request.setBody(
-            KvGetInSerializer._toJsonObject(
-                kvGetIn,
-            )
+            KvGetInSerializer._toJsonObject({
+                ...kvGetIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             KvGetOutSerializer._fromJsonObject,
         );
     }/** KV Delete */
     public delete(
+        key: string,
         kvDeleteIn: KvDeleteIn,
-        ): Promise<KvDeleteOut> {
+    ): Promise<KvDeleteOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/delete");
 
         request.setBody(
-            KvDeleteInSerializer._toJsonObject(
-                kvDeleteIn,
-            )
+            KvDeleteInSerializer._toJsonObject({
+                ...kvDeleteIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             KvDeleteOutSerializer._fromJsonObject,

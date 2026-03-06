@@ -1,6 +1,11 @@
 // this file is @generated
 
 export interface MsgQueueReceiveIn {
+    batchSize?: number;
+    leaseDurationMillis?: number;
+}
+
+export interface MsgQueueReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
@@ -9,7 +14,7 @@ export interface MsgQueueReceiveIn {
 
 export const MsgQueueReceiveInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(object: any): MsgQueueReceiveIn {
+    _fromJsonObject(object: any): MsgQueueReceiveIn_ {
         return {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
@@ -19,7 +24,7 @@ export const MsgQueueReceiveInSerializer = {
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(self: MsgQueueReceiveIn): any {
+    _toJsonObject(self: MsgQueueReceiveIn_): any {
         return {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,

@@ -1,6 +1,10 @@
 // this file is @generated
 
 export interface MsgStreamCommitIn {
+    offset: number;
+}
+
+export interface MsgStreamCommitIn_ {
     topic: string;
     consumerGroup: string;
     offset: number;
@@ -8,7 +12,7 @@ export interface MsgStreamCommitIn {
 
 export const MsgStreamCommitInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(object: any): MsgStreamCommitIn {
+    _fromJsonObject(object: any): MsgStreamCommitIn_ {
         return {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
@@ -17,7 +21,7 @@ export const MsgStreamCommitInSerializer = {
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(self: MsgStreamCommitIn): any {
+    _toJsonObject(self: MsgStreamCommitIn_): any {
         return {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,

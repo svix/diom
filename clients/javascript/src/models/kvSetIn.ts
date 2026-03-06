@@ -5,6 +5,13 @@ import {
 } from './operationBehavior';
 
 export interface KvSetIn {
+    value: number[];
+    /** Time to live in milliseconds */
+    ttl?: number | null;
+    behavior?: OperationBehavior;
+}
+
+export interface KvSetIn_ {
     key: string;
     value: number[];
     /** Time to live in milliseconds */
@@ -14,7 +21,7 @@ export interface KvSetIn {
 
 export const KvSetInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(object: any): KvSetIn {
+    _fromJsonObject(object: any): KvSetIn_ {
         return {
             key: object['key'],
             value: object['value'],
@@ -24,7 +31,7 @@ export const KvSetInSerializer = {
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(self: KvSetIn): any {
+    _toJsonObject(self: KvSetIn_): any {
         return {
             'key': self.key,
             'value': self.value,

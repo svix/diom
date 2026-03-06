@@ -20,15 +20,18 @@ export class Idempotency {
 
     /** Abandon an idempotent request (remove lock without saving response) */
     public abort(
+        key: string,
         idempotencyAbortIn: IdempotencyAbortIn,
-        ): Promise<IdempotencyAbortOut> {
+    ): Promise<IdempotencyAbortOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/abort");
 
         request.setBody(
-            IdempotencyAbortInSerializer._toJsonObject(
-                idempotencyAbortIn,
-            )
+            IdempotencyAbortInSerializer._toJsonObject({
+                ...idempotencyAbortIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             IdempotencyAbortOutSerializer._fromJsonObject,

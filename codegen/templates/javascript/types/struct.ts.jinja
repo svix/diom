@@ -6,17 +6,38 @@ import {
 } from './{{ c | to_lower_camel_case }}';
 {% endfor -%}
 {% set type_name = type.name | to_upper_camel_case -%}
+{% set has_positional_fields = type.fields | selectattr("positional") | length > 0 -%}
+{% set has_non_positional_fields = type.fields | selectattr("positional", "false") | length > 0 -%}
 
-{% if type.fields | length == 0 -%}
+{% if not has_non_positional_fields -%}
 // biome-ignore-all lint/suspicious/noEmptyInterface: forwards compat
 {% endif -%}
 
 {{ doc_comment }}
 export interface {{ type_name }} {
+{%- for field in type.fields %}
+    {%- if not field.positional %}
+    {% if field.description is defined -%}
+        {{ field.description | with_javadoc_deprecation(field.deprecated) | to_doc_comment(style="js") }}
+    {% endif -%}
+    {% set field_lhs = field.name | to_lower_camel_case -%}
+    {% if not field.required %}{% set field_lhs %}{{ field_lhs }}?{% endset %}{% endif -%}
+    {% set ty = field.type.to_js() -%}
+    {% if field.nullable %}{% set ty %}{{ ty }} | null{% endset %}{% endif -%}
+    {{ field_lhs }}: {{ ty }};
+    {%- endif %}
+{%- endfor %}
+}
+
+{% if has_positional_fields -%}
+export interface {{ type_name }}_ {
     {%- include "types/struct_fields.ts.jinja" %}
 }
 
+{% endif -%}
+
 export const {{ type_name }}Serializer = {
+    {% if has_positional_fields %}{% set type_name = type_name ~ "_" %}{% endif -%}
     {% set underscore_prefix %}{% if type.fields | length == 0%}_{% endif %}{% endset -%}
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject({{ underscore_prefix }}object: any): {{ type_name }} {

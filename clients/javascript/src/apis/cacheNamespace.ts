@@ -24,14 +24,13 @@ export class CacheNamespace {
     /** Create cache namespace */
     public create(
         cacheCreateNamespaceIn: CacheCreateNamespaceIn,
-        ): Promise<CacheCreateNamespaceOut> {
+    ): Promise<CacheCreateNamespaceOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/namespace/create");
 
         request.setBody(
-            CacheCreateNamespaceInSerializer._toJsonObject(
-                cacheCreateNamespaceIn,
-            )
+            CacheCreateNamespaceInSerializer._toJsonObject(cacheCreateNamespaceIn)
         );
+        
         return request.send(
             this.requestCtx,
             CacheCreateNamespaceOutSerializer._fromJsonObject,
@@ -39,14 +38,13 @@ export class CacheNamespace {
     }/** Get cache namespace */
     public get(
         cacheGetNamespaceIn: CacheGetNamespaceIn,
-        ): Promise<CacheGetNamespaceOut> {
+    ): Promise<CacheGetNamespaceOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/cache/namespace/get");
 
         request.setBody(
-            CacheGetNamespaceInSerializer._toJsonObject(
-                cacheGetNamespaceIn,
-            )
+            CacheGetNamespaceInSerializer._toJsonObject(cacheGetNamespaceIn)
         );
+        
         return request.send(
             this.requestCtx,
             CacheGetNamespaceOutSerializer._fromJsonObject,
