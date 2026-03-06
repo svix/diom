@@ -851,6 +851,80 @@
         ]
       }
     },
+    "/api/v1/msgs/queue/receive": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Queue Receive",
+        "description": "Receives messages from a topic as competing consumers.\n\nMessages are individually leased for the specified duration. Multiple consumers can receive\ndifferent messages from the same topic concurrently. Leased messages are skipped until they\nare acked or their lease expires.",
+        "operationId": "v1.msgs.queue.receive",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgQueueReceiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgQueueReceiveOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/msgs/queue/ack": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Queue Ack",
+        "description": "Acknowledges messages by their opaque msg_ids.\n\nAcked messages are permanently removed from the queue and will never be re-delivered.",
+        "operationId": "v1.msgs.queue.ack",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgQueueAckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgQueueAckOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/msgs/topic/configure": {
       "post": {
         "tags": [
@@ -1752,6 +1826,71 @@
           "offset"
         ]
       },
+      "MsgQueueAckIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "msg_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "topic",
+          "msg_ids"
+        ],
+        "x-positional": [
+          "topic"
+        ]
+      },
+      "MsgQueueAckOut": {
+        "type": "object"
+      },
+      "MsgQueueReceiveIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "batch_size": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 1,
+            "maximum": 65535,
+            "default": 10
+          },
+          "lease_duration_millis": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "default": 30000
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "x-positional": [
+          "topic"
+        ]
+      },
+      "MsgQueueReceiveOut": {
+        "type": "object",
+        "properties": {
+          "msgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueueMsgOut"
+            }
+          }
+        },
+        "required": [
+          "msgs"
+        ]
+      },
       "MsgStreamCommitIn": {
         "type": "object",
         "properties": {
@@ -1878,6 +2017,39 @@
         },
         "required": [
           "ok"
+        ]
+      },
+      "QueueMsgOut": {
+        "type": "object",
+        "properties": {
+          "msg_id": {
+            "type": "string"
+          },
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "headers": {
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "msg_id",
+          "value",
+          "timestamp"
         ]
       },
       "RateLimitStatus": {

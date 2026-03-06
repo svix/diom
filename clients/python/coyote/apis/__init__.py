@@ -8,6 +8,7 @@ from .kv import Kv, KvAsync
 from .kv_namespace import KvNamespace, KvNamespaceAsync
 from .msgs import Msgs, MsgsAsync
 from .msgs_namespace import MsgsNamespace, MsgsNamespaceAsync
+from .msgs_queue import MsgsQueue, MsgsQueueAsync
 from .msgs_stream import MsgsStream, MsgsStreamAsync
 from .msgs_topic import MsgsTopic, MsgsTopicAsync
 from .rate_limiter import RateLimiter, RateLimiterAsync
@@ -32,6 +33,8 @@ __all__ = [
     "MsgsAsync",
     "MsgsNamespace",
     "MsgsNamespaceAsync",
+    "MsgsQueue",
+    "MsgsQueueAsync",
     "MsgsStream",
     "MsgsStreamAsync",
     "MsgsTopic",

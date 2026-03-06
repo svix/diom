@@ -36,6 +36,10 @@ mod msg_namespace_get_out;
 mod msg_publish_in;
 mod msg_publish_out;
 mod msg_publish_out_topic;
+mod msg_queue_ack_in;
+mod msg_queue_ack_out;
+mod msg_queue_receive_in;
+mod msg_queue_receive_out;
 mod msg_stream_commit_in;
 mod msg_stream_commit_out;
 mod msg_stream_receive_in;
@@ -44,6 +48,7 @@ mod msg_topic_configure_in;
 mod msg_topic_configure_out;
 mod operation_behavior;
 mod ping_out;
+mod queue_msg_out;
 mod rate_limit_status;
 mod rate_limiter_check_in;
 mod rate_limiter_check_out;
@@ -91,6 +96,10 @@ pub use self::{
     msg_publish_in::MsgPublishIn,
     msg_publish_out::MsgPublishOut,
     msg_publish_out_topic::MsgPublishOutTopic,
+    msg_queue_ack_in::MsgQueueAckIn,
+    msg_queue_ack_out::MsgQueueAckOut,
+    msg_queue_receive_in::MsgQueueReceiveIn,
+    msg_queue_receive_out::MsgQueueReceiveOut,
     msg_stream_commit_in::MsgStreamCommitIn,
     msg_stream_commit_out::MsgStreamCommitOut,
     msg_stream_receive_in::MsgStreamReceiveIn,
@@ -99,6 +108,7 @@ pub use self::{
     msg_topic_configure_out::MsgTopicConfigureOut,
     operation_behavior::OperationBehavior,
     ping_out::PingOut,
+    queue_msg_out::QueueMsgOut,
     rate_limit_status::RateLimitStatus,
     rate_limiter_check_in::{RateLimiterCheckIn, RateLimiterCheckInConfig},
     rate_limiter_check_out::RateLimiterCheckOut,
@@ -116,6 +126,7 @@ pub(crate) use self::{
     idempotency_abort_in::IdempotencyAbortIn_, kv_delete_in::KvDeleteIn_, kv_get_in::KvGetIn_,
     kv_set_in::KvSetIn_, msg_namespace_create_in::MsgNamespaceCreateIn_,
     msg_namespace_get_in::MsgNamespaceGetIn_, msg_publish_in::MsgPublishIn_,
+    msg_queue_ack_in::MsgQueueAckIn_, msg_queue_receive_in::MsgQueueReceiveIn_,
     msg_stream_commit_in::MsgStreamCommitIn_, msg_stream_receive_in::MsgStreamReceiveIn_,
     msg_topic_configure_in::MsgTopicConfigureIn_,
 };

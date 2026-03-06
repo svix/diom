@@ -1,0 +1,93 @@
+use coyote_error::Error;
+use coyote_namespace::entities::NamespaceId;
+use fjall_utils::{TableRow, WriteBatchExt};
+use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    State,
+    entities::{ConsumerGroup, MsgId, TopicName},
+    tables::{QueueLeaseRow, StreamLeaseRow, TopicRow},
+};
+
+use super::{
+    super::{MsgsRaftState, MsgsRequest, QueueAckResponse},
+    receive::compact_cursor,
+};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueueAckOperation {
+    namespace_id: NamespaceId,
+    pub(crate) topic: TopicName,
+    msg_ids: Vec<MsgId>,
+    now: Timestamp,
+}
+
+impl QueueAckOperation {
+    pub fn new(namespace_id: NamespaceId, topic: TopicName, msg_ids: Vec<MsgId>) -> Self {
+        Self {
+            namespace_id,
+            topic,
+            msg_ids,
+            now: Timestamp::now(),
+        }
+    }
+
+    #[tracing::instrument(skip_all, level = "debug")]
+    fn apply_real(self, state: &State) -> coyote_operations::Result<QueueAckResponseData> {
+        let topic_row = TopicRow::fetch(
+            &state.metadata_tables,
+            TopicRow::key_for(self.namespace_id, &self.topic),
+        )?
+        .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
+
+        let mut batch = state.db.batch();
+        let queue_cg = ConsumerGroup::queue();
+
+        // Track which partitions were affected for cursor compaction
+        let mut affected_partitions = std::collections::BTreeSet::new();
+
+        for msg_id in &self.msg_ids {
+            batch.insert_row(
+                &state.metadata_tables,
+                QueueLeaseRow::key_for(topic_row.id, msg_id),
+                &QueueLeaseRow {
+                    expiry: Timestamp::MAX,
+                },
+            )?;
+            affected_partitions.insert(msg_id.partition);
+        }
+
+        // Compact cursor for each affected partition
+        for partition in affected_partitions {
+            let Some(mut cursor) = StreamLeaseRow::fetch(
+                &state.metadata_tables,
+                StreamLeaseRow::key_for(topic_row.id, partition, &queue_cg),
+            )?
+            else {
+                continue;
+            };
+
+            compact_cursor(&mut cursor, &mut batch, state, topic_row.id, partition)?;
+
+            batch.insert_row(
+                &state.metadata_tables,
+                StreamLeaseRow::key_for(topic_row.id, partition, &queue_cg),
+                &cursor,
+            )?;
+        }
+
+        batch.commit().map_err(Error::from)?;
+
+        Ok(QueueAckResponseData {})
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueueAckResponseData {}
+
+impl MsgsRequest for QueueAckOperation {
+    fn apply(self, state: MsgsRaftState<'_>) -> QueueAckResponse {
+        QueueAckResponse(self.apply_real(state.msgs))
+    }
+}
