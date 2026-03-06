@@ -93,8 +93,20 @@ impl BenchmarkArgs {
         eprintln!();
         bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
         bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
-        bench_msgs_stream(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
-        bench_msgs_queue(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+        bench_msgs_stream(
+            Arc::clone(&bench_cfg),
+            batch_size,
+            &mut all_stats,
+            filter.as_ref(),
+        )
+        .await?;
+        bench_msgs_queue(
+            Arc::clone(&bench_cfg),
+            batch_size,
+            &mut all_stats,
+            filter.as_ref(),
+        )
+        .await?;
 
         eprintln!("\n");
 
@@ -876,6 +888,7 @@ impl BenchShard for BenchMsgsQueueReceive {
 
 async fn bench_msgs_stream(
     cfg: Arc<BenchConfig>,
+    batch_size: u16,
     all_stats: &mut Vec<Stats>,
     filter: Option<&Pattern>,
 ) -> Result<()> {
@@ -885,17 +898,10 @@ async fn bench_msgs_stream(
         .create("bench".to_string(), MsgNamespaceCreateIn::new())
         .await?;
 
-    BenchMsgsPublish::new(1, "stream")
+    BenchMsgsPublish::new(batch_size, "stream")
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
-    BenchMsgsStreamReceive::new(1)
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
-        .await?;
-
-    BenchMsgsPublish::new(10, "stream")
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
-        .await?;
-    BenchMsgsStreamReceive::new(10)
+    BenchMsgsStreamReceive::new(batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
@@ -903,6 +909,7 @@ async fn bench_msgs_stream(
 
 async fn bench_msgs_queue(
     cfg: Arc<BenchConfig>,
+    batch_size: u16,
     all_stats: &mut Vec<Stats>,
     filter: Option<&Pattern>,
 ) -> Result<()> {
@@ -912,17 +919,10 @@ async fn bench_msgs_queue(
         .create("bench".to_string(), MsgNamespaceCreateIn::new())
         .await?;
 
-    BenchMsgsPublish::new(1, "queue")
+    BenchMsgsPublish::new(batch_size, "queue")
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
-    BenchMsgsQueueReceive::new(1)
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
-        .await?;
-
-    BenchMsgsPublish::new(10, "queue")
-        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
-        .await?;
-    BenchMsgsQueueReceive::new(10)
+    BenchMsgsQueueReceive::new(batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
