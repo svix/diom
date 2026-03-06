@@ -6,9 +6,11 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
     secrets: inherit
-  benchmark:
-    uses: ./.github/workflows/benchmark.yml
-    secrets: inherit
+    # Disabling for now because results are too inconsistent
+    # on github runners. Will revisit later.
+    #  benchmark:
+    #    uses: ./.github/workflows/benchmark.yml
+    #    secrets: inherit
   docker_publish:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
