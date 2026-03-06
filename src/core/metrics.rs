@@ -1,4 +1,7 @@
-use opentelemetry::metrics::{Gauge, Meter};
+use std::fmt::{self, Display, Formatter};
+
+use http::StatusCode;
+use opentelemetry::metrics::{Counter, Gauge, Histogram, Meter};
 
 use super::cluster::NodeId;
 
@@ -84,5 +87,109 @@ impl LogMetrics {
                 self.node_id.to_string(),
             )],
         );
+    }
+}
+
+pub enum ConnectionType {
+    Internal,
+    External,
+}
+
+impl Display for ConnectionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            ConnectionType::Internal => "internal",
+            ConnectionType::External => "external",
+        };
+        write!(f, "{value}")
+    }
+}
+pub struct ConnectionMetrics {
+    pub total: Counter<u64>,
+}
+
+impl ConnectionMetrics {
+    pub fn new(meter: &Meter) -> Self {
+        Self {
+            total: meter
+                .u64_counter("coyote.connections.total")
+                .with_description("Total number of accepted connections")
+                .build(),
+        }
+    }
+
+    pub fn accepted(&self, node_id: NodeId, t: ConnectionType) {
+        self.total.add(
+            1,
+            &[
+                opentelemetry::KeyValue::new("node_id", node_id.to_string()),
+                opentelemetry::KeyValue::new("connection_type", t.to_string()),
+            ],
+        );
+    }
+}
+
+pub struct RequestMetrics {
+    success: Counter<u64>,
+    client_error: Counter<u64>,
+    server_error: Counter<u64>,
+    latency: Histogram<u64>,
+    content_length: Histogram<u64>,
+}
+
+impl RequestMetrics {
+    pub fn new(meter: &Meter) -> Self {
+        Self {
+            success: meter
+                .u64_counter("coyote.request.success")
+                .with_description("Count of successful requests")
+                .build(),
+            client_error: meter
+                .u64_counter("coyote.request.client_error")
+                .with_description("Count of client errors")
+                .build(),
+            server_error: meter
+                .u64_counter("coyote.request.server_error")
+                .with_description("Count of server errors")
+                .build(),
+            latency: meter
+                .u64_histogram("coyote.request.duration")
+                .with_description("Request latency")
+                .with_unit("ms")
+                .build(),
+            content_length: meter
+                .u64_histogram("coyote.request.content_length")
+                .with_description("Content length")
+                .with_unit("By")
+                .build(),
+        }
+    }
+
+    pub fn record(
+        &self,
+        route: &str,
+        node_id: NodeId,
+        status: StatusCode,
+        duration: u64,
+        content_length: Option<u64>,
+    ) {
+        let attrs = &[
+            opentelemetry::KeyValue::new("route", route.to_owned()),
+            opentelemetry::KeyValue::new("node_id", node_id.to_string()),
+        ];
+
+        if status.is_success() {
+            self.success.add(1, attrs);
+        } else if status.is_server_error() {
+            self.server_error.add(1, attrs);
+        } else {
+            self.client_error.add(1, attrs);
+        }
+
+        self.latency.record(duration, attrs);
+
+        if let Some(cl) = content_length {
+            self.content_length.record(cl, attrs);
+        }
     }
 }

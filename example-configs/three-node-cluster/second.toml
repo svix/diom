@@ -4,6 +4,9 @@ jwt_algorithm = "HS256"
 environment = "dev"
 persistent_db.path = "./db-second"
 ephemeral_db.path = "./db-second-ephemeral"
+opentelemetry_address = "http://localhost:4317"
+opentelemetry_metrics_address = "http://localhost:9090/api/v1/otlp/v1/metrics"
+opentelemetry_metrics_use_http = true
 
 [cluster]
 secret = "hunter2"
