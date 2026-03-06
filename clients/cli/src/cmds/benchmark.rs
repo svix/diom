@@ -14,7 +14,7 @@ use diom_client::{
     DiomClient,
     models::{
         CacheGetIn, CacheSetIn, KvGetIn, KvSetIn, MsgIn, MsgNamespaceCreateIn, MsgPublishIn,
-        MsgStreamCommitIn, MsgStreamReceiveIn,
+        MsgQueueAckIn, MsgQueueReceiveIn, MsgStreamCommitIn, MsgStreamReceiveIn,
     },
 };
 use futures_util::future::try_join_all;
@@ -93,7 +93,8 @@ impl BenchmarkArgs {
         eprintln!();
         bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
         bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
-        bench_msgs(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+        bench_msgs_stream(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+        bench_msgs_queue(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
 
         eprintln!("\n");
 
@@ -631,20 +632,22 @@ async fn bench_cache(
 struct BenchMsgsPublish {
     bench_result: BenchResult,
     batch_size: u16,
+    label: String,
 }
 
 impl BenchMsgsPublish {
-    fn new(batch_size: u16) -> Self {
+    fn new(batch_size: u16, label: &str) -> Self {
         Self {
             bench_result: BenchResult::new().set_batch_size(batch_size),
             batch_size,
+            label: label.to_owned(),
         }
     }
 }
 
 impl BenchShard for BenchMsgsPublish {
     fn test_name(&self) -> String {
-        format!("msgs.publish (batch={})", self.batch_size)
+        format!("msgs.{}.publish (batch={})", self.label, self.batch_size)
     }
 
     async fn run(
@@ -654,7 +657,7 @@ impl BenchShard for BenchMsgsPublish {
         shard_id: u64,
         _iteration: u64,
     ) -> Result<()> {
-        let topic = format!("bench:bench/topic/{shard_id}");
+        let topic = format!("bench:bench-{}/topic/{shard_id}", self.label);
         let msgs: Vec<_> = (0..self.batch_size)
             .map(|_| {
                 let mut payload = vec![0u8; 2_834];
@@ -708,7 +711,7 @@ impl BenchMsgsStreamReceive {
 
 impl BenchShard for BenchMsgsStreamReceive {
     fn test_name(&self) -> String {
-        format!("msgs.receive (batch={})", self.batch_size)
+        format!("msgs.stream.receive (batch={})", self.batch_size)
     }
 
     async fn run(
@@ -719,7 +722,7 @@ impl BenchShard for BenchMsgsStreamReceive {
         _iteration: u64,
     ) -> Result<()> {
         let consumer_group = "consumer";
-        let topic = format!("bench:bench/topic/{shard_id}");
+        let topic = format!("bench:bench-stream/topic/{shard_id}");
         let mut value = vec![0u8; 256];
         rng.fill(&mut value[..]);
 
@@ -788,30 +791,138 @@ impl BenchShard for BenchMsgsStreamReceive {
     }
 }
 
-async fn bench_msgs(
+#[derive(Clone)]
+struct BenchMsgsQueueReceive {
+    bench_result_rcv: BenchResult,
+    bench_result_ack: BenchResult,
+    batch_size: u16,
+}
+
+impl BenchMsgsQueueReceive {
+    fn new(batch_size: u16) -> Self {
+        Self {
+            bench_result_rcv: BenchResult::new().set_batch_size(batch_size),
+            bench_result_ack: BenchResult::new().set_batch_size(batch_size),
+            batch_size,
+        }
+    }
+}
+
+impl BenchShard for BenchMsgsQueueReceive {
+    fn test_name(&self) -> String {
+        format!("msgs.queue.receive (batch={})", self.batch_size)
+    }
+
+    async fn run(
+        &mut self,
+        client: &DiomClient,
+        _rng: &mut StdRng,
+        shard_id: u64,
+        _iteration: u64,
+    ) -> Result<()> {
+        let topic = format!("bench:bench-queue/topic/{shard_id}");
+
+        let t = Instant::now();
+        let out = client
+            .msgs()
+            .queue()
+            .receive(
+                topic.clone(),
+                MsgQueueReceiveIn::new()
+                    .with_batch_size(self.batch_size)
+                    .with_lease_duration_millis(300_000u64),
+            )
+            .await?;
+        let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
+        self.bench_result_rcv.process(t.elapsed(), rcv_bytes)?;
+
+        let msg_ids: Vec<String> = out.msgs.into_iter().map(|m| m.msg_id).collect();
+        let t = Instant::now();
+        client
+            .msgs()
+            .queue()
+            .ack(topic, MsgQueueAckIn::new(msg_ids))
+            .await?;
+        self.bench_result_ack.process(t.elapsed(), 0)?;
+
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        let (rcv_results, ack_results): (Vec<_>, Vec<_>) = results
+            .into_iter()
+            .map(|x| (x.bench_result_rcv, x.bench_result_ack))
+            .unzip();
+        BenchResult::finalize_result_stats(
+            Arc::clone(&cfg),
+            rcv_results,
+            format!("{} - receive", self.test_name()),
+            all_stats,
+        )?;
+        BenchResult::finalize_result_stats(
+            Arc::clone(&cfg),
+            ack_results,
+            format!("{} - ack", self.test_name()),
+            all_stats,
+        )?;
+        Ok(())
+    }
+}
+
+async fn bench_msgs_stream(
     cfg: Arc<BenchConfig>,
     all_stats: &mut Vec<Stats>,
     filter: Option<&Pattern>,
 ) -> Result<()> {
-    let ns_name = "bench";
-
     cfg.client
         .msgs()
         .namespace()
-        .create(ns_name.to_string(), MsgNamespaceCreateIn::new())
+        .create("bench".to_string(), MsgNamespaceCreateIn::new())
         .await?;
 
-    BenchMsgsPublish::new(1)
+    BenchMsgsPublish::new(1, "stream")
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     BenchMsgsStreamReceive::new(1)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
 
-    BenchMsgsPublish::new(10)
+    BenchMsgsPublish::new(10, "stream")
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     BenchMsgsStreamReceive::new(10)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    Ok(())
+}
+
+async fn bench_msgs_queue(
+    cfg: Arc<BenchConfig>,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
+    cfg.client
+        .msgs()
+        .namespace()
+        .create("bench".to_string(), MsgNamespaceCreateIn::new())
+        .await?;
+
+    BenchMsgsPublish::new(1, "queue")
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    BenchMsgsQueueReceive::new(1)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+
+    BenchMsgsPublish::new(10, "queue")
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    BenchMsgsQueueReceive::new(10)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())
