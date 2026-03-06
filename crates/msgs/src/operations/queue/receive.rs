@@ -9,7 +9,7 @@ use tracing::Span;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, Partition, TopicIn, TopicName},
+    entities::{ConsumerGroup, MsgId, Partition, TopicId, TopicIn, TopicName},
     tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow},
 };
 
@@ -49,8 +49,9 @@ impl QueueReceiveOperation {
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
     fn apply_real(self, state: &State) -> coyote_operations::Result<QueueReceiveResponseData> {
         let lease_duration = Duration::from_millis(self.lease_duration_millis);
-        let mut remaining = self.batch_size.get() as usize;
-        let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining);
+        let mut remaining = self.batch_size.get();
+        let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
+
         let expiry = self.now + lease_duration;
         let queue_cg = ConsumerGroup::queue();
 
@@ -87,18 +88,17 @@ impl QueueReceiveOperation {
             let mut scan_offset = cursor.offset;
 
             // Scan messages from cursor, skipping leased and acked ones
-            'scan: loop {
+            loop {
                 if remaining == 0 {
                     break;
                 }
 
-                let fetch_count = (remaining as u16).saturating_add(16);
                 let msgs = MsgRow::fetch_range(
                     &state.msg_table,
                     topic_row.id,
                     partition,
                     scan_offset,
-                    fetch_count,
+                    remaining,
                 )?;
 
                 if msgs.is_empty() {
@@ -107,37 +107,18 @@ impl QueueReceiveOperation {
 
                 let msgs_len = msgs.len() as u64;
 
-                for (i, msg) in msgs.into_iter().enumerate() {
-                    let offset = scan_offset + i as u64;
-                    let msg_id = MsgId::new(partition, offset);
-
-                    if let Some(lease) = QueueLeaseRow::fetch(
-                        &state.metadata_tables,
-                        QueueLeaseRow::key_for(topic_row.id, &msg_id),
-                    )? && (lease.is_acked() || !lease.is_available(self.now))
-                    {
-                        continue;
-                    }
-
-                    // Available — lease this message
-                    batch.insert_row(
-                        &state.metadata_tables,
-                        QueueLeaseRow::key_for(topic_row.id, &msg_id),
-                        &QueueLeaseRow { expiry },
-                    )?;
-
-                    all_msgs.push(QueueReceiveMsg {
-                        msg_id,
-                        value: msg.value,
-                        headers: msg.headers,
-                        timestamp: msg.timestamp,
-                    });
-
-                    remaining -= 1;
-                    if remaining == 0 {
-                        break 'scan;
-                    }
-                }
+                let n = lease_available_msgs(
+                    state,
+                    &mut batch,
+                    &mut all_msgs,
+                    msgs,
+                    scan_offset,
+                    partition,
+                    topic_row.id,
+                    self.now,
+                    expiry,
+                )?;
+                remaining = remaining.saturating_sub(n);
 
                 scan_offset += msgs_len;
             }
@@ -164,13 +145,59 @@ impl QueueReceiveOperation {
     }
 }
 
+/// Processes a batch of fetched messages, leasing any that are available.
+#[allow(clippy::too_many_arguments)]
+fn lease_available_msgs(
+    state: &State,
+    batch: &mut fjall::OwnedWriteBatch,
+    all_msgs: &mut Vec<QueueReceiveMsg>,
+    msgs: Vec<MsgRow>,
+    scan_offset: u64,
+    partition: Partition,
+    topic_id: TopicId,
+    now: Timestamp,
+    expiry: Timestamp,
+) -> coyote_error::Result<u16> {
+    let mut count = 0;
+
+    for (i, msg) in msgs.into_iter().enumerate() {
+        let offset = scan_offset + i as u64;
+        let msg_id = MsgId::new(partition, offset);
+
+        if let Some(lease) = QueueLeaseRow::fetch(
+            &state.metadata_tables,
+            QueueLeaseRow::key_for(topic_id, &msg_id),
+        )? && !lease.is_available(now)
+        {
+            continue;
+        }
+
+        batch.insert_row(
+            &state.metadata_tables,
+            QueueLeaseRow::key_for(topic_id, &msg_id),
+            &QueueLeaseRow { expiry },
+        )?;
+
+        all_msgs.push(QueueReceiveMsg {
+            msg_id,
+            value: msg.value,
+            headers: msg.headers,
+            timestamp: msg.timestamp,
+        });
+
+        count += 1;
+    }
+
+    Ok(count)
+}
+
 /// Advances the cursor past contiguous acked messages, deleting their
 /// [`QueueLeaseRow`] entries to prevent unbounded growth.
 pub(crate) fn compact_cursor(
     cursor: &mut StreamLeaseRow,
     batch: &mut fjall::OwnedWriteBatch,
     state: &State,
-    topic_id: crate::entities::TopicId,
+    topic_id: TopicId,
     partition: Partition,
 ) -> coyote_error::Result<()> {
     loop {
