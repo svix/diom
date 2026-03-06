@@ -8,7 +8,8 @@ use coyote_error::{Error, HttpError, Result, ResultExt};
 use coyote_msgs::{
     MsgsNamespace,
     entities::{
-        ConsumerGroup, MsgId, Offset, QueueMsgOut, StreamMsgOut, TopicIn, TopicName, TopicPartition,
+        ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, StreamMsgOut, TopicIn, TopicName,
+        TopicPartition, default_retention_bytes, default_retention_millis,
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueReceiveOperation,
@@ -20,7 +21,6 @@ use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use stream_internals::entities::{Retention, default_retention_bytes, default_retention_millis};
 use validator::Validate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]

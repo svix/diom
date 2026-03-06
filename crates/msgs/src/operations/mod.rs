@@ -47,8 +47,8 @@ impl MsgsOperation {
 #[cfg(test)]
 mod tests {
 
+    use crate::entities::Retention;
     use coyote_namespace::entities::StorageType;
-    use stream_internals::entities::Retention;
     use uuid::Uuid;
 
     use super::*;

@@ -66,7 +66,6 @@ schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
-stream-internals.workspace = true
 sysinfo = "0.38.2"
 tap.workspace = true
 tokio.workspace = true
@@ -193,7 +192,6 @@ serde = { version = "1.0.184", features = ["derive", "rc"] }
 serde_json = { version = "1.0.74", features = ["preserve_order", "raw_value"] }
 serde_path_to_error = "0.1.7"
 sha2 = "0.10.2"
-stream-internals = { path = "crates/stream-internals" }
 syn = "2.0.48"
 tap = "1"
 tempfile = "3.24.0"

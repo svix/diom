@@ -7,9 +7,9 @@ use std::{
 
 use crate::{cfg::Configuration as AppConfig, core::cluster::RaftState};
 use anyhow::Context;
+use coyote_msgs::entities::{Retention, default_retention_bytes, default_retention_millis};
 use coyote_namespace::entities::{EvictionPolicy, StorageType};
 use serde::Deserialize;
-use stream_internals::entities::{Retention, default_retention_bytes, default_retention_millis};
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "snake_case")]
