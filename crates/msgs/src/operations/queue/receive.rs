@@ -77,7 +77,7 @@ impl QueueReceiveOperation {
         for partition_idx in partitions {
             let partition = Partition::new(partition_idx)?;
 
-            // Fetch or create cursor for this partition (using StreamLeaseRow with __queue__ CG).
+            // Fetch or create cursor for this partition.
             // Queue starts from offset 0 (earliest), unlike stream which starts from latest.
             let mut cursor = match StreamLeaseRow::fetch(
                 &state.metadata_tables,
