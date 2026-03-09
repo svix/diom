@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class CacheGetIn {
 @JsonProperty private String key;
+@JsonProperty private Boolean linearizable;
 public CacheGetIn () {}
 
  public CacheGetIn key(String key) {
@@ -48,6 +49,29 @@ public CacheGetIn () {}
 
      public void setKey(String key) {
         this.key = key;
+    }
+
+     public CacheGetIn linearizable(Boolean linearizable) {
+        this.linearizable = linearizable;
+        return this;
+    }
+
+    /**
+    * Whether or not the read should be linearizable
+
+If this is `true`, the read is guaranteed to see all previous operations, but will
+have to make at least one additional round-trip to the leader. If this is false, stale
+reads will be performed against the replica which receives this request.
+    *
+     * @return linearizable
+     */
+    @javax.annotation.Nullable
+     public Boolean getLinearizable() {
+        return linearizable;
+    }
+
+     public void setLinearizable(Boolean linearizable) {
+        this.linearizable = linearizable;
     }
 
     /**

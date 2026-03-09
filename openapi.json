@@ -1068,6 +1068,11 @@
             "maxLength": 256,
             "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.]+$",
             "example": "some_key"
+          },
+          "linearizable": {
+            "description": "Whether or not the read should be linearizable\n\nIf this is `true`, the read is guaranteed to see all previous operations, but will\nhave to make at least one additional round-trip to the leader. If this is false, stale\nreads will be performed against the replica which receives this request.",
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
@@ -1520,6 +1525,11 @@
             "maxLength": 256,
             "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.]+$",
             "example": "some_key"
+          },
+          "linearizable": {
+            "description": "Whether or not the read should be linearizable\n\nIf this is `true`, the read is guaranteed to see all previous operations, but will\nhave to make at least one additional round-trip to the leader. If this is false, stale\nreads will be performed against the replica which receives this request.",
+            "type": "boolean",
+            "default": true
           }
         },
         "required": [

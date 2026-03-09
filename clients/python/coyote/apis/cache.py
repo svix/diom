@@ -51,6 +51,7 @@ class CacheAsync(ApiBase):
         """Cache Get"""
         body = _CacheGetIn(
             key=key,
+            linearizable=cache_get_in.linearizable,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -110,6 +111,7 @@ class Cache(ApiBase):
         """Cache Get"""
         body = _CacheGetIn(
             key=key,
+            linearizable=cache_get_in.linearizable,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(
