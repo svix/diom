@@ -188,7 +188,7 @@ fn lease_available_msgs(
         batch.insert_row(
             &state.metadata_tables,
             QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
-            &QueueLeaseRow { expiry },
+            &QueueLeaseRow { expiry, dlq: false },
         )?;
 
         all_msgs.push(QueueReceiveMsg {
@@ -225,6 +225,10 @@ pub(crate) fn compact_cursor(
                     &state.metadata_tables,
                     QueueLeaseRow::key_for(topic_id, &check_id, consumer_group).into_fjall_key(),
                 );
+                cursor.offset += 1;
+            }
+            // Advance past DLQ'd messages but keep their rows for redrive
+            Some(lease) if lease.is_dlq() => {
                 cursor.offset += 1;
             }
             _ => break,
