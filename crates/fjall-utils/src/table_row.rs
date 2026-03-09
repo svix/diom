@@ -94,6 +94,12 @@ pub struct TableKey<Tag: TableRow> {
     _table: PhantomData<Tag>,
 }
 
+impl<Tag: TableRow> ::std::fmt::Debug for TableKey<Tag> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.key.fmt(f)
+    }
+}
+
 impl<'a, Tag: TableRow> TableKey<Tag> {
     /// Construct the key to be used for fjall
     ///

@@ -57,6 +57,13 @@ pub struct CacheSetOut {}
 pub struct CacheGetIn {
     #[validate(nested)]
     pub key: EntityKey,
+    /// Whether or not the read should be linearizable
+    ///
+    /// If this is `true`, the read is guaranteed to see all previous operations, but will
+    /// have to make at least one additional round-trip to the leader. If this is false, stale
+    /// reads will be performed against the replica which receives this request.
+    #[serde(default)]
+    pub linearizable: bool,
 }
 
 #[derive(Clone, Debug, Serialize, JsonSchema)]
@@ -153,7 +160,9 @@ async fn cache_get(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    if data.linearizable {
+        repl.wait_linearizable().await.map_err_generic()?;
+    }
 
     // FIXME: support more than just persistent, etc.
     let cache_state = coyote_cache::State::init(state.do_not_use_dbs.clone())?;
@@ -225,7 +234,7 @@ async fn cache_get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<CacheGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<CacheGetNamespaceOut>> {
     // Ensure we have the latest version of namespace
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.map_err_generic()?;
 
     let namespace: CacheNamespace = state
         .namespace_state

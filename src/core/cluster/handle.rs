@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, time::Duration};
 
 use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
 
@@ -320,5 +320,52 @@ impl RaftState {
             .send(BackgroundCommand::Snapshot)
             .await
             .context("attempting to send background command to trigger snapshot")
+    }
+
+    /// Accomplish a linearizable wait for the caller
+    ///
+    /// On the leader, this is implemented by calling `openraft::Raft::ensure_linearizable`.
+    pub async fn wait_linearizable(&self) -> anyhow::Result<()> {
+        let leader_id = match self.raft.current_leader().await {
+            Some(n) if n == self.node_id => {
+                tracing::trace!("performing a linearizable read on the leader");
+                self.raft.ensure_linearizable().await?;
+                return Ok(());
+            }
+            Some(leader) => leader,
+            None => anyhow::bail!("no cluster leader, cannot perform linearizable operations"),
+        };
+        let leader_id_for_lookup = leader_id.clone();
+        let leader_node = self
+            .raft
+            .with_raft_state(move |s| {
+                s.membership_state
+                    .effective()
+                    .get_node(&leader_id_for_lookup)
+                    .cloned()
+            })
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("unable to look up leader node IP"))?;
+        tracing::trace!(?leader_id, "performing a linearizable read on a follower");
+        let mut network_handle = self.network.clone();
+        let client = network_handle.new_client(leader_id, &leader_node).await;
+        let Some(last_committed_log_id) = client.get_last_committed_log_id().await? else {
+            tracing::warn!(
+                "attempted to do a linearizable read, but nothing has ever been written"
+            );
+            return Ok(());
+        };
+
+        const DEFAULT_WAIT_TIME: Duration = Duration::from_secs(1);
+
+        tracing::trace!(?last_committed_log_id, "waiting for follower to apply logs");
+        self.raft
+            .wait(Some(DEFAULT_WAIT_TIME))
+            .applied_index_at_least(
+                Some(last_committed_log_id.index),
+                "waiting for linearizability",
+            )
+            .await?;
+        Ok(())
     }
 }

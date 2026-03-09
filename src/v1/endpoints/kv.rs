@@ -49,6 +49,13 @@ pub struct KvSetOut {}
 pub struct KvGetIn {
     #[validate(nested)]
     pub key: EntityKey,
+    /// Whether or not the read should be linearizable
+    ///
+    /// If this is `true`, the read is guaranteed to see all previous operations, but will
+    /// have to make at least one additional round-trip to the leader. If this is false, stale
+    /// reads will be performed against the replica which receives this request.
+    #[serde(default)]
+    pub linearizable: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -115,7 +122,9 @@ async fn kv_get(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    if data.linearizable {
+        repl.wait_linearizable().await.map_err_generic()?;
+    }
 
     // FIXME: this state should be passed, not created every time.
     let kv_state = coyote_kv::State::init(state.do_not_use_dbs.clone())?;
@@ -212,7 +221,7 @@ async fn kv_get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<KvGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<KvGetNamespaceOut>> {
     // Ensure we have the latest version of namespace
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.map_err_generic()?;
 
     let namespace: KvNamespace = state
         .namespace_state
