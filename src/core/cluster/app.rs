@@ -171,8 +171,11 @@ async fn stream_snapshot(
 #[tracing::instrument(skip_all)]
 async fn handle_forwarded_write(
     Extension(state): Extension<RaftState>,
-    MsgPack(req): MsgPack<ForwardedWriteRequest>,
+    MsgPack(mut req): MsgPack<ForwardedWriteRequest>,
 ) -> Result<MsgPack<ForwardedWriteResponse>, crate::Error> {
+    // reset the timestamp in case the forwarding node was out of sync
+    req.request.timestamp = state.state_machine.now();
+
     // intentionally do not use state.client_write because we don't want an infinite recursion
     // of forwardings
     let response =
@@ -295,6 +298,8 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     let leader = state.raft.current_leader().await;
     let me = state.node_id;
     let cluster_id = state.state_machine.cluster_id().await;
+    let wall_time = jiff::Timestamp::now();
+    let monotonic_time = state.state_machine.time.last();
     state
         .raft
         .with_raft_state(move |s| {
@@ -304,6 +309,8 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
                 server_state: s.server_state,
                 cluster_id,
                 leader,
+                wall_time,
+                monotonic_time,
             };
             let status = if s.server_state.is_leader()
                 || s.server_state.is_follower()

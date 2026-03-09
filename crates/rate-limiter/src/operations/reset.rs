@@ -23,7 +23,7 @@ impl ResetOperation {
 }
 
 impl RateLimiterRequest for ResetOperation {
-    fn apply(self, state: &crate::RateLimiter) -> ResetResponse {
+    fn apply(self, state: &crate::RateLimiter, _now: jiff::Timestamp) -> ResetResponse {
         ResetResponse(self.apply_real(state))
     }
 }

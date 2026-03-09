@@ -23,7 +23,6 @@ pub struct QueueReceiveOperation {
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
-    now: Timestamp,
 }
 
 impl QueueReceiveOperation {
@@ -45,17 +44,20 @@ impl QueueReceiveOperation {
             consumer_group,
             batch_size,
             lease_duration_millis,
-            now: Timestamp::now(),
         })
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    fn apply_real(self, state: &State) -> coyote_operations::Result<QueueReceiveResponseData> {
+    fn apply_real(
+        self,
+        state: &State,
+        now: Timestamp,
+    ) -> coyote_operations::Result<QueueReceiveResponseData> {
         let lease_duration = Duration::from_millis(self.lease_duration_millis);
         let mut remaining = self.batch_size.get();
         let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
 
-        let expiry = self.now + lease_duration;
+        let expiry = now + lease_duration;
 
         let mut batch = state.db.batch();
 
@@ -64,7 +66,7 @@ impl QueueReceiveOperation {
             &mut batch,
             self.namespace_id,
             &self.topic,
-            self.now,
+            now,
         )?;
 
         Span::current().record("partition_count", topic_row.partitions);
@@ -118,7 +120,7 @@ impl QueueReceiveOperation {
                     partition,
                     topic_row.id,
                     &self.consumer_group,
-                    self.now,
+                    now,
                     expiry,
                 )?;
                 remaining = remaining.saturating_sub(n);
@@ -245,7 +247,7 @@ pub struct QueueReceiveResponseData {
 }
 
 impl MsgsRequest for QueueReceiveOperation {
-    fn apply(self, state: MsgsRaftState<'_>) -> QueueReceiveResponse {
-        QueueReceiveResponse(self.apply_real(state.msgs))
+    fn apply(self, state: MsgsRaftState<'_>, now: Timestamp) -> QueueReceiveResponse {
+        QueueReceiveResponse(self.apply_real(state.msgs, now))
     }
 }

@@ -14,7 +14,6 @@ use crate::{
 #[derive(Deserialize, Serialize)]
 #[serde(bound = "C: ModuleConfig")]
 pub struct CreateNamespace<C: ModuleConfig> {
-    timestamp: Timestamp,
     name: String,
     #[serde(default)]
     storage_type: StorageType,
@@ -42,7 +41,6 @@ impl<C: ModuleConfig> CreateNamespace<C> {
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
         Self {
-            timestamp: Timestamp::now(),
             name,
             config,
             storage_type,
@@ -50,13 +48,17 @@ impl<C: ModuleConfig> CreateNamespace<C> {
         }
     }
 
-    pub fn apply_operation(self, state: &State) -> Result<CreateNamespaceOutput<C>> {
+    pub fn apply_operation(
+        self,
+        state: &State,
+        timestamp: Timestamp,
+    ) -> Result<CreateNamespaceOutput<C>> {
         let db = state.db();
         let keyspace = state.keyspace();
         let namespace = match Namespace::<C>::fetch(keyspace, &self.name)? {
             Some(mut namespace) => {
                 namespace.storage_type = self.storage_type;
-                namespace.updated_at = self.timestamp;
+                namespace.updated_at = timestamp;
                 namespace.max_storage_bytes = self.max_storage_bytes;
                 namespace.config = self.config;
                 namespace
@@ -64,16 +66,16 @@ impl<C: ModuleConfig> CreateNamespace<C> {
             None => {
                 let id = NamespaceId::new_v7(uuid::Timestamp::from_unix(
                     uuid::NoContext,
-                    self.timestamp.as_second() as u64,
-                    self.timestamp.subsec_nanosecond() as u32,
+                    timestamp.as_second() as u64,
+                    timestamp.subsec_nanosecond() as u32,
                 ));
                 Namespace {
                     id,
                     name: self.name,
                     storage_type: self.storage_type,
                     max_storage_bytes: self.max_storage_bytes,
-                    created_at: self.timestamp,
-                    updated_at: self.timestamp,
+                    created_at: timestamp,
+                    updated_at: timestamp,
                     config: self.config,
                 }
             }

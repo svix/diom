@@ -32,6 +32,9 @@ pub(super) async fn apply_request(
     }
     let _exit = child_span.enter();
 
+    state_machine.time.bump(request.timestamp);
+    let timestamp = request.timestamp;
+
     Ok(match request.inner {
         Request::Kv(req) => {
             let stores = state_machine.db_handle();
@@ -39,11 +42,11 @@ pub(super) async fn apply_request(
                 state: &stores.kv_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Kv(req.apply(state))
+            Response::Kv(req.apply(state, timestamp))
         }
         Request::RateLimiter(req) => {
             // Rate limiter neither needs nor uses namespaces for now
-            Response::RateLimiter(req.apply(&state_machine.state.rate_limiter))
+            Response::RateLimiter(req.apply(&state_machine.state.rate_limiter, timestamp))
         }
         Request::Idempotency(req) => {
             let stores = state_machine.db_handle();
@@ -51,7 +54,7 @@ pub(super) async fn apply_request(
                 state: &stores.idempotency_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Idempotency(req.apply(state))
+            Response::Idempotency(req.apply(state, timestamp))
         }
         Request::Cache(req) => {
             let stores = state_machine.db_handle();
@@ -59,7 +62,7 @@ pub(super) async fn apply_request(
                 state: &stores.cache_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Cache(req.apply(state))
+            Response::Cache(req.apply(state, timestamp))
         }
         Request::Msgs(req) => {
             let stores = state_machine.db_handle();
@@ -67,10 +70,10 @@ pub(super) async fn apply_request(
                 msgs: &stores.msgs_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Msgs(req.apply(state))
+            Response::Msgs(req.apply(state, timestamp))
         }
         Request::ClusterInternal(req) => {
-            Response::ClusterInternal(req.apply((state_machine, log_id)).await)
+            Response::ClusterInternal(req.apply((state_machine, log_id), timestamp).await)
         }
     })
 }

@@ -47,6 +47,11 @@ pub enum Request {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RequestWithContext {
     pub inner: Request,
+    #[serde(
+        rename = "t",
+        with = "jiff::fmt::serde::timestamp::millisecond::required"
+    )]
+    pub timestamp: jiff::Timestamp,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<OperationRequestMetadata>,
 }
@@ -65,9 +70,14 @@ impl fmt::Display for RequestWithContext {
 }
 
 impl RequestWithContext {
-    pub(crate) fn new(req: Request, ctx: Option<OperationRequestMetadata>) -> Self {
+    pub(crate) fn new(
+        req: Request,
+        timestamp: jiff::Timestamp,
+        ctx: Option<OperationRequestMetadata>,
+    ) -> Self {
         Self {
             inner: req,
+            timestamp,
             context: ctx,
         }
     }
@@ -228,8 +238,9 @@ impl RaftState {
         >>::Error: fmt::Debug,
     {
         let inner: Request = op.into().into();
+        let now = self.state_machine.now();
         let request =
-            RequestWithContext::new(inner, Some(opentelemetry::Context::current().into()));
+            RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
         let response = match self.raft.client_write(request.clone()).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");

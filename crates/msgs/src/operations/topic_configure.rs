@@ -18,7 +18,6 @@ pub struct TopicConfigureOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,
     partitions: u16,
-    now: Timestamp,
 }
 
 impl TopicConfigureOperation {
@@ -36,17 +35,20 @@ impl TopicConfigureOperation {
             namespace_id,
             topic,
             partitions,
-            now: Timestamp::now(),
         })
     }
 
-    fn apply_real(self, state: &State) -> coyote_operations::Result<TopicConfigureResponseData> {
+    fn apply_real(
+        self,
+        state: &State,
+        now: Timestamp,
+    ) -> coyote_operations::Result<TopicConfigureResponseData> {
         let mut topic_row = match TopicRow::fetch(
             &state.metadata_tables,
             TopicRow::key_for(self.namespace_id, &self.topic),
         )? {
             Some(topic_row) => topic_row,
-            None => TopicRow::new(self.topic.clone(), self.now),
+            None => TopicRow::new(self.topic.clone(), now),
         };
 
         if self.partitions < topic_row.partitions {
@@ -78,7 +80,7 @@ pub struct TopicConfigureResponseData {
 }
 
 impl MsgsRequest for TopicConfigureOperation {
-    fn apply(self, state: MsgsRaftState<'_>) -> TopicConfigureResponse {
-        TopicConfigureResponse(self.apply_real(state.msgs))
+    fn apply(self, state: MsgsRaftState<'_>, timestamp: Timestamp) -> TopicConfigureResponse {
+        TopicConfigureResponse(self.apply_real(state.msgs, timestamp))
     }
 }

@@ -15,7 +15,7 @@ use fjall_utils::{
 };
 use jiff::Timestamp;
 use openraft::{
-    Entry, LogId, OptionalSend, RaftLogReader, RaftTypeConfig, StorageError, Vote,
+    Entry, EntryPayload, LogId, OptionalSend, RaftLogReader, RaftTypeConfig, StorageError, Vote,
     storage::{LogFlushed, RaftLogStorage},
 };
 use parking_lot::Mutex;
@@ -663,6 +663,22 @@ impl CoyoteLogs {
             }
         })
         .await?
+    }
+
+    pub(super) async fn get_last_timestamp(&self) -> anyhow::Result<Option<Timestamp>> {
+        let log_keyspace = self.log_keyspace.clone();
+        spawn_blocking_in_current_span(move || {
+            for guard in Log::range(&log_keyspace, ..).rev() {
+                if let Ok(guard) = guard
+                    && let EntryPayload::Normal(req) = guard.1.0.payload
+                {
+                    return Some(req.timestamp);
+                }
+            }
+            None
+        })
+        .await
+        .context("failed to join")
     }
 }
 
