@@ -8,10 +8,10 @@ use std::{
 
 use crate::{
     cfg::Dir,
-    core::metrics::{DbMetrics, DbType},
+    core::metrics::{DbMetrics, DbType, Module},
 };
 use anyhow::Context;
-use coyote_namespace::entities::StorageType;
+use coyote_namespace::entities::{CacheConfig, IdempotencyConfig, KeyValueConfig, StorageType};
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
 use openraft::{
@@ -169,6 +169,7 @@ impl Store {
 
     pub fn start_metrics(&self, metrics: DbMetrics) {
         let stores = Arc::clone(&self.stores);
+        let namespace_state = self.state.namespace_state.clone();
         let shutdown = crate::shutting_down_token();
         tokio::spawn(async move {
             let mut ticker = tokio::time::interval(Duration::from_secs(60));
@@ -178,23 +179,85 @@ impl Store {
                     _ = shutdown.cancelled() => break,
                 }
 
-                match tokio::task::spawn_blocking({
+                if let Err(err) = tokio::task::spawn_blocking({
                     let stores = Arc::clone(&stores);
-                    move || {
-                        let guard = stores.read();
-                        let persistent_bytes = guard.databases.persistent.disk_space()?;
-                        let ephemeral_bytes = guard.databases.ephemeral.disk_space()?;
-                        Ok::<_, fjall::Error>((persistent_bytes, ephemeral_bytes))
+                    let namespace_state = namespace_state.clone();
+                    let metrics = metrics.clone();
+                    move || -> anyhow::Result<()> {
+                        let stores = stores.read();
+
+                        let persistent_bytes = stores.databases.persistent.disk_space()?;
+                        let ephemeral_bytes = stores.databases.ephemeral.disk_space()?;
+                        metrics.bytes_used(persistent_bytes, DbType::Persistent);
+                        metrics.bytes_used(ephemeral_bytes, DbType::Ephemeral);
+
+                        for ns in namespace_state.fetch_all_namespaces::<KeyValueConfig>()? {
+                            match stores
+                                .kv_state
+                                .controller(ns.storage_type)
+                                .count_for_namespace(ns.id)
+                            {
+                                Ok(count) => metrics.key_count(
+                                    Module::KeyValue,
+                                    &ns.name,
+                                    ns.storage_type,
+                                    count,
+                                ),
+                                Err(err) => tracing::warn!(
+                                    ?err,
+                                    namespace = ns.name,
+                                    "failed to count kv namespace keys"
+                                ),
+                            }
+                        }
+
+                        for ns in namespace_state.fetch_all_namespaces::<CacheConfig>()? {
+                            match stores
+                                .cache_state
+                                .controller(ns.storage_type)
+                                .count_for_namespace(ns.id)
+                            {
+                                Ok(count) => metrics.key_count(
+                                    Module::Cache,
+                                    &ns.name,
+                                    ns.storage_type,
+                                    count,
+                                ),
+                                Err(err) => tracing::warn!(
+                                    ?err,
+                                    namespace = ns.name,
+                                    "failed to count cache namespace keys"
+                                ),
+                            }
+                        }
+
+                        for ns in namespace_state.fetch_all_namespaces::<IdempotencyConfig>()? {
+                            match stores
+                                .idempotency_state
+                                .controller(ns.storage_type)
+                                .count_for_namespace(ns.id)
+                            {
+                                Ok(count) => metrics.key_count(
+                                    Module::Idempotency,
+                                    &ns.name,
+                                    ns.storage_type,
+                                    count,
+                                ),
+                                Err(err) => tracing::warn!(
+                                    ?err,
+                                    namespace = ns.name,
+                                    "failed to count idempotency namespace keys"
+                                ),
+                            }
+                        }
+
+                        Ok(())
                     }
                 })
                 .await
                 .expect("Failed joining blocking task")
                 {
-                    Ok((persistent_bytes, ephemeral_bytes)) => {
-                        metrics.bytes_used(persistent_bytes, DbType::Persistent);
-                        metrics.bytes_used(ephemeral_bytes, DbType::Ephemeral);
-                    }
-                    Err(err) => tracing::info!(?err, "failed to read db disk space"),
+                    tracing::info!(?err, "Failed to record db metrics");
                 }
             }
         });

@@ -161,6 +161,12 @@ impl KvController {
         KvPairRow::values(&self.keyspace)
     }
 
+    pub fn count_for_namespace(&self, namespace_id: NamespaceId) -> Result<usize> {
+        let mut prefix = vec![KvPairRow::ROW_TYPE];
+        prefix.extend_from_slice(namespace_id.as_bytes());
+        Ok(self.keyspace.prefix(prefix).count())
+    }
+
     pub fn clear_expired(&self, now: Timestamp) -> Result<()> {
         let start = ExpirationRow::key_for(NamespaceId::nil(), Timestamp::MIN, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
