@@ -29,6 +29,16 @@ pub enum MsgsStreamCommands {
         consumer_group: String,
         msg_stream_commit_in: crate::json::JsonOf<coyote_client::models::MsgStreamCommitIn>,
     },
+    /// Repositions a consumer group's read cursor on a topic.
+    ///
+    /// Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
+    /// partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
+    /// `"latest"` and may be used with or without a partition suffix.
+    Seek {
+        topic: String,
+        consumer_group: String,
+        msg_stream_seek_in: crate::json::JsonOf<coyote_client::models::MsgStreamSeekIn>,
+    },
 }
 
 impl MsgsStreamCommands {
@@ -59,6 +69,18 @@ impl MsgsStreamCommands {
                     .msgs()
                     .stream()
                     .commit(topic, consumer_group, msg_stream_commit_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Seek {
+                topic,
+                consumer_group,
+                msg_stream_seek_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .stream()
+                    .seek(topic, consumer_group, msg_stream_seek_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

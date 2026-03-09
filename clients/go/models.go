@@ -49,6 +49,8 @@ type (
 	MsgStreamCommitOut            = coyote_models.MsgStreamCommitOut
 	MsgStreamReceiveIn            = coyote_models.MsgStreamReceiveIn
 	MsgStreamReceiveOut           = coyote_models.MsgStreamReceiveOut
+	MsgStreamSeekIn               = coyote_models.MsgStreamSeekIn
+	MsgStreamSeekOut              = coyote_models.MsgStreamSeekOut
 	MsgTopicConfigureIn           = coyote_models.MsgTopicConfigureIn
 	MsgTopicConfigureOut          = coyote_models.MsgTopicConfigureOut
 	OperationBehavior             = coyote_models.OperationBehavior

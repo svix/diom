@@ -54,3 +54,23 @@ func (msgsStream MsgsStream) Commit(
 		&msgStreamCommitIn,
 	)
 }
+
+// Repositions a consumer group's read cursor on a topic.
+//
+// Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
+// partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
+// `"latest"` and may be used with or without a partition suffix.
+func (msgsStream MsgsStream) Seek(
+	ctx context.Context,
+	msgStreamSeekIn coyote_models.MsgStreamSeekIn,
+) (*coyote_models.MsgStreamSeekOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamSeekIn, coyote_models.MsgStreamSeekOut](
+		ctx,
+		msgsStream.client,
+		"POST",
+		"/api/v1/msgs/stream/seek",
+		nil,
+		nil,
+		&msgStreamSeekIn,
+	)
+}
