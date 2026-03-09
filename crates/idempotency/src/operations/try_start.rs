@@ -40,7 +40,7 @@ impl TryStartOperation {
         let now = self.now;
         let expiry = now + Duration::from_secs(self.ttl_seconds);
 
-        let controller = state.state.controller(StorageType::Persistent);
+        let controller = state.state.controller(self.storage_type);
 
         match controller.fetch(self.namespace_id, &self.key, now)? {
             None => {

@@ -26,7 +26,7 @@ impl DeleteOperation {
     fn apply_real(self, state: &CacheRaftState<'_>) -> Result<()> {
         state
             .state
-            .controller(StorageType::Persistent)
+            .controller(self.storage_type)
             .delete(self.namespace_id, &self.key)?;
         Ok(())
     }
