@@ -1,22 +1,6 @@
 // this file is @generated
 
 import {
-    type MsgNamespaceCreateIn,
-    MsgNamespaceCreateInSerializer,
-} from '../models/msgNamespaceCreateIn';
-import {
-    type MsgNamespaceCreateOut,
-    MsgNamespaceCreateOutSerializer,
-} from '../models/msgNamespaceCreateOut';
-import {
-    type MsgNamespaceGetIn,
-    MsgNamespaceGetInSerializer,
-} from '../models/msgNamespaceGetIn';
-import {
-    type MsgNamespaceGetOut,
-    MsgNamespaceGetOutSerializer,
-} from '../models/msgNamespaceGetOut';
-import {
     type MsgPublishIn,
     MsgPublishInSerializer,
 } from '../models/msgPublishIn';
@@ -24,46 +8,6 @@ import {
     type MsgPublishOut,
     MsgPublishOutSerializer,
 } from '../models/msgPublishOut';
-import {
-    type MsgQueueAckIn,
-    MsgQueueAckInSerializer,
-} from '../models/msgQueueAckIn';
-import {
-    type MsgQueueAckOut,
-    MsgQueueAckOutSerializer,
-} from '../models/msgQueueAckOut';
-import {
-    type MsgQueueReceiveIn,
-    MsgQueueReceiveInSerializer,
-} from '../models/msgQueueReceiveIn';
-import {
-    type MsgQueueReceiveOut,
-    MsgQueueReceiveOutSerializer,
-} from '../models/msgQueueReceiveOut';
-import {
-    type MsgStreamCommitIn,
-    MsgStreamCommitInSerializer,
-} from '../models/msgStreamCommitIn';
-import {
-    type MsgStreamCommitOut,
-    MsgStreamCommitOutSerializer,
-} from '../models/msgStreamCommitOut';
-import {
-    type MsgStreamReceiveIn,
-    MsgStreamReceiveInSerializer,
-} from '../models/msgStreamReceiveIn';
-import {
-    type MsgStreamReceiveOut,
-    MsgStreamReceiveOutSerializer,
-} from '../models/msgStreamReceiveOut';
-import {
-    type MsgTopicConfigureIn,
-    MsgTopicConfigureInSerializer,
-} from '../models/msgTopicConfigureIn';
-import {
-    type MsgTopicConfigureOut,
-    MsgTopicConfigureOutSerializer,
-} from '../models/msgTopicConfigureOut';
 import { MsgsNamespace } from './msgsNamespace';
 import { MsgsQueue } from './msgsQueue';
 import { MsgsStream } from './msgsStream';

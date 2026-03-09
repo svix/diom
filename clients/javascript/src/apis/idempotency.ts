@@ -8,22 +8,6 @@ import {
     type IdempotencyAbortOut,
     IdempotencyAbortOutSerializer,
 } from '../models/idempotencyAbortOut';
-import {
-    type IdempotencyCreateNamespaceIn,
-    IdempotencyCreateNamespaceInSerializer,
-} from '../models/idempotencyCreateNamespaceIn';
-import {
-    type IdempotencyCreateNamespaceOut,
-    IdempotencyCreateNamespaceOutSerializer,
-} from '../models/idempotencyCreateNamespaceOut';
-import {
-    type IdempotencyGetNamespaceIn,
-    IdempotencyGetNamespaceInSerializer,
-} from '../models/idempotencyGetNamespaceIn';
-import {
-    type IdempotencyGetNamespaceOut,
-    IdempotencyGetNamespaceOutSerializer,
-} from '../models/idempotencyGetNamespaceOut';
 import { IdempotencyNamespace } from './idempotencyNamespace';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 

@@ -1,14 +1,6 @@
 // this file is @generated
 
 import {
-    type CacheCreateNamespaceIn,
-    CacheCreateNamespaceInSerializer,
-} from '../models/cacheCreateNamespaceIn';
-import {
-    type CacheCreateNamespaceOut,
-    CacheCreateNamespaceOutSerializer,
-} from '../models/cacheCreateNamespaceOut';
-import {
     type CacheDeleteIn,
     CacheDeleteInSerializer,
 } from '../models/cacheDeleteIn';
@@ -20,14 +12,6 @@ import {
     type CacheGetIn,
     CacheGetInSerializer,
 } from '../models/cacheGetIn';
-import {
-    type CacheGetNamespaceIn,
-    CacheGetNamespaceInSerializer,
-} from '../models/cacheGetNamespaceIn';
-import {
-    type CacheGetNamespaceOut,
-    CacheGetNamespaceOutSerializer,
-} from '../models/cacheGetNamespaceOut';
 import {
     type CacheGetOut,
     CacheGetOutSerializer,

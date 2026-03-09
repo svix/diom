@@ -14,22 +14,8 @@ import java.util.Set;
 import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.diom.models.MsgNamespaceCreateIn;
-import com.svix.diom.models.MsgNamespaceCreateOut;
-import com.svix.diom.models.MsgNamespaceGetIn;
-import com.svix.diom.models.MsgNamespaceGetOut;
 import com.svix.diom.models.MsgPublishIn;
 import com.svix.diom.models.MsgPublishOut;
-import com.svix.diom.models.MsgQueueAckIn;
-import com.svix.diom.models.MsgQueueAckOut;
-import com.svix.diom.models.MsgQueueReceiveIn;
-import com.svix.diom.models.MsgQueueReceiveOut;
-import com.svix.diom.models.MsgStreamCommitIn;
-import com.svix.diom.models.MsgStreamCommitOut;
-import com.svix.diom.models.MsgStreamReceiveIn;
-import com.svix.diom.models.MsgStreamReceiveOut;
-import com.svix.diom.models.MsgTopicConfigureIn;
-import com.svix.diom.models.MsgTopicConfigureOut;
 
 public class Msgs {
     private final HttpClient client;

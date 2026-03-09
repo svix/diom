@@ -16,10 +16,6 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.IdempotencyAbortIn;
 import com.svix.diom.models.IdempotencyAbortOut;
-import com.svix.diom.models.IdempotencyCreateNamespaceIn;
-import com.svix.diom.models.IdempotencyCreateNamespaceOut;
-import com.svix.diom.models.IdempotencyGetNamespaceIn;
-import com.svix.diom.models.IdempotencyGetNamespaceOut;
 
 public class Idempotency {
     private final HttpClient client;

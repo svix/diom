@@ -1,14 +1,6 @@
 // this file is @generated
 
 import {
-    type KvCreateNamespaceIn,
-    KvCreateNamespaceInSerializer,
-} from '../models/kvCreateNamespaceIn';
-import {
-    type KvCreateNamespaceOut,
-    KvCreateNamespaceOutSerializer,
-} from '../models/kvCreateNamespaceOut';
-import {
     type KvDeleteIn,
     KvDeleteInSerializer,
 } from '../models/kvDeleteIn';
@@ -20,14 +12,6 @@ import {
     type KvGetIn,
     KvGetInSerializer,
 } from '../models/kvGetIn';
-import {
-    type KvGetNamespaceIn,
-    KvGetNamespaceInSerializer,
-} from '../models/kvGetNamespaceIn';
-import {
-    type KvGetNamespaceOut,
-    KvGetNamespaceOutSerializer,
-} from '../models/kvGetNamespaceOut';
 import {
     type KvGetOut,
     KvGetOutSerializer,
