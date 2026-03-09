@@ -20,6 +20,7 @@ pub struct QueueReceiveOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,
     partition: Option<Partition>,
+    consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
     now: Timestamp,
@@ -29,6 +30,7 @@ impl QueueReceiveOperation {
     pub fn new(
         namespace_id: NamespaceId,
         topic: TopicIn,
+        consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
         lease_duration_millis: u64,
     ) -> coyote_error::Result<Self> {
@@ -40,6 +42,7 @@ impl QueueReceiveOperation {
             namespace_id,
             topic,
             partition,
+            consumer_group,
             batch_size,
             lease_duration_millis,
             now: Timestamp::now(),
@@ -53,7 +56,6 @@ impl QueueReceiveOperation {
         let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
 
         let expiry = self.now + lease_duration;
-        let queue_cg = ConsumerGroup::queue();
 
         let mut batch = state.db.batch();
 
@@ -79,7 +81,7 @@ impl QueueReceiveOperation {
             // Queue starts from offset 0 (earliest), unlike stream which starts from latest.
             let mut cursor = match StreamLeaseRow::fetch(
                 &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, partition, &queue_cg),
+                StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
             )? {
                 Some(cursor) => cursor,
                 None => StreamLeaseRow::new()?,
@@ -115,6 +117,7 @@ impl QueueReceiveOperation {
                     scan_offset,
                     partition,
                     topic_row.id,
+                    &self.consumer_group,
                     self.now,
                     expiry,
                 )?;
@@ -124,11 +127,18 @@ impl QueueReceiveOperation {
             }
 
             // Compact cursor: advance past contiguous acked messages
-            compact_cursor(&mut cursor, &mut batch, state, topic_row.id, partition)?;
+            compact_cursor(
+                &mut cursor,
+                &mut batch,
+                state,
+                topic_row.id,
+                partition,
+                &self.consumer_group,
+            )?;
 
             batch.insert_row(
                 &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, partition, &queue_cg),
+                StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
                 &cursor,
             )?;
 
@@ -155,6 +165,7 @@ fn lease_available_msgs(
     scan_offset: u64,
     partition: Partition,
     topic_id: TopicId,
+    consumer_group: &ConsumerGroup,
     now: Timestamp,
     expiry: Timestamp,
 ) -> coyote_error::Result<u16> {
@@ -166,7 +177,7 @@ fn lease_available_msgs(
 
         if let Some(lease) = QueueLeaseRow::fetch(
             &state.metadata_tables,
-            QueueLeaseRow::key_for(topic_id, &msg_id),
+            QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
         )? && !lease.is_available(now)
         {
             continue;
@@ -174,7 +185,7 @@ fn lease_available_msgs(
 
         batch.insert_row(
             &state.metadata_tables,
-            QueueLeaseRow::key_for(topic_id, &msg_id),
+            QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
             &QueueLeaseRow { expiry },
         )?;
 
@@ -199,17 +210,18 @@ pub(crate) fn compact_cursor(
     state: &State,
     topic_id: TopicId,
     partition: Partition,
+    consumer_group: &ConsumerGroup,
 ) -> coyote_error::Result<()> {
     loop {
         let check_id = MsgId::new(partition, cursor.offset);
         match QueueLeaseRow::fetch(
             &state.metadata_tables,
-            QueueLeaseRow::key_for(topic_id, &check_id),
+            QueueLeaseRow::key_for(topic_id, &check_id, consumer_group),
         )? {
             Some(lease) if lease.is_acked() => {
                 batch.remove(
                     &state.metadata_tables,
-                    QueueLeaseRow::key_for(topic_id, &check_id).into_fjall_key(),
+                    QueueLeaseRow::key_for(topic_id, &check_id, consumer_group).into_fjall_key(),
                 );
                 cursor.offset += 1;
             }
