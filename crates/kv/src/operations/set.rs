@@ -43,7 +43,7 @@ impl SetOperation {
 
 impl SetOperation {
     fn apply_real(self, state: &State) -> Result<()> {
-        state.controller(StorageType::Persistent).set(
+        state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
             self.value,

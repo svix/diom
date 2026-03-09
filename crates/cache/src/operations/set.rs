@@ -30,7 +30,7 @@ impl SetOperation {
 
 impl SetOperation {
     fn apply_real(self, state: &CacheRaftState<'_>) -> Result<()> {
-        state.state.controller(StorageType::Persistent).set(
+        state.state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
             self.model.value,

@@ -26,7 +26,7 @@ impl DeleteOperation {
 impl DeleteOperation {
     fn apply_real(self, state: &State) -> Result<()> {
         state
-            .controller(StorageType::Persistent)
+            .controller(self.storage_type)
             .delete(self.namespace_id, &self.key)?;
         Ok(())
     }
