@@ -12,4 +12,6 @@ class MsgQueueAckIn(BaseModel):
 class _MsgQueueAckIn(BaseModel):
     topic: str
 
+    consumer_group: str = Field(alias="consumer_group")
+
     msg_ids: t.List[str] = Field(alias="msg_ids")

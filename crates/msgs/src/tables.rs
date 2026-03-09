@@ -120,7 +120,11 @@ pub(crate) struct QueueLeaseRow {
 }
 
 impl QueueLeaseRow {
-    pub(crate) fn key_for(topic_id: TopicId, msg_id: &MsgId) -> TableKey<Self> {
+    pub(crate) fn key_for(
+        topic_id: TopicId,
+        msg_id: &MsgId,
+        consumer_group: &ConsumerGroup,
+    ) -> TableKey<Self> {
         TableKey::init_key(
             Self::ROW_TYPE,
             &[
@@ -128,7 +132,7 @@ impl QueueLeaseRow {
                 &msg_id.partition.get().to_be_bytes(),
                 &msg_id.offset.to_be_bytes(),
             ],
-            &[],
+            &[consumer_group],
         )
     }
 

@@ -18,6 +18,7 @@ pub enum MsgsQueueCommands {
     /// are acked or their lease expires.
     Receive {
         topic: String,
+        consumer_group: String,
         msg_queue_receive_in: crate::json::JsonOf<diom_client::models::MsgQueueReceiveIn>,
     },
     /// Acknowledges messages by their opaque msg_ids.
@@ -25,6 +26,7 @@ pub enum MsgsQueueCommands {
     /// Acked messages are permanently removed from the queue and will never be re-delivered.
     Ack {
         topic: String,
+        consumer_group: String,
         msg_queue_ack_in: crate::json::JsonOf<diom_client::models::MsgQueueAckIn>,
     },
 }
@@ -38,23 +40,25 @@ impl MsgsQueueCommands {
         match self {
             Self::Receive {
                 topic,
+                consumer_group,
                 msg_queue_receive_in,
             } => {
                 let resp = client
                     .msgs()
                     .queue()
-                    .receive(topic, msg_queue_receive_in.into_inner())
+                    .receive(topic, consumer_group, msg_queue_receive_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::Ack {
                 topic,
+                consumer_group,
                 msg_queue_ack_in,
             } => {
                 let resp = client
                     .msgs()
                     .queue()
-                    .ack(topic, msg_queue_ack_in.into_inner())
+                    .ack(topic, consumer_group, msg_queue_ack_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgQueueAckIn {
 @JsonProperty private String topic;
+@JsonProperty("consumer_group") private String consumerGroup;
 @JsonProperty("msg_ids") private List<String> msgIds;
 public MsgQueueAckIn () {}
 
@@ -49,6 +50,25 @@ public MsgQueueAckIn () {}
 
      public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+     public MsgQueueAckIn consumerGroup(String consumerGroup) {
+        this.consumerGroup = consumerGroup;
+        return this;
+    }
+
+    /**
+    * Get consumerGroup
+    *
+     * @return consumerGroup
+     */
+    @javax.annotation.Nonnull
+     public String getConsumerGroup() {
+        return consumerGroup;
+    }
+
+     public void setConsumerGroup(String consumerGroup) {
+        this.consumerGroup = consumerGroup;
     }
 
      public MsgQueueAckIn msgIds(List<String> msgIds) {

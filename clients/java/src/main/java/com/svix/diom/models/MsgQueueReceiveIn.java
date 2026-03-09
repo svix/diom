@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class MsgQueueReceiveIn {
 @JsonProperty private String topic;
+@JsonProperty("consumer_group") private String consumerGroup;
 @JsonProperty("batch_size") private Short batchSize;
 @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
 public MsgQueueReceiveIn () {}
@@ -50,6 +51,25 @@ public MsgQueueReceiveIn () {}
 
      public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+     public MsgQueueReceiveIn consumerGroup(String consumerGroup) {
+        this.consumerGroup = consumerGroup;
+        return this;
+    }
+
+    /**
+    * Get consumerGroup
+    *
+     * @return consumerGroup
+     */
+    @javax.annotation.Nonnull
+     public String getConsumerGroup() {
+        return consumerGroup;
+    }
+
+     public void setConsumerGroup(String consumerGroup) {
+        this.consumerGroup = consumerGroup;
     }
 
      public MsgQueueReceiveIn batchSize(Short batchSize) {

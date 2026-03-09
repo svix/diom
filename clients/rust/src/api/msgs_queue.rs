@@ -18,10 +18,12 @@ impl<'a> MsgsQueue<'a> {
     pub async fn receive(
         &self,
         topic: String,
+        consumer_group: String,
         msg_queue_receive_in: MsgQueueReceiveIn,
     ) -> Result<MsgQueueReceiveOut> {
         let msg_queue_receive_in = MsgQueueReceiveIn_ {
             topic,
+            consumer_group,
             batch_size: msg_queue_receive_in.batch_size,
             lease_duration_millis: msg_queue_receive_in.lease_duration_millis,
         };
@@ -38,10 +40,12 @@ impl<'a> MsgsQueue<'a> {
     pub async fn ack(
         &self,
         topic: String,
+        consumer_group: String,
         msg_queue_ack_in: MsgQueueAckIn,
     ) -> Result<MsgQueueAckOut> {
         let msg_queue_ack_in = MsgQueueAckIn_ {
             topic,
+            consumer_group,
             msg_ids: msg_queue_ack_in.msg_ids,
         };
 

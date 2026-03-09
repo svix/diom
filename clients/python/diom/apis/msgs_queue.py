@@ -16,6 +16,7 @@ class MsgsQueueAsync(ApiBase):
     async def receive(
         self,
         topic: str,
+        consumer_group: str,
         msg_queue_receive_in: MsgQueueReceiveIn = MsgQueueReceiveIn(),
     ) -> MsgQueueReceiveOut:
         """Receives messages from a topic as competing consumers.
@@ -25,6 +26,7 @@ class MsgsQueueAsync(ApiBase):
         are acked or their lease expires."""
         body = _MsgQueueReceiveIn(
             topic=topic,
+            consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
             lease_duration_millis=msg_queue_receive_in.lease_duration_millis,
         ).model_dump(exclude_none=True)
@@ -39,6 +41,7 @@ class MsgsQueueAsync(ApiBase):
     async def ack(
         self,
         topic: str,
+        consumer_group: str,
         msg_queue_ack_in: MsgQueueAckIn,
     ) -> MsgQueueAckOut:
         """Acknowledges messages by their opaque msg_ids.
@@ -46,6 +49,7 @@ class MsgsQueueAsync(ApiBase):
         Acked messages are permanently removed from the queue and will never be re-delivered."""
         body = _MsgQueueAckIn(
             topic=topic,
+            consumer_group=consumer_group,
             msg_ids=msg_queue_ack_in.msg_ids,
         ).model_dump(exclude_none=True)
 
@@ -61,6 +65,7 @@ class MsgsQueue(ApiBase):
     def receive(
         self,
         topic: str,
+        consumer_group: str,
         msg_queue_receive_in: MsgQueueReceiveIn = MsgQueueReceiveIn(),
     ) -> MsgQueueReceiveOut:
         """Receives messages from a topic as competing consumers.
@@ -70,6 +75,7 @@ class MsgsQueue(ApiBase):
         are acked or their lease expires."""
         body = _MsgQueueReceiveIn(
             topic=topic,
+            consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
             lease_duration_millis=msg_queue_receive_in.lease_duration_millis,
         ).model_dump(exclude_none=True)
@@ -84,6 +90,7 @@ class MsgsQueue(ApiBase):
     def ack(
         self,
         topic: str,
+        consumer_group: str,
         msg_queue_ack_in: MsgQueueAckIn,
     ) -> MsgQueueAckOut:
         """Acknowledges messages by their opaque msg_ids.
@@ -91,6 +98,7 @@ class MsgsQueue(ApiBase):
         Acked messages are permanently removed from the queue and will never be re-delivered."""
         body = _MsgQueueAckIn(
             topic=topic,
+            consumer_group=consumer_group,
             msg_ids=msg_queue_ack_in.msg_ids,
         ).model_dump(exclude_none=True)
 

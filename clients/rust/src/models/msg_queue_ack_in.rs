@@ -16,5 +16,7 @@ impl MsgQueueAckIn {
 pub(crate) struct MsgQueueAckIn_ {
     pub topic: String,
 
+    pub consumer_group: String,
+
     pub msg_ids: Vec<String>,
 }
