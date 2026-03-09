@@ -1,7 +1,7 @@
 use std::num::NonZeroU64;
 
 use coyote_namespace::{
-    entities::{IdempotencyConfig, StorageType},
+    entities::{IdempotencyConfig, NamespaceId, StorageType, gen_namespace_id},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -14,11 +14,13 @@ pub struct CreateIdempotencyOperation {
     pub(crate) name: String,
     storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
+    id: NamespaceId,
 }
 
 impl From<CreateIdempotencyOperation> for CreateNamespace<IdempotencyConfig> {
     fn from(value: CreateIdempotencyOperation) -> Self {
         CreateNamespace::new(
+            value.id,
             value.name,
             IdempotencyConfig {},
             value.storage_type,
@@ -34,6 +36,7 @@ impl CreateIdempotencyOperation {
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
         Self {
+            id: gen_namespace_id(),
             name,
             storage_type,
             max_storage_bytes,

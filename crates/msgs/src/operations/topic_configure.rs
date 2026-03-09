@@ -7,7 +7,7 @@ use coyote_error::Error;
 
 use crate::{
     State,
-    entities::{MAX_PARTITION_COUNT, TopicName},
+    entities::{MAX_PARTITION_COUNT, TopicId, TopicName, gen_topic_id},
     tables::TopicRow,
 };
 
@@ -19,6 +19,7 @@ pub struct TopicConfigureOperation {
     pub(crate) topic: TopicName,
     partitions: u16,
     now: Timestamp,
+    topic_id: TopicId,
 }
 
 impl TopicConfigureOperation {
@@ -37,6 +38,7 @@ impl TopicConfigureOperation {
             topic,
             partitions,
             now: Timestamp::now(),
+            topic_id: gen_topic_id(),
         })
     }
 
@@ -46,7 +48,7 @@ impl TopicConfigureOperation {
             TopicRow::key_for(self.namespace_id, &self.topic),
         )? {
             Some(topic_row) => topic_row,
-            None => TopicRow::new(self.topic.clone(), self.now),
+            None => TopicRow::new(self.topic_id, self.topic.clone()),
         };
 
         if self.partitions < topic_row.partitions {

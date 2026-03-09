@@ -35,13 +35,9 @@ impl TopicRow {
         TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[topic])
     }
 
-    pub(crate) fn new(name: TopicName, now: Timestamp) -> Self {
+    pub(crate) fn new(id: TopicId, name: TopicName) -> Self {
         Self {
-            id: uuid::Uuid::new_v7(uuid::Timestamp::from_unix(
-                uuid::NoContext,
-                now.as_second() as u64,
-                now.subsec_nanosecond() as u32,
-            )),
+            id,
             name,
             partitions: 1,
         }
@@ -60,12 +56,12 @@ impl TopicRow {
         batch: &mut fjall::OwnedWriteBatch,
         namespace_id: NamespaceId,
         topic: &TopicName,
-        now: Timestamp,
+        maybe_topic_id: TopicId,
     ) -> Result<Self> {
         if let Some(row) = Self::fetch(metadata_tables, Self::key_for(namespace_id, topic))? {
             return Ok(row);
         }
-        let row = Self::new(topic.clone(), now);
+        let row = Self::new(maybe_topic_id, topic.clone());
         batch.insert_row(metadata_tables, Self::key_for(namespace_id, topic), &row)?;
         Ok(row)
     }

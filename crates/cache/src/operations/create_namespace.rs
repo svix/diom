@@ -1,7 +1,7 @@
 use std::num::NonZeroU64;
 
 use coyote_namespace::{
-    entities::{CacheConfig, EvictionPolicy, StorageType},
+    entities::{CacheConfig, EvictionPolicy, NamespaceId, StorageType, gen_namespace_id},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -15,11 +15,13 @@ pub struct CreateCacheOperation {
     eviction_policy: EvictionPolicy,
     storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
+    id: NamespaceId,
 }
 
 impl From<CreateCacheOperation> for CreateNamespace<CacheConfig> {
     fn from(value: CreateCacheOperation) -> Self {
         CreateNamespace::new(
+            value.id,
             value.name,
             CacheConfig {
                 eviction_policy: value.eviction_policy,
@@ -38,6 +40,7 @@ impl CreateCacheOperation {
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
         Self {
+            id: gen_namespace_id(),
             name,
             eviction_policy,
             storage_type,

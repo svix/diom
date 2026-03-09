@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use coyote_namespace::{
-    entities::{NamespaceName, StorageType, StreamConfig},
+    entities::{NamespaceId, NamespaceName, StorageType, StreamConfig, gen_namespace_id},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 
@@ -16,11 +16,13 @@ pub struct CreateNamespaceOperation {
     pub name: NamespaceName,
     pub retention: Retention,
     pub storage_type: StorageType,
+    id: NamespaceId,
 }
 
 impl CreateNamespaceOperation {
     pub fn new(name: NamespaceName, retention: Retention, storage_type: StorageType) -> Self {
         Self {
+            id: gen_namespace_id(),
             name,
             retention,
             storage_type,
@@ -32,6 +34,7 @@ impl CreateNamespaceOperation {
         namespace_state: &coyote_namespace::State,
     ) -> coyote_operations::Result<CreateNamespaceResponseData> {
         let op = CreateNamespace::new(
+            self.id,
             self.name,
             StreamConfig {
                 retention_period: Duration::from_millis(self.retention.millis.get()),

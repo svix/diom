@@ -20,6 +20,7 @@ pub struct CreateNamespace<C: ModuleConfig> {
     storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
     config: C,
+    id: NamespaceId,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -36,6 +37,7 @@ pub struct CreateNamespaceOutput<C: ModuleConfig> {
 
 impl<C: ModuleConfig> CreateNamespace<C> {
     pub fn new(
+        id: NamespaceId,
         name: String,
         config: C,
         storage_type: StorageType,
@@ -43,6 +45,7 @@ impl<C: ModuleConfig> CreateNamespace<C> {
     ) -> Self {
         Self {
             timestamp: Timestamp::now(),
+            id,
             name,
             config,
             storage_type,
@@ -61,22 +64,15 @@ impl<C: ModuleConfig> CreateNamespace<C> {
                 namespace.config = self.config;
                 namespace
             }
-            None => {
-                let id = NamespaceId::new_v7(uuid::Timestamp::from_unix(
-                    uuid::NoContext,
-                    self.timestamp.as_second() as u64,
-                    self.timestamp.subsec_nanosecond() as u32,
-                ));
-                Namespace {
-                    id,
-                    name: self.name,
-                    storage_type: self.storage_type,
-                    max_storage_bytes: self.max_storage_bytes,
-                    created_at: self.timestamp,
-                    updated_at: self.timestamp,
-                    config: self.config,
-                }
-            }
+            None => Namespace {
+                id: self.id,
+                name: self.name,
+                storage_type: self.storage_type,
+                max_storage_bytes: self.max_storage_bytes,
+                created_at: self.timestamp,
+                updated_at: self.timestamp,
+                config: self.config,
+            },
         };
 
         {

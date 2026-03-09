@@ -1,7 +1,7 @@
 use std::num::NonZeroU64;
 
 use coyote_namespace::{
-    entities::{KeyValueConfig, StorageType},
+    entities::{KeyValueConfig, NamespaceId, StorageType, gen_namespace_id},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -14,11 +14,13 @@ pub struct CreateKvOperation {
     pub(crate) name: String,
     storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
+    id: NamespaceId,
 }
 
 impl From<CreateKvOperation> for CreateNamespace<KeyValueConfig> {
     fn from(value: CreateKvOperation) -> Self {
         CreateNamespace::new(
+            value.id,
             value.name,
             KeyValueConfig {},
             value.storage_type,
@@ -34,6 +36,7 @@ impl CreateKvOperation {
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
         Self {
+            id: gen_namespace_id(),
             name,
             storage_type,
             max_storage_bytes,

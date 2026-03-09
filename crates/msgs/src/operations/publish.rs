@@ -3,7 +3,8 @@ use std::collections::BTreeMap;
 use crate::{
     State,
     entities::{
-        MsgIn, Offset, Partition, TopicId, TopicIn, TopicName, TopicPartition, partition_for_key,
+        MsgIn, Offset, Partition, TopicId, TopicIn, TopicName, TopicPartition, gen_topic_id,
+        partition_for_key,
     },
     tables::{MsgRow, TopicRow},
 };
@@ -24,6 +25,7 @@ pub struct PublishOperation {
     partition: Option<Partition>,
     msgs: Vec<MsgIn>,
     now: Timestamp,
+    topic_id: TopicId,
 }
 
 impl PublishOperation {
@@ -50,6 +52,7 @@ impl PublishOperation {
             partition,
             msgs,
             now: Timestamp::now(),
+            topic_id: gen_topic_id(),
         })
     }
 
@@ -71,7 +74,7 @@ impl PublishOperation {
                 return Err(Error::invalid_user_input("topic does not exist").into());
             }
             (None, None) => {
-                let row = TopicRow::new(self.topic.clone(), self.now);
+                let row = TopicRow::new(self.topic_id, self.topic.clone());
                 batch.insert_row(
                     &state.metadata_tables,
                     TopicRow::key_for(self.namespace_id, &self.topic),

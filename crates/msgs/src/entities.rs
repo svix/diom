@@ -460,6 +460,10 @@ impl JsonSchema for ConsumerGroup {
 // FIXME: should be a newtype
 pub type TopicId = Uuid;
 
+pub fn gen_topic_id() -> TopicId {
+    coyote_namespace::entities::gen_namespace_id()
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {
     #[serde(default = "default_retention_millis")]

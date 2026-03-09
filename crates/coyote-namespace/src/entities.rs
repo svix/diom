@@ -12,6 +12,15 @@ pub use fjall_utils::StorageType;
 pub type NamespaceId = Uuid;
 pub type NamespaceName = String;
 
+pub fn gen_namespace_id() -> NamespaceId {
+    let ts = jiff::Timestamp::now();
+    Uuid::new_v7(uuid::Timestamp::from_unix(
+        uuid::NoContext,
+        ts.as_second() as u64,
+        ts.subsec_nanosecond() as u32,
+    ))
+}
+
 #[derive(Serialize, Deserialize)]
 #[repr(u8)]
 pub enum Module {

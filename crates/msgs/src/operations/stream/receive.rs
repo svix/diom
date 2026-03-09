@@ -9,7 +9,9 @@ use tracing::Span;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Offset, Partition, TopicIn, TopicName, TopicPartition},
+    entities::{
+        ConsumerGroup, Offset, Partition, TopicId, TopicIn, TopicName, TopicPartition, gen_topic_id,
+    },
     tables::{MsgRow, StreamLeaseRow, TopicRow},
 };
 
@@ -24,6 +26,8 @@ pub struct StreamReceiveOperation {
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
     now: Timestamp,
+    // Only used if topic doesn't already exist
+    maybe_topic_id: TopicId,
 }
 
 impl StreamReceiveOperation {
@@ -46,6 +50,7 @@ impl StreamReceiveOperation {
             batch_size,
             lease_duration_millis,
             now: Timestamp::now(),
+            maybe_topic_id: gen_topic_id(),
         })
     }
 
@@ -63,7 +68,7 @@ impl StreamReceiveOperation {
             &mut batch,
             self.namespace_id,
             &self.topic,
-            self.now,
+            self.maybe_topic_id,
         )?;
 
         Span::current().record("partition_count", topic_row.partitions);
