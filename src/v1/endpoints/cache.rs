@@ -11,7 +11,7 @@ use diom_cache::{
 };
 use diom_core::types::EntityKey;
 use diom_derive::aide_annotate;
-use diom_error::{Error, HttpError, ResultExt};
+use diom_error::{Error, HttpError, OptionExt, ResultExt};
 use diom_kv::kvcontroller::KvModel;
 use diom_namespace::{
     Namespace,
@@ -134,7 +134,7 @@ async fn cache_set(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model());
     repl.client_write(operation).await.map_err_generic()?.0?;
@@ -151,7 +151,7 @@ async fn cache_get(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     repl.raft.ensure_linearizable().await.map_err_generic()?;
 
@@ -165,8 +165,7 @@ async fn cache_get(
         Some(m) => CacheGetOut::from_model(data.key, m),
         None => {
             return Err(Error::http(HttpError::not_found(
-                None,
-                Some("Key not found".to_string()),
+                "Key not found".to_owned(),
             )));
         }
     };
@@ -183,7 +182,7 @@ async fn cache_del(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());
     repl.client_write(operation).await.map_err_generic()?.0?;
@@ -231,7 +230,7 @@ async fn cache_get_namespace(
     let namespace: CacheNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
         name: namespace.name,

@@ -7,7 +7,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_core::types::EntityKey;
 use diom_derive::aide_annotate;
-use diom_error::{Error, HttpError, ResultExt};
+use diom_error::{Error, HttpError, OptionExt, ResultExt};
 use diom_kv::{
     KvNamespace,
     kvcontroller::{KvModel, OperationBehavior},
@@ -94,7 +94,7 @@ async fn kv_set(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = SetOperation::new(namespace, data.key, data.value, data.ttl, data.behavior);
     repl.client_write(operation).await.map_err_generic()?.0?;
@@ -113,7 +113,7 @@ async fn kv_get(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     repl.raft.ensure_linearizable().await.map_err_generic()?;
 
@@ -127,8 +127,7 @@ async fn kv_get(
         Some(m) => KvGetOut::from_model(data.key, m),
         None => {
             return Err(Error::http(HttpError::not_found(
-                None,
-                Some("Key not found".to_string()),
+                "Key not found".to_owned(),
             )));
         }
     };
@@ -145,7 +144,7 @@ async fn kv_del(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let key = data.key;
     let operation = DeleteOperation::new(namespace, key);
@@ -218,7 +217,7 @@ async fn kv_get_namespace(
     let namespace: KvNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     Ok(MsgPackOrJson(KvGetNamespaceOut {
         name: namespace.name,

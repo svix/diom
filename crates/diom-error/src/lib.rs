@@ -16,10 +16,12 @@ use serde::Serialize;
 use serde_json::json;
 use tokio::task::JoinError;
 
+mod option_ext;
 mod result_ext;
 mod validation;
 
 pub use self::{
+    option_ext::OptionExt,
     result_ext::ResultExt,
     validation::{ValidationErrorBody, ValidationErrorItem, validation_error, validation_errors},
 };
@@ -202,11 +204,13 @@ impl HttpError {
         )
     }
 
-    pub fn not_found(code: Option<String>, detail: Option<String>) -> Self {
+    pub fn not_found(detail: impl Into<Option<String>>) -> Self {
         Self::new_standard(
             StatusCode::NOT_FOUND,
-            code.unwrap_or_else(|| "not_found".to_owned()),
-            detail.unwrap_or_else(|| "Entity not found".to_owned()),
+            "not_found".to_owned(),
+            detail
+                .into()
+                .unwrap_or_else(|| "Entity not found".to_owned()),
         )
     }
 
