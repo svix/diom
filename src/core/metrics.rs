@@ -1,5 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
+use fjall_utils::StorageType;
 use http::StatusCode;
 use opentelemetry::metrics::{Counter, Gauge, Histogram, Meter};
 
@@ -19,8 +20,30 @@ impl From<DbType> for opentelemetry::Value {
     }
 }
 
+pub enum Module {
+    Cache,
+    Idempotency,
+    KeyValue,
+    RateLimiter,
+    Stream,
+}
+
+impl From<Module> for opentelemetry::Value {
+    fn from(module: Module) -> Self {
+        match module {
+            Module::Cache => "cache".into(),
+            Module::Idempotency => "idempotency".into(),
+            Module::KeyValue => "kv".into(),
+            Module::RateLimiter => "ratelimiter".into(),
+            Module::Stream => "stream".into(),
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct DbMetrics {
     bytes_used: Gauge<u64>,
+    key_count: Gauge<u64>,
     node_id: NodeId,
 }
 
@@ -32,6 +55,10 @@ impl DbMetrics {
                 .with_description("DB size in bytes")
                 .with_unit("By")
                 .build(),
+            key_count: meter
+                .u64_gauge("diom.key_count")
+                .with_description("Number of keys by namespace/module")
+                .build(),
             node_id,
         }
     }
@@ -42,6 +69,28 @@ impl DbMetrics {
             &[
                 opentelemetry::KeyValue::new("node_id", self.node_id.to_string()),
                 opentelemetry::KeyValue::new("db_type", db_type),
+            ],
+        );
+    }
+
+    pub fn key_count(
+        &self,
+        module: Module,
+        namespace: &str,
+        storage_type: StorageType,
+        count: usize,
+    ) {
+        let storage_type_str: &'static str = match storage_type {
+            StorageType::Persistent => "persistent",
+            StorageType::Ephemeral => "ephemeral",
+        };
+        self.key_count.record(
+            count as _,
+            &[
+                opentelemetry::KeyValue::new("node_id", self.node_id.to_string()),
+                opentelemetry::KeyValue::new("module", module),
+                opentelemetry::KeyValue::new("namespace", namespace.to_owned()),
+                opentelemetry::KeyValue::new("storage_type", storage_type_str),
             ],
         );
     }
