@@ -151,11 +151,10 @@ impl Store {
         };
 
         let time = Monotime::initial();
-        // if we've ever committed anything, make sure we don't rewind time on restarting
         if let Some(timestamp) = logs.get_last_timestamp().await? {
+            // if we've ever committed anything, make sure we don't rewind time on restarting
             time.bump(timestamp);
         }
-        let _ = time.now();
 
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
