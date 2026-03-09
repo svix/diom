@@ -13,6 +13,7 @@ export interface KvSetIn {
 }
 
 export const KvSetInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): KvSetIn {
         return {
             key: object['key'],
@@ -22,6 +23,7 @@ export const KvSetInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: KvSetIn): any {
         return {
             'key': self.key,

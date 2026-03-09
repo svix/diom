@@ -8,6 +8,7 @@ export interface QueueMsgOut {
 }
 
 export const QueueMsgOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): QueueMsgOut {
         return {
             msgId: object['msg_id'],
@@ -17,6 +18,7 @@ export const QueueMsgOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: QueueMsgOut): any {
         return {
             'msg_id': self.msgId,

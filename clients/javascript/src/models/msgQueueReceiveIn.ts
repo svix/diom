@@ -7,6 +7,7 @@ export interface MsgQueueReceiveIn {
 }
 
 export const MsgQueueReceiveInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgQueueReceiveIn {
         return {
             topic: object['topic'],
@@ -15,6 +16,7 @@ export const MsgQueueReceiveInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgQueueReceiveIn): any {
         return {
             'topic': self.topic,

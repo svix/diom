@@ -7,6 +7,7 @@ export interface MsgPublishOutTopic {
 }
 
 export const MsgPublishOutTopicSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgPublishOutTopic {
         return {
             topic: object['topic'],
@@ -15,6 +16,7 @@ export const MsgPublishOutTopicSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgPublishOutTopic): any {
         return {
             'topic': self.topic,

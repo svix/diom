@@ -127,6 +127,7 @@ export class DiomRequest {
 
     this.headerParams[name] = value;
   }
+
   // biome-ignore lint/suspicious/noExplicitAny: intentional any
   public setBody(value: any) {
     this.body = JSON.stringify(value);

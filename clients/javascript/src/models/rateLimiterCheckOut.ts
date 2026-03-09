@@ -14,6 +14,7 @@ export interface RateLimiterCheckOut {
 }
 
 export const RateLimiterCheckOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): RateLimiterCheckOut {
         return {
             status: RateLimitStatusSerializer._fromJsonObject(object['status']),
@@ -22,6 +23,7 @@ export const RateLimiterCheckOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: RateLimiterCheckOut): any {
         return {
             'status': RateLimitStatusSerializer._toJsonObject(self.status),

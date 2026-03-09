@@ -41,9 +41,11 @@ export type {{ type_name }} = _{{ type_name }}Fields & (
 );
 
 export const {{ type.name | to_upper_camel_case }}Serializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): {{ type.name | to_upper_camel_case }} {
         const {{ disc_field_name }} = object['{{ type.discriminator_field }}'];
 
+        // biome-ignore lint/suspicious/noExplicitAny: intentional any
         function get{{ content_field_name | to_upper_camel_case }}({{ disc_field_name }}: string): any {
             switch ({{ disc_field_name }}) {
             {%- for variant in type.variants %}
@@ -72,6 +74,7 @@ export const {{ type.name | to_upper_camel_case }}Serializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: {{ type.name | to_upper_camel_case }}): any {
         // biome-ignore lint/suspicious/noImplicitAnyLet: the return type needs to be any
         let {{ content_field_name }};

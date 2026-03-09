@@ -8,6 +8,7 @@ export interface RateLimiterFixedWindowConfig {
 }
 
 export const RateLimiterFixedWindowConfigSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): RateLimiterFixedWindowConfig {
         return {
             windowSize: object['window_size'],
@@ -15,6 +16,7 @@ export const RateLimiterFixedWindowConfigSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: RateLimiterFixedWindowConfig): any {
         return {
             'window_size': self.windowSize,

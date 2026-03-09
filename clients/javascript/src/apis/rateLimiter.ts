@@ -16,7 +16,7 @@ import {
     type RateLimiterGetRemainingOut,
     RateLimiterGetRemainingOutSerializer,
 } from '../models/rateLimiterGetRemainingOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class RateLimiter {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

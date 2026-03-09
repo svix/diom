@@ -4,7 +4,7 @@ import {
     type PingOut,
     PingOutSerializer,
 } from '../models/pingOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class Health {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

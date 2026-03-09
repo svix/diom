@@ -8,7 +8,7 @@ import {
     type MsgTopicConfigureOut,
     MsgTopicConfigureOutSerializer,
 } from '../models/msgTopicConfigureOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class MsgsTopic {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

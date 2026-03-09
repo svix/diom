@@ -8,6 +8,7 @@ export interface MsgStreamReceiveIn {
 }
 
 export const MsgStreamReceiveInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgStreamReceiveIn {
         return {
             topic: object['topic'],
@@ -17,6 +18,7 @@ export const MsgStreamReceiveInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgStreamReceiveIn): any {
         return {
             'topic': self.topic,

@@ -68,7 +68,7 @@ import { MsgsNamespace } from './msgsNamespace';
 import { MsgsQueue } from './msgsQueue';
 import { MsgsStream } from './msgsStream';
 import { MsgsTopic } from './msgsTopic';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class Msgs {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

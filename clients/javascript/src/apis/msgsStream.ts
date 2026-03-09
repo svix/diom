@@ -16,7 +16,7 @@ import {
     type MsgStreamReceiveOut,
     MsgStreamReceiveOutSerializer,
 } from '../models/msgStreamReceiveOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class MsgsStream {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
