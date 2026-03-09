@@ -8,3 +8,8 @@ dependencies = [
     "msgpack>=1.1.2,<2.0.0",
     "pydantic>=2.12.5,<3.0.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.5",
+]
