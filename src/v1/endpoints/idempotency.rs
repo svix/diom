@@ -7,7 +7,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_core::types::EntityKey;
 use coyote_derive::aide_annotate;
-use coyote_error::{Error, HttpError, ResultExt};
+use coyote_error::{OptionExt as _, ResultExt};
 use coyote_idempotency::{
     IdempotencyStartResult,
     operations::{
@@ -107,7 +107,7 @@ async fn idempotency_start(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
@@ -125,7 +125,7 @@ async fn idempotency_complete(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation =
         CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl);
@@ -144,7 +144,7 @@ async fn idempotency_abort(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     let operation = AbortOperation::new(namespace, data.key.to_string());
     repl.client_write(operation).await.map_err_generic()?.0?;
@@ -216,7 +216,7 @@ async fn idempotency_get_namespace(
     let namespace: IdempotencyNamespace = state
         .namespace_state
         .fetch_namespace_admin(&data.name)?
-        .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
+        .ok_or_not_found()?;
 
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {
         name: namespace.name,
