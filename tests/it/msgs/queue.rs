@@ -602,3 +602,241 @@ async fn queue_consumer_groups_independent() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn nack_sends_to_dlq() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-q-nack" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-q-nack:t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive messages
+    let r1 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-nack:t1",
+            "consumer_group": "test-cg",
+            "lease_duration_millis": 1000,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = r1["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 2);
+
+    // Nack all messages
+    let msg_ids: Vec<&str> = msgs.iter().map(|m| m["msg_id"].as_str().unwrap()).collect();
+    client
+        .post("msgs/queue/nack")
+        .json(json!({
+            "topic": "ns-q-nack:t1",
+            "consumer_group": "test-cg",
+            "msg_ids": msg_ids,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for original lease to expire
+    sleep(Duration::from_millis(1500)).await;
+
+    // Receive again — nacked messages are in DLQ, should get nothing
+    let r2 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-nack:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(
+        r2["msgs"].as_array().unwrap().len(),
+        0,
+        "nacked messages should be in DLQ and not re-delivered"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn nack_then_redrive_makes_available() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-q-redrive" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-q-redrive:t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive and nack
+    let r1 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-redrive:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msg_ids: Vec<&str> = r1["msgs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|m| m["msg_id"].as_str().unwrap())
+        .collect();
+
+    client
+        .post("msgs/queue/nack")
+        .json(json!({
+            "topic": "ns-q-redrive:t1",
+            "consumer_group": "test-cg",
+            "msg_ids": msg_ids,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Redrive DLQ
+    client
+        .post("msgs/queue/redrive-dlq")
+        .json(json!({
+            "topic": "ns-q-redrive:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive again — redriven messages should be available
+    let r2 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-redrive:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(
+        r2["msgs"].as_array().unwrap().len(),
+        2,
+        "redriven messages should be available again"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn nack_nonexistent_namespace() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/queue/nack")
+        .json(json!({
+            "topic": "does-not-exist:t1",
+            "consumer_group": "test-cg",
+            "msg_ids": ["0:0"],
+        }))
+        .await?
+        .expect(StatusCode::NOT_FOUND);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn redrive_dlq_nonexistent_namespace() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/queue/redrive-dlq")
+        .json(json!({
+            "topic": "does-not-exist:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::NOT_FOUND);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn redrive_dlq_no_dlq_messages() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-q-redrive-noop" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish a message to create the topic
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-q-redrive-noop:t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Redrive with no DLQ messages should succeed as a no-op
+    client
+        .post("msgs/queue/redrive-dlq")
+        .json(json!({
+            "topic": "ns-q-redrive-noop:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    Ok(())
+}
