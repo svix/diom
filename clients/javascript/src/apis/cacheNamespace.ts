@@ -16,7 +16,7 @@ import {
     type CacheGetNamespaceOut,
     CacheGetNamespaceOutSerializer,
 } from '../models/cacheGetNamespaceOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class CacheNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

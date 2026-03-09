@@ -16,7 +16,7 @@ import {
     type IdempotencyGetNamespaceOut,
     IdempotencyGetNamespaceOutSerializer,
 } from '../models/idempotencyGetNamespaceOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class IdempotencyNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

@@ -16,7 +16,7 @@ import {
     type KvGetNamespaceOut,
     KvGetNamespaceOutSerializer,
 } from '../models/kvGetNamespaceOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class KvNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

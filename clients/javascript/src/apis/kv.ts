@@ -41,7 +41,7 @@ import {
     KvSetOutSerializer,
 } from '../models/kvSetOut';
 import { KvNamespace } from './kvNamespace';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class Kv {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

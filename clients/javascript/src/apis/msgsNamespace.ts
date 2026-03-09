@@ -16,7 +16,7 @@ import {
     type MsgNamespaceGetOut,
     MsgNamespaceGetOutSerializer,
 } from '../models/msgNamespaceGetOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class MsgsNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

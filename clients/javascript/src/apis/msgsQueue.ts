@@ -16,7 +16,7 @@ import {
     type MsgQueueReceiveOut,
     MsgQueueReceiveOutSerializer,
 } from '../models/msgQueueReceiveOut';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class MsgsQueue {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

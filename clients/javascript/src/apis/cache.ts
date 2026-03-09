@@ -41,7 +41,7 @@ import {
     CacheSetOutSerializer,
 } from '../models/cacheSetOut';
 import { CacheNamespace } from './cacheNamespace';
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class Cache {
     public constructor(private readonly requestCtx: DiomRequestContext) {}

@@ -11,7 +11,7 @@ import {
 {% for _, sub in resource.subresources | items -%}
 import { {{ sub.name | to_upper_camel_case}} } from './{{ sub.name | to_lower_camel_case }}';
 {% endfor -%}
-import { HttpMethod, DiomRequest, DiomRequestContext } from "../request";
+import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class {{ resource_type_name }} {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
