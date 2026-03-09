@@ -9,6 +9,7 @@ from .cache_get_namespace_out import CacheGetNamespaceOut
 from .cache_get_out import CacheGetOut
 from .cache_set_in import CacheSetIn
 from .cache_set_out import CacheSetOut
+from .consistency import Consistency
 from .eviction_policy import EvictionPolicy
 from .idempotency_abort_in import IdempotencyAbortIn
 from .idempotency_abort_out import IdempotencyAbortOut
@@ -70,6 +71,7 @@ __all__ = [
     "CacheGetOut",
     "CacheSetIn",
     "CacheSetOut",
+    "Consistency",
     "EvictionPolicy",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",

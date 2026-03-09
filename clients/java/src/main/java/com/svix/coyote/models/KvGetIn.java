@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class KvGetIn {
 @JsonProperty private String key;
+@JsonProperty private Consistency consistency;
 public KvGetIn () {}
 
  public KvGetIn key(String key) {
@@ -48,6 +49,25 @@ public KvGetIn () {}
 
      public void setKey(String key) {
         this.key = key;
+    }
+
+     public KvGetIn consistency(Consistency consistency) {
+        this.consistency = consistency;
+        return this;
+    }
+
+    /**
+    * Get consistency
+    *
+     * @return consistency
+     */
+    @javax.annotation.Nullable
+     public Consistency getConsistency() {
+        return consistency;
+    }
+
+     public void setConsistency(Consistency consistency) {
+        this.consistency = consistency;
     }
 
     /**

@@ -11,6 +11,7 @@ mod cache_get_namespace_out;
 mod cache_get_out;
 mod cache_set_in;
 mod cache_set_out;
+mod consistency;
 mod eviction_policy;
 mod idempotency_abort_in;
 mod idempotency_abort_out;
@@ -71,6 +72,7 @@ pub use self::{
     cache_get_out::CacheGetOut,
     cache_set_in::CacheSetIn,
     cache_set_out::CacheSetOut,
+    consistency::Consistency,
     eviction_policy::EvictionPolicy,
     idempotency_abort_in::IdempotencyAbortIn,
     idempotency_abort_out::IdempotencyAbortOut,

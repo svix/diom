@@ -83,7 +83,7 @@ async fn get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceGetIn>,
 ) -> Result<MsgPackOrJson<MsgNamespaceGetOut>> {
     // Ensure we have the latest version of namespace
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.map_err_generic()?;
 
     let namespace: MsgsNamespace = state
         .namespace_state

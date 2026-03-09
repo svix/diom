@@ -3,5 +3,6 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 type KvGetIn struct {
-	Key string `json:"key"`
+	Key         string       `json:"key"`
+	Consistency *Consistency `json:"consistency,omitempty"`
 }

@@ -67,3 +67,11 @@ pub struct ForwardedWriteResponse {
     pub log_id: LogId<NodeId>,
     pub response: Response,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LastIdRequest {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LastIdResponse {
+    pub last_committed_log_id: Option<LogId<NodeId>>,
+}

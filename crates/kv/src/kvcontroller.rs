@@ -57,6 +57,7 @@ impl KvController {
         }
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn fetch(
         &self,
         namespace_id: NamespaceId,
@@ -102,6 +103,7 @@ impl KvController {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, value))]
     pub fn set(
         &self,
         namespace_id: NamespaceId,
@@ -137,6 +139,7 @@ impl KvController {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn delete(&self, namespace_id: NamespaceId, key: &str) -> Result<()> {
         let mut batch = self.db.batch();
 

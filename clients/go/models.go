@@ -15,6 +15,7 @@ type (
 	CacheGetOut                   = coyote_models.CacheGetOut
 	CacheSetIn                    = coyote_models.CacheSetIn
 	CacheSetOut                   = coyote_models.CacheSetOut
+	Consistency                   = coyote_models.Consistency
 	EvictionPolicy                = coyote_models.EvictionPolicy
 	IdempotencyAbortIn            = coyote_models.IdempotencyAbortIn
 	IdempotencyAbortOut           = coyote_models.IdempotencyAbortOut
