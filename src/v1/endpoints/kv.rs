@@ -5,7 +5,7 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use coyote_core::types::EntityKey;
+use coyote_core::types::{Consistency, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, OptionExt, ResultExt};
 use coyote_kv::{
@@ -49,17 +49,8 @@ pub struct KvSetOut {}
 pub struct KvGetIn {
     #[validate(nested)]
     pub key: EntityKey,
-    /// Whether or not the read should be linearizable
-    ///
-    /// If this is `true`, the read is guaranteed to see all previous operations, but will
-    /// have to make at least one additional round-trip to the leader. If this is false, stale
-    /// reads will be performed against the replica which receives this request.
-    #[serde(default = "default_true")]
-    pub linearizable: bool,
-}
-
-const fn default_true() -> bool {
-    true
+    #[serde(default = "Consistency::strong")]
+    pub consistency: Consistency,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -126,7 +117,7 @@ async fn kv_get(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    if data.linearizable {
+    if data.consistency.linearizable() {
         repl.wait_linearizable().await.map_err_generic()?;
     }
 

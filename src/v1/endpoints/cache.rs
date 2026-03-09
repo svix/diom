@@ -9,7 +9,7 @@ use coyote_cache::{
     CacheModel,
     operations::{CreateCacheOperation, DeleteOperation, SetOperation},
 };
-use coyote_core::types::EntityKey;
+use coyote_core::types::{Consistency, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, HttpError, OptionExt, ResultExt};
 use coyote_kv::kvcontroller::KvModel;
@@ -57,13 +57,8 @@ pub struct CacheSetOut {}
 pub struct CacheGetIn {
     #[validate(nested)]
     pub key: EntityKey,
-    /// Whether or not the read should be linearizable
-    ///
-    /// If this is `true`, the read is guaranteed to see all previous operations, but will
-    /// have to make at least one additional round-trip to the leader. If this is false, stale
-    /// reads will be performed against the replica which receives this request.
-    #[serde(default)]
-    pub linearizable: bool,
+    #[serde(default = "Consistency::weak")]
+    pub consistency: Consistency,
 }
 
 #[derive(Clone, Debug, Serialize, JsonSchema)]
@@ -160,7 +155,7 @@ async fn cache_get(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    if data.linearizable {
+    if data.consistency.linearizable() {
         repl.wait_linearizable().await.map_err_generic()?;
     }
 

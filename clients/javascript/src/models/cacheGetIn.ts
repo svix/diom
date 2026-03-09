@@ -1,15 +1,12 @@
 // this file is @generated
+import {
+    type Consistency,
+    ConsistencySerializer,
+} from './consistency';
 
 export interface CacheGetIn {
     key: string;
-    /**
-* Whether or not the read should be linearizable
-* 
-* If this is `true`, the read is guaranteed to see all previous operations, but will
-* have to make at least one additional round-trip to the leader. If this is false, stale
-* reads will be performed against the replica which receives this request.
-*/
-    linearizable?: boolean;
+    consistency?: Consistency;
 }
 
 export const CacheGetInSerializer = {
@@ -17,7 +14,7 @@ export const CacheGetInSerializer = {
     _fromJsonObject(object: any): CacheGetIn {
         return {
             key: object['key'],
-            linearizable: object['linearizable'],
+            consistency: object['consistency'] != null ? ConsistencySerializer._fromJsonObject(object['consistency']): undefined,
         };
     },
 
@@ -25,7 +22,7 @@ export const CacheGetInSerializer = {
     _toJsonObject(self: CacheGetIn): any {
         return {
             'key': self.key,
-            'linearizable': self.linearizable,
+            'consistency': self.consistency != null ? ConsistencySerializer._toJsonObject(self.consistency) : undefined,
         };
     }
 }

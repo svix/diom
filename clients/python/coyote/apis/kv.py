@@ -52,7 +52,7 @@ class KvAsync(ApiBase):
         """KV Get"""
         body = _KvGetIn(
             key=key,
-            linearizable=kv_get_in.linearizable,
+            consistency=kv_get_in.consistency,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -113,7 +113,7 @@ class Kv(ApiBase):
         """KV Get"""
         body = _KvGetIn(
             key=key,
-            linearizable=kv_get_in.linearizable,
+            consistency=kv_get_in.consistency,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

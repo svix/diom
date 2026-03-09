@@ -3,22 +3,14 @@ import typing as t
 
 from ..internal.base_model import BaseModel
 
+from .consistency import Consistency
+
 
 class KvGetIn(BaseModel):
-    linearizable: t.Optional[bool] = None
-    """Whether or not the read should be linearizable
-
-    If this is `true`, the read is guaranteed to see all previous operations, but will
-    have to make at least one additional round-trip to the leader. If this is false, stale
-    reads will be performed against the replica which receives this request."""
+    consistency: t.Optional[Consistency] = None
 
 
 class _KvGetIn(BaseModel):
     key: str
 
-    linearizable: t.Optional[bool] = None
-    """Whether or not the read should be linearizable
-
-    If this is `true`, the read is guaranteed to see all previous operations, but will
-    have to make at least one additional round-trip to the leader. If this is false, stale
-    reads will be performed against the replica which receives this request."""
+    consistency: t.Optional[Consistency] = None

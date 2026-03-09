@@ -34,7 +34,7 @@ impl<'a> Kv<'a> {
     pub async fn get(&self, key: String, kv_get_in: KvGetIn) -> Result<KvGetOut> {
         let kv_get_in = KvGetIn_ {
             key,
-            linearizable: kv_get_in.linearizable,
+            consistency: kv_get_in.consistency,
         };
 
         crate::request::Request::new(http::Method::POST, "/api/v1/kv/get")

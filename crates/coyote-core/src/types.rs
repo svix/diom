@@ -334,6 +334,33 @@ impl Validate for EntityKey {
     }
 }
 
+/// Consistency level for reads.
+///
+/// Strong consistency (also known as linearizability) guarantees that a read will see all previous
+/// writes. Weak consistency allows stale reads, but can save one or more round trip to the leader.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PartialOrd, Ord,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Consistency {
+    Strong,
+    Weak,
+}
+
+impl Consistency {
+    pub fn linearizable(&self) -> bool {
+        matches!(self, Self::Strong)
+    }
+
+    pub fn strong() -> Self {
+        Self::Strong
+    }
+
+    pub fn weak() -> Self {
+        Self::Weak
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use validator::Validate;
