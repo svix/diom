@@ -8,7 +8,7 @@ import {
     type MsgTopicConfigureOut,
     MsgTopicConfigureOutSerializer,
 } from '../models/msgTopicConfigureOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class MsgsTopic {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}
