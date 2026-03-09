@@ -10,6 +10,7 @@ axum.workspace = true
 diom-error.workspace = true
 http.workspace = true
 http-serde.workspace = true
+jiff.workspace = true
 opentelemetry.workspace = true
 paste.workspace = true
 serde.workspace = true

@@ -2,6 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use jiff::Timestamp;
 use openraft::{LogId, ServerState};
 use serde::{Deserialize, Serialize};
 
@@ -54,6 +55,8 @@ pub struct HealthResponse {
     pub server_state: ServerState,
     pub leader: Option<NodeId>,
     pub cluster_id: Option<ClusterId>,
+    pub wall_time: Timestamp,
+    pub monotonic_time: Timestamp,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

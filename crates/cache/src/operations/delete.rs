@@ -33,7 +33,7 @@ impl DeleteOperation {
 }
 
 impl CacheRequest for DeleteOperation {
-    fn apply(self, state: CacheRaftState<'_>) -> DeleteResponse {
+    fn apply(self, state: CacheRaftState<'_>, _now: jiff::Timestamp) -> DeleteResponse {
         DeleteResponse(self.apply_real(&state))
     }
 }

@@ -18,7 +18,6 @@ pub struct SetOperation {
     expiry: Option<Timestamp>,
     value: Vec<u8>,
     behavior: OperationBehavior,
-    now: Timestamp,
 }
 
 impl SetOperation {
@@ -36,27 +35,26 @@ impl SetOperation {
             expiry: ttl.map(|ttl| Timestamp::now() + Duration::from_millis(ttl)),
             value,
             behavior,
-            now: Timestamp::now(),
         }
     }
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &State) -> Result<()> {
+    fn apply_real(self, state: &State, now: Timestamp) -> Result<()> {
         state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
             self.value,
             self.expiry,
             self.behavior,
-            self.now,
+            now,
         )?;
         Ok(())
     }
 }
 
 impl KvRequest for SetOperation {
-    fn apply(self, state: KvRaftState<'_>) -> SetResponse {
-        SetResponse(self.apply_real(state.state))
+    fn apply(self, state: KvRaftState<'_>, timestamp: Timestamp) -> SetResponse {
+        SetResponse(self.apply_real(state.state, timestamp))
     }
 }

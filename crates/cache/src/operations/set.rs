@@ -13,7 +13,6 @@ pub struct SetOperation {
     storage_type: StorageType,
     pub(crate) key: String,
     model: CacheModel,
-    now: Timestamp,
 }
 
 impl SetOperation {
@@ -23,27 +22,26 @@ impl SetOperation {
             storage_type: namespace.storage_type,
             key,
             model,
-            now: Timestamp::now(),
         }
     }
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &CacheRaftState<'_>) -> Result<()> {
+    fn apply_real(self, state: &CacheRaftState<'_>, now: Timestamp) -> Result<()> {
         state.state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
             self.model.value,
             self.model.expiry,
             OperationBehavior::Upsert,
-            self.now,
+            now,
         )?;
         Ok(())
     }
 }
 
 impl CacheRequest for SetOperation {
-    fn apply(self, state: CacheRaftState<'_>) -> SetResponse {
-        SetResponse(self.apply_real(&state))
+    fn apply(self, state: CacheRaftState<'_>, now: Timestamp) -> SetResponse {
+        SetResponse(self.apply_real(&state, now))
     }
 }

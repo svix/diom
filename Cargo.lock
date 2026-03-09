@@ -1156,6 +1156,7 @@ dependencies = [
  "diom-error",
  "http",
  "http-serde",
+ "jiff",
  "opentelemetry",
  "paste",
  "serde",

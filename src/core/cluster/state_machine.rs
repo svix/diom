@@ -12,6 +12,7 @@ use crate::{
 };
 use anyhow::Context;
 use diom_namespace::entities::StorageType;
+use diom_operations::Monotime;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
 use openraft::{
@@ -50,7 +51,10 @@ impl ClusterId {
 }
 
 #[derive(Clone)]
-pub struct StoreHandle(Arc<TokioRwLock<Store>>);
+pub struct StoreHandle {
+    inner: Arc<TokioRwLock<Store>>,
+    pub time: Monotime,
+}
 
 /// The actual meat of the database; a wrapper around fjall state
 /// and any number of module states
@@ -64,7 +68,11 @@ pub struct Stores {
 
 impl From<Store> for StoreHandle {
     fn from(value: Store) -> Self {
-        Self(Arc::new(TokioRwLock::new(value)))
+        let time = value.time.clone();
+        Self {
+            inner: Arc::new(TokioRwLock::new(value)),
+            time,
+        }
     }
 }
 
@@ -88,6 +96,7 @@ pub struct Store {
     last_membership: StoredMembership<NodeId, Node>,
     last_snapshot: Arc<RwLock<Option<LastSnapshot>>>,
     cluster_id: Option<ClusterId>,
+    pub(super) time: Monotime,
     pub(super) logs: DiomLogs,
 }
 
@@ -141,6 +150,12 @@ impl Store {
                 .context("initializing idempotency state")?,
         };
 
+        let time = Monotime::initial();
+        if let Some(timestamp) = logs.get_last_timestamp().await? {
+            // if we've ever committed anything, make sure we don't rewind time on restarting
+            time.bump(timestamp);
+        }
+
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
             state: app_state,
@@ -152,6 +167,7 @@ impl Store {
             last_applied_log_id: None,
             last_membership: Default::default(),
             cluster_id: None,
+            time,
             logs,
         };
         this.load_information().await?;
@@ -580,7 +596,7 @@ impl StoredSnapshot {
 
 impl RaftSnapshotBuilder<TypeConfig> for StoreHandle {
     async fn build_snapshot(&mut self) -> StorageResult<Snapshot<TypeConfig>> {
-        self.0.write().await.build_snapshot_().await
+        self.inner.write().await.build_snapshot_().await
     }
 }
 
@@ -590,7 +606,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
     async fn applied_state(
         &mut self,
     ) -> StorageResult<(Option<LogId<NodeId>>, StoredMembership<NodeId, Node>)> {
-        let this = self.0.read().await;
+        let this = self.inner.read().await;
         Ok((this.last_applied_log_id, this.last_membership.clone()))
     }
 
@@ -599,23 +615,23 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
         I: IntoIterator<Item = <TypeConfig as RaftTypeConfig>::Entry> + openraft::OptionalSend,
         I::IntoIter: openraft::OptionalSend,
     {
-        self.0.write().await.apply_(entries).await
+        self.inner.write().await.apply_(entries).await
     }
 
     async fn begin_receiving_snapshot(
         &mut self,
     ) -> StorageResult<Box<<TypeConfig as RaftTypeConfig>::SnapshotData>> {
-        self.0.write().await.begin_receiving_snapshot_().await
+        self.inner.write().await.begin_receiving_snapshot_().await
     }
 
     async fn get_snapshot_builder(&mut self) -> Self::SnapshotBuilder {
-        self.0.write().await.prep_snapshot_builder_();
+        self.inner.write().await.prep_snapshot_builder_();
         self.clone()
     }
 
     #[tracing::instrument(skip(self))]
     async fn get_current_snapshot(&mut self) -> StorageResult<Option<Snapshot<TypeConfig>>> {
-        self.0.write().await.get_current_snapshot_().await
+        self.inner.write().await.get_current_snapshot_().await
     }
 
     #[tracing::instrument(skip(self, meta))]
@@ -624,7 +640,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
         meta: &SnapshotMeta<NodeId, Node>,
         snapshot: Box<StoredSnapshot>,
     ) -> StorageResult<()> {
-        self.0
+        self.inner
             .write()
             .await
             .install_snapshot_(meta, snapshot)
@@ -635,13 +651,22 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
 
 impl StoreHandle {
     pub async fn cluster_id(&self) -> Option<ClusterId> {
-        self.0.read().await.cluster_id().copied()
+        self.inner.read().await.cluster_id().copied()
     }
 
     pub async fn log_id_before_time(
         &self,
         timestamp: jiff::Timestamp,
     ) -> anyhow::Result<Option<u64>> {
-        self.0.read().await.logs.log_index_before(timestamp).await
+        self.inner
+            .read()
+            .await
+            .logs
+            .log_index_before(timestamp)
+            .await
+    }
+
+    pub fn now(&self) -> jiff::Timestamp {
+        self.time.now()
     }
 }

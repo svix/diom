@@ -56,6 +56,7 @@ pub(super) async fn initialize_cluster(
     tracing::debug!(cluster_id=?new_id, "cluster initialized, setting cluster_id");
     raft.client_write(RequestWithContext::new(
         Request::ClusterInternal(SetClusterUuidOperation(new_id).into()),
+        jiff::Timestamp::now(),
         None,
     ))
     .await

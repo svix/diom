@@ -6,7 +6,7 @@ use std::{
 use super::{
     Node, NodeId,
     handle::{BackgroundCommand, RaftState},
-    operations::RecordLogTimestampOperation,
+    operations::{RecordLogTimestampOperation, TickOperation},
 };
 use crate::cfg::Configuration;
 use openraft::error::{ClientWriteError, RaftError};
@@ -26,11 +26,25 @@ impl BackgroundJob for RecordLogTimestamps {
     async fn run_on_leader(self) -> anyhow::Result<()> {
         let mut ticker = tokio::time::interval(self.cfg.cluster.log_index_interval);
         loop {
-            tracing::debug!("recording log timestamps");
-            let now = jiff::Timestamp::now();
+            tracing::trace!("recording log timestamps");
             self.handle
-                .client_write(RecordLogTimestampOperation { timestamp: now })
+                .client_write(RecordLogTimestampOperation {})
                 .await?;
+            ticker.tick().await;
+        }
+    }
+}
+
+struct Tick {
+    handle: RaftState,
+}
+
+impl BackgroundJob for Tick {
+    async fn run_on_leader(self) -> anyhow::Result<()> {
+        let mut ticker = tokio::time::interval(Duration::from_secs(10));
+        loop {
+            tracing::trace!("recording a no-op event");
+            self.handle.client_write(TickOperation {}).await?;
             ticker.tick().await;
         }
     }
@@ -51,7 +65,14 @@ fn is_forward_to_leader_err(e: &anyhow::Error) -> bool {
 impl BackgroundJobRunner {
     fn spawn_all(cfg: Configuration, handle: RaftState) -> Self {
         let mut jobs = JoinSet::new();
-        jobs.spawn(RecordLogTimestamps { cfg, handle }.run_on_leader());
+        jobs.spawn(
+            RecordLogTimestamps {
+                cfg,
+                handle: handle.clone(),
+            }
+            .run_on_leader(),
+        );
+        jobs.spawn(Tick { handle }.run_on_leader());
         Self { jobs }
     }
 
@@ -91,6 +112,7 @@ async fn leadership_changes(handle: RaftState) -> tokio::sync::broadcast::Receiv
                 |m| {
                     let mut l = last_leader.lock().unwrap();
                     if m.current_leader != *l {
+                        tracing::debug!(old_leader=?l, new_leader=?m, "leader has changed");
                         *l = m.current_leader;
                         if tx.send(m.current_leader).is_err() {
                             return true;

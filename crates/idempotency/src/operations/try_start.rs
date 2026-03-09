@@ -15,7 +15,6 @@ pub struct TryStartOperation {
     storage_type: StorageType,
     pub(crate) key: String,
     pub(crate) ttl_seconds: u64,
-    now: Timestamp,
 }
 
 impl TryStartOperation {
@@ -25,7 +24,6 @@ impl TryStartOperation {
             storage_type: namespace.storage_type,
             key,
             ttl_seconds,
-            now: Timestamp::now(),
         }
     }
 }
@@ -36,8 +34,11 @@ pub struct TryStartResponseData {
 }
 
 impl TryStartOperation {
-    fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<TryStartResponseData> {
-        let now = self.now;
+    fn apply_real(
+        self,
+        state: &IdempotencyRaftState<'_>,
+        now: Timestamp,
+    ) -> Result<TryStartResponseData> {
         let expiry = now + Duration::from_secs(self.ttl_seconds);
 
         let controller = state.state.controller(self.storage_type);
@@ -71,7 +72,7 @@ impl TryStartOperation {
 }
 
 impl IdempotencyRequest for TryStartOperation {
-    fn apply(self, state: IdempotencyRaftState<'_>) -> TryStartResponse {
-        TryStartResponse(self.apply_real(&state))
+    fn apply(self, state: IdempotencyRaftState<'_>, now: Timestamp) -> TryStartResponse {
+        TryStartResponse(self.apply_real(&state, now))
     }
 }

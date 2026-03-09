@@ -43,9 +43,10 @@ impl CreateKvOperation {
     fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
+        now: Timestamp,
     ) -> diom_operations::Result<CreateKvResponseData> {
         let op: CreateNamespace<KeyValueConfig> = self.into();
-        let out = op.apply_operation(namespace_state)?;
+        let out = op.apply_operation(namespace_state, now)?;
         Ok(out.into())
     }
 }
@@ -72,7 +73,7 @@ impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
 }
 
 impl KvRequest for CreateKvOperation {
-    fn apply(self, state: KvRaftState<'_>) -> CreateKvResponse {
-        CreateKvResponse(self.apply_real(state.namespace))
+    fn apply(self, state: KvRaftState<'_>, now: Timestamp) -> CreateKvResponse {
+        CreateKvResponse(self.apply_real(state.namespace, now))
     }
 }

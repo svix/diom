@@ -12,7 +12,11 @@ use tap::Pipe;
 pub struct SetClusterUuidOperation(pub ClusterId);
 
 impl InternalRequest for SetClusterUuidOperation {
-    async fn apply(self, (state, _): (&mut Store, LogId<NodeId>)) -> Response {
+    async fn apply(
+        self,
+        (state, _): (&mut Store, LogId<NodeId>),
+        _timestamp: jiff::Timestamp,
+    ) -> Response {
         state
             .set_cluster_id(self.0)
             .await

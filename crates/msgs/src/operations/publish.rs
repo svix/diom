@@ -23,7 +23,6 @@ pub struct PublishOperation {
     pub(crate) topic: TopicName,
     partition: Option<Partition>,
     msgs: Vec<MsgIn>,
-    now: Timestamp,
 }
 
 impl PublishOperation {
@@ -49,12 +48,15 @@ impl PublishOperation {
             topic,
             partition,
             msgs,
-            now: Timestamp::now(),
         })
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
-    fn apply_real(self, state: &State) -> diom_operations::Result<PublishResponseData> {
+    fn apply_real(
+        self,
+        state: &State,
+        now: Timestamp,
+    ) -> diom_operations::Result<PublishResponseData> {
         let topic_row = TopicRow::fetch(
             &state.metadata_tables,
             TopicRow::key_for(self.namespace_id, &self.topic),
@@ -71,7 +73,7 @@ impl PublishOperation {
                 return Err(Error::invalid_user_input("topic does not exist").into());
             }
             (None, None) => {
-                let row = TopicRow::new(self.topic.clone(), self.now);
+                let row = TopicRow::new(self.topic.clone(), now);
                 batch.insert_row(
                     &state.metadata_tables,
                     TopicRow::key_for(self.namespace_id, &self.topic),
@@ -92,7 +94,7 @@ impl PublishOperation {
             &self.topic,
             topic_row.id,
             msgs_by_partition,
-            self.now,
+            now,
         )?;
 
         batch.commit().map_err(Error::from)?;
@@ -116,8 +118,8 @@ pub struct PublishResponseData {
 }
 
 impl MsgsRequest for PublishOperation {
-    fn apply(self, state: MsgsRaftState<'_>) -> PublishResponse {
-        PublishResponse(self.apply_real(state.msgs))
+    fn apply(self, state: MsgsRaftState<'_>, timestamp: Timestamp) -> PublishResponse {
+        PublishResponse(self.apply_real(state.msgs, timestamp))
     }
 }
 

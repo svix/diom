@@ -23,7 +23,6 @@ pub struct StreamReceiveOperation {
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: u64,
-    now: Timestamp,
 }
 
 impl StreamReceiveOperation {
@@ -45,16 +44,19 @@ impl StreamReceiveOperation {
             consumer_group,
             batch_size,
             lease_duration_millis,
-            now: Timestamp::now(),
         })
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    fn apply_real(self, state: &State) -> diom_operations::Result<StreamReceiveResponseData> {
+    fn apply_real(
+        self,
+        state: &State,
+        now: Timestamp,
+    ) -> diom_operations::Result<StreamReceiveResponseData> {
         let lease_duration = Duration::from_millis(self.lease_duration_millis);
         let mut remaining = self.batch_size.get();
         let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
-        let expiry = self.now + lease_duration;
+        let expiry = now + lease_duration;
 
         let mut batch = state.db.batch();
 
@@ -63,7 +65,7 @@ impl StreamReceiveOperation {
             &mut batch,
             self.namespace_id,
             &self.topic,
-            self.now,
+            now,
         )?;
 
         Span::current().record("partition_count", topic_row.partitions);
@@ -90,7 +92,7 @@ impl StreamReceiveOperation {
                 }
             };
 
-            if lease.expiry > self.now {
+            if lease.expiry > now {
                 continue;
             }
             no_lease_available = false;
@@ -175,7 +177,7 @@ pub struct StreamReceiveResponseData {
 }
 
 impl MsgsRequest for StreamReceiveOperation {
-    fn apply(self, state: MsgsRaftState<'_>) -> StreamReceiveResponse {
-        StreamReceiveResponse(self.apply_real(state.msgs))
+    fn apply(self, state: MsgsRaftState<'_>, now: Timestamp) -> StreamReceiveResponse {
+        StreamReceiveResponse(self.apply_real(state.msgs, now))
     }
 }

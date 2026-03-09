@@ -21,7 +21,6 @@ pub struct QueueAckOperation {
     pub(crate) topic: TopicName,
     consumer_group: ConsumerGroup,
     msg_ids: Vec<MsgId>,
-    now: Timestamp,
 }
 
 impl QueueAckOperation {
@@ -36,7 +35,6 @@ impl QueueAckOperation {
             topic,
             consumer_group,
             msg_ids,
-            now: Timestamp::now(),
         }
     }
 
@@ -100,7 +98,7 @@ impl QueueAckOperation {
 pub struct QueueAckResponseData {}
 
 impl MsgsRequest for QueueAckOperation {
-    fn apply(self, state: MsgsRaftState<'_>) -> QueueAckResponse {
+    fn apply(self, state: MsgsRaftState<'_>, _now: Timestamp) -> QueueAckResponse {
         QueueAckResponse(self.apply_real(state.msgs))
     }
 }
