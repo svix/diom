@@ -58,6 +58,7 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
             "/repl/raft/handle-forwarded-write",
             post(handle_forwarded_write),
         )
+        .route("/repl/raft/last-id", get(last_id))
         .route("/repl/raft/admin/add-learner", post(add_learner))
         .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
         .route(
@@ -278,6 +279,16 @@ async fn initialize(
 
 async fn force_snapshot(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     state.trigger_snapshot().await.pipe(admin_response)
+}
+
+async fn last_id(Extension(state): Extension<RaftState>) -> impl IntoResponse {
+    state
+        .raft
+        .with_raft_state(move |s| LastIdResponse {
+            last_committed_log_id: s.committed,
+        })
+        .await
+        .pipe(rpc_response)
 }
 
 async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {

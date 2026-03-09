@@ -15,6 +15,7 @@ type (
 	CacheGetOut                   = diom_models.CacheGetOut
 	CacheSetIn                    = diom_models.CacheSetIn
 	CacheSetOut                   = diom_models.CacheSetOut
+	Consistency                   = diom_models.Consistency
 	EvictionPolicy                = diom_models.EvictionPolicy
 	IdempotencyAbortIn            = diom_models.IdempotencyAbortIn
 	IdempotencyAbortOut           = diom_models.IdempotencyAbortOut

@@ -5,7 +5,7 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use diom_core::types::EntityKey;
+use diom_core::types::{Consistency, EntityKey};
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, OptionExt, ResultExt};
 use diom_kv::{
@@ -49,6 +49,8 @@ pub struct KvSetOut {}
 pub struct KvGetIn {
     #[validate(nested)]
     pub key: EntityKey,
+    #[serde(default = "Consistency::strong")]
+    pub consistency: Consistency,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -115,7 +117,9 @@ async fn kv_get(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    if data.consistency.linearizable() {
+        repl.wait_linearizable().await.map_err_generic()?;
+    }
 
     // FIXME: this state should be passed, not created every time.
     let kv_state = diom_kv::State::init(state.do_not_use_dbs.clone())?;
@@ -212,7 +216,7 @@ async fn kv_get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<KvGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<KvGetNamespaceOut>> {
     // Ensure we have the latest version of namespace
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.map_err_generic()?;
 
     let namespace: KvNamespace = state
         .namespace_state

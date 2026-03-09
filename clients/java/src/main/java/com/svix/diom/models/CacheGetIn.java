@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class CacheGetIn {
 @JsonProperty private String key;
+@JsonProperty private Consistency consistency;
 public CacheGetIn () {}
 
  public CacheGetIn key(String key) {
@@ -48,6 +49,25 @@ public CacheGetIn () {}
 
      public void setKey(String key) {
         this.key = key;
+    }
+
+     public CacheGetIn consistency(Consistency consistency) {
+        this.consistency = consistency;
+        return this;
+    }
+
+    /**
+    * Get consistency
+    *
+     * @return consistency
+     */
+    @javax.annotation.Nullable
+     public Consistency getConsistency() {
+        return consistency;
+    }
+
+     public void setConsistency(Consistency consistency) {
+        this.consistency = consistency;
     }
 
     /**

@@ -178,6 +178,17 @@ impl NetworkClient {
         self.send_request("/repl/raft/admin/upgrade-learner", req)
             .await
     }
+
+    pub(super) async fn get_last_committed_log_id(
+        &self,
+    ) -> Result<Option<openraft::LogId<NodeId>>, RPCError<NodeId, Node, UnreachableError>> {
+        let proto::LastIdResponse {
+            last_committed_log_id,
+        } = self
+            .send_request("/repl/raft/last-id", proto::LastIdRequest {})
+            .await?;
+        Ok(last_committed_log_id)
+    }
 }
 
 impl RaftNetwork<TypeConfig> for NetworkClient {

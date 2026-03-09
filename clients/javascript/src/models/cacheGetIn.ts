@@ -1,7 +1,12 @@
 // this file is @generated
+import {
+    type Consistency,
+    ConsistencySerializer,
+} from './consistency';
 
 export interface CacheGetIn {
     key: string;
+    consistency?: Consistency;
 }
 
 export const CacheGetInSerializer = {
@@ -9,6 +14,7 @@ export const CacheGetInSerializer = {
     _fromJsonObject(object: any): CacheGetIn {
         return {
             key: object['key'],
+            consistency: object['consistency'] != null ? ConsistencySerializer._fromJsonObject(object['consistency']): undefined,
         };
     },
 
@@ -16,6 +22,7 @@ export const CacheGetInSerializer = {
     _toJsonObject(self: CacheGetIn): any {
         return {
             'key': self.key,
+            'consistency': self.consistency != null ? ConsistencySerializer._toJsonObject(self.consistency) : undefined,
         };
     }
 }

@@ -9,7 +9,7 @@ use diom_cache::{
     CacheModel,
     operations::{CreateCacheOperation, DeleteOperation, SetOperation},
 };
-use diom_core::types::EntityKey;
+use diom_core::types::{Consistency, EntityKey};
 use diom_derive::aide_annotate;
 use diom_error::{Error, HttpError, OptionExt, ResultExt};
 use diom_kv::kvcontroller::KvModel;
@@ -57,6 +57,8 @@ pub struct CacheSetOut {}
 pub struct CacheGetIn {
     #[validate(nested)]
     pub key: EntityKey,
+    #[serde(default = "Consistency::weak")]
+    pub consistency: Consistency,
 }
 
 #[derive(Clone, Debug, Serialize, JsonSchema)]
@@ -153,7 +155,9 @@ async fn cache_get(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    if data.consistency.linearizable() {
+        repl.wait_linearizable().await.map_err_generic()?;
+    }
 
     // FIXME: support more than just persistent, etc.
     let cache_state = diom_cache::State::init(state.do_not_use_dbs.clone())?;
@@ -225,7 +229,7 @@ async fn cache_get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<CacheGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<CacheGetNamespaceOut>> {
     // Ensure we have the latest version of namespace
-    repl.raft.ensure_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.map_err_generic()?;
 
     let namespace: CacheNamespace = state
         .namespace_state
