@@ -94,6 +94,7 @@ pub struct TableKey<Tag: TableRow> {
     _table: PhantomData<Tag>,
 }
 
+#[cfg(debug_assertions)]
 impl<Tag: TableRow> ::std::fmt::Debug for TableKey<Tag> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.key.fmt(f)
