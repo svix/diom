@@ -14,22 +14,8 @@ import java.util.Set;
 import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.coyote.models.MsgNamespaceCreateIn;
-import com.svix.coyote.models.MsgNamespaceCreateOut;
-import com.svix.coyote.models.MsgNamespaceGetIn;
-import com.svix.coyote.models.MsgNamespaceGetOut;
 import com.svix.coyote.models.MsgPublishIn;
 import com.svix.coyote.models.MsgPublishOut;
-import com.svix.coyote.models.MsgQueueAckIn;
-import com.svix.coyote.models.MsgQueueAckOut;
-import com.svix.coyote.models.MsgQueueReceiveIn;
-import com.svix.coyote.models.MsgQueueReceiveOut;
-import com.svix.coyote.models.MsgStreamCommitIn;
-import com.svix.coyote.models.MsgStreamCommitOut;
-import com.svix.coyote.models.MsgStreamReceiveIn;
-import com.svix.coyote.models.MsgStreamReceiveOut;
-import com.svix.coyote.models.MsgTopicConfigureIn;
-import com.svix.coyote.models.MsgTopicConfigureOut;
 
 public class Msgs {
     private final HttpClient client;
