@@ -1,11 +1,8 @@
-use std::time::Duration;
-
 use serde_json::json;
 use test_utils::{
     StatusCode, TestResult,
     server::{TestContext, start_server},
 };
-use tokio::time::sleep;
 
 #[tokio::test]
 async fn seek_earliest_replays_all_messages() -> TestResult {
@@ -287,7 +284,11 @@ async fn seek_to_specific_offset() -> TestResult {
         .json();
 
     let msgs2 = r2["msgs"].as_array().unwrap();
-    assert_eq!(msgs2.len(), 3, "should get 3 messages starting from offset 2");
+    assert_eq!(
+        msgs2.len(),
+        3,
+        "should get 3 messages starting from offset 2"
+    );
     assert_eq!(msgs2[0]["offset"].as_u64().unwrap(), 2);
 
     Ok(())
