@@ -16,6 +16,7 @@ jobs:
   docker_publish:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
+    needs: [ci, clients]
     permissions:
       actions: read
       contents: read
