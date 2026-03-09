@@ -11,6 +11,8 @@ jobs:
     #  benchmark:
     #    uses: ./.github/workflows/benchmark.yml
     #    secrets: inherit
+  clients:
+    uses: ./.github/workflows/clients.yml
   docker_publish:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit

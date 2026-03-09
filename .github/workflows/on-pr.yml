@@ -9,6 +9,8 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/ci.yml
     secrets: inherit
+  clients:
+    uses: ./.github/workflows/clients.yml
   lint-openapi:
     permissions:
       contents: read
@@ -18,7 +20,7 @@ jobs:
   ci-required-checks:
     name: CI Required Checks
     runs-on: ubuntu-24.04
-    needs: [ci, lint-openapi]
+    needs: [ci, clients, lint-openapi]
     # Always run so that this job is a stable required status check: if an
     # upstream job is skipped (e.g. due to path filters added in the future)
     # that is fine; we only fail if something actually failed or was cancelled.
