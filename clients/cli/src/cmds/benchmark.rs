@@ -818,7 +818,7 @@ struct BenchMsgsQueueReceive<'a> {
     bench_result_ack: BenchResult,
     batch_size: u16,
     topics: &'a [String],
-    _consumer_group: &'a str,
+    consumer_group: &'a str,
 }
 
 impl<'a> BenchMsgsQueueReceive<'a> {
@@ -828,7 +828,7 @@ impl<'a> BenchMsgsQueueReceive<'a> {
             bench_result_ack: BenchResult::new().set_batch_size(batch_size),
             batch_size,
             topics,
-            _consumer_group: consumer_group,
+            consumer_group,
         }
     }
 }
@@ -853,6 +853,7 @@ impl<'a> BenchShard for BenchMsgsQueueReceive<'a> {
             .queue()
             .receive(
                 topic.clone(),
+                self.consumer_group.to_owned(),
                 MsgQueueReceiveIn::new()
                     .with_batch_size(self.batch_size)
                     .with_lease_duration_millis(300_000u64),
@@ -866,7 +867,11 @@ impl<'a> BenchShard for BenchMsgsQueueReceive<'a> {
         client
             .msgs()
             .queue()
-            .ack(topic, MsgQueueAckIn::new(msg_ids))
+            .ack(
+                topic,
+                self.consumer_group.to_owned(),
+                MsgQueueAckIn::new(msg_ids),
+            )
             .await?;
         self.bench_result_ack.process(t.elapsed(), 0)?;
 

@@ -267,9 +267,10 @@ fn default_queue_lease_duration_millis() -> u64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
-#[schemars(extend("x-positional" = ["topic"]))]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueReceiveIn {
     pub topic: TopicIn,
+    pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
     #[serde(default = "default_queue_lease_duration_millis")]
@@ -300,6 +301,7 @@ async fn queue_receive(
     let operation = QueueReceiveOperation::new(
         namespace.id,
         data.topic,
+        data.consumer_group,
         data.batch_size,
         data.lease_duration_millis,
     )?;
@@ -324,9 +326,10 @@ async fn queue_receive(
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
-#[schemars(extend("x-positional" = ["topic"]))]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueAckIn {
     pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
     pub msg_ids: Vec<MsgId>,
 }
 
@@ -347,7 +350,8 @@ async fn queue_ack(
         .fetch_namespace(data.topic.namespace())?
         .ok_or_else(|| Error::http(HttpError::not_found(None, None)))?;
 
-    let operation = QueueAckOperation::new(namespace.id, data.topic, data.msg_ids);
+    let operation =
+        QueueAckOperation::new(namespace.id, data.topic, data.consumer_group, data.msg_ids);
     repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(MsgQueueAckOut {}))

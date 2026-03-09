@@ -59,6 +59,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                             .queue()
                             .receive(
                                 topic.clone(),
+                                "bench-cg".to_owned(),
                                 MsgQueueReceiveIn::new().with_batch_size(100u16),
                             )
                             .await
@@ -72,7 +73,11 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                         client
                             .msgs()
                             .queue()
-                            .ack(topic.clone(), MsgQueueAckIn::new(msg_ids))
+                            .ack(
+                                topic.clone(),
+                                "bench-cg".to_owned(),
+                                MsgQueueAckIn::new(msg_ids),
+                            )
                             .await
                             .unwrap(),
                     );
@@ -112,6 +117,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                             .queue()
                             .receive(
                                 topic.clone(),
+                                "bench-cg".to_owned(),
                                 MsgQueueReceiveIn::new()
                                     .with_batch_size(100u16)
                                     .with_lease_duration_millis(100u64),
