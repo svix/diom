@@ -38,9 +38,11 @@ export type RateLimiterCheckIn = _RateLimiterCheckInFields & (| RateLimiterCheck
     );
 
 export const RateLimiterCheckInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): RateLimiterCheckIn {
         const method = object['method'];
 
+        // biome-ignore lint/suspicious/noExplicitAny: intentional any
         function getConfig(method: string): any {
             switch (method) {
                 case 'token_bucket':
@@ -63,6 +65,7 @@ export const RateLimiterCheckInSerializer = {
             };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: RateLimiterCheckIn): any {
         // biome-ignore lint/suspicious/noImplicitAnyLet: the return type needs to be any
         let config;

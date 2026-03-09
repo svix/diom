@@ -9,6 +9,7 @@ export interface StreamMsgOut {
 }
 
 export const StreamMsgOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): StreamMsgOut {
         return {
             offset: object['offset'],
@@ -19,6 +20,7 @@ export const StreamMsgOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: StreamMsgOut): any {
         return {
             'offset': self.offset,

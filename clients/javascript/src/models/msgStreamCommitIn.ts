@@ -7,6 +7,7 @@ export interface MsgStreamCommitIn {
 }
 
 export const MsgStreamCommitInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgStreamCommitIn {
         return {
             topic: object['topic'],
@@ -15,6 +16,7 @@ export const MsgStreamCommitInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgStreamCommitIn): any {
         return {
             'topic': self.topic,
