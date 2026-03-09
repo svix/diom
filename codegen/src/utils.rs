@@ -107,7 +107,7 @@ impl ContainerizedFormatter<'_> {
         let ctx_dir = "codegen/formatters";
         let args = vec!["build", "-t", &tag, "-f", &containerfile_path, ctx_dir];
         exec(base, args).await?;
-        let args = ["run"]
+        let args = ["run", "--rm"]
             .into_iter()
             .chain(mounts.iter().map(|m| m.as_str()))
             .chain([tag.as_str()])
