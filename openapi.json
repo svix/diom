@@ -1832,6 +1832,9 @@
           "topic": {
             "type": "string"
           },
+          "consumer_group": {
+            "type": "string"
+          },
           "msg_ids": {
             "type": "array",
             "items": {
@@ -1841,10 +1844,12 @@
         },
         "required": [
           "topic",
+          "consumer_group",
           "msg_ids"
         ],
         "x-positional": [
-          "topic"
+          "topic",
+          "consumer_group"
         ]
       },
       "MsgQueueAckOut": {
@@ -1854,6 +1859,9 @@
         "type": "object",
         "properties": {
           "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
             "type": "string"
           },
           "batch_size": {
@@ -1871,10 +1879,12 @@
           }
         },
         "required": [
-          "topic"
+          "topic",
+          "consumer_group"
         ],
         "x-positional": [
-          "topic"
+          "topic",
+          "consumer_group"
         ]
       },
       "MsgQueueReceiveOut": {

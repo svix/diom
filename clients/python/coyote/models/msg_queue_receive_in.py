@@ -16,6 +16,8 @@ class MsgQueueReceiveIn(BaseModel):
 class _MsgQueueReceiveIn(BaseModel):
     topic: str
 
+    consumer_group: str = Field(alias="consumer_group")
+
     batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
 
     lease_duration_millis: t.Optional[int] = Field(

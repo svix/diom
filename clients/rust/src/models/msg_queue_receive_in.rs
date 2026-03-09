@@ -33,6 +33,8 @@ impl MsgQueueReceiveIn {
 pub(crate) struct MsgQueueReceiveIn_ {
     pub topic: String,
 
+    pub consumer_group: String,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub batch_size: Option<u16>,
 
