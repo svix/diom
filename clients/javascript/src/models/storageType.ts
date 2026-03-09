@@ -6,10 +6,12 @@ export enum StorageType {
     }
 
 export const StorageTypeSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): StorageType {
         return object;
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: StorageType): any {
         return self;
     }

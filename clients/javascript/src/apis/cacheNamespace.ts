@@ -16,7 +16,7 @@ import {
     type CacheGetNamespaceOut,
     CacheGetNamespaceOutSerializer,
 } from '../models/cacheGetNamespaceOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class CacheNamespace {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

@@ -8,6 +8,7 @@ export interface RateLimiterGetRemainingOut {
 }
 
 export const RateLimiterGetRemainingOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): RateLimiterGetRemainingOut {
         return {
             remaining: object['remaining'],
@@ -15,6 +16,7 @@ export const RateLimiterGetRemainingOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: RateLimiterGetRemainingOut): any {
         return {
             'remaining': self.remaining,

@@ -6,6 +6,7 @@ export interface Retention {
 }
 
 export const RetentionSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): Retention {
         return {
             millis: object['millis'],
@@ -13,6 +14,7 @@ export const RetentionSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: Retention): any {
         return {
             'millis': self.millis,

@@ -16,7 +16,7 @@ import {
     type MsgNamespaceGetOut,
     MsgNamespaceGetOutSerializer,
 } from '../models/msgNamespaceGetOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class MsgsNamespace {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

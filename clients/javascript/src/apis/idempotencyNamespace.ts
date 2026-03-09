@@ -16,7 +16,7 @@ import {
     type IdempotencyGetNamespaceOut,
     IdempotencyGetNamespaceOutSerializer,
 } from '../models/idempotencyGetNamespaceOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class IdempotencyNamespace {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

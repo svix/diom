@@ -41,7 +41,7 @@ import {
     CacheSetOutSerializer,
 } from '../models/cacheSetOut';
 import { CacheNamespace } from './cacheNamespace';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class Cache {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

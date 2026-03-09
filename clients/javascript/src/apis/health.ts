@@ -4,7 +4,7 @@ import {
     type PingOut,
     PingOutSerializer,
 } from '../models/pingOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class Health {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

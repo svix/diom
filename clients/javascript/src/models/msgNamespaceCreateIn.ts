@@ -15,6 +15,7 @@ export interface MsgNamespaceCreateIn {
 }
 
 export const MsgNamespaceCreateInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgNamespaceCreateIn {
         return {
             name: object['name'],
@@ -23,6 +24,7 @@ export const MsgNamespaceCreateInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgNamespaceCreateIn): any {
         return {
             'name': self.name,

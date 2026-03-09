@@ -6,10 +6,12 @@ export enum {{ type.name | to_upper_camel_case }} {
 }
 
 export const {{ type.name | to_upper_camel_case }}Serializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): {{ type.name | to_upper_camel_case }} {
         return object;
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: {{ type.name | to_upper_camel_case }}): any {
         return self;
     }

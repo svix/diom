@@ -17,6 +17,7 @@ export interface MsgNamespaceGetOut {
 }
 
 export const MsgNamespaceGetOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgNamespaceGetOut {
         return {
             name: object['name'],
@@ -27,6 +28,7 @@ export const MsgNamespaceGetOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgNamespaceGetOut): any {
         return {
             'name': self.name,

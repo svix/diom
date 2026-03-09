@@ -16,7 +16,7 @@ import {
     type RateLimiterGetRemainingOut,
     RateLimiterGetRemainingOutSerializer,
 } from '../models/rateLimiterGetRemainingOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class RateLimiter {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

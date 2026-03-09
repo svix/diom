@@ -16,7 +16,7 @@ import {
     type MsgStreamReceiveOut,
     MsgStreamReceiveOutSerializer,
 } from '../models/msgStreamReceiveOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class MsgsStream {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

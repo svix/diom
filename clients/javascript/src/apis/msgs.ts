@@ -68,7 +68,7 @@ import { MsgsNamespace } from './msgsNamespace';
 import { MsgsQueue } from './msgsQueue';
 import { MsgsStream } from './msgsStream';
 import { MsgsTopic } from './msgsTopic';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class Msgs {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

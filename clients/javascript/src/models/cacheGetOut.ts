@@ -8,6 +8,7 @@ export interface CacheGetOut {
 }
 
 export const CacheGetOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): CacheGetOut {
         return {
             key: object['key'],
@@ -16,6 +17,7 @@ export const CacheGetOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: CacheGetOut): any {
         return {
             'key': self.key,

@@ -16,7 +16,7 @@ import {
     type KvGetNamespaceOut,
     KvGetNamespaceOutSerializer,
 } from '../models/kvGetNamespaceOut';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class KvNamespace {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

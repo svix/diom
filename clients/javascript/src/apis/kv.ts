@@ -41,7 +41,7 @@ import {
     KvSetOutSerializer,
 } from '../models/kvSetOut';
 import { KvNamespace } from './kvNamespace';
-import { HttpMethod, CoyoteRequest, CoyoteRequestContext } from "../request";
+import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class Kv {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}

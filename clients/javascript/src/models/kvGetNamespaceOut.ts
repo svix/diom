@@ -13,6 +13,7 @@ export interface KvGetNamespaceOut {
 }
 
 export const KvGetNamespaceOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): KvGetNamespaceOut {
         return {
             name: object['name'],
@@ -23,6 +24,7 @@ export const KvGetNamespaceOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: KvGetNamespaceOut): any {
         return {
             'name': self.name,
