@@ -38,6 +38,7 @@ async fn queue_receive_returns_published_messages() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-queue:my-topic",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -86,6 +87,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-lease:t1",
+            "consumer_group": "test-cg",
             "batch_size": 1,
         }))
         .await?
@@ -101,6 +103,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-lease:t1",
+            "consumer_group": "test-cg",
             "batch_size": 1,
         }))
         .await?
@@ -116,6 +119,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-lease:t1",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -161,6 +165,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-ack:t1",
+            "consumer_group": "test-cg",
             "lease_duration_millis": 1000,
         }))
         .await?
@@ -176,6 +181,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
         .post("msgs/queue/ack")
         .json(json!({
             "topic": "ns-q-ack:t1",
+            "consumer_group": "test-cg",
             "msg_ids": msg_ids,
         }))
         .await?
@@ -189,6 +195,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-ack:t1",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -233,6 +240,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-redeliver:t1",
+            "consumer_group": "test-cg",
             "lease_duration_millis": 1000,
         }))
         .await?
@@ -248,6 +256,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-redeliver:t1",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -285,6 +294,7 @@ async fn queue_receive_nonexistent_namespace() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "does-not-exist:t1",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::NOT_FOUND);
@@ -323,6 +333,7 @@ async fn queue_starts_from_earliest() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-earliest:t1",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -370,6 +381,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-partial:t1",
+            "consumer_group": "test-cg",
             "lease_duration_millis": 1000,
         }))
         .await?
@@ -386,6 +398,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
         .post("msgs/queue/ack")
         .json(json!({
             "topic": "ns-q-partial:t1",
+            "consumer_group": "test-cg",
             "msg_ids": [first_id, last_id],
         }))
         .await?
@@ -399,6 +412,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-partial:t1",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -454,6 +468,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-concurrent:t1",
+            "consumer_group": "test-cg",
             "batch_size": 3,
         }))
         .await?
@@ -468,6 +483,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-concurrent:t1",
+            "consumer_group": "test-cg",
             "batch_size": 3,
         }))
         .await?
@@ -496,6 +512,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
         .post("msgs/queue/receive")
         .json(json!({
             "topic": "ns-q-concurrent:t1",
+            "consumer_group": "test-cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -504,6 +521,83 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
         r_c["msgs"].as_array().unwrap().len(),
         0,
         "no messages available when all are leased"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_consumer_groups_independent() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-q-cg" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-q-cg:t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+                { "value": "c".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Group A receives all messages
+    let r_a = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-cg:t1",
+            "consumer_group": "group-a",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs_a = r_a["msgs"].as_array().unwrap();
+    assert_eq!(msgs_a.len(), 3);
+
+    // Ack all messages for group A
+    let msg_ids_a: Vec<&str> = msgs_a
+        .iter()
+        .map(|m| m["msg_id"].as_str().unwrap())
+        .collect();
+    client
+        .post("msgs/queue/ack")
+        .json(json!({
+            "topic": "ns-q-cg:t1",
+            "consumer_group": "group-a",
+            "msg_ids": msg_ids_a,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Group B should independently receive all the same messages
+    let r_b = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-cg:t1",
+            "consumer_group": "group-b",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs_b = r_b["msgs"].as_array().unwrap();
+    assert_eq!(
+        msgs_b.len(),
+        3,
+        "different consumer group should get all messages independently"
     );
 
     Ok(())
