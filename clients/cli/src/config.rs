@@ -1,5 +1,7 @@
 use std::{fs, path::PathBuf};
 
+use super::Cli;
+
 use anyhow::Context as _;
 use config::FileFormat;
 use serde::{Deserialize, Serialize};
@@ -13,12 +15,10 @@ pub struct Config {
     #[cfg(all(feature = "http1", feature = "http2"))]
     #[serde(default)]
     pub http1: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    debug_url: Option<String>,
 }
 
 impl Config {
-    pub fn load() -> anyhow::Result<Config> {
+    pub fn load(cli: &Cli) -> anyhow::Result<Config> {
         let cfg_file = get_config_file_path()?;
         let cfg_file = cfg_file
             .as_os_str()
@@ -30,24 +30,29 @@ impl Config {
             builder = builder.add_source(config::File::new(cfg_file, FileFormat::Toml));
         }
 
+        let cli_config = config::Config::builder()
+            .set_override("server_url", cli.server_url.clone())?
+            .set_override("auth_token", cli.auth_token.clone())?
+            .build()?;
+
         builder
+            .add_source(cli_config)
             .add_source(config::Environment::with_prefix("COYOTE"))
             .build()?
             .try_deserialize()
             .context("failed to extract configuration")
     }
 
-    /// Gives the `server_url` for a Svix client with fallback to the legacy `SVIX_DEBUG_URL` variable/config.
     pub fn server_url(&self) -> Option<&str> {
-        match self.server_url.as_deref() {
-            Some(s) if s.trim().is_empty() => self.debug_url.as_deref(),
-            server_url @ Some(_) => server_url,
-            None => self.debug_url.as_deref(),
-        }
+        self.server_url.as_deref()
+    }
+
+    pub fn auth_token(&self) -> String {
+        self.auth_token.as_deref().unwrap_or("xxx").to_owned()
     }
 }
 
-const FILE_NAME: &str = "config.toml";
+const FILE_NAME: &str = "coyote-cli-config.toml";
 
 fn get_folder() -> anyhow::Result<PathBuf> {
     Ok(dirs::config_dir()
