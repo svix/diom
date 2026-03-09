@@ -26,7 +26,7 @@ impl AbortOperation {
     fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
         state
             .state
-            .controller(StorageType::Persistent)
+            .controller(self.storage_type)
             .delete(self.namespace_id, &self.key)?;
 
         Ok(())

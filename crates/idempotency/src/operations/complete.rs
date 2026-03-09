@@ -40,7 +40,7 @@ impl CompleteOperation {
 impl CompleteOperation {
     fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
         let expiry = self.now + Duration::from_secs(self.ttl_seconds);
-        state.state.controller(StorageType::Persistent).set(
+        state.state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
             IdempotencyState::Completed {
