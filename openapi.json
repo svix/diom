@@ -962,6 +962,80 @@
         ]
       }
     },
+    "/api/v1/msgs/queue/nack": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Queue Nack",
+        "description": "Rejects messages, sending them to the dead-letter queue.\n\nNacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to\nmove them back to the queue for reprocessing.",
+        "operationId": "v1.msgs.queue.nack",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgQueueNackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgQueueNackOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/msgs/queue/redrive-dlq": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Queue Redrive Dlq",
+        "description": "Moves all dead-letter queue messages back to the main queue for reprocessing.",
+        "operationId": "v1.msgs.queue.redrive-dlq",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgQueueRedriveDlqIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgQueueRedriveDlqOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/msgs/topic/configure": {
       "post": {
         "tags": [
@@ -1908,6 +1982,35 @@
       "MsgQueueAckOut": {
         "type": "object"
       },
+      "MsgQueueNackIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "msg_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "msg_ids"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgQueueNackOut": {
+        "type": "object"
+      },
       "MsgQueueReceiveIn": {
         "type": "object",
         "properties": {
@@ -1953,6 +2056,28 @@
         "required": [
           "msgs"
         ]
+      },
+      "MsgQueueRedriveDlqIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgQueueRedriveDlqOut": {
+        "type": "object"
       },
       "MsgStreamCommitIn": {
         "type": "object",

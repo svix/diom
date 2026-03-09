@@ -29,6 +29,21 @@ pub enum MsgsQueueCommands {
         consumer_group: String,
         msg_queue_ack_in: crate::json::JsonOf<coyote_client::models::MsgQueueAckIn>,
     },
+    /// Rejects messages, sending them to the dead-letter queue.
+    ///
+    /// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+    /// move them back to the queue for reprocessing.
+    Nack {
+        topic: String,
+        consumer_group: String,
+        msg_queue_nack_in: crate::json::JsonOf<coyote_client::models::MsgQueueNackIn>,
+    },
+    /// Moves all dead-letter queue messages back to the main queue for reprocessing.
+    RedriveDlq {
+        topic: String,
+        consumer_group: String,
+        msg_queue_redrive_dlq_in: crate::json::JsonOf<coyote_client::models::MsgQueueRedriveDlqIn>,
+    },
 }
 
 impl MsgsQueueCommands {
@@ -59,6 +74,30 @@ impl MsgsQueueCommands {
                     .msgs()
                     .queue()
                     .ack(topic, consumer_group, msg_queue_ack_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Nack {
+                topic,
+                consumer_group,
+                msg_queue_nack_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .queue()
+                    .nack(topic, consumer_group, msg_queue_nack_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::RedriveDlq {
+                topic,
+                consumer_group,
+                msg_queue_redrive_dlq_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .queue()
+                    .redrive_dlq(topic, consumer_group, msg_queue_redrive_dlq_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
