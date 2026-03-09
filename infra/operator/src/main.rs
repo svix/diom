@@ -1,0 +1,61 @@
+use std::sync::Arc;
+
+use futures::StreamExt;
+use k8s_openapi::api::apps::v1::StatefulSet;
+use kube::{
+    Api, Client,
+    runtime::{Controller, watcher},
+};
+use tracing::*;
+
+mod crd;
+mod error;
+mod labels;
+mod reconciler;
+mod resources;
+
+use crd::CoyoteCluster;
+use reconciler::{Context, error_policy, reconcile};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    if std::env::args().any(|a| a == "--print-crd") {
+        use kube::CustomResourceExt;
+        print!("{}", serde_yaml::to_string(&CoyoteCluster::crd())?);
+        return Ok(());
+    }
+
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
+    let client = Client::try_default().await?;
+
+    let clusters: Api<CoyoteCluster> = Api::all(client.clone());
+    let statefulsets: Api<StatefulSet> = Api::all(client.clone());
+
+    info!("Starting coyote-operator");
+
+    let ctx = Arc::new(Context {
+        client: client.clone(),
+    });
+
+    Controller::new(clusters, watcher::Config::default())
+        // Re-reconcile the owning CoyoteCluster whenever a managed StatefulSet changes.
+        .owns(statefulsets, watcher::Config::default())
+        .shutdown_on_signal()
+        .run(reconcile, error_policy, ctx)
+        .for_each(|res| async move {
+            match res {
+                Ok(obj) => info!(
+                    "Reconciled {}/{}",
+                    obj.0.namespace.as_deref().unwrap_or(""),
+                    obj.0.name
+                ),
+                Err(err) => error!("Reconcile error: {err:?}"),
+            }
+        })
+        .await;
+
+    Ok(())
+}
