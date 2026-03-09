@@ -7,7 +7,7 @@ lint:
     cargo +beta clippy --workspace --fix --allow-dirty --all-features --all-targets
     # this has to be nightly to get import sorting working correctly
     cargo +nightly fmt
-    cargo sort --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
+    cargo sort --no-format --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
 
 # Test the backend
 test *args='':
