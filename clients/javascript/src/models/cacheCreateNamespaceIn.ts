@@ -16,6 +16,7 @@ export interface CacheCreateNamespaceIn {
 }
 
 export const CacheCreateNamespaceInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): CacheCreateNamespaceIn {
         return {
             name: object['name'],
@@ -25,6 +26,7 @@ export const CacheCreateNamespaceInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: CacheCreateNamespaceIn): any {
         return {
             'name': self.name,

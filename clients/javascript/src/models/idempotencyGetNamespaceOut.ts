@@ -13,6 +13,7 @@ export interface IdempotencyGetNamespaceOut {
 }
 
 export const IdempotencyGetNamespaceOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): IdempotencyGetNamespaceOut {
         return {
             name: object['name'],
@@ -23,6 +24,7 @@ export const IdempotencyGetNamespaceOutSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: IdempotencyGetNamespaceOut): any {
         return {
             'name': self.name,

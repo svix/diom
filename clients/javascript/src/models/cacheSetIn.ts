@@ -8,6 +8,7 @@ export interface CacheSetIn {
 }
 
 export const CacheSetInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): CacheSetIn {
         return {
             key: object['key'],
@@ -16,6 +17,7 @@ export const CacheSetInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: CacheSetIn): any {
         return {
             'key': self.key,

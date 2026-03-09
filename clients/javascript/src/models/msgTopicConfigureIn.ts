@@ -6,6 +6,7 @@ export interface MsgTopicConfigureIn {
 }
 
 export const MsgTopicConfigureInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgTopicConfigureIn {
         return {
             topic: object['topic'],
@@ -13,6 +14,7 @@ export const MsgTopicConfigureInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgTopicConfigureIn): any {
         return {
             'topic': self.topic,

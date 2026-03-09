@@ -6,6 +6,7 @@ export interface MsgQueueAckIn {
 }
 
 export const MsgQueueAckInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgQueueAckIn {
         return {
             topic: object['topic'],
@@ -13,6 +14,7 @@ export const MsgQueueAckInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgQueueAckIn): any {
         return {
             'topic': self.topic,

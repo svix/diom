@@ -8,6 +8,7 @@ export interface MsgIn {
 }
 
 export const MsgInSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgIn {
         return {
             value: object['value'],
@@ -16,6 +17,7 @@ export const MsgInSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgIn): any {
         return {
             'value': self.value,

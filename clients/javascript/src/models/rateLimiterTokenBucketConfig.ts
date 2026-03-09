@@ -10,6 +10,7 @@ export interface RateLimiterTokenBucketConfig {
 }
 
 export const RateLimiterTokenBucketConfigSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): RateLimiterTokenBucketConfig {
         return {
             capacity: object['capacity'],
@@ -18,6 +19,7 @@ export const RateLimiterTokenBucketConfigSerializer = {
         };
     },
 
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: RateLimiterTokenBucketConfig): any {
         return {
             'capacity': self.capacity,
