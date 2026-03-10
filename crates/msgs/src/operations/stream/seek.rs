@@ -55,11 +55,7 @@ impl StreamSeekOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    fn apply_real(
-        self,
-        state: &State,
-        _now: Timestamp,
-    ) -> coyote_operations::Result<StreamSeekResponseData> {
+    fn apply_real(self, state: &State) -> coyote_operations::Result<StreamSeekResponseData> {
         let mut batch = state.db.batch();
 
         let topic_row = TopicRow::fetch(
@@ -107,7 +103,7 @@ impl StreamSeekOperation {
 pub struct StreamSeekResponseData {}
 
 impl MsgsRequest for StreamSeekOperation {
-    fn apply(self, state: MsgsRaftState<'_>, timestamp: Timestamp) -> StreamSeekResponse {
-        StreamSeekResponse(self.apply_real(state.msgs, timestamp))
+    fn apply(self, state: MsgsRaftState<'_>, _timestamp: Timestamp) -> StreamSeekResponse {
+        StreamSeekResponse(self.apply_real(state.msgs))
     }
 }
