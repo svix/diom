@@ -185,14 +185,14 @@ impl fmt::Display for ErrorType {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct StandardErrorBody {
-    code: String,
+    code: &'static str,
     detail: String,
 }
 
 impl StandardErrorBody {
     pub fn new(code: &'static str, detail: impl fmt::Display) -> Self {
         Self {
-            code: code.to_owned(),
+            code,
             detail: detail.to_string(),
         }
     }
