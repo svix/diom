@@ -1,0 +1,21 @@
+name: Python
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/python.yml'
+      - 'clients/python/**'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - run: uv run --only-dev ruff check diom
+        working-directory: clients/python
