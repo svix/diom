@@ -31,29 +31,21 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// The error type returned from the Coyote API
 #[derive(Debug)]
-pub struct Error {
-    // the file name and line number of the error. Used for debugging non Http errors
-    pub trace: Vec<&'static Location<'static>>,
-    pub typ: ErrorType,
-}
+pub struct Error(ErrorType);
 
 impl Error {
     #[track_caller]
-    fn new(typ: ErrorType) -> Self {
-        let trace = vec![Location::caller()];
-        Self { trace, typ }
-    }
-
-    #[track_caller]
     pub fn generic(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Generic(s.to_string()))
+        Self(ErrorType::Generic {
+            message: s.to_string(),
+            trace: vec![Location::caller()],
+        })
     }
 
-    #[track_caller]
     pub fn invalid_user_input(s: impl fmt::Display) -> Self {
         // We'll probably change _how_ invalid user input is displayed later on,
         // but having a universal error function to capture user errors is ideal
-        Self::new(ErrorType::Http(HttpError {
+        Self(ErrorType::Http(HttpError {
             status: StatusCode::BAD_REQUEST,
             body: StandardErrorBody {
                 code: "invalid_input".to_owned(),
@@ -62,34 +54,30 @@ impl Error {
         }))
     }
 
-    #[track_caller]
     pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
-        Self::new(ErrorType::Validation(ValidationErrorBody::new(detail)))
+        Self(ErrorType::Validation(ValidationErrorBody::new(detail)))
     }
 
-    #[track_caller]
     pub fn http(h: HttpError) -> Self {
-        Self {
-            trace: Vec::with_capacity(0), // no debugging necessary
-            typ: ErrorType::Http(h),
-        }
+        Self(ErrorType::Http(h))
     }
 
-    #[track_caller]
     pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
-        Self::new(ErrorType::Operation { code, detail })
+        Self(ErrorType::Operation { code, detail })
     }
 
     #[track_caller]
     pub fn trace(mut self) -> Self {
-        self.trace.push(Location::caller());
+        if let ErrorType::Generic { trace, .. } = &mut self.0 {
+            trace.push(Location::caller());
+        }
         self
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.typ.fmt(f)
+        self.0.fmt(f)
     }
 }
 
@@ -101,14 +89,13 @@ impl error::Error for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        let location: Vec<String> = self.trace.into_iter().map(ToString::to_string).collect();
-        match self.typ {
+        match self.0 {
             ErrorType::Http(s) => {
-                tracing::debug!(?location, error = %s, "http error");
+                tracing::debug!(error = %s, "http error");
                 s.into_response()
             }
             ErrorType::Validation(body) => {
-                tracing::debug!(?location, error = %body, "validation error");
+                tracing::debug!(error = %body, "validation error");
                 (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
             }
             ErrorType::Operation {
@@ -116,8 +103,12 @@ impl IntoResponse for Error {
                 detail: Some(detail),
             } => (code, detail).into_response(),
             ErrorType::Operation { code, detail: _ } => code.into_response(),
-            ErrorType::Generic(_) => {
-                tracing::error!(?location, error = %self.typ, "generic error");
+            ErrorType::Generic { trace, message } => {
+                tracing::error!(
+                    location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
+                    message,
+                    "generic error",
+                );
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({}))).into_response()
             }
         }
@@ -147,7 +138,10 @@ impl<T> Traceable<T> for Result<T> {
 #[derive(Debug)]
 pub enum ErrorType {
     /// A generic error
-    Generic(String),
+    Generic {
+        message: String,
+        trace: Vec<&'static Location<'static>>,
+    },
     /// Any kind of HttpError
     Http(HttpError),
     /// An error from validating a request
@@ -162,7 +156,7 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Generic(s) => s.fmt(f),
+            Self::Generic { message, .. } => message.fmt(f),
             Self::Http(s) => s.fmt(f),
             Self::Validation(s) => s.fmt(f),
             Self::Operation { detail, code } => {
@@ -280,19 +274,13 @@ impl IntoResponse for HttpError {
 impl From<fjall::Error> for Error {
     #[track_caller]
     fn from(e: fjall::Error) -> Self {
-        Self {
-            trace: vec![Location::caller()],
-            typ: ErrorType::Generic(format!("{e:?}")),
-        }
+        Self::generic(format!("{e:?}"))
     }
 }
 
 impl From<JoinError> for Error {
     #[track_caller]
     fn from(e: JoinError) -> Self {
-        Self {
-            trace: vec![Location::caller()],
-            typ: ErrorType::Generic(format!("{e:?}")),
-        }
+        Self::generic(format!("{e:?}"))
     }
 }
