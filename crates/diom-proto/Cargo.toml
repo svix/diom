@@ -13,7 +13,6 @@ ignored = ["schemars"]
 aide.workspace = true
 axum.workspace = true
 bytes.workspace = true
-diom-error.workspace = true
 http.workspace = true
 mime.workspace = true
 reqwest.workspace = true

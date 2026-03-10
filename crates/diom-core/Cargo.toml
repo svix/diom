@@ -7,8 +7,8 @@ rust-version.workspace = true
 edition = "2024"
 
 [dependencies]
-diom-error.workspace = true
 diom-namespace.workspace = true
+diom-proto.workspace = true
 regex.workspace = true
 schemars.workspace = true
 serde.workspace = true

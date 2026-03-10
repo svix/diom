@@ -3,8 +3,8 @@
 
 use std::{ops::Deref, sync::LazyLock};
 
-use diom_error::validation_error;
 use diom_namespace::parse_namespace;
+use diom_proto::validation_error;
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;

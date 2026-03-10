@@ -13,12 +13,11 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use bytes::{BufMut as _, Bytes, BytesMut};
-use diom_error::{
-    StandardErrorBody, ValidationErrorBody, ValidationErrorItem, validation_errors,
-};
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
 use validator::Validate;
+
+use crate::{StandardErrorBody, ValidationErrorBody, ValidationErrorItem, validation_errors};
 
 tokio::task_local! {
     static RESPONSE_CONTENT_TYPE: SupportedContentType;

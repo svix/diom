@@ -4,27 +4,21 @@
 use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
-// FIXME: Can't use MsgPackOrJson as that would create
-// dependency cycle between diom-error and diom-proto
+// FIXME: Change to MsgPackOrJson
 #[expect(clippy::disallowed_types)]
 use axum::{
     Json,
     response::{IntoResponse, Response},
 };
+use diom_proto::{StandardErrorBody, ValidationErrorBody, ValidationErrorItem};
 use hyper::StatusCode;
-use serde::Serialize;
 use serde_json::json;
 use tokio::task::JoinError;
 
 mod option_ext;
 mod result_ext;
-mod validation;
 
-pub use self::{
-    option_ext::OptionExt,
-    result_ext::ResultExt,
-    validation::{ValidationErrorBody, ValidationErrorItem, validation_error, validation_errors},
-};
+pub use self::{option_ext::OptionExt, result_ext::ResultExt};
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Diom'es [Error].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -177,28 +171,6 @@ impl fmt::Display for ErrorType {
                 }
             }
         }
-    }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct StandardErrorBody {
-    code: &'static str,
-    detail: String,
-}
-
-impl StandardErrorBody {
-    pub fn new(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self {
-            code,
-            detail: detail.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for StandardErrorBody {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let Self { code, detail } = self;
-        write!(f, "code={code:?} detail={detail:?}")
     }
 }
 
