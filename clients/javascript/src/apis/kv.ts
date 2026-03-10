@@ -35,64 +35,50 @@ export class Kv {
     }
 
     /** KV Set */
-        public set(
-            kvSetIn: KvSetIn,
-            ): Promise<KvSetOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/set");
+    public set(
+        kvSetIn: KvSetIn,
+        ): Promise<KvSetOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/set");
 
-            request.setBody(
-                    KvSetInSerializer._toJsonObject(
-                        kvSetIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    KvSetOutSerializer._fromJsonObject,
-                );
-            }
+        request.setBody(
+            KvSetInSerializer._toJsonObject(
+                kvSetIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            KvSetOutSerializer._fromJsonObject,
+        );
+    }/** KV Get */
+    public get(
+        kvGetIn: KvGetIn,
+        ): Promise<KvGetOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/get");
 
-        
+        request.setBody(
+            KvGetInSerializer._toJsonObject(
+                kvGetIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            KvGetOutSerializer._fromJsonObject,
+        );
+    }/** KV Delete */
+    public delete(
+        kvDeleteIn: KvDeleteIn,
+        ): Promise<KvDeleteOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/delete");
 
-    /** KV Get */
-        public get(
-            kvGetIn: KvGetIn,
-            ): Promise<KvGetOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/get");
-
-            request.setBody(
-                    KvGetInSerializer._toJsonObject(
-                        kvGetIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    KvGetOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /** KV Delete */
-        public delete(
-            kvDeleteIn: KvDeleteIn,
-            ): Promise<KvDeleteOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/delete");
-
-            request.setBody(
-                    KvDeleteInSerializer._toJsonObject(
-                        kvDeleteIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    KvDeleteOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            KvDeleteInSerializer._toJsonObject(
+                kvDeleteIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            KvDeleteOutSerializer._fromJsonObject,
+        );
     }
+}
 

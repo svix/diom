@@ -35,64 +35,50 @@ export class RateLimit {
     }
 
     /** Rate Limiter Check and Consume */
-        public limit(
-            rateLimitCheckIn: RateLimitCheckIn,
-            ): Promise<RateLimitCheckOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/limit");
+    public limit(
+        rateLimitCheckIn: RateLimitCheckIn,
+        ): Promise<RateLimitCheckOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/limit");
 
-            request.setBody(
-                    RateLimitCheckInSerializer._toJsonObject(
-                        rateLimitCheckIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    RateLimitCheckOutSerializer._fromJsonObject,
-                );
-            }
+        request.setBody(
+            RateLimitCheckInSerializer._toJsonObject(
+                rateLimitCheckIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            RateLimitCheckOutSerializer._fromJsonObject,
+        );
+    }/** Rate Limiter Get Remaining */
+    public getRemaining(
+        rateLimitGetRemainingIn: RateLimitGetRemainingIn,
+        ): Promise<RateLimitGetRemainingOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/get-remaining");
 
-        
+        request.setBody(
+            RateLimitGetRemainingInSerializer._toJsonObject(
+                rateLimitGetRemainingIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            RateLimitGetRemainingOutSerializer._fromJsonObject,
+        );
+    }/** Rate Limiter Reset */
+    public reset(
+        rateLimitResetIn: RateLimitResetIn,
+        ): Promise<RateLimitResetOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/reset");
 
-    /** Rate Limiter Get Remaining */
-        public getRemaining(
-            rateLimitGetRemainingIn: RateLimitGetRemainingIn,
-            ): Promise<RateLimitGetRemainingOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/get-remaining");
-
-            request.setBody(
-                    RateLimitGetRemainingInSerializer._toJsonObject(
-                        rateLimitGetRemainingIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    RateLimitGetRemainingOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /** Rate Limiter Reset */
-        public reset(
-            rateLimitResetIn: RateLimitResetIn,
-            ): Promise<RateLimitResetOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/reset");
-
-            request.setBody(
-                    RateLimitResetInSerializer._toJsonObject(
-                        rateLimitResetIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    RateLimitResetOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            RateLimitResetInSerializer._toJsonObject(
+                rateLimitResetIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            RateLimitResetOutSerializer._fromJsonObject,
+        );
     }
+}
 
