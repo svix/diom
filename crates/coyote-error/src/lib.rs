@@ -43,21 +43,18 @@ impl Error {
     }
 
     pub fn not_found(detail: impl Into<Option<String>>) -> Self {
-        Self(ErrorType::NotFound(StandardErrorBody {
-            code: "not_found".to_owned(),
-            detail: detail
+        Self(ErrorType::NotFound(StandardErrorBody::new(
+            "not_found",
+            detail
                 .into()
                 .unwrap_or_else(|| "Entity not found".to_owned()),
-        }))
+        )))
     }
 
     pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
         Self(ErrorType::Http(HttpError {
             status: StatusCode::BAD_REQUEST,
-            body: StandardErrorBody {
-                code: code.to_owned(),
-                detail: detail.to_string(),
-            },
+            body: StandardErrorBody::new(code, detail),
         }))
     }
 
@@ -190,6 +187,15 @@ impl fmt::Display for ErrorType {
 pub struct StandardErrorBody {
     code: String,
     detail: String,
+}
+
+impl StandardErrorBody {
+    pub fn new(code: &'static str, detail: impl fmt::Display) -> Self {
+        Self {
+            code: code.to_owned(),
+            detail: detail.to_string(),
+        }
+    }
 }
 
 impl fmt::Display for StandardErrorBody {
