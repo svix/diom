@@ -223,7 +223,7 @@ impl QueueLeaseRow {
                 continue;
             }
 
-            let row: Self = rmp_serde::from_slice(&val).map_err_generic()?;
+            let row: Self = rmp_serde::from_slice(&val).or_internal_error()?;
             results.push((MsgId::new(partition, offset), row));
         }
 
@@ -312,7 +312,7 @@ impl MsgRow {
         let end = Self::key_for(topic_id, partition, offset + batch_size as u64).into_fjall_key();
         for entry in keyspace.range(start..end) {
             let val = entry.value()?;
-            let msg = rmp_serde::from_slice(&val).map_err_generic()?;
+            let msg = rmp_serde::from_slice(&val).or_internal_error()?;
             results.push(msg);
         }
 

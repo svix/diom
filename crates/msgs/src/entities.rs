@@ -66,9 +66,9 @@ pub struct TopicName {
 impl TopicName {
     pub fn new(namespace: Option<NamespaceName>, topic: String) -> Result<Self, Error> {
         if topic.contains(TOPIC_PARTITION_DELIMITER) {
-            Err(Error::generic("invalid topic"))
+            Err(Error::internal("invalid topic"))
         } else if topic.len() > 64 {
-            Err(Error::generic("topic cannot exceed 64 bytes"))
+            Err(Error::internal("topic cannot exceed 64 bytes"))
         } else {
             Ok(Self { namespace, topic })
         }
@@ -155,10 +155,10 @@ impl TryFrom<String> for TopicPartition {
         let (ns, rest) = parse_namespace(&value);
         let (topic, idx_str) = rest
             .rsplit_once(TOPIC_PARTITION_DELIMITER)
-            .ok_or_else(|| Error::generic("missing '~' separator in topic"))?;
+            .ok_or_else(|| Error::internal("missing '~' separator in topic"))?;
         let idx: u16 = idx_str
             .parse()
-            .map_err(|_| Error::generic("invalid partition index in topic"))?;
+            .map_err(|_| Error::internal("invalid partition index in topic"))?;
         let partition = Partition::new(idx)?;
         let raw = TopicName::new(ns.map(|x| x.to_owned()), topic.to_owned())?;
         Ok(Self { raw, partition })

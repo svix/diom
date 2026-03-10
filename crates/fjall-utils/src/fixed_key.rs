@@ -23,21 +23,21 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
     pub fn get<K: ReadableKeyspace>(&self, keyspace: &K) -> Result<Option<T>> {
         keyspace
             .get(self.key)?
-            .map(|v| rmp_serde::from_slice(&v).map_err_generic())
+            .map(|v| rmp_serde::from_slice(&v).or_internal_error())
             .transpose()
             .map_err(|err| {
                 tracing::warn!(key = self.key, ?err, "error deserializing key from DB");
-                Error::generic(err)
+                Error::internal(err)
             })
     }
 
     pub fn store(&self, keyspace: &fjall::Keyspace, value: &T) -> Result<()> {
-        let serialized = rmp_serde::encode::to_vec_named(&value).map_err_generic()?;
-        keyspace.insert(self.key, serialized).map_err_generic()
+        let serialized = rmp_serde::encode::to_vec_named(&value).or_internal_error()?;
+        keyspace.insert(self.key, serialized).or_internal_error()
     }
 
     pub fn remove(&self, keyspace: &fjall::Keyspace) -> Result<()> {
-        keyspace.remove(self.key).map_err_generic()
+        keyspace.remove(self.key).or_internal_error()
     }
 
     pub fn store_tx(
@@ -46,7 +46,7 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
         keyspace: &fjall::Keyspace,
         value: &T,
     ) -> Result<()> {
-        let serialized = rmp_serde::encode::to_vec_named(&value).map_err_generic()?;
+        let serialized = rmp_serde::encode::to_vec_named(&value).or_internal_error()?;
         tx.insert(keyspace, self.key, serialized);
         Ok(())
     }

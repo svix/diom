@@ -169,7 +169,7 @@ async fn rate_limiter_limit(
     let method = data.method.into();
 
     let operation = RateLimiter::limit_operation(namespace, key, units, method);
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(RateLimiterCheckOut {
         status: response.status,
@@ -245,7 +245,7 @@ async fn rate_limiter_create_namespace(
 ) -> Result<MsgPackOrJson<RateLimiterCreateNamespaceOut>> {
     let operation =
         CreateRateLimitOperation::new(data.name, data.storage_type, data.max_storage_bytes);
-    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(RateLimiterCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
@@ -262,7 +262,7 @@ async fn rate_limiter_get_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<RateLimiterGetNamespaceOut>> {
-    repl.wait_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.or_internal_error()?;
 
     let namespace: RateLimitNamespace = state
         .namespace_state

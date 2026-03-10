@@ -24,7 +24,7 @@ impl TableKey for String {
 
     fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         let owned: Vec<u8> = bytes.to_owned();
-        Self::from_utf8(owned).map_err_generic()
+        Self::from_utf8(owned).or_internal_error()
     }
 }
 
@@ -44,7 +44,7 @@ impl TableKey for Uuid {
     }
 
     fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        Self::from_slice(bytes).map_err_generic()
+        Self::from_slice(bytes).or_internal_error()
     }
 }
 
@@ -57,7 +57,7 @@ impl TableKey for u64 {
 
     fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != 8 {
-            return Err(Error::generic("invalid byte length in key"));
+            return Err(Error::internal("invalid byte length in key"));
         }
         Ok(BigEndian::read_u64(bytes))
     }
@@ -101,13 +101,13 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         // FIXME(@svix-gabriel) - it's not clear if we're committed to using msgpack
         // for internal serialization. Using messagepack for now, but this
         // should be easy to change later.
-        let value = rmp_serde::to_vec_named(&self).map_err_generic()?;
+        let value = rmp_serde::to_vec_named(&self).or_internal_error()?;
 
         Ok((key, value.into()))
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
-        rmp_serde::from_slice(&value).map_err_generic()
+        rmp_serde::from_slice(&value).or_internal_error()
     }
 
     fn fetch<K: ReadableKeyspace>(keyspace: &K, key: &Self::Key) -> Result<Option<Self>> {
