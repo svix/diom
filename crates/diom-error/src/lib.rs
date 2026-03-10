@@ -4,111 +4,99 @@
 use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
-// FIXME: Can't use MsgPackOrJson as that would create
-// dependency cycle between diom-error and diom-proto
+// FIXME: Change to MsgPackOrJson
 #[expect(clippy::disallowed_types)]
 use axum::{
     Json,
     response::{IntoResponse, Response},
 };
+use diom_proto::{StandardErrorBody, ValidationErrorBody, ValidationErrorItem};
 use hyper::StatusCode;
-use serde::Serialize;
 use serde_json::json;
 use tokio::task::JoinError;
 
 mod option_ext;
 mod result_ext;
-mod validation;
 
-pub use self::{
-    option_ext::OptionExt,
-    result_ext::ResultExt,
-    validation::{ValidationErrorBody, ValidationErrorItem, validation_error, validation_errors},
-};
+pub use self::{option_ext::OptionExt, result_ext::ResultExt};
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Diom'es [Error].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// The error type returned from the Diom API
 #[derive(Debug)]
-pub struct Error {
-    // the file name and line number of the error. Used for debugging non Http errors
-    pub trace: Vec<&'static Location<'static>>,
-    pub typ: ErrorType,
-}
+pub struct Error(Box<ErrorType>);
 
 impl Error {
-    #[track_caller]
-    fn new(typ: ErrorType) -> Self {
-        let trace = vec![Location::caller()];
-        Self { trace, typ }
+    pub fn new(error_type: ErrorType) -> Self {
+        Self(Box::new(error_type))
     }
 
     #[track_caller]
     pub fn generic(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Generic(s.to_string()))
+        Self::new(ErrorType::Generic {
+            message: s.to_string(),
+            trace: vec![Location::caller()],
+        })
     }
 
-    #[track_caller]
-    pub fn invalid_user_input(s: impl fmt::Display) -> Self {
+    pub fn not_found(detail: impl Into<Option<String>>) -> Self {
+        Self::new(ErrorType::NotFound(StandardErrorBody::new(
+            "not_found",
+            detail
+                .into()
+                .unwrap_or_else(|| "Entity not found".to_owned()),
+        )))
+    }
+
+    pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
+        Self::new(ErrorType::BadRequest(StandardErrorBody::new(code, detail)))
+    }
+
+    pub fn invalid_user_input(detail: impl fmt::Display) -> Self {
         // We'll probably change _how_ invalid user input is displayed later on,
         // but having a universal error function to capture user errors is ideal
-        Self::new(ErrorType::Http(HttpError {
-            status: StatusCode::BAD_REQUEST,
-            body: StandardErrorBody {
-                code: "invalid_input".to_owned(),
-                detail: s.to_string(),
-            },
-        }))
+        Self::bad_request("invalid_input", detail)
     }
 
-    #[track_caller]
     pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
         Self::new(ErrorType::Validation(ValidationErrorBody::new(detail)))
     }
 
-    #[track_caller]
-    pub fn http(h: HttpError) -> Self {
-        Self {
-            trace: Vec::with_capacity(0), // no debugging necessary
-            typ: ErrorType::Http(h),
-        }
-    }
-
-    #[track_caller]
     pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
         Self::new(ErrorType::Operation { code, detail })
     }
 
     #[track_caller]
     pub fn trace(mut self) -> Self {
-        self.trace.push(Location::caller());
+        if let ErrorType::Generic { trace, .. } = &mut *self.0 {
+            trace.push(Location::caller());
+        }
         self
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.typ.fmt(f)
+        self.0.fmt(f)
     }
 }
 
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
-    }
-}
+impl error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        let location: Vec<String> = self.trace.into_iter().map(ToString::to_string).collect();
-        match self.typ {
-            ErrorType::Http(s) => {
-                tracing::debug!(?location, error = %s, "http error");
-                s.into_response()
+        match *self.0 {
+            ErrorType::BadRequest(body) => {
+                tracing::debug!(error = %body, "bad request");
+                (StatusCode::BAD_REQUEST, Json(body)).into_response()
+            }
+            ErrorType::NotFound(body) => {
+                tracing::debug!(error = %body, "not found");
+                (StatusCode::NOT_FOUND, Json(body)).into_response()
             }
             ErrorType::Validation(body) => {
-                tracing::debug!(?location, error = %body, "validation error");
+                tracing::debug!(error = %body, "validation error");
                 (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
             }
             ErrorType::Operation {
@@ -116,8 +104,12 @@ impl IntoResponse for Error {
                 detail: Some(detail),
             } => (code, detail).into_response(),
             ErrorType::Operation { code, detail: _ } => code.into_response(),
-            ErrorType::Generic(_) => {
-                tracing::error!(?location, error = %self.typ, "generic error");
+            ErrorType::Generic { trace, message } => {
+                tracing::error!(
+                    location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
+                    message,
+                    "generic error",
+                );
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({}))).into_response()
             }
         }
@@ -147,9 +139,14 @@ impl<T> Traceable<T> for Result<T> {
 #[derive(Debug)]
 pub enum ErrorType {
     /// A generic error
-    Generic(String),
-    /// Any kind of HttpError
-    Http(HttpError),
+    Generic {
+        message: String,
+        trace: Vec<&'static Location<'static>>,
+    },
+    /// Bad user input
+    BadRequest(StandardErrorBody),
+    /// Entity not found
+    NotFound(StandardErrorBody),
     /// An error from validating a request
     Validation(ValidationErrorBody),
     /// An error from an Operation application
@@ -162,8 +159,9 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Generic(s) => s.fmt(f),
-            Self::Http(s) => s.fmt(f),
+            Self::Generic { message, .. } => message.fmt(f),
+            Self::BadRequest(s) => write!(f, "bad_request {s}"),
+            Self::NotFound(s) => write!(f, "not_found {s}"),
             Self::Validation(s) => s.fmt(f),
             Self::Operation { detail, code } => {
                 if let Some(detail) = detail {
@@ -176,123 +174,16 @@ impl fmt::Display for ErrorType {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct StandardErrorBody {
-    code: String,
-    detail: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct HttpError {
-    pub status: StatusCode,
-    body: StandardErrorBody,
-}
-
-impl HttpError {
-    fn new_standard(status: StatusCode, code: String, detail: String) -> Self {
-        Self {
-            status,
-            body: StandardErrorBody { code, detail },
-        }
-    }
-
-    pub fn bad_request(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::BAD_REQUEST,
-            code.unwrap_or_else(|| "generic_error".to_owned()),
-            detail.unwrap_or_else(|| "Generic error".to_owned()),
-        )
-    }
-
-    pub fn not_found(detail: impl Into<Option<String>>) -> Self {
-        Self::new_standard(
-            StatusCode::NOT_FOUND,
-            "not_found".to_owned(),
-            detail
-                .into()
-                .unwrap_or_else(|| "Entity not found".to_owned()),
-        )
-    }
-
-    pub fn unauthorized(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::UNAUTHORIZED,
-            code.unwrap_or_else(|| "authentication_failed".to_owned()),
-            detail.unwrap_or_else(|| "Incorrect authentication credentials.".to_owned()),
-        )
-    }
-
-    pub fn permission_denied(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::FORBIDDEN,
-            code.unwrap_or_else(|| "insufficient access".to_owned()),
-            detail.unwrap_or_else(|| "Insufficient access for the given operation.".to_owned()),
-        )
-    }
-
-    pub fn conflict(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::CONFLICT,
-            code.unwrap_or_else(|| "conflict".to_owned()),
-            detail.unwrap_or_else(|| "A conflict has occurred".to_owned()),
-        )
-    }
-
-    pub fn internal_server_error(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            code.unwrap_or_else(|| "server_error".to_owned()),
-            detail.unwrap_or_else(|| "Internal Server Error".to_owned()),
-        )
-    }
-
-    pub fn too_large(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::PAYLOAD_TOO_LARGE,
-            code.unwrap_or_else(|| "payload_too_large".to_owned()),
-            detail.unwrap_or_else(|| "Request payload is too large.".to_owned()),
-        )
-    }
-}
-
-impl From<HttpError> for Error {
-    fn from(err: HttpError) -> Error {
-        Error::http(err)
-    }
-}
-
-impl fmt::Display for HttpError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "status={} code=\"{}\" detail=\"{}\"",
-            self.status, self.body.code, self.body.detail,
-        )
-    }
-}
-
-impl IntoResponse for HttpError {
-    fn into_response(self) -> Response {
-        (self.status, Json(self.body)).into_response()
-    }
-}
-
 impl From<fjall::Error> for Error {
     #[track_caller]
     fn from(e: fjall::Error) -> Self {
-        Self {
-            trace: vec![Location::caller()],
-            typ: ErrorType::Generic(format!("{e:?}")),
-        }
+        Self::generic(format!("{e:?}"))
     }
 }
 
 impl From<JoinError> for Error {
     #[track_caller]
     fn from(e: JoinError) -> Self {
-        Self {
-            trace: vec![Location::caller()],
-            typ: ErrorType::Generic(format!("{e:?}")),
-        }
+        Self::generic(format!("{e:?}"))
     }
 }

@@ -1045,8 +1045,8 @@ dependencies = [
 name = "diom-core"
 version = "0.0.1"
 dependencies = [
- "diom-error",
  "diom-namespace",
+ "diom-proto",
  "regex",
  "schemars 1.2.1",
  "serde",
@@ -1069,14 +1069,12 @@ version = "0.0.1"
 dependencies = [
  "aide 0.16.0-alpha.2",
  "axum",
+ "diom-proto",
  "fjall",
  "hyper",
- "schemars 1.2.1",
- "serde",
  "serde_json",
  "tokio",
  "tracing",
- "validator",
 ]
 
 [[package]]
@@ -1169,7 +1167,6 @@ dependencies = [
  "aide 0.16.0-alpha.2",
  "axum",
  "bytes",
- "diom-error",
  "http",
  "mime",
  "reqwest 0.13.2",

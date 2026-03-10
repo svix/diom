@@ -7,7 +7,7 @@ use std::{
 };
 
 use aide::transform::{TransformOperation, TransformPathItem};
-use diom_error::validation_error;
+use diom_proto::validation_error;
 use regex::Regex;
 use validator::ValidationError;
 
@@ -45,11 +45,10 @@ pub fn get_unix_timestamp() -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use diom_error::validation_errors;
+    use diom_proto::{ValidationErrorItem, validation_errors};
     use validator::Validate;
 
     use super::validate_no_control_characters;
-    use crate::error::ValidationErrorItem;
 
     #[derive(Debug, Validate)]
     struct ValidationErrorTestStruct {

@@ -11,7 +11,7 @@ use diom_cache::{
 };
 use diom_core::types::{Consistency, EntityKey};
 use diom_derive::aide_annotate;
-use diom_error::{Error, HttpError, OptionExt, ResultExt};
+use diom_error::{Error, OptionExt, ResultExt};
 use diom_kv::kvcontroller::KvModel;
 use diom_namespace::{
     Namespace,
@@ -168,9 +168,7 @@ async fn cache_get(
     let ret = match model {
         Some(m) => CacheGetOut::from_model(data.key, m),
         None => {
-            return Err(Error::http(HttpError::not_found(
-                "Key not found".to_owned(),
-            )));
+            return Err(Error::not_found("Key not found".to_owned()));
         }
     };
     Ok(MsgPackOrJson(ret))
