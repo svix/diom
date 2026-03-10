@@ -1050,6 +1050,8 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "serde_json",
+ "tokio-util",
+ "uuid",
  "validator",
 ]
 
@@ -1202,6 +1204,7 @@ dependencies = [
  "anyhow",
  "clap",
  "coyote",
+ "coyote-core",
  "dotenvy",
  "mimalloc",
  "opentelemetry",

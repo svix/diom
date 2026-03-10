@@ -8,6 +8,7 @@ edition = "2024"
 anyhow.workspace = true
 clap.workspace = true
 coyote.workspace = true
+coyote-core.workspace = true
 dotenvy.workspace = true
 mimalloc.workspace = true
 opentelemetry.workspace = true
