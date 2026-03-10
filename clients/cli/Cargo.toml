@@ -27,7 +27,7 @@ rustls-tls = ["coyote-client/rustls-tls"]
 
 [dependencies]
 anyhow.workspace = true
-clap.workspace = true
+clap = { workspace = true, features = ["derive", "env"] }
 clap_complete.workspace = true
 colored_json.workspace = true
 comfy-table = "7"
