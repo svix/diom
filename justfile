@@ -5,6 +5,7 @@ HERE := justfile_directory()
 lint:
     # keep this beta to keep it in sync with CI
     cargo +beta clippy --workspace --fix --allow-dirty --all-features --all-targets
+    cargo machete --fix
     # this has to be nightly to get import sorting working correctly
     cargo +nightly fmt
     cargo sort --no-format --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
