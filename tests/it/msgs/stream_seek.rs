@@ -336,7 +336,7 @@ async fn seek_position_works_on_topic_level() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    // Configure 2 partitions
+    // Configure multiple partitions to ensure we can seek on a per-partition basis
     client
         .post("msgs/topic/configure")
         .json(json!({
