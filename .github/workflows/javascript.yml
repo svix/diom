@@ -1,0 +1,22 @@
+name: Clients
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/javascript.yml'
+      - 'clients/javascript/**'
+
+jobs:
+  lint-js:
+    name: Lint JavaScript
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: clients/javascript
+    steps:
+      - uses: actions/checkout@v6
+      - run: npm ci
+      - run: npm run lint

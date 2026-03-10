@@ -1,26 +1,69 @@
 name: CI on PR
+
 on:
   pull_request:
     branches: ['*']
+
 jobs:
+  filter:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      openapi: ${{ steps.filter.outputs.openapi }}
+      javascript: ${{ steps.filter.outputs.javascript }}
+      python: ${{ steps.filter.outputs.python }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            openapi:
+              - '.github/workflows/lint-openapi.yml'
+              - 'openapi.json'
+            javascript:
+              - '.github/workflows/javascript.yml'
+              - 'clients/javascript'
+            python:
+              - '.github/workflows/python.yml'
+              - 'clients/python'
+
   ci:
     permissions:
       contents: read
       pull-requests: write
     uses: ./.github/workflows/ci.yml
     secrets: inherit
-  clients:
-    uses: ./.github/workflows/clients.yml
+
   lint-openapi:
+    needs: filter
+    if: needs.filter.outputs.openapi == 'true'
     permissions:
       contents: read
       pull-requests: write
     uses: ./.github/workflows/lint-openapi.yml
     secrets: inherit
+
+  javascript:
+    needs: filter
+    if: needs.filter.outputs.javascript == 'true'
+    uses: ./.github/workflows/javascript.yml
+
+  python:
+    needs: filter
+    if: needs.filter.outputs.python == 'true'
+    uses: ./.github/workflows/python.yml
+
   ci-required-checks:
     name: CI Required Checks
     runs-on: ubuntu-24.04
-    needs: [ci, clients, lint-openapi]
+    needs:
+      - ci
+      - lint-openapi
+      - javascript
+      - python
     # Always run so that this job is a stable required status check: if an
     # upstream job is skipped (e.g. due to path filters added in the future)
     # that is fine; we only fail if something actually failed or was cancelled.

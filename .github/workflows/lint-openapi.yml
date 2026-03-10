@@ -1,7 +1,14 @@
 name: Lint OpenAPI
+
 on:
   workflow_dispatch:
   workflow_call:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lint-openapi.yml'
+      - 'openapi.json'
+
 jobs:
   lint-openapi:
     name: Lint openapi.json
@@ -11,18 +18,10 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      - id: changed-files
-        uses: tj-actions/changed-files@v47.0.4
-        with:
-          files: "openapi.json"
       - uses: pb33f/vacuum-action@v2
-        if: steps.changed-files.outputs.test_any_changed == 'true'
         with:
           openapi_path: openapi.json
           ruleset: .vacuum.yaml
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # raise this as time goes on and we fix some stuff
           minimum_score: 0
-      - run: |
-          echo "succeed even if we skipped vacuum-action"
-          exit 0
