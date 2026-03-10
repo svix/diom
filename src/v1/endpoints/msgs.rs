@@ -4,16 +4,17 @@ use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
-use coyote_error::{OptionExt as _, Result, ResultExt};
+use coyote_error::{Error, OptionExt, Result, ResultExt};
 use coyote_msgs::{
     MsgsNamespace,
     entities::{
-        ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, StreamMsgOut, TopicIn, TopicName,
-        TopicPartition, default_retention_bytes, default_retention_millis,
+        ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, SeekPosition, StreamMsgOut, TopicIn,
+        TopicName, TopicPartition, default_retention_bytes, default_retention_millis,
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueReceiveOperation,
-        StreamCommitOperation, StreamReceiveOperation, TopicConfigureOperation,
+        SeekTarget, StreamCommitOperation, StreamReceiveOperation, StreamSeekOperation,
+        TopicConfigureOperation,
     },
 };
 use coyote_namespace::entities::StorageType;
@@ -259,6 +260,55 @@ async fn stream_commit(
 }
 
 // ---------------------------------------------------------------------------
+// stream/seek
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgStreamSeekIn {
+    pub topic: TopicIn,
+    pub consumer_group: ConsumerGroup,
+    pub offset: Option<Offset>,
+    pub position: Option<SeekPosition>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct MsgStreamSeekOut {}
+
+/// Repositions a consumer group's read cursor on a topic.
+///
+/// Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
+/// partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
+/// `"latest"` and may be used with or without a partition suffix.
+#[aide_annotate(op_id = "v1.msgs.stream.seek")]
+async fn stream_seek(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgStreamSeekIn>,
+) -> Result<MsgPackOrJson<MsgStreamSeekOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.topic.namespace())?
+        .ok_or_not_found()?;
+
+    let target = match (data.offset, data.position) {
+        (Some(offset), None) => SeekTarget::Offset(offset),
+        (None, Some(position)) => SeekTarget::Position(position),
+        _ => {
+            return Err(Error::invalid_user_input(
+                "exactly one of 'offset' or 'position' must be provided",
+            ));
+        }
+    };
+
+    let operation =
+        StreamSeekOperation::new(namespace.id, data.topic, data.consumer_group, target)?;
+    repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(MsgStreamSeekOut {}))
+}
+
+// ---------------------------------------------------------------------------
 // queue/receive
 // ---------------------------------------------------------------------------
 
@@ -418,6 +468,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/msgs/stream/commit",
             post_with(stream_commit, stream_commit_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/stream/seek",
+            post_with(stream_seek, stream_seek_operation),
             &tag,
         )
         .api_route_with(

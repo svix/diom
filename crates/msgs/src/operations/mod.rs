@@ -25,6 +25,7 @@ raft_module_operations!(
         QueueReceive(QueueReceiveOperation) -> QueueReceiveResponseData,
         StreamCommit(StreamCommitOperation) -> StreamCommitResponseData,
         StreamReceive(StreamReceiveOperation) -> StreamReceiveResponseData,
+        StreamSeek(StreamSeekOperation) -> StreamSeekResponseData,
         TopicConfigure(TopicConfigureOperation) -> TopicConfigureResponseData,
     },
     state = MsgsRaftState<'_>,
@@ -39,6 +40,7 @@ impl MsgsOperation {
             MsgsOperation::QueueReceive(op) => op.topic.to_string(),
             MsgsOperation::StreamCommit(op) => op.topic.to_string(),
             MsgsOperation::StreamReceive(op) => op.topic.to_string(),
+            MsgsOperation::StreamSeek(op) => op.topic.to_string(),
             MsgsOperation::TopicConfigure(op) => op.topic.to_string(),
         }
     }

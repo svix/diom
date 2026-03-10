@@ -43,6 +43,8 @@ from .msg_stream_commit_in import MsgStreamCommitIn
 from .msg_stream_commit_out import MsgStreamCommitOut
 from .msg_stream_receive_in import MsgStreamReceiveIn
 from .msg_stream_receive_out import MsgStreamReceiveOut
+from .msg_stream_seek_in import MsgStreamSeekIn
+from .msg_stream_seek_out import MsgStreamSeekOut
 from .msg_topic_configure_in import MsgTopicConfigureIn
 from .msg_topic_configure_out import MsgTopicConfigureOut
 from .operation_behavior import OperationBehavior
@@ -105,6 +107,8 @@ __all__ = [
     "MsgStreamCommitOut",
     "MsgStreamReceiveIn",
     "MsgStreamReceiveOut",
+    "MsgStreamSeekIn",
+    "MsgStreamSeekOut",
     "MsgTopicConfigureIn",
     "MsgTopicConfigureOut",
     "OperationBehavior",

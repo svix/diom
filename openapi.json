@@ -851,6 +851,43 @@
         ]
       }
     },
+    "/api/v1/msgs/stream/seek": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Stream Seek",
+        "description": "Repositions a consumer group's read cursor on a topic.\n\nProvide exactly one of `offset` or `position`. When using `offset`, the topic must include a\npartition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `\"earliest\"` or\n`\"latest\"` and may be used with or without a partition suffix.",
+        "operationId": "v1.msgs.stream.seek",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgStreamSeekIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgStreamSeekOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/msgs/queue/receive": {
       "post": {
         "tags": [
@@ -1990,6 +2027,38 @@
         "required": [
           "msgs"
         ]
+      },
+      "MsgStreamSeekIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgStreamSeekOut": {
+        "type": "object"
       },
       "MsgTopicConfigureIn": {
         "type": "object",

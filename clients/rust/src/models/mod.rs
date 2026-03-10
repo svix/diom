@@ -45,6 +45,8 @@ mod msg_stream_commit_in;
 mod msg_stream_commit_out;
 mod msg_stream_receive_in;
 mod msg_stream_receive_out;
+mod msg_stream_seek_in;
+mod msg_stream_seek_out;
 mod msg_topic_configure_in;
 mod msg_topic_configure_out;
 mod operation_behavior;
@@ -106,6 +108,8 @@ pub use self::{
     msg_stream_commit_out::MsgStreamCommitOut,
     msg_stream_receive_in::MsgStreamReceiveIn,
     msg_stream_receive_out::MsgStreamReceiveOut,
+    msg_stream_seek_in::MsgStreamSeekIn,
+    msg_stream_seek_out::MsgStreamSeekOut,
     msg_topic_configure_in::MsgTopicConfigureIn,
     msg_topic_configure_out::MsgTopicConfigureOut,
     operation_behavior::OperationBehavior,
@@ -130,5 +134,5 @@ pub(crate) use self::{
     msg_namespace_get_in::MsgNamespaceGetIn_, msg_publish_in::MsgPublishIn_,
     msg_queue_ack_in::MsgQueueAckIn_, msg_queue_receive_in::MsgQueueReceiveIn_,
     msg_stream_commit_in::MsgStreamCommitIn_, msg_stream_receive_in::MsgStreamReceiveIn_,
-    msg_topic_configure_in::MsgTopicConfigureIn_,
+    msg_stream_seek_in::MsgStreamSeekIn_, msg_topic_configure_in::MsgTopicConfigureIn_,
 };

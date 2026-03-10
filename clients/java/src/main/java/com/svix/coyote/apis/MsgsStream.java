@@ -17,6 +17,8 @@ import com.svix.coyote.models.MsgStreamCommitIn;
 import com.svix.coyote.models.MsgStreamCommitOut;
 import com.svix.coyote.models.MsgStreamReceiveIn;
 import com.svix.coyote.models.MsgStreamReceiveOut;
+import com.svix.coyote.models.MsgStreamSeekIn;
+import com.svix.coyote.models.MsgStreamSeekOut;
 
 public class MsgsStream {
     private final HttpClient client;
@@ -60,6 +62,26 @@ public class MsgsStream {
             null,
             msgStreamCommitIn,
             MsgStreamCommitOut.class
+            );
+    }
+
+    /**
+* Repositions a consumer group's read cursor on a topic.
+* 
+* Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
+* partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
+* `"latest"` and may be used with or without a partition suffix.
+*/
+    public MsgStreamSeekOut seek(
+        final MsgStreamSeekIn msgStreamSeekIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/seek");
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            msgStreamSeekIn,
+            MsgStreamSeekOut.class
             );
     }
 }
