@@ -13,6 +13,8 @@ regex.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+tokio-util.workspace = true
+uuid.workspace = true
 validator.workspace = true
 
 [lints]
