@@ -221,30 +221,6 @@ impl HttpError {
         )
     }
 
-    pub fn unauthorized(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::UNAUTHORIZED,
-            code.unwrap_or_else(|| "authentication_failed".to_owned()),
-            detail.unwrap_or_else(|| "Incorrect authentication credentials.".to_owned()),
-        )
-    }
-
-    pub fn permission_denied(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::FORBIDDEN,
-            code.unwrap_or_else(|| "insufficient access".to_owned()),
-            detail.unwrap_or_else(|| "Insufficient access for the given operation.".to_owned()),
-        )
-    }
-
-    pub fn conflict(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::CONFLICT,
-            code.unwrap_or_else(|| "conflict".to_owned()),
-            detail.unwrap_or_else(|| "A conflict has occurred".to_owned()),
-        )
-    }
-
     pub fn internal_server_error(code: Option<String>, detail: Option<String>) -> Self {
         Self::new_standard(
             StatusCode::INTERNAL_SERVER_ERROR,
