@@ -211,39 +211,6 @@ pub struct HttpError {
     body: StandardErrorBody,
 }
 
-impl HttpError {
-    fn new_standard(status: StatusCode, code: String, detail: String) -> Self {
-        Self {
-            status,
-            body: StandardErrorBody { code, detail },
-        }
-    }
-
-    pub fn bad_request(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::BAD_REQUEST,
-            code.unwrap_or_else(|| "generic_error".to_owned()),
-            detail.unwrap_or_else(|| "Generic error".to_owned()),
-        )
-    }
-
-    pub fn internal_server_error(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            code.unwrap_or_else(|| "server_error".to_owned()),
-            detail.unwrap_or_else(|| "Internal Server Error".to_owned()),
-        )
-    }
-
-    pub fn too_large(code: Option<String>, detail: Option<String>) -> Self {
-        Self::new_standard(
-            StatusCode::PAYLOAD_TOO_LARGE,
-            code.unwrap_or_else(|| "payload_too_large".to_owned()),
-            detail.unwrap_or_else(|| "Request payload is too large.".to_owned()),
-        )
-    }
-}
-
 impl From<HttpError> for Error {
     fn from(err: HttpError) -> Error {
         Self(ErrorType::Http(err))
