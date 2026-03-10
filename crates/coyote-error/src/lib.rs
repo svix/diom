@@ -84,11 +84,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
-    }
-}
+impl error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
