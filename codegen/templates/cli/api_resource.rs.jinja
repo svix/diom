@@ -32,15 +32,6 @@ pub enum {{ resource_type_name }}Commands {
             {{ op.description | to_doc_comment(style="rust") }}
         {% endif -%}
         {{ op.name | to_upper_camel_case }} {
-            {# path parameters -#}
-            {% for p in op.path_params -%}
-                {% if p == resource_id_name -%}
-                    id: String,
-                {% else -%}
-                    {{ p }}: String,
-                {% endif -%}
-            {% endfor -%}
-
             {% if op.request_body_schema_name is defined -%}
                 {# positional body parameters -#}
                 {% set body_schema = api.types[op.request_body_schema_name] -%}
@@ -75,15 +66,6 @@ impl {{ resource_type_name }}Commands {
                 {% set has_params = (op.query_params | length > 0) or (op.header_params | length > 0) -%}
 
                 Self::{{ op.name | to_upper_camel_case }} {
-                    {# path parameters -#}
-                    {% for p in op.path_params -%}
-                        {% if p == resource_id_name -%}
-                            id,
-                        {% else -%}
-                            {{ p }},
-                        {% endif -%}
-                    {% endfor -%}
-
                     {% if op.request_body_schema_name is defined -%}
                         {# positional body parameters -#}
                         {% set body_schema = api.types[op.request_body_schema_name] -%}
@@ -109,15 +91,6 @@ impl {{ resource_type_name }}Commands {
                         .{{ segment | to_snake_case }}()
                         {% endfor -%}
                         .{{ op.name | to_snake_case }}(
-                            {# path parameters -#}
-                            {% for p in op.path_params -%}
-                                {% if p == resource_id_name -%}
-                                    id,
-                                {% else -%}
-                                    {{ p }},
-                                {% endif -%}
-                            {% endfor -%}
-
                             {% if op.request_body_schema_name is defined -%}
                                 {# positional body parameters -#}
                                 {% set body_schema = api.types[op.request_body_schema_name] -%}
