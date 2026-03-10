@@ -266,11 +266,18 @@ pub async fn run_with_listeners(
     // Spawn background workers for each module
     let workers = tokio::spawn({
         let app_state = app_state.clone();
+        let raft_state = raft_state.clone();
         async move {
             tracing::debug!("spawned workers");
             // FIXME: gotta do actual error handling...
             let _ = tokio::join!(
-                tokio::spawn(v1::modules::kv::worker(app_state.clone())),
+                tokio::spawn({
+                    let kv_store = raft_state
+                        .state_machine
+                        .with_stores(|s| s.kv_state.clone())
+                        .await;
+                    v1::modules::kv::worker(app_state.clone(), kv_store)
+                }),
                 tokio::spawn(v1::modules::cache::worker(app_state.clone())),
                 tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
                 tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),

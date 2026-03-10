@@ -1,7 +1,7 @@
+use coyote_core::Monotime;
 use coyote_error::Result;
 use coyote_namespace::{Namespace, entities::KeyValueConfig};
 use fjall_utils::{Databases, StorageType};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -47,28 +47,37 @@ pub enum OperationBehavior {
 }
 
 /// This is the worker function for this module, it does background cleanup and accounting.
+///
 /// It deletes expired entries from the database and evicts entries if the KvStore is configured to do so.
-pub async fn worker<F>(dbs: Databases, is_shutting_down: F)
-where
-    F: Fn() -> bool,
-{
-    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
-    // FIXME: handle both!
-    let controller = KvController::new(dbs.persistent, KV_KEYSPACE);
+/// This function may never make any user-visible changes, under penalty of breaking replication.
+pub async fn worker(state: State, time: Monotime) {
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(10));
 
-    loop {
-        if is_shutting_down() {
-            break;
-        }
-
-        timer.tick().await;
-
-        let now = Timestamp::now();
-        match controller.clear_expired(now) {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::error!(error = ?e, "Failed to clean.");
+    let shutting_down = coyote_core::shutdown::shutting_down_token();
+    while shutting_down
+        .run_until_cancelled(timer.tick())
+        .await
+        .is_some()
+    {
+        let controllers = [
+            state.persistent_controller.clone(),
+            state.ephemeral_controller.clone(),
+        ];
+        let tasks = controllers.into_iter().map(|c| {
+            let now = time.last();
+            tokio::task::spawn_blocking(move || {
+                match c.clear_expired(now) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::error!(error = ?e, "Failed to clean store.");
+                    }
+                };
+            })
+        });
+        for result in futures_util::future::join_all(tasks).await {
+            if let Err(e) = result {
+                tracing::error!(error = ?e, "Failed to join cleanup task");
             }
-        };
+        }
     }
 }

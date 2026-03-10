@@ -110,6 +110,7 @@ impl<'a, Tag: TableRow> TableKey<Tag> {
         fixed_parts: &[&[u8]],
         nul_delimited_parts: &[&str],
     ) -> Self {
+        tracing::debug!(?row_type, ?fixed_parts, "building key");
         let len = size_of::<u8>() /* the row tag */
             + fixed_parts.iter().fold(0, |acc, e| acc + e.len()) /* all the fixed parts */
             + nul_delimited_parts.iter().fold(0, |acc, e| acc + e.len()) /* The parts that are nul delimited */

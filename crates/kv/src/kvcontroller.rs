@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
+use coyote_core::sync::GcFence;
 use coyote_error::Result;
 use coyote_namespace::entities::NamespaceId;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{TableRow, WriteBatchExt};
-use itertools::Itertools;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -41,10 +43,12 @@ impl From<KvPairRow> for KvModel {
 pub struct KvController {
     db: fjall::Database,
     keyspace: fjall::Keyspace,
+    keyspace_name: &'static str,
+    kv_fence: Arc<GcFence<String>>,
 }
 
 impl KvController {
-    pub fn new(db: fjall::Database, keyspace_name: &str) -> Self {
+    pub fn new(db: fjall::Database, keyspace_name: &'static str) -> Self {
         let tables = {
             let opts = KeyspaceCreateOptions::default()
                 .with_kv_separation(Some(KvSeparationOptions::default()));
@@ -54,6 +58,8 @@ impl KvController {
         Self {
             db,
             keyspace: tables,
+            keyspace_name,
+            kv_fence: Arc::new(GcFence::new()),
         }
     }
 
@@ -85,17 +91,16 @@ impl KvController {
     ) -> Result<()> {
         let mut batch = self.db.batch();
 
+        let _guard = self.kv_fence.want_to_write(key);
+
         let row = KvPairRow { value, expiry };
 
         batch.insert_row(&self.keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
 
         if let Some(expiry) = expiry {
             let expiration_row = ExpirationRow::new();
-            batch.insert_row(
-                &self.keyspace,
-                ExpirationRow::key_for(namespace_id, expiry, key),
-                &expiration_row,
-            )?;
+            let key = ExpirationRow::key_for(namespace_id, expiry, key);
+            batch.insert_row(&self.keyspace, key, &expiration_row)?;
         }
 
         batch.commit()?;
@@ -143,6 +148,8 @@ impl KvController {
     pub fn delete(&self, namespace_id: NamespaceId, key: &str) -> Result<()> {
         let mut batch = self.db.batch();
 
+        let _guard = self.kv_fence.want_to_write(key);
+
         if let Some(data) = KvPairRow::fetch(&self.keyspace, KvPairRow::key_for(namespace_id, key))?
         {
             // Delete from the expiration keyspace
@@ -164,34 +171,70 @@ impl KvController {
         KvPairRow::values(&self.keyspace)
     }
 
+    #[tracing::instrument(skip(self), fields(keyspace))]
     pub fn clear_expired(&self, now: Timestamp) -> Result<usize> {
-        let start =
+        tracing::Span::current().record("keyspace", self.keyspace_name);
+
+        let mut start =
             ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
         let mut cleared = 0;
+        let mut conflicts = 0;
 
-        for chunk in &self
-            .keyspace
-            .range(start..=end)
-            .chunks(EXPIRATION_BATCH_SIZE)
-        {
-            let mut batch = self.db.batch();
-            // FIXME: there's a race condition because the item key is first read and only then
-            // acted upon.
-            // Essentially: (1) key read here, (2) key + expiry updated elsewhere, (3) new key
-            // is deleted here even though it's not expired.
-            // See https://svixhq.slack.com/archives/C0A72988962/p1772685631571679
-            for item in chunk {
-                cleared += 1;
-                let k = item.key()?;
+        tracing::debug!(%now, "starting background clear for expired data");
+
+        let marker = self.kv_fence.start_marking();
+
+        loop {
+            // mark
+
+            // make sure we don't reuse an iterator from a previous loop because it might
+            // have been invalidated by concurrent writes.
+            tracing::trace!(?start, ?end, "scanning for expiry");
+            let chunk = self
+                .keyspace
+                .range(start..=end.clone())
+                .take(EXPIRATION_BATCH_SIZE)
+                .map(|item| item.key())
+                .collect::<Result<Vec<_>, _>>()?;
+
+            let mut to_destroy = Vec::new();
+
+            if let Some(last) = chunk.last() {
+                start = last.clone();
+            } else {
+                break;
+            }
+
+            for k in chunk {
                 let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
-                batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, main_key))?;
+                to_destroy.push((namespace_id, main_key.to_owned(), k.to_vec()));
+            }
 
-                batch.remove(&self.keyspace, k);
+            marker.intent_to_gc(to_destroy.iter().map(|s| &s.1));
+
+            // sweep
+
+            let mut batch = self.db.batch();
+
+            let valid = marker.drain_all();
+
+            for (namespace_id, main_key, k) in to_destroy {
+                if valid.contains(&main_key) {
+                    cleared += 1;
+                    batch
+                        .remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, &main_key))?;
+                    batch.remove(&self.keyspace, k);
+                } else {
+                    conflicts += 1;
+                    tracing::trace!(?namespace_id, ?main_key, "something else touched this row");
+                }
             }
             batch.commit()?;
         }
+
+        tracing::debug!(cleared, conflicts, "finished clearing keys");
 
         Ok(cleared)
     }

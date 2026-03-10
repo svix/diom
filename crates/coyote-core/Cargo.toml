@@ -10,6 +10,7 @@ edition = "2024"
 coyote-namespace.workspace = true
 coyote-proto.workspace = true
 jiff.workspace = true
+parking_lot.workspace = true
 regex.workspace = true
 schemars.workspace = true
 serde.workspace = true

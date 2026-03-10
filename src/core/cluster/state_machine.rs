@@ -669,4 +669,13 @@ impl StoreHandle {
     pub fn now(&self) -> jiff::Timestamp {
         self.time.now()
     }
+
+    pub(crate) async fn with_stores<F, O>(&self, f: F) -> O
+    where
+        F: FnOnce(&Stores) -> O,
+    {
+        let guard = self.inner.read().await;
+        let inner_guard = guard.stores.read();
+        f(&inner_guard)
+    }
 }
