@@ -346,15 +346,9 @@ impl RaftState {
             Some(leader) => leader,
             None => anyhow::bail!("no cluster leader, cannot perform linearizable operations"),
         };
-        let leader_id_for_lookup = leader_id.clone();
         let leader_node = self
             .raft
-            .with_raft_state(move |s| {
-                s.membership_state
-                    .effective()
-                    .get_node(&leader_id_for_lookup)
-                    .cloned()
-            })
+            .with_raft_state(move |s| s.membership_state.effective().get_node(&leader_id).cloned())
             .await?
             .ok_or_else(|| anyhow::anyhow!("unable to look up leader node IP"))?;
         tracing::trace!(?leader_id, "performing a linearizable read on a follower");
