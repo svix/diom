@@ -3,8 +3,8 @@
 
 use std::{ops::Deref, sync::LazyLock};
 
-use coyote_error::validation_error;
 use coyote_namespace::parse_namespace;
+use coyote_proto::validation_error;
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;

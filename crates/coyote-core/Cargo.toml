@@ -7,8 +7,8 @@ rust-version.workspace = true
 edition = "2024"
 
 [dependencies]
-coyote-error.workspace = true
 coyote-namespace.workspace = true
+coyote-proto.workspace = true
 regex.workspace = true
 schemars.workspace = true
 serde.workspace = true

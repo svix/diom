@@ -9,14 +9,12 @@ edition = "2024"
 [dependencies]
 aide.workspace = true
 axum.workspace = true
+coyote-proto.workspace = true
 fjall.workspace = true
 hyper.workspace = true
-schemars.workspace = true
-serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-validator.workspace = true
 
 [lints]
 workspace = true
