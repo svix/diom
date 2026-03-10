@@ -117,6 +117,8 @@ impl TableRow for StreamLeaseRow {
 #[derive(Serialize, Deserialize)]
 pub(crate) struct QueueLeaseRow {
     pub expiry: Timestamp,
+    #[serde(default)]
+    pub dlq: bool,
 }
 
 impl QueueLeaseRow {
@@ -137,11 +139,58 @@ impl QueueLeaseRow {
     }
 
     pub(crate) fn is_available(&self, now: Timestamp) -> bool {
-        self.expiry <= now
+        !self.dlq && self.expiry <= now
     }
 
     pub(crate) fn is_acked(&self) -> bool {
-        self.expiry == Timestamp::MAX
+        !self.dlq && self.expiry == Timestamp::MAX
+    }
+
+    pub(crate) fn is_dlq(&self) -> bool {
+        self.dlq
+    }
+
+    // FIXME(@svix-gabriel): This manually parses the TableKey byte layout, which is
+    // fragile and tightly coupled to `TableKey::init_key`'s encoding. Should be replaced
+    // with a proper range/prefix scan API on TableRow.
+    /// Returns all lease rows for a given (topic, partition, consumer_group) via prefix scan.
+    pub(crate) fn scan_partition(
+        keyspace: &fjall::Keyspace,
+        topic_id: TopicId,
+        partition: Partition,
+        consumer_group: &ConsumerGroup,
+    ) -> Result<Vec<(MsgId, Self)>> {
+        // Key layout: [ROW_TYPE:1B][topic_id:16B][partition:2B][offset:8B][consumer_group]
+        let mut prefix = Vec::with_capacity(1 + 16 + 2);
+        prefix.push(Self::ROW_TYPE);
+        prefix.extend_from_slice(topic_id.as_bytes());
+        prefix.extend_from_slice(&partition.get().to_be_bytes());
+
+        let cg_bytes = consumer_group.as_bytes();
+        let mut results = Vec::new();
+
+        for guard in keyspace.prefix(&prefix) {
+            let (key, val) = guard.into_inner()?;
+            let offset_start = 1 + 16 + 2;
+            let offset_end = offset_start + 8;
+            if key.len() < offset_end {
+                continue;
+            }
+            let offset_bytes: [u8; 8] = key[offset_start..offset_end]
+                .try_into()
+                .expect("checked length");
+            let offset = u64::from_be_bytes(offset_bytes);
+
+            let key_cg = &key[offset_end..];
+            if key_cg != cg_bytes {
+                continue;
+            }
+
+            let row: Self = rmp_serde::from_slice(&val).map_err_generic()?;
+            results.push((MsgId::new(partition, offset), row));
+        }
+
+        Ok(results)
     }
 }
 

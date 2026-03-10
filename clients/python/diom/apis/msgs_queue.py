@@ -4,12 +4,18 @@ from ..internal.api_common import ApiBase
 from ..models import (
     MsgQueueAckIn,
     MsgQueueAckOut,
+    MsgQueueNackIn,
+    MsgQueueNackOut,
     MsgQueueReceiveIn,
     MsgQueueReceiveOut,
+    MsgQueueRedriveDlqIn,
+    MsgQueueRedriveDlqOut,
 )
 
 from ..models.msg_queue_receive_in import _MsgQueueReceiveIn
 from ..models.msg_queue_ack_in import _MsgQueueAckIn
+from ..models.msg_queue_nack_in import _MsgQueueNackIn
+from ..models.msg_queue_redrive_dlq_in import _MsgQueueRedriveDlqIn
 
 
 class MsgsQueueAsync(ApiBase):
@@ -60,6 +66,48 @@ class MsgsQueueAsync(ApiBase):
             response_type=MsgQueueAckOut,
         )
 
+    async def nack(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_nack_in: MsgQueueNackIn,
+    ) -> MsgQueueNackOut:
+        """Rejects messages, sending them to the dead-letter queue.
+
+        Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+        move them back to the queue for reprocessing."""
+        body = _MsgQueueNackIn(
+            topic=topic,
+            consumer_group=consumer_group,
+            msg_ids=msg_queue_nack_in.msg_ids,
+        ).model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1/msgs/queue/nack",
+            body=body,
+            response_type=MsgQueueNackOut,
+        )
+
+    async def redrive_dlq(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_redrive_dlq_in: MsgQueueRedriveDlqIn = MsgQueueRedriveDlqIn(),
+    ) -> MsgQueueRedriveDlqOut:
+        """Moves all dead-letter queue messages back to the main queue for reprocessing."""
+        body = _MsgQueueRedriveDlqIn(
+            topic=topic,
+            consumer_group=consumer_group,
+        ).model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1/msgs/queue/redrive-dlq",
+            body=body,
+            response_type=MsgQueueRedriveDlqOut,
+        )
+
 
 class MsgsQueue(ApiBase):
     def receive(
@@ -107,4 +155,46 @@ class MsgsQueue(ApiBase):
             path="/api/v1/msgs/queue/ack",
             body=body,
             response_type=MsgQueueAckOut,
+        )
+
+    def nack(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_nack_in: MsgQueueNackIn,
+    ) -> MsgQueueNackOut:
+        """Rejects messages, sending them to the dead-letter queue.
+
+        Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+        move them back to the queue for reprocessing."""
+        body = _MsgQueueNackIn(
+            topic=topic,
+            consumer_group=consumer_group,
+            msg_ids=msg_queue_nack_in.msg_ids,
+        ).model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1/msgs/queue/nack",
+            body=body,
+            response_type=MsgQueueNackOut,
+        )
+
+    def redrive_dlq(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_redrive_dlq_in: MsgQueueRedriveDlqIn = MsgQueueRedriveDlqIn(),
+    ) -> MsgQueueRedriveDlqOut:
+        """Moves all dead-letter queue messages back to the main queue for reprocessing."""
+        body = _MsgQueueRedriveDlqIn(
+            topic=topic,
+            consumer_group=consumer_group,
+        ).model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1/msgs/queue/redrive-dlq",
+            body=body,
+            response_type=MsgQueueRedriveDlqOut,
         )

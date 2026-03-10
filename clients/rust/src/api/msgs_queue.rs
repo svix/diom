@@ -54,4 +54,45 @@ impl<'a> MsgsQueue<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Rejects messages, sending them to the dead-letter queue.
+    ///
+    /// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+    /// move them back to the queue for reprocessing.
+    pub async fn nack(
+        &self,
+        topic: String,
+        consumer_group: String,
+        msg_queue_nack_in: MsgQueueNackIn,
+    ) -> Result<MsgQueueNackOut> {
+        let msg_queue_nack_in = MsgQueueNackIn_ {
+            topic,
+            consumer_group,
+            msg_ids: msg_queue_nack_in.msg_ids,
+        };
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/msgs/queue/nack")
+            .with_body(msg_queue_nack_in)
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Moves all dead-letter queue messages back to the main queue for reprocessing.
+    pub async fn redrive_dlq(
+        &self,
+        topic: String,
+        consumer_group: String,
+        msg_queue_redrive_dlq_in: MsgQueueRedriveDlqIn,
+    ) -> Result<MsgQueueRedriveDlqOut> {
+        let _unused = msg_queue_redrive_dlq_in;
+        let msg_queue_redrive_dlq_in = MsgQueueRedriveDlqIn_ {
+            topic,
+            consumer_group,
+        };
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/msgs/queue/redrive-dlq")
+            .with_body(msg_queue_redrive_dlq_in)
+            .execute(self.cfg)
+            .await
+    }
 }

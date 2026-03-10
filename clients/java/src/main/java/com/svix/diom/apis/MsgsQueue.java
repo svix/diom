@@ -15,8 +15,12 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.MsgQueueAckIn;
 import com.svix.diom.models.MsgQueueAckOut;
+import com.svix.diom.models.MsgQueueNackIn;
+import com.svix.diom.models.MsgQueueNackOut;
 import com.svix.diom.models.MsgQueueReceiveIn;
 import com.svix.diom.models.MsgQueueReceiveOut;
+import com.svix.diom.models.MsgQueueRedriveDlqIn;
+import com.svix.diom.models.MsgQueueRedriveDlqOut;
 
 public class MsgsQueue {
     private final HttpClient client;
@@ -60,6 +64,39 @@ public class MsgsQueue {
             null,
             msgQueueAckIn,
             MsgQueueAckOut.class
+            );
+    }
+
+    /**
+* Rejects messages, sending them to the dead-letter queue.
+* 
+* Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+* move them back to the queue for reprocessing.
+*/
+    public MsgQueueNackOut nack(
+        final MsgQueueNackIn msgQueueNackIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/nack");
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            msgQueueNackIn,
+            MsgQueueNackOut.class
+            );
+    }
+
+    /** Moves all dead-letter queue messages back to the main queue for reprocessing. */
+    public MsgQueueRedriveDlqOut redriveDlq(
+        final MsgQueueRedriveDlqIn msgQueueRedriveDlqIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/redrive-dlq");
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            msgQueueRedriveDlqIn,
+            MsgQueueRedriveDlqOut.class
             );
     }
 }

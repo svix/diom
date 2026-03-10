@@ -57,6 +57,7 @@ impl QueueAckOperation {
                 QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
                 &QueueLeaseRow {
                     expiry: Timestamp::MAX,
+                    dlq: false,
                 },
             )?;
             affected_partitions.insert(msg_id.partition);
