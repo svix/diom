@@ -14,6 +14,10 @@
 * Keep mutation or state manipulation as isolated as possible
 * Keep functions short and simple. If a function is too long, split it into shorter, self documenting functions.
 * Avoid verbose fully qualified module syntax. Prefer imports instead.
+* Avoid non-deterministic function calls inside of `*Operation::apply_real(...)` calls. This includes things like
+  * Generating random values (uuids, sampling, etc.)
+  * Generating timestamps
+  * Any data non-deterministically generated inside `*Operation::apply_real(...)` should instead be passed into the Operation before apply_real step.
 * `#[instrument]` any function that performs IO (network or disk).
 * Comments
     * Avoid superfluous, trivial comments. Only add comments to explain *why*s that are non-obvious, or particularly complex and non-trivial logic.
