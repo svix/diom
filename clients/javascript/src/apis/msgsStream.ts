@@ -16,6 +16,14 @@ import {
     type MsgStreamReceiveOut,
     MsgStreamReceiveOutSerializer,
 } from '../models/msgStreamReceiveOut';
+import {
+    type MsgStreamSeekIn,
+    MsgStreamSeekInSerializer,
+} from '../models/msgStreamSeekIn';
+import {
+    type MsgStreamSeekOut,
+    MsgStreamSeekOutSerializer,
+} from '../models/msgStreamSeekOut';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class MsgsStream {
@@ -66,6 +74,32 @@ export class MsgsStream {
                 return request.send(
                     this.requestCtx,
                     MsgStreamCommitOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /**
+* Repositions a consumer group's read cursor on a topic.
+* 
+* Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
+* partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
+* `"latest"` and may be used with or without a partition suffix.
+*/
+        public seek(
+            msgStreamSeekIn: MsgStreamSeekIn,
+            ): Promise<MsgStreamSeekOut> {
+            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/stream/seek");
+
+            request.setBody(
+                    MsgStreamSeekInSerializer._toJsonObject(
+                        msgStreamSeekIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    MsgStreamSeekOutSerializer._fromJsonObject,
                 );
             }
 

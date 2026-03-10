@@ -49,6 +49,8 @@ type (
 	MsgStreamCommitOut            = diom_models.MsgStreamCommitOut
 	MsgStreamReceiveIn            = diom_models.MsgStreamReceiveIn
 	MsgStreamReceiveOut           = diom_models.MsgStreamReceiveOut
+	MsgStreamSeekIn               = diom_models.MsgStreamSeekIn
+	MsgStreamSeekOut              = diom_models.MsgStreamSeekOut
 	MsgTopicConfigureIn           = diom_models.MsgTopicConfigureIn
 	MsgTopicConfigureOut          = diom_models.MsgTopicConfigureOut
 	OperationBehavior             = diom_models.OperationBehavior
