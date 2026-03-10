@@ -1,9 +1,7 @@
 use std::time::Duration;
 
-use diom::{
-    INSTANCE_ID,
-    cfg::{self, ConfigurationInner},
-};
+use diom::cfg::{self, ConfigurationInner};
+use diom_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{

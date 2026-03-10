@@ -5,10 +5,7 @@
 
 #[cfg(test)]
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::{
-    sync::{Arc, LazyLock},
-    time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 
 use core::metrics::RequestMetrics;
 
@@ -20,13 +17,11 @@ use opentelemetry::metrics::Meter;
 use tokio::{net::TcpListener, sync::Barrier};
 use tower_http::trace::TraceLayer;
 
-use tokio_util::sync::CancellationToken;
 use tower_http::{
     ServiceExt,
     cors::{AllowHeaders, Any, CorsLayer},
     normalize_path::NormalizePath,
 };
-use uuid::Uuid;
 
 use crate::{
     cfg::{Configuration, DatabaseConfig},
@@ -36,6 +31,7 @@ use crate::{
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
+use diom_core::shutdown::{is_shutting_down, shutting_down_token, start_shut_down};
 
 pub mod bootstrap;
 pub mod cfg;
@@ -44,25 +40,6 @@ pub use diom_error as error;
 pub mod openapi;
 mod serde;
 pub mod v1;
-
-static SHUTTING_DOWN_TOKEN: LazyLock<CancellationToken> = LazyLock::new(CancellationToken::new);
-
-/// Has someone requested shutdown?
-pub fn is_shutting_down() -> bool {
-    SHUTTING_DOWN_TOKEN.is_cancelled()
-}
-
-/// Request a CancellationToken for the application shut down
-pub fn shutting_down_token() -> CancellationToken {
-    SHUTTING_DOWN_TOKEN.clone()
-}
-
-/// Shut down the application
-pub fn start_shut_down() {
-    SHUTTING_DOWN_TOKEN.cancel();
-}
-
-pub static INSTANCE_ID: LazyLock<String> = LazyLock::new(|| Uuid::new_v4().to_string());
 
 async fn graceful_shutdown_handler() {
     let ctrl_c = async {

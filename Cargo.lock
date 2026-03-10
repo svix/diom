@@ -942,7 +942,6 @@ dependencies = [
  "tempfile",
  "test-utils",
  "tokio",
- "tokio-util",
  "toml 1.0.3+spec-1.1.0",
  "tower",
  "tower-http",
@@ -1050,6 +1049,8 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "serde_json",
+ "tokio-util",
+ "uuid",
  "validator",
 ]
 
@@ -1202,6 +1203,7 @@ dependencies = [
  "anyhow",
  "clap",
  "diom",
+ "diom-core",
  "dotenvy",
  "mimalloc",
  "opentelemetry",
