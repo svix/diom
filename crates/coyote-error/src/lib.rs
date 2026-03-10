@@ -42,6 +42,15 @@ impl Error {
         })
     }
 
+    pub fn not_found(detail: impl Into<Option<String>>) -> Self {
+        Self(ErrorType::NotFound(StandardErrorBody {
+            code: "not_found".to_owned(),
+            detail: detail
+                .into()
+                .unwrap_or_else(|| "Entity not found".to_owned()),
+        }))
+    }
+
     pub fn invalid_user_input(s: impl fmt::Display) -> Self {
         // We'll probably change _how_ invalid user input is displayed later on,
         // but having a universal error function to capture user errors is ideal
@@ -94,6 +103,10 @@ impl IntoResponse for Error {
                 tracing::debug!(error = %s, "http error");
                 s.into_response()
             }
+            ErrorType::NotFound(body) => {
+                tracing::debug!(error = %body, "not found");
+                (StatusCode::NOT_FOUND, Json(body)).into_response()
+            }
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
                 (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
@@ -144,6 +157,8 @@ pub enum ErrorType {
     },
     /// Any kind of HttpError
     Http(HttpError),
+    /// Entity not found
+    NotFound(StandardErrorBody),
     /// An error from validating a request
     Validation(ValidationErrorBody),
     /// An error from an Operation application
@@ -158,6 +173,7 @@ impl fmt::Display for ErrorType {
         match self {
             Self::Generic { message, .. } => message.fmt(f),
             Self::Http(s) => s.fmt(f),
+            Self::NotFound(s) => write!(f, "not_found {s}"),
             Self::Validation(s) => s.fmt(f),
             Self::Operation { detail, code } => {
                 if let Some(detail) = detail {
@@ -174,6 +190,13 @@ impl fmt::Display for ErrorType {
 pub struct StandardErrorBody {
     code: String,
     detail: String,
+}
+
+impl fmt::Display for StandardErrorBody {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self { code, detail } = self;
+        write!(f, "code={code:?} detail={detail:?}")
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -195,16 +218,6 @@ impl HttpError {
             StatusCode::BAD_REQUEST,
             code.unwrap_or_else(|| "generic_error".to_owned()),
             detail.unwrap_or_else(|| "Generic error".to_owned()),
-        )
-    }
-
-    pub fn not_found(detail: impl Into<Option<String>>) -> Self {
-        Self::new_standard(
-            StatusCode::NOT_FOUND,
-            "not_found".to_owned(),
-            detail
-                .into()
-                .unwrap_or_else(|| "Entity not found".to_owned()),
         )
     }
 
@@ -257,11 +270,7 @@ impl From<HttpError> for Error {
 
 impl fmt::Display for HttpError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "status={} code=\"{}\" detail=\"{}\"",
-            self.status, self.body.code, self.body.detail,
-        )
+        write!(f, "status={} {}", self.status, self.body)
     }
 }
 

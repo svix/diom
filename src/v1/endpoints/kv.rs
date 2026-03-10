@@ -7,7 +7,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_core::types::{Consistency, EntityKey};
 use coyote_derive::aide_annotate;
-use coyote_error::{Error, HttpError, OptionExt, ResultExt};
+use coyote_error::{Error, OptionExt, ResultExt};
 use coyote_kv::{
     KvNamespace,
     kvcontroller::{KvModel, OperationBehavior},
@@ -130,9 +130,7 @@ async fn kv_get(
     let ret = match model {
         Some(m) => KvGetOut::from_model(data.key, m),
         None => {
-            return Err(Error::http(HttpError::not_found(
-                "Key not found".to_owned(),
-            )));
+            return Err(Error::not_found("Key not found".to_owned()));
         }
     };
     Ok(MsgPackOrJson(ret))
