@@ -51,24 +51,24 @@ impl Error {
         }))
     }
 
-    pub fn invalid_user_input(s: impl fmt::Display) -> Self {
-        // We'll probably change _how_ invalid user input is displayed later on,
-        // but having a universal error function to capture user errors is ideal
+    pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
         Self(ErrorType::Http(HttpError {
             status: StatusCode::BAD_REQUEST,
             body: StandardErrorBody {
-                code: "invalid_input".to_owned(),
-                detail: s.to_string(),
+                code: code.to_owned(),
+                detail: detail.to_string(),
             },
         }))
     }
 
-    pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
-        Self(ErrorType::Validation(ValidationErrorBody::new(detail)))
+    pub fn invalid_user_input(detail: impl fmt::Display) -> Self {
+        // We'll probably change _how_ invalid user input is displayed later on,
+        // but having a universal error function to capture user errors is ideal
+        Self::bad_request("invalid_input", detail)
     }
 
-    pub fn http(h: HttpError) -> Self {
-        Self(ErrorType::Http(h))
+    pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
+        Self(ErrorType::Validation(ValidationErrorBody::new(detail)))
     }
 
     pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
@@ -264,7 +264,7 @@ impl HttpError {
 
 impl From<HttpError> for Error {
     fn from(err: HttpError) -> Error {
-        Error::http(err)
+        Self(ErrorType::Http(err))
     }
 }
 
