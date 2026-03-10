@@ -55,10 +55,6 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
         {%- endif %}
     {{ async -}} def {{ op.name | to_snake_case }}(
         self,
-        {#- path parameters are non optional strings #}
-        {%- for p in op.path_params %}
-        {{ p }}: str,
-        {%- endfor %}
         {%- if op.request_body_schema_name is defined %}
         {% set req_body_schema_snake = op.request_body_schema_name | to_snake_case -%}
         {# positional body parameters -#}
@@ -111,13 +107,6 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
         self.{{ internal_func_name }}(
             method="{{ op.method }}",
             path="{{ op.path }}",
-            {%- if op.path_params | length > 0 %}
-            path_params={
-            {%- for path_param in op.path_params %}
-                "{{ path_param }}":{{ path_param }},
-            {% endfor -%}
-            }
-            {%- endif %}
             {%- if op.request_body_schema_name is defined %}
             body=body,
             {%- endif %}

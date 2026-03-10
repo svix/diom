@@ -25,7 +25,6 @@ hyper-rustls = { workspace = true, optional = true }
 hyper-tls = { workspace = true, optional = true }
 hyper-util.workspace = true
 jiff.workspace = true
-percent-encoding.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
 rustls = { workspace = true, optional = true }

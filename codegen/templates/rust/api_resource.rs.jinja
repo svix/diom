@@ -44,12 +44,6 @@ impl<'a> {{ resource_type_name }}<'a> {
     {% endif -%}
     pub async fn {{ op.name | to_snake_case }}(
         &self,
-
-        {#- path parameters #}
-        {% for p in op.path_params -%}
-            {{ p }}: String,
-        {% endfor -%}
-
         {% if op.request_body_schema_name is defined -%}
             {# positional body parameters -#}
             {% set body_schema = api.types[op.request_body_schema_name] -%}
