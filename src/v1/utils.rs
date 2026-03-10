@@ -7,7 +7,7 @@ use std::{
 };
 
 use aide::transform::{TransformOperation, TransformPathItem};
-use coyote_error::validation_error;
+use coyote_proto::validation_error;
 use regex::Regex;
 use validator::ValidationError;
 
@@ -45,11 +45,10 @@ pub fn get_unix_timestamp() -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use coyote_error::validation_errors;
+    use coyote_proto::{ValidationErrorItem, validation_errors};
     use validator::Validate;
 
     use super::validate_no_control_characters;
-    use crate::error::ValidationErrorItem;
 
     #[derive(Debug, Validate)]
     struct ValidationErrorTestStruct {

@@ -11,7 +11,7 @@ use coyote_cache::{
 };
 use coyote_core::types::{Consistency, EntityKey};
 use coyote_derive::aide_annotate;
-use coyote_error::{Error, HttpError, OptionExt, ResultExt};
+use coyote_error::{Error, OptionExt, ResultExt};
 use coyote_kv::kvcontroller::KvModel;
 use coyote_namespace::{
     Namespace,
@@ -168,9 +168,7 @@ async fn cache_get(
     let ret = match model {
         Some(m) => CacheGetOut::from_model(data.key, m),
         None => {
-            return Err(Error::http(HttpError::not_found(
-                "Key not found".to_owned(),
-            )));
+            return Err(Error::not_found("Key not found".to_owned()));
         }
     };
     Ok(MsgPackOrJson(ret))
