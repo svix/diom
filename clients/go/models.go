@@ -43,8 +43,12 @@ type (
 	MsgPublishOutTopic            = coyote_models.MsgPublishOutTopic
 	MsgQueueAckIn                 = coyote_models.MsgQueueAckIn
 	MsgQueueAckOut                = coyote_models.MsgQueueAckOut
+	MsgQueueNackIn                = coyote_models.MsgQueueNackIn
+	MsgQueueNackOut               = coyote_models.MsgQueueNackOut
 	MsgQueueReceiveIn             = coyote_models.MsgQueueReceiveIn
 	MsgQueueReceiveOut            = coyote_models.MsgQueueReceiveOut
+	MsgQueueRedriveDlqIn          = coyote_models.MsgQueueRedriveDlqIn
+	MsgQueueRedriveDlqOut         = coyote_models.MsgQueueRedriveDlqOut
 	MsgStreamCommitIn             = coyote_models.MsgStreamCommitIn
 	MsgStreamCommitOut            = coyote_models.MsgStreamCommitOut
 	MsgStreamReceiveIn            = coyote_models.MsgStreamReceiveIn

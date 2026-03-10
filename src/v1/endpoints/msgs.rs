@@ -12,9 +12,9 @@ use coyote_msgs::{
         TopicName, TopicPartition, default_retention_bytes, default_retention_millis,
     },
     operations::{
-        CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueReceiveOperation,
-        SeekTarget, StreamCommitOperation, StreamReceiveOperation, StreamSeekOperation,
-        TopicConfigureOperation,
+        CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueNackOperation,
+        QueueReceiveOperation, QueueRedriveDlqOperation, SeekTarget, StreamCommitOperation,
+        StreamReceiveOperation, StreamSeekOperation, TopicConfigureOperation,
     },
 };
 use coyote_namespace::entities::StorageType;
@@ -408,6 +408,75 @@ async fn queue_ack(
 }
 
 // ---------------------------------------------------------------------------
+// queue/nack
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgQueueNackIn {
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub msg_ids: Vec<MsgId>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct MsgQueueNackOut {}
+
+/// Rejects messages, sending them to the dead-letter queue.
+///
+/// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+/// move them back to the queue for reprocessing.
+#[aide_annotate(op_id = "v1.msgs.queue.nack")]
+async fn queue_nack(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgQueueNackIn>,
+) -> Result<MsgPackOrJson<MsgQueueNackOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.topic.namespace())?
+        .ok_or_not_found()?;
+
+    let operation =
+        QueueNackOperation::new(namespace.id, data.topic, data.consumer_group, data.msg_ids);
+    repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(MsgQueueNackOut {}))
+}
+
+// ---------------------------------------------------------------------------
+// queue/redrive-dlq
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgQueueRedriveDlqIn {
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct MsgQueueRedriveDlqOut {}
+
+/// Moves all dead-letter queue messages back to the main queue for reprocessing.
+#[aide_annotate(op_id = "v1.msgs.queue.redrive-dlq")]
+async fn queue_redrive_dlq(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgQueueRedriveDlqIn>,
+) -> Result<MsgPackOrJson<MsgQueueRedriveDlqOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.topic.namespace())?
+        .ok_or_not_found()?;
+
+    let operation = QueueRedriveDlqOperation::new(namespace.id, data.topic, data.consumer_group);
+    repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(MsgQueueRedriveDlqOut {}))
+}
+
+// ---------------------------------------------------------------------------
 // topic/configure
 // ---------------------------------------------------------------------------
 
@@ -483,6 +552,16 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/msgs/queue/ack",
             post_with(queue_ack, queue_ack_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/queue/nack",
+            post_with(queue_nack, queue_nack_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/queue/redrive-dlq",
+            post_with(queue_redrive_dlq, queue_redrive_dlq_operation),
             &tag,
         )
         .api_route_with(

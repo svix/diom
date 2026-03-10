@@ -54,3 +54,38 @@ func (msgsQueue MsgsQueue) Ack(
 		&msgQueueAckIn,
 	)
 }
+
+// Rejects messages, sending them to the dead-letter queue.
+//
+// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+// move them back to the queue for reprocessing.
+func (msgsQueue MsgsQueue) Nack(
+	ctx context.Context,
+	msgQueueNackIn coyote_models.MsgQueueNackIn,
+) (*coyote_models.MsgQueueNackOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueNackIn, coyote_models.MsgQueueNackOut](
+		ctx,
+		msgsQueue.client,
+		"POST",
+		"/api/v1/msgs/queue/nack",
+		nil,
+		nil,
+		&msgQueueNackIn,
+	)
+}
+
+// Moves all dead-letter queue messages back to the main queue for reprocessing.
+func (msgsQueue MsgsQueue) RedriveDlq(
+	ctx context.Context,
+	msgQueueRedriveDlqIn coyote_models.MsgQueueRedriveDlqIn,
+) (*coyote_models.MsgQueueRedriveDlqOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueRedriveDlqIn, coyote_models.MsgQueueRedriveDlqOut](
+		ctx,
+		msgsQueue.client,
+		"POST",
+		"/api/v1/msgs/queue/redrive-dlq",
+		nil,
+		nil,
+		&msgQueueRedriveDlqIn,
+	)
+}

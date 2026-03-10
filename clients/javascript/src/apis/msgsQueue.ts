@@ -9,6 +9,14 @@ import {
     MsgQueueAckOutSerializer,
 } from '../models/msgQueueAckOut';
 import {
+    type MsgQueueNackIn,
+    MsgQueueNackInSerializer,
+} from '../models/msgQueueNackIn';
+import {
+    type MsgQueueNackOut,
+    MsgQueueNackOutSerializer,
+} from '../models/msgQueueNackOut';
+import {
     type MsgQueueReceiveIn,
     MsgQueueReceiveInSerializer,
 } from '../models/msgQueueReceiveIn';
@@ -16,6 +24,14 @@ import {
     type MsgQueueReceiveOut,
     MsgQueueReceiveOutSerializer,
 } from '../models/msgQueueReceiveOut';
+import {
+    type MsgQueueRedriveDlqIn,
+    MsgQueueRedriveDlqInSerializer,
+} from '../models/msgQueueRedriveDlqIn';
+import {
+    type MsgQueueRedriveDlqOut,
+    MsgQueueRedriveDlqOutSerializer,
+} from '../models/msgQueueRedriveDlqOut';
 import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request";
 
 export class MsgsQueue {
@@ -66,6 +82,51 @@ export class MsgsQueue {
                 return request.send(
                     this.requestCtx,
                     MsgQueueAckOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /**
+* Rejects messages, sending them to the dead-letter queue.
+* 
+* Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
+* move them back to the queue for reprocessing.
+*/
+        public nack(
+            msgQueueNackIn: MsgQueueNackIn,
+            ): Promise<MsgQueueNackOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/queue/nack");
+
+            request.setBody(
+                    MsgQueueNackInSerializer._toJsonObject(
+                        msgQueueNackIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    MsgQueueNackOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /** Moves all dead-letter queue messages back to the main queue for reprocessing. */
+        public redriveDlq(
+            msgQueueRedriveDlqIn: MsgQueueRedriveDlqIn,
+            ): Promise<MsgQueueRedriveDlqOut> {
+            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/queue/redrive-dlq");
+
+            request.setBody(
+                    MsgQueueRedriveDlqInSerializer._toJsonObject(
+                        msgQueueRedriveDlqIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    MsgQueueRedriveDlqOutSerializer._fromJsonObject,
                 );
             }
 
