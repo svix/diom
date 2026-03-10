@@ -31,19 +31,23 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// The error type returned from the Coyote API
 #[derive(Debug)]
-pub struct Error(ErrorType);
+pub struct Error(Box<ErrorType>);
 
 impl Error {
+    pub fn new(error_type: ErrorType) -> Self {
+        Self(Box::new(error_type))
+    }
+
     #[track_caller]
     pub fn generic(s: impl fmt::Display) -> Self {
-        Self(ErrorType::Generic {
+        Self::new(ErrorType::Generic {
             message: s.to_string(),
             trace: vec![Location::caller()],
         })
     }
 
     pub fn not_found(detail: impl Into<Option<String>>) -> Self {
-        Self(ErrorType::NotFound(StandardErrorBody::new(
+        Self::new(ErrorType::NotFound(StandardErrorBody::new(
             "not_found",
             detail
                 .into()
@@ -52,7 +56,7 @@ impl Error {
     }
 
     pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self(ErrorType::BadRequest(StandardErrorBody::new(code, detail)))
+        Self::new(ErrorType::BadRequest(StandardErrorBody::new(code, detail)))
     }
 
     pub fn invalid_user_input(detail: impl fmt::Display) -> Self {
@@ -62,16 +66,16 @@ impl Error {
     }
 
     pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
-        Self(ErrorType::Validation(ValidationErrorBody::new(detail)))
+        Self::new(ErrorType::Validation(ValidationErrorBody::new(detail)))
     }
 
     pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
-        Self(ErrorType::Operation { code, detail })
+        Self::new(ErrorType::Operation { code, detail })
     }
 
     #[track_caller]
     pub fn trace(mut self) -> Self {
-        if let ErrorType::Generic { trace, .. } = &mut self.0 {
+        if let ErrorType::Generic { trace, .. } = &mut *self.0 {
             trace.push(Location::caller());
         }
         self
@@ -88,7 +92,7 @@ impl error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        match self.0 {
+        match *self.0 {
             ErrorType::BadRequest(body) => {
                 tracing::debug!(error = %body, "bad request");
                 (StatusCode::BAD_REQUEST, Json(body)).into_response()
