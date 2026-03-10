@@ -52,10 +52,7 @@ impl Error {
     }
 
     pub fn bad_request(code: &'static str, detail: impl fmt::Display) -> Self {
-        Self(ErrorType::Http(HttpError {
-            status: StatusCode::BAD_REQUEST,
-            body: StandardErrorBody::new(code, detail),
-        }))
+        Self(ErrorType::BadRequest(StandardErrorBody::new(code, detail)))
     }
 
     pub fn invalid_user_input(detail: impl fmt::Display) -> Self {
@@ -96,9 +93,9 @@ impl error::Error for Error {
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self.0 {
-            ErrorType::Http(s) => {
-                tracing::debug!(error = %s, "http error");
-                s.into_response()
+            ErrorType::BadRequest(body) => {
+                tracing::debug!(error = %body, "bad request");
+                (StatusCode::BAD_REQUEST, Json(body)).into_response()
             }
             ErrorType::NotFound(body) => {
                 tracing::debug!(error = %body, "not found");
@@ -152,8 +149,8 @@ pub enum ErrorType {
         message: String,
         trace: Vec<&'static Location<'static>>,
     },
-    /// Any kind of HttpError
-    Http(HttpError),
+    /// Bad user input
+    BadRequest(StandardErrorBody),
     /// Entity not found
     NotFound(StandardErrorBody),
     /// An error from validating a request
@@ -169,7 +166,7 @@ impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Generic { message, .. } => message.fmt(f),
-            Self::Http(s) => s.fmt(f),
+            Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::NotFound(s) => write!(f, "not_found {s}"),
             Self::Validation(s) => s.fmt(f),
             Self::Operation { detail, code } => {
@@ -202,30 +199,6 @@ impl fmt::Display for StandardErrorBody {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self { code, detail } = self;
         write!(f, "code={code:?} detail={detail:?}")
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct HttpError {
-    pub status: StatusCode,
-    body: StandardErrorBody,
-}
-
-impl From<HttpError> for Error {
-    fn from(err: HttpError) -> Error {
-        Self(ErrorType::Http(err))
-    }
-}
-
-impl fmt::Display for HttpError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "status={} {}", self.status, self.body)
-    }
-}
-
-impl IntoResponse for HttpError {
-    fn into_response(self) -> Response {
-        (self.status, Json(self.body)).into_response()
     }
 }
 
