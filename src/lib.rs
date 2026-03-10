@@ -7,10 +7,9 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{sync::Arc, time::Duration};
 
-use core::metrics::RequestMetrics;
-
 use aide::axum::ApiRouter;
 use axum::{Extension, extract::DefaultBodyLimit, middleware, serve::ListenerExt as _};
+use coyote_core::Monotime;
 use coyote_error::Error;
 use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::metrics::Meter;
@@ -27,7 +26,7 @@ use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
         cluster::RaftState,
-        metrics::{ConnectionMetrics, ConnectionType},
+        metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
@@ -86,6 +85,9 @@ pub struct AppState {
     pub meter: Meter,
     pub request_metrics: Arc<RequestMetrics>,
     pub conn_metrics: Arc<ConnectionMetrics>,
+
+    #[allow(unused)]
+    pub(crate) time: Monotime,
 }
 
 async fn run_interserver(
@@ -148,7 +150,7 @@ async fn run_interserver(
 }
 
 impl AppState {
-    fn new(cfg: Configuration) -> Self {
+    fn new(cfg: Configuration, time: Monotime) -> Self {
         let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
         let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
 
@@ -175,6 +177,7 @@ impl AppState {
             meter,
             request_metrics,
             conn_metrics,
+            time,
         }
     }
 }
@@ -191,10 +194,12 @@ pub async fn run_with_listeners(
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
-    // build our application with a route
-    let app_state = AppState::new(cfg.clone());
+    let time = Monotime::initial();
 
-    let raft_state = core::cluster::initialize_raft(&cfg, app_state.clone())
+    // build our application with a route
+    let app_state = AppState::new(cfg.clone(), time.clone());
+
+    let raft_state = core::cluster::initialize_raft(&cfg, app_state.clone(), time)
         .await
         .expect("failed to initialize cluster");
     let node_id = raft_state.node_id;

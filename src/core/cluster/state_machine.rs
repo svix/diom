@@ -11,8 +11,8 @@ use crate::{
     core::metrics::{DbMetrics, DbType},
 };
 use anyhow::Context;
+use coyote_core::Monotime;
 use coyote_namespace::entities::StorageType;
-use coyote_operations::Monotime;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
 use openraft::{
@@ -133,6 +133,7 @@ impl Store {
         app_state: AppState,
         logs: CoyoteLogs,
         node_id: NodeId,
+        time: Monotime,
     ) -> anyhow::Result<Self> {
         let meta_keyspace =
             persistent_db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
@@ -150,7 +151,6 @@ impl Store {
                 .context("initializing idempotency state")?,
         };
 
-        let time = Monotime::initial();
         if let Some(timestamp) = logs.get_last_timestamp().await? {
             // if we've ever committed anything, make sure we don't rewind time on restarting
             time.bump(timestamp);

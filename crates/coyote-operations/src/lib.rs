@@ -10,9 +10,6 @@ pub mod __reexports {
     pub use paste;
 }
 
-mod monotime;
-pub use monotime::Monotime;
-
 #[macro_use]
 mod macros;
 pub trait OperationResponse: Serialize + DeserializeOwned + Clone + Debug {
