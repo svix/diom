@@ -12,7 +12,7 @@ mod request;
 
 use self::connector::Connector;
 pub use self::{
-    client::{DiomClient, DiomOptions},
+    client::{DiomClient, DiomOptions, DEFAULT_URL},
     error::{Error, Result},
 };
 

@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 use clap_complete::Shell;
 use colored_json::{ColorMode, Output};
 use concolor_clap::{Color, ColorChoice};
-use diom_client::{DiomClient, DiomOptions};
+use diom_client::{DiomClient, DiomOptions, DEFAULT_URL};
 use mimalloc::MiMalloc;
 
 #[global_allocator]
@@ -39,6 +39,19 @@ struct Cli {
         help = "Log more. This option may be repeated up to 3 times"
     )]
     verbose: u8,
+    #[arg(
+        short,
+        long,
+        help = format!("Base url for server. Overrides any config file. If not passed, {DEFAULT_URL} is used"),
+        env = "DIOM_SERVER_URL"
+    )]
+    server_url: Option<String>,
+    #[arg(
+        long,
+        help = "Authentication token. Overrides any config file.",
+        env = "DIOM_AUTH_TOKEN"
+    )]
+    auth_token: Option<String>,
     #[command(subcommand)]
     command: RootCommands,
 }
@@ -104,7 +117,7 @@ async fn main() -> Result<()> {
     // Assigning the variable here since several match arms need a `&Config` but the rest of them
     // won't care/are still usable if the config doesn't exist.
     // To this, the `?` is deferred until the point inside a given match arm needs the config value.
-    let cfg = Config::load();
+    let cfg = Config::load(&cli);
     match cli.command {
         // Local-only things
         RootCommands::Version => println!("{VERSION}"),
@@ -142,7 +155,7 @@ async fn main() -> Result<()> {
             if let Some(url) = args.server_url.clone() {
                 opts.server_url = Some(url);
             }
-            let client = Arc::new(DiomClient::new("xxx".to_owned(), Some(opts)));
+            let client = Arc::new(DiomClient::new(cfg.auth_token(), Some(opts)));
             args.exec(client).await?;
         }
     }
@@ -156,7 +169,7 @@ fn get_client(cfg: &Config) -> Result<DiomClient> {
         anyhow::anyhow!("No auth token set. Try running `{BIN_NAME} login` to get started.")
     })?; */
     let opts = get_client_options(cfg)?;
-    Ok(DiomClient::new("xxx".to_owned(), Some(opts)))
+    Ok(DiomClient::new(cfg.auth_token(), Some(opts)))
 }
 
 fn get_client_options(cfg: &Config) -> Result<DiomOptions> {
