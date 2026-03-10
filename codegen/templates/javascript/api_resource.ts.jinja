@@ -28,11 +28,6 @@ export class {{ resource_type_name }} {
             op.response_body_schema_name | default("void") | replace("_", "") -%}
         {{ op.description | with_javadoc_deprecation(op.deprecated) | to_doc_comment(style="js") }}
         public {{ op.name | to_lower_camel_case }}(
-            {# path parameters -#}
-            {% for p in op.path_params -%}
-                {{ p | to_lower_camel_case }}: string,
-            {% endfor -%}
-
             {# body parameter interface -#}
             {% if op.request_body_schema_name is defined -%}
                 {% set field_name = op.request_body_schema_name | to_lower_camel_case -%}
@@ -41,11 +36,6 @@ export class {{ resource_type_name }} {
 
         ): Promise<{{ response_type }}> {
             const request = new DiomRequest(HttpMethod.{{ op.method | upper }}, "{{ op.path }}");
-
-            {# path parameters -#}
-            {% for p in op.path_params -%}
-                request.setPathParam("{{ p }}", {{ p | to_lower_camel_case }});
-            {% endfor -%}
 
             {# body parameter -#}
             {% if op.request_body_schema_name is defined -%}
