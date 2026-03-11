@@ -79,6 +79,7 @@ impl State {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn limit_inner(
         &self,
         now: Timestamp,

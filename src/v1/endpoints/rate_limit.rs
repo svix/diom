@@ -1,15 +1,16 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::time::Duration;
+use std::{num::NonZeroU64, time::Duration};
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_core::types::EntityKey;
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
+use coyote_namespace::entities::StorageType;
 use coyote_proto::MsgPackOrJson;
-use coyote_rate_limit::State as RateLimiter;
+use coyote_rate_limit::{State as RateLimiter, operations::CreateRateLimitOperation};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -203,6 +204,80 @@ async fn rate_limiter_get_remaining(
     }))
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct RateLimiterCreateNamespaceIn {
+    pub name: String,
+    #[serde(default)]
+    pub storage_type: StorageType,
+    pub max_storage_bytes: Option<NonZeroU64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct RateLimiterCreateNamespaceOut {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct RateLimiterGetNamespaceIn {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct RateLimiterGetNamespaceOut {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_storage_bytes: Option<NonZeroU64>,
+    pub storage_type: StorageType,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+}
+
+/// Create rate limiter namespace
+#[aide_annotate(op_id = "v1.rate_limiter.namespace.create")]
+async fn rate_limiter_create_namespace(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<RateLimiterCreateNamespaceIn>,
+) -> Result<MsgPackOrJson<RateLimiterCreateNamespaceOut>> {
+    let operation =
+        CreateRateLimitOperation::new(data.name, data.storage_type, data.max_storage_bytes);
+    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    Ok(MsgPackOrJson(RateLimiterCreateNamespaceOut {
+        name: resp.name,
+        max_storage_bytes: resp.max_storage_bytes,
+        storage_type: resp.storage_type,
+        created: resp.created,
+        updated: resp.updated,
+    }))
+}
+
+/// Get rate limiter namespace
+#[aide_annotate(op_id = "v1.rate_limiter.namespace.get")]
+async fn rate_limiter_get_namespace(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetNamespaceIn>,
+) -> Result<MsgPackOrJson<RateLimiterGetNamespaceOut>> {
+    repl.wait_linearizable().await.map_err_generic()?;
+
+    let namespace: RateLimitNamespace = state
+        .namespace_state
+        .fetch_namespace_admin(&data.name)?
+        .ok_or_not_found()?;
+
+    Ok(MsgPackOrJson(RateLimiterGetNamespaceOut {
+        name: namespace.name,
+        max_storage_bytes: namespace.max_storage_bytes,
+        storage_type: namespace.storage_type,
+        created: namespace.created_at,
+        updated: namespace.updated_at,
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Rate Limiter");
 
@@ -217,6 +292,22 @@ pub fn router() -> ApiRouter<AppState> {
             post_with(
                 rate_limiter_get_remaining,
                 rate_limiter_get_remaining_operation,
+            ),
+            &tag,
+        )
+        .api_route_with(
+            "/rate-limiter/namespace/create",
+            post_with(
+                rate_limiter_create_namespace,
+                rate_limiter_create_namespace_operation,
+            ),
+            &tag,
+        )
+        .api_route_with(
+            "/rate-limiter/namespace/get",
+            post_with(
+                rate_limiter_get_namespace,
+                rate_limiter_get_namespace_operation,
             ),
             &tag,
         )
