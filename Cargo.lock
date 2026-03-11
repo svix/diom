@@ -908,7 +908,7 @@ dependencies = [
  "coyote-namespace",
  "coyote-operations",
  "coyote-proto",
- "coyote-rate-limiter",
+ "coyote-rate-limit",
  "ctor",
  "fjall",
  "fjall-utils",
@@ -1184,7 +1184,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "coyote-rate-limiter"
+name = "coyote-rate-limit"
 version = "0.0.1"
 dependencies = [
  "coyote-error",

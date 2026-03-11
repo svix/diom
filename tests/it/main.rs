@@ -4,5 +4,5 @@ mod idempotency;
 mod kv;
 mod msgpack;
 mod msgs;
-mod rate_limiter;
+mod rate_limit;
 mod stream;

@@ -70,7 +70,7 @@ async fn graceful_shutdown_handler() {
 #[derive(Clone)]
 pub struct AppState {
     cfg: Configuration,
-    rate_limiter: v1::modules::rate_limiter::RateLimiter,
+    rate_limiter: v1::modules::rate_limit::RateLimiter,
 
     namespace_state: coyote_namespace::State,
 
@@ -167,7 +167,7 @@ impl AppState {
 
         AppState {
             cfg,
-            rate_limiter: v1::modules::rate_limiter::RateLimiter::new(
+            rate_limiter: v1::modules::rate_limit::RateLimiter::new(
                 "rate_limiter_default",
                 persistent_db,
             ),
@@ -273,7 +273,7 @@ pub async fn run_with_listeners(
                 tokio::spawn(v1::modules::kv::worker(app_state.clone())),
                 tokio::spawn(v1::modules::cache::worker(app_state.clone())),
                 tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
-                tokio::spawn(v1::modules::rate_limiter::worker(app_state.clone())),
+                tokio::spawn(v1::modules::rate_limit::worker(app_state.clone())),
             );
             tracing::debug!("workers died");
         }
