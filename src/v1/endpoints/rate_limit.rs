@@ -283,12 +283,12 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/rate-limiter/limit",
+            "/rate-limit/limit",
             post_with(rate_limiter_limit, rate_limiter_limit_operation),
             &tag,
         )
         .api_route_with(
-            "/rate-limiter/get-remaining",
+            "/rate-limit/get-remaining",
             post_with(
                 rate_limiter_get_remaining,
                 rate_limiter_get_remaining_operation,
@@ -296,7 +296,7 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/rate-limiter/namespace/create",
+            "/rate-limit/namespace/create",
             post_with(
                 rate_limiter_create_namespace,
                 rate_limiter_create_namespace_operation,
@@ -304,7 +304,7 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/rate-limiter/namespace/get",
+            "/rate-limit/namespace/get",
             post_with(
                 rate_limiter_get_namespace,
                 rate_limiter_get_namespace_operation,

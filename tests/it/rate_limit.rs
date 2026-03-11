@@ -16,7 +16,7 @@ async fn call_limit_token_bucket(
     refill_interval_seconds: u64,
 ) -> TestResult<serde_json::Value> {
     let response = client
-        .post("rate-limiter/limit")
+        .post("rate-limit/limit")
         .json(json!({
             "key": key,
             "tokens": units,
@@ -42,7 +42,7 @@ async fn call_limit_fixed_window(
     window_size_seconds: u64,
 ) -> TestResult<serde_json::Value> {
     let response = client
-        .post("rate-limiter/limit")
+        .post("rate-limit/limit")
         .json(json!({
             "key": key,
             "tokens": units,
@@ -124,7 +124,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     tokio::time::sleep(Duration::from_secs(1)).await;
 
     let response = client
-        .post("rate-limiter/get-remaining")
+        .post("rate-limit/get-remaining")
         .json(json!({
             "key": "rl-key-1",
             "method": "token_bucket",
@@ -182,7 +182,7 @@ async fn test_rate_limiter_limit_fixed_window() -> TestResult {
     tokio::time::sleep(Duration::from_secs(3)).await;
 
     let response = client
-        .post("rate-limiter/get-remaining")
+        .post("rate-limit/get-remaining")
         .json(json!({
             "key": key,
             "method": "fixed_window",
@@ -276,7 +276,7 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
     tokio::time::sleep(Duration::from_secs(3)).await;
 
     let response = client
-        .post("rate-limiter/get-remaining")
+        .post("rate-limit/get-remaining")
         .json(json!({
                 "key": "rl-key-1",
                 "method": "token_bucket",
