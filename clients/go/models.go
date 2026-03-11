@@ -63,7 +63,11 @@ type (
 	RateLimitStatus               = diom_models.RateLimitStatus
 	RateLimiterCheckIn            = diom_models.RateLimiterCheckIn
 	RateLimiterCheckOut           = diom_models.RateLimiterCheckOut
+	RateLimiterCreateNamespaceIn  = diom_models.RateLimiterCreateNamespaceIn
+	RateLimiterCreateNamespaceOut = diom_models.RateLimiterCreateNamespaceOut
 	RateLimiterFixedWindowConfig  = diom_models.RateLimiterFixedWindowConfig
+	RateLimiterGetNamespaceIn     = diom_models.RateLimiterGetNamespaceIn
+	RateLimiterGetNamespaceOut    = diom_models.RateLimiterGetNamespaceOut
 	RateLimiterGetRemainingIn     = diom_models.RateLimiterGetRemainingIn
 	RateLimiterGetRemainingOut    = diom_models.RateLimiterGetRemainingOut
 	RateLimiterTokenBucketConfig  = diom_models.RateLimiterTokenBucketConfig

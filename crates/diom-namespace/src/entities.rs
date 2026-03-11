@@ -18,7 +18,7 @@ pub enum Module {
     Cache = 1,
     Idempotency = 2,
     KeyValue = 3,
-    RateLimiter = 4,
+    RateLimit = 4,
     Stream = 5,
 }
 
@@ -29,7 +29,7 @@ impl Display for Module {
             Module::Cache => 1,
             Module::Idempotency => 2,
             Module::KeyValue => 3,
-            Module::RateLimiter => 4,
+            Module::RateLimit => 4,
             Module::Stream => 5,
         };
         write!(f, "{value}")
@@ -92,6 +92,15 @@ pub struct StreamConfig {
 impl ModuleConfig for StreamConfig {
     fn module() -> Module {
         Module::Stream
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+pub struct RateLimitNamespaceConfig {}
+
+impl ModuleConfig for RateLimitNamespaceConfig {
+    fn module() -> Module {
+        Module::RateLimit
     }
 }
 

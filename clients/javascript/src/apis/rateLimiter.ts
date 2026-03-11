@@ -16,16 +16,21 @@ import {
     type RateLimiterGetRemainingOut,
     RateLimiterGetRemainingOutSerializer,
 } from '../models/rateLimiterGetRemainingOut';
+import { RateLimiterNamespace } from './rateLimiterNamespace';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class RateLimiter {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
+    public get namespace() {
+        return new RateLimiterNamespace(this.requestCtx);
+    }
+
     /** Rate Limiter Check and Consume */
         public limit(
             rateLimiterCheckIn: RateLimiterCheckIn,
             ): Promise<RateLimiterCheckOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limiter/limit");
+            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/limit");
 
             request.setBody(
                     RateLimiterCheckInSerializer._toJsonObject(
@@ -45,7 +50,7 @@ export class RateLimiter {
         public getRemaining(
             rateLimiterGetRemainingIn: RateLimiterGetRemainingIn,
             ): Promise<RateLimiterGetRemainingOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limiter/get-remaining");
+            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/get-remaining");
 
             request.setBody(
                     RateLimiterGetRemainingInSerializer._toJsonObject(

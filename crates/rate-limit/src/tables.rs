@@ -1,3 +1,4 @@
+use diom_namespace::entities::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -20,8 +21,8 @@ impl TableRow for FixedWindowState {
 }
 
 impl FixedWindowState {
-    pub(crate) fn key_for(key: &str) -> TableKey<Self> {
-        TableKey::init_key(Self::ROW_TYPE, &[], &[key])
+    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[key])
     }
 }
 
@@ -36,7 +37,7 @@ impl TableRow for TokenBucketState {
 }
 
 impl TokenBucketState {
-    pub(crate) fn key_for(key: &str) -> TableKey<Self> {
-        TableKey::init_key(Self::ROW_TYPE, &[], &[key])
+    pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[key])
     }
 }

@@ -29,7 +29,7 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("rate-limiter/limit").json(json!({
+                    std::hint::black_box(client.post("rate-limit/limit").json(json!({
                         "key": key,
                         "units": 1,
                         "method": "token_bucket",
@@ -53,7 +53,7 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("rate-limiter/limit").json(json!({
+                    std::hint::black_box(client.post("rate-limit/limit").json(json!({
                         "key": key,
                         "units": 1,
                         "method": "token_bucket",
@@ -77,7 +77,7 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("rate-limiter/limit").json(json!({
+                    std::hint::black_box(client.post("rate-limit/limit").json(json!({
                         "key": key,
                         "units": 1,
                         "method": "token_bucket",
@@ -101,7 +101,7 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("rate-limiter/limit").json(json!({
+                    std::hint::black_box(client.post("rate-limit/limit").json(json!({
                         "key": key,
                         "units": 1,
                         "method": "fixed_window",
@@ -124,7 +124,7 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("rate-limiter/limit").json(json!({
+                    std::hint::black_box(client.post("rate-limit/limit").json(json!({
                         "key": key,
                         "units": 1,
                         "method": "fixed_window",

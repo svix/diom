@@ -1,4 +1,5 @@
 // this file is @generated
+use super::RateLimiterNamespace;
 use crate::{Configuration, error::Result, models::*};
 
 pub struct RateLimiter<'a> {
@@ -10,12 +11,16 @@ impl<'a> RateLimiter<'a> {
         Self { cfg }
     }
 
+    pub fn namespace(&self) -> RateLimiterNamespace<'a> {
+        RateLimiterNamespace::new(self.cfg)
+    }
+
     /// Rate Limiter Check and Consume
     pub async fn limit(
         &self,
         rate_limiter_check_in: RateLimiterCheckIn,
     ) -> Result<RateLimiterCheckOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/rate-limiter/limit")
+        crate::request::Request::new(http::Method::POST, "/api/v1/rate-limit/limit")
             .with_body(rate_limiter_check_in)
             .execute(self.cfg)
             .await
@@ -26,7 +31,7 @@ impl<'a> RateLimiter<'a> {
         &self,
         rate_limiter_get_remaining_in: RateLimiterGetRemainingIn,
     ) -> Result<RateLimiterGetRemainingOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/rate-limiter/get-remaining")
+        crate::request::Request::new(http::Method::POST, "/api/v1/rate-limit/get-remaining")
             .with_body(rate_limiter_get_remaining_in)
             .execute(self.cfg)
             .await

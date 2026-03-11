@@ -59,7 +59,11 @@ mod queue_msg_out;
 mod rate_limit_status;
 mod rate_limiter_check_in;
 mod rate_limiter_check_out;
+mod rate_limiter_create_namespace_in;
+mod rate_limiter_create_namespace_out;
 mod rate_limiter_fixed_window_config;
+mod rate_limiter_get_namespace_in;
+mod rate_limiter_get_namespace_out;
 mod rate_limiter_get_remaining_in;
 mod rate_limiter_get_remaining_out;
 mod rate_limiter_token_bucket_config;
@@ -126,7 +130,11 @@ pub use self::{
     rate_limit_status::RateLimitStatus,
     rate_limiter_check_in::{RateLimiterCheckIn, RateLimiterCheckInConfig},
     rate_limiter_check_out::RateLimiterCheckOut,
+    rate_limiter_create_namespace_in::RateLimiterCreateNamespaceIn,
+    rate_limiter_create_namespace_out::RateLimiterCreateNamespaceOut,
     rate_limiter_fixed_window_config::RateLimiterFixedWindowConfig,
+    rate_limiter_get_namespace_in::RateLimiterGetNamespaceIn,
+    rate_limiter_get_namespace_out::RateLimiterGetNamespaceOut,
     rate_limiter_get_remaining_in::{RateLimiterGetRemainingIn, RateLimiterGetRemainingInConfig},
     rate_limiter_get_remaining_out::RateLimiterGetRemainingOut,
     rate_limiter_token_bucket_config::RateLimiterTokenBucketConfig,

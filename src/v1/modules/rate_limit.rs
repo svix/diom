@@ -1,6 +1,6 @@
 use crate::{AppState, error::Result};
 
-pub use diom_rate_limit::RateLimiter;
+pub use diom_rate_limit::State as RateLimiter;
 
 /// This is the worker function for this module, it does background cleanup and accounting.
 pub async fn worker(state: AppState) -> Result<()> {

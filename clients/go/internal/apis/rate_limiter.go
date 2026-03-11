@@ -10,7 +10,8 @@ import (
 )
 
 type RateLimiter struct {
-	client *diom_proto.HttpClient
+	client    *diom_proto.HttpClient
+	Namespace *RateLimiterNamespace
 }
 
 func NewRateLimiter(client *diom_proto.HttpClient) RateLimiter {
@@ -26,7 +27,7 @@ func (rateLimiter RateLimiter) Limit(
 		ctx,
 		rateLimiter.client,
 		"POST",
-		"/api/v1/rate-limiter/limit",
+		"/api/v1/rate-limit/limit",
 		nil,
 		nil,
 		&rateLimiterCheckIn,
@@ -42,7 +43,7 @@ func (rateLimiter RateLimiter) GetRemaining(
 		ctx,
 		rateLimiter.client,
 		"POST",
-		"/api/v1/rate-limiter/get-remaining",
+		"/api/v1/rate-limit/get-remaining",
 		nil,
 		nil,
 		&rateLimiterGetRemainingIn,
