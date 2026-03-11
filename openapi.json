@@ -962,6 +962,43 @@
         ]
       }
     },
+    "/api/v1/msgs/queue/configure": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Queue Configure",
+        "description": "Configures retry and DLQ behavior for a consumer group on a topic.\n\n`retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,\nthe message is moved to the DLQ (or forwarded to `dlq_topic` if set).",
+        "operationId": "v1.msgs.queue.configure",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgQueueConfigureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgQueueConfigureOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/msgs/queue/nack": {
       "post": {
         "tags": [
@@ -1981,6 +2018,58 @@
       },
       "MsgQueueAckOut": {
         "type": "object"
+      },
+      "MsgQueueConfigureIn": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "retry_schedule": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "default": []
+          },
+          "dlq_topic": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgQueueConfigureOut": {
+        "type": "object",
+        "properties": {
+          "retry_schedule": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            }
+          },
+          "dlq_topic": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "retry_schedule"
+        ]
       },
       "MsgQueueNackIn": {
         "type": "object",

@@ -37,6 +37,8 @@ from .msg_publish_out import MsgPublishOut
 from .msg_publish_out_topic import MsgPublishOutTopic
 from .msg_queue_ack_in import MsgQueueAckIn
 from .msg_queue_ack_out import MsgQueueAckOut
+from .msg_queue_configure_in import MsgQueueConfigureIn
+from .msg_queue_configure_out import MsgQueueConfigureOut
 from .msg_queue_nack_in import MsgQueueNackIn
 from .msg_queue_nack_out import MsgQueueNackOut
 from .msg_queue_receive_in import MsgQueueReceiveIn
@@ -105,6 +107,8 @@ __all__ = [
     "MsgPublishOutTopic",
     "MsgQueueAckIn",
     "MsgQueueAckOut",
+    "MsgQueueConfigureIn",
+    "MsgQueueConfigureOut",
     "MsgQueueNackIn",
     "MsgQueueNackOut",
     "MsgQueueReceiveIn",

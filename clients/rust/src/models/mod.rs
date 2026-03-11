@@ -39,6 +39,8 @@ mod msg_publish_out;
 mod msg_publish_out_topic;
 mod msg_queue_ack_in;
 mod msg_queue_ack_out;
+mod msg_queue_configure_in;
+mod msg_queue_configure_out;
 mod msg_queue_nack_in;
 mod msg_queue_nack_out;
 mod msg_queue_receive_in;
@@ -106,6 +108,8 @@ pub use self::{
     msg_publish_out_topic::MsgPublishOutTopic,
     msg_queue_ack_in::MsgQueueAckIn,
     msg_queue_ack_out::MsgQueueAckOut,
+    msg_queue_configure_in::MsgQueueConfigureIn,
+    msg_queue_configure_out::MsgQueueConfigureOut,
     msg_queue_nack_in::MsgQueueNackIn,
     msg_queue_nack_out::MsgQueueNackOut,
     msg_queue_receive_in::MsgQueueReceiveIn,
@@ -140,8 +144,9 @@ pub(crate) use self::{
     idempotency_abort_in::IdempotencyAbortIn_, kv_delete_in::KvDeleteIn_, kv_get_in::KvGetIn_,
     kv_set_in::KvSetIn_, msg_namespace_create_in::MsgNamespaceCreateIn_,
     msg_namespace_get_in::MsgNamespaceGetIn_, msg_publish_in::MsgPublishIn_,
-    msg_queue_ack_in::MsgQueueAckIn_, msg_queue_nack_in::MsgQueueNackIn_,
-    msg_queue_receive_in::MsgQueueReceiveIn_, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_,
-    msg_stream_commit_in::MsgStreamCommitIn_, msg_stream_receive_in::MsgStreamReceiveIn_,
-    msg_stream_seek_in::MsgStreamSeekIn_, msg_topic_configure_in::MsgTopicConfigureIn_,
+    msg_queue_ack_in::MsgQueueAckIn_, msg_queue_configure_in::MsgQueueConfigureIn_,
+    msg_queue_nack_in::MsgQueueNackIn_, msg_queue_receive_in::MsgQueueReceiveIn_,
+    msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_, msg_stream_commit_in::MsgStreamCommitIn_,
+    msg_stream_receive_in::MsgStreamReceiveIn_, msg_stream_seek_in::MsgStreamSeekIn_,
+    msg_topic_configure_in::MsgTopicConfigureIn_,
 };
