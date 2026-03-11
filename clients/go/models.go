@@ -63,7 +63,11 @@ type (
 	RateLimitStatus               = coyote_models.RateLimitStatus
 	RateLimiterCheckIn            = coyote_models.RateLimiterCheckIn
 	RateLimiterCheckOut           = coyote_models.RateLimiterCheckOut
+	RateLimiterCreateNamespaceIn  = coyote_models.RateLimiterCreateNamespaceIn
+	RateLimiterCreateNamespaceOut = coyote_models.RateLimiterCreateNamespaceOut
 	RateLimiterFixedWindowConfig  = coyote_models.RateLimiterFixedWindowConfig
+	RateLimiterGetNamespaceIn     = coyote_models.RateLimiterGetNamespaceIn
+	RateLimiterGetNamespaceOut    = coyote_models.RateLimiterGetNamespaceOut
 	RateLimiterGetRemainingIn     = coyote_models.RateLimiterGetRemainingIn
 	RateLimiterGetRemainingOut    = coyote_models.RateLimiterGetRemainingOut
 	RateLimiterTokenBucketConfig  = coyote_models.RateLimiterTokenBucketConfig

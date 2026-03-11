@@ -407,7 +407,7 @@
         ]
       }
     },
-    "/api/v1/rate-limiter/limit": {
+    "/api/v1/rate-limit/limit": {
       "post": {
         "tags": [
           "Rate Limiter"
@@ -444,7 +444,7 @@
         ]
       }
     },
-    "/api/v1/rate-limiter/get-remaining": {
+    "/api/v1/rate-limit/get-remaining": {
       "post": {
         "tags": [
           "Rate Limiter"
@@ -469,6 +469,80 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RateLimiterGetRemainingOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rate-limit/namespace/create": {
+      "post": {
+        "tags": [
+          "Rate Limiter"
+        ],
+        "summary": "Rate Limiter Create Namespace",
+        "description": "Create rate limiter namespace",
+        "operationId": "v1.rate_limiter.namespace.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateLimiterCreateNamespaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimiterCreateNamespaceOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rate-limit/namespace/get": {
+      "post": {
+        "tags": [
+          "Rate Limiter"
+        ],
+        "summary": "Rate Limiter Get Namespace",
+        "description": "Get rate limiter namespace",
+        "operationId": "v1.rate_limiter.namespace.get",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateLimiterGetNamespaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimiterGetNamespaceOut"
                 }
               }
             }
@@ -2364,6 +2438,58 @@
           "remaining"
         ]
       },
+      "RateLimiterCreateNamespaceIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "storage_type": {
+            "default": "Persistent",
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "RateLimiterCreateNamespaceOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "created",
+          "updated"
+        ]
+      },
       "RateLimiterFixedWindowConfig": {
         "type": "object",
         "properties": {
@@ -2383,6 +2509,48 @@
         "required": [
           "window_size",
           "max_requests"
+        ]
+      },
+      "RateLimiterGetNamespaceIn": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "RateLimiterGetNamespaceOut": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "max_storage_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "nullable": true
+          },
+          "storage_type": {
+            "$ref": "#/components/schemas/StorageType"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "name",
+          "storage_type",
+          "created",
+          "updated"
         ]
       },
       "RateLimiterGetRemainingIn": {
