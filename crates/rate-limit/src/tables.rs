@@ -11,7 +11,6 @@ enum RowType {
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct FixedWindowState {
-    pub key: String,
     pub count: u64,
     pub window_start: Timestamp,
 }
@@ -28,7 +27,6 @@ impl FixedWindowState {
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct TokenBucketState {
-    pub key: String,
     pub tokens: u64,
     pub last_refill: Timestamp,
 }
