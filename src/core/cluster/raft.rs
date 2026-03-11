@@ -1,6 +1,7 @@
 use std::{collections::BTreeMap, sync::Arc, time::Instant};
 
 use anyhow::Context;
+use diom_core::Monotime;
 use openraft::error::{InitializeError, RaftError};
 use tap::TapFallible;
 
@@ -68,6 +69,7 @@ pub(super) async fn initialize_cluster(
 pub async fn initialize_raft(
     cfg: &Configuration,
     app_state: AppState,
+    time: Monotime,
 ) -> anyhow::Result<RaftState> {
     let mut logs = super::DiomLogs::new(
         cfg.cluster.log_path(cfg)?,
@@ -101,6 +103,7 @@ pub async fn initialize_raft(
         app_state.clone(),
         logs.clone(),
         id,
+        time,
     )
     .await?;
     let state_machine: StoreHandle = state_machine.into();
@@ -197,10 +200,21 @@ mod tests {
             let db = Database::builder(data_path).open()?;
             let edb = Database::builder(e_data_path).open()?;
 
-            let app_state: AppState = AppState::new(cfg);
+            let time = diom_core::Monotime::initial();
+            let _ = time.now();
 
-            let store =
-                Store::new(db, edb, snapshot_path, app_state, logs.clone(), 1.into()).await?;
+            let app_state: AppState = AppState::new(cfg, time.clone());
+
+            let store = Store::new(
+                db,
+                edb,
+                snapshot_path,
+                app_state,
+                logs.clone(),
+                1.into(),
+                time,
+            )
+            .await?;
 
             Ok((workdir, logs, store.into()))
         }

@@ -9,6 +9,7 @@ edition = "2024"
 [dependencies]
 diom-namespace.workspace = true
 diom-proto.workspace = true
+jiff.workspace = true
 regex.workspace = true
 schemars.workspace = true
 serde.workspace = true
