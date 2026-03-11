@@ -70,7 +70,6 @@ impl RateLimiter {
                 let mut state =
                     FixedWindowState::fetch(&self.tables, FixedWindowState::key_for(identifier))?
                         .unwrap_or(FixedWindowState {
-                            key: identifier.to_owned(),
                             count: 0,
                             window_start,
                         });
@@ -106,7 +105,6 @@ impl RateLimiter {
                 let mut bucket =
                     TokenBucketState::fetch(&self.tables, TokenBucketState::key_for(identifier))?
                         .unwrap_or(TokenBucketState {
-                            key: identifier.to_owned(),
                             tokens: tb_config.bucket_size,
                             last_refill: now,
                         });
