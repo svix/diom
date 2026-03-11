@@ -55,6 +55,25 @@ func (msgsQueue MsgsQueue) Ack(
 	)
 }
 
+// Configures retry and DLQ behavior for a consumer group on a topic.
+//
+// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
+func (msgsQueue MsgsQueue) Configure(
+	ctx context.Context,
+	msgQueueConfigureIn coyote_models.MsgQueueConfigureIn,
+) (*coyote_models.MsgQueueConfigureOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueConfigureIn, coyote_models.MsgQueueConfigureOut](
+		ctx,
+		msgsQueue.client,
+		"POST",
+		"/api/v1/msgs/queue/configure",
+		nil,
+		nil,
+		&msgQueueConfigureIn,
+	)
+}
+
 // Rejects messages, sending them to the dead-letter queue.
 //
 // Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to

@@ -177,18 +177,29 @@ fn lease_available_msgs(
         let offset = scan_offset + i as u64;
         let msg_id = MsgId::new(partition, offset);
 
-        if let Some(lease) = QueueLeaseRow::fetch(
+        let existing_lease = QueueLeaseRow::fetch(
             &state.metadata_tables,
             QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
-        )? && !lease.is_available(now)
+        )?;
+
+        if existing_lease
+            .as_ref()
+            .is_some_and(|l| !l.is_available(now))
         {
             continue;
         }
 
+        // Preserve retry_count from previous lease so nack retries are tracked correctly
+        let attempt_count = existing_lease.map(|l| l.attempt_count).unwrap_or(0);
+
         batch.insert_row(
             &state.metadata_tables,
             QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
-            &QueueLeaseRow { expiry, dlq: false },
+            &QueueLeaseRow {
+                expiry,
+                dlq: false,
+                attempt_count,
+            },
         )?;
 
         all_msgs.push(QueueReceiveMsg {

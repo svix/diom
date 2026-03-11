@@ -52,13 +52,12 @@ impl QueueAckOperation {
         let mut affected_partitions = std::collections::BTreeSet::new();
 
         for msg_id in &self.msg_ids {
-            batch.insert_row(
+            QueueLeaseRow::write_ack(
+                &mut batch,
                 &state.metadata_tables,
-                QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
-                &QueueLeaseRow {
-                    expiry: Timestamp::MAX,
-                    dlq: false,
-                },
+                topic_row.id,
+                msg_id,
+                &self.consumer_group,
             )?;
             affected_partitions.insert(msg_id.partition);
         }

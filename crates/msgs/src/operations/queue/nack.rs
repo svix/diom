@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -6,8 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, TopicName},
-    tables::{QueueLeaseRow, TopicRow},
+    entities::{ConsumerGroup, MsgId, Partition, TopicName},
+    tables::{MsgRow, QueueConfigRow, QueueLeaseRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueNackResponse};
@@ -36,24 +38,68 @@ impl QueueNackOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    fn apply_real(self, state: &State) -> coyote_operations::Result<QueueNackResponseData> {
+    fn apply_real(
+        self,
+        state: &State,
+        now: Timestamp,
+    ) -> coyote_operations::Result<QueueNackResponseData> {
         let topic_row = TopicRow::fetch(
             &state.metadata_tables,
             TopicRow::key_for(self.namespace_id, &self.topic),
         )?
         .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
+        let config = QueueConfigRow::fetch(
+            &state.metadata_tables,
+            QueueConfigRow::key_for(topic_row.id, &self.consumer_group),
+        )?;
+
+        let retry_schedule = config
+            .as_ref()
+            .map(|c| c.retry_schedule.as_slice())
+            .unwrap_or_default();
+
         let mut batch = state.db.batch();
 
         for msg_id in &self.msg_ids {
-            batch.insert_row(
+            let existing = QueueLeaseRow::fetch(
                 &state.metadata_tables,
                 QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
-                &QueueLeaseRow {
-                    expiry: Timestamp::MAX,
-                    dlq: true,
-                },
             )?;
+            let attempt_count = existing.map(|r| r.attempt_count).unwrap_or(0);
+
+            if let Some(&delay_ms) = retry_schedule.get(attempt_count as usize) {
+                // Schedule for retry: set expiry to now + delay, message becomes available after
+                let expiry = now + Duration::from_millis(delay_ms);
+                batch.insert_row(
+                    &state.metadata_tables,
+                    QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                    &QueueLeaseRow {
+                        expiry,
+                        dlq: false,
+                        attempt_count: attempt_count + 1,
+                    },
+                )?;
+            } else if let Some(dlq_topic) = config.as_ref().and_then(|c| c.dlq_topic.as_ref()) {
+                // Retries exhausted, forward to DLQ topic
+                forward_to_dlq(
+                    state,
+                    &mut batch,
+                    self.namespace_id,
+                    topic_row.id,
+                    msg_id,
+                    dlq_topic,
+                    &self.consumer_group,
+                    now,
+                )?;
+            } else {
+                // No config or no DLQ topic — immediate DLQ
+                batch.insert_row(
+                    &state.metadata_tables,
+                    QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                    &QueueLeaseRow::dlq_marker(attempt_count),
+                )?;
+            }
         }
 
         batch.commit().map_err(Error::from)?;
@@ -62,11 +108,58 @@ impl QueueNackOperation {
     }
 }
 
+/// Copies a message to the DLQ topic and acks the original.
+#[allow(clippy::too_many_arguments)]
+fn forward_to_dlq(
+    state: &State,
+    batch: &mut fjall::OwnedWriteBatch,
+    namespace_id: NamespaceId,
+    source_topic_id: uuid::Uuid,
+    msg_id: &MsgId,
+    dlq_topic: &TopicName,
+    consumer_group: &ConsumerGroup,
+    now: Timestamp,
+) -> coyote_error::Result<()> {
+    let original = MsgRow::fetch(
+        &state.msg_table,
+        MsgRow::key_for(source_topic_id, msg_id.partition, msg_id.offset),
+    )?
+    .ok_or_else(|| Error::generic("nacked message not found"))?;
+
+    let dlq_topic_row =
+        TopicRow::fetch_or_create(&state.metadata_tables, batch, namespace_id, dlq_topic, now)?;
+
+    // Route deterministically: use source partition clamped to DLQ partition count
+    let dlq_partition = Partition::new(msg_id.partition.get() % dlq_topic_row.partitions)?;
+    let dlq_offset = MsgRow::next_offset(&state.msg_table, dlq_topic_row.id, dlq_partition)?;
+
+    batch.insert_row(
+        &state.msg_table,
+        MsgRow::key_for(dlq_topic_row.id, dlq_partition, dlq_offset),
+        &MsgRow {
+            value: original.value,
+            headers: original.headers,
+            timestamp: original.timestamp,
+        },
+    )?;
+
+    // Ack to prevent re-delivery
+    QueueLeaseRow::write_ack(
+        batch,
+        &state.metadata_tables,
+        source_topic_id,
+        msg_id,
+        consumer_group,
+    )?;
+
+    Ok(())
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueueNackResponseData {}
 
 impl MsgsRequest for QueueNackOperation {
-    fn apply(self, state: MsgsRaftState<'_>, _timestamp: Timestamp) -> QueueNackResponse {
-        QueueNackResponse(self.apply_real(state.msgs))
+    fn apply(self, state: MsgsRaftState<'_>, timestamp: Timestamp) -> QueueNackResponse {
+        QueueNackResponse(self.apply_real(state.msgs, timestamp))
     }
 }
