@@ -154,7 +154,7 @@ impl AppState {
         let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
         let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
 
-        let dbs = Databases::new(persistent_db.clone(), ephemeral_db);
+        let dbs = Databases::new(persistent_db, ephemeral_db);
         let ro_dbs = dbs.readonly();
 
         let namespace_state =
@@ -167,10 +167,8 @@ impl AppState {
 
         AppState {
             cfg,
-            rate_limiter: v1::modules::rate_limit::RateLimiter::new(
-                "rate_limiter_default",
-                persistent_db,
-            ),
+            rate_limiter: v1::modules::rate_limit::RateLimiter::init(dbs.clone())
+                .expect("initializing rate limiter state"),
             namespace_state,
             ro_dbs,
             do_not_use_dbs: dbs,

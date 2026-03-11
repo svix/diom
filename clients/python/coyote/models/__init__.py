@@ -57,7 +57,11 @@ from .queue_msg_out import QueueMsgOut
 from .rate_limit_status import RateLimitStatus
 from .rate_limiter_check_in import RateLimiterCheckIn
 from .rate_limiter_check_out import RateLimiterCheckOut
+from .rate_limiter_create_namespace_in import RateLimiterCreateNamespaceIn
+from .rate_limiter_create_namespace_out import RateLimiterCreateNamespaceOut
 from .rate_limiter_fixed_window_config import RateLimiterFixedWindowConfig
+from .rate_limiter_get_namespace_in import RateLimiterGetNamespaceIn
+from .rate_limiter_get_namespace_out import RateLimiterGetNamespaceOut
 from .rate_limiter_get_remaining_in import RateLimiterGetRemainingIn
 from .rate_limiter_get_remaining_out import RateLimiterGetRemainingOut
 from .rate_limiter_token_bucket_config import RateLimiterTokenBucketConfig
@@ -125,7 +129,11 @@ __all__ = [
     "RateLimitStatus",
     "RateLimiterCheckIn",
     "RateLimiterCheckOut",
+    "RateLimiterCreateNamespaceIn",
+    "RateLimiterCreateNamespaceOut",
     "RateLimiterFixedWindowConfig",
+    "RateLimiterGetNamespaceIn",
+    "RateLimiterGetNamespaceOut",
     "RateLimiterGetRemainingIn",
     "RateLimiterGetRemainingOut",
     "RateLimiterTokenBucketConfig",

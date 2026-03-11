@@ -45,8 +45,11 @@ pub(super) async fn apply_request(
             Response::Kv(req.apply(state, timestamp))
         }
         Request::RateLimiter(req) => {
-            // Rate limiter neither needs nor uses namespaces for now
-            Response::RateLimiter(req.apply(&state_machine.state.rate_limiter, timestamp))
+            let state = coyote_rate_limit::operations::RateLimiterRaftState {
+                state: &state_machine.state.rate_limiter,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::RateLimiter(req.apply(state, timestamp))
         }
         Request::Idempotency(req) => {
             let stores = state_machine.db_handle();
