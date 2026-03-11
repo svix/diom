@@ -228,6 +228,10 @@ mod tests {
         NamespaceId::nil()
     }
 
+    fn key_exists_as_of(controller: &KvController, key: &str, now: Timestamp) -> bool {
+        controller.fetch(ns(), key, now).unwrap().is_some()
+    }
+
     fn key_exists(controller: &KvController, key: &str) -> bool {
         controller
             .fetch(ns(), key, Timestamp::now())
@@ -433,12 +437,24 @@ mod tests {
 
         assert_eq!(controller.iter().unwrap().count(), 6);
 
+        // the key should have expired by now, so key_exists should already be false
+        assert!(!key_exists(&controller, "expired:key"));
+        let then = Timestamp::now().checked_sub(6.hours()).unwrap();
+        // but if we time travel to the past, it should still be there
+        assert!(key_exists_as_of(&controller, "expired:key", then));
+        for (key, _, _) in &expired_models {
+            assert!(key_exists_as_of(&controller, key, then));
+        }
+
         assert_eq!(controller.clear_expired(Timestamp::now()).unwrap(), 4);
 
         for (key, _, _) in &expired_models {
+            // now it should really and truly be gone
             assert!(!key_exists(&controller, key));
+            assert!(!key_exists_as_of(&controller, key, then));
         }
         assert!(!key_exists(&controller, "expired:key"));
+        assert!(!key_exists_as_of(&controller, "expired:key", then));
 
         assert!(key_exists(&controller, valid_key));
         let valid = controller.fetch(ns(), valid_key, Timestamp::now()).unwrap();
