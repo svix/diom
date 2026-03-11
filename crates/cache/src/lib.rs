@@ -60,7 +60,7 @@ where
 
         let now = Timestamp::now();
         match controller.clear_expired(now) {
-            Ok(()) => {}
+            Ok(_) => {}
             Err(e) => {
                 tracing::error!(error = ?e, "Failed to clean.");
             }

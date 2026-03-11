@@ -82,7 +82,7 @@ impl StreamSeekOperation {
 
             let lease = StreamLeaseRow {
                 offset,
-                expiry: Timestamp::MIN,
+                expiry: Timestamp::UNIX_EPOCH,
                 end_offset: 0,
             };
 

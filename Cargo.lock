@@ -1110,6 +1110,7 @@ dependencies = [
  "jiff",
  "schemars 1.2.1",
  "serde",
+ "tap",
  "tempfile",
  "tokio",
  "tracing",

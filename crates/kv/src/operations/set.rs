@@ -9,6 +9,7 @@ use diom_operations::Result;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+use tap::TapOptional;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
@@ -28,11 +29,14 @@ impl SetOperation {
         ttl: Option<u64>,
         behavior: OperationBehavior,
     ) -> Self {
+        let expiry = ttl
+            .map(|ttl| Timestamp::now() + Duration::from_millis(ttl))
+            .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
         Self {
             namespace_id: namespace.id,
             storage_type: namespace.storage_type,
             key,
-            expiry: ttl.map(|ttl| Timestamp::now() + Duration::from_millis(ttl)),
+            expiry,
             value,
             behavior,
         }
