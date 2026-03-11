@@ -267,11 +267,12 @@ mod tests {
 
     fn create_test_state() -> (State, tempfile::TempDir) {
         let dir = tempdir().unwrap();
+        let dir2 = tempdir().unwrap();
         let persistent_db = fjall::Database::builder(&dir)
             .temporary(true)
             .open()
             .unwrap();
-        let ephemeral_db = fjall::Database::builder(&dir)
+        let ephemeral_db = fjall::Database::builder(&dir2)
             .temporary(true)
             .open()
             .unwrap();
