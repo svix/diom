@@ -4,4 +4,4 @@
 pub mod cache;
 pub mod idempotency;
 pub mod kv;
-pub mod rate_limiter;
+pub mod rate_limit;

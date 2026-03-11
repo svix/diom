@@ -10,14 +10,14 @@ pub mod idempotency;
 pub mod kv;
 pub mod msgs;
 pub mod queue;
-pub mod rate_limiter;
+pub mod rate_limit;
 
 pub fn router() -> ApiRouter<AppState> {
     ApiRouter::new()
         .merge(health::router())
         .merge(cache::router())
         .merge(kv::router())
-        .merge(rate_limiter::router())
+        .merge(rate_limit::router())
         .merge(idempotency::router())
         .merge(queue::router())
         .merge(msgs::router())

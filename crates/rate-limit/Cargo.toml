@@ -1,5 +1,5 @@
 [package]
-name = "coyote-rate-limiter"
+name = "coyote-rate-limit"
 edition = "2024"
 license.workspace = true
 version.workspace = true

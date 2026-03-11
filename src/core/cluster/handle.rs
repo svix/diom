@@ -38,7 +38,7 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalOperation),
     Kv(coyote_kv::operations::KvOperation),
-    RateLimiter(coyote_rate_limiter::operations::RateLimiterOperation),
+    RateLimiter(coyote_rate_limit::operations::RateLimiterOperation),
     Idempotency(coyote_idempotency::operations::IdempotencyOperation),
     Cache(coyote_cache::operations::CacheOperation),
     Msgs(coyote_msgs::operations::MsgsOperation),
@@ -101,8 +101,8 @@ impl From<coyote_kv::operations::KvOperation> for Request {
     }
 }
 
-impl From<coyote_rate_limiter::operations::RateLimiterOperation> for Request {
-    fn from(value: coyote_rate_limiter::operations::RateLimiterOperation) -> Self {
+impl From<coyote_rate_limit::operations::RateLimiterOperation> for Request {
+    fn from(value: coyote_rate_limit::operations::RateLimiterOperation) -> Self {
         Request::RateLimiter(value)
     }
 }
@@ -136,7 +136,7 @@ pub enum Response {
     Blank,
     ClusterInternal(super::operations::Response),
     Kv(coyote_kv::operations::Response),
-    RateLimiter(coyote_rate_limiter::operations::Response),
+    RateLimiter(coyote_rate_limit::operations::Response),
     Idempotency(coyote_idempotency::operations::Response),
     Cache(coyote_cache::operations::Response),
     Msgs(coyote_msgs::operations::Response),
@@ -153,7 +153,7 @@ impl TryFrom<Response> for coyote_kv::operations::Response {
     }
 }
 
-impl TryFrom<Response> for coyote_rate_limiter::operations::Response {
+impl TryFrom<Response> for coyote_rate_limit::operations::Response {
     type Error = ResponseParseError;
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
