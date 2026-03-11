@@ -16,6 +16,7 @@ itertools.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
+tap.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 

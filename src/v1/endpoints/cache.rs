@@ -41,6 +41,7 @@ pub struct CacheSetIn {
 impl CacheSetIn {
     fn into_model(self) -> CacheModel {
         let expiry = Timestamp::now() + Duration::from_millis(self.ttl);
+        debug_assert!(expiry > Timestamp::UNIX_EPOCH);
 
         CacheModel {
             expiry: Some(expiry),

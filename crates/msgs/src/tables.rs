@@ -96,7 +96,7 @@ impl StreamLeaseRow {
     pub(crate) fn new() -> Result<Self> {
         Ok(Self {
             offset: 0,
-            expiry: Timestamp::MIN,
+            expiry: Timestamp::UNIX_EPOCH,
             end_offset: 0,
         })
     }
