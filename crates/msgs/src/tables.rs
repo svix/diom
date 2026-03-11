@@ -15,6 +15,7 @@ enum RowType {
     StreamLease = 1,
     Msg = 2,
     QueueLease = 3,
+    QueueConfig = 4,
 }
 
 const SIZE_U64: usize = size_of::<u64>();
@@ -119,6 +120,8 @@ pub(crate) struct QueueLeaseRow {
     pub expiry: Timestamp,
     #[serde(default)]
     pub dlq: bool,
+    #[serde(default)]
+    pub attempt_count: u32,
 }
 
 impl QueueLeaseRow {
@@ -136,6 +139,40 @@ impl QueueLeaseRow {
             ],
             &[consumer_group],
         )
+    }
+
+    /// Permanently acked — will never be re-delivered.
+    pub(crate) fn acked() -> Self {
+        Self {
+            expiry: Timestamp::MAX,
+            dlq: false,
+            attempt_count: 0,
+        }
+    }
+
+    /// Sent to the dead-letter queue.
+    pub(crate) fn dlq_marker(attempt_count: u32) -> Self {
+        Self {
+            expiry: Timestamp::MAX,
+            dlq: true,
+            attempt_count,
+        }
+    }
+
+    /// Writes an ack row into the batch, permanently marking the message as consumed.
+    pub(crate) fn write_ack(
+        batch: &mut fjall::OwnedWriteBatch,
+        keyspace: &fjall::Keyspace,
+        topic_id: TopicId,
+        msg_id: &MsgId,
+        consumer_group: &ConsumerGroup,
+    ) -> Result<()> {
+        batch.insert_row(
+            keyspace,
+            Self::key_for(topic_id, msg_id, consumer_group),
+            &Self::acked(),
+        )?;
+        Ok(())
     }
 
     pub(crate) fn is_available(&self, now: Timestamp) -> bool {
@@ -196,6 +233,23 @@ impl QueueLeaseRow {
 
 impl TableRow for QueueLeaseRow {
     const ROW_TYPE: u8 = RowType::QueueLease as u8;
+}
+
+/// Per-consumer-group queue configuration
+#[derive(Serialize, Deserialize)]
+pub(crate) struct QueueConfigRow {
+    pub retry_schedule: Vec<u64>,
+    pub dlq_topic: Option<TopicName>,
+}
+
+impl QueueConfigRow {
+    pub(crate) fn key_for(topic_id: TopicId, consumer_group: &ConsumerGroup) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[topic_id.as_bytes()], &[consumer_group])
+    }
+}
+
+impl TableRow for QueueConfigRow {
+    const ROW_TYPE: u8 = RowType::QueueConfig as u8;
 }
 
 #[derive(Serialize, Deserialize)]
