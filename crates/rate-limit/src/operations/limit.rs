@@ -1,21 +1,32 @@
 use std::time::Duration;
 
-use super::{LimitResponse, RateLimiterRequest};
-use crate::{RateLimitConfig, RateLimitStatus};
+use super::{LimitResponse, RateLimiterRaftState, RateLimiterRequest};
+use crate::{RateLimitConfig, RateLimitNamespace, RateLimitStatus};
+use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
+use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimitOperation {
+    namespace_id: NamespaceId,
+    storage_type: StorageType,
     pub(crate) key: String,
     pub(crate) tokens: u64,
     pub(crate) method: RateLimitConfig,
 }
 
 impl LimitOperation {
-    pub fn new(key: String, tokens: u64, method: RateLimitConfig) -> Self {
+    pub fn new(
+        namespace: RateLimitNamespace,
+        key: String,
+        tokens: u64,
+        method: RateLimitConfig,
+    ) -> Self {
         Self {
+            namespace_id: namespace.id,
+            storage_type: namespace.storage_type,
             key,
             tokens,
             method,
@@ -31,9 +42,19 @@ pub struct LimitResponseData {
 }
 
 impl LimitOperation {
-    fn apply_real(self, state: &crate::RateLimiter, now: Timestamp) -> Result<LimitResponseData> {
-        let (status, remaining, retry_after) =
-            state.limit(now, &self.key, self.tokens, self.method)?;
+    fn apply_real(
+        self,
+        state: &RateLimiterRaftState<'_>,
+        now: Timestamp,
+    ) -> Result<LimitResponseData> {
+        let (status, remaining, retry_after) = state.state.limit(
+            now,
+            self.namespace_id,
+            self.storage_type,
+            &self.key,
+            self.tokens,
+            self.method,
+        )?;
         Ok(LimitResponseData {
             status,
             remaining,
@@ -43,7 +64,7 @@ impl LimitOperation {
 }
 
 impl RateLimiterRequest for LimitOperation {
-    fn apply(self, state: &crate::RateLimiter, now: Timestamp) -> LimitResponse {
-        LimitResponse(self.apply_real(state, now))
+    fn apply(self, state: RateLimiterRaftState<'_>, now: Timestamp) -> LimitResponse {
+        LimitResponse(self.apply_real(&state, now))
     }
 }

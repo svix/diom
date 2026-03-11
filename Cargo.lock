@@ -1188,6 +1188,7 @@ name = "coyote-rate-limit"
 version = "0.0.1"
 dependencies = [
  "coyote-error",
+ "coyote-namespace",
  "coyote-operations",
  "fjall",
  "fjall-utils",

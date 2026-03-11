@@ -1,4 +1,5 @@
-use super::RateLimiter;
+use crate::State;
+
 use serde::{Deserialize, Serialize};
 
 mod limit;
@@ -9,13 +10,18 @@ pub use reset::ResetOperation;
 
 use coyote_operations::raft_module_operations;
 
+pub struct RateLimiterRaftState<'a> {
+    pub state: &'a State,
+    pub namespace: &'a coyote_namespace::State,
+}
+
 raft_module_operations!(
     RateLimiterRequest,
     RateLimiterOperation {
         Limit(LimitOperation) -> LimitResponseData,
         Reset(ResetOperation) -> (),
     },
-    state = &RateLimiter,
+    state = RateLimiterRaftState<'_>,
 );
 
 impl RateLimiterOperation {
