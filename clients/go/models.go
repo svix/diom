@@ -43,6 +43,8 @@ type (
 	MsgPublishOutTopic            = diom_models.MsgPublishOutTopic
 	MsgQueueAckIn                 = diom_models.MsgQueueAckIn
 	MsgQueueAckOut                = diom_models.MsgQueueAckOut
+	MsgQueueConfigureIn           = diom_models.MsgQueueConfigureIn
+	MsgQueueConfigureOut          = diom_models.MsgQueueConfigureOut
 	MsgQueueNackIn                = diom_models.MsgQueueNackIn
 	MsgQueueNackOut               = diom_models.MsgQueueNackOut
 	MsgQueueReceiveIn             = diom_models.MsgQueueReceiveIn

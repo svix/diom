@@ -12,9 +12,10 @@ use diom_msgs::{
         TopicName, TopicPartition, default_retention_bytes, default_retention_millis,
     },
     operations::{
-        CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueNackOperation,
-        QueueReceiveOperation, QueueRedriveDlqOperation, SeekTarget, StreamCommitOperation,
-        StreamReceiveOperation, StreamSeekOperation, TopicConfigureOperation,
+        CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
+        QueueNackOperation, QueueReceiveOperation, QueueRedriveDlqOperation, SeekTarget,
+        StreamCommitOperation, StreamReceiveOperation, StreamSeekOperation,
+        TopicConfigureOperation,
     },
 };
 use diom_namespace::entities::StorageType;
@@ -408,6 +409,56 @@ async fn queue_ack(
 }
 
 // ---------------------------------------------------------------------------
+// queue/configure
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgQueueConfigureIn {
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    #[serde(default)]
+    pub retry_schedule: Vec<u64>,
+    pub dlq_topic: Option<TopicName>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct MsgQueueConfigureOut {
+    pub retry_schedule: Vec<u64>,
+    pub dlq_topic: Option<TopicName>,
+}
+
+/// Configures retry and DLQ behavior for a consumer group on a topic.
+///
+/// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+/// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
+#[aide_annotate(op_id = "v1.msgs.queue.configure")]
+async fn queue_configure(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgQueueConfigureIn>,
+) -> Result<MsgPackOrJson<MsgQueueConfigureOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.topic.namespace())?
+        .ok_or_not_found()?;
+
+    let operation = QueueConfigureOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group,
+        data.retry_schedule,
+        data.dlq_topic,
+    );
+    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+
+    Ok(MsgPackOrJson(MsgQueueConfigureOut {
+        retry_schedule: response.retry_schedule,
+        dlq_topic: response.dlq_topic,
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // queue/nack
 // ---------------------------------------------------------------------------
 
@@ -552,6 +603,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/msgs/queue/ack",
             post_with(queue_ack, queue_ack_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/msgs/queue/configure",
+            post_with(queue_configure, queue_configure_operation),
             &tag,
         )
         .api_route_with(

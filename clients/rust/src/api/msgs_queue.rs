@@ -55,6 +55,29 @@ impl<'a> MsgsQueue<'a> {
             .await
     }
 
+    /// Configures retry and DLQ behavior for a consumer group on a topic.
+    ///
+    /// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+    /// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
+    pub async fn configure(
+        &self,
+        topic: String,
+        consumer_group: String,
+        msg_queue_configure_in: MsgQueueConfigureIn,
+    ) -> Result<MsgQueueConfigureOut> {
+        let msg_queue_configure_in = MsgQueueConfigureIn_ {
+            topic,
+            consumer_group,
+            retry_schedule: msg_queue_configure_in.retry_schedule,
+            dlq_topic: msg_queue_configure_in.dlq_topic,
+        };
+
+        crate::request::Request::new(http::Method::POST, "/api/v1/msgs/queue/configure")
+            .with_body(msg_queue_configure_in)
+            .execute(self.cfg)
+            .await
+    }
+
     /// Rejects messages, sending them to the dead-letter queue.
     ///
     /// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to

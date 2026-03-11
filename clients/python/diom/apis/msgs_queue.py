@@ -4,6 +4,8 @@ from ..internal.api_common import ApiBase
 from ..models import (
     MsgQueueAckIn,
     MsgQueueAckOut,
+    MsgQueueConfigureIn,
+    MsgQueueConfigureOut,
     MsgQueueNackIn,
     MsgQueueNackOut,
     MsgQueueReceiveIn,
@@ -14,6 +16,7 @@ from ..models import (
 
 from ..models.msg_queue_receive_in import _MsgQueueReceiveIn
 from ..models.msg_queue_ack_in import _MsgQueueAckIn
+from ..models.msg_queue_configure_in import _MsgQueueConfigureIn
 from ..models.msg_queue_nack_in import _MsgQueueNackIn
 from ..models.msg_queue_redrive_dlq_in import _MsgQueueRedriveDlqIn
 
@@ -64,6 +67,30 @@ class MsgsQueueAsync(ApiBase):
             path="/api/v1/msgs/queue/ack",
             body=body,
             response_type=MsgQueueAckOut,
+        )
+
+    async def configure(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_configure_in: MsgQueueConfigureIn = MsgQueueConfigureIn(),
+    ) -> MsgQueueConfigureOut:
+        """Configures retry and DLQ behavior for a consumer group on a topic.
+
+        `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+        the message is moved to the DLQ (or forwarded to `dlq_topic` if set)."""
+        body = _MsgQueueConfigureIn(
+            topic=topic,
+            consumer_group=consumer_group,
+            retry_schedule=msg_queue_configure_in.retry_schedule,
+            dlq_topic=msg_queue_configure_in.dlq_topic,
+        ).model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1/msgs/queue/configure",
+            body=body,
+            response_type=MsgQueueConfigureOut,
         )
 
     async def nack(
@@ -155,6 +182,30 @@ class MsgsQueue(ApiBase):
             path="/api/v1/msgs/queue/ack",
             body=body,
             response_type=MsgQueueAckOut,
+        )
+
+    def configure(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_configure_in: MsgQueueConfigureIn = MsgQueueConfigureIn(),
+    ) -> MsgQueueConfigureOut:
+        """Configures retry and DLQ behavior for a consumer group on a topic.
+
+        `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+        the message is moved to the DLQ (or forwarded to `dlq_topic` if set)."""
+        body = _MsgQueueConfigureIn(
+            topic=topic,
+            consumer_group=consumer_group,
+            retry_schedule=msg_queue_configure_in.retry_schedule,
+            dlq_topic=msg_queue_configure_in.dlq_topic,
+        ).model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1/msgs/queue/configure",
+            body=body,
+            response_type=MsgQueueConfigureOut,
         )
 
     def nack(

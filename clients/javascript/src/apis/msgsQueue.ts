@@ -9,6 +9,14 @@ import {
     MsgQueueAckOutSerializer,
 } from '../models/msgQueueAckOut';
 import {
+    type MsgQueueConfigureIn,
+    MsgQueueConfigureInSerializer,
+} from '../models/msgQueueConfigureIn';
+import {
+    type MsgQueueConfigureOut,
+    MsgQueueConfigureOutSerializer,
+} from '../models/msgQueueConfigureOut';
+import {
     type MsgQueueNackIn,
     MsgQueueNackInSerializer,
 } from '../models/msgQueueNackIn';
@@ -82,6 +90,31 @@ export class MsgsQueue {
                 return request.send(
                     this.requestCtx,
                     MsgQueueAckOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /**
+* Configures retry and DLQ behavior for a consumer group on a topic.
+* 
+* `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+* the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
+*/
+        public configure(
+            msgQueueConfigureIn: MsgQueueConfigureIn,
+            ): Promise<MsgQueueConfigureOut> {
+            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/configure");
+
+            request.setBody(
+                    MsgQueueConfigureInSerializer._toJsonObject(
+                        msgQueueConfigureIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    MsgQueueConfigureOutSerializer._fromJsonObject,
                 );
             }
 

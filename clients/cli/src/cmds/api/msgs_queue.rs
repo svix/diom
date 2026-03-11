@@ -29,6 +29,15 @@ pub enum MsgsQueueCommands {
         consumer_group: String,
         msg_queue_ack_in: crate::json::JsonOf<diom_client::models::MsgQueueAckIn>,
     },
+    /// Configures retry and DLQ behavior for a consumer group on a topic.
+    ///
+    /// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+    /// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
+    Configure {
+        topic: String,
+        consumer_group: String,
+        msg_queue_configure_in: crate::json::JsonOf<diom_client::models::MsgQueueConfigureIn>,
+    },
     /// Rejects messages, sending them to the dead-letter queue.
     ///
     /// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
@@ -74,6 +83,18 @@ impl MsgsQueueCommands {
                     .msgs()
                     .queue()
                     .ack(topic, consumer_group, msg_queue_ack_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Configure {
+                topic,
+                consumer_group,
+                msg_queue_configure_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .queue()
+                    .configure(topic, consumer_group, msg_queue_configure_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

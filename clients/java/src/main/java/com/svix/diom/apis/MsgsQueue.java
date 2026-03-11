@@ -15,6 +15,8 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.MsgQueueAckIn;
 import com.svix.diom.models.MsgQueueAckOut;
+import com.svix.diom.models.MsgQueueConfigureIn;
+import com.svix.diom.models.MsgQueueConfigureOut;
 import com.svix.diom.models.MsgQueueNackIn;
 import com.svix.diom.models.MsgQueueNackOut;
 import com.svix.diom.models.MsgQueueReceiveIn;
@@ -64,6 +66,25 @@ public class MsgsQueue {
             null,
             msgQueueAckIn,
             MsgQueueAckOut.class
+            );
+    }
+
+    /**
+* Configures retry and DLQ behavior for a consumer group on a topic.
+* 
+* `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
+* the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
+*/
+    public MsgQueueConfigureOut configure(
+        final MsgQueueConfigureIn msgQueueConfigureIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/configure");
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            msgQueueConfigureIn,
+            MsgQueueConfigureOut.class
             );
     }
 
