@@ -10,7 +10,7 @@ use diom_derive::aide_annotate;
 use diom_error::ResultExt;
 use diom_namespace::Namespace;
 use diom_proto::MsgPackOrJson;
-use diom_rate_limiter::RateLimiter;
+use diom_rate_limit::RateLimiter;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,7 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
-use diom_rate_limiter::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};
+use diom_rate_limit::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};
 
 pub type RateLimitNamespace = Namespace<RateLimitConfig>;
 

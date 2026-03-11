@@ -908,7 +908,7 @@ dependencies = [
  "diom-namespace",
  "diom-operations",
  "diom-proto",
- "diom-rate-limiter",
+ "diom-rate-limit",
  "ctor",
  "fjall",
  "fjall-utils",
@@ -1184,7 +1184,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "diom-rate-limiter"
+name = "diom-rate-limit"
 version = "0.0.1"
 dependencies = [
  "diom-error",

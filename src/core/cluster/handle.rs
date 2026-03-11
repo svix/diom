@@ -38,7 +38,7 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalOperation),
     Kv(diom_kv::operations::KvOperation),
-    RateLimiter(diom_rate_limiter::operations::RateLimiterOperation),
+    RateLimiter(diom_rate_limit::operations::RateLimiterOperation),
     Idempotency(diom_idempotency::operations::IdempotencyOperation),
     Cache(diom_cache::operations::CacheOperation),
     Msgs(diom_msgs::operations::MsgsOperation),
@@ -101,8 +101,8 @@ impl From<diom_kv::operations::KvOperation> for Request {
     }
 }
 
-impl From<diom_rate_limiter::operations::RateLimiterOperation> for Request {
-    fn from(value: diom_rate_limiter::operations::RateLimiterOperation) -> Self {
+impl From<diom_rate_limit::operations::RateLimiterOperation> for Request {
+    fn from(value: diom_rate_limit::operations::RateLimiterOperation) -> Self {
         Request::RateLimiter(value)
     }
 }
@@ -136,7 +136,7 @@ pub enum Response {
     Blank,
     ClusterInternal(super::operations::Response),
     Kv(diom_kv::operations::Response),
-    RateLimiter(diom_rate_limiter::operations::Response),
+    RateLimiter(diom_rate_limit::operations::Response),
     Idempotency(diom_idempotency::operations::Response),
     Cache(diom_cache::operations::Response),
     Msgs(diom_msgs::operations::Response),
@@ -153,7 +153,7 @@ impl TryFrom<Response> for diom_kv::operations::Response {
     }
 }
 
-impl TryFrom<Response> for diom_rate_limiter::operations::Response {
+impl TryFrom<Response> for diom_rate_limit::operations::Response {
     type Error = ResponseParseError;
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {

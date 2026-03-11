@@ -37,7 +37,7 @@ name = "idempotency"
 harness = false
 
 [[bench]]
-name = "rate_limiter"
+name = "rate_limit"
 harness = false
 
 [[bench]]
