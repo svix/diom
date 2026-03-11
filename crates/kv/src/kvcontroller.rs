@@ -164,9 +164,12 @@ impl KvController {
         KvPairRow::values(&self.keyspace)
     }
 
-    pub fn clear_expired(&self, now: Timestamp) -> Result<()> {
-        let start = ExpirationRow::key_for(NamespaceId::nil(), Timestamp::MIN, "").into_fjall_key();
+    pub fn clear_expired(&self, now: Timestamp) -> Result<usize> {
+        let start =
+            ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
+
+        let mut cleared = 0;
 
         for chunk in &self
             .keyspace
@@ -180,6 +183,7 @@ impl KvController {
             // is deleted here even though it's not expired.
             // See https://svixhq.slack.com/archives/C0A72988962/p1772685631571679
             for item in chunk {
+                cleared += 1;
                 let k = item.key()?;
                 let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
                 batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, main_key))?;
@@ -189,7 +193,7 @@ impl KvController {
             batch.commit()?;
         }
 
-        Ok(())
+        Ok(cleared)
     }
 }
 
@@ -429,7 +433,7 @@ mod tests {
 
         assert_eq!(controller.iter().unwrap().count(), 6);
 
-        controller.clear_expired(Timestamp::now()).unwrap();
+        assert_eq!(controller.clear_expired(Timestamp::now()).unwrap(), 4);
 
         for (key, _, _) in &expired_models {
             assert!(!key_exists(&controller, key));

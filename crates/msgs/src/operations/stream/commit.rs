@@ -55,7 +55,7 @@ impl StreamCommitOperation {
 
         lease.offset = self.offset + 1;
         if self.offset >= lease.end_offset {
-            lease.expiry = Timestamp::MIN;
+            lease.expiry = Timestamp::UNIX_EPOCH;
         }
 
         batch.insert_row(
