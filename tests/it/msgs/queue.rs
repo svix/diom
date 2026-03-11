@@ -840,3 +840,303 @@ async fn redrive_dlq_no_dlq_messages() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn configure_retry_schedule() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-q-cfg" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = client
+        .post("msgs/queue/configure")
+        .json(json!({
+            "topic": "ns-q-cfg:t1",
+            "consumer_group": "test-cg",
+            "retry_schedule": [1000, 5000, 10000],
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(response["retry_schedule"], json!([1000, 5000, 10000]));
+    assert!(response["dlq_topic"].is_null());
+
+    // Updating the config should overwrite
+    let response2 = client
+        .post("msgs/queue/configure")
+        .json(json!({
+            "topic": "ns-q-cfg:t1",
+            "consumer_group": "test-cg",
+            "retry_schedule": [2000],
+            "dlq_topic": "ns-q-cfg:t1-dlq",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(response2["retry_schedule"], json!([2000]));
+    assert_eq!(response2["dlq_topic"], json!("ns-q-cfg:t1-dlq"));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn nack_retries_before_dlq() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-q-retry" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Configure a single retry with 1s delay
+    client
+        .post("msgs/queue/configure")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "consumer_group": "test-cg",
+            "retry_schedule": [1000],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive the message
+    let r1 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "consumer_group": "test-cg",
+            "lease_duration_millis": 500,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = r1["msgs"].as_array().unwrap();
+    assert_eq!(msgs.len(), 1);
+    let msg_id = msgs[0]["msg_id"].as_str().unwrap();
+
+    // Nack — should schedule for retry, NOT DLQ
+    client
+        .post("msgs/queue/nack")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Immediately after nack, message should NOT be available (retry delay not elapsed)
+    let r2 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(
+        r2["msgs"].as_array().unwrap().len(),
+        0,
+        "message should be delayed, not immediately available"
+    );
+
+    // Wait for the retry delay to elapse
+    sleep(Duration::from_millis(1500)).await;
+
+    // Message should now be available again (retried, not DLQ'd)
+    let r3 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "consumer_group": "test-cg",
+            "lease_duration_millis": 500,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs3 = r3["msgs"].as_array().unwrap();
+    assert_eq!(
+        msgs3.len(),
+        1,
+        "message should be redelivered after retry delay"
+    );
+    assert_eq!(msgs3[0]["msg_id"].as_str().unwrap(), msg_id);
+
+    // Nack again — retries exhausted, should go to DLQ
+    client
+        .post("msgs/queue/nack")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for any delay
+    sleep(Duration::from_millis(1500)).await;
+
+    // Message should now be in DLQ — not available
+    let r4 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-retry:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(
+        r4["msgs"].as_array().unwrap().len(),
+        0,
+        "message should be in DLQ after exhausting retries"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn nack_with_dlq_topic_forwards() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-q-dlqfwd" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Configure with retry schedule and DLQ topic
+    client
+        .post("msgs/queue/configure")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1",
+            "consumer_group": "test-cg",
+            "retry_schedule": [1000],
+            "dlq_topic": "ns-q-dlqfwd:t1-dlq",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive and nack (first retry)
+    let r1 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1",
+            "consumer_group": "test-cg",
+            "lease_duration_millis": 500,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msg_id = r1["msgs"].as_array().unwrap()[0]["msg_id"]
+        .as_str()
+        .unwrap();
+
+    client
+        .post("msgs/queue/nack")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for retry delay
+    sleep(Duration::from_millis(1500)).await;
+
+    // Receive the retried message and nack again (exhausts retries → forwards to DLQ topic)
+    let r2 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1",
+            "consumer_group": "test-cg",
+            "lease_duration_millis": 500,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(r2["msgs"].as_array().unwrap().len(), 1);
+
+    client
+        .post("msgs/queue/nack")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Original topic should have no messages available
+    sleep(Duration::from_millis(1500)).await;
+    let r3 = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(r3["msgs"].as_array().unwrap().len(), 0);
+
+    // The DLQ topic should have the message
+    let r_dlq = client
+        .post("msgs/queue/receive")
+        .json(json!({
+            "topic": "ns-q-dlqfwd:t1-dlq",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let dlq_msgs = r_dlq["msgs"].as_array().unwrap();
+    assert_eq!(dlq_msgs.len(), 1, "message should appear in DLQ topic");
+    assert_eq!(dlq_msgs[0]["value"], json!("a".as_bytes()));
+
+    Ok(())
+}
