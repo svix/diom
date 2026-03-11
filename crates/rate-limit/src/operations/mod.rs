@@ -2,9 +2,11 @@ use crate::State;
 
 use serde::{Deserialize, Serialize};
 
+mod create_namespace;
 mod limit;
 mod reset;
 
+pub use create_namespace::{CreateRateLimitOperation, CreateRateLimitResponseData};
 pub use limit::{LimitOperation, LimitResponseData};
 pub use reset::ResetOperation;
 
@@ -20,6 +22,7 @@ raft_module_operations!(
     RateLimiterOperation {
         Limit(LimitOperation) -> LimitResponseData,
         Reset(ResetOperation) -> (),
+        CreateRateLimit(CreateRateLimitOperation) -> CreateRateLimitResponseData,
     },
     state = RateLimiterRaftState<'_>,
 );
@@ -29,6 +32,7 @@ impl RateLimiterOperation {
         match self {
             RateLimiterOperation::Limit(limit_operation) => &limit_operation.key,
             RateLimiterOperation::Reset(reset_operation) => &reset_operation.key,
+            RateLimiterOperation::CreateRateLimit(op) => &op.name,
         }
     }
 }
