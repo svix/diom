@@ -67,6 +67,9 @@ struct CacheConfigIn {
 }
 
 #[derive(Debug, Default, Deserialize)]
+struct RateLimitConfigIn {}
+
+#[derive(Debug, Default, Deserialize)]
 struct StreamConfigIn {
     pub retention_period_ms: Option<NonZeroU64>,
 }
@@ -75,6 +78,7 @@ struct StreamConfigIn {
 struct BootstrapConfig {
     cache: Option<HashMap<String, NamespaceIn<CacheConfigIn>>>,
     idempotency: Option<HashMap<String, NamespaceIn<IdempotencyConfigIn>>>,
+    rate_limit: Option<HashMap<String, NamespaceIn<RateLimitConfigIn>>>,
     kv: Option<HashMap<String, NamespaceIn<KeyValueConfigIn>>>,
     stream: Option<HashMap<String, NamespaceIn<StreamConfigIn>>>,
 }
@@ -110,6 +114,15 @@ impl BootstrapConfig {
         // Configure default namespace for kv, if not part of the config file
         if let Entry::Vacant(v) = config
             .kv
+            .get_or_insert_default()
+            .entry("default".to_owned())
+        {
+            v.insert(NamespaceIn::default());
+        }
+
+        // Configure default namespace for idempotency, if not part of the config file
+        if let Entry::Vacant(v) = config
+            .rate_limit
             .get_or_insert_default()
             .entry("default".to_owned())
         {
@@ -184,6 +197,18 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
         for (name, cfg) in idempotency {
             tracing::debug!(?name, "bootstrapping idemptency");
             let operation = diom_idempotency::operations::CreateIdempotencyOperation::new(
+                name,
+                cfg.storage_type.into(),
+                cfg.max_storage_bytes,
+            );
+            raft_state.client_write(operation).await?;
+        }
+    }
+
+    if let Some(rate_limit) = bootstrap.rate_limit {
+        for (name, cfg) in rate_limit {
+            tracing::debug!(?name, "bootstrapping idemptency");
+            let operation = diom_rate_limit::operations::CreateRateLimitOperation::new(
                 name,
                 cfg.storage_type.into(),
                 cfg.max_storage_bytes,
