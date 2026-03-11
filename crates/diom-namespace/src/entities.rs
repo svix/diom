@@ -96,6 +96,15 @@ impl ModuleConfig for StreamConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+pub struct RateLimitNamespaceConfig {}
+
+impl ModuleConfig for RateLimitNamespaceConfig {
+    fn module() -> Module {
+        Module::RateLimiter
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct IdempotencyConfig {}
 
 impl ModuleConfig for IdempotencyConfig {

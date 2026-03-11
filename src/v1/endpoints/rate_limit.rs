@@ -7,10 +7,9 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_core::types::EntityKey;
 use diom_derive::aide_annotate;
-use diom_error::ResultExt;
-use diom_namespace::Namespace;
+use diom_error::{OptionExt, ResultExt};
 use diom_proto::MsgPackOrJson;
-use diom_rate_limit::RateLimiter;
+use diom_rate_limit::State as RateLimiter;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -21,7 +20,7 @@ use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openap
 // Re-export types that are used in AppState
 use diom_rate_limit::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};
 
-pub type RateLimitNamespace = Namespace<RateLimitConfig>;
+pub use diom_rate_limit::RateLimitNamespace;
 
 // FIXME(@svix-lucho): Not fully convinced about 'method' and 'config'
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -156,13 +155,19 @@ pub struct RateLimiterGetRemainingOut {
 #[aide_annotate(op_id = "v1.rate_limiter.limit")]
 async fn rate_limiter_limit(
     Extension(repl): Extension<RaftState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterCheckIn>,
 ) -> Result<MsgPackOrJson<RateLimiterCheckOut>> {
+    let namespace: RateLimitNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_not_found()?;
+
     let key = data.key.0.clone();
     let units = data.tokens;
     let method = data.method.into();
 
-    let operation = RateLimiter::limit_operation(key, units, method);
+    let operation = RateLimiter::limit_operation(namespace, key, units, method);
     let response = repl.client_write(operation).await.map_err_generic()?.0?;
 
     Ok(MsgPackOrJson(RateLimiterCheckOut {
@@ -175,12 +180,22 @@ async fn rate_limiter_limit(
 /// Rate Limiter Get Remaining
 #[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
 async fn rate_limiter_get_remaining(
-    State(AppState { rate_limiter, .. }): State<AppState>,
+    State(state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetRemainingIn>,
 ) -> Result<MsgPackOrJson<RateLimiterGetRemainingOut>> {
+    let namespace: RateLimitNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_not_found()?;
+
     let now = Timestamp::now();
-    let (remaining, retry_after) =
-        rate_limiter.get_remaining(now, &data.key, data.method.into())?;
+    let (remaining, retry_after) = state.rate_limiter.get_remaining(
+        now,
+        namespace.id,
+        namespace.storage_type,
+        &data.key,
+        data.method.into(),
+    )?;
 
     Ok(MsgPackOrJson(RateLimiterGetRemainingOut {
         remaining,

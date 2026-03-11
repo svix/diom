@@ -1188,6 +1188,7 @@ name = "diom-rate-limit"
 version = "0.0.1"
 dependencies = [
  "diom-error",
+ "diom-namespace",
  "diom-operations",
  "fjall",
  "fjall-utils",
