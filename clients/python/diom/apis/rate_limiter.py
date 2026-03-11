@@ -7,9 +7,17 @@ from ..models import (
     RateLimiterGetRemainingIn,
     RateLimiterGetRemainingOut,
 )
+from .rate_limiter_namespace import (
+    RateLimiterNamespace,
+    RateLimiterNamespaceAsync,
+)
 
 
 class RateLimiterAsync(ApiBase):
+    @property
+    def namespace(self) -> RateLimiterNamespaceAsync:
+        return RateLimiterNamespaceAsync(self._client)
+
     async def limit(
         self,
         rate_limiter_check_in: RateLimiterCheckIn,
@@ -19,7 +27,7 @@ class RateLimiterAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/rate-limiter/limit",
+            path="/api/v1/rate-limit/limit",
             body=body,
             response_type=RateLimiterCheckOut,
         )
@@ -33,13 +41,17 @@ class RateLimiterAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/rate-limiter/get-remaining",
+            path="/api/v1/rate-limit/get-remaining",
             body=body,
             response_type=RateLimiterGetRemainingOut,
         )
 
 
 class RateLimiter(ApiBase):
+    @property
+    def namespace(self) -> RateLimiterNamespace:
+        return RateLimiterNamespace(self._client)
+
     def limit(
         self,
         rate_limiter_check_in: RateLimiterCheckIn,
@@ -49,7 +61,7 @@ class RateLimiter(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/rate-limiter/limit",
+            path="/api/v1/rate-limit/limit",
             body=body,
             response_type=RateLimiterCheckOut,
         )
@@ -63,7 +75,7 @@ class RateLimiter(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/rate-limiter/get-remaining",
+            path="/api/v1/rate-limit/get-remaining",
             body=body,
             response_type=RateLimiterGetRemainingOut,
         )

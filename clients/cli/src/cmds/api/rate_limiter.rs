@@ -2,6 +2,8 @@
 use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
+use super::RateLimiterNamespaceArgs;
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct RateLimiterArgs {
@@ -11,6 +13,7 @@ pub struct RateLimiterArgs {
 
 #[derive(Subcommand)]
 pub enum RateLimiterCommands {
+    Namespace(RateLimiterNamespaceArgs),
     /// Rate Limiter Check and Consume
     Limit {
         rate_limiter_check_in: crate::json::JsonOf<diom_client::models::RateLimiterCheckIn>,
@@ -29,6 +32,9 @@ impl RateLimiterCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
+            Self::Namespace(args) => {
+                args.command.exec(client, color_mode).await?;
+            }
             Self::Limit {
                 rate_limiter_check_in,
             } => {

@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.RateLimiterCheckIn;
@@ -29,7 +30,7 @@ public class RateLimiter {
     public RateLimiterCheckOut limit(
         final RateLimiterCheckIn rateLimiterCheckIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limiter/limit");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/limit");
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -43,7 +44,7 @@ public class RateLimiter {
     public RateLimiterGetRemainingOut getRemaining(
         final RateLimiterGetRemainingIn rateLimiterGetRemainingIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limiter/get-remaining");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/get-remaining");
         return this.client.executeRequest(
             "POST",
             url.build(),

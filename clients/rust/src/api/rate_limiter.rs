@@ -1,4 +1,5 @@
 // this file is @generated
+use super::RateLimiterNamespace;
 use crate::{Configuration, error::Result, models::*};
 
 pub struct RateLimiter<'a> {
@@ -8,6 +9,10 @@ pub struct RateLimiter<'a> {
 impl<'a> RateLimiter<'a> {
     pub(super) fn new(cfg: &'a Configuration) -> Self {
         Self { cfg }
+    }
+
+    pub fn namespace(&self) -> RateLimiterNamespace<'a> {
+        RateLimiterNamespace::new(self.cfg)
     }
 
     /// Rate Limiter Check and Consume

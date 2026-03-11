@@ -14,12 +14,13 @@ mod msgs_queue;
 mod msgs_stream;
 mod msgs_topic;
 mod rate_limiter;
+mod rate_limiter_namespace;
 
 pub use self::{
     cache::Cache, cache_namespace::CacheNamespace, health::Health, idempotency::Idempotency,
     idempotency_namespace::IdempotencyNamespace, kv::Kv, kv_namespace::KvNamespace, msgs::Msgs,
     msgs_namespace::MsgsNamespace, msgs_queue::MsgsQueue, msgs_stream::MsgsStream,
-    msgs_topic::MsgsTopic, rate_limiter::RateLimiter,
+    msgs_topic::MsgsTopic, rate_limiter::RateLimiter, rate_limiter_namespace::RateLimiterNamespace,
 };
 
 impl DiomClient {
