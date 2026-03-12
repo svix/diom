@@ -9,6 +9,7 @@ use super::{
     operations::{RecordLogTimestampOperation, TickOperation},
 };
 use crate::cfg::Configuration;
+use coyote_operations::OperationWriter;
 use openraft::error::{ClientWriteError, RaftError};
 use tap::TapFallible;
 use tokio::task::JoinSet;
@@ -50,9 +51,7 @@ impl BackgroundJob for RecordLogTimestamps {
         loop {
             tracing::trace!("recording log timestamps");
             let op = RecordLogTimestampOperation {};
-            self.handle
-                .client_write_background::<super::operations::InternalOperation>(op.into())
-                .await?;
+            self.handle.write_request(op).await?;
             ticker.tick().await;
         }
     }
@@ -68,9 +67,7 @@ impl BackgroundJob for Tick {
         loop {
             tracing::trace!("recording a no-op event");
             let op = TickOperation {};
-            self.handle
-                .client_write_background::<super::operations::InternalOperation>(op.into())
-                .await?;
+            self.handle.write_request(op).await?;
             ticker.tick().await;
         }
     }
@@ -83,13 +80,7 @@ struct KvBackground {
 impl BackgroundJob for KvBackground {
     async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
         let store = self.handle.state_machine.kv_store().await;
-        coyote_kv::worker(
-            store,
-            async move |message: coyote_kv::operations::KvOperation| {
-                self.handle.client_write_background(message).await
-            },
-        )
-        .await
+        coyote_kv::worker(store, self.handle).await
     }
 }
 
@@ -100,13 +91,7 @@ struct CacheBackground {
 impl BackgroundJob for CacheBackground {
     async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
         let store = self.handle.state_machine.cache_store().await;
-        coyote_cache::worker(
-            store,
-            async move |message: coyote_cache::operations::CacheOperation| {
-                self.handle.client_write_background(message).await
-            },
-        )
-        .await
+        coyote_cache::worker(store, self.handle).await
     }
 }
 
@@ -117,13 +102,7 @@ struct IdempotencyBackground {
 impl BackgroundJob for IdempotencyBackground {
     async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
         let store = self.handle.state_machine.idempotency_store().await;
-        coyote_idempotency::worker(
-            store,
-            async move |message: coyote_idempotency::operations::IdempotencyOperation| {
-                self.handle.client_write_background(message).await
-            },
-        )
-        .await
+        coyote_idempotency::worker(store, self.handle).await
     }
 }
 
