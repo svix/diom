@@ -29,8 +29,16 @@ pub struct State {
 impl State {
     pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            persistent_controller: KvController::new(dbs.persistent, CACHE_KEYSPACE),
-            ephemeral_controller: KvController::new(dbs.ephemeral, CACHE_KEYSPACE),
+            persistent_controller: KvController::new(
+                StorageType::Persistent,
+                dbs.persistent,
+                CACHE_KEYSPACE,
+            ),
+            ephemeral_controller: KvController::new(
+                StorageType::Ephemeral,
+                dbs.ephemeral,
+                CACHE_KEYSPACE,
+            ),
         })
     }
 
@@ -42,37 +50,48 @@ impl State {
     }
 }
 
-/// This is the worker function for this module, it does background cleanup and accounting.
-/// It deletes expired entries from the database and evicts entries if the Cache is configured to do so.
-pub async fn worker<F>(dbs: Databases, is_shutting_down: F)
-where
-    F: Fn() -> bool,
-{
-    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
-    let controller = KvController::new(dbs.persistent, CACHE_KEYSPACE);
-
-    loop {
-        if is_shutting_down() {
-            break;
-        }
-
-        timer.tick().await;
-
-        let now = Timestamp::now();
-        match controller.clear_expired(now) {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::error!(error = ?e, "Failed to clean.");
-            }
-        };
-
-        // FIXME: also do cache eviction once that's implemented
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
     pub expiry: Option<Timestamp>,
 
     pub value: Vec<u8>,
+}
+
+/// This is the worker function for this module, it does background cleanup and accounting.
+///
+/// It should not mutate the database in any way that could possibly be customer- or
+/// replication-visible; all  mutations should be written through the writer function
+pub async fn worker<F>(state: State, writer: F) -> coyote_operations::BackgroundResult<()>
+where
+    F: AsyncFn(
+        operations::CacheOperation,
+    ) -> coyote_operations::BackgroundResult<operations::Response>,
+{
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+
+    let shutting_down = coyote_core::shutdown::shutting_down_token();
+
+    while shutting_down
+        .run_until_cancelled(timer.tick())
+        .await
+        .is_some()
+    {
+        worker_loop(&state, &writer).await?;
+    }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn worker_loop<F>(state: &State, writer: &F) -> coyote_operations::BackgroundResult<()>
+where
+    F: AsyncFn(
+        operations::CacheOperation,
+    ) -> coyote_operations::BackgroundResult<operations::Response>,
+{
+    writer(operations::ClearExpiredOperation::new(state.persistent_controller.storage_type).into())
+        .await?;
+    writer(operations::ClearExpiredOperation::new(state.ephemeral_controller.storage_type).into())
+        .await?;
+    Ok(())
 }

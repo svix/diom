@@ -7,7 +7,9 @@ use super::{
     raft::Raft,
 };
 use anyhow::Context;
-use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
+use coyote_operations::{
+    ModuleRequest, OperationRequest, OperationRequestMetadata, OperationResponse,
+};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -84,10 +86,10 @@ impl RequestWithContext {
 
     pub(crate) fn hashed_key(&self) -> Option<String> {
         let digest = match &self.inner {
-            Request::Kv(op) => Sha256::digest(op.key_name()),
+            Request::Kv(op) => Sha256::digest(op.key_name()?),
             Request::RateLimiter(op) => Sha256::digest(op.key_name()),
-            Request::Idempotency(op) => Sha256::digest(op.key_name()),
-            Request::Cache(op) => Sha256::digest(op.key_name()),
+            Request::Idempotency(op) => Sha256::digest(op.key_name()?),
+            Request::Cache(op) => Sha256::digest(op.key_name()?),
             Request::Msgs(op) => Sha256::digest(op.key_name()),
             Request::ClusterInternal(_) => return None,
         };
@@ -287,6 +289,43 @@ impl RaftState {
         let resp = module_response.try_into().map_err(|e| {
             anyhow::anyhow!("module response should be convertible into target type: {e:?}")
         })?;
+        Ok(resp)
+    }
+
+    /// Write a single operation into the Raft log and return its response.
+    #[tracing::instrument(skip_all)]
+    pub async fn client_write_background<O>(
+        &self,
+        op: O,
+    ) -> coyote_operations::BackgroundResult<O::Response>
+    where
+        O: ModuleRequest + Into<Request>,
+        O::Response: TryFrom<Response>,
+    {
+        let inner: Request = op.into();
+        let now = self.state_machine.now();
+        let request =
+            RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
+        let response = match self.raft.client_write(request.clone()).await {
+            Ok(resp) => {
+                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
+                resp.data
+            }
+            Err(err) => {
+                if err.forward_to_leader().is_some() {
+                    return Err(coyote_operations::BackgroundError::NotLeader);
+                } else {
+                    return Err(coyote_operations::BackgroundError::Other(
+                        coyote_error::Error::generic(err),
+                    ));
+                }
+            }
+        };
+        let Ok(resp) = response.try_into() else {
+            return Err(coyote_operations::BackgroundError::Other(
+                coyote_error::Error::generic("invalid response type"),
+            ));
+        };
         Ok(resp)
     }
 

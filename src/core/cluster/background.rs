@@ -13,8 +13,30 @@ use openraft::error::{ClientWriteError, RaftError};
 use tap::TapFallible;
 use tokio::task::JoinSet;
 
+trait CanBeForwardToLeader {
+    fn is_forward_to_leader_err(&self) -> bool;
+}
+
+impl CanBeForwardToLeader for anyhow::Error {
+    fn is_forward_to_leader_err(&self) -> bool {
+        if let Some(raft_err) =
+            self.downcast_ref::<RaftError<NodeId, ClientWriteError<NodeId, Node>>>()
+        {
+            raft_err.forward_to_leader().is_some()
+        } else {
+            false
+        }
+    }
+}
+
+impl CanBeForwardToLeader for coyote_operations::BackgroundError {
+    fn is_forward_to_leader_err(&self) -> bool {
+        matches!(self, Self::NotLeader)
+    }
+}
+
 trait BackgroundJob {
-    async fn run_on_leader(self) -> anyhow::Result<()>;
+    async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()>;
 }
 
 struct RecordLogTimestamps {
@@ -23,12 +45,13 @@ struct RecordLogTimestamps {
 }
 
 impl BackgroundJob for RecordLogTimestamps {
-    async fn run_on_leader(self) -> anyhow::Result<()> {
+    async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
         let mut ticker = tokio::time::interval(self.cfg.cluster.log_index_interval);
         loop {
             tracing::trace!("recording log timestamps");
+            let op = RecordLogTimestampOperation {};
             self.handle
-                .client_write(RecordLogTimestampOperation {})
+                .client_write_background::<super::operations::InternalOperation>(op.into())
                 .await?;
             ticker.tick().await;
         }
@@ -40,26 +63,72 @@ struct Tick {
 }
 
 impl BackgroundJob for Tick {
-    async fn run_on_leader(self) -> anyhow::Result<()> {
+    async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
         let mut ticker = tokio::time::interval(Duration::from_secs(10));
         loop {
             tracing::trace!("recording a no-op event");
-            self.handle.client_write(TickOperation {}).await?;
+            let op = TickOperation {};
+            self.handle
+                .client_write_background::<super::operations::InternalOperation>(op.into())
+                .await?;
             ticker.tick().await;
         }
     }
 }
 
-struct BackgroundJobRunner {
-    jobs: JoinSet<anyhow::Result<()>>,
+struct KvBackground {
+    handle: RaftState,
 }
 
-fn is_forward_to_leader_err(e: &anyhow::Error) -> bool {
-    if let Some(raft_err) = e.downcast_ref::<RaftError<NodeId, ClientWriteError<NodeId, Node>>>() {
-        raft_err.forward_to_leader().is_some()
-    } else {
-        false
+impl BackgroundJob for KvBackground {
+    async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
+        let store = self.handle.state_machine.kv_store().await;
+        coyote_kv::worker(
+            store,
+            async move |message: coyote_kv::operations::KvOperation| {
+                self.handle.client_write_background(message).await
+            },
+        )
+        .await
     }
+}
+
+struct CacheBackground {
+    handle: RaftState,
+}
+
+impl BackgroundJob for CacheBackground {
+    async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
+        let store = self.handle.state_machine.cache_store().await;
+        coyote_cache::worker(
+            store,
+            async move |message: coyote_cache::operations::CacheOperation| {
+                self.handle.client_write_background(message).await
+            },
+        )
+        .await
+    }
+}
+
+struct IdempotencyBackground {
+    handle: RaftState,
+}
+
+impl BackgroundJob for IdempotencyBackground {
+    async fn run_on_leader(self) -> coyote_operations::BackgroundResult<()> {
+        let store = self.handle.state_machine.idempotency_store().await;
+        coyote_idempotency::worker(
+            store,
+            async move |message: coyote_idempotency::operations::IdempotencyOperation| {
+                self.handle.client_write_background(message).await
+            },
+        )
+        .await
+    }
+}
+
+struct BackgroundJobRunner {
+    jobs: JoinSet<coyote_operations::BackgroundResult<()>>,
 }
 
 impl BackgroundJobRunner {
@@ -68,6 +137,24 @@ impl BackgroundJobRunner {
         jobs.spawn(
             RecordLogTimestamps {
                 cfg,
+                handle: handle.clone(),
+            }
+            .run_on_leader(),
+        );
+        jobs.spawn(
+            KvBackground {
+                handle: handle.clone(),
+            }
+            .run_on_leader(),
+        );
+        jobs.spawn(
+            CacheBackground {
+                handle: handle.clone(),
+            }
+            .run_on_leader(),
+        );
+        jobs.spawn(
+            IdempotencyBackground {
                 handle: handle.clone(),
             }
             .run_on_leader(),
@@ -83,10 +170,10 @@ impl BackgroundJobRunner {
             match job {
                 Ok(Ok(_)) => {}
                 Ok(Err(e)) => {
-                    if is_forward_to_leader_err(&e) {
+                    if e.is_forward_to_leader_err() {
                         tracing::trace!("some worker died with forward-to-leader, who cares");
                     } else {
-                        return Err(e);
+                        return Err(e.into());
                     }
                 }
                 Err(e) if e.is_cancelled() => {}
@@ -190,12 +277,12 @@ pub(super) async fn run_background_jobs_on_leader(
                         match res {
                             Ok(Ok(_)) => {},
                             Ok(Err(e)) => {
-                                if is_forward_to_leader_err(&e) {
+                                if e.is_forward_to_leader_err() {
                                     tracing::debug!("failed a write because we are not the leader");
                                     break;
                                 } else {
                                     runner.stop_all().await?;
-                                    return Err(e);
+                                    return Err(e.into());
                                 }
                             }
                             Err(e) => {

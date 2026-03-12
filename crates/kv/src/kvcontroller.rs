@@ -1,7 +1,7 @@
 use coyote_error::Result;
 use coyote_namespace::entities::NamespaceId;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
-use fjall_utils::{TableRow, WriteBatchExt};
+use fjall_utils::{StorageType, TableRow, WriteBatchExt};
 use itertools::Itertools;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -9,8 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::tables::{ExpirationRow, KvPairRow};
 
-const EXPIRATION_BATCH_SIZE: usize = 1_000; // FIXME(@svix-lucho): make this configurable? Probably
-// much larger too?
+const EXPIRATION_BATCH_SIZE: usize = 1_000;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -39,12 +38,18 @@ impl From<KvPairRow> for KvModel {
 
 #[derive(Clone)]
 pub struct KvController {
+    pub storage_type: StorageType,
     db: fjall::Database,
     keyspace: fjall::Keyspace,
+    keyspace_name: &'static str,
 }
 
 impl KvController {
-    pub fn new(db: fjall::Database, keyspace_name: &str) -> Self {
+    pub fn new(
+        storage_type: StorageType,
+        db: fjall::Database,
+        keyspace_name: &'static str,
+    ) -> Self {
         let tables = {
             let opts = KeyspaceCreateOptions::default()
                 .with_kv_separation(Some(KvSeparationOptions::default()));
@@ -52,8 +57,10 @@ impl KvController {
         };
 
         Self {
+            storage_type,
             db,
             keyspace: tables,
+            keyspace_name,
         }
     }
 
@@ -164,24 +171,26 @@ impl KvController {
         KvPairRow::values(&self.keyspace)
     }
 
-    pub fn clear_expired(&self, now: Timestamp) -> Result<usize> {
+    #[tracing::instrument(skip(self), fields(keyspace_id, storage_type, cleared))]
+    pub fn clear_expired(&self, now: Timestamp, max_expirations: usize) -> Result<usize> {
         let start =
             ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
         let mut cleared = 0;
+        let start_time = std::time::Instant::now();
+
+        tracing::Span::current()
+            .record("keyspace_name", self.keyspace_name)
+            .record("storage_type", tracing::field::debug(self.storage_type));
 
         for chunk in &self
             .keyspace
             .range(start..=end)
+            .take(max_expirations)
             .chunks(EXPIRATION_BATCH_SIZE)
         {
             let mut batch = self.db.batch();
-            // FIXME: there's a race condition because the item key is first read and only then
-            // acted upon.
-            // Essentially: (1) key read here, (2) key + expiry updated elsewhere, (3) new key
-            // is deleted here even though it's not expired.
-            // See https://svixhq.slack.com/archives/C0A72988962/p1772685631571679
             for item in chunk {
                 cleared += 1;
                 let k = item.key()?;
@@ -192,6 +201,15 @@ impl KvController {
             }
             batch.commit()?;
         }
+
+        if cleared == max_expirations {
+            tracing::warn!(cleared, elapsed=?start_time.elapsed(), "expiration loop is not keeping up");
+        } else if cleared > 0 {
+            tracing::debug!(cleared, "cleared some keys");
+        } else {
+            tracing::trace!("no expired keys");
+        }
+        tracing::Span::current().record("cleared", cleared);
 
         Ok(cleared)
     }
@@ -216,7 +234,7 @@ mod tests {
                 .temporary(true)
                 .open()
                 .unwrap();
-            let controller = KvController::new(db, "mod_kv_test");
+            let controller = KvController::new(StorageType::Persistent, db, "mod_kv_test");
             Self {
                 _workdir: workdir,
                 controller,
@@ -446,7 +464,7 @@ mod tests {
             assert!(key_exists_as_of(&controller, key, then));
         }
 
-        assert_eq!(controller.clear_expired(Timestamp::now()).unwrap(), 4);
+        assert_eq!(controller.clear_expired(Timestamp::now(), 100).unwrap(), 4);
 
         for (key, _, _) in &expired_models {
             // now it should really and truly be gone
