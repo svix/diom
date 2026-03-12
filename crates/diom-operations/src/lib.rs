@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 #[derive(Debug)]
 pub enum BackgroundError {
     NotLeader,
+    InvalidResponse,
     Other(diom_error::Error),
 }
 
@@ -14,6 +15,7 @@ impl std::fmt::Display for BackgroundError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::NotLeader => write!(f, "tried to write to a non-leader node"),
+            Self::InvalidResponse => write!(f, "raft layer returned invalid response type"),
             Self::Other(e) => std::fmt::Display::fmt(&e, f),
         }
     }
@@ -27,12 +29,50 @@ impl std::error::Error for BackgroundError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match &self {
             Self::Other(e) => Some(e),
+            Self::InvalidResponse => None,
             Self::NotLeader => None,
         }
     }
 }
 
 pub type BackgroundResult<T> = std::result::Result<T, BackgroundError>;
+
+pub trait OperationWriter {
+    type Request: Sized;
+    type Response: Sized;
+
+    /// Execute a write against the replicated state machine
+    ///
+    /// This should typically not be called by users
+    #[allow(async_fn_in_trait)]
+    async fn do_write_request(&self, request: Self::Request) -> BackgroundResult<Self::Response>;
+
+    /// Execute an operation against the replicated state machine
+    ///
+    /// This calls `.do_write_request` internally, and takes care of wrapping/unwrapping
+    /// the request appropriately.
+    #[allow(async_fn_in_trait)]
+    async fn write_request<O>(&self, op: O) -> BackgroundResult<O::Response>
+    where
+        O: OperationRequest + Into<O::RequestParent>,
+        O::RequestParent: Into<Self::Request>,
+        <O::Response as OperationResponse>::ResponseParent: TryFrom<Self::Response>,
+        O::Response: TryFrom<<O::Response as OperationResponse>::ResponseParent>,
+    {
+        let module_request: O::RequestParent = op.into();
+        let top_level_request: Self::Request = module_request.into();
+        let top_level_response = self.do_write_request(top_level_request).await?;
+        let Ok(module_response): std::result::Result<
+            <O::Response as OperationResponse>::ResponseParent,
+            _,
+        > = top_level_response.try_into() else {
+            return Err(BackgroundError::InvalidResponse);
+        };
+        module_response
+            .try_into()
+            .map_err(|_| BackgroundError::InvalidResponse)
+    }
+}
 
 /// Macro support module
 #[doc(hidden)]

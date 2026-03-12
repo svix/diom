@@ -7,9 +7,7 @@ use super::{
     raft::Raft,
 };
 use anyhow::Context;
-use diom_operations::{
-    ModuleRequest, OperationRequest, OperationRequestMetadata, OperationResponse,
-};
+use diom_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -292,43 +290,6 @@ impl RaftState {
         Ok(resp)
     }
 
-    /// Write a single operation into the Raft log and return its response.
-    #[tracing::instrument(skip_all)]
-    pub async fn client_write_background<O>(
-        &self,
-        op: O,
-    ) -> diom_operations::BackgroundResult<O::Response>
-    where
-        O: ModuleRequest + Into<Request>,
-        O::Response: TryFrom<Response>,
-    {
-        let inner: Request = op.into();
-        let now = self.state_machine.now();
-        let request =
-            RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
-        let response = match self.raft.client_write(request.clone()).await {
-            Ok(resp) => {
-                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
-                resp.data
-            }
-            Err(err) => {
-                if err.forward_to_leader().is_some() {
-                    return Err(diom_operations::BackgroundError::NotLeader);
-                } else {
-                    return Err(diom_operations::BackgroundError::Other(
-                        diom_error::Error::generic(err),
-                    ));
-                }
-            }
-        };
-        let Ok(resp) = response.try_into() else {
-            return Err(diom_operations::BackgroundError::Other(
-                diom_error::Error::generic("invalid response type"),
-            ));
-        };
-        Ok(resp)
-    }
-
     pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> anyhow::Result<()> {
         let network = NetworkFactory::new(&cfg)?;
         let has_cluster = self
@@ -411,5 +372,35 @@ impl RaftState {
             )
             .await?;
         Ok(())
+    }
+}
+
+impl diom_operations::OperationWriter for RaftState {
+    type Request = Request;
+    type Response = Response;
+
+    async fn do_write_request(
+        &self,
+        request: Self::Request,
+    ) -> diom_operations::BackgroundResult<Self::Response> {
+        let now = self.state_machine.now();
+        let request =
+            RequestWithContext::new(request, now, Some(opentelemetry::Context::current().into()));
+        match self.raft.client_write(request.clone()).await {
+            Ok(resp) => {
+                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
+                Ok(resp.data)
+            }
+            Err(err) => {
+                if let Some(_) = err.forward_to_leader() {
+                    Err(diom_operations::BackgroundError::NotLeader)
+                } else {
+                    tracing::warn!(?err, "unhandled error writing request to raft");
+                    Err(diom_operations::BackgroundError::Other(
+                        diom_error::Error::generic(err),
+                    ))
+                }
+            }
+        }
     }
 }

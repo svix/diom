@@ -10,6 +10,7 @@ pub mod operations;
 use diom_error::Result;
 use diom_kv::kvcontroller::KvController;
 use diom_namespace::{Namespace, entities::CacheConfig};
+use diom_operations::OperationWriter;
 use fjall_utils::{Databases, StorageType};
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -63,9 +64,9 @@ pub struct CacheModel {
 /// replication-visible; all  mutations should be written through the writer function
 pub async fn worker<F>(state: State, writer: F) -> diom_operations::BackgroundResult<()>
 where
-    F: AsyncFn(
-        operations::CacheOperation,
-    ) -> diom_operations::BackgroundResult<operations::Response>,
+    F: OperationWriter,
+    <F as OperationWriter>::Request: From<operations::CacheOperation>,
+    operations::Response: TryFrom<<F as OperationWriter>::Response>,
 {
     let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
 
@@ -85,13 +86,19 @@ where
 #[tracing::instrument(skip_all)]
 pub async fn worker_loop<F>(state: &State, writer: &F) -> diom_operations::BackgroundResult<()>
 where
-    F: AsyncFn(
-        operations::CacheOperation,
-    ) -> diom_operations::BackgroundResult<operations::Response>,
+    F: OperationWriter,
+    <F as OperationWriter>::Request: From<operations::CacheOperation>,
+    operations::Response: TryFrom<<F as OperationWriter>::Response>,
 {
-    writer(operations::ClearExpiredOperation::new(state.persistent_controller.storage_type).into())
+    writer
+        .write_request(operations::ClearExpiredOperation::new(
+            state.persistent_controller.storage_type,
+        ))
         .await?;
-    writer(operations::ClearExpiredOperation::new(state.ephemeral_controller.storage_type).into())
+    writer
+        .write_request(operations::ClearExpiredOperation::new(
+            state.ephemeral_controller.storage_type,
+        ))
         .await?;
     Ok(())
 }
