@@ -4,6 +4,36 @@ use std::{collections::HashMap, fmt::Debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
+#[derive(Debug)]
+pub enum BackgroundError {
+    NotLeader,
+    Other(diom_error::Error),
+}
+
+impl std::fmt::Display for BackgroundError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotLeader => write!(f, "tried to write to a non-leader node"),
+            Self::Other(e) => std::fmt::Display::fmt(&e, f),
+        }
+    }
+}
+
+impl std::error::Error for BackgroundError {
+    fn description(&self) -> &str {
+        "Error while writing from background job"
+    }
+
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match &self {
+            Self::Other(e) => Some(e),
+            Self::NotLeader => None,
+        }
+    }
+}
+
+pub type BackgroundResult<T> = std::result::Result<T, BackgroundError>;
+
 /// Macro support module
 #[doc(hidden)]
 pub mod __reexports {

@@ -2,10 +2,12 @@ use crate::State;
 
 use serde::{Deserialize, Serialize};
 
+mod clear_expired;
 mod create_namespace;
 mod delete;
 mod set;
 
+pub use clear_expired::ClearExpiredOperation;
 pub use create_namespace::{CreateCacheOperation, CreateCacheResponseData};
 pub use delete::DeleteOperation;
 pub use set::SetOperation;
@@ -23,16 +25,18 @@ raft_module_operations!(
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> (),
         CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
+        ClearExpired(ClearExpiredOperation) -> (),
     },
     state = CacheRaftState<'_>,
 );
 
 impl CacheOperation {
-    pub fn key_name(&self) -> &str {
+    pub fn key_name(&self) -> Option<&str> {
         match self {
-            Self::Set(op) => &op.key,
-            Self::Delete(op) => &op.key,
-            Self::CreateCache(op) => &op.name,
+            Self::Set(op) => Some(&op.key),
+            Self::Delete(op) => Some(&op.key),
+            Self::CreateCache(op) => Some(&op.name),
+            Self::ClearExpired(_) => None,
         }
     }
 }

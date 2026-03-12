@@ -11,13 +11,10 @@
 
 pub mod operations;
 
-use std::time::Duration;
-
 use diom_error::Result;
 use diom_kv::kvcontroller::KvController;
 use diom_namespace::{Namespace, entities::IdempotencyConfig};
 use fjall_utils::{Databases, StorageType};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
@@ -62,8 +59,16 @@ pub struct State {
 impl State {
     pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            persistent_controller: KvController::new(dbs.persistent, IDEMPOTENCY_KEYSPACE),
-            ephemeral_controller: KvController::new(dbs.ephemeral, IDEMPOTENCY_KEYSPACE),
+            persistent_controller: KvController::new(
+                StorageType::Persistent,
+                dbs.persistent,
+                IDEMPOTENCY_KEYSPACE,
+            ),
+            ephemeral_controller: KvController::new(
+                StorageType::Ephemeral,
+                dbs.ephemeral,
+                IDEMPOTENCY_KEYSPACE,
+            ),
         })
     }
 
@@ -76,28 +81,40 @@ impl State {
 }
 
 /// This is the worker function for this module, it does background cleanup and accounting.
-/// It deletes expired entries from the database.
-pub async fn worker<F>(dbs: Databases, is_shutting_down: F)
+///
+/// It should not mutate the database in any way that could possibly be customer- or
+/// replication-visible; all  mutations should be written through the writer function
+pub async fn worker<F>(state: State, writer: F) -> diom_operations::BackgroundResult<()>
 where
-    F: Fn() -> bool,
+    F: AsyncFn(
+        operations::IdempotencyOperation,
+    ) -> diom_operations::BackgroundResult<operations::Response>,
 {
-    let mut timer = tokio::time::interval(Duration::from_secs(1));
-    // FIXME: handle both!
-    let controller = KvController::new(dbs.persistent, IDEMPOTENCY_KEYSPACE);
+    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
 
-    loop {
-        if is_shutting_down() {
-            break;
-        }
+    let shutting_down = diom_core::shutdown::shutting_down_token();
 
-        timer.tick().await;
-
-        let now = Timestamp::now();
-        match controller.clear_expired(now) {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::error!(error = ?e, "Failed to clean.");
-            }
-        };
+    while shutting_down
+        .run_until_cancelled(timer.tick())
+        .await
+        .is_some()
+    {
+        worker_loop(&state, &writer).await?;
     }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn worker_loop<F>(state: &State, writer: &F) -> diom_operations::BackgroundResult<()>
+where
+    F: AsyncFn(
+        operations::IdempotencyOperation,
+    ) -> diom_operations::BackgroundResult<operations::Response>,
+{
+    writer(operations::ClearExpiredOperation::new(state.persistent_controller.storage_type).into())
+        .await?;
+    writer(operations::ClearExpiredOperation::new(state.ephemeral_controller.storage_type).into())
+        .await?;
+    Ok(())
 }
