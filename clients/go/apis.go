@@ -36,8 +36,8 @@ func (diom Diom) Msgs() Msgs {
 	return diom_apis.NewMsgs(&diom.inner)
 }
 
-type RateLimiter = diom_apis.RateLimiter
+type RateLimit = diom_apis.RateLimit
 
-func (diom Diom) RateLimiter() RateLimiter {
-	return diom_apis.NewRateLimiter(&diom.inner)
+func (diom Diom) RateLimit() RateLimit {
+	return diom_apis.NewRateLimit(&diom.inner)
 }

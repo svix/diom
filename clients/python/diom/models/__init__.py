@@ -56,17 +56,15 @@ from .msg_topic_configure_out import MsgTopicConfigureOut
 from .operation_behavior import OperationBehavior
 from .ping_out import PingOut
 from .queue_msg_out import QueueMsgOut
+from .rate_limit_check_in import RateLimitCheckIn
+from .rate_limit_check_out import RateLimitCheckOut
+from .rate_limit_create_namespace_in import RateLimitCreateNamespaceIn
+from .rate_limit_create_namespace_out import RateLimitCreateNamespaceOut
+from .rate_limit_get_namespace_in import RateLimitGetNamespaceIn
+from .rate_limit_get_namespace_out import RateLimitGetNamespaceOut
+from .rate_limit_get_remaining_in import RateLimitGetRemainingIn
+from .rate_limit_get_remaining_out import RateLimitGetRemainingOut
 from .rate_limit_status import RateLimitStatus
-from .rate_limiter_check_in import RateLimiterCheckIn
-from .rate_limiter_check_out import RateLimiterCheckOut
-from .rate_limiter_create_namespace_in import RateLimiterCreateNamespaceIn
-from .rate_limiter_create_namespace_out import RateLimiterCreateNamespaceOut
-from .rate_limiter_fixed_window_config import RateLimiterFixedWindowConfig
-from .rate_limiter_get_namespace_in import RateLimiterGetNamespaceIn
-from .rate_limiter_get_namespace_out import RateLimiterGetNamespaceOut
-from .rate_limiter_get_remaining_in import RateLimiterGetRemainingIn
-from .rate_limiter_get_remaining_out import RateLimiterGetRemainingOut
-from .rate_limiter_token_bucket_config import RateLimiterTokenBucketConfig
 from .retention import Retention
 from .storage_type import StorageType
 from .stream_msg_out import StreamMsgOut
@@ -130,17 +128,15 @@ __all__ = [
     "OperationBehavior",
     "PingOut",
     "QueueMsgOut",
+    "RateLimitCheckIn",
+    "RateLimitCheckOut",
+    "RateLimitCreateNamespaceIn",
+    "RateLimitCreateNamespaceOut",
+    "RateLimitGetNamespaceIn",
+    "RateLimitGetNamespaceOut",
+    "RateLimitGetRemainingIn",
+    "RateLimitGetRemainingOut",
     "RateLimitStatus",
-    "RateLimiterCheckIn",
-    "RateLimiterCheckOut",
-    "RateLimiterCreateNamespaceIn",
-    "RateLimiterCreateNamespaceOut",
-    "RateLimiterFixedWindowConfig",
-    "RateLimiterGetNamespaceIn",
-    "RateLimiterGetNamespaceOut",
-    "RateLimiterGetRemainingIn",
-    "RateLimiterGetRemainingOut",
-    "RateLimiterTokenBucketConfig",
     "Retention",
     "StorageType",
     "StreamMsgOut",

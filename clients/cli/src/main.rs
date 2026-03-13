@@ -13,7 +13,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 use self::{
     cmds::{
-        api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimiterArgs},
+        api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
         benchmark::BenchmarkArgs,
     },
     config::Config,
@@ -86,7 +86,7 @@ enum RootCommands {
     Idempotency(IdempotencyArgs),
     Kv(KvArgs),
     Msgs(MsgsArgs),
-    RateLimit(RateLimiterArgs),
+    RateLimit(RateLimitArgs),
     Health(HealthArgs),
     /// Benchmark module throughput
     Benchmark(BenchmarkArgs),

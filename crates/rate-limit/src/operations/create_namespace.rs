@@ -7,7 +7,7 @@ use diom_namespace::{
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use super::{CreateRateLimitResponse, RateLimiterRaftState, RateLimiterRequest};
+use super::{CreateRateLimitResponse, RateLimitRaftState, RateLimitRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateRateLimitOperation {
@@ -72,8 +72,8 @@ impl From<CreateNamespaceOutput<RateLimitNamespaceConfig>> for CreateRateLimitRe
     }
 }
 
-impl RateLimiterRequest for CreateRateLimitOperation {
-    fn apply(self, state: RateLimiterRaftState<'_>, now: Timestamp) -> CreateRateLimitResponse {
+impl RateLimitRequest for CreateRateLimitOperation {
+    fn apply(self, state: RateLimitRaftState<'_>, now: Timestamp) -> CreateRateLimitResponse {
         CreateRateLimitResponse(self.apply_real(state.namespace, now))
     }
 }

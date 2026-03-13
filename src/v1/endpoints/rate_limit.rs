@@ -10,7 +10,7 @@ use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
-use diom_rate_limit::{State as RateLimiter, operations::CreateRateLimitOperation};
+use diom_rate_limit::{State as RateLimit, operations::CreateRateLimitOperation};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -23,8 +23,8 @@ pub use diom_rate_limit::{RateLimitStatus, TokenBucket};
 
 pub use diom_rate_limit::RateLimitNamespace;
 
-impl From<RateLimiterTokenBucketConfig> for TokenBucket {
-    fn from(val: RateLimiterTokenBucketConfig) -> Self {
+impl From<RateLimitTokenBucketConfig> for TokenBucket {
+    fn from(val: RateLimitTokenBucketConfig) -> Self {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
@@ -34,7 +34,7 @@ impl From<RateLimiterTokenBucketConfig> for TokenBucket {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct RateLimiterTokenBucketConfig {
+pub struct RateLimitTokenBucketConfig {
     /// Maximum capacity of the bucket
     #[validate(range(min = 1))]
     pub capacity: u64,
@@ -54,7 +54,7 @@ fn default_interval() -> u64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct RateLimiterCheckIn {
+pub struct RateLimitCheckIn {
     #[validate(nested)]
     pub key: EntityKey,
 
@@ -65,7 +65,7 @@ pub struct RateLimiterCheckIn {
     /// Rate limiter configuration
     #[validate(nested)]
     #[serde(flatten)]
-    pub config: RateLimiterTokenBucketConfig,
+    pub config: RateLimitTokenBucketConfig,
 }
 
 fn default_tokens() -> u64 {
@@ -73,7 +73,7 @@ fn default_tokens() -> u64 {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub struct RateLimiterCheckOut {
+pub struct RateLimitCheckOut {
     /// Whether the request is allowed
     pub status: RateLimitStatus,
 
@@ -86,18 +86,18 @@ pub struct RateLimiterCheckOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct RateLimiterGetRemainingIn {
+pub struct RateLimitGetRemainingIn {
     #[validate(nested)]
     pub key: EntityKey,
 
     /// Rate limiter configuration
     #[validate(nested)]
     #[serde(flatten)]
-    pub config: RateLimiterTokenBucketConfig,
+    pub config: RateLimitTokenBucketConfig,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub struct RateLimiterGetRemainingOut {
+pub struct RateLimitGetRemainingOut {
     /// Number of tokens remaining
     pub remaining: u64,
 
@@ -107,12 +107,12 @@ pub struct RateLimiterGetRemainingOut {
 }
 
 /// Rate Limiter Check and Consume
-#[aide_annotate(op_id = "v1.rate_limiter.limit")]
-async fn rate_limiter_limit(
+#[aide_annotate(op_id = "v1.rate_limit.limit")]
+async fn rate_limit_limit(
     Extension(repl): Extension<RaftState>,
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<RateLimiterCheckIn>,
-) -> Result<MsgPackOrJson<RateLimiterCheckOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<RateLimitCheckIn>,
+) -> Result<MsgPackOrJson<RateLimitCheckOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
@@ -122,10 +122,10 @@ async fn rate_limiter_limit(
     let units = data.tokens;
     let method = data.config.into();
 
-    let operation = RateLimiter::limit_operation(namespace, key, units, method);
+    let operation = RateLimit::limit_operation(namespace, key, units, method);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
-    Ok(MsgPackOrJson(RateLimiterCheckOut {
+    Ok(MsgPackOrJson(RateLimitCheckOut {
         status: response.status,
         remaining: response.remaining,
         retry_after: response
@@ -135,18 +135,18 @@ async fn rate_limiter_limit(
 }
 
 /// Rate Limiter Get Remaining
-#[aide_annotate(op_id = "v1.rate_limiter.get_remaining")]
-async fn rate_limiter_get_remaining(
+#[aide_annotate(op_id = "v1.rate_limit.get_remaining")]
+async fn rate_limit_get_remaining(
     State(state): State<AppState>,
-    MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetRemainingIn>,
-) -> Result<MsgPackOrJson<RateLimiterGetRemainingOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<RateLimitGetRemainingIn>,
+) -> Result<MsgPackOrJson<RateLimitGetRemainingOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
     let now = Timestamp::now();
-    let (remaining, retry_after) = state.rate_limiter.get_remaining(
+    let (remaining, retry_after) = state.rate_limit.get_remaining(
         now,
         namespace.id,
         namespace.storage_type,
@@ -154,14 +154,14 @@ async fn rate_limiter_get_remaining(
         data.config.into(),
     )?;
 
-    Ok(MsgPackOrJson(RateLimiterGetRemainingOut {
+    Ok(MsgPackOrJson(RateLimitGetRemainingOut {
         remaining,
         retry_after: retry_after.map(|t| t.as_millis() as u64),
     }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct RateLimiterCreateNamespaceIn {
+struct RateLimitCreateNamespaceIn {
     pub name: String,
     #[serde(default)]
     pub storage_type: StorageType,
@@ -169,7 +169,7 @@ struct RateLimiterCreateNamespaceIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct RateLimiterCreateNamespaceOut {
+struct RateLimitCreateNamespaceOut {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
@@ -179,12 +179,12 @@ struct RateLimiterCreateNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct RateLimiterGetNamespaceIn {
+struct RateLimitGetNamespaceIn {
     pub name: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct RateLimiterGetNamespaceOut {
+struct RateLimitGetNamespaceOut {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
@@ -194,15 +194,15 @@ struct RateLimiterGetNamespaceOut {
 }
 
 /// Create rate limiter namespace
-#[aide_annotate(op_id = "v1.rate_limiter.namespace.create")]
-async fn rate_limiter_create_namespace(
+#[aide_annotate(op_id = "v1.rate_limit.namespace.create")]
+async fn rate_limit_create_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<RateLimiterCreateNamespaceIn>,
-) -> Result<MsgPackOrJson<RateLimiterCreateNamespaceOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<RateLimitCreateNamespaceIn>,
+) -> Result<MsgPackOrJson<RateLimitCreateNamespaceOut>> {
     let operation =
         CreateRateLimitOperation::new(data.name, data.storage_type, data.max_storage_bytes);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(RateLimiterCreateNamespaceOut {
+    Ok(MsgPackOrJson(RateLimitCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
         storage_type: resp.storage_type,
@@ -212,12 +212,12 @@ async fn rate_limiter_create_namespace(
 }
 
 /// Get rate limiter namespace
-#[aide_annotate(op_id = "v1.rate_limiter.namespace.get")]
-async fn rate_limiter_get_namespace(
+#[aide_annotate(op_id = "v1.rate_limit.namespace.get")]
+async fn rate_limit_get_namespace(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<RateLimiterGetNamespaceIn>,
-) -> Result<MsgPackOrJson<RateLimiterGetNamespaceOut>> {
+    MsgPackOrJson(data): MsgPackOrJson<RateLimitGetNamespaceIn>,
+) -> Result<MsgPackOrJson<RateLimitGetNamespaceOut>> {
     repl.wait_linearizable().await.or_internal_error()?;
 
     let namespace: RateLimitNamespace = state
@@ -225,7 +225,7 @@ async fn rate_limiter_get_namespace(
         .fetch_namespace_admin(&data.name)?
         .ok_or_not_found()?;
 
-    Ok(MsgPackOrJson(RateLimiterGetNamespaceOut {
+    Ok(MsgPackOrJson(RateLimitGetNamespaceOut {
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
         storage_type: namespace.storage_type,
@@ -240,31 +240,25 @@ pub fn router() -> ApiRouter<AppState> {
     ApiRouter::new()
         .api_route_with(
             "/rate-limit/limit",
-            post_with(rate_limiter_limit, rate_limiter_limit_operation),
+            post_with(rate_limit_limit, rate_limit_limit_operation),
             &tag,
         )
         .api_route_with(
             "/rate-limit/get-remaining",
-            post_with(
-                rate_limiter_get_remaining,
-                rate_limiter_get_remaining_operation,
-            ),
+            post_with(rate_limit_get_remaining, rate_limit_get_remaining_operation),
             &tag,
         )
         .api_route_with(
             "/rate-limit/namespace/create",
             post_with(
-                rate_limiter_create_namespace,
-                rate_limiter_create_namespace_operation,
+                rate_limit_create_namespace,
+                rate_limit_create_namespace_operation,
             ),
             &tag,
         )
         .api_route_with(
             "/rate-limit/namespace/get",
-            post_with(
-                rate_limiter_get_namespace,
-                rate_limiter_get_namespace_operation,
-            ),
+            post_with(rate_limit_get_namespace, rate_limit_get_namespace_operation),
             &tag,
         )
 }

@@ -1,4 +1,4 @@
-use super::{RateLimiterRaftState, RateLimiterRequest, ResetResponse};
+use super::{RateLimitRaftState, RateLimitRequest, ResetResponse};
 use crate::{RateLimitNamespace, TokenBucket};
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
@@ -25,7 +25,7 @@ impl ResetOperation {
 }
 
 impl ResetOperation {
-    fn apply_real(self, state: &RateLimiterRaftState<'_>) -> Result<()> {
+    fn apply_real(self, state: &RateLimitRaftState<'_>) -> Result<()> {
         state
             .state
             .reset(self.namespace_id, self.storage_type, &self.key)?;
@@ -33,8 +33,8 @@ impl ResetOperation {
     }
 }
 
-impl RateLimiterRequest for ResetOperation {
-    fn apply(self, state: RateLimiterRaftState<'_>, _now: jiff::Timestamp) -> ResetResponse {
+impl RateLimitRequest for ResetOperation {
+    fn apply(self, state: RateLimitRaftState<'_>, _now: jiff::Timestamp) -> ResetResponse {
         ResetResponse(self.apply_real(&state))
     }
 }
