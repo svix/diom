@@ -976,6 +976,7 @@ dependencies = [
 name = "coyote-cache"
 version = "0.0.1"
 dependencies = [
+ "coyote-core",
  "coyote-error",
  "coyote-kv",
  "coyote-namespace",
@@ -1082,6 +1083,7 @@ dependencies = [
 name = "coyote-idempotency"
 version = "0.0.1"
 dependencies = [
+ "coyote-core",
  "coyote-error",
  "coyote-kv",
  "coyote-namespace",

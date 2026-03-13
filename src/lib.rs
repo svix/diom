@@ -30,7 +30,7 @@ use crate::{
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
 };
-use coyote_core::shutdown::{is_shutting_down, shutting_down_token, start_shut_down};
+use coyote_core::shutdown::{shutting_down_token, start_shut_down};
 
 pub mod bootstrap;
 pub mod cfg;
@@ -258,22 +258,6 @@ pub async fn run_with_listeners(
     };
     tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
-    // Spawn background workers for each module
-    let workers = tokio::spawn({
-        let app_state = app_state.clone();
-        async move {
-            tracing::debug!("spawned workers");
-            // FIXME: gotta do actual error handling...
-            let _ = tokio::join!(
-                tokio::spawn(v1::modules::kv::worker(app_state.clone())),
-                tokio::spawn(v1::modules::cache::worker(app_state.clone())),
-                tokio::spawn(v1::modules::idempotency::worker(app_state.clone())),
-                tokio::spawn(v1::modules::rate_limit::worker(app_state.clone())),
-            );
-            tracing::debug!("workers died");
-        }
-    });
-
     bootstrap::run(cfg, raft_state)
         .await
         .expect("bootstrapping failed");
@@ -294,7 +278,6 @@ pub async fn run_with_listeners(
 
     // Wait for workers to finish cleanup
     tracing::debug!("done serving; waiting for background tasks to finish");
-    let _ = workers.await;
     let _ = interserver.await;
     tracing::debug!("we're outta here!");
 }
