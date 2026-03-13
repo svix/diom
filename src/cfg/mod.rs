@@ -120,10 +120,10 @@ impl Dir {
             && let Err(e) = fs::create_dir_all(dir)
             && e.kind() != ErrorKind::AlreadyExists
         {
-            return Err(Error::generic(e));
+            return Err(Error::internal(e));
         }
         if !dir.is_dir() {
-            return Err(Error::generic(format!(
+            return Err(Error::internal(format!(
                 "database directory {} exists but is not a directory",
                 dir.display()
             )));

@@ -110,7 +110,7 @@ async fn idempotency_start(
         .ok_or_not_found()?;
 
     let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
 }
@@ -129,7 +129,7 @@ async fn idempotency_complete(
 
     let operation =
         CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl);
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
 }
@@ -147,7 +147,7 @@ async fn idempotency_abort(
         .ok_or_not_found()?;
 
     let operation = AbortOperation::new(namespace, data.key.to_string());
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyAbortOut {}))
 }
@@ -193,7 +193,7 @@ async fn idempotency_create_namespace(
 ) -> Result<MsgPackOrJson<IdempotencyCreateNamespaceOut>> {
     let operation =
         CreateIdempotencyOperation::new(data.name, data.storage_type, data.max_storage_bytes);
-    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(IdempotencyCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
@@ -211,7 +211,7 @@ async fn idempotency_get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<IdempotencyGetNamespaceOut>> {
     // Ensure we have the latest version of namespace
-    repl.wait_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.or_internal_error()?;
 
     let namespace: IdempotencyNamespace = state
         .namespace_state

@@ -20,7 +20,7 @@ impl InternalRequest for SetClusterUuidOperation {
         state
             .set_cluster_id(self.0)
             .await
-            .map_err(|e| Error::generic(e).into())
+            .map_err(|e| Error::internal(e).into())
             .pipe(Response)
     }
 }

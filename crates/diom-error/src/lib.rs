@@ -33,8 +33,8 @@ impl Error {
     }
 
     #[track_caller]
-    pub fn generic(s: impl fmt::Display) -> Self {
-        Self::new(ErrorType::Generic {
+    pub fn internal(s: impl fmt::Display) -> Self {
+        Self::new(ErrorType::Internal {
             message: s.to_string(),
             trace: vec![Location::caller()],
         })
@@ -69,7 +69,7 @@ impl Error {
 
     #[track_caller]
     pub fn trace(mut self) -> Self {
-        if let ErrorType::Generic { trace, .. } = &mut *self.0 {
+        if let ErrorType::Internal { trace, .. } = &mut *self.0 {
             trace.push(Location::caller());
         }
         self
@@ -104,7 +104,7 @@ impl IntoResponse for Error {
                 detail: Some(detail),
             } => (code, detail).into_response(),
             ErrorType::Operation { code, detail: _ } => code.into_response(),
-            ErrorType::Generic { trace, message } => {
+            ErrorType::Internal { trace, message } => {
                 tracing::error!(
                     location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
                     message,
@@ -138,17 +138,21 @@ impl<T> Traceable<T> for Result<T> {
 
 #[derive(Debug)]
 pub enum ErrorType {
-    /// A generic error
-    Generic {
+    /// An unexpected internal error
+    Internal {
         message: String,
         trace: Vec<&'static Location<'static>>,
     },
-    /// Bad user input
+
+    /// Bad user input (to be further refined)
     BadRequest(StandardErrorBody),
+
     /// Entity not found
     NotFound(StandardErrorBody),
+
     /// An error from validating a request
     Validation(ValidationErrorBody),
+
     /// An error from an Operation application
     Operation {
         code: StatusCode,
@@ -159,7 +163,7 @@ pub enum ErrorType {
 impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Generic { message, .. } => message.fmt(f),
+            Self::Internal { message, .. } => message.fmt(f),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::NotFound(s) => write!(f, "not_found {s}"),
             Self::Validation(s) => s.fmt(f),
@@ -177,13 +181,13 @@ impl fmt::Display for ErrorType {
 impl From<fjall::Error> for Error {
     #[track_caller]
     fn from(e: fjall::Error) -> Self {
-        Self::generic(format!("{e:?}"))
+        Self::internal(format!("{e:?}"))
     }
 }
 
 impl From<JoinError> for Error {
     #[track_caller]
     fn from(e: JoinError) -> Self {
-        Self::generic(format!("{e:?}"))
+        Self::internal(format!("{e:?}"))
     }
 }
