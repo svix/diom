@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class KvSetOut {
 @JsonProperty private Boolean success;
+@JsonProperty private Long version;
 public KvSetOut () {}
 
  public KvSetOut success(Boolean success) {
@@ -48,6 +49,25 @@ public KvSetOut () {}
 
      public void setSuccess(Boolean success) {
         this.success = success;
+    }
+
+     public KvSetOut version(Long version) {
+        this.version = version;
+        return this;
+    }
+
+    /**
+    * Get version
+    *
+     * @return version
+     */
+    @javax.annotation.Nonnull
+     public Long getVersion() {
+        return version;
+    }
+
+     public void setVersion(Long version) {
+        this.version = version;
     }
 
     /**

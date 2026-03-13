@@ -35,6 +35,7 @@ class KvAsync(ApiBase):
             value=kv_set_in.value,
             ttl=kv_set_in.ttl,
             behavior=kv_set_in.behavior,
+            version=kv_set_in.version,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -96,6 +97,7 @@ class Kv(ApiBase):
             value=kv_set_in.value,
             ttl=kv_set_in.ttl,
             behavior=kv_set_in.behavior,
+            version=kv_set_in.version,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

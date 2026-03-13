@@ -1867,8 +1867,17 @@
               "maximum": 255
             },
             "nullable": true
+          },
+          "version": {
+            "description": "Opaque version token for optimistic concurrency control.\nPass as `version` in a subsequent `set` to perform a conditional write.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
           }
-        }
+        },
+        "required": [
+          "version"
+        ]
       },
       "KvSetIn": {
         "type": "object",
@@ -1898,6 +1907,13 @@
           "behavior": {
             "default": "upsert",
             "$ref": "#/components/schemas/OperationBehavior"
+          },
+          "version": {
+            "description": "If set, the write only succeeds when the stored version matches this value.\nUse the `version` field from a prior `get` response.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
           }
         },
         "required": [
@@ -1914,10 +1930,16 @@
           "success": {
             "description": "Whether the operation succeeded or was a noop due to pre-conditions.",
             "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
           }
         },
         "required": [
-          "success"
+          "success",
+          "version"
         ]
       },
       "MsgIn": {

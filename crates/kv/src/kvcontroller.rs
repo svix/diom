@@ -1,4 +1,4 @@
-use coyote_error::Result;
+use coyote_error::{Error, Result};
 use coyote_namespace::entities::NamespaceId;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{StorageType, TableRow, WriteBatchExt};
@@ -25,6 +25,23 @@ pub enum OperationBehavior {
 pub struct KvModel {
     pub expiry: Option<Timestamp>,
     pub value: Vec<u8>,
+    /// Opaque version token for optimistic concurrency control.
+    pub version: u64,
+}
+
+/// Input model for [`KvController::set`]. `version` is the expected current
+/// version for OCC — `None` skips the check.
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
+pub struct KvModelIn {
+    pub value: Vec<u8>,
+    pub expiry: Option<Timestamp>,
+    pub version: Option<u64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KvSetResult {
+    pub version: u64,
+    pub success: bool,
 }
 
 impl From<KvPairRow> for KvModel {
@@ -32,6 +49,7 @@ impl From<KvPairRow> for KvModel {
         Self {
             expiry: row.expiry,
             value: row.value,
+            version: row.version,
         }
     }
 }
@@ -81,16 +99,19 @@ impl KvController {
         &self,
         namespace_id: NamespaceId,
         key: &str,
-        value: Vec<u8>,
-        expiry: Option<Timestamp>,
+        model: KvModel,
     ) -> Result<()> {
         let mut batch = self.db.batch();
 
-        let row = KvPairRow { value, expiry };
+        let row = KvPairRow {
+            value: model.value,
+            expiry: model.expiry,
+            version: model.version,
+        };
 
         batch.insert_row(&self.keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
 
-        if let Some(expiry) = expiry {
+        if let Some(expiry) = row.expiry {
             let expiration_row = ExpirationRow::new();
             batch.insert_row(
                 &self.keyspace,
@@ -104,40 +125,78 @@ impl KvController {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, value))]
+    #[tracing::instrument(skip(self, model))]
     pub fn set(
         &self,
         namespace_id: NamespaceId,
         key: &str,
-        value: Vec<u8>,
-        expiry: Option<Timestamp>,
+        model: KvModelIn,
         behavior: OperationBehavior,
         now: Timestamp,
-    ) -> Result<bool> {
-        match behavior {
-            OperationBehavior::Upsert => {
-                self.insert_with_expiration(namespace_id, key, value, expiry)?;
-            }
-            OperationBehavior::Insert => {
-                let exists = self.fetch(namespace_id, key, now)?.is_some();
-
-                if !exists {
-                    self.insert_with_expiration(namespace_id, key, value, expiry)?;
-                } else {
-                    return Ok(false);
-                }
-            }
-            OperationBehavior::Update => {
-                let exists = self.fetch(namespace_id, key, now)?.is_some();
-                if exists {
-                    self.insert_with_expiration(namespace_id, key, value, expiry)?;
-                } else {
-                    return Ok(false);
-                }
+        // This is a monotonically increasing global counter (e.g. raft offset)
+        global_counter: u64,
+    ) -> Result<KvSetResult> {
+        let mut current = None;
+        // OCC check: if the caller supplied an expected version, verify it.
+        if let Some(expected) = model.version {
+            current = self.fetch(namespace_id, key, now)?;
+            let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
+            if current_version != expected {
+                return Err(Error::bad_request("version_mismatch", "version mismatch"));
             }
         }
 
-        Ok(true)
+        let new_version = global_counter + 1;
+
+        let new_model = KvModel {
+            value: model.value,
+            expiry: model.expiry,
+            version: new_version,
+        };
+
+        match behavior {
+            OperationBehavior::Upsert => {
+                self.insert_with_expiration(namespace_id, key, new_model)?;
+            }
+            OperationBehavior::Insert => {
+                current = if current.is_some() {
+                    current
+                } else {
+                    self.fetch(namespace_id, key, now)?
+                };
+
+                if let Some(current) = current {
+                    return Ok(KvSetResult {
+                        version: current.version,
+                        success: false,
+                    });
+                } else {
+                    self.insert_with_expiration(namespace_id, key, new_model)?;
+                }
+            }
+            OperationBehavior::Update => {
+                current = if current.is_some() {
+                    current
+                } else {
+                    self.fetch(namespace_id, key, now)?
+                };
+                let exists = current.is_some();
+
+                if exists {
+                    self.insert_with_expiration(namespace_id, key, new_model)?;
+                } else {
+                    return Ok(KvSetResult {
+                        version: 0,
+                        success: false,
+                    });
+                }
+            }
+        };
+
+        Ok(KvSetResult {
+            version: new_version,
+            success: true,
+        })
     }
 
     #[tracing::instrument(skip(self))]
@@ -281,10 +340,14 @@ mod tests {
             .set(
                 ns(),
                 key,
-                b"hello world".to_vec(),
-                None,
+                KvModelIn {
+                    value: b"hello world".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
                 OperationBehavior::Upsert,
                 Timestamp::now(),
+                0,
             )
             .unwrap();
 
@@ -309,23 +372,31 @@ mod tests {
         let res = controller.set(
             ns(),
             "key1",
-            b"key1 updated".to_vec(),
-            None,
+            KvModelIn {
+                value: b"key1 updated".to_vec(),
+                expiry: None,
+                version: None,
+            },
             OperationBehavior::Update,
             Timestamp::now(),
+            0,
         );
-        assert!(!res.unwrap());
+        assert!(!res.unwrap().success);
         assert!(!key_exists(&controller, "key1"));
 
         let res = controller.set(
             ns(),
             "key1",
-            b"key1 inserted".to_vec(),
-            None,
+            KvModelIn {
+                value: b"key1 inserted".to_vec(),
+                expiry: None,
+                version: None,
+            },
             OperationBehavior::Insert,
             Timestamp::now(),
+            0,
         );
-        assert!(res.unwrap());
+        assert!(res.unwrap().success);
         assert!(key_exists(&controller, "key1"));
         let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
         assert!(result.is_some());
@@ -334,12 +405,16 @@ mod tests {
         let res = controller.set(
             ns(),
             "key1",
-            b"another value".to_vec(),
-            None,
+            KvModelIn {
+                value: b"another value".to_vec(),
+                expiry: None,
+                version: None,
+            },
             OperationBehavior::Insert,
             Timestamp::now(),
+            0,
         );
-        assert!(!res.unwrap());
+        assert!(!res.unwrap().success);
         assert!(key_exists(&controller, "key1"));
         let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
         assert!(result.is_some());
@@ -349,12 +424,16 @@ mod tests {
         let res = controller.set(
             ns(),
             "key1",
-            b"key1 upserted".to_vec(),
-            None,
+            KvModelIn {
+                value: b"key1 upserted".to_vec(),
+                expiry: None,
+                version: None,
+            },
             OperationBehavior::Upsert,
             Timestamp::now(),
+            0,
         );
-        assert!(res.unwrap());
+        assert!(res.unwrap().success);
         assert!(key_exists(&controller, "key1"));
         let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
         assert!(result.is_some());
@@ -371,20 +450,28 @@ mod tests {
             .set(
                 ns(),
                 key,
-                b"first value".to_vec(),
-                None,
+                KvModelIn {
+                    value: b"first value".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
                 OperationBehavior::Upsert,
                 Timestamp::now(),
+                0,
             )
             .unwrap();
         controller
             .set(
                 ns(),
                 key,
-                b"second value".to_vec(),
-                None,
+                KvModelIn {
+                    value: b"second value".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
                 OperationBehavior::Upsert,
                 Timestamp::now(),
+                0,
             )
             .unwrap();
 
@@ -407,10 +494,14 @@ mod tests {
             .set(
                 ns(),
                 "expired:key",
-                b"expired data".to_vec(),
-                Some(now.checked_sub(1.hour()).unwrap()),
+                KvModelIn {
+                    value: b"expired data".to_vec(),
+                    expiry: Some(now.checked_sub(1.hour()).unwrap()),
+                    version: None,
+                },
                 OperationBehavior::Upsert,
                 now,
+                0,
             )
             .unwrap();
 
@@ -437,10 +528,14 @@ mod tests {
                 .set(
                     ns(),
                     key,
-                    value.to_vec(),
-                    Some(*expiry),
+                    KvModelIn {
+                        value: value.to_vec(),
+                        expiry: Some(*expiry),
+                        version: None,
+                    },
                     OperationBehavior::Upsert,
                     now,
+                    0,
                 )
                 .unwrap();
         }
@@ -450,10 +545,14 @@ mod tests {
             .set(
                 ns(),
                 valid_key,
-                b"valid data".to_vec(),
-                Some(now.checked_add(1.hour()).unwrap()),
+                KvModelIn {
+                    value: b"valid data".to_vec(),
+                    expiry: Some(now.checked_add(1.hour()).unwrap()),
+                    version: None,
+                },
                 OperationBehavior::Upsert,
                 now,
+                0,
             )
             .unwrap();
 
@@ -462,10 +561,14 @@ mod tests {
             .set(
                 ns(),
                 permanent_key,
-                b"permanent data".to_vec(),
-                None,
+                KvModelIn {
+                    value: b"permanent data".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
                 OperationBehavior::Upsert,
                 now,
+                0,
             )
             .unwrap();
 

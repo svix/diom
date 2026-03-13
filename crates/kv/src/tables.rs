@@ -15,6 +15,8 @@ enum RowType {
 pub struct KvPairRow {
     pub value: Vec<u8>,
     pub expiry: Option<Timestamp>,
+    #[serde(default)]
+    pub version: u64,
 }
 
 impl TableRow for KvPairRow {

@@ -10,6 +10,11 @@ export interface KvSetIn {
     /** Time to live in milliseconds */
     ttl?: number | null;
     behavior?: OperationBehavior;
+    /**
+* If set, the write only succeeds when the stored version matches this value.
+* Use the `version` field from a prior `get` response.
+*/
+    version?: number | null;
 }
 
 export const KvSetInSerializer = {
@@ -20,6 +25,7 @@ export const KvSetInSerializer = {
             value: object['value'],
             ttl: object['ttl'],
             behavior: object['behavior'] != null ? OperationBehaviorSerializer._fromJsonObject(object['behavior']): undefined,
+            version: object['version'],
         };
     },
 
@@ -30,6 +36,7 @@ export const KvSetInSerializer = {
             'value': self.value,
             'ttl': self.ttl,
             'behavior': self.behavior != null ? OperationBehaviorSerializer._toJsonObject(self.behavior) : undefined,
+            'version': self.version,
         };
     }
 }
