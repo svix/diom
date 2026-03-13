@@ -19,7 +19,7 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
-pub use diom_rate_limit::{RateLimitStatus, TokenBucket};
+pub use diom_rate_limit::TokenBucket;
 
 pub use diom_rate_limit::RateLimitNamespace;
 
@@ -75,7 +75,7 @@ fn default_tokens() -> u64 {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitCheckOut {
     /// Whether the request is allowed
-    pub status: RateLimitStatus,
+    pub allowed: bool,
 
     /// Number of tokens remaining
     pub remaining: u64,
@@ -126,7 +126,7 @@ async fn rate_limit_limit(
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(RateLimitCheckOut {
-        status: response.status,
+        allowed: response.allowed,
         remaining: response.remaining,
         retry_after_millis: response
             .retry_after

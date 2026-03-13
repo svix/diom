@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
-use crate::{RateLimitNamespace, RateLimitStatus, TokenBucket};
+use crate::{RateLimitNamespace, TokenBucket};
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
 use fjall_utils::StorageType;
@@ -36,7 +36,7 @@ impl LimitOperation {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimitResponseData {
-    pub status: RateLimitStatus,
+    pub allowed: bool,
     pub remaining: u64,
     pub retry_after: Option<Duration>,
 }
@@ -47,7 +47,7 @@ impl LimitOperation {
         state: &RateLimitRaftState<'_>,
         now: Timestamp,
     ) -> Result<LimitResponseData> {
-        let (status, remaining, retry_after) = state.state.limit(
+        let (allowed, remaining, retry_after) = state.state.limit(
             now,
             self.namespace_id,
             self.storage_type,
@@ -56,7 +56,7 @@ impl LimitOperation {
             self.method,
         )?;
         Ok(LimitResponseData {
-            status,
+            allowed,
             remaining,
             retry_after,
         })

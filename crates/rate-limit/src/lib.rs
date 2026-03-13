@@ -4,17 +4,14 @@ pub mod tables;
 
 use std::time::Duration;
 
+pub use crate::algorithms::TokenBucket;
+use crate::tables::TokenBucketState;
 use diom_error::{Result, ResultExt as _};
+pub use diom_namespace::entities::RateLimitConfig;
 use diom_namespace::{Namespace, entities::NamespaceId};
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::{Databases, StorageType, TableRow};
 use jiff::Timestamp;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
-pub use crate::algorithms::TokenBucket;
-use crate::tables::TokenBucketState;
-pub use diom_namespace::entities::RateLimitConfig;
 
 pub type RateLimitNamespace = Namespace<RateLimitConfig>;
 
@@ -24,13 +21,6 @@ const RATE_LIMIT_KEYSPACE: &str = "mod_rate_limit";
 pub struct State {
     persistent_tables: fjall::Keyspace,
     ephemeral_tables: fjall::Keyspace,
-}
-
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum RateLimitStatus {
-    Ok,
-    Block,
 }
 
 impl State {
@@ -64,7 +54,7 @@ impl State {
         identifier: &str,
         delta: u64,
         config: TokenBucket,
-    ) -> Result<(RateLimitStatus, u64, Option<Duration>)> {
+    ) -> Result<(bool, u64, Option<Duration>)> {
         self.limit_inner(
             now,
             namespace_id,
@@ -86,7 +76,7 @@ impl State {
         delta: u64,
         config: TokenBucket,
         update: bool,
-    ) -> Result<(RateLimitStatus, u64, Option<Duration>)> {
+    ) -> Result<(bool, u64, Option<Duration>)> {
         let tables = self.tables(storage_type);
 
         let mut bucket =
@@ -103,11 +93,7 @@ impl State {
             let filled_per_millis = config.refill_rate * config.refill_interval.as_millis() as u64;
             let retry_after = (filled_per_millis - capacity).div_ceil(delta);
 
-            return Ok((
-                RateLimitStatus::Block,
-                capacity,
-                Some(Duration::from_millis(retry_after)),
-            ));
+            return Ok((false, capacity, Some(Duration::from_millis(retry_after))));
         }
 
         bucket.last_refill = new_last_refill;
@@ -121,7 +107,7 @@ impl State {
             )?;
         }
 
-        Ok((RateLimitStatus::Ok, bucket.tokens, None))
+        Ok((true, bucket.tokens, None))
     }
 
     pub fn get_remaining(
@@ -143,11 +129,7 @@ impl State {
         )?;
 
         // We 'simulated' consuming 1 token, so we add it back to get the actual remaining capacity
-        let actual_remaining = if matches!(result, RateLimitStatus::Ok) {
-            remaining + 1
-        } else {
-            remaining
-        };
+        let actual_remaining = if result { remaining + 1 } else { remaining };
 
         Ok((actual_remaining, retry_after))
     }
@@ -230,21 +212,21 @@ mod tests {
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), StorageType::Persistent, id, 3, config())
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Ok));
+        assert!(result);
         assert_eq!(remaining, 2);
         assert_eq!(retry_after, None);
 
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), StorageType::Persistent, id, 2, config())
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Ok));
+        assert!(result);
         assert_eq!(remaining, 0);
         assert_eq!(retry_after, None);
 
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), StorageType::Persistent, id, 1, config())
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Block));
+        assert!(!result);
         assert_eq!(remaining, 0);
         assert_eq!(retry_after, Some(Duration::from_millis(100)));
     }
@@ -265,7 +247,7 @@ mod tests {
                 config_refill_2(),
             )
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Ok));
+        assert!(result);
         assert_eq!(remaining, 0);
         assert_eq!(retry_after, None);
 
@@ -293,7 +275,7 @@ mod tests {
                 config_refill_2(),
             )
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Ok));
+        assert!(result);
         assert_eq!(remaining, 3);
         assert_eq!(retry_after, None);
     }
@@ -316,7 +298,7 @@ mod tests {
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), StorageType::Persistent, id, 2, make_config())
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Ok));
+        assert!(result);
         assert_eq!(remaining, 4);
         assert_eq!(retry_after, None);
 
@@ -324,7 +306,7 @@ mod tests {
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), StorageType::Persistent, id, 1, make_config())
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Ok));
+        assert!(result);
         assert_eq!(remaining, 3);
         assert_eq!(retry_after, None);
 
@@ -332,7 +314,7 @@ mod tests {
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), StorageType::Persistent, id, 1, make_config())
             .unwrap();
-        assert!(matches!(result, RateLimitStatus::Ok));
+        assert!(result);
         assert_eq!(remaining, 4); // 4 (previous) + 2 (refill) - 1 (consumed)
         assert_eq!(retry_after, None);
     }
