@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 
 pub use crate::algorithms::TokenBucket;
 use crate::tables::TokenBucketState;
-pub use diom_namespace::entities::RateLimitNamespaceConfig;
+pub use diom_namespace::entities::RateLimitConfig;
 
-pub type RateLimitNamespace = Namespace<RateLimitNamespaceConfig>;
+pub type RateLimitNamespace = Namespace<RateLimitConfig>;
 
 const RATE_LIMIT_KEYSPACE: &str = "mod_rate_limit";
 
