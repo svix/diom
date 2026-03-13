@@ -42,7 +42,6 @@ async fn test_cache_set_and_get() -> TestResult {
 
     let response = cache_get(&client, "test-key-1").await?;
 
-    assert_eq!(response["key"], "test-key-1");
     assert_eq!(response["value"], json!("test-value-123".as_bytes()));
     assert!(response["expiry"].is_string());
 
@@ -85,13 +84,15 @@ async fn test_cache_set_get_and_delete() -> TestResult {
 
     assert_eq!(delete_response["deleted"], true);
 
-    client
+    let response = client
         .post("cache/get")
         .json(json!({
             "key": "test-key-2"
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .expect(StatusCode::OK)
+        .json();
+    assert!(response["value"].is_null());
 
     Ok(())
 }

@@ -482,7 +482,7 @@ impl BenchShard for BenchKvGet {
         // Start of real code
         let t = Instant::now();
         let ret = client.kv().get(key.clone(), KvGetIn::new()).await?;
-        let bytes = ret.value.len() as u64;
+        let bytes = ret.value.expect("key should exist").len() as u64;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
@@ -604,7 +604,7 @@ impl BenchShard for BenchCacheGet {
         // Start of real code
         let t = Instant::now();
         let ret = client.cache().get(key.clone(), CacheGetIn::new()).await?;
-        let bytes = ret.value.len() as u64;
+        let bytes = ret.value.expect("key should exist").len() as u64;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }

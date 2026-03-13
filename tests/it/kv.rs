@@ -41,14 +41,15 @@ async fn kv_get(client: &TestClient, key: &str) -> TestResult<serde_json::Value>
 }
 
 async fn kv_not_found(client: &TestClient, key: &str) -> TestResult<()> {
-    let _ = client
+    let response = client
         .post("kv/get")
         .json(json!({
             "key": key
         }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?
+        .ensure(StatusCode::OK)?
         .json();
+    assert!(response["value"].is_null());
     Ok(())
 }
 
@@ -64,7 +65,6 @@ async fn test_kv_set_and_get() -> TestResult {
 
     let response = kv_get(&client, "kv-key-1").await?;
 
-    assert_eq!(response["key"], "kv-key-1");
     assert_eq!(response["value"], json!("kv-value-456".as_bytes()));
     assert!(response["expiry"].is_null());
 
