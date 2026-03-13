@@ -13,10 +13,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 pub use crate::algorithms::TokenBucket;
-use crate::{
-    operations::{LimitOperation, ResetOperation},
-    tables::TokenBucketState,
-};
+use crate::tables::TokenBucketState;
 pub use coyote_namespace::entities::RateLimitNamespaceConfig;
 
 pub type RateLimitNamespace = Namespace<RateLimitNamespaceConfig>;
@@ -164,23 +161,6 @@ impl State {
         let tables = self.tables(storage_type);
         TokenBucketState::remove(tables, TokenBucketState::key_for(namespace_id, identifier))?;
         Ok(())
-    }
-
-    pub fn limit_operation(
-        namespace: RateLimitNamespace,
-        key: String,
-        units: u64,
-        method: TokenBucket,
-    ) -> LimitOperation {
-        LimitOperation::new(namespace, key, units, method)
-    }
-
-    pub fn reset_operation(
-        namespace: RateLimitNamespace,
-        key: String,
-        method: TokenBucket,
-    ) -> ResetOperation {
-        ResetOperation::new(namespace, key, method)
     }
 }
 
