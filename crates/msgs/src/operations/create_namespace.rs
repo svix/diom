@@ -75,7 +75,11 @@ impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
 }
 
 impl MsgsRequest for CreateNamespaceOperation {
-    fn apply(self, state: MsgsRaftState<'_>, now: Timestamp) -> CreateNamespaceResponse {
-        CreateNamespaceResponse(self.apply_real(state.namespace, now))
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        ctx: &diom_operations::OpContext,
+    ) -> CreateNamespaceResponse {
+        CreateNamespaceResponse(self.apply_real(state.namespace, ctx.timestamp))
     }
 }

@@ -34,7 +34,11 @@ impl AbortOperation {
 }
 
 impl IdempotencyRequest for AbortOperation {
-    fn apply(self, state: IdempotencyRaftState<'_>, _now: jiff::Timestamp) -> AbortResponse {
+    fn apply(
+        self,
+        state: IdempotencyRaftState<'_>,
+        _ctx: &diom_operations::OpContext,
+    ) -> AbortResponse {
         AbortResponse(self.apply_real(&state))
     }
 }

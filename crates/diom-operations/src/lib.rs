@@ -4,6 +4,9 @@ use std::{collections::HashMap, fmt::Debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
+mod context;
+pub use context::OpContext;
+
 #[derive(Debug)]
 pub enum BackgroundError {
     NotLeader,

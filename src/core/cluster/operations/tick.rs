@@ -1,17 +1,12 @@
 use super::{InternalRequest, TickResponse as Response};
-use crate::core::cluster::{NodeId, state_machine::Store};
-use openraft::LogId;
+use crate::core::cluster::state_machine::Store;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TickOperation {}
 
 impl InternalRequest for TickOperation {
-    async fn apply(
-        self,
-        _state: (&mut Store, LogId<NodeId>),
-        _timestamp: jiff::Timestamp,
-    ) -> Response {
+    async fn apply(self, _state: &mut Store, _context: &diom_operations::OpContext) -> Response {
         // This job does nothing except periodically write something to the log
         // (because openraft doesn't let us customize the existing Heartbeat event)
         Response(Ok(()))

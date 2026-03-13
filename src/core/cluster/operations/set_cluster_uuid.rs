@@ -1,10 +1,6 @@
 use super::{InternalRequest, SetClusterUuidResponse as Response};
-use crate::core::cluster::{
-    NodeId,
-    state_machine::{ClusterId, Store},
-};
+use crate::core::cluster::state_machine::{ClusterId, Store};
 use diom_error::Error;
-use openraft::LogId;
 use serde::{Deserialize, Serialize};
 use tap::Pipe;
 
@@ -12,11 +8,7 @@ use tap::Pipe;
 pub struct SetClusterUuidOperation(pub ClusterId);
 
 impl InternalRequest for SetClusterUuidOperation {
-    async fn apply(
-        self,
-        (state, _): (&mut Store, LogId<NodeId>),
-        _timestamp: jiff::Timestamp,
-    ) -> Response {
+    async fn apply(self, state: &mut Store, _ctx: &diom_operations::OpContext) -> Response {
         state
             .set_cluster_id(self.0)
             .await

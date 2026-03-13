@@ -34,8 +34,8 @@ impl IdempotencyRequest for ClearExpiredOperation {
     fn apply(
         self,
         state: IdempotencyRaftState<'_>,
-        timestamp: jiff::Timestamp,
+        ctx: &diom_operations::OpContext,
     ) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, timestamp))
+        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp))
     }
 }
