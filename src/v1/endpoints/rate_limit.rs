@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{num::NonZeroU64, time::Duration};
+use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
@@ -19,64 +19,18 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 // Re-export types that are used in AppState
-use diom_rate_limit::{FixedWindow, RateLimitConfig, RateLimitStatus, TokenBucket};
+pub use diom_rate_limit::{RateLimitStatus, TokenBucket};
 
 pub use diom_rate_limit::RateLimitNamespace;
-
-// FIXME(@svix-lucho): Not fully convinced about 'method' and 'config'
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(tag = "method", content = "config", rename_all = "snake_case")]
-pub enum RateLimiterMethod {
-    TokenBucket(RateLimiterTokenBucketConfig),
-    FixedWindow(RateLimiterFixedWindowConfig),
-}
-
-// FIXME(@svix-lucho): Is this right?
-impl Validate for RateLimiterMethod {
-    fn validate(&self) -> Result<(), validator::ValidationErrors> {
-        match self {
-            RateLimiterMethod::TokenBucket(config) => config.validate(),
-            RateLimiterMethod::FixedWindow(config) => config.validate(),
-        }
-    }
-}
-
-impl From<RateLimiterMethod> for RateLimitConfig {
-    fn from(val: RateLimiterMethod) -> Self {
-        match val {
-            RateLimiterMethod::TokenBucket(config) => RateLimitConfig::TokenBucket(config.into()),
-            RateLimiterMethod::FixedWindow(config) => RateLimitConfig::FixedWindow(config.into()),
-        }
-    }
-}
 
 impl From<RateLimiterTokenBucketConfig> for TokenBucket {
     fn from(val: RateLimiterTokenBucketConfig) -> Self {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
-            refill_interval: Duration::from_secs(val.refill_interval),
+            refill_interval: std::time::Duration::from_secs(val.refill_interval),
         }
     }
-}
-
-impl From<RateLimiterFixedWindowConfig> for FixedWindow {
-    fn from(val: RateLimiterFixedWindowConfig) -> Self {
-        FixedWindow {
-            size: Duration::from_secs(val.window_size),
-            tokens: val.max_requests,
-        }
-    }
-}
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct RateLimiterFixedWindowConfig {
-    /// Window size in seconds
-    #[validate(range(min = 1))]
-    pub window_size: u64,
-
-    /// Maximum number of requests allowed within the window
-    #[validate(range(min = 1))]
-    pub max_requests: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -111,7 +65,7 @@ pub struct RateLimiterCheckIn {
     /// Rate limiter configuration
     #[validate(nested)]
     #[serde(flatten)]
-    pub method: RateLimiterMethod,
+    pub config: RateLimiterTokenBucketConfig,
 }
 
 fn default_tokens() -> u64 {
@@ -139,7 +93,7 @@ pub struct RateLimiterGetRemainingIn {
     /// Rate limiter configuration
     #[validate(nested)]
     #[serde(flatten)]
-    pub method: RateLimiterMethod,
+    pub config: RateLimiterTokenBucketConfig,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -166,7 +120,7 @@ async fn rate_limiter_limit(
 
     let key = data.key.0.clone();
     let units = data.tokens;
-    let method = data.method.into();
+    let method = data.config.into();
 
     let operation = RateLimiter::limit_operation(namespace, key, units, method);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
@@ -174,7 +128,9 @@ async fn rate_limiter_limit(
     Ok(MsgPackOrJson(RateLimiterCheckOut {
         status: response.status,
         remaining: response.remaining,
-        retry_after: response.retry_after.map(|t: Duration| t.as_millis() as u64),
+        retry_after: response
+            .retry_after
+            .map(|t: std::time::Duration| t.as_millis() as u64),
     }))
 }
 
@@ -195,7 +151,7 @@ async fn rate_limiter_get_remaining(
         namespace.id,
         namespace.storage_type,
         &data.key,
-        data.method.into(),
+        data.config.into(),
     )?;
 
     Ok(MsgPackOrJson(RateLimiterGetRemainingOut {

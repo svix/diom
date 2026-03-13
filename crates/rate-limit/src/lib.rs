@@ -12,10 +12,10 @@ use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-pub use crate::algorithms::{FixedWindow, RateLimitConfig, TokenBucket};
+pub use crate::algorithms::TokenBucket;
 use crate::{
     operations::{LimitOperation, ResetOperation},
-    tables::{FixedWindowState, TokenBucketState},
+    tables::TokenBucketState,
 };
 pub use diom_namespace::entities::RateLimitNamespaceConfig;
 
@@ -66,7 +66,7 @@ impl State {
         storage_type: StorageType,
         identifier: &str,
         delta: u64,
-        algorithm: RateLimitConfig,
+        config: TokenBucket,
     ) -> Result<(RateLimitStatus, u64, Option<Duration>)> {
         self.limit_inner(
             now,
@@ -74,7 +74,7 @@ impl State {
             storage_type,
             identifier,
             delta,
-            algorithm,
+            config,
             true,
         )
     }
@@ -87,90 +87,44 @@ impl State {
         storage_type: StorageType,
         identifier: &str,
         delta: u64,
-        algorithm: RateLimitConfig,
+        config: TokenBucket,
         update: bool,
     ) -> Result<(RateLimitStatus, u64, Option<Duration>)> {
         let tables = self.tables(storage_type);
-        match algorithm {
-            RateLimitConfig::FixedWindow(fw_config) => {
-                let window_start = fw_config.get_window_start(now);
-                let max_tokens = fw_config.tokens;
 
-                let mut state = FixedWindowState::fetch(
-                    tables,
-                    FixedWindowState::key_for(namespace_id, identifier),
-                )?
-                .unwrap_or(FixedWindowState {
-                    count: 0,
-                    window_start,
-                });
-
-                if state.window_start != window_start {
-                    state.count = 0;
-                }
-
-                state.window_start = window_start;
-
-                let (remaining, result, retry_after) = if state.count + delta > max_tokens {
-                    state.count = max_tokens;
-                    let window_end = window_start + fw_config.size;
-                    let time_until_reset = window_end.duration_since(now).try_into().unwrap();
-                    (0, RateLimitStatus::Block, Some(time_until_reset))
-                } else {
-                    state.count += delta;
-                    (max_tokens - state.count, RateLimitStatus::Ok, None)
-                };
-
-                if update {
-                    FixedWindowState::insert(
-                        tables,
-                        FixedWindowState::key_for(namespace_id, identifier),
-                        &state,
-                    )?;
-                }
-
-                Ok((result, remaining, retry_after))
-            }
-
-            RateLimitConfig::TokenBucket(tb_config) => {
-                let mut bucket = TokenBucketState::fetch(
-                    tables,
-                    TokenBucketState::key_for(namespace_id, identifier),
-                )?
+        let mut bucket =
+            TokenBucketState::fetch(tables, TokenBucketState::key_for(namespace_id, identifier))?
                 .unwrap_or(TokenBucketState {
-                    tokens: tb_config.bucket_size,
+                    tokens: config.bucket_size,
                     last_refill: now,
                 });
 
-                let (capacity, new_last_refill) =
-                    tb_config.get_new_capacity(bucket.tokens, now, bucket.last_refill);
+        let (capacity, new_last_refill) =
+            config.get_new_capacity(bucket.tokens, now, bucket.last_refill);
 
-                if capacity < delta {
-                    let filled_per_millis =
-                        tb_config.refill_rate * tb_config.refill_interval.as_millis() as u64;
-                    let retry_after = (filled_per_millis - capacity).div_ceil(delta);
+        if capacity < delta {
+            let filled_per_millis = config.refill_rate * config.refill_interval.as_millis() as u64;
+            let retry_after = (filled_per_millis - capacity).div_ceil(delta);
 
-                    return Ok((
-                        RateLimitStatus::Block,
-                        capacity,
-                        Some(Duration::from_millis(retry_after)),
-                    ));
-                }
-
-                bucket.last_refill = new_last_refill;
-                bucket.tokens = capacity - delta;
-
-                if update {
-                    TokenBucketState::insert(
-                        tables,
-                        TokenBucketState::key_for(namespace_id, identifier),
-                        &bucket,
-                    )?;
-                }
-
-                Ok((RateLimitStatus::Ok, bucket.tokens, None))
-            }
+            return Ok((
+                RateLimitStatus::Block,
+                capacity,
+                Some(Duration::from_millis(retry_after)),
+            ));
         }
+
+        bucket.last_refill = new_last_refill;
+        bucket.tokens = capacity - delta;
+
+        if update {
+            TokenBucketState::insert(
+                tables,
+                TokenBucketState::key_for(namespace_id, identifier),
+                &bucket,
+            )?;
+        }
+
+        Ok((RateLimitStatus::Ok, bucket.tokens, None))
     }
 
     pub fn get_remaining(
@@ -179,7 +133,7 @@ impl State {
         namespace_id: NamespaceId,
         storage_type: StorageType,
         identifier: &str,
-        algorithm: RateLimitConfig,
+        config: TokenBucket,
     ) -> Result<(u64, Option<Duration>)> {
         let (result, remaining, retry_after) = self.limit_inner(
             now,
@@ -187,7 +141,7 @@ impl State {
             storage_type,
             identifier,
             1,
-            algorithm,
+            config,
             false,
         )?;
 
@@ -206,23 +160,9 @@ impl State {
         namespace_id: NamespaceId,
         storage_type: StorageType,
         identifier: &str,
-        algorithm: RateLimitConfig,
     ) -> Result<()> {
         let tables = self.tables(storage_type);
-        match algorithm {
-            RateLimitConfig::FixedWindow(_) => {
-                FixedWindowState::remove(
-                    tables,
-                    FixedWindowState::key_for(namespace_id, identifier),
-                )?;
-            }
-            RateLimitConfig::TokenBucket(_) => {
-                TokenBucketState::remove(
-                    tables,
-                    TokenBucketState::key_for(namespace_id, identifier),
-                )?;
-            }
-        }
+        TokenBucketState::remove(tables, TokenBucketState::key_for(namespace_id, identifier))?;
         Ok(())
     }
 
@@ -230,7 +170,7 @@ impl State {
         namespace: RateLimitNamespace,
         key: String,
         units: u64,
-        method: RateLimitConfig,
+        method: TokenBucket,
     ) -> LimitOperation {
         LimitOperation::new(namespace, key, units, method)
     }
@@ -238,7 +178,7 @@ impl State {
     pub fn reset_operation(
         namespace: RateLimitNamespace,
         key: String,
-        method: RateLimitConfig,
+        method: TokenBucket,
     ) -> ResetOperation {
         ResetOperation::new(namespace, key, method)
     }
@@ -285,203 +225,135 @@ mod tests {
         NamespaceId::nil()
     }
 
-    mod fixed_window {
-        use super::*;
-
-        fn config() -> RateLimitConfig {
-            RateLimitConfig::FixedWindow(FixedWindow {
-                size: Duration::from_secs(1),
-                tokens: 5,
-            })
-        }
-
-        #[test]
-        fn rate_limiting() {
-            let (limiter, _dir) = create_test_state();
-            let id = "user1";
-
-            let mut clock = Timestamp::UNIX_EPOCH;
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 3, config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 2);
-            assert_eq!(retry_after, None);
-
-            clock += Duration::from_millis(500);
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 2, config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 0);
-            assert_eq!(retry_after, None);
-
-            clock += Duration::from_millis(400);
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 1, config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Block));
-            assert_eq!(remaining, 0);
-            assert_eq!(retry_after, Some(Duration::from_millis(100)));
-
-            let (remaining_2, retry_after_2) = limiter
-                .get_remaining(clock, ns(), StorageType::Persistent, id, config())
-                .unwrap();
-            assert_eq!(remaining_2, remaining);
-            assert_eq!(retry_after_2, retry_after);
-
-            // Resets at t=1000ms
-            clock += Duration::from_millis(100);
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 1, config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 4);
-            assert_eq!(retry_after, None);
-
-            // Doesn't accumulate
-            clock += Duration::from_millis(100000);
-            let (remaining, retry_after) = limiter
-                .get_remaining(clock, ns(), StorageType::Persistent, id, config())
-                .unwrap();
-            assert_eq!(remaining, 5);
-            assert_eq!(retry_after, None);
+    fn config() -> TokenBucket {
+        TokenBucket {
+            refill_rate: 1,
+            refill_interval: Duration::from_millis(100),
+            bucket_size: 5,
         }
     }
 
-    mod token_bucket {
-        use super::*;
-
-        fn config() -> RateLimitConfig {
-            RateLimitConfig::TokenBucket(TokenBucket {
-                refill_rate: 1,
-                refill_interval: Duration::from_millis(100),
-                bucket_size: 5,
-            })
+    fn config_refill_2() -> TokenBucket {
+        TokenBucket {
+            refill_rate: 2,
+            refill_interval: Duration::from_millis(100),
+            bucket_size: 5,
         }
+    }
 
-        fn config_refill_2() -> RateLimitConfig {
-            RateLimitConfig::TokenBucket(TokenBucket {
+    #[test]
+    fn rate_limiting() {
+        let (limiter, _dir) = create_test_state();
+        let id = "user1";
+
+        let clock = Timestamp::now();
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), StorageType::Persistent, id, 3, config())
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Ok));
+        assert_eq!(remaining, 2);
+        assert_eq!(retry_after, None);
+
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), StorageType::Persistent, id, 2, config())
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Ok));
+        assert_eq!(remaining, 0);
+        assert_eq!(retry_after, None);
+
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), StorageType::Persistent, id, 1, config())
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Block));
+        assert_eq!(remaining, 0);
+        assert_eq!(retry_after, Some(Duration::from_millis(100)));
+    }
+
+    #[test]
+    fn tokens_refill_over_time() {
+        let (limiter, _dir) = create_test_state();
+        let id = "user1";
+
+        let mut clock = Timestamp::now();
+        let (result, remaining, retry_after) = limiter
+            .limit(
+                clock,
+                ns(),
+                StorageType::Persistent,
+                id,
+                5,
+                config_refill_2(),
+            )
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Ok));
+        assert_eq!(remaining, 0);
+        assert_eq!(retry_after, None);
+
+        clock += Duration::from_millis(100);
+        let (remaining, retry_after) = limiter
+            .get_remaining(clock, ns(), StorageType::Persistent, id, config_refill_2())
+            .unwrap();
+        assert_eq!(remaining, 2);
+        assert_eq!(retry_after, None);
+
+        clock += Duration::from_millis(200);
+        let (remaining, retry_after) = limiter
+            .get_remaining(clock, ns(), StorageType::Persistent, id, config_refill_2())
+            .unwrap();
+        assert_eq!(remaining, 5);
+        assert_eq!(retry_after, None);
+
+        let (result, remaining, retry_after) = limiter
+            .limit(
+                clock,
+                ns(),
+                StorageType::Persistent,
+                id,
+                2,
+                config_refill_2(),
+            )
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Ok));
+        assert_eq!(remaining, 3);
+        assert_eq!(retry_after, None);
+    }
+
+    #[test]
+    fn refill_interval_tracking() {
+        let (limiter, _dir) = create_test_state();
+        let id = "user1";
+
+        fn make_config() -> TokenBucket {
+            TokenBucket {
                 refill_rate: 2,
-                refill_interval: Duration::from_millis(100),
-                bucket_size: 5,
-            })
-        }
-
-        #[test]
-        fn rate_limiting() {
-            let (limiter, _dir) = create_test_state();
-            let id = "user1";
-
-            let clock = Timestamp::now();
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 3, config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 2);
-            assert_eq!(retry_after, None);
-
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 2, config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 0);
-            assert_eq!(retry_after, None);
-
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 1, config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Block));
-            assert_eq!(remaining, 0);
-            assert_eq!(retry_after, Some(Duration::from_millis(100)));
-        }
-
-        #[test]
-        fn tokens_refill_over_time() {
-            let (limiter, _dir) = create_test_state();
-            let id = "user1";
-
-            let mut clock = Timestamp::now();
-            let (result, remaining, retry_after) = limiter
-                .limit(
-                    clock,
-                    ns(),
-                    StorageType::Persistent,
-                    id,
-                    5,
-                    config_refill_2(),
-                )
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 0);
-            assert_eq!(retry_after, None);
-
-            clock += Duration::from_millis(100);
-            let (remaining, retry_after) = limiter
-                .get_remaining(clock, ns(), StorageType::Persistent, id, config_refill_2())
-                .unwrap();
-            assert_eq!(remaining, 2);
-            assert_eq!(retry_after, None);
-
-            clock += Duration::from_millis(200);
-            let (remaining, retry_after) = limiter
-                .get_remaining(clock, ns(), StorageType::Persistent, id, config_refill_2())
-                .unwrap();
-            assert_eq!(remaining, 5);
-            assert_eq!(retry_after, None);
-
-            let (result, remaining, retry_after) = limiter
-                .limit(
-                    clock,
-                    ns(),
-                    StorageType::Persistent,
-                    id,
-                    2,
-                    config_refill_2(),
-                )
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 3);
-            assert_eq!(retry_after, None);
-        }
-
-        #[test]
-        fn refill_interval_tracking() {
-            let (limiter, _dir) = create_test_state();
-            let id = "user1";
-
-            fn make_config() -> RateLimitConfig {
-                RateLimitConfig::TokenBucket(TokenBucket {
-                    refill_rate: 2,
-                    refill_interval: Duration::from_secs(5),
-                    bucket_size: 6,
-                })
+                refill_interval: Duration::from_secs(5),
+                bucket_size: 6,
             }
-
-            let mut clock = Timestamp::now();
-
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 2, make_config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 4);
-            assert_eq!(retry_after, None);
-
-            clock += Duration::from_secs(2);
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 1, make_config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 3);
-            assert_eq!(retry_after, None);
-
-            clock += Duration::from_secs(3);
-            let (result, remaining, retry_after) = limiter
-                .limit(clock, ns(), StorageType::Persistent, id, 1, make_config())
-                .unwrap();
-            assert!(matches!(result, RateLimitStatus::Ok));
-            assert_eq!(remaining, 4); // 4 (previous) + 2 (refill) - 1 (consumed)
-            assert_eq!(retry_after, None);
         }
+
+        let mut clock = Timestamp::now();
+
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), StorageType::Persistent, id, 2, make_config())
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Ok));
+        assert_eq!(remaining, 4);
+        assert_eq!(retry_after, None);
+
+        clock += Duration::from_secs(2);
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), StorageType::Persistent, id, 1, make_config())
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Ok));
+        assert_eq!(remaining, 3);
+        assert_eq!(retry_after, None);
+
+        clock += Duration::from_secs(3);
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), StorageType::Persistent, id, 1, make_config())
+            .unwrap();
+        assert!(matches!(result, RateLimitStatus::Ok));
+        assert_eq!(remaining, 4); // 4 (previous) + 2 (refill) - 1 (consumed)
+        assert_eq!(retry_after, None);
     }
 }

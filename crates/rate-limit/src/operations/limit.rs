@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use super::{LimitResponse, RateLimiterRaftState, RateLimiterRequest};
-use crate::{RateLimitConfig, RateLimitNamespace, RateLimitStatus};
+use crate::{RateLimitNamespace, RateLimitStatus, TokenBucket};
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
 use fjall_utils::StorageType;
@@ -14,7 +14,7 @@ pub struct LimitOperation {
     storage_type: StorageType,
     pub(crate) key: String,
     pub(crate) tokens: u64,
-    pub(crate) method: RateLimitConfig,
+    pub(crate) method: TokenBucket,
 }
 
 impl LimitOperation {
@@ -22,7 +22,7 @@ impl LimitOperation {
         namespace: RateLimitNamespace,
         key: String,
         tokens: u64,
-        method: RateLimitConfig,
+        method: TokenBucket,
     ) -> Self {
         Self {
             namespace_id: namespace.id,

@@ -4,23 +4,6 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct FixedWindow {
-    /// Window size
-    pub size: Duration,
-    /// Max tokens allowed per window
-    pub tokens: u64,
-}
-
-impl FixedWindow {
-    pub(crate) fn get_window_start(&self, now: Timestamp) -> Timestamp {
-        let size_ms = self.size.as_millis() as i64;
-        let now_ms = now.as_millisecond();
-        let window_start_ms = now_ms - (now_ms % size_ms);
-        Timestamp::from_millisecond(window_start_ms).unwrap()
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TokenBucket {
     /// Token refill rate in tokens per refill interval
     pub refill_rate: u64,
@@ -57,10 +40,4 @@ impl TokenBucket {
 
         (capacity, new_last_refill)
     }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum RateLimitConfig {
-    FixedWindow(FixedWindow),
-    TokenBucket(TokenBucket),
 }
