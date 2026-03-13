@@ -37,9 +37,9 @@ impl std::error::Error for BackgroundError {
 
 pub type BackgroundResult<T> = std::result::Result<T, BackgroundError>;
 
-pub trait OperationWriter {
-    type Request: Sized;
-    type Response: Sized;
+pub trait OperationWriter<M: ModuleRequest> {
+    type Request: From<M> + Sized;
+    type Response: TryInto<M::Response> + Sized;
 
     /// Execute a write against the replicated state machine
     ///
@@ -54,18 +54,15 @@ pub trait OperationWriter {
     #[allow(async_fn_in_trait)]
     async fn write_request<O>(&self, op: O) -> BackgroundResult<O::Response>
     where
-        O: OperationRequest + Into<O::RequestParent>,
-        O::RequestParent: Into<Self::Request>,
-        <O::Response as OperationResponse>::ResponseParent: TryFrom<Self::Response>,
-        O::Response: TryFrom<<O::Response as OperationResponse>::ResponseParent>,
+        O: OperationRequest<RequestParent = M, Response: TryFrom<M::Response>>
+            + Into<O::RequestParent>,
     {
         let module_request: O::RequestParent = op.into();
         let top_level_request: Self::Request = module_request.into();
         let top_level_response = self.do_write_request(top_level_request).await?;
-        let Ok(module_response): std::result::Result<
-            <O::Response as OperationResponse>::ResponseParent,
-            _,
-        > = top_level_response.try_into() else {
+        let Ok(module_response): std::result::Result<M::Response, _> =
+            top_level_response.try_into()
+        else {
             return Err(BackgroundError::InvalidResponse);
         };
         module_response
