@@ -29,8 +29,7 @@ impl std::error::Error for BackgroundError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match &self {
             Self::Other(e) => Some(e),
-            Self::InvalidResponse => None,
-            Self::NotLeader => None,
+            Self::InvalidResponse | Self::NotLeader => None,
         }
     }
 }
