@@ -7,9 +7,7 @@ use super::{
     raft::Raft,
 };
 use anyhow::Context;
-use coyote_operations::{
-    ModuleRequest, OperationRequest, OperationRequestMetadata, OperationResponse,
-};
+use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -377,11 +375,7 @@ impl RaftState {
     }
 }
 
-impl<T> coyote_operations::OperationWriter<T> for RaftState
-where
-    T: ModuleRequest<Response: TryFrom<Response>>,
-    Request: From<T>,
-{
+impl coyote_operations::OperationWriterBase for RaftState {
     type Request = Request;
     type Response = Response;
 
