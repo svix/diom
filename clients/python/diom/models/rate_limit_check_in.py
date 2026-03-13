@@ -17,5 +17,7 @@ class RateLimitCheckIn(BaseModel):
     refill_amount: int = Field(alias="refill_amount")
     """Number of tokens to add per refill interval"""
 
-    refill_interval: t.Optional[int] = Field(default=None, alias="refill_interval")
-    """Interval in seconds between refills (minimum 1 second)"""
+    refill_interval_millis: t.Optional[int] = Field(
+        default=None, alias="refill_interval_millis"
+    )
+    """Interval in milliseconds between refills (minimum 1 millisecond)"""

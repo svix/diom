@@ -32,7 +32,7 @@ public class RateLimitCheckIn {
 @JsonProperty private Long tokens;
 @JsonProperty private Long capacity;
 @JsonProperty("refill_amount") private Long refillAmount;
-@JsonProperty("refill_interval") private Long refillInterval;
+@JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
 public RateLimitCheckIn () {}
 
  public RateLimitCheckIn key(String key) {
@@ -111,23 +111,23 @@ public RateLimitCheckIn () {}
         this.refillAmount = refillAmount;
     }
 
-     public RateLimitCheckIn refillInterval(Long refillInterval) {
-        this.refillInterval = refillInterval;
+     public RateLimitCheckIn refillIntervalMillis(Long refillIntervalMillis) {
+        this.refillIntervalMillis = refillIntervalMillis;
         return this;
     }
 
     /**
-    * Interval in seconds between refills (minimum 1 second)
+    * Interval in milliseconds between refills (minimum 1 millisecond)
     *
-     * @return refillInterval
+     * @return refillIntervalMillis
      */
     @javax.annotation.Nullable
-     public Long getRefillInterval() {
-        return refillInterval;
+     public Long getRefillIntervalMillis() {
+        return refillIntervalMillis;
     }
 
-     public void setRefillInterval(Long refillInterval) {
-        this.refillInterval = refillInterval;
+     public void setRefillIntervalMillis(Long refillIntervalMillis) {
+        this.refillIntervalMillis = refillIntervalMillis;
     }
 
     /**

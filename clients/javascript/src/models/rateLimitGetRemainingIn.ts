@@ -6,8 +6,8 @@ export interface RateLimitGetRemainingIn {
     capacity: number;
     /** Number of tokens to add per refill interval */
     refillAmount: number;
-    /** Interval in seconds between refills (minimum 1 second) */
-    refillInterval?: number;
+    /** Interval in milliseconds between refills (minimum 1 millisecond) */
+    refillIntervalMillis?: number;
 }
 
 export const RateLimitGetRemainingInSerializer = {
@@ -17,7 +17,7 @@ export const RateLimitGetRemainingInSerializer = {
             key: object['key'],
             capacity: object['capacity'],
             refillAmount: object['refill_amount'],
-            refillInterval: object['refill_interval'],
+            refillIntervalMillis: object['refill_interval_millis'],
         };
     },
 
@@ -27,7 +27,7 @@ export const RateLimitGetRemainingInSerializer = {
             'key': self.key,
             'capacity': self.capacity,
             'refill_amount': self.refillAmount,
-            'refill_interval': self.refillInterval,
+            'refill_interval_millis': self.refillIntervalMillis,
         };
     }
 }

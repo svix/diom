@@ -3,8 +3,8 @@
 export interface RateLimitGetRemainingOut {
     /** Number of tokens remaining */
     remaining: number;
-    /** Seconds until at least one token is available (only present when remaining is 0) */
-    retryAfter?: number | null;
+    /** Milliseconds until at least one token is available (only present when remaining is 0) */
+    retryAfterMillis?: number | null;
 }
 
 export const RateLimitGetRemainingOutSerializer = {
@@ -12,7 +12,7 @@ export const RateLimitGetRemainingOutSerializer = {
     _fromJsonObject(object: any): RateLimitGetRemainingOut {
         return {
             remaining: object['remaining'],
-            retryAfter: object['retry_after'],
+            retryAfterMillis: object['retry_after_millis'],
         };
     },
 
@@ -20,7 +20,7 @@ export const RateLimitGetRemainingOutSerializer = {
     _toJsonObject(self: RateLimitGetRemainingOut): any {
         return {
             'remaining': self.remaining,
-            'retry_after': self.retryAfter,
+            'retry_after_millis': self.retryAfterMillis,
         };
     }
 }

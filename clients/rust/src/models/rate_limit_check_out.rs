@@ -1,32 +1,30 @@
 // this file is @generated
 use serde::{Deserialize, Serialize};
 
-use super::rate_limit_status::RateLimitStatus;
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RateLimitCheckOut {
     /// Whether the request is allowed
-    pub status: RateLimitStatus,
+    pub allowed: bool,
 
     /// Number of tokens remaining
     pub remaining: u64,
 
-    /// Seconds until enough tokens are available (only present when allowed is false)
+    /// Milliseconds until enough tokens are available (only present when allowed is false)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after: Option<u64>,
+    pub retry_after_millis: Option<u64>,
 }
 
 impl RateLimitCheckOut {
-    pub fn new(status: RateLimitStatus, remaining: u64) -> Self {
+    pub fn new(allowed: bool, remaining: u64) -> Self {
         Self {
-            status,
+            allowed,
             remaining,
-            retry_after: None,
+            retry_after_millis: None,
         }
     }
 
-    pub fn with_retry_after(mut self, value: impl Into<Option<u64>>) -> Self {
-        self.retry_after = value.into();
+    pub fn with_retry_after_millis(mut self, value: impl Into<Option<u64>>) -> Self {
+        self.retry_after_millis = value.into();
         self
     }
 }

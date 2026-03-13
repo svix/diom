@@ -8,8 +8,8 @@ export interface RateLimitCheckIn {
     capacity: number;
     /** Number of tokens to add per refill interval */
     refillAmount: number;
-    /** Interval in seconds between refills (minimum 1 second) */
-    refillInterval?: number;
+    /** Interval in milliseconds between refills (minimum 1 millisecond) */
+    refillIntervalMillis?: number;
 }
 
 export const RateLimitCheckInSerializer = {
@@ -20,7 +20,7 @@ export const RateLimitCheckInSerializer = {
             tokens: object['tokens'],
             capacity: object['capacity'],
             refillAmount: object['refill_amount'],
-            refillInterval: object['refill_interval'],
+            refillIntervalMillis: object['refill_interval_millis'],
         };
     },
 
@@ -31,7 +31,7 @@ export const RateLimitCheckInSerializer = {
             'tokens': self.tokens,
             'capacity': self.capacity,
             'refill_amount': self.refillAmount,
-            'refill_interval': self.refillInterval,
+            'refill_interval_millis': self.refillIntervalMillis,
         };
     }
 }

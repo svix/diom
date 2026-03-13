@@ -28,7 +28,7 @@ impl From<RateLimitTokenBucketConfig> for TokenBucket {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
-            refill_interval: std::time::Duration::from_secs(val.refill_interval),
+            refill_interval: std::time::Duration::from_millis(val.refill_interval_millis),
         }
     }
 }
@@ -43,14 +43,14 @@ pub struct RateLimitTokenBucketConfig {
     #[validate(range(min = 1))]
     pub refill_amount: u64,
 
-    /// Interval in seconds between refills (minimum 1 second)
+    /// Interval in milliseconds between refills (minimum 1 millisecond)
     #[validate(range(min = 1))]
-    #[serde(default = "default_interval")]
-    pub refill_interval: u64,
+    #[serde(default = "default_interval_millis")]
+    pub refill_interval_millis: u64,
 }
 
-fn default_interval() -> u64 {
-    1
+fn default_interval_millis() -> u64 {
+    1000
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -80,9 +80,9 @@ pub struct RateLimitCheckOut {
     /// Number of tokens remaining
     pub remaining: u64,
 
-    /// Seconds until enough tokens are available (only present when allowed is false)
+    /// Milliseconds until enough tokens are available (only present when allowed is false)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after: Option<u64>,
+    pub retry_after_millis: Option<u64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -101,9 +101,9 @@ pub struct RateLimitGetRemainingOut {
     /// Number of tokens remaining
     pub remaining: u64,
 
-    /// Seconds until at least one token is available (only present when remaining is 0)
+    /// Milliseconds until at least one token is available (only present when remaining is 0)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after: Option<u64>,
+    pub retry_after_millis: Option<u64>,
 }
 
 /// Rate Limiter Check and Consume
@@ -128,7 +128,7 @@ async fn rate_limit_limit(
     Ok(MsgPackOrJson(RateLimitCheckOut {
         status: response.status,
         remaining: response.remaining,
-        retry_after: response
+        retry_after_millis: response
             .retry_after
             .map(|t: std::time::Duration| t.as_millis() as u64),
     }))
@@ -159,7 +159,7 @@ async fn rate_limit_get_remaining(
 
     Ok(MsgPackOrJson(RateLimitGetRemainingOut {
         remaining,
-        retry_after: retry_after.map(|t| t.as_millis() as u64),
+        retry_after_millis: retry_after.map(|t| t.as_millis() as u64),
     }))
 }
 

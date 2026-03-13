@@ -70,7 +70,6 @@ type (
 	RateLimitGetNamespaceOut      = diom_models.RateLimitGetNamespaceOut
 	RateLimitGetRemainingIn       = diom_models.RateLimitGetRemainingIn
 	RateLimitGetRemainingOut      = diom_models.RateLimitGetRemainingOut
-	RateLimitStatus               = diom_models.RateLimitStatus
 	Retention                     = diom_models.Retention
 	StorageType                   = diom_models.StorageType
 	StreamMsgOut                  = diom_models.StreamMsgOut

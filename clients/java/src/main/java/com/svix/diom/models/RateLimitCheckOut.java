@@ -28,28 +28,28 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class RateLimitCheckOut {
-@JsonProperty private RateLimitStatus status;
+@JsonProperty private Boolean allowed;
 @JsonProperty private Long remaining;
-@JsonProperty("retry_after") private Long retryAfter;
+@JsonProperty("retry_after_millis") private Long retryAfterMillis;
 public RateLimitCheckOut () {}
 
- public RateLimitCheckOut status(RateLimitStatus status) {
-        this.status = status;
+ public RateLimitCheckOut allowed(Boolean allowed) {
+        this.allowed = allowed;
         return this;
     }
 
     /**
     * Whether the request is allowed
     *
-     * @return status
+     * @return allowed
      */
     @javax.annotation.Nonnull
-     public RateLimitStatus getStatus() {
-        return status;
+     public Boolean getAllowed() {
+        return allowed;
     }
 
-     public void setStatus(RateLimitStatus status) {
-        this.status = status;
+     public void setAllowed(Boolean allowed) {
+        this.allowed = allowed;
     }
 
      public RateLimitCheckOut remaining(Long remaining) {
@@ -71,23 +71,23 @@ public RateLimitCheckOut () {}
         this.remaining = remaining;
     }
 
-     public RateLimitCheckOut retryAfter(Long retryAfter) {
-        this.retryAfter = retryAfter;
+     public RateLimitCheckOut retryAfterMillis(Long retryAfterMillis) {
+        this.retryAfterMillis = retryAfterMillis;
         return this;
     }
 
     /**
-    * Seconds until enough tokens are available (only present when allowed is false)
+    * Milliseconds until enough tokens are available (only present when allowed is false)
     *
-     * @return retryAfter
+     * @return retryAfterMillis
      */
     @javax.annotation.Nullable
-     public Long getRetryAfter() {
-        return retryAfter;
+     public Long getRetryAfterMillis() {
+        return retryAfterMillis;
     }
 
-     public void setRetryAfter(Long retryAfter) {
-        this.retryAfter = retryAfter;
+     public void setRetryAfterMillis(Long retryAfterMillis) {
+        this.retryAfterMillis = retryAfterMillis;
     }
 
     /**
