@@ -70,6 +70,8 @@ type (
 	RateLimitGetNamespaceOut      = diom_models.RateLimitGetNamespaceOut
 	RateLimitGetRemainingIn       = diom_models.RateLimitGetRemainingIn
 	RateLimitGetRemainingOut      = diom_models.RateLimitGetRemainingOut
+	RateLimitResetIn              = diom_models.RateLimitResetIn
+	RateLimitResetOut             = diom_models.RateLimitResetOut
 	RateLimitTokenBucketConfig    = diom_models.RateLimitTokenBucketConfig
 	Retention                     = diom_models.Retention
 	StorageType                   = diom_models.StorageType

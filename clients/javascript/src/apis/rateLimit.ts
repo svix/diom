@@ -16,6 +16,14 @@ import {
     type RateLimitGetRemainingOut,
     RateLimitGetRemainingOutSerializer,
 } from '../models/rateLimitGetRemainingOut';
+import {
+    type RateLimitResetIn,
+    RateLimitResetInSerializer,
+} from '../models/rateLimitResetIn';
+import {
+    type RateLimitResetOut,
+    RateLimitResetOutSerializer,
+} from '../models/rateLimitResetOut';
 import { RateLimitNamespace } from './rateLimitNamespace';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
@@ -61,6 +69,26 @@ export class RateLimit {
                 return request.send(
                     this.requestCtx,
                     RateLimitGetRemainingOutSerializer._fromJsonObject,
+                );
+            }
+
+        
+
+    /** Rate Limiter Reset */
+        public reset(
+            rateLimitResetIn: RateLimitResetIn,
+            ): Promise<RateLimitResetOut> {
+            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/reset");
+
+            request.setBody(
+                    RateLimitResetInSerializer._toJsonObject(
+                        rateLimitResetIn,
+                    )
+                );
+            
+                return request.send(
+                    this.requestCtx,
+                    RateLimitResetOutSerializer._fromJsonObject,
                 );
             }
 

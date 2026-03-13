@@ -10,7 +10,7 @@ use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
-use diom_rate_limit::operations::{CreateRateLimitOperation, LimitOperation};
+use diom_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -159,6 +159,40 @@ async fn rate_limit_get_remaining(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+pub struct RateLimitResetIn {
+    #[validate(nested)]
+    pub key: EntityKey,
+
+    /// Rate limiter configuration
+    #[validate(nested)]
+    pub config: RateLimitTokenBucketConfig,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct RateLimitResetOut {}
+
+/// Rate Limiter Reset
+#[aide_annotate(op_id = "v1.rate_limit.reset")]
+async fn rate_limit_reset(
+    Extension(repl): Extension<RaftState>,
+    State(state): State<AppState>,
+    MsgPackOrJson(data): MsgPackOrJson<RateLimitResetIn>,
+) -> Result<MsgPackOrJson<RateLimitResetOut>> {
+    let namespace: RateLimitNamespace = state
+        .namespace_state
+        .fetch_namespace(data.key.namespace())?
+        .ok_or_not_found()?;
+
+    let key = data.key.0.clone();
+    let method = data.config.into();
+
+    let operation = ResetOperation::new(namespace, key, method);
+    repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(RateLimitResetOut {}))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitCreateNamespaceIn {
     pub name: String,
     #[serde(default)]
@@ -244,6 +278,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/rate-limit/get-remaining",
             post_with(rate_limit_get_remaining, rate_limit_get_remaining_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/rate-limit/reset",
+            post_with(rate_limit_reset, rate_limit_reset_operation),
             &tag,
         )
         .api_route_with(

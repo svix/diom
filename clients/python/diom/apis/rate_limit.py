@@ -6,6 +6,8 @@ from ..models import (
     RateLimitCheckOut,
     RateLimitGetRemainingIn,
     RateLimitGetRemainingOut,
+    RateLimitResetIn,
+    RateLimitResetOut,
 )
 from .rate_limit_namespace import (
     RateLimitNamespace,
@@ -46,6 +48,20 @@ class RateLimitAsync(ApiBase):
             response_type=RateLimitGetRemainingOut,
         )
 
+    async def reset(
+        self,
+        rate_limit_reset_in: RateLimitResetIn,
+    ) -> RateLimitResetOut:
+        """Rate Limiter Reset"""
+        body = rate_limit_reset_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1/rate-limit/reset",
+            body=body,
+            response_type=RateLimitResetOut,
+        )
+
 
 class RateLimit(ApiBase):
     @property
@@ -78,4 +94,18 @@ class RateLimit(ApiBase):
             path="/api/v1/rate-limit/get-remaining",
             body=body,
             response_type=RateLimitGetRemainingOut,
+        )
+
+    def reset(
+        self,
+        rate_limit_reset_in: RateLimitResetIn,
+    ) -> RateLimitResetOut:
+        """Rate Limiter Reset"""
+        body = rate_limit_reset_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1/rate-limit/reset",
+            body=body,
+            response_type=RateLimitResetOut,
         )

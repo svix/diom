@@ -49,3 +49,19 @@ func (rateLimit RateLimit) GetRemaining(
 		&rateLimitGetRemainingIn,
 	)
 }
+
+// Rate Limiter Reset
+func (rateLimit RateLimit) Reset(
+	ctx context.Context,
+	rateLimitResetIn diom_models.RateLimitResetIn,
+) (*diom_models.RateLimitResetOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.RateLimitResetIn, diom_models.RateLimitResetOut](
+		ctx,
+		rateLimit.client,
+		"POST",
+		"/api/v1/rate-limit/reset",
+		nil,
+		nil,
+		&rateLimitResetIn,
+	)
+}

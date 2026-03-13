@@ -64,6 +64,8 @@ from .rate_limit_get_namespace_in import RateLimitGetNamespaceIn
 from .rate_limit_get_namespace_out import RateLimitGetNamespaceOut
 from .rate_limit_get_remaining_in import RateLimitGetRemainingIn
 from .rate_limit_get_remaining_out import RateLimitGetRemainingOut
+from .rate_limit_reset_in import RateLimitResetIn
+from .rate_limit_reset_out import RateLimitResetOut
 from .rate_limit_token_bucket_config import RateLimitTokenBucketConfig
 from .retention import Retention
 from .storage_type import StorageType
@@ -136,6 +138,8 @@ __all__ = [
     "RateLimitGetNamespaceOut",
     "RateLimitGetRemainingIn",
     "RateLimitGetRemainingOut",
+    "RateLimitResetIn",
+    "RateLimitResetOut",
     "RateLimitTokenBucketConfig",
     "Retention",
     "StorageType",
