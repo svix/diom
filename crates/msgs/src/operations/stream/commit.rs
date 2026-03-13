@@ -1,6 +1,5 @@
 use coyote_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use coyote_error::Error;
@@ -55,7 +54,7 @@ impl StreamCommitOperation {
 
         lease.offset = self.offset + 1;
         if self.offset >= lease.end_offset {
-            lease.expiry = Timestamp::UNIX_EPOCH;
+            lease.expiry = jiff::Timestamp::UNIX_EPOCH;
         }
 
         batch.insert_row(
@@ -74,7 +73,11 @@ impl StreamCommitOperation {
 pub struct StreamCommitResponseData {}
 
 impl MsgsRequest for StreamCommitOperation {
-    fn apply(self, state: MsgsRaftState<'_>, _timestamp: Timestamp) -> StreamCommitResponse {
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        _ctx: &coyote_operations::OpContext,
+    ) -> StreamCommitResponse {
         StreamCommitResponse(self.apply_real(state.msgs))
     }
 }

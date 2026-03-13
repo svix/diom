@@ -31,7 +31,11 @@ impl ClearExpiredOperation {
 }
 
 impl KvRequest for ClearExpiredOperation {
-    fn apply(self, state: KvRaftState<'_>, timestamp: jiff::Timestamp) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, timestamp))
+    fn apply(
+        self,
+        state: KvRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> ClearExpiredResponse {
+        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp))
     }
 }

@@ -80,7 +80,11 @@ impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
 }
 
 impl CacheRequest for CreateCacheOperation {
-    fn apply(self, state: CacheRaftState<'_>, now: Timestamp) -> CreateCacheResponse {
-        CreateCacheResponse(self.apply_real(state.namespace, now))
+    fn apply(
+        self,
+        state: CacheRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> CreateCacheResponse {
+        CreateCacheResponse(self.apply_real(state.namespace, ctx.timestamp))
     }
 }

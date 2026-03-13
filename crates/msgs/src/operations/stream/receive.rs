@@ -177,7 +177,11 @@ pub struct StreamReceiveResponseData {
 }
 
 impl MsgsRequest for StreamReceiveOperation {
-    fn apply(self, state: MsgsRaftState<'_>, now: Timestamp) -> StreamReceiveResponse {
-        StreamReceiveResponse(self.apply_real(state.msgs, now))
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> StreamReceiveResponse {
+        StreamReceiveResponse(self.apply_real(state.msgs, ctx.timestamp))
     }
 }

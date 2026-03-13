@@ -55,7 +55,11 @@ impl CompleteOperation {
 }
 
 impl IdempotencyRequest for CompleteOperation {
-    fn apply(self, state: IdempotencyRaftState<'_>, now: Timestamp) -> CompleteResponse {
-        CompleteResponse(self.apply_real(&state, now))
+    fn apply(
+        self,
+        state: IdempotencyRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> CompleteResponse {
+        CompleteResponse(self.apply_real(&state, ctx.timestamp))
     }
 }

@@ -1,14 +1,12 @@
-use crate::core::cluster::handle::Request;
-
 use super::{
     NodeId,
-    handle::{RequestWithContext, Response},
+    handle::{Request, RequestWithContext, Response},
     state_machine::Store,
 };
 use openraft::LogId;
 use opentelemetry::{Value, propagation::TextMapPropagator};
 use opentelemetry_sdk::propagation::TraceContextPropagator;
-use tracing::info_span;
+use tracing::{Instrument, info_span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 pub(super) async fn apply_request(
@@ -16,7 +14,12 @@ pub(super) async fn apply_request(
     state_machine: &mut Store,
     log_id: LogId<NodeId>,
 ) -> anyhow::Result<Response> {
-    let child_span = info_span!("apply_request");
+    let child_span = info_span!(
+        "apply_request",
+        module = request.module(),
+        timestamp = %request.timestamp,
+        log_index = log_id.index
+    );
     let trace_ctx = request
         .context
         .as_ref()
@@ -30,19 +33,33 @@ pub(super) async fn apply_request(
     if let Some(hash) = request.hashed_key() {
         child_span.set_attribute("hashed_key", Value::String(hash.into()));
     }
-    let _exit = child_span.enter();
 
     state_machine.time.bump(request.timestamp);
-    let timestamp = request.timestamp;
 
-    Ok(match request.inner {
+    let context = coyote_operations::OpContext {
+        timestamp: request.timestamp,
+        log_index: log_id.index,
+        term: log_id.leader_id.term,
+    };
+
+    apply_request_with_context(state_machine, context, request.inner)
+        .instrument(child_span)
+        .await
+}
+
+async fn apply_request_with_context(
+    state_machine: &mut Store,
+    context: coyote_operations::OpContext,
+    request: Request,
+) -> anyhow::Result<Response> {
+    Ok(match request {
         Request::Kv(req) => {
             let stores = state_machine.db_handle();
             let state = coyote_kv::operations::KvRaftState {
                 state: &stores.kv_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Kv(req.apply(state, timestamp))
+            Response::Kv(req.apply(state, &context))
         }
         Request::RateLimit(req) => {
             let stores = state_machine.db_handle();
@@ -50,7 +67,7 @@ pub(super) async fn apply_request(
                 state: &stores.rate_limit_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::RateLimit(req.apply(state, timestamp))
+            Response::RateLimit(req.apply(state, &context))
         }
         Request::Idempotency(req) => {
             let stores = state_machine.db_handle();
@@ -58,7 +75,7 @@ pub(super) async fn apply_request(
                 state: &stores.idempotency_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Idempotency(req.apply(state, timestamp))
+            Response::Idempotency(req.apply(state, &context))
         }
         Request::Cache(req) => {
             let stores = state_machine.db_handle();
@@ -66,7 +83,7 @@ pub(super) async fn apply_request(
                 state: &stores.cache_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Cache(req.apply(state, timestamp))
+            Response::Cache(req.apply(state, &context))
         }
         Request::Msgs(req) => {
             let stores = state_machine.db_handle();
@@ -74,10 +91,10 @@ pub(super) async fn apply_request(
                 msgs: &stores.msgs_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Msgs(req.apply(state, timestamp))
+            Response::Msgs(req.apply(state, &context))
         }
         Request::ClusterInternal(req) => {
-            Response::ClusterInternal(req.apply((state_machine, log_id), timestamp).await)
+            Response::ClusterInternal(req.apply(state_machine, &context).await)
         }
     })
 }

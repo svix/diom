@@ -80,7 +80,11 @@ pub struct TopicConfigureResponseData {
 }
 
 impl MsgsRequest for TopicConfigureOperation {
-    fn apply(self, state: MsgsRaftState<'_>, timestamp: Timestamp) -> TopicConfigureResponse {
-        TopicConfigureResponse(self.apply_real(state.msgs, timestamp))
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> TopicConfigureResponse {
+        TopicConfigureResponse(self.apply_real(state.msgs, ctx.timestamp))
     }
 }

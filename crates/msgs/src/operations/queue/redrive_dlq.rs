@@ -1,7 +1,6 @@
 use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -90,7 +89,11 @@ impl QueueRedriveDlqOperation {
 pub struct QueueRedriveDlqResponseData {}
 
 impl MsgsRequest for QueueRedriveDlqOperation {
-    fn apply(self, state: MsgsRaftState<'_>, _timestamp: Timestamp) -> QueueRedriveDlqResponse {
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        _ctx: &coyote_operations::OpContext,
+    ) -> QueueRedriveDlqResponse {
         QueueRedriveDlqResponse(self.apply_real(state.msgs))
     }
 }

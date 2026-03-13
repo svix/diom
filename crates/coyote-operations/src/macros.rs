@@ -34,7 +34,7 @@ macro_rules! raft_module_operations {
             where
                 Self: 'static,
             {
-                fn apply(self, state: $state_type, timestamp: jiff::Timestamp) -> Self::Response;
+                fn apply(self, state: $state_type, ctx: &::coyote_operations::OpContext) -> Self::Response;
             }
 
             $(
@@ -95,9 +95,9 @@ macro_rules! raft_module_operations {
             )*
 
             impl $module_op_name {
-                pub fn apply(self, state: $state_type, timestamp: jiff::Timestamp) -> $response_name {
+                pub fn apply(self, state: $state_type, ctx: &::coyote_operations::OpContext) -> $response_name {
                     match self {
-                        $(Self::$variant(req) => $response_name::$variant(req.apply(state, timestamp)),)*
+                        $(Self::$variant(req) => $response_name::$variant(req.apply(state, ctx)),)*
                     }
                 }
             }
@@ -141,7 +141,7 @@ macro_rules! async_raft_module_operations {
             where
                 Self: 'static,
             {
-                async fn apply(self, state: $state_type, timestamp: jiff::Timestamp) -> Self::Response;
+                async fn apply(self, state: $state_type, ctx: &::coyote_operations::OpContext) -> Self::Response;
             }
 
             $(
@@ -202,9 +202,9 @@ macro_rules! async_raft_module_operations {
             )*
 
             impl $module_op_name {
-                pub async fn apply(self, state: $state_type, timestamp: jiff::Timestamp) -> $response_name {
+                pub async fn apply(self, state: $state_type, ctx: &::coyote_operations::OpContext) -> $response_name {
                     match self {
-                        $(Self::$variant(req) => $response_name::$variant(req.apply(state, timestamp).await),)*
+                        $(Self::$variant(req) => $response_name::$variant(req.apply(state, ctx).await),)*
                     }
                 }
             }

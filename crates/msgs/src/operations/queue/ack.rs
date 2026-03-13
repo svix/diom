@@ -1,7 +1,6 @@
 use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -98,7 +97,11 @@ impl QueueAckOperation {
 pub struct QueueAckResponseData {}
 
 impl MsgsRequest for QueueAckOperation {
-    fn apply(self, state: MsgsRaftState<'_>, _now: Timestamp) -> QueueAckResponse {
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        _ctx: &coyote_operations::OpContext,
+    ) -> QueueAckResponse {
         QueueAckResponse(self.apply_real(state.msgs))
     }
 }
