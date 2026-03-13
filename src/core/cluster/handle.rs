@@ -38,7 +38,7 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalOperation),
     Kv(diom_kv::operations::KvOperation),
-    RateLimiter(diom_rate_limit::operations::RateLimiterOperation),
+    RateLimit(diom_rate_limit::operations::RateLimitOperation),
     Idempotency(diom_idempotency::operations::IdempotencyOperation),
     Cache(diom_cache::operations::CacheOperation),
     Msgs(diom_msgs::operations::MsgsOperation),
@@ -61,7 +61,7 @@ impl fmt::Display for RequestWithContext {
         match self.inner {
             Request::ClusterInternal(_) => write!(f, "cluster_internal"),
             Request::Kv(_) => write!(f, "kv"),
-            Request::RateLimiter(_) => write!(f, "ratelimiter"),
+            Request::RateLimit(_) => write!(f, "ratelimiter"),
             Request::Idempotency(_) => write!(f, "idempotency"),
             Request::Cache(_) => write!(f, "cache"),
             Request::Msgs(_) => write!(f, "msgs"),
@@ -85,7 +85,7 @@ impl RequestWithContext {
     pub(crate) fn hashed_key(&self) -> Option<String> {
         let digest = match &self.inner {
             Request::Kv(op) => Sha256::digest(op.key_name()),
-            Request::RateLimiter(op) => Sha256::digest(op.key_name()),
+            Request::RateLimit(op) => Sha256::digest(op.key_name()),
             Request::Idempotency(op) => Sha256::digest(op.key_name()),
             Request::Cache(op) => Sha256::digest(op.key_name()),
             Request::Msgs(op) => Sha256::digest(op.key_name()),
@@ -101,9 +101,9 @@ impl From<diom_kv::operations::KvOperation> for Request {
     }
 }
 
-impl From<diom_rate_limit::operations::RateLimiterOperation> for Request {
-    fn from(value: diom_rate_limit::operations::RateLimiterOperation) -> Self {
-        Request::RateLimiter(value)
+impl From<diom_rate_limit::operations::RateLimitOperation> for Request {
+    fn from(value: diom_rate_limit::operations::RateLimitOperation) -> Self {
+        Request::RateLimit(value)
     }
 }
 
@@ -136,7 +136,7 @@ pub enum Response {
     Blank,
     ClusterInternal(super::operations::Response),
     Kv(diom_kv::operations::Response),
-    RateLimiter(diom_rate_limit::operations::Response),
+    RateLimit(diom_rate_limit::operations::Response),
     Idempotency(diom_idempotency::operations::Response),
     Cache(diom_cache::operations::Response),
     Msgs(diom_msgs::operations::Response),
@@ -158,7 +158,7 @@ impl TryFrom<Response> for diom_rate_limit::operations::Response {
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
-            Response::RateLimiter(v) => Ok(v),
+            Response::RateLimit(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

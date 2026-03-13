@@ -1,10 +1,7 @@
 use crate::{AppState, error::Result};
 
-pub use diom_rate_limit::State as RateLimiter;
-
 /// This is the worker function for this module, it does background cleanup and accounting.
 pub async fn worker(state: AppState) -> Result<()> {
-    let stores = [&state.rate_limiter];
-    diom_rate_limit::worker(&stores, crate::is_shutting_down).await;
+    diom_rate_limit::worker(state.do_not_use_dbs.clone(), crate::is_shutting_down).await;
     Ok(())
 }
