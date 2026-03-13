@@ -146,7 +146,7 @@ async fn rate_limit_get_remaining(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    repl.wait_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.or_internal_error()?;
 
     let now = Timestamp::now();
     let (remaining, retry_after) = state.rate_limit.get_remaining(
