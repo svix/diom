@@ -73,7 +73,11 @@ impl From<CreateNamespaceOutput<IdempotencyConfig>> for CreateIdempotencyRespons
 }
 
 impl IdempotencyRequest for CreateIdempotencyOperation {
-    fn apply(self, state: IdempotencyRaftState<'_>, now: Timestamp) -> CreateIdempotencyResponse {
-        CreateIdempotencyResponse(self.apply_real(state.namespace, now))
+    fn apply(
+        self,
+        state: IdempotencyRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> CreateIdempotencyResponse {
+        CreateIdempotencyResponse(self.apply_real(state.namespace, ctx.timestamp))
     }
 }

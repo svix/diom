@@ -80,7 +80,11 @@ pub struct QueueConfigureResponseData {
 }
 
 impl MsgsRequest for QueueConfigureOperation {
-    fn apply(self, state: MsgsRaftState<'_>, now: Timestamp) -> QueueConfigureResponse {
-        QueueConfigureResponse(self.apply_real(state.msgs, now))
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> QueueConfigureResponse {
+        QueueConfigureResponse(self.apply_real(state.msgs, ctx.timestamp))
     }
 }

@@ -262,7 +262,11 @@ pub struct QueueReceiveResponseData {
 }
 
 impl MsgsRequest for QueueReceiveOperation {
-    fn apply(self, state: MsgsRaftState<'_>, now: Timestamp) -> QueueReceiveResponse {
-        QueueReceiveResponse(self.apply_real(state.msgs, now))
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> QueueReceiveResponse {
+        QueueReceiveResponse(self.apply_real(state.msgs, ctx.timestamp))
     }
 }

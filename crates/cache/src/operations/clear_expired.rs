@@ -1,6 +1,6 @@
 use super::{CacheRequest, ClearExpiredResponse};
 use crate::{State, operations::CacheRaftState};
-use coyote_operations::Result;
+use coyote_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +31,7 @@ impl ClearExpiredOperation {
 }
 
 impl CacheRequest for ClearExpiredOperation {
-    fn apply(self, state: CacheRaftState<'_>, timestamp: jiff::Timestamp) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, timestamp))
+    fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> ClearExpiredResponse {
+        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp))
     }
 }
