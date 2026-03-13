@@ -149,13 +149,10 @@ async fn rate_limit_get_remaining(
     repl.wait_linearizable().await.or_internal_error()?;
 
     let now = Timestamp::now();
-    let (remaining, retry_after) = state.rate_limit.get_remaining(
-        now,
-        namespace.id,
-        namespace.storage_type,
-        &data.key,
-        data.config.into(),
-    )?;
+    let (remaining, retry_after) = state
+        .rate_limit
+        .controller(namespace.storage_type)
+        .get_remaining(now, namespace.id, &data.key, data.config.into())?;
 
     Ok(MsgPackOrJson(RateLimitGetRemainingOut {
         remaining,

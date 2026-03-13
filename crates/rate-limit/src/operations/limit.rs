@@ -47,10 +47,9 @@ impl LimitOperation {
         state: &RateLimitRaftState<'_>,
         now: Timestamp,
     ) -> Result<LimitResponseData> {
-        let (allowed, remaining, retry_after) = state.state.limit(
+        let (allowed, remaining, retry_after) = state.state.controller(self.storage_type).limit(
             now,
             self.namespace_id,
-            self.storage_type,
             &self.key,
             self.tokens,
             self.method,

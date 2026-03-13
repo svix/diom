@@ -28,7 +28,8 @@ impl ResetOperation {
     fn apply_real(self, state: &RateLimitRaftState<'_>) -> Result<()> {
         state
             .state
-            .reset(self.namespace_id, self.storage_type, &self.key)?;
+            .controller(self.storage_type)
+            .reset(self.namespace_id, &self.key)?;
         Ok(())
     }
 }
