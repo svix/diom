@@ -7,7 +7,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_core::types::{Consistency, EntityKey};
 use coyote_derive::aide_annotate;
-use coyote_error::{Error, OptionExt, ResultExt};
+use coyote_error::{OptionExt, ResultExt};
 use coyote_kv::{
     KvNamespace,
     kvcontroller::{KvModel, OperationBehavior},
@@ -55,21 +55,17 @@ pub struct KvGetIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvGetOut {
-    #[validate(nested)]
-    pub key: EntityKey,
-
     /// Time of expiry
     pub expiry: Option<Timestamp>,
 
-    pub value: Vec<u8>,
+    pub value: Option<Vec<u8>>,
 }
 
 impl KvGetOut {
-    fn from_model(key: EntityKey, model: KvModel) -> Self {
+    fn from_model(model: KvModel) -> Self {
         Self {
-            key,
             expiry: model.expiry,
-            value: model.value,
+            value: Some(model.value),
         }
     }
 }
@@ -128,10 +124,11 @@ async fn kv_get(
     let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
 
     let ret = match model {
-        Some(m) => KvGetOut::from_model(data.key, m),
-        None => {
-            return Err(Error::not_found("Key not found".to_owned()));
-        }
+        Some(m) => KvGetOut::from_model(m),
+        None => KvGetOut {
+            expiry: None,
+            value: None,
+        },
     };
     Ok(MsgPackOrJson(ret))
 }

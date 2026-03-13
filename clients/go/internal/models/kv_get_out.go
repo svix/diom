@@ -7,7 +7,6 @@ import (
 )
 
 type KvGetOut struct {
-	Key    string     `json:"key"`
 	Expiry *time.Time `json:"expiry,omitempty"` // Time of expiry
-	Value  []uint8    `json:"value"`
+	Value  []uint8    `json:"value,omitempty"`
 }
