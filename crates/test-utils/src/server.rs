@@ -247,6 +247,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             log_sync_interval_duration: Duration::from_secs(30),
             log_ack_immediately: true,
         },
+        bootstrap_cfg: None,
         bootstrap_cfg_path: None,
     }
 }
