@@ -159,7 +159,11 @@ fn forward_to_dlq(
 pub struct QueueNackResponseData {}
 
 impl MsgsRequest for QueueNackOperation {
-    fn apply(self, state: MsgsRaftState<'_>, timestamp: Timestamp) -> QueueNackResponse {
-        QueueNackResponse(self.apply_real(state.msgs, timestamp))
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        ctx: &diom_operations::OpContext,
+    ) -> QueueNackResponse {
+        QueueNackResponse(self.apply_real(state.msgs, ctx.timestamp))
     }
 }

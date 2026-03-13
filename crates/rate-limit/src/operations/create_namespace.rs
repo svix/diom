@@ -73,7 +73,11 @@ impl From<CreateNamespaceOutput<RateLimitConfig>> for CreateRateLimitResponseDat
 }
 
 impl RateLimitRequest for CreateRateLimitOperation {
-    fn apply(self, state: RateLimitRaftState<'_>, now: Timestamp) -> CreateRateLimitResponse {
-        CreateRateLimitResponse(self.apply_real(state.namespace, now))
+    fn apply(
+        self,
+        state: RateLimitRaftState<'_>,
+        ctx: &diom_operations::OpContext,
+    ) -> CreateRateLimitResponse {
+        CreateRateLimitResponse(self.apply_real(state.namespace, ctx.timestamp))
     }
 }

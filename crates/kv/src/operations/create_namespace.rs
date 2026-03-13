@@ -73,7 +73,7 @@ impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
 }
 
 impl KvRequest for CreateKvOperation {
-    fn apply(self, state: KvRaftState<'_>, now: Timestamp) -> CreateKvResponse {
-        CreateKvResponse(self.apply_real(state.namespace, now))
+    fn apply(self, state: KvRaftState<'_>, ctx: &diom_operations::OpContext) -> CreateKvResponse {
+        CreateKvResponse(self.apply_real(state.namespace, ctx.timestamp))
     }
 }

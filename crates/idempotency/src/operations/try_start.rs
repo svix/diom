@@ -72,7 +72,11 @@ impl TryStartOperation {
 }
 
 impl IdempotencyRequest for TryStartOperation {
-    fn apply(self, state: IdempotencyRaftState<'_>, now: Timestamp) -> TryStartResponse {
-        TryStartResponse(self.apply_real(&state, now))
+    fn apply(
+        self,
+        state: IdempotencyRaftState<'_>,
+        ctx: &diom_operations::OpContext,
+    ) -> TryStartResponse {
+        TryStartResponse(self.apply_real(&state, ctx.timestamp))
     }
 }

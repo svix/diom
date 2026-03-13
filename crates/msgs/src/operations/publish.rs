@@ -118,8 +118,12 @@ pub struct PublishResponseData {
 }
 
 impl MsgsRequest for PublishOperation {
-    fn apply(self, state: MsgsRaftState<'_>, timestamp: Timestamp) -> PublishResponse {
-        PublishResponse(self.apply_real(state.msgs, timestamp))
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        ctx: &diom_operations::OpContext,
+    ) -> PublishResponse {
+        PublishResponse(self.apply_real(state.msgs, ctx.timestamp))
     }
 }
 

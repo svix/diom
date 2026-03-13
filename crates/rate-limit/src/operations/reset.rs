@@ -35,7 +35,11 @@ impl ResetOperation {
 }
 
 impl RateLimitRequest for ResetOperation {
-    fn apply(self, state: RateLimitRaftState<'_>, _now: jiff::Timestamp) -> ResetResponse {
+    fn apply(
+        self,
+        state: RateLimitRaftState<'_>,
+        _ctx: &diom_operations::OpContext,
+    ) -> ResetResponse {
         ResetResponse(self.apply_real(&state))
     }
 }

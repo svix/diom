@@ -103,7 +103,11 @@ impl StreamSeekOperation {
 pub struct StreamSeekResponseData {}
 
 impl MsgsRequest for StreamSeekOperation {
-    fn apply(self, state: MsgsRaftState<'_>, _timestamp: Timestamp) -> StreamSeekResponse {
+    fn apply(
+        self,
+        state: MsgsRaftState<'_>,
+        _ctx: &diom_operations::OpContext,
+    ) -> StreamSeekResponse {
         StreamSeekResponse(self.apply_real(state.msgs))
     }
 }

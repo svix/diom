@@ -93,6 +93,17 @@ impl RequestWithContext {
         };
         Some(hex::encode(digest))
     }
+
+    pub(crate) fn module(&self) -> &'static str {
+        match self.inner {
+            Request::Cache(_) => "cache",
+            Request::ClusterInternal(_) => "cluster-internal",
+            Request::Idempotency(_) => "idempotency",
+            Request::Kv(_) => "kv",
+            Request::Msgs(_) => "msgs",
+            Request::RateLimit(_) => "rate-limit",
+        }
+    }
 }
 
 impl From<diom_kv::operations::KvOperation> for Request {
