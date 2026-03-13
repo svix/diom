@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use serde_json::json;
 use test_utils::{
-    StatusCode, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
 use tokio::time::sleep;
@@ -44,7 +44,7 @@ async fn queue_receive_returns_published_messages() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     for m in msgs {
@@ -94,7 +94,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs1 = r1["msgs"].as_array().unwrap();
+    let msgs1 = r1["msgs"].assert_array();
     assert_eq!(msgs1.len(), 1);
     assert_eq!(msgs1[0]["value"], json!("a".as_bytes()));
 
@@ -110,7 +110,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs2 = r2["msgs"].as_array().unwrap();
+    let msgs2 = r2["msgs"].assert_array();
     assert_eq!(msgs2.len(), 1);
     assert_eq!(msgs2[0]["value"], json!("b".as_bytes()));
 
@@ -125,7 +125,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r3["msgs"].as_array().unwrap().len(),
+        r3["msgs"].assert_array().len(),
         0,
         "no messages available when all are leased"
     );
@@ -172,11 +172,11 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     // Ack all messages
-    let msg_ids: Vec<&str> = msgs.iter().map(|m| m["msg_id"].as_str().unwrap()).collect();
+    let msg_ids: Vec<&str> = msgs.iter().map(|m| m["msg_id"].assert_str()).collect();
     client
         .post("msgs/queue/ack")
         .json(json!({
@@ -201,7 +201,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         0,
         "acked messages should not be re-delivered"
     );
@@ -246,7 +246,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r1["msgs"].as_array().unwrap().len(), 2);
+    assert_eq!(r1["msgs"].assert_array().len(), 2);
 
     // Don't ack — wait for lease to expire
     sleep(Duration::from_millis(1500)).await;
@@ -262,7 +262,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r2["msgs"].as_array().unwrap();
+    let msgs = r2["msgs"].assert_array();
     assert_eq!(
         msgs.len(),
         2,
@@ -271,12 +271,11 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
 
     // Should have the same msg_ids as before
     let ids_r1: Vec<&str> = r1["msgs"]
-        .as_array()
-        .unwrap()
+        .assert_array()
         .iter()
-        .map(|m| m["msg_id"].as_str().unwrap())
+        .map(|m| m["msg_id"].assert_str())
         .collect();
-    let ids_r2: Vec<&str> = msgs.iter().map(|m| m["msg_id"].as_str().unwrap()).collect();
+    let ids_r2: Vec<&str> = msgs.iter().map(|m| m["msg_id"].assert_str()).collect();
     assert_eq!(ids_r1, ids_r2);
 
     Ok(())
@@ -339,7 +338,7 @@ async fn queue_starts_from_earliest() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(
         msgs.len(),
         5,
@@ -388,12 +387,12 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     // Ack only the first and last messages (skip the middle one)
-    let first_id = msgs[0]["msg_id"].as_str().unwrap();
-    let last_id = msgs[2]["msg_id"].as_str().unwrap();
+    let first_id = msgs[0]["msg_id"].assert_str();
+    let last_id = msgs[2]["msg_id"].assert_str();
     client
         .post("msgs/queue/ack")
         .json(json!({
@@ -418,7 +417,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs2 = r2["msgs"].as_array().unwrap();
+    let msgs2 = r2["msgs"].assert_array();
     assert_eq!(
         msgs2.len(),
         1,
@@ -426,8 +425,8 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     );
 
     // The re-delivered message should be the middle one (value "b")
-    let middle_id = msgs[1]["msg_id"].as_str().unwrap();
-    assert_eq!(msgs2[0]["msg_id"].as_str().unwrap(), middle_id);
+    let middle_id = msgs[1]["msg_id"].assert_str();
+    assert_eq!(msgs2[0]["msg_id"].assert_str(), middle_id);
     assert_eq!(msgs2[0]["value"], json!("b".as_bytes()));
 
     Ok(())
@@ -475,7 +474,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs_a = r_a["msgs"].as_array().unwrap();
+    let msgs_a = r_a["msgs"].assert_array();
     assert_eq!(msgs_a.len(), 3);
 
     // Consumer B receives remaining 3 messages (first 3 are leased)
@@ -490,18 +489,14 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs_b = r_b["msgs"].as_array().unwrap();
+    let msgs_b = r_b["msgs"].assert_array();
     assert_eq!(msgs_b.len(), 3);
 
     // Verify no overlap in msg_ids between the two consumers
-    let ids_a: std::collections::HashSet<&str> = msgs_a
-        .iter()
-        .map(|m| m["msg_id"].as_str().unwrap())
-        .collect();
-    let ids_b: std::collections::HashSet<&str> = msgs_b
-        .iter()
-        .map(|m| m["msg_id"].as_str().unwrap())
-        .collect();
+    let ids_a: std::collections::HashSet<&str> =
+        msgs_a.iter().map(|m| m["msg_id"].assert_str()).collect();
+    let ids_b: std::collections::HashSet<&str> =
+        msgs_b.iter().map(|m| m["msg_id"].assert_str()).collect();
     assert!(
         ids_a.is_disjoint(&ids_b),
         "consumers must receive different messages"
@@ -518,7 +513,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r_c["msgs"].as_array().unwrap().len(),
+        r_c["msgs"].assert_array().len(),
         0,
         "no messages available when all are leased"
     );
@@ -564,14 +559,11 @@ async fn queue_consumer_groups_independent() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs_a = r_a["msgs"].as_array().unwrap();
+    let msgs_a = r_a["msgs"].assert_array();
     assert_eq!(msgs_a.len(), 3);
 
     // Ack all messages for group A
-    let msg_ids_a: Vec<&str> = msgs_a
-        .iter()
-        .map(|m| m["msg_id"].as_str().unwrap())
-        .collect();
+    let msg_ids_a: Vec<&str> = msgs_a.iter().map(|m| m["msg_id"].assert_str()).collect();
     client
         .post("msgs/queue/ack")
         .json(json!({
@@ -593,7 +585,7 @@ async fn queue_consumer_groups_independent() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs_b = r_b["msgs"].as_array().unwrap();
+    let msgs_b = r_b["msgs"].assert_array();
     assert_eq!(
         msgs_b.len(),
         3,
@@ -641,11 +633,11 @@ async fn nack_sends_to_dlq() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 2);
 
     // Nack all messages
-    let msg_ids: Vec<&str> = msgs.iter().map(|m| m["msg_id"].as_str().unwrap()).collect();
+    let msg_ids: Vec<&str> = msgs.iter().map(|m| m["msg_id"].assert_str()).collect();
     client
         .post("msgs/queue/nack")
         .json(json!({
@@ -671,7 +663,7 @@ async fn nack_sends_to_dlq() -> TestResult {
         .json();
 
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         0,
         "nacked messages should be in DLQ and not re-delivered"
     );
@@ -717,10 +709,9 @@ async fn nack_then_redrive_makes_available() -> TestResult {
         .json();
 
     let msg_ids: Vec<&str> = r1["msgs"]
-        .as_array()
-        .unwrap()
+        .assert_array()
         .iter()
-        .map(|m| m["msg_id"].as_str().unwrap())
+        .map(|m| m["msg_id"].assert_str())
         .collect();
 
     client
@@ -755,7 +746,7 @@ async fn nack_then_redrive_makes_available() -> TestResult {
         .json();
 
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         2,
         "redriven messages should be available again"
     );
@@ -934,9 +925,9 @@ async fn nack_retries_before_dlq() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 1);
-    let msg_id = msgs[0]["msg_id"].as_str().unwrap();
+    let msg_id = msgs[0]["msg_id"].assert_str();
 
     // Nack — should schedule for retry, NOT DLQ
     client
@@ -960,7 +951,7 @@ async fn nack_retries_before_dlq() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         0,
         "message should be delayed, not immediately available"
     );
@@ -980,13 +971,13 @@ async fn nack_retries_before_dlq() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs3 = r3["msgs"].as_array().unwrap();
+    let msgs3 = r3["msgs"].assert_array();
     assert_eq!(
         msgs3.len(),
         1,
         "message should be redelivered after retry delay"
     );
-    assert_eq!(msgs3[0]["msg_id"].as_str().unwrap(), msg_id);
+    assert_eq!(msgs3[0]["msg_id"].assert_str(), msg_id);
 
     // Nack again — retries exhausted, should go to DLQ
     client
@@ -1014,7 +1005,7 @@ async fn nack_retries_before_dlq() -> TestResult {
         .json();
 
     assert_eq!(
-        r4["msgs"].as_array().unwrap().len(),
+        r4["msgs"].assert_array().len(),
         0,
         "message should be in DLQ after exhausting retries"
     );
@@ -1069,9 +1060,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msg_id = r1["msgs"].as_array().unwrap()[0]["msg_id"]
-        .as_str()
-        .unwrap();
+    let msg_id = r1["msgs"].assert_array()[0]["msg_id"].assert_str();
 
     client
         .post("msgs/queue/nack")
@@ -1098,7 +1087,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(r2["msgs"].as_array().unwrap().len(), 1);
+    assert_eq!(r2["msgs"].assert_array().len(), 1);
 
     client
         .post("msgs/queue/nack")
@@ -1121,7 +1110,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r3["msgs"].as_array().unwrap().len(), 0);
+    assert_eq!(r3["msgs"].assert_array().len(), 0);
 
     // The DLQ topic should have the message
     let r_dlq = client
@@ -1134,7 +1123,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let dlq_msgs = r_dlq["msgs"].as_array().unwrap();
+    let dlq_msgs = r_dlq["msgs"].assert_array();
     assert_eq!(dlq_msgs.len(), 1, "message should appear in DLQ topic");
     assert_eq!(dlq_msgs[0]["value"], json!("a".as_bytes()));
 

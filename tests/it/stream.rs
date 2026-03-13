@@ -117,7 +117,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 3);
 //     assert_eq!(
 //         msgs1[0],
@@ -157,7 +157,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 2);
 //     assert_eq!(
 //         msgs2[0],
@@ -214,7 +214,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 2);
 //     assert_eq!(
 //         msgs1[0],
@@ -241,7 +241,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 2);
 //     assert_eq!(
 //         msgs2[0],
@@ -299,7 +299,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 2);
 //     assert_eq!(
 //         msgs1[0],
@@ -335,7 +335,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 1);
 //     assert_eq!(
 //         msgs2[0],
@@ -388,7 +388,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 1);
 //     assert_eq!(
 //         msgs1[0],
@@ -408,7 +408,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 1);
 //     assert_eq!(
 //         msgs2[0],
@@ -431,7 +431,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs3 = fetch3["msgs"].as_array().unwrap();
+//     let msgs3 = fetch3["msgs"].assert_array();
 //     assert_eq!(msgs3.len(), 1);
 //     assert_eq!(
 //         msgs3[0],
@@ -492,7 +492,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 2);
 //     assert_eq!(msgs1[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs1[1]["headers"]["msg"], "B");
@@ -510,7 +510,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 2);
 //     assert_eq!(msgs2[0]["headers"]["msg"], "C");
 //     assert_eq!(msgs2[1]["headers"]["msg"], "D");
@@ -528,7 +528,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs3 = fetch3["msgs"].as_array().unwrap();
+//     let msgs3 = fetch3["msgs"].assert_array();
 //     assert_eq!(msgs3.len(), 2);
 //     assert_eq!(msgs3[0]["headers"]["msg"], "E");
 //     assert_eq!(msgs3[1]["headers"]["msg"], "F");
@@ -562,7 +562,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs4 = fetch4["msgs"].as_array().unwrap();
+//     let msgs4 = fetch4["msgs"].assert_array();
 //     assert_eq!(msgs4.len(), 6);
 //     assert_eq!(msgs4[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs4[1]["headers"]["msg"], "B");
@@ -621,7 +621,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 3);
 //     assert_eq!(msgs1[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs1[1]["headers"]["msg"], "B");
@@ -640,7 +640,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 3);
 //     assert_eq!(msgs2[0]["headers"]["msg"], "D");
 //     assert_eq!(msgs2[1]["headers"]["msg"], "E");
@@ -675,7 +675,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs3 = fetch3["msgs"].as_array().unwrap();
+//     let msgs3 = fetch3["msgs"].assert_array();
 //     assert_eq!(msgs3.len(), 2);
 //     assert_eq!(msgs3[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs3[1]["headers"]["msg"], "F");
@@ -729,7 +729,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 6);
 //     assert_eq!(msgs1[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs1[1]["headers"]["msg"], "B");
@@ -767,7 +767,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs3 = fetch3["msgs"].as_array().unwrap();
+//     let msgs3 = fetch3["msgs"].assert_array();
 //     assert_eq!(msgs3.len(), 4);
 //     assert_eq!(msgs3[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs3[1]["headers"]["msg"], "B");
@@ -824,7 +824,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 6);
 
 //     // DLQ messages B and D (ids 1 and 3)
@@ -856,7 +856,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 4);
 //     assert_eq!(msgs2[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs2[1]["headers"]["msg"], "C");
@@ -902,7 +902,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs3 = fetch3["msgs"].as_array().unwrap();
+//     let msgs3 = fetch3["msgs"].assert_array();
 //     assert_eq!(msgs3.len(), 2);
 //     assert_eq!(msgs3[0]["headers"]["msg"], "B");
 //     assert_eq!(msgs3[1]["headers"]["msg"], "D");
@@ -955,7 +955,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 3);
 //     assert_eq!(msgs1[0]["headers"]["msg"], "A");
 //     assert_eq!(msgs1[1]["headers"]["msg"], "B");
@@ -1008,7 +1008,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 2);
 //     assert_eq!(msgs2[0]["headers"]["msg"], "B");
 //     assert_eq!(msgs2[1]["headers"]["msg"], "D");
@@ -1057,7 +1057,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs1 = fetch1["msgs"].as_array().unwrap();
+//     let msgs1 = fetch1["msgs"].assert_array();
 //     assert_eq!(msgs1.len(), 1);
 //     assert_eq!(msgs1[0]["headers"]["msg"], "A");
 
@@ -1106,7 +1106,7 @@
 //         .expect(StatusCode::OK)
 //         .json();
 
-//     let msgs2 = fetch2["msgs"].as_array().unwrap();
+//     let msgs2 = fetch2["msgs"].assert_array();
 //     assert_eq!(msgs2.len(), 0);
 
 //     Ok(())

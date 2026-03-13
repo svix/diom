@@ -1,6 +1,6 @@
 use serde_json::json;
 use test_utils::{
-    StatusCode, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
 
@@ -53,12 +53,12 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     // Commit to advance past all messages
-    let partition_topic = msgs[0]["topic"].as_str().unwrap();
-    let last_offset = msgs[2]["offset"].as_u64().unwrap();
+    let partition_topic = msgs[0]["topic"].assert_str();
+    let last_offset = msgs[2]["offset"].assert_u64();
     client
         .post("msgs/stream/commit")
         .json(json!({
@@ -79,7 +79,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r2["msgs"].as_array().unwrap().len(), 0);
+    assert_eq!(r2["msgs"].assert_array().len(), 0);
 
     // Seek to earliest
     client
@@ -104,7 +104,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
         .json();
 
     assert_eq!(
-        r3["msgs"].as_array().unwrap().len(),
+        r3["msgs"].assert_array().len(),
         3,
         "seek to earliest should replay all messages"
     );
@@ -161,7 +161,7 @@ async fn seek_latest_skips_existing() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r1["msgs"].as_array().unwrap().len(),
+        r1["msgs"].assert_array().len(),
         0,
         "seek to latest should skip existing messages"
     );
@@ -190,7 +190,7 @@ async fn seek_latest_skips_existing() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         2,
         "should receive only messages published after seek to latest"
     );
@@ -245,12 +245,12 @@ async fn seek_to_specific_offset() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 5);
-    let partition_topic = msgs[0]["topic"].as_str().unwrap();
+    let partition_topic = msgs[0]["topic"].assert_str();
 
     // Commit past all messages
-    let last_offset = msgs[4]["offset"].as_u64().unwrap();
+    let last_offset = msgs[4]["offset"].assert_u64();
     client
         .post("msgs/stream/commit")
         .json(json!({
@@ -283,13 +283,13 @@ async fn seek_to_specific_offset() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs2 = r2["msgs"].as_array().unwrap();
+    let msgs2 = r2["msgs"].assert_array();
     assert_eq!(
         msgs2.len(),
         3,
         "should get 3 messages starting from offset 2"
     );
-    assert_eq!(msgs2[0]["offset"].as_u64().unwrap(), 2);
+    assert_eq!(msgs2[0]["offset"].assert_u64(), 2);
 
     Ok(())
 }
@@ -394,7 +394,7 @@ async fn seek_position_works_on_topic_level() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert!(
         msgs.len() >= 2,
         "should receive messages from at least one partition after topic-level seek"
@@ -470,7 +470,7 @@ async fn seek_clears_lease() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r1["msgs"].as_array().unwrap().len(), 2);
+    assert_eq!(r1["msgs"].assert_array().len(), 2);
 
     // Verify partition is locked
     client
@@ -505,7 +505,7 @@ async fn seek_clears_lease() -> TestResult {
         .json();
 
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         2,
         "seek should clear lease and allow re-receive"
     );

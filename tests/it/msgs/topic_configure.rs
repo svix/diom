@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use serde_json::json;
 use test_utils::{
-    StatusCode, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
 
@@ -54,11 +54,11 @@ async fn default_is_one_partition() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     // All messages should be on the same single partition
-    let topics: HashSet<&str> = msgs.iter().map(|m| m["topic"].as_str().unwrap()).collect();
+    let topics: HashSet<&str> = msgs.iter().map(|m| m["topic"].assert_str()).collect();
     assert_eq!(topics.len(), 1, "all messages should be on one partition");
     assert!(
         topics.contains("ns-def-part:t1~0"),
@@ -92,7 +92,7 @@ async fn configure_topic_partitions() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(response["partitions"].as_u64().unwrap(), 4);
+    assert_eq!(response["partitions"].assert_u64(), 4);
 
     // Register consumer group before publishing
     client
@@ -128,17 +128,17 @@ async fn configure_topic_partitions() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     // All partition-level topics should be within ns-conf:t1~0..ns-conf:t1~3
     for m in msgs {
-        let topic = m["topic"].as_str().unwrap();
+        let topic = m["topic"].assert_str();
         assert!(
             topic.starts_with("ns-conf:t1~"),
             "expected partition-level topic: {topic}"
         );
-        let partition: u16 = topic.strip_prefix("ns-conf:t1~").unwrap().parse().unwrap();
+        let partition: u16 = topic.strip_prefix("ns-conf:t1~").unwrap().parse()?;
         assert!(partition < 4, "partition {partition} should be < 4");
     }
 
@@ -309,11 +309,11 @@ async fn receive_respects_configured_partitions() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 2);
 
     // Messages should come from different partition-level topics
-    let topics: HashSet<&str> = msgs.iter().map(|m| m["topic"].as_str().unwrap()).collect();
+    let topics: HashSet<&str> = msgs.iter().map(|m| m["topic"].assert_str()).collect();
     assert_eq!(
         topics.len(),
         2,
@@ -325,11 +325,7 @@ async fn receive_respects_configured_partitions() -> TestResult {
             topic.starts_with("ns-recv-conf:t1~"),
             "expected partition-level topic: {topic}"
         );
-        let partition: u16 = topic
-            .strip_prefix("ns-recv-conf:t1~")
-            .unwrap()
-            .parse()
-            .unwrap();
+        let partition: u16 = topic.strip_prefix("ns-recv-conf:t1~").unwrap().parse()?;
         assert!(partition < 16, "partition {partition} should be < 16");
     }
 
@@ -355,7 +351,7 @@ async fn configure_default_namespace_topic() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(response["partitions"].as_u64().unwrap(), 4);
+    assert_eq!(response["partitions"].assert_u64(), 4);
 
     // Register consumer group before publishing
     client
@@ -391,16 +387,16 @@ async fn configure_default_namespace_topic() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     for m in msgs {
-        let topic = m["topic"].as_str().unwrap();
+        let topic = m["topic"].assert_str();
         assert!(
             topic.starts_with("def-t1~"),
             "default namespace topic should not have namespace prefix: {topic}"
         );
-        let partition: u16 = topic.strip_prefix("def-t1~").unwrap().parse().unwrap();
+        let partition: u16 = topic.strip_prefix("def-t1~").unwrap().parse()?;
         assert!(partition < 4, "partition {partition} should be < 4");
     }
 
