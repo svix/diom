@@ -29,15 +29,15 @@ impl std::error::Error for BackgroundError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match &self {
             Self::Other(e) => Some(e),
-            Self::InvalidResponse => None,
-            Self::NotLeader => None,
+            Self::InvalidResponse | Self::NotLeader => None,
         }
     }
 }
 
 pub type BackgroundResult<T> = std::result::Result<T, BackgroundError>;
 
-pub trait OperationWriter {
+// Not part of the trait below so do_write_request only has to be codegen'ed once
+pub trait OperationWriterBase {
     type Request: Sized;
     type Response: Sized;
 
@@ -46,7 +46,14 @@ pub trait OperationWriter {
     /// This should typically not be called by users
     #[allow(async_fn_in_trait)]
     async fn do_write_request(&self, request: Self::Request) -> BackgroundResult<Self::Response>;
+}
 
+// The M generic is not required for anything (the only impl is generic over it)
+// and could be replaced by further bounds in write_request, but this is more
+// convenient for users of the trait.
+pub trait OperationWriter<M: ModuleRequest>:
+    OperationWriterBase<Request: From<M>, Response: TryInto<M::Response>>
+{
     /// Execute an operation against the replicated state machine
     ///
     /// This calls `.do_write_request` internally, and takes care of wrapping/unwrapping
@@ -54,24 +61,26 @@ pub trait OperationWriter {
     #[allow(async_fn_in_trait)]
     async fn write_request<O>(&self, op: O) -> BackgroundResult<O::Response>
     where
-        O: OperationRequest + Into<O::RequestParent>,
-        O::RequestParent: Into<Self::Request>,
-        <O::Response as OperationResponse>::ResponseParent: TryFrom<Self::Response>,
-        O::Response: TryFrom<<O::Response as OperationResponse>::ResponseParent>,
+        O: OperationRequest<RequestParent = M, Response: TryFrom<M::Response>>
+            + Into<O::RequestParent>,
     {
         let module_request: O::RequestParent = op.into();
         let top_level_request: Self::Request = module_request.into();
         let top_level_response = self.do_write_request(top_level_request).await?;
-        let Ok(module_response): std::result::Result<
-            <O::Response as OperationResponse>::ResponseParent,
-            _,
-        > = top_level_response.try_into() else {
+        let Ok(module_response): std::result::Result<M::Response, _> =
+            top_level_response.try_into()
+        else {
             return Err(BackgroundError::InvalidResponse);
         };
         module_response
             .try_into()
             .map_err(|_| BackgroundError::InvalidResponse)
     }
+}
+
+impl<T, M: ModuleRequest> OperationWriter<M> for T where
+    T: OperationWriterBase<Request: From<M>, Response: TryInto<M::Response>>
+{
 }
 
 /// Macro support module

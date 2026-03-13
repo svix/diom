@@ -375,7 +375,7 @@ impl RaftState {
     }
 }
 
-impl diom_operations::OperationWriter for RaftState {
+impl diom_operations::OperationWriterBase for RaftState {
     type Request = Request;
     type Response = Response;
 
@@ -392,7 +392,7 @@ impl diom_operations::OperationWriter for RaftState {
                 Ok(resp.data)
             }
             Err(err) => {
-                if let Some(_) = err.forward_to_leader() {
+                if err.forward_to_leader().is_some() {
                     Err(diom_operations::BackgroundError::NotLeader)
                 } else {
                     tracing::warn!(?err, "unhandled error writing request to raft");
