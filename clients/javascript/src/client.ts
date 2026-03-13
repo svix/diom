@@ -6,7 +6,7 @@ import { Health } from "./apis/health";
 import { Idempotency } from "./apis/idempotency";
 import { Kv } from "./apis/kv";
 import { Msgs } from "./apis/msgs";
-import { RateLimiter } from "./apis/rateLimiter";
+import { RateLimit } from "./apis/rateLimit";
 
 export {
   Cache,
@@ -14,7 +14,7 @@ export {
   Idempotency,
   Kv,
   Msgs,
-  RateLimiter,
+  RateLimit,
 };
 
 export class Diom {
@@ -44,7 +44,7 @@ export class Diom {
     return new Msgs(this.requestCtx);
   }
 
-  public get rateLimiter(){
-    return new RateLimiter(this.requestCtx);
+  public get rateLimit(){
+    return new RateLimit(this.requestCtx);
   }
 }

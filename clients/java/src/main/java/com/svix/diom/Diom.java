@@ -9,7 +9,7 @@ import com.svix.diom.apis.Health;
 import com.svix.diom.apis.Idempotency;
 import com.svix.diom.apis.Kv;
 import com.svix.diom.apis.Msgs;
-import com.svix.diom.apis.RateLimiter;
+import com.svix.diom.apis.RateLimit;
 
 import okhttp3.HttpUrl;
 
@@ -58,7 +58,7 @@ public class Diom {
         return new Msgs(this.httpClient);
     }
 
-    public RateLimiter getRateLimiter() {
-        return new RateLimiter(this.httpClient);
+    public RateLimit getRateLimit() {
+        return new RateLimit(this.httpClient);
     }
 }

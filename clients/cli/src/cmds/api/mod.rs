@@ -11,13 +11,13 @@ mod msgs_namespace;
 mod msgs_queue;
 mod msgs_stream;
 mod msgs_topic;
-mod rate_limiter;
-mod rate_limiter_namespace;
+mod rate_limit;
+mod rate_limit_namespace;
 
 pub(crate) use self::{
     cache::CacheArgs, cache_namespace::CacheNamespaceArgs, health::HealthArgs,
     idempotency::IdempotencyArgs, idempotency_namespace::IdempotencyNamespaceArgs, kv::KvArgs,
     kv_namespace::KvNamespaceArgs, msgs::MsgsArgs, msgs_namespace::MsgsNamespaceArgs,
     msgs_queue::MsgsQueueArgs, msgs_stream::MsgsStreamArgs, msgs_topic::MsgsTopicArgs,
-    rate_limiter::RateLimiterArgs, rate_limiter_namespace::RateLimiterNamespaceArgs,
+    rate_limit::RateLimitArgs, rate_limit_namespace::RateLimitNamespaceArgs,
 };

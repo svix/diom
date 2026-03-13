@@ -1,0 +1,30 @@
+// this file is @generated
+
+export interface RateLimitCheckOut {
+    /** Whether the request is allowed */
+    allowed: boolean;
+    /** Number of tokens remaining */
+    remaining: number;
+    /** Milliseconds until enough tokens are available (only present when allowed is false) */
+    retryAfterMillis?: number | null;
+}
+
+export const RateLimitCheckOutSerializer = {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
+    _fromJsonObject(object: any): RateLimitCheckOut {
+        return {
+            allowed: object['allowed'],
+            remaining: object['remaining'],
+            retryAfterMillis: object['retry_after_millis'],
+        };
+    },
+
+    // biome-ignore lint/suspicious/noExplicitAny: intentional any
+    _toJsonObject(self: RateLimitCheckOut): any {
+        return {
+            'allowed': self.allowed,
+            'remaining': self.remaining,
+            'retry_after_millis': self.retryAfterMillis,
+        };
+    }
+}
