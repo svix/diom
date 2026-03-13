@@ -397,7 +397,7 @@ impl coyote_operations::OperationWriterBase for RaftState {
                 } else {
                     tracing::warn!(?err, "unhandled error writing request to raft");
                     Err(coyote_operations::BackgroundError::Other(
-                        coyote_error::Error::generic(err),
+                        coyote_error::Error::internal(err),
                     ))
                 }
             }
