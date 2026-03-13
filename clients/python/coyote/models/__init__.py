@@ -64,7 +64,6 @@ from .rate_limit_get_namespace_in import RateLimitGetNamespaceIn
 from .rate_limit_get_namespace_out import RateLimitGetNamespaceOut
 from .rate_limit_get_remaining_in import RateLimitGetRemainingIn
 from .rate_limit_get_remaining_out import RateLimitGetRemainingOut
-from .rate_limit_status import RateLimitStatus
 from .retention import Retention
 from .storage_type import StorageType
 from .stream_msg_out import StreamMsgOut
@@ -136,7 +135,6 @@ __all__ = [
     "RateLimitGetNamespaceOut",
     "RateLimitGetRemainingIn",
     "RateLimitGetRemainingOut",
-    "RateLimitStatus",
     "Retention",
     "StorageType",
     "StreamMsgOut",

@@ -2463,12 +2463,12 @@
             "format": "uint64",
             "minimum": 1
           },
-          "refill_interval": {
-            "description": "Interval in seconds between refills (minimum 1 second)",
+          "refill_interval_millis": {
+            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
-            "default": 1
+            "default": 1000
           }
         },
         "required": [
@@ -2480,9 +2480,9 @@
       "RateLimitCheckOut": {
         "type": "object",
         "properties": {
-          "status": {
+          "allowed": {
             "description": "Whether the request is allowed",
-            "$ref": "#/components/schemas/RateLimitStatus"
+            "type": "boolean"
           },
           "remaining": {
             "description": "Number of tokens remaining",
@@ -2490,8 +2490,8 @@
             "format": "uint64",
             "minimum": 0
           },
-          "retry_after": {
-            "description": "Seconds until enough tokens are available (only present when allowed is false)",
+          "retry_after_millis": {
+            "description": "Milliseconds until enough tokens are available (only present when allowed is false)",
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
@@ -2499,7 +2499,7 @@
           }
         },
         "required": [
-          "status",
+          "allowed",
           "remaining"
         ]
       },
@@ -2618,12 +2618,12 @@
             "format": "uint64",
             "minimum": 1
           },
-          "refill_interval": {
-            "description": "Interval in seconds between refills (minimum 1 second)",
+          "refill_interval_millis": {
+            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
-            "default": 1
+            "default": 1000
           }
         },
         "required": [
@@ -2641,8 +2641,8 @@
             "format": "uint64",
             "minimum": 0
           },
-          "retry_after": {
-            "description": "Seconds until at least one token is available (only present when remaining is 0)",
+          "retry_after_millis": {
+            "description": "Milliseconds until at least one token is available (only present when remaining is 0)",
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
@@ -2651,13 +2651,6 @@
         },
         "required": [
           "remaining"
-        ]
-      },
-      "RateLimitStatus": {
-        "type": "string",
-        "enum": [
-          "ok",
-          "block"
         ]
       },
       "Retention": {

@@ -70,7 +70,6 @@ type (
 	RateLimitGetNamespaceOut      = coyote_models.RateLimitGetNamespaceOut
 	RateLimitGetRemainingIn       = coyote_models.RateLimitGetRemainingIn
 	RateLimitGetRemainingOut      = coyote_models.RateLimitGetRemainingOut
-	RateLimitStatus               = coyote_models.RateLimitStatus
 	Retention                     = coyote_models.Retention
 	StorageType                   = coyote_models.StorageType
 	StreamMsgOut                  = coyote_models.StreamMsgOut

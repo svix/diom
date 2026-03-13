@@ -66,7 +66,6 @@ mod rate_limit_get_namespace_in;
 mod rate_limit_get_namespace_out;
 mod rate_limit_get_remaining_in;
 mod rate_limit_get_remaining_out;
-mod rate_limit_status;
 mod retention;
 mod storage_type;
 mod stream_msg_out;
@@ -107,8 +106,8 @@ pub use self::{
     rate_limit_get_namespace_in::RateLimitGetNamespaceIn,
     rate_limit_get_namespace_out::RateLimitGetNamespaceOut,
     rate_limit_get_remaining_in::RateLimitGetRemainingIn,
-    rate_limit_get_remaining_out::RateLimitGetRemainingOut, rate_limit_status::RateLimitStatus,
-    retention::Retention, storage_type::StorageType, stream_msg_out::StreamMsgOut,
+    rate_limit_get_remaining_out::RateLimitGetRemainingOut, retention::Retention,
+    storage_type::StorageType, stream_msg_out::StreamMsgOut,
 };
 
 pub(crate) use self::{

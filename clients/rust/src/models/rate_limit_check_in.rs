@@ -15,9 +15,9 @@ pub struct RateLimitCheckIn {
     /// Number of tokens to add per refill interval
     pub refill_amount: u64,
 
-    /// Interval in seconds between refills (minimum 1 second)
+    /// Interval in milliseconds between refills (minimum 1 millisecond)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub refill_interval: Option<u64>,
+    pub refill_interval_millis: Option<u64>,
 }
 
 impl RateLimitCheckIn {
@@ -27,7 +27,7 @@ impl RateLimitCheckIn {
             tokens: None,
             capacity,
             refill_amount,
-            refill_interval: None,
+            refill_interval_millis: None,
         }
     }
 
@@ -36,8 +36,8 @@ impl RateLimitCheckIn {
         self
     }
 
-    pub fn with_refill_interval(mut self, value: impl Into<Option<u64>>) -> Self {
-        self.refill_interval = value.into();
+    pub fn with_refill_interval_millis(mut self, value: impl Into<Option<u64>>) -> Self {
+        self.refill_interval_millis = value.into();
         self
     }
 }

@@ -31,7 +31,7 @@ public class RateLimitGetRemainingIn {
 @JsonProperty private String key;
 @JsonProperty private Long capacity;
 @JsonProperty("refill_amount") private Long refillAmount;
-@JsonProperty("refill_interval") private Long refillInterval;
+@JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
 public RateLimitGetRemainingIn () {}
 
  public RateLimitGetRemainingIn key(String key) {
@@ -91,23 +91,23 @@ public RateLimitGetRemainingIn () {}
         this.refillAmount = refillAmount;
     }
 
-     public RateLimitGetRemainingIn refillInterval(Long refillInterval) {
-        this.refillInterval = refillInterval;
+     public RateLimitGetRemainingIn refillIntervalMillis(Long refillIntervalMillis) {
+        this.refillIntervalMillis = refillIntervalMillis;
         return this;
     }
 
     /**
-    * Interval in seconds between refills (minimum 1 second)
+    * Interval in milliseconds between refills (minimum 1 millisecond)
     *
-     * @return refillInterval
+     * @return refillIntervalMillis
      */
     @javax.annotation.Nullable
-     public Long getRefillInterval() {
-        return refillInterval;
+     public Long getRefillIntervalMillis() {
+        return refillIntervalMillis;
     }
 
-     public void setRefillInterval(Long refillInterval) {
-        this.refillInterval = refillInterval;
+     public void setRefillIntervalMillis(Long refillIntervalMillis) {
+        this.refillIntervalMillis = refillIntervalMillis;
     }
 
     /**
