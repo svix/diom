@@ -84,12 +84,12 @@ impl RequestWithContext {
 
     pub(crate) fn hashed_key(&self) -> Option<String> {
         let digest = match &self.inner {
-            Request::Kv(op) => Sha256::digest(op.key_name()),
-            Request::RateLimit(op) => Sha256::digest(op.key_name()),
-            Request::Idempotency(op) => Sha256::digest(op.key_name()),
-            Request::Cache(op) => Sha256::digest(op.key_name()),
-            Request::Msgs(op) => Sha256::digest(op.key_name()),
+            Request::Cache(op) => Sha256::digest(op.key_name()?),
             Request::ClusterInternal(_) => return None,
+            Request::Idempotency(op) => Sha256::digest(op.key_name()?),
+            Request::Kv(op) => Sha256::digest(op.key_name()?),
+            Request::Msgs(op) => Sha256::digest(op.key_name()),
+            Request::RateLimit(op) => Sha256::digest(op.key_name()),
         };
         Some(hex::encode(digest))
     }
@@ -398,5 +398,35 @@ impl RaftState {
             )
             .await?;
         Ok(())
+    }
+}
+
+impl diom_operations::OperationWriterBase for RaftState {
+    type Request = Request;
+    type Response = Response;
+
+    async fn do_write_request(
+        &self,
+        request: Self::Request,
+    ) -> diom_operations::BackgroundResult<Self::Response> {
+        let now = self.state_machine.now();
+        let request =
+            RequestWithContext::new(request, now, Some(opentelemetry::Context::current().into()));
+        match self.raft.client_write(request.clone()).await {
+            Ok(resp) => {
+                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
+                Ok(resp.data)
+            }
+            Err(err) => {
+                if err.forward_to_leader().is_some() {
+                    Err(diom_operations::BackgroundError::NotLeader)
+                } else {
+                    tracing::warn!(?err, "unhandled error writing request to raft");
+                    Err(diom_operations::BackgroundError::Other(
+                        diom_error::Error::internal(err),
+                    ))
+                }
+            }
+        }
     }
 }

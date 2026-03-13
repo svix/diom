@@ -976,6 +976,7 @@ dependencies = [
 name = "diom-cache"
 version = "0.0.1"
 dependencies = [
+ "diom-core",
  "diom-error",
  "diom-kv",
  "diom-namespace",
@@ -1082,6 +1083,7 @@ dependencies = [
 name = "diom-idempotency"
 version = "0.0.1"
 dependencies = [
+ "diom-core",
  "diom-error",
  "diom-kv",
  "diom-namespace",

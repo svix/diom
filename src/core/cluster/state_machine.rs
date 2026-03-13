@@ -672,4 +672,22 @@ impl StoreHandle {
     pub fn now(&self) -> jiff::Timestamp {
         self.time.now()
     }
+
+    pub(super) async fn kv_store(&self) -> diom_kv::State {
+        self.inner.read().await.stores.read().kv_state.clone()
+    }
+
+    pub(super) async fn cache_store(&self) -> diom_cache::State {
+        self.inner.read().await.stores.read().cache_state.clone()
+    }
+
+    pub(super) async fn idempotency_store(&self) -> diom_idempotency::State {
+        self.inner
+            .read()
+            .await
+            .stores
+            .read()
+            .idempotency_state
+            .clone()
+    }
 }
