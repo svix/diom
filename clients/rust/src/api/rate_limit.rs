@@ -33,4 +33,12 @@ impl<'a> RateLimit<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Rate Limiter Reset
+    pub async fn reset(&self, rate_limit_reset_in: RateLimitResetIn) -> Result<RateLimitResetOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1/rate-limit/reset")
+            .with_body(rate_limit_reset_in)
+            .execute(self.cfg)
+            .await
+    }
 }

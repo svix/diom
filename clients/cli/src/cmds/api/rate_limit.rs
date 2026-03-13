@@ -23,6 +23,10 @@ pub enum RateLimitCommands {
         rate_limit_get_remaining_in:
             crate::json::JsonOf<coyote_client::models::RateLimitGetRemainingIn>,
     },
+    /// Rate Limiter Reset
+    Reset {
+        rate_limit_reset_in: crate::json::JsonOf<coyote_client::models::RateLimitResetIn>,
+    },
 }
 
 impl RateLimitCommands {
@@ -50,6 +54,15 @@ impl RateLimitCommands {
                 let resp = client
                     .rate_limit()
                     .get_remaining(rate_limit_get_remaining_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Reset {
+                rate_limit_reset_in,
+            } => {
+                let resp = client
+                    .rate_limit()
+                    .reset(rate_limit_reset_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

@@ -18,6 +18,8 @@ import com.svix.coyote.models.RateLimitCheckIn;
 import com.svix.coyote.models.RateLimitCheckOut;
 import com.svix.coyote.models.RateLimitGetRemainingIn;
 import com.svix.coyote.models.RateLimitGetRemainingOut;
+import com.svix.coyote.models.RateLimitResetIn;
+import com.svix.coyote.models.RateLimitResetOut;
 
 public class RateLimit {
     private final HttpClient client;
@@ -51,6 +53,20 @@ public class RateLimit {
             null,
             rateLimitGetRemainingIn,
             RateLimitGetRemainingOut.class
+            );
+    }
+
+    /** Rate Limiter Reset */
+    public RateLimitResetOut reset(
+        final RateLimitResetIn rateLimitResetIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/reset");
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            rateLimitResetIn,
+            RateLimitResetOut.class
             );
     }
 }

@@ -481,6 +481,43 @@
         ]
       }
     },
+    "/api/v1/rate-limit/reset": {
+      "post": {
+        "tags": [
+          "Rate Limiter"
+        ],
+        "summary": "Rate Limit Reset",
+        "description": "Rate Limiter Reset",
+        "operationId": "v1.rate_limit.reset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateLimitResetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitResetOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/rate-limit/namespace/create": {
       "post": {
         "tags": [
@@ -2620,6 +2657,28 @@
         "required": [
           "remaining"
         ]
+      },
+      "RateLimitResetIn": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.]+$",
+            "example": "some_key"
+          },
+          "config": {
+            "description": "Rate limiter configuration",
+            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
+          }
+        },
+        "required": [
+          "key",
+          "config"
+        ]
+      },
+      "RateLimitResetOut": {
+        "type": "object"
       },
       "RateLimitTokenBucketConfig": {
         "type": "object",

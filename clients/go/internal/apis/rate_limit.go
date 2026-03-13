@@ -49,3 +49,19 @@ func (rateLimit RateLimit) GetRemaining(
 		&rateLimitGetRemainingIn,
 	)
 }
+
+// Rate Limiter Reset
+func (rateLimit RateLimit) Reset(
+	ctx context.Context,
+	rateLimitResetIn coyote_models.RateLimitResetIn,
+) (*coyote_models.RateLimitResetOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.RateLimitResetIn, coyote_models.RateLimitResetOut](
+		ctx,
+		rateLimit.client,
+		"POST",
+		"/api/v1/rate-limit/reset",
+		nil,
+		nil,
+		&rateLimitResetIn,
+	)
+}
