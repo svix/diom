@@ -21,9 +21,11 @@ impl ClearExpiredOperation {
 
 impl ClearExpiredOperation {
     fn apply_real(self, state: &State, timestamp: jiff::Timestamp) -> Result<()> {
-        state
-            .controller(self.storage_type)
-            .clear_expired(timestamp, self.max_expirations)?;
+        state.controller(self.storage_type).clear_expired(
+            timestamp,
+            self.max_expirations,
+            self.storage_type,
+        )?;
         Ok(())
     }
 }

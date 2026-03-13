@@ -38,18 +38,13 @@ impl From<KvPairRow> for KvModel {
 
 #[derive(Clone)]
 pub struct KvController {
-    pub storage_type: StorageType,
     db: fjall::Database,
     keyspace: fjall::Keyspace,
     keyspace_name: &'static str,
 }
 
 impl KvController {
-    pub fn new(
-        storage_type: StorageType,
-        db: fjall::Database,
-        keyspace_name: &'static str,
-    ) -> Self {
+    pub fn new(db: fjall::Database, keyspace_name: &'static str) -> Self {
         let tables = {
             let opts = KeyspaceCreateOptions::default()
                 .with_kv_separation(Some(KvSeparationOptions::default()));
@@ -57,7 +52,6 @@ impl KvController {
         };
 
         Self {
-            storage_type,
             db,
             keyspace: tables,
             keyspace_name,
@@ -171,8 +165,27 @@ impl KvController {
         KvPairRow::values(&self.keyspace)
     }
 
+    #[tracing::instrument(skip(self))]
+    pub async fn has_expired(&self, now: Timestamp) -> bool {
+        let keyspace = self.keyspace.clone();
+
+        let start =
+            ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
+        let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
+
+        tokio::task::spawn_blocking(move || keyspace.range(start..=end).next().is_some())
+            .await
+            .inspect_err(|err| tracing::warn!(?err, "unhandled error looking for expired keys"))
+            .unwrap_or(false)
+    }
+
     #[tracing::instrument(skip(self), fields(keyspace_id, storage_type, cleared))]
-    pub fn clear_expired(&self, now: Timestamp, max_expirations: usize) -> Result<usize> {
+    pub fn clear_expired(
+        &self,
+        now: Timestamp,
+        max_expirations: usize,
+        storage_type: StorageType,
+    ) -> Result<usize> {
         let start =
             ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
@@ -182,7 +195,7 @@ impl KvController {
 
         tracing::Span::current()
             .record("keyspace_name", self.keyspace_name)
-            .record("storage_type", tracing::field::debug(self.storage_type));
+            .record("storage_type", tracing::field::debug(storage_type));
 
         for chunk in &self
             .keyspace
@@ -234,7 +247,7 @@ mod tests {
                 .temporary(true)
                 .open()
                 .unwrap();
-            let controller = KvController::new(StorageType::Persistent, db, "mod_kv_test");
+            let controller = KvController::new(db, "mod_kv_test");
             Self {
                 _workdir: workdir,
                 controller,
@@ -464,7 +477,12 @@ mod tests {
             assert!(key_exists_as_of(&controller, key, then));
         }
 
-        assert_eq!(controller.clear_expired(Timestamp::now(), 100).unwrap(), 4);
+        assert_eq!(
+            controller
+                .clear_expired(Timestamp::now(), 100, StorageType::Persistent)
+                .unwrap(),
+            4
+        );
 
         for (key, _, _) in &expired_models {
             // now it should really and truly be gone
