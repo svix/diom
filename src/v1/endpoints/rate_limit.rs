@@ -64,7 +64,6 @@ pub struct RateLimitCheckIn {
 
     /// Rate limiter configuration
     #[validate(nested)]
-    #[serde(flatten)]
     pub config: RateLimitTokenBucketConfig,
 }
 
@@ -92,7 +91,6 @@ pub struct RateLimitGetRemainingIn {
 
     /// Rate limiter configuration
     #[validate(nested)]
-    #[serde(flatten)]
     pub config: RateLimitTokenBucketConfig,
 }
 

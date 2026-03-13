@@ -66,6 +66,7 @@ mod rate_limit_get_namespace_in;
 mod rate_limit_get_namespace_out;
 mod rate_limit_get_remaining_in;
 mod rate_limit_get_remaining_out;
+mod rate_limit_token_bucket_config;
 mod retention;
 mod storage_type;
 mod stream_msg_out;
@@ -106,7 +107,8 @@ pub use self::{
     rate_limit_get_namespace_in::RateLimitGetNamespaceIn,
     rate_limit_get_namespace_out::RateLimitGetNamespaceOut,
     rate_limit_get_remaining_in::RateLimitGetRemainingIn,
-    rate_limit_get_remaining_out::RateLimitGetRemainingOut, retention::Retention,
+    rate_limit_get_remaining_out::RateLimitGetRemainingOut,
+    rate_limit_token_bucket_config::RateLimitTokenBucketConfig, retention::Retention,
     storage_type::StorageType, stream_msg_out::StreamMsgOut,
 };
 
