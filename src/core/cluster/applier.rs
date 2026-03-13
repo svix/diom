@@ -44,12 +44,12 @@ pub(super) async fn apply_request(
             };
             Response::Kv(req.apply(state, timestamp))
         }
-        Request::RateLimiter(req) => {
-            let state = coyote_rate_limit::operations::RateLimiterRaftState {
-                state: &state_machine.state.rate_limiter,
+        Request::RateLimit(req) => {
+            let state = coyote_rate_limit::operations::RateLimitRaftState {
+                state: &state_machine.state.rate_limit,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::RateLimiter(req.apply(state, timestamp))
+            Response::RateLimit(req.apply(state, timestamp))
         }
         Request::Idempotency(req) => {
             let stores = state_machine.db_handle();

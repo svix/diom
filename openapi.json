@@ -412,14 +412,14 @@
         "tags": [
           "Rate Limiter"
         ],
-        "summary": "Rate Limiter Limit",
+        "summary": "Rate Limit Limit",
         "description": "Rate Limiter Check and Consume",
-        "operationId": "v1.rate_limiter.limit",
+        "operationId": "v1.rate_limit.limit",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RateLimiterCheckIn"
+                "$ref": "#/components/schemas/RateLimitCheckIn"
               }
             }
           },
@@ -431,7 +431,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RateLimiterCheckOut"
+                  "$ref": "#/components/schemas/RateLimitCheckOut"
                 }
               }
             }
@@ -449,14 +449,14 @@
         "tags": [
           "Rate Limiter"
         ],
-        "summary": "Rate Limiter Get Remaining",
+        "summary": "Rate Limit Get Remaining",
         "description": "Rate Limiter Get Remaining",
-        "operationId": "v1.rate_limiter.get_remaining",
+        "operationId": "v1.rate_limit.get_remaining",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RateLimiterGetRemainingIn"
+                "$ref": "#/components/schemas/RateLimitGetRemainingIn"
               }
             }
           },
@@ -468,7 +468,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RateLimiterGetRemainingOut"
+                  "$ref": "#/components/schemas/RateLimitGetRemainingOut"
                 }
               }
             }
@@ -486,14 +486,14 @@
         "tags": [
           "Rate Limiter"
         ],
-        "summary": "Rate Limiter Create Namespace",
+        "summary": "Rate Limit Create Namespace",
         "description": "Create rate limiter namespace",
-        "operationId": "v1.rate_limiter.namespace.create",
+        "operationId": "v1.rate_limit.namespace.create",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RateLimiterCreateNamespaceIn"
+                "$ref": "#/components/schemas/RateLimitCreateNamespaceIn"
               }
             }
           },
@@ -505,7 +505,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RateLimiterCreateNamespaceOut"
+                  "$ref": "#/components/schemas/RateLimitCreateNamespaceOut"
                 }
               }
             }
@@ -523,14 +523,14 @@
         "tags": [
           "Rate Limiter"
         ],
-        "summary": "Rate Limiter Get Namespace",
+        "summary": "Rate Limit Get Namespace",
         "description": "Get rate limiter namespace",
-        "operationId": "v1.rate_limiter.namespace.get",
+        "operationId": "v1.rate_limit.namespace.get",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RateLimiterGetNamespaceIn"
+                "$ref": "#/components/schemas/RateLimitGetNamespaceIn"
               }
             }
           },
@@ -542,7 +542,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RateLimiterGetNamespaceOut"
+                  "$ref": "#/components/schemas/RateLimitGetNamespaceOut"
                 }
               }
             }
@@ -2435,14 +2435,7 @@
           "timestamp"
         ]
       },
-      "RateLimitStatus": {
-        "type": "string",
-        "enum": [
-          "ok",
-          "block"
-        ]
-      },
-      "RateLimiterCheckIn": {
+      "RateLimitCheckIn": {
         "type": "object",
         "properties": {
           "key": {
@@ -2457,51 +2450,34 @@
             "format": "uint64",
             "minimum": 0,
             "default": 1
+          },
+          "capacity": {
+            "description": "Maximum capacity of the bucket",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_amount": {
+            "description": "Number of tokens to add per refill interval",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_interval": {
+            "description": "Interval in seconds between refills (minimum 1 second)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "default": 1
           }
         },
         "required": [
-          "key"
-        ],
-        "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "method": {
-                "type": "string",
-                "enum": [
-                  "token_bucket"
-                ]
-              },
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "method": {
-                "type": "string",
-                "enum": [
-                  "fixed_window"
-                ]
-              },
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
-          }
+          "key",
+          "capacity",
+          "refill_amount"
         ]
       },
-      "RateLimiterCheckOut": {
+      "RateLimitCheckOut": {
         "type": "object",
         "properties": {
           "status": {
@@ -2527,7 +2503,7 @@
           "remaining"
         ]
       },
-      "RateLimiterCreateNamespaceIn": {
+      "RateLimitCreateNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -2548,7 +2524,7 @@
           "name"
         ]
       },
-      "RateLimiterCreateNamespaceOut": {
+      "RateLimitCreateNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -2579,28 +2555,7 @@
           "updated"
         ]
       },
-      "RateLimiterFixedWindowConfig": {
-        "type": "object",
-        "properties": {
-          "window_size": {
-            "description": "Window size in seconds",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "max_requests": {
-            "description": "Maximum number of requests allowed within the window",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "window_size",
-          "max_requests"
-        ]
-      },
-      "RateLimiterGetNamespaceIn": {
+      "RateLimitGetNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -2611,7 +2566,7 @@
           "name"
         ]
       },
-      "RateLimiterGetNamespaceOut": {
+      "RateLimitGetNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -2642,7 +2597,7 @@
           "updated"
         ]
       },
-      "RateLimiterGetRemainingIn": {
+      "RateLimitGetRemainingIn": {
         "type": "object",
         "properties": {
           "key": {
@@ -2650,74 +2605,7 @@
             "maxLength": 256,
             "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.]+$",
             "example": "some_key"
-          }
-        },
-        "required": [
-          "key"
-        ],
-        "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "method": {
-                "type": "string",
-                "enum": [
-                  "token_bucket"
-                ]
-              },
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterTokenBucketConfig"
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
           },
-          {
-            "type": "object",
-            "properties": {
-              "method": {
-                "type": "string",
-                "enum": [
-                  "fixed_window"
-                ]
-              },
-              "config": {
-                "$ref": "#/components/schemas/RateLimiterFixedWindowConfig"
-              }
-            },
-            "required": [
-              "method",
-              "config"
-            ]
-          }
-        ]
-      },
-      "RateLimiterGetRemainingOut": {
-        "type": "object",
-        "properties": {
-          "remaining": {
-            "description": "Number of tokens remaining",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0
-          },
-          "retry_after": {
-            "description": "Seconds until at least one token is available (only present when remaining is 0)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "nullable": true
-          }
-        },
-        "required": [
-          "remaining"
-        ]
-      },
-      "RateLimiterTokenBucketConfig": {
-        "type": "object",
-        "properties": {
           "capacity": {
             "description": "Maximum capacity of the bucket",
             "type": "integer",
@@ -2739,8 +2627,37 @@
           }
         },
         "required": [
+          "key",
           "capacity",
           "refill_amount"
+        ]
+      },
+      "RateLimitGetRemainingOut": {
+        "type": "object",
+        "properties": {
+          "remaining": {
+            "description": "Number of tokens remaining",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          },
+          "retry_after": {
+            "description": "Seconds until at least one token is available (only present when remaining is 0)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "remaining"
+        ]
+      },
+      "RateLimitStatus": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "block"
         ]
       },
       "Retention": {

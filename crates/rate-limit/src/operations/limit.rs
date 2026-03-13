@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::{LimitResponse, RateLimiterRaftState, RateLimiterRequest};
+use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
 use crate::{RateLimitNamespace, RateLimitStatus, TokenBucket};
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
@@ -44,7 +44,7 @@ pub struct LimitResponseData {
 impl LimitOperation {
     fn apply_real(
         self,
-        state: &RateLimiterRaftState<'_>,
+        state: &RateLimitRaftState<'_>,
         now: Timestamp,
     ) -> Result<LimitResponseData> {
         let (status, remaining, retry_after) = state.state.limit(
@@ -63,8 +63,8 @@ impl LimitOperation {
     }
 }
 
-impl RateLimiterRequest for LimitOperation {
-    fn apply(self, state: RateLimiterRaftState<'_>, now: Timestamp) -> LimitResponse {
+impl RateLimitRequest for LimitOperation {
+    fn apply(self, state: RateLimitRaftState<'_>, now: Timestamp) -> LimitResponse {
         LimitResponse(self.apply_real(&state, now))
     }
 }
