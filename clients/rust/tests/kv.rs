@@ -22,5 +22,5 @@ async fn test_kv_set_get() {
 
     let resp = client.kv().get(test_key, KvGetIn::new()).await.unwrap();
 
-    assert_eq!(resp.value, test_val);
+    assert_eq!(resp.value, Some(test_val));
 }

@@ -45,7 +45,6 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(response["key"], "test-key-1");
     assert_eq!(response["value"], json!(b"test-value-123"));
     assert!(response["expiry"].is_string());
 
@@ -54,8 +53,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
 
 #[derive(Deserialize)]
 struct CacheGetOut {
-    key: String,
-    value: Vec<u8>,
+    value: Option<Vec<u8>>,
     #[allow(unused)]
     expiry: Option<String>,
 }
@@ -92,8 +90,10 @@ async fn test_cache_set_and_get_msgpack_out() -> TestResult {
     assert_eq!(response_content_type, "application/msgpack");
 
     let response_body: CacheGetOut = rmp_serde::from_slice(response.body())?;
-    assert_eq!(response_body.key, "test-key-1");
-    assert_eq!(response_body.value, b"test-value-123");
+    assert_eq!(
+        response_body.value.as_deref(),
+        Some(b"test-value-123" as &[u8])
+    );
 
     Ok(())
 }
