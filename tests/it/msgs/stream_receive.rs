@@ -2,7 +2,7 @@ use std::{collections::HashSet, time::Duration};
 
 use serde_json::json;
 use test_utils::{
-    StatusCode, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
 use tokio::time::sleep;
@@ -54,12 +54,12 @@ async fn stream_receive_returns_published_messages() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     for m in msgs {
         assert!(m["offset"].is_u64());
-        let topic = m["topic"].as_str().unwrap();
+        let topic = m["topic"].assert_str();
         assert!(
             topic.starts_with("ns-recv:my-topic~"),
             "topic should be partition-level: {topic}"
@@ -69,7 +69,7 @@ async fn stream_receive_returns_published_messages() -> TestResult {
     }
 
     // Offsets should be sequential within the same partition
-    let offsets: Vec<u64> = msgs.iter().map(|m| m["offset"].as_u64().unwrap()).collect();
+    let offsets: Vec<u64> = msgs.iter().map(|m| m["offset"].assert_u64()).collect();
     assert_eq!(offsets[1], offsets[0] + 1);
     assert_eq!(offsets[2], offsets[1] + 1);
 
@@ -122,7 +122,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r1["msgs"].as_array().unwrap().len(), 2);
+    assert_eq!(r1["msgs"].assert_array().len(), 2);
 
     // Second receive with the same CG — partition is locked, returns error
     let _r2 = client
@@ -136,9 +136,9 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
 
     // Commit the first batch to unlock the partition.
     // The response topic already includes the namespace, so we can pass it directly.
-    let msgs = r1["msgs"].as_array().unwrap();
-    let partition_topic = msgs[0]["topic"].as_str().unwrap();
-    let last_offset = msgs[1]["offset"].as_u64().unwrap();
+    let msgs = r1["msgs"].assert_array();
+    let partition_topic = msgs[0]["topic"].assert_str();
+    let last_offset = msgs[1]["offset"].assert_u64();
 
     client
         .post("msgs/stream/commit")
@@ -172,7 +172,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r3["msgs"].as_array().unwrap().len(), 1);
+    assert_eq!(r3["msgs"].assert_array().len(), 1);
 
     Ok(())
 }
@@ -242,21 +242,15 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs_a = r_a["msgs"].as_array().unwrap();
-    let msgs_b = r_b["msgs"].as_array().unwrap();
+    let msgs_a = r_a["msgs"].assert_array();
+    let msgs_b = r_b["msgs"].assert_array();
 
     assert_eq!(msgs_a.len(), 2);
     assert_eq!(msgs_b.len(), 2);
 
     // Both groups should get the same offsets
-    let offsets_a: Vec<u64> = msgs_a
-        .iter()
-        .map(|m| m["offset"].as_u64().unwrap())
-        .collect();
-    let offsets_b: Vec<u64> = msgs_b
-        .iter()
-        .map(|m| m["offset"].as_u64().unwrap())
-        .collect();
+    let offsets_a: Vec<u64> = msgs_a.iter().map(|m| m["offset"].assert_u64()).collect();
+    let offsets_b: Vec<u64> = msgs_b.iter().map(|m| m["offset"].assert_u64()).collect();
     assert_eq!(offsets_a, offsets_b);
 
     Ok(())
@@ -326,7 +320,7 @@ async fn stream_receive_with_defaults() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 1);
 
     Ok(())
@@ -382,7 +376,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r_a["msgs"].as_array().unwrap().len(), 2);
+    assert_eq!(r_a["msgs"].assert_array().len(), 2);
 
     // Consumer B (same CG) — partition is locked, returns error
     let _ = client
@@ -396,9 +390,9 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
 
     // Consumer A commits — unlocks the partition.
     // The response topic already includes the namespace.
-    let msgs_a = r_a["msgs"].as_array().unwrap();
-    let partition_topic = msgs_a[0]["topic"].as_str().unwrap();
-    let last_offset = msgs_a[1]["offset"].as_u64().unwrap();
+    let msgs_a = r_a["msgs"].assert_array();
+    let partition_topic = msgs_a[0]["topic"].assert_str();
+    let last_offset = msgs_a[1]["offset"].assert_u64();
 
     client
         .post("msgs/stream/commit")
@@ -421,7 +415,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r_b["msgs"].as_array().unwrap().len(),
+        r_b["msgs"].assert_array().len(),
         3,
         "after commit, remaining messages should be available"
     );
@@ -496,7 +490,7 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
         .expect(StatusCode::OK)
         .json();
 
-    let msgs_a = r_a["msgs"].as_array().unwrap();
+    let msgs_a = r_a["msgs"].assert_array();
     assert_eq!(msgs_a.len(), 5);
 
     // Consumer B: same CG, should get the other partition
@@ -511,18 +505,12 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
         .expect(StatusCode::OK)
         .json();
 
-    let msgs_b = r_b["msgs"].as_array().unwrap();
+    let msgs_b = r_b["msgs"].assert_array();
     assert_eq!(msgs_b.len(), 5);
 
     // Each consumer should have messages from a single (different) partition
-    let topics_a: HashSet<&str> = msgs_a
-        .iter()
-        .map(|m| m["topic"].as_str().unwrap())
-        .collect();
-    let topics_b: HashSet<&str> = msgs_b
-        .iter()
-        .map(|m| m["topic"].as_str().unwrap())
-        .collect();
+    let topics_a: HashSet<&str> = msgs_a.iter().map(|m| m["topic"].assert_str()).collect();
+    let topics_b: HashSet<&str> = msgs_b.iter().map(|m| m["topic"].assert_str()).collect();
 
     assert_eq!(
         topics_a.len(),
@@ -590,13 +578,13 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     // Extract partition-level topic and last offset in the batch.
     // The response topic already includes the namespace.
-    let partition_topic = msgs[0]["topic"].as_str().unwrap();
-    let last_offset = msgs[2]["offset"].as_u64().unwrap();
+    let partition_topic = msgs[0]["topic"].assert_str();
+    let last_offset = msgs[2]["offset"].assert_u64();
 
     // Commit the last offset we processed
     client
@@ -619,7 +607,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r2["msgs"].as_array().unwrap().len(), 0);
+    assert_eq!(r2["msgs"].assert_array().len(), 0);
 
     // Publish more
     client
@@ -645,7 +633,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(r3["msgs"].as_array().unwrap().len(), 1);
+    assert_eq!(r3["msgs"].assert_array().len(), 1);
 
     Ok(())
 }
@@ -748,16 +736,15 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
                     "consumer_group": "cg1",
                 }))
                 .await
-                .unwrap()
         }));
     }
 
     let mut total_msgs = 0usize;
     for handle in handles {
-        let resp = handle.await.unwrap();
+        let resp = handle.await??;
         if matches!(resp.status(), StatusCode::OK) {
             let body = resp.json();
-            let msgs = body["msgs"].as_array().unwrap();
+            let msgs = body["msgs"].assert_array();
             total_msgs += msgs.len();
         } else {
             assert!(matches!(resp.status(), StatusCode::BAD_REQUEST));
@@ -821,12 +808,12 @@ async fn partial_commit_preserves_lease() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = r1["msgs"].as_array().unwrap();
+    let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 5);
 
-    let partition_topic = msgs[0]["topic"].as_str().unwrap();
-    let first_offset = msgs[0]["offset"].as_u64().unwrap();
-    let last_offset = msgs[4]["offset"].as_u64().unwrap();
+    let partition_topic = msgs[0]["topic"].assert_str();
+    let first_offset = msgs[0]["offset"].assert_u64();
+    let last_offset = msgs[4]["offset"].assert_u64();
 
     // Partial commit: only commit the first message
     client
@@ -871,7 +858,7 @@ async fn partial_commit_preserves_lease() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         5,
         "remaining messages should be available after lease release"
     );
@@ -916,7 +903,7 @@ async fn new_consumer_group_starts_from_latest() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r1["msgs"].as_array().unwrap().len(),
+        r1["msgs"].assert_array().len(),
         0,
         "new consumer group should not see pre-existing messages"
     );
@@ -944,7 +931,7 @@ async fn new_consumer_group_starts_from_latest() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(
-        r2["msgs"].as_array().unwrap().len(),
+        r2["msgs"].assert_array().len(),
         3,
         "consumer group should only see messages published after registration"
     );
@@ -996,11 +983,11 @@ async fn default_namespace_receive_and_commit() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
     for m in msgs {
-        let topic = m["topic"].as_str().unwrap();
+        let topic = m["topic"].assert_str();
         assert!(
             topic.starts_with("def-topic~"),
             "default namespace response topics should not have a namespace prefix: {topic}"
@@ -1009,8 +996,8 @@ async fn default_namespace_receive_and_commit() -> TestResult {
 
     // Commit using the response topic directly
     let last = msgs.last().unwrap();
-    let partition_topic = last["topic"].as_str().unwrap();
-    let last_offset = last["offset"].as_u64().unwrap();
+    let partition_topic = last["topic"].assert_str();
+    let last_offset = last["offset"].assert_u64();
 
     client
         .post("msgs/stream/commit")
@@ -1033,7 +1020,7 @@ async fn default_namespace_receive_and_commit() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let msgs = response["msgs"].as_array().unwrap();
+    let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 0, "all messages should be committed");
 
     Ok(())

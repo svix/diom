@@ -3,7 +3,7 @@ use std::time::Duration;
 use jiff::Timestamp;
 use serde_json::json;
 use test_utils::{
-    StatusCode, TestClient, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestClient, TestResult,
     server::{TestContext, start_server},
 };
 
@@ -80,7 +80,7 @@ async fn test_kv_set_and_get() -> TestResult {
     .await?;
     let response = kv_get(&client, "kv-key-1").await?;
 
-    let expires_at: Timestamp = serde_json::from_value(response["expiry"].clone()).unwrap();
+    let expires_at: Timestamp = serde_json::from_value(response["expiry"].clone())?;
     let expected = now + Duration::from_millis(expires_in);
     assert!(
         expires_at
@@ -170,7 +170,7 @@ async fn test_kv_update_expiration() -> TestResult {
     kv_set(&client, "kv4", Some(3000), "v4", "upsert").await?;
 
     let response = kv_get(&client, "kv4").await?;
-    let expires_at = response["expiry"].as_str().unwrap();
+    let expires_at = response["expiry"].assert_str();
 
     tokio::time::sleep(Duration::from_millis(1500)).await;
 
@@ -400,7 +400,7 @@ async fn create_namespace_upserts() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let created_ts = first["created"].as_str().unwrap().to_owned();
+    let created_ts = first["created"].assert_str().to_owned();
     assert_eq!(first["name"], "upsert-ns");
     assert_eq!(first["storage_type"], "Ephemeral");
 

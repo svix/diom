@@ -1,6 +1,6 @@
 use serde_json::json;
 use test_utils::{
-    StatusCode, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
 
@@ -31,22 +31,17 @@ async fn publish_to_topic() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let topics = response["topics"].as_array().unwrap();
+    let topics = response["topics"].assert_array();
     assert_eq!(topics.len(), 1);
     let topic = &topics[0];
     assert_eq!(
-        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        topic["offset"].assert_u64() - topic["start_offset"].assert_u64(),
         2
     );
 
     // Each topic should have a partition
     for topic in topics {
-        assert!(
-            topic["topic"]
-                .as_str()
-                .unwrap()
-                .starts_with("ns1:my-topic~")
-        );
+        assert!(topic["topic"].assert_str().starts_with("ns1:my-topic~"));
     }
 
     Ok(())
@@ -80,11 +75,11 @@ async fn publish_with_partition_key() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let topics = response["topics"].as_array().unwrap();
+    let topics = response["topics"].assert_array();
     assert_eq!(topics.len(), 1);
     let topic = &topics[0];
     assert_eq!(
-        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        topic["offset"].assert_u64() - topic["start_offset"].assert_u64(),
         3
     );
 
@@ -92,8 +87,7 @@ async fn publish_with_partition_key() -> TestResult {
     for topic in topics {
         assert!(
             topic["topic"]
-                .as_str()
-                .unwrap()
+                .assert_str()
                 .starts_with("ns-key:keyed-topic~")
         );
     }
@@ -135,11 +129,11 @@ async fn publish_directly_to_partition() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let topics = response["topics"].as_array().unwrap();
+    let topics = response["topics"].assert_array();
     assert_eq!(topics.len(), 1);
     let topic = &topics[0];
     assert_eq!(
-        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        topic["offset"].assert_u64() - topic["start_offset"].assert_u64(),
         2
     );
 
@@ -147,8 +141,7 @@ async fn publish_directly_to_partition() -> TestResult {
     for topic in topics {
         assert!(
             topic["topic"]
-                .as_str()
-                .unwrap()
+                .assert_str()
                 .starts_with("ns-direct:my-topic~2")
         );
     }
@@ -258,11 +251,11 @@ async fn publish_keyless_same_partition() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let topics = response["topics"].as_array().unwrap();
+    let topics = response["topics"].assert_array();
     assert_eq!(topics.len(), 1);
     let topic = &topics[0];
     assert_eq!(
-        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        topic["offset"].assert_u64() - topic["start_offset"].assert_u64(),
         3
     );
 
@@ -270,8 +263,7 @@ async fn publish_keyless_same_partition() -> TestResult {
     for topic in topics {
         assert!(
             topic["topic"]
-                .as_str()
-                .unwrap()
+                .assert_str()
                 .starts_with("ns-kl:keyless-topic~")
         );
     }
@@ -301,17 +293,17 @@ async fn publish_to_default_namespace() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let topics = response["topics"].as_array().unwrap();
+    let topics = response["topics"].assert_array();
     assert_eq!(topics.len(), 1);
     let topic = &topics[0];
     assert_eq!(
-        topic["offset"].as_u64().unwrap() - topic["start_offset"].as_u64().unwrap(),
+        topic["offset"].assert_u64() - topic["start_offset"].assert_u64(),
         2
     );
 
     // Each topic should have a partition
     for topic in topics {
-        assert!(topic["topic"].as_str().unwrap().starts_with("my-topic~"));
+        assert!(topic["topic"].assert_str().starts_with("my-topic~"));
     }
 
     Ok(())
@@ -381,12 +373,11 @@ async fn default_namespace_isolated_from_named() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let default_msgs = response["msgs"].as_array().unwrap();
+    let default_msgs = response["msgs"].assert_array();
     assert_eq!(default_msgs.len(), 1);
     assert!(
         default_msgs[0]["topic"]
-            .as_str()
-            .unwrap()
+            .assert_str()
             .starts_with("shared-name~"),
         "default namespace response topics should not have a namespace prefix"
     );
@@ -402,12 +393,11 @@ async fn default_namespace_isolated_from_named() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let other_msgs = response["msgs"].as_array().unwrap();
+    let other_msgs = response["msgs"].assert_array();
     assert_eq!(other_msgs.len(), 1);
     assert!(
         other_msgs[0]["topic"]
-            .as_str()
-            .unwrap()
+            .assert_str()
             .starts_with("other:shared-name~"),
         "other namespace messages should have other: prefix"
     );

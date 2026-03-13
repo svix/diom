@@ -7,7 +7,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn test_bootstrap() -> TestResult {
-    let workdir = tempfile::tempdir().unwrap();
+    let workdir = tempfile::tempdir()?;
     let mut cfg = default_server_config(workdir.path());
     cfg.bootstrap_cfg_path = Some("./tests/it/static/bootstrap.test.yaml".to_string());
 

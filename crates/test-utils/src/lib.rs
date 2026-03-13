@@ -2,10 +2,14 @@ use std::fmt::{Debug, Display};
 
 pub use reqwest::StatusCode;
 
+mod json;
 pub mod server;
 mod test_client;
 
-pub use self::test_client::{TestClient, TestRequestBuilder, TestResponse};
+pub use self::{
+    json::JsonFastAndLoose,
+    test_client::{TestClient, TestRequestBuilder, TestResponse},
+};
 
 #[derive(Debug)] // needed to be able to return TestResult from #[test] fns
 pub enum TestError {}

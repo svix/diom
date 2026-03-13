@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use serde_json::json;
 use test_utils::{
-    StatusCode, TestClient, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestClient, TestResult,
     server::{TestContext, start_server},
 };
 
@@ -288,7 +288,7 @@ async fn create_namespace_upserts() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let created_ts = first["created"].as_str().unwrap().to_owned();
+    let created_ts = first["created"].assert_str().to_owned();
     assert_eq!(first["name"], "upsert-ns");
     assert_eq!(first["storage_type"], "Ephemeral");
 
