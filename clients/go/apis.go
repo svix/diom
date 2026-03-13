@@ -36,8 +36,8 @@ func (coyote Coyote) Msgs() Msgs {
 	return coyote_apis.NewMsgs(&coyote.inner)
 }
 
-type RateLimiter = coyote_apis.RateLimiter
+type RateLimit = coyote_apis.RateLimit
 
-func (coyote Coyote) RateLimiter() RateLimiter {
-	return coyote_apis.NewRateLimiter(&coyote.inner)
+func (coyote Coyote) RateLimit() RateLimit {
+	return coyote_apis.NewRateLimit(&coyote.inner)
 }

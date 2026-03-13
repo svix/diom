@@ -38,7 +38,7 @@ impl std::error::Error for ResponseParseError {
 pub enum Request {
     ClusterInternal(InternalOperation),
     Kv(coyote_kv::operations::KvOperation),
-    RateLimiter(coyote_rate_limit::operations::RateLimiterOperation),
+    RateLimit(coyote_rate_limit::operations::RateLimitOperation),
     Idempotency(coyote_idempotency::operations::IdempotencyOperation),
     Cache(coyote_cache::operations::CacheOperation),
     Msgs(coyote_msgs::operations::MsgsOperation),
@@ -61,7 +61,7 @@ impl fmt::Display for RequestWithContext {
         match self.inner {
             Request::ClusterInternal(_) => write!(f, "cluster_internal"),
             Request::Kv(_) => write!(f, "kv"),
-            Request::RateLimiter(_) => write!(f, "ratelimiter"),
+            Request::RateLimit(_) => write!(f, "ratelimiter"),
             Request::Idempotency(_) => write!(f, "idempotency"),
             Request::Cache(_) => write!(f, "cache"),
             Request::Msgs(_) => write!(f, "msgs"),
@@ -84,12 +84,12 @@ impl RequestWithContext {
 
     pub(crate) fn hashed_key(&self) -> Option<String> {
         let digest = match &self.inner {
-            Request::Kv(op) => Sha256::digest(op.key_name()?),
-            Request::RateLimiter(op) => Sha256::digest(op.key_name()),
-            Request::Idempotency(op) => Sha256::digest(op.key_name()?),
             Request::Cache(op) => Sha256::digest(op.key_name()?),
-            Request::Msgs(op) => Sha256::digest(op.key_name()),
             Request::ClusterInternal(_) => return None,
+            Request::Idempotency(op) => Sha256::digest(op.key_name()?),
+            Request::Kv(op) => Sha256::digest(op.key_name()?),
+            Request::Msgs(op) => Sha256::digest(op.key_name()),
+            Request::RateLimit(op) => Sha256::digest(op.key_name()),
         };
         Some(hex::encode(digest))
     }
@@ -101,9 +101,9 @@ impl From<coyote_kv::operations::KvOperation> for Request {
     }
 }
 
-impl From<coyote_rate_limit::operations::RateLimiterOperation> for Request {
-    fn from(value: coyote_rate_limit::operations::RateLimiterOperation) -> Self {
-        Request::RateLimiter(value)
+impl From<coyote_rate_limit::operations::RateLimitOperation> for Request {
+    fn from(value: coyote_rate_limit::operations::RateLimitOperation) -> Self {
+        Request::RateLimit(value)
     }
 }
 
@@ -136,7 +136,7 @@ pub enum Response {
     Blank,
     ClusterInternal(super::operations::Response),
     Kv(coyote_kv::operations::Response),
-    RateLimiter(coyote_rate_limit::operations::Response),
+    RateLimit(coyote_rate_limit::operations::Response),
     Idempotency(coyote_idempotency::operations::Response),
     Cache(coyote_cache::operations::Response),
     Msgs(coyote_msgs::operations::Response),
@@ -158,7 +158,7 @@ impl TryFrom<Response> for coyote_rate_limit::operations::Response {
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
-            Response::RateLimiter(v) => Ok(v),
+            Response::RateLimit(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }
@@ -316,14 +316,40 @@ impl RaftState {
     }
 
     pub async fn is_up(&self) -> bool {
-        self.raft
-            .with_raft_state(move |s| {
-                s.server_state.is_leader()
-                    || s.server_state.is_follower()
-                    || s.server_state.is_candidate()
-            })
+        let Ok(state) = self
+            .raft
+            .with_raft_state(|s| s.server_state)
             .await
-            .unwrap_or(false)
+            .inspect_err(|err| tracing::warn!(?err, "error reading server state"))
+        else {
+            return false;
+        };
+        if state.is_leader() {
+            true
+        } else if state.is_learner() {
+            false
+        } else {
+            let Some(leader) = self.raft.current_leader().await else {
+                tracing::debug!(my_state=?state, "no current leader known");
+                return false;
+            };
+            if !self
+                .raft
+                .with_raft_state(move |s| {
+                    s.membership_state.effective().get_node(&leader).is_some()
+                })
+                .await
+                .unwrap_or(false)
+            {
+                tracing::debug!(
+                    ?leader,
+                    "I know the leader's node ID, but not yet their address"
+                );
+                false
+            } else {
+                true
+            }
+        }
     }
 
     pub(crate) async fn trigger_snapshot(&self) -> anyhow::Result<()> {

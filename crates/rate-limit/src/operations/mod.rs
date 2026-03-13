@@ -12,27 +12,27 @@ pub use reset::ResetOperation;
 
 use coyote_operations::raft_module_operations;
 
-pub struct RateLimiterRaftState<'a> {
+pub struct RateLimitRaftState<'a> {
     pub state: &'a State,
     pub namespace: &'a coyote_namespace::State,
 }
 
 raft_module_operations!(
-    RateLimiterRequest,
-    RateLimiterOperation {
+    RateLimitRequest,
+    RateLimitOperation {
         Limit(LimitOperation) -> LimitResponseData,
         Reset(ResetOperation) -> (),
         CreateRateLimit(CreateRateLimitOperation) -> CreateRateLimitResponseData,
     },
-    state = RateLimiterRaftState<'_>,
+    state = RateLimitRaftState<'_>,
 );
 
-impl RateLimiterOperation {
+impl RateLimitOperation {
     pub fn key_name(&self) -> &str {
         match self {
-            RateLimiterOperation::Limit(limit_operation) => &limit_operation.key,
-            RateLimiterOperation::Reset(reset_operation) => &reset_operation.key,
-            RateLimiterOperation::CreateRateLimit(op) => &op.name,
+            RateLimitOperation::Limit(limit_operation) => &limit_operation.key,
+            RateLimitOperation::Reset(reset_operation) => &reset_operation.key,
+            RateLimitOperation::CreateRateLimit(op) => &op.name,
         }
     }
 }

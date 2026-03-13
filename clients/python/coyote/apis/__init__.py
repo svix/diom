@@ -11,8 +11,8 @@ from .msgs_namespace import MsgsNamespace, MsgsNamespaceAsync
 from .msgs_queue import MsgsQueue, MsgsQueueAsync
 from .msgs_stream import MsgsStream, MsgsStreamAsync
 from .msgs_topic import MsgsTopic, MsgsTopicAsync
-from .rate_limiter import RateLimiter, RateLimiterAsync
-from .rate_limiter_namespace import RateLimiterNamespace, RateLimiterNamespaceAsync
+from .rate_limit import RateLimit, RateLimitAsync
+from .rate_limit_namespace import RateLimitNamespace, RateLimitNamespaceAsync
 
 
 __all__ = [
@@ -40,8 +40,8 @@ __all__ = [
     "MsgsStreamAsync",
     "MsgsTopic",
     "MsgsTopicAsync",
-    "RateLimiter",
-    "RateLimiterAsync",
-    "RateLimiterNamespace",
-    "RateLimiterNamespaceAsync",
+    "RateLimit",
+    "RateLimitAsync",
+    "RateLimitNamespace",
+    "RateLimitNamespaceAsync",
 ]

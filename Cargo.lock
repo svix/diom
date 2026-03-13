@@ -1195,7 +1195,6 @@ dependencies = [
  "fjall",
  "fjall-utils",
  "jiff",
- "schemars 1.2.1",
  "serde",
  "tempfile",
  "tokio",

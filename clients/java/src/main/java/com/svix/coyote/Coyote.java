@@ -9,7 +9,7 @@ import com.svix.coyote.apis.Health;
 import com.svix.coyote.apis.Idempotency;
 import com.svix.coyote.apis.Kv;
 import com.svix.coyote.apis.Msgs;
-import com.svix.coyote.apis.RateLimiter;
+import com.svix.coyote.apis.RateLimit;
 
 import okhttp3.HttpUrl;
 
@@ -58,7 +58,7 @@ public class Coyote {
         return new Msgs(this.httpClient);
     }
 
-    public RateLimiter getRateLimiter() {
-        return new RateLimiter(this.httpClient);
+    public RateLimit getRateLimit() {
+        return new RateLimit(this.httpClient);
     }
 }

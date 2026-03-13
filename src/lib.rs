@@ -70,7 +70,6 @@ async fn graceful_shutdown_handler() {
 #[derive(Clone)]
 pub struct AppState {
     cfg: Configuration,
-    rate_limiter: coyote_rate_limit::State,
 
     namespace_state: coyote_namespace::State,
 
@@ -167,8 +166,6 @@ impl AppState {
 
         AppState {
             cfg,
-            rate_limiter: coyote_rate_limit::State::init(dbs.clone())
-                .expect("initializing rate limiter state"),
             namespace_state,
             ro_dbs,
             do_not_use_dbs: dbs,
