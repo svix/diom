@@ -30,9 +30,7 @@ import lombok.ToString;
 public class RateLimitCheckIn {
 @JsonProperty private String key;
 @JsonProperty private Long tokens;
-@JsonProperty private Long capacity;
-@JsonProperty("refill_amount") private Long refillAmount;
-@JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
+@JsonProperty private RateLimitTokenBucketConfig config;
 public RateLimitCheckIn () {}
 
  public RateLimitCheckIn key(String key) {
@@ -73,61 +71,23 @@ public RateLimitCheckIn () {}
         this.tokens = tokens;
     }
 
-     public RateLimitCheckIn capacity(Long capacity) {
-        this.capacity = capacity;
+     public RateLimitCheckIn config(RateLimitTokenBucketConfig config) {
+        this.config = config;
         return this;
     }
 
     /**
-    * Maximum capacity of the bucket
+    * Rate limiter configuration
     *
-     * @return capacity
+     * @return config
      */
     @javax.annotation.Nonnull
-     public Long getCapacity() {
-        return capacity;
+     public RateLimitTokenBucketConfig getConfig() {
+        return config;
     }
 
-     public void setCapacity(Long capacity) {
-        this.capacity = capacity;
-    }
-
-     public RateLimitCheckIn refillAmount(Long refillAmount) {
-        this.refillAmount = refillAmount;
-        return this;
-    }
-
-    /**
-    * Number of tokens to add per refill interval
-    *
-     * @return refillAmount
-     */
-    @javax.annotation.Nonnull
-     public Long getRefillAmount() {
-        return refillAmount;
-    }
-
-     public void setRefillAmount(Long refillAmount) {
-        this.refillAmount = refillAmount;
-    }
-
-     public RateLimitCheckIn refillIntervalMillis(Long refillIntervalMillis) {
-        this.refillIntervalMillis = refillIntervalMillis;
-        return this;
-    }
-
-    /**
-    * Interval in milliseconds between refills (minimum 1 millisecond)
-    *
-     * @return refillIntervalMillis
-     */
-    @javax.annotation.Nullable
-     public Long getRefillIntervalMillis() {
-        return refillIntervalMillis;
-    }
-
-     public void setRefillIntervalMillis(Long refillIntervalMillis) {
-        this.refillIntervalMillis = refillIntervalMillis;
+     public void setConfig(RateLimitTokenBucketConfig config) {
+        this.config = config;
     }
 
     /**

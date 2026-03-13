@@ -1,13 +1,13 @@
 // this file is @generated
+import {
+    type RateLimitTokenBucketConfig,
+    RateLimitTokenBucketConfigSerializer,
+} from './rateLimitTokenBucketConfig';
 
 export interface RateLimitGetRemainingIn {
     key: string;
-    /** Maximum capacity of the bucket */
-    capacity: number;
-    /** Number of tokens to add per refill interval */
-    refillAmount: number;
-    /** Interval in milliseconds between refills (minimum 1 millisecond) */
-    refillIntervalMillis?: number;
+    /** Rate limiter configuration */
+    config: RateLimitTokenBucketConfig;
 }
 
 export const RateLimitGetRemainingInSerializer = {
@@ -15,9 +15,7 @@ export const RateLimitGetRemainingInSerializer = {
     _fromJsonObject(object: any): RateLimitGetRemainingIn {
         return {
             key: object['key'],
-            capacity: object['capacity'],
-            refillAmount: object['refill_amount'],
-            refillIntervalMillis: object['refill_interval_millis'],
+            config: RateLimitTokenBucketConfigSerializer._fromJsonObject(object['config']),
         };
     },
 
@@ -25,9 +23,7 @@ export const RateLimitGetRemainingInSerializer = {
     _toJsonObject(self: RateLimitGetRemainingIn): any {
         return {
             'key': self.key,
-            'capacity': self.capacity,
-            'refill_amount': self.refillAmount,
-            'refill_interval_millis': self.refillIntervalMillis,
+            'config': RateLimitTokenBucketConfigSerializer._toJsonObject(self.config),
         };
     }
 }

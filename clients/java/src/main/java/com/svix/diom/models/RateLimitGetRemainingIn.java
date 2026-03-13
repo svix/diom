@@ -29,9 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class RateLimitGetRemainingIn {
 @JsonProperty private String key;
-@JsonProperty private Long capacity;
-@JsonProperty("refill_amount") private Long refillAmount;
-@JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
+@JsonProperty private RateLimitTokenBucketConfig config;
 public RateLimitGetRemainingIn () {}
 
  public RateLimitGetRemainingIn key(String key) {
@@ -53,61 +51,23 @@ public RateLimitGetRemainingIn () {}
         this.key = key;
     }
 
-     public RateLimitGetRemainingIn capacity(Long capacity) {
-        this.capacity = capacity;
+     public RateLimitGetRemainingIn config(RateLimitTokenBucketConfig config) {
+        this.config = config;
         return this;
     }
 
     /**
-    * Maximum capacity of the bucket
+    * Rate limiter configuration
     *
-     * @return capacity
+     * @return config
      */
     @javax.annotation.Nonnull
-     public Long getCapacity() {
-        return capacity;
+     public RateLimitTokenBucketConfig getConfig() {
+        return config;
     }
 
-     public void setCapacity(Long capacity) {
-        this.capacity = capacity;
-    }
-
-     public RateLimitGetRemainingIn refillAmount(Long refillAmount) {
-        this.refillAmount = refillAmount;
-        return this;
-    }
-
-    /**
-    * Number of tokens to add per refill interval
-    *
-     * @return refillAmount
-     */
-    @javax.annotation.Nonnull
-     public Long getRefillAmount() {
-        return refillAmount;
-    }
-
-     public void setRefillAmount(Long refillAmount) {
-        this.refillAmount = refillAmount;
-    }
-
-     public RateLimitGetRemainingIn refillIntervalMillis(Long refillIntervalMillis) {
-        this.refillIntervalMillis = refillIntervalMillis;
-        return this;
-    }
-
-    /**
-    * Interval in milliseconds between refills (minimum 1 millisecond)
-    *
-     * @return refillIntervalMillis
-     */
-    @javax.annotation.Nullable
-     public Long getRefillIntervalMillis() {
-        return refillIntervalMillis;
-    }
-
-     public void setRefillIntervalMillis(Long refillIntervalMillis) {
-        this.refillIntervalMillis = refillIntervalMillis;
+     public void setConfig(RateLimitTokenBucketConfig config) {
+        this.config = config;
     }
 
     /**

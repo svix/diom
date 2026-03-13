@@ -2451,30 +2451,14 @@
             "minimum": 0,
             "default": 1
           },
-          "capacity": {
-            "description": "Maximum capacity of the bucket",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_amount": {
-            "description": "Number of tokens to add per refill interval",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_interval_millis": {
-            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "default": 1000
+          "config": {
+            "description": "Rate limiter configuration",
+            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
           }
         },
         "required": [
           "key",
-          "capacity",
-          "refill_amount"
+          "config"
         ]
       },
       "RateLimitCheckOut": {
@@ -2606,30 +2590,14 @@
             "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.]+$",
             "example": "some_key"
           },
-          "capacity": {
-            "description": "Maximum capacity of the bucket",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_amount": {
-            "description": "Number of tokens to add per refill interval",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_interval_millis": {
-            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "default": 1000
+          "config": {
+            "description": "Rate limiter configuration",
+            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
           }
         },
         "required": [
           "key",
-          "capacity",
-          "refill_amount"
+          "config"
         ]
       },
       "RateLimitGetRemainingOut": {
@@ -2651,6 +2619,34 @@
         },
         "required": [
           "remaining"
+        ]
+      },
+      "RateLimitTokenBucketConfig": {
+        "type": "object",
+        "properties": {
+          "capacity": {
+            "description": "Maximum capacity of the bucket",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_amount": {
+            "description": "Number of tokens to add per refill interval",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_interval_millis": {
+            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "default": 1000
+          }
+        },
+        "required": [
+          "capacity",
+          "refill_amount"
         ]
       },
       "Retention": {
