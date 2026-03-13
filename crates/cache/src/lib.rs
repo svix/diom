@@ -7,6 +7,7 @@
 
 pub mod operations;
 
+use diom_core::Monotime;
 use diom_error::Result;
 use diom_kv::kvcontroller::KvController;
 use diom_namespace::{Namespace, entities::CacheConfig};
@@ -30,16 +31,8 @@ pub struct State {
 impl State {
     pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            persistent_controller: KvController::new(
-                StorageType::Persistent,
-                dbs.persistent,
-                CACHE_KEYSPACE,
-            ),
-            ephemeral_controller: KvController::new(
-                StorageType::Ephemeral,
-                dbs.ephemeral,
-                CACHE_KEYSPACE,
-            ),
+            persistent_controller: KvController::new(dbs.persistent, CACHE_KEYSPACE),
+            ephemeral_controller: KvController::new(dbs.ephemeral, CACHE_KEYSPACE),
         })
     }
 
@@ -62,7 +55,11 @@ pub struct CacheModel {
 ///
 /// It should not mutate the database in any way that could possibly be customer- or
 /// replication-visible; all  mutations should be written through the writer function
-pub async fn worker<F>(state: State, writer: F) -> diom_operations::BackgroundResult<()>
+pub async fn worker<F>(
+    state: State,
+    writer: F,
+    time: Monotime,
+) -> diom_operations::BackgroundResult<()>
 where
     F: OperationWriter<operations::CacheOperation>,
 {
@@ -75,26 +72,34 @@ where
         .await
         .is_some()
     {
-        worker_loop(&state, &writer).await?;
+        worker_loop(&state, &writer, time.last()).await?;
     }
 
     Ok(())
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn worker_loop<F>(state: &State, writer: &F) -> diom_operations::BackgroundResult<()>
+pub async fn worker_loop<F>(
+    state: &State,
+    writer: &F,
+    now: Timestamp,
+) -> diom_operations::BackgroundResult<()>
 where
     F: OperationWriter<operations::CacheOperation>,
 {
-    writer
-        .write_request(operations::ClearExpiredOperation::new(
-            state.persistent_controller.storage_type,
-        ))
-        .await?;
-    writer
-        .write_request(operations::ClearExpiredOperation::new(
-            state.ephemeral_controller.storage_type,
-        ))
-        .await?;
+    if state.persistent_controller.has_expired(now).await {
+        writer
+            .write_request(operations::ClearExpiredOperation::new(
+                StorageType::Persistent,
+            ))
+            .await?;
+    }
+    if state.ephemeral_controller.has_expired(now).await {
+        writer
+            .write_request(operations::ClearExpiredOperation::new(
+                StorageType::Ephemeral,
+            ))
+            .await?;
+    }
     Ok(())
 }

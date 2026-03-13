@@ -80,7 +80,8 @@ struct KvBackground {
 impl BackgroundJob for KvBackground {
     async fn run_on_leader(self) -> diom_operations::BackgroundResult<()> {
         let store = self.handle.state_machine.kv_store().await;
-        diom_kv::worker(store, self.handle).await
+        let time = self.handle.state_machine.time.clone();
+        diom_kv::worker(store, self.handle, time).await
     }
 }
 
@@ -91,7 +92,8 @@ struct CacheBackground {
 impl BackgroundJob for CacheBackground {
     async fn run_on_leader(self) -> diom_operations::BackgroundResult<()> {
         let store = self.handle.state_machine.cache_store().await;
-        diom_cache::worker(store, self.handle).await
+        let time = self.handle.state_machine.time.clone();
+        diom_cache::worker(store, self.handle, time).await
     }
 }
 
@@ -102,7 +104,8 @@ struct IdempotencyBackground {
 impl BackgroundJob for IdempotencyBackground {
     async fn run_on_leader(self) -> diom_operations::BackgroundResult<()> {
         let store = self.handle.state_machine.idempotency_store().await;
-        diom_idempotency::worker(store, self.handle).await
+        let time = self.handle.state_machine.time.clone();
+        diom_idempotency::worker(store, self.handle, time).await
     }
 }
 
