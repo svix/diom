@@ -99,7 +99,7 @@ async fn kv_set(
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(namespace, data.key, data.value, data.ttl, data.behavior);
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     let ret = KvSetOut {};
     Ok(MsgPackOrJson(ret))
@@ -118,7 +118,7 @@ async fn kv_get(
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
-        repl.wait_linearizable().await.map_err_generic()?;
+        repl.wait_linearizable().await.or_internal_error()?;
     }
 
     // FIXME: this state should be passed, not created every time.
@@ -150,7 +150,7 @@ async fn kv_del(
 
     let key = data.key;
     let operation = DeleteOperation::new(namespace, key);
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     let ret = KvDeleteOut { deleted: true };
     Ok(MsgPackOrJson(ret))
@@ -196,7 +196,7 @@ async fn kv_create_namespace(
     MsgPackOrJson(data): MsgPackOrJson<KvCreateNamespaceIn>,
 ) -> Result<MsgPackOrJson<KvCreateNamespaceOut>> {
     let operation = CreateKvOperation::new(data.name, data.storage_type, data.max_storage_bytes);
-    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(KvCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
@@ -214,7 +214,7 @@ async fn kv_get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<KvGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<KvGetNamespaceOut>> {
     // Ensure we have the latest version of namespace
-    repl.wait_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.or_internal_error()?;
 
     let namespace: KvNamespace = state
         .namespace_state

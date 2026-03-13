@@ -124,7 +124,7 @@ fn forward_to_dlq(
         &state.msg_table,
         MsgRow::key_for(source_topic_id, msg_id.partition, msg_id.offset),
     )?
-    .ok_or_else(|| Error::generic("nacked message not found"))?;
+    .ok_or_else(|| Error::internal("nacked message not found"))?;
 
     let dlq_topic_row =
         TopicRow::fetch_or_create(&state.metadata_tables, batch, namespace_id, dlq_topic, now)?;

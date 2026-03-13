@@ -14,11 +14,11 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
         rmp_serde::to_vec_named(&self)
             .map(|bytes| bytes.into())
-            .map_err_generic()
+            .or_internal_error()
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
-        rmp_serde::from_slice(&value).map_err_generic()
+        rmp_serde::from_slice(&value).or_internal_error()
     }
 
     fn fetch<K: ReadableKeyspace>(keyspace: &K, key: TableKey<Self>) -> Result<Option<Self>> {

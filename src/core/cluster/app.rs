@@ -180,7 +180,7 @@ async fn handle_forwarded_write(
     // of forwardings
     let response =
         state.raft.client_write(req.request).await.map_err(|e| {
-            crate::Error::generic(format!("Unable to execute forwarded write: {e:?}"))
+            crate::Error::internal(format!("Unable to execute forwarded write: {e:?}"))
         })?;
     let response = ForwardedWriteResponse {
         log_id: response.log_id,

@@ -91,7 +91,7 @@ impl NetworkClient {
         let Ok(url) = self.node.url_for(path) else {
             tracing::warn!(node_id=?self.target, node=?self.node, "node has no valid addresses, cannot send rpc");
             return Err(RPCError::Unreachable(Unreachable::new(
-                &crate::Error::generic("no has no known addresses"),
+                &crate::Error::internal("no has no known addresses"),
             )));
         };
         tracing::trace!(%url, target=?self.target, "sending internal RPC");

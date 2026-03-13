@@ -51,7 +51,7 @@ async fn create_namespace(
     MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceCreateIn>,
 ) -> Result<MsgPackOrJson<MsgNamespaceCreateOut>> {
     let operation = CreateNamespaceOperation::new(data.name, data.retention, data.storage_type);
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgNamespaceCreateOut {
         name: response.name,
@@ -85,7 +85,7 @@ async fn get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceGetIn>,
 ) -> Result<MsgPackOrJson<MsgNamespaceGetOut>> {
     // Ensure we have the latest version of namespace
-    repl.wait_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.or_internal_error()?;
 
     let namespace: MsgsNamespace = state
         .namespace_state
@@ -141,7 +141,7 @@ async fn publish(
         .ok_or_not_found()?;
 
     let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgPublishOut {
         topics: response
@@ -206,7 +206,7 @@ async fn stream_receive(
         data.batch_size,
         data.lease_duration_millis,
     )?;
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgStreamReceiveOut {
         msgs: response
@@ -255,7 +255,7 @@ async fn stream_commit(
 
     let operation =
         StreamCommitOperation::new(namespace.id, data.topic, data.consumer_group, data.offset);
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgStreamCommitOut {}))
 }
@@ -304,7 +304,7 @@ async fn stream_seek(
 
     let operation =
         StreamSeekOperation::new(namespace.id, data.topic, data.consumer_group, target)?;
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgStreamSeekOut {}))
 }
@@ -356,7 +356,7 @@ async fn queue_receive(
         data.batch_size,
         data.lease_duration_millis,
     )?;
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgQueueReceiveOut {
         msgs: response
@@ -403,7 +403,7 @@ async fn queue_ack(
 
     let operation =
         QueueAckOperation::new(namespace.id, data.topic, data.consumer_group, data.msg_ids);
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgQueueAckOut {}))
 }
@@ -450,7 +450,7 @@ async fn queue_configure(
         data.retry_schedule,
         data.dlq_topic,
     );
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgQueueConfigureOut {
         retry_schedule: response.retry_schedule,
@@ -490,7 +490,7 @@ async fn queue_nack(
 
     let operation =
         QueueNackOperation::new(namespace.id, data.topic, data.consumer_group, data.msg_ids);
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgQueueNackOut {}))
 }
@@ -522,7 +522,7 @@ async fn queue_redrive_dlq(
         .ok_or_not_found()?;
 
     let operation = QueueRedriveDlqOperation::new(namespace.id, data.topic, data.consumer_group);
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgQueueRedriveDlqOut {}))
 }
@@ -558,7 +558,7 @@ async fn topic_configure(
         .ok_or_not_found()?;
 
     let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions)?;
-    let response = repl.client_write(operation).await.map_err_generic()?.0?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgTopicConfigureOut {
         partitions: response.partitions,
