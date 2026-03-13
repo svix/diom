@@ -397,7 +397,7 @@ impl diom_operations::OperationWriterBase for RaftState {
                 } else {
                     tracing::warn!(?err, "unhandled error writing request to raft");
                     Err(diom_operations::BackgroundError::Other(
-                        diom_error::Error::generic(err),
+                        diom_error::Error::internal(err),
                     ))
                 }
             }
