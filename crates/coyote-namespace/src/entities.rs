@@ -96,9 +96,9 @@ impl ModuleConfig for StreamConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
-pub struct RateLimitNamespaceConfig {}
+pub struct RateLimitConfig {}
 
-impl ModuleConfig for RateLimitNamespaceConfig {
+impl ModuleConfig for RateLimitConfig {
     fn module() -> Module {
         Module::RateLimit
     }

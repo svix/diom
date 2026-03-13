@@ -1,7 +1,7 @@
 use std::num::NonZeroU64;
 
 use coyote_namespace::{
-    entities::{RateLimitNamespaceConfig, StorageType},
+    entities::{RateLimitConfig, StorageType},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -16,11 +16,11 @@ pub struct CreateRateLimitOperation {
     max_storage_bytes: Option<NonZeroU64>,
 }
 
-impl From<CreateRateLimitOperation> for CreateNamespace<RateLimitNamespaceConfig> {
+impl From<CreateRateLimitOperation> for CreateNamespace<RateLimitConfig> {
     fn from(value: CreateRateLimitOperation) -> Self {
         CreateNamespace::new(
             value.name,
-            RateLimitNamespaceConfig {},
+            RateLimitConfig {},
             value.storage_type,
             value.max_storage_bytes,
         )
@@ -45,7 +45,7 @@ impl CreateRateLimitOperation {
         namespace_state: &coyote_namespace::State,
         now: Timestamp,
     ) -> coyote_operations::Result<CreateRateLimitResponseData> {
-        let op: CreateNamespace<RateLimitNamespaceConfig> = self.into();
+        let op: CreateNamespace<RateLimitConfig> = self.into();
         let out = op.apply_operation(namespace_state, now)?;
         Ok(out.into())
     }
@@ -60,8 +60,8 @@ pub struct CreateRateLimitResponseData {
     pub updated: Timestamp,
 }
 
-impl From<CreateNamespaceOutput<RateLimitNamespaceConfig>> for CreateRateLimitResponseData {
-    fn from(value: CreateNamespaceOutput<RateLimitNamespaceConfig>) -> Self {
+impl From<CreateNamespaceOutput<RateLimitConfig>> for CreateRateLimitResponseData {
+    fn from(value: CreateNamespaceOutput<RateLimitConfig>) -> Self {
         Self {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
