@@ -316,14 +316,40 @@ impl RaftState {
     }
 
     pub async fn is_up(&self) -> bool {
-        self.raft
-            .with_raft_state(move |s| {
-                s.server_state.is_leader()
-                    || s.server_state.is_follower()
-                    || s.server_state.is_candidate()
-            })
+        let Ok(state) = self
+            .raft
+            .with_raft_state(|s| s.server_state)
             .await
-            .unwrap_or(false)
+            .inspect_err(|err| tracing::warn!(?err, "error reading server state"))
+        else {
+            return false;
+        };
+        if state.is_leader() {
+            true
+        } else if state.is_learner() {
+            false
+        } else {
+            let Some(leader) = self.raft.current_leader().await else {
+                tracing::debug!(my_state=?state, "no current leader known");
+                return false;
+            };
+            if !self
+                .raft
+                .with_raft_state(move |s| {
+                    s.membership_state.effective().get_node(&leader).is_some()
+                })
+                .await
+                .unwrap_or(false)
+            {
+                tracing::debug!(
+                    ?leader,
+                    "I know the leader's node ID, but not yet their address"
+                );
+                false
+            } else {
+                true
+            }
+        }
     }
 
     pub(crate) async fn trigger_snapshot(&self) -> anyhow::Result<()> {
