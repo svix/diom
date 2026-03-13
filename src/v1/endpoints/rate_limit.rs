@@ -10,7 +10,7 @@ use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
-use diom_rate_limit::{State as RateLimit, operations::CreateRateLimitOperation};
+use diom_rate_limit::operations::{CreateRateLimitOperation, LimitOperation};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -122,7 +122,7 @@ async fn rate_limit_limit(
     let units = data.tokens;
     let method = data.config.into();
 
-    let operation = RateLimit::limit_operation(namespace, key, units, method);
+    let operation = LimitOperation::new(namespace, key, units, method);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(RateLimitCheckOut {
