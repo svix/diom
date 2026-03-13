@@ -48,7 +48,7 @@ impl State {
 }
 
 /// This is the worker function for this module, it does background cleanup and accounting.
-pub async fn worker<F>(_stores: &[&State], is_shutting_down: F)
+pub async fn worker<F>(_dbs: Databases, is_shutting_down: F)
 where
     F: Fn() -> bool,
 {

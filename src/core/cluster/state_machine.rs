@@ -64,6 +64,7 @@ pub struct Stores {
     pub kv_state: coyote_kv::State,
     pub cache_state: coyote_cache::State,
     pub idempotency_state: coyote_idempotency::State,
+    pub rate_limit_state: coyote_rate_limit::State,
 }
 
 impl From<Store> for StoreHandle {
@@ -149,6 +150,8 @@ impl Store {
                 .context("initializing cache state")?,
             idempotency_state: coyote_idempotency::State::init(databases.clone())
                 .context("initializing idempotency state")?,
+            rate_limit_state: coyote_rate_limit::State::init(databases.clone())
+                .context("initializing rate limit state")?,
         };
 
         if let Some(timestamp) = logs.get_last_timestamp().await? {
