@@ -60,9 +60,7 @@ pub enum OperationBehavior {
 /// replication-visible; all  mutations should be written through the writer function
 pub async fn worker<F>(state: State, writer: F) -> coyote_operations::BackgroundResult<()>
 where
-    F: OperationWriter,
-    <F as OperationWriter>::Request: From<operations::KvOperation>,
-    operations::Response: TryFrom<<F as OperationWriter>::Response>,
+    F: OperationWriter<operations::KvOperation>,
 {
     let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
 
@@ -82,9 +80,7 @@ where
 #[tracing::instrument(skip_all)]
 pub async fn worker_loop<F>(state: &State, writer: &F) -> coyote_operations::BackgroundResult<()>
 where
-    F: OperationWriter,
-    <F as OperationWriter>::Request: From<operations::KvOperation>,
-    operations::Response: TryFrom<<F as OperationWriter>::Response>,
+    F: OperationWriter<operations::KvOperation>,
 {
     writer
         .write_request(operations::ClearExpiredOperation::new(
