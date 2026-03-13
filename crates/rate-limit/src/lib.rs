@@ -4,7 +4,7 @@ pub mod tables;
 
 use std::time::Duration;
 
-use diom_error::Result;
+use diom_error::{Result, ResultExt as _};
 use diom_namespace::{Namespace, entities::NamespaceId};
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::{Databases, StorageType, TableRow};
@@ -43,11 +43,11 @@ impl State {
             persistent_tables: dbs
                 .persistent
                 .keyspace(RATE_LIMIT_KEYSPACE, opts)
-                .map_err(diom_error::Error::generic)?,
+                .or_internal_error()?,
             ephemeral_tables: dbs
                 .ephemeral
                 .keyspace(RATE_LIMIT_KEYSPACE, opts)
-                .map_err(diom_error::Error::generic)?,
+                .or_internal_error()?,
         })
     }
 

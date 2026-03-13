@@ -18,7 +18,7 @@ impl InternalRequest for RecordLogTimestampOperation {
             .logs
             .record_log_timestamp(timestamp, log_id.index)
             .await
-            .map_err(|e| Error::generic(e).into())
+            .map_err(|e| Error::internal(e).into())
             .pipe(Response)
     }
 }

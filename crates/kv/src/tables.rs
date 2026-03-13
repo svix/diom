@@ -1,4 +1,4 @@
-use diom_error::{Error, Result};
+use diom_error::{Result, ResultExt};
 use diom_namespace::entities::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
@@ -54,8 +54,8 @@ impl ExpirationRow {
         let namespace_offset = 1 /* row_type */ + size_of::<i64>() /* timestamp */;
         let fixed_sizes = namespace_offset + size_of::<NamespaceId>() /* namespace */;
         let namespace_id =
-            NamespaceId::from_slice(&key[namespace_offset..fixed_sizes]).map_err(Error::generic)?;
-        let main_key = str::from_utf8(&key[fixed_sizes..]).map_err(Error::generic)?;
+            NamespaceId::from_slice(&key[namespace_offset..fixed_sizes]).or_internal_error()?;
+        let main_key = str::from_utf8(&key[fixed_sizes..]).or_internal_error()?;
         Ok((namespace_id, main_key))
     }
 }

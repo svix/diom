@@ -140,7 +140,7 @@ async fn cache_set(
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model());
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
 
@@ -157,7 +157,7 @@ async fn cache_get(
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
-        repl.wait_linearizable().await.map_err_generic()?;
+        repl.wait_linearizable().await.or_internal_error()?;
     }
 
     // FIXME: support more than just persistent, etc.
@@ -188,7 +188,7 @@ async fn cache_del(
         .ok_or_not_found()?;
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());
-    repl.client_write(operation).await.map_err_generic()?.0?;
+    repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
 }
 
@@ -209,7 +209,7 @@ async fn cache_create_namespace(
         data.storage_type,
         data.max_storage_bytes,
     );
-    let resp = repl.client_write(operation).await.map_err_generic()?.0?;
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
@@ -228,7 +228,7 @@ async fn cache_get_namespace(
     MsgPackOrJson(data): MsgPackOrJson<CacheGetNamespaceIn>,
 ) -> Result<MsgPackOrJson<CacheGetNamespaceOut>> {
     // Ensure we have the latest version of namespace
-    repl.wait_linearizable().await.map_err_generic()?;
+    repl.wait_linearizable().await.or_internal_error()?;
 
     let namespace: CacheNamespace = state
         .namespace_state
