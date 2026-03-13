@@ -19,29 +19,14 @@ impl RateLimitController {
         Self { db, tables }
     }
 
-    // Using the same identifier but changing the algorithm is considered a different resource.
-    pub fn limit(
+    fn calculate_capacity(
         &self,
-        now: Timestamp,
         namespace_id: NamespaceId,
         identifier: &str,
-        delta: u64,
-        config: TokenBucket,
-    ) -> Result<(bool, u64, Option<Duration>)> {
-        self.limit_inner(now, namespace_id, identifier, delta, config, true)
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn limit_inner(
-        &self,
+        config: &TokenBucket,
         now: Timestamp,
-        namespace_id: NamespaceId,
-        identifier: &str,
-        delta: u64,
-        config: TokenBucket,
-        update: bool,
-    ) -> Result<(bool, u64, Option<Duration>)> {
-        let mut bucket = TokenBucketRow::fetch(
+    ) -> Result<(u64, Timestamp)> {
+        let bucket = TokenBucketRow::fetch(
             &self.tables,
             TokenBucketRow::key_for(namespace_id, identifier),
         )?
@@ -49,29 +34,38 @@ impl RateLimitController {
             tokens: config.bucket_size,
             last_refill: now,
         });
+        Ok(config.get_new_capacity(bucket.tokens, now, bucket.last_refill))
+    }
 
+    // Using the same identifier but changing the algorithm is considered a different resource.
+    pub fn limit(
+        &self,
+        now: Timestamp,
+        namespace_id: NamespaceId,
+        identifier: &str,
+        wanted: u64,
+        config: TokenBucket,
+    ) -> Result<(bool, u64, Option<Duration>)> {
         let (capacity, new_last_refill) =
-            config.get_new_capacity(bucket.tokens, now, bucket.last_refill);
+            self.calculate_capacity(namespace_id, identifier, &config, now)?;
 
-        if capacity < delta {
-            let filled_per_millis = config.refill_rate * config.refill_interval.as_millis() as u64;
-            let retry_after = (filled_per_millis - capacity).div_ceil(delta);
-
-            return Ok((false, capacity, Some(Duration::from_millis(retry_after))));
+        if capacity < wanted {
+            let retry_after = config.calculate_retry_after(capacity, wanted);
+            return Ok((false, capacity, Some(retry_after)));
         }
 
-        bucket.last_refill = new_last_refill;
-        bucket.tokens = capacity - delta;
+        let remaining = capacity - wanted;
 
-        if update {
-            TokenBucketRow::insert(
-                &self.tables,
-                TokenBucketRow::key_for(namespace_id, identifier),
-                &bucket,
-            )?;
-        }
+        TokenBucketRow::insert(
+            &self.tables,
+            TokenBucketRow::key_for(namespace_id, identifier),
+            &TokenBucketRow {
+                tokens: remaining,
+                last_refill: new_last_refill,
+            },
+        )?;
 
-        Ok((true, bucket.tokens, None))
+        Ok((true, remaining, None))
     }
 
     pub fn get_remaining(
@@ -81,13 +75,14 @@ impl RateLimitController {
         identifier: &str,
         config: TokenBucket,
     ) -> Result<(u64, Option<Duration>)> {
-        let (result, remaining, retry_after) =
-            self.limit_inner(now, namespace_id, identifier, 1, config, false)?;
+        let (capacity, _) = self.calculate_capacity(namespace_id, identifier, &config, now)?;
 
-        // We 'simulated' consuming 1 token, so we add it back to get the actual remaining capacity
-        let actual_remaining = if result { remaining + 1 } else { remaining };
+        if capacity == 0 {
+            let retry_after = config.calculate_retry_after(capacity, 1);
+            return Ok((0, Some(retry_after)));
+        }
 
-        Ok((actual_remaining, retry_after))
+        Ok((capacity, None))
     }
 
     pub fn reset(&self, namespace_id: NamespaceId, identifier: &str) -> Result<()> {
@@ -103,8 +98,8 @@ impl RateLimitController {
 mod tests {
     use std::time::Duration;
 
-    use tempfile::tempdir;
     use jiff::Timestamp;
+    use tempfile::tempdir;
 
     use super::*;
     use diom_namespace::entities::NamespaceId;
