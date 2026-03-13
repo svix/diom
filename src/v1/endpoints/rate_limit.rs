@@ -138,12 +138,15 @@ async fn rate_limit_limit(
 #[aide_annotate(op_id = "v1.rate_limit.get_remaining")]
 async fn rate_limit_get_remaining(
     State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimitGetRemainingIn>,
 ) -> Result<MsgPackOrJson<RateLimitGetRemainingOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
+
+    repl.wait_linearizable().await.map_err_generic()?;
 
     let now = Timestamp::now();
     let (remaining, retry_after) = state.rate_limit.get_remaining(
