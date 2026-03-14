@@ -12,6 +12,11 @@ use serde::{Deserialize, Serialize};
 use tap::TapOptional;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetResponseData {
+    pub success: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
     storage_type: StorageType,
@@ -44,8 +49,8 @@ impl SetOperation {
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &State, now: Timestamp) -> Result<()> {
-        state.controller(self.storage_type).set(
+    fn apply_real(self, state: &State, now: Timestamp) -> Result<SetResponseData> {
+        let success = state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
             self.value,
@@ -53,7 +58,7 @@ impl SetOperation {
             self.behavior,
             now,
         )?;
-        Ok(())
+        Ok(SetResponseData { success })
     }
 }
 

@@ -113,7 +113,7 @@ impl KvController {
         expiry: Option<Timestamp>,
         behavior: OperationBehavior,
         now: Timestamp,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         match behavior {
             OperationBehavior::Upsert => {
                 self.insert_with_expiration(namespace_id, key, value, expiry)?;
@@ -124,7 +124,7 @@ impl KvController {
                 if !exists {
                     self.insert_with_expiration(namespace_id, key, value, expiry)?;
                 } else {
-                    // FIXME(@svix-lucho): Do nothing?
+                    return Ok(false);
                 }
             }
             OperationBehavior::Update => {
@@ -132,12 +132,12 @@ impl KvController {
                 if exists {
                     self.insert_with_expiration(namespace_id, key, value, expiry)?;
                 } else {
-                    // FIXME(@svix-lucho): Do nothing?
+                    return Ok(false);
                 }
             }
         }
 
-        Ok(())
+        Ok(true)
     }
 
     #[tracing::instrument(skip(self))]
@@ -304,6 +304,7 @@ mod tests {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
+        // Update on non-existent key returns false
         let res = controller.set(
             ns(),
             "key1",
@@ -312,7 +313,7 @@ mod tests {
             OperationBehavior::Update,
             Timestamp::now(),
         );
-        assert!(res.is_ok());
+        assert!(!res.unwrap());
         assert!(!key_exists(&controller, "key1"));
 
         let res = controller.set(
@@ -323,11 +324,12 @@ mod tests {
             OperationBehavior::Insert,
             Timestamp::now(),
         );
-        assert!(res.is_ok());
+        assert!(res.unwrap());
         assert!(key_exists(&controller, "key1"));
         let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
         assert!(result.is_some());
 
+        // Insert on existing key returns false
         let res = controller.set(
             ns(),
             "key1",
@@ -336,7 +338,7 @@ mod tests {
             OperationBehavior::Insert,
             Timestamp::now(),
         );
-        assert!(res.is_ok());
+        assert!(!res.unwrap());
         assert!(key_exists(&controller, "key1"));
         let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
         assert!(result.is_some());
@@ -351,7 +353,7 @@ mod tests {
             OperationBehavior::Upsert,
             Timestamp::now(),
         );
-        assert!(res.is_ok());
+        assert!(res.unwrap());
         assert!(key_exists(&controller, "key1"));
         let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
         assert!(result.is_some());
