@@ -185,8 +185,10 @@ async fn cache_del(
         .ok_or_not_found()?;
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());
-    repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(CacheDeleteOut { success: true }))
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
+    Ok(MsgPackOrJson(CacheDeleteOut {
+        success: resp.success,
+    }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]

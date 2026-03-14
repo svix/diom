@@ -150,9 +150,11 @@ async fn kv_del(
 
     let key = data.key;
     let operation = DeleteOperation::new(namespace, key);
-    repl.client_write(operation).await.or_internal_error()?.0?;
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
 
-    let ret = KvDeleteOut { success: true };
+    let ret = KvDeleteOut {
+        success: resp.success,
+    };
     Ok(MsgPackOrJson(ret))
 }
 
