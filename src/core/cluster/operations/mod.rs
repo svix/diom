@@ -1,5 +1,4 @@
 use crate::core::cluster::state_machine::Store;
-use serde::{Deserialize, Serialize};
 
 use coyote_operations::async_raft_module_operations;
 

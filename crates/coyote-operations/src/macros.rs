@@ -38,18 +38,36 @@ macro_rules! raft_module_operations {
             }
 
             $(
-                #[derive(Debug, Clone, Serialize, Deserialize)]
+                #[derive(
+                    Debug,
+                    Clone,
+                    $crate::__reexports::serde::Serialize,
+                    $crate::__reexports::serde::Deserialize,
+                )]
+                #[serde(crate = "coyote_operations::__reexports::serde")]
                 pub struct [<$variant Response>](pub $crate::Result<$response_data_type>);
             )*
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $module_op_name {
                 $(
                     $variant($operation),
                 )*
             }
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $response_name {
                 $(
                     $variant([<$variant Response>]),
@@ -145,18 +163,36 @@ macro_rules! async_raft_module_operations {
             }
 
             $(
-                #[derive(Debug, Clone, Serialize, Deserialize)]
+                #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
                 pub struct [<$variant Response>](pub $crate::Result<$response_data_type>);
             )*
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $module_op_name {
                 $(
                     $variant($operation),
                 )*
             }
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $response_name {
                 $(
                     $variant([<$variant Response>]),
