@@ -1,5 +1,6 @@
-use std::{num::NonZeroU16, time::Duration};
+use std::num::NonZeroU16;
 
+use coyote_core::types::DurationMs;
 use coyote_error::Error;
 use coyote_namespace::entities::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -22,7 +23,7 @@ pub struct StreamReceiveOperation {
     partition: Option<Partition>,
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
-    lease_duration_millis: u64,
+    lease_duration_millis: DurationMs,
 }
 
 impl StreamReceiveOperation {
@@ -31,7 +32,7 @@ impl StreamReceiveOperation {
         topic: TopicIn,
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
-        lease_duration_millis: u64,
+        lease_duration_millis: DurationMs,
     ) -> coyote_error::Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.raw, Some(tp.partition)),
@@ -53,10 +54,9 @@ impl StreamReceiveOperation {
         state: &State,
         now: Timestamp,
     ) -> coyote_operations::Result<StreamReceiveResponseData> {
-        let lease_duration = Duration::from_millis(self.lease_duration_millis);
         let mut remaining = self.batch_size.get();
         let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
-        let expiry = now + lease_duration;
+        let expiry = now + self.lease_duration_millis;
 
         let mut batch = state.db.batch();
 

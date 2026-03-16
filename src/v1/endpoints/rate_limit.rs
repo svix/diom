@@ -5,7 +5,7 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use coyote_core::types::EntityKey;
+use coyote_core::types::{DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_namespace::entities::StorageType;
@@ -28,7 +28,7 @@ impl From<RateLimitTokenBucketConfig> for TokenBucket {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
-            refill_interval: std::time::Duration::from_millis(val.refill_interval_millis),
+            refill_interval: val.refill_interval_millis,
         }
     }
 }
@@ -46,11 +46,11 @@ pub struct RateLimitTokenBucketConfig {
     /// Interval in milliseconds between refills (minimum 1 millisecond)
     #[validate(range(min = 1))]
     #[serde(default = "default_interval_millis")]
-    pub refill_interval_millis: u64,
+    pub refill_interval_millis: DurationMs,
 }
 
-fn default_interval_millis() -> u64 {
-    1000
+fn default_interval_millis() -> DurationMs {
+    1000.into()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]

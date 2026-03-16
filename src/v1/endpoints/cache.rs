@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::{num::NonZeroU64, time::Duration};
+use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
@@ -9,7 +9,7 @@ use coyote_cache::{
     CacheModel,
     operations::{CreateCacheOperation, DeleteOperation, SetOperation},
 };
-use coyote_core::types::{Consistency, EntityKey};
+use coyote_core::types::{Consistency, DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_kv::kvcontroller::KvModel;
@@ -35,12 +35,12 @@ pub struct CacheSetIn {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    pub ttl: u64,
+    pub ttl: DurationMs,
 }
 
 impl CacheSetIn {
     fn into_model(self) -> CacheModel {
-        let expiry = Timestamp::now() + Duration::from_millis(self.ttl);
+        let expiry = Timestamp::now() + self.ttl;
         debug_assert!(expiry > Timestamp::UNIX_EPOCH);
 
         CacheModel {

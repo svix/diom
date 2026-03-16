@@ -1187,6 +1187,7 @@ dependencies = [
 name = "coyote-msgs"
 version = "0.0.1"
 dependencies = [
+ "coyote-core",
  "coyote-error",
  "coyote-namespace",
  "coyote-operations",
@@ -1272,6 +1273,7 @@ dependencies = [
 name = "coyote-rate-limit"
 version = "0.0.1"
 dependencies = [
+ "coyote-core",
  "coyote-error",
  "coyote-namespace",
  "coyote-operations",
