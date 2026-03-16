@@ -14,6 +14,16 @@ pub struct IdempotencyArgs {
 #[derive(Subcommand)]
 pub enum IdempotencyCommands {
     Namespace(IdempotencyNamespaceArgs),
+    /// Start an idempotent request
+    Start {
+        key: String,
+        idempotency_start_in: crate::json::JsonOf<coyote_client::models::IdempotencyStartIn>,
+    },
+    /// Complete an idempotent request with a response
+    Complete {
+        key: String,
+        idempotency_complete_in: crate::json::JsonOf<coyote_client::models::IdempotencyCompleteIn>,
+    },
     /// Abandon an idempotent request (remove lock without saving response)
     Abort {
         key: String,
@@ -30,6 +40,26 @@ impl IdempotencyCommands {
         match self {
             Self::Namespace(args) => {
                 args.command.exec(client, color_mode).await?;
+            }
+            Self::Start {
+                key,
+                idempotency_start_in,
+            } => {
+                let resp = client
+                    .idempotency()
+                    .start(key, idempotency_start_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Complete {
+                key,
+                idempotency_complete_in,
+            } => {
+                let resp = client
+                    .idempotency()
+                    .complete(key, idempotency_complete_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::Abort {
                 key,

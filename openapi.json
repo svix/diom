@@ -1517,6 +1517,23 @@
       "IdempotencyCompleteOut": {
         "type": "object"
       },
+      "IdempotencyCompleted": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        },
+        "required": [
+          "response"
+        ]
+      },
       "IdempotencyCreateNamespaceIn": {
         "type": "object",
         "properties": {
@@ -1671,25 +1688,19 @@
             "description": "Request was already completed, cached response returned",
             "type": "object",
             "properties": {
-              "response": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "uint8",
-                  "minimum": 0,
-                  "maximum": 255
-                }
-              },
               "status": {
                 "type": "string",
                 "enum": [
                   "completed"
                 ]
+              },
+              "data": {
+                "$ref": "#/components/schemas/IdempotencyCompleted"
               }
             },
             "required": [
               "status",
-              "response"
+              "data"
             ]
           }
         ]
