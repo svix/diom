@@ -35,75 +35,61 @@ export class MsgsStream {
 * Each consumer in the group reads from all partitions. Messages are locked by leases for the
 * specified duration to prevent duplicate delivery within the same consumer group.
 */
-        public receive(
-            msgStreamReceiveIn: MsgStreamReceiveIn,
-            ): Promise<MsgStreamReceiveOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/receive");
+    public receive(
+        msgStreamReceiveIn: MsgStreamReceiveIn,
+        ): Promise<MsgStreamReceiveOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/receive");
 
-            request.setBody(
-                    MsgStreamReceiveInSerializer._toJsonObject(
-                        msgStreamReceiveIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgStreamReceiveOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /**
+        request.setBody(
+            MsgStreamReceiveInSerializer._toJsonObject(
+                msgStreamReceiveIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgStreamReceiveOutSerializer._fromJsonObject,
+        );
+    }/**
 * Commits an offset for a consumer group on a specific partition.
 * 
 * The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
 * successfully processed offset; future receives will start after it.
 */
-        public commit(
-            msgStreamCommitIn: MsgStreamCommitIn,
-            ): Promise<MsgStreamCommitOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/commit");
+    public commit(
+        msgStreamCommitIn: MsgStreamCommitIn,
+        ): Promise<MsgStreamCommitOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/commit");
 
-            request.setBody(
-                    MsgStreamCommitInSerializer._toJsonObject(
-                        msgStreamCommitIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgStreamCommitOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /**
+        request.setBody(
+            MsgStreamCommitInSerializer._toJsonObject(
+                msgStreamCommitIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgStreamCommitOutSerializer._fromJsonObject,
+        );
+    }/**
 * Repositions a consumer group's read cursor on a topic.
 * 
 * Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
 * partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
 * `"latest"` and may be used with or without a partition suffix.
 */
-        public seek(
-            msgStreamSeekIn: MsgStreamSeekIn,
-            ): Promise<MsgStreamSeekOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/seek");
+    public seek(
+        msgStreamSeekIn: MsgStreamSeekIn,
+        ): Promise<MsgStreamSeekOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/seek");
 
-            request.setBody(
-                    MsgStreamSeekInSerializer._toJsonObject(
-                        msgStreamSeekIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgStreamSeekOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            MsgStreamSeekInSerializer._toJsonObject(
+                msgStreamSeekIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgStreamSeekOutSerializer._fromJsonObject,
+        );
     }
+}
 

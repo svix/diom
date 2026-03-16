@@ -22,44 +22,35 @@ export class KvNamespace {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}
 
     /** Create KV namespace */
-        public create(
-            kvCreateNamespaceIn: KvCreateNamespaceIn,
-            ): Promise<KvCreateNamespaceOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/create");
+    public create(
+        kvCreateNamespaceIn: KvCreateNamespaceIn,
+        ): Promise<KvCreateNamespaceOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/create");
 
-            request.setBody(
-                    KvCreateNamespaceInSerializer._toJsonObject(
-                        kvCreateNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    KvCreateNamespaceOutSerializer._fromJsonObject,
-                );
-            }
+        request.setBody(
+            KvCreateNamespaceInSerializer._toJsonObject(
+                kvCreateNamespaceIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            KvCreateNamespaceOutSerializer._fromJsonObject,
+        );
+    }/** Get KV namespace */
+    public get(
+        kvGetNamespaceIn: KvGetNamespaceIn,
+        ): Promise<KvGetNamespaceOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/get");
 
-        
-
-    /** Get KV namespace */
-        public get(
-            kvGetNamespaceIn: KvGetNamespaceIn,
-            ): Promise<KvGetNamespaceOut> {
-            const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/get");
-
-            request.setBody(
-                    KvGetNamespaceInSerializer._toJsonObject(
-                        kvGetNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    KvGetNamespaceOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            KvGetNamespaceInSerializer._toJsonObject(
+                kvGetNamespaceIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            KvGetNamespaceOutSerializer._fromJsonObject,
+        );
     }
+}
 
