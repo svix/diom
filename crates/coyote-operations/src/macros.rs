@@ -1,13 +1,13 @@
 #[macro_export]
 macro_rules! raft_module_operations {
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty $(,)?
     ) => {
         $crate::raft_module_operations!(
             $trait_name,
@@ -20,14 +20,14 @@ macro_rules! raft_module_operations {
     };
 
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty,
-      response = $response_name:ident $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty,
+        response = $response_name:ident $(,)?
     ) => {
         $crate::__reexports::paste::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
@@ -38,18 +38,36 @@ macro_rules! raft_module_operations {
             }
 
             $(
-                #[derive(Debug, Clone, Serialize, Deserialize)]
+                #[derive(
+                    Debug,
+                    Clone,
+                    $crate::__reexports::serde::Serialize,
+                    $crate::__reexports::serde::Deserialize,
+                )]
+                #[serde(crate = "coyote_operations::__reexports::serde")]
                 pub struct [<$variant Response>](pub $crate::Result<$response_data_type>);
             )*
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $module_op_name {
                 $(
                     $variant($operation),
                 )*
             }
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $response_name {
                 $(
                     $variant([<$variant Response>]),
@@ -108,13 +126,13 @@ macro_rules! raft_module_operations {
 #[macro_export]
 macro_rules! async_raft_module_operations {
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty $(,)?
     ) => {
         $crate::async_raft_module_operations!(
             $trait_name,
@@ -127,14 +145,14 @@ macro_rules! async_raft_module_operations {
     };
 
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty,
-      response = $response_name:ident $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty,
+        response = $response_name:ident $(,)?
     ) => {
         $crate::__reexports::paste::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
@@ -145,18 +163,36 @@ macro_rules! async_raft_module_operations {
             }
 
             $(
-                #[derive(Debug, Clone, Serialize, Deserialize)]
+                #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
                 pub struct [<$variant Response>](pub $crate::Result<$response_data_type>);
             )*
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $module_op_name {
                 $(
                     $variant($operation),
                 )*
             }
 
-            #[derive(Debug, Clone, Serialize, Deserialize)]
+            #[derive(
+                Debug,
+                Clone,
+                $crate::__reexports::serde::Serialize,
+                $crate::__reexports::serde::Deserialize,
+            )]
+            #[serde(crate = "coyote_operations::__reexports::serde")]
             pub enum $response_name {
                 $(
                     $variant([<$variant Response>]),
