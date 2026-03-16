@@ -1,13 +1,13 @@
 #[macro_export]
 macro_rules! raft_module_operations {
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty $(,)?
     ) => {
         $crate::raft_module_operations!(
             $trait_name,
@@ -20,14 +20,14 @@ macro_rules! raft_module_operations {
     };
 
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty,
-      response = $response_name:ident $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty,
+        response = $response_name:ident $(,)?
     ) => {
         $crate::__reexports::paste::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
@@ -126,13 +126,13 @@ macro_rules! raft_module_operations {
 #[macro_export]
 macro_rules! async_raft_module_operations {
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty $(,)?
     ) => {
         $crate::async_raft_module_operations!(
             $trait_name,
@@ -145,14 +145,14 @@ macro_rules! async_raft_module_operations {
     };
 
     (
-      $trait_name:ident,
-      $module_op_name:ident {
-        $(
-          $variant:ident($operation:ident) -> $response_data_type:tt
-        ),* $(,)?
-      },
-      state = $state_type:ty,
-      response = $response_name:ident $(,)?
+        $trait_name:ident,
+        $module_op_name:ident {
+            $(
+                $variant:ident($operation:ident) -> $response_data_type:tt
+            ),* $(,)?
+        },
+        state = $state_type:ty,
+        response = $response_name:ident $(,)?
     ) => {
         $crate::__reexports::paste::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
