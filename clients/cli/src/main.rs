@@ -15,6 +15,7 @@ use self::{
     cmds::{
         api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
         benchmark::BenchmarkArgs,
+        cluster::ClusterAdminArgs,
     },
     config::Config,
 };
@@ -88,9 +89,11 @@ enum RootCommands {
     Msgs(MsgsArgs),
     RateLimit(RateLimitArgs),
     Health(HealthArgs),
+    /// Manipulate a Coyote cluster
+    ClusterAdmin(ClusterAdminArgs),
     /// Benchmark module throughput
     Benchmark(BenchmarkArgs),
-    /// Get the version of the Svix CLI
+    /// Get the version of the Coyote CLI
     Version,
     /// Generate the autocompletion script for the specified shell
     Completion {
@@ -157,6 +160,10 @@ async fn main() -> Result<()> {
             }
             let client = Arc::new(CoyoteClient::new(cfg.auth_token(), Some(opts)));
             args.exec(client).await?;
+        }
+        RootCommands::ClusterAdmin(args) => {
+            let client = get_client(&cfg?)?;
+            args.command.exec(&client, color_mode).await?;
         }
     }
 
