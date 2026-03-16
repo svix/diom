@@ -90,6 +90,7 @@ impl<T, M: ModuleRequest> OperationWriter<M> for T where
 #[doc(hidden)]
 pub mod __reexports {
     pub use paste;
+    pub use serde;
 }
 
 #[macro_use]

@@ -1,7 +1,5 @@
 use crate::State;
 
-use serde::{Deserialize, Serialize};
-
 mod create_namespace;
 mod limit;
 mod reset;
