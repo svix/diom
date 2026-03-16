@@ -238,15 +238,13 @@ impl RaftState {
     #[tracing::instrument(skip_all)]
     pub async fn client_write<O>(&self, op: O) -> anyhow::Result<O::Response>
     where
-        O: OperationRequest + Into<O::RequestParent>,
-        O::RequestParent: Into<Request>,
-        <<O as OperationRequest>::Response as OperationResponse>::ResponseParent: TryFrom<Response>,
-        <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryFrom<
-            Response,
-        >>::Error: fmt::Debug,
-        <<<O as OperationRequest>::Response as OperationResponse>::ResponseParent as TryInto<
-            <O as OperationRequest>::Response,
-        >>::Error: fmt::Debug,
+        O: OperationRequest<
+                RequestParent: Into<Request>,
+                Response: OperationResponse<
+                    ResponseParent: TryFrom<Response, Error: fmt::Debug>
+                                        + TryInto<O::Response, Error: fmt::Debug>,
+                >,
+            > + Into<O::RequestParent>,
     {
         let inner: Request = op.into().into();
         let now = self.state_machine.now();
@@ -286,15 +284,12 @@ impl RaftState {
                 }
             }
         };
-        let module_response =
-            <<O as OperationRequest>::Response as OperationResponse>::ResponseParent::try_from(
-                response,
-            )
-            .map_err(|e| {
-                anyhow::anyhow!(
-                    "raft response should be convertible into module response type: {e:?}"
-                )
-            })?;
+        let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
+            response,
+        )
+        .map_err(|e| {
+            anyhow::anyhow!("raft response should be convertible into module response type: {e:?}")
+        })?;
         let resp = module_response.try_into().map_err(|e| {
             anyhow::anyhow!("module response should be convertible into target type: {e:?}")
         })?;
