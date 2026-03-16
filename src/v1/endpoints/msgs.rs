@@ -3,6 +3,7 @@ use std::num::NonZeroU16;
 use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use diom_core::types::DurationMs;
 use diom_derive::aide_annotate;
 use diom_error::{Error, OptionExt, Result, ResultExt};
 use diom_msgs::{
@@ -164,8 +165,8 @@ fn default_batch_size() -> NonZeroU16 {
     NonZeroU16::new(10).unwrap()
 }
 
-fn default_lease_duration_millis() -> u64 {
-    300_000 // 5 minutes
+fn default_lease_duration_millis() -> DurationMs {
+    DurationMs::from_mins(5)
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
@@ -176,7 +177,7 @@ struct MsgStreamReceiveIn {
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
     #[serde(default = "default_lease_duration_millis")]
-    pub lease_duration_millis: u64,
+    pub lease_duration_millis: DurationMs,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -313,8 +314,8 @@ async fn stream_seek(
 // queue/receive
 // ---------------------------------------------------------------------------
 
-fn default_queue_lease_duration_millis() -> u64 {
-    30_000 // 30 seconds
+fn default_queue_lease_duration_millis() -> DurationMs {
+    DurationMs::from_secs(30)
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
@@ -325,7 +326,7 @@ struct MsgQueueReceiveIn {
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
     #[serde(default = "default_queue_lease_duration_millis")]
-    pub lease_duration_millis: u64,
+    pub lease_duration_millis: DurationMs,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
