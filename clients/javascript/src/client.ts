@@ -1,6 +1,7 @@
 // this file is @generated
 import type { DiomOptions } from "./options";
 import { makeRequestContext, type DiomRequestContext } from "./request";
+import { Admin } from "./apis/admin";
 import { Cache } from "./apis/cache";
 import { Health } from "./apis/health";
 import { Idempotency } from "./apis/idempotency";
@@ -9,6 +10,7 @@ import { Msgs } from "./apis/msgs";
 import { RateLimit } from "./apis/rateLimit";
 
 export {
+  Admin,
   Cache,
   Health,
   Idempotency,
@@ -22,6 +24,10 @@ export class Diom {
 
   public constructor(token: string, options: DiomOptions = {}) {
     this.requestCtx = makeRequestContext(token, options);
+  }
+
+  public get admin(){
+    return new Admin(this.requestCtx);
   }
 
   public get cache(){

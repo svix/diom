@@ -1,4 +1,5 @@
 use anyhow::Context;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use tap::Pipe;
@@ -7,7 +8,7 @@ use uuid::Uuid;
 
 use crate::cfg::PeerAddr;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
 pub enum Node {
     #[default]
     NoAddress,
@@ -76,6 +77,20 @@ impl Node {
 pub struct NodeId {
     #[serde(with = "uuid::serde::simple")]
     inner: Uuid,
+}
+
+impl JsonSchema for NodeId {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        String::schema_name()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        String::json_schema(generator)
+    }
 }
 
 impl std::fmt::Display for NodeId {

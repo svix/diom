@@ -24,4 +24,6 @@ pub use self::{
 };
 
 pub type NodeId = <TypeConfig as RaftTypeConfig>::NodeId;
-type Node = <TypeConfig as RaftTypeConfig>::Node;
+pub type Node = <TypeConfig as RaftTypeConfig>::Node;
+
+pub use state_machine::ClusterId;
