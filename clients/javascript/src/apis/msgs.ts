@@ -34,24 +34,20 @@ export class Msgs {
     }
 
     /** Publishes messages to a topic within a namespace. */
-        public publish(
-            msgPublishIn: MsgPublishIn,
-            ): Promise<MsgPublishOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/publish");
+    public publish(
+        msgPublishIn: MsgPublishIn,
+        ): Promise<MsgPublishOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/publish");
 
-            request.setBody(
-                    MsgPublishInSerializer._toJsonObject(
-                        msgPublishIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgPublishOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            MsgPublishInSerializer._toJsonObject(
+                msgPublishIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgPublishOutSerializer._fromJsonObject,
+        );
     }
+}
 

@@ -23,55 +23,45 @@ export class {{ resource_type_name }} {
 
     {% endfor -%}
 
-    {% for op in resource.operations -%}
-        {% set response_type =
-            op.response_body_schema_name | default("void") | replace("_", "") -%}
-        {{ op.description | with_javadoc_deprecation(op.deprecated) | to_doc_comment(style="js") }}
-        public {{ op.name | to_lower_camel_case }}(
-            {# path parameters -#}
-            {% for p in op.path_params -%}
-                {{ p | to_lower_camel_case }}: string,
-            {% endfor -%}
+    {%- for op in resource.operations %}
+    {%- set response_type =
+        op.response_body_schema_name | default("void") | replace("_", "") %}
+    {{- op.description | with_javadoc_deprecation(op.deprecated) | to_doc_comment(style="js") }}
+    public {{ op.name | to_lower_camel_case }}(
+        {# body parameter interface -#}
+        {% if op.request_body_schema_name is defined -%}
+            {% set field_name = op.request_body_schema_name | to_lower_camel_case -%}
+            {{ field_name }}: {{ op.request_body_schema_name }},
+        {% endif -%}
 
-            {# body parameter interface -#}
-            {% if op.request_body_schema_name is defined -%}
-                {% set field_name = op.request_body_schema_name | to_lower_camel_case -%}
-                {{ field_name }}: {{ op.request_body_schema_name }},
-            {% endif -%}
+    ): Promise<{{ response_type }}> {
+        const request = new DiomRequest(HttpMethod.{{ op.method | upper }}, "{{ op.path }}");
 
-        ): Promise<{{ response_type }}> {
-            const request = new DiomRequest(HttpMethod.{{ op.method | upper }}, "{{ op.path }}");
+        {# body parameter -#}
+        {% if op.request_body_schema_name is defined -%}
+        request.setBody(
+            {{ op.request_body_schema_name | to_upper_camel_case }}Serializer._toJsonObject(
+                {{ op.request_body_schema_name | to_lower_camel_case }},
+            )
+        );
+        {%- endif %}
 
-            {# path parameters -#}
-            {% for p in op.path_params -%}
-                request.setPathParam("{{ p }}", {{ p | to_lower_camel_case }});
-            {% endfor -%}
+        {%- if op.response_body_schema_name is defined %}
+        return request.send(
+            this.requestCtx,
+            {{ op.response_body_schema_name | to_upper_camel_case }}Serializer._fromJsonObject,
+        );
+        {%- else %}
+        return request.sendNoResponseBody(this.requestCtx);
+        {%- endif %}
+    }
 
-            {# body parameter -#}
-            {% if op.request_body_schema_name is defined -%}
-                request.setBody(
-                    {{ op.request_body_schema_name | to_upper_camel_case }}Serializer._toJsonObject(
-                        {{ op.request_body_schema_name | to_lower_camel_case }},
-                    )
-                );
-            {% endif -%}
+    {%- set extra_path -%}
+        api_extra/{{ resource.name | to_snake_case }}_{{ op.name | to_snake_case }}.ts
+    {%- endset -%}
+    {%- include extra_path ignore missing %}
 
-            {% if op.response_body_schema_name is defined %}
-                return request.send(
-                    this.requestCtx,
-                    {{ op.response_body_schema_name | to_upper_camel_case }}Serializer._fromJsonObject,
-                );
-            {% else %}
-                return request.sendNoResponseBody(this.requestCtx);
-            {% endif -%}
-        }
-
-        {% set extra_path -%}
-            api_extra/{{ resource.name | to_snake_case }}_{{ op.name | to_snake_case }}.ts
-        {%- endset -%}
-        {% include extra_path ignore missing %}
-
-    {% endfor -%}
+    {%- endfor %}
 }
 
 {% set extra_path -%}

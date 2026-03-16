@@ -22,44 +22,35 @@ export class IdempotencyNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
     /** Create idempotency namespace */
-        public create(
-            idempotencyCreateNamespaceIn: IdempotencyCreateNamespaceIn,
-            ): Promise<IdempotencyCreateNamespaceOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/idempotency/namespace/create");
+    public create(
+        idempotencyCreateNamespaceIn: IdempotencyCreateNamespaceIn,
+        ): Promise<IdempotencyCreateNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/idempotency/namespace/create");
 
-            request.setBody(
-                    IdempotencyCreateNamespaceInSerializer._toJsonObject(
-                        idempotencyCreateNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    IdempotencyCreateNamespaceOutSerializer._fromJsonObject,
-                );
-            }
+        request.setBody(
+            IdempotencyCreateNamespaceInSerializer._toJsonObject(
+                idempotencyCreateNamespaceIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            IdempotencyCreateNamespaceOutSerializer._fromJsonObject,
+        );
+    }/** Get idempotency namespace */
+    public get(
+        idempotencyGetNamespaceIn: IdempotencyGetNamespaceIn,
+        ): Promise<IdempotencyGetNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/idempotency/namespace/get");
 
-        
-
-    /** Get idempotency namespace */
-        public get(
-            idempotencyGetNamespaceIn: IdempotencyGetNamespaceIn,
-            ): Promise<IdempotencyGetNamespaceOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/idempotency/namespace/get");
-
-            request.setBody(
-                    IdempotencyGetNamespaceInSerializer._toJsonObject(
-                        idempotencyGetNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    IdempotencyGetNamespaceOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            IdempotencyGetNamespaceInSerializer._toJsonObject(
+                idempotencyGetNamespaceIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            IdempotencyGetNamespaceOutSerializer._fromJsonObject,
+        );
     }
+}
 

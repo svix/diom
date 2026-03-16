@@ -52,118 +52,94 @@ export class MsgsQueue {
 * different messages from the same topic concurrently. Leased messages are skipped until they
 * are acked or their lease expires.
 */
-        public receive(
-            msgQueueReceiveIn: MsgQueueReceiveIn,
-            ): Promise<MsgQueueReceiveOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/receive");
+    public receive(
+        msgQueueReceiveIn: MsgQueueReceiveIn,
+        ): Promise<MsgQueueReceiveOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/receive");
 
-            request.setBody(
-                    MsgQueueReceiveInSerializer._toJsonObject(
-                        msgQueueReceiveIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgQueueReceiveOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /**
+        request.setBody(
+            MsgQueueReceiveInSerializer._toJsonObject(
+                msgQueueReceiveIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgQueueReceiveOutSerializer._fromJsonObject,
+        );
+    }/**
 * Acknowledges messages by their opaque msg_ids.
 * 
 * Acked messages are permanently removed from the queue and will never be re-delivered.
 */
-        public ack(
-            msgQueueAckIn: MsgQueueAckIn,
-            ): Promise<MsgQueueAckOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/ack");
+    public ack(
+        msgQueueAckIn: MsgQueueAckIn,
+        ): Promise<MsgQueueAckOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/ack");
 
-            request.setBody(
-                    MsgQueueAckInSerializer._toJsonObject(
-                        msgQueueAckIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgQueueAckOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /**
+        request.setBody(
+            MsgQueueAckInSerializer._toJsonObject(
+                msgQueueAckIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgQueueAckOutSerializer._fromJsonObject,
+        );
+    }/**
 * Configures retry and DLQ behavior for a consumer group on a topic.
 * 
 * `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
 * the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
 */
-        public configure(
-            msgQueueConfigureIn: MsgQueueConfigureIn,
-            ): Promise<MsgQueueConfigureOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/configure");
+    public configure(
+        msgQueueConfigureIn: MsgQueueConfigureIn,
+        ): Promise<MsgQueueConfigureOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/configure");
 
-            request.setBody(
-                    MsgQueueConfigureInSerializer._toJsonObject(
-                        msgQueueConfigureIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgQueueConfigureOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
-    /**
+        request.setBody(
+            MsgQueueConfigureInSerializer._toJsonObject(
+                msgQueueConfigureIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgQueueConfigureOutSerializer._fromJsonObject,
+        );
+    }/**
 * Rejects messages, sending them to the dead-letter queue.
 * 
 * Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
 * move them back to the queue for reprocessing.
 */
-        public nack(
-            msgQueueNackIn: MsgQueueNackIn,
-            ): Promise<MsgQueueNackOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/nack");
+    public nack(
+        msgQueueNackIn: MsgQueueNackIn,
+        ): Promise<MsgQueueNackOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/nack");
 
-            request.setBody(
-                    MsgQueueNackInSerializer._toJsonObject(
-                        msgQueueNackIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgQueueNackOutSerializer._fromJsonObject,
-                );
-            }
+        request.setBody(
+            MsgQueueNackInSerializer._toJsonObject(
+                msgQueueNackIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgQueueNackOutSerializer._fromJsonObject,
+        );
+    }/** Moves all dead-letter queue messages back to the main queue for reprocessing. */
+    public redriveDlq(
+        msgQueueRedriveDlqIn: MsgQueueRedriveDlqIn,
+        ): Promise<MsgQueueRedriveDlqOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/redrive-dlq");
 
-        
-
-    /** Moves all dead-letter queue messages back to the main queue for reprocessing. */
-        public redriveDlq(
-            msgQueueRedriveDlqIn: MsgQueueRedriveDlqIn,
-            ): Promise<MsgQueueRedriveDlqOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/redrive-dlq");
-
-            request.setBody(
-                    MsgQueueRedriveDlqInSerializer._toJsonObject(
-                        msgQueueRedriveDlqIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    MsgQueueRedriveDlqOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            MsgQueueRedriveDlqInSerializer._toJsonObject(
+                msgQueueRedriveDlqIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            MsgQueueRedriveDlqOutSerializer._fromJsonObject,
+        );
     }
+}
 

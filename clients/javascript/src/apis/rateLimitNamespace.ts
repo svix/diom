@@ -22,44 +22,35 @@ export class RateLimitNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
     /** Create rate limiter namespace */
-        public create(
-            rateLimitCreateNamespaceIn: RateLimitCreateNamespaceIn,
-            ): Promise<RateLimitCreateNamespaceOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/namespace/create");
+    public create(
+        rateLimitCreateNamespaceIn: RateLimitCreateNamespaceIn,
+        ): Promise<RateLimitCreateNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/namespace/create");
 
-            request.setBody(
-                    RateLimitCreateNamespaceInSerializer._toJsonObject(
-                        rateLimitCreateNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    RateLimitCreateNamespaceOutSerializer._fromJsonObject,
-                );
-            }
+        request.setBody(
+            RateLimitCreateNamespaceInSerializer._toJsonObject(
+                rateLimitCreateNamespaceIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            RateLimitCreateNamespaceOutSerializer._fromJsonObject,
+        );
+    }/** Get rate limiter namespace */
+    public get(
+        rateLimitGetNamespaceIn: RateLimitGetNamespaceIn,
+        ): Promise<RateLimitGetNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/namespace/get");
 
-        
-
-    /** Get rate limiter namespace */
-        public get(
-            rateLimitGetNamespaceIn: RateLimitGetNamespaceIn,
-            ): Promise<RateLimitGetNamespaceOut> {
-            const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/namespace/get");
-
-            request.setBody(
-                    RateLimitGetNamespaceInSerializer._toJsonObject(
-                        rateLimitGetNamespaceIn,
-                    )
-                );
-            
-                return request.send(
-                    this.requestCtx,
-                    RateLimitGetNamespaceOutSerializer._fromJsonObject,
-                );
-            }
-
-        
-
+        request.setBody(
+            RateLimitGetNamespaceInSerializer._toJsonObject(
+                rateLimitGetNamespaceIn,
+            )
+        );
+        return request.send(
+            this.requestCtx,
+            RateLimitGetNamespaceOutSerializer._fromJsonObject,
+        );
     }
+}
 
