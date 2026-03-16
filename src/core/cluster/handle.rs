@@ -7,6 +7,7 @@ use super::{
     raft::Raft,
 };
 use anyhow::Context;
+use coyote_core::Monotime;
 use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
@@ -231,6 +232,7 @@ pub struct RaftState {
     pub state_machine: StoreHandle,
     pub(super) network: NetworkFactory,
     pub background_channel: Sender<BackgroundCommand>,
+    pub time: Monotime,
 }
 
 impl RaftState {
@@ -247,7 +249,7 @@ impl RaftState {
             > + Into<O::RequestParent>,
     {
         let inner: Request = op.into().into();
-        let now = self.state_machine.now();
+        let now = self.time.now();
         let request =
             RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
         let response = match self.raft.client_write(request.clone()).await {
@@ -358,6 +360,13 @@ impl RaftState {
         }
     }
 
+    pub async fn state(&self) -> anyhow::Result<openraft::ServerState> {
+        self.raft
+            .with_raft_state(|s| s.server_state)
+            .await
+            .context("error reading server state")
+    }
+
     pub(crate) async fn trigger_snapshot(&self) -> anyhow::Result<()> {
         self.background_channel
             .send(BackgroundCommand::Snapshot)
@@ -404,6 +413,19 @@ impl RaftState {
             )
             .await?;
         Ok(())
+    }
+
+    pub(crate) async fn get_peer_last_committed_log(
+        &self,
+        node_id: NodeId,
+        address: &super::Node,
+    ) -> anyhow::Result<Option<openraft::LogId<NodeId>>> {
+        let mut network_handle = self.network.clone();
+        let client = network_handle.new_client(node_id, address).await;
+        client
+            .get_last_committed_log_id()
+            .await
+            .context("attempting to read last committed id from peer")
     }
 }
 

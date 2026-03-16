@@ -10,6 +10,33 @@
     }
   },
   "paths": {
+    "/api/v1/admin/cluster-status": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cluster Status",
+        "description": "Get information about the current cluster",
+        "operationId": "v1.admin.cluster-status",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterStatusOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/health/ping": {
       "get": {
         "tags": [
@@ -1464,6 +1491,47 @@
       "CacheSetOut": {
         "type": "object"
       },
+      "ClusterStatusOut": {
+        "type": "object",
+        "properties": {
+          "cluster_id": {
+            "description": "The unique ID of this cluster.pub(crate)\n\nThis value is populated on cluster initialization and will never change.",
+            "type": "string",
+            "nullable": true
+          },
+          "cluster_name": {
+            "description": "The name of this cluster (as defined in the config)\n\nThis value is not replicated and should only be used for debugging.",
+            "type": "string",
+            "nullable": true
+          },
+          "this_node_id": {
+            "description": "The unique ID of the node servicing this request",
+            "type": "string"
+          },
+          "this_node_state": {
+            "description": "The cluster state of the node servicing this request",
+            "$ref": "#/components/schemas/ServerState"
+          },
+          "this_node_last_committed_timestamp": {
+            "description": "The timestamp of the last transaction committed on this node",
+            "type": "string",
+            "format": "date-time"
+          },
+          "nodes": {
+            "description": "A list of all nodes known to be in the cluster",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodeStatusOut"
+            }
+          }
+        },
+        "required": [
+          "this_node_id",
+          "this_node_state",
+          "this_node_last_committed_timestamp",
+          "nodes"
+        ]
+      },
       "Consistency": {
         "description": "Consistency level for reads.\n\nStrong consistency (also known as linearizability) guarantees that a read will see all previous\nwrites. Weak consistency allows stale reads, but can save one or more round trip to the leader.",
         "type": "string",
@@ -2465,6 +2533,91 @@
           "partitions"
         ]
       },
+      "Node": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "NoAddress"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "SingleHomed": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "SingleHomed"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "HostnameAndPort": {
+                "type": "object",
+                "properties": {
+                  "hostname": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0,
+                    "maximum": 65535
+                  }
+                },
+                "required": [
+                  "hostname",
+                  "port"
+                ]
+              }
+            },
+            "required": [
+              "HostnameAndPort"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "NodeStatusOut": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "description": "A unique ID representing this node.\n\nThis will never change unless the node is erased and reset",
+            "type": "string"
+          },
+          "address": {
+            "description": "The advertised inter-server (cluster) address of this node.",
+            "$ref": "#/components/schemas/Node"
+          },
+          "state": {
+            "description": "The last known state of this node",
+            "$ref": "#/components/schemas/ServerState"
+          },
+          "last_committed_log_index": {
+            "description": "The index of the last log applied on this node",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "last_committed_term": {
+            "description": "The raft term of the last committed leadership",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "node_id",
+          "address",
+          "state"
+        ]
+      },
       "OperationBehavior": {
         "type": "string",
         "enum": [
@@ -2769,6 +2922,17 @@
             "default": 1000000000000
           }
         }
+      },
+      "ServerState": {
+        "type": "string",
+        "enum": [
+          "Leader",
+          "Follower",
+          "Learner",
+          "Candidate",
+          "Shutdown",
+          "Unknown"
+        ]
       },
       "StorageType": {
         "type": "string",

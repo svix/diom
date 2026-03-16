@@ -6,6 +6,12 @@ import (
 	coyote_apis "github.com/svix/coyote/clients/go/internal/apis"
 )
 
+type Admin = coyote_apis.Admin
+
+func (coyote Coyote) Admin() Admin {
+	return coyote_apis.NewAdmin(&coyote.inner)
+}
+
 type Cache = coyote_apis.Cache
 
 func (coyote Coyote) Cache() Cache {
