@@ -14,32 +14,6 @@ use validator::{Validate, ValidationErrors};
 
 const ALL_ERROR: &str = "__all__";
 
-#[allow(unused_macros)]
-macro_rules! enum_wrapper {
-    ($name_id:ty) => {
-        impl Serialize for $name_id {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: serde::Serializer,
-            {
-                serializer.serialize_i16((*self).into())
-            }
-        }
-
-        impl<'de> Deserialize<'de> for $name_id {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                use serde::de::Error;
-                i16::deserialize(deserializer)?.try_into().map_err(|_| {
-                    Error::custom(format!("Failed deserializing {}", stringify!($name_id)))
-                })
-            }
-        }
-    };
-}
-
 fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {
     const MAX_LENGTH: usize = 256;
     static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-_.:]+$").unwrap());
@@ -199,80 +173,6 @@ macro_rules! common_jsonschema_impl {
             }
         }
     };
-}
-
-/// A macro to which you pass the list of variants of an enum using `repr(N)`
-/// and it returns a `Vec<(N, String)>`, where each element is `(value, "VariantStringified")`
-#[allow(unused_macros)]
-macro_rules! repr_enum {
-    ($($variant:ident),+) => {
-        vec![
-            $(($variant.into(), stringify!($variant).to_string())),+
-        ]
-    }
-}
-
-/// Generates a `JsonSchema` implementation for an enum using `repr(N)`. The
-/// enum must also derive `IntoPrimitive`.
-///
-/// Arguments are:
-/// 1. Name of the enum type, `Foo`
-/// 2. The repr type used, e.g. in case of `repr(i16)` it must be `i16`
-/// 3. The string description to be used in the docs.
-///
-/// Remaining arguments must be the variants in order. For example:
-///
-/// ```ignore
-/// #[derive(IntoPrimitive)]
-/// #[repr(u8)]
-/// enum MyEnum {
-///     Foo = 0,
-///     Bar = 1,
-///     Qux = 5,
-/// }
-///
-/// jsonschema_for_repr_enum! {
-///     MyEnum,
-///     u8,
-///     "My nice little enum",
-///     Foo, Bar, Qux
-/// }
-/// ```
-#[allow(unused_macros)]
-macro_rules! jsonschema_for_repr_enum {
-    ($tyname:ty, $repr_ty:ty, $descr:expr, $($variant:ident),+) => {
-        impl JsonSchema for $tyname {
-            fn schema_name() -> Cow<'static, str> {
-                stringify!($tyname).to_string()
-            }
-
-            fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-                use schemars::schema::{InstanceType, Metadata, Schema, SchemaObject, SingleOrVec};
-                use $tyname::*;
-
-                // A list of variant values and their corresponding name.
-                let variants: Vec<($repr_ty, String)> = repr_enum!($($variant),+);
-                // The list of possible enum primitive values.
-                let values = variants.iter().map(|(value, _)| serde_json::json!(value)).collect();
-                // The list of nice variant names the above values correspond to.
-                let variant_names = variants.iter().map(|(_, name)| serde_json::Value::String(name.clone())).collect();
-
-                Schema::Object(SchemaObject{
-                    metadata: Some(Box::new(Metadata {
-                        title: Some(Self::schema_name()),
-                        description: Some($descr.to_string()),
-                        ..Default::default()
-                    })),
-                    instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Integer))),
-                    enum_values: Some(values),
-                    extensions: FromIterator::from_iter([
-                        ("x-enum-varnames".to_string(), serde_json::Value::Array(variant_names)),
-                    ]),
-                    ..Default::default()
-                })
-            }
-        }
-    }
 }
 
 string_wrapper!(
