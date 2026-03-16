@@ -13,8 +13,9 @@ use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
 
 mod duration_ms;
+mod duration_s;
 
-pub use self::duration_ms::DurationMs;
+pub use self::{duration_ms::DurationMs, duration_s::DurationS};
 
 const ALL_ERROR: &str = "__all__";
 

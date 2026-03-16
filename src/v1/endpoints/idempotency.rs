@@ -5,7 +5,7 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use diom_core::types::EntityKey;
+use diom_core::types::{DurationS, EntityKey};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt as _, ResultExt};
 use diom_idempotency::{
@@ -40,7 +40,7 @@ pub struct IdempotencyStartIn {
 
     /// TTL in seconds for the lock/response
     #[validate(range(min = 1))]
-    pub ttl: u64,
+    pub ttl: DurationS,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -82,7 +82,7 @@ pub struct IdempotencyCompleteIn {
 
     /// TTL in seconds for the cached response
     #[validate(range(min = 1))]
-    pub ttl: u64,
+    pub ttl: DurationS,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
