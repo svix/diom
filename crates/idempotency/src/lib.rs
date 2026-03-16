@@ -42,7 +42,7 @@ pub enum IdempotencyStartResult {
 
 impl From<IdempotencyState> for Vec<u8> {
     fn from(state: IdempotencyState) -> Self {
-        rmp_serde::to_vec(&state).expect("Failed to serialize IdempotencyState")
+        rmp_serde::to_vec_named(&state).expect("Failed to serialize IdempotencyState")
     }
 }
 
