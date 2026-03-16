@@ -1,7 +1,7 @@
 use clap::{Args, Subcommand};
 use colored_json::Paint;
 use comfy_table::{Attribute, Cell, Table};
-use diom_client::DiomClient;
+use diom_client::{DiomClient, models::ClusterRemoveNodeIn};
 use itertools::Itertools;
 
 #[derive(Args)]
@@ -9,6 +9,15 @@ use itertools::Itertools;
 pub struct ClusterAdminArgs {
     #[command(subcommand)]
     pub command: ClusterCommands,
+}
+
+#[derive(Args)]
+pub struct RemoveNodeArgs {
+    #[arg()]
+    node_id: String,
+    /// This command is dangerous
+    #[arg(long)]
+    yes_i_know_what_im_doing: bool,
 }
 
 #[derive(Subcommand)]
@@ -19,6 +28,8 @@ pub enum ClusterCommands {
         #[arg(long)]
         json: bool,
     },
+    /// Remove a node immediately from the cluster
+    RemoveNode(RemoveNodeArgs),
 }
 
 impl ClusterCommands {
@@ -29,6 +40,7 @@ impl ClusterCommands {
     ) -> anyhow::Result<()> {
         match self {
             Self::Status { json } => print_status(json, client, color_mode).await,
+            Self::RemoveNode(args) => remove_node(args, client).await,
         }
     }
 }
@@ -119,5 +131,32 @@ async fn print_status(
         .set_header(["Node ID", "Address", "State", "Last Transaction"])
         .add_rows(rows);
     println!("{table}");
+    Ok(())
+}
+
+async fn remove_node(args: RemoveNodeArgs, client: &DiomClient) -> anyhow::Result<()> {
+    let status = client.admin().cluster_status().await?;
+    let Some(node) = status.nodes.iter().find(|n| n.node_id == args.node_id) else {
+        anyhow::bail!("unable to find node {}", args.node_id);
+    };
+    if !args.yes_i_know_what_im_doing
+        && !crate::utils::prompt(format!(
+            "Are you sure you want to remove node {} ({})",
+            args.node_id, node.address
+        ))?
+    {
+        anyhow::bail!("aborting");
+    }
+    tracing::info!(
+        node_id = args.node_id,
+        address = node.address,
+        "removing node"
+    );
+    client
+        .admin()
+        .cluster_remove_node(ClusterRemoveNodeIn {
+            node_id: args.node_id,
+        })
+        .await?;
     Ok(())
 }
