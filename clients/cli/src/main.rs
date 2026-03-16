@@ -13,7 +13,7 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 use self::{
     cmds::{
-        api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
+        api::{AdminArgs, CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
         benchmark::BenchmarkArgs,
         cluster::ClusterAdminArgs,
     },
@@ -89,6 +89,10 @@ enum RootCommands {
     Msgs(MsgsArgs),
     RateLimit(RateLimitArgs),
     Health(HealthArgs),
+    /// Send raw administrative commands.
+    ///
+    /// Prefer the cluster-admin family of CLI commands.
+    RawAdmin(AdminArgs),
     /// Manipulate a Coyote cluster
     ClusterAdmin(ClusterAdminArgs),
     /// Benchmark module throughput
@@ -149,6 +153,10 @@ async fn main() -> Result<()> {
             args.command.exec(&client, color_mode).await?;
         }
         RootCommands::Health(args) => {
+            let client = get_client(&cfg?)?;
+            args.command.exec(&client, color_mode).await?;
+        }
+        RootCommands::RawAdmin(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;
         }
