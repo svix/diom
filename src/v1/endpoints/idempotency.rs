@@ -44,14 +44,19 @@ pub struct IdempotencyStartIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(tag = "status", rename_all = "snake_case")]
+#[serde(tag = "status", content = "data", rename_all = "snake_case")]
 pub enum IdempotencyStartOut {
     /// Lock acquired, request should proceed
     Started,
     /// Request is already in progress (locked)
     Locked,
     /// Request was already completed, cached response returned
-    Completed { response: Vec<u8> },
+    Completed(IdempotencyCompleted),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IdempotencyCompleted {
+    pub response: Vec<u8>,
 }
 
 impl From<IdempotencyStartResult> for IdempotencyStartOut {
@@ -60,7 +65,7 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
             IdempotencyStartResult::Started => IdempotencyStartOut::Started,
             IdempotencyStartResult::Locked => IdempotencyStartOut::Locked,
             IdempotencyStartResult::Completed { response } => {
-                IdempotencyStartOut::Completed { response }
+                IdempotencyStartOut::Completed(IdempotencyCompleted { response })
             }
         }
     }

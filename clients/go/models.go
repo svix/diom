@@ -19,10 +19,15 @@ type (
 	EvictionPolicy                = diom_models.EvictionPolicy
 	IdempotencyAbortIn            = diom_models.IdempotencyAbortIn
 	IdempotencyAbortOut           = diom_models.IdempotencyAbortOut
+	IdempotencyCompleteIn         = diom_models.IdempotencyCompleteIn
+	IdempotencyCompleteOut        = diom_models.IdempotencyCompleteOut
+	IdempotencyCompleted          = diom_models.IdempotencyCompleted
 	IdempotencyCreateNamespaceIn  = diom_models.IdempotencyCreateNamespaceIn
 	IdempotencyCreateNamespaceOut = diom_models.IdempotencyCreateNamespaceOut
 	IdempotencyGetNamespaceIn     = diom_models.IdempotencyGetNamespaceIn
 	IdempotencyGetNamespaceOut    = diom_models.IdempotencyGetNamespaceOut
+	IdempotencyStartIn            = diom_models.IdempotencyStartIn
+	IdempotencyStartOut           = diom_models.IdempotencyStartOut
 	KvCreateNamespaceIn           = diom_models.KvCreateNamespaceIn
 	KvCreateNamespaceOut          = diom_models.KvCreateNamespaceOut
 	KvDeleteIn                    = diom_models.KvDeleteIn

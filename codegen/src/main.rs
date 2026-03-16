@@ -56,11 +56,7 @@ fn main() -> anyhow::Result<ExitCode> {
         components,
         &webhooks,
         IncludeMode::PublicAndInternal,
-        &BTreeSet::from_iter([
-            "v1.idempotency.start".to_owned(),
-            "v1.idempotency.complete".to_owned(),
-            "v1.idempotency.abandon".to_owned(),
-        ]),
+        &BTreeSet::new(),
         &BTreeSet::new(),
     )?;
 

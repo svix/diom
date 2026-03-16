@@ -48,5 +48,9 @@ class {{ type_name }}(BaseModel):
 {%- if has_positional_fields %}
 
 class _{{ type_name }}(BaseModel):
+{%- if type.fields | length == 0 %}
+    pass
+{%- else %}
 {% include "types/struct_fields.py.jinja" %}
+{%- endif %}
 {%- endif %}
