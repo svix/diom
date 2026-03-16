@@ -7,7 +7,6 @@ mod topic_configure;
 pub use self::{create_namespace::*, publish::*, queue::*, stream::*, topic_configure::*};
 
 use crate::State;
-use serde::{Deserialize, Serialize};
 
 use diom_operations::raft_module_operations;
 
