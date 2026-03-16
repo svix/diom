@@ -18,6 +18,38 @@ func NewIdempotency(client *coyote_proto.HttpClient) Idempotency {
 	return Idempotency{client}
 }
 
+// Start an idempotent request
+func (idempotency Idempotency) Start(
+	ctx context.Context,
+	idempotencyStartIn coyote_models.IdempotencyStartIn,
+) (*coyote_models.IdempotencyStartOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyStartIn, coyote_models.IdempotencyStartOut](
+		ctx,
+		idempotency.client,
+		"POST",
+		"/api/v1/idempotency/start",
+		nil,
+		nil,
+		&idempotencyStartIn,
+	)
+}
+
+// Complete an idempotent request with a response
+func (idempotency Idempotency) Complete(
+	ctx context.Context,
+	idempotencyCompleteIn coyote_models.IdempotencyCompleteIn,
+) (*coyote_models.IdempotencyCompleteOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyCompleteIn, coyote_models.IdempotencyCompleteOut](
+		ctx,
+		idempotency.client,
+		"POST",
+		"/api/v1/idempotency/complete",
+		nil,
+		nil,
+		&idempotencyCompleteIn,
+	)
+}
+
 // Abandon an idempotent request (remove lock without saving response)
 func (idempotency Idempotency) Abort(
 	ctx context.Context,

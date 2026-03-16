@@ -80,7 +80,7 @@ async fn test_idempotency_start_and_complete() -> TestResult {
 
     let response = start(&client, "k3", 60).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["response"], json!("v2".as_bytes()));
+    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
 
     start(&client, "k4", 60).await?;
     abandon(&client, "k4").await?;
@@ -90,18 +90,18 @@ async fn test_idempotency_start_and_complete() -> TestResult {
     start(&client, "k5", 60).await?;
     complete(&client, "k5", "v2", 60).await?;
     let response = start(&client, "k5", 60).await?;
-    assert_eq!(response["response"], json!("v2".as_bytes()));
+    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
 
     complete(&client, "k5", "v3", 60).await?;
     let response = start(&client, "k5", 60).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["response"], json!("v3".as_bytes()));
+    assert_eq!(response["data"]["response"], json!("v3".as_bytes()));
 
     start(&client, "k6", 60).await?;
     complete(&client, "k6", "v4", 60).await?;
 
     let response = start(&client, "k6", 60).await?;
-    assert_eq!(response["response"], json!("v4".as_bytes()));
+    assert_eq!(response["data"]["response"], json!("v4".as_bytes()));
 
     abandon(&client, "k6").await?;
 
@@ -178,7 +178,7 @@ async fn test_idempotency_expiration() -> TestResult {
     tokio::time::sleep(Duration::from_secs(1)).await;
     let response = start(&client, "k5", 1).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["response"], json!("v1".as_bytes()));
+    assert_eq!(response["data"]["response"], json!("v1".as_bytes()));
 
     Ok(())
 }

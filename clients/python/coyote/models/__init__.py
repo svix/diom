@@ -13,10 +13,15 @@ from .consistency import Consistency
 from .eviction_policy import EvictionPolicy
 from .idempotency_abort_in import IdempotencyAbortIn
 from .idempotency_abort_out import IdempotencyAbortOut
+from .idempotency_complete_in import IdempotencyCompleteIn
+from .idempotency_complete_out import IdempotencyCompleteOut
+from .idempotency_completed import IdempotencyCompleted
 from .idempotency_create_namespace_in import IdempotencyCreateNamespaceIn
 from .idempotency_create_namespace_out import IdempotencyCreateNamespaceOut
 from .idempotency_get_namespace_in import IdempotencyGetNamespaceIn
 from .idempotency_get_namespace_out import IdempotencyGetNamespaceOut
+from .idempotency_start_in import IdempotencyStartIn
+from .idempotency_start_out import IdempotencyStartOut
 from .kv_create_namespace_in import KvCreateNamespaceIn
 from .kv_create_namespace_out import KvCreateNamespaceOut
 from .kv_delete_in import KvDeleteIn
@@ -87,10 +92,15 @@ __all__ = [
     "EvictionPolicy",
     "IdempotencyAbortIn",
     "IdempotencyAbortOut",
+    "IdempotencyCompleteIn",
+    "IdempotencyCompleteOut",
+    "IdempotencyCompleted",
     "IdempotencyCreateNamespaceIn",
     "IdempotencyCreateNamespaceOut",
     "IdempotencyGetNamespaceIn",
     "IdempotencyGetNamespaceOut",
+    "IdempotencyStartIn",
+    "IdempotencyStartOut",
     "KvCreateNamespaceIn",
     "KvCreateNamespaceOut",
     "KvDeleteIn",

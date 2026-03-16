@@ -168,7 +168,7 @@ itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
 mimalloc = "0.1.48"
 mime = "0.3"
-openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "29098b6b02c86fbe79091f0d4da697ca486c2875" }
+openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "f464ae88b65c76fd6a39b6547003611e24680825" }
 openraft = { version = "0.9.21", features = ["tracing-log", "anyhow", "serde", "storage-v2"] }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"

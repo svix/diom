@@ -19,10 +19,15 @@ type (
 	EvictionPolicy                = coyote_models.EvictionPolicy
 	IdempotencyAbortIn            = coyote_models.IdempotencyAbortIn
 	IdempotencyAbortOut           = coyote_models.IdempotencyAbortOut
+	IdempotencyCompleteIn         = coyote_models.IdempotencyCompleteIn
+	IdempotencyCompleteOut        = coyote_models.IdempotencyCompleteOut
+	IdempotencyCompleted          = coyote_models.IdempotencyCompleted
 	IdempotencyCreateNamespaceIn  = coyote_models.IdempotencyCreateNamespaceIn
 	IdempotencyCreateNamespaceOut = coyote_models.IdempotencyCreateNamespaceOut
 	IdempotencyGetNamespaceIn     = coyote_models.IdempotencyGetNamespaceIn
 	IdempotencyGetNamespaceOut    = coyote_models.IdempotencyGetNamespaceOut
+	IdempotencyStartIn            = coyote_models.IdempotencyStartIn
+	IdempotencyStartOut           = coyote_models.IdempotencyStartOut
 	KvCreateNamespaceIn           = coyote_models.KvCreateNamespaceIn
 	KvCreateNamespaceOut          = coyote_models.KvCreateNamespaceOut
 	KvDeleteIn                    = coyote_models.KvDeleteIn

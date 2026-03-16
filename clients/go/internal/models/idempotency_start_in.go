@@ -1,0 +1,8 @@
+package coyote_models
+
+// This file is @generated DO NOT EDIT
+
+type IdempotencyStartIn struct {
+	Key string `json:"key"`
+	Ttl uint64 `json:"ttl"` // TTL in seconds for the lock/response
+}
