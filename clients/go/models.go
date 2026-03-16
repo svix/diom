@@ -15,6 +15,8 @@ type (
 	CacheGetOut                   = diom_models.CacheGetOut
 	CacheSetIn                    = diom_models.CacheSetIn
 	CacheSetOut                   = diom_models.CacheSetOut
+	ClusterRemoveNodeIn           = diom_models.ClusterRemoveNodeIn
+	ClusterRemoveNodeOut          = diom_models.ClusterRemoveNodeOut
 	ClusterStatusOut              = diom_models.ClusterStatusOut
 	Consistency                   = diom_models.Consistency
 	EvictionPolicy                = diom_models.EvictionPolicy

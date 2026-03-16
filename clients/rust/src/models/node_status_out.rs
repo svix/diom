@@ -1,7 +1,7 @@
 // this file is @generated
 use serde::{Deserialize, Serialize};
 
-use super::{node::Node, server_state::ServerState};
+use super::server_state::ServerState;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NodeStatusOut {
@@ -11,7 +11,7 @@ pub struct NodeStatusOut {
     pub node_id: String,
 
     /// The advertised inter-server (cluster) address of this node.
-    pub address: Node,
+    pub address: String,
 
     /// The last known state of this node
     pub state: ServerState,
@@ -26,7 +26,7 @@ pub struct NodeStatusOut {
 }
 
 impl NodeStatusOut {
-    pub fn new(node_id: String, address: Node, state: ServerState) -> Self {
+    pub fn new(node_id: String, address: String, state: ServerState) -> Self {
         Self {
             node_id,
             address,

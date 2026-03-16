@@ -11,6 +11,8 @@ mod cache_get_namespace_out;
 mod cache_get_out;
 mod cache_set_in;
 mod cache_set_out;
+mod cluster_remove_node_in;
+mod cluster_remove_node_out;
 mod cluster_status_out;
 mod consistency;
 mod eviction_policy;
@@ -87,6 +89,7 @@ pub use self::{
     cache_delete_out::CacheDeleteOut, cache_get_in::CacheGetIn,
     cache_get_namespace_in::CacheGetNamespaceIn, cache_get_namespace_out::CacheGetNamespaceOut,
     cache_get_out::CacheGetOut, cache_set_in::CacheSetIn, cache_set_out::CacheSetOut,
+    cluster_remove_node_in::ClusterRemoveNodeIn, cluster_remove_node_out::ClusterRemoveNodeOut,
     cluster_status_out::ClusterStatusOut, consistency::Consistency,
     eviction_policy::EvictionPolicy, idempotency_abort_in::IdempotencyAbortIn,
     idempotency_abort_out::IdempotencyAbortOut, idempotency_complete_in::IdempotencyCompleteIn,

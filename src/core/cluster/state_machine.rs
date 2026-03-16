@@ -186,6 +186,12 @@ impl Store {
             time.bump(timestamp);
         }
 
+        if logs.is_poisoned().await? {
+            anyhow::bail!(
+                "this node was previously removed from a cluster and must be erased before it can be re-added"
+            );
+        }
+
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
             state: app_state,
@@ -719,5 +725,12 @@ impl StoreHandle {
             .read()
             .idempotency_state
             .clone()
+    }
+
+    /// Mark this node as removed from a cluster and ineligible to continue
+    pub(super) async fn poison(&self, cluster_id: ClusterId) -> anyhow::Result<()> {
+        let handle = self.inner.write().await;
+        handle.logs.poison(cluster_id).await?;
+        Ok(())
     }
 }

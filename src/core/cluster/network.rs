@@ -179,6 +179,20 @@ impl NetworkClient {
             .await
     }
 
+    pub(super) async fn remove_node(
+        &self,
+        req: proto::RemoveNodeRequest,
+    ) -> Result<proto::RemoveNodeResponse, RPCError<NodeId, Node, UnreachableError>> {
+        self.send_request("/repl/raft/admin/remove-node", req).await
+    }
+
+    pub(super) async fn go_away(
+        &self,
+        req: proto::GoAwayRequest,
+    ) -> Result<proto::GoAwayResponse, RPCError<NodeId, Node, UnreachableError>> {
+        self.send_request("/repl/raft/go-away", req).await
+    }
+
     pub(super) async fn get_last_committed_log_id(
         &self,
     ) -> Result<Option<openraft::LogId<NodeId>>, RPCError<NodeId, Node, UnreachableError>> {

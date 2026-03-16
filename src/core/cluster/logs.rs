@@ -24,7 +24,10 @@ use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tracing::{Instrument, Span};
 
 use super::{NodeId, errors::*, raft::TypeConfig};
-use crate::{cfg::Dir, core::metrics::LogMetrics};
+use crate::{
+    cfg::Dir,
+    core::{cluster::ClusterId, metrics::LogMetrics},
+};
 
 // This is an implementation of an openraft Logs store backed by fjall
 
@@ -226,6 +229,7 @@ static NODE_ID: FjallFixedKey<NodeId> = FjallFixedKey::new("node_id");
 static LAST_PURGED_LOG_ID: FjallFixedKey<LogId<NodeId>> = FjallFixedKey::new("last_purged_log_id");
 static VOTE: FjallFixedKey<Vote<NodeId>> = FjallFixedKey::new("vote");
 static COMMITTED: FjallFixedKey<Option<LogId<NodeId>>> = FjallFixedKey::new("committed");
+static POISONED: FjallFixedKey<ClusterId> = FjallFixedKey::new("poisoned");
 
 #[derive(Debug, Clone)]
 pub(super) struct BackgroundFsyncFailedError(String);
@@ -679,6 +683,27 @@ impl DiomLogs {
         })
         .await
         .context("failed to join")
+    }
+
+    pub(crate) async fn poison(&self, cluster_id: ClusterId) -> anyhow::Result<()> {
+        let meta_keyspace = self.meta_keyspace.clone();
+        spawn_blocking_in_current_span(move || POISONED.store(&meta_keyspace, &cluster_id))
+            .await?
+            .context("saving poisoned state")
+    }
+
+    pub(crate) async fn is_poisoned(&self) -> anyhow::Result<bool> {
+        let meta_keyspace = self.meta_keyspace.clone();
+        spawn_blocking_in_current_span(move || {
+            POISONED
+                .get(&meta_keyspace)?
+                .tap_some(|cluster_id| {
+                    tracing::error!(?cluster_id, "this node was previously poisoned")
+                })
+                .is_some()
+                .pipe(Ok)
+        })
+        .await?
     }
 }
 

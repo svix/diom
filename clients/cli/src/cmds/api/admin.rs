@@ -13,6 +13,13 @@ pub struct AdminArgs {
 pub enum AdminCommands {
     /// Get information about the current cluster
     ClusterStatus {},
+    /// Remove a node from the cluster.
+    ///
+    /// This operation executes immediately and the node must be wiped and reset
+    /// before it can safely be added to the cluster.
+    ClusterRemoveNode {
+        cluster_remove_node_in: crate::json::JsonOf<diom_client::models::ClusterRemoveNodeIn>,
+    },
 }
 
 impl AdminCommands {
@@ -24,6 +31,15 @@ impl AdminCommands {
         match self {
             Self::ClusterStatus {} => {
                 let resp = client.admin().cluster_status().await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::ClusterRemoveNode {
+                cluster_remove_node_in,
+            } => {
+                let resp = client
+                    .admin()
+                    .cluster_remove_node(cluster_remove_node_in.into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
         }

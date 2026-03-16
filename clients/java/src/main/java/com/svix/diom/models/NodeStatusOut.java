@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class NodeStatusOut {
 @JsonProperty("node_id") private String nodeId;
-@JsonProperty private Node address;
+@JsonProperty private String address;
 @JsonProperty private ServerState state;
 @JsonProperty("last_committed_log_index") private Long lastCommittedLogIndex;
 @JsonProperty("last_committed_term") private Long lastCommittedTerm;
@@ -56,7 +56,7 @@ This will never change unless the node is erased and reset
         this.nodeId = nodeId;
     }
 
-     public NodeStatusOut address(Node address) {
+     public NodeStatusOut address(String address) {
         this.address = address;
         return this;
     }
@@ -67,11 +67,11 @@ This will never change unless the node is erased and reset
      * @return address
      */
     @javax.annotation.Nonnull
-     public Node getAddress() {
+     public String getAddress() {
         return address;
     }
 
-     public void setAddress(Node address) {
+     public void setAddress(String address) {
         this.address = address;
     }
 
