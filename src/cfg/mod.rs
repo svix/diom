@@ -454,8 +454,13 @@ pub struct ConfigurationInner {
     #[serde(default)]
     pub cluster: ClusterConfiguration,
 
+    /// The path to a YAML bootstrap file
     #[serde(default)]
     pub bootstrap_cfg_path: Option<String>,
+
+    /// YAML bootstrap data. Takes precedence over `bootstrap_cfg_path`
+    #[serde(default)]
+    pub bootstrap_cfg: Option<String>,
 }
 
 impl Default for ConfigurationInner {
@@ -598,6 +603,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         opentelemetry_service_name,
         environment,
         bootstrap_cfg_path,
+        bootstrap_cfg,
         cluster:
             ClusterConfiguration {
                 advertised_address: cluster_advertised_address,
@@ -648,6 +654,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         opentelemetry_metrics_address: "DIOM_OPENTELEMETRY_METRICS_ADDRESS",
         opentelemetry_sample_ratio: "DIOM_OPENTELEMETRY_SAMPLE_RATIO",
         bootstrap_cfg_path: "DIOM_BOOTSTRAP_CFG_PATH",
+        bootstrap_cfg: "DIOM_BOOTSTRAP_CFG",
         cluster_listen_address: "DIOM_CLUSTER_LISTEN_ADDRESS",
         cluster_advertised_address: "DIOM_CLUSTER_ADVERTISED_ADDRESS",
         cluster_snapshot_path: "DIOM_CLUSTER_SNAPSHOT_PATH",

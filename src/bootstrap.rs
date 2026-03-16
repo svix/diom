@@ -84,13 +84,19 @@ struct BootstrapConfig {
 }
 
 impl BootstrapConfig {
-    fn load(config_path: Option<&str>) -> anyhow::Result<BootstrapConfig> {
-        let mut config = match config_path {
-            Some(path) => {
-                let config_file = File::open(path).context("opening bootstrap config")?;
+    fn load(
+        config_path: Option<&str>,
+        config_content: Option<&str>,
+    ) -> anyhow::Result<BootstrapConfig> {
+        let mut config = match (config_content, config_path) {
+            (Some(content), _) => {
+                yaml_serde::from_str(content).context("parsing bootstrap config")?
+            }
+            (None, Some(path)) => {
+                let config_file = File::open(path).context("opening bootstrap config file")?;
                 yaml_serde::from_reader(config_file).context("parsing bootstrap config")?
             }
-            None => BootstrapConfig::default(),
+            (None, None) => BootstrapConfig::default(),
         };
 
         // Configure default namespace for cache, if not part of the config file
@@ -158,8 +164,10 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
         }
     }
 
-    let bootstrap = BootstrapConfig::load(app_config.bootstrap_cfg_path.as_deref())
-        .expect("Failed to load bootstrap config");
+    let bootstrap = BootstrapConfig::load(
+        app_config.bootstrap_cfg_path.as_deref(),
+        app_config.bootstrap_cfg.as_deref(),
+    )?;
 
     tracing::debug!(
         ?bootstrap,
