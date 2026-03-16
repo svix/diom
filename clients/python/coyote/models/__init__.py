@@ -9,6 +9,8 @@ from .cache_get_namespace_out import CacheGetNamespaceOut
 from .cache_get_out import CacheGetOut
 from .cache_set_in import CacheSetIn
 from .cache_set_out import CacheSetOut
+from .cluster_remove_node_in import ClusterRemoveNodeIn
+from .cluster_remove_node_out import ClusterRemoveNodeOut
 from .cluster_status_out import ClusterStatusOut
 from .consistency import Consistency
 from .eviction_policy import EvictionPolicy
@@ -91,6 +93,8 @@ __all__ = [
     "CacheGetOut",
     "CacheSetIn",
     "CacheSetOut",
+    "ClusterRemoveNodeIn",
+    "ClusterRemoveNodeOut",
     "ClusterStatusOut",
     "Consistency",
     "EvictionPolicy",

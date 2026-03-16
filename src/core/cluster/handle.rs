@@ -1,15 +1,24 @@
 use std::{fmt, time::Duration};
 
-use crate::{cfg::Configuration, core::cluster::state_machine::StoreHandle};
+use crate::{
+    cfg::Configuration,
+    core::cluster::{ClusterId, state_machine::StoreHandle},
+};
 
 use super::{
-    NodeId, discovery::Discovery, network::NetworkFactory, operations::InternalOperation,
+    Node, NodeId, discovery::Discovery, network::NetworkFactory, operations::InternalOperation,
     raft::Raft,
 };
 use anyhow::Context;
 use coyote_core::Monotime;
+use coyote_error::ResultExt;
 use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
-use openraft::RaftNetworkFactory;
+use itertools::Itertools;
+use maplit::btreeset;
+use openraft::{
+    RaftNetworkFactory,
+    error::{ClientWriteError, RaftError},
+};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc::Sender;
@@ -225,6 +234,51 @@ pub enum BackgroundCommand {
     Snapshot,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) enum CoyoteErrorOrForwardToLeader {
+    Error(coyote_operations::OperationError),
+    ForwardToLeader {
+        leader_id: NodeId,
+        leader_node: Node,
+    },
+}
+
+impl CoyoteErrorOrForwardToLeader {
+    #[track_caller]
+    fn internal(e: impl fmt::Display) -> Self {
+        Self::Error(coyote_operations::OperationError::from(
+            coyote_error::Error::internal(e),
+        ))
+    }
+}
+
+impl From<coyote_error::Error> for CoyoteErrorOrForwardToLeader {
+    fn from(value: coyote_error::Error) -> Self {
+        Self::Error(value.into())
+    }
+}
+
+impl From<RaftError<NodeId, ClientWriteError<NodeId, Node>>> for CoyoteErrorOrForwardToLeader {
+    fn from(value: RaftError<NodeId, ClientWriteError<NodeId, Node>>) -> Self {
+        if let Some(leader) = value.forward_to_leader() {
+            let Some(leader_id) = leader.leader_id else {
+                return Self::internal("wanted to forward to leader, but do not know leader ID");
+            };
+            let Some(leader_node) = leader.leader_node.clone() else {
+                return Self::internal(
+                    "wanted to forward to leader, but do not know leader address",
+                );
+            };
+            Self::ForwardToLeader {
+                leader_id,
+                leader_node,
+            }
+        } else {
+            Self::internal(value)
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct RaftState {
     pub raft: Raft,
@@ -418,7 +472,7 @@ impl RaftState {
     pub(crate) async fn get_peer_last_committed_log(
         &self,
         node_id: NodeId,
-        address: &super::Node,
+        address: &Node,
     ) -> anyhow::Result<Option<openraft::LogId<NodeId>>> {
         let mut network_handle = self.network.clone();
         let client = network_handle.new_client(node_id, address).await;
@@ -426,6 +480,152 @@ impl RaftState {
             .get_last_committed_log_id()
             .await
             .context("attempting to read last committed id from peer")
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub(crate) async fn handle_go_away(
+        &self,
+        cluster_id: ClusterId,
+        node_id: NodeId,
+    ) -> Result<(), crate::Error> {
+        if node_id != self.node_id {
+            return Err(crate::Error::bad_request(
+                "invalid node_id",
+                "Received a GO-AWAY request for the wrong node",
+            ));
+        }
+        let Some(our_cluster_id) = self.state_machine.cluster_id().await else {
+            tracing::warn!("received go-away at non-clustered node");
+            return Err(crate::Error::bad_request(
+                "invalid cluster_id",
+                "Received a GO-AWAY request but we are not in a cluster",
+            ));
+        };
+        if cluster_id != our_cluster_id {
+            tracing::warn!(
+                ?cluster_id,
+                ?our_cluster_id,
+                "received go-away for the wrong cluster"
+            );
+            return Err(crate::Error::bad_request(
+                "invalid node_id",
+                "Received a GO-AWAY request for the wrong cluster",
+            ));
+        }
+        self.state_machine
+            .poison(cluster_id)
+            .await
+            .or_internal_error()?;
+        tracing::error!("this node has been removed from a cluster and will now shut down");
+        crate::start_shut_down();
+        Ok(())
+    }
+
+    async fn guard_leader(&self) -> Result<(), CoyoteErrorOrForwardToLeader> {
+        let Some(leader_id) = self.raft.current_leader().await else {
+            return Err(CoyoteErrorOrForwardToLeader::internal(
+                "unable to determine leader",
+            ));
+        };
+        if leader_id != self.node_id {
+            let Some(leader_node) = self
+                .raft
+                .with_raft_state(move |s| {
+                    s.membership_state.effective().get_node(&leader_id).cloned()
+                })
+                .await
+                .or_internal_error()?
+            else {
+                tracing::error!(
+                    ?leader_id,
+                    "want to forward request to leader, but cannot find leader node"
+                );
+                return Err(CoyoteErrorOrForwardToLeader::from(
+                    coyote_error::Error::internal("unable to determine leader"),
+                ));
+            };
+            return Err(CoyoteErrorOrForwardToLeader::ForwardToLeader {
+                leader_id,
+                leader_node,
+            });
+        }
+        Ok(())
+    }
+
+    async fn remove_node_inner(&self, node_id: NodeId) -> Result<(), CoyoteErrorOrForwardToLeader> {
+        self.guard_leader().await?;
+        let Some(cluster_id) = self.state_machine.cluster_id().await else {
+            return Err(CoyoteErrorOrForwardToLeader::internal(
+                "attempted to remove node from a null cluster",
+            ));
+        };
+        let (is_voter, is_learner, node) = self
+            .raft
+            .with_raft_state(move |s| {
+                let membership = s.membership_state.effective().membership();
+                let is_voter = membership.voter_ids().contains(&node_id);
+                let is_learner = membership.learner_ids().contains(&node_id);
+                let node = membership.get_node(&node_id).cloned();
+                (is_voter, is_learner, node)
+            })
+            .await
+            .or_internal_error()?;
+        if !(is_voter || is_learner) {
+            return Err(coyote_error::Error::invalid_user_input(
+                "node is neither a voter nor a learner",
+            )
+            .into());
+        }
+        let Some(node) = node else {
+            return Err(CoyoteErrorOrForwardToLeader::internal(
+                "wanted to remove a node, but could not find its address",
+            ));
+        };
+        if is_voter {
+            tracing::info!(%node_id, ?node, "downgrading node from voter to learner");
+            let proposal = openraft::ChangeMembers::RemoveVoters(btreeset! { node_id });
+            self.raft.change_membership(proposal, true).await?;
+        }
+        let client = self.network.client_for(node_id, &node);
+        tracing::info!(%node_id, ?node, "removing learner from cluster");
+        let proposal = openraft::ChangeMembers::RemoveNodes(btreeset! { node_id });
+        self.raft.change_membership(proposal, false).await?;
+        if let Err(err) = client
+            .go_away(crate::core::cluster::proto::GoAwayRequest {
+                cluster_id,
+                node_id,
+            })
+            .await
+        {
+            tracing::error!(
+                ?err,
+                "Peer refused GO-AWAY request and may need to be manually shut down"
+            );
+        }
+        Ok(())
+    }
+
+    /// Remove the given node_id.
+    ///
+    /// If it's a voter, first downgrade it to a learner, then remove it entirely.
+    /// Returns the removed node.
+    pub(crate) async fn remove_node(&self, node_id: NodeId) -> coyote_error::Result<()> {
+        match self.remove_node_inner(node_id).await {
+            Ok(_) => Ok(()),
+            Err(CoyoteErrorOrForwardToLeader::Error(e)) => Err(e.into()),
+            Err(CoyoteErrorOrForwardToLeader::ForwardToLeader {
+                leader_id,
+                leader_node,
+            }) => {
+                let mut network_handle = self.network.clone();
+                let client = network_handle.new_client(leader_id, &leader_node).await;
+                client
+                    .remove_node(super::proto::RemoveNodeRequest { node_id })
+                    .await
+                    .or_internal_error()?;
+                Ok(())
+            }
+        }
     }
 }
 

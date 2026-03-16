@@ -4,7 +4,6 @@ from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
-from .node import Node
 from .server_state import ServerState
 
 
@@ -14,7 +13,7 @@ class NodeStatusOut(BaseModel):
 
     This will never change unless the node is erased and reset"""
 
-    address: Node
+    address: str
     """The advertised inter-server (cluster) address of this node."""
 
     state: ServerState

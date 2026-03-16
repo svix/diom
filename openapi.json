@@ -10,7 +10,7 @@
     }
   },
   "paths": {
-    "/api/v1/admin/cluster-status": {
+    "/api/v1/admin/cluster/status": {
       "get": {
         "tags": [
           "Admin"
@@ -25,6 +25,43 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClusterStatusOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/cluster/remove-node": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cluster Remove Node",
+        "description": "Remove a node from the cluster.\n\nThis operation executes immediately and the node must be wiped and reset\nbefore it can safely be added to the cluster.",
+        "operationId": "v1.admin.cluster-remove-node",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClusterRemoveNodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterRemoveNodeOut"
                 }
               }
             }
@@ -1491,6 +1528,28 @@
       "CacheSetOut": {
         "type": "object"
       },
+      "ClusterRemoveNodeIn": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id"
+        ]
+      },
+      "ClusterRemoveNodeOut": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id"
+        ]
+      },
       "ClusterStatusOut": {
         "type": "object",
         "properties": {
@@ -2533,55 +2592,6 @@
           "partitions"
         ]
       },
-      "Node": {
-        "oneOf": [
-          {
-            "type": "string",
-            "enum": [
-              "NoAddress"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "SingleHomed": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "SingleHomed"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "HostnameAndPort": {
-                "type": "object",
-                "properties": {
-                  "hostname": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "integer",
-                    "format": "uint16",
-                    "minimum": 0,
-                    "maximum": 65535
-                  }
-                },
-                "required": [
-                  "hostname",
-                  "port"
-                ]
-              }
-            },
-            "required": [
-              "HostnameAndPort"
-            ],
-            "additionalProperties": false
-          }
-        ]
-      },
       "NodeStatusOut": {
         "type": "object",
         "properties": {
@@ -2591,7 +2601,7 @@
           },
           "address": {
             "description": "The advertised inter-server (cluster) address of this node.",
-            "$ref": "#/components/schemas/Node"
+            "type": "string"
           },
           "state": {
             "description": "The last known state of this node",

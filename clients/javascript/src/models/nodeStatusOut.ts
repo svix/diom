@@ -1,9 +1,5 @@
 // this file is @generated
 import {
-    type Node,
-    NodeSerializer,
-} from './node';
-import {
     type ServerState,
     ServerStateSerializer,
 } from './serverState';
@@ -16,7 +12,7 @@ export interface NodeStatusOut {
 */
     nodeId: string;
     /** The advertised inter-server (cluster) address of this node. */
-    address: Node;
+    address: string;
     /** The last known state of this node */
     state: ServerState;
     /** The index of the last log applied on this node */
@@ -30,7 +26,7 @@ export const NodeStatusOutSerializer = {
     _fromJsonObject(object: any): NodeStatusOut {
         return {
             nodeId: object['node_id'],
-            address: NodeSerializer._fromJsonObject(object['address']),
+            address: object['address'],
             state: ServerStateSerializer._fromJsonObject(object['state']),
             lastCommittedLogIndex: object['last_committed_log_index'],
             lastCommittedTerm: object['last_committed_term'],
@@ -41,7 +37,7 @@ export const NodeStatusOutSerializer = {
     _toJsonObject(self: NodeStatusOut): any {
         return {
             'node_id': self.nodeId,
-            'address': NodeSerializer._toJsonObject(self.address),
+            'address': self.address,
             'state': ServerStateSerializer._toJsonObject(self.state),
             'last_committed_log_index': self.lastCommittedLogIndex,
             'last_committed_term': self.lastCommittedTerm,

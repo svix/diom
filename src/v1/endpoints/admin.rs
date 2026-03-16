@@ -3,7 +3,10 @@
 
 use std::collections::BTreeSet;
 
-use aide::axum::{ApiRouter, routing::get_with};
+use aide::axum::{
+    ApiRouter,
+    routing::{get_with, post_with},
+};
 use axum::{Extension, extract::State};
 use coyote_derive::aide_annotate;
 use coyote_error::ResultExt;
@@ -11,6 +14,7 @@ use coyote_proto::MsgPackOrJson;
 use futures_util::StreamExt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 use crate::{
     AppState, RaftState,
@@ -48,7 +52,7 @@ pub struct NodeStatusOut {
     /// This will never change unless the node is erased and reset
     node_id: NodeId,
     /// The advertised inter-server (cluster) address of this node.
-    address: Node,
+    address: String,
     /// The last known state of this node
     state: ServerState,
     /// The index of the last log applied on this node
@@ -80,7 +84,7 @@ pub struct ClusterStatusOut {
 #[derive(Debug)]
 struct PartialNodeStatus {
     node_id: NodeId,
-    address: Node,
+    node: Node,
     state: ServerState,
 }
 
@@ -104,7 +108,7 @@ async fn cluster_status(
                 .nodes()
                 .map(|(node_id, node)| {
                     let node_id = *node_id;
-                    let address = node.clone();
+                    let node = node.clone();
                     let state = if let Some(id) = &leader_id
                         && id == &node_id
                     {
@@ -118,7 +122,7 @@ async fn cluster_status(
                     };
                     PartialNodeStatus {
                         node_id,
-                        address,
+                        node,
                         state,
                     }
                 })
@@ -144,14 +148,14 @@ async fn cluster_status(
                 let last_log = if peer.node_id == this_node_id {
                     this_last_committed_log_index
                 } else {
-                    repl.get_peer_last_committed_log(peer.node_id, &peer.address)
+                    repl.get_peer_last_committed_log(peer.node_id, &peer.node)
                         .await
                         .ok()
                         .flatten()
                 };
                 NodeStatusOut {
                     node_id: peer.node_id,
-                    address: peer.address,
+                    address: peer.node.to_string(),
                     state: peer.state,
                     last_committed_log_index: last_log.map(|l| l.index),
                     last_committed_term: last_log.map(|l| l.leader_id.term),
@@ -172,12 +176,44 @@ async fn cluster_status(
     }))
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
+struct ClusterRemoveNodeIn {
+    node_id: NodeId,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterRemoveNodeOut {
+    node_id: NodeId,
+}
+
+/// Remove a node from the cluster.
+///
+/// This operation executes immediately and the node must be wiped and reset
+/// before it can safely be added to the cluster.
+#[aide_annotate(op_id = "v1.admin.cluster-remove-node")]
+async fn cluster_remove_node(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<ClusterRemoveNodeIn>,
+) -> Result<MsgPackOrJson<ClusterRemoveNodeOut>> {
+    let node_id = data.node_id;
+
+    repl.remove_node(node_id).await?;
+
+    Ok(MsgPackOrJson(ClusterRemoveNodeOut { node_id }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Admin");
 
-    ApiRouter::new().api_route_with(
-        "/admin/cluster-status",
-        get_with(cluster_status, cluster_status_operation),
-        &tag,
-    )
+    ApiRouter::new()
+        .api_route_with(
+            "/admin/cluster/status",
+            get_with(cluster_status, cluster_status_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/admin/cluster/remove-node",
+            post_with(cluster_remove_node, cluster_remove_node_operation),
+            &tag,
+        )
 }

@@ -15,6 +15,8 @@ type (
 	CacheGetOut                   = coyote_models.CacheGetOut
 	CacheSetIn                    = coyote_models.CacheSetIn
 	CacheSetOut                   = coyote_models.CacheSetOut
+	ClusterRemoveNodeIn           = coyote_models.ClusterRemoveNodeIn
+	ClusterRemoveNodeOut          = coyote_models.ClusterRemoveNodeOut
 	ClusterStatusOut              = coyote_models.ClusterStatusOut
 	Consistency                   = coyote_models.Consistency
 	EvictionPolicy                = coyote_models.EvictionPolicy
