@@ -360,6 +360,12 @@ pub struct ClusterConfiguration {
         default = "defaults::cluster_snapshot_after_time"
     )]
     pub snapshot_after_time: Option<Duration>,
+
+    /// Shut down the process when the it is evicted from the cluster
+    ///
+    /// This should be true unless you are testing internal details of the replication system
+    #[serde(default = "defaults::default_true")]
+    pub shut_down_on_go_away: bool,
 }
 
 impl ClusterConfiguration {
@@ -628,6 +634,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
                 log_ack_immediately: cluster_log_ack_immediately,
                 snapshot_after_writes: cluster_snapshot_after_writes,
                 snapshot_after_time: cluster_snapshot_after_time,
+                shut_down_on_go_away: _,
             },
     } = &mut config;
 

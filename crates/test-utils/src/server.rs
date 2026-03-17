@@ -5,9 +5,10 @@ use diom::{
     cfg::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, LogFormat, LogLevel,
     },
-    core::cluster::proto::HealthResponse,
+    core::cluster::{ClusterId, NodeId, proto::HealthResponse},
     run_with_listeners,
 };
+use futures_util::TryFutureExt;
 use tempfile::TempDir;
 use tokio::{
     net::TcpListener,
@@ -34,6 +35,7 @@ pub struct TestServerBuilder {
     token: Option<String>,
     listener: Option<TcpListener>,
     repl_listener: Option<TcpListener>,
+    workdir: Option<TempDir>,
 }
 
 impl TestServerBuilder {
@@ -43,7 +45,27 @@ impl TestServerBuilder {
             token: None,
             listener: None,
             repl_listener: None,
+            workdir: None,
         }
+    }
+
+    pub fn with_default_config() -> Self {
+        let workdir = tempfile::tempdir().unwrap();
+        let cfg = default_server_config(workdir.path());
+        Self {
+            cfg: Some(cfg),
+            workdir: Some(workdir),
+            token: None,
+            listener: None,
+            repl_listener: None,
+        }
+    }
+
+    pub fn tap_cfg(mut self, f: impl FnOnce(&mut ConfigurationInner)) -> Self {
+        if let Some(cfg) = &mut self.cfg {
+            f(cfg)
+        }
+        self
     }
 
     pub fn token(mut self, token: String) -> Self {
@@ -82,7 +104,7 @@ impl TestServerBuilder {
         let repl_listener = if let Some(listener) = self.repl_listener {
             listener
         } else {
-            TcpListener::bind("0.0.0.0:0").await.unwrap()
+            TcpListener::bind("127.0.0.1:0").await.unwrap()
         };
 
         let addr: SocketAddr = listener.local_addr().unwrap();
@@ -90,9 +112,9 @@ impl TestServerBuilder {
 
         let (mut cfg, workdir) = if let Some(cfg) = self.cfg {
             // Assume that workdir will be tracked externally if custom
-            (cfg, None)
+            (cfg, self.workdir)
         } else {
-            let workdir = tempfile::tempdir().unwrap();
+            let workdir = self.workdir.unwrap_or_else(|| tempfile::tempdir().unwrap());
             let cfg = default_server_config(workdir.path());
             (cfg, Some(workdir))
         };
@@ -100,6 +122,7 @@ impl TestServerBuilder {
         let cfg = {
             cfg.listen_address = addr;
             cfg.cluster.listen_address = Some(repl_addr);
+            cfg.cluster.advertised_address = Some(repl_addr.into());
             Arc::new(cfg)
         };
 
@@ -118,7 +141,7 @@ impl TestServerBuilder {
         };
         let client = TestClient::new(base_uri, &token);
 
-        wait_for_initialized(repl_addr, Duration::from_secs(8))
+        let (node_id, cluster_id) = wait_for_initialized(addr, repl_addr, Duration::from_secs(8))
             .await
             .expect("failed to initialize server");
 
@@ -129,6 +152,8 @@ impl TestServerBuilder {
             token,
             addr,
             repl_addr,
+            node_id,
+            cluster_id,
         }
     }
 }
@@ -140,9 +165,14 @@ pub struct TestContext {
     pub token: String,
     pub addr: SocketAddr,
     pub repl_addr: SocketAddr,
+    pub node_id: NodeId,
+    pub cluster_id: ClusterId,
 }
 
-async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Result<bool> {
+async fn check_initialized(
+    client: &reqwest::Client,
+    url: &str,
+) -> anyhow::Result<Option<(NodeId, ClusterId)>> {
     tracing::debug!("checking if server is initialized yet...");
     let response = client
         .get(url)
@@ -151,36 +181,71 @@ async fn check_initialized(client: &reqwest::Client, url: &str) -> anyhow::Resul
         .await?;
     if response.status() != 200 {
         tracing::debug!(status=%response.status(), "server returned an error");
-        return Ok(false);
+        return Ok(None);
     }
     let body: HealthResponse = response.json().await?;
     if body.server_state.is_candidate() {
         tracing::warn!(state=?body.server_state, "booted, but just a candidate");
-        return Ok(false);
+        return Ok(None);
     }
-    Ok(true)
+    if let Some(cluster_id) = body.cluster_id {
+        Ok(Some((body.node_id, cluster_id)))
+    } else {
+        Ok(None)
+    }
 }
 
-async fn wait_for_initialized(repl_addr: SocketAddr, max_wait: Duration) -> anyhow::Result<()> {
+async fn wait_for_initialized(
+    main_addr: SocketAddr,
+    repl_addr: SocketAddr,
+    max_wait: Duration,
+) -> anyhow::Result<(NodeId, ClusterId)> {
     tracing::info!("waiting for server to boot up");
+    let main_url = format!("http://{main_addr}/api/v1/health/ping");
     let url = format!("http://{repl_addr}/repl/health");
     let deadline = Instant::now() + max_wait;
     let client = reqwest::Client::new();
     let mut backoff_ms = 10;
     let max_backoff_time = Duration::from_millis(500);
+    let mut repl_booted = None;
+    let mut regular_booted = false;
     loop {
+        // First, check that the cluster has initialized
         match tokio::time::timeout_at(deadline, check_initialized(&client, &url)).await {
-            Ok(Ok(true)) => {
-                tracing::info!("server started!");
-                return Ok(());
+            Ok(Ok(Some(info))) => {
+                tracing::info!("replication is ready");
+                repl_booted = Some(info);
             }
-            Ok(Ok(false)) => {
+            Ok(Ok(None)) => {
                 tracing::debug!("server not yet up");
             }
             Ok(Err(err)) => {
                 tracing::warn!(?err, "error waiting for server to boot");
             }
             Err(_) => anyhow::bail!("timed out waiting for server to boot"),
+        }
+        // Then, make sure that the regular comms port is up
+        match tokio::time::timeout_at(
+            deadline,
+            client
+                .get(&main_url)
+                .timeout(Duration::from_millis(10))
+                .send()
+                .and_then(|r| futures_util::future::ready(r.error_for_status())),
+        )
+        .await
+        {
+            Ok(Ok(_)) => {
+                tracing::info!("regular HTTP server is ready");
+                regular_booted = true
+            }
+            Ok(Err(err)) => {
+                tracing::warn!(?err, "error waiting for server to boot");
+            }
+            Err(_) => anyhow::bail!("timed out waiting for server to boot"),
+        }
+        if regular_booted && let Some(info) = repl_booted {
+            return Ok(info);
         }
         tokio::time::sleep(Duration::from_millis(backoff_ms).min(max_backoff_time)).await;
         backoff_ms *= 2;
@@ -246,6 +311,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             log_sync_interval_commits: 0,
             log_sync_interval_duration: Duration::from_secs(30),
             log_ack_immediately: true,
+            shut_down_on_go_away: true,
         },
         bootstrap_cfg: None,
         bootstrap_cfg_path: None,

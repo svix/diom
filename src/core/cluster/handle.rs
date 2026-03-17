@@ -281,6 +281,7 @@ impl From<RaftError<NodeId, ClientWriteError<NodeId, Node>>> for DiomErrorOrForw
 
 #[derive(Clone)]
 pub struct RaftState {
+    pub cfg: Configuration,
     pub raft: Raft,
     pub node_id: NodeId,
     pub state_machine: StoreHandle,
@@ -352,8 +353,8 @@ impl RaftState {
         Ok(resp)
     }
 
-    pub async fn run_discovery_if_necessary(&self, cfg: Configuration) -> anyhow::Result<()> {
-        let network = NetworkFactory::new(&cfg)?;
+    pub async fn run_discovery_if_necessary(&self) -> anyhow::Result<()> {
+        let network = NetworkFactory::new(&self.cfg)?;
         let has_cluster = self
             .raft
             .with_raft_state(|s| {
@@ -365,7 +366,7 @@ impl RaftState {
             tracing::debug!("node already has cluster information; skipping discovery");
         } else {
             tracing::debug!("node has no cluster information; kicking off discovery");
-            let disco = Discovery::new(cfg, self.raft.clone(), self.node_id, network)?;
+            let disco = Discovery::new(self.cfg.clone(), self.raft.clone(), self.node_id, network)?;
             if let Err(err) = disco.discover_cluster().await {
                 tracing::error!(
                     ?err,
@@ -517,7 +518,9 @@ impl RaftState {
             .await
             .or_internal_error()?;
         tracing::error!("this node has been removed from a cluster and will now shut down");
-        crate::start_shut_down();
+        if self.cfg.cluster.shut_down_on_go_away {
+            crate::start_shut_down();
+        }
         Ok(())
     }
 
