@@ -19,15 +19,18 @@ export class MsgsTopic {
 * Partition count can only be increased, never decreased. The default for a new topic is 1.
 */
     public configure(
+        topic: string,
         msgTopicConfigureIn: MsgTopicConfigureIn,
-        ): Promise<MsgTopicConfigureOut> {
+    ): Promise<MsgTopicConfigureOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/topic/configure");
 
         request.setBody(
-            MsgTopicConfigureInSerializer._toJsonObject(
-                msgTopicConfigureIn,
-            )
+            MsgTopicConfigureInSerializer._toJsonObject({
+                ...msgTopicConfigureIn,
+                topic,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgTopicConfigureOutSerializer._fromJsonObject,

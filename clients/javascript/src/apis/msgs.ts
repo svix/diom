@@ -35,15 +35,18 @@ export class Msgs {
 
     /** Publishes messages to a topic within a namespace. */
     public publish(
+        topic: string,
         msgPublishIn: MsgPublishIn,
-        ): Promise<MsgPublishOut> {
+    ): Promise<MsgPublishOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/publish");
 
         request.setBody(
-            MsgPublishInSerializer._toJsonObject(
-                msgPublishIn,
-            )
+            MsgPublishInSerializer._toJsonObject({
+                ...msgPublishIn,
+                topic,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgPublishOutSerializer._fromJsonObject,

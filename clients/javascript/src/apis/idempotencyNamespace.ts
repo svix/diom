@@ -24,14 +24,13 @@ export class IdempotencyNamespace {
     /** Create idempotency namespace */
     public create(
         idempotencyCreateNamespaceIn: IdempotencyCreateNamespaceIn,
-        ): Promise<IdempotencyCreateNamespaceOut> {
+    ): Promise<IdempotencyCreateNamespaceOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/namespace/create");
 
         request.setBody(
-            IdempotencyCreateNamespaceInSerializer._toJsonObject(
-                idempotencyCreateNamespaceIn,
-            )
+            IdempotencyCreateNamespaceInSerializer._toJsonObject(idempotencyCreateNamespaceIn)
         );
+        
         return request.send(
             this.requestCtx,
             IdempotencyCreateNamespaceOutSerializer._fromJsonObject,
@@ -39,14 +38,13 @@ export class IdempotencyNamespace {
     }/** Get idempotency namespace */
     public get(
         idempotencyGetNamespaceIn: IdempotencyGetNamespaceIn,
-        ): Promise<IdempotencyGetNamespaceOut> {
+    ): Promise<IdempotencyGetNamespaceOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/namespace/get");
 
         request.setBody(
-            IdempotencyGetNamespaceInSerializer._toJsonObject(
-                idempotencyGetNamespaceIn,
-            )
+            IdempotencyGetNamespaceInSerializer._toJsonObject(idempotencyGetNamespaceIn)
         );
+        
         return request.send(
             this.requestCtx,
             IdempotencyGetNamespaceOutSerializer._fromJsonObject,

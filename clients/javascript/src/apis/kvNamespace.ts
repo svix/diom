@@ -24,14 +24,13 @@ export class KvNamespace {
     /** Create KV namespace */
     public create(
         kvCreateNamespaceIn: KvCreateNamespaceIn,
-        ): Promise<KvCreateNamespaceOut> {
+    ): Promise<KvCreateNamespaceOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/create");
 
         request.setBody(
-            KvCreateNamespaceInSerializer._toJsonObject(
-                kvCreateNamespaceIn,
-            )
+            KvCreateNamespaceInSerializer._toJsonObject(kvCreateNamespaceIn)
         );
+        
         return request.send(
             this.requestCtx,
             KvCreateNamespaceOutSerializer._fromJsonObject,
@@ -39,14 +38,13 @@ export class KvNamespace {
     }/** Get KV namespace */
     public get(
         kvGetNamespaceIn: KvGetNamespaceIn,
-        ): Promise<KvGetNamespaceOut> {
+    ): Promise<KvGetNamespaceOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/get");
 
         request.setBody(
-            KvGetNamespaceInSerializer._toJsonObject(
-                kvGetNamespaceIn,
-            )
+            KvGetNamespaceInSerializer._toJsonObject(kvGetNamespaceIn)
         );
+        
         return request.send(
             this.requestCtx,
             KvGetNamespaceOutSerializer._fromJsonObject,

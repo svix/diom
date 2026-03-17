@@ -28,23 +28,44 @@ export class {{ resource_type_name }} {
         op.response_body_schema_name | default("void") | replace("_", "") %}
     {{- op.description | with_javadoc_deprecation(op.deprecated) | to_doc_comment(style="js") }}
     public {{ op.name | to_lower_camel_case }}(
-        {# body parameter interface -#}
-        {% if op.request_body_schema_name is defined -%}
-            {% set field_name = op.request_body_schema_name | to_lower_camel_case -%}
-            {{ field_name }}: {{ op.request_body_schema_name }},
+    {%- if op.request_body_schema_name is defined %}
+        {# positional body parameters -#}
+        {% set body_schema = api.types[op.request_body_schema_name] -%}
+        {% set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 -%}
+        {% for field in body_schema.fields -%}
+        {% if field.positional -%}
+            {{ field.name | to_snake_case }}: {{ field.type.to_js() }},
         {% endif -%}
+        {% endfor -%}
 
+        {# body parameter interface -#}
+        {% set req_body_schema_name = op.request_body_schema_name | to_lower_camel_case -%}
+        {{ req_body_schema_name }}: {{ op.request_body_schema_name }},
+    {%- endif %}
     ): Promise<{{ response_type }}> {
         const request = new CoyoteRequest(HttpMethod.{{ op.method | upper }}, "{{ op.path }}");
 
         {# body parameter -#}
         {% if op.request_body_schema_name is defined -%}
+        {% if has_positional_fields -%}
+        {% set body -%}
+            {
+                ...{{ req_body_schema_name }},
+            {%- for field in body_schema.fields %}
+                {%- if field.positional %}
+                {{ field.name | to_snake_case }},
+                {%- endif %}
+            {%- endfor %}
+            }
+        {%- endset -%}
+        {% else -%}
+        {% set body = req_body_schema_name -%}
+        {% endif -%}
+
         request.setBody(
-            {{ op.request_body_schema_name | to_upper_camel_case }}Serializer._toJsonObject(
-                {{ op.request_body_schema_name | to_lower_camel_case }},
-            )
+            {{ op.request_body_schema_name | to_upper_camel_case }}Serializer._toJsonObject({{ body }})
         );
-        {%- endif %}
+        {% endif -%}
 
         {%- if op.response_body_schema_name is defined %}
         return request.send(
