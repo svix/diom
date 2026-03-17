@@ -11,10 +11,25 @@ jobs:
     #  benchmark:
     #    uses: ./.github/workflows/benchmark.yml
     #    secrets: inherit
-  docker_publish:
+  docker_publish_server:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
     needs: ci
+    with:
+      image_name: svix/coyote-server
+      target: prod
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+      security-events: write
+  docker_publish_cli:
+    uses: ./.github/workflows/docker-publish.yml
+    secrets: inherit
+    needs: ci
+    with:
+      image_name: svix/coyote-cli
+      target: cli-prod
     permissions:
       actions: read
       contents: read

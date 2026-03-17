@@ -2,10 +2,17 @@ name: Coyote Docker Build
 
 on:
   workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: svix/coyote-server
+  IMAGE_NAME: ${{ inputs.image_name }}
 
 jobs:
   build-and-push-image:
@@ -63,6 +70,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          target: ${{ inputs.target }}
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -108,7 +116,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          target: prod
+          target: ${{ inputs.target }}
           push: true
           provenance: false
           cache-from: type=gha
@@ -130,7 +138,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v6
         with:
-          name: digests-nonfips-${{ env.PLATFORM_PAIR }}
+          name: digests-nonfips-${{ inputs.target }}-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -147,7 +155,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
-          pattern: digests-nonfips-*
+          pattern: digests-nonfips-${{ inputs.target }}-*
           merge-multiple: true
 
       - name: Set up Docker Buildx

@@ -41,6 +41,7 @@ COPY --from=planner /app/recipe.json recipe.json
 
 # Build dependencies - this is the caching Docker layer
 RUN cargo chef cook --release --package coyote-server --features coyote/openapi --recipe-path recipe.json
+RUN cargo chef cook --release --package coyote-cli --recipe-path recipe.json
 
 # Build the server
 COPY . .
@@ -49,6 +50,7 @@ ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
 RUN cargo build --release --package coyote-server --bin coyote-server --features coyote/openapi --frozen
+RUN cargo build --release --package coyote-cli --bin coyote --frozen
 
 # Production
 FROM docker.io/debian:trixie-slim AS prod
@@ -90,3 +92,33 @@ EXPOSE 8050
 COPY --chown=root:root --chmod=755 --from=build /app/target/release/coyote-server /usr/local/bin/coyote-server
 
 CMD ["/usr/local/bin/coyote-server"]
+
+# CLI Production
+FROM docker.io/debian:trixie-slim AS cli-prod
+
+RUN <<EOF
+    #!/bin/bash
+    set -euxo pipefail
+    useradd appuser
+    mkdir -p /home/appuser
+    chown -R appuser: /home/appuser
+EOF
+
+ENV __BUST_DOCKER_BUILD_CACHE=2026-01-30
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
+    #!/bin/bash
+    set -euxo pipefail
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -q
+    apt-get install -y \
+        ca-certificates=20250419 \
+        --no-install-recommends
+    update-ca-certificates
+EOF
+
+USER appuser
+WORKDIR /home/appuser
+
+COPY --chown=root:root --chmod=755 --from=build /app/target/release/coyote /usr/local/bin/coyote
+
+ENTRYPOINT ["/usr/local/bin/coyote"]
