@@ -14,6 +14,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 static GLOBAL: MiMalloc = MiMalloc;
 
 mod otel;
+mod tracing_panic_hook;
 
 #[derive(Parser)]
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
@@ -67,6 +68,8 @@ async fn main() -> anyhow::Result<()> {
     let (tracing_subscriber, otel_tracer_provider) =
         otel::setup_tracing(&cfg, /* for_test = */ false);
     tracing_subscriber.init();
+
+    tracing_panic_hook::setup_tracing_panic_handler();
 
     match args.command {
         Some(Commands::Healthcheck { .. }) => {
