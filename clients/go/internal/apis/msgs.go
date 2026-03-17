@@ -33,15 +33,21 @@ func (msgs Msgs) Topic() MsgsTopic {
 // Publishes messages to a topic within a namespace.
 func (msgs Msgs) Publish(
 	ctx context.Context,
+	topic string,
 	msgPublishIn coyote_models.MsgPublishIn,
 ) (*coyote_models.MsgPublishOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgPublishIn, coyote_models.MsgPublishOut](
+	body := coyote_models.MsgPublishIn_{
+		Topic: topic,
+		Msgs:  msgPublishIn.Msgs,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgPublishIn_, coyote_models.MsgPublishOut](
 		ctx,
 		msgs.client,
 		"POST",
 		"/api/v1/msgs/publish",
 		nil,
 		nil,
-		&msgPublishIn,
+		&body,
 	)
 }

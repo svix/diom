@@ -24,47 +24,67 @@ func (kv Kv) Namespace() KvNamespace {
 // KV Set
 func (kv Kv) Set(
 	ctx context.Context,
+	key string,
 	kvSetIn coyote_models.KvSetIn,
 ) (*coyote_models.KvSetOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.KvSetIn, coyote_models.KvSetOut](
+	body := coyote_models.KvSetIn_{
+		Key:      key,
+		Value:    kvSetIn.Value,
+		Ttl:      kvSetIn.Ttl,
+		Behavior: kvSetIn.Behavior,
+		Version:  kvSetIn.Version,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.KvSetIn_, coyote_models.KvSetOut](
 		ctx,
 		kv.client,
 		"POST",
 		"/api/v1/kv/set",
 		nil,
 		nil,
-		&kvSetIn,
+		&body,
 	)
 }
 
 // KV Get
 func (kv Kv) Get(
 	ctx context.Context,
+	key string,
 	kvGetIn coyote_models.KvGetIn,
 ) (*coyote_models.KvGetOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.KvGetIn, coyote_models.KvGetOut](
+	body := coyote_models.KvGetIn_{
+		Key:         key,
+		Consistency: kvGetIn.Consistency,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.KvGetIn_, coyote_models.KvGetOut](
 		ctx,
 		kv.client,
 		"POST",
 		"/api/v1/kv/get",
 		nil,
 		nil,
-		&kvGetIn,
+		&body,
 	)
 }
 
 // KV Delete
 func (kv Kv) Delete(
 	ctx context.Context,
+	key string,
 	kvDeleteIn coyote_models.KvDeleteIn,
 ) (*coyote_models.KvDeleteOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.KvDeleteIn, coyote_models.KvDeleteOut](
+	body := coyote_models.KvDeleteIn_{
+		Key: key,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.KvDeleteIn_, coyote_models.KvDeleteOut](
 		ctx,
 		kv.client,
 		"POST",
 		"/api/v1/kv/delete",
 		nil,
 		nil,
-		&kvDeleteIn,
+		&body,
 	)
 }

@@ -65,8 +65,17 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 		{{ p | to_lower_camel_case }} string,
 	{% endfor -%}
 
-	{# body parameter interface -#}
 	{% if op.request_body_schema_name is defined -%}
+		{# positional body parameters -#}
+		{% set body_schema = api.types[op.request_body_schema_name] -%}
+		{% set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 -%}
+		{% for field in body_schema.fields -%}
+			{% if field.positional -%}
+			{{ field.name | to_lower_camel_case }} {{ field.type.to_go() }},
+			{% endif -%}
+		{% endfor -%}
+
+		{# body parameter interface -#}
 		{{ request_body_param }} coyote_models.{{ op.request_body_schema_name }},
 	{% endif -%}
 ) {{ func_ret_type }} {
@@ -83,14 +92,36 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 	headerMap := map[string]string{}
 	{% endif -%}
 
-	{# make template ugly, but generated code nice -#}
-	{% set generic_ret_type = ret_type -%}
+	{# body parameter -#}
 	{% if op.request_body_schema_name is defined -%}
-		{% set generic_ret_type -%}coyote_models.{{ op.request_body_schema_name }},{{ ret_type }}{% endset -%}
+		{% if has_positional_fields -%}
+	body := coyote_models.{{ op.request_body_schema_name }}_{
+		{%- for field in body_schema.fields %}
+			{{ field.name | to_upper_camel_case }}:
+			{%- if field.positional %} {{ field.name | to_lower_camel_case }}
+			{%- else %} {{ request_body_param }}.{{ field.name | to_upper_camel_case }}
+			{%- endif %},
+		{%- endfor %}
+	}
+
+			{% set body = "&body" -%}
+		{% else -%}
+			{% set body = "&" ~ request_body_param -%}
+		{% endif -%}
 	{% else -%}
-		{% set generic_ret_type -%}any,{{ ret_type }}{% endset -%}
+		{% set body = "nil" -%}
 	{% endif -%}
-	{% if has_return %}return {% else %} _, err := {% endif %}coyote_proto.ExecuteRequest[{{ generic_ret_type }}](
+
+	{# make template ugly, but generated code nice -#}
+	{% if op.request_body_schema_name is defined -%}
+		{% set generics -%}
+			coyote_models.{{ op.request_body_schema_name }}
+			{%- if has_positional_fields %}_{% endif %}, {{ ret_type }}
+		{%- endset -%}
+	{% else -%}
+		{% set generics -%}any, {{ ret_type }}{% endset -%}
+	{% endif -%}
+	{% if has_return %}return {% else %} _, err := {% endif %}coyote_proto.ExecuteRequest[{{ generics }}](
 		ctx,
 		{{ resource_self_name }}.client,
 		"{{ op.method | upper }}",
@@ -109,11 +140,7 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 		nil,
 		{% endif -%}
 
-		{% if op.request_body_schema_name is defined -%}
-		&{{ request_body_param }},
-		{% else -%}
-		nil,
-		{% endif -%}
+		{{ body }},
 	)
 	{% if not has_return -%}
 	return err

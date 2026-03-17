@@ -22,15 +22,21 @@ func NewMsgsTopic(client *coyote_proto.HttpClient) MsgsTopic {
 // Partition count can only be increased, never decreased. The default for a new topic is 1.
 func (msgsTopic MsgsTopic) Configure(
 	ctx context.Context,
+	topic string,
 	msgTopicConfigureIn coyote_models.MsgTopicConfigureIn,
 ) (*coyote_models.MsgTopicConfigureOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgTopicConfigureIn, coyote_models.MsgTopicConfigureOut](
+	body := coyote_models.MsgTopicConfigureIn_{
+		Topic:      topic,
+		Partitions: msgTopicConfigureIn.Partitions,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgTopicConfigureIn_, coyote_models.MsgTopicConfigureOut](
 		ctx,
 		msgsTopic.client,
 		"POST",
 		"/api/v1/msgs/topic/configure",
 		nil,
 		nil,
-		&msgTopicConfigureIn,
+		&body,
 	)
 }
