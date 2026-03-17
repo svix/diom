@@ -10,12 +10,15 @@ import (
 )
 
 type Cache struct {
-	client    *diom_proto.HttpClient
-	Namespace *CacheNamespace
+	client *diom_proto.HttpClient
 }
 
 func NewCache(client *diom_proto.HttpClient) Cache {
 	return Cache{client}
+}
+
+func (cache Cache) Namespace() CacheNamespace {
+	return NewCacheNamespace(cache.client)
 }
 
 // Cache Set

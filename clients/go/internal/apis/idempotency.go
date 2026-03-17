@@ -10,12 +10,15 @@ import (
 )
 
 type Idempotency struct {
-	client    *diom_proto.HttpClient
-	Namespace *IdempotencyNamespace
+	client *diom_proto.HttpClient
 }
 
 func NewIdempotency(client *diom_proto.HttpClient) Idempotency {
 	return Idempotency{client}
+}
+
+func (idempotency Idempotency) Namespace() IdempotencyNamespace {
+	return NewIdempotencyNamespace(idempotency.client)
 }
 
 // Start an idempotent request
