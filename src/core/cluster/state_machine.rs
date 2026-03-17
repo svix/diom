@@ -703,7 +703,7 @@ impl StoreHandle {
         self.time.now()
     }
 
-    pub(super) async fn kv_store(&self) -> coyote_kv::State {
+    pub(crate) async fn kv_store(&self) -> coyote_kv::State {
         self.inner.read().await.stores.read().kv_state.clone()
     }
 

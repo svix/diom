@@ -1,15 +1,22 @@
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use coyote_error::{Error, Result};
 use coyote_namespace::entities::NamespaceId;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{StorageType, TableRow, WriteBatchExt};
 use itertools::Itertools;
 use jiff::Timestamp;
+use parking_lot::{Mutex, MutexGuard};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::tables::{ExpirationRow, KvPairRow};
 
 const EXPIRATION_BATCH_SIZE: usize = 1_000;
+const WARN_LONG_LOCK_DURATION: Duration = Duration::from_millis(100);
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -56,7 +63,7 @@ impl From<KvPairRow> for KvModel {
 
 #[derive(Clone)]
 pub struct KvController {
-    db: fjall::Database,
+    db: Arc<Mutex<fjall::Database>>,
     keyspace: fjall::Keyspace,
     keyspace_name: &'static str,
 }
@@ -70,7 +77,7 @@ impl KvController {
         };
 
         Self {
-            db,
+            db: Arc::new(Mutex::new(db)),
             keyspace: tables,
             keyspace_name,
         }
@@ -97,11 +104,12 @@ impl KvController {
 
     fn insert_with_expiration(
         &self,
+        db: MutexGuard<'_, fjall::Database>,
         namespace_id: NamespaceId,
         key: &str,
         model: KvModel,
     ) -> Result<()> {
-        let mut batch = self.db.batch();
+        let mut batch = db.batch();
 
         let row = KvPairRow {
             value: model.value,
@@ -113,11 +121,8 @@ impl KvController {
 
         if let Some(expiry) = row.expiry {
             let expiration_row = ExpirationRow::new();
-            batch.insert_row(
-                &self.keyspace,
-                ExpirationRow::key_for(namespace_id, expiry, key),
-                &expiration_row,
-            )?;
+            let key = ExpirationRow::key_for(namespace_id, expiry, key);
+            batch.insert_row(&self.keyspace, key, &expiration_row)?;
         }
 
         batch.commit()?;
@@ -154,9 +159,11 @@ impl KvController {
             version: new_version,
         };
 
+        let db = self.db.lock();
+
         match behavior {
             OperationBehavior::Upsert => {
-                self.insert_with_expiration(namespace_id, key, new_model)?;
+                self.insert_with_expiration(db, namespace_id, key, new_model)?;
             }
             OperationBehavior::Insert => {
                 current = if current.is_some() {
@@ -171,7 +178,7 @@ impl KvController {
                         success: false,
                     });
                 } else {
-                    self.insert_with_expiration(namespace_id, key, new_model)?;
+                    self.insert_with_expiration(db, namespace_id, key, new_model)?;
                 }
             }
             OperationBehavior::Update => {
@@ -183,7 +190,7 @@ impl KvController {
                 let exists = current.is_some();
 
                 if exists {
-                    self.insert_with_expiration(namespace_id, key, new_model)?;
+                    self.insert_with_expiration(db, namespace_id, key, new_model)?;
                 } else {
                     return Ok(KvSetResult {
                         version: 0,
@@ -201,9 +208,11 @@ impl KvController {
 
     #[tracing::instrument(skip(self))]
     pub fn delete(&self, namespace_id: NamespaceId, key: &str) -> Result<bool> {
+        let db = self.db.lock();
+
         if let Some(data) = KvPairRow::fetch(&self.keyspace, KvPairRow::key_for(namespace_id, key))?
         {
-            let mut batch = self.db.batch();
+            let mut batch = db.batch();
 
             // Delete from the expiration keyspace
             if let Some(expiry) = data.expiry {
@@ -239,7 +248,10 @@ impl KvController {
             .unwrap_or(false)
     }
 
-    #[tracing::instrument(skip(self), fields(keyspace_id, storage_type, cleared))]
+    #[tracing::instrument(skip(self), fields(
+        keyspace_name = self.keyspace_name,
+        cleared,
+    ))]
     pub fn clear_expired(
         &self,
         now: Timestamp,
@@ -251,11 +263,7 @@ impl KvController {
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
         let mut cleared = 0;
-        let start_time = std::time::Instant::now();
-
-        tracing::Span::current()
-            .record("keyspace_name", self.keyspace_name)
-            .record("storage_type", tracing::field::debug(storage_type));
+        let start_time = Instant::now();
 
         for chunk in &self
             .keyspace
@@ -263,7 +271,8 @@ impl KvController {
             .take(max_expirations)
             .chunks(EXPIRATION_BATCH_SIZE)
         {
-            let mut batch = self.db.batch();
+            let db = self.db.lock();
+            let mut batch = db.batch();
             for item in chunk {
                 cleared += 1;
                 let k = item.key()?;
@@ -278,6 +287,83 @@ impl KvController {
         if cleared == max_expirations {
             tracing::warn!(cleared, elapsed=?start_time.elapsed(), "expiration loop is not keeping up");
         } else if cleared > 0 {
+            tracing::debug!(cleared, "cleared some keys");
+        } else {
+            tracing::trace!("no expired keys");
+        }
+        tracing::Span::current().record("cleared", cleared);
+
+        Ok(cleared)
+    }
+
+    #[tracing::instrument(skip(self), fields(
+        keyspace_name = self.keyspace_name,
+        cleared
+    ))]
+    pub fn clear_expired_in_background(
+        &self,
+        now: Timestamp,
+        storage_type: StorageType,
+    ) -> Result<usize> {
+        let grace_period = now - jiff::SignedDuration::from_secs(10);
+        let start =
+            ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
+        let end = ExpirationRow::key_for(NamespaceId::max(), grace_period, "").into_fjall_key();
+
+        let mut cleared = 0;
+
+        loop {
+            let mut keys = self
+                .keyspace
+                .range(start.clone()..=end.clone())
+                .take(EXPIRATION_BATCH_SIZE)
+                .map(|item| item.key());
+            let Some(Ok(first)) = keys.next() else {
+                tracing::trace!("nothing to clean up");
+                break;
+            };
+            let Some(Ok(last)) = keys.last() else {
+                break;
+            };
+
+            tracing::trace!(first_key=?first, last_key=?last, "about to prune some expired keys");
+
+            let start_batch = Instant::now();
+            let num_this_batch = tracing::debug_span!("clear_expired_in_background:remove_chunk")
+                .in_scope(|| {
+                let db = self.db.lock();
+                let start_lock = Instant::now();
+                let mut batch = db.batch();
+                let mut num_this_batch = 0;
+
+                for item in self.keyspace.range(first..=last) {
+                    cleared += 1;
+                    num_this_batch += 1;
+                    let k = item.key()?;
+                    let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
+                    batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, main_key))?;
+
+                    batch.remove(&self.keyspace, k);
+                }
+                batch.commit()?;
+                drop(db);
+                let duration = start_lock.elapsed();
+                if duration > WARN_LONG_LOCK_DURATION {
+                    tracing::warn!(
+                        lock_us = duration.as_micros(),
+                        "clear_expired_in_background locked kvcontroller for a long time"
+                    );
+                }
+                Ok::<_, Error>(num_this_batch)
+            })?;
+            tracing::trace!(num_this_batch, elapsed=?start_batch.elapsed(), "cleared a batch of items");
+
+            if num_this_batch < EXPIRATION_BATCH_SIZE {
+                break;
+            }
+        }
+
+        if cleared > 0 {
             tracing::debug!(cleared, "cleared some keys");
         } else {
             tracing::trace!("no expired keys");
@@ -594,6 +680,144 @@ mod tests {
             // now it should really and truly be gone
             assert!(!key_exists(&controller, key));
             assert!(!key_exists_as_of(&controller, key, then));
+        }
+        assert!(!key_exists(&controller, "expired:key"));
+        assert!(!key_exists_as_of(&controller, "expired:key", then));
+
+        assert!(key_exists(&controller, valid_key));
+        let valid = controller.fetch(ns(), valid_key, Timestamp::now()).unwrap();
+        assert!(valid.is_some());
+        assert_eq!(valid.unwrap().value, b"valid data");
+
+        assert!(key_exists(&controller, permanent_key));
+        let permanent = controller
+            .fetch(ns(), permanent_key, Timestamp::now())
+            .unwrap();
+        assert!(permanent.is_some());
+        assert_eq!(permanent.unwrap().value, b"permanent data");
+    }
+
+    #[test]
+    fn test_clear_expired_in_background_removes_expired_entries() {
+        let setup = SetupFixture::new();
+        let controller = setup.controller;
+
+        let now = Timestamp::now();
+
+        controller
+            .set(
+                ns(),
+                "expired:key",
+                KvModelIn {
+                    value: b"expired data".to_vec(),
+                    expiry: Some(now.checked_sub(1.hour()).unwrap()),
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                now,
+                0,
+            )
+            .unwrap();
+
+        let expired_models = [
+            (
+                "expired:key:1",
+                now.checked_sub(3.hour()).unwrap(),
+                b"expired data 1".as_slice(),
+            ),
+            (
+                "expired:key:2",
+                now.checked_sub(2.hour()).unwrap(),
+                b"expired data 2".as_slice(),
+            ),
+            (
+                "expired:key:3",
+                now.checked_sub(11.second()).unwrap(),
+                b"expired data 3".as_slice(),
+            ),
+            (
+                "expired:key:4",
+                now.checked_sub(1.second()).unwrap(),
+                b"expired data that is in the grace period".as_slice(),
+            ),
+        ];
+
+        for (key, expiry, value) in &expired_models {
+            controller
+                .set(
+                    ns(),
+                    key,
+                    KvModelIn {
+                        value: value.to_vec(),
+                        expiry: Some(*expiry),
+                        version: None,
+                    },
+                    OperationBehavior::Upsert,
+                    now,
+                    0,
+                )
+                .unwrap();
+        }
+
+        let valid_key = "valid:key";
+        controller
+            .set(
+                ns(),
+                valid_key,
+                KvModelIn {
+                    value: b"valid data".to_vec(),
+                    expiry: Some(now.checked_add(1.hour()).unwrap()),
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                now,
+                0,
+            )
+            .unwrap();
+
+        let permanent_key = "permanent:key";
+        controller
+            .set(
+                ns(),
+                permanent_key,
+                KvModelIn {
+                    value: b"permanent data".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                now,
+                0,
+            )
+            .unwrap();
+
+        assert_eq!(controller.iter().unwrap().count(), 7);
+
+        // the key should have expired by now, so key_exists should already be false
+        assert!(!key_exists(&controller, "expired:key"));
+        let then = Timestamp::now().checked_sub(6.hours()).unwrap();
+        // but if we time travel to the past, it should still be there
+        assert!(key_exists_as_of(&controller, "expired:key", then));
+        for (key, _, _) in &expired_models {
+            assert!(key_exists_as_of(&controller, key, then));
+        }
+
+        assert_eq!(
+            controller
+                .clear_expired_in_background(Timestamp::now(), StorageType::Persistent)
+                .unwrap(),
+            4
+        );
+
+        for (key, _, _) in &expired_models {
+            // now it should really and truly be gone
+            assert!(!key_exists(&controller, key));
+            if *key == "expired:key:4" {
+                // this one is in the grace period
+                assert!(key_exists_as_of(&controller, key, then));
+            } else {
+                assert!(!key_exists_as_of(&controller, key, then));
+            }
         }
         assert!(!key_exists(&controller, "expired:key"));
         assert!(!key_exists_as_of(&controller, "expired:key", then));
