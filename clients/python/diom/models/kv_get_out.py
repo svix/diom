@@ -10,3 +10,7 @@ class KvGetOut(BaseModel):
     """Time of expiry"""
 
     value: t.Optional[bytes] = None
+
+    version: int
+    """Opaque version token for optimistic concurrency control.
+    Pass as `version` in a subsequent `set` to perform a conditional write."""

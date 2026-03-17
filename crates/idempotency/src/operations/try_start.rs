@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
 use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
-use diom_kv::kvcontroller::OperationBehavior;
+use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
 use fjall_utils::StorageType;
@@ -38,6 +38,7 @@ impl TryStartOperation {
         self,
         state: &IdempotencyRaftState<'_>,
         now: Timestamp,
+        log_index: u64,
     ) -> Result<TryStartResponseData> {
         let expiry = now + Duration::from_secs(self.ttl_seconds);
 
@@ -48,10 +49,14 @@ impl TryStartOperation {
                 controller.set(
                     self.namespace_id,
                     &self.key,
-                    IdempotencyState::InProgress.into(),
-                    Some(expiry),
+                    KvModelIn {
+                        value: IdempotencyState::InProgress.into(),
+                        expiry: Some(expiry),
+                        version: None,
+                    },
                     OperationBehavior::Insert,
                     now,
+                    log_index,
                 )?;
                 Ok(TryStartResponseData {
                     result: IdempotencyStartResult::Started,
@@ -77,6 +82,6 @@ impl IdempotencyRequest for TryStartOperation {
         state: IdempotencyRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> TryStartResponse {
-        TryStartResponse(self.apply_real(&state, ctx.timestamp))
+        TryStartResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index))
     }
 }

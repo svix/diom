@@ -3,6 +3,7 @@
 export interface KvSetOut {
     /** Whether the operation succeeded or was a noop due to pre-conditions. */
     success: boolean;
+    version: number;
 }
 
 export const KvSetOutSerializer = {
@@ -10,6 +11,7 @@ export const KvSetOutSerializer = {
     _fromJsonObject(object: any): KvSetOut {
         return {
             success: object['success'],
+            version: object['version'],
         };
     },
 
@@ -17,6 +19,7 @@ export const KvSetOutSerializer = {
     _toJsonObject(self: KvSetOut): any {
         return {
             'success': self.success,
+            'version': self.version,
         };
     }
 }

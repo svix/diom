@@ -11,7 +11,7 @@ use diom_error::{OptionExt, ResultExt};
 use diom_kv::{
     KvNamespace,
     kvcontroller::{KvModel, OperationBehavior},
-    operations::{CreateKvOperation, DeleteOperation, SetOperation},
+    operations::{CreateKvOperation, DeleteOperation, SetOperation, SetResponseData},
 };
 use diom_namespace::entities::StorageType;
 use diom_proto::MsgPackOrJson;
@@ -36,12 +36,17 @@ pub struct KvSetIn {
 
     #[serde(default)]
     pub behavior: OperationBehavior,
+
+    /// If set, the write only succeeds when the stored version matches this value.
+    /// Use the `version` field from a prior `get` response.
+    pub version: Option<u64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetOut {
     /// Whether the operation succeeded or was a noop due to pre-conditions.
     pub success: bool,
+    pub version: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -59,6 +64,10 @@ pub struct KvGetOut {
     pub expiry: Option<Timestamp>,
 
     pub value: Option<Vec<u8>>,
+
+    /// Opaque version token for optimistic concurrency control.
+    /// Pass as `version` in a subsequent `set` to perform a conditional write.
+    pub version: u64,
 }
 
 impl KvGetOut {
@@ -66,6 +75,7 @@ impl KvGetOut {
         Self {
             expiry: model.expiry,
             value: Some(model.value),
+            version: model.version,
         }
     }
 }
@@ -95,12 +105,18 @@ async fn kv_set(
         .fetch_namespace(data.key.namespace())?
         .ok_or_not_found()?;
 
-    let operation = SetOperation::new(namespace, data.key, data.value, data.ttl, data.behavior);
-    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
+    let operation = SetOperation::new(
+        namespace,
+        data.key,
+        data.value,
+        data.ttl,
+        data.behavior,
+        data.version,
+    );
+    let SetResponseData { version, success } =
+        repl.client_write(operation).await.or_internal_error()?.0?;
 
-    let ret = KvSetOut {
-        success: resp.success,
-    };
+    let ret = KvSetOut { version, success };
     Ok(MsgPackOrJson(ret))
 }
 
@@ -131,6 +147,7 @@ async fn kv_get(
         None => KvGetOut {
             expiry: None,
             value: None,
+            version: 0,
         },
     };
     Ok(MsgPackOrJson(ret))

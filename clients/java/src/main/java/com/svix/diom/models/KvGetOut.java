@@ -30,6 +30,7 @@ import lombok.ToString;
 public class KvGetOut {
 @JsonProperty private OffsetDateTime expiry;
 @JsonProperty private List<Byte> value;
+@JsonProperty private Long version;
 public KvGetOut () {}
 
  public KvGetOut expiry(OffsetDateTime expiry) {
@@ -75,6 +76,26 @@ public KvGetOut () {}
 
      public void setValue(List<Byte> value) {
         this.value = value;
+    }
+
+     public KvGetOut version(Long version) {
+        this.version = version;
+        return this;
+    }
+
+    /**
+    * Opaque version token for optimistic concurrency control.
+Pass as `version` in a subsequent `set` to perform a conditional write.
+    *
+     * @return version
+     */
+    @javax.annotation.Nonnull
+     public Long getVersion() {
+        return version;
+    }
+
+     public void setVersion(Long version) {
+        this.version = version;
     }
 
     /**
