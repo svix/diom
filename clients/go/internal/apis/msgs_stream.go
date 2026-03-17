@@ -39,8 +39,6 @@ func (msgsStream MsgsStream) Receive(
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/receive",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -66,8 +64,6 @@ func (msgsStream MsgsStream) Commit(
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/commit",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -95,8 +91,6 @@ func (msgsStream MsgsStream) Seek(
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/seek",
-		nil,
-		nil,
 		&body,
 	)
 }

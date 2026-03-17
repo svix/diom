@@ -35,8 +35,6 @@ func (msgsTopic MsgsTopic) Configure(
 		msgsTopic.client,
 		"POST",
 		"/api/v1/msgs/topic/configure",
-		nil,
-		nil,
 		&body,
 	)
 }

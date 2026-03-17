@@ -38,8 +38,6 @@ func (cache Cache) Set(
 		cache.client,
 		"POST",
 		"/api/v1/cache/set",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -60,8 +58,6 @@ func (cache Cache) Get(
 		cache.client,
 		"POST",
 		"/api/v1/cache/get",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -81,8 +77,6 @@ func (cache Cache) Delete(
 		cache.client,
 		"POST",
 		"/api/v1/cache/delete",
-		nil,
-		nil,
 		&body,
 	)
 }
