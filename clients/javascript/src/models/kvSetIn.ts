@@ -9,6 +9,11 @@ export interface KvSetIn {
     /** Time to live in milliseconds */
     ttl?: number | null;
     behavior?: OperationBehavior;
+    /**
+* If set, the write only succeeds when the stored version matches this value.
+* Use the `version` field from a prior `get` response.
+*/
+    version?: number | null;
 }
 
 export interface KvSetIn_ {
