@@ -1,6 +1,11 @@
 // this file is @generated
 
 export interface MsgStreamReceiveIn {
+    batchSize?: number;
+    leaseDurationMillis?: number;
+}
+
+export interface MsgStreamReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
@@ -9,7 +14,7 @@ export interface MsgStreamReceiveIn {
 
 export const MsgStreamReceiveInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(object: any): MsgStreamReceiveIn {
+    _fromJsonObject(object: any): MsgStreamReceiveIn_ {
         return {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
@@ -19,7 +24,7 @@ export const MsgStreamReceiveInSerializer = {
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(self: MsgStreamReceiveIn): any {
+    _toJsonObject(self: MsgStreamReceiveIn_): any {
         return {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,

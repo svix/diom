@@ -1,6 +1,10 @@
 // this file is @generated
 
 export interface MsgQueueAckIn {
+    msgIds: string[];
+}
+
+export interface MsgQueueAckIn_ {
     topic: string;
     consumerGroup: string;
     msgIds: string[];
@@ -8,7 +12,7 @@ export interface MsgQueueAckIn {
 
 export const MsgQueueAckInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(object: any): MsgQueueAckIn {
+    _fromJsonObject(object: any): MsgQueueAckIn_ {
         return {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
@@ -17,7 +21,7 @@ export const MsgQueueAckInSerializer = {
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(self: MsgQueueAckIn): any {
+    _toJsonObject(self: MsgQueueAckIn_): any {
         return {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,

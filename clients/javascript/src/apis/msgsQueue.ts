@@ -53,15 +53,20 @@ export class MsgsQueue {
 * are acked or their lease expires.
 */
     public receive(
+        topic: string,
+        consumer_group: string,
         msgQueueReceiveIn: MsgQueueReceiveIn,
-        ): Promise<MsgQueueReceiveOut> {
+    ): Promise<MsgQueueReceiveOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/receive");
 
         request.setBody(
-            MsgQueueReceiveInSerializer._toJsonObject(
-                msgQueueReceiveIn,
-            )
+            MsgQueueReceiveInSerializer._toJsonObject({
+                ...msgQueueReceiveIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgQueueReceiveOutSerializer._fromJsonObject,
@@ -72,15 +77,20 @@ export class MsgsQueue {
 * Acked messages are permanently removed from the queue and will never be re-delivered.
 */
     public ack(
+        topic: string,
+        consumer_group: string,
         msgQueueAckIn: MsgQueueAckIn,
-        ): Promise<MsgQueueAckOut> {
+    ): Promise<MsgQueueAckOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/ack");
 
         request.setBody(
-            MsgQueueAckInSerializer._toJsonObject(
-                msgQueueAckIn,
-            )
+            MsgQueueAckInSerializer._toJsonObject({
+                ...msgQueueAckIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgQueueAckOutSerializer._fromJsonObject,
@@ -92,15 +102,20 @@ export class MsgsQueue {
 * the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
 */
     public configure(
+        topic: string,
+        consumer_group: string,
         msgQueueConfigureIn: MsgQueueConfigureIn,
-        ): Promise<MsgQueueConfigureOut> {
+    ): Promise<MsgQueueConfigureOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/configure");
 
         request.setBody(
-            MsgQueueConfigureInSerializer._toJsonObject(
-                msgQueueConfigureIn,
-            )
+            MsgQueueConfigureInSerializer._toJsonObject({
+                ...msgQueueConfigureIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgQueueConfigureOutSerializer._fromJsonObject,
@@ -112,30 +127,40 @@ export class MsgsQueue {
 * move them back to the queue for reprocessing.
 */
     public nack(
+        topic: string,
+        consumer_group: string,
         msgQueueNackIn: MsgQueueNackIn,
-        ): Promise<MsgQueueNackOut> {
+    ): Promise<MsgQueueNackOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/nack");
 
         request.setBody(
-            MsgQueueNackInSerializer._toJsonObject(
-                msgQueueNackIn,
-            )
+            MsgQueueNackInSerializer._toJsonObject({
+                ...msgQueueNackIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgQueueNackOutSerializer._fromJsonObject,
         );
     }/** Moves all dead-letter queue messages back to the main queue for reprocessing. */
     public redriveDlq(
+        topic: string,
+        consumer_group: string,
         msgQueueRedriveDlqIn: MsgQueueRedriveDlqIn,
-        ): Promise<MsgQueueRedriveDlqOut> {
+    ): Promise<MsgQueueRedriveDlqOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/queue/redrive-dlq");
 
         request.setBody(
-            MsgQueueRedriveDlqInSerializer._toJsonObject(
-                msgQueueRedriveDlqIn,
-            )
+            MsgQueueRedriveDlqInSerializer._toJsonObject({
+                ...msgQueueRedriveDlqIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgQueueRedriveDlqOutSerializer._fromJsonObject,

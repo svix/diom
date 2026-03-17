@@ -36,45 +36,54 @@ export class Cache {
 
     /** Cache Set */
     public set(
+        key: string,
         cacheSetIn: CacheSetIn,
-        ): Promise<CacheSetOut> {
+    ): Promise<CacheSetOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/set");
 
         request.setBody(
-            CacheSetInSerializer._toJsonObject(
-                cacheSetIn,
-            )
+            CacheSetInSerializer._toJsonObject({
+                ...cacheSetIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             CacheSetOutSerializer._fromJsonObject,
         );
     }/** Cache Get */
     public get(
+        key: string,
         cacheGetIn: CacheGetIn,
-        ): Promise<CacheGetOut> {
+    ): Promise<CacheGetOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/get");
 
         request.setBody(
-            CacheGetInSerializer._toJsonObject(
-                cacheGetIn,
-            )
+            CacheGetInSerializer._toJsonObject({
+                ...cacheGetIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             CacheGetOutSerializer._fromJsonObject,
         );
     }/** Cache Delete */
     public delete(
+        key: string,
         cacheDeleteIn: CacheDeleteIn,
-        ): Promise<CacheDeleteOut> {
+    ): Promise<CacheDeleteOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/delete");
 
         request.setBody(
-            CacheDeleteInSerializer._toJsonObject(
-                cacheDeleteIn,
-            )
+            CacheDeleteInSerializer._toJsonObject({
+                ...cacheDeleteIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             CacheDeleteOutSerializer._fromJsonObject,

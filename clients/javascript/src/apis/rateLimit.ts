@@ -37,14 +37,13 @@ export class RateLimit {
     /** Rate Limiter Check and Consume */
     public limit(
         rateLimitCheckIn: RateLimitCheckIn,
-        ): Promise<RateLimitCheckOut> {
+    ): Promise<RateLimitCheckOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/limit");
 
         request.setBody(
-            RateLimitCheckInSerializer._toJsonObject(
-                rateLimitCheckIn,
-            )
+            RateLimitCheckInSerializer._toJsonObject(rateLimitCheckIn)
         );
+        
         return request.send(
             this.requestCtx,
             RateLimitCheckOutSerializer._fromJsonObject,
@@ -52,14 +51,13 @@ export class RateLimit {
     }/** Rate Limiter Get Remaining */
     public getRemaining(
         rateLimitGetRemainingIn: RateLimitGetRemainingIn,
-        ): Promise<RateLimitGetRemainingOut> {
+    ): Promise<RateLimitGetRemainingOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/get-remaining");
 
         request.setBody(
-            RateLimitGetRemainingInSerializer._toJsonObject(
-                rateLimitGetRemainingIn,
-            )
+            RateLimitGetRemainingInSerializer._toJsonObject(rateLimitGetRemainingIn)
         );
+        
         return request.send(
             this.requestCtx,
             RateLimitGetRemainingOutSerializer._fromJsonObject,
@@ -67,14 +65,13 @@ export class RateLimit {
     }/** Rate Limiter Reset */
     public reset(
         rateLimitResetIn: RateLimitResetIn,
-        ): Promise<RateLimitResetOut> {
+    ): Promise<RateLimitResetOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/rate-limit/reset");
 
         request.setBody(
-            RateLimitResetInSerializer._toJsonObject(
-                rateLimitResetIn,
-            )
+            RateLimitResetInSerializer._toJsonObject(rateLimitResetIn)
         );
+        
         return request.send(
             this.requestCtx,
             RateLimitResetOutSerializer._fromJsonObject,

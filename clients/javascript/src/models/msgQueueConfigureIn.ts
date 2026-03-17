@@ -1,6 +1,11 @@
 // this file is @generated
 
 export interface MsgQueueConfigureIn {
+    retrySchedule?: number[];
+    dlqTopic?: string | null;
+}
+
+export interface MsgQueueConfigureIn_ {
     topic: string;
     consumerGroup: string;
     retrySchedule?: number[];
@@ -9,7 +14,7 @@ export interface MsgQueueConfigureIn {
 
 export const MsgQueueConfigureInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(object: any): MsgQueueConfigureIn {
+    _fromJsonObject(object: any): MsgQueueConfigureIn_ {
         return {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
@@ -19,7 +24,7 @@ export const MsgQueueConfigureInSerializer = {
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(self: MsgQueueConfigureIn): any {
+    _toJsonObject(self: MsgQueueConfigureIn_): any {
         return {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,

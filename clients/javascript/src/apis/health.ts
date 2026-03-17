@@ -11,7 +11,7 @@ export class Health {
 
     /** Verify the server is up and running. */
     public ping(
-        ): Promise<PingOut> {
+    ): Promise<PingOut> {
         const request = new DiomRequest(HttpMethod.GET, "/api/v1/health/ping");
 
         

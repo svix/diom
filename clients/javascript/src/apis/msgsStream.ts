@@ -36,15 +36,20 @@ export class MsgsStream {
 * specified duration to prevent duplicate delivery within the same consumer group.
 */
     public receive(
+        topic: string,
+        consumer_group: string,
         msgStreamReceiveIn: MsgStreamReceiveIn,
-        ): Promise<MsgStreamReceiveOut> {
+    ): Promise<MsgStreamReceiveOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/stream/receive");
 
         request.setBody(
-            MsgStreamReceiveInSerializer._toJsonObject(
-                msgStreamReceiveIn,
-            )
+            MsgStreamReceiveInSerializer._toJsonObject({
+                ...msgStreamReceiveIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgStreamReceiveOutSerializer._fromJsonObject,
@@ -56,15 +61,20 @@ export class MsgsStream {
 * successfully processed offset; future receives will start after it.
 */
     public commit(
+        topic: string,
+        consumer_group: string,
         msgStreamCommitIn: MsgStreamCommitIn,
-        ): Promise<MsgStreamCommitOut> {
+    ): Promise<MsgStreamCommitOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/stream/commit");
 
         request.setBody(
-            MsgStreamCommitInSerializer._toJsonObject(
-                msgStreamCommitIn,
-            )
+            MsgStreamCommitInSerializer._toJsonObject({
+                ...msgStreamCommitIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgStreamCommitOutSerializer._fromJsonObject,
@@ -77,15 +87,20 @@ export class MsgsStream {
 * `"latest"` and may be used with or without a partition suffix.
 */
     public seek(
+        topic: string,
+        consumer_group: string,
         msgStreamSeekIn: MsgStreamSeekIn,
-        ): Promise<MsgStreamSeekOut> {
+    ): Promise<MsgStreamSeekOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/stream/seek");
 
         request.setBody(
-            MsgStreamSeekInSerializer._toJsonObject(
-                msgStreamSeekIn,
-            )
+            MsgStreamSeekInSerializer._toJsonObject({
+                ...msgStreamSeekIn,
+                topic,
+                consumer_group,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             MsgStreamSeekOutSerializer._fromJsonObject,
