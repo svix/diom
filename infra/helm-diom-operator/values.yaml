@@ -1,0 +1,33 @@
+replicaCount: 1
+
+image:
+  repository: 780095232710.dkr.ecr.us-west-2.amazonaws.com/diom-controller
+  pullPolicy: IfNotPresent
+  # Overrides the image tag. Defaults to the chart's appVersion.
+  tag: ""
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  # If not set, defaults to the fullname of the release.
+  name: ""
+  annotations: {}
+
+rbac:
+  create: true
+
+logLevel: info
+
+podAnnotations: {}
+
+resources:
+  requests:
+    cpu: "1"
+    memory: 1024Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,25 @@
+apiVersion: diom.svix.com/v1alpha1
+kind: DiomCluster
+metadata:
+  name: diom
+  namespace: diom
+spec:
+  nodes: 3
+  image: ghcr.io/svix/diom-server:sha-450fed76623cf0a79d6384259db8d303f9a1c3e7
+  storage:
+    persistent:
+      size: 64Gi
+      storageClass: gp2
+  extraEnv:
+    - name: DIOM_OPENTELEMETRY_METRICS_ADDRESS
+      value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+    - name: DIOM_OPENTELEMETRY_METRICS_USE_HTTP
+      value: "true"
+    - name: RUST_LOG
+      value: debug
+    - name: RUST_BACKTRACE
+      value: "1"
+    - name: DIOM_LOG_FORMAT
+      value: "json"
+    - name: DIOM_OPENTELEMETRY_ADDRESS
+      value: grpc://datadog-agent.datadog.svc.cluster.local:4317
