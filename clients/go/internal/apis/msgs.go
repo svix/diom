@@ -10,15 +10,24 @@ import (
 )
 
 type Msgs struct {
-	client    *coyote_proto.HttpClient
-	Namespace *MsgsNamespace
-	Queue     *MsgsQueue
-	Stream    *MsgsStream
-	Topic     *MsgsTopic
+	client *coyote_proto.HttpClient
 }
 
 func NewMsgs(client *coyote_proto.HttpClient) Msgs {
 	return Msgs{client}
+}
+
+func (msgs Msgs) Namespace() MsgsNamespace {
+	return NewMsgsNamespace(msgs.client)
+}
+func (msgs Msgs) Queue() MsgsQueue {
+	return NewMsgsQueue(msgs.client)
+}
+func (msgs Msgs) Stream() MsgsStream {
+	return NewMsgsStream(msgs.client)
+}
+func (msgs Msgs) Topic() MsgsTopic {
+	return NewMsgsTopic(msgs.client)
 }
 
 // Publishes messages to a topic within a namespace.
