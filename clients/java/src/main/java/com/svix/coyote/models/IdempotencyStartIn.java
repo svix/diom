@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyStartIn {
-@JsonProperty private String key;
-@JsonProperty private Long ttl;
-public IdempotencyStartIn () {}
+    @JsonProperty private String key;
+    @JsonProperty private Long ttl;
+    public IdempotencyStartIn () {}
 
- public IdempotencyStartIn key(String key) {
+    public IdempotencyStartIn key(String key) {
         this.key = key;
         return this;
     }
@@ -43,15 +43,15 @@ public IdempotencyStartIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
-     public IdempotencyStartIn ttl(Long ttl) {
+    public IdempotencyStartIn ttl(Long ttl) {
         this.ttl = ttl;
         return this;
     }
@@ -62,14 +62,13 @@ public IdempotencyStartIn () {}
      * @return ttl
      */
     @javax.annotation.Nonnull
-     public Long getTtl() {
+    public Long getTtl() {
         return ttl;
     }
 
-     public void setTtl(Long ttl) {
+    public void setTtl(Long ttl) {
         this.ttl = ttl;
     }
-
     /**
      * Create an instance of IdempotencyStartIn given an JSON string
      *

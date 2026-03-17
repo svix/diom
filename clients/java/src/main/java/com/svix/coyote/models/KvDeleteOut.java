@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvDeleteOut {
-@JsonProperty private Boolean success;
-public KvDeleteOut () {}
+    @JsonProperty private Boolean success;
+    public KvDeleteOut () {}
 
- public KvDeleteOut success(Boolean success) {
+    public KvDeleteOut success(Boolean success) {
         this.success = success;
         return this;
     }
@@ -42,14 +42,13 @@ public KvDeleteOut () {}
      * @return success
      */
     @javax.annotation.Nonnull
-     public Boolean getSuccess() {
+    public Boolean getSuccess() {
         return success;
     }
 
-     public void setSuccess(Boolean success) {
+    public void setSuccess(Boolean success) {
         this.success = success;
     }
-
     /**
      * Create an instance of KvDeleteOut given an JSON string
      *

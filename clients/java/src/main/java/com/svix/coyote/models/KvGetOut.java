@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvGetOut {
-@JsonProperty private OffsetDateTime expiry;
-@JsonProperty private List<Byte> value;
-@JsonProperty private Long version;
-public KvGetOut () {}
+    @JsonProperty private OffsetDateTime expiry;
+    @JsonProperty private List<Byte> value;
+    @JsonProperty private Long version;
+    public KvGetOut () {}
 
- public KvGetOut expiry(OffsetDateTime expiry) {
+    public KvGetOut expiry(OffsetDateTime expiry) {
         this.expiry = expiry;
         return this;
     }
@@ -44,20 +44,20 @@ public KvGetOut () {}
      * @return expiry
      */
     @javax.annotation.Nullable
-     public OffsetDateTime getExpiry() {
+    public OffsetDateTime getExpiry() {
         return expiry;
     }
 
-     public void setExpiry(OffsetDateTime expiry) {
+    public void setExpiry(OffsetDateTime expiry) {
         this.expiry = expiry;
     }
 
-     public KvGetOut value(List<Byte> value) {
+    public KvGetOut value(List<Byte> value) {
         this.value = value;
         return this;
     }
 
-     public KvGetOut addValueItem(Byte valueItem) {
+    public KvGetOut addValueItem(Byte valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -70,15 +70,15 @@ public KvGetOut () {}
      * @return value
      */
     @javax.annotation.Nullable
-     public List<Byte> getValue() {
+    public List<Byte> getValue() {
         return value;
     }
 
-     public void setValue(List<Byte> value) {
+    public void setValue(List<Byte> value) {
         this.value = value;
     }
 
-     public KvGetOut version(Long version) {
+    public KvGetOut version(Long version) {
         this.version = version;
         return this;
     }
@@ -90,14 +90,13 @@ Pass as `version` in a subsequent `set` to perform a conditional write.
      * @return version
      */
     @javax.annotation.Nonnull
-     public Long getVersion() {
+    public Long getVersion() {
         return version;
     }
 
-     public void setVersion(Long version) {
+    public void setVersion(Long version) {
         this.version = version;
     }
-
     /**
      * Create an instance of KvGetOut given an JSON string
      *

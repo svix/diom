@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgNamespaceCreateIn {
-@JsonProperty private String name;
-@JsonProperty private Retention retention;
-@JsonProperty("storage_type") private StorageType storageType;
-public MsgNamespaceCreateIn () {}
+    @JsonProperty private String name;
+    @JsonProperty private Retention retention;
+    @JsonProperty("storage_type") private StorageType storageType;
+    public MsgNamespaceCreateIn () {}
 
- public MsgNamespaceCreateIn name(String name) {
+    public MsgNamespaceCreateIn name(String name) {
         this.name = name;
         return this;
     }
@@ -44,15 +44,15 @@ public MsgNamespaceCreateIn () {}
      * @return name
      */
     @javax.annotation.Nonnull
-     public String getName() {
+    public String getName() {
         return name;
     }
 
-     public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-     public MsgNamespaceCreateIn retention(Retention retention) {
+    public MsgNamespaceCreateIn retention(Retention retention) {
         this.retention = retention;
         return this;
     }
@@ -63,15 +63,15 @@ public MsgNamespaceCreateIn () {}
      * @return retention
      */
     @javax.annotation.Nullable
-     public Retention getRetention() {
+    public Retention getRetention() {
         return retention;
     }
 
-     public void setRetention(Retention retention) {
+    public void setRetention(Retention retention) {
         this.retention = retention;
     }
 
-     public MsgNamespaceCreateIn storageType(StorageType storageType) {
+    public MsgNamespaceCreateIn storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -82,14 +82,13 @@ public MsgNamespaceCreateIn () {}
      * @return storageType
      */
     @javax.annotation.Nullable
-     public StorageType getStorageType() {
+    public StorageType getStorageType() {
         return storageType;
     }
 
-     public void setStorageType(StorageType storageType) {
+    public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
     }
-
     /**
      * Create an instance of MsgNamespaceCreateIn given an JSON string
      *

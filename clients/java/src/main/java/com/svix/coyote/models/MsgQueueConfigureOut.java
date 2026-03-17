@@ -26,18 +26,18 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueConfigureOut {
-@JsonProperty("retry_schedule") private List<Long> retrySchedule;
-@JsonProperty("dlq_topic") private String dlqTopic;
-public MsgQueueConfigureOut () {}
+    @JsonProperty("retry_schedule") private List<Long> retrySchedule;
+    @JsonProperty("dlq_topic") private String dlqTopic;
+    public MsgQueueConfigureOut () {}
 
- public MsgQueueConfigureOut retrySchedule(List<Long> retrySchedule) {
+    public MsgQueueConfigureOut retrySchedule(List<Long> retrySchedule) {
         this.retrySchedule = retrySchedule;
         return this;
     }
 
-     public MsgQueueConfigureOut addRetryScheduleItem(Long retryScheduleItem) {
+    public MsgQueueConfigureOut addRetryScheduleItem(Long retryScheduleItem) {
         if (this.retrySchedule == null) {
             this.retrySchedule = new ArrayList<>();
         }
@@ -50,15 +50,15 @@ public MsgQueueConfigureOut () {}
      * @return retrySchedule
      */
     @javax.annotation.Nonnull
-     public List<Long> getRetrySchedule() {
+    public List<Long> getRetrySchedule() {
         return retrySchedule;
     }
 
-     public void setRetrySchedule(List<Long> retrySchedule) {
+    public void setRetrySchedule(List<Long> retrySchedule) {
         this.retrySchedule = retrySchedule;
     }
 
-     public MsgQueueConfigureOut dlqTopic(String dlqTopic) {
+    public MsgQueueConfigureOut dlqTopic(String dlqTopic) {
         this.dlqTopic = dlqTopic;
         return this;
     }
@@ -69,14 +69,13 @@ public MsgQueueConfigureOut () {}
      * @return dlqTopic
      */
     @javax.annotation.Nullable
-     public String getDlqTopic() {
+    public String getDlqTopic() {
         return dlqTopic;
     }
 
-     public void setDlqTopic(String dlqTopic) {
+    public void setDlqTopic(String dlqTopic) {
         this.dlqTopic = dlqTopic;
     }
-
     /**
      * Create an instance of MsgQueueConfigureOut given an JSON string
      *

@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamCommitIn {
-@JsonProperty private String topic;
-@JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty private Long offset;
-public MsgStreamCommitIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty("consumer_group") private String consumerGroup;
+    @JsonProperty private Long offset;
+    public MsgStreamCommitIn () {}
 
- public MsgStreamCommitIn topic(String topic) {
+    public MsgStreamCommitIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -44,15 +44,15 @@ public MsgStreamCommitIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgStreamCommitIn consumerGroup(String consumerGroup) {
+    public MsgStreamCommitIn consumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
         return this;
     }
@@ -63,15 +63,15 @@ public MsgStreamCommitIn () {}
      * @return consumerGroup
      */
     @javax.annotation.Nonnull
-     public String getConsumerGroup() {
+    public String getConsumerGroup() {
         return consumerGroup;
     }
 
-     public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
 
-     public MsgStreamCommitIn offset(Long offset) {
+    public MsgStreamCommitIn offset(Long offset) {
         this.offset = offset;
         return this;
     }
@@ -82,14 +82,13 @@ public MsgStreamCommitIn () {}
      * @return offset
      */
     @javax.annotation.Nonnull
-     public Long getOffset() {
+    public Long getOffset() {
         return offset;
     }
 
-     public void setOffset(Long offset) {
+    public void setOffset(Long offset) {
         this.offset = offset;
     }
-
     /**
      * Create an instance of MsgStreamCommitIn given an JSON string
      *

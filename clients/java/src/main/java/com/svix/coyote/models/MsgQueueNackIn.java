@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueNackIn {
-@JsonProperty private String topic;
-@JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty("msg_ids") private List<String> msgIds;
-public MsgQueueNackIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty("consumer_group") private String consumerGroup;
+    @JsonProperty("msg_ids") private List<String> msgIds;
+    public MsgQueueNackIn () {}
 
- public MsgQueueNackIn topic(String topic) {
+    public MsgQueueNackIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -44,15 +44,15 @@ public MsgQueueNackIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgQueueNackIn consumerGroup(String consumerGroup) {
+    public MsgQueueNackIn consumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
         return this;
     }
@@ -63,20 +63,20 @@ public MsgQueueNackIn () {}
      * @return consumerGroup
      */
     @javax.annotation.Nonnull
-     public String getConsumerGroup() {
+    public String getConsumerGroup() {
         return consumerGroup;
     }
 
-     public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
 
-     public MsgQueueNackIn msgIds(List<String> msgIds) {
+    public MsgQueueNackIn msgIds(List<String> msgIds) {
         this.msgIds = msgIds;
         return this;
     }
 
-     public MsgQueueNackIn addMsgIdsItem(String msgIdsItem) {
+    public MsgQueueNackIn addMsgIdsItem(String msgIdsItem) {
         if (this.msgIds == null) {
             this.msgIds = new ArrayList<>();
         }
@@ -89,14 +89,13 @@ public MsgQueueNackIn () {}
      * @return msgIds
      */
     @javax.annotation.Nonnull
-     public List<String> getMsgIds() {
+    public List<String> getMsgIds() {
         return msgIds;
     }
 
-     public void setMsgIds(List<String> msgIds) {
+    public void setMsgIds(List<String> msgIds) {
         this.msgIds = msgIds;
     }
-
     /**
      * Create an instance of MsgQueueNackIn given an JSON string
      *

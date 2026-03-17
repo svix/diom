@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class Retention {
-@JsonProperty private Long millis;
-@JsonProperty private Long bytes;
-public Retention () {}
+    @JsonProperty private Long millis;
+    @JsonProperty private Long bytes;
+    public Retention () {}
 
- public Retention millis(Long millis) {
+    public Retention millis(Long millis) {
         this.millis = millis;
         return this;
     }
@@ -43,15 +43,15 @@ public Retention () {}
      * @return millis
      */
     @javax.annotation.Nullable
-     public Long getMillis() {
+    public Long getMillis() {
         return millis;
     }
 
-     public void setMillis(Long millis) {
+    public void setMillis(Long millis) {
         this.millis = millis;
     }
 
-     public Retention bytes(Long bytes) {
+    public Retention bytes(Long bytes) {
         this.bytes = bytes;
         return this;
     }
@@ -62,14 +62,13 @@ public Retention () {}
      * @return bytes
      */
     @javax.annotation.Nullable
-     public Long getBytes() {
+    public Long getBytes() {
         return bytes;
     }
 
-     public void setBytes(Long bytes) {
+    public void setBytes(Long bytes) {
         this.bytes = bytes;
     }
-
     /**
      * Create an instance of Retention given an JSON string
      *

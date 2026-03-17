@@ -26,16 +26,16 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvSetIn {
-@JsonProperty private String key;
-@JsonProperty private List<Byte> value;
-@JsonProperty private Long ttl;
-@JsonProperty private OperationBehavior behavior;
-@JsonProperty private Long version;
-public KvSetIn () {}
+    @JsonProperty private String key;
+    @JsonProperty private List<Byte> value;
+    @JsonProperty private Long ttl;
+    @JsonProperty private OperationBehavior behavior;
+    @JsonProperty private Long version;
+    public KvSetIn () {}
 
- public KvSetIn key(String key) {
+    public KvSetIn key(String key) {
         this.key = key;
         return this;
     }
@@ -46,20 +46,20 @@ public KvSetIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
-     public KvSetIn value(List<Byte> value) {
+    public KvSetIn value(List<Byte> value) {
         this.value = value;
         return this;
     }
 
-     public KvSetIn addValueItem(Byte valueItem) {
+    public KvSetIn addValueItem(Byte valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -72,15 +72,15 @@ public KvSetIn () {}
      * @return value
      */
     @javax.annotation.Nonnull
-     public List<Byte> getValue() {
+    public List<Byte> getValue() {
         return value;
     }
 
-     public void setValue(List<Byte> value) {
+    public void setValue(List<Byte> value) {
         this.value = value;
     }
 
-     public KvSetIn ttl(Long ttl) {
+    public KvSetIn ttl(Long ttl) {
         this.ttl = ttl;
         return this;
     }
@@ -91,15 +91,15 @@ public KvSetIn () {}
      * @return ttl
      */
     @javax.annotation.Nullable
-     public Long getTtl() {
+    public Long getTtl() {
         return ttl;
     }
 
-     public void setTtl(Long ttl) {
+    public void setTtl(Long ttl) {
         this.ttl = ttl;
     }
 
-     public KvSetIn behavior(OperationBehavior behavior) {
+    public KvSetIn behavior(OperationBehavior behavior) {
         this.behavior = behavior;
         return this;
     }
@@ -110,15 +110,15 @@ public KvSetIn () {}
      * @return behavior
      */
     @javax.annotation.Nullable
-     public OperationBehavior getBehavior() {
+    public OperationBehavior getBehavior() {
         return behavior;
     }
 
-     public void setBehavior(OperationBehavior behavior) {
+    public void setBehavior(OperationBehavior behavior) {
         this.behavior = behavior;
     }
 
-     public KvSetIn version(Long version) {
+    public KvSetIn version(Long version) {
         this.version = version;
         return this;
     }
@@ -130,14 +130,13 @@ Use the `version` field from a prior `get` response.
      * @return version
      */
     @javax.annotation.Nullable
-     public Long getVersion() {
+    public Long getVersion() {
         return version;
     }
 
-     public void setVersion(Long version) {
+    public void setVersion(Long version) {
         this.version = version;
     }
-
     /**
      * Create an instance of KvSetIn given an JSON string
      *

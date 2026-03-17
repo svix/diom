@@ -26,19 +26,19 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgIn {
-@JsonProperty private List<Byte> value;
-@JsonProperty private Map<String,String> headers;
-@JsonProperty private String key;
-public MsgIn () {}
+    @JsonProperty private List<Byte> value;
+    @JsonProperty private Map<String,String> headers;
+    @JsonProperty private String key;
+    public MsgIn () {}
 
- public MsgIn value(List<Byte> value) {
+    public MsgIn value(List<Byte> value) {
         this.value = value;
         return this;
     }
 
-     public MsgIn addValueItem(Byte valueItem) {
+    public MsgIn addValueItem(Byte valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -51,20 +51,20 @@ public MsgIn () {}
      * @return value
      */
     @javax.annotation.Nonnull
-     public List<Byte> getValue() {
+    public List<Byte> getValue() {
         return value;
     }
 
-     public void setValue(List<Byte> value) {
+    public void setValue(List<Byte> value) {
         this.value = value;
     }
 
-     public MsgIn headers(Map<String,String> headers) {
+    public MsgIn headers(Map<String,String> headers) {
         this.headers = headers;
         return this;
     }
 
-     public MsgIn putHeadersItem(String key, String headersItem) {
+    public MsgIn putHeadersItem(String key, String headersItem) {
         if (this.headers == null) {
             this.headers = new HashMap<>();
         }
@@ -77,15 +77,15 @@ public MsgIn () {}
      * @return headers
      */
     @javax.annotation.Nullable
-     public Map<String,String> getHeaders() {
+    public Map<String,String> getHeaders() {
         return headers;
     }
 
-     public void setHeaders(Map<String,String> headers) {
+    public void setHeaders(Map<String,String> headers) {
         this.headers = headers;
     }
 
-     public MsgIn key(String key) {
+    public MsgIn key(String key) {
         this.key = key;
         return this;
     }
@@ -96,14 +96,13 @@ public MsgIn () {}
      * @return key
      */
     @javax.annotation.Nullable
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
-
     /**
      * Create an instance of MsgIn given an JSON string
      *

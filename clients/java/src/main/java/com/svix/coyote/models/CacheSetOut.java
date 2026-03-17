@@ -26,11 +26,10 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheSetOut {
-public CacheSetOut () {}
-
-/**
+    public CacheSetOut () {}
+    /**
      * Create an instance of CacheSetOut given an JSON string
      *
      * @param jsonString JSON string

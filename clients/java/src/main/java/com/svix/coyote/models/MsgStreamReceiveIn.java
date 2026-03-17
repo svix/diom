@@ -26,15 +26,15 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamReceiveIn {
-@JsonProperty private String topic;
-@JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty("batch_size") private Short batchSize;
-@JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
-public MsgStreamReceiveIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty("consumer_group") private String consumerGroup;
+    @JsonProperty("batch_size") private Short batchSize;
+    @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
+    public MsgStreamReceiveIn () {}
 
- public MsgStreamReceiveIn topic(String topic) {
+    public MsgStreamReceiveIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -45,15 +45,15 @@ public MsgStreamReceiveIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgStreamReceiveIn consumerGroup(String consumerGroup) {
+    public MsgStreamReceiveIn consumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
         return this;
     }
@@ -64,15 +64,15 @@ public MsgStreamReceiveIn () {}
      * @return consumerGroup
      */
     @javax.annotation.Nonnull
-     public String getConsumerGroup() {
+    public String getConsumerGroup() {
         return consumerGroup;
     }
 
-     public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
 
-     public MsgStreamReceiveIn batchSize(Short batchSize) {
+    public MsgStreamReceiveIn batchSize(Short batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -83,15 +83,15 @@ public MsgStreamReceiveIn () {}
      * @return batchSize
      */
     @javax.annotation.Nullable
-     public Short getBatchSize() {
+    public Short getBatchSize() {
         return batchSize;
     }
 
-     public void setBatchSize(Short batchSize) {
+    public void setBatchSize(Short batchSize) {
         this.batchSize = batchSize;
     }
 
-     public MsgStreamReceiveIn leaseDurationMillis(Long leaseDurationMillis) {
+    public MsgStreamReceiveIn leaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
         return this;
     }
@@ -102,14 +102,13 @@ public MsgStreamReceiveIn () {}
      * @return leaseDurationMillis
      */
     @javax.annotation.Nullable
-     public Long getLeaseDurationMillis() {
+    public Long getLeaseDurationMillis() {
         return leaseDurationMillis;
     }
 
-     public void setLeaseDurationMillis(Long leaseDurationMillis) {
+    public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
     }
-
     /**
      * Create an instance of MsgStreamReceiveIn given an JSON string
      *

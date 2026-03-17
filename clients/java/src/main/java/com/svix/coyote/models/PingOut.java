@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class PingOut {
-@JsonProperty private Boolean ok;
-public PingOut () {}
+    @JsonProperty private Boolean ok;
+    public PingOut () {}
 
- public PingOut ok(Boolean ok) {
+    public PingOut ok(Boolean ok) {
         this.ok = ok;
         return this;
     }
@@ -42,14 +42,13 @@ public PingOut () {}
      * @return ok
      */
     @javax.annotation.Nonnull
-     public Boolean getOk() {
+    public Boolean getOk() {
         return ok;
     }
 
-     public void setOk(Boolean ok) {
+    public void setOk(Boolean ok) {
         this.ok = ok;
     }
-
     /**
      * Create an instance of PingOut given an JSON string
      *

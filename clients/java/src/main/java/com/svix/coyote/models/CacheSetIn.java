@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheSetIn {
-@JsonProperty private String key;
-@JsonProperty private List<Byte> value;
-@JsonProperty private Long ttl;
-public CacheSetIn () {}
+    @JsonProperty private String key;
+    @JsonProperty private List<Byte> value;
+    @JsonProperty private Long ttl;
+    public CacheSetIn () {}
 
- public CacheSetIn key(String key) {
+    public CacheSetIn key(String key) {
         this.key = key;
         return this;
     }
@@ -44,20 +44,20 @@ public CacheSetIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
-     public CacheSetIn value(List<Byte> value) {
+    public CacheSetIn value(List<Byte> value) {
         this.value = value;
         return this;
     }
 
-     public CacheSetIn addValueItem(Byte valueItem) {
+    public CacheSetIn addValueItem(Byte valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -70,15 +70,15 @@ public CacheSetIn () {}
      * @return value
      */
     @javax.annotation.Nonnull
-     public List<Byte> getValue() {
+    public List<Byte> getValue() {
         return value;
     }
 
-     public void setValue(List<Byte> value) {
+    public void setValue(List<Byte> value) {
         this.value = value;
     }
 
-     public CacheSetIn ttl(Long ttl) {
+    public CacheSetIn ttl(Long ttl) {
         this.ttl = ttl;
         return this;
     }
@@ -89,14 +89,13 @@ public CacheSetIn () {}
      * @return ttl
      */
     @javax.annotation.Nonnull
-     public Long getTtl() {
+    public Long getTtl() {
         return ttl;
     }
 
-     public void setTtl(Long ttl) {
+    public void setTtl(Long ttl) {
         this.ttl = ttl;
     }
-
     /**
      * Create an instance of CacheSetIn given an JSON string
      *

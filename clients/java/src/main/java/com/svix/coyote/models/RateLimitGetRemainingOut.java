@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitGetRemainingOut {
-@JsonProperty private Long remaining;
-@JsonProperty("retry_after_millis") private Long retryAfterMillis;
-public RateLimitGetRemainingOut () {}
+    @JsonProperty private Long remaining;
+    @JsonProperty("retry_after_millis") private Long retryAfterMillis;
+    public RateLimitGetRemainingOut () {}
 
- public RateLimitGetRemainingOut remaining(Long remaining) {
+    public RateLimitGetRemainingOut remaining(Long remaining) {
         this.remaining = remaining;
         return this;
     }
@@ -43,15 +43,15 @@ public RateLimitGetRemainingOut () {}
      * @return remaining
      */
     @javax.annotation.Nonnull
-     public Long getRemaining() {
+    public Long getRemaining() {
         return remaining;
     }
 
-     public void setRemaining(Long remaining) {
+    public void setRemaining(Long remaining) {
         this.remaining = remaining;
     }
 
-     public RateLimitGetRemainingOut retryAfterMillis(Long retryAfterMillis) {
+    public RateLimitGetRemainingOut retryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
         return this;
     }
@@ -62,14 +62,13 @@ public RateLimitGetRemainingOut () {}
      * @return retryAfterMillis
      */
     @javax.annotation.Nullable
-     public Long getRetryAfterMillis() {
+    public Long getRetryAfterMillis() {
         return retryAfterMillis;
     }
 
-     public void setRetryAfterMillis(Long retryAfterMillis) {
+    public void setRetryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
     }
-
     /**
      * Create an instance of RateLimitGetRemainingOut given an JSON string
      *
