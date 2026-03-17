@@ -42,7 +42,6 @@ jobs:
     with:
       image_name: svix/diom-operator
       target: prod
-      context: ./infra/operator
       file: ./infra/operator/Dockerfile
     permissions:
       actions: read
