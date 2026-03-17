@@ -23,16 +23,25 @@ func NewMsgsStream(client *coyote_proto.HttpClient) MsgsStream {
 // specified duration to prevent duplicate delivery within the same consumer group.
 func (msgsStream MsgsStream) Receive(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgStreamReceiveIn coyote_models.MsgStreamReceiveIn,
 ) (*coyote_models.MsgStreamReceiveOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamReceiveIn, coyote_models.MsgStreamReceiveOut](
+	body := coyote_models.MsgStreamReceiveIn_{
+		Topic:               topic,
+		ConsumerGroup:       consumerGroup,
+		BatchSize:           msgStreamReceiveIn.BatchSize,
+		LeaseDurationMillis: msgStreamReceiveIn.LeaseDurationMillis,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamReceiveIn_, coyote_models.MsgStreamReceiveOut](
 		ctx,
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/receive",
 		nil,
 		nil,
-		&msgStreamReceiveIn,
+		&body,
 	)
 }
 
@@ -42,16 +51,24 @@ func (msgsStream MsgsStream) Receive(
 // successfully processed offset; future receives will start after it.
 func (msgsStream MsgsStream) Commit(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgStreamCommitIn coyote_models.MsgStreamCommitIn,
 ) (*coyote_models.MsgStreamCommitOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamCommitIn, coyote_models.MsgStreamCommitOut](
+	body := coyote_models.MsgStreamCommitIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		Offset:        msgStreamCommitIn.Offset,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamCommitIn_, coyote_models.MsgStreamCommitOut](
 		ctx,
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/commit",
 		nil,
 		nil,
-		&msgStreamCommitIn,
+		&body,
 	)
 }
 
@@ -62,15 +79,24 @@ func (msgsStream MsgsStream) Commit(
 // `"latest"` and may be used with or without a partition suffix.
 func (msgsStream MsgsStream) Seek(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgStreamSeekIn coyote_models.MsgStreamSeekIn,
 ) (*coyote_models.MsgStreamSeekOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamSeekIn, coyote_models.MsgStreamSeekOut](
+	body := coyote_models.MsgStreamSeekIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		Offset:        msgStreamSeekIn.Offset,
+		Position:      msgStreamSeekIn.Position,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamSeekIn_, coyote_models.MsgStreamSeekOut](
 		ctx,
 		msgsStream.client,
 		"POST",
 		"/api/v1/msgs/stream/seek",
 		nil,
 		nil,
-		&msgStreamSeekIn,
+		&body,
 	)
 }

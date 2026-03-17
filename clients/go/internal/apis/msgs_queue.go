@@ -24,16 +24,25 @@ func NewMsgsQueue(client *coyote_proto.HttpClient) MsgsQueue {
 // are acked or their lease expires.
 func (msgsQueue MsgsQueue) Receive(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueReceiveIn coyote_models.MsgQueueReceiveIn,
 ) (*coyote_models.MsgQueueReceiveOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueReceiveIn, coyote_models.MsgQueueReceiveOut](
+	body := coyote_models.MsgQueueReceiveIn_{
+		Topic:               topic,
+		ConsumerGroup:       consumerGroup,
+		BatchSize:           msgQueueReceiveIn.BatchSize,
+		LeaseDurationMillis: msgQueueReceiveIn.LeaseDurationMillis,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueReceiveIn_, coyote_models.MsgQueueReceiveOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/receive",
 		nil,
 		nil,
-		&msgQueueReceiveIn,
+		&body,
 	)
 }
 
@@ -42,16 +51,24 @@ func (msgsQueue MsgsQueue) Receive(
 // Acked messages are permanently removed from the queue and will never be re-delivered.
 func (msgsQueue MsgsQueue) Ack(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueAckIn coyote_models.MsgQueueAckIn,
 ) (*coyote_models.MsgQueueAckOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueAckIn, coyote_models.MsgQueueAckOut](
+	body := coyote_models.MsgQueueAckIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		MsgIds:        msgQueueAckIn.MsgIds,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueAckIn_, coyote_models.MsgQueueAckOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/ack",
 		nil,
 		nil,
-		&msgQueueAckIn,
+		&body,
 	)
 }
 
@@ -61,16 +78,25 @@ func (msgsQueue MsgsQueue) Ack(
 // the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
 func (msgsQueue MsgsQueue) Configure(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueConfigureIn coyote_models.MsgQueueConfigureIn,
 ) (*coyote_models.MsgQueueConfigureOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueConfigureIn, coyote_models.MsgQueueConfigureOut](
+	body := coyote_models.MsgQueueConfigureIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		RetrySchedule: msgQueueConfigureIn.RetrySchedule,
+		DlqTopic:      msgQueueConfigureIn.DlqTopic,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueConfigureIn_, coyote_models.MsgQueueConfigureOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/configure",
 		nil,
 		nil,
-		&msgQueueConfigureIn,
+		&body,
 	)
 }
 
@@ -80,31 +106,46 @@ func (msgsQueue MsgsQueue) Configure(
 // move them back to the queue for reprocessing.
 func (msgsQueue MsgsQueue) Nack(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueNackIn coyote_models.MsgQueueNackIn,
 ) (*coyote_models.MsgQueueNackOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueNackIn, coyote_models.MsgQueueNackOut](
+	body := coyote_models.MsgQueueNackIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		MsgIds:        msgQueueNackIn.MsgIds,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueNackIn_, coyote_models.MsgQueueNackOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/nack",
 		nil,
 		nil,
-		&msgQueueNackIn,
+		&body,
 	)
 }
 
 // Moves all dead-letter queue messages back to the main queue for reprocessing.
 func (msgsQueue MsgsQueue) RedriveDlq(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueRedriveDlqIn coyote_models.MsgQueueRedriveDlqIn,
 ) (*coyote_models.MsgQueueRedriveDlqOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueRedriveDlqIn, coyote_models.MsgQueueRedriveDlqOut](
+	body := coyote_models.MsgQueueRedriveDlqIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueRedriveDlqIn_, coyote_models.MsgQueueRedriveDlqOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/redrive-dlq",
 		nil,
 		nil,
-		&msgQueueRedriveDlqIn,
+		&body,
 	)
 }

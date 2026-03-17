@@ -24,47 +24,65 @@ func (idempotency Idempotency) Namespace() IdempotencyNamespace {
 // Start an idempotent request
 func (idempotency Idempotency) Start(
 	ctx context.Context,
+	key string,
 	idempotencyStartIn coyote_models.IdempotencyStartIn,
 ) (*coyote_models.IdempotencyStartOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyStartIn, coyote_models.IdempotencyStartOut](
+	body := coyote_models.IdempotencyStartIn_{
+		Key: key,
+		Ttl: idempotencyStartIn.Ttl,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyStartIn_, coyote_models.IdempotencyStartOut](
 		ctx,
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/start",
 		nil,
 		nil,
-		&idempotencyStartIn,
+		&body,
 	)
 }
 
 // Complete an idempotent request with a response
 func (idempotency Idempotency) Complete(
 	ctx context.Context,
+	key string,
 	idempotencyCompleteIn coyote_models.IdempotencyCompleteIn,
 ) (*coyote_models.IdempotencyCompleteOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyCompleteIn, coyote_models.IdempotencyCompleteOut](
+	body := coyote_models.IdempotencyCompleteIn_{
+		Key:      key,
+		Response: idempotencyCompleteIn.Response,
+		Ttl:      idempotencyCompleteIn.Ttl,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyCompleteIn_, coyote_models.IdempotencyCompleteOut](
 		ctx,
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/complete",
 		nil,
 		nil,
-		&idempotencyCompleteIn,
+		&body,
 	)
 }
 
 // Abandon an idempotent request (remove lock without saving response)
 func (idempotency Idempotency) Abort(
 	ctx context.Context,
+	key string,
 	idempotencyAbortIn coyote_models.IdempotencyAbortIn,
 ) (*coyote_models.IdempotencyAbortOut, error) {
-	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyAbortIn, coyote_models.IdempotencyAbortOut](
+	body := coyote_models.IdempotencyAbortIn_{
+		Key: key,
+	}
+
+	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyAbortIn_, coyote_models.IdempotencyAbortOut](
 		ctx,
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/abort",
 		nil,
 		nil,
-		&idempotencyAbortIn,
+		&body,
 	)
 }
