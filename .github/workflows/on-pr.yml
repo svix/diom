@@ -25,10 +25,10 @@ jobs:
               - 'openapi.json'
             javascript:
               - '.github/workflows/javascript.yml'
-              - 'clients/javascript'
+              - 'clients/javascript/**'
             python:
               - '.github/workflows/python.yml'
-              - 'clients/python'
+              - 'clients/python/**'
 
   ci:
     permissions:
