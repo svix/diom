@@ -16,14 +16,18 @@ type {{ resource_type_name }} struct {
 	{% if resource.operations | length > 0 -%}
 	client *coyote_proto.HttpClient
 	{%- endif %}
-	{%- for name, sub in resource.subresources | items %}
-	{{ name | to_upper_camel_case }} *{{ sub.name | to_upper_camel_case }}
-	{%- endfor %}
 }
 
 func New{{ resource_type_name }}(client *coyote_proto.HttpClient) {{ resource_type_name }} {
 	return {{ resource_type_name }}{client}
 }
+
+{% for name, sub in resource.subresources | items %}
+{%- set sub_name = sub.name | to_upper_camel_case %}
+func ({{ resource_self_name }} {{ resource_type_name }}) {{ name | to_upper_camel_case }}() {{ sub_name }} {
+	return New{{ sub_name }}({{ resource_self_name }}.client)
+}
+{%- endfor %}
 
 {% for op in resource.operations %}
 	{% if op.query_params | length > 0 -%}

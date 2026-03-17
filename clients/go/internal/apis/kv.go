@@ -10,12 +10,15 @@ import (
 )
 
 type Kv struct {
-	client    *coyote_proto.HttpClient
-	Namespace *KvNamespace
+	client *coyote_proto.HttpClient
 }
 
 func NewKv(client *coyote_proto.HttpClient) Kv {
 	return Kv{client}
+}
+
+func (kv Kv) Namespace() KvNamespace {
+	return NewKvNamespace(kv.client)
 }
 
 // KV Set

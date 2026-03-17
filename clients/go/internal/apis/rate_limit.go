@@ -10,12 +10,15 @@ import (
 )
 
 type RateLimit struct {
-	client    *coyote_proto.HttpClient
-	Namespace *RateLimitNamespace
+	client *coyote_proto.HttpClient
 }
 
 func NewRateLimit(client *coyote_proto.HttpClient) RateLimit {
 	return RateLimit{client}
+}
+
+func (rateLimit RateLimit) Namespace() RateLimitNamespace {
+	return NewRateLimitNamespace(rateLimit.client)
 }
 
 // Rate Limiter Check and Consume

@@ -8,8 +8,9 @@ import (
 )
 
 // When creating an IdempotencyStartOut, use the appropriate data structure based on the Type:
-//   - "started","locked": No data needed (nil or just ignore the data field)
-//   - "completed": Use IdempotencyCompleted
+//
+// - "started","locked": No data needed (nil or just ignore the data field)
+// - "completed": Use IdempotencyCompleted
 type IdempotencyStartOut struct {
 	Status IdempotencyStartOutStatus `json:"status"`
 	Data   IdempotencyStartOutData   `json:"data"`
@@ -27,8 +28,10 @@ type IdempotencyStartOutData interface {
 	isIdempotencyStartOutData()
 }
 
-func (emptyMap) isIdempotencyStartOutData()             {}
-func (IdempotencyCompleted) isIdempotencyStartOutData() {}
+type idempotencyStartOutEmpty struct{}
+
+func (idempotencyStartOutEmpty) isIdempotencyStartOutData() {}
+func (IdempotencyCompleted) isIdempotencyStartOutData()     {}
 
 func (i *IdempotencyStartOut) UnmarshalJSON(data []byte) error {
 	type Alias IdempotencyStartOut
@@ -63,7 +66,7 @@ var IdempotencyStartOutStatusWithNoData = map[string]bool{
 func (i IdempotencyStartOut) MarshalJSON() ([]byte, error) {
 	type Alias IdempotencyStartOut
 	if _, found := IdempotencyStartOutStatusWithNoData[string(i.Status)]; found {
-		i.Data = emptyMap{}
+		i.Data = idempotencyStartOutEmpty{}
 	}
 	return json.Marshal(&struct{ Alias }{Alias: (Alias)(i)})
 }
