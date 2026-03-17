@@ -6,10 +6,10 @@ import {
 
 export interface NodeStatusOut {
     /**
-* A unique ID representing this node.
-* 
-* This will never change unless the node is erased and reset
-*/
+     * A unique ID representing this node.
+     * 
+     * This will never change unless the node is erased and reset
+     */
     nodeId: string;
     /** The advertised inter-server (cluster) address of this node. */
     address: string;

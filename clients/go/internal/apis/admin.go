@@ -27,8 +27,6 @@ func (admin Admin) ClusterStatus(
 		"GET",
 		"/api/v1/admin/cluster/status",
 		nil,
-		nil,
-		nil,
 	)
 }
 
@@ -45,8 +43,6 @@ func (admin Admin) ClusterRemoveNode(
 		admin.client,
 		"POST",
 		"/api/v1/admin/cluster/remove-node",
-		nil,
-		nil,
 		&clusterRemoveNodeIn,
 	)
 }

@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class ClusterRemoveNodeIn {
-@JsonProperty("node_id") private String nodeId;
-public ClusterRemoveNodeIn () {}
+    @JsonProperty("node_id") private String nodeId;
+    public ClusterRemoveNodeIn () {}
 
- public ClusterRemoveNodeIn nodeId(String nodeId) {
+    public ClusterRemoveNodeIn nodeId(String nodeId) {
         this.nodeId = nodeId;
         return this;
     }
@@ -42,14 +42,13 @@ public ClusterRemoveNodeIn () {}
      * @return nodeId
      */
     @javax.annotation.Nonnull
-     public String getNodeId() {
+    public String getNodeId() {
         return nodeId;
     }
 
-     public void setNodeId(String nodeId) {
+    public void setNodeId(String nodeId) {
         this.nodeId = nodeId;
     }
-
     /**
      * Create an instance of ClusterRemoveNodeIn given an JSON string
      *

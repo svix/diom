@@ -26,17 +26,17 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class ClusterStatusOut {
-@JsonProperty("cluster_id") private String clusterId;
-@JsonProperty("cluster_name") private String clusterName;
-@JsonProperty("this_node_id") private String thisNodeId;
-@JsonProperty("this_node_state") private ServerState thisNodeState;
-@JsonProperty("this_node_last_committed_timestamp") private OffsetDateTime thisNodeLastCommittedTimestamp;
-@JsonProperty private List<NodeStatusOut> nodes;
-public ClusterStatusOut () {}
+    @JsonProperty("cluster_id") private String clusterId;
+    @JsonProperty("cluster_name") private String clusterName;
+    @JsonProperty("this_node_id") private String thisNodeId;
+    @JsonProperty("this_node_state") private ServerState thisNodeState;
+    @JsonProperty("this_node_last_committed_timestamp") private OffsetDateTime thisNodeLastCommittedTimestamp;
+    @JsonProperty private List<NodeStatusOut> nodes;
+    public ClusterStatusOut () {}
 
- public ClusterStatusOut clusterId(String clusterId) {
+    public ClusterStatusOut clusterId(String clusterId) {
         this.clusterId = clusterId;
         return this;
     }
@@ -49,15 +49,15 @@ This value is populated on cluster initialization and will never change.
      * @return clusterId
      */
     @javax.annotation.Nullable
-     public String getClusterId() {
+    public String getClusterId() {
         return clusterId;
     }
 
-     public void setClusterId(String clusterId) {
+    public void setClusterId(String clusterId) {
         this.clusterId = clusterId;
     }
 
-     public ClusterStatusOut clusterName(String clusterName) {
+    public ClusterStatusOut clusterName(String clusterName) {
         this.clusterName = clusterName;
         return this;
     }
@@ -70,15 +70,15 @@ This value is not replicated and should only be used for debugging.
      * @return clusterName
      */
     @javax.annotation.Nullable
-     public String getClusterName() {
+    public String getClusterName() {
         return clusterName;
     }
 
-     public void setClusterName(String clusterName) {
+    public void setClusterName(String clusterName) {
         this.clusterName = clusterName;
     }
 
-     public ClusterStatusOut thisNodeId(String thisNodeId) {
+    public ClusterStatusOut thisNodeId(String thisNodeId) {
         this.thisNodeId = thisNodeId;
         return this;
     }
@@ -89,15 +89,15 @@ This value is not replicated and should only be used for debugging.
      * @return thisNodeId
      */
     @javax.annotation.Nonnull
-     public String getThisNodeId() {
+    public String getThisNodeId() {
         return thisNodeId;
     }
 
-     public void setThisNodeId(String thisNodeId) {
+    public void setThisNodeId(String thisNodeId) {
         this.thisNodeId = thisNodeId;
     }
 
-     public ClusterStatusOut thisNodeState(ServerState thisNodeState) {
+    public ClusterStatusOut thisNodeState(ServerState thisNodeState) {
         this.thisNodeState = thisNodeState;
         return this;
     }
@@ -108,15 +108,15 @@ This value is not replicated and should only be used for debugging.
      * @return thisNodeState
      */
     @javax.annotation.Nonnull
-     public ServerState getThisNodeState() {
+    public ServerState getThisNodeState() {
         return thisNodeState;
     }
 
-     public void setThisNodeState(ServerState thisNodeState) {
+    public void setThisNodeState(ServerState thisNodeState) {
         this.thisNodeState = thisNodeState;
     }
 
-     public ClusterStatusOut thisNodeLastCommittedTimestamp(OffsetDateTime thisNodeLastCommittedTimestamp) {
+    public ClusterStatusOut thisNodeLastCommittedTimestamp(OffsetDateTime thisNodeLastCommittedTimestamp) {
         this.thisNodeLastCommittedTimestamp = thisNodeLastCommittedTimestamp;
         return this;
     }
@@ -127,20 +127,20 @@ This value is not replicated and should only be used for debugging.
      * @return thisNodeLastCommittedTimestamp
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getThisNodeLastCommittedTimestamp() {
+    public OffsetDateTime getThisNodeLastCommittedTimestamp() {
         return thisNodeLastCommittedTimestamp;
     }
 
-     public void setThisNodeLastCommittedTimestamp(OffsetDateTime thisNodeLastCommittedTimestamp) {
+    public void setThisNodeLastCommittedTimestamp(OffsetDateTime thisNodeLastCommittedTimestamp) {
         this.thisNodeLastCommittedTimestamp = thisNodeLastCommittedTimestamp;
     }
 
-     public ClusterStatusOut nodes(List<NodeStatusOut> nodes) {
+    public ClusterStatusOut nodes(List<NodeStatusOut> nodes) {
         this.nodes = nodes;
         return this;
     }
 
-     public ClusterStatusOut addNodesItem(NodeStatusOut nodesItem) {
+    public ClusterStatusOut addNodesItem(NodeStatusOut nodesItem) {
         if (this.nodes == null) {
             this.nodes = new ArrayList<>();
         }
@@ -153,14 +153,13 @@ This value is not replicated and should only be used for debugging.
      * @return nodes
      */
     @javax.annotation.Nonnull
-     public List<NodeStatusOut> getNodes() {
+    public List<NodeStatusOut> getNodes() {
         return nodes;
     }
 
-     public void setNodes(List<NodeStatusOut> nodes) {
+    public void setNodes(List<NodeStatusOut> nodes) {
         this.nodes = nodes;
     }
-
     /**
      * Create an instance of ClusterStatusOut given an JSON string
      *
