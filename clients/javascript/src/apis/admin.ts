@@ -19,7 +19,7 @@ export class Admin {
 
     /** Get information about the current cluster */
     public clusterStatus(
-        ): Promise<ClusterStatusOut> {
+    ): Promise<ClusterStatusOut> {
         const request = new DiomRequest(HttpMethod.GET, "/api/v1/admin/cluster/status");
 
         
@@ -35,14 +35,13 @@ export class Admin {
 */
     public clusterRemoveNode(
         clusterRemoveNodeIn: ClusterRemoveNodeIn,
-        ): Promise<ClusterRemoveNodeOut> {
+    ): Promise<ClusterRemoveNodeOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1/admin/cluster/remove-node");
 
         request.setBody(
-            ClusterRemoveNodeInSerializer._toJsonObject(
-                clusterRemoveNodeIn,
-            )
+            ClusterRemoveNodeInSerializer._toJsonObject(clusterRemoveNodeIn)
         );
+        
         return request.send(
             this.requestCtx,
             ClusterRemoveNodeOutSerializer._fromJsonObject,

@@ -10,16 +10,16 @@ import {
 
 export interface ClusterStatusOut {
     /**
-* The unique ID of this cluster.pub(crate)
-* 
-* This value is populated on cluster initialization and will never change.
-*/
+     * The unique ID of this cluster.pub(crate)
+     * 
+     * This value is populated on cluster initialization and will never change.
+     */
     clusterId?: string | null;
     /**
-* The name of this cluster (as defined in the config)
-* 
-* This value is not replicated and should only be used for debugging.
-*/
+     * The name of this cluster (as defined in the config)
+     * 
+     * This value is not replicated and should only be used for debugging.
+     */
     clusterName?: string | null;
     /** The unique ID of the node servicing this request */
     thisNodeId: string;

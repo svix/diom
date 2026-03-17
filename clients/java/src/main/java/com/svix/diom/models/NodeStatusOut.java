@@ -26,16 +26,16 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class NodeStatusOut {
-@JsonProperty("node_id") private String nodeId;
-@JsonProperty private String address;
-@JsonProperty private ServerState state;
-@JsonProperty("last_committed_log_index") private Long lastCommittedLogIndex;
-@JsonProperty("last_committed_term") private Long lastCommittedTerm;
-public NodeStatusOut () {}
+    @JsonProperty("node_id") private String nodeId;
+    @JsonProperty private String address;
+    @JsonProperty private ServerState state;
+    @JsonProperty("last_committed_log_index") private Long lastCommittedLogIndex;
+    @JsonProperty("last_committed_term") private Long lastCommittedTerm;
+    public NodeStatusOut () {}
 
- public NodeStatusOut nodeId(String nodeId) {
+    public NodeStatusOut nodeId(String nodeId) {
         this.nodeId = nodeId;
         return this;
     }
@@ -48,15 +48,15 @@ This will never change unless the node is erased and reset
      * @return nodeId
      */
     @javax.annotation.Nonnull
-     public String getNodeId() {
+    public String getNodeId() {
         return nodeId;
     }
 
-     public void setNodeId(String nodeId) {
+    public void setNodeId(String nodeId) {
         this.nodeId = nodeId;
     }
 
-     public NodeStatusOut address(String address) {
+    public NodeStatusOut address(String address) {
         this.address = address;
         return this;
     }
@@ -67,15 +67,15 @@ This will never change unless the node is erased and reset
      * @return address
      */
     @javax.annotation.Nonnull
-     public String getAddress() {
+    public String getAddress() {
         return address;
     }
 
-     public void setAddress(String address) {
+    public void setAddress(String address) {
         this.address = address;
     }
 
-     public NodeStatusOut state(ServerState state) {
+    public NodeStatusOut state(ServerState state) {
         this.state = state;
         return this;
     }
@@ -86,15 +86,15 @@ This will never change unless the node is erased and reset
      * @return state
      */
     @javax.annotation.Nonnull
-     public ServerState getState() {
+    public ServerState getState() {
         return state;
     }
 
-     public void setState(ServerState state) {
+    public void setState(ServerState state) {
         this.state = state;
     }
 
-     public NodeStatusOut lastCommittedLogIndex(Long lastCommittedLogIndex) {
+    public NodeStatusOut lastCommittedLogIndex(Long lastCommittedLogIndex) {
         this.lastCommittedLogIndex = lastCommittedLogIndex;
         return this;
     }
@@ -105,15 +105,15 @@ This will never change unless the node is erased and reset
      * @return lastCommittedLogIndex
      */
     @javax.annotation.Nullable
-     public Long getLastCommittedLogIndex() {
+    public Long getLastCommittedLogIndex() {
         return lastCommittedLogIndex;
     }
 
-     public void setLastCommittedLogIndex(Long lastCommittedLogIndex) {
+    public void setLastCommittedLogIndex(Long lastCommittedLogIndex) {
         this.lastCommittedLogIndex = lastCommittedLogIndex;
     }
 
-     public NodeStatusOut lastCommittedTerm(Long lastCommittedTerm) {
+    public NodeStatusOut lastCommittedTerm(Long lastCommittedTerm) {
         this.lastCommittedTerm = lastCommittedTerm;
         return this;
     }
@@ -124,14 +124,13 @@ This will never change unless the node is erased and reset
      * @return lastCommittedTerm
      */
     @javax.annotation.Nullable
-     public Long getLastCommittedTerm() {
+    public Long getLastCommittedTerm() {
         return lastCommittedTerm;
     }
 
-     public void setLastCommittedTerm(Long lastCommittedTerm) {
+    public void setLastCommittedTerm(Long lastCommittedTerm) {
         this.lastCommittedTerm = lastCommittedTerm;
     }
-
     /**
      * Create an instance of NodeStatusOut given an JSON string
      *

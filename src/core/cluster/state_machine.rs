@@ -57,12 +57,6 @@ impl ClusterId {
     }
 }
 
-impl std::fmt::Display for ClusterId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.simple().fmt(f)
-    }
-}
-
 impl JsonSchema for ClusterId {
     fn schema_name() -> std::borrow::Cow<'static, str> {
         String::schema_name()
