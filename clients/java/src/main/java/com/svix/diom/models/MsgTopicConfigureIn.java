@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgTopicConfigureIn {
-@JsonProperty private String topic;
-@JsonProperty private Short partitions;
-public MsgTopicConfigureIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty private Short partitions;
+    public MsgTopicConfigureIn () {}
 
- public MsgTopicConfigureIn topic(String topic) {
+    public MsgTopicConfigureIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -43,15 +43,15 @@ public MsgTopicConfigureIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgTopicConfigureIn partitions(Short partitions) {
+    public MsgTopicConfigureIn partitions(Short partitions) {
         this.partitions = partitions;
         return this;
     }
@@ -62,14 +62,13 @@ public MsgTopicConfigureIn () {}
      * @return partitions
      */
     @javax.annotation.Nonnull
-     public Short getPartitions() {
+    public Short getPartitions() {
         return partitions;
     }
 
-     public void setPartitions(Short partitions) {
+    public void setPartitions(Short partitions) {
         this.partitions = partitions;
     }
-
     /**
      * Create an instance of MsgTopicConfigureIn given an JSON string
      *

@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitCheckIn {
-@JsonProperty private String key;
-@JsonProperty private Long tokens;
-@JsonProperty private RateLimitTokenBucketConfig config;
-public RateLimitCheckIn () {}
+    @JsonProperty private String key;
+    @JsonProperty private Long tokens;
+    @JsonProperty private RateLimitTokenBucketConfig config;
+    public RateLimitCheckIn () {}
 
- public RateLimitCheckIn key(String key) {
+    public RateLimitCheckIn key(String key) {
         this.key = key;
         return this;
     }
@@ -44,15 +44,15 @@ public RateLimitCheckIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
-     public RateLimitCheckIn tokens(Long tokens) {
+    public RateLimitCheckIn tokens(Long tokens) {
         this.tokens = tokens;
         return this;
     }
@@ -63,15 +63,15 @@ public RateLimitCheckIn () {}
      * @return tokens
      */
     @javax.annotation.Nullable
-     public Long getTokens() {
+    public Long getTokens() {
         return tokens;
     }
 
-     public void setTokens(Long tokens) {
+    public void setTokens(Long tokens) {
         this.tokens = tokens;
     }
 
-     public RateLimitCheckIn config(RateLimitTokenBucketConfig config) {
+    public RateLimitCheckIn config(RateLimitTokenBucketConfig config) {
         this.config = config;
         return this;
     }
@@ -82,14 +82,13 @@ public RateLimitCheckIn () {}
      * @return config
      */
     @javax.annotation.Nonnull
-     public RateLimitTokenBucketConfig getConfig() {
+    public RateLimitTokenBucketConfig getConfig() {
         return config;
     }
 
-     public void setConfig(RateLimitTokenBucketConfig config) {
+    public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
-
     /**
      * Create an instance of RateLimitCheckIn given an JSON string
      *

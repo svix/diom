@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheDeleteOut {
-@JsonProperty private Boolean success;
-public CacheDeleteOut () {}
+    @JsonProperty private Boolean success;
+    public CacheDeleteOut () {}
 
- public CacheDeleteOut success(Boolean success) {
+    public CacheDeleteOut success(Boolean success) {
         this.success = success;
         return this;
     }
@@ -42,14 +42,13 @@ public CacheDeleteOut () {}
      * @return success
      */
     @javax.annotation.Nonnull
-     public Boolean getSuccess() {
+    public Boolean getSuccess() {
         return success;
     }
 
-     public void setSuccess(Boolean success) {
+    public void setSuccess(Boolean success) {
         this.success = success;
     }
-
     /**
      * Create an instance of CacheDeleteOut given an JSON string
      *

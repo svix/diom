@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleteIn {
-@JsonProperty private String key;
-@JsonProperty private List<Byte> response;
-@JsonProperty private Long ttl;
-public IdempotencyCompleteIn () {}
+    @JsonProperty private String key;
+    @JsonProperty private List<Byte> response;
+    @JsonProperty private Long ttl;
+    public IdempotencyCompleteIn () {}
 
- public IdempotencyCompleteIn key(String key) {
+    public IdempotencyCompleteIn key(String key) {
         this.key = key;
         return this;
     }
@@ -44,20 +44,20 @@ public IdempotencyCompleteIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
-     public IdempotencyCompleteIn response(List<Byte> response) {
+    public IdempotencyCompleteIn response(List<Byte> response) {
         this.response = response;
         return this;
     }
 
-     public IdempotencyCompleteIn addResponseItem(Byte responseItem) {
+    public IdempotencyCompleteIn addResponseItem(Byte responseItem) {
         if (this.response == null) {
             this.response = new ArrayList<>();
         }
@@ -70,15 +70,15 @@ public IdempotencyCompleteIn () {}
      * @return response
      */
     @javax.annotation.Nonnull
-     public List<Byte> getResponse() {
+    public List<Byte> getResponse() {
         return response;
     }
 
-     public void setResponse(List<Byte> response) {
+    public void setResponse(List<Byte> response) {
         this.response = response;
     }
 
-     public IdempotencyCompleteIn ttl(Long ttl) {
+    public IdempotencyCompleteIn ttl(Long ttl) {
         this.ttl = ttl;
         return this;
     }
@@ -89,14 +89,13 @@ public IdempotencyCompleteIn () {}
      * @return ttl
      */
     @javax.annotation.Nonnull
-     public Long getTtl() {
+    public Long getTtl() {
         return ttl;
     }
 
-     public void setTtl(Long ttl) {
+    public void setTtl(Long ttl) {
         this.ttl = ttl;
     }
-
     /**
      * Create an instance of IdempotencyCompleteIn given an JSON string
      *

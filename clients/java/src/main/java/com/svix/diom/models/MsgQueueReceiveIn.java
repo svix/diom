@@ -26,15 +26,15 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueReceiveIn {
-@JsonProperty private String topic;
-@JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty("batch_size") private Short batchSize;
-@JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
-public MsgQueueReceiveIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty("consumer_group") private String consumerGroup;
+    @JsonProperty("batch_size") private Short batchSize;
+    @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
+    public MsgQueueReceiveIn () {}
 
- public MsgQueueReceiveIn topic(String topic) {
+    public MsgQueueReceiveIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -45,15 +45,15 @@ public MsgQueueReceiveIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgQueueReceiveIn consumerGroup(String consumerGroup) {
+    public MsgQueueReceiveIn consumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
         return this;
     }
@@ -64,15 +64,15 @@ public MsgQueueReceiveIn () {}
      * @return consumerGroup
      */
     @javax.annotation.Nonnull
-     public String getConsumerGroup() {
+    public String getConsumerGroup() {
         return consumerGroup;
     }
 
-     public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
 
-     public MsgQueueReceiveIn batchSize(Short batchSize) {
+    public MsgQueueReceiveIn batchSize(Short batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -83,15 +83,15 @@ public MsgQueueReceiveIn () {}
      * @return batchSize
      */
     @javax.annotation.Nullable
-     public Short getBatchSize() {
+    public Short getBatchSize() {
         return batchSize;
     }
 
-     public void setBatchSize(Short batchSize) {
+    public void setBatchSize(Short batchSize) {
         this.batchSize = batchSize;
     }
 
-     public MsgQueueReceiveIn leaseDurationMillis(Long leaseDurationMillis) {
+    public MsgQueueReceiveIn leaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
         return this;
     }
@@ -102,14 +102,13 @@ public MsgQueueReceiveIn () {}
      * @return leaseDurationMillis
      */
     @javax.annotation.Nullable
-     public Long getLeaseDurationMillis() {
+    public Long getLeaseDurationMillis() {
         return leaseDurationMillis;
     }
 
-     public void setLeaseDurationMillis(Long leaseDurationMillis) {
+    public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
     }
-
     /**
      * Create an instance of MsgQueueReceiveIn given an JSON string
      *

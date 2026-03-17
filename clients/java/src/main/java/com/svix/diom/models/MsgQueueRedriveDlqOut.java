@@ -26,11 +26,10 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueRedriveDlqOut {
-public MsgQueueRedriveDlqOut () {}
-
-/**
+    public MsgQueueRedriveDlqOut () {}
+    /**
      * Create an instance of MsgQueueRedriveDlqOut given an JSON string
      *
      * @param jsonString JSON string

@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheGetIn {
-@JsonProperty private String key;
-@JsonProperty private Consistency consistency;
-public CacheGetIn () {}
+    @JsonProperty private String key;
+    @JsonProperty private Consistency consistency;
+    public CacheGetIn () {}
 
- public CacheGetIn key(String key) {
+    public CacheGetIn key(String key) {
         this.key = key;
         return this;
     }
@@ -43,15 +43,15 @@ public CacheGetIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
-     public CacheGetIn consistency(Consistency consistency) {
+    public CacheGetIn consistency(Consistency consistency) {
         this.consistency = consistency;
         return this;
     }
@@ -62,14 +62,13 @@ public CacheGetIn () {}
      * @return consistency
      */
     @javax.annotation.Nullable
-     public Consistency getConsistency() {
+    public Consistency getConsistency() {
         return consistency;
     }
 
-     public void setConsistency(Consistency consistency) {
+    public void setConsistency(Consistency consistency) {
         this.consistency = consistency;
     }
-
     /**
      * Create an instance of CacheGetIn given an JSON string
      *

@@ -26,17 +26,17 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleted {
-@JsonProperty private List<Byte> response;
-public IdempotencyCompleted () {}
+    @JsonProperty private List<Byte> response;
+    public IdempotencyCompleted () {}
 
- public IdempotencyCompleted response(List<Byte> response) {
+    public IdempotencyCompleted response(List<Byte> response) {
         this.response = response;
         return this;
     }
 
-     public IdempotencyCompleted addResponseItem(Byte responseItem) {
+    public IdempotencyCompleted addResponseItem(Byte responseItem) {
         if (this.response == null) {
             this.response = new ArrayList<>();
         }
@@ -49,14 +49,13 @@ public IdempotencyCompleted () {}
      * @return response
      */
     @javax.annotation.Nonnull
-     public List<Byte> getResponse() {
+    public List<Byte> getResponse() {
         return response;
     }
 
-     public void setResponse(List<Byte> response) {
+    public void setResponse(List<Byte> response) {
         this.response = response;
     }
-
     /**
      * Create an instance of IdempotencyCompleted given an JSON string
      *

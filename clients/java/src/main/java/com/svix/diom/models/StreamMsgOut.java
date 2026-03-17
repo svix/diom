@@ -26,16 +26,16 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class StreamMsgOut {
-@JsonProperty private Long offset;
-@JsonProperty private String topic;
-@JsonProperty private List<Byte> value;
-@JsonProperty private Map<String,String> headers;
-@JsonProperty private OffsetDateTime timestamp;
-public StreamMsgOut () {}
+    @JsonProperty private Long offset;
+    @JsonProperty private String topic;
+    @JsonProperty private List<Byte> value;
+    @JsonProperty private Map<String,String> headers;
+    @JsonProperty private OffsetDateTime timestamp;
+    public StreamMsgOut () {}
 
- public StreamMsgOut offset(Long offset) {
+    public StreamMsgOut offset(Long offset) {
         this.offset = offset;
         return this;
     }
@@ -46,15 +46,15 @@ public StreamMsgOut () {}
      * @return offset
      */
     @javax.annotation.Nonnull
-     public Long getOffset() {
+    public Long getOffset() {
         return offset;
     }
 
-     public void setOffset(Long offset) {
+    public void setOffset(Long offset) {
         this.offset = offset;
     }
 
-     public StreamMsgOut topic(String topic) {
+    public StreamMsgOut topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -65,20 +65,20 @@ public StreamMsgOut () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public StreamMsgOut value(List<Byte> value) {
+    public StreamMsgOut value(List<Byte> value) {
         this.value = value;
         return this;
     }
 
-     public StreamMsgOut addValueItem(Byte valueItem) {
+    public StreamMsgOut addValueItem(Byte valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -91,20 +91,20 @@ public StreamMsgOut () {}
      * @return value
      */
     @javax.annotation.Nonnull
-     public List<Byte> getValue() {
+    public List<Byte> getValue() {
         return value;
     }
 
-     public void setValue(List<Byte> value) {
+    public void setValue(List<Byte> value) {
         this.value = value;
     }
 
-     public StreamMsgOut headers(Map<String,String> headers) {
+    public StreamMsgOut headers(Map<String,String> headers) {
         this.headers = headers;
         return this;
     }
 
-     public StreamMsgOut putHeadersItem(String key, String headersItem) {
+    public StreamMsgOut putHeadersItem(String key, String headersItem) {
         if (this.headers == null) {
             this.headers = new HashMap<>();
         }
@@ -117,15 +117,15 @@ public StreamMsgOut () {}
      * @return headers
      */
     @javax.annotation.Nullable
-     public Map<String,String> getHeaders() {
+    public Map<String,String> getHeaders() {
         return headers;
     }
 
-     public void setHeaders(Map<String,String> headers) {
+    public void setHeaders(Map<String,String> headers) {
         this.headers = headers;
     }
 
-     public StreamMsgOut timestamp(OffsetDateTime timestamp) {
+    public StreamMsgOut timestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
         return this;
     }
@@ -136,14 +136,13 @@ public StreamMsgOut () {}
      * @return timestamp
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getTimestamp() {
+    public OffsetDateTime getTimestamp() {
         return timestamp;
     }
 
-     public void setTimestamp(OffsetDateTime timestamp) {
+    public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
     }
-
     /**
      * Create an instance of StreamMsgOut given an JSON string
      *

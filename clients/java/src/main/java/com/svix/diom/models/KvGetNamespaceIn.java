@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvGetNamespaceIn {
-@JsonProperty private String name;
-public KvGetNamespaceIn () {}
+    @JsonProperty private String name;
+    public KvGetNamespaceIn () {}
 
- public KvGetNamespaceIn name(String name) {
+    public KvGetNamespaceIn name(String name) {
         this.name = name;
         return this;
     }
@@ -42,14 +42,13 @@ public KvGetNamespaceIn () {}
      * @return name
      */
     @javax.annotation.Nonnull
-     public String getName() {
+    public String getName() {
         return name;
     }
 
-     public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
-
     /**
      * Create an instance of KvGetNamespaceIn given an JSON string
      *

@@ -26,15 +26,15 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class QueueMsgOut {
-@JsonProperty("msg_id") private String msgId;
-@JsonProperty private List<Byte> value;
-@JsonProperty private Map<String,String> headers;
-@JsonProperty private OffsetDateTime timestamp;
-public QueueMsgOut () {}
+    @JsonProperty("msg_id") private String msgId;
+    @JsonProperty private List<Byte> value;
+    @JsonProperty private Map<String,String> headers;
+    @JsonProperty private OffsetDateTime timestamp;
+    public QueueMsgOut () {}
 
- public QueueMsgOut msgId(String msgId) {
+    public QueueMsgOut msgId(String msgId) {
         this.msgId = msgId;
         return this;
     }
@@ -45,20 +45,20 @@ public QueueMsgOut () {}
      * @return msgId
      */
     @javax.annotation.Nonnull
-     public String getMsgId() {
+    public String getMsgId() {
         return msgId;
     }
 
-     public void setMsgId(String msgId) {
+    public void setMsgId(String msgId) {
         this.msgId = msgId;
     }
 
-     public QueueMsgOut value(List<Byte> value) {
+    public QueueMsgOut value(List<Byte> value) {
         this.value = value;
         return this;
     }
 
-     public QueueMsgOut addValueItem(Byte valueItem) {
+    public QueueMsgOut addValueItem(Byte valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -71,20 +71,20 @@ public QueueMsgOut () {}
      * @return value
      */
     @javax.annotation.Nonnull
-     public List<Byte> getValue() {
+    public List<Byte> getValue() {
         return value;
     }
 
-     public void setValue(List<Byte> value) {
+    public void setValue(List<Byte> value) {
         this.value = value;
     }
 
-     public QueueMsgOut headers(Map<String,String> headers) {
+    public QueueMsgOut headers(Map<String,String> headers) {
         this.headers = headers;
         return this;
     }
 
-     public QueueMsgOut putHeadersItem(String key, String headersItem) {
+    public QueueMsgOut putHeadersItem(String key, String headersItem) {
         if (this.headers == null) {
             this.headers = new HashMap<>();
         }
@@ -97,15 +97,15 @@ public QueueMsgOut () {}
      * @return headers
      */
     @javax.annotation.Nullable
-     public Map<String,String> getHeaders() {
+    public Map<String,String> getHeaders() {
         return headers;
     }
 
-     public void setHeaders(Map<String,String> headers) {
+    public void setHeaders(Map<String,String> headers) {
         this.headers = headers;
     }
 
-     public QueueMsgOut timestamp(OffsetDateTime timestamp) {
+    public QueueMsgOut timestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
         return this;
     }
@@ -116,14 +116,13 @@ public QueueMsgOut () {}
      * @return timestamp
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getTimestamp() {
+    public OffsetDateTime getTimestamp() {
         return timestamp;
     }
 
-     public void setTimestamp(OffsetDateTime timestamp) {
+    public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
     }
-
     /**
      * Create an instance of QueueMsgOut given an JSON string
      *

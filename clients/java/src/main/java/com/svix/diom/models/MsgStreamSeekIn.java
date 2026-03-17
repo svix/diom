@@ -26,15 +26,15 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamSeekIn {
-@JsonProperty private String topic;
-@JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty private Long offset;
-@JsonProperty private String position;
-public MsgStreamSeekIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty("consumer_group") private String consumerGroup;
+    @JsonProperty private Long offset;
+    @JsonProperty private String position;
+    public MsgStreamSeekIn () {}
 
- public MsgStreamSeekIn topic(String topic) {
+    public MsgStreamSeekIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -45,15 +45,15 @@ public MsgStreamSeekIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgStreamSeekIn consumerGroup(String consumerGroup) {
+    public MsgStreamSeekIn consumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
         return this;
     }
@@ -64,15 +64,15 @@ public MsgStreamSeekIn () {}
      * @return consumerGroup
      */
     @javax.annotation.Nonnull
-     public String getConsumerGroup() {
+    public String getConsumerGroup() {
         return consumerGroup;
     }
 
-     public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
 
-     public MsgStreamSeekIn offset(Long offset) {
+    public MsgStreamSeekIn offset(Long offset) {
         this.offset = offset;
         return this;
     }
@@ -83,15 +83,15 @@ public MsgStreamSeekIn () {}
      * @return offset
      */
     @javax.annotation.Nullable
-     public Long getOffset() {
+    public Long getOffset() {
         return offset;
     }
 
-     public void setOffset(Long offset) {
+    public void setOffset(Long offset) {
         this.offset = offset;
     }
 
-     public MsgStreamSeekIn position(String position) {
+    public MsgStreamSeekIn position(String position) {
         this.position = position;
         return this;
     }
@@ -102,14 +102,13 @@ public MsgStreamSeekIn () {}
      * @return position
      */
     @javax.annotation.Nullable
-     public String getPosition() {
+    public String getPosition() {
         return position;
     }
 
-     public void setPosition(String position) {
+    public void setPosition(String position) {
         this.position = position;
     }
-
     /**
      * Create an instance of MsgStreamSeekIn given an JSON string
      *

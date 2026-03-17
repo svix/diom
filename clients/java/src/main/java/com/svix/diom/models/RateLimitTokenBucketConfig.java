@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitTokenBucketConfig {
-@JsonProperty private Long capacity;
-@JsonProperty("refill_amount") private Long refillAmount;
-@JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
-public RateLimitTokenBucketConfig () {}
+    @JsonProperty private Long capacity;
+    @JsonProperty("refill_amount") private Long refillAmount;
+    @JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
+    public RateLimitTokenBucketConfig () {}
 
- public RateLimitTokenBucketConfig capacity(Long capacity) {
+    public RateLimitTokenBucketConfig capacity(Long capacity) {
         this.capacity = capacity;
         return this;
     }
@@ -44,15 +44,15 @@ public RateLimitTokenBucketConfig () {}
      * @return capacity
      */
     @javax.annotation.Nonnull
-     public Long getCapacity() {
+    public Long getCapacity() {
         return capacity;
     }
 
-     public void setCapacity(Long capacity) {
+    public void setCapacity(Long capacity) {
         this.capacity = capacity;
     }
 
-     public RateLimitTokenBucketConfig refillAmount(Long refillAmount) {
+    public RateLimitTokenBucketConfig refillAmount(Long refillAmount) {
         this.refillAmount = refillAmount;
         return this;
     }
@@ -63,15 +63,15 @@ public RateLimitTokenBucketConfig () {}
      * @return refillAmount
      */
     @javax.annotation.Nonnull
-     public Long getRefillAmount() {
+    public Long getRefillAmount() {
         return refillAmount;
     }
 
-     public void setRefillAmount(Long refillAmount) {
+    public void setRefillAmount(Long refillAmount) {
         this.refillAmount = refillAmount;
     }
 
-     public RateLimitTokenBucketConfig refillIntervalMillis(Long refillIntervalMillis) {
+    public RateLimitTokenBucketConfig refillIntervalMillis(Long refillIntervalMillis) {
         this.refillIntervalMillis = refillIntervalMillis;
         return this;
     }
@@ -82,14 +82,13 @@ public RateLimitTokenBucketConfig () {}
      * @return refillIntervalMillis
      */
     @javax.annotation.Nullable
-     public Long getRefillIntervalMillis() {
+    public Long getRefillIntervalMillis() {
         return refillIntervalMillis;
     }
 
-     public void setRefillIntervalMillis(Long refillIntervalMillis) {
+    public void setRefillIntervalMillis(Long refillIntervalMillis) {
         this.refillIntervalMillis = refillIntervalMillis;
     }
-
     /**
      * Create an instance of RateLimitTokenBucketConfig given an JSON string
      *

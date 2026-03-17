@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueRedriveDlqIn {
-@JsonProperty private String topic;
-@JsonProperty("consumer_group") private String consumerGroup;
-public MsgQueueRedriveDlqIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty("consumer_group") private String consumerGroup;
+    public MsgQueueRedriveDlqIn () {}
 
- public MsgQueueRedriveDlqIn topic(String topic) {
+    public MsgQueueRedriveDlqIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -43,15 +43,15 @@ public MsgQueueRedriveDlqIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgQueueRedriveDlqIn consumerGroup(String consumerGroup) {
+    public MsgQueueRedriveDlqIn consumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
         return this;
     }
@@ -62,14 +62,13 @@ public MsgQueueRedriveDlqIn () {}
      * @return consumerGroup
      */
     @javax.annotation.Nonnull
-     public String getConsumerGroup() {
+    public String getConsumerGroup() {
         return consumerGroup;
     }
 
-     public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
-
     /**
      * Create an instance of MsgQueueRedriveDlqIn given an JSON string
      *

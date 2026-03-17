@@ -26,15 +26,15 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueConfigureIn {
-@JsonProperty private String topic;
-@JsonProperty("consumer_group") private String consumerGroup;
-@JsonProperty("retry_schedule") private List<Long> retrySchedule;
-@JsonProperty("dlq_topic") private String dlqTopic;
-public MsgQueueConfigureIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty("consumer_group") private String consumerGroup;
+    @JsonProperty("retry_schedule") private List<Long> retrySchedule;
+    @JsonProperty("dlq_topic") private String dlqTopic;
+    public MsgQueueConfigureIn () {}
 
- public MsgQueueConfigureIn topic(String topic) {
+    public MsgQueueConfigureIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -45,15 +45,15 @@ public MsgQueueConfigureIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgQueueConfigureIn consumerGroup(String consumerGroup) {
+    public MsgQueueConfigureIn consumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
         return this;
     }
@@ -64,20 +64,20 @@ public MsgQueueConfigureIn () {}
      * @return consumerGroup
      */
     @javax.annotation.Nonnull
-     public String getConsumerGroup() {
+    public String getConsumerGroup() {
         return consumerGroup;
     }
 
-     public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
 
-     public MsgQueueConfigureIn retrySchedule(List<Long> retrySchedule) {
+    public MsgQueueConfigureIn retrySchedule(List<Long> retrySchedule) {
         this.retrySchedule = retrySchedule;
         return this;
     }
 
-     public MsgQueueConfigureIn addRetryScheduleItem(Long retryScheduleItem) {
+    public MsgQueueConfigureIn addRetryScheduleItem(Long retryScheduleItem) {
         if (this.retrySchedule == null) {
             this.retrySchedule = new ArrayList<>();
         }
@@ -90,15 +90,15 @@ public MsgQueueConfigureIn () {}
      * @return retrySchedule
      */
     @javax.annotation.Nullable
-     public List<Long> getRetrySchedule() {
+    public List<Long> getRetrySchedule() {
         return retrySchedule;
     }
 
-     public void setRetrySchedule(List<Long> retrySchedule) {
+    public void setRetrySchedule(List<Long> retrySchedule) {
         this.retrySchedule = retrySchedule;
     }
 
-     public MsgQueueConfigureIn dlqTopic(String dlqTopic) {
+    public MsgQueueConfigureIn dlqTopic(String dlqTopic) {
         this.dlqTopic = dlqTopic;
         return this;
     }
@@ -109,14 +109,13 @@ public MsgQueueConfigureIn () {}
      * @return dlqTopic
      */
     @javax.annotation.Nullable
-     public String getDlqTopic() {
+    public String getDlqTopic() {
         return dlqTopic;
     }
 
-     public void setDlqTopic(String dlqTopic) {
+    public void setDlqTopic(String dlqTopic) {
         this.dlqTopic = dlqTopic;
     }
-
     /**
      * Create an instance of MsgQueueConfigureIn given an JSON string
      *

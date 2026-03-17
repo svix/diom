@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgPublishIn {
-@JsonProperty private String topic;
-@JsonProperty private List<MsgIn> msgs;
-public MsgPublishIn () {}
+    @JsonProperty private String topic;
+    @JsonProperty private List<MsgIn> msgs;
+    public MsgPublishIn () {}
 
- public MsgPublishIn topic(String topic) {
+    public MsgPublishIn topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -43,20 +43,20 @@ public MsgPublishIn () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgPublishIn msgs(List<MsgIn> msgs) {
+    public MsgPublishIn msgs(List<MsgIn> msgs) {
         this.msgs = msgs;
         return this;
     }
 
-     public MsgPublishIn addMsgsItem(MsgIn msgsItem) {
+    public MsgPublishIn addMsgsItem(MsgIn msgsItem) {
         if (this.msgs == null) {
             this.msgs = new ArrayList<>();
         }
@@ -69,14 +69,13 @@ public MsgPublishIn () {}
      * @return msgs
      */
     @javax.annotation.Nonnull
-     public List<MsgIn> getMsgs() {
+    public List<MsgIn> getMsgs() {
         return msgs;
     }
 
-     public void setMsgs(List<MsgIn> msgs) {
+    public void setMsgs(List<MsgIn> msgs) {
         this.msgs = msgs;
     }
-
     /**
      * Create an instance of MsgPublishIn given an JSON string
      *

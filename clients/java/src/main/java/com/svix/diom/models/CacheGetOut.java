@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheGetOut {
-@JsonProperty private OffsetDateTime expiry;
-@JsonProperty private List<Byte> value;
-public CacheGetOut () {}
+    @JsonProperty private OffsetDateTime expiry;
+    @JsonProperty private List<Byte> value;
+    public CacheGetOut () {}
 
- public CacheGetOut expiry(OffsetDateTime expiry) {
+    public CacheGetOut expiry(OffsetDateTime expiry) {
         this.expiry = expiry;
         return this;
     }
@@ -43,20 +43,20 @@ public CacheGetOut () {}
      * @return expiry
      */
     @javax.annotation.Nullable
-     public OffsetDateTime getExpiry() {
+    public OffsetDateTime getExpiry() {
         return expiry;
     }
 
-     public void setExpiry(OffsetDateTime expiry) {
+    public void setExpiry(OffsetDateTime expiry) {
         this.expiry = expiry;
     }
 
-     public CacheGetOut value(List<Byte> value) {
+    public CacheGetOut value(List<Byte> value) {
         this.value = value;
         return this;
     }
 
-     public CacheGetOut addValueItem(Byte valueItem) {
+    public CacheGetOut addValueItem(Byte valueItem) {
         if (this.value == null) {
             this.value = new ArrayList<>();
         }
@@ -69,14 +69,13 @@ public CacheGetOut () {}
      * @return value
      */
     @javax.annotation.Nullable
-     public List<Byte> getValue() {
+    public List<Byte> getValue() {
         return value;
     }
 
-     public void setValue(List<Byte> value) {
+    public void setValue(List<Byte> value) {
         this.value = value;
     }
-
     /**
      * Create an instance of CacheGetOut given an JSON string
      *

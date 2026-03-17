@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyAbortIn {
-@JsonProperty private String key;
-public IdempotencyAbortIn () {}
+    @JsonProperty private String key;
+    public IdempotencyAbortIn () {}
 
- public IdempotencyAbortIn key(String key) {
+    public IdempotencyAbortIn key(String key) {
         this.key = key;
         return this;
     }
@@ -42,14 +42,13 @@ public IdempotencyAbortIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
-
     /**
      * Create an instance of IdempotencyAbortIn given an JSON string
      *

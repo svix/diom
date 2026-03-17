@@ -26,17 +26,17 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgPublishOut {
-@JsonProperty private List<MsgPublishOutTopic> topics;
-public MsgPublishOut () {}
+    @JsonProperty private List<MsgPublishOutTopic> topics;
+    public MsgPublishOut () {}
 
- public MsgPublishOut topics(List<MsgPublishOutTopic> topics) {
+    public MsgPublishOut topics(List<MsgPublishOutTopic> topics) {
         this.topics = topics;
         return this;
     }
 
-     public MsgPublishOut addTopicsItem(MsgPublishOutTopic topicsItem) {
+    public MsgPublishOut addTopicsItem(MsgPublishOutTopic topicsItem) {
         if (this.topics == null) {
             this.topics = new ArrayList<>();
         }
@@ -49,14 +49,13 @@ public MsgPublishOut () {}
      * @return topics
      */
     @javax.annotation.Nonnull
-     public List<MsgPublishOutTopic> getTopics() {
+    public List<MsgPublishOutTopic> getTopics() {
         return topics;
     }
 
-     public void setTopics(List<MsgPublishOutTopic> topics) {
+    public void setTopics(List<MsgPublishOutTopic> topics) {
         this.topics = topics;
     }
-
     /**
      * Create an instance of MsgPublishOut given an JSON string
      *

@@ -26,11 +26,10 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitResetOut {
-public RateLimitResetOut () {}
-
-/**
+    public RateLimitResetOut () {}
+    /**
      * Create an instance of RateLimitResetOut given an JSON string
      *
      * @param jsonString JSON string

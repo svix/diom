@@ -26,16 +26,16 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyGetNamespaceOut {
-@JsonProperty private String name;
-@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-@JsonProperty("storage_type") private StorageType storageType;
-@JsonProperty private OffsetDateTime created;
-@JsonProperty private OffsetDateTime updated;
-public IdempotencyGetNamespaceOut () {}
+    @JsonProperty private String name;
+    @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
+    @JsonProperty("storage_type") private StorageType storageType;
+    @JsonProperty private OffsetDateTime created;
+    @JsonProperty private OffsetDateTime updated;
+    public IdempotencyGetNamespaceOut () {}
 
- public IdempotencyGetNamespaceOut name(String name) {
+    public IdempotencyGetNamespaceOut name(String name) {
         this.name = name;
         return this;
     }
@@ -46,15 +46,15 @@ public IdempotencyGetNamespaceOut () {}
      * @return name
      */
     @javax.annotation.Nonnull
-     public String getName() {
+    public String getName() {
         return name;
     }
 
-     public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-     public IdempotencyGetNamespaceOut maxStorageBytes(Long maxStorageBytes) {
+    public IdempotencyGetNamespaceOut maxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
         return this;
     }
@@ -65,15 +65,15 @@ public IdempotencyGetNamespaceOut () {}
      * @return maxStorageBytes
      */
     @javax.annotation.Nullable
-     public Long getMaxStorageBytes() {
+    public Long getMaxStorageBytes() {
         return maxStorageBytes;
     }
 
-     public void setMaxStorageBytes(Long maxStorageBytes) {
+    public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
 
-     public IdempotencyGetNamespaceOut storageType(StorageType storageType) {
+    public IdempotencyGetNamespaceOut storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -84,15 +84,15 @@ public IdempotencyGetNamespaceOut () {}
      * @return storageType
      */
     @javax.annotation.Nonnull
-     public StorageType getStorageType() {
+    public StorageType getStorageType() {
         return storageType;
     }
 
-     public void setStorageType(StorageType storageType) {
+    public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
     }
 
-     public IdempotencyGetNamespaceOut created(OffsetDateTime created) {
+    public IdempotencyGetNamespaceOut created(OffsetDateTime created) {
         this.created = created;
         return this;
     }
@@ -103,15 +103,15 @@ public IdempotencyGetNamespaceOut () {}
      * @return created
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreated() {
+    public OffsetDateTime getCreated() {
         return created;
     }
 
-     public void setCreated(OffsetDateTime created) {
+    public void setCreated(OffsetDateTime created) {
         this.created = created;
     }
 
-     public IdempotencyGetNamespaceOut updated(OffsetDateTime updated) {
+    public IdempotencyGetNamespaceOut updated(OffsetDateTime updated) {
         this.updated = updated;
         return this;
     }
@@ -122,14 +122,13 @@ public IdempotencyGetNamespaceOut () {}
      * @return updated
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getUpdated() {
+    public OffsetDateTime getUpdated() {
         return updated;
     }
 
-     public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
-
     /**
      * Create an instance of IdempotencyGetNamespaceOut given an JSON string
      *
