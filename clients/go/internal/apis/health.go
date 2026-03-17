@@ -27,7 +27,5 @@ func (health Health) Ping(
 		"GET",
 		"/api/v1/health/ping",
 		nil,
-		nil,
-		nil,
 	)
 }
