@@ -36,30 +36,36 @@ export class Idempotency {
 
     /** Start an idempotent request */
     public start(
+        key: string,
         idempotencyStartIn: IdempotencyStartIn,
-        ): Promise<IdempotencyStartOut> {
+    ): Promise<IdempotencyStartOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/start");
 
         request.setBody(
-            IdempotencyStartInSerializer._toJsonObject(
-                idempotencyStartIn,
-            )
+            IdempotencyStartInSerializer._toJsonObject({
+                ...idempotencyStartIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             IdempotencyStartOutSerializer._fromJsonObject,
         );
     }/** Complete an idempotent request with a response */
     public complete(
+        key: string,
         idempotencyCompleteIn: IdempotencyCompleteIn,
-        ): Promise<IdempotencyCompleteOut> {
+    ): Promise<IdempotencyCompleteOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/idempotency/complete");
 
         request.setBody(
-            IdempotencyCompleteInSerializer._toJsonObject(
-                idempotencyCompleteIn,
-            )
+            IdempotencyCompleteInSerializer._toJsonObject({
+                ...idempotencyCompleteIn,
+                key,
+            })
         );
+        
         return request.send(
             this.requestCtx,
             IdempotencyCompleteOutSerializer._fromJsonObject,
