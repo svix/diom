@@ -319,17 +319,16 @@ async fn test_kv_delete() -> TestResult {
         ..
     } = start_server().await;
 
-    // let response = client
-    //     .post("kv/delete")
-    //     .json(json!({
-    //         "key": "kv-key-5"
-    //     }))
-    //     .await?
-    //     .expect(StatusCode::OK)
-    //     .json();
+    let response = client
+        .post("kv/delete")
+        .json(json!({
+            "key": "kv-key-5"
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
 
-    // FIXME(@svix-lucho): Behavior not implemented yet
-    // assert_eq!(response["success"], false);
+    assert_eq!(response["success"], false);
 
     kv_set(&client, "kv-key-5", None, "value-5", "upsert").await?;
 

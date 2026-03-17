@@ -68,6 +68,17 @@ async fn test_cache_set_get_and_delete() -> TestResult {
         ..
     } = start_server().await;
 
+    let delete_response = client
+        .post("cache/delete")
+        .json(json!({
+            "key": "test-key-2"
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(delete_response["success"], false);
+
     cache_set(&client, "test-key-2", 30000, "another-value").await?;
 
     let response = cache_get(&client, "test-key-2").await?;

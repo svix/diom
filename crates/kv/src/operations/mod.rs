@@ -7,7 +7,7 @@ mod set;
 
 pub use clear_expired::ClearExpiredOperation;
 pub use create_namespace::{CreateKvOperation, CreateKvResponseData};
-pub use delete::DeleteOperation;
+pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::{SetOperation, SetResponseData};
 
 use coyote_operations::raft_module_operations;
@@ -21,7 +21,7 @@ raft_module_operations!(
     KvRequest,
     KvOperation {
         Set(SetOperation) -> SetResponseData,
-        Delete(DeleteOperation) -> (),
+        Delete(DeleteOperation) -> DeleteResponseData,
         CreateKv(CreateKvOperation) -> CreateKvResponseData,
         ClearExpired(ClearExpiredOperation) -> (),
     },

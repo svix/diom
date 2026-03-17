@@ -141,11 +141,11 @@ impl KvController {
     }
 
     #[tracing::instrument(skip(self))]
-    pub fn delete(&self, namespace_id: NamespaceId, key: &str) -> Result<()> {
-        let mut batch = self.db.batch();
-
+    pub fn delete(&self, namespace_id: NamespaceId, key: &str) -> Result<bool> {
         if let Some(data) = KvPairRow::fetch(&self.keyspace, KvPairRow::key_for(namespace_id, key))?
         {
+            let mut batch = self.db.batch();
+
             // Delete from the expiration keyspace
             if let Some(expiry) = data.expiry {
                 batch.remove_row(
@@ -154,11 +154,12 @@ impl KvController {
                 )?;
             }
             batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, key))?;
+
+            batch.commit()?;
+            Ok(true)
+        } else {
+            Ok(false)
         }
-
-        batch.commit()?;
-
-        Ok(())
     }
 
     pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
