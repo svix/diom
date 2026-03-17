@@ -40,8 +40,6 @@ func (kv Kv) Set(
 		kv.client,
 		"POST",
 		"/api/v1/kv/set",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -62,8 +60,6 @@ func (kv Kv) Get(
 		kv.client,
 		"POST",
 		"/api/v1/kv/get",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -83,8 +79,6 @@ func (kv Kv) Delete(
 		kv.client,
 		"POST",
 		"/api/v1/kv/delete",
-		nil,
-		nil,
 		&body,
 	)
 }
