@@ -1,0 +1,25 @@
+apiVersion: coyote.svix.com/v1alpha1
+kind: CoyoteCluster
+metadata:
+  name: coyote
+  namespace: coyote
+spec:
+  nodes: 3
+  image: ghcr.io/svix/coyote-server:sha-450fed76623cf0a79d6384259db8d303f9a1c3e7
+  storage:
+    persistent:
+      size: 64Gi
+      storageClass: gp2
+  extraEnv:
+    - name: COYOTE_OPENTELEMETRY_METRICS_ADDRESS
+      value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+    - name: COYOTE_OPENTELEMETRY_METRICS_USE_HTTP
+      value: "true"
+    - name: RUST_LOG
+      value: debug
+    - name: RUST_BACKTRACE
+      value: "1"
+    - name: COYOTE_LOG_FORMAT
+      value: "json"
+    - name: COYOTE_OPENTELEMETRY_ADDRESS
+      value: grpc://datadog-agent.datadog.svc.cluster.local:4317

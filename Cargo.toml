@@ -102,6 +102,7 @@ members = [
     "clients/rust",
     "codegen",
     "crates/*",
+    "infra/operator",
     "server",
 ]
 # By default, don't build extra helpers like codegen.
@@ -166,6 +167,8 @@ idna_adapter = "=1.1.0"
 indexmap = "2.6.0"
 itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
+k8s-openapi = { version = "0.27.1", features = ["v1_31"] }
+kube = { version = "3.0.1", features = ["runtime", "derive", "client"] }
 mimalloc = "0.1.48"
 mime = "0.3"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "f464ae88b65c76fd6a39b6547003611e24680825" }
