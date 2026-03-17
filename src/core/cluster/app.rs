@@ -58,7 +58,7 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
             "/repl/raft/handle-forwarded-write",
             post(handle_forwarded_write),
         )
-        .route("/repl/raft/last-id", get(last_id))
+        .route("/repl/raft/last-id", post(last_id))
         .route("/repl/raft/admin/add-learner", post(add_learner))
         .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
         .route(
