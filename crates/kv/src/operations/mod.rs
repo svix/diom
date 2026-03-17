@@ -8,7 +8,7 @@ mod set;
 pub use clear_expired::ClearExpiredOperation;
 pub use create_namespace::{CreateKvOperation, CreateKvResponseData};
 pub use delete::DeleteOperation;
-pub use set::SetOperation;
+pub use set::{SetOperation, SetResponseData};
 
 use diom_operations::raft_module_operations;
 
@@ -20,7 +20,7 @@ pub struct KvRaftState<'a> {
 raft_module_operations!(
     KvRequest,
     KvOperation {
-        Set(SetOperation) -> (),
+        Set(SetOperation) -> SetResponseData,
         Delete(DeleteOperation) -> (),
         CreateKv(CreateKvOperation) -> CreateKvResponseData,
         ClearExpired(ClearExpiredOperation) -> (),

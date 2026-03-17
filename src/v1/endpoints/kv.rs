@@ -39,7 +39,10 @@ pub struct KvSetIn {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct KvSetOut {}
+pub struct KvSetOut {
+    /// Whether the operation succeeded or was a noop due to pre-conditions.
+    pub success: bool,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
@@ -76,7 +79,8 @@ pub struct KvDeleteIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvDeleteOut {
-    pub deleted: bool,
+    /// Whether the operation succeeded or was a noop due to pre-conditions.
+    pub success: bool,
 }
 
 /// KV Set
@@ -92,9 +96,11 @@ async fn kv_set(
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(namespace, data.key, data.value, data.ttl, data.behavior);
-    repl.client_write(operation).await.or_internal_error()?.0?;
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
 
-    let ret = KvSetOut {};
+    let ret = KvSetOut {
+        success: resp.success,
+    };
     Ok(MsgPackOrJson(ret))
 }
 
@@ -146,7 +152,7 @@ async fn kv_del(
     let operation = DeleteOperation::new(namespace, key);
     repl.client_write(operation).await.or_internal_error()?.0?;
 
-    let ret = KvDeleteOut { deleted: true };
+    let ret = KvDeleteOut { success: true };
     Ok(MsgPackOrJson(ret))
 }
 

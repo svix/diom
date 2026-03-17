@@ -88,7 +88,7 @@ pub struct CacheDeleteIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheDeleteOut {
-    pub deleted: bool,
+    pub success: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -186,7 +186,7 @@ async fn cache_del(
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());
     repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(CacheDeleteOut { deleted: true }))
+    Ok(MsgPackOrJson(CacheDeleteOut { success: true }))
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]

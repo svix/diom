@@ -14,7 +14,7 @@ async fn kv_set(
     value: &str,
     behavior: &str,
 ) -> TestResult<()> {
-    client
+    let response = client
         .post("kv/set")
         .json(json!({
             "key": key,
@@ -23,7 +23,31 @@ async fn kv_set(
             "behavior": behavior
         }))
         .await?
-        .ensure(StatusCode::OK)?;
+        .ensure(StatusCode::OK)?
+        .json();
+    assert!(response["success"].as_bool().unwrap());
+    Ok(())
+}
+
+async fn kv_set_unsuccessful(
+    client: &TestClient,
+    key: &str,
+    expire_in: Option<u64>,
+    value: &str,
+    behavior: &str,
+) -> TestResult<()> {
+    let response = client
+        .post("kv/set")
+        .json(json!({
+            "key": key,
+            "ttl": expire_in,
+            "value": value.as_bytes(),
+            "behavior": behavior
+        }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+    assert!(!response["success"].as_bool().unwrap());
     Ok(())
 }
 
@@ -112,13 +136,13 @@ async fn test_kv_set_with_insert_and_delete() -> TestResult {
         ..
     } = start_server().await;
 
-    kv_set(&client, "kv-key-2", None, "value-ignored", "update").await?;
+    kv_set_unsuccessful(&client, "kv-key-2", None, "value-ignored", "update").await?;
     kv_not_found(&client, "kv-key-2").await?;
 
     kv_set(&client, "kv-key-2", None, "permanent-value", "insert").await?;
 
     // This insert gets ignored
-    kv_set(&client, "kv-key-2", None, "value-ignored-2", "insert").await?;
+    kv_set_unsuccessful(&client, "kv-key-2", None, "value-ignored-2", "insert").await?;
 
     let response = kv_get(&client, "kv-key-2").await?;
     assert_eq!(response["value"], json!("permanent-value".as_bytes()));
@@ -133,7 +157,7 @@ async fn test_kv_set_with_insert_and_delete() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(delete_response["deleted"], true);
+    assert_eq!(delete_response["success"], true);
 
     kv_not_found(&client, "kv-key-2").await?;
 
@@ -187,7 +211,7 @@ async fn test_kv_update_expiration() -> TestResult {
 
     // Test updating expired key
     kv_set(&client, "kv6", Some(1000), "v6", "upsert").await?;
-    kv_set(&client, "kv6", Some(500), "v6", "insert").await?;
+    kv_set_unsuccessful(&client, "kv6", Some(500), "v6", "insert").await?;
     tokio::time::sleep(Duration::from_millis(500)).await;
 
     let response = kv_get(&client, "kv6").await?;
@@ -195,7 +219,7 @@ async fn test_kv_update_expiration() -> TestResult {
 
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    kv_set(&client, "kv6", Some(500), "v6", "update").await?;
+    kv_set_unsuccessful(&client, "kv6", Some(500), "v6", "update").await?;
     kv_not_found(&client, "kv6").await?;
 
     Ok(())
@@ -305,7 +329,7 @@ async fn test_kv_delete() -> TestResult {
     //     .json();
 
     // FIXME(@svix-lucho): Behavior not implemented yet
-    // assert_eq!(response["deleted"], false);
+    // assert_eq!(response["success"], false);
 
     kv_set(&client, "kv-key-5", None, "value-5", "upsert").await?;
 
@@ -317,7 +341,7 @@ async fn test_kv_delete() -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(response["deleted"], true);
+    assert_eq!(response["success"], true);
 
     kv_not_found(&client, "kv-key-5").await?;
 

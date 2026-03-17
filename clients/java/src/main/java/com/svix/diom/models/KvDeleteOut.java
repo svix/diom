@@ -28,26 +28,26 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
 public class KvDeleteOut {
-@JsonProperty private Boolean deleted;
+@JsonProperty private Boolean success;
 public KvDeleteOut () {}
 
- public KvDeleteOut deleted(Boolean deleted) {
-        this.deleted = deleted;
+ public KvDeleteOut success(Boolean success) {
+        this.success = success;
         return this;
     }
 
     /**
-    * Get deleted
+    * Whether the operation succeeded or was a noop due to pre-conditions.
     *
-     * @return deleted
+     * @return success
      */
     @javax.annotation.Nonnull
-     public Boolean getDeleted() {
-        return deleted;
+     public Boolean getSuccess() {
+        return success;
     }
 
-     public void setDeleted(Boolean deleted) {
-        this.deleted = deleted;
+     public void setSuccess(Boolean success) {
+        this.success = success;
     }
 
     /**

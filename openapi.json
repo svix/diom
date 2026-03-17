@@ -1311,12 +1311,12 @@
       "CacheDeleteOut": {
         "type": "object",
         "properties": {
-          "deleted": {
+          "success": {
             "type": "boolean"
           }
         },
         "required": [
-          "deleted"
+          "success"
         ]
       },
       "CacheGetIn": {
@@ -1777,12 +1777,13 @@
       "KvDeleteOut": {
         "type": "object",
         "properties": {
-          "deleted": {
+          "success": {
+            "description": "Whether the operation succeeded or was a noop due to pre-conditions.",
             "type": "boolean"
           }
         },
         "required": [
-          "deleted"
+          "success"
         ]
       },
       "KvGetIn": {
@@ -1908,7 +1909,16 @@
         ]
       },
       "KvSetOut": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "success": {
+            "description": "Whether the operation succeeded or was a noop due to pre-conditions.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
       },
       "MsgIn": {
         "type": "object",
