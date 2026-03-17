@@ -54,7 +54,7 @@ pub(super) async fn initialize_cluster(
         .voter_ids(voters, "waiting for cluster to bootstrap")
         .await?;
     let new_id = ClusterId::generate();
-    tracing::debug!(cluster_id=?new_id, "cluster initialized, setting cluster_id");
+    tracing::info!(cluster_id=%new_id, "cluster initialized, setting cluster_id");
     raft.client_write(RequestWithContext::new(
         Request::ClusterInternal(SetClusterUuidOperation(new_id).into()),
         jiff::Timestamp::now(),

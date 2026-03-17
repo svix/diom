@@ -196,10 +196,10 @@ impl Discovery {
         while Instant::now() < deadline {
             let (my_addr, discovered_seeds) = self.poll_seeds().await;
             if let Some(addr) = &my_addr {
-                tracing::debug!(?addr, "discovered my seed address");
+                tracing::trace!(?addr, "discovered my seed address");
                 self.my_addr = addr.clone();
             }
-            tracing::debug!(?discovered_seeds, "discovered peers");
+            tracing::trace!(?discovered_seeds, "discovered peers");
 
             let num_nodes_in_live_clusters = discovered_seeds
                 .values()

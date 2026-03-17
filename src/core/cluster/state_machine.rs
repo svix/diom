@@ -44,6 +44,12 @@ struct LastSnapshot {
 #[serde(transparent)]
 pub struct ClusterId(#[serde(with = "uuid::serde::simple")] Uuid);
 
+impl std::fmt::Display for ClusterId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.simple().fmt(f)
+    }
+}
+
 impl ClusterId {
     pub(super) fn generate() -> Self {
         Self(Uuid::new_v4())
@@ -258,6 +264,9 @@ impl Store {
             .as_ref()
             .map_or(Ok(0), |s| s.meta.snapshot_idx())?;
         self.cluster_id = cluster_id;
+        if let Some(cluster_id) = &cluster_id {
+            tracing::info!(%cluster_id, "starting up with existing cluster membership");
+        }
         *self.last_snapshot.write() = last_snapshot;
         Ok(())
     }
