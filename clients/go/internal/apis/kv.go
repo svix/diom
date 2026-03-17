@@ -24,47 +24,67 @@ func (kv Kv) Namespace() KvNamespace {
 // KV Set
 func (kv Kv) Set(
 	ctx context.Context,
+	key string,
 	kvSetIn diom_models.KvSetIn,
 ) (*diom_models.KvSetOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.KvSetIn, diom_models.KvSetOut](
+	body := diom_models.KvSetIn_{
+		Key:      key,
+		Value:    kvSetIn.Value,
+		Ttl:      kvSetIn.Ttl,
+		Behavior: kvSetIn.Behavior,
+		Version:  kvSetIn.Version,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.KvSetIn_, diom_models.KvSetOut](
 		ctx,
 		kv.client,
 		"POST",
 		"/api/v1/kv/set",
 		nil,
 		nil,
-		&kvSetIn,
+		&body,
 	)
 }
 
 // KV Get
 func (kv Kv) Get(
 	ctx context.Context,
+	key string,
 	kvGetIn diom_models.KvGetIn,
 ) (*diom_models.KvGetOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.KvGetIn, diom_models.KvGetOut](
+	body := diom_models.KvGetIn_{
+		Key:         key,
+		Consistency: kvGetIn.Consistency,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.KvGetIn_, diom_models.KvGetOut](
 		ctx,
 		kv.client,
 		"POST",
 		"/api/v1/kv/get",
 		nil,
 		nil,
-		&kvGetIn,
+		&body,
 	)
 }
 
 // KV Delete
 func (kv Kv) Delete(
 	ctx context.Context,
+	key string,
 	kvDeleteIn diom_models.KvDeleteIn,
 ) (*diom_models.KvDeleteOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.KvDeleteIn, diom_models.KvDeleteOut](
+	body := diom_models.KvDeleteIn_{
+		Key: key,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.KvDeleteIn_, diom_models.KvDeleteOut](
 		ctx,
 		kv.client,
 		"POST",
 		"/api/v1/kv/delete",
 		nil,
 		nil,
-		&kvDeleteIn,
+		&body,
 	)
 }

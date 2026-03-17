@@ -24,47 +24,65 @@ func (cache Cache) Namespace() CacheNamespace {
 // Cache Set
 func (cache Cache) Set(
 	ctx context.Context,
+	key string,
 	cacheSetIn diom_models.CacheSetIn,
 ) (*diom_models.CacheSetOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.CacheSetIn, diom_models.CacheSetOut](
+	body := diom_models.CacheSetIn_{
+		Key:   key,
+		Value: cacheSetIn.Value,
+		Ttl:   cacheSetIn.Ttl,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.CacheSetIn_, diom_models.CacheSetOut](
 		ctx,
 		cache.client,
 		"POST",
 		"/api/v1/cache/set",
 		nil,
 		nil,
-		&cacheSetIn,
+		&body,
 	)
 }
 
 // Cache Get
 func (cache Cache) Get(
 	ctx context.Context,
+	key string,
 	cacheGetIn diom_models.CacheGetIn,
 ) (*diom_models.CacheGetOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.CacheGetIn, diom_models.CacheGetOut](
+	body := diom_models.CacheGetIn_{
+		Key:         key,
+		Consistency: cacheGetIn.Consistency,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.CacheGetIn_, diom_models.CacheGetOut](
 		ctx,
 		cache.client,
 		"POST",
 		"/api/v1/cache/get",
 		nil,
 		nil,
-		&cacheGetIn,
+		&body,
 	)
 }
 
 // Cache Delete
 func (cache Cache) Delete(
 	ctx context.Context,
+	key string,
 	cacheDeleteIn diom_models.CacheDeleteIn,
 ) (*diom_models.CacheDeleteOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.CacheDeleteIn, diom_models.CacheDeleteOut](
+	body := diom_models.CacheDeleteIn_{
+		Key: key,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.CacheDeleteIn_, diom_models.CacheDeleteOut](
 		ctx,
 		cache.client,
 		"POST",
 		"/api/v1/cache/delete",
 		nil,
 		nil,
-		&cacheDeleteIn,
+		&body,
 	)
 }

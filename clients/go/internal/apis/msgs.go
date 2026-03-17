@@ -33,15 +33,21 @@ func (msgs Msgs) Topic() MsgsTopic {
 // Publishes messages to a topic within a namespace.
 func (msgs Msgs) Publish(
 	ctx context.Context,
+	topic string,
 	msgPublishIn diom_models.MsgPublishIn,
 ) (*diom_models.MsgPublishOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.MsgPublishIn, diom_models.MsgPublishOut](
+	body := diom_models.MsgPublishIn_{
+		Topic: topic,
+		Msgs:  msgPublishIn.Msgs,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgPublishIn_, diom_models.MsgPublishOut](
 		ctx,
 		msgs.client,
 		"POST",
 		"/api/v1/msgs/publish",
 		nil,
 		nil,
-		&msgPublishIn,
+		&body,
 	)
 }

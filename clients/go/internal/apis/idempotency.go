@@ -24,47 +24,65 @@ func (idempotency Idempotency) Namespace() IdempotencyNamespace {
 // Start an idempotent request
 func (idempotency Idempotency) Start(
 	ctx context.Context,
+	key string,
 	idempotencyStartIn diom_models.IdempotencyStartIn,
 ) (*diom_models.IdempotencyStartOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.IdempotencyStartIn, diom_models.IdempotencyStartOut](
+	body := diom_models.IdempotencyStartIn_{
+		Key: key,
+		Ttl: idempotencyStartIn.Ttl,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.IdempotencyStartIn_, diom_models.IdempotencyStartOut](
 		ctx,
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/start",
 		nil,
 		nil,
-		&idempotencyStartIn,
+		&body,
 	)
 }
 
 // Complete an idempotent request with a response
 func (idempotency Idempotency) Complete(
 	ctx context.Context,
+	key string,
 	idempotencyCompleteIn diom_models.IdempotencyCompleteIn,
 ) (*diom_models.IdempotencyCompleteOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.IdempotencyCompleteIn, diom_models.IdempotencyCompleteOut](
+	body := diom_models.IdempotencyCompleteIn_{
+		Key:      key,
+		Response: idempotencyCompleteIn.Response,
+		Ttl:      idempotencyCompleteIn.Ttl,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.IdempotencyCompleteIn_, diom_models.IdempotencyCompleteOut](
 		ctx,
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/complete",
 		nil,
 		nil,
-		&idempotencyCompleteIn,
+		&body,
 	)
 }
 
 // Abandon an idempotent request (remove lock without saving response)
 func (idempotency Idempotency) Abort(
 	ctx context.Context,
+	key string,
 	idempotencyAbortIn diom_models.IdempotencyAbortIn,
 ) (*diom_models.IdempotencyAbortOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.IdempotencyAbortIn, diom_models.IdempotencyAbortOut](
+	body := diom_models.IdempotencyAbortIn_{
+		Key: key,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.IdempotencyAbortIn_, diom_models.IdempotencyAbortOut](
 		ctx,
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/abort",
 		nil,
 		nil,
-		&idempotencyAbortIn,
+		&body,
 	)
 }

@@ -24,16 +24,25 @@ func NewMsgsQueue(client *diom_proto.HttpClient) MsgsQueue {
 // are acked or their lease expires.
 func (msgsQueue MsgsQueue) Receive(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueReceiveIn diom_models.MsgQueueReceiveIn,
 ) (*diom_models.MsgQueueReceiveOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.MsgQueueReceiveIn, diom_models.MsgQueueReceiveOut](
+	body := diom_models.MsgQueueReceiveIn_{
+		Topic:               topic,
+		ConsumerGroup:       consumerGroup,
+		BatchSize:           msgQueueReceiveIn.BatchSize,
+		LeaseDurationMillis: msgQueueReceiveIn.LeaseDurationMillis,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgQueueReceiveIn_, diom_models.MsgQueueReceiveOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/receive",
 		nil,
 		nil,
-		&msgQueueReceiveIn,
+		&body,
 	)
 }
 
@@ -42,16 +51,24 @@ func (msgsQueue MsgsQueue) Receive(
 // Acked messages are permanently removed from the queue and will never be re-delivered.
 func (msgsQueue MsgsQueue) Ack(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueAckIn diom_models.MsgQueueAckIn,
 ) (*diom_models.MsgQueueAckOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.MsgQueueAckIn, diom_models.MsgQueueAckOut](
+	body := diom_models.MsgQueueAckIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		MsgIds:        msgQueueAckIn.MsgIds,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgQueueAckIn_, diom_models.MsgQueueAckOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/ack",
 		nil,
 		nil,
-		&msgQueueAckIn,
+		&body,
 	)
 }
 
@@ -61,16 +78,25 @@ func (msgsQueue MsgsQueue) Ack(
 // the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
 func (msgsQueue MsgsQueue) Configure(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueConfigureIn diom_models.MsgQueueConfigureIn,
 ) (*diom_models.MsgQueueConfigureOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.MsgQueueConfigureIn, diom_models.MsgQueueConfigureOut](
+	body := diom_models.MsgQueueConfigureIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		RetrySchedule: msgQueueConfigureIn.RetrySchedule,
+		DlqTopic:      msgQueueConfigureIn.DlqTopic,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgQueueConfigureIn_, diom_models.MsgQueueConfigureOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/configure",
 		nil,
 		nil,
-		&msgQueueConfigureIn,
+		&body,
 	)
 }
 
@@ -80,31 +106,46 @@ func (msgsQueue MsgsQueue) Configure(
 // move them back to the queue for reprocessing.
 func (msgsQueue MsgsQueue) Nack(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueNackIn diom_models.MsgQueueNackIn,
 ) (*diom_models.MsgQueueNackOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.MsgQueueNackIn, diom_models.MsgQueueNackOut](
+	body := diom_models.MsgQueueNackIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		MsgIds:        msgQueueNackIn.MsgIds,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgQueueNackIn_, diom_models.MsgQueueNackOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/nack",
 		nil,
 		nil,
-		&msgQueueNackIn,
+		&body,
 	)
 }
 
 // Moves all dead-letter queue messages back to the main queue for reprocessing.
 func (msgsQueue MsgsQueue) RedriveDlq(
 	ctx context.Context,
+	topic string,
+	consumerGroup string,
 	msgQueueRedriveDlqIn diom_models.MsgQueueRedriveDlqIn,
 ) (*diom_models.MsgQueueRedriveDlqOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.MsgQueueRedriveDlqIn, diom_models.MsgQueueRedriveDlqOut](
+	body := diom_models.MsgQueueRedriveDlqIn_{
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgQueueRedriveDlqIn_, diom_models.MsgQueueRedriveDlqOut](
 		ctx,
 		msgsQueue.client,
 		"POST",
 		"/api/v1/msgs/queue/redrive-dlq",
 		nil,
 		nil,
-		&msgQueueRedriveDlqIn,
+		&body,
 	)
 }

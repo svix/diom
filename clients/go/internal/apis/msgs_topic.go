@@ -22,15 +22,21 @@ func NewMsgsTopic(client *diom_proto.HttpClient) MsgsTopic {
 // Partition count can only be increased, never decreased. The default for a new topic is 1.
 func (msgsTopic MsgsTopic) Configure(
 	ctx context.Context,
+	topic string,
 	msgTopicConfigureIn diom_models.MsgTopicConfigureIn,
 ) (*diom_models.MsgTopicConfigureOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.MsgTopicConfigureIn, diom_models.MsgTopicConfigureOut](
+	body := diom_models.MsgTopicConfigureIn_{
+		Topic:      topic,
+		Partitions: msgTopicConfigureIn.Partitions,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgTopicConfigureIn_, diom_models.MsgTopicConfigureOut](
 		ctx,
 		msgsTopic.client,
 		"POST",
 		"/api/v1/msgs/topic/configure",
 		nil,
 		nil,
-		&msgTopicConfigureIn,
+		&body,
 	)
 }
