@@ -45,9 +45,8 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with("/health/ping", get_with(ping, ping_operation), &tag)
         .api_route_with("/health/error", post_with(error, error_operation), &tag);
 
-    if cfg!(debug_assertions) {
-        router.route("/health/panic", post(panic))
-    } else {
-        router
-    }
+    #[cfg(debug_assertions)]
+    let router = router.route("/health/panic", post(panic));
+
+    router
 }
