@@ -93,12 +93,18 @@ pub struct AppState {
     pub(crate) time: Monotime,
 }
 
-fn handle_panic(_err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
+fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
     #[derive(Debug, Serialize)]
     struct MinimalError {
         message: &'static str,
     }
-    tracing::error!("Unhandled panic");
+    if let Some(err) = err.downcast_ref::<String>() {
+        tracing::error!(?err, "Unhandled panic");
+    } else if let Some(err) = err.downcast_ref::<&'static str>() {
+        tracing::error!(?err, "Unhandled panic");
+    } else {
+        tracing::error!("Unhandled non-string panic");
+    }
     (
         http::StatusCode::INTERNAL_SERVER_ERROR,
         coyote_proto::MsgPackOrJson(MinimalError {
