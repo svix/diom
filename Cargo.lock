@@ -741,6 +741,7 @@ dependencies = [
  "fs-err",
  "futures-lite",
  "openapi-codegen",
+ "schemars 1.2.1",
  "serde_json",
  "tracing",
  "tracing-subscriber",
