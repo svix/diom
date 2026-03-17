@@ -40,8 +40,6 @@ func (health Health) Error(
 		"POST",
 		"/api/v1/health/error",
 		nil,
-		nil,
-		nil,
 	)
 	return err
 }
