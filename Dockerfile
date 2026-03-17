@@ -90,6 +90,7 @@ WORKDIR /home/appuser
 EXPOSE 8050
 
 COPY --chown=root:root --chmod=755 --from=build /app/target/release/coyote-server /usr/local/bin/coyote-server
+COPY --chown=root:root --chmod=755 --from=build /app/target/release/coyote /usr/local/bin/coyote
 
 CMD ["/usr/local/bin/coyote-server"]
 
