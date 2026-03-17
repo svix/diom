@@ -80,7 +80,7 @@ pub struct NodeId {
 
 impl std::fmt::Display for NodeId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.inner)
+        self.inner.simple().fmt(f)
     }
 }
 

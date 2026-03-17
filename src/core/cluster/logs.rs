@@ -393,7 +393,7 @@ impl CoyoteLogs {
             unix_timestamp_millis: timestamp.as_millisecond() as u64,
             log_id: log_index,
         };
-        tracing::debug!(?rec, "recording log/timestamp checkpoint");
+        tracing::trace!(?rec, "recording log/timestamp checkpoint");
         let (k, v) = rec.to_fjall_entry()?;
         let keyspace = self.log_keyspace.clone();
         spawn_blocking_in_current_span(move || -> fjall::Result<()> { keyspace.insert(k, v) })
@@ -407,11 +407,11 @@ impl CoyoteLogs {
         let meta_keyspace = self.meta_keyspace.clone();
         spawn_blocking_in_current_span(move || {
             if let Some(node_id) = NODE_ID.get(&meta_keyspace)? {
-                tracing::debug!(?node_id, "starting up with existing node ID");
+                tracing::info!(%node_id, "starting up with existing node ID");
                 node_id
             } else {
                 let node_id = NodeId::generate();
-                tracing::info!(?node_id, "generated a new node ID");
+                tracing::info!(%node_id, "generated a new node ID");
                 NODE_ID
                     .store(&meta_keyspace, &node_id)
                     .context("saving node ID to logs database")?;
