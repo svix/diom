@@ -121,6 +121,7 @@ pub async fn initialize_raft(
         network,
         background_channel: bgtx,
         time,
+        cfg: cfg.clone(),
     };
     tokio::spawn({
         let handle = handle.clone();

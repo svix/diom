@@ -4887,6 +4887,7 @@ dependencies = [
  "anyhow",
  "bytes",
  "coyote",
+ "futures-util",
  "http",
  "http-body-util",
  "reqwest 0.13.2",
