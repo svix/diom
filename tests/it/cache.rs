@@ -82,7 +82,7 @@ async fn test_cache_set_get_and_delete() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(delete_response["deleted"], true);
+    assert_eq!(delete_response["success"], true);
 
     let response = client
         .post("cache/get")

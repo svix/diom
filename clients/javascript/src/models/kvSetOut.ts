@@ -1,19 +1,22 @@
 // this file is @generated
-// biome-ignore-all lint/suspicious/noEmptyInterface: forwards compat
 
 export interface KvSetOut {
+    /** Whether the operation succeeded or was a noop due to pre-conditions. */
+    success: boolean;
 }
 
 export const KvSetOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _fromJsonObject(_object: any): KvSetOut {
+    _fromJsonObject(object: any): KvSetOut {
         return {
+            success: object['success'],
         };
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    _toJsonObject(_self: KvSetOut): any {
+    _toJsonObject(self: KvSetOut): any {
         return {
+            'success': self.success,
         };
     }
 }
