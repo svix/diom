@@ -3,20 +3,20 @@ import {
     type IdempotencyCompleted,
     IdempotencyCompletedSerializer,
 } from './idempotencyCompleted';
+
+
+// biome-ignore lint/suspicious/noEmptyInterface: backwards compat
 interface _IdempotencyStartOutFields {}
 
 
-    
 // biome-ignore lint/suspicious/noEmptyInterface: backwards compat
 interface IdempotencyStartOutStartedData {}
     
 
-    
 // biome-ignore lint/suspicious/noEmptyInterface: backwards compat
 interface IdempotencyStartOutLockedData {}
     
 
-    
 
 
 
