@@ -12,6 +12,7 @@ jobs:
       pull-requests: read
     outputs:
       openapi: ${{ steps.filter.outputs.openapi }}
+      java: ${{ steps.filter.outputs.java }}
       javascript: ${{ steps.filter.outputs.javascript }}
       python: ${{ steps.filter.outputs.python }}
     steps:
@@ -23,6 +24,9 @@ jobs:
             openapi:
               - '.github/workflows/lint-openapi.yml'
               - 'openapi.json'
+            java:
+              - '.github/workflows/java.yml'
+              - 'clients/java/**'
             javascript:
               - '.github/workflows/javascript.yml'
               - 'clients/javascript/**'
@@ -45,6 +49,11 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/lint-openapi.yml
     secrets: inherit
+
+  java:
+    needs: filter
+    if: needs.filter.outputs.java == 'true'
+    uses: ./.github/workflows/java.yml
 
   javascript:
     needs: filter
