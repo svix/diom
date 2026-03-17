@@ -35,4 +35,18 @@ public class Health {
             PingOut.class
             );
     }
+
+    /** Intentionally return an error */
+    public void error(
+        
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/health/error");
+        this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            null,
+            null
+            );
+    }
 }

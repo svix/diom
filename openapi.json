@@ -37,6 +37,26 @@
         ]
       }
     },
+    "/api/v1/health/error": {
+      "post": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Error",
+        "description": "Intentionally return an error",
+        "operationId": "v1.health.error",
+        "responses": {
+          "204": {
+            "description": "no content"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/cache/set": {
       "post": {
         "tags": [
