@@ -5,9 +5,9 @@ export interface KvGetOut {
     expiry?: Date | null;
     value?: number[] | null;
     /**
-* Opaque version token for optimistic concurrency control.
-* Pass as `version` in a subsequent `set` to perform a conditional write.
-*/
+     * Opaque version token for optimistic concurrency control.
+     * Pass as `version` in a subsequent `set` to perform a conditional write.
+     */
     version: number;
 }
 

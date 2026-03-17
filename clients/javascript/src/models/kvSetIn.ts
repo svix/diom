@@ -10,9 +10,9 @@ export interface KvSetIn {
     ttl?: number | null;
     behavior?: OperationBehavior;
     /**
-* If set, the write only succeeds when the stored version matches this value.
-* Use the `version` field from a prior `get` response.
-*/
+     * If set, the write only succeeds when the stored version matches this value.
+     * Use the `version` field from a prior `get` response.
+     */
     version?: number | null;
 }
 
@@ -23,9 +23,9 @@ export interface KvSetIn_ {
     ttl?: number | null;
     behavior?: OperationBehavior;
     /**
-* If set, the write only succeeds when the stored version matches this value.
-* Use the `version` field from a prior `get` response.
-*/
+     * If set, the write only succeeds when the stored version matches this value.
+     * Use the `version` field from a prior `get` response.
+     */
     version?: number | null;
 }
 
