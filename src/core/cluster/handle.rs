@@ -260,7 +260,7 @@ impl RaftState {
                     if let Some(leader_id) = forward_to_leader.leader_id
                         && let Some(leader_node) = &forward_to_leader.leader_node
                     {
-                        tracing::debug!("received write to non-leader, forwarding");
+                        tracing::trace!("received write to non-leader, forwarding");
                         let mut network_handle = self.network.clone();
                         let client = network_handle.new_client(leader_id, leader_node).await;
                         client
@@ -336,7 +336,7 @@ impl RaftState {
             false
         } else {
             let Some(leader) = self.raft.current_leader().await else {
-                tracing::debug!(my_state=?state, "no current leader known");
+                tracing::warn!(my_state=?state, "no current leader known");
                 return false;
             };
             if !self
@@ -347,7 +347,7 @@ impl RaftState {
                 .await
                 .unwrap_or(false)
             {
-                tracing::debug!(
+                tracing::warn!(
                     ?leader,
                     "I know the leader's node ID, but not yet their address"
                 );
