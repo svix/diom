@@ -19,6 +19,13 @@ export class Health {
             this.requestCtx,
             PingOutSerializer._fromJsonObject,
         );
+    }/** Intentionally return an error */
+    public error(
+    ): Promise<void> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/health/error");
+
+        
+        return request.sendNoResponseBody(this.requestCtx);
     }
 }
 

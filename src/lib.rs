@@ -7,19 +7,23 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{sync::Arc, time::Duration};
 
+use ::serde::Serialize;
 use aide::axum::ApiRouter;
-use axum::{Extension, extract::DefaultBodyLimit, middleware, serve::ListenerExt as _};
+use axum::{
+    Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
+    serve::ListenerExt as _,
+};
 use coyote_core::Monotime;
 use coyote_error::Error;
 use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::metrics::Meter;
 use tokio::{net::TcpListener, sync::Barrier};
-use tower_http::trace::TraceLayer;
-
 use tower_http::{
     ServiceExt,
+    catch_panic::CatchPanicLayer,
     cors::{AllowHeaders, Any, CorsLayer},
     normalize_path::NormalizePath,
+    trace::TraceLayer,
 };
 
 use crate::{
@@ -89,6 +93,21 @@ pub struct AppState {
     pub(crate) time: Monotime,
 }
 
+fn handle_panic(_err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
+    #[derive(Debug, Serialize)]
+    struct MinimalError {
+        message: &'static str,
+    }
+    tracing::error!("Unhandled panic");
+    (
+        http::StatusCode::INTERNAL_SERVER_ERROR,
+        coyote_proto::MsgPackOrJson(MinimalError {
+            message: "unhandled internal panic",
+        }),
+    )
+        .into_response()
+}
+
 async fn run_interserver(
     cfg: Configuration,
     state: AppState,
@@ -118,6 +137,7 @@ async fn run_interserver(
         .layer(Extension(raft.clone()))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(coyote_proto::capture_accept_hdr))
+        .layer(CatchPanicLayer::custom(handle_panic))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(AxumOtelSpanCreator)
@@ -243,6 +263,7 @@ pub async fn run_with_listeners(
                 .allow_headers(AllowHeaders::mirror_request())
                 .max_age(Duration::from_secs(600)),
             middleware::from_fn(coyote_proto::capture_accept_hdr),
+            CatchPanicLayer::custom(handle_panic),
         ))
         // It is important that this service wraps the router instead of being
         // applied via `Router::layer`, as it would run after routing then.
