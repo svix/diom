@@ -13,6 +13,8 @@ pub struct HealthArgs {
 pub enum HealthCommands {
     /// Verify the server is up and running.
     Ping {},
+    /// Intentionally return an error
+    Error {},
 }
 
 impl HealthCommands {
@@ -25,6 +27,9 @@ impl HealthCommands {
             Self::Ping {} => {
                 let resp = client.health().ping().await?;
                 crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Error {} => {
+                client.health().error().await?;
             }
         }
 

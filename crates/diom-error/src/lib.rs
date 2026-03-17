@@ -110,7 +110,11 @@ impl IntoResponse for Error {
                     message,
                     "generic error",
                 );
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({}))).into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({"error": "internal error"})),
+                )
+                    .into_response()
             }
         }
     }

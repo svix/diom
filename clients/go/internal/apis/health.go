@@ -29,3 +29,19 @@ func (health Health) Ping(
 		nil,
 	)
 }
+
+// Intentionally return an error
+func (health Health) Error(
+	ctx context.Context,
+) error {
+	_, err := diom_proto.ExecuteRequest[any, any](
+		ctx,
+		health.client,
+		"POST",
+		"/api/v1/health/error",
+		nil,
+		nil,
+		nil,
+	)
+	return err
+}
