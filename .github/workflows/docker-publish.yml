@@ -9,6 +9,14 @@ on:
       target:
         required: true
         type: string
+      context:
+        required: false
+        type: string
+        default: '.'
+      file:
+        required: false
+        type: string
+        default: './Dockerfile'
 
 env:
   REGISTRY: ghcr.io
@@ -68,8 +76,8 @@ jobs:
       - name: Build ${{ matrix.os.arch }} Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ${{ inputs.context }}
+          file: ${{ inputs.file }}
           target: ${{ inputs.target }}
           push: false
           cache-from: type=gha
@@ -114,8 +122,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ${{ inputs.context }}
+          file: ${{ inputs.file }}
           target: ${{ inputs.target }}
           push: true
           provenance: false
