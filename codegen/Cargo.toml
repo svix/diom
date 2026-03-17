@@ -20,6 +20,9 @@ diom.workspace = true
 fs-err.workspace = true
 futures-lite = { version = "2.6.1", default-features = false }
 openapi-codegen.workspace = true
+# this feature enablement is required so declared field order
+# for structs used in the API is preserved into openapi.json
+schemars = { workspace = true, features = ["preserve_order"] }
 serde_json.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
