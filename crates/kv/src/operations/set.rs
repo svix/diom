@@ -1,6 +1,10 @@
 use std::time::Duration;
 
-use crate::{KvNamespace, State, kvcontroller::OperationBehavior, operations::KvRaftState};
+use crate::{
+    KvNamespace, State,
+    kvcontroller::{KvModelIn, OperationBehavior},
+    operations::KvRaftState,
+};
 
 use super::{KvRequest, SetResponse};
 use coyote_core::types::EntityKey;
@@ -14,6 +18,7 @@ use tap::TapOptional;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetResponseData {
     pub success: bool,
+    pub version: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,8 +26,7 @@ pub struct SetOperation {
     namespace_id: NamespaceId,
     storage_type: StorageType,
     pub(crate) key: EntityKey,
-    expiry: Option<Timestamp>,
-    value: Vec<u8>,
+    model: KvModelIn,
     behavior: OperationBehavior,
 }
 
@@ -33,6 +37,7 @@ impl SetOperation {
         value: Vec<u8>,
         ttl: Option<u64>,
         behavior: OperationBehavior,
+        version: Option<u64>,
     ) -> Self {
         let expiry = ttl
             .map(|ttl| Timestamp::now() + Duration::from_millis(ttl))
@@ -41,29 +46,35 @@ impl SetOperation {
             namespace_id: namespace.id,
             storage_type: namespace.storage_type,
             key,
-            expiry,
-            value,
+            model: KvModelIn {
+                value,
+                expiry,
+                version,
+            },
             behavior,
         }
     }
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &State, now: Timestamp) -> Result<SetResponseData> {
-        let success = state.controller(self.storage_type).set(
+    fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
+        let result = state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
-            self.value,
-            self.expiry,
+            self.model,
             self.behavior,
-            now,
+            ctx.timestamp,
+            ctx.log_index,
         )?;
-        Ok(SetResponseData { success })
+        Ok(SetResponseData {
+            success: result.success,
+            version: result.version,
+        })
     }
 }
 
 impl KvRequest for SetOperation {
     fn apply(self, state: KvRaftState<'_>, ctx: &OpContext) -> SetResponse {
-        SetResponse(self.apply_real(state.state, ctx.timestamp))
+        SetResponse(self.apply_real(state.state, ctx))
     }
 }

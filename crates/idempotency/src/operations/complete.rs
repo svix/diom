@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, IdempotencyState};
-use coyote_kv::kvcontroller::OperationBehavior;
+use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
 use fjall_utils::StorageType;
@@ -36,18 +36,27 @@ impl CompleteOperation {
 }
 
 impl CompleteOperation {
-    fn apply_real(self, state: &IdempotencyRaftState<'_>, now: Timestamp) -> Result<()> {
+    fn apply_real(
+        self,
+        state: &IdempotencyRaftState<'_>,
+        now: Timestamp,
+        log_index: u64,
+    ) -> Result<()> {
         let expiry = now + Duration::from_secs(self.ttl_seconds);
         state.state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
-            IdempotencyState::Completed {
-                response: self.response,
-            }
-            .into(),
-            Some(expiry),
+            KvModelIn {
+                value: IdempotencyState::Completed {
+                    response: self.response,
+                }
+                .into(),
+                expiry: Some(expiry),
+                version: None,
+            },
             OperationBehavior::Upsert,
             now,
+            log_index,
         )?;
 
         Ok(())
@@ -60,6 +69,6 @@ impl IdempotencyRequest for CompleteOperation {
         state: IdempotencyRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> CompleteResponse {
-        CompleteResponse(self.apply_real(&state, ctx.timestamp))
+        CompleteResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index))
     }
 }

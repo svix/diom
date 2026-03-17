@@ -32,6 +32,7 @@ public class KvSetIn {
 @JsonProperty private List<Byte> value;
 @JsonProperty private Long ttl;
 @JsonProperty private OperationBehavior behavior;
+@JsonProperty private Long version;
 public KvSetIn () {}
 
  public KvSetIn key(String key) {
@@ -115,6 +116,26 @@ public KvSetIn () {}
 
      public void setBehavior(OperationBehavior behavior) {
         this.behavior = behavior;
+    }
+
+     public KvSetIn version(Long version) {
+        this.version = version;
+        return this;
+    }
+
+    /**
+    * If set, the write only succeeds when the stored version matches this value.
+Use the `version` field from a prior `get` response.
+    *
+     * @return version
+     */
+    @javax.annotation.Nullable
+     public Long getVersion() {
+        return version;
+    }
+
+     public void setVersion(Long version) {
+        this.version = version;
     }
 
     /**

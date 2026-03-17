@@ -1,6 +1,6 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
 use crate::{CacheModel, CacheNamespace};
-use coyote_kv::kvcontroller::OperationBehavior;
+use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::{OpContext, Result};
 use fjall_utils::StorageType;
@@ -27,14 +27,18 @@ impl SetOperation {
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &CacheRaftState<'_>, now: Timestamp) -> Result<()> {
+    fn apply_real(self, state: &CacheRaftState<'_>, now: Timestamp, log_index: u64) -> Result<()> {
         state.state.controller(self.storage_type).set(
             self.namespace_id,
             &self.key,
-            self.model.value,
-            self.model.expiry,
+            KvModelIn {
+                value: self.model.value,
+                expiry: self.model.expiry,
+                version: None,
+            },
             OperationBehavior::Upsert,
             now,
+            log_index,
         )?;
         Ok(())
     }
@@ -42,6 +46,6 @@ impl SetOperation {
 
 impl CacheRequest for SetOperation {
     fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> SetResponse {
-        SetResponse(self.apply_real(&state, ctx.timestamp))
+        SetResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index))
     }
 }
