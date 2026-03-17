@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitCheckOut {
-@JsonProperty private Boolean allowed;
-@JsonProperty private Long remaining;
-@JsonProperty("retry_after_millis") private Long retryAfterMillis;
-public RateLimitCheckOut () {}
+    @JsonProperty private Boolean allowed;
+    @JsonProperty private Long remaining;
+    @JsonProperty("retry_after_millis") private Long retryAfterMillis;
+    public RateLimitCheckOut () {}
 
- public RateLimitCheckOut allowed(Boolean allowed) {
+    public RateLimitCheckOut allowed(Boolean allowed) {
         this.allowed = allowed;
         return this;
     }
@@ -44,15 +44,15 @@ public RateLimitCheckOut () {}
      * @return allowed
      */
     @javax.annotation.Nonnull
-     public Boolean getAllowed() {
+    public Boolean getAllowed() {
         return allowed;
     }
 
-     public void setAllowed(Boolean allowed) {
+    public void setAllowed(Boolean allowed) {
         this.allowed = allowed;
     }
 
-     public RateLimitCheckOut remaining(Long remaining) {
+    public RateLimitCheckOut remaining(Long remaining) {
         this.remaining = remaining;
         return this;
     }
@@ -63,15 +63,15 @@ public RateLimitCheckOut () {}
      * @return remaining
      */
     @javax.annotation.Nonnull
-     public Long getRemaining() {
+    public Long getRemaining() {
         return remaining;
     }
 
-     public void setRemaining(Long remaining) {
+    public void setRemaining(Long remaining) {
         this.remaining = remaining;
     }
 
-     public RateLimitCheckOut retryAfterMillis(Long retryAfterMillis) {
+    public RateLimitCheckOut retryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
         return this;
     }
@@ -82,14 +82,13 @@ public RateLimitCheckOut () {}
      * @return retryAfterMillis
      */
     @javax.annotation.Nullable
-     public Long getRetryAfterMillis() {
+    public Long getRetryAfterMillis() {
         return retryAfterMillis;
     }
 
-     public void setRetryAfterMillis(Long retryAfterMillis) {
+    public void setRetryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
     }
-
     /**
      * Create an instance of RateLimitCheckOut given an JSON string
      *

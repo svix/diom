@@ -26,15 +26,15 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheCreateNamespaceIn {
-@JsonProperty private String name;
-@JsonProperty("storage_type") private StorageType storageType;
-@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-@JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
-public CacheCreateNamespaceIn () {}
+    @JsonProperty private String name;
+    @JsonProperty("storage_type") private StorageType storageType;
+    @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
+    @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
+    public CacheCreateNamespaceIn () {}
 
- public CacheCreateNamespaceIn name(String name) {
+    public CacheCreateNamespaceIn name(String name) {
         this.name = name;
         return this;
     }
@@ -45,15 +45,15 @@ public CacheCreateNamespaceIn () {}
      * @return name
      */
     @javax.annotation.Nonnull
-     public String getName() {
+    public String getName() {
         return name;
     }
 
-     public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-     public CacheCreateNamespaceIn storageType(StorageType storageType) {
+    public CacheCreateNamespaceIn storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -64,15 +64,15 @@ public CacheCreateNamespaceIn () {}
      * @return storageType
      */
     @javax.annotation.Nullable
-     public StorageType getStorageType() {
+    public StorageType getStorageType() {
         return storageType;
     }
 
-     public void setStorageType(StorageType storageType) {
+    public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
     }
 
-     public CacheCreateNamespaceIn maxStorageBytes(Long maxStorageBytes) {
+    public CacheCreateNamespaceIn maxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
         return this;
     }
@@ -83,15 +83,15 @@ public CacheCreateNamespaceIn () {}
      * @return maxStorageBytes
      */
     @javax.annotation.Nullable
-     public Long getMaxStorageBytes() {
+    public Long getMaxStorageBytes() {
         return maxStorageBytes;
     }
 
-     public void setMaxStorageBytes(Long maxStorageBytes) {
+    public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
 
-     public CacheCreateNamespaceIn evictionPolicy(EvictionPolicy evictionPolicy) {
+    public CacheCreateNamespaceIn evictionPolicy(EvictionPolicy evictionPolicy) {
         this.evictionPolicy = evictionPolicy;
         return this;
     }
@@ -102,14 +102,13 @@ public CacheCreateNamespaceIn () {}
      * @return evictionPolicy
      */
     @javax.annotation.Nullable
-     public EvictionPolicy getEvictionPolicy() {
+    public EvictionPolicy getEvictionPolicy() {
         return evictionPolicy;
     }
 
-     public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
+    public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
         this.evictionPolicy = evictionPolicy;
     }
-
     /**
      * Create an instance of CacheCreateNamespaceIn given an JSON string
      *

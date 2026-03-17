@@ -26,16 +26,16 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgNamespaceGetOut {
-@JsonProperty private String name;
-@JsonProperty private Retention retention;
-@JsonProperty("storage_type") private StorageType storageType;
-@JsonProperty private OffsetDateTime created;
-@JsonProperty private OffsetDateTime updated;
-public MsgNamespaceGetOut () {}
+    @JsonProperty private String name;
+    @JsonProperty private Retention retention;
+    @JsonProperty("storage_type") private StorageType storageType;
+    @JsonProperty private OffsetDateTime created;
+    @JsonProperty private OffsetDateTime updated;
+    public MsgNamespaceGetOut () {}
 
- public MsgNamespaceGetOut name(String name) {
+    public MsgNamespaceGetOut name(String name) {
         this.name = name;
         return this;
     }
@@ -46,15 +46,15 @@ public MsgNamespaceGetOut () {}
      * @return name
      */
     @javax.annotation.Nonnull
-     public String getName() {
+    public String getName() {
         return name;
     }
 
-     public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-     public MsgNamespaceGetOut retention(Retention retention) {
+    public MsgNamespaceGetOut retention(Retention retention) {
         this.retention = retention;
         return this;
     }
@@ -65,15 +65,15 @@ public MsgNamespaceGetOut () {}
      * @return retention
      */
     @javax.annotation.Nonnull
-     public Retention getRetention() {
+    public Retention getRetention() {
         return retention;
     }
 
-     public void setRetention(Retention retention) {
+    public void setRetention(Retention retention) {
         this.retention = retention;
     }
 
-     public MsgNamespaceGetOut storageType(StorageType storageType) {
+    public MsgNamespaceGetOut storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -84,15 +84,15 @@ public MsgNamespaceGetOut () {}
      * @return storageType
      */
     @javax.annotation.Nonnull
-     public StorageType getStorageType() {
+    public StorageType getStorageType() {
         return storageType;
     }
 
-     public void setStorageType(StorageType storageType) {
+    public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
     }
 
-     public MsgNamespaceGetOut created(OffsetDateTime created) {
+    public MsgNamespaceGetOut created(OffsetDateTime created) {
         this.created = created;
         return this;
     }
@@ -103,15 +103,15 @@ public MsgNamespaceGetOut () {}
      * @return created
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreated() {
+    public OffsetDateTime getCreated() {
         return created;
     }
 
-     public void setCreated(OffsetDateTime created) {
+    public void setCreated(OffsetDateTime created) {
         this.created = created;
     }
 
-     public MsgNamespaceGetOut updated(OffsetDateTime updated) {
+    public MsgNamespaceGetOut updated(OffsetDateTime updated) {
         this.updated = updated;
         return this;
     }
@@ -122,14 +122,13 @@ public MsgNamespaceGetOut () {}
      * @return updated
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getUpdated() {
+    public OffsetDateTime getUpdated() {
         return updated;
     }
 
-     public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
-
     /**
      * Create an instance of MsgNamespaceGetOut given an JSON string
      *

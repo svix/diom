@@ -26,17 +26,17 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheCreateNamespaceOut {
-@JsonProperty private String name;
-@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-@JsonProperty("storage_type") private StorageType storageType;
-@JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
-@JsonProperty private OffsetDateTime created;
-@JsonProperty private OffsetDateTime updated;
-public CacheCreateNamespaceOut () {}
+    @JsonProperty private String name;
+    @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
+    @JsonProperty("storage_type") private StorageType storageType;
+    @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
+    @JsonProperty private OffsetDateTime created;
+    @JsonProperty private OffsetDateTime updated;
+    public CacheCreateNamespaceOut () {}
 
- public CacheCreateNamespaceOut name(String name) {
+    public CacheCreateNamespaceOut name(String name) {
         this.name = name;
         return this;
     }
@@ -47,15 +47,15 @@ public CacheCreateNamespaceOut () {}
      * @return name
      */
     @javax.annotation.Nonnull
-     public String getName() {
+    public String getName() {
         return name;
     }
 
-     public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-     public CacheCreateNamespaceOut maxStorageBytes(Long maxStorageBytes) {
+    public CacheCreateNamespaceOut maxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
         return this;
     }
@@ -66,15 +66,15 @@ public CacheCreateNamespaceOut () {}
      * @return maxStorageBytes
      */
     @javax.annotation.Nullable
-     public Long getMaxStorageBytes() {
+    public Long getMaxStorageBytes() {
         return maxStorageBytes;
     }
 
-     public void setMaxStorageBytes(Long maxStorageBytes) {
+    public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
 
-     public CacheCreateNamespaceOut storageType(StorageType storageType) {
+    public CacheCreateNamespaceOut storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -85,15 +85,15 @@ public CacheCreateNamespaceOut () {}
      * @return storageType
      */
     @javax.annotation.Nonnull
-     public StorageType getStorageType() {
+    public StorageType getStorageType() {
         return storageType;
     }
 
-     public void setStorageType(StorageType storageType) {
+    public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
     }
 
-     public CacheCreateNamespaceOut evictionPolicy(EvictionPolicy evictionPolicy) {
+    public CacheCreateNamespaceOut evictionPolicy(EvictionPolicy evictionPolicy) {
         this.evictionPolicy = evictionPolicy;
         return this;
     }
@@ -104,15 +104,15 @@ public CacheCreateNamespaceOut () {}
      * @return evictionPolicy
      */
     @javax.annotation.Nonnull
-     public EvictionPolicy getEvictionPolicy() {
+    public EvictionPolicy getEvictionPolicy() {
         return evictionPolicy;
     }
 
-     public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
+    public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
         this.evictionPolicy = evictionPolicy;
     }
 
-     public CacheCreateNamespaceOut created(OffsetDateTime created) {
+    public CacheCreateNamespaceOut created(OffsetDateTime created) {
         this.created = created;
         return this;
     }
@@ -123,15 +123,15 @@ public CacheCreateNamespaceOut () {}
      * @return created
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getCreated() {
+    public OffsetDateTime getCreated() {
         return created;
     }
 
-     public void setCreated(OffsetDateTime created) {
+    public void setCreated(OffsetDateTime created) {
         this.created = created;
     }
 
-     public CacheCreateNamespaceOut updated(OffsetDateTime updated) {
+    public CacheCreateNamespaceOut updated(OffsetDateTime updated) {
         this.updated = updated;
         return this;
     }
@@ -142,14 +142,13 @@ public CacheCreateNamespaceOut () {}
      * @return updated
      */
     @javax.annotation.Nonnull
-     public OffsetDateTime getUpdated() {
+    public OffsetDateTime getUpdated() {
         return updated;
     }
 
-     public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
-
     /**
      * Create an instance of CacheCreateNamespaceOut given an JSON string
      *

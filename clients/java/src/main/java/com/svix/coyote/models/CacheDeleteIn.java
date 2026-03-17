@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheDeleteIn {
-@JsonProperty private String key;
-public CacheDeleteIn () {}
+    @JsonProperty private String key;
+    public CacheDeleteIn () {}
 
- public CacheDeleteIn key(String key) {
+    public CacheDeleteIn key(String key) {
         this.key = key;
         return this;
     }
@@ -42,14 +42,13 @@ public CacheDeleteIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
-
     /**
      * Create an instance of CacheDeleteIn given an JSON string
      *

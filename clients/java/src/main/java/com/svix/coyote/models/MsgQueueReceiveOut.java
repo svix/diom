@@ -26,17 +26,17 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueReceiveOut {
-@JsonProperty private List<QueueMsgOut> msgs;
-public MsgQueueReceiveOut () {}
+    @JsonProperty private List<QueueMsgOut> msgs;
+    public MsgQueueReceiveOut () {}
 
- public MsgQueueReceiveOut msgs(List<QueueMsgOut> msgs) {
+    public MsgQueueReceiveOut msgs(List<QueueMsgOut> msgs) {
         this.msgs = msgs;
         return this;
     }
 
-     public MsgQueueReceiveOut addMsgsItem(QueueMsgOut msgsItem) {
+    public MsgQueueReceiveOut addMsgsItem(QueueMsgOut msgsItem) {
         if (this.msgs == null) {
             this.msgs = new ArrayList<>();
         }
@@ -49,14 +49,13 @@ public MsgQueueReceiveOut () {}
      * @return msgs
      */
     @javax.annotation.Nonnull
-     public List<QueueMsgOut> getMsgs() {
+    public List<QueueMsgOut> getMsgs() {
         return msgs;
     }
 
-     public void setMsgs(List<QueueMsgOut> msgs) {
+    public void setMsgs(List<QueueMsgOut> msgs) {
         this.msgs = msgs;
     }
-
     /**
      * Create an instance of MsgQueueReceiveOut given an JSON string
      *

@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvDeleteIn {
-@JsonProperty private String key;
-public KvDeleteIn () {}
+    @JsonProperty private String key;
+    public KvDeleteIn () {}
 
- public KvDeleteIn key(String key) {
+    public KvDeleteIn key(String key) {
         this.key = key;
         return this;
     }
@@ -42,14 +42,13 @@ public KvDeleteIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
-
     /**
      * Create an instance of KvDeleteIn given an JSON string
      *

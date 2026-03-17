@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvSetOut {
-@JsonProperty private Boolean success;
-@JsonProperty private Long version;
-public KvSetOut () {}
+    @JsonProperty private Boolean success;
+    @JsonProperty private Long version;
+    public KvSetOut () {}
 
- public KvSetOut success(Boolean success) {
+    public KvSetOut success(Boolean success) {
         this.success = success;
         return this;
     }
@@ -43,15 +43,15 @@ public KvSetOut () {}
      * @return success
      */
     @javax.annotation.Nonnull
-     public Boolean getSuccess() {
+    public Boolean getSuccess() {
         return success;
     }
 
-     public void setSuccess(Boolean success) {
+    public void setSuccess(Boolean success) {
         this.success = success;
     }
 
-     public KvSetOut version(Long version) {
+    public KvSetOut version(Long version) {
         this.version = version;
         return this;
     }
@@ -62,14 +62,13 @@ public KvSetOut () {}
      * @return version
      */
     @javax.annotation.Nonnull
-     public Long getVersion() {
+    public Long getVersion() {
         return version;
     }
 
-     public void setVersion(Long version) {
+    public void setVersion(Long version) {
         this.version = version;
     }
-
     /**
      * Create an instance of KvSetOut given an JSON string
      *

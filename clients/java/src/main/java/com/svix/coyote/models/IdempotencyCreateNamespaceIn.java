@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCreateNamespaceIn {
-@JsonProperty private String name;
-@JsonProperty("storage_type") private StorageType storageType;
-@JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-public IdempotencyCreateNamespaceIn () {}
+    @JsonProperty private String name;
+    @JsonProperty("storage_type") private StorageType storageType;
+    @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
+    public IdempotencyCreateNamespaceIn () {}
 
- public IdempotencyCreateNamespaceIn name(String name) {
+    public IdempotencyCreateNamespaceIn name(String name) {
         this.name = name;
         return this;
     }
@@ -44,15 +44,15 @@ public IdempotencyCreateNamespaceIn () {}
      * @return name
      */
     @javax.annotation.Nonnull
-     public String getName() {
+    public String getName() {
         return name;
     }
 
-     public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-     public IdempotencyCreateNamespaceIn storageType(StorageType storageType) {
+    public IdempotencyCreateNamespaceIn storageType(StorageType storageType) {
         this.storageType = storageType;
         return this;
     }
@@ -63,15 +63,15 @@ public IdempotencyCreateNamespaceIn () {}
      * @return storageType
      */
     @javax.annotation.Nullable
-     public StorageType getStorageType() {
+    public StorageType getStorageType() {
         return storageType;
     }
 
-     public void setStorageType(StorageType storageType) {
+    public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
     }
 
-     public IdempotencyCreateNamespaceIn maxStorageBytes(Long maxStorageBytes) {
+    public IdempotencyCreateNamespaceIn maxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
         return this;
     }
@@ -82,14 +82,13 @@ public IdempotencyCreateNamespaceIn () {}
      * @return maxStorageBytes
      */
     @javax.annotation.Nullable
-     public Long getMaxStorageBytes() {
+    public Long getMaxStorageBytes() {
         return maxStorageBytes;
     }
 
-     public void setMaxStorageBytes(Long maxStorageBytes) {
+    public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
-
     /**
      * Create an instance of IdempotencyCreateNamespaceIn given an JSON string
      *

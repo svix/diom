@@ -26,14 +26,14 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgPublishOutTopic {
-@JsonProperty private String topic;
-@JsonProperty("start_offset") private Long startOffset;
-@JsonProperty private Long offset;
-public MsgPublishOutTopic () {}
+    @JsonProperty private String topic;
+    @JsonProperty("start_offset") private Long startOffset;
+    @JsonProperty private Long offset;
+    public MsgPublishOutTopic () {}
 
- public MsgPublishOutTopic topic(String topic) {
+    public MsgPublishOutTopic topic(String topic) {
         this.topic = topic;
         return this;
     }
@@ -44,15 +44,15 @@ public MsgPublishOutTopic () {}
      * @return topic
      */
     @javax.annotation.Nonnull
-     public String getTopic() {
+    public String getTopic() {
         return topic;
     }
 
-     public void setTopic(String topic) {
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-     public MsgPublishOutTopic startOffset(Long startOffset) {
+    public MsgPublishOutTopic startOffset(Long startOffset) {
         this.startOffset = startOffset;
         return this;
     }
@@ -63,15 +63,15 @@ public MsgPublishOutTopic () {}
      * @return startOffset
      */
     @javax.annotation.Nonnull
-     public Long getStartOffset() {
+    public Long getStartOffset() {
         return startOffset;
     }
 
-     public void setStartOffset(Long startOffset) {
+    public void setStartOffset(Long startOffset) {
         this.startOffset = startOffset;
     }
 
-     public MsgPublishOutTopic offset(Long offset) {
+    public MsgPublishOutTopic offset(Long offset) {
         this.offset = offset;
         return this;
     }
@@ -82,14 +82,13 @@ public MsgPublishOutTopic () {}
      * @return offset
      */
     @javax.annotation.Nonnull
-     public Long getOffset() {
+    public Long getOffset() {
         return offset;
     }
 
-     public void setOffset(Long offset) {
+    public void setOffset(Long offset) {
         this.offset = offset;
     }
-
     /**
      * Create an instance of MsgPublishOutTopic given an JSON string
      *

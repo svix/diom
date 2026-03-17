@@ -26,13 +26,13 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitResetIn {
-@JsonProperty private String key;
-@JsonProperty private RateLimitTokenBucketConfig config;
-public RateLimitResetIn () {}
+    @JsonProperty private String key;
+    @JsonProperty private RateLimitTokenBucketConfig config;
+    public RateLimitResetIn () {}
 
- public RateLimitResetIn key(String key) {
+    public RateLimitResetIn key(String key) {
         this.key = key;
         return this;
     }
@@ -43,15 +43,15 @@ public RateLimitResetIn () {}
      * @return key
      */
     @javax.annotation.Nonnull
-     public String getKey() {
+    public String getKey() {
         return key;
     }
 
-     public void setKey(String key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
-     public RateLimitResetIn config(RateLimitTokenBucketConfig config) {
+    public RateLimitResetIn config(RateLimitTokenBucketConfig config) {
         this.config = config;
         return this;
     }
@@ -62,14 +62,13 @@ public RateLimitResetIn () {}
      * @return config
      */
     @javax.annotation.Nonnull
-     public RateLimitTokenBucketConfig getConfig() {
+    public RateLimitTokenBucketConfig getConfig() {
         return config;
     }
 
-     public void setConfig(RateLimitTokenBucketConfig config) {
+    public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
-
     /**
      * Create an instance of RateLimitResetIn given an JSON string
      *

@@ -26,12 +26,12 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonAutoDetect(getterVisibility = Visibility.NONE,setterVisibility = Visibility.NONE)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgTopicConfigureOut {
-@JsonProperty private Short partitions;
-public MsgTopicConfigureOut () {}
+    @JsonProperty private Short partitions;
+    public MsgTopicConfigureOut () {}
 
- public MsgTopicConfigureOut partitions(Short partitions) {
+    public MsgTopicConfigureOut partitions(Short partitions) {
         this.partitions = partitions;
         return this;
     }
@@ -42,14 +42,13 @@ public MsgTopicConfigureOut () {}
      * @return partitions
      */
     @javax.annotation.Nonnull
-     public Short getPartitions() {
+    public Short getPartitions() {
         return partitions;
     }
 
-     public void setPartitions(Short partitions) {
+    public void setPartitions(Short partitions) {
         this.partitions = partitions;
     }
-
     /**
      * Create an instance of MsgTopicConfigureOut given an JSON string
      *
