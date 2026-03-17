@@ -404,7 +404,7 @@ impl JsonSchema for SeekPosition {
 
 /// A validated consumer group identifier.
 ///
-/// Must be at most 64 bytes and only contain ASCII alphanumeric characters, `_`, or `-`.
+/// Must be at most 64 bytes and only contain ASCII alphanumeric characters, `_`, `-`, or `.`.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize)]
 #[serde(transparent)]
 pub struct ConsumerGroup(pub(crate) String);
@@ -418,10 +418,10 @@ impl ConsumerGroup {
         }
         if !s
             .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-' || b == b'.')
         {
             return Err(
-                "consumer group name must only contain alphanumeric characters, '_', and '-'",
+                "consumer group name must only contain alphanumeric characters, '_', and '-' and '.'",
             );
         }
         Ok(())
