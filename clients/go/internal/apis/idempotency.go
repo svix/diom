@@ -37,8 +37,6 @@ func (idempotency Idempotency) Start(
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/start",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -60,8 +58,6 @@ func (idempotency Idempotency) Complete(
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/complete",
-		nil,
-		nil,
 		&body,
 	)
 }
@@ -81,8 +77,6 @@ func (idempotency Idempotency) Abort(
 		idempotency.client,
 		"POST",
 		"/api/v1/idempotency/abort",
-		nil,
-		nil,
 		&body,
 	)
 }

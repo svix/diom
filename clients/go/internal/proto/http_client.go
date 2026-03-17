@@ -48,11 +48,9 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	client *HttpClient,
 	method string,
 	path string,
-	pathParams map[string]string,
-	headerParams map[string]string,
 	jsonBody *ReqBody,
 ) (*ResBody, error) {
-	urlStr := client.BaseURL + replacePathKeys(path, pathParams)
+	urlStr := client.BaseURL + path
 
 	var req *http.Request
 	var err error
@@ -75,9 +73,6 @@ func ExecuteRequest[ReqBody any, ResBody any](
 
 	req.Header.Set("svix-req-id", strconv.FormatUint(rand.Uint64(), 10))
 	for hKey, hVal := range client.DefaultHeaders {
-		req.Header.Add(hKey, hVal)
-	}
-	for hKey, hVal := range headerParams {
 		req.Header.Add(hKey, hVal)
 	}
 
@@ -164,14 +159,6 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		}
 	}
 	return resp, err
-}
-
-func replacePathKeys(path string, pathParams map[string]string) string {
-	for key, value := range pathParams {
-		placeholder := "{" + key + "}"
-		path = strings.ReplaceAll(path, placeholder, value)
-	}
-	return path
 }
 
 func SerializeParamToMap(key string, val interface{}, d map[string]string, err *error) {

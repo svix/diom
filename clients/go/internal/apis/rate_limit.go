@@ -31,8 +31,6 @@ func (rateLimit RateLimit) Limit(
 		rateLimit.client,
 		"POST",
 		"/api/v1/rate-limit/limit",
-		nil,
-		nil,
 		&rateLimitCheckIn,
 	)
 }
@@ -47,8 +45,6 @@ func (rateLimit RateLimit) GetRemaining(
 		rateLimit.client,
 		"POST",
 		"/api/v1/rate-limit/get-remaining",
-		nil,
-		nil,
 		&rateLimitGetRemainingIn,
 	)
 }
@@ -63,8 +59,6 @@ func (rateLimit RateLimit) Reset(
 		rateLimit.client,
 		"POST",
 		"/api/v1/rate-limit/reset",
-		nil,
-		nil,
 		&rateLimitResetIn,
 	)
 }

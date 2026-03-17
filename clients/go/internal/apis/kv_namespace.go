@@ -27,8 +27,6 @@ func (kvNamespace KvNamespace) Create(
 		kvNamespace.client,
 		"POST",
 		"/api/v1/kv/namespace/create",
-		nil,
-		nil,
 		&kvCreateNamespaceIn,
 	)
 }
@@ -43,8 +41,6 @@ func (kvNamespace KvNamespace) Get(
 		kvNamespace.client,
 		"POST",
 		"/api/v1/kv/namespace/get",
-		nil,
-		nil,
 		&kvGetNamespaceIn,
 	)
 }

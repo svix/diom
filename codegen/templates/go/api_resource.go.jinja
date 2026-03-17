@@ -60,12 +60,7 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ name | to_upper_came
 func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_camel_case }}(
 	ctx context.Context,
 
-	{#- path parameters #}
-	{% for p in op.path_params -%}
-		{{ p | to_lower_camel_case }} string,
-	{% endfor -%}
-
-	{% if op.request_body_schema_name is defined -%}
+	{%- if op.request_body_schema_name is defined %}
 		{# positional body parameters -#}
 		{% set body_schema = api.types[op.request_body_schema_name] -%}
 		{% set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 -%}
@@ -77,21 +72,8 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 
 		{# body parameter interface -#}
 		{{ request_body_param }} coyote_models.{{ op.request_body_schema_name }},
-	{% endif -%}
+	{%- endif %}
 ) {{ func_ret_type }} {
-	{# path params -#}
-	{% if op.path_params | length > 0 -%}
-	pathMap := map[string]string{
-		{% for p in op.path_params -%}
-		"{{ p }}" : {{ p | to_lower_camel_case }},
-		{% endfor -%}
-	}
-	{% endif -%}
-
-	{% if op.header_params | length > 0 -%}
-	headerMap := map[string]string{}
-	{% endif -%}
-
 	{# body parameter -#}
 	{% if op.request_body_schema_name is defined -%}
 		{% if has_positional_fields -%}
@@ -112,7 +94,6 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 		{% set body = "nil" -%}
 	{% endif -%}
 
-	{# make template ugly, but generated code nice -#}
 	{% if op.request_body_schema_name is defined -%}
 		{% set generics -%}
 			coyote_models.{{ op.request_body_schema_name }}
@@ -126,20 +107,6 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 		{{ resource_self_name }}.client,
 		"{{ op.method | upper }}",
 		"{{ op.path }}",
-		{# path params -#}
-		{% if op.path_params | length > 0 -%}
-		pathMap,
-		{% else -%}
-		nil,
-		{% endif -%}
-
-		{#- header params -#}
-		{% if op.header_params | length >0 -%}
-		headerMap,
-		{% else -%}
-		nil,
-		{% endif -%}
-
 		{{ body }},
 	)
 	{% if not has_return -%}
