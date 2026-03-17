@@ -10,12 +10,15 @@ import (
 )
 
 type RateLimit struct {
-	client    *diom_proto.HttpClient
-	Namespace *RateLimitNamespace
+	client *diom_proto.HttpClient
 }
 
 func NewRateLimit(client *diom_proto.HttpClient) RateLimit {
 	return RateLimit{client}
+}
+
+func (rateLimit RateLimit) Namespace() RateLimitNamespace {
+	return NewRateLimitNamespace(rateLimit.client)
 }
 
 // Rate Limiter Check and Consume

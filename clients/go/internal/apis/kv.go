@@ -10,12 +10,15 @@ import (
 )
 
 type Kv struct {
-	client    *diom_proto.HttpClient
-	Namespace *KvNamespace
+	client *diom_proto.HttpClient
 }
 
 func NewKv(client *diom_proto.HttpClient) Kv {
 	return Kv{client}
+}
+
+func (kv Kv) Namespace() KvNamespace {
+	return NewKvNamespace(kv.client)
 }
 
 // KV Set
