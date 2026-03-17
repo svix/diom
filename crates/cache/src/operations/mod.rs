@@ -7,7 +7,7 @@ mod set;
 
 pub use clear_expired::ClearExpiredOperation;
 pub use create_namespace::{CreateCacheOperation, CreateCacheResponseData};
-pub use delete::DeleteOperation;
+pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::SetOperation;
 
 use diom_operations::raft_module_operations;
@@ -21,7 +21,7 @@ raft_module_operations!(
     CacheRequest,
     CacheOperation {
         Set(SetOperation) -> (),
-        Delete(DeleteOperation) -> (),
+        Delete(DeleteOperation) -> DeleteResponseData,
         CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
         ClearExpired(ClearExpiredOperation) -> (),
     },

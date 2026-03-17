@@ -7,6 +7,11 @@ use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteResponseData {
+    pub success: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteOperation {
     namespace_id: NamespaceId,
     storage_type: StorageType,
@@ -24,11 +29,11 @@ impl DeleteOperation {
 }
 
 impl DeleteOperation {
-    fn apply_real(self, state: &State) -> Result<()> {
-        state
+    fn apply_real(self, state: &State) -> Result<DeleteResponseData> {
+        let success = state
             .controller(self.storage_type)
             .delete(self.namespace_id, &self.key)?;
-        Ok(())
+        Ok(DeleteResponseData { success })
     }
 }
 
