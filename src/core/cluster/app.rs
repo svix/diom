@@ -134,7 +134,7 @@ async fn append_entries(
     Extension(state): Extension<RaftState>,
     MsgPack(body): MsgPack<AppendEntriesRequest<TypeConfig>>,
 ) -> impl IntoResponse {
-    tracing::debug!(
+    tracing::trace!(
         num_entries=body.entries.len(),
         leader_commit=?body.leader_commit,
         "appending some entries to the log");
@@ -146,7 +146,7 @@ async fn vote(
     Extension(state): Extension<RaftState>,
     MsgPack(body): MsgPack<VoteRequest<NodeId>>,
 ) -> impl IntoResponse {
-    tracing::debug!(
+    tracing::trace!(
         vote=?body.vote,
         "recording a vote",
     );
@@ -158,8 +158,7 @@ async fn stream_snapshot(
     Extension(state): Extension<RaftState>,
     MsgPack(req): MsgPack<InstallSnapshotRequest<TypeConfig>>,
 ) -> impl IntoResponse {
-    let _num_bytes = req.data.len();
-    tracing::debug!(
+    tracing::trace!(
         num_bytes = req.data.len(),
         vote = ?req.vote,
         done = req.done,
@@ -238,7 +237,7 @@ async fn add_learner(
     Extension(state): Extension<RaftState>,
     MsgPack(request): MsgPack<AddLearnerRequest>,
 ) -> impl IntoResponse {
-    tracing::debug!(address=?request.address, "adding a learner");
+    tracing::info!(node_id=?request.node_id, address=?request.address, "adding a learner");
     let node = Node::from(request.address);
     rpc_response(state.raft.add_learner(request.node_id, node, true).await)
 }
@@ -247,7 +246,7 @@ async fn upgrade_learner(
     Extension(raft_state): Extension<RaftState>,
     MsgPack(request): MsgPack<UpgradeLearnerRequest>,
 ) -> impl IntoResponse {
-    tracing::debug!(node_id=?request.node_id, "upgrading learner to follower");
+    tracing::info!(node_id=?request.node_id, "upgrading learner to follower");
     let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
     rpc_response(raft_state.raft.change_membership(request, true).await)
 }
