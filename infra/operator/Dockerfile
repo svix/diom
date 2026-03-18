@@ -40,7 +40,7 @@ EOF
 COPY --from=planner /app/recipe.json recipe.json
 
 # Build dependencies - this is the caching Docker layer
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN cargo chef cook --release -p coyote-operator --recipe-path recipe.json
 
 # Build the operator
 COPY . .
@@ -48,7 +48,7 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
-RUN cargo build --release --bin coyote-operator --frozen
+RUN cargo build --release -p coyote-operator --bin coyote-operator --frozen
 
 # Production
 FROM docker.io/debian:trixie-slim AS prod
