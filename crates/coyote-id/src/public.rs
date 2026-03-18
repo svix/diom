@@ -7,6 +7,7 @@ use uuid::Uuid;
 use super::{Id, PublicIdMarker};
 
 /// serde wrapper for ID types that uses a verbose format (using `M`s prefix).
+#[derive(Clone, Copy, Debug)]
 pub struct Public<T>(T);
 
 impl<T> Public<T> {

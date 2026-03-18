@@ -2,6 +2,7 @@
 import type { CoyoteOptions } from "./options";
 import { makeRequestContext, type CoyoteRequestContext } from "./request";
 import { Admin } from "./apis/admin";
+import { AuthToken } from "./apis/authToken";
 import { Cache } from "./apis/cache";
 import { Health } from "./apis/health";
 import { Idempotency } from "./apis/idempotency";
@@ -11,6 +12,7 @@ import { RateLimit } from "./apis/rateLimit";
 
 export {
   Admin,
+  AuthToken,
   Cache,
   Health,
   Idempotency,
@@ -28,6 +30,10 @@ export class Coyote {
 
   public get admin(){
     return new Admin(this.requestCtx);
+  }
+
+  public get authToken(){
+    return new AuthToken(this.requestCtx);
   }
 
   public get cache(){

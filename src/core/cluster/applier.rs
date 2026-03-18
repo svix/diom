@@ -96,5 +96,13 @@ async fn apply_request_with_context(
         Request::ClusterInternal(req) => {
             Response::ClusterInternal(req.apply(state_machine, &context).await)
         }
+        Request::AuthToken(req) => {
+            let stores = state_machine.db_handle();
+            let state = coyote_auth_token::operations::AuthTokenRaftState {
+                state: &stores.auth_token_state,
+                namespace: &state_machine.state.namespace_state,
+            };
+            Response::AuthToken(req.apply(state, &context))
+        }
     })
 }

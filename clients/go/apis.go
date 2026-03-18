@@ -12,6 +12,12 @@ func (coyote Coyote) Admin() Admin {
 	return coyote_apis.NewAdmin(&coyote.inner)
 }
 
+type AuthToken = coyote_apis.AuthToken
+
+func (coyote Coyote) AuthToken() AuthToken {
+	return coyote_apis.NewAuthToken(&coyote.inner)
+}
+
 type Cache = coyote_apis.Cache
 
 func (coyote Coyote) Cache() Cache {

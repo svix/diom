@@ -86,6 +86,7 @@ pub struct Stores {
     pub cache_state: coyote_cache::State,
     pub idempotency_state: coyote_idempotency::State,
     pub rate_limit_state: coyote_rate_limit::State,
+    pub auth_token_state: coyote_auth_token::State,
 }
 
 impl From<Store> for StoreHandle {
@@ -173,6 +174,8 @@ impl Store {
                 .context("initializing idempotency state")?,
             rate_limit_state: coyote_rate_limit::State::init(databases.clone())
                 .context("initializing rate limit state")?,
+            auth_token_state: coyote_auth_token::State::init(databases.clone())
+                .context("initializing auth token state")?,
         };
 
         if let Some(timestamp) = logs.get_last_timestamp().await? {

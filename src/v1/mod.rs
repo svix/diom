@@ -26,6 +26,7 @@ pub fn router(state: Option<AppState>) -> ApiRouter<AppState> {
 
     let mut authenticated_router: ApiRouter<AppState> = ApiRouter::new()
         .merge(endpoints::admin::router())
+        .merge(endpoints::auth_token::router())
         .merge(endpoints::cache::router())
         .merge(endpoints::kv::router())
         .merge(endpoints::rate_limit::router())

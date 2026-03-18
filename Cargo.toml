@@ -29,10 +29,13 @@ axum.workspace = true
 axum-extra.workspace = true
 byteorder.workspace = true
 constant_time_eq.workspace = true
+coyote-auth-token.workspace = true
 coyote-cache.workspace = true
+coyote-client.workspace = true
 coyote-core.workspace = true
 coyote-derive.workspace = true
 coyote-error.workspace = true
+coyote-id.workspace = true
 coyote-idempotency.workspace = true
 coyote-kv.workspace = true
 coyote-msgs.workspace = true
@@ -83,7 +86,6 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
-coyote-client.workspace = true
 ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
@@ -122,6 +124,7 @@ anyhow = "1.0.56"
 assert_matches = "1.5.0"
 axum = { version = "0.8.8", features = ["macros", "http2"] }
 axum-extra = { version = "0.12", features = ["typed-header"] }
+base64 = "0.22"
 byteorder = "1.5.0"
 bytes = "1.11.1"
 clap = { version = "4.1.8", features = ["derive"] }
@@ -131,6 +134,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
 coyote.path = "."
+coyote-auth-token.path = "crates/auth-token"
 coyote-cache.path = "crates/cache"
 coyote-client.path = "clients/rust"
 coyote-core.path = "crates/coyote-core"

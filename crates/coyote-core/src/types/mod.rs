@@ -13,8 +13,9 @@ use validator::{Validate, ValidationErrors};
 
 mod duration_ms;
 mod duration_s;
+mod metadata;
 
-pub use self::{duration_ms::DurationMs, duration_s::DurationS};
+pub use self::{duration_ms::DurationMs, duration_s::DurationS, metadata::Metadata};
 
 const ALL_ERROR: &str = "__all__";
 

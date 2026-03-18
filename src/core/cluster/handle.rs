@@ -52,6 +52,7 @@ pub enum Request {
     Idempotency(coyote_idempotency::operations::IdempotencyOperation),
     Cache(coyote_cache::operations::CacheOperation),
     Msgs(coyote_msgs::operations::MsgsOperation),
+    AuthToken(coyote_auth_token::operations::AuthTokenOperation),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -75,6 +76,7 @@ impl fmt::Display for RequestWithContext {
             Request::Idempotency(_) => write!(f, "idempotency"),
             Request::Cache(_) => write!(f, "cache"),
             Request::Msgs(_) => write!(f, "msgs"),
+            Request::AuthToken(_) => write!(f, "auth_token"),
         }
     }
 }
@@ -95,11 +97,11 @@ impl RequestWithContext {
     pub(crate) fn hashed_key(&self) -> Option<String> {
         let digest = match &self.inner {
             Request::Cache(op) => Sha256::digest(op.key_name()?),
-            Request::ClusterInternal(_) => return None,
             Request::Idempotency(op) => Sha256::digest(op.key_name()?),
             Request::Kv(op) => Sha256::digest(op.key_name()?),
             Request::Msgs(op) => Sha256::digest(op.key_name()),
             Request::RateLimit(op) => Sha256::digest(op.key_name()),
+            Request::ClusterInternal(_) | Request::AuthToken(_) => return None,
         };
         Some(hex::encode(digest))
     }
@@ -112,6 +114,7 @@ impl RequestWithContext {
             Request::Kv(_) => "kv",
             Request::Msgs(_) => "msgs",
             Request::RateLimit(_) => "rate-limit",
+            Request::AuthToken(_) => "auth-token",
         }
     }
 }
@@ -146,6 +149,12 @@ impl From<coyote_msgs::operations::MsgsOperation> for Request {
     }
 }
 
+impl From<coyote_auth_token::operations::AuthTokenOperation> for Request {
+    fn from(value: coyote_auth_token::operations::AuthTokenOperation) -> Self {
+        Request::AuthToken(value)
+    }
+}
+
 impl From<InternalOperation> for Request {
     fn from(value: InternalOperation) -> Self {
         Self::ClusterInternal(value)
@@ -161,6 +170,7 @@ pub enum Response {
     Idempotency(coyote_idempotency::operations::Response),
     Cache(coyote_cache::operations::Response),
     Msgs(coyote_msgs::operations::Response),
+    AuthToken(coyote_auth_token::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -224,6 +234,17 @@ impl TryFrom<Response> for super::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::ClusterInternal(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_auth_token::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::AuthToken(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }
