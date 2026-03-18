@@ -39,7 +39,7 @@ public class Kv {
             null,
             kvSetIn,
             KvSetOut.class
-            );
+        );
     }
 
     /** KV Get */
@@ -53,7 +53,7 @@ public class Kv {
             null,
             kvGetIn,
             KvGetOut.class
-            );
+        );
     }
 
     /** KV Delete */
@@ -67,6 +67,6 @@ public class Kv {
             null,
             kvDeleteIn,
             KvDeleteOut.class
-            );
+        );
     }
 }

@@ -38,6 +38,6 @@ public class MsgsTopic {
             null,
             msgTopicConfigureIn,
             MsgTopicConfigureOut.class
-            );
+        );
     }
 }

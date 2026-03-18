@@ -36,7 +36,7 @@ public class KvNamespace {
             null,
             kvCreateNamespaceIn,
             KvCreateNamespaceOut.class
-            );
+        );
     }
 
     /** Get KV namespace */
@@ -50,6 +50,6 @@ public class KvNamespace {
             null,
             kvGetNamespaceIn,
             KvGetNamespaceOut.class
-            );
+        );
     }
 }

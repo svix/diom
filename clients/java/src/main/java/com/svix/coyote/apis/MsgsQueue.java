@@ -48,7 +48,7 @@ public class MsgsQueue {
             null,
             msgQueueReceiveIn,
             MsgQueueReceiveOut.class
-            );
+        );
     }
 
     /**
@@ -66,7 +66,7 @@ public class MsgsQueue {
             null,
             msgQueueAckIn,
             MsgQueueAckOut.class
-            );
+        );
     }
 
     /**
@@ -85,7 +85,7 @@ public class MsgsQueue {
             null,
             msgQueueConfigureIn,
             MsgQueueConfigureOut.class
-            );
+        );
     }
 
     /**
@@ -104,7 +104,7 @@ public class MsgsQueue {
             null,
             msgQueueNackIn,
             MsgQueueNackOut.class
-            );
+        );
     }
 
     /** Moves all dead-letter queue messages back to the main queue for reprocessing. */
@@ -118,6 +118,6 @@ public class MsgsQueue {
             null,
             msgQueueRedriveDlqIn,
             MsgQueueRedriveDlqOut.class
-            );
+        );
     }
 }

@@ -35,6 +35,6 @@ public class Msgs {
             null,
             msgPublishIn,
             MsgPublishOut.class
-            );
+        );
     }
 }

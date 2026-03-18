@@ -33,7 +33,7 @@ public class Health {
             null,
             null,
             PingOut.class
-            );
+        );
     }
 
     /** Intentionally return an error */
@@ -47,6 +47,6 @@ public class Health {
             null,
             null,
             null
-            );
+        );
     }
 }

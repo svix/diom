@@ -35,7 +35,7 @@ public class Admin {
             null,
             null,
             ClusterStatusOut.class
-            );
+        );
     }
 
     /**
@@ -54,6 +54,6 @@ public class Admin {
             null,
             clusterRemoveNodeIn,
             ClusterRemoveNodeOut.class
-            );
+        );
     }
 }

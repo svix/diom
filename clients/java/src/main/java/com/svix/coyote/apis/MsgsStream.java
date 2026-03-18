@@ -43,7 +43,7 @@ public class MsgsStream {
             null,
             msgStreamReceiveIn,
             MsgStreamReceiveOut.class
-            );
+        );
     }
 
     /**
@@ -62,7 +62,7 @@ public class MsgsStream {
             null,
             msgStreamCommitIn,
             MsgStreamCommitOut.class
-            );
+        );
     }
 
     /**
@@ -82,6 +82,6 @@ public class MsgsStream {
             null,
             msgStreamSeekIn,
             MsgStreamSeekOut.class
-            );
+        );
     }
 }

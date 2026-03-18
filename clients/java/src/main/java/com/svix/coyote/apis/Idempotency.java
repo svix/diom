@@ -39,7 +39,7 @@ public class Idempotency {
             null,
             idempotencyStartIn,
             IdempotencyStartOut.class
-            );
+        );
     }
 
     /** Complete an idempotent request with a response */
@@ -53,7 +53,7 @@ public class Idempotency {
             null,
             idempotencyCompleteIn,
             IdempotencyCompleteOut.class
-            );
+        );
     }
 
     /** Abandon an idempotent request (remove lock without saving response) */
@@ -67,6 +67,6 @@ public class Idempotency {
             null,
             idempotencyAbortIn,
             IdempotencyAbortOut.class
-            );
+        );
     }
 }

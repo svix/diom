@@ -36,7 +36,7 @@ public class RateLimitNamespace {
             null,
             rateLimitCreateNamespaceIn,
             RateLimitCreateNamespaceOut.class
-            );
+        );
     }
 
     /** Get rate limiter namespace */
@@ -50,6 +50,6 @@ public class RateLimitNamespace {
             null,
             rateLimitGetNamespaceIn,
             RateLimitGetNamespaceOut.class
-            );
+        );
     }
 }
