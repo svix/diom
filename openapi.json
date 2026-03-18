@@ -1448,8 +1448,7 @@
           "ttl": {
             "description": "Time to live in milliseconds",
             "type": "integer",
-            "format": "uint64",
-            "minimum": 0
+            "format": "uint64"
           }
         },
         "required": [
@@ -2275,7 +2274,6 @@
           "lease_duration_millis": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0,
             "default": 30000
           }
         },
@@ -2371,7 +2369,6 @@
           "lease_duration_millis": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0,
             "default": 300000
           }
         },

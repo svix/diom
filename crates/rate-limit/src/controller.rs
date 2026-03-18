@@ -98,6 +98,7 @@ impl RateLimitController {
 mod tests {
     use std::time::Duration;
 
+    use coyote_core::types::DurationMs;
     use jiff::Timestamp;
     use tempfile::tempdir;
 
@@ -125,7 +126,7 @@ mod tests {
     fn config() -> TokenBucket {
         TokenBucket {
             refill_rate: 1,
-            refill_interval: Duration::from_millis(100),
+            refill_interval: DurationMs::from(100),
             bucket_size: 5,
         }
     }
@@ -133,7 +134,7 @@ mod tests {
     fn config_refill_2() -> TokenBucket {
         TokenBucket {
             refill_rate: 2,
-            refill_interval: Duration::from_millis(100),
+            refill_interval: DurationMs::from(100),
             bucket_size: 5,
         }
     }
@@ -203,7 +204,7 @@ mod tests {
         fn make_config() -> TokenBucket {
             TokenBucket {
                 refill_rate: 2,
-                refill_interval: Duration::from_secs(5),
+                refill_interval: DurationMs::from(5000),
                 bucket_size: 6,
             }
         }

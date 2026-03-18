@@ -1,7 +1,6 @@
-use std::time::Duration;
-
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
 use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
+use coyote_core::types::DurationS;
 use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
@@ -14,11 +13,11 @@ pub struct TryStartOperation {
     namespace_id: NamespaceId,
     storage_type: StorageType,
     pub(crate) key: String,
-    pub(crate) ttl_seconds: u64,
+    pub(crate) ttl_seconds: DurationS,
 }
 
 impl TryStartOperation {
-    pub fn new(namespace: IdempotencyNamespace, key: String, ttl_seconds: u64) -> Self {
+    pub fn new(namespace: IdempotencyNamespace, key: String, ttl_seconds: DurationS) -> Self {
         Self {
             namespace_id: namespace.id,
             storage_type: namespace.storage_type,
@@ -40,7 +39,7 @@ impl TryStartOperation {
         now: Timestamp,
         log_index: u64,
     ) -> Result<TryStartResponseData> {
-        let expiry = now + Duration::from_secs(self.ttl_seconds);
+        let expiry = now + self.ttl_seconds;
 
         let controller = state.state.controller(self.storage_type);
 

@@ -5,7 +5,7 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
-use coyote_core::types::{Consistency, EntityKey};
+use coyote_core::types::{Consistency, DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_kv::{
@@ -22,7 +22,7 @@ use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvSetIn {
     #[validate(nested)]
@@ -32,7 +32,7 @@ pub struct KvSetIn {
 
     /// Time to live in milliseconds
     #[validate(range(min = 1))]
-    pub ttl: Option<u64>,
+    pub ttl: Option<DurationMs>,
 
     #[serde(default)]
     pub behavior: OperationBehavior,

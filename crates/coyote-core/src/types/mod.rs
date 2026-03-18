@@ -12,6 +12,11 @@ use schemars::{Schema, json_schema};
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
 
+mod duration_ms;
+mod duration_s;
+
+pub use self::{duration_ms::DurationMs, duration_s::DurationS};
+
 const ALL_ERROR: &str = "__all__";
 
 fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {
