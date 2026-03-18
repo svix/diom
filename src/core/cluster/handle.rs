@@ -292,7 +292,7 @@ pub struct RaftState {
 
 impl RaftState {
     /// Write a single operation into the Raft log and return its response.
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(name = "raft_client_write", skip_all, fields(forwarded = false))]
     pub async fn client_write<O>(&self, op: O) -> anyhow::Result<O::Response>
     where
         O: OperationRequest<
@@ -317,6 +317,7 @@ impl RaftState {
                     if let Some(leader_id) = forward_to_leader.leader_id
                         && let Some(leader_node) = &forward_to_leader.leader_node
                     {
+                        tracing::Span::current().record("forwarded", true);
                         tracing::trace!("received write to non-leader, forwarding");
                         let mut network_handle = self.network.clone();
                         let client = network_handle.new_client(leader_id, leader_node).await;
