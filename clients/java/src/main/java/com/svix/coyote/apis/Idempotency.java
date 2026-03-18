@@ -33,6 +33,7 @@ public class Idempotency {
         final IdempotencyStartIn idempotencyStartIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/start");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -47,6 +48,7 @@ public class Idempotency {
         final IdempotencyCompleteIn idempotencyCompleteIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/complete");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -61,6 +63,7 @@ public class Idempotency {
         final IdempotencyAbortIn idempotencyAbortIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/abort");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
