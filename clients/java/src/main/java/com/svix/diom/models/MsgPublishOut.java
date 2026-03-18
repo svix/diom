@@ -56,6 +56,7 @@ public class MsgPublishOut {
     public void setTopics(List<MsgPublishOutTopic> topics) {
         this.topics = topics;
     }
+
     /**
      * Create an instance of MsgPublishOut given an JSON string
      *

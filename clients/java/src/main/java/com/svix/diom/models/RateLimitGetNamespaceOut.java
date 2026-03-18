@@ -129,6 +129,7 @@ public class RateLimitGetNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
      * Create an instance of RateLimitGetNamespaceOut given an JSON string
      *

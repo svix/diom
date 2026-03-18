@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleteOut {
     public IdempotencyCompleteOut () {}
+
     /**
      * Create an instance of IdempotencyCompleteOut given an JSON string
      *

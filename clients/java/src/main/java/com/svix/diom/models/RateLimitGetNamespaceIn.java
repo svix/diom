@@ -49,6 +49,7 @@ public class RateLimitGetNamespaceIn {
     public void setName(String name) {
         this.name = name;
     }
+
     /**
      * Create an instance of RateLimitGetNamespaceIn given an JSON string
      *

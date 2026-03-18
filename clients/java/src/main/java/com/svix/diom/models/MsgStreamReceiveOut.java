@@ -56,6 +56,7 @@ public class MsgStreamReceiveOut {
     public void setMsgs(List<StreamMsgOut> msgs) {
         this.msgs = msgs;
     }
+
     /**
      * Create an instance of MsgStreamReceiveOut given an JSON string
      *

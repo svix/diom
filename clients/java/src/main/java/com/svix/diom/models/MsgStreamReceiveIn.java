@@ -129,6 +129,7 @@ public class MsgStreamReceiveIn {
     public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
     }
+
     /**
      * Create an instance of MsgStreamReceiveIn given an JSON string
      *

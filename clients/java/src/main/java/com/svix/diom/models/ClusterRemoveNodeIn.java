@@ -49,6 +49,7 @@ public class ClusterRemoveNodeIn {
     public void setNodeId(String nodeId) {
         this.nodeId = nodeId;
     }
+
     /**
      * Create an instance of ClusterRemoveNodeIn given an JSON string
      *

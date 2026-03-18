@@ -89,6 +89,7 @@ public class RateLimitGetRemainingIn {
     public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
+
     /**
      * Create an instance of RateLimitGetRemainingIn given an JSON string
      *

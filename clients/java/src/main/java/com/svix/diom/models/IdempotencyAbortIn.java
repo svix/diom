@@ -69,6 +69,7 @@ public class IdempotencyAbortIn {
     public void setKey(String key) {
         this.key = key;
     }
+
     /**
      * Create an instance of IdempotencyAbortIn given an JSON string
      *

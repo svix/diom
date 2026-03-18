@@ -129,6 +129,7 @@ public class KvCreateNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
      * Create an instance of KvCreateNamespaceOut given an JSON string
      *

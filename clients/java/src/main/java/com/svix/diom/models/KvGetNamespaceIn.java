@@ -49,6 +49,7 @@ public class KvGetNamespaceIn {
     public void setName(String name) {
         this.name = name;
     }
+
     /**
      * Create an instance of KvGetNamespaceIn given an JSON string
      *

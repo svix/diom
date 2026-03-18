@@ -49,6 +49,7 @@ public class MsgNamespaceGetIn {
     public void setName(String name) {
         this.name = name;
     }
+
     /**
      * Create an instance of MsgNamespaceGetIn given an JSON string
      *

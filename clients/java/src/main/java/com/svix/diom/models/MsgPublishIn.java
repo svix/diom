@@ -96,6 +96,7 @@ public class MsgPublishIn {
     public void setMsgs(List<MsgIn> msgs) {
         this.msgs = msgs;
     }
+
     /**
      * Create an instance of MsgPublishIn given an JSON string
      *

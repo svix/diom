@@ -123,6 +123,7 @@ public class QueueMsgOut {
     public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
     }
+
     /**
      * Create an instance of QueueMsgOut given an JSON string
      *

@@ -129,6 +129,7 @@ public class MsgQueueReceiveIn {
     public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
     }
+
     /**
      * Create an instance of MsgQueueReceiveIn given an JSON string
      *

@@ -89,6 +89,7 @@ public class KvGetIn {
     public void setConsistency(Consistency consistency) {
         this.consistency = consistency;
     }
+
     /**
      * Create an instance of KvGetIn given an JSON string
      *

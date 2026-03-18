@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueNackOut {
     public MsgQueueNackOut () {}
+
     /**
      * Create an instance of MsgQueueNackOut given an JSON string
      *

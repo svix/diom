@@ -89,6 +89,7 @@ public class IdempotencyStartIn {
     public void setTtl(Long ttl) {
         this.ttl = ttl;
     }
+
     /**
      * Create an instance of IdempotencyStartIn given an JSON string
      *

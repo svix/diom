@@ -149,6 +149,7 @@ public class CacheCreateNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
      * Create an instance of CacheCreateNamespaceOut given an JSON string
      *

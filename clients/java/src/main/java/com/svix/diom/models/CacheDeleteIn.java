@@ -69,6 +69,7 @@ public class CacheDeleteIn {
     public void setKey(String key) {
         this.key = key;
     }
+
     /**
      * Create an instance of CacheDeleteIn given an JSON string
      *

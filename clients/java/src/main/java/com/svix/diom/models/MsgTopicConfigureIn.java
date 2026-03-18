@@ -89,6 +89,7 @@ public class MsgTopicConfigureIn {
     public void setPartitions(Short partitions) {
         this.partitions = partitions;
     }
+
     /**
      * Create an instance of MsgTopicConfigureIn given an JSON string
      *

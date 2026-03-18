@@ -76,6 +76,7 @@ public class MsgQueueConfigureOut {
     public void setDlqTopic(String dlqTopic) {
         this.dlqTopic = dlqTopic;
     }
+
     /**
      * Create an instance of MsgQueueConfigureOut given an JSON string
      *

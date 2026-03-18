@@ -89,6 +89,7 @@ public class RateLimitResetIn {
     public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
+
     /**
      * Create an instance of RateLimitResetIn given an JSON string
      *

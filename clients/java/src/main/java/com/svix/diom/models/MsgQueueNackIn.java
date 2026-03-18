@@ -116,6 +116,7 @@ public class MsgQueueNackIn {
     public void setMsgIds(List<String> msgIds) {
         this.msgIds = msgIds;
     }
+
     /**
      * Create an instance of MsgQueueNackIn given an JSON string
      *

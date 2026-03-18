@@ -109,6 +109,7 @@ public class MsgStreamCommitIn {
     public void setOffset(Long offset) {
         this.offset = offset;
     }
+
     /**
      * Create an instance of MsgStreamCommitIn given an JSON string
      *

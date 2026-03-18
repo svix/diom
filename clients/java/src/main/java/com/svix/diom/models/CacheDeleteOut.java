@@ -49,6 +49,7 @@ public class CacheDeleteOut {
     public void setSuccess(Boolean success) {
         this.success = success;
     }
+
     /**
      * Create an instance of CacheDeleteOut given an JSON string
      *

@@ -89,6 +89,7 @@ public class MsgNamespaceCreateIn {
     public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
     }
+
     /**
      * Create an instance of MsgNamespaceCreateIn given an JSON string
      *

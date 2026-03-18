@@ -69,6 +69,7 @@ public class KvDeleteIn {
     public void setKey(String key) {
         this.key = key;
     }
+
     /**
      * Create an instance of KvDeleteIn given an JSON string
      *

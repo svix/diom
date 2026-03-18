@@ -129,6 +129,7 @@ public class MsgNamespaceCreateOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
      * Create an instance of MsgNamespaceCreateOut given an JSON string
      *

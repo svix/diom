@@ -89,6 +89,7 @@ public class CacheGetIn {
     public void setConsistency(Consistency consistency) {
         this.consistency = consistency;
     }
+
     /**
      * Create an instance of CacheGetIn given an JSON string
      *

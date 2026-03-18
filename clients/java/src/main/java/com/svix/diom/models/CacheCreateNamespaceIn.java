@@ -109,6 +109,7 @@ public class CacheCreateNamespaceIn {
     public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
         this.evictionPolicy = evictionPolicy;
     }
+
     /**
      * Create an instance of CacheCreateNamespaceIn given an JSON string
      *

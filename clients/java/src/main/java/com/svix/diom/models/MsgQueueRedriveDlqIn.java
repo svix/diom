@@ -89,6 +89,7 @@ public class MsgQueueRedriveDlqIn {
     public void setConsumerGroup(String consumerGroup) {
         this.consumerGroup = consumerGroup;
     }
+
     /**
      * Create an instance of MsgQueueRedriveDlqIn given an JSON string
      *
