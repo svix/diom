@@ -18,37 +18,39 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgQueueRedriveDlqIn {
+public class CacheDeleteIn_ {
     @JsonProperty private String namespace;
-    @JsonProperty private String topic;
-    @JsonProperty("consumer_group") private String consumerGroup;
-    public MsgQueueRedriveDlqIn() {}
+    @JsonProperty private String key;
 
-    public MsgQueueRedriveDlqIn namespace(String namespace) {
+    public CacheDeleteIn_(
+        String namespace,
+        String key
+    ) {
         this.namespace = namespace;
-        return this;
+        this.key = key;
     }
 
     /**
-    * Get namespace
-    *
-     * @return namespace
+     * Create an instance of CacheDeleteIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of CacheDeleteIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to CacheDeleteIn_
      */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
+    public static CacheDeleteIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, CacheDeleteIn_.class);
     }
 
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
+    /**
+     * Convert an instance of CacheDeleteIn_ to an JSON string
+     *
+     * @return JSON string
+     */
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

@@ -16,6 +16,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.coyote.models.MsgPublishIn;
 import com.svix.coyote.models.MsgPublishOut;
+import com.svix.coyote.models.MsgPublishIn_;
 
 public class Msgs {
     private final HttpClient client;
@@ -26,15 +27,21 @@ public class Msgs {
 
     /** Publishes messages to a topic within a namespace. */
     public MsgPublishOut publish(
+        String topic,
         final MsgPublishIn msgPublishIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/publish");
+        MsgPublishIn_ body = new MsgPublishIn_(
+            msgPublishIn.getNamespace(),
+            topic,
+            msgPublishIn.getMsgs()
+        );
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            msgPublishIn,
+            body,
             MsgPublishOut.class
         );
     }

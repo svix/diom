@@ -18,77 +18,48 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgQueueReceiveIn {
+public class MsgStreamReceiveIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
-    public MsgQueueReceiveIn() {}
 
-    public MsgQueueReceiveIn namespace(String namespace) {
+    public MsgStreamReceiveIn_(
+        String namespace,
+        String topic,
+        String consumerGroup,
+        Short batchSize,
+        Long leaseDurationMillis
+    ) {
         this.namespace = namespace;
-        return this;
-    }
-
-    /**
-    * Get namespace
-    *
-     * @return namespace
-     */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
-    }
-
-    public MsgQueueReceiveIn batchSize(Short batchSize) {
+        this.topic = topic;
+        this.consumerGroup = consumerGroup;
         this.batchSize = batchSize;
-        return this;
+        this.leaseDurationMillis = leaseDurationMillis;
     }
 
     /**
-    * Get batchSize
-    *
-     * @return batchSize
+     * Create an instance of MsgStreamReceiveIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of MsgStreamReceiveIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgStreamReceiveIn_
      */
-    @javax.annotation.Nullable
-    public Short getBatchSize() {
-        return batchSize;
-    }
-
-    public void setBatchSize(Short batchSize) {
-        this.batchSize = batchSize;
-    }
-
-    public MsgQueueReceiveIn leaseDurationMillis(Long leaseDurationMillis) {
-        this.leaseDurationMillis = leaseDurationMillis;
-        return this;
+    public static MsgStreamReceiveIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, MsgStreamReceiveIn_.class);
     }
 
     /**
-    * Get leaseDurationMillis
-    *
-     * @return leaseDurationMillis
+     * Convert an instance of MsgStreamReceiveIn_ to an JSON string
+     *
+     * @return JSON string
      */
-    @javax.annotation.Nullable
-    public Long getLeaseDurationMillis() {
-        return leaseDurationMillis;
-    }
-
-    public void setLeaseDurationMillis(Long leaseDurationMillis) {
-        this.leaseDurationMillis = leaseDurationMillis;
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

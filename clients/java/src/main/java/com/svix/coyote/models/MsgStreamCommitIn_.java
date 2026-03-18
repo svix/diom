@@ -18,37 +18,45 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgQueueRedriveDlqIn {
+public class MsgStreamCommitIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
-    public MsgQueueRedriveDlqIn() {}
+    @JsonProperty private Long offset;
 
-    public MsgQueueRedriveDlqIn namespace(String namespace) {
+    public MsgStreamCommitIn_(
+        String namespace,
+        String topic,
+        String consumerGroup,
+        Long offset
+    ) {
         this.namespace = namespace;
-        return this;
+        this.topic = topic;
+        this.consumerGroup = consumerGroup;
+        this.offset = offset;
     }
 
     /**
-    * Get namespace
-    *
-     * @return namespace
+     * Create an instance of MsgStreamCommitIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of MsgStreamCommitIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgStreamCommitIn_
      */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
+    public static MsgStreamCommitIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, MsgStreamCommitIn_.class);
     }
 
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
+    /**
+     * Convert an instance of MsgStreamCommitIn_ to an JSON string
+     *
+     * @return JSON string
+     */
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

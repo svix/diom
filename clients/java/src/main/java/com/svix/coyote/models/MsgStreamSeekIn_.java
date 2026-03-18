@@ -18,37 +18,48 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgQueueRedriveDlqIn {
+public class MsgStreamSeekIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
-    public MsgQueueRedriveDlqIn() {}
+    @JsonProperty private Long offset;
+    @JsonProperty private String position;
 
-    public MsgQueueRedriveDlqIn namespace(String namespace) {
+    public MsgStreamSeekIn_(
+        String namespace,
+        String topic,
+        String consumerGroup,
+        Long offset,
+        String position
+    ) {
         this.namespace = namespace;
-        return this;
+        this.topic = topic;
+        this.consumerGroup = consumerGroup;
+        this.offset = offset;
+        this.position = position;
     }
 
     /**
-    * Get namespace
-    *
-     * @return namespace
+     * Create an instance of MsgStreamSeekIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of MsgStreamSeekIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgStreamSeekIn_
      */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
+    public static MsgStreamSeekIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, MsgStreamSeekIn_.class);
     }
 
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
+    /**
+     * Convert an instance of MsgStreamSeekIn_ to an JSON string
+     *
+     * @return JSON string
+     */
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

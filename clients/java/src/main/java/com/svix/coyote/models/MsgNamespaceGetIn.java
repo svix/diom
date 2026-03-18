@@ -30,43 +30,4 @@ import lombok.ToString;
 public class MsgNamespaceGetIn {
     @JsonProperty private String name;
     public MsgNamespaceGetIn() {}
-
-    public MsgNamespaceGetIn name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Create an instance of MsgNamespaceGetIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgNamespaceGetIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgNamespaceGetIn
-     */
-    public static MsgNamespaceGetIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgNamespaceGetIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgNamespaceGetIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
-    }
 }

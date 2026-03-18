@@ -18,56 +18,42 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgNamespaceCreateIn {
+public class MsgNamespaceCreateIn_ {
     @JsonProperty private String name;
     @JsonProperty private Retention retention;
     @JsonProperty("storage_type") private StorageType storageType;
-    public MsgNamespaceCreateIn() {}
 
-    public MsgNamespaceCreateIn retention(Retention retention) {
+    public MsgNamespaceCreateIn_(
+        String name,
+        Retention retention,
+        StorageType storageType
+    ) {
+        this.name = name;
         this.retention = retention;
-        return this;
+        this.storageType = storageType;
     }
 
     /**
-    * Get retention
-    *
-     * @return retention
+     * Create an instance of MsgNamespaceCreateIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of MsgNamespaceCreateIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgNamespaceCreateIn_
      */
-    @javax.annotation.Nullable
-    public Retention getRetention() {
-        return retention;
-    }
-
-    public void setRetention(Retention retention) {
-        this.retention = retention;
-    }
-
-    public MsgNamespaceCreateIn storageType(StorageType storageType) {
-        this.storageType = storageType;
-        return this;
+    public static MsgNamespaceCreateIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, MsgNamespaceCreateIn_.class);
     }
 
     /**
-    * Get storageType
-    *
-     * @return storageType
+     * Convert an instance of MsgNamespaceCreateIn_ to an JSON string
+     *
+     * @return JSON string
      */
-    @javax.annotation.Nullable
-    public StorageType getStorageType() {
-        return storageType;
-    }
-
-    public void setStorageType(StorageType storageType) {
-        this.storageType = storageType;
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

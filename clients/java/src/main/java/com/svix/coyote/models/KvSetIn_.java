@@ -18,56 +18,51 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class IdempotencyStartIn {
+public class KvSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
+    @JsonProperty private List<Byte> value;
     @JsonProperty private Long ttl;
-    public IdempotencyStartIn() {}
+    @JsonProperty private OperationBehavior behavior;
+    @JsonProperty private Long version;
 
-    public IdempotencyStartIn namespace(String namespace) {
+    public KvSetIn_(
+        String namespace,
+        String key,
+        List<Byte> value,
+        Long ttl,
+        OperationBehavior behavior,
+        Long version
+    ) {
         this.namespace = namespace;
-        return this;
+        this.key = key;
+        this.value = value;
+        this.ttl = ttl;
+        this.behavior = behavior;
+        this.version = version;
     }
 
     /**
-    * Get namespace
-    *
-     * @return namespace
+     * Create an instance of KvSetIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of KvSetIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to KvSetIn_
      */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
-    }
-
-    public IdempotencyStartIn ttl(Long ttl) {
-        this.ttl = ttl;
-        return this;
+    public static KvSetIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, KvSetIn_.class);
     }
 
     /**
-    * TTL in seconds for the lock/response
-    *
-     * @return ttl
+     * Convert an instance of KvSetIn_ to an JSON string
+     *
+     * @return JSON string
      */
-    @javax.annotation.Nonnull
-    public Long getTtl() {
-        return ttl;
-    }
-
-    public void setTtl(Long ttl) {
-        this.ttl = ttl;
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

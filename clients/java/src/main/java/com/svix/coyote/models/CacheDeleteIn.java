@@ -50,43 +50,4 @@ public class CacheDeleteIn {
     public void setNamespace(String namespace) {
         this.namespace = namespace;
     }
-
-    public CacheDeleteIn key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    /**
-    * Get key
-    *
-     * @return key
-     */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    /**
-     * Create an instance of CacheDeleteIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of CacheDeleteIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to CacheDeleteIn
-     */
-    public static CacheDeleteIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, CacheDeleteIn.class);
-    }
-
-    /**
-     * Convert an instance of CacheDeleteIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
-    }
 }

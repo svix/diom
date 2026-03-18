@@ -53,25 +53,6 @@ public class CacheSetIn {
         this.namespace = namespace;
     }
 
-    public CacheSetIn key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    /**
-    * Get key
-    *
-     * @return key
-     */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
     public CacheSetIn value(List<Byte> value) {
         this.value = value;
         return this;
@@ -115,25 +96,5 @@ public class CacheSetIn {
 
     public void setTtl(Long ttl) {
         this.ttl = ttl;
-    }
-
-    /**
-     * Create an instance of CacheSetIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of CacheSetIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to CacheSetIn
-     */
-    public static CacheSetIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, CacheSetIn.class);
-    }
-
-    /**
-     * Convert an instance of CacheSetIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

@@ -18,37 +18,39 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgQueueRedriveDlqIn {
+public class IdempotencyAbortIn_ {
     @JsonProperty private String namespace;
-    @JsonProperty private String topic;
-    @JsonProperty("consumer_group") private String consumerGroup;
-    public MsgQueueRedriveDlqIn() {}
+    @JsonProperty private String key;
 
-    public MsgQueueRedriveDlqIn namespace(String namespace) {
+    public IdempotencyAbortIn_(
+        String namespace,
+        String key
+    ) {
         this.namespace = namespace;
-        return this;
+        this.key = key;
     }
 
     /**
-    * Get namespace
-    *
-     * @return namespace
+     * Create an instance of IdempotencyAbortIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of IdempotencyAbortIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to IdempotencyAbortIn_
      */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
+    public static IdempotencyAbortIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, IdempotencyAbortIn_.class);
     }
 
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
+    /**
+     * Convert an instance of IdempotencyAbortIn_ to an JSON string
+     *
+     * @return JSON string
+     */
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

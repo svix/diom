@@ -52,25 +52,6 @@ public class CacheGetIn {
         this.namespace = namespace;
     }
 
-    public CacheGetIn key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    /**
-    * Get key
-    *
-     * @return key
-     */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
     public CacheGetIn consistency(Consistency consistency) {
         this.consistency = consistency;
         return this;
@@ -88,25 +69,5 @@ public class CacheGetIn {
 
     public void setConsistency(Consistency consistency) {
         this.consistency = consistency;
-    }
-
-    /**
-     * Create an instance of CacheGetIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of CacheGetIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to CacheGetIn
-     */
-    public static CacheGetIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, CacheGetIn.class);
-    }
-
-    /**
-     * Convert an instance of CacheGetIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

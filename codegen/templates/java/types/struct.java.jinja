@@ -1,4 +1,5 @@
-{% set class_ty = type.name | to_upper_camel_case -%}
+{% set class_name = type.name | to_upper_camel_case -%}
+{% set has_positional_fields = type.fields | selectattr("positional") | length > 0 -%}
 {% macro fromJson_toJson(ty) -%}
     /**
      * Create an instance of {{ ty }} given an JSON string
@@ -47,7 +48,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class {{ type.name | to_upper_camel_case }} {
+public class {{ class_name }} {
 {%- for field in type.fields %}
     {%- set field_annotation = "" %}
 
@@ -59,11 +60,12 @@ public class {{ type.name | to_upper_camel_case }} {
     {%- endif %}
 
     {#- none nullable fields #}
-    {{ field_annotation}} private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
+    {{ field_annotation }} private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
 {%- endfor %}
-    public {{ type.name | to_upper_camel_case }}() {}
+    public {{ class_name }}() {}
 
 {%- for field in type.fields %}
+    {%- if not field.positional %}
     {%- set f_ty = field.type.to_java() %}
     {%- set f_varname = field.name | to_lower_camel_case %}
     {%- set f_deprecated = "" %}
@@ -71,13 +73,13 @@ public class {{ type.name | to_upper_camel_case }} {
         {%- set f_deprecated = "@Deprecated " %}
     {%- endif %}
 
-    {{ f_deprecated -}} public {{ class_ty }} {{ f_varname }}({{ f_ty }} {{ f_varname }}) {
+    {{ f_deprecated -}} public {{ class_name }} {{ f_varname }}({{ f_ty }} {{ f_varname }}) {
         this.{{ f_varname }} = {{ f_varname }};
         return this;
     }
 
     {% if field.type.is_set() or field.type.is_list() -%}
-    {{ f_deprecated -}} public {{ class_ty }} add{{ f_varname | to_upper_camel_case }}Item({{ field.type.inner_type().to_java() }} {{ f_varname }}Item) {
+    {{ f_deprecated -}} public {{ class_name }} add{{ f_varname | to_upper_camel_case }}Item({{ field.type.inner_type().to_java() }} {{ f_varname }}Item) {
         if (this.{{ f_varname }} == null) {
             {%- if field.type.is_set() %}
             this.{{ f_varname }} = new LinkedHashSet<>();
@@ -89,7 +91,7 @@ public class {{ type.name | to_upper_camel_case }} {
         return this;
     }
     {% elif field.type.is_map() -%}
-    {{ f_deprecated -}} public {{ class_ty }} put{{ f_varname | to_upper_camel_case }}Item(String key, String {{ f_varname }}Item) {
+    {{ f_deprecated -}} public {{ class_name }} put{{ f_varname | to_upper_camel_case }}Item(String key, String {{ f_varname }}Item) {
         if (this.{{ f_varname }} == null) {
             this.{{ f_varname }} = new HashMap<>();
         }
@@ -148,7 +150,68 @@ public class {{ type.name | to_upper_camel_case }} {
         }
     }
     {%- endif %}
+    {%- endif %}
+{%- endfor %}
+{%- if not has_positional_fields %}
+
+    {{ fromJson_toJson(class_name) }}
+{%- endif %}
+}
+
+{%- if has_positional_fields %}
+{%- set extra_class_decl -%}
+// this file is @generated
+package com.svix.coyote.models;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.svix.coyote.Utils;
+import java.util.Map;
+import java.util.Set;
+import java.util.List;
+import java.util.Optional;
+import java.util.HashMap;
+import java.time.OffsetDateTime;
+import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.Objects;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+public class {{ class_name }}_ {
+{%- for field in type.fields %}
+    {% set field_annotation = "" -%}
+
+    {# ensure json field name is correct -#}
+    {% if field.name != field.name | to_lower_camel_case -%}
+        {%- set field_annotation %}@JsonProperty("{{ field.name }}"){% endset -%}
+    {% else -%}
+    {% set field_annotation %}@JsonProperty{% endset -%}
+    {% endif -%}
+
+    {{ field_annotation }} private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
 {%- endfor %}
 
-    {{ fromJson_toJson(class_ty) }}
+    public {{ class_name }}_(
+        {%- for field in type.fields %}
+        {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }}
+        {%- if not loop.last %},{% endif %}
+        {%- endfor %}
+    ) {
+        {%- for field in type.fields %}
+        {%- set ident = field.name | to_lower_camel_case %}
+        this.{{ ident }} = {{ ident }};
+        {%- endfor %}
+    }
+
+    {{ fromJson_toJson(class_name ~ "_") }}
 }
+{% endset %}
+{%- do generate_extra_file(output_dir ~ "/" ~ class_name ~ "_.java", extra_class_decl) %}
+{%- endif %}

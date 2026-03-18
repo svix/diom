@@ -15,6 +15,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.coyote.models.MsgTopicConfigureIn;
 import com.svix.coyote.models.MsgTopicConfigureOut;
+import com.svix.coyote.models.MsgTopicConfigureIn_;
 
 public class MsgsTopic {
     private final HttpClient client;
@@ -29,15 +30,21 @@ public class MsgsTopic {
 * Partition count can only be increased, never decreased. The default for a new topic is 1.
 */
     public MsgTopicConfigureOut configure(
+        String topic,
         final MsgTopicConfigureIn msgTopicConfigureIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/topic/configure");
+        MsgTopicConfigureIn_ body = new MsgTopicConfigureIn_(
+            msgTopicConfigureIn.getNamespace(),
+            topic,
+            msgTopicConfigureIn.getPartitions()
+        );
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            msgTopicConfigureIn,
+            body,
             MsgTopicConfigureOut.class
         );
     }
