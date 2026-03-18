@@ -15,6 +15,9 @@ type (
 	CacheGetOut                   = diom_models.CacheGetOut
 	CacheSetIn                    = diom_models.CacheSetIn
 	CacheSetOut                   = diom_models.CacheSetOut
+	ClusterRemoveNodeIn           = diom_models.ClusterRemoveNodeIn
+	ClusterRemoveNodeOut          = diom_models.ClusterRemoveNodeOut
+	ClusterStatusOut              = diom_models.ClusterStatusOut
 	Consistency                   = diom_models.Consistency
 	EvictionPolicy                = diom_models.EvictionPolicy
 	IdempotencyAbortIn            = diom_models.IdempotencyAbortIn
@@ -64,6 +67,7 @@ type (
 	MsgStreamSeekOut              = diom_models.MsgStreamSeekOut
 	MsgTopicConfigureIn           = diom_models.MsgTopicConfigureIn
 	MsgTopicConfigureOut          = diom_models.MsgTopicConfigureOut
+	NodeStatusOut                 = diom_models.NodeStatusOut
 	OperationBehavior             = diom_models.OperationBehavior
 	PingOut                       = diom_models.PingOut
 	QueueMsgOut                   = diom_models.QueueMsgOut
@@ -79,6 +83,7 @@ type (
 	RateLimitResetOut             = diom_models.RateLimitResetOut
 	RateLimitTokenBucketConfig    = diom_models.RateLimitTokenBucketConfig
 	Retention                     = diom_models.Retention
+	ServerState                   = diom_models.ServerState
 	StorageType                   = diom_models.StorageType
 	StreamMsgOut                  = diom_models.StreamMsgOut
 )

@@ -6,6 +6,12 @@ import (
 	diom_apis "github.com/svix/diom/clients/go/internal/apis"
 )
 
+type Admin = diom_apis.Admin
+
+func (diom Diom) Admin() Admin {
+	return diom_apis.NewAdmin(&diom.inner)
+}
+
 type Cache = diom_apis.Cache
 
 func (diom Diom) Cache() Cache {

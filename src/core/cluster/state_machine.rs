@@ -20,6 +20,7 @@ use openraft::{
     StorageIOError, StoredMembership, storage::RaftStateMachine,
 };
 use parking_lot::RwLock;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tap::TapOptional;
 use tokio::sync::RwLock as TokioRwLock;
@@ -53,6 +54,20 @@ impl std::fmt::Display for ClusterId {
 impl ClusterId {
     pub(super) fn generate() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl JsonSchema for ClusterId {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        String::schema_name()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        String::json_schema(generator)
     }
 }
 
@@ -163,6 +178,12 @@ impl Store {
         if let Some(timestamp) = logs.get_last_timestamp().await? {
             // if we've ever committed anything, make sure we don't rewind time on restarting
             time.bump(timestamp);
+        }
+
+        if logs.is_poisoned().await? {
+            anyhow::bail!(
+                "this node was previously removed from a cluster and must be erased before it can be re-added"
+            );
         }
 
         let mut this = Self {
@@ -698,5 +719,12 @@ impl StoreHandle {
             .read()
             .idempotency_state
             .clone()
+    }
+
+    /// Mark this node as removed from a cluster and ineligible to continue
+    pub(super) async fn poison(&self, cluster_id: ClusterId) -> anyhow::Result<()> {
+        let handle = self.inner.write().await;
+        handle.logs.poison(cluster_id).await?;
+        Ok(())
     }
 }

@@ -13,8 +13,9 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 use self::{
     cmds::{
-        api::{CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
+        api::{AdminArgs, CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
         benchmark::BenchmarkArgs,
+        cluster::ClusterAdminArgs,
     },
     config::Config,
 };
@@ -22,6 +23,7 @@ use self::{
 mod cmds;
 mod config;
 mod json;
+mod utils;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const BIN_NAME: &str = env!("CARGO_BIN_NAME");
@@ -88,9 +90,15 @@ enum RootCommands {
     Msgs(MsgsArgs),
     RateLimit(RateLimitArgs),
     Health(HealthArgs),
+    /// Send raw administrative commands.
+    ///
+    /// Prefer the cluster-admin family of CLI commands.
+    RawAdmin(AdminArgs),
+    /// Manipulate a Diom cluster
+    ClusterAdmin(ClusterAdminArgs),
     /// Benchmark module throughput
     Benchmark(BenchmarkArgs),
-    /// Get the version of the Svix CLI
+    /// Get the version of the Diom CLI
     Version,
     /// Generate the autocompletion script for the specified shell
     Completion {
@@ -149,6 +157,10 @@ async fn main() -> Result<()> {
             let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;
         }
+        RootCommands::RawAdmin(args) => {
+            let client = get_client(&cfg?)?;
+            args.command.exec(&client, color_mode).await?;
+        }
         RootCommands::Benchmark(args) => {
             let cfg = cfg?;
             let mut opts = get_client_options(&cfg)?;
@@ -157,6 +169,10 @@ async fn main() -> Result<()> {
             }
             let client = Arc::new(DiomClient::new(cfg.auth_token(), Some(opts)));
             args.exec(client).await?;
+        }
+        RootCommands::ClusterAdmin(args) => {
+            let client = get_client(&cfg?)?;
+            args.command.exec(&client, color_mode).await?;
         }
     }
 

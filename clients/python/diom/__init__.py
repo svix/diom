@@ -1,6 +1,8 @@
 # this file is @generated
 
 from .apis import (
+    Admin,
+    AdminAsync,
     Cache,
     CacheAsync,
     Health,
@@ -19,6 +21,10 @@ from .options import DiomOptions
 
 
 class Diom(ClientBase):
+    @property
+    def admin(self) -> Admin:
+        return Admin(self._client)
+
     @property
     def cache(self) -> Cache:
         return Cache(self._client)
@@ -45,6 +51,10 @@ class Diom(ClientBase):
 
 
 class DiomAsync(ClientBase):
+    @property
+    def admin(self) -> AdminAsync:
+        return AdminAsync(self._client)
+
     @property
     def cache(self) -> CacheAsync:
         return CacheAsync(self._client)

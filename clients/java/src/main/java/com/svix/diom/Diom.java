@@ -4,6 +4,7 @@ package com.svix.diom;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.svix.diom.apis.Admin;
 import com.svix.diom.apis.Cache;
 import com.svix.diom.apis.Health;
 import com.svix.diom.apis.Idempotency;
@@ -36,6 +37,10 @@ public class Diom {
 
         this.httpClient
                 = new HttpClient(parsedUrl, defaultHeaders, options.getRetrySchedule());
+    }
+
+    public Admin getAdmin() {
+        return new Admin(this.httpClient);
     }
 
     public Cache getCache() {
