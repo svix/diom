@@ -1190,6 +1190,7 @@ dependencies = [
 name = "diom-msgs"
 version = "0.0.1"
 dependencies = [
+ "diom-core",
  "diom-error",
  "diom-namespace",
  "diom-operations",
@@ -1275,6 +1276,7 @@ dependencies = [
 name = "diom-rate-limit"
 version = "0.0.1"
 dependencies = [
+ "diom-core",
  "diom-error",
  "diom-namespace",
  "diom-operations",

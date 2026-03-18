@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::{
     KvNamespace, State,
     kvcontroller::{KvModelIn, OperationBehavior},
@@ -7,7 +5,7 @@ use crate::{
 };
 
 use super::{KvRequest, SetResponse};
-use diom_core::types::EntityKey;
+use diom_core::types::{DurationMs, EntityKey};
 use diom_namespace::entities::NamespaceId;
 use diom_operations::{OpContext, Result};
 use fjall_utils::StorageType;
@@ -35,12 +33,12 @@ impl SetOperation {
         namespace: KvNamespace,
         key: EntityKey,
         value: Vec<u8>,
-        ttl: Option<u64>,
+        ttl: Option<DurationMs>,
         behavior: OperationBehavior,
         version: Option<u64>,
     ) -> Self {
         let expiry = ttl
-            .map(|ttl| Timestamp::now() + Duration::from_millis(ttl))
+            .map(|ttl| Timestamp::now() + ttl)
             .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
         Self {
             namespace_id: namespace.id,

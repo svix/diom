@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use diom_core::types::DurationMs;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +9,7 @@ pub struct TokenBucket {
     /// Token refill rate in tokens per refill interval
     pub refill_rate: u64,
     /// Token refill interval
-    pub refill_interval: Duration,
+    pub refill_interval: DurationMs,
     /// Max tokens allowed in the bucket
     pub bucket_size: u64,
 }
@@ -29,7 +30,7 @@ impl TokenBucket {
                 .as_millis()
                 .try_into()
                 .unwrap();
-            let refill_interval_millis: u64 = self.refill_interval.as_millis().try_into().unwrap();
+            let refill_interval_millis: u64 = self.refill_interval.as_millis();
             let intervals = elapsed_millis / refill_interval_millis;
 
             capacity += intervals * self.refill_rate;
@@ -44,6 +45,6 @@ impl TokenBucket {
     pub(crate) fn calculate_retry_after(&self, current: u64, wanted: u64) -> Duration {
         let wanted = wanted.saturating_sub(current);
         let intervals = wanted.div_ceil(self.refill_rate);
-        Duration::from_millis(intervals * self.refill_interval.as_millis() as u64)
+        Duration::from_millis(intervals * self.refill_interval.as_millis())
     }
 }
