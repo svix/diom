@@ -69,6 +69,7 @@ public class KvSetOut {
     public void setVersion(Long version) {
         this.version = version;
     }
+
     /**
      * Create an instance of KvSetOut given an JSON string
      *

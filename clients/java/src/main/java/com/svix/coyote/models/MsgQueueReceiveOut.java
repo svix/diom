@@ -56,6 +56,7 @@ public class MsgQueueReceiveOut {
     public void setMsgs(List<QueueMsgOut> msgs) {
         this.msgs = msgs;
     }
+
     /**
      * Create an instance of MsgQueueReceiveOut given an JSON string
      *

@@ -89,6 +89,7 @@ public class IdempotencyCreateNamespaceIn {
     public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
+
     /**
      * Create an instance of IdempotencyCreateNamespaceIn given an JSON string
      *

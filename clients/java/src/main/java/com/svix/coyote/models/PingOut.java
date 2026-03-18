@@ -49,6 +49,7 @@ public class PingOut {
     public void setOk(Boolean ok) {
         this.ok = ok;
     }
+
     /**
      * Create an instance of PingOut given an JSON string
      *

@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheSetOut {
     public CacheSetOut () {}
+
     /**
      * Create an instance of CacheSetOut given an JSON string
      *

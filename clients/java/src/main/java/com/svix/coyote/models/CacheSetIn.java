@@ -116,6 +116,7 @@ public class CacheSetIn {
     public void setTtl(Long ttl) {
         this.ttl = ttl;
     }
+
     /**
      * Create an instance of CacheSetIn given an JSON string
      *

@@ -116,6 +116,7 @@ public class MsgQueueAckIn {
     public void setMsgIds(List<String> msgIds) {
         this.msgIds = msgIds;
     }
+
     /**
      * Create an instance of MsgQueueAckIn given an JSON string
      *

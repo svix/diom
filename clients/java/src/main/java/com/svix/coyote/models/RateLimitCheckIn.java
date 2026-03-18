@@ -109,6 +109,7 @@ public class RateLimitCheckIn {
     public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
+
     /**
      * Create an instance of RateLimitCheckIn given an JSON string
      *

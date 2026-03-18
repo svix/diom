@@ -129,6 +129,7 @@ public class IdempotencyGetNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
      * Create an instance of IdempotencyGetNamespaceOut given an JSON string
      *

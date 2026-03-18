@@ -1,4 +1,25 @@
 {% set class_ty = type.name | to_upper_camel_case -%}
+{% macro fromJson_toJson(ty) -%}
+    /**
+     * Create an instance of {{ ty }} given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of {{ ty }}
+     * @throws JsonProcessingException if the JSON string is invalid with respect to {{ ty }}
+     */
+    public static {{ ty }} fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, {{ ty }}.class);
+    }
+
+    /**
+     * Convert an instance of {{ ty }} to an JSON string
+     *
+     * @return JSON string
+     */
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
+    }
+{%- endmacro -%}
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -127,23 +148,6 @@ public class {{ type.name | to_upper_camel_case }} {
     }
     {%- endif %}
 {%- endfor %}
-    /**
-     * Create an instance of {{ class_ty }} given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of {{ class_ty }}
-     * @throws JsonProcessingException if the JSON string is invalid with respect to {{ class_ty }}
-     */
-    public static {{ class_ty }} fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, {{ class_ty }}.class);
-    }
 
-    /**
-     * Convert an instance of {{ class_ty }} to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
-    }
+    {{ fromJson_toJson(class_ty) }}
 }

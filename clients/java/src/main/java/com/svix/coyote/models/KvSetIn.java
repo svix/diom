@@ -157,6 +157,7 @@ Use the `version` field from a prior `get` response.
     public void setVersion(Long version) {
         this.version = version;
     }
+
     /**
      * Create an instance of KvSetIn given an JSON string
      *

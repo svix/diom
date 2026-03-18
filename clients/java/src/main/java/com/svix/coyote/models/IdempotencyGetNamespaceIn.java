@@ -49,6 +49,7 @@ public class IdempotencyGetNamespaceIn {
     public void setName(String name) {
         this.name = name;
     }
+
     /**
      * Create an instance of IdempotencyGetNamespaceIn given an JSON string
      *

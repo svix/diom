@@ -89,6 +89,7 @@ public class RateLimitCreateNamespaceIn {
     public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
+
     /**
      * Create an instance of RateLimitCreateNamespaceIn given an JSON string
      *

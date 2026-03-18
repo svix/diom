@@ -49,6 +49,7 @@ public class CacheGetNamespaceIn {
     public void setName(String name) {
         this.name = name;
     }
+
     /**
      * Create an instance of CacheGetNamespaceIn given an JSON string
      *

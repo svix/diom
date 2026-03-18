@@ -89,6 +89,7 @@ public class MsgPublishOutTopic {
     public void setOffset(Long offset) {
         this.offset = offset;
     }
+
     /**
      * Create an instance of MsgPublishOutTopic given an JSON string
      *

@@ -97,6 +97,7 @@ Pass as `version` in a subsequent `set` to perform a conditional write.
     public void setVersion(Long version) {
         this.version = version;
     }
+
     /**
      * Create an instance of KvGetOut given an JSON string
      *

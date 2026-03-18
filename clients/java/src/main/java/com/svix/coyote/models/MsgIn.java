@@ -103,6 +103,7 @@ public class MsgIn {
     public void setKey(String key) {
         this.key = key;
     }
+
     /**
      * Create an instance of MsgIn given an JSON string
      *

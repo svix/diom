@@ -129,6 +129,7 @@ public class MsgStreamSeekIn {
     public void setPosition(String position) {
         this.position = position;
     }
+
     /**
      * Create an instance of MsgStreamSeekIn given an JSON string
      *

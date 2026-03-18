@@ -116,6 +116,7 @@ public class IdempotencyCompleteIn {
     public void setTtl(Long ttl) {
         this.ttl = ttl;
     }
+
     /**
      * Create an instance of IdempotencyCompleteIn given an JSON string
      *

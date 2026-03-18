@@ -136,6 +136,7 @@ public class MsgQueueConfigureIn {
     public void setDlqTopic(String dlqTopic) {
         this.dlqTopic = dlqTopic;
     }
+
     /**
      * Create an instance of MsgQueueConfigureIn given an JSON string
      *

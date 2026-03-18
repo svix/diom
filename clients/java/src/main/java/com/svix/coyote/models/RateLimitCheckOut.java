@@ -89,6 +89,7 @@ public class RateLimitCheckOut {
     public void setRetryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
     }
+
     /**
      * Create an instance of RateLimitCheckOut given an JSON string
      *

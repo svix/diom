@@ -49,6 +49,7 @@ public class MsgTopicConfigureOut {
     public void setPartitions(Short partitions) {
         this.partitions = partitions;
     }
+
     /**
      * Create an instance of MsgTopicConfigureOut given an JSON string
      *

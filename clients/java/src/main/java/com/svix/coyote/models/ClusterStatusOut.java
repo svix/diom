@@ -160,6 +160,7 @@ This value is not replicated and should only be used for debugging.
     public void setNodes(List<NodeStatusOut> nodes) {
         this.nodes = nodes;
     }
+
     /**
      * Create an instance of ClusterStatusOut given an JSON string
      *

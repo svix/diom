@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitResetOut {
     public RateLimitResetOut () {}
+
     /**
      * Create an instance of RateLimitResetOut given an JSON string
      *

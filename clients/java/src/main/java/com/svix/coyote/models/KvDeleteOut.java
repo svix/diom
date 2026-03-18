@@ -49,6 +49,7 @@ public class KvDeleteOut {
     public void setSuccess(Boolean success) {
         this.success = success;
     }
+
     /**
      * Create an instance of KvDeleteOut given an JSON string
      *

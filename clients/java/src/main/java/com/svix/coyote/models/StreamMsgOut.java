@@ -143,6 +143,7 @@ public class StreamMsgOut {
     public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
     }
+
     /**
      * Create an instance of StreamMsgOut given an JSON string
      *

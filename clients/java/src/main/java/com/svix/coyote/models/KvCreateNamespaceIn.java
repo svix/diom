@@ -89,6 +89,7 @@ public class KvCreateNamespaceIn {
     public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
+
     /**
      * Create an instance of KvCreateNamespaceIn given an JSON string
      *

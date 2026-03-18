@@ -76,6 +76,7 @@ public class CacheGetOut {
     public void setValue(List<Byte> value) {
         this.value = value;
     }
+
     /**
      * Create an instance of CacheGetOut given an JSON string
      *

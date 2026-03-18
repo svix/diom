@@ -89,6 +89,7 @@ public class RateLimitTokenBucketConfig {
     public void setRefillIntervalMillis(Long refillIntervalMillis) {
         this.refillIntervalMillis = refillIntervalMillis;
     }
+
     /**
      * Create an instance of RateLimitTokenBucketConfig given an JSON string
      *

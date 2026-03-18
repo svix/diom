@@ -69,6 +69,7 @@ public class Retention {
     public void setBytes(Long bytes) {
         this.bytes = bytes;
     }
+
     /**
      * Create an instance of Retention given an JSON string
      *

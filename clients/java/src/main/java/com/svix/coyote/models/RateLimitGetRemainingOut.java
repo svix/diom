@@ -69,6 +69,7 @@ public class RateLimitGetRemainingOut {
     public void setRetryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
     }
+
     /**
      * Create an instance of RateLimitGetRemainingOut given an JSON string
      *
