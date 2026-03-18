@@ -103,7 +103,7 @@ pub async fn initialize_raft(
         app_state.clone(),
         logs.clone(),
         id,
-        time,
+        time.clone(),
     )
     .await?;
     let state_machine: StoreHandle = state_machine.into();
@@ -120,6 +120,8 @@ pub async fn initialize_raft(
         state_machine,
         network,
         background_channel: bgtx,
+        time,
+        cfg: cfg.clone(),
     };
     tokio::spawn({
         let handle = handle.clone();

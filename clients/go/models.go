@@ -15,6 +15,9 @@ type (
 	CacheGetOut                   = coyote_models.CacheGetOut
 	CacheSetIn                    = coyote_models.CacheSetIn
 	CacheSetOut                   = coyote_models.CacheSetOut
+	ClusterRemoveNodeIn           = coyote_models.ClusterRemoveNodeIn
+	ClusterRemoveNodeOut          = coyote_models.ClusterRemoveNodeOut
+	ClusterStatusOut              = coyote_models.ClusterStatusOut
 	Consistency                   = coyote_models.Consistency
 	EvictionPolicy                = coyote_models.EvictionPolicy
 	IdempotencyAbortIn            = coyote_models.IdempotencyAbortIn
@@ -64,6 +67,7 @@ type (
 	MsgStreamSeekOut              = coyote_models.MsgStreamSeekOut
 	MsgTopicConfigureIn           = coyote_models.MsgTopicConfigureIn
 	MsgTopicConfigureOut          = coyote_models.MsgTopicConfigureOut
+	NodeStatusOut                 = coyote_models.NodeStatusOut
 	OperationBehavior             = coyote_models.OperationBehavior
 	PingOut                       = coyote_models.PingOut
 	QueueMsgOut                   = coyote_models.QueueMsgOut
@@ -79,6 +83,7 @@ type (
 	RateLimitResetOut             = coyote_models.RateLimitResetOut
 	RateLimitTokenBucketConfig    = coyote_models.RateLimitTokenBucketConfig
 	Retention                     = coyote_models.Retention
+	ServerState                   = coyote_models.ServerState
 	StorageType                   = coyote_models.StorageType
 	StreamMsgOut                  = coyote_models.StreamMsgOut
 )

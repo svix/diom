@@ -6,10 +6,12 @@ use jiff::Timestamp;
 use openraft::{LogId, ServerState};
 use serde::{Deserialize, Serialize};
 
-use super::handle::{RequestWithContext, Response};
-use crate::{cfg::PeerAddr, core::cluster::state_machine::ClusterId};
+use crate::cfg::PeerAddr;
 
-use super::NodeId;
+use super::{
+    ClusterId, NodeId,
+    handle::{RequestWithContext, Response},
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct DiscoverClusterResponse {
@@ -42,6 +44,23 @@ pub(super) struct UpgradeLearnerRequest {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct UpgradeLearnerResponse {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct RemoveNodeRequest {
+    pub node_id: NodeId,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct RemoveNodeResponse {}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct GoAwayRequest {
+    pub cluster_id: ClusterId,
+    pub node_id: NodeId,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct GoAwayResponse {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(super) struct ChangeMembershipRequest {

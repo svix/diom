@@ -61,6 +61,8 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
         .route("/repl/raft/last-id", post(last_id))
         .route("/repl/raft/admin/add-learner", post(add_learner))
         .route("/repl/raft/admin/upgrade-learner", post(upgrade_learner))
+        .route("/repl/raft/admin/remove-node", post(remove_node))
+        .route("/repl/raft/go-away", post(go_away))
         .route(
             "/repl/raft/admin/change-membership",
             post(change_membership),
@@ -242,6 +244,14 @@ async fn add_learner(
     rpc_response(state.raft.add_learner(request.node_id, node, true).await)
 }
 
+async fn remove_node(
+    Extension(raft_state): Extension<RaftState>,
+    MsgPack(request): MsgPack<RemoveNodeRequest>,
+) -> Result<MsgPack<RemoveNodeResponse>, crate::Error> {
+    raft_state.remove_node(request.node_id).await?;
+    Ok(MsgPack(RemoveNodeResponse {}))
+}
+
 async fn upgrade_learner(
     Extension(raft_state): Extension<RaftState>,
     MsgPack(request): MsgPack<UpgradeLearnerRequest>,
@@ -249,6 +259,16 @@ async fn upgrade_learner(
     tracing::info!(node_id=?request.node_id, "upgrading learner to follower");
     let request = ChangeMembers::AddVoterIds([request.node_id].into_iter().collect());
     rpc_response(raft_state.raft.change_membership(request, true).await)
+}
+
+async fn go_away(
+    Extension(raft_state): Extension<RaftState>,
+    MsgPack(request): MsgPack<GoAwayRequest>,
+) -> Result<MsgPack<GoAwayResponse>, crate::Error> {
+    raft_state
+        .handle_go_away(request.cluster_id, request.node_id)
+        .await?;
+    Ok(MsgPack(GoAwayResponse {}))
 }
 
 async fn change_membership(

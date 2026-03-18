@@ -1,4 +1,5 @@
 // this file is @generated
+mod admin;
 mod cache;
 mod cache_namespace;
 mod health;
@@ -15,7 +16,7 @@ mod rate_limit;
 mod rate_limit_namespace;
 
 pub(crate) use self::{
-    cache::CacheArgs, cache_namespace::CacheNamespaceArgs, health::HealthArgs,
+    admin::AdminArgs, cache::CacheArgs, cache_namespace::CacheNamespaceArgs, health::HealthArgs,
     idempotency::IdempotencyArgs, idempotency_namespace::IdempotencyNamespaceArgs, kv::KvArgs,
     kv_namespace::KvNamespaceArgs, msgs::MsgsArgs, msgs_namespace::MsgsNamespaceArgs,
     msgs_queue::MsgsQueueArgs, msgs_stream::MsgsStreamArgs, msgs_topic::MsgsTopicArgs,
