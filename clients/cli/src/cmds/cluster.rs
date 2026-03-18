@@ -13,7 +13,6 @@ pub struct ClusterAdminArgs {
 
 #[derive(Args)]
 pub struct RemoveNodeArgs {
-    #[arg()]
     node_id: String,
     /// This command is dangerous
     #[arg(long)]
@@ -114,7 +113,7 @@ async fn print_status(
             let term = if let Some(term) = row.last_committed_term
                 && let Some(index) = row.last_committed_log_index
             {
-                format!("{}-{}", term, index)
+                format!("{term}-{index}")
             } else {
                 "".to_string()
             };

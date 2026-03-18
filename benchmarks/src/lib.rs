@@ -15,7 +15,6 @@ pub struct BenchmarkContext {
     pub servers: Arc<Vec<TestContext>>,
     pub client: CoyoteClient,
     pub test_client: TestClient,
-    pub workdirs: Vec<TempDir>,
 }
 
 pub fn setup_single_server() -> BenchmarkContext {
@@ -24,11 +23,10 @@ pub fn setup_single_server() -> BenchmarkContext {
         .build()
         .unwrap();
 
-    let (server, workdir) = rt.block_on(async {
-        let workdir = tempfile::tempdir().unwrap();
-        let mut cfg = default_server_config(workdir.path());
+    let server = rt.block_on(async {
+        let server = TestServerBuilder::with_default_config().build().await;
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        (TestServerBuilder::new().build().await, workdir)
+        server
     });
 
     let server_url = Some(format!("http://{}", server.addr));
@@ -50,7 +48,6 @@ pub fn setup_single_server() -> BenchmarkContext {
         servers,
         client,
         test_client,
-        workdirs: vec![workdir],
     }
 }
 
@@ -109,21 +106,21 @@ pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
 
     let mut seed_nodes = vec![];
     let mut servers: Vec<TestContext> = vec![];
-    let mut workdirs = vec![];
     for i in 0..num_servers {
-        let (server, workdir) = rt.block_on(async {
-            let workdir = tempfile::tempdir().unwrap();
-            let mut cfg = default_server_config(workdir.path());
-            cfg.cluster.seed_nodes = seed_nodes.clone();
-            cfg.cluster.auto_initialize = true;
-            let server = TestServerBuilder::new().cfg(cfg).build().await;
+        let server = rt.block_on(async {
+            let server = TestServerBuilder::with_default_config()
+                .tap_cfg(|cfg| {
+                    cfg.cluster.seed_nodes = seed_nodes.clone();
+                    cfg.cluster.auto_initialize = true;
+                })
+                .build()
+                .await;
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-            (server, workdir)
+            server
         });
 
         seed_nodes.push(server.repl_addr.into());
         servers.push(server);
-        workdirs.push(workdir);
     }
 
     let servers = Arc::new(servers);
@@ -151,6 +148,5 @@ pub fn setup_cluster(num_servers: usize) -> BenchmarkContext {
         servers,
         client,
         test_client,
-        workdirs,
     }
 }
