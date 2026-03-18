@@ -3,6 +3,18 @@ on:
   push:
     branches: ['main']
 jobs:
+  check_operator_changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      operator_changed: ${{ steps.filter.outputs.operator }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            operator:
+              - 'infra/operator/**'
   ci:
     uses: ./.github/workflows/ci.yml
     secrets: inherit
@@ -38,7 +50,8 @@ jobs:
   docker_publish_operator:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
-    needs: ci
+    needs: [ci, check_operator_changes]
+    if: needs.check_operator_changes.outputs.operator_changed == 'true'
     with:
       image_name: svix/diom-operator
       target: prod
