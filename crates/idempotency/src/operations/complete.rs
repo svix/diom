@@ -35,39 +35,43 @@ impl CompleteOperation {
 }
 
 impl CompleteOperation {
-    fn apply_real(
+    async fn apply_real(
         self,
         state: &IdempotencyRaftState<'_>,
         now: Timestamp,
         log_index: u64,
     ) -> Result<()> {
         let expiry = now + self.ttl_seconds;
-        state.state.controller(self.storage_type).set(
-            self.namespace_id,
-            &self.key,
-            KvModelIn {
-                value: IdempotencyState::Completed {
-                    response: self.response,
-                }
-                .into(),
-                expiry: Some(expiry),
-                version: None,
-            },
-            OperationBehavior::Upsert,
-            now,
-            log_index,
-        )?;
+        state
+            .state
+            .controller(self.storage_type)
+            .set(
+                self.namespace_id,
+                self.key,
+                KvModelIn {
+                    value: IdempotencyState::Completed {
+                        response: self.response,
+                    }
+                    .into(),
+                    expiry: Some(expiry),
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                now,
+                log_index,
+            )
+            .await?;
 
         Ok(())
     }
 }
 
 impl IdempotencyRequest for CompleteOperation {
-    fn apply(
+    async fn apply(
         self,
         state: IdempotencyRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> CompleteResponse {
-        CompleteResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index))
+        CompleteResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
     }
 }

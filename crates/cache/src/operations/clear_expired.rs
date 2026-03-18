@@ -20,18 +20,17 @@ impl ClearExpiredOperation {
 }
 
 impl ClearExpiredOperation {
-    fn apply_real(self, state: &State, timestamp: jiff::Timestamp) -> Result<()> {
-        state.controller(self.storage_type).clear_expired(
-            timestamp,
-            self.max_expirations,
-            self.storage_type,
-        )?;
+    async fn apply_real(self, state: &State, timestamp: jiff::Timestamp) -> Result<()> {
+        state
+            .controller(self.storage_type)
+            .clear_expired(timestamp, self.max_expirations, self.storage_type)
+            .await?;
         Ok(())
     }
 }
 
 impl CacheRequest for ClearExpiredOperation {
-    fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp))
+    async fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> ClearExpiredResponse {
+        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp).await)
     }
 }

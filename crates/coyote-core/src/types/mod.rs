@@ -100,6 +100,12 @@ macro_rules! string_wrapper_impl {
             }
         }
 
+        impl AsRef<str> for $name_id {
+            fn as_ref(&self) -> &str {
+                &self.0
+            }
+        }
+
         impl std::fmt::Display for $name_id {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 self.0.fmt(f)

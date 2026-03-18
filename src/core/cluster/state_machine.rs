@@ -208,7 +208,7 @@ impl Store {
         self.cluster_id.as_ref()
     }
 
-    pub fn db_handle(&self) -> impl std::ops::Deref<Target = Stores> {
+    pub fn db_handle(&self) -> impl std::ops::Deref<Target = Stores> + Send {
         self.stores.read_arc()
     }
 

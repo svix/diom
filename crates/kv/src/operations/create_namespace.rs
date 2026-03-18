@@ -40,13 +40,13 @@ impl CreateKvOperation {
         }
     }
 
-    fn apply_real(
+    async fn apply_real(
         self,
         namespace_state: &coyote_namespace::State,
         now: Timestamp,
     ) -> coyote_operations::Result<CreateKvResponseData> {
         let op: CreateNamespace<KeyValueConfig> = self.into();
-        let out = op.apply_operation(namespace_state, now)?;
+        let out = op.async_apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }
@@ -73,7 +73,11 @@ impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
 }
 
 impl KvRequest for CreateKvOperation {
-    fn apply(self, state: KvRaftState<'_>, ctx: &coyote_operations::OpContext) -> CreateKvResponse {
-        CreateKvResponse(self.apply_real(state.namespace, ctx.timestamp))
+    async fn apply(
+        self,
+        state: KvRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> CreateKvResponse {
+        CreateKvResponse(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

@@ -34,7 +34,7 @@ pub struct CreateNamespaceOutput<C: ModuleConfig> {
     pub updated_at: Timestamp,
 }
 
-impl<C: ModuleConfig> CreateNamespace<C> {
+impl<C: ModuleConfig + 'static> CreateNamespace<C> {
     pub fn new(
         name: String,
         config: C,
@@ -49,6 +49,17 @@ impl<C: ModuleConfig> CreateNamespace<C> {
         }
     }
 
+    pub async fn async_apply_operation(
+        self,
+        state: &State,
+        timestamp: Timestamp,
+    ) -> Result<CreateNamespaceOutput<C>> {
+        let db = state.db().clone();
+        let keyspace = state.keyspace().clone();
+        tokio::task::spawn_blocking(move || self.apply_operation_inner(&db, &keyspace, timestamp))
+            .await?
+    }
+
     pub fn apply_operation(
         self,
         state: &State,
@@ -56,6 +67,15 @@ impl<C: ModuleConfig> CreateNamespace<C> {
     ) -> Result<CreateNamespaceOutput<C>> {
         let db = state.db();
         let keyspace = state.keyspace();
+        self.apply_operation_inner(db, keyspace, timestamp)
+    }
+
+    fn apply_operation_inner(
+        self,
+        db: &fjall::Database,
+        keyspace: &fjall::Keyspace,
+        timestamp: Timestamp,
+    ) -> Result<CreateNamespaceOutput<C>> {
         let namespace = match Namespace::<C>::fetch(keyspace, &self.name)? {
             Some(mut namespace) => {
                 namespace.storage_type = self.storage_type;

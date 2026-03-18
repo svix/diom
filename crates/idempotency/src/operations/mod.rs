@@ -13,14 +13,14 @@ pub use try_start::{TryStartOperation, TryStartResponseData};
 
 pub use create_namespace::{CreateIdempotencyOperation, CreateIdempotencyResponseData};
 
-use coyote_operations::raft_module_operations;
+use coyote_operations::async_raft_module_operations;
 
 pub struct IdempotencyRaftState<'a> {
     pub state: &'a State,
     pub namespace: &'a coyote_namespace::State,
 }
 
-raft_module_operations!(
+async_raft_module_operations!(
     IdempotencyRequest,
     IdempotencyOperation {
         TryStart(TryStartOperation) -> TryStartResponseData,

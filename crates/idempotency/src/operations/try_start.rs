@@ -33,7 +33,7 @@ pub struct TryStartResponseData {
 }
 
 impl TryStartOperation {
-    fn apply_real(
+    async fn apply_real(
         self,
         state: &IdempotencyRaftState<'_>,
         now: Timestamp,
@@ -43,20 +43,25 @@ impl TryStartOperation {
 
         let controller = state.state.controller(self.storage_type);
 
-        match controller.fetch(self.namespace_id, &self.key, now)? {
+        match controller
+            .fetch(self.namespace_id, self.key.clone(), now)
+            .await?
+        {
             None => {
-                controller.set(
-                    self.namespace_id,
-                    &self.key,
-                    KvModelIn {
-                        value: IdempotencyState::InProgress.into(),
-                        expiry: Some(expiry),
-                        version: None,
-                    },
-                    OperationBehavior::Insert,
-                    now,
-                    log_index,
-                )?;
+                controller
+                    .set(
+                        self.namespace_id,
+                        self.key,
+                        KvModelIn {
+                            value: IdempotencyState::InProgress.into(),
+                            expiry: Some(expiry),
+                            version: None,
+                        },
+                        OperationBehavior::Insert,
+                        now,
+                        log_index,
+                    )
+                    .await?;
                 Ok(TryStartResponseData {
                     result: IdempotencyStartResult::Started,
                 })
@@ -76,11 +81,11 @@ impl TryStartOperation {
 }
 
 impl IdempotencyRequest for TryStartOperation {
-    fn apply(
+    async fn apply(
         self,
         state: IdempotencyRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> TryStartResponse {
-        TryStartResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index))
+        TryStartResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
     }
 }
