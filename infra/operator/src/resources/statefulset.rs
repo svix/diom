@@ -231,7 +231,8 @@ fn build_container(
     volume_mounts: Vec<VolumeMount>,
 ) -> Container {
     let cluster_port = spec.cluster_port();
-    const HEALTH_CHECK_ENDPOINT: &str = "/api/v1/health/ping";
+    const API_HEALTH_ENDPOINT: &str = "/api/v1/health/ping";
+    const CLUSTER_HEALTH_ENDPOINT: &str = "/repl/health";
 
     Container {
         name: "coyote".into(),
@@ -267,7 +268,7 @@ fn build_container(
         }),
         liveness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
-                path: Some(HEALTH_CHECK_ENDPOINT.into()),
+                path: Some(API_HEALTH_ENDPOINT.into()),
                 port: IntOrString::Int(spec.api_port as _),
                 ..Default::default()
             }),
@@ -279,7 +280,7 @@ fn build_container(
         }),
         readiness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
-                path: Some(HEALTH_CHECK_ENDPOINT.into()),
+                path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
                 port: IntOrString::Int(spec.api_port as _),
                 ..Default::default()
             }),
