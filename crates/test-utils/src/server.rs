@@ -31,7 +31,7 @@ impl Drop for IsolatedServerHandle {
 }
 
 pub struct TestServerBuilder {
-    cfg: Option<ConfigurationInner>,
+    cfg: ConfigurationInner,
     token: Option<String>,
     listener: Option<TcpListener>,
     repl_listener: Option<TcpListener>,
@@ -39,21 +39,11 @@ pub struct TestServerBuilder {
 }
 
 impl TestServerBuilder {
-    pub fn new() -> Self {
-        Self {
-            cfg: None,
-            token: None,
-            listener: None,
-            repl_listener: None,
-            workdir: None,
-        }
-    }
-
     pub fn with_default_config() -> Self {
         let workdir = tempfile::tempdir().unwrap();
         let cfg = default_server_config(workdir.path());
         Self {
-            cfg: Some(cfg),
+            cfg,
             workdir: Some(workdir),
             token: None,
             listener: None,
@@ -61,10 +51,12 @@ impl TestServerBuilder {
         }
     }
 
+    /// Mutate the current configuration.
+    ///
+    /// Panics if no config is set (that is to say, if TestServerBuilder wasn't
+    /// created with `.with_default_cfg`, or `.cfg` has not been called).
     pub fn tap_cfg(mut self, f: impl FnOnce(&mut ConfigurationInner)) -> Self {
-        if let Some(cfg) = &mut self.cfg {
-            f(cfg)
-        }
+        f(&mut self.cfg);
         self
     }
 
@@ -83,8 +75,9 @@ impl TestServerBuilder {
         self
     }
 
+    /// Replace the configuration for this test server with a new one
     pub fn cfg(mut self, cfg: ConfigurationInner) -> Self {
-        self.cfg = Some(cfg);
+        self.cfg = cfg;
         self
     }
 
@@ -110,16 +103,8 @@ impl TestServerBuilder {
         let addr: SocketAddr = listener.local_addr().unwrap();
         let repl_addr: SocketAddr = repl_listener.local_addr().unwrap();
 
-        let (mut cfg, workdir) = if let Some(cfg) = self.cfg {
-            // Assume that workdir will be tracked externally if custom
-            (cfg, self.workdir)
-        } else {
-            let workdir = self.workdir.unwrap_or_else(|| tempfile::tempdir().unwrap());
-            let cfg = default_server_config(workdir.path());
-            (cfg, Some(workdir))
-        };
-
         let cfg = {
+            let mut cfg = self.cfg;
             cfg.listen_address = addr;
             cfg.cluster.listen_address = Some(repl_addr);
             cfg.cluster.advertised_address = Some(repl_addr.into());
@@ -136,7 +121,7 @@ impl TestServerBuilder {
         });
 
         let handle = IsolatedServerHandle {
-            _dir: workdir,
+            _dir: self.workdir,
             server_handle,
         };
         let client = TestClient::new(base_uri, &token);
@@ -231,7 +216,7 @@ async fn wait_for_initialized(
                 .get(&main_url)
                 .timeout(Duration::from_millis(10))
                 .send()
-                .and_then(|r| futures_util::future::ready(r.error_for_status())),
+                .and_then(|r| async { r.error_for_status() }),
         )
         .await
         {
@@ -319,5 +304,5 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
 }
 
 pub async fn start_server() -> TestContext {
-    TestServerBuilder::new().build().await
+    TestServerBuilder::with_default_config().build().await
 }

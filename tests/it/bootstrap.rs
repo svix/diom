@@ -1,9 +1,6 @@
 use http::StatusCode;
 use serde_json::json;
-use test_utils::{
-    TestClient, TestResult,
-    server::{TestServerBuilder, default_server_config},
-};
+use test_utils::{TestClient, TestResult, server::TestServerBuilder};
 
 async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
     let default_kv = client
@@ -76,20 +73,22 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
 
 #[tokio::test]
 async fn test_bootstrap_file_based() -> TestResult {
-    let workdir = tempfile::tempdir()?;
-    let mut cfg = default_server_config(workdir.path());
-    cfg.bootstrap_cfg_path = Some("./tests/it/static/bootstrap.test.yaml".to_string());
-
-    let test_server = TestServerBuilder::new().cfg(cfg).build().await;
+    let test_server = TestServerBuilder::with_default_config()
+        .tap_cfg(|cfg| {
+            cfg.bootstrap_cfg_path = Some("tests/it/static/bootstrap.test.yaml".to_string())
+        })
+        .build()
+        .await;
     assert_bootstrap_namespaces(&test_server.client).await
 }
 
 #[tokio::test]
 async fn test_bootstrap_env_var_based() -> TestResult {
-    let workdir = tempfile::tempdir()?;
-    let mut cfg = default_server_config(workdir.path());
-    cfg.bootstrap_cfg = Some(include_str!("static/bootstrap.test.yaml").to_string());
-
-    let test_server = TestServerBuilder::new().cfg(cfg).build().await;
+    let test_server = TestServerBuilder::with_default_config()
+        .tap_cfg(|cfg| {
+            cfg.bootstrap_cfg_path = Some("tests/it/static/bootstrap.test.yaml".to_string())
+        })
+        .build()
+        .await;
     assert_bootstrap_namespaces(&test_server.client).await
 }

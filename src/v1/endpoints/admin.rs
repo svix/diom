@@ -109,9 +109,7 @@ async fn cluster_status(
                 .map(|(node_id, node)| {
                     let node_id = *node_id;
                     let node = node.clone();
-                    let state = if let Some(id) = &leader_id
-                        && id == &node_id
-                    {
+                    let state = if leader_id == Some(node_id) {
                         ServerState::Leader
                     } else if voters.contains(&node_id) {
                         ServerState::Follower
@@ -132,11 +130,9 @@ async fn cluster_status(
         .await
         .or_internal_error()?;
     let cluster_id = repl.state_machine.cluster_id().await;
-    let cluster_name = if cluster_id.is_some() {
-        Some(app_state.cfg.cluster.name.to_owned())
-    } else {
-        None
-    };
+    let cluster_name = cluster_id
+        .is_some()
+        .then(|| app_state.cfg.cluster.name.to_owned());
     let this_node_id = repl.node_id;
 
     let this_node_last_committed_timestamp = repl.time.last();
