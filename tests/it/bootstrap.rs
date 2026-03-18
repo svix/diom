@@ -75,7 +75,7 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
 async fn test_bootstrap_file_based() -> TestResult {
     let test_server = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.bootstrap_cfg_path = Some("./tests/it/static/bootstrap.test.yaml".to_string())
+            cfg.bootstrap_cfg_path = Some("tests/it/static/bootstrap.test.yaml".to_string())
         })
         .build()
         .await;
@@ -85,7 +85,9 @@ async fn test_bootstrap_file_based() -> TestResult {
 #[tokio::test]
 async fn test_bootstrap_env_var_based() -> TestResult {
     let test_server = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| cfg.bootstrap_cfg_path = Some("static/bootstrap.test.yaml".to_string()))
+        .tap_cfg(|cfg| {
+            cfg.bootstrap_cfg_path = Some("tests/it/static/bootstrap.test.yaml".to_string())
+        })
         .build()
         .await;
     assert_bootstrap_namespaces(&test_server.client).await
