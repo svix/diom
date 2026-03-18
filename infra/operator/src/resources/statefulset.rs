@@ -109,7 +109,7 @@ fn build_env(
     headless_svc: &str,
     ns: &str,
 ) -> Vec<EnvVar> {
-    let cluster_port = spec.api_port + 10000;
+    let cluster_port = spec.cluster_port();
 
     // These must come before any vars that reference them via $(VAR) substitution.
     let mut env: Vec<EnvVar> = vec![
@@ -230,8 +230,8 @@ fn build_container(
     env: Vec<EnvVar>,
     volume_mounts: Vec<VolumeMount>,
 ) -> Container {
-    let cluster_port = spec.api_port + 10000;
-    const HEALTH_CHECK_ENDPOINT: &str = "/repl/health";
+    let cluster_port = spec.cluster_port();
+    const HEALTH_CHECK_ENDPOINT: &str = "/api/v1/health/ping";
 
     Container {
         name: "coyote".into(),
@@ -268,7 +268,7 @@ fn build_container(
         liveness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
                 path: Some(HEALTH_CHECK_ENDPOINT.into()),
-                port: IntOrString::Int(cluster_port as i32),
+                port: IntOrString::Int(spec.api_port as _),
                 ..Default::default()
             }),
             initial_delay_seconds: Some(5),
@@ -280,7 +280,7 @@ fn build_container(
         readiness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
                 path: Some(HEALTH_CHECK_ENDPOINT.into()),
-                port: IntOrString::Int(cluster_port as i32),
+                port: IntOrString::Int(spec.api_port as _),
                 ..Default::default()
             }),
             initial_delay_seconds: Some(5),
