@@ -36,7 +36,7 @@ public class IdempotencyNamespace {
             null,
             idempotencyCreateNamespaceIn,
             IdempotencyCreateNamespaceOut.class
-            );
+        );
     }
 
     /** Get idempotency namespace */
@@ -50,6 +50,6 @@ public class IdempotencyNamespace {
             null,
             idempotencyGetNamespaceIn,
             IdempotencyGetNamespaceOut.class
-            );
+        );
     }
 }

@@ -39,7 +39,7 @@ public class Cache {
             null,
             cacheSetIn,
             CacheSetOut.class
-            );
+        );
     }
 
     /** Cache Get */
@@ -53,7 +53,7 @@ public class Cache {
             null,
             cacheGetIn,
             CacheGetOut.class
-            );
+        );
     }
 
     /** Cache Delete */
@@ -67,6 +67,6 @@ public class Cache {
             null,
             cacheDeleteIn,
             CacheDeleteOut.class
-            );
+        );
     }
 }

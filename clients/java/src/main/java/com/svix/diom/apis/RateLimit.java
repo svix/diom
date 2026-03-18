@@ -39,7 +39,7 @@ public class RateLimit {
             null,
             rateLimitCheckIn,
             RateLimitCheckOut.class
-            );
+        );
     }
 
     /** Rate Limiter Get Remaining */
@@ -53,7 +53,7 @@ public class RateLimit {
             null,
             rateLimitGetRemainingIn,
             RateLimitGetRemainingOut.class
-            );
+        );
     }
 
     /** Rate Limiter Reset */
@@ -67,6 +67,6 @@ public class RateLimit {
             null,
             rateLimitResetIn,
             RateLimitResetOut.class
-            );
+        );
     }
 }

@@ -72,18 +72,18 @@ public class {{ resource_type_name }} {
             "{{ op.method | upper }}",
             url.build(),
             null,
-            {# request body -#}
-            {% if op.request_body_schema_name is defined -%}
+            {#- request body #}
+            {%- if op.request_body_schema_name is defined %}
             {{ req_body_field_name }},
-            {% else -%}
+            {%- else %}
             null,
-            {% endif -%}
-            {# response body class -#}
-            {% if op.response_body_schema_name is defined -%}
+            {%- endif %}
+            {#- response body class #}
+            {%- if op.response_body_schema_name is defined %}
             {{ res_type }}.class
-            {% else -%}
+            {%- else %}
             null
-            {% endif -%}
+            {%- endif %}
         );
     }
 {%- endfor %}

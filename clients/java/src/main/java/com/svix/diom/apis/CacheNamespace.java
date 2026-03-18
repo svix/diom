@@ -36,7 +36,7 @@ public class CacheNamespace {
             null,
             cacheCreateNamespaceIn,
             CacheCreateNamespaceOut.class
-            );
+        );
     }
 
     /** Get cache namespace */
@@ -50,6 +50,6 @@ public class CacheNamespace {
             null,
             cacheGetNamespaceIn,
             CacheGetNamespaceOut.class
-            );
+        );
     }
 }

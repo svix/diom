@@ -36,7 +36,7 @@ public class MsgsNamespace {
             null,
             msgNamespaceCreateIn,
             MsgNamespaceCreateOut.class
-            );
+        );
     }
 
     /** Gets a msgs namespace by name. */
@@ -50,6 +50,6 @@ public class MsgsNamespace {
             null,
             msgNamespaceGetIn,
             MsgNamespaceGetOut.class
-            );
+        );
     }
 }
