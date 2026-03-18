@@ -4,13 +4,15 @@ use k8s_openapi::{
     api::{
         apps::v1::{StatefulSet, StatefulSetSpec},
         core::v1::{
-            Container, ContainerPort, EnvVar, EnvVarSource, ObjectFieldSelector,
+            Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, ObjectFieldSelector,
             PersistentVolumeClaim, PersistentVolumeClaimSpec, PodSecurityContext, PodSpec,
-            PodTemplateSpec, ResourceRequirements, TopologySpreadConstraint, VolumeMount,
+            PodTemplateSpec, Probe, ResourceRequirements, TopologySpreadConstraint, VolumeMount,
             VolumeResourceRequirements,
         },
     },
-    apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::LabelSelector},
+    apimachinery::pkg::{
+        api::resource::Quantity, apis::meta::v1::LabelSelector, util::intstr::IntOrString,
+    },
 };
 use kube::{Resource, ResourceExt, core::ObjectMeta};
 
@@ -207,7 +209,6 @@ fn build_env(
         env.push(env_var("COYOTE_LOG_LEVEL", level));
     }
 
-    // Bootstrap config — pass inline content directly, no file mount needed.
     if let Some(bootstrap) = &spec.bootstrap {
         env.push(env_var("COYOTE_BOOTSTRAP_CFG", bootstrap));
     }
@@ -230,6 +231,7 @@ fn build_container(
     volume_mounts: Vec<VolumeMount>,
 ) -> Container {
     let cluster_port = spec.api_port + 10000;
+    const HEALTH_CHECK_ENDPOINT: &str = "/repl/health";
 
     Container {
         name: "coyote".into(),
@@ -263,7 +265,30 @@ fn build_container(
             }),
             ..Default::default()
         }),
-        // TODO: add readiness/liveness probes against the health endpoint
+        liveness_probe: Some(Probe {
+            http_get: Some(HTTPGetAction {
+                path: Some(HEALTH_CHECK_ENDPOINT.into()),
+                port: IntOrString::Int(cluster_port as i32),
+                ..Default::default()
+            }),
+            initial_delay_seconds: Some(5),
+            period_seconds: Some(10),
+            failure_threshold: Some(6),
+            success_threshold: Some(1),
+            ..Default::default()
+        }),
+        readiness_probe: Some(Probe {
+            http_get: Some(HTTPGetAction {
+                path: Some(HEALTH_CHECK_ENDPOINT.into()),
+                port: IntOrString::Int(cluster_port as i32),
+                ..Default::default()
+            }),
+            initial_delay_seconds: Some(5),
+            period_seconds: Some(10),
+            failure_threshold: Some(6),
+            success_threshold: Some(1),
+            ..Default::default()
+        }),
         ..Default::default()
     }
 }

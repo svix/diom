@@ -5,7 +5,7 @@ metadata:
   namespace: coyote
 spec:
   nodes: 3
-  image: ghcr.io/svix/coyote-server:sha-450fed76623cf0a79d6384259db8d303f9a1c3e7
+  image: ghcr.io/svix/coyote-server:${COYOTE_IMAGE_TAG}
   storage:
     persistent:
       size: 64Gi
