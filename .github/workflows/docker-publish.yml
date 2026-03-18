@@ -29,7 +29,7 @@ jobs:
       artifact_prefix: ${{ steps.prefix.outputs.artifact_prefix }}
     steps:
       - name: Compute artifact prefix
-        id: prefix 
+        id: prefix
         run: |
           image="${{ inputs.image_name }}"
           echo "artifact_prefix=digests-${image//\//-}" >> "$GITHUB_OUTPUT"
