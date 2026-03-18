@@ -180,11 +180,10 @@ impl Store {
             time.bump(timestamp);
         }
 
-        if logs.is_poisoned().await? {
-            anyhow::bail!(
-                "this node was previously removed from a cluster and must be erased before it can be re-added"
-            );
-        }
+        anyhow::ensure!(
+            !logs.is_poisoned().await?,
+            "this node was previously removed from a cluster and must be erased before it can be re-added"
+        );
 
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
