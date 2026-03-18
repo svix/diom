@@ -31,7 +31,7 @@ public class IdempotencyStartIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private Long ttl;
-    public IdempotencyStartIn () {}
+    public IdempotencyStartIn() {}
 
     public IdempotencyStartIn namespace(String namespace) {
         this.namespace = namespace;

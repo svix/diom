@@ -31,7 +31,7 @@ public class MsgQueueRedriveDlqIn {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
-    public MsgQueueRedriveDlqIn () {}
+    public MsgQueueRedriveDlqIn() {}
 
     public MsgQueueRedriveDlqIn namespace(String namespace) {
         this.namespace = namespace;

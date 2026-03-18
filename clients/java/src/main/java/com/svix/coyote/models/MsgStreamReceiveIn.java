@@ -33,7 +33,7 @@ public class MsgStreamReceiveIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
-    public MsgStreamReceiveIn () {}
+    public MsgStreamReceiveIn() {}
 
     public MsgStreamReceiveIn namespace(String namespace) {
         this.namespace = namespace;

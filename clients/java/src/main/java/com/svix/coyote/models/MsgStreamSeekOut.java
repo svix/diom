@@ -28,7 +28,7 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamSeekOut {
-    public MsgStreamSeekOut () {}
+    public MsgStreamSeekOut() {}
 
     /**
      * Create an instance of MsgStreamSeekOut given an JSON string

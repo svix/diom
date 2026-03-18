@@ -31,7 +31,7 @@ public class MsgPublishOutTopic {
     @JsonProperty private String topic;
     @JsonProperty("start_offset") private Long startOffset;
     @JsonProperty private Long offset;
-    public MsgPublishOutTopic () {}
+    public MsgPublishOutTopic() {}
 
     public MsgPublishOutTopic topic(String topic) {
         this.topic = topic;

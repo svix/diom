@@ -31,7 +31,7 @@ public class KvGetOut {
     @JsonProperty private OffsetDateTime expiry;
     @JsonProperty private List<Byte> value;
     @JsonProperty private Long version;
-    public KvGetOut () {}
+    public KvGetOut() {}
 
     public KvGetOut expiry(OffsetDateTime expiry) {
         this.expiry = expiry;

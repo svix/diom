@@ -33,7 +33,7 @@ public class MsgStreamSeekIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
     @JsonProperty private String position;
-    public MsgStreamSeekIn () {}
+    public MsgStreamSeekIn() {}
 
     public MsgStreamSeekIn namespace(String namespace) {
         this.namespace = namespace;

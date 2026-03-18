@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitGetNamespaceIn {
     @JsonProperty private String name;
-    public RateLimitGetNamespaceIn () {}
+    public RateLimitGetNamespaceIn() {}
 
     public RateLimitGetNamespaceIn name(String name) {
         this.name = name;

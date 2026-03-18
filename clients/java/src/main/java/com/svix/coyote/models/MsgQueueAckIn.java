@@ -32,7 +32,7 @@ public class MsgQueueAckIn {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("msg_ids") private List<String> msgIds;
-    public MsgQueueAckIn () {}
+    public MsgQueueAckIn() {}
 
     public MsgQueueAckIn namespace(String namespace) {
         this.namespace = namespace;

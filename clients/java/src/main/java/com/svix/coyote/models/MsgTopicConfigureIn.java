@@ -31,7 +31,7 @@ public class MsgTopicConfigureIn {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty private Short partitions;
-    public MsgTopicConfigureIn () {}
+    public MsgTopicConfigureIn() {}
 
     public MsgTopicConfigureIn namespace(String namespace) {
         this.namespace = namespace;

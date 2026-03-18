@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleted {
     @JsonProperty private List<Byte> response;
-    public IdempotencyCompleted () {}
+    public IdempotencyCompleted() {}
 
     public IdempotencyCompleted response(List<Byte> response) {
         this.response = response;

@@ -32,7 +32,7 @@ public class CacheSetIn {
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
     @JsonProperty private Long ttl;
-    public CacheSetIn () {}
+    public CacheSetIn() {}
 
     public CacheSetIn namespace(String namespace) {
         this.namespace = namespace;

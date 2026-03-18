@@ -33,7 +33,7 @@ public class StreamMsgOut {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private OffsetDateTime timestamp;
-    public StreamMsgOut () {}
+    public StreamMsgOut() {}
 
     public StreamMsgOut offset(Long offset) {
         this.offset = offset;

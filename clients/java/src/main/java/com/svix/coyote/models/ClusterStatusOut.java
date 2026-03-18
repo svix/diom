@@ -34,7 +34,7 @@ public class ClusterStatusOut {
     @JsonProperty("this_node_state") private ServerState thisNodeState;
     @JsonProperty("this_node_last_committed_timestamp") private OffsetDateTime thisNodeLastCommittedTimestamp;
     @JsonProperty private List<NodeStatusOut> nodes;
-    public ClusterStatusOut () {}
+    public ClusterStatusOut() {}
 
     public ClusterStatusOut clusterId(String clusterId) {
         this.clusterId = clusterId;

@@ -31,7 +31,7 @@ public class KvCreateNamespaceIn {
     @JsonProperty private String name;
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-    public KvCreateNamespaceIn () {}
+    public KvCreateNamespaceIn() {}
 
     public KvCreateNamespaceIn name(String name) {
         this.name = name;

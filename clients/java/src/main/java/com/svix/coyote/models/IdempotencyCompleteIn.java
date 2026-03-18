@@ -32,7 +32,7 @@ public class IdempotencyCompleteIn {
     @JsonProperty private String key;
     @JsonProperty private List<Byte> response;
     @JsonProperty private Long ttl;
-    public IdempotencyCompleteIn () {}
+    public IdempotencyCompleteIn() {}
 
     public IdempotencyCompleteIn namespace(String namespace) {
         this.namespace = namespace;

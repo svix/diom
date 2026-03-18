@@ -31,7 +31,7 @@ public class KvGetIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private Consistency consistency;
-    public KvGetIn () {}
+    public KvGetIn() {}
 
     public KvGetIn namespace(String namespace) {
         this.namespace = namespace;

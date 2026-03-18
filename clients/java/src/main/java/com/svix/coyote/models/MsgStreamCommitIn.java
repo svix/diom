@@ -32,7 +32,7 @@ public class MsgStreamCommitIn {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
-    public MsgStreamCommitIn () {}
+    public MsgStreamCommitIn() {}
 
     public MsgStreamCommitIn namespace(String namespace) {
         this.namespace = namespace;
