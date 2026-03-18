@@ -39,7 +39,7 @@ enum Commands {
     Server,
 }
 
-#[tokio::main(flavor = "local")]
+#[tokio::main]
 async fn main() -> anyhow::Result<()> {
     _ = dotenv();
 
