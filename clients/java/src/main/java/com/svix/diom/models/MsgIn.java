@@ -31,7 +31,7 @@ public class MsgIn {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private String key;
-    public MsgIn () {}
+    public MsgIn() {}
 
     public MsgIn value(List<Byte> value) {
         this.value = value;

@@ -33,7 +33,7 @@ public class MsgQueueConfigureIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("retry_schedule") private List<Long> retrySchedule;
     @JsonProperty("dlq_topic") private String dlqTopic;
-    public MsgQueueConfigureIn () {}
+    public MsgQueueConfigureIn() {}
 
     public MsgQueueConfigureIn namespace(String namespace) {
         this.namespace = namespace;

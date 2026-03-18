@@ -34,7 +34,7 @@ public class KvSetIn {
     @JsonProperty private Long ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
-    public KvSetIn () {}
+    public KvSetIn() {}
 
     public KvSetIn namespace(String namespace) {
         this.namespace = namespace;

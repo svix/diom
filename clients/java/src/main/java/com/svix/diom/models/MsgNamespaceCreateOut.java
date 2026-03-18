@@ -33,7 +33,7 @@ public class MsgNamespaceCreateOut {
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
-    public MsgNamespaceCreateOut () {}
+    public MsgNamespaceCreateOut() {}
 
     public MsgNamespaceCreateOut name(String name) {
         this.name = name;

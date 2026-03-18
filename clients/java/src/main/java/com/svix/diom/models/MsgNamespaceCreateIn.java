@@ -31,7 +31,7 @@ public class MsgNamespaceCreateIn {
     @JsonProperty private String name;
     @JsonProperty private Retention retention;
     @JsonProperty("storage_type") private StorageType storageType;
-    public MsgNamespaceCreateIn () {}
+    public MsgNamespaceCreateIn() {}
 
     public MsgNamespaceCreateIn name(String name) {
         this.name = name;

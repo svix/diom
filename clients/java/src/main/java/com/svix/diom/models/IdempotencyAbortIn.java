@@ -30,7 +30,7 @@ import lombok.ToString;
 public class IdempotencyAbortIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    public IdempotencyAbortIn () {}
+    public IdempotencyAbortIn() {}
 
     public IdempotencyAbortIn namespace(String namespace) {
         this.namespace = namespace;

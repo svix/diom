@@ -32,7 +32,7 @@ public class MsgQueueNackIn {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("msg_ids") private List<String> msgIds;
-    public MsgQueueNackIn () {}
+    public MsgQueueNackIn() {}
 
     public MsgQueueNackIn namespace(String namespace) {
         this.namespace = namespace;

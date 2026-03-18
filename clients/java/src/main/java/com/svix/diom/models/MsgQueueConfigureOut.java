@@ -30,7 +30,7 @@ import lombok.ToString;
 public class MsgQueueConfigureOut {
     @JsonProperty("retry_schedule") private List<Long> retrySchedule;
     @JsonProperty("dlq_topic") private String dlqTopic;
-    public MsgQueueConfigureOut () {}
+    public MsgQueueConfigureOut() {}
 
     public MsgQueueConfigureOut retrySchedule(List<Long> retrySchedule) {
         this.retrySchedule = retrySchedule;

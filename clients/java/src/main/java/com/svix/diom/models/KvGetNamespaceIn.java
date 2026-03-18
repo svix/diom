@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvGetNamespaceIn {
     @JsonProperty private String name;
-    public KvGetNamespaceIn () {}
+    public KvGetNamespaceIn() {}
 
     public KvGetNamespaceIn name(String name) {
         this.name = name;

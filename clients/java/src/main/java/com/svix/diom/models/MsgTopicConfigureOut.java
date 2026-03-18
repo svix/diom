@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgTopicConfigureOut {
     @JsonProperty private Short partitions;
-    public MsgTopicConfigureOut () {}
+    public MsgTopicConfigureOut() {}
 
     public MsgTopicConfigureOut partitions(Short partitions) {
         this.partitions = partitions;

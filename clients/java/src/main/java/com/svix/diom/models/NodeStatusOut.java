@@ -33,7 +33,7 @@ public class NodeStatusOut {
     @JsonProperty private ServerState state;
     @JsonProperty("last_committed_log_index") private Long lastCommittedLogIndex;
     @JsonProperty("last_committed_term") private Long lastCommittedTerm;
-    public NodeStatusOut () {}
+    public NodeStatusOut() {}
 
     public NodeStatusOut nodeId(String nodeId) {
         this.nodeId = nodeId;

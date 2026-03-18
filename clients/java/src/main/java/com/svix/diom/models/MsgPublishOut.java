@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgPublishOut {
     @JsonProperty private List<MsgPublishOutTopic> topics;
-    public MsgPublishOut () {}
+    public MsgPublishOut() {}
 
     public MsgPublishOut topics(List<MsgPublishOutTopic> topics) {
         this.topics = topics;

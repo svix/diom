@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class ClusterRemoveNodeIn {
     @JsonProperty("node_id") private String nodeId;
-    public ClusterRemoveNodeIn () {}
+    public ClusterRemoveNodeIn() {}
 
     public ClusterRemoveNodeIn nodeId(String nodeId) {
         this.nodeId = nodeId;

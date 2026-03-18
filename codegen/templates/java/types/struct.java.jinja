@@ -61,7 +61,7 @@ public class {{ type.name | to_upper_camel_case }} {
     {#- none nullable fields #}
     {{ field_annotation}} private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
 {%- endfor %}
-    public {{ type.name | to_upper_camel_case }} () {}
+    public {{ type.name | to_upper_camel_case }}() {}
 
 {%- for field in type.fields %}
     {%- set f_ty = field.type.to_java() %}

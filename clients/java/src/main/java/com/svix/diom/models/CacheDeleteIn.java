@@ -30,7 +30,7 @@ import lombok.ToString;
 public class CacheDeleteIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    public CacheDeleteIn () {}
+    public CacheDeleteIn() {}
 
     public CacheDeleteIn namespace(String namespace) {
         this.namespace = namespace;

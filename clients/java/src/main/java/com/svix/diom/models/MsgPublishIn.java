@@ -31,7 +31,7 @@ public class MsgPublishIn {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty private List<MsgIn> msgs;
-    public MsgPublishIn () {}
+    public MsgPublishIn() {}
 
     public MsgPublishIn namespace(String namespace) {
         this.namespace = namespace;

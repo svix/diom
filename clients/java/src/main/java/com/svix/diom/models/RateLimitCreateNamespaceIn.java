@@ -31,7 +31,7 @@ public class RateLimitCreateNamespaceIn {
     @JsonProperty private String name;
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-    public RateLimitCreateNamespaceIn () {}
+    public RateLimitCreateNamespaceIn() {}
 
     public RateLimitCreateNamespaceIn name(String name) {
         this.name = name;

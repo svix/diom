@@ -31,7 +31,7 @@ public class CacheGetIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private Consistency consistency;
-    public CacheGetIn () {}
+    public CacheGetIn() {}
 
     public CacheGetIn namespace(String namespace) {
         this.namespace = namespace;

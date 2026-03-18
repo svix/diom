@@ -34,7 +34,7 @@ public class CacheCreateNamespaceOut {
     @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
-    public CacheCreateNamespaceOut () {}
+    public CacheCreateNamespaceOut() {}
 
     public CacheCreateNamespaceOut name(String name) {
         this.name = name;

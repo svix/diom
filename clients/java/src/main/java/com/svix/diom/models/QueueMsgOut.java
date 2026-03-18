@@ -32,7 +32,7 @@ public class QueueMsgOut {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private OffsetDateTime timestamp;
-    public QueueMsgOut () {}
+    public QueueMsgOut() {}
 
     public QueueMsgOut msgId(String msgId) {
         this.msgId = msgId;

@@ -31,7 +31,7 @@ public class IdempotencyCreateNamespaceIn {
     @JsonProperty private String name;
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-    public IdempotencyCreateNamespaceIn () {}
+    public IdempotencyCreateNamespaceIn() {}
 
     public IdempotencyCreateNamespaceIn name(String name) {
         this.name = name;

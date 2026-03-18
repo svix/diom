@@ -30,7 +30,7 @@ import lombok.ToString;
 public class KvDeleteIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    public KvDeleteIn () {}
+    public KvDeleteIn() {}
 
     public KvDeleteIn namespace(String namespace) {
         this.namespace = namespace;

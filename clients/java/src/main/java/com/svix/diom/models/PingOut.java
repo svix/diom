@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class PingOut {
     @JsonProperty private Boolean ok;
-    public PingOut () {}
+    public PingOut() {}
 
     public PingOut ok(Boolean ok) {
         this.ok = ok;

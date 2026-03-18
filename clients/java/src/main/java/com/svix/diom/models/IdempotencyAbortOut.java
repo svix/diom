@@ -28,7 +28,7 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyAbortOut {
-    public IdempotencyAbortOut () {}
+    public IdempotencyAbortOut() {}
 
     /**
      * Create an instance of IdempotencyAbortOut given an JSON string

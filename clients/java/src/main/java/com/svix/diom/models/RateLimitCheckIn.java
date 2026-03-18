@@ -32,7 +32,7 @@ public class RateLimitCheckIn {
     @JsonProperty private String key;
     @JsonProperty private Long tokens;
     @JsonProperty private RateLimitTokenBucketConfig config;
-    public RateLimitCheckIn () {}
+    public RateLimitCheckIn() {}
 
     public RateLimitCheckIn namespace(String namespace) {
         this.namespace = namespace;

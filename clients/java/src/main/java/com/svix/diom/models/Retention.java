@@ -30,7 +30,7 @@ import lombok.ToString;
 public class Retention {
     @JsonProperty private Long millis;
     @JsonProperty private Long bytes;
-    public Retention () {}
+    public Retention() {}
 
     public Retention millis(Long millis) {
         this.millis = millis;
