@@ -134,17 +134,18 @@ public class {{ type.name | to_upper_camel_case }} {
         public String getValue() {
             return this.value;
         }
+
         @Override
         public String toString(){
             return this.value;
         }
+
         public static TypeEnum fromValue(String value) {
             if (!Objects.equals(value, "{{ field.type.string_const_val() }}")){
                 throw new IllegalArgumentException("Unexpected value '" + value + "'");
             }
             return {{ field.type.string_const_val() | to_upper_snake_case }};
         }
-
     }
     {%- endif %}
 {%- endfor %}
