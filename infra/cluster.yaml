@@ -9,7 +9,7 @@ spec:
   storage:
     persistent:
       size: 64Gi
-      storageClass: gp2
+      storageClass: gp3-encrypted
   extraEnv:
     - name: COYOTE_OPENTELEMETRY_METRICS_ADDRESS
       value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
