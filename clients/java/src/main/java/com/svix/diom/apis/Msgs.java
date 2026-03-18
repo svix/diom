@@ -29,6 +29,7 @@ public class Msgs {
         final MsgPublishIn msgPublishIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/publish");
+
         return this.client.executeRequest(
             "POST",
             url.build(),

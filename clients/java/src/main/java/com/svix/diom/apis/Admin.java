@@ -29,6 +29,7 @@ public class Admin {
         
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/admin/cluster/status");
+
         return this.client.executeRequest(
             "GET",
             url.build(),
@@ -48,6 +49,7 @@ public class Admin {
         final ClusterRemoveNodeIn clusterRemoveNodeIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/admin/cluster/remove-node");
+
         return this.client.executeRequest(
             "POST",
             url.build(),

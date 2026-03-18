@@ -37,6 +37,7 @@ public class MsgsStream {
         final MsgStreamReceiveIn msgStreamReceiveIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/receive");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -56,6 +57,7 @@ public class MsgsStream {
         final MsgStreamCommitIn msgStreamCommitIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/commit");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -76,6 +78,7 @@ public class MsgsStream {
         final MsgStreamSeekIn msgStreamSeekIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/seek");
+
         return this.client.executeRequest(
             "POST",
             url.build(),

@@ -32,6 +32,7 @@ public class MsgsTopic {
         final MsgTopicConfigureIn msgTopicConfigureIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/topic/configure");
+
         return this.client.executeRequest(
             "POST",
             url.build(),

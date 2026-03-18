@@ -42,6 +42,7 @@ public class MsgsQueue {
         final MsgQueueReceiveIn msgQueueReceiveIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/receive");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -60,6 +61,7 @@ public class MsgsQueue {
         final MsgQueueAckIn msgQueueAckIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/ack");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -79,6 +81,7 @@ public class MsgsQueue {
         final MsgQueueConfigureIn msgQueueConfigureIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/configure");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -98,6 +101,7 @@ public class MsgsQueue {
         final MsgQueueNackIn msgQueueNackIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/nack");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -112,6 +116,7 @@ public class MsgsQueue {
         final MsgQueueRedriveDlqIn msgQueueRedriveDlqIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/redrive-dlq");
+
         return this.client.executeRequest(
             "POST",
             url.build(),

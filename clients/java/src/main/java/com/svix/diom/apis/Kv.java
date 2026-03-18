@@ -33,6 +33,7 @@ public class Kv {
         final KvSetIn kvSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/set");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -47,6 +48,7 @@ public class Kv {
         final KvGetIn kvGetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/get");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -61,6 +63,7 @@ public class Kv {
         final KvDeleteIn kvDeleteIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/delete");
+
         return this.client.executeRequest(
             "POST",
             url.build(),

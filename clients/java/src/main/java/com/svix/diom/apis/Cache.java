@@ -33,6 +33,7 @@ public class Cache {
         final CacheSetIn cacheSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/set");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -47,6 +48,7 @@ public class Cache {
         final CacheGetIn cacheGetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/get");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -61,6 +63,7 @@ public class Cache {
         final CacheDeleteIn cacheDeleteIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/delete");
+
         return this.client.executeRequest(
             "POST",
             url.build(),

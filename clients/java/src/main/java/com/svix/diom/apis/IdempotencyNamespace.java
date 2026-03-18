@@ -30,6 +30,7 @@ public class IdempotencyNamespace {
         final IdempotencyCreateNamespaceIn idempotencyCreateNamespaceIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/namespace/create");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
@@ -44,6 +45,7 @@ public class IdempotencyNamespace {
         final IdempotencyGetNamespaceIn idempotencyGetNamespaceIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/namespace/get");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
