@@ -18,64 +18,45 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgQueueAckIn {
+public class MsgQueueNackIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("msg_ids") private List<String> msgIds;
-    public MsgQueueAckIn() {}
 
-    public MsgQueueAckIn namespace(String namespace) {
+    public MsgQueueNackIn_(
+        String namespace,
+        String topic,
+        String consumerGroup,
+        List<String> msgIds
+    ) {
         this.namespace = namespace;
-        return this;
+        this.topic = topic;
+        this.consumerGroup = consumerGroup;
+        this.msgIds = msgIds;
     }
 
     /**
-    * Get namespace
-    *
-     * @return namespace
+     * Create an instance of MsgQueueNackIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of MsgQueueNackIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgQueueNackIn_
      */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
+    public static MsgQueueNackIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, MsgQueueNackIn_.class);
     }
 
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
-    }
-
-    public MsgQueueAckIn msgIds(List<String> msgIds) {
-        this.msgIds = msgIds;
-        return this;
-    }
-
-    public MsgQueueAckIn addMsgIdsItem(String msgIdsItem) {
-        if (this.msgIds == null) {
-            this.msgIds = new ArrayList<>();
-        }
-        this.msgIds.add(msgIdsItem);
-        return this;
-    }
     /**
-    * Get msgIds
-    *
-     * @return msgIds
+     * Convert an instance of MsgQueueNackIn_ to an JSON string
+     *
+     * @return JSON string
      */
-    @javax.annotation.Nonnull
-    public List<String> getMsgIds() {
-        return msgIds;
-    }
-
-    public void setMsgIds(List<String> msgIds) {
-        this.msgIds = msgIds;
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

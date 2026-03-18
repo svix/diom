@@ -20,6 +20,9 @@ import com.svix.diom.models.CacheGetIn;
 import com.svix.diom.models.CacheGetOut;
 import com.svix.diom.models.CacheSetIn;
 import com.svix.diom.models.CacheSetOut;
+import com.svix.diom.models.CacheSetIn_;
+import com.svix.diom.models.CacheGetIn_;
+import com.svix.diom.models.CacheDeleteIn_;
 
 public class Cache {
     private final HttpClient client;
@@ -30,46 +33,84 @@ public class Cache {
 
     /** Cache Set */
     public CacheSetOut set(
+        String key,
         final CacheSetIn cacheSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/set");
+        CacheSetIn_ body = new CacheSetIn_(
+            cacheSetIn.getNamespace(),
+            key,
+            cacheSetIn.getValue(),
+            cacheSetIn.getTtl()
+        );
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            cacheSetIn,
+            body,
             CacheSetOut.class
         );
     }
 
     /** Cache Get */
     public CacheGetOut get(
+        String key,
         final CacheGetIn cacheGetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/get");
+        CacheGetIn_ body = new CacheGetIn_(
+            cacheGetIn.getNamespace(),
+            key,
+            cacheGetIn.getConsistency()
+        );
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            cacheGetIn,
+            body,
             CacheGetOut.class
+        );
+    }
+
+    /** Cache Get */
+    public CacheGetOut get(
+        String key
+    ) throws IOException, ApiException {
+        return this.get(
+            key,
+            new CacheGetIn()
         );
     }
 
     /** Cache Delete */
     public CacheDeleteOut delete(
+        String key,
         final CacheDeleteIn cacheDeleteIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/delete");
+        CacheDeleteIn_ body = new CacheDeleteIn_(
+            cacheDeleteIn.getNamespace(),
+            key
+        );
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            cacheDeleteIn,
+            body,
             CacheDeleteOut.class
+        );
+    }
+
+    /** Cache Delete */
+    public CacheDeleteOut delete(
+        String key
+    ) throws IOException, ApiException {
+        return this.delete(
+            key,
+            new CacheDeleteIn()
         );
     }
 }

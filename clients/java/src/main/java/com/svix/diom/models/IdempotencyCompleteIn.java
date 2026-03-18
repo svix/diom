@@ -53,25 +53,6 @@ public class IdempotencyCompleteIn {
         this.namespace = namespace;
     }
 
-    public IdempotencyCompleteIn key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    /**
-    * Get key
-    *
-     * @return key
-     */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
     public IdempotencyCompleteIn response(List<Byte> response) {
         this.response = response;
         return this;
@@ -115,25 +96,5 @@ public class IdempotencyCompleteIn {
 
     public void setTtl(Long ttl) {
         this.ttl = ttl;
-    }
-
-    /**
-     * Create an instance of IdempotencyCompleteIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of IdempotencyCompleteIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to IdempotencyCompleteIn
-     */
-    public static IdempotencyCompleteIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, IdempotencyCompleteIn.class);
-    }
-
-    /**
-     * Convert an instance of IdempotencyCompleteIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

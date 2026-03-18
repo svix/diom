@@ -53,44 +53,6 @@ public class MsgQueueNackIn {
         this.namespace = namespace;
     }
 
-    public MsgQueueNackIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public MsgQueueNackIn consumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-        return this;
-    }
-
-    /**
-    * Get consumerGroup
-    *
-     * @return consumerGroup
-     */
-    @javax.annotation.Nonnull
-    public String getConsumerGroup() {
-        return consumerGroup;
-    }
-
-    public void setConsumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-    }
-
     public MsgQueueNackIn msgIds(List<String> msgIds) {
         this.msgIds = msgIds;
         return this;
@@ -115,25 +77,5 @@ public class MsgQueueNackIn {
 
     public void setMsgIds(List<String> msgIds) {
         this.msgIds = msgIds;
-    }
-
-    /**
-     * Create an instance of MsgQueueNackIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgQueueNackIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgQueueNackIn
-     */
-    public static MsgQueueNackIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgQueueNackIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgQueueNackIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

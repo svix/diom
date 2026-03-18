@@ -52,25 +52,6 @@ public class MsgPublishIn {
         this.namespace = namespace;
     }
 
-    public MsgPublishIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
     public MsgPublishIn msgs(List<MsgIn> msgs) {
         this.msgs = msgs;
         return this;
@@ -95,25 +76,5 @@ public class MsgPublishIn {
 
     public void setMsgs(List<MsgIn> msgs) {
         this.msgs = msgs;
-    }
-
-    /**
-     * Create an instance of MsgPublishIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgPublishIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgPublishIn
-     */
-    public static MsgPublishIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgPublishIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgPublishIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

@@ -18,16 +18,36 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class MsgNamespaceGetIn {
+public class MsgNamespaceGetIn_ {
     @JsonProperty private String name;
-    public MsgNamespaceGetIn() {}
+
+    public MsgNamespaceGetIn_(
+        String name
+    ) {
+        this.name = name;
+    }
+
+    /**
+     * Create an instance of MsgNamespaceGetIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of MsgNamespaceGetIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgNamespaceGetIn_
+     */
+    public static MsgNamespaceGetIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, MsgNamespaceGetIn_.class);
+    }
+
+    /**
+     * Convert an instance of MsgNamespaceGetIn_ to an JSON string
+     *
+     * @return JSON string
+     */
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
+    }
 }

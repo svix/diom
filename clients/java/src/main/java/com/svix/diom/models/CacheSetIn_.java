@@ -18,56 +18,45 @@ import java.util.HashMap;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import java.net.URI;
 import java.util.Objects;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@ToString
-@EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class CacheGetIn {
+public class CacheSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty private Consistency consistency;
-    public CacheGetIn() {}
+    @JsonProperty private List<Byte> value;
+    @JsonProperty private Long ttl;
 
-    public CacheGetIn namespace(String namespace) {
+    public CacheSetIn_(
+        String namespace,
+        String key,
+        List<Byte> value,
+        Long ttl
+    ) {
         this.namespace = namespace;
-        return this;
+        this.key = key;
+        this.value = value;
+        this.ttl = ttl;
     }
 
     /**
-    * Get namespace
-    *
-     * @return namespace
+     * Create an instance of CacheSetIn_ given an JSON string
+     *
+     * @param jsonString JSON string
+     * @return An instance of CacheSetIn_
+     * @throws JsonProcessingException if the JSON string is invalid with respect to CacheSetIn_
      */
-    @javax.annotation.Nullable
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
-    }
-
-    public CacheGetIn consistency(Consistency consistency) {
-        this.consistency = consistency;
-        return this;
+    public static CacheSetIn_ fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, CacheSetIn_.class);
     }
 
     /**
-    * Get consistency
-    *
-     * @return consistency
+     * Convert an instance of CacheSetIn_ to an JSON string
+     *
+     * @return JSON string
      */
-    @javax.annotation.Nullable
-    public Consistency getConsistency() {
-        return consistency;
-    }
-
-    public void setConsistency(Consistency consistency) {
-        this.consistency = consistency;
+    public String toJson() throws JsonProcessingException {
+        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

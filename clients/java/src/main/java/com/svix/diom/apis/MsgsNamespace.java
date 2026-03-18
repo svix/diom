@@ -17,6 +17,8 @@ import com.svix.diom.models.MsgNamespaceCreateIn;
 import com.svix.diom.models.MsgNamespaceCreateOut;
 import com.svix.diom.models.MsgNamespaceGetIn;
 import com.svix.diom.models.MsgNamespaceGetOut;
+import com.svix.diom.models.MsgNamespaceCreateIn_;
+import com.svix.diom.models.MsgNamespaceGetIn_;
 
 public class MsgsNamespace {
     private final HttpClient client;
@@ -27,31 +29,61 @@ public class MsgsNamespace {
 
     /** Creates or updates a msgs namespace with the given name. */
     public MsgNamespaceCreateOut create(
+        String name,
         final MsgNamespaceCreateIn msgNamespaceCreateIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/namespace/create");
+        MsgNamespaceCreateIn_ body = new MsgNamespaceCreateIn_(
+            name,
+            msgNamespaceCreateIn.getRetention(),
+            msgNamespaceCreateIn.getStorageType()
+        );
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            msgNamespaceCreateIn,
+            body,
             MsgNamespaceCreateOut.class
+        );
+    }
+
+    /** Creates or updates a msgs namespace with the given name. */
+    public MsgNamespaceCreateOut create(
+        String name
+    ) throws IOException, ApiException {
+        return this.create(
+            name,
+            new MsgNamespaceCreateIn()
         );
     }
 
     /** Gets a msgs namespace by name. */
     public MsgNamespaceGetOut get(
+        String name,
         final MsgNamespaceGetIn msgNamespaceGetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/namespace/get");
+        MsgNamespaceGetIn_ body = new MsgNamespaceGetIn_(
+            name
+        );
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            msgNamespaceGetIn,
+            body,
             MsgNamespaceGetOut.class
+        );
+    }
+
+    /** Gets a msgs namespace by name. */
+    public MsgNamespaceGetOut get(
+        String name
+    ) throws IOException, ApiException {
+        return this.get(
+            name,
+            new MsgNamespaceGetIn()
         );
     }
 }
