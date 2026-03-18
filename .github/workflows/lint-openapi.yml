@@ -1,13 +1,7 @@
 name: Lint OpenAPI
 
 on:
-  workflow_dispatch:
   workflow_call:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/lint-openapi.yml'
-      - 'openapi.json'
 
 jobs:
   lint-openapi:
