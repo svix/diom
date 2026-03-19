@@ -2,13 +2,11 @@ use std::collections::BTreeMap;
 
 use crate::{
     State,
-    entities::{
-        MsgIn, Offset, Partition, TopicId, TopicIn, TopicName, TopicPartition, partition_for_key,
-    },
+    entities::{MsgIn, Offset, Partition, TopicIn, TopicName, TopicPartition, partition_for_key},
     tables::{MsgRow, TopicRow},
 };
 use coyote_error::Error;
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::{NamespaceId, TopicId};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;

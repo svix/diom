@@ -6,7 +6,7 @@ use crate::{
 
 use super::{KvRequest, SetResponse};
 use coyote_core::types::{DurationMs, EntityKey};
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use coyote_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use jiff::Timestamp;

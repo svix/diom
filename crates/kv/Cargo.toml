@@ -8,6 +8,7 @@ rust-version.workspace = true
 [dependencies]
 coyote-core = { version = "0.0.1", path = "../coyote-core" }
 coyote-error.workspace = true
+coyote-id.workspace = true
 coyote-namespace.workspace = true
 coyote-operations.workspace = true
 fjall.workspace = true

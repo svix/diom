@@ -1044,6 +1044,7 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-kv",
  "coyote-namespace",
  "coyote-operations",
@@ -1151,11 +1152,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "coyote-id"
+version = "0.0.1"
+dependencies = [
+ "jiff",
+ "rmp-serde",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "coyote-idempotency"
 version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-kv",
  "coyote-namespace",
  "coyote-operations",
@@ -1175,6 +1187,7 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-namespace",
  "coyote-operations",
  "fjall",
@@ -1195,6 +1208,7 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-namespace",
  "coyote-operations",
  "fjall",
@@ -1205,7 +1219,6 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "tracing",
- "uuid",
  "validator",
 ]
 
@@ -1214,12 +1227,12 @@ name = "coyote-namespace"
 version = "0.0.1"
 dependencies = [
  "coyote-error",
+ "coyote-id",
  "fjall",
  "fjall-utils",
  "jiff",
  "schemars 1.2.1",
  "serde",
- "uuid",
 ]
 
 [[package]]
@@ -1281,6 +1294,7 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-namespace",
  "coyote-operations",
  "fjall",

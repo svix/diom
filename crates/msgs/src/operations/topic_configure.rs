@@ -1,4 +1,4 @@
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};

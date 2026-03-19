@@ -1,18 +1,17 @@
 [package]
-name = "coyote-namespace"
+name = "coyote-id"
 edition = "2024"
 license.workspace = true
 version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-coyote-error.workspace = true
-coyote-id.workspace = true
-fjall.workspace = true
-fjall-utils.workspace = true
 jiff.workspace = true
-schemars.workspace = true
 serde.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+rmp-serde.workspace = true
 
 [lints]
 workspace = true
