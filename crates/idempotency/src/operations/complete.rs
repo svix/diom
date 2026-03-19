@@ -1,8 +1,8 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, IdempotencyState};
 use coyote_core::types::DurationS;
+use coyote_id::NamespaceId;
 use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use coyote_namespace::entities::NamespaceId;
 use coyote_operations::Result;
 use fjall_utils::StorageType;
 use jiff::Timestamp;

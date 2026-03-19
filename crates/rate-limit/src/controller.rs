@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use coyote_error::Result;
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 
@@ -99,12 +99,12 @@ mod tests {
     use std::time::Duration;
 
     use coyote_core::types::DurationMs;
+    use coyote_id::NamespaceId;
+    use fjall::KeyspaceCreateOptions;
     use jiff::Timestamp;
     use tempfile::tempdir;
 
     use super::*;
-    use coyote_namespace::entities::NamespaceId;
-    use fjall::KeyspaceCreateOptions;
 
     const TEST_KEYSPACE: &str = "mod_rate_limit";
 

@@ -1,7 +1,7 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
 use crate::{CacheModel, CacheNamespace};
+use coyote_id::NamespaceId;
 use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use coyote_namespace::entities::NamespaceId;
 use coyote_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use jiff::Timestamp;

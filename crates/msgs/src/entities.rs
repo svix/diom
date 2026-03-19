@@ -8,7 +8,6 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self},
 };
-use uuid::Uuid;
 use validator::Validate;
 
 pub type Offset = u64;
@@ -484,9 +483,6 @@ impl JsonSchema for ConsumerGroup {
         String::json_schema(generator)
     }
 }
-
-// FIXME: should be a newtype
-pub type TopicId = Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {

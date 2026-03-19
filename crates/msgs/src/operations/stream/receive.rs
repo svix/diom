@@ -2,7 +2,7 @@ use std::num::NonZeroU16;
 
 use coyote_core::types::DurationMs;
 use coyote_error::Error;
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};

@@ -4,7 +4,7 @@ use std::{
 };
 
 use coyote_error::{Error, Result};
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{StorageType, TableRow, WriteBatchExt};
 use itertools::Itertools;
@@ -376,10 +376,10 @@ impl KvController {
 
 #[cfg(test)]
 mod tests {
+    use coyote_id::NamespaceId;
     use jiff::ToSpan;
 
     use super::*;
-    use coyote_namespace::entities::NamespaceId;
 
     struct SetupFixture {
         _workdir: tempfile::TempDir,

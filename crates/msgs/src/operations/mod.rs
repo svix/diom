@@ -53,13 +53,11 @@ impl MsgsOperation {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::entities::Retention;
+    use coyote_id::NamespaceId;
     use coyote_namespace::entities::StorageType;
-    use uuid::Uuid;
 
     use super::*;
-    use crate::entities::{TopicIn, TopicName};
+    use crate::entities::{Retention, TopicIn, TopicName};
 
     #[test]
     fn test_msgs_operation_key_name() {
@@ -74,7 +72,7 @@ mod tests {
         );
 
         let op = PublishOperation::new(
-            Uuid::nil(),
+            NamespaceId::nil(),
             TopicIn::TopicName(
                 TopicName::new(Some("my-ns".to_string()), "my-topic".to_string()).unwrap(),
             ),

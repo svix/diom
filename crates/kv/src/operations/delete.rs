@@ -1,7 +1,7 @@
 use super::{DeleteResponse, KvRequest};
 use crate::{KvNamespace, State, operations::KvRaftState};
 use coyote_core::types::EntityKey;
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use coyote_operations::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
