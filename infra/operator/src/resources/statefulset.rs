@@ -281,7 +281,7 @@ fn build_container(
         readiness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
                 path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
-                port: IntOrString::Int(spec.api_port as _),
+                port: IntOrString::Int(cluster_port as _),
                 ..Default::default()
             }),
             initial_delay_seconds: Some(5),
