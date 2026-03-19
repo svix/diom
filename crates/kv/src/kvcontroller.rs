@@ -4,7 +4,7 @@ use std::{
 };
 
 use diom_error::{Error, Result};
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{StorageType, TableRow, WriteBatchExt};
 use itertools::Itertools;
@@ -376,10 +376,10 @@ impl KvController {
 
 #[cfg(test)]
 mod tests {
+    use diom_id::NamespaceId;
     use jiff::ToSpan;
 
     use super::*;
-    use diom_namespace::entities::NamespaceId;
 
     struct SetupFixture {
         _workdir: tempfile::TempDir,

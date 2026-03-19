@@ -1,7 +1,7 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
 use crate::{CacheModel, CacheNamespace};
+use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use diom_namespace::entities::NamespaceId;
 use diom_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use jiff::Timestamp;

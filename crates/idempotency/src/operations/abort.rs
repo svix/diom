@@ -1,6 +1,6 @@
 use super::{AbortResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::IdempotencyNamespace;
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use diom_operations::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};

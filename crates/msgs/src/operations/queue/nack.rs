@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use diom_error::Error;
-use diom_namespace::entities::NamespaceId;
+use diom_id::{NamespaceId, TopicId};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -114,7 +114,7 @@ fn forward_to_dlq(
     state: &State,
     batch: &mut fjall::OwnedWriteBatch,
     namespace_id: NamespaceId,
-    source_topic_id: uuid::Uuid,
+    source_topic_id: TopicId,
     msg_id: &MsgId,
     dlq_topic: &TopicName,
     consumer_group: &ConsumerGroup,

@@ -1,6 +1,6 @@
 use super::{CacheRaftState, CacheRequest, DeleteResponse};
 use crate::CacheNamespace;
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use diom_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};

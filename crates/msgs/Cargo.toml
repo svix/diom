@@ -8,6 +8,7 @@ rust-version.workspace = true
 [dependencies]
 diom-core.workspace = true
 diom-error.workspace = true
+diom-id.workspace = true
 diom-namespace.workspace = true
 diom-operations.workspace = true
 fjall.workspace = true
@@ -18,7 +19,6 @@ rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
 tracing.workspace = true
-uuid.workspace = true
 validator.workspace = true
 
 [lints]
