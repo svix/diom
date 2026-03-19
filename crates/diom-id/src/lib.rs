@@ -152,7 +152,7 @@ mod tests {
         assert_eq!(&serialized[2..], id.as_bytes());
 
         let serialized = rmp_serde::to_vec_named(&id.public()).unwrap();
-        assert_eq!(serialized.len(), 38);
-        assert_eq!(&serialized[2..][..4], b"pub_");
+        assert_eq!(serialized.len(), 31);
+        assert_eq!(&serialized[1..][..4], b"pub_");
     }
 }

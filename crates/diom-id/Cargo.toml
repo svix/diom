@@ -6,6 +6,8 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+data-encoding = "2.10.0"
+data-encoding-macro = "0.1.19"
 jiff.workspace = true
 serde.workspace = true
 uuid.workspace = true
