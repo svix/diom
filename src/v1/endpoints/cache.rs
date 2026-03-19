@@ -160,7 +160,7 @@ async fn cache_get(
     let cache_state = coyote_cache::State::init(state.do_not_use_dbs.clone())?;
     let controller = cache_state.controller(namespace.storage_type);
 
-    let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
+    let model = controller.fetch(namespace.id, &data.key, repl.time.last())?;
 
     let ret = match model {
         Some(m) => CacheGetOut::from_model(m),
