@@ -267,7 +267,8 @@ async fn stream_receive_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/stream/receive")
         .json(json!({
-            "topic": "does-not-exist:t1",
+            "namespace": "does-not-exist",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -677,7 +678,8 @@ async fn commit_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/stream/commit")
         .json(json!({
-            "topic": "does-not-exist:t1~0",
+            "namespace": "does-not-exist",
+            "topic": "t1~0",
             "consumer_group": "cg1",
             "offset": 0,
         }))

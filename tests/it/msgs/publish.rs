@@ -168,7 +168,8 @@ async fn publish_rejects_out_of_range_partition() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "topic": "ns-range:my-topic~1",
+            "namespace": "ns-range",
+            "topic": "my-topic~1",
             "msgs": [{ "value": "a".as_bytes() }],
         }))
         .await?
@@ -194,7 +195,8 @@ async fn publish_rejects_malformed_partition_topic() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "topic": "ns-bad:my-topic~abc",
+            "namespace": "ns-bad",
+            "topic": "my-topic~abc",
             "msgs": [{ "value": "a".as_bytes() }],
         }))
         .await?
@@ -214,7 +216,8 @@ async fn publish_to_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "topic": "does-not-exist:topic",
+            "namespace": "does-not-exist",
+            "topic": "topic",
             "msgs": [{ "value": "x".as_bytes() }],
         }))
         .await?
@@ -240,7 +243,8 @@ async fn publish_keyless_same_partition() -> TestResult {
     let response = client
         .post("msgs/publish")
         .json(json!({
-            "topic": "ns-kl:keyless-topic",
+            "namespace": "ns-kl",
+            "topic": "keyless-topic",
             "msgs": [
                 { "value": "a".as_bytes() },
                 { "value": "b".as_bytes() },
@@ -261,11 +265,7 @@ async fn publish_keyless_same_partition() -> TestResult {
 
     // Each topic should have a partition
     for topic in topics {
-        assert!(
-            topic["topic"]
-                .assert_str()
-                .starts_with("ns-kl:keyless-topic~")
-        );
+        assert!(topic["topic"].assert_str().starts_with("keyless-topic~"));
     }
 
     Ok(())
@@ -336,7 +336,8 @@ async fn default_namespace_isolated_from_named() -> TestResult {
     client
         .post("msgs/stream/receive")
         .json(json!({
-            "topic": "other:shared-name",
+            "namespace": "other",
+            "topic": "shared-name",
             "consumer_group": "cg1",
         }))
         .await?
@@ -356,7 +357,8 @@ async fn default_namespace_isolated_from_named() -> TestResult {
     client
         .post("msgs/publish")
         .json(json!({
-            "topic": "other:shared-name",
+            "namespace": "other",
+            "topic": "shared-name",
             "msgs": [{ "value": "other-msg".as_bytes() }],
         }))
         .await?
@@ -386,7 +388,8 @@ async fn default_namespace_isolated_from_named() -> TestResult {
     let response = client
         .post("msgs/stream/receive")
         .json(json!({
-            "topic": "other:shared-name",
+            "namespace": "other",
+            "topic": "shared-name",
             "consumer_group": "cg1",
         }))
         .await?
@@ -398,7 +401,7 @@ async fn default_namespace_isolated_from_named() -> TestResult {
     assert!(
         other_msgs[0]["topic"]
             .assert_str()
-            .starts_with("other:shared-name~"),
+            .starts_with("shared-name~"),
         "other namespace messages should have other: prefix"
     );
 

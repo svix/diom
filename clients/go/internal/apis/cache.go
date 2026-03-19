@@ -28,9 +28,10 @@ func (cache Cache) Set(
 	cacheSetIn coyote_models.CacheSetIn,
 ) (*coyote_models.CacheSetOut, error) {
 	body := coyote_models.CacheSetIn_{
-		Key:   key,
-		Value: cacheSetIn.Value,
-		Ttl:   cacheSetIn.Ttl,
+		Namespace: cacheSetIn.Namespace,
+		Key:       key,
+		Value:     cacheSetIn.Value,
+		Ttl:       cacheSetIn.Ttl,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.CacheSetIn_, coyote_models.CacheSetOut](
@@ -49,6 +50,7 @@ func (cache Cache) Get(
 	cacheGetIn coyote_models.CacheGetIn,
 ) (*coyote_models.CacheGetOut, error) {
 	body := coyote_models.CacheGetIn_{
+		Namespace:   cacheGetIn.Namespace,
 		Key:         key,
 		Consistency: cacheGetIn.Consistency,
 	}
@@ -69,7 +71,8 @@ func (cache Cache) Delete(
 	cacheDeleteIn coyote_models.CacheDeleteIn,
 ) (*coyote_models.CacheDeleteOut, error) {
 	body := coyote_models.CacheDeleteIn_{
-		Key: key,
+		Namespace: cacheDeleteIn.Namespace,
+		Key:       key,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.CacheDeleteIn_, coyote_models.CacheDeleteOut](

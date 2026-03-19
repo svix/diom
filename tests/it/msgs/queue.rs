@@ -292,7 +292,8 @@ async fn queue_receive_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/queue/receive")
         .json(json!({
-            "topic": "does-not-exist:t1",
+            "namespace": "does-not-exist",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -765,7 +766,8 @@ async fn nack_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/queue/nack")
         .json(json!({
-            "topic": "does-not-exist:t1",
+            "namespace": "does-not-exist",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": ["0:0"],
         }))
@@ -786,7 +788,8 @@ async fn redrive_dlq_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/queue/redrive-dlq")
         .json(json!({
-            "topic": "does-not-exist:t1",
+            "namespace": "does-not-exist",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?

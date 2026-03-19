@@ -7,7 +7,6 @@ rust-version.workspace = true
 edition = "2024"
 
 [dependencies]
-coyote-namespace.workspace = true
 coyote-proto.workspace = true
 jiff.workspace = true
 rand.workspace = true

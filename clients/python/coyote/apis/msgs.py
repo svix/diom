@@ -49,6 +49,7 @@ class MsgsAsync(ApiBase):
     ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
         body = _MsgPublishIn(
+            namespace=msg_publish_in.namespace,
             topic=topic,
             msgs=msg_publish_in.msgs,
         ).model_dump(exclude_none=True)
@@ -85,6 +86,7 @@ class Msgs(ApiBase):
     ) -> MsgPublishOut:
         """Publishes messages to a topic within a namespace."""
         body = _MsgPublishIn(
+            namespace=msg_publish_in.namespace,
             topic=topic,
             msgs=msg_publish_in.msgs,
         ).model_dump(exclude_none=True)

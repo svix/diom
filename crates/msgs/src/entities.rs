@@ -72,10 +72,6 @@ impl TopicName {
             Ok(Self { namespace, topic })
         }
     }
-
-    pub fn namespace(&self) -> Option<&str> {
-        self.namespace.as_ref().map(|x| &x[..])
-    }
 }
 
 /// Derefs to the topic name (without namespace or partition).
@@ -140,10 +136,6 @@ pub struct TopicPartition {
 impl TopicPartition {
     pub fn new(raw: TopicName, partition: Partition) -> Self {
         Self { raw, partition }
-    }
-
-    pub fn namespace(&self) -> Option<&str> {
-        self.raw.namespace()
     }
 }
 
@@ -221,10 +213,6 @@ impl TopicIn {
             TopicIn::TopicName(topic_name) => topic_name,
             TopicIn::TopicPartition(topic_partition) => &topic_partition.raw,
         }
-    }
-
-    pub fn namespace(&self) -> Option<&str> {
-        self.topic_name().namespace()
     }
 }
 

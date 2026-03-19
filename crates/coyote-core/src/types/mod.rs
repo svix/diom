@@ -3,7 +3,6 @@
 
 use std::{ops::Deref, sync::LazyLock};
 
-use coyote_namespace::parse_namespace;
 use coyote_proto::validation_error;
 use regex::Regex;
 #[allow(unused_imports)]
@@ -190,18 +189,6 @@ string_wrapper!(
         example: Some("some_key".to_string()),
     }
 );
-
-impl EntityKey {
-    pub fn key(&self) -> &str {
-        let (_, key) = parse_namespace(self);
-        key
-    }
-
-    pub fn namespace(&self) -> Option<&str> {
-        let (ns, _) = parse_namespace(self);
-        ns
-    }
-}
 
 impl Validate for EntityKey {
     fn validate(&self) -> Result<(), ValidationErrors> {

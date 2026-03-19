@@ -16,7 +16,7 @@ use coyote_idempotency::{
 };
 use coyote_namespace::{
     Namespace,
-    entities::{IdempotencyConfig, StorageType},
+    entities::{IdempotencyConfig, NamespaceName, StorageType},
 };
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -35,6 +35,9 @@ pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyStartIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 
@@ -74,6 +77,9 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyCompleteIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 
@@ -91,6 +97,9 @@ pub struct IdempotencyCompleteOut {}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyAbortIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 }
@@ -111,7 +120,7 @@ async fn idempotency_start(
 ) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
@@ -129,7 +138,7 @@ async fn idempotency_complete(
 ) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -148,7 +157,7 @@ async fn idempotency_abort(
 ) -> Result<MsgPackOrJson<IdempotencyAbortOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = AbortOperation::new(namespace, data.key.to_string());
@@ -159,12 +168,12 @@ async fn idempotency_abort(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
@@ -174,7 +183,7 @@ struct IdempotencyGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyCreateNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
@@ -182,7 +191,7 @@ struct IdempotencyCreateNamespaceIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyCreateNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,

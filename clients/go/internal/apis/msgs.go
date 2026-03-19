@@ -37,8 +37,9 @@ func (msgs Msgs) Publish(
 	msgPublishIn coyote_models.MsgPublishIn,
 ) (*coyote_models.MsgPublishOut, error) {
 	body := coyote_models.MsgPublishIn_{
-		Topic: topic,
-		Msgs:  msgPublishIn.Msgs,
+		Namespace: msgPublishIn.Namespace,
+		Topic:     topic,
+		Msgs:      msgPublishIn.Msgs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgPublishIn_, coyote_models.MsgPublishOut](
