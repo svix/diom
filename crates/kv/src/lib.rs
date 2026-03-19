@@ -1,7 +1,7 @@
 use coyote_core::Monotime;
 use coyote_error::Result;
 use coyote_namespace::{Namespace, entities::KeyValueConfig};
-use coyote_operations::{BackgroundError, BackgroundResult, OperationWriter};
+use coyote_operations::{BackgroundError, BackgroundResult};
 use fjall_utils::{Databases, StorageType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -102,19 +102,4 @@ impl AllNodesWorker {
         }
         Ok(())
     }
-}
-
-/// This is a worker function for this module which runs only on the leader
-///
-/// It should not mutate the database in any way that could possibly be customer- or
-/// replication-visible; all  mutations should be written through the writer function
-pub async fn leader_worker<F>(_state: State, _writer: F, _time: Monotime) -> BackgroundResult<()>
-where
-    F: OperationWriter<operations::KvOperation>,
-{
-    let shutting_down = coyote_core::shutdown::shutting_down_token();
-
-    shutting_down.cancelled().await;
-
-    Ok(())
 }
