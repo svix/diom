@@ -137,7 +137,7 @@ async fn cluster_status(
 
     let this_node_last_committed_timestamp = repl.time.last();
 
-    let nodes = futures_util::stream::iter(pnodes.into_iter())
+    let nodes = futures_util::stream::iter(pnodes)
         .map(|peer| {
             let repl = repl.clone();
             async move {

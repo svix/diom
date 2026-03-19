@@ -28,9 +28,10 @@ func (cache Cache) Set(
 	cacheSetIn diom_models.CacheSetIn,
 ) (*diom_models.CacheSetOut, error) {
 	body := diom_models.CacheSetIn_{
-		Key:   key,
-		Value: cacheSetIn.Value,
-		Ttl:   cacheSetIn.Ttl,
+		Namespace: cacheSetIn.Namespace,
+		Key:       key,
+		Value:     cacheSetIn.Value,
+		Ttl:       cacheSetIn.Ttl,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.CacheSetIn_, diom_models.CacheSetOut](
@@ -49,6 +50,7 @@ func (cache Cache) Get(
 	cacheGetIn diom_models.CacheGetIn,
 ) (*diom_models.CacheGetOut, error) {
 	body := diom_models.CacheGetIn_{
+		Namespace:   cacheGetIn.Namespace,
 		Key:         key,
 		Consistency: cacheGetIn.Consistency,
 	}
@@ -69,7 +71,8 @@ func (cache Cache) Delete(
 	cacheDeleteIn diom_models.CacheDeleteIn,
 ) (*diom_models.CacheDeleteOut, error) {
 	body := diom_models.CacheDeleteIn_{
-		Key: key,
+		Namespace: cacheDeleteIn.Namespace,
+		Key:       key,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.CacheDeleteIn_, diom_models.CacheDeleteOut](

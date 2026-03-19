@@ -28,8 +28,28 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvDeleteIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
     public KvDeleteIn () {}
+
+    public KvDeleteIn namespace(String namespace) {
+        this.namespace = namespace;
+        return this;
+    }
+
+    /**
+    * Get namespace
+    *
+     * @return namespace
+     */
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
 
     public KvDeleteIn key(String key) {
         this.key = key;

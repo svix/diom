@@ -28,9 +28,29 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitResetIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private RateLimitTokenBucketConfig config;
     public RateLimitResetIn () {}
+
+    public RateLimitResetIn namespace(String namespace) {
+        this.namespace = namespace;
+        return this;
+    }
+
+    /**
+    * Get namespace
+    *
+     * @return namespace
+     */
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
 
     public RateLimitResetIn key(String key) {
         this.key = key;

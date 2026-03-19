@@ -28,11 +28,31 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamSeekIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
     @JsonProperty private String position;
     public MsgStreamSeekIn () {}
+
+    public MsgStreamSeekIn namespace(String namespace) {
+        this.namespace = namespace;
+        return this;
+    }
+
+    /**
+    * Get namespace
+    *
+     * @return namespace
+     */
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
 
     public MsgStreamSeekIn topic(String topic) {
         this.topic = topic;

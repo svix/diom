@@ -117,7 +117,8 @@ async fn test_kv_set_and_get() -> TestResult {
     client
         .post("kv/set")
         .json(json!({
-            "key": "nonexistentnamespace:key1",
+            "namespace": "nonexistentnamespace",
+            "key": "key1",
             "ttl": Some(expires_in),
             "value": "123".as_bytes(),
             "behavior": "upsert",

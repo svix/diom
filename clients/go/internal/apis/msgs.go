@@ -37,8 +37,9 @@ func (msgs Msgs) Publish(
 	msgPublishIn diom_models.MsgPublishIn,
 ) (*diom_models.MsgPublishOut, error) {
 	body := diom_models.MsgPublishIn_{
-		Topic: topic,
-		Msgs:  msgPublishIn.Msgs,
+		Namespace: msgPublishIn.Namespace,
+		Topic:     topic,
+		Msgs:      msgPublishIn.Msgs,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgPublishIn_, diom_models.MsgPublishOut](

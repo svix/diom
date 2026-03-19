@@ -29,6 +29,7 @@ func (msgsQueue MsgsQueue) Receive(
 	msgQueueReceiveIn diom_models.MsgQueueReceiveIn,
 ) (*diom_models.MsgQueueReceiveOut, error) {
 	body := diom_models.MsgQueueReceiveIn_{
+		Namespace:           msgQueueReceiveIn.Namespace,
 		Topic:               topic,
 		ConsumerGroup:       consumerGroup,
 		BatchSize:           msgQueueReceiveIn.BatchSize,
@@ -54,6 +55,7 @@ func (msgsQueue MsgsQueue) Ack(
 	msgQueueAckIn diom_models.MsgQueueAckIn,
 ) (*diom_models.MsgQueueAckOut, error) {
 	body := diom_models.MsgQueueAckIn_{
+		Namespace:     msgQueueAckIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		MsgIds:        msgQueueAckIn.MsgIds,
@@ -79,6 +81,7 @@ func (msgsQueue MsgsQueue) Configure(
 	msgQueueConfigureIn diom_models.MsgQueueConfigureIn,
 ) (*diom_models.MsgQueueConfigureOut, error) {
 	body := diom_models.MsgQueueConfigureIn_{
+		Namespace:     msgQueueConfigureIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		RetrySchedule: msgQueueConfigureIn.RetrySchedule,
@@ -105,6 +108,7 @@ func (msgsQueue MsgsQueue) Nack(
 	msgQueueNackIn diom_models.MsgQueueNackIn,
 ) (*diom_models.MsgQueueNackOut, error) {
 	body := diom_models.MsgQueueNackIn_{
+		Namespace:     msgQueueNackIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		MsgIds:        msgQueueNackIn.MsgIds,
@@ -127,6 +131,7 @@ func (msgsQueue MsgsQueue) RedriveDlq(
 	msgQueueRedriveDlqIn diom_models.MsgQueueRedriveDlqIn,
 ) (*diom_models.MsgQueueRedriveDlqOut, error) {
 	body := diom_models.MsgQueueRedriveDlqIn_{
+		Namespace:     msgQueueRedriveDlqIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 	}

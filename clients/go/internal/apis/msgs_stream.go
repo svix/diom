@@ -28,6 +28,7 @@ func (msgsStream MsgsStream) Receive(
 	msgStreamReceiveIn diom_models.MsgStreamReceiveIn,
 ) (*diom_models.MsgStreamReceiveOut, error) {
 	body := diom_models.MsgStreamReceiveIn_{
+		Namespace:           msgStreamReceiveIn.Namespace,
 		Topic:               topic,
 		ConsumerGroup:       consumerGroup,
 		BatchSize:           msgStreamReceiveIn.BatchSize,
@@ -54,6 +55,7 @@ func (msgsStream MsgsStream) Commit(
 	msgStreamCommitIn diom_models.MsgStreamCommitIn,
 ) (*diom_models.MsgStreamCommitOut, error) {
 	body := diom_models.MsgStreamCommitIn_{
+		Namespace:     msgStreamCommitIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		Offset:        msgStreamCommitIn.Offset,
@@ -80,6 +82,7 @@ func (msgsStream MsgsStream) Seek(
 	msgStreamSeekIn diom_models.MsgStreamSeekIn,
 ) (*diom_models.MsgStreamSeekOut, error) {
 	body := diom_models.MsgStreamSeekIn_{
+		Namespace:     msgStreamSeekIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		Offset:        msgStreamSeekIn.Offset,

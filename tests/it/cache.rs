@@ -49,7 +49,8 @@ async fn test_cache_set_and_get() -> TestResult {
     client
         .post("cache/set")
         .json(json!({
-            "key": "nonexistentnamespace:key1",
+            "namespace": "nonexistentnamespace",
+            "key": "key1",
             "ttl": 1,
             "value": "123".as_bytes(),
             "behavior": "upsert",

@@ -28,11 +28,12 @@ func (kv Kv) Set(
 	kvSetIn diom_models.KvSetIn,
 ) (*diom_models.KvSetOut, error) {
 	body := diom_models.KvSetIn_{
-		Key:      key,
-		Value:    kvSetIn.Value,
-		Ttl:      kvSetIn.Ttl,
-		Behavior: kvSetIn.Behavior,
-		Version:  kvSetIn.Version,
+		Namespace: kvSetIn.Namespace,
+		Key:       key,
+		Value:     kvSetIn.Value,
+		Ttl:       kvSetIn.Ttl,
+		Behavior:  kvSetIn.Behavior,
+		Version:   kvSetIn.Version,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.KvSetIn_, diom_models.KvSetOut](
@@ -51,6 +52,7 @@ func (kv Kv) Get(
 	kvGetIn diom_models.KvGetIn,
 ) (*diom_models.KvGetOut, error) {
 	body := diom_models.KvGetIn_{
+		Namespace:   kvGetIn.Namespace,
 		Key:         key,
 		Consistency: kvGetIn.Consistency,
 	}
@@ -71,7 +73,8 @@ func (kv Kv) Delete(
 	kvDeleteIn diom_models.KvDeleteIn,
 ) (*diom_models.KvDeleteOut, error) {
 	body := diom_models.KvDeleteIn_{
-		Key: key,
+		Namespace: kvDeleteIn.Namespace,
+		Key:       key,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.KvDeleteIn_, diom_models.KvDeleteOut](

@@ -6,6 +6,8 @@ from ..internal.base_model import BaseModel
 
 
 class MsgQueueConfigureIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     retry_schedule: t.Optional[t.List[int]] = Field(
         default=None, alias="retry_schedule"
     )
@@ -14,6 +16,8 @@ class MsgQueueConfigureIn(BaseModel):
 
 
 class _MsgQueueConfigureIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     topic: str
 
     consumer_group: str = Field(alias="consumer_group")

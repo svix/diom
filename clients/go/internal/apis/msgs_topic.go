@@ -26,6 +26,7 @@ func (msgsTopic MsgsTopic) Configure(
 	msgTopicConfigureIn diom_models.MsgTopicConfigureIn,
 ) (*diom_models.MsgTopicConfigureOut, error) {
 	body := diom_models.MsgTopicConfigureIn_{
+		Namespace:  msgTopicConfigureIn.Namespace,
 		Topic:      topic,
 		Partitions: msgTopicConfigureIn.Partitions,
 	}

@@ -3,12 +3,14 @@ package diom_models
 // This file is @generated DO NOT EDIT
 
 type IdempotencyCompleteIn struct {
-	Response []uint8 `json:"response"` // The response to cache
-	Ttl      uint64  `json:"ttl"`      // TTL in seconds for the cached response
+	Namespace *string `json:"namespace,omitempty"`
+	Response  []uint8 `json:"response"` // The response to cache
+	Ttl       uint64  `json:"ttl"`      // TTL in seconds for the cached response
 }
 
 type IdempotencyCompleteIn_ struct {
-	Key      string  `json:"key"`
-	Response []uint8 `json:"response"` // The response to cache
-	Ttl      uint64  `json:"ttl"`      // TTL in seconds for the cached response
+	Namespace *string `json:"namespace,omitempty"`
+	Key       string  `json:"key"`
+	Response  []uint8 `json:"response"` // The response to cache
+	Ttl       uint64  `json:"ttl"`      // TTL in seconds for the cached response
 }

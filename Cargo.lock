@@ -1113,7 +1113,6 @@ dependencies = [
 name = "diom-core"
 version = "0.0.1"
 dependencies = [
- "diom-namespace",
  "diom-proto",
  "jiff",
  "rand 0.9.2",
