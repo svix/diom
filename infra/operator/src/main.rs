@@ -19,9 +19,16 @@ use reconciler::{Context, error_policy, reconcile};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    use kube::CustomResourceExt;
+
     if std::env::args().any(|a| a == "--print-crd") {
-        use kube::CustomResourceExt;
         print!("{}", serde_yaml::to_string(&CoyoteCluster::crd())?);
+        return Ok(());
+    }
+
+    if std::env::args().any(|a| a == "--print-crd-json") {
+        let json = serde_json::to_string_pretty(&CoyoteCluster::crd())?;
+        println!("{}", json);
         return Ok(());
     }
 
