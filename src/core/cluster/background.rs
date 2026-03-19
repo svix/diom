@@ -102,7 +102,7 @@ impl BackgroundJob for KvBackground {
     async fn run_on_leader(self) -> BackgroundResult<()> {
         let store = self.handle.state_machine.kv_store().await;
         let time = self.handle.state_machine.time.clone();
-        coyote_kv::worker(store, self.handle, time).await
+        coyote_kv::leader_worker(store, self.handle, time).await
     }
 }
 
