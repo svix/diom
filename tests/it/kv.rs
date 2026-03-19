@@ -13,7 +13,7 @@ async fn kv_set(
     expire_in: Option<u64>,
     value: &str,
     behavior: &str,
-) -> TestResult<()> {
+) -> anyhow::Result<()> {
     let response = client
         .post("kv/set")
         .json(json!({
@@ -25,7 +25,7 @@ async fn kv_set(
         .await?
         .ensure(StatusCode::OK)?
         .json();
-    assert!(response["success"].as_bool().unwrap());
+    anyhow::ensure!(response["success"].as_bool().unwrap(), "set should succeed");
     Ok(())
 }
 
@@ -35,7 +35,7 @@ async fn kv_set_unsuccessful(
     expire_in: Option<u64>,
     value: &str,
     behavior: &str,
-) -> TestResult<()> {
+) -> anyhow::Result<()> {
     let response = client
         .post("kv/set")
         .json(json!({
@@ -47,7 +47,7 @@ async fn kv_set_unsuccessful(
         .await?
         .ensure(StatusCode::OK)?
         .json();
-    assert!(!response["success"].as_bool().unwrap());
+    anyhow::ensure!(!response["success"].as_bool().unwrap(), "set should fail");
     Ok(())
 }
 
@@ -64,7 +64,7 @@ async fn kv_get(client: &TestClient, key: &str) -> TestResult<serde_json::Value>
     Ok(response)
 }
 
-async fn kv_not_found(client: &TestClient, key: &str) -> TestResult<()> {
+async fn kv_not_found(client: &TestClient, key: &str) -> anyhow::Result<()> {
     let response = client
         .post("kv/get")
         .json(json!({
@@ -73,7 +73,7 @@ async fn kv_not_found(client: &TestClient, key: &str) -> TestResult<()> {
         .await?
         .ensure(StatusCode::OK)?
         .json();
-    assert!(response["value"].is_null());
+    anyhow::ensure!(response["value"].is_null(), "key should be not-found");
     Ok(())
 }
 
@@ -82,6 +82,7 @@ async fn test_kv_set_and_get() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -93,7 +94,7 @@ async fn test_kv_set_and_get() -> TestResult {
     assert!(response["expiry"].is_null());
 
     let expires_in = 1000;
-    let now = Timestamp::now();
+    let now = time.last();
     kv_set(
         &client,
         "kv-key-1",
@@ -169,12 +170,13 @@ async fn test_kv_expiration() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
     kv_set(&client, "test-key-3", Some(100), "test-value-345", "upsert").await?;
 
-    tokio::time::sleep(Duration::from_millis(1000)).await;
+    time.fast_forward(Duration::from_secs(1));
 
     kv_not_found(&client, "test-key-3").await?;
 
@@ -185,18 +187,23 @@ async fn test_kv_expiration() -> TestResult {
 async fn test_kv_update_expiration() -> TestResult {
     let TestContext {
         client,
+        time,
         handle: _handle,
         ..
     } = start_server().await;
 
     // Test updating expiration time
     kv_set(&client, "kv4", Some(1500), "v4", "upsert").await?;
+    let response = kv_get(&client, "kv4").await?;
+    let initial_expires_at = response["expiry"].assert_str();
+
     kv_set(&client, "kv4", Some(3000), "v4", "upsert").await?;
 
     let response = kv_get(&client, "kv4").await?;
     let expires_at = response["expiry"].assert_str();
+    assert_ne!(initial_expires_at, expires_at);
 
-    tokio::time::sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     let response = kv_get(&client, "kv4").await?;
     assert_eq!(response["value"], json!("v4".as_bytes()));
@@ -205,19 +212,20 @@ async fn test_kv_update_expiration() -> TestResult {
     kv_set(&client, "kv5", Some(3000), "v5", "upsert").await?;
     kv_set(&client, "kv5", Some(500), "v5", "upsert").await?;
 
-    tokio::time::sleep(Duration::from_millis(500)).await;
+    time.fast_forward(Duration::from_millis(501));
 
     kv_not_found(&client, "kv5").await?;
 
     // Test updating expired key
     kv_set(&client, "kv6", Some(1000), "v6", "upsert").await?;
     kv_set_unsuccessful(&client, "kv6", Some(500), "v6", "insert").await?;
-    tokio::time::sleep(Duration::from_millis(500)).await;
+
+    time.fast_forward(Duration::from_millis(500));
 
     let response = kv_get(&client, "kv6").await?;
     assert_eq!(response["value"], json!("v6".as_bytes()));
 
-    tokio::time::sleep(Duration::from_millis(500)).await;
+    time.fast_forward(Duration::from_millis(501));
 
     kv_set_unsuccessful(&client, "kv6", Some(500), "v6", "update").await?;
     kv_not_found(&client, "kv6").await?;

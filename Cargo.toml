@@ -19,6 +19,8 @@ ignored = [
 # FIXME: Make this actually effective by switching from using schemars'
 #        derive directly to using our own wrapper (like webhooks-private)
 openapi = []
+mockable-time = ["coyote-core/mockable-time"]
+default = ["mockable-time"]
 
 [dependencies]
 addr.workspace = true

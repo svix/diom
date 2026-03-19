@@ -3,9 +3,13 @@
 
 #![warn(clippy::all)]
 
-#[cfg(test)]
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
 
 use ::serde::Serialize;
 use aide::axum::ApiRouter;
@@ -203,19 +207,25 @@ impl AppState {
     }
 }
 
-// Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
-// consuming from each others' queues
+/// Run the server with the given configuration
+pub async fn run(cfg: Configuration) {
+    run_with_listeners(cfg, None, None, Monotime::initial()).await
+}
+
+/// Run the server with the given configuration and initial state
+///
+/// This is public for integration tests to use it, but should not be used
+/// by any callers other than integration tests
 pub async fn run_with_listeners(
     cfg: Configuration,
     listener: Option<TcpListener>,
     interserver_listener: Option<TcpListener>,
+    time: Monotime,
 ) {
     // OpenAPI/aide must be initialized before any routers are constructed
     // because its initialization sets generation-global settings which are
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
-
-    let time = Monotime::initial();
 
     // build our application with a route
     let app_state = AppState::new(cfg.clone(), time.clone());
@@ -308,8 +318,14 @@ pub async fn run_with_listeners(
     tracing::debug!("we're outta here!");
 }
 
+static TEST_TRACING_INITIALIZED: AtomicBool = AtomicBool::new(false);
+
 pub fn setup_tracing_for_tests() {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+    if TEST_TRACING_INITIALIZED.load(Ordering::Acquire) {
+        return;
+    }
 
     tracing_subscriber::registry()
         .with(
@@ -322,18 +338,13 @@ pub fn setup_tracing_for_tests() {
         )
         .with(tracing_subscriber::fmt::layer().with_test_writer())
         .init();
+    TEST_TRACING_INITIALIZED.store(true, Ordering::Release);
 }
-
-#[cfg(test)]
-static TEST_TRACING_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 #[cfg(test)]
 #[ctor::ctor]
 fn test_setup() {
-    if !TEST_TRACING_INITIALIZED.load(Ordering::Acquire) {
-        setup_tracing_for_tests();
-        TEST_TRACING_INITIALIZED.store(true, Ordering::Release);
-    }
+    setup_tracing_for_tests();
 }
 
 mod docs {

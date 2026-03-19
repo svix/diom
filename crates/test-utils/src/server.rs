@@ -8,6 +8,7 @@ use coyote::{
     core::cluster::{ClusterId, NodeId, proto::HealthResponse},
     run_with_listeners,
 };
+use coyote_core::Monotime;
 use futures_util::TryFutureExt;
 use tempfile::TempDir;
 use tokio::{
@@ -113,10 +114,14 @@ impl TestServerBuilder {
 
         let base_uri = format!("http://{addr}/api/v1");
 
+        let time = Monotime::initial();
+        time.now();
+
         let server_handle = tokio::spawn({
             let cfg = cfg.clone();
+            let time = time.clone();
             async move {
-                run_with_listeners(cfg, Some(listener), Some(repl_listener)).await;
+                run_with_listeners(cfg, Some(listener), Some(repl_listener), time).await;
             }
         });
 
@@ -139,6 +144,7 @@ impl TestServerBuilder {
             repl_addr,
             node_id,
             cluster_id,
+            time,
         }
     }
 }
@@ -152,6 +158,7 @@ pub struct TestContext {
     pub repl_addr: SocketAddr,
     pub node_id: NodeId,
     pub cluster_id: ClusterId,
+    pub time: Monotime,
 }
 
 async fn check_initialized(

@@ -4889,6 +4889,7 @@ dependencies = [
  "anyhow",
  "bytes",
  "coyote",
+ "coyote-core",
  "futures-util",
  "http",
  "http-body-util",

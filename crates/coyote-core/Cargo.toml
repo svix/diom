@@ -6,6 +6,9 @@ license.workspace = true
 rust-version.workspace = true
 edition = "2024"
 
+[features]
+mockable-time = []
+
 [dependencies]
 coyote-namespace.workspace = true
 coyote-proto.workspace = true

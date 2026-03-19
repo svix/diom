@@ -112,6 +112,7 @@ async fn kv_set(
         data.ttl,
         data.behavior,
         data.version,
+        repl.time.last(),
     );
     let SetResponseData { version, success } =
         repl.client_write(operation).await.or_internal_error()?.0?;
@@ -140,7 +141,7 @@ async fn kv_get(
     let kv_state = coyote_kv::State::init(state.do_not_use_dbs.clone())?;
     let controller = kv_state.controller(namespace.storage_type);
 
-    let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
+    let model = controller.fetch(namespace.id, &data.key, repl.time.last())?;
 
     let ret = match model {
         Some(m) => KvGetOut::from_model(m),
