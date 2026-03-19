@@ -4,3 +4,9 @@ description: Kubernetes operator for Coyote clusters
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
+
+dependencies:
+  - name: crds
+    version: "0.0.0"
+    repository: "file://./charts/crds"
+    condition: crds.enabled

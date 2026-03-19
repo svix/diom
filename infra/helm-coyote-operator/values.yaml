@@ -1,33 +1,63 @@
-replicaCount: 1
+crds:
+  # Install the CoyoteCluster CRD.
+  enabled: true
 
-image:
-  repository: ghcr.io/svix/coyote-operator
-  pullPolicy: IfNotPresent
-  # Overrides the image tag. Defaults to the chart's appVersion.
-  tag: ""
+operator:
+  image:
+    repository: ghcr.io/svix/coyote-operator
+    pullPolicy: IfNotPresent
+    # Overrides the image tag. Defaults to the chart's appVersion.
+    tag: ""
 
-imagePullSecrets: []
+  imagePullSecrets: []
 
-serviceAccount:
-  create: true
-  # If not set, defaults to the fullname of the release.
-  name: ""
-  annotations: {}
+  serviceAccount:
+    create: true
+    # If not set, defaults to the fullname of the release.
+    name: ""
+    annotations: {}
 
-rbac:
-  create: true
+  rbac:
+    create: true
 
-logLevel: info
+  logLevel: info
 
-podAnnotations: {}
+  podAnnotations: {}
 
-resources:
-  requests:
-    cpu: "1"
-    memory: 1024Mi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
-nodeSelector: {}
+  nodeSelector: {}
 
-tolerations: []
+  tolerations: []
 
-affinity: {}
+  affinity: {}
+
+# Definition for coyote cluster
+cluster:
+  enabled: true
+  name: coyote
+  image:
+    repository: ghcr.io/svix/coyote-server
+    tag: ""
+  spec:
+    nodes: 3
+    storage:
+      persistent:
+        size: 64Gi
+        storageClass: gp3-encrypted
+    extraEnv:
+      - name: COYOTE_OPENTELEMETRY_METRICS_ADDRESS
+        value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+      - name: COYOTE_OPENTELEMETRY_METRICS_USE_HTTP
+        value: "true"
+      - name: RUST_LOG
+        value: debug
+      - name: RUST_BACKTRACE
+        value: "1"
+      - name: COYOTE_LOG_FORMAT
+        value: "json"
+      - name: COYOTE_OPENTELEMETRY_ADDRESS
+        value: grpc://datadog-agent.datadog.svc.cluster.local:4317
