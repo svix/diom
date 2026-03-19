@@ -1181,6 +1181,7 @@ dependencies = [
  "fjall-utils",
  "itertools 0.14.0",
  "jiff",
+ "parking_lot",
  "schemars 1.2.1",
  "serde",
  "tap",
@@ -1227,13 +1228,16 @@ name = "diom-operations"
 version = "0.0.1"
 dependencies = [
  "axum",
+ "diom-core",
  "diom-error",
+ "futures-util",
  "http",
  "http-serde",
  "jiff",
  "opentelemetry",
  "paste",
  "serde",
+ "tracing",
 ]
 
 [[package]]

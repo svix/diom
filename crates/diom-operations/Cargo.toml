@@ -7,13 +7,16 @@ rust-version.workspace = true
 
 [dependencies]
 axum.workspace = true
+diom-core.workspace = true
 diom-error.workspace = true
+futures-util.workspace = true
 http.workspace = true
 http-serde.workspace = true
 jiff.workspace = true
 opentelemetry.workspace = true
 paste.workspace = true
 serde.workspace = true
+tracing.workspace = true
 
 [lints]
 workspace = true

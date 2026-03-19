@@ -33,6 +33,7 @@ use crate::{
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
+    workers::Workers,
 };
 use diom_core::shutdown::{shutting_down_token, start_shut_down};
 
@@ -43,6 +44,7 @@ pub use diom_error as error;
 pub mod openapi;
 mod serde;
 pub mod v1;
+mod workers;
 
 async fn graceful_shutdown_handler() {
     let ctrl_c = async {
@@ -284,7 +286,7 @@ pub async fn run_with_listeners(
     };
     tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
-    bootstrap::run(cfg, raft_state)
+    bootstrap::run(cfg, raft_state.clone())
         .await
         .expect("bootstrapping failed");
 
@@ -297,6 +299,9 @@ pub async fn run_with_listeners(
             .accepted(node_id, ConnectionType::External);
     });
 
+    let mut workers = Workers::new();
+    workers.spawn_all(raft_state).await;
+
     axum::serve(listener, make_svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
         .await
@@ -305,6 +310,7 @@ pub async fn run_with_listeners(
     // Wait for workers to finish cleanup
     tracing::debug!("done serving; waiting for background tasks to finish");
     let _ = interserver.await;
+    let _ = workers.shutdown().await;
     tracing::debug!("we're outta here!");
 }
 

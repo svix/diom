@@ -6,11 +6,13 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 mod context;
 pub use context::OpContext;
+pub mod workers;
 
 #[derive(Debug)]
 pub enum BackgroundError {
     NotLeader,
     InvalidResponse,
+    TooManyPanics,
     Other(diom_error::Error),
 }
 
@@ -19,6 +21,10 @@ impl std::fmt::Display for BackgroundError {
         match self {
             Self::NotLeader => write!(f, "tried to write to a non-leader node"),
             Self::InvalidResponse => write!(f, "raft layer returned invalid response type"),
+            Self::TooManyPanics => write!(
+                f,
+                "a background worker experienced too many panics in a row"
+            ),
             Self::Other(e) => std::fmt::Display::fmt(&e, f),
         }
     }
@@ -32,7 +38,7 @@ impl std::error::Error for BackgroundError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match &self {
             Self::Other(e) => Some(e),
-            Self::InvalidResponse | Self::NotLeader => None,
+            Self::InvalidResponse | Self::NotLeader | Self::TooManyPanics => None,
         }
     }
 }

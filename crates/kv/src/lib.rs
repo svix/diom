@@ -1,7 +1,7 @@
 use diom_core::Monotime;
 use diom_error::Result;
 use diom_namespace::{Namespace, entities::KeyValueConfig};
-use diom_operations::OperationWriter;
+use diom_operations::{BackgroundError, BackgroundResult, OperationWriter};
 use fjall_utils::{Databases, StorageType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -47,55 +47,74 @@ pub enum OperationBehavior {
     Update,
 }
 
-/// This is the worker function for this module, it does background cleanup and accounting.
+#[derive(Clone)]
+pub struct AllNodesWorker {
+    state: State,
+    time: Monotime,
+}
+
+impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
+    const NAME: &'static str = "bg-worker:kv";
+
+    /// This is a worker function which runs on every node
+    ///
+    /// It should not mutate the database in any way that could possibly be customer- or
+    /// replication-visible; all  mutations should be written through the writer function
+    async fn run(self) -> BackgroundResult<()> {
+        let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+
+        let shutting_down = diom_core::shutdown::shutting_down_token();
+
+        while shutting_down
+            .run_until_cancelled(timer.tick())
+            .await
+            .is_some()
+        {
+            self.worker_loop(self.time.last()).await?;
+        }
+
+        Ok(())
+    }
+}
+
+impl AllNodesWorker {
+    pub fn new(state: State, time: Monotime) -> Self {
+        Self { state, time }
+    }
+
+    #[tracing::instrument(skip_all)]
+    async fn worker_loop(&self, now: jiff::Timestamp) -> BackgroundResult<()> {
+        let mut tasks = tokio::task::JoinSet::new();
+        let state = self.state.clone();
+        tasks.spawn_blocking(move || {
+            state
+                .persistent_controller
+                .clear_expired_in_background(now, StorageType::Persistent)
+        });
+        let state = self.state.clone();
+        tasks.spawn_blocking(move || {
+            state
+                .ephemeral_controller
+                .clear_expired_in_background(now, StorageType::Ephemeral)
+        });
+        for result in tasks.join_all().await {
+            result.map_err(BackgroundError::Other)?;
+        }
+        Ok(())
+    }
+}
+
+/// This is a worker function for this module which runs only on the leader
 ///
 /// It should not mutate the database in any way that could possibly be customer- or
 /// replication-visible; all  mutations should be written through the writer function
-pub async fn worker<F>(
-    state: State,
-    writer: F,
-    time: Monotime,
-) -> diom_operations::BackgroundResult<()>
+pub async fn leader_worker<F>(_state: State, _writer: F, _time: Monotime) -> BackgroundResult<()>
 where
     F: OperationWriter<operations::KvOperation>,
 {
-    let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
-
     let shutting_down = diom_core::shutdown::shutting_down_token();
 
-    while shutting_down
-        .run_until_cancelled(timer.tick())
-        .await
-        .is_some()
-    {
-        worker_loop(&state, &writer, time.last()).await?;
-    }
+    shutting_down.cancelled().await;
 
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn worker_loop<F>(
-    state: &State,
-    writer: &F,
-    now: jiff::Timestamp,
-) -> diom_operations::BackgroundResult<()>
-where
-    F: OperationWriter<operations::KvOperation>,
-{
-    if state.persistent_controller.has_expired(now).await {
-        writer
-            .write_request(operations::ClearExpiredOperation::new(
-                StorageType::Persistent,
-            ))
-            .await?;
-    }
-    if state.ephemeral_controller.has_expired(now).await {
-        writer
-            .write_request(operations::ClearExpiredOperation::new(
-                StorageType::Ephemeral,
-            ))
-            .await?;
-    }
     Ok(())
 }
