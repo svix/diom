@@ -8,6 +8,7 @@ rust-version.workspace = true
 [dependencies]
 diom-core = { version = "0.0.1", path = "../diom-core" }
 diom-error.workspace = true
+diom-id.workspace = true
 diom-namespace.workspace = true
 diom-operations.workspace = true
 fjall.workspace = true

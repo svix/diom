@@ -1,7 +1,7 @@
 use super::{DeleteResponse, KvRequest};
 use crate::{KvNamespace, State, operations::KvRaftState};
 use diom_core::types::EntityKey;
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use diom_operations::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};

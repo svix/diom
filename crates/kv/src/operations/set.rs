@@ -6,7 +6,7 @@ use crate::{
 
 use super::{KvRequest, SetResponse};
 use diom_core::types::{DurationMs, EntityKey};
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use diom_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use jiff::Timestamp;

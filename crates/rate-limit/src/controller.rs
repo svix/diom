@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use diom_error::Result;
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 
@@ -99,12 +99,12 @@ mod tests {
     use std::time::Duration;
 
     use diom_core::types::DurationMs;
+    use diom_id::NamespaceId;
+    use fjall::KeyspaceCreateOptions;
     use jiff::Timestamp;
     use tempfile::tempdir;
 
     use super::*;
-    use diom_namespace::entities::NamespaceId;
-    use fjall::KeyspaceCreateOptions;
 
     const TEST_KEYSPACE: &str = "mod_rate_limit";
 

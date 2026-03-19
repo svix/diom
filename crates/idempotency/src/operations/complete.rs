@@ -1,8 +1,8 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, IdempotencyState};
 use diom_core::types::DurationS;
+use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use diom_namespace::entities::NamespaceId;
 use diom_operations::Result;
 use fjall_utils::StorageType;
 use jiff::Timestamp;

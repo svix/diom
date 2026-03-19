@@ -2,7 +2,7 @@ use std::{collections::HashMap, num::NonZeroU16};
 
 use diom_core::types::DurationMs;
 use diom_error::Error;
-use diom_namespace::entities::NamespaceId;
+use diom_id::{NamespaceId, TopicId};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use tracing::Span;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, Partition, TopicId, TopicIn, TopicName},
+    entities::{ConsumerGroup, MsgId, Partition, TopicIn, TopicName},
     tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow},
 };
 

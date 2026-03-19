@@ -1,5 +1,5 @@
 use diom_error::Error;
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};

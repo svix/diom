@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
 use crate::{RateLimitNamespace, TokenBucket};
-use diom_namespace::entities::NamespaceId;
+use diom_id::NamespaceId;
 use diom_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use jiff::Timestamp;

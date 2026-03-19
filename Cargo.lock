@@ -1044,6 +1044,7 @@ version = "0.0.1"
 dependencies = [
  "diom-core",
  "diom-error",
+ "diom-id",
  "diom-kv",
  "diom-namespace",
  "diom-operations",
@@ -1151,11 +1152,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "diom-id"
+version = "0.0.1"
+dependencies = [
+ "jiff",
+ "rmp-serde",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "diom-idempotency"
 version = "0.0.1"
 dependencies = [
  "diom-core",
  "diom-error",
+ "diom-id",
  "diom-kv",
  "diom-namespace",
  "diom-operations",
@@ -1175,6 +1187,7 @@ version = "0.0.1"
 dependencies = [
  "diom-core",
  "diom-error",
+ "diom-id",
  "diom-namespace",
  "diom-operations",
  "fjall",
@@ -1195,6 +1208,7 @@ version = "0.0.1"
 dependencies = [
  "diom-core",
  "diom-error",
+ "diom-id",
  "diom-namespace",
  "diom-operations",
  "fjall",
@@ -1205,7 +1219,6 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "tracing",
- "uuid",
  "validator",
 ]
 
@@ -1214,12 +1227,12 @@ name = "diom-namespace"
 version = "0.0.1"
 dependencies = [
  "diom-error",
+ "diom-id",
  "fjall",
  "fjall-utils",
  "jiff",
  "schemars 1.2.1",
  "serde",
- "uuid",
 ]
 
 [[package]]
@@ -1281,6 +1294,7 @@ version = "0.0.1"
 dependencies = [
  "diom-core",
  "diom-error",
+ "diom-id",
  "diom-namespace",
  "diom-operations",
  "fjall",

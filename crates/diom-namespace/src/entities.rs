@@ -5,11 +5,9 @@ use std::{
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use uuid::Uuid;
 
 pub use fjall_utils::StorageType;
 
-pub type NamespaceId = Uuid;
 pub type NamespaceName = String;
 
 #[derive(Serialize, Deserialize)]
