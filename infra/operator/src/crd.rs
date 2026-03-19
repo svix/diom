@@ -222,6 +222,12 @@ pub(crate) struct ResourcesSpec {
     pub limits: Option<BTreeMap<String, String>>,
 }
 
+impl CoyoteClusterSpec {
+    pub(crate) fn cluster_port(&self) -> u16 {
+        self.api_port + 10000
+    }
+}
+
 fn topology_spread_constraints_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({
         "type": "array",

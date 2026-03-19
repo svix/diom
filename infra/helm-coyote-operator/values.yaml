@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: 780095232710.dkr.ecr.us-west-2.amazonaws.com/coyote-controller
+  repository: ghcr.io/svix/coyote-operator
   pullPolicy: IfNotPresent
   # Overrides the image tag. Defaults to the chart's appVersion.
   tag: ""
