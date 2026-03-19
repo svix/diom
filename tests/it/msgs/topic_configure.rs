@@ -244,7 +244,8 @@ async fn configure_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/topic/configure")
         .json(json!({
-            "topic": "does-not-exist:t1",
+            "namespace": "does-not-exist",
+            "topic": "t1",
             "partitions": 4,
         }))
         .await?

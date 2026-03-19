@@ -19,7 +19,7 @@ use coyote_msgs::{
         TopicConfigureOperation,
     },
 };
-use coyote_namespace::entities::StorageType;
+use coyote_namespace::entities::{NamespaceName, StorageType};
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -29,7 +29,7 @@ use validator::Validate;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 struct MsgNamespaceCreateIn {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(default)]
     pub retention: Retention,
     #[serde(default)]
@@ -38,7 +38,7 @@ struct MsgNamespaceCreateIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgNamespaceCreateOut {
-    pub name: String,
+    pub name: NamespaceName,
     pub retention: Retention,
     pub storage_type: StorageType,
     pub created: Timestamp,
@@ -66,12 +66,12 @@ async fn create_namespace(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 struct MsgNamespaceGetIn {
-    pub name: String,
+    pub name: NamespaceName,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgNamespaceGetOut {
-    pub name: String,
+    pub name: NamespaceName,
     pub retention: Retention,
     pub storage_type: StorageType,
     pub created: Timestamp,
@@ -113,6 +113,8 @@ async fn get_namespace(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgPublishIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub msgs: Vec<coyote_msgs::entities::MsgIn>,
 }
@@ -138,7 +140,7 @@ async fn publish(
 ) -> Result<MsgPackOrJson<MsgPublishOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
@@ -172,6 +174,8 @@ fn default_lease_duration_millis() -> DurationMs {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamReceiveIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
@@ -197,7 +201,7 @@ async fn stream_receive(
 ) -> Result<MsgPackOrJson<MsgStreamReceiveOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = StreamReceiveOperation::new(
@@ -231,6 +235,8 @@ async fn stream_receive(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamCommitIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicPartition,
     pub consumer_group: ConsumerGroup,
     pub offset: u64,
@@ -251,7 +257,7 @@ async fn stream_commit(
 ) -> Result<MsgPackOrJson<MsgStreamCommitOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -268,6 +274,8 @@ async fn stream_commit(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamSeekIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
     pub offset: Option<Offset>,
@@ -290,7 +298,7 @@ async fn stream_seek(
 ) -> Result<MsgPackOrJson<MsgStreamSeekOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let target = match (data.offset, data.position) {
@@ -321,6 +329,8 @@ fn default_queue_lease_duration_millis() -> DurationMs {
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueReceiveIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
@@ -347,7 +357,7 @@ async fn queue_receive(
 ) -> Result<MsgPackOrJson<MsgQueueReceiveOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = QueueReceiveOperation::new(
@@ -380,6 +390,8 @@ async fn queue_receive(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueAckIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
     pub msg_ids: Vec<MsgId>,
@@ -399,7 +411,7 @@ async fn queue_ack(
 ) -> Result<MsgPackOrJson<MsgQueueAckOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -416,6 +428,8 @@ async fn queue_ack(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueConfigureIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
     #[serde(default)]
@@ -441,7 +455,7 @@ async fn queue_configure(
 ) -> Result<MsgPackOrJson<MsgQueueConfigureOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = QueueConfigureOperation::new(
@@ -466,6 +480,8 @@ async fn queue_configure(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueNackIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
     pub msg_ids: Vec<MsgId>,
@@ -486,7 +502,7 @@ async fn queue_nack(
 ) -> Result<MsgPackOrJson<MsgQueueNackOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -503,6 +519,8 @@ async fn queue_nack(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueRedriveDlqIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
 }
@@ -519,7 +537,7 @@ async fn queue_redrive_dlq(
 ) -> Result<MsgPackOrJson<MsgQueueRedriveDlqOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = QueueRedriveDlqOperation::new(namespace.id, data.topic, data.consumer_group);
@@ -535,6 +553,8 @@ async fn queue_redrive_dlq(
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgTopicConfigureIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub partitions: u16,
 }
@@ -555,7 +575,7 @@ async fn topic_configure(
 ) -> Result<MsgPackOrJson<MsgTopicConfigureOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.topic.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions)?;
