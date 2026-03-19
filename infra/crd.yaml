@@ -47,14 +47,14 @@ spec:
                   type: string
                 cluster:
                   default:
-                    secretRef: null
-                    heartbeatIntervalMs: null
-                    electionTimeoutMinMs: null
                     electionTimeoutMaxMs: null
-                    replicationRequestTimeoutMs: null
-                    snapshotAfterWrites: null
-                    snapshotAfterMs: null
+                    electionTimeoutMinMs: null
+                    heartbeatIntervalMs: null
                     logLevel: null
+                    replicationRequestTimeoutMs: null
+                    secretRef: null
+                    snapshotAfterMs: null
+                    snapshotAfterWrites: null
                   description: Cluster/replication configuration.
                   properties:
                     electionTimeoutMaxMs:
@@ -149,8 +149,8 @@ spec:
                   type: object
                 resources:
                   default:
-                    requests: null
                     limits: null
+                    requests: null
                   description: CPU and memory resource requests and limits for the diom container.
                   properties:
                     limits:
@@ -168,8 +168,8 @@ spec:
                   type: object
                 service:
                   default:
-                    type: null
                     annotations: {}
+                    type: null
                   description: Configuration for the externally-facing Service.
                   properties:
                     annotations:

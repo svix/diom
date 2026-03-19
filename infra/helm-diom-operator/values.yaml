@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: 780095232710.dkr.ecr.us-west-2.amazonaws.com/diom-controller
+  repository: ghcr.io/svix/diom-operator
   pullPolicy: IfNotPresent
   # Overrides the image tag. Defaults to the chart's appVersion.
   tag: ""
