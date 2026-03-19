@@ -1,0 +1,14 @@
+{{- if .Values.cluster.enabled }}
+{{- $_ := required "cluster.image.tag is required when cluster.enabled=true" .Values.cluster.image.tag }}
+{{- $_ = required "cluster.spec.storage.persistent.size is required when cluster.enabled=true" ((.Values.cluster.spec.storage).persistent).size }}
+apiVersion: diom.svix.com/v1alpha1
+kind: DiomCluster
+metadata:
+  name: {{ .Values.cluster.name | default .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "diom-operator.labels" . | nindent 4 }}
+spec:
+  image: {{ printf "%s:%s" .Values.cluster.image.repository .Values.cluster.image.tag }}
+  {{- toYaml (omit .Values.cluster.spec "image") | nindent 2 }}
+{{- end }}

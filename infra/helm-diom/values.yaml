@@ -1,0 +1,63 @@
+crds:
+  # Install the DiomCluster CRD.
+  enabled: true
+
+operator:
+  image:
+    repository: ghcr.io/svix/diom-operator
+    pullPolicy: IfNotPresent
+    # Overrides the image tag. Defaults to the chart's appVersion.
+    tag: ""
+
+  imagePullSecrets: []
+
+  serviceAccount:
+    create: true
+    # If not set, defaults to the fullname of the release.
+    name: ""
+    annotations: {}
+
+  rbac:
+    create: true
+
+  logLevel: info
+
+  podAnnotations: {}
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+# Definition for diom cluster
+cluster:
+  enabled: true
+  name: diom
+  image:
+    repository: ghcr.io/svix/diom-server
+    tag: ""
+  spec:
+    nodes: 3
+    storage:
+      persistent:
+        size: 64Gi
+        storageClass: gp3-encrypted
+    extraEnv:
+      - name: DIOM_OPENTELEMETRY_METRICS_ADDRESS
+        value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+      - name: DIOM_OPENTELEMETRY_METRICS_USE_HTTP
+        value: "true"
+      - name: RUST_LOG
+        value: debug
+      - name: RUST_BACKTRACE
+        value: "1"
+      - name: DIOM_LOG_FORMAT
+        value: "json"
+      - name: DIOM_OPENTELEMETRY_ADDRESS
+        value: grpc://datadog-agent.datadog.svc.cluster.local:4317

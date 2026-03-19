@@ -43,10 +43,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 ServiceAccount name.
 */}}
 {{- define "diom-operator.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "diom-operator.fullname" .) .Values.serviceAccount.name }}
+{{- if .Values.operator.serviceAccount.create }}
+{{- default (include "diom-operator.fullname" .) .Values.operator.serviceAccount.name }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- default "default" .Values.operator.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
@@ -54,6 +54,6 @@ ServiceAccount name.
 Container image reference.
 */}}
 {{- define "diom-operator.image" -}}
-{{- $tag := .Values.image.tag | default .Chart.AppVersion }}
-{{- printf "%s:%s" .Values.image.repository $tag }}
+{{- $tag := .Values.operator.image.tag | default .Chart.AppVersion }}
+{{- printf "%s:%s" .Values.operator.image.repository $tag }}
 {{- end }}

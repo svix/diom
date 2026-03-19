@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "diom-operator.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "diom-operator.selectorLabels" . | nindent 6 }}
@@ -14,12 +14,12 @@ spec:
     metadata:
       labels:
         {{- include "diom-operator.selectorLabels" . | nindent 8 }}
-      {{- with .Values.podAnnotations }}
+      {{- with .Values.operator.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- with .Values.operator.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -30,7 +30,7 @@ spec:
       containers:
         - name: operator
           image: {{ include "diom-operator.image" . }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -38,20 +38,20 @@ spec:
               drop: ["ALL"]
           env:
             - name: RUST_LOG
-              value: {{ .Values.logLevel | quote }}
-          {{- with .Values.resources }}
+              value: {{ .Values.operator.logLevel | quote }}
+          {{- with .Values.operator.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- with .Values.operator.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.operator.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.operator.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
