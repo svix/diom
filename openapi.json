@@ -74,53 +74,6 @@
         ]
       }
     },
-    "/api/v1/health/ping": {
-      "get": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Ping",
-        "description": "Verify the server is up and running.",
-        "operationId": "v1.health.ping",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PingOut"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/health/error": {
-      "post": {
-        "tags": [
-          "Health"
-        ],
-        "summary": "Error",
-        "description": "Intentionally return an error",
-        "operationId": "v1.health.error",
-        "responses": {
-          "204": {
-            "description": "no content"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/api/v1/cache/set": {
       "post": {
         "tags": [
@@ -1296,6 +1249,53 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/health/ping": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Ping",
+        "description": "Verify the server is up and running.",
+        "operationId": "v1.health.ping",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PingOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/health/error": {
+      "post": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Error",
+        "description": "Intentionally return an error",
+        "operationId": "v1.health.error",
+        "responses": {
+          "204": {
+            "description": "no content"
           }
         },
         "security": [
