@@ -49,8 +49,8 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
-RUN cargo build --release --package coyote-server --bin coyote-server --features coyote/openapi --frozen --no-default-features
-RUN cargo build --release --package coyote-cli --bin coyote --frozen --no-default-features
+RUN cargo build --release --package coyote-server --bin coyote-server --features coyote/openapi --frozen
+RUN cargo build --release --package coyote-cli --bin coyote --frozen
 
 # Production
 FROM docker.io/debian:trixie-slim AS prod

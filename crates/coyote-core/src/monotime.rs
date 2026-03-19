@@ -52,9 +52,13 @@ impl Monotime {
         self.time.load(Ordering::Acquire)
     }
 
-    #[cfg(feature = "mockable-time")]
     /// Advance time by the given amount. This should only be used in integration tests.
+    #[cfg(debug_assertions)]
     pub fn fast_forward(&self, by: std::time::Duration) -> Timestamp {
+        // TODO: it would be cool to only enable this for integration tests, even if the
+        // integration tests run in release mode. Unfortunately, there isn't any feature
+        // or build variable set when running integration tests, so we're doing this
+        // debug_assertions shenanigans for now.
         let millis: i64 = by.as_millis().try_into().expect("duration out of bounds");
         tracing::trace!(millis, "fast-forwarding time");
         self.time.fetch_add(millis, Ordering::AcqRel);
@@ -91,7 +95,6 @@ mod tests {
         assert_approximately_equal(mt.now(), future);
     }
 
-    #[cfg(feature = "mockable-time")]
     #[test]
     fn test_mockable_time() {
         let mt = Monotime::initial();
