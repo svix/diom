@@ -28,9 +28,29 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueRedriveDlqIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     public MsgQueueRedriveDlqIn () {}
+
+    public MsgQueueRedriveDlqIn namespace(String namespace) {
+        this.namespace = namespace;
+        return this;
+    }
+
+    /**
+    * Get namespace
+    *
+     * @return namespace
+     */
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
 
     public MsgQueueRedriveDlqIn topic(String topic) {
         this.topic = topic;

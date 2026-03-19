@@ -7,6 +7,8 @@ from .rate_limit_token_bucket_config import RateLimitTokenBucketConfig
 
 
 class RateLimitCheckIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     key: str
 
     tokens: t.Optional[int] = None

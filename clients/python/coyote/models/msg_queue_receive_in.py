@@ -6,6 +6,8 @@ from ..internal.base_model import BaseModel
 
 
 class MsgQueueReceiveIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
 
     lease_duration_millis: t.Optional[int] = Field(
@@ -14,6 +16,8 @@ class MsgQueueReceiveIn(BaseModel):
 
 
 class _MsgQueueReceiveIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     topic: str
 
     consumer_group: str = Field(alias="consumer_group")

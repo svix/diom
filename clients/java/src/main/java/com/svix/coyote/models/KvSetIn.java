@@ -28,12 +28,32 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvSetIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
     @JsonProperty private Long ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
     public KvSetIn () {}
+
+    public KvSetIn namespace(String namespace) {
+        this.namespace = namespace;
+        return this;
+    }
+
+    /**
+    * Get namespace
+    *
+     * @return namespace
+     */
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
 
     public KvSetIn key(String key) {
         this.key = key;

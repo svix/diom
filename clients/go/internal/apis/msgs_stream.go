@@ -28,6 +28,7 @@ func (msgsStream MsgsStream) Receive(
 	msgStreamReceiveIn coyote_models.MsgStreamReceiveIn,
 ) (*coyote_models.MsgStreamReceiveOut, error) {
 	body := coyote_models.MsgStreamReceiveIn_{
+		Namespace:           msgStreamReceiveIn.Namespace,
 		Topic:               topic,
 		ConsumerGroup:       consumerGroup,
 		BatchSize:           msgStreamReceiveIn.BatchSize,
@@ -54,6 +55,7 @@ func (msgsStream MsgsStream) Commit(
 	msgStreamCommitIn coyote_models.MsgStreamCommitIn,
 ) (*coyote_models.MsgStreamCommitOut, error) {
 	body := coyote_models.MsgStreamCommitIn_{
+		Namespace:     msgStreamCommitIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		Offset:        msgStreamCommitIn.Offset,
@@ -80,6 +82,7 @@ func (msgsStream MsgsStream) Seek(
 	msgStreamSeekIn coyote_models.MsgStreamSeekIn,
 ) (*coyote_models.MsgStreamSeekOut, error) {
 	body := coyote_models.MsgStreamSeekIn_{
+		Namespace:     msgStreamSeekIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		Offset:        msgStreamSeekIn.Offset,

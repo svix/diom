@@ -27,6 +27,7 @@ class MsgsStreamAsync(ApiBase):
         Each consumer in the group reads from all partitions. Messages are locked by leases for the
         specified duration to prevent duplicate delivery within the same consumer group."""
         body = _MsgStreamReceiveIn(
+            namespace=msg_stream_receive_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_stream_receive_in.batch_size,
@@ -51,6 +52,7 @@ class MsgsStreamAsync(ApiBase):
         The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
         successfully processed offset; future receives will start after it."""
         body = _MsgStreamCommitIn(
+            namespace=msg_stream_commit_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             offset=msg_stream_commit_in.offset,
@@ -75,6 +77,7 @@ class MsgsStreamAsync(ApiBase):
         partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
         `"latest"` and may be used with or without a partition suffix."""
         body = _MsgStreamSeekIn(
+            namespace=msg_stream_seek_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             offset=msg_stream_seek_in.offset,
@@ -101,6 +104,7 @@ class MsgsStream(ApiBase):
         Each consumer in the group reads from all partitions. Messages are locked by leases for the
         specified duration to prevent duplicate delivery within the same consumer group."""
         body = _MsgStreamReceiveIn(
+            namespace=msg_stream_receive_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_stream_receive_in.batch_size,
@@ -125,6 +129,7 @@ class MsgsStream(ApiBase):
         The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
         successfully processed offset; future receives will start after it."""
         body = _MsgStreamCommitIn(
+            namespace=msg_stream_commit_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             offset=msg_stream_commit_in.offset,
@@ -149,6 +154,7 @@ class MsgsStream(ApiBase):
         partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
         `"latest"` and may be used with or without a partition suffix."""
         body = _MsgStreamSeekIn(
+            namespace=msg_stream_seek_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             offset=msg_stream_seek_in.offset,

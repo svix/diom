@@ -31,6 +31,7 @@ class KvAsync(ApiBase):
     ) -> KvSetOut:
         """KV Set"""
         body = _KvSetIn(
+            namespace=kv_set_in.namespace,
             key=key,
             value=kv_set_in.value,
             ttl=kv_set_in.ttl,
@@ -52,6 +53,7 @@ class KvAsync(ApiBase):
     ) -> KvGetOut:
         """KV Get"""
         body = _KvGetIn(
+            namespace=kv_get_in.namespace,
             key=key,
             consistency=kv_get_in.consistency,
         ).model_dump(exclude_none=True)
@@ -70,6 +72,7 @@ class KvAsync(ApiBase):
     ) -> KvDeleteOut:
         """KV Delete"""
         body = _KvDeleteIn(
+            namespace=kv_delete_in.namespace,
             key=key,
         ).model_dump(exclude_none=True)
 
@@ -93,6 +96,7 @@ class Kv(ApiBase):
     ) -> KvSetOut:
         """KV Set"""
         body = _KvSetIn(
+            namespace=kv_set_in.namespace,
             key=key,
             value=kv_set_in.value,
             ttl=kv_set_in.ttl,
@@ -114,6 +118,7 @@ class Kv(ApiBase):
     ) -> KvGetOut:
         """KV Get"""
         body = _KvGetIn(
+            namespace=kv_get_in.namespace,
             key=key,
             consistency=kv_get_in.consistency,
         ).model_dump(exclude_none=True)
@@ -132,6 +137,7 @@ class Kv(ApiBase):
     ) -> KvDeleteOut:
         """KV Delete"""
         body = _KvDeleteIn(
+            namespace=kv_delete_in.namespace,
             key=key,
         ).model_dump(exclude_none=True)
 

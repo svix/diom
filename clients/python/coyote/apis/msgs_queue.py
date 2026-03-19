@@ -34,6 +34,7 @@ class MsgsQueueAsync(ApiBase):
         different messages from the same topic concurrently. Leased messages are skipped until they
         are acked or their lease expires."""
         body = _MsgQueueReceiveIn(
+            namespace=msg_queue_receive_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
@@ -57,6 +58,7 @@ class MsgsQueueAsync(ApiBase):
 
         Acked messages are permanently removed from the queue and will never be re-delivered."""
         body = _MsgQueueAckIn(
+            namespace=msg_queue_ack_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             msg_ids=msg_queue_ack_in.msg_ids,
@@ -80,6 +82,7 @@ class MsgsQueueAsync(ApiBase):
         `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
         the message is moved to the DLQ (or forwarded to `dlq_topic` if set)."""
         body = _MsgQueueConfigureIn(
+            namespace=msg_queue_configure_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             retry_schedule=msg_queue_configure_in.retry_schedule,
@@ -104,6 +107,7 @@ class MsgsQueueAsync(ApiBase):
         Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
         move them back to the queue for reprocessing."""
         body = _MsgQueueNackIn(
+            namespace=msg_queue_nack_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             msg_ids=msg_queue_nack_in.msg_ids,
@@ -124,6 +128,7 @@ class MsgsQueueAsync(ApiBase):
     ) -> MsgQueueRedriveDlqOut:
         """Moves all dead-letter queue messages back to the main queue for reprocessing."""
         body = _MsgQueueRedriveDlqIn(
+            namespace=msg_queue_redrive_dlq_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
         ).model_dump(exclude_none=True)
@@ -149,6 +154,7 @@ class MsgsQueue(ApiBase):
         different messages from the same topic concurrently. Leased messages are skipped until they
         are acked or their lease expires."""
         body = _MsgQueueReceiveIn(
+            namespace=msg_queue_receive_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
@@ -172,6 +178,7 @@ class MsgsQueue(ApiBase):
 
         Acked messages are permanently removed from the queue and will never be re-delivered."""
         body = _MsgQueueAckIn(
+            namespace=msg_queue_ack_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             msg_ids=msg_queue_ack_in.msg_ids,
@@ -195,6 +202,7 @@ class MsgsQueue(ApiBase):
         `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
         the message is moved to the DLQ (or forwarded to `dlq_topic` if set)."""
         body = _MsgQueueConfigureIn(
+            namespace=msg_queue_configure_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             retry_schedule=msg_queue_configure_in.retry_schedule,
@@ -219,6 +227,7 @@ class MsgsQueue(ApiBase):
         Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
         move them back to the queue for reprocessing."""
         body = _MsgQueueNackIn(
+            namespace=msg_queue_nack_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
             msg_ids=msg_queue_nack_in.msg_ids,
@@ -239,6 +248,7 @@ class MsgsQueue(ApiBase):
     ) -> MsgQueueRedriveDlqOut:
         """Moves all dead-letter queue messages back to the main queue for reprocessing."""
         body = _MsgQueueRedriveDlqIn(
+            namespace=msg_queue_redrive_dlq_in.namespace,
             topic=topic,
             consumer_group=consumer_group,
         ).model_dump(exclude_none=True)

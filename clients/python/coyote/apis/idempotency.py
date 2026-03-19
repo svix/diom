@@ -31,6 +31,7 @@ class IdempotencyAsync(ApiBase):
     ) -> IdempotencyStartOut:
         """Start an idempotent request"""
         body = _IdempotencyStartIn(
+            namespace=idempotency_start_in.namespace,
             key=key,
             ttl=idempotency_start_in.ttl,
         ).model_dump(exclude_none=True)
@@ -49,6 +50,7 @@ class IdempotencyAsync(ApiBase):
     ) -> IdempotencyCompleteOut:
         """Complete an idempotent request with a response"""
         body = _IdempotencyCompleteIn(
+            namespace=idempotency_complete_in.namespace,
             key=key,
             response=idempotency_complete_in.response,
             ttl=idempotency_complete_in.ttl,
@@ -68,6 +70,7 @@ class IdempotencyAsync(ApiBase):
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
         body = _IdempotencyAbortIn(
+            namespace=idempotency_abort_in.namespace,
             key=key,
         ).model_dump(exclude_none=True)
 
@@ -91,6 +94,7 @@ class Idempotency(ApiBase):
     ) -> IdempotencyStartOut:
         """Start an idempotent request"""
         body = _IdempotencyStartIn(
+            namespace=idempotency_start_in.namespace,
             key=key,
             ttl=idempotency_start_in.ttl,
         ).model_dump(exclude_none=True)
@@ -109,6 +113,7 @@ class Idempotency(ApiBase):
     ) -> IdempotencyCompleteOut:
         """Complete an idempotent request with a response"""
         body = _IdempotencyCompleteIn(
+            namespace=idempotency_complete_in.namespace,
             key=key,
             response=idempotency_complete_in.response,
             ttl=idempotency_complete_in.ttl,
@@ -128,6 +133,7 @@ class Idempotency(ApiBase):
     ) -> IdempotencyAbortOut:
         """Abandon an idempotent request (remove lock without saving response)"""
         body = _IdempotencyAbortIn(
+            namespace=idempotency_abort_in.namespace,
             key=key,
         ).model_dump(exclude_none=True)
 
