@@ -3,11 +3,6 @@ name: JavaScript
 on:
   workflow_dispatch:
   workflow_call:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/javascript.yml'
-      - 'clients/javascript/**'
 
 jobs:
   lint-js:

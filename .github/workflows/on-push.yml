@@ -1,16 +1,29 @@
 name: CI on Push to Main
+
 on:
   push:
-    branches: ['main']
+    branches: [main]
+
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
     secrets: inherit
-    # Disabling for now because results are too inconsistent
-    # on github runners. Will revisit later.
-    #  benchmark:
-    #    uses: ./.github/workflows/benchmark.yml
-    #    secrets: inherit
+
+  # Disabling for now because results are too inconsistent
+  # on github runners. Will revisit later.
+  #  benchmark:
+  #    uses: ./.github/workflows/benchmark.yml
+  #    secrets: inherit
+
+  java:
+    uses: ./.github/workflows/java.yml
+
+  javascript:
+    uses: ./.github/workflows/javascript.yml
+
+  python:
+    uses: ./.github/workflows/python.yml
+
   docker_publish_server:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
@@ -23,6 +36,7 @@ jobs:
       contents: read
       packages: write
       security-events: write
+
   docker_publish_cli:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
@@ -35,6 +49,7 @@ jobs:
       contents: read
       packages: write
       security-events: write
+
   docker_publish_operator:
     uses: ./.github/workflows/docker-publish.yml
     secrets: inherit
