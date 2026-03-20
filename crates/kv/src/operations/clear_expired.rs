@@ -20,22 +20,21 @@ impl ClearExpiredOperation {
 }
 
 impl ClearExpiredOperation {
-    fn apply_real(self, state: &State, timestamp: jiff::Timestamp) -> Result<()> {
-        state.controller(self.storage_type).clear_expired(
-            timestamp,
-            self.max_expirations,
-            self.storage_type,
-        )?;
+    async fn apply_real(self, state: &State, timestamp: jiff::Timestamp) -> Result<()> {
+        state
+            .controller(self.storage_type)
+            .clear_expired(timestamp, self.max_expirations, self.storage_type)
+            .await?;
         Ok(())
     }
 }
 
 impl KvRequest for ClearExpiredOperation {
-    fn apply(
+    async fn apply(
         self,
         state: KvRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp))
+        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp).await)
     }
 }

@@ -27,25 +27,34 @@ impl SetOperation {
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &CacheRaftState<'_>, now: Timestamp, log_index: u64) -> Result<()> {
-        state.state.controller(self.storage_type).set(
-            self.namespace_id,
-            &self.key,
-            KvModelIn {
-                value: self.model.value,
-                expiry: self.model.expiry,
-                version: None,
-            },
-            OperationBehavior::Upsert,
-            now,
-            log_index,
-        )?;
+    async fn apply_real(
+        self,
+        state: &CacheRaftState<'_>,
+        now: Timestamp,
+        log_index: u64,
+    ) -> Result<()> {
+        state
+            .state
+            .controller(self.storage_type)
+            .set(
+                self.namespace_id,
+                self.key,
+                KvModelIn {
+                    value: self.model.value,
+                    expiry: self.model.expiry,
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                now,
+                log_index,
+            )
+            .await?;
         Ok(())
     }
 }
 
 impl CacheRequest for SetOperation {
-    fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> SetResponse {
-        SetResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index))
+    async fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> SetResponse {
+        SetResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
     }
 }

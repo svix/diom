@@ -13,6 +13,7 @@ fjall-utils.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
+tokio.workspace = true
 
 [lints]
 workspace = true

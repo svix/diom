@@ -9,6 +9,7 @@ edition = "2024"
 [dependencies]
 diom-proto.workspace = true
 jiff.workspace = true
+parking_lot.workspace = true
 rand.workspace = true
 regex.workspace = true
 schemars.workspace = true
@@ -19,6 +20,9 @@ tokio-util.workspace = true
 tracing.workspace = true
 uuid.workspace = true
 validator.workspace = true
+
+[dev-dependencies]
+tracing-test.workspace = true
 
 [lints]
 workspace = true

@@ -23,22 +23,23 @@ impl AbortOperation {
 }
 
 impl AbortOperation {
-    fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
+    async fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
         state
             .state
             .controller(self.storage_type)
-            .delete(self.namespace_id, &self.key)?;
+            .delete(self.namespace_id, self.key)
+            .await?;
 
         Ok(())
     }
 }
 
 impl IdempotencyRequest for AbortOperation {
-    fn apply(
+    async fn apply(
         self,
         state: IdempotencyRaftState<'_>,
         _ctx: &diom_operations::OpContext,
     ) -> AbortResponse {
-        AbortResponse(self.apply_real(&state))
+        AbortResponse(self.apply_real(&state).await)
     }
 }

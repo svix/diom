@@ -59,7 +59,7 @@ async fn apply_request_with_context(
                 state: &stores.kv_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Kv(req.apply(state, &context))
+            Response::Kv(req.apply(state, &context).await)
         }
         Request::RateLimit(req) => {
             let stores = state_machine.db_handle();
@@ -75,7 +75,7 @@ async fn apply_request_with_context(
                 state: &stores.idempotency_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Idempotency(req.apply(state, &context))
+            Response::Idempotency(req.apply(state, &context).await)
         }
         Request::Cache(req) => {
             let stores = state_machine.db_handle();
@@ -83,7 +83,7 @@ async fn apply_request_with_context(
                 state: &stores.cache_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Cache(req.apply(state, &context))
+            Response::Cache(req.apply(state, &context).await)
         }
         Request::Msgs(req) => {
             let stores = state_machine.db_handle();

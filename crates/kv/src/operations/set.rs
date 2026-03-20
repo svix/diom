@@ -56,15 +56,18 @@ impl SetOperation {
 }
 
 impl SetOperation {
-    fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
-        let result = state.controller(self.storage_type).set(
-            self.namespace_id,
-            &self.key,
-            self.model,
-            self.behavior,
-            ctx.timestamp,
-            ctx.log_index,
-        )?;
+    async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
+        let result = state
+            .controller(self.storage_type)
+            .set(
+                self.namespace_id,
+                self.key,
+                self.model,
+                self.behavior,
+                ctx.timestamp,
+                ctx.log_index,
+            )
+            .await?;
         Ok(SetResponseData {
             success: result.success,
             version: result.version,
@@ -73,7 +76,7 @@ impl SetOperation {
 }
 
 impl KvRequest for SetOperation {
-    fn apply(self, state: KvRaftState<'_>, ctx: &OpContext) -> SetResponse {
-        SetResponse(self.apply_real(state.state, ctx))
+    async fn apply(self, state: KvRaftState<'_>, ctx: &OpContext) -> SetResponse {
+        SetResponse(self.apply_real(state.state, ctx).await)
     }
 }

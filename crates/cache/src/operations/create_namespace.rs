@@ -45,13 +45,13 @@ impl CreateCacheOperation {
         }
     }
 
-    fn apply_real(
+    async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
         now: Timestamp,
     ) -> diom_operations::Result<CreateCacheResponseData> {
         let op: CreateNamespace<CacheConfig> = self.into();
-        let out = op.apply_operation(namespace_state, now)?;
+        let out = op.async_apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }
@@ -80,11 +80,11 @@ impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
 }
 
 impl CacheRequest for CreateCacheOperation {
-    fn apply(
+    async fn apply(
         self,
         state: CacheRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> CreateCacheResponse {
-        CreateCacheResponse(self.apply_real(state.namespace, ctx.timestamp))
+        CreateCacheResponse(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

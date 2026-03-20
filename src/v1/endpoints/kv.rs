@@ -150,7 +150,9 @@ async fn kv_get(
     let kv_state = diom_kv::State::init(state.do_not_use_dbs.clone())?;
     let controller = kv_state.controller(namespace.storage_type);
 
-    let model = controller.fetch(namespace.id, &data.key, repl.time.last())?;
+    let model = controller
+        .fetch(namespace.id, data.key, repl.time.last())
+        .await?;
 
     let ret = match model {
         Some(m) => KvGetOut::from_model(m),

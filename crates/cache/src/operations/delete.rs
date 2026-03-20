@@ -28,17 +28,18 @@ impl DeleteOperation {
 }
 
 impl DeleteOperation {
-    fn apply_real(self, state: &CacheRaftState<'_>) -> Result<DeleteResponseData> {
+    async fn apply_real(self, state: &CacheRaftState<'_>) -> Result<DeleteResponseData> {
         let success = state
             .state
             .controller(self.storage_type)
-            .delete(self.namespace_id, &self.key)?;
+            .delete(self.namespace_id, self.key)
+            .await?;
         Ok(DeleteResponseData { success })
     }
 }
 
 impl CacheRequest for DeleteOperation {
-    fn apply(self, state: CacheRaftState<'_>, _ctx: &OpContext) -> DeleteResponse {
-        DeleteResponse(self.apply_real(&state))
+    async fn apply(self, state: CacheRaftState<'_>, _ctx: &OpContext) -> DeleteResponse {
+        DeleteResponse(self.apply_real(&state).await)
     }
 }
