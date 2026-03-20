@@ -1,5 +1,5 @@
 use crate::entities::TokenHashed;
-use coyote_core::types::Metadata;
+use coyote_core::{task::spawn_blocking_in_current_span, types::Metadata};
 use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
@@ -88,7 +88,7 @@ impl AuthTokenController {
     ) -> Result<Option<AuthTokenModel>> {
         let keyspace = self.keyspace.clone();
         let token_hashed = token_hashed.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let Some(row) = AuthTokenRow::fetch(
                 &keyspace,
                 AuthTokenRow::key_for(namespace_id, &token_hashed),
@@ -115,7 +115,7 @@ impl AuthTokenController {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
 
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let entity = AuthTokenEntity {
                 namespace_id,
                 token_hashed: input.token_hashed,
@@ -148,7 +148,7 @@ impl AuthTokenController {
     ) -> Result<Option<AuthTokenModel>> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let Some(index_row) =
                 IdIndexRow::fetch(&keyspace, IdIndexRow::key_for(namespace_id, id))?
             else {
@@ -183,7 +183,7 @@ impl AuthTokenController {
     pub async fn delete(&self, namespace_id: NamespaceId, id: AuthTokenId) -> Result<bool> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let Some(id_index) =
                 IdIndexRow::fetch(&keyspace, IdIndexRow::key_for(namespace_id, id))?
             else {
@@ -220,7 +220,7 @@ impl AuthTokenController {
     ) -> Result<Vec<AuthTokenModel>> {
         let keyspace = self.keyspace.clone();
         let owner_id = owner_id.to_owned();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let prefix = OwnerIndexRow::owner_prefix(namespace_id, &owner_id);
             let mut tokens = Vec::new();
             for item in keyspace.prefix(&prefix) {
@@ -248,7 +248,7 @@ impl AuthTokenController {
     ) -> Result<Option<AuthTokenModel>> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let Some(id_index) =
                 IdIndexRow::fetch(&keyspace, IdIndexRow::key_for(namespace_id, id))?
             else {

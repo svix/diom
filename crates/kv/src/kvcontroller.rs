@@ -1,6 +1,9 @@
 use std::time::{Duration, Instant};
 
-use coyote_core::instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard};
+use coyote_core::{
+    instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard},
+    task::spawn_blocking_in_current_span,
+};
 use coyote_error::{Error, Result};
 use coyote_id::NamespaceId;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, KvSeparationOptions};
@@ -106,7 +109,7 @@ impl KvController {
         now: Timestamp,
     ) -> Result<Option<KvModel>> {
         let keyspace = self.keyspace.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             Self::fetch_inner(&keyspace, namespace_id, key.as_ref(), now)
         })
         .await?
@@ -154,7 +157,7 @@ impl KvController {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
 
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let key = key.as_ref();
             let mut current = None;
             // OCC check: if the caller supplied an expected version, verify it.
@@ -232,7 +235,7 @@ impl KvController {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
 
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let db = db.lock("kvcontroller::delete");
             let key = key.as_ref();
 
@@ -268,7 +271,7 @@ impl KvController {
             ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
-        tokio::task::spawn_blocking(move || keyspace.range(start..=end).next().is_some())
+        spawn_blocking_in_current_span(move || keyspace.range(start..=end).next().is_some())
             .await
             .inspect_err(|err| tracing::warn!(?err, "unhandled error looking for expired keys"))
             .unwrap_or(false)
@@ -293,7 +296,7 @@ impl KvController {
         let keyspace = self.keyspace.clone();
         let db = self.db.clone();
 
-        let cleared = tokio::task::spawn_blocking(move || {
+        let cleared = spawn_blocking_in_current_span(move || {
             let mut cleared = 0;
 
             for chunk in &keyspace
