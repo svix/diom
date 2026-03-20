@@ -353,6 +353,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
 
             let offset_to_purge = match purge_by {
                 PurgeBy::Time(duration) => {
+                    #[allow(clippy::disallowed_methods)]
                     let then = jiff::Timestamp::now() - duration;
                     handle
                         .state_machine

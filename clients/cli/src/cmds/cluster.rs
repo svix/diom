@@ -87,6 +87,7 @@ async fn print_status(
             Cell::new("Last Committed Timestamp").add_attribute(Attribute::Bold),
             Cell::new({
                 let ts = raw_status.this_node_last_committed_timestamp;
+                #[allow(clippy::disallowed_methods)]
                 let now = jiff::Timestamp::now();
                 if now > ts {
                     let ago = now - ts;

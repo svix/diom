@@ -317,6 +317,7 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     let leader = state.raft.current_leader().await;
     let me = state.node_id;
     let cluster_id = state.state_machine.cluster_id().await;
+    #[allow(clippy::disallowed_methods)]
     let wall_time = jiff::Timestamp::now();
     let monotonic_time = state.state_machine.time.last();
     state

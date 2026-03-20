@@ -744,6 +744,7 @@ mod tests {
     #[tokio::test]
     async fn test_log_timestamps() -> TestResult {
         let context = TestContext::new();
+        #[allow(clippy::disallowed_methods)]
         let now = Timestamp::now();
         context
             .logs

@@ -2,3 +2,7 @@ disallowed-types = [
     { path = "axum::Json", replacement = "diom_proto::MsgPackOrJson" },
     { path = "serde_json::Value", reason = "not compatible with msgpack" },
 ]
+
+disallowed-methods = [
+    { path = "jiff::Timestamp::now", reason = "generally, should be reading cluster Monotime" }
+]
