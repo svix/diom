@@ -33,7 +33,7 @@ public class IdempotencyGetNamespaceOut {
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
-    public IdempotencyGetNamespaceOut () {}
+    public IdempotencyGetNamespaceOut() {}
 
     public IdempotencyGetNamespaceOut name(String name) {
         this.name = name;
@@ -129,6 +129,7 @@ public class IdempotencyGetNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
      * Create an instance of IdempotencyGetNamespaceOut given an JSON string
      *

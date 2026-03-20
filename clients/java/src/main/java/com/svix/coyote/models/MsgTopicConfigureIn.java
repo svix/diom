@@ -31,7 +31,7 @@ public class MsgTopicConfigureIn {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty private Short partitions;
-    public MsgTopicConfigureIn () {}
+    public MsgTopicConfigureIn() {}
 
     public MsgTopicConfigureIn namespace(String namespace) {
         this.namespace = namespace;
@@ -52,25 +52,6 @@ public class MsgTopicConfigureIn {
         this.namespace = namespace;
     }
 
-    public MsgTopicConfigureIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
     public MsgTopicConfigureIn partitions(Short partitions) {
         this.partitions = partitions;
         return this;
@@ -88,24 +69,5 @@ public class MsgTopicConfigureIn {
 
     public void setPartitions(Short partitions) {
         this.partitions = partitions;
-    }
-    /**
-     * Create an instance of MsgTopicConfigureIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgTopicConfigureIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgTopicConfigureIn
-     */
-    public static MsgTopicConfigureIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgTopicConfigureIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgTopicConfigureIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

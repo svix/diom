@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheDeleteOut {
     @JsonProperty private Boolean success;
-    public CacheDeleteOut () {}
+    public CacheDeleteOut() {}
 
     public CacheDeleteOut success(Boolean success) {
         this.success = success;
@@ -49,6 +49,7 @@ public class CacheDeleteOut {
     public void setSuccess(Boolean success) {
         this.success = success;
     }
+
     /**
      * Create an instance of CacheDeleteOut given an JSON string
      *

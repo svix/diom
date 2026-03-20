@@ -33,7 +33,7 @@ public class KvGetNamespaceOut {
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
-    public KvGetNamespaceOut () {}
+    public KvGetNamespaceOut() {}
 
     public KvGetNamespaceOut name(String name) {
         this.name = name;
@@ -129,6 +129,7 @@ public class KvGetNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
      * Create an instance of KvGetNamespaceOut given an JSON string
      *

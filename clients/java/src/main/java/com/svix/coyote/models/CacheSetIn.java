@@ -32,7 +32,7 @@ public class CacheSetIn {
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
     @JsonProperty private Long ttl;
-    public CacheSetIn () {}
+    public CacheSetIn() {}
 
     public CacheSetIn namespace(String namespace) {
         this.namespace = namespace;
@@ -51,25 +51,6 @@ public class CacheSetIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
-    }
-
-    public CacheSetIn key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    /**
-    * Get key
-    *
-     * @return key
-     */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
     }
 
     public CacheSetIn value(List<Byte> value) {
@@ -115,24 +96,5 @@ public class CacheSetIn {
 
     public void setTtl(Long ttl) {
         this.ttl = ttl;
-    }
-    /**
-     * Create an instance of CacheSetIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of CacheSetIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to CacheSetIn
-     */
-    public static CacheSetIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, CacheSetIn.class);
-    }
-
-    /**
-     * Convert an instance of CacheSetIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

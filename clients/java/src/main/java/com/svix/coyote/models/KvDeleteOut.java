@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvDeleteOut {
     @JsonProperty private Boolean success;
-    public KvDeleteOut () {}
+    public KvDeleteOut() {}
 
     public KvDeleteOut success(Boolean success) {
         this.success = success;
@@ -49,6 +49,7 @@ public class KvDeleteOut {
     public void setSuccess(Boolean success) {
         this.success = success;
     }
+
     /**
      * Create an instance of KvDeleteOut given an JSON string
      *

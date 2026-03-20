@@ -32,7 +32,7 @@ public class CacheCreateNamespaceIn {
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
     @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
-    public CacheCreateNamespaceIn () {}
+    public CacheCreateNamespaceIn() {}
 
     public CacheCreateNamespaceIn name(String name) {
         this.name = name;
@@ -109,6 +109,7 @@ public class CacheCreateNamespaceIn {
     public void setEvictionPolicy(EvictionPolicy evictionPolicy) {
         this.evictionPolicy = evictionPolicy;
     }
+
     /**
      * Create an instance of CacheCreateNamespaceIn given an JSON string
      *

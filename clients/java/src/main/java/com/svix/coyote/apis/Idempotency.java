@@ -20,6 +20,9 @@ import com.svix.coyote.models.IdempotencyCompleteIn;
 import com.svix.coyote.models.IdempotencyCompleteOut;
 import com.svix.coyote.models.IdempotencyStartIn;
 import com.svix.coyote.models.IdempotencyStartOut;
+import com.svix.coyote.models.IdempotencyStartIn_;
+import com.svix.coyote.models.IdempotencyCompleteIn_;
+import com.svix.coyote.models.IdempotencyAbortIn_;
 
 public class Idempotency {
     private final HttpClient client;
@@ -30,43 +33,74 @@ public class Idempotency {
 
     /** Start an idempotent request */
     public IdempotencyStartOut start(
+        String key,
         final IdempotencyStartIn idempotencyStartIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/start");
+        IdempotencyStartIn_ body = new IdempotencyStartIn_(
+            idempotencyStartIn.getNamespace(),
+            key,
+            idempotencyStartIn.getTtl()
+        );
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            idempotencyStartIn,
+            body,
             IdempotencyStartOut.class
-            );
+        );
     }
 
     /** Complete an idempotent request with a response */
     public IdempotencyCompleteOut complete(
+        String key,
         final IdempotencyCompleteIn idempotencyCompleteIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/complete");
+        IdempotencyCompleteIn_ body = new IdempotencyCompleteIn_(
+            idempotencyCompleteIn.getNamespace(),
+            key,
+            idempotencyCompleteIn.getResponse(),
+            idempotencyCompleteIn.getTtl()
+        );
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            idempotencyCompleteIn,
+            body,
             IdempotencyCompleteOut.class
-            );
+        );
     }
 
     /** Abandon an idempotent request (remove lock without saving response) */
     public IdempotencyAbortOut abort(
+        String key,
         final IdempotencyAbortIn idempotencyAbortIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/abort");
+        IdempotencyAbortIn_ body = new IdempotencyAbortIn_(
+            idempotencyAbortIn.getNamespace(),
+            key
+        );
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            idempotencyAbortIn,
+            body,
             IdempotencyAbortOut.class
-            );
+        );
+    }
+
+    /** Abandon an idempotent request (remove lock without saving response) */
+    public IdempotencyAbortOut abort(
+        String key
+    ) throws IOException, ApiException {
+        return this.abort(
+            key,
+            new IdempotencyAbortIn()
+        );
     }
 }

@@ -33,7 +33,7 @@ public class MsgQueueConfigureIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("retry_schedule") private List<Long> retrySchedule;
     @JsonProperty("dlq_topic") private String dlqTopic;
-    public MsgQueueConfigureIn () {}
+    public MsgQueueConfigureIn() {}
 
     public MsgQueueConfigureIn namespace(String namespace) {
         this.namespace = namespace;
@@ -52,44 +52,6 @@ public class MsgQueueConfigureIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
-    }
-
-    public MsgQueueConfigureIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public MsgQueueConfigureIn consumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-        return this;
-    }
-
-    /**
-    * Get consumerGroup
-    *
-     * @return consumerGroup
-     */
-    @javax.annotation.Nonnull
-    public String getConsumerGroup() {
-        return consumerGroup;
-    }
-
-    public void setConsumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
     }
 
     public MsgQueueConfigureIn retrySchedule(List<Long> retrySchedule) {
@@ -135,24 +97,5 @@ public class MsgQueueConfigureIn {
 
     public void setDlqTopic(String dlqTopic) {
         this.dlqTopic = dlqTopic;
-    }
-    /**
-     * Create an instance of MsgQueueConfigureIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgQueueConfigureIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgQueueConfigureIn
-     */
-    public static MsgQueueConfigureIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgQueueConfigureIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgQueueConfigureIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

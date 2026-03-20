@@ -31,7 +31,7 @@ public class RateLimitCheckOut {
     @JsonProperty private Boolean allowed;
     @JsonProperty private Long remaining;
     @JsonProperty("retry_after_millis") private Long retryAfterMillis;
-    public RateLimitCheckOut () {}
+    public RateLimitCheckOut() {}
 
     public RateLimitCheckOut allowed(Boolean allowed) {
         this.allowed = allowed;
@@ -89,6 +89,7 @@ public class RateLimitCheckOut {
     public void setRetryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
     }
+
     /**
      * Create an instance of RateLimitCheckOut given an JSON string
      *

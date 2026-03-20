@@ -29,13 +29,14 @@ public class Admin {
         
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/admin/cluster/status");
+
         return this.client.executeRequest(
             "GET",
             url.build(),
             null,
             null,
             ClusterStatusOut.class
-            );
+        );
     }
 
     /**
@@ -48,12 +49,13 @@ public class Admin {
         final ClusterRemoveNodeIn clusterRemoveNodeIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/admin/cluster/remove-node");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
             clusterRemoveNodeIn,
             ClusterRemoveNodeOut.class
-            );
+        );
     }
 }

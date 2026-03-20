@@ -31,7 +31,7 @@ public class IdempotencyStartIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private Long ttl;
-    public IdempotencyStartIn () {}
+    public IdempotencyStartIn() {}
 
     public IdempotencyStartIn namespace(String namespace) {
         this.namespace = namespace;
@@ -52,25 +52,6 @@ public class IdempotencyStartIn {
         this.namespace = namespace;
     }
 
-    public IdempotencyStartIn key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    /**
-    * Get key
-    *
-     * @return key
-     */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
     public IdempotencyStartIn ttl(Long ttl) {
         this.ttl = ttl;
         return this;
@@ -88,24 +69,5 @@ public class IdempotencyStartIn {
 
     public void setTtl(Long ttl) {
         this.ttl = ttl;
-    }
-    /**
-     * Create an instance of IdempotencyStartIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of IdempotencyStartIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to IdempotencyStartIn
-     */
-    public static IdempotencyStartIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, IdempotencyStartIn.class);
-    }
-
-    /**
-     * Convert an instance of IdempotencyStartIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }
