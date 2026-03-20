@@ -25,21 +25,22 @@ impl ResetOperation {
 }
 
 impl ResetOperation {
-    fn apply_real(self, state: &RateLimitRaftState<'_>) -> Result<()> {
+    async fn apply_real(self, state: &RateLimitRaftState<'_>) -> Result<()> {
         state
             .state
             .controller(self.storage_type)
-            .reset(self.namespace_id, &self.key)?;
+            .reset(self.namespace_id, self.key)
+            .await?;
         Ok(())
     }
 }
 
 impl RateLimitRequest for ResetOperation {
-    fn apply(
+    async fn apply(
         self,
         state: RateLimitRaftState<'_>,
         _ctx: &coyote_operations::OpContext,
     ) -> ResetResponse {
-        ResetResponse(self.apply_real(&state))
+        ResetResponse(self.apply_real(&state).await)
     }
 }
