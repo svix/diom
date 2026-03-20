@@ -51,25 +51,28 @@ impl UpdateAuthTokenOperation {
         }
     }
 
-    fn apply_real(self, state: &State, ctx: &OpContext) -> Result<UpdateResponseData> {
-        let model = state.controller.partial_update(
-            self.namespace_id,
-            self.id,
-            PartialUpdateInput {
-                name: self.name,
-                expiry: self.expiry,
-                metadata: self.metadata,
-                scopes: self.scopes,
-                enabled: self.enabled,
-                now: ctx.timestamp,
-            },
-        )?;
+    async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<UpdateResponseData> {
+        let model = state
+            .controller
+            .partial_update(
+                self.namespace_id,
+                self.id,
+                PartialUpdateInput {
+                    name: self.name,
+                    expiry: self.expiry,
+                    metadata: self.metadata,
+                    scopes: self.scopes,
+                    enabled: self.enabled,
+                    now: ctx.timestamp,
+                },
+            )
+            .await?;
         Ok(UpdateResponseData { model })
     }
 }
 
 impl AuthTokenRequest for UpdateAuthTokenOperation {
-    fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> UpdateResponse {
-        UpdateResponse(self.apply_real(state.state, ctx))
+    async fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> UpdateResponse {
+        UpdateResponse(self.apply_real(state.state, ctx).await)
     }
 }

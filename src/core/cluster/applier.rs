@@ -102,7 +102,7 @@ async fn apply_request_with_context(
                 state: &stores.auth_token_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::AuthToken(req.apply(state, &context))
+            Response::AuthToken(req.apply(state, &context).await)
         }
     })
 }

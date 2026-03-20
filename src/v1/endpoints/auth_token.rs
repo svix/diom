@@ -224,11 +224,10 @@ async fn auth_token_verify(
 
     let token_hashed = TokenHashed::from(data.token.as_str());
     let auth_token_state = coyote_auth_token::State::init(state.do_not_use_dbs.clone())?;
-    let token = auth_token_state.controller.fetch_non_expired(
-        namespace.id,
-        &token_hashed,
-        repl.time.last(),
-    )?;
+    let token = auth_token_state
+        .controller
+        .fetch_non_expired(namespace.id, &token_hashed, repl.time.last())
+        .await?;
 
     // FIXME: actually do something if expired, failed for other reasons, etc.
 
@@ -262,7 +261,8 @@ async fn auth_token_list(
     let auth_token_state = coyote_auth_token::State::init(state.do_not_use_dbs.clone())?;
     let models = auth_token_state
         .controller
-        .list_by_owner(namespace.id, &data.owner_id)?;
+        .list_by_owner(namespace.id, &data.owner_id)
+        .await?;
 
     let data = models.into_iter().map(AuthTokenOut::from).collect();
 

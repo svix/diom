@@ -29,14 +29,14 @@ impl DeleteAuthTokenOperation {
         }
     }
 
-    fn apply_real(self, state: &State) -> Result<DeleteResponseData> {
-        let success = state.controller.delete(self.namespace_id, self.id)?;
+    async fn apply_real(self, state: &State) -> Result<DeleteResponseData> {
+        let success = state.controller.delete(self.namespace_id, self.id).await?;
         Ok(DeleteResponseData { success })
     }
 }
 
 impl AuthTokenRequest for DeleteAuthTokenOperation {
-    fn apply(self, state: AuthTokenRaftState<'_>, _ctx: &OpContext) -> DeleteResponse {
-        DeleteResponse(self.apply_real(state.state))
+    async fn apply(self, state: AuthTokenRaftState<'_>, _ctx: &OpContext) -> DeleteResponse {
+        DeleteResponse(self.apply_real(state.state).await)
     }
 }

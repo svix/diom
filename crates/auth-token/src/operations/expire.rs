@@ -35,17 +35,18 @@ impl ExpireAuthTokenOperation {
         }
     }
 
-    fn apply_real(self, state: &State, ctx: &OpContext) -> Result<ExpireResponseData> {
+    async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<ExpireResponseData> {
         let expiry = self.expiry.unwrap_or(ctx.timestamp);
         let model = state
             .controller
-            .expire(self.namespace_id, self.id, expiry, ctx.timestamp)?;
+            .expire(self.namespace_id, self.id, expiry, ctx.timestamp)
+            .await?;
         Ok(ExpireResponseData { model })
     }
 }
 
 impl AuthTokenRequest for ExpireAuthTokenOperation {
-    fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> ExpireResponse {
-        ExpireResponse(self.apply_real(state.state, ctx))
+    async fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> ExpireResponse {
+        ExpireResponse(self.apply_real(state.state, ctx).await)
     }
 }

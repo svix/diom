@@ -40,13 +40,13 @@ impl CreateAuthTokenNamespaceOperation {
         }
     }
 
-    fn apply_real(
+    async fn apply_real(
         self,
         namespace_state: &coyote_namespace::State,
         now: Timestamp,
     ) -> coyote_operations::Result<CreateAuthTokenNamespaceResponseData> {
         let op: CreateNamespace<AuthTokenConfig> = self.into();
-        let out = op.apply_operation(namespace_state, now)?;
+        let out = op.async_apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }
@@ -73,11 +73,11 @@ impl From<CreateNamespaceOutput<AuthTokenConfig>> for CreateAuthTokenNamespaceRe
 }
 
 impl AuthTokenRequest for CreateAuthTokenNamespaceOperation {
-    fn apply(
+    async fn apply(
         self,
         state: AuthTokenRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> CreateNamespaceResponse {
-        CreateNamespaceResponse(self.apply_real(state.namespace, ctx.timestamp))
+        CreateNamespaceResponse(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

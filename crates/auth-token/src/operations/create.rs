@@ -61,27 +61,30 @@ impl CreateAuthTokenOperation {
         }
     }
 
-    fn apply_real(self, state: &State, ctx: &OpContext) -> Result<CreateResponseData> {
-        let model = state.controller.create(
-            self.namespace_id,
-            CreateTokenInput {
-                id: self.id,
-                name: self.name,
-                token_hashed: self.token_hashed,
-                expiry: self.expiry,
-                metadata: self.metadata,
-                owner_id: self.owner_id,
-                scopes: self.scopes,
-                enabled: self.enabled,
-                now: ctx.timestamp,
-            },
-        )?;
+    async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<CreateResponseData> {
+        let model = state
+            .controller
+            .create(
+                self.namespace_id,
+                CreateTokenInput {
+                    id: self.id,
+                    name: self.name,
+                    token_hashed: self.token_hashed,
+                    expiry: self.expiry,
+                    metadata: self.metadata,
+                    owner_id: self.owner_id,
+                    scopes: self.scopes,
+                    enabled: self.enabled,
+                    now: ctx.timestamp,
+                },
+            )
+            .await?;
         Ok(CreateResponseData { model })
     }
 }
 
 impl AuthTokenRequest for CreateAuthTokenOperation {
-    fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> CreateResponse {
-        CreateResponse(self.apply_real(state.state, ctx))
+    async fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> CreateResponse {
+        CreateResponse(self.apply_real(state.state, ctx).await)
     }
 }
