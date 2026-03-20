@@ -42,9 +42,17 @@ impl TokenBucket {
         (capacity, new_last_refill)
     }
 
-    pub(crate) fn calculate_retry_after(&self, current: u64, wanted: u64) -> Duration {
+    fn calculate_refill_duration(&self, current: u64, wanted: u64) -> Duration {
         let wanted = wanted.saturating_sub(current);
         let intervals = wanted.div_ceil(self.refill_rate);
         Duration::from_millis(intervals * self.refill_interval.as_millis())
+    }
+
+    pub(crate) fn calculate_retry_after(&self, current: u64, wanted: u64) -> Duration {
+        self.calculate_refill_duration(current, wanted)
+    }
+
+    pub(crate) fn calculate_when_full(&self, current: u64) -> Duration {
+        self.calculate_refill_duration(current, self.bucket_size)
     }
 }
