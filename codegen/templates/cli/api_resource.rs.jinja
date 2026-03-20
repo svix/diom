@@ -68,10 +68,8 @@ impl {{ resource_type_name }}Commands {
                     {% if op.request_body_schema_name is defined -%}
                         {# positional body parameters -#}
                         {% set body_schema = api.types[op.request_body_schema_name] -%}
-                        {% for field in body_schema.fields -%}
-                        {% if field.positional -%}
+                        {% for field in body_schema.fields | selectattr("positional") -%}
                             {{ field.name | to_snake_case }},
-                        {% endif -%}
                         {% endfor -%}
 
                         {# body parameter struct -#}
@@ -94,10 +92,8 @@ impl {{ resource_type_name }}Commands {
                                 {# positional body parameters -#}
                                 {% set body_schema = api.types[op.request_body_schema_name] -%}
                                 {% set body_schema_all_optional = body_schema.fields | selectattr("required") | length == 0 %}
-                                {% for field in body_schema.fields -%}
-                                {% if field.positional -%}
+                                {% for field in body_schema.fields | selectattr("positional") -%}
                                     {{ field.name | to_snake_case }},
-                                {% endif -%}
                                 {% endfor -%}
 
                                 {# body parameter struct -#}

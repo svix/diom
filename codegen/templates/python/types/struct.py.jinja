@@ -1,6 +1,5 @@
 {% set type_name = type.name | to_upper_camel_case -%}
-{% set has_positional_fields = type.fields | selectattr("positional") | length > 0 -%}
-{% set has_non_positional_fields = type.fields | selectattr("positional", "false") | length > 0 -%}
+{% set positional_fields = type.fields | selectattr("positional") -%}
 import typing as t
 from pydantic import Field
 from datetime import datetime
@@ -15,7 +14,7 @@ class {{ type_name }}(BaseModel):
 {%- if type.description is defined %}
     {{ type.description | to_doc_comment(style="python") | indent(4) }}
 {%- endif %}
-{%- if not has_non_positional_fields %}
+{%- if type.fields | selectattr("positional", "false") | length == 0 %}
     pass
 {%- endif %}
 {%- for field in type.fields %}
@@ -45,7 +44,7 @@ class {{ type_name }}(BaseModel):
     {%- endif %}
 {% endfor %}
 
-{%- if has_positional_fields %}
+{%- if positional_fields | length > 0 %}
 
 class _{{ type_name }}(BaseModel):
 {%- if type.fields | length == 0 %}
