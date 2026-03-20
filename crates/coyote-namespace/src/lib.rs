@@ -10,7 +10,7 @@ mod tables;
 
 pub use self::tables::Namespace;
 
-pub(crate) const DEFAULT_NAMESPACE_NAME: &str = "default";
+pub const DEFAULT_NAMESPACE_NAME: &str = "default";
 
 pub fn parse_namespace(key: &str) -> (Option<&str>, &str) {
     match key.split_once(":") {

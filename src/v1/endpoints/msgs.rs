@@ -28,12 +28,18 @@ use validator::Validate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
-struct MsgNamespaceCreateIn {
+pub(crate) struct MsgNamespaceCreateIn {
     pub name: NamespaceName,
     #[serde(default)]
     pub retention: Retention,
     #[serde(default)]
     pub storage_type: StorageType,
+}
+
+impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
+    fn from(v: MsgNamespaceCreateIn) -> Self {
+        CreateNamespaceOperation::new(v.name, v.retention, v.storage_type)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -51,7 +57,7 @@ async fn create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceCreateIn>,
 ) -> Result<MsgPackOrJson<MsgNamespaceCreateOut>> {
-    let operation = CreateNamespaceOperation::new(data.name, data.retention, data.storage_type);
+    let operation = CreateNamespaceOperation::from(data);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgNamespaceCreateOut {

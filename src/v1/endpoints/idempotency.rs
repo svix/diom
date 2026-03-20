@@ -182,11 +182,17 @@ struct IdempotencyGetNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct IdempotencyCreateNamespaceIn {
+pub(crate) struct IdempotencyCreateNamespaceIn {
     pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
+}
+
+impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
+    fn from(v: IdempotencyCreateNamespaceIn) -> Self {
+        CreateIdempotencyOperation::new(v.name, v.storage_type, v.max_storage_bytes)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -205,8 +211,7 @@ async fn idempotency_create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<IdempotencyCreateNamespaceIn>,
 ) -> Result<MsgPackOrJson<IdempotencyCreateNamespaceOut>> {
-    let operation =
-        CreateIdempotencyOperation::new(data.name, data.storage_type, data.max_storage_bytes);
+    let operation = CreateIdempotencyOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(IdempotencyCreateNamespaceOut {
         name: resp.name,

@@ -112,13 +112,24 @@ struct CacheGetNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct CacheCreateNamespaceIn {
+pub(crate) struct CacheCreateNamespaceIn {
     pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
     #[serde(default)]
     pub eviction_policy: EvictionPolicy,
+}
+
+impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
+    fn from(v: CacheCreateNamespaceIn) -> Self {
+        CreateCacheOperation::new(
+            v.name,
+            v.eviction_policy,
+            v.storage_type,
+            v.max_storage_bytes,
+        )
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -213,12 +224,7 @@ async fn cache_create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<CacheCreateNamespaceIn>,
 ) -> Result<MsgPackOrJson<CacheCreateNamespaceOut>> {
-    let operation = CreateCacheOperation::new(
-        data.name,
-        data.eviction_policy,
-        data.storage_type,
-        data.max_storage_bytes,
-    );
+    let operation = CreateCacheOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheCreateNamespaceOut {
         name: resp.name,

@@ -79,7 +79,6 @@ tracing-subscriber = { workspace = true, features = ["json"] }
 url.workspace = true
 uuid.workspace = true
 validator.workspace = true
-yaml_serde.workspace = true
 zip.workspace = true
 
 [dev-dependencies]

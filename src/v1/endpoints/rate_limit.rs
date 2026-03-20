@@ -203,11 +203,17 @@ async fn rate_limit_reset(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct RateLimitCreateNamespaceIn {
+pub(crate) struct RateLimitCreateNamespaceIn {
     pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
+}
+
+impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
+    fn from(v: RateLimitCreateNamespaceIn) -> Self {
+        CreateRateLimitOperation::new(v.name, v.storage_type, v.max_storage_bytes)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -241,8 +247,7 @@ async fn rate_limit_create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimitCreateNamespaceIn>,
 ) -> Result<MsgPackOrJson<RateLimitCreateNamespaceOut>> {
-    let operation =
-        CreateRateLimitOperation::new(data.name, data.storage_type, data.max_storage_bytes);
+    let operation = CreateRateLimitOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(RateLimitCreateNamespaceOut {
         name: resp.name,
