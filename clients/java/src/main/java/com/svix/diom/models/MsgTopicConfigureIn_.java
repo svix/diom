@@ -38,7 +38,7 @@ public class MsgTopicConfigureIn_ {
     }
 
     /**
-     * Create an instance of MsgTopicConfigureIn_ given an JSON string
+     * Create an instance of MsgTopicConfigureIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgTopicConfigureIn_
@@ -49,7 +49,7 @@ public class MsgTopicConfigureIn_ {
     }
 
     /**
-     * Convert an instance of MsgTopicConfigureIn_ to an JSON string
+     * Convert an instance of MsgTopicConfigureIn_ to a JSON string
      *
      * @return JSON string
      */

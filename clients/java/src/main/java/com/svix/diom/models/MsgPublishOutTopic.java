@@ -91,7 +91,7 @@ public class MsgPublishOutTopic {
     }
 
     /**
-     * Create an instance of MsgPublishOutTopic given an JSON string
+     * Create an instance of MsgPublishOutTopic given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgPublishOutTopic
@@ -102,7 +102,7 @@ public class MsgPublishOutTopic {
     }
 
     /**
-     * Convert an instance of MsgPublishOutTopic to an JSON string
+     * Convert an instance of MsgPublishOutTopic to a JSON string
      *
      * @return JSON string
      */

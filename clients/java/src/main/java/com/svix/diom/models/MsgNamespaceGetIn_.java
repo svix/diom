@@ -32,7 +32,7 @@ public class MsgNamespaceGetIn_ {
     }
 
     /**
-     * Create an instance of MsgNamespaceGetIn_ given an JSON string
+     * Create an instance of MsgNamespaceGetIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgNamespaceGetIn_
@@ -43,7 +43,7 @@ public class MsgNamespaceGetIn_ {
     }
 
     /**
-     * Convert an instance of MsgNamespaceGetIn_ to an JSON string
+     * Convert an instance of MsgNamespaceGetIn_ to a JSON string
      *
      * @return JSON string
      */

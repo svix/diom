@@ -131,7 +131,7 @@ public class IdempotencyCreateNamespaceOut {
     }
 
     /**
-     * Create an instance of IdempotencyCreateNamespaceOut given an JSON string
+     * Create an instance of IdempotencyCreateNamespaceOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of IdempotencyCreateNamespaceOut
@@ -142,7 +142,7 @@ public class IdempotencyCreateNamespaceOut {
     }
 
     /**
-     * Convert an instance of IdempotencyCreateNamespaceOut to an JSON string
+     * Convert an instance of IdempotencyCreateNamespaceOut to a JSON string
      *
      * @return JSON string
      */

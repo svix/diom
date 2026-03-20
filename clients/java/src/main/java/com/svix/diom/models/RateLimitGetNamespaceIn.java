@@ -51,7 +51,7 @@ public class RateLimitGetNamespaceIn {
     }
 
     /**
-     * Create an instance of RateLimitGetNamespaceIn given an JSON string
+     * Create an instance of RateLimitGetNamespaceIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitGetNamespaceIn
@@ -62,7 +62,7 @@ public class RateLimitGetNamespaceIn {
     }
 
     /**
-     * Convert an instance of RateLimitGetNamespaceIn to an JSON string
+     * Convert an instance of RateLimitGetNamespaceIn to a JSON string
      *
      * @return JSON string
      */

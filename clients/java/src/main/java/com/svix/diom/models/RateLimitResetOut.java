@@ -31,7 +31,7 @@ public class RateLimitResetOut {
     public RateLimitResetOut() {}
 
     /**
-     * Create an instance of RateLimitResetOut given an JSON string
+     * Create an instance of RateLimitResetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitResetOut
@@ -42,7 +42,7 @@ public class RateLimitResetOut {
     }
 
     /**
-     * Convert an instance of RateLimitResetOut to an JSON string
+     * Convert an instance of RateLimitResetOut to a JSON string
      *
      * @return JSON string
      */

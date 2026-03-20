@@ -78,7 +78,7 @@ public class MsgQueueConfigureOut {
     }
 
     /**
-     * Create an instance of MsgQueueConfigureOut given an JSON string
+     * Create an instance of MsgQueueConfigureOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueConfigureOut
@@ -89,7 +89,7 @@ public class MsgQueueConfigureOut {
     }
 
     /**
-     * Convert an instance of MsgQueueConfigureOut to an JSON string
+     * Convert an instance of MsgQueueConfigureOut to a JSON string
      *
      * @return JSON string
      */

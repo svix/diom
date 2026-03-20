@@ -44,7 +44,7 @@ public class MsgStreamSeekIn_ {
     }
 
     /**
-     * Create an instance of MsgStreamSeekIn_ given an JSON string
+     * Create an instance of MsgStreamSeekIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgStreamSeekIn_
@@ -55,7 +55,7 @@ public class MsgStreamSeekIn_ {
     }
 
     /**
-     * Convert an instance of MsgStreamSeekIn_ to an JSON string
+     * Convert an instance of MsgStreamSeekIn_ to a JSON string
      *
      * @return JSON string
      */

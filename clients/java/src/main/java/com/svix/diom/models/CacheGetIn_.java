@@ -38,7 +38,7 @@ public class CacheGetIn_ {
     }
 
     /**
-     * Create an instance of CacheGetIn_ given an JSON string
+     * Create an instance of CacheGetIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheGetIn_
@@ -49,7 +49,7 @@ public class CacheGetIn_ {
     }
 
     /**
-     * Convert an instance of CacheGetIn_ to an JSON string
+     * Convert an instance of CacheGetIn_ to a JSON string
      *
      * @return JSON string
      */

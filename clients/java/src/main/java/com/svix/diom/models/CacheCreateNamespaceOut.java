@@ -151,7 +151,7 @@ public class CacheCreateNamespaceOut {
     }
 
     /**
-     * Create an instance of CacheCreateNamespaceOut given an JSON string
+     * Create an instance of CacheCreateNamespaceOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheCreateNamespaceOut
@@ -162,7 +162,7 @@ public class CacheCreateNamespaceOut {
     }
 
     /**
-     * Convert an instance of CacheCreateNamespaceOut to an JSON string
+     * Convert an instance of CacheCreateNamespaceOut to a JSON string
      *
      * @return JSON string
      */

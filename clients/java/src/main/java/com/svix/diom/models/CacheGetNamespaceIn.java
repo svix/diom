@@ -51,7 +51,7 @@ public class CacheGetNamespaceIn {
     }
 
     /**
-     * Create an instance of CacheGetNamespaceIn given an JSON string
+     * Create an instance of CacheGetNamespaceIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheGetNamespaceIn
@@ -62,7 +62,7 @@ public class CacheGetNamespaceIn {
     }
 
     /**
-     * Convert an instance of CacheGetNamespaceIn to an JSON string
+     * Convert an instance of CacheGetNamespaceIn to a JSON string
      *
      * @return JSON string
      */

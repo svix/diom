@@ -91,7 +91,7 @@ public class RateLimitResetIn {
     }
 
     /**
-     * Create an instance of RateLimitResetIn given an JSON string
+     * Create an instance of RateLimitResetIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitResetIn
@@ -102,7 +102,7 @@ public class RateLimitResetIn {
     }
 
     /**
-     * Convert an instance of RateLimitResetIn to an JSON string
+     * Convert an instance of RateLimitResetIn to a JSON string
      *
      * @return JSON string
      */

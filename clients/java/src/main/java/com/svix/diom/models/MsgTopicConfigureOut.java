@@ -51,7 +51,7 @@ public class MsgTopicConfigureOut {
     }
 
     /**
-     * Create an instance of MsgTopicConfigureOut given an JSON string
+     * Create an instance of MsgTopicConfigureOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgTopicConfigureOut
@@ -62,7 +62,7 @@ public class MsgTopicConfigureOut {
     }
 
     /**
-     * Convert an instance of MsgTopicConfigureOut to an JSON string
+     * Convert an instance of MsgTopicConfigureOut to a JSON string
      *
      * @return JSON string
      */

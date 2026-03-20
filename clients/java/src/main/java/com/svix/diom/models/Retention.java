@@ -71,7 +71,7 @@ public class Retention {
     }
 
     /**
-     * Create an instance of Retention given an JSON string
+     * Create an instance of Retention given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of Retention
@@ -82,7 +82,7 @@ public class Retention {
     }
 
     /**
-     * Convert an instance of Retention to an JSON string
+     * Convert an instance of Retention to a JSON string
      *
      * @return JSON string
      */

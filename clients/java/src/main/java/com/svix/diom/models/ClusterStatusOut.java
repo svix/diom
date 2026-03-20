@@ -162,7 +162,7 @@ This value is not replicated and should only be used for debugging.
     }
 
     /**
-     * Create an instance of ClusterStatusOut given an JSON string
+     * Create an instance of ClusterStatusOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of ClusterStatusOut
@@ -173,7 +173,7 @@ This value is not replicated and should only be used for debugging.
     }
 
     /**
-     * Convert an instance of ClusterStatusOut to an JSON string
+     * Convert an instance of ClusterStatusOut to a JSON string
      *
      * @return JSON string
      */

@@ -41,7 +41,7 @@ public class MsgQueueNackIn_ {
     }
 
     /**
-     * Create an instance of MsgQueueNackIn_ given an JSON string
+     * Create an instance of MsgQueueNackIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueNackIn_
@@ -52,7 +52,7 @@ public class MsgQueueNackIn_ {
     }
 
     /**
-     * Convert an instance of MsgQueueNackIn_ to an JSON string
+     * Convert an instance of MsgQueueNackIn_ to a JSON string
      *
      * @return JSON string
      */

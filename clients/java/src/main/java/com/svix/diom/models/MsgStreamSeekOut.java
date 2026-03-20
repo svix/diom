@@ -31,7 +31,7 @@ public class MsgStreamSeekOut {
     public MsgStreamSeekOut() {}
 
     /**
-     * Create an instance of MsgStreamSeekOut given an JSON string
+     * Create an instance of MsgStreamSeekOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgStreamSeekOut
@@ -42,7 +42,7 @@ public class MsgStreamSeekOut {
     }
 
     /**
-     * Convert an instance of MsgStreamSeekOut to an JSON string
+     * Convert an instance of MsgStreamSeekOut to a JSON string
      *
      * @return JSON string
      */

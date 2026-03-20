@@ -91,7 +91,7 @@ public class RateLimitCreateNamespaceIn {
     }
 
     /**
-     * Create an instance of RateLimitCreateNamespaceIn given an JSON string
+     * Create an instance of RateLimitCreateNamespaceIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitCreateNamespaceIn
@@ -102,7 +102,7 @@ public class RateLimitCreateNamespaceIn {
     }
 
     /**
-     * Convert an instance of RateLimitCreateNamespaceIn to an JSON string
+     * Convert an instance of RateLimitCreateNamespaceIn to a JSON string
      *
      * @return JSON string
      */

@@ -71,7 +71,7 @@ public class RateLimitGetRemainingOut {
     }
 
     /**
-     * Create an instance of RateLimitGetRemainingOut given an JSON string
+     * Create an instance of RateLimitGetRemainingOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitGetRemainingOut
@@ -82,7 +82,7 @@ public class RateLimitGetRemainingOut {
     }
 
     /**
-     * Convert an instance of RateLimitGetRemainingOut to an JSON string
+     * Convert an instance of RateLimitGetRemainingOut to a JSON string
      *
      * @return JSON string
      */

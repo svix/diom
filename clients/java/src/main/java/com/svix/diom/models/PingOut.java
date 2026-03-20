@@ -51,7 +51,7 @@ public class PingOut {
     }
 
     /**
-     * Create an instance of PingOut given an JSON string
+     * Create an instance of PingOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of PingOut
@@ -62,7 +62,7 @@ public class PingOut {
     }
 
     /**
-     * Convert an instance of PingOut to an JSON string
+     * Convert an instance of PingOut to a JSON string
      *
      * @return JSON string
      */

@@ -38,7 +38,7 @@ public class IdempotencyStartIn_ {
     }
 
     /**
-     * Create an instance of IdempotencyStartIn_ given an JSON string
+     * Create an instance of IdempotencyStartIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of IdempotencyStartIn_
@@ -49,7 +49,7 @@ public class IdempotencyStartIn_ {
     }
 
     /**
-     * Convert an instance of IdempotencyStartIn_ to an JSON string
+     * Convert an instance of IdempotencyStartIn_ to a JSON string
      *
      * @return JSON string
      */

@@ -78,7 +78,7 @@ public class CacheGetOut {
     }
 
     /**
-     * Create an instance of CacheGetOut given an JSON string
+     * Create an instance of CacheGetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheGetOut
@@ -89,7 +89,7 @@ public class CacheGetOut {
     }
 
     /**
-     * Convert an instance of CacheGetOut to an JSON string
+     * Convert an instance of CacheGetOut to a JSON string
      *
      * @return JSON string
      */

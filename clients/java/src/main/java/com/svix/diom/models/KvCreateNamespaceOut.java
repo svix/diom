@@ -131,7 +131,7 @@ public class KvCreateNamespaceOut {
     }
 
     /**
-     * Create an instance of KvCreateNamespaceOut given an JSON string
+     * Create an instance of KvCreateNamespaceOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of KvCreateNamespaceOut
@@ -142,7 +142,7 @@ public class KvCreateNamespaceOut {
     }
 
     /**
-     * Convert an instance of KvCreateNamespaceOut to an JSON string
+     * Convert an instance of KvCreateNamespaceOut to a JSON string
      *
      * @return JSON string
      */

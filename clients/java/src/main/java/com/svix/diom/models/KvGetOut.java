@@ -99,7 +99,7 @@ Pass as `version` in a subsequent `set` to perform a conditional write.
     }
 
     /**
-     * Create an instance of KvGetOut given an JSON string
+     * Create an instance of KvGetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of KvGetOut
@@ -110,7 +110,7 @@ Pass as `version` in a subsequent `set` to perform a conditional write.
     }
 
     /**
-     * Convert an instance of KvGetOut to an JSON string
+     * Convert an instance of KvGetOut to a JSON string
      *
      * @return JSON string
      */

@@ -47,7 +47,7 @@ public class KvSetIn_ {
     }
 
     /**
-     * Create an instance of KvSetIn_ given an JSON string
+     * Create an instance of KvSetIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of KvSetIn_
@@ -58,7 +58,7 @@ public class KvSetIn_ {
     }
 
     /**
-     * Convert an instance of KvSetIn_ to an JSON string
+     * Convert an instance of KvSetIn_ to a JSON string
      *
      * @return JSON string
      */
