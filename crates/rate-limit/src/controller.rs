@@ -20,76 +20,94 @@ impl RateLimitController {
     }
 
     fn calculate_capacity(
-        &self,
+        tables: &fjall::Keyspace,
         namespace_id: NamespaceId,
         identifier: &str,
         config: &TokenBucket,
         now: Timestamp,
     ) -> Result<(u64, Timestamp)> {
-        let bucket = TokenBucketRow::fetch(
-            &self.tables,
-            TokenBucketRow::key_for(namespace_id, identifier),
-        )?
-        .unwrap_or(TokenBucketRow {
-            tokens: config.bucket_size,
-            last_refill: now,
-        });
+        let bucket =
+            TokenBucketRow::fetch(tables, TokenBucketRow::key_for(namespace_id, identifier))?
+                .unwrap_or(TokenBucketRow {
+                    tokens: config.bucket_size,
+                    last_refill: now,
+                });
         Ok(config.get_new_capacity(bucket.tokens, now, bucket.last_refill))
     }
 
     // Using the same identifier but changing the algorithm is considered a different resource.
-    pub fn limit(
+    pub async fn limit<I: AsRef<str> + 'static + Send>(
         &self,
         now: Timestamp,
         namespace_id: NamespaceId,
-        identifier: &str,
+        identifier: I,
         wanted: u64,
         config: TokenBucket,
     ) -> Result<(bool, u64, Option<Duration>)> {
-        let (capacity, new_last_refill) =
-            self.calculate_capacity(namespace_id, identifier, &config, now)?;
+        let tables = self.tables.clone();
 
-        if capacity < wanted {
-            let retry_after = config.calculate_retry_after(capacity, wanted);
-            return Ok((false, capacity, Some(retry_after)));
-        }
+        tokio::task::spawn_blocking(move || {
+            let identifier = identifier.as_ref();
+            let (capacity, new_last_refill) =
+                Self::calculate_capacity(&tables, namespace_id, identifier, &config, now)?;
 
-        let remaining = capacity - wanted;
+            if capacity < wanted {
+                let retry_after = config.calculate_retry_after(capacity, wanted);
+                return Ok((false, capacity, Some(retry_after)));
+            }
 
-        TokenBucketRow::insert(
-            &self.tables,
-            TokenBucketRow::key_for(namespace_id, identifier),
-            &TokenBucketRow {
-                tokens: remaining,
-                last_refill: new_last_refill,
-            },
-        )?;
+            let remaining = capacity - wanted;
 
-        Ok((true, remaining, None))
+            TokenBucketRow::insert(
+                &tables,
+                TokenBucketRow::key_for(namespace_id, identifier),
+                &TokenBucketRow {
+                    tokens: remaining,
+                    last_refill: new_last_refill,
+                },
+            )?;
+
+            Ok((true, remaining, None))
+        })
+        .await?
     }
 
-    pub fn get_remaining(
+    pub async fn get_remaining<I: AsRef<str> + 'static + Send>(
         &self,
         now: Timestamp,
         namespace_id: NamespaceId,
-        identifier: &str,
+        identifier: I,
         config: TokenBucket,
     ) -> Result<(u64, Option<Duration>)> {
-        let (capacity, _) = self.calculate_capacity(namespace_id, identifier, &config, now)?;
+        let tables = self.tables.clone();
+        tokio::task::spawn_blocking(move || {
+            let identifier = identifier.as_ref();
+            let (capacity, _) =
+                Self::calculate_capacity(&tables, namespace_id, identifier, &config, now)?;
 
-        if capacity == 0 {
-            let retry_after = config.calculate_retry_after(capacity, 1);
-            return Ok((0, Some(retry_after)));
-        }
+            if capacity == 0 {
+                let retry_after = config.calculate_retry_after(capacity, 1);
+                return Ok((0, Some(retry_after)));
+            }
 
-        Ok((capacity, None))
+            Ok((capacity, None))
+        })
+        .await?
     }
 
-    pub fn reset(&self, namespace_id: NamespaceId, identifier: &str) -> Result<()> {
-        TokenBucketRow::remove(
-            &self.tables,
-            TokenBucketRow::key_for(namespace_id, identifier),
-        )?;
+    pub async fn reset<I: AsRef<str> + 'static + Send>(
+        &self,
+        namespace_id: NamespaceId,
+        identifier: I,
+    ) -> Result<()> {
+        let tables = self.tables.clone();
+        tokio::task::spawn_blocking(move || {
+            TokenBucketRow::remove(
+                &tables,
+                TokenBucketRow::key_for(namespace_id, identifier.as_ref()),
+            )
+        })
+        .await??;
         Ok(())
     }
 }
@@ -140,36 +158,40 @@ mod tests {
         }
     }
 
-    #[test]
-    fn rate_limiting() {
+    #[tokio::test]
+    async fn rate_limiting() {
         let (limiter, _dir) = create_test_controller();
         let id = "user1";
 
         let clock = Timestamp::now();
-        let (result, remaining, retry_after) = limiter.limit(clock, ns(), id, 3, config()).unwrap();
+        let (result, remaining, retry_after) =
+            limiter.limit(clock, ns(), id, 3, config()).await.unwrap();
         assert!(result);
         assert_eq!(remaining, 2);
         assert_eq!(retry_after, None);
 
-        let (result, remaining, retry_after) = limiter.limit(clock, ns(), id, 2, config()).unwrap();
+        let (result, remaining, retry_after) =
+            limiter.limit(clock, ns(), id, 2, config()).await.unwrap();
         assert!(result);
         assert_eq!(remaining, 0);
         assert_eq!(retry_after, None);
 
-        let (result, remaining, retry_after) = limiter.limit(clock, ns(), id, 1, config()).unwrap();
+        let (result, remaining, retry_after) =
+            limiter.limit(clock, ns(), id, 1, config()).await.unwrap();
         assert!(!result);
         assert_eq!(remaining, 0);
         assert_eq!(retry_after, Some(Duration::from_millis(100)));
     }
 
-    #[test]
-    fn tokens_refill_over_time() {
+    #[tokio::test]
+    async fn tokens_refill_over_time() {
         let (limiter, _dir) = create_test_controller();
         let id = "user1";
 
         let mut clock = Timestamp::now();
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), id, 5, config_refill_2())
+            .await
             .unwrap();
         assert!(result);
         assert_eq!(remaining, 0);
@@ -178,6 +200,7 @@ mod tests {
         clock += Duration::from_millis(100);
         let (remaining, retry_after) = limiter
             .get_remaining(clock, ns(), id, config_refill_2())
+            .await
             .unwrap();
         assert_eq!(remaining, 2);
         assert_eq!(retry_after, None);
@@ -185,20 +208,22 @@ mod tests {
         clock += Duration::from_millis(200);
         let (remaining, retry_after) = limiter
             .get_remaining(clock, ns(), id, config_refill_2())
+            .await
             .unwrap();
         assert_eq!(remaining, 5);
         assert_eq!(retry_after, None);
 
         let (result, remaining, retry_after) = limiter
             .limit(clock, ns(), id, 2, config_refill_2())
+            .await
             .unwrap();
         assert!(result);
         assert_eq!(remaining, 3);
         assert_eq!(retry_after, None);
     }
 
-    #[test]
-    fn refill_interval_tracking() {
+    #[tokio::test]
+    async fn refill_interval_tracking() {
         let (limiter, _dir) = create_test_controller();
         let id = "user1";
 
@@ -212,22 +237,28 @@ mod tests {
 
         let mut clock = Timestamp::now();
 
-        let (result, remaining, retry_after) =
-            limiter.limit(clock, ns(), id, 2, make_config()).unwrap();
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), id, 2, make_config())
+            .await
+            .unwrap();
         assert!(result);
         assert_eq!(remaining, 4);
         assert_eq!(retry_after, None);
 
         clock += Duration::from_secs(2);
-        let (result, remaining, retry_after) =
-            limiter.limit(clock, ns(), id, 1, make_config()).unwrap();
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), id, 1, make_config())
+            .await
+            .unwrap();
         assert!(result);
         assert_eq!(remaining, 3);
         assert_eq!(retry_after, None);
 
         clock += Duration::from_secs(3);
-        let (result, remaining, retry_after) =
-            limiter.limit(clock, ns(), id, 1, make_config()).unwrap();
+        let (result, remaining, retry_after) = limiter
+            .limit(clock, ns(), id, 1, make_config())
+            .await
+            .unwrap();
         assert!(result);
         assert_eq!(remaining, 4); // 4 (previous) + 2 (refill) - 1 (consumed)
         assert_eq!(retry_after, None);

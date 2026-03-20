@@ -67,7 +67,7 @@ async fn apply_request_with_context(
                 state: &stores.rate_limit_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::RateLimit(req.apply(state, &context))
+            Response::RateLimit(req.apply(state, &context).await)
         }
         Request::Idempotency(req) => {
             let stores = state_machine.db_handle();

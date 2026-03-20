@@ -42,18 +42,16 @@ pub struct LimitResponseData {
 }
 
 impl LimitOperation {
-    fn apply_real(
+    async fn apply_real(
         self,
         state: &RateLimitRaftState<'_>,
         now: Timestamp,
     ) -> Result<LimitResponseData> {
-        let (allowed, remaining, retry_after) = state.state.controller(self.storage_type).limit(
-            now,
-            self.namespace_id,
-            &self.key,
-            self.tokens,
-            self.method,
-        )?;
+        let (allowed, remaining, retry_after) = state
+            .state
+            .controller(self.storage_type)
+            .limit(now, self.namespace_id, self.key, self.tokens, self.method)
+            .await?;
         Ok(LimitResponseData {
             allowed,
             remaining,
@@ -63,7 +61,7 @@ impl LimitOperation {
 }
 
 impl RateLimitRequest for LimitOperation {
-    fn apply(self, state: RateLimitRaftState<'_>, ctx: &OpContext) -> LimitResponse {
-        LimitResponse(self.apply_real(&state, ctx.timestamp))
+    async fn apply(self, state: RateLimitRaftState<'_>, ctx: &OpContext) -> LimitResponse {
+        LimitResponse(self.apply_real(&state, ctx.timestamp).await)
     }
 }
