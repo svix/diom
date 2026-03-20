@@ -48,7 +48,9 @@ impl<'a> {{ resource_type_name }}<'a> {
             {# positional body parameters -#}
             {% set body_schema = api.types[op.request_body_schema_name] -%}
             {% set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 -%}
-            {% set has_non_positional_fields = body_schema.fields | selectattr("positional", "false") | length > 0 -%}
+            {% if has_positional_fields -%}
+                {% set unused_body_param_struct = body_schema.fields | selectattr("positional", "false") | length == 0 -%}
+            {% endif -%}
             {% for field in body_schema.fields -%}
             {% if field.positional -%}
                 {{ field.name | to_snake_case }}: {{ field.type.to_rust() }},
@@ -59,7 +61,7 @@ impl<'a> {{ resource_type_name }}<'a> {
             {{ req_body_schema_name }}: {{ op.request_body_schema_name }},
         {% endif -%}
     ) -> Result<{{ op.response_body_schema_name | default("()") | replace("_", "") }}> {
-        {%- if op.request_body_schema_name is defined and not has_non_positional_fields %}
+        {%- if unused_body_param_struct %}
         let _unused = {{ req_body_schema_name }};
         {%- endif %}
         {%- if has_positional_fields %}
