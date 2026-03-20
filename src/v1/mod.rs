@@ -2,40 +2,52 @@
 // SPDX-License-Identifier: MIT
 
 use aide::axum::ApiRouter;
-use tower_http::trace::TraceLayer;
 
 use crate::{
     AppState,
-    core::otel_spans::{
-        AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator, request_metrics_middleware,
-    },
+    core::{auth::authorization, otel_spans::request_metrics_middleware},
 };
 
 pub mod endpoints;
 pub mod utils;
 
 pub fn router(state: Option<AppState>) -> ApiRouter<AppState> {
-    let mut ret: ApiRouter<AppState> = ApiRouter::new().merge(endpoints::router());
+    let mut ret: ApiRouter<AppState> = ApiRouter::new();
 
-    if let Some(state) = state {
+    if let Some(state) = &state {
         ret = ret.layer(axum::middleware::from_fn_with_state(
-            state,
+            state.clone(),
             request_metrics_middleware,
         ));
     }
 
-    let ret = ret.layer(
-        TraceLayer::new_for_http()
-            .make_span_with(AxumOtelSpanCreator)
-            .on_response(AxumOtelOnResponse)
-            .on_failure(AxumOtelOnFailure),
-    );
+    let unauthenticated_router: ApiRouter<AppState> =
+        ApiRouter::new().merge(endpoints::health::router());
+
+    let mut authenticated_router: ApiRouter<AppState> = ApiRouter::new()
+        .merge(endpoints::admin::router())
+        .merge(endpoints::cache::router())
+        .merge(endpoints::kv::router())
+        .merge(endpoints::rate_limit::router())
+        .merge(endpoints::idempotency::router())
+        .merge(endpoints::queue::router())
+        .merge(endpoints::msgs::router());
+
+    if let Some(state) = state {
+        authenticated_router =
+            authenticated_router.layer(axum::middleware::from_fn_with_state(state, authorization));
+    }
+
+    ret = ret
+        .merge(authenticated_router)
+        .merge(unauthenticated_router);
 
     #[cfg(debug_assertions)]
     if cfg!(debug_assertions) {
         let dev_router: ApiRouter<AppState> = development::router().into();
         return ret.merge(dev_router);
     }
+
     ret
 }
 

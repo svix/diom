@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+pub mod auth;
 pub mod cluster;
 pub mod metrics;
 pub mod otel_spans;

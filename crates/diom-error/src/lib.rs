@@ -59,6 +59,18 @@ impl Error {
         Self::bad_request("invalid_input", detail)
     }
 
+    pub fn authentication(code: &'static str, detail: impl fmt::Display) -> Self {
+        Self::new(ErrorType::Authentication(StandardErrorBody::new(
+            code, detail,
+        )))
+    }
+
+    pub fn authorization(code: &'static str, detail: impl fmt::Display) -> Self {
+        Self::new(ErrorType::Authorization(StandardErrorBody::new(
+            code, detail,
+        )))
+    }
+
     pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
         Self::new(ErrorType::Validation(ValidationErrorBody::new(detail)))
     }
@@ -98,6 +110,14 @@ impl IntoResponse for Error {
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
                 (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
+            }
+            ErrorType::Authentication(body) => {
+                tracing::debug!(error = %body, "authentication");
+                (StatusCode::UNAUTHORIZED, Json(body)).into_response()
+            }
+            ErrorType::Authorization(body) => {
+                tracing::debug!(error = %body, "authorization");
+                (StatusCode::FORBIDDEN, Json(body)).into_response()
             }
             ErrorType::Operation {
                 code,
@@ -154,6 +174,12 @@ pub enum ErrorType {
     /// Entity not found
     NotFound(StandardErrorBody),
 
+    /// Authentication error
+    Authentication(StandardErrorBody),
+
+    /// Authorization error
+    Authorization(StandardErrorBody),
+
     /// An error from validating a request
     Validation(ValidationErrorBody),
 
@@ -170,6 +196,8 @@ impl fmt::Display for ErrorType {
             Self::Internal { message, .. } => message.fmt(f),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::NotFound(s) => write!(f, "not_found {s}"),
+            Self::Authentication(s) => write!(f, "authn {s}"),
+            Self::Authorization(s) => write!(f, "authz {s}"),
             Self::Validation(s) => s.fmt(f),
             Self::Operation { detail, code } => {
                 if let Some(detail) = detail {

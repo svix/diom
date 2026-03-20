@@ -82,11 +82,7 @@ impl TestServerBuilder {
     }
 
     pub async fn build(self) -> TestContext {
-        let token = if let Some(token) = self.token {
-            token
-        } else {
-            "Stubbed token. Should probably be legit when we add auth.".to_string()
-        };
+        let token = self.token.unwrap_or_else(|| TEST_ADMIN_TOKEN.to_string());
 
         let listener = if let Some(listener) = self.listener {
             listener
@@ -246,6 +242,8 @@ pub struct ServerlessTestContext {
     _workdir: TempDir,
 }
 
+pub const TEST_ADMIN_TOKEN: &str = "admin_abcdefghijlmnopqrstuvwxyz";
+
 pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
     let db_dir = workdir.join("db");
     let log_path = workdir.join("logs");
@@ -300,6 +298,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         },
         bootstrap_cfg: None,
         bootstrap_cfg_path: None,
+        admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
     }
 }
 

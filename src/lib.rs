@@ -264,6 +264,10 @@ pub async fn run_with_listeners(
     let router = api_router.merge(docs_router);
     let svc = router
         .layer((
+            TraceLayer::new_for_http()
+                .make_span_with(AxumOtelSpanCreator)
+                .on_response(AxumOtelOnResponse)
+                .on_failure(AxumOtelOnFailure),
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)
