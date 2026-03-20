@@ -35,7 +35,7 @@ public class CacheDeleteIn_ {
     }
 
     /**
-     * Create an instance of CacheDeleteIn_ given an JSON string
+     * Create an instance of CacheDeleteIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheDeleteIn_
@@ -46,7 +46,7 @@ public class CacheDeleteIn_ {
     }
 
     /**
-     * Convert an instance of CacheDeleteIn_ to an JSON string
+     * Convert an instance of CacheDeleteIn_ to a JSON string
      *
      * @return JSON string
      */

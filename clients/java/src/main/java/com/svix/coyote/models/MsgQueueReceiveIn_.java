@@ -44,7 +44,7 @@ public class MsgQueueReceiveIn_ {
     }
 
     /**
-     * Create an instance of MsgQueueReceiveIn_ given an JSON string
+     * Create an instance of MsgQueueReceiveIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueReceiveIn_
@@ -55,7 +55,7 @@ public class MsgQueueReceiveIn_ {
     }
 
     /**
-     * Convert an instance of MsgQueueReceiveIn_ to an JSON string
+     * Convert an instance of MsgQueueReceiveIn_ to a JSON string
      *
      * @return JSON string
      */

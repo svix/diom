@@ -131,7 +131,7 @@ public class MsgNamespaceGetOut {
     }
 
     /**
-     * Create an instance of MsgNamespaceGetOut given an JSON string
+     * Create an instance of MsgNamespaceGetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgNamespaceGetOut
@@ -142,7 +142,7 @@ public class MsgNamespaceGetOut {
     }
 
     /**
-     * Convert an instance of MsgNamespaceGetOut to an JSON string
+     * Convert an instance of MsgNamespaceGetOut to a JSON string
      *
      * @return JSON string
      */

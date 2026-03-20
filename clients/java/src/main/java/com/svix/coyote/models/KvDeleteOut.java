@@ -51,7 +51,7 @@ public class KvDeleteOut {
     }
 
     /**
-     * Create an instance of KvDeleteOut given an JSON string
+     * Create an instance of KvDeleteOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of KvDeleteOut
@@ -62,7 +62,7 @@ public class KvDeleteOut {
     }
 
     /**
-     * Convert an instance of KvDeleteOut to an JSON string
+     * Convert an instance of KvDeleteOut to a JSON string
      *
      * @return JSON string
      */

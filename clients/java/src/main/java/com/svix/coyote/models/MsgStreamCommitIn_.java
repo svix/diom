@@ -41,7 +41,7 @@ public class MsgStreamCommitIn_ {
     }
 
     /**
-     * Create an instance of MsgStreamCommitIn_ given an JSON string
+     * Create an instance of MsgStreamCommitIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgStreamCommitIn_
@@ -52,7 +52,7 @@ public class MsgStreamCommitIn_ {
     }
 
     /**
-     * Convert an instance of MsgStreamCommitIn_ to an JSON string
+     * Convert an instance of MsgStreamCommitIn_ to a JSON string
      *
      * @return JSON string
      */

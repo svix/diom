@@ -125,7 +125,7 @@ public class QueueMsgOut {
     }
 
     /**
-     * Create an instance of QueueMsgOut given an JSON string
+     * Create an instance of QueueMsgOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of QueueMsgOut
@@ -136,7 +136,7 @@ public class QueueMsgOut {
     }
 
     /**
-     * Convert an instance of QueueMsgOut to an JSON string
+     * Convert an instance of QueueMsgOut to a JSON string
      *
      * @return JSON string
      */

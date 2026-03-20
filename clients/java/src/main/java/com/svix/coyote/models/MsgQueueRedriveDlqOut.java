@@ -31,7 +31,7 @@ public class MsgQueueRedriveDlqOut {
     public MsgQueueRedriveDlqOut() {}
 
     /**
-     * Create an instance of MsgQueueRedriveDlqOut given an JSON string
+     * Create an instance of MsgQueueRedriveDlqOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueRedriveDlqOut
@@ -42,7 +42,7 @@ public class MsgQueueRedriveDlqOut {
     }
 
     /**
-     * Convert an instance of MsgQueueRedriveDlqOut to an JSON string
+     * Convert an instance of MsgQueueRedriveDlqOut to a JSON string
      *
      * @return JSON string
      */

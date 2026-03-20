@@ -133,7 +133,7 @@ This will never change unless the node is erased and reset
     }
 
     /**
-     * Create an instance of NodeStatusOut given an JSON string
+     * Create an instance of NodeStatusOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of NodeStatusOut
@@ -144,7 +144,7 @@ This will never change unless the node is erased and reset
     }
 
     /**
-     * Convert an instance of NodeStatusOut to an JSON string
+     * Convert an instance of NodeStatusOut to a JSON string
      *
      * @return JSON string
      */

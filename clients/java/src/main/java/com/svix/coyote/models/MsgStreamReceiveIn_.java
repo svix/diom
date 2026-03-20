@@ -44,7 +44,7 @@ public class MsgStreamReceiveIn_ {
     }
 
     /**
-     * Create an instance of MsgStreamReceiveIn_ given an JSON string
+     * Create an instance of MsgStreamReceiveIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgStreamReceiveIn_
@@ -55,7 +55,7 @@ public class MsgStreamReceiveIn_ {
     }
 
     /**
-     * Convert an instance of MsgStreamReceiveIn_ to an JSON string
+     * Convert an instance of MsgStreamReceiveIn_ to a JSON string
      *
      * @return JSON string
      */

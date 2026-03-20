@@ -58,7 +58,7 @@ public class MsgPublishOut {
     }
 
     /**
-     * Create an instance of MsgPublishOut given an JSON string
+     * Create an instance of MsgPublishOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgPublishOut
@@ -69,7 +69,7 @@ public class MsgPublishOut {
     }
 
     /**
-     * Convert an instance of MsgPublishOut to an JSON string
+     * Convert an instance of MsgPublishOut to a JSON string
      *
      * @return JSON string
      */

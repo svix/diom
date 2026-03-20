@@ -35,7 +35,7 @@ public class IdempotencyAbortIn_ {
     }
 
     /**
-     * Create an instance of IdempotencyAbortIn_ given an JSON string
+     * Create an instance of IdempotencyAbortIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of IdempotencyAbortIn_
@@ -46,7 +46,7 @@ public class IdempotencyAbortIn_ {
     }
 
     /**
-     * Convert an instance of IdempotencyAbortIn_ to an JSON string
+     * Convert an instance of IdempotencyAbortIn_ to a JSON string
      *
      * @return JSON string
      */
