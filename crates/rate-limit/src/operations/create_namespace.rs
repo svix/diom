@@ -40,13 +40,13 @@ impl CreateRateLimitOperation {
         }
     }
 
-    fn apply_real(
+    async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
         now: Timestamp,
     ) -> diom_operations::Result<CreateRateLimitResponseData> {
         let op: CreateNamespace<RateLimitConfig> = self.into();
-        let out = op.apply_operation(namespace_state, now)?;
+        let out = op.async_apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }
@@ -73,11 +73,11 @@ impl From<CreateNamespaceOutput<RateLimitConfig>> for CreateRateLimitResponseDat
 }
 
 impl RateLimitRequest for CreateRateLimitOperation {
-    fn apply(
+    async fn apply(
         self,
         state: RateLimitRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> CreateRateLimitResponse {
-        CreateRateLimitResponse(self.apply_real(state.namespace, ctx.timestamp))
+        CreateRateLimitResponse(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

@@ -8,14 +8,14 @@ pub use create_namespace::{CreateRateLimitOperation, CreateRateLimitResponseData
 pub use limit::{LimitOperation, LimitResponseData};
 pub use reset::ResetOperation;
 
-use diom_operations::raft_module_operations;
+use diom_operations::async_raft_module_operations;
 
 pub struct RateLimitRaftState<'a> {
     pub state: &'a State,
     pub namespace: &'a diom_namespace::State,
 }
 
-raft_module_operations!(
+async_raft_module_operations!(
     RateLimitRequest,
     RateLimitOperation {
         Limit(LimitOperation) -> LimitResponseData,

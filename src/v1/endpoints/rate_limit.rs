@@ -156,8 +156,9 @@ async fn rate_limit_get_remaining(
     // FIXME: this state should be passed, not created every time.
     let rate_limit_state = diom_rate_limit::State::init(state.do_not_use_dbs.clone())?;
     let controller = rate_limit_state.controller(namespace.storage_type);
-    let (remaining, retry_after) =
-        controller.get_remaining(now, namespace.id, &data.key, data.config.into())?;
+    let (remaining, retry_after) = controller
+        .get_remaining(now, namespace.id, data.key, data.config.into())
+        .await?;
 
     Ok(MsgPackOrJson(RateLimitGetRemainingOut {
         remaining,
