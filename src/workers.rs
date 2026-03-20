@@ -28,6 +28,12 @@ impl Workers {
             let time = time.clone();
             self.spawn(coyote_cache::AllNodesWorker::new(state, time));
         }
+        {
+            tracing::debug!("spawning idempotency module worker");
+            let state = state.state_machine.idempotency_store().await;
+            let time = time.clone();
+            self.spawn(coyote_idempotency::AllNodesWorker::new(state, time));
+        }
     }
 
     pub(crate) async fn shutdown(mut self) {

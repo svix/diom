@@ -79,21 +79,6 @@ impl BackgroundWorker for Tick {
     }
 }
 
-#[derive(Clone)]
-struct IdempotencyBackground {
-    handle: RaftState,
-}
-
-impl BackgroundWorker for IdempotencyBackground {
-    const NAME: &str = "leader-worker:idempotency";
-
-    async fn run(self) -> BackgroundResult<()> {
-        let store = self.handle.state_machine.idempotency_store().await;
-        let time = self.handle.state_machine.time.clone();
-        coyote_idempotency::worker(store, self.handle, time).await
-    }
-}
-
 struct BackgroundJobRunner {
     jobs: JoinSet<BackgroundResult<()>>,
 }
@@ -113,9 +98,6 @@ impl BackgroundJobRunner {
     fn spawn_all(&mut self, cfg: Configuration, handle: RaftState) {
         self.spawn_job(RecordLogTimestamps {
             cfg,
-            handle: handle.clone(),
-        });
-        self.spawn_job(IdempotencyBackground {
             handle: handle.clone(),
         });
         self.spawn_job(Tick { handle });
