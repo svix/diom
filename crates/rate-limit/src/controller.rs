@@ -94,6 +94,7 @@ impl RateLimitController {
     }
 }
 
+#[allow(clippy::disallowed_methods)]
 #[cfg(test)]
 mod tests {
     use std::time::Duration;

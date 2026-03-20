@@ -119,7 +119,7 @@ mod tests {
 
     #[test]
     fn private_id_serde() {
-        let id = PrivateId::new(jiff::Timestamp::now());
+        let id = PrivateId::new(jiff::Timestamp::UNIX_EPOCH);
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, i.e. just a UUID
 
@@ -130,7 +130,7 @@ mod tests {
 
     #[test]
     fn public_id_serde() {
-        let id = PublicId::new(jiff::Timestamp::now());
+        let id = PublicId::new(jiff::Timestamp::UNIX_EPOCH);
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, also just a UUID
 

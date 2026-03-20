@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use jiff::Timestamp;
 use std::sync::{
     Arc,
