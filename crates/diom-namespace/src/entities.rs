@@ -18,6 +18,7 @@ pub enum Module {
     KeyValue = 3,
     RateLimit = 4,
     Stream = 5,
+    AuthToken = 6,
 }
 
 // This shouldn't be needed when we're writing keys as bytes
@@ -29,6 +30,7 @@ impl Display for Module {
             Module::KeyValue => 3,
             Module::RateLimit => 4,
             Module::Stream => 5,
+            Module::AuthToken => 6,
         };
         write!(f, "{value}")
     }
@@ -118,5 +120,18 @@ impl IdempotencyConfig {
 
     pub fn eviction_policy(&self) -> EvictionPolicy {
         EvictionPolicy::NoEviction
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+pub struct AuthTokenConfig {}
+
+impl AuthTokenConfig {
+    pub const NAMESPACE: &'static str = "auth_token_store";
+}
+
+impl ModuleConfig for AuthTokenConfig {
+    fn module() -> Module {
+        Module::AuthToken
     }
 }

@@ -962,11 +962,13 @@ dependencies = [
  "axum-extra",
  "byteorder",
  "constant_time_eq 0.4.2",
+ "diom-auth-token",
  "diom-cache",
  "diom-client",
  "diom-core",
  "diom-derive",
  "diom-error",
+ "diom-id",
  "diom-idempotency",
  "diom-kv",
  "diom-msgs",
@@ -1018,6 +1020,27 @@ dependencies = [
  "uuid",
  "validator",
  "zip",
+]
+
+[[package]]
+name = "diom-auth-token"
+version = "0.0.1"
+dependencies = [
+ "base64 0.22.1",
+ "diom-core",
+ "diom-error",
+ "diom-id",
+ "diom-namespace",
+ "diom-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "rand 0.9.2",
+ "serde",
+ "sha2",
+ "tempfile",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

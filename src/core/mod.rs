@@ -7,6 +7,8 @@ pub mod metrics;
 pub mod otel_spans;
 pub mod retry;
 
+pub const INTERNAL_NAMESPACE: &str = "_internal";
+
 #[cfg(test)]
 mod tests {
     use serde::Serialize;

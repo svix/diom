@@ -48,6 +48,7 @@ pub async fn authorization(
     // this middleware being invoked with that span active
     let span = Span::current();
     let perms = authorization_inner(state, &mut request, span).await?;
+    request.extensions_mut().insert(perms.clone());
     // This is run outside of the `tracing::instrument` function, so that the
     // route handler execution time isn't included in the span
     let mut response = next.run(request).await;
@@ -72,17 +73,14 @@ async fn authorization_inner(
 
     let token = bearer.token();
 
-    let perms = if let Some(admin_token) = state.cfg.admin_token.as_ref() {
-        if !constant_time_eq(admin_token, token) {
-            return Err(Error::authentication("invalid_token", "Invalid token.").into());
-        }
-
+    let perms = if let Some(admin_token) = state.cfg.admin_token.as_ref()
+        && constant_time_eq(admin_token, token)
+    {
         Permissions {
             role: "admin".to_string(),
             auth_token_id: Some("admin".to_string()),
         }
     } else {
-        // FIXME: support non-admin tokens too.
         return Err(Error::authentication("invalid_token", "Invalid token.").into());
     };
 

@@ -1,4 +1,5 @@
 mod admin;
+mod auth_token;
 mod bootstrap;
 mod cache;
 mod idempotency;

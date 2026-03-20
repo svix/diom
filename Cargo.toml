@@ -29,10 +29,13 @@ axum.workspace = true
 axum-extra.workspace = true
 byteorder.workspace = true
 constant_time_eq.workspace = true
+diom-auth-token.workspace = true
 diom-cache.workspace = true
+diom-client.workspace = true
 diom-core.workspace = true
 diom-derive.workspace = true
 diom-error.workspace = true
+diom-id.workspace = true
 diom-idempotency.workspace = true
 diom-kv.workspace = true
 diom-msgs.workspace = true
@@ -83,7 +86,6 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
-diom-client.workspace = true
 ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
@@ -122,6 +124,7 @@ anyhow = "1.0.56"
 assert_matches = "1.5.0"
 axum = { version = "0.8.8", features = ["macros", "http2"] }
 axum-extra = { version = "0.12", features = ["typed-header"] }
+base64 = "0.22"
 byteorder = "1.5.0"
 bytes = "1.11.1"
 clap = { version = "4.1.8", features = ["derive"] }
@@ -131,6 +134,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
 diom.path = "."
+diom-auth-token.path = "crates/auth-token"
 diom-cache.path = "crates/cache"
 diom-client.path = "clients/rust"
 diom-core.path = "crates/diom-core"

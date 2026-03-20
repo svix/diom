@@ -5,6 +5,22 @@ package diom
 import diom_models "github.com/svix/diom/clients/go/internal/models"
 
 type (
+	AuthTokenCreateIn             = diom_models.AuthTokenCreateIn
+	AuthTokenCreateNamespaceIn    = diom_models.AuthTokenCreateNamespaceIn
+	AuthTokenCreateNamespaceOut   = diom_models.AuthTokenCreateNamespaceOut
+	AuthTokenCreateOut            = diom_models.AuthTokenCreateOut
+	AuthTokenDeleteIn             = diom_models.AuthTokenDeleteIn
+	AuthTokenDeleteOut            = diom_models.AuthTokenDeleteOut
+	AuthTokenExpireIn             = diom_models.AuthTokenExpireIn
+	AuthTokenExpireOut            = diom_models.AuthTokenExpireOut
+	AuthTokenGetNamespaceIn       = diom_models.AuthTokenGetNamespaceIn
+	AuthTokenGetNamespaceOut      = diom_models.AuthTokenGetNamespaceOut
+	AuthTokenListIn               = diom_models.AuthTokenListIn
+	AuthTokenOut                  = diom_models.AuthTokenOut
+	AuthTokenUpdateIn             = diom_models.AuthTokenUpdateIn
+	AuthTokenUpdateOut            = diom_models.AuthTokenUpdateOut
+	AuthTokenVerifyIn             = diom_models.AuthTokenVerifyIn
+	AuthTokenVerifyOut            = diom_models.AuthTokenVerifyOut
 	CacheCreateNamespaceIn        = diom_models.CacheCreateNamespaceIn
 	CacheCreateNamespaceOut       = diom_models.CacheCreateNamespaceOut
 	CacheDeleteIn                 = diom_models.CacheDeleteIn
@@ -41,6 +57,7 @@ type (
 	KvGetOut                      = diom_models.KvGetOut
 	KvSetIn                       = diom_models.KvSetIn
 	KvSetOut                      = diom_models.KvSetOut
+	ListResponseAuthTokenOut      = diom_models.ListResponseAuthTokenOut
 	MsgIn                         = diom_models.MsgIn
 	MsgNamespaceCreateIn          = diom_models.MsgNamespaceCreateIn
 	MsgNamespaceCreateOut         = diom_models.MsgNamespaceCreateOut

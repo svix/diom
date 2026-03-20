@@ -1,0 +1,28 @@
+[package]
+name = "diom-auth-token"
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+base64.workspace = true
+diom-core.workspace = true
+diom-error.workspace = true
+diom-id.workspace = true
+diom-namespace.workspace = true
+diom-operations.workspace = true
+fjall.workspace = true
+fjall-utils.workspace = true
+jiff.workspace = true
+rand.workspace = true
+serde.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

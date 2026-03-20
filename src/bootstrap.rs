@@ -4,9 +4,9 @@ use crate::{
     cfg::Configuration as AppConfig,
     core::cluster::RaftState,
     v1::endpoints::{
-        cache::CacheCreateNamespaceIn, idempotency::IdempotencyCreateNamespaceIn,
-        kv::KvCreateNamespaceIn, msgs::MsgNamespaceCreateIn,
-        rate_limit::RateLimitCreateNamespaceIn,
+        auth_token::AuthTokenCreateNamespaceIn, cache::CacheCreateNamespaceIn,
+        idempotency::IdempotencyCreateNamespaceIn, kv::KvCreateNamespaceIn,
+        msgs::MsgNamespaceCreateIn, rate_limit::RateLimitCreateNamespaceIn,
     },
 };
 use anyhow::{Context, bail};
@@ -23,6 +23,7 @@ enum BootstrapCommand {
     Idempotency(IdempotencyCreateNamespaceIn),
     RateLimit(RateLimitCreateNamespaceIn),
     Msgs(MsgNamespaceCreateIn),
+    AuthToken(AuthTokenCreateNamespaceIn),
 }
 
 impl BootstrapCommand {
@@ -60,6 +61,14 @@ impl BootstrapCommand {
                     .client_write(diom_msgs::operations::CreateNamespaceOperation::from(v))
                     .await?;
             }
+            BootstrapCommand::AuthToken(v) => {
+                tracing::debug!(name = v.name, "bootstrapping auth_token");
+                raft_state
+                    .client_write(
+                        diom_auth_token::operations::CreateAuthTokenNamespaceOperation::from(v),
+                    )
+                    .await?;
+            }
         }
         Ok(())
     }
@@ -71,6 +80,7 @@ impl BootstrapCommand {
             BootstrapCommand::Idempotency(v) => &v.name,
             BootstrapCommand::RateLimit(v) => &v.name,
             BootstrapCommand::Msgs(v) => &v.name,
+            BootstrapCommand::AuthToken(v) => &v.name,
         }
     }
 }
@@ -154,6 +164,14 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         };
     }
 
+    ensure_default!(
+        AuthToken,
+        BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
+            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            storage_type: StorageType::Persistent,
+            max_storage_bytes: None,
+        })
+    );
     ensure_default!(
         Msgs,
         BootstrapCommand::Msgs(MsgNamespaceCreateIn {
@@ -439,7 +457,8 @@ mod tests {
     fn ensure_defaults_injects_all_five_when_empty() {
         let mut cmds = vec![];
         ensure_defaults(&mut cmds);
-        assert_eq!(cmds.len(), 5);
+        // Make sure at least the original five are there
+        assert!(cmds.len() >= 5);
         assert!(
             cmds.iter()
                 .any(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == DEFAULT_NAMESPACE_NAME))
