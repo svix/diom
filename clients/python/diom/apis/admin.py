@@ -4,21 +4,17 @@ from ..internal.api_common import ApiBase
 from ..models import (
     ClusterRemoveNodeIn,
     ClusterRemoveNodeOut,
-    ClusterStatusOut,
+)
+from .admin_cluster import (
+    AdminCluster,
+    AdminClusterAsync,
 )
 
 
 class AdminAsync(ApiBase):
-    async def cluster_status(
-        self,
-    ) -> ClusterStatusOut:
-        """Get information about the current cluster"""
-
-        return await self._request_asyncio(
-            method="get",
-            path="/api/v1/admin/cluster/status",
-            response_type=ClusterStatusOut,
-        )
+    @property
+    def cluster(self) -> AdminClusterAsync:
+        return AdminClusterAsync(self._client)
 
     async def cluster_remove_node(
         self,
@@ -39,16 +35,9 @@ class AdminAsync(ApiBase):
 
 
 class Admin(ApiBase):
-    def cluster_status(
-        self,
-    ) -> ClusterStatusOut:
-        """Get information about the current cluster"""
-
-        return self._request_sync(
-            method="get",
-            path="/api/v1/admin/cluster/status",
-            response_type=ClusterStatusOut,
-        )
+    @property
+    def cluster(self) -> AdminCluster:
+        return AdminCluster(self._client)
 
     def cluster_remove_node(
         self,

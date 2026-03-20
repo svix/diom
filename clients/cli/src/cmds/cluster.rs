@@ -49,7 +49,7 @@ async fn print_status(
     client: &DiomClient,
     color_mode: colored_json::ColorMode,
 ) -> anyhow::Result<()> {
-    let raw_status = client.admin().cluster_status().await?;
+    let raw_status = client.admin().cluster().status().await?;
     if json {
         return crate::json::print_json_output(&raw_status, color_mode);
     }
@@ -134,7 +134,7 @@ async fn print_status(
 }
 
 async fn remove_node(args: RemoveNodeArgs, client: &DiomClient) -> anyhow::Result<()> {
-    let status = client.admin().cluster_status().await?;
+    let status = client.admin().cluster().status().await?;
     let Some(node) = status.nodes.iter().find(|n| n.node_id == args.node_id) else {
         anyhow::bail!("unable to find node {}", args.node_id);
     };

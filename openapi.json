@@ -17,7 +17,7 @@
         ],
         "summary": "Cluster Status",
         "description": "Get information about the current cluster",
-        "operationId": "v1.admin.cluster-status",
+        "operationId": "v1.admin.cluster.status",
         "responses": {
           "200": {
             "description": "",

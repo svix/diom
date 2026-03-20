@@ -8,26 +8,17 @@ import {
     type ClusterRemoveNodeOut,
     ClusterRemoveNodeOutSerializer,
 } from '../models/clusterRemoveNodeOut';
-import {
-    type ClusterStatusOut,
-    ClusterStatusOutSerializer,
-} from '../models/clusterStatusOut';
+import { AdminCluster } from './adminCluster';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
 export class Admin {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
-    /** Get information about the current cluster */
-    public clusterStatus(
-    ): Promise<ClusterStatusOut> {
-        const request = new DiomRequest(HttpMethod.GET, "/api/v1/admin/cluster/status");
+    public get cluster() {
+        return new AdminCluster(this.requestCtx);
+    }
 
-        
-        return request.send(
-            this.requestCtx,
-            ClusterStatusOutSerializer._fromJsonObject,
-        );
-    }/**
+    /**
 * Remove a node from the cluster.
 * 
 * This operation executes immediately and the node must be wiped and reset
