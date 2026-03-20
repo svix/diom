@@ -9,6 +9,8 @@ use std::{
 use aide::transform::{TransformOperation, TransformPathItem};
 use diom_proto::validation_error;
 use regex::Regex;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use validator::ValidationError;
 
 use crate::error::Result;
@@ -41,6 +43,27 @@ pub fn get_unix_timestamp() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs()
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+#[schemars(rename = "ListResponse{T}")]
+pub struct ListResponse<T> {
+    pub data: Vec<T>,
+    pub iterator: Option<String>,
+    pub prev_iterator: Option<String>,
+    pub done: bool,
+}
+
+impl<T> ListResponse<T> {
+    pub fn empty() -> Self {
+        Self {
+            data: Vec::new(),
+            iterator: None,
+            prev_iterator: None,
+            done: true,
+        }
+    }
 }
 
 #[cfg(test)]
