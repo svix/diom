@@ -35,19 +35,18 @@ pub enum {{ resource_type_name }}Commands {
             {% if op.request_body_schema_name is defined -%}
                 {# positional body parameters -#}
                 {% set body_schema = api.types[op.request_body_schema_name] -%}
-                {% for field in body_schema.fields -%}
-                {% if field.positional -%}
+                {% set body_schema_all_optional = body_schema.fields | selectattr("required") | length == 0 %}
+                {% for field in body_schema.fields | selectattr("positional") -%}
                     {% if field.description is defined -%}
                         {{ field.description | to_doc_comment(style="rust") }}
                     {% endif -%}
                     {{ field.name | to_snake_case }}: {{ field.type.to_rust() }},
-                {% endif -%}
                 {% endfor -%}
 
                 {# body parameter struct -#}
                 {% set ty = "crate::json::JsonOf<coyote_client::models::" ~ op.request_body_schema_name ~ ">" -%}
                 {{ op.request_body_schema_name | to_snake_case }}:
-                {% if op.request_body_all_optional %}Option<{{ ty }}>{% else %}{{ ty }}{% endif %},
+                {% if body_schema_all_optional %}Option<{{ ty }}>{% else %}{{ ty }}{% endif %},
             {% endif -%}
         },
     {% endfor %}
@@ -94,6 +93,7 @@ impl {{ resource_type_name }}Commands {
                             {% if op.request_body_schema_name is defined -%}
                                 {# positional body parameters -#}
                                 {% set body_schema = api.types[op.request_body_schema_name] -%}
+                                {% set body_schema_all_optional = body_schema.fields | selectattr("required") | length == 0 %}
                                 {% for field in body_schema.fields -%}
                                 {% if field.positional -%}
                                     {{ field.name | to_snake_case }},
@@ -102,7 +102,7 @@ impl {{ resource_type_name }}Commands {
 
                                 {# body parameter struct -#}
                                 {{ op.request_body_schema_name | to_snake_case }}
-                                {% if op.request_body_all_optional -%}
+                                {% if body_schema_all_optional -%}
                                     .unwrap_or_default()
                                 {% endif -%}
                                     .into_inner(),
