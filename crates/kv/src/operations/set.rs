@@ -36,9 +36,10 @@ impl SetOperation {
         ttl: Option<DurationMs>,
         behavior: OperationBehavior,
         version: Option<u64>,
+        now: Timestamp,
     ) -> Self {
         let expiry = ttl
-            .map(|ttl| Timestamp::now() + ttl)
+            .map(|ttl| now + ttl)
             .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
         Self {
             namespace_id: namespace.id,

@@ -42,8 +42,8 @@ pub struct CacheSetIn {
 }
 
 impl CacheSetIn {
-    fn into_model(self) -> CacheModel {
-        let expiry = Timestamp::now() + self.ttl;
+    fn into_model(self, when: Timestamp) -> CacheModel {
+        let expiry = when + self.ttl;
         debug_assert!(expiry > Timestamp::UNIX_EPOCH);
 
         CacheModel {
@@ -144,7 +144,9 @@ async fn cache_set(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model());
+    let now = repl.time.last();
+
+    let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model(now));
     repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
@@ -169,7 +171,7 @@ async fn cache_get(
     let cache_state = coyote_cache::State::init(state.do_not_use_dbs.clone())?;
     let controller = cache_state.controller(namespace.storage_type);
 
-    let model = controller.fetch(namespace.id, &data.key, Timestamp::now())?;
+    let model = controller.fetch(namespace.id, &data.key, repl.time.last())?;
 
     let ret = match model {
         Some(m) => CacheGetOut::from_model(m),
