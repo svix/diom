@@ -3,8 +3,8 @@
 export interface AuthTokenOut {
     id: string;
     name: string;
-    createdAt: Date;
-    updatedAt: Date;
+    created: Date;
+    updated: Date;
     expiry?: Date | null;
     metadata: { [key: string]: string };
     ownerId: string;
@@ -19,8 +19,8 @@ export const AuthTokenOutSerializer = {
         return {
             id: object['id'],
             name: object['name'],
-            createdAt: new Date(object['created_at']),
-            updatedAt: new Date(object['updated_at']),
+            created: new Date(object['created']),
+            updated: new Date(object['updated']),
             expiry: object['expiry'] ? new Date(object['expiry']) : null,
             metadata: object['metadata'],
             ownerId: object['owner_id'],
@@ -34,8 +34,8 @@ export const AuthTokenOutSerializer = {
         return {
             'id': self.id,
             'name': self.name,
-            'created_at': self.createdAt,
-            'updated_at': self.updatedAt,
+            'created': self.created,
+            'updated': self.updated,
             'expiry': self.expiry,
             'metadata': self.metadata,
             'owner_id': self.ownerId,

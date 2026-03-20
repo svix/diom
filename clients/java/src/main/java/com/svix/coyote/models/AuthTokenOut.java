@@ -30,8 +30,8 @@ import lombok.ToString;
 public class AuthTokenOut {
     @JsonProperty private String id;
     @JsonProperty private String name;
-    @JsonProperty("created_at") private OffsetDateTime createdAt;
-    @JsonProperty("updated_at") private OffsetDateTime updatedAt;
+    @JsonProperty private OffsetDateTime created;
+    @JsonProperty private OffsetDateTime updated;
     @JsonProperty private OffsetDateTime expiry;
     @JsonProperty private Map<String,String> metadata;
     @JsonProperty("owner_id") private String ownerId;
@@ -77,42 +77,42 @@ public class AuthTokenOut {
         this.name = name;
     }
 
-    public AuthTokenOut createdAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+    public AuthTokenOut created(OffsetDateTime created) {
+        this.created = created;
         return this;
     }
 
     /**
-    * Get createdAt
+    * Get created
     *
-     * @return createdAt
+     * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
+    public OffsetDateTime getCreated() {
+        return created;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setCreated(OffsetDateTime created) {
+        this.created = created;
     }
 
-    public AuthTokenOut updatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public AuthTokenOut updated(OffsetDateTime updated) {
+        this.updated = updated;
         return this;
     }
 
     /**
-    * Get updatedAt
+    * Get updated
     *
-     * @return updatedAt
+     * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
+    public OffsetDateTime getUpdated() {
+        return updated;
     }
 
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setUpdated(OffsetDateTime updated) {
+        this.updated = updated;
     }
 
     public AuthTokenOut expiry(OffsetDateTime expiry) {

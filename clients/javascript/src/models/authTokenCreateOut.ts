@@ -2,8 +2,8 @@
 
 export interface AuthTokenCreateOut {
     id: string;
-    createdAt: Date;
-    updatedAt: Date;
+    created: Date;
+    updated: Date;
     token: string;
 }
 
@@ -12,8 +12,8 @@ export const AuthTokenCreateOutSerializer = {
     _fromJsonObject(object: any): AuthTokenCreateOut {
         return {
             id: object['id'],
-            createdAt: new Date(object['created_at']),
-            updatedAt: new Date(object['updated_at']),
+            created: new Date(object['created']),
+            updated: new Date(object['updated']),
             token: object['token'],
         };
     },
@@ -22,8 +22,8 @@ export const AuthTokenCreateOutSerializer = {
     _toJsonObject(self: AuthTokenCreateOut): any {
         return {
             'id': self.id,
-            'created_at': self.createdAt,
-            'updated_at': self.updatedAt,
+            'created': self.created,
+            'updated': self.updated,
             'token': self.token,
         };
     }

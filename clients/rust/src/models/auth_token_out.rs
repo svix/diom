@@ -7,9 +7,9 @@ pub struct AuthTokenOut {
 
     pub name: String,
 
-    pub created_at: jiff::Timestamp,
+    pub created: jiff::Timestamp,
 
-    pub updated_at: jiff::Timestamp,
+    pub updated: jiff::Timestamp,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expiry: Option<jiff::Timestamp>,
@@ -28,8 +28,8 @@ impl AuthTokenOut {
     pub fn new(
         id: String,
         name: String,
-        created_at: jiff::Timestamp,
-        updated_at: jiff::Timestamp,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
         metadata: std::collections::HashMap<String, String>,
         owner_id: String,
         scopes: Vec<String>,
@@ -38,8 +38,8 @@ impl AuthTokenOut {
         Self {
             id,
             name,
-            created_at,
-            updated_at,
+            created,
+            updated,
             expiry: None,
             metadata,
             owner_id,

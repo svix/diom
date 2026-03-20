@@ -1721,11 +1721,11 @@
           "id": {
             "type": "string"
           },
-          "created_at": {
+          "created": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updated": {
             "type": "string",
             "format": "date-time"
           },
@@ -1735,8 +1735,8 @@
         },
         "required": [
           "id",
-          "created_at",
-          "updated_at",
+          "created",
+          "updated",
           "token"
         ]
       },
@@ -1856,11 +1856,11 @@
           "name": {
             "type": "string"
           },
-          "created_at": {
+          "created": {
             "type": "string",
             "format": "date-time"
           },
-          "updated_at": {
+          "updated": {
             "type": "string",
             "format": "date-time"
           },
@@ -1892,8 +1892,8 @@
         "required": [
           "id",
           "name",
-          "created_at",
-          "updated_at",
+          "created",
+          "updated",
           "metadata",
           "owner_id",
           "scopes",

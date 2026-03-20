@@ -25,8 +25,8 @@ pub struct AuthTokenRow {
     pub scopes: Vec<String>,
     /// Whether this token is currently enabled.
     pub enabled: bool,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
 impl TableRow for AuthTokenRow {

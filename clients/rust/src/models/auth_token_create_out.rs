@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 pub struct AuthTokenCreateOut {
     pub id: String,
 
-    pub created_at: jiff::Timestamp,
+    pub created: jiff::Timestamp,
 
-    pub updated_at: jiff::Timestamp,
+    pub updated: jiff::Timestamp,
 
     pub token: String,
 }
@@ -15,14 +15,14 @@ pub struct AuthTokenCreateOut {
 impl AuthTokenCreateOut {
     pub fn new(
         id: String,
-        created_at: jiff::Timestamp,
-        updated_at: jiff::Timestamp,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
         token: String,
     ) -> Self {
         Self {
             id,
-            created_at,
-            updated_at,
+            created,
+            updated,
             token,
         }
     }

@@ -36,8 +36,8 @@ use crate::{
 pub struct AuthTokenOut {
     pub id: Public<AuthTokenId>,
     pub name: String,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
     pub expiry: Option<Timestamp>,
     pub metadata: Metadata,
     pub owner_id: String,
@@ -56,8 +56,8 @@ impl From<AuthTokenModel> for AuthTokenOut {
             owner_id: m.owner_id,
             scopes: m.scopes,
             enabled: m.enabled,
-            created_at: m.created_at,
-            updated_at: m.updated_at,
+            created: m.created,
+            updated: m.updated,
         }
     }
 }
@@ -92,8 +92,8 @@ fn default_prefix() -> String {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenCreateOut {
     pub id: Public<AuthTokenId>,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
     pub token: String,
 }
 
@@ -126,8 +126,8 @@ async fn auth_token_create(
     let ret = AuthTokenCreateOut {
         id: resp.model.id.public(),
         token: token.expose_plaintext_dangerously(),
-        created_at: resp.model.created_at,
-        updated_at: resp.model.updated_at,
+        created: resp.model.created,
+        updated: resp.model.updated,
     };
     Ok(MsgPackOrJson(ret))
 }

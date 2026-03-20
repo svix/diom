@@ -19,8 +19,8 @@ pub struct AuthTokenModel {
     pub scopes: Vec<String>,
     /// Whether this token is currently enabled.
     pub enabled: bool,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
 impl From<AuthTokenRow> for AuthTokenModel {
@@ -33,8 +33,8 @@ impl From<AuthTokenRow> for AuthTokenModel {
             owner_id: row.owner_id,
             scopes: row.scopes,
             enabled: row.enabled,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            created: row.created,
+            updated: row.updated,
         }
     }
 }
@@ -127,8 +127,8 @@ impl AuthTokenController {
                     owner_id: input.owner_id,
                     scopes: input.scopes,
                     enabled: input.enabled,
-                    created_at: input.now,
-                    updated_at: input.now,
+                    created: input.now,
+                    updated: input.now,
                 },
             };
             let mut batch = db.batch();
@@ -284,7 +284,7 @@ impl AuthTokenController {
             if let Some(enabled) = enabled {
                 row.enabled = enabled;
             }
-            row.updated_at = now;
+            row.updated = now;
             let entity = AuthTokenEntity {
                 namespace_id,
                 token_hashed: id_index.token_hashed,

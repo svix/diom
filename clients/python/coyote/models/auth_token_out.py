@@ -11,9 +11,9 @@ class AuthTokenOut(BaseModel):
 
     name: str
 
-    created_at: datetime = Field(alias="created_at")
+    created: datetime
 
-    updated_at: datetime = Field(alias="updated_at")
+    updated: datetime
 
     expiry: t.Optional[datetime] = None
 
