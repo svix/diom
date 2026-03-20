@@ -58,15 +58,15 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
     assert_eq!(cache1["eviction_policy"], "LeastRecentlyUsed");
     assert_eq!(cache1["storage_type"], "Persistent");
 
-    let stream2 = client
+    let msgs2 = client
         .post("msgs/namespace/get")
-        .json(json!({"name": "stream2"}))
+        .json(json!({"name": "msgs2"}))
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(stream2["name"], "stream2");
-    assert!(stream2["retention"].is_object());
-    assert_eq!(stream2["storage_type"], "Persistent");
+    assert_eq!(msgs2["name"], "msgs2");
+    assert!(msgs2["retention"].is_object());
+    assert_eq!(msgs2["storage_type"], "Persistent");
 
     Ok(())
 }

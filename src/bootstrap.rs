@@ -22,7 +22,7 @@ enum BootstrapCommand {
     Cache(CacheCreateNamespaceIn),
     Idempotency(IdempotencyCreateNamespaceIn),
     RateLimit(RateLimitCreateNamespaceIn),
-    Stream(MsgNamespaceCreateIn),
+    Msgs(MsgNamespaceCreateIn),
 }
 
 impl BootstrapCommand {
@@ -54,8 +54,8 @@ impl BootstrapCommand {
                     .client_write(coyote_rate_limit::operations::CreateRateLimitOperation::from(v))
                     .await?;
             }
-            BootstrapCommand::Stream(v) => {
-                tracing::debug!(name = v.name, "bootstrapping stream");
+            BootstrapCommand::Msgs(v) => {
+                tracing::debug!(name = v.name, "bootstrapping msgs");
                 raft_state
                     .client_write(coyote_msgs::operations::CreateNamespaceOperation::from(v))
                     .await?;
@@ -70,7 +70,7 @@ impl BootstrapCommand {
             BootstrapCommand::Cache(v) => &v.name,
             BootstrapCommand::Idempotency(v) => &v.name,
             BootstrapCommand::RateLimit(v) => &v.name,
-            BootstrapCommand::Stream(v) => &v.name,
+            BootstrapCommand::Msgs(v) => &v.name,
         }
     }
 }
@@ -119,9 +119,9 @@ impl FromStr for BootstrapCommand {
                     format!("invalid JSON for rate-limit namespace: {json_str:?}")
                 })?,
             )),
-            "stream" => Ok(BootstrapCommand::Stream(
+            "msgs" => Ok(BootstrapCommand::Msgs(
                 serde_json::from_str(json_str)
-                    .with_context(|| format!("invalid JSON for stream namespace: {json_str:?}"))?,
+                    .with_context(|| format!("invalid JSON for msgs namespace: {json_str:?}"))?,
             )),
             _ => bail!("unknown module {module:?}"),
         }
@@ -155,8 +155,8 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
     }
 
     ensure_default!(
-        Stream,
-        BootstrapCommand::Stream(MsgNamespaceCreateIn {
+        Msgs,
+        BootstrapCommand::Msgs(MsgNamespaceCreateIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
             storage_type: StorageType::Persistent,
             retention: Retention::default(),
@@ -320,9 +320,9 @@ mod tests {
     }
 
     #[test]
-    fn stream_defaults() {
-        let cmd: BootstrapCommand = r#"stream namespace create {"name":"myns"}"#.parse().unwrap();
-        let BootstrapCommand::Stream(v) = cmd else {
+    fn msgs_defaults() {
+        let cmd: BootstrapCommand = r#"msgs namespace create {"name":"myns"}"#.parse().unwrap();
+        let BootstrapCommand::Msgs(v) = cmd else {
             panic!()
         };
         assert_eq!(v.name, "myns");
@@ -331,12 +331,12 @@ mod tests {
     }
 
     #[test]
-    fn stream_with_options() {
+    fn msgs_with_options() {
         let cmd: BootstrapCommand =
-            r#"stream namespace create {"name":"myns","retention":{"millis":60000,"bytes":500}}"#
+            r#"msgs namespace create {"name":"myns","retention":{"millis":60000,"bytes":500}}"#
                 .parse()
                 .unwrap();
-        let BootstrapCommand::Stream(v) = cmd else {
+        let BootstrapCommand::Msgs(v) = cmd else {
             panic!()
         };
         assert_eq!(v.retention.millis.get(), 60000);
@@ -457,7 +457,7 @@ mod tests {
         ));
         assert!(
             cmds.iter().any(
-                |c| matches!(c, BootstrapCommand::Stream(v) if v.name == DEFAULT_NAMESPACE_NAME)
+                |c| matches!(c, BootstrapCommand::Msgs(v) if v.name == DEFAULT_NAMESPACE_NAME)
             )
         );
     }

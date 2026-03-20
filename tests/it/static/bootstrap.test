@@ -2,4 +2,4 @@ kv namespace create {"name":"default","storage_type":"Ephemeral","max_storage_by
 kv namespace create {"name":"kv1","storage_type":"Ephemeral","max_storage_bytes":2000}
 kv namespace create {"name":"kv2","storage_type":"Persistent","max_storage_bytes":3000}
 cache namespace create {"name":"cache1","storage_type":"Persistent","eviction_policy":"LeastRecentlyUsed"}
-stream namespace create {"name":"stream2","storage_type":"Persistent"}
+msgs namespace create {"name":"msgs2","storage_type":"Persistent"}
