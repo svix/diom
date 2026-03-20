@@ -25,7 +25,7 @@ async fn kv_set(
         .await?
         .ensure(StatusCode::OK)?
         .json();
-    anyhow::ensure!(response["success"].as_bool().unwrap(), "set should succeed");
+    anyhow::ensure!(response["success"] == true, "set should succeed");
     Ok(())
 }
 
@@ -47,7 +47,7 @@ async fn kv_set_unsuccessful(
         .await?
         .ensure(StatusCode::OK)?
         .json();
-    anyhow::ensure!(!response["success"].as_bool().unwrap(), "set should fail");
+    anyhow::ensure!(response["success"] == false, "set should fail");
     Ok(())
 }
 
