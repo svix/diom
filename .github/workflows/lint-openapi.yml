@@ -9,13 +9,15 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      - uses: pb33f/vacuum-action@v2
-        with:
-          openapi_path: openapi.json
-          ruleset: .vacuum.yaml
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # raise this as time goes on and we fix some stuff
-          minimum_score: 0
+      - name: Run vacuum lint
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work:ro \
+            dshanley/vacuum lint \
+            openapi.json \
+            --pipeline-output \
+            --fail-severity error \
+            --ruleset .vacuum.yaml \
+            --min-score 0
