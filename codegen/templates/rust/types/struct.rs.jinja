@@ -1,6 +1,6 @@
 {% from "types/macros.rs.jinja" import ident -%}
 {% set type_name = type.name | to_upper_camel_case -%}
-{% set has_positional_fields = type.fields | selectattr("positional") | length > 0 -%}
+{% set positional_fields = type.fields | selectattr("positional") -%}
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -17,7 +17,7 @@ use super::{
     Default,
     {%- endif %}
     Deserialize,
-    {%- if not has_positional_fields %}
+    {%- if positional_fields | length == 0 %}
     Serialize,
     {%- endif %}
 )]
@@ -96,7 +96,7 @@ impl {{ type_name }} {
     {% endfor -%}
 }
 
-{%- if has_positional_fields %}
+{%- if positional_fields | length > 0 %}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct {{ type_name }}_ {

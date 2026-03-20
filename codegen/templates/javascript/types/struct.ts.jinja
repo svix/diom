@@ -6,10 +6,9 @@ import {
 } from './{{ c | to_lower_camel_case }}';
 {% endfor -%}
 {% set type_name = type.name | to_upper_camel_case -%}
-{% set has_positional_fields = type.fields | selectattr("positional") | length > 0 -%}
-{% set has_non_positional_fields = type.fields | selectattr("positional", "false") | length > 0 -%}
+{% set positional_fields = type.fields | selectattr("positional") -%}
 
-{% if not has_non_positional_fields -%}
+{% if type.fields | selectattr("positional", "false") | length == 0 -%}
 // biome-ignore-all lint/suspicious/noEmptyInterface: forwards compat
 {% endif -%}
 
@@ -29,7 +28,7 @@ export interface {{ type_name }} {
 {%- endfor %}
 }
 
-{% if has_positional_fields -%}
+{% if positional_fields | length > 0 -%}
 export interface {{ type_name }}_ {
     {%- include "types/struct_fields.ts.jinja" %}
 }
@@ -37,7 +36,7 @@ export interface {{ type_name }}_ {
 {% endif -%}
 
 export const {{ type_name }}Serializer = {
-    {% if has_positional_fields %}{% set type_name = type_name ~ "_" %}{% endif -%}
+    {% if positional_fields | length > 0 %}{% set type_name = type_name ~ "_" %}{% endif -%}
     {% set underscore_prefix %}{% if type.fields | length == 0%}_{% endif %}{% endset -%}
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject({{ underscore_prefix }}object: any): {{ type_name }} {

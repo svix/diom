@@ -31,11 +31,9 @@ export class {{ resource_type_name }} {
     {%- if op.request_body_schema_name is defined %}
         {# positional body parameters -#}
         {% set body_schema = api.types[op.request_body_schema_name] -%}
-        {% set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 -%}
-        {% for field in body_schema.fields -%}
-        {% if field.positional -%}
+        {% set positional_fields = body_schema.fields | selectattr("positional") -%}
+        {% for field in positional_fields -%}
             {{ field.name | to_snake_case }}: {{ field.type.to_js() }},
-        {% endif -%}
         {% endfor -%}
 
         {# body parameter interface -#}
@@ -47,14 +45,12 @@ export class {{ resource_type_name }} {
 
         {# body parameter -#}
         {% if op.request_body_schema_name is defined -%}
-        {% if has_positional_fields -%}
+        {% if positional_fields | length > 0 -%}
         {% set body -%}
             {
                 ...{{ req_body_schema_name }},
-            {%- for field in body_schema.fields %}
-                {%- if field.positional %}
+            {%- for field in positional_fields %}
                 {{ field.name | to_snake_case }},
-                {%- endif %}
             {%- endfor %}
             }
         {%- endset -%}

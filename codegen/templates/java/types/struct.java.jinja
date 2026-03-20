@@ -1,5 +1,5 @@
 {% set class_name = type.name | to_upper_camel_case -%}
-{% set has_positional_fields = type.fields | selectattr("positional") | length > 0 -%}
+{% set positional_fields = type.fields | selectattr("positional") -%}
 {% macro fromJson_toJson(ty) -%}
     /**
      * Create an instance of {{ ty }} given a JSON string
@@ -152,13 +152,13 @@ public class {{ class_name }} {
     {%- endif %}
     {%- endif %}
 {%- endfor %}
-{%- if not has_positional_fields %}
+{%- if positional_fields | length == 0 %}
 
     {{ fromJson_toJson(class_name) }}
 {%- endif %}
 }
 
-{%- if has_positional_fields %}
+{%- if positional_fields | length > 0 %}
 {%- set extra_class_decl -%}
 // this file is @generated
 package com.svix.diom.models;

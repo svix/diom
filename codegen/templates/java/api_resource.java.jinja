@@ -52,8 +52,8 @@ public class {{ resource_type_name }} {
 
         {#- positional body parameters #}
         {%- set body_schema = api.types[op.request_body_schema_name] %}
-        {%- set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 %}
-        {%- for field in body_schema.fields | selectattr("positional") %}
+        {%- set positional_fields = body_schema.fields | selectattr("positional") %}
+        {%- for field in positional_fields %}
         {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }},
         {%- endfor %}
 
@@ -69,7 +69,7 @@ public class {{ resource_type_name }} {
 
         {#- request body #}
         {%- if op.request_body_schema_name is defined %}
-            {%- if has_positional_fields %}
+            {%- if positional_fields | length > 0 %}
         {{ op.request_body_schema_name }}_ body = new {{ op.request_body_schema_name }}_(
         {%- set args %}
         {%- for field in body_schema.fields %}
@@ -106,9 +106,9 @@ public class {{ resource_type_name }} {
         );
     }
 
-    {%- if has_positional_fields and
+    {%- if positional_fields is defined and
         (body_schema.fields | selectattr("required") | length)
-            == (body_schema.fields | selectattr("positional") | length) %}
+            == (positional_fields | length) %}
     {#- if all required body parameters are positional, generate
         an extra overload without the body parameter interface #}
 
@@ -119,7 +119,7 @@ public class {{ resource_type_name }} {
     public {{ res_type }} {{ method_name }}(
         {%- set func_args %}
         {#- positional body parameters #}
-        {%- for field in body_schema.fields | selectattr("positional") %}
+        {%- for field in positional_fields %}
         {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }},
         {%- endfor %}
         {% endset -%}
@@ -127,7 +127,7 @@ public class {{ resource_type_name }} {
     ) {{ throws }} {
         {% if res_type != "void" %}return {% endif -%}
         this.{{ method_name }}(
-            {%- for field in body_schema.fields | selectattr("positional") %}
+            {%- for field in positional_fields %}
             {{ field.name | to_lower_camel_case }},
             {%- endfor %}
             new {{ op.request_body_schema_name }}()

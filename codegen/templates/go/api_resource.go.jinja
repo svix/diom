@@ -63,11 +63,9 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 	{%- if op.request_body_schema_name is defined %}
 		{# positional body parameters -#}
 		{% set body_schema = api.types[op.request_body_schema_name] -%}
-		{% set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 -%}
-		{% for field in body_schema.fields -%}
-			{% if field.positional -%}
+		{% set positional_fields = body_schema.fields | selectattr("positional") -%}
+		{% for field in positional_fields -%}
 			{{ field.name | to_lower_camel_case }} {{ field.type.to_go() }},
-			{% endif -%}
 		{% endfor -%}
 
 		{# body parameter interface -#}
@@ -76,7 +74,7 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 ) {{ func_ret_type }} {
 	{# body parameter -#}
 	{% if op.request_body_schema_name is defined -%}
-		{% if has_positional_fields -%}
+		{% if positional_fields | length > 0 -%}
 	body := diom_models.{{ op.request_body_schema_name }}_{
 		{%- for field in body_schema.fields %}
 			{{ field.name | to_upper_camel_case }}:
@@ -97,7 +95,7 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 	{% if op.request_body_schema_name is defined -%}
 		{% set generics -%}
 			diom_models.{{ op.request_body_schema_name }}
-			{%- if has_positional_fields %}_{% endif %}, {{ ret_type }}
+			{%- if positional_fields | length > 0 %}_{% endif %}, {{ ret_type }}
 		{%- endset -%}
 	{% else -%}
 		{% set generics -%}any, {{ ret_type }}{% endset -%}
