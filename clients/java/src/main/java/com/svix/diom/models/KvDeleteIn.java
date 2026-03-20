@@ -30,7 +30,7 @@ import lombok.ToString;
 public class KvDeleteIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    public KvDeleteIn () {}
+    public KvDeleteIn() {}
 
     public KvDeleteIn namespace(String namespace) {
         this.namespace = namespace;
@@ -49,43 +49,5 @@ public class KvDeleteIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
-    }
-
-    public KvDeleteIn key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    /**
-    * Get key
-    *
-     * @return key
-     */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-    /**
-     * Create an instance of KvDeleteIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of KvDeleteIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to KvDeleteIn
-     */
-    public static KvDeleteIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, KvDeleteIn.class);
-    }
-
-    /**
-     * Convert an instance of KvDeleteIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

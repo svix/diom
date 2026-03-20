@@ -31,7 +31,7 @@ public class RateLimitGetRemainingIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private RateLimitTokenBucketConfig config;
-    public RateLimitGetRemainingIn () {}
+    public RateLimitGetRemainingIn() {}
 
     public RateLimitGetRemainingIn namespace(String namespace) {
         this.namespace = namespace;
@@ -89,6 +89,7 @@ public class RateLimitGetRemainingIn {
     public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
+
     /**
      * Create an instance of RateLimitGetRemainingIn given an JSON string
      *

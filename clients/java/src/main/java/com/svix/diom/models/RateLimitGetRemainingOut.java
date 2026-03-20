@@ -30,7 +30,7 @@ import lombok.ToString;
 public class RateLimitGetRemainingOut {
     @JsonProperty private Long remaining;
     @JsonProperty("retry_after_millis") private Long retryAfterMillis;
-    public RateLimitGetRemainingOut () {}
+    public RateLimitGetRemainingOut() {}
 
     public RateLimitGetRemainingOut remaining(Long remaining) {
         this.remaining = remaining;
@@ -69,6 +69,7 @@ public class RateLimitGetRemainingOut {
     public void setRetryAfterMillis(Long retryAfterMillis) {
         this.retryAfterMillis = retryAfterMillis;
     }
+
     /**
      * Create an instance of RateLimitGetRemainingOut given an JSON string
      *

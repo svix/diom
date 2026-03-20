@@ -20,6 +20,12 @@ import okhttp3.HttpUrl;
 {%- for c in referenced_components %}
 import com.svix.diom.models.{{ c | to_upper_camel_case }};
 {%- endfor %}
+{%- for op in resource.operations %}
+{%- if op.request_body_schema_name is defined and
+    api.types[op.request_body_schema_name].fields | selectattr("positional") | length > 0 %}
+import com.svix.diom.models.{{ op.request_body_schema_name }}_;
+{%- endif %}
+{%- endfor %}
 
 public class {{ resource_type_name }} {
     private final HttpClient client;
@@ -29,6 +35,7 @@ public class {{ resource_type_name }} {
     }
 
 {%- for op in resource.operations %}
+    {%- set method_name = op.name | to_lower_camel_case %}
     {%- set throws = "throws IOException, ApiException" %}
     {%- set res_type = "void" %}
     {%- if op.response_body_schema_name is defined %}
@@ -39,52 +46,93 @@ public class {{ resource_type_name }} {
     {% if op.deprecated -%}
     @Deprecated
     {% endif -%}
-    public {{ res_type }} {{ op.name | to_lower_camel_case }}(
-        {% set func_args -%}
-        {# path parameters -#}
-        {% for p in op.path_params -%}
-            final String {{ p | to_lower_camel_case }},
-        {% endfor -%}
+    public {{ res_type }} {{ method_name }}(
+        {%- set func_args %}
+        {%- if op.request_body_schema_name is defined %}
 
-        {# body parameter interface -#}
-        {% if op.request_body_schema_name is defined -%}
-            {% set req_body_field_name = op.request_body_schema_name | to_lower_camel_case -%}
-            final {{ op.request_body_schema_name }} {{ req_body_field_name }},
-        {% endif -%}
+        {#- positional body parameters #}
+        {%- set body_schema = api.types[op.request_body_schema_name] %}
+        {%- set has_positional_fields = body_schema.fields | selectattr("positional") | length > 0 %}
+        {%- for field in body_schema.fields | selectattr("positional") %}
+        {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }},
+        {%- endfor %}
+
+        {#- body parameter interface #}
+        {%- set req_body_field_name = op.request_body_schema_name | to_lower_camel_case %}
+        final {{ op.request_body_schema_name }} {{ req_body_field_name }},
+
+        {%- endif %}
         {% endset -%}
         {{ func_args | strip_trailing_comma }}
     ) {{ throws }} {
-        {# path params -#}
-        {% if op.path_params | length > 0 -%}
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath(String.format(
-            "{{ op.path | generate_java_path_str(op.path_params) }}"
-            {%- for p in op.path_params -%}
-            ,
-            {{ p | to_lower_camel_case }}
-            {%- endfor -%}
-        ));
-        {% else -%}
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("{{ op.path }}");
-        {% endif -%}
+
+        {#- request body #}
+        {%- if op.request_body_schema_name is defined %}
+            {%- if has_positional_fields %}
+        {{ op.request_body_schema_name }}_ body = new {{ op.request_body_schema_name }}_(
+        {%- set args %}
+        {%- for field in body_schema.fields %}
+            {% if not field.positional -%}
+                {{ req_body_field_name }}.get{{ field.name | to_upper_camel_case }}(),
+            {%- else -%}
+                {{ field.name | to_lower_camel_case }},
+            {%- endif -%}
+        {%- endfor %}
+        {%- endset %}
+        {{- args | strip_trailing_comma }}
+        );
+
+                {%- set body = "body" %}
+            {%- else %}
+                {%- set body = req_body_field_name %}
+            {%- endif %}
+        {%- else %}
+        {%- set body = "null" %}
+        {%- endif %}
 
         {% if res_type != "void" %}return {% endif -%}
         this.client.executeRequest(
             "{{ op.method | upper }}",
             url.build(),
             null,
-            {# request body -#}
-            {% if op.request_body_schema_name is defined -%}
-            {{ req_body_field_name }},
-            {% else -%}
-            null,
-            {% endif -%}
-            {# response body class -#}
-            {% if op.response_body_schema_name is defined -%}
+            {{ body }},
+            {#- response body class #}
+            {%- if op.response_body_schema_name is defined %}
             {{ res_type }}.class
-            {% else -%}
+            {%- else %}
             null
-            {% endif -%}
+            {%- endif %}
         );
     }
+
+    {%- if has_positional_fields and
+        (body_schema.fields | selectattr("required") | length)
+            == (body_schema.fields | selectattr("positional") | length) %}
+    {#- if all required body parameters are positional, generate
+        an extra overload without the body parameter interface #}
+
+    {{ op.description | with_javadoc_deprecation(op.deprecated) | to_doc_comment(style="java") }}
+    {% if op.deprecated -%}
+    @Deprecated
+    {% endif -%}
+    public {{ res_type }} {{ method_name }}(
+        {%- set func_args %}
+        {#- positional body parameters #}
+        {%- for field in body_schema.fields | selectattr("positional") %}
+        {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }},
+        {%- endfor %}
+        {% endset -%}
+        {{ func_args | strip_trailing_comma }}
+    ) {{ throws }} {
+        {% if res_type != "void" %}return {% endif -%}
+        this.{{ method_name }}(
+            {%- for field in body_schema.fields | selectattr("positional") %}
+            {{ field.name | to_lower_camel_case }},
+            {%- endfor %}
+            new {{ op.request_body_schema_name }}()
+        );
+    }
+    {%- endif %}
 {%- endfor %}
 }

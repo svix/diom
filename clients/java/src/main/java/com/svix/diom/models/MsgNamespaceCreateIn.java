@@ -31,26 +31,7 @@ public class MsgNamespaceCreateIn {
     @JsonProperty private String name;
     @JsonProperty private Retention retention;
     @JsonProperty("storage_type") private StorageType storageType;
-    public MsgNamespaceCreateIn () {}
-
-    public MsgNamespaceCreateIn name(String name) {
-        this.name = name;
-        return this;
-    }
-
-    /**
-    * Get name
-    *
-     * @return name
-     */
-    @javax.annotation.Nonnull
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    public MsgNamespaceCreateIn() {}
 
     public MsgNamespaceCreateIn retention(Retention retention) {
         this.retention = retention;
@@ -88,24 +69,5 @@ public class MsgNamespaceCreateIn {
 
     public void setStorageType(StorageType storageType) {
         this.storageType = storageType;
-    }
-    /**
-     * Create an instance of MsgNamespaceCreateIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgNamespaceCreateIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgNamespaceCreateIn
-     */
-    public static MsgNamespaceCreateIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgNamespaceCreateIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgNamespaceCreateIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

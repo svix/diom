@@ -31,7 +31,7 @@ public class RateLimitResetIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private RateLimitTokenBucketConfig config;
-    public RateLimitResetIn () {}
+    public RateLimitResetIn() {}
 
     public RateLimitResetIn namespace(String namespace) {
         this.namespace = namespace;
@@ -89,6 +89,7 @@ public class RateLimitResetIn {
     public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
+
     /**
      * Create an instance of RateLimitResetIn given an JSON string
      *

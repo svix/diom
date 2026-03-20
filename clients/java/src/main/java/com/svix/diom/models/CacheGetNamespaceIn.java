@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheGetNamespaceIn {
     @JsonProperty private String name;
-    public CacheGetNamespaceIn () {}
+    public CacheGetNamespaceIn() {}
 
     public CacheGetNamespaceIn name(String name) {
         this.name = name;
@@ -49,6 +49,7 @@ public class CacheGetNamespaceIn {
     public void setName(String name) {
         this.name = name;
     }
+
     /**
      * Create an instance of CacheGetNamespaceIn given an JSON string
      *

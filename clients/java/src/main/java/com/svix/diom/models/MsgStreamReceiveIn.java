@@ -33,7 +33,7 @@ public class MsgStreamReceiveIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
-    public MsgStreamReceiveIn () {}
+    public MsgStreamReceiveIn() {}
 
     public MsgStreamReceiveIn namespace(String namespace) {
         this.namespace = namespace;
@@ -52,44 +52,6 @@ public class MsgStreamReceiveIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
-    }
-
-    public MsgStreamReceiveIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public MsgStreamReceiveIn consumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-        return this;
-    }
-
-    /**
-    * Get consumerGroup
-    *
-     * @return consumerGroup
-     */
-    @javax.annotation.Nonnull
-    public String getConsumerGroup() {
-        return consumerGroup;
-    }
-
-    public void setConsumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
     }
 
     public MsgStreamReceiveIn batchSize(Short batchSize) {
@@ -128,24 +90,5 @@ public class MsgStreamReceiveIn {
 
     public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
-    }
-    /**
-     * Create an instance of MsgStreamReceiveIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgStreamReceiveIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgStreamReceiveIn
-     */
-    public static MsgStreamReceiveIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgStreamReceiveIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgStreamReceiveIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

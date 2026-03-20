@@ -33,7 +33,7 @@ public class MsgQueueReceiveIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
-    public MsgQueueReceiveIn () {}
+    public MsgQueueReceiveIn() {}
 
     public MsgQueueReceiveIn namespace(String namespace) {
         this.namespace = namespace;
@@ -52,44 +52,6 @@ public class MsgQueueReceiveIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
-    }
-
-    public MsgQueueReceiveIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public MsgQueueReceiveIn consumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-        return this;
-    }
-
-    /**
-    * Get consumerGroup
-    *
-     * @return consumerGroup
-     */
-    @javax.annotation.Nonnull
-    public String getConsumerGroup() {
-        return consumerGroup;
-    }
-
-    public void setConsumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
     }
 
     public MsgQueueReceiveIn batchSize(Short batchSize) {
@@ -128,24 +90,5 @@ public class MsgQueueReceiveIn {
 
     public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
-    }
-    /**
-     * Create an instance of MsgQueueReceiveIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgQueueReceiveIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgQueueReceiveIn
-     */
-    public static MsgQueueReceiveIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgQueueReceiveIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgQueueReceiveIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

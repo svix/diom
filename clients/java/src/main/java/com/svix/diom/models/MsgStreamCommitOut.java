@@ -28,7 +28,8 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamCommitOut {
-    public MsgStreamCommitOut () {}
+    public MsgStreamCommitOut() {}
+
     /**
      * Create an instance of MsgStreamCommitOut given an JSON string
      *

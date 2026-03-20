@@ -20,6 +20,9 @@ import com.svix.diom.models.KvGetIn;
 import com.svix.diom.models.KvGetOut;
 import com.svix.diom.models.KvSetIn;
 import com.svix.diom.models.KvSetOut;
+import com.svix.diom.models.KvSetIn_;
+import com.svix.diom.models.KvGetIn_;
+import com.svix.diom.models.KvDeleteIn_;
 
 public class Kv {
     private final HttpClient client;
@@ -30,43 +33,86 @@ public class Kv {
 
     /** KV Set */
     public KvSetOut set(
+        String key,
         final KvSetIn kvSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/set");
+        KvSetIn_ body = new KvSetIn_(
+            kvSetIn.getNamespace(),
+            key,
+            kvSetIn.getValue(),
+            kvSetIn.getTtl(),
+            kvSetIn.getBehavior(),
+            kvSetIn.getVersion()
+        );
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            kvSetIn,
+            body,
             KvSetOut.class
-            );
+        );
     }
 
     /** KV Get */
     public KvGetOut get(
+        String key,
         final KvGetIn kvGetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/get");
+        KvGetIn_ body = new KvGetIn_(
+            kvGetIn.getNamespace(),
+            key,
+            kvGetIn.getConsistency()
+        );
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            kvGetIn,
+            body,
             KvGetOut.class
-            );
+        );
+    }
+
+    /** KV Get */
+    public KvGetOut get(
+        String key
+    ) throws IOException, ApiException {
+        return this.get(
+            key,
+            new KvGetIn()
+        );
     }
 
     /** KV Delete */
     public KvDeleteOut delete(
+        String key,
         final KvDeleteIn kvDeleteIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/delete");
+        KvDeleteIn_ body = new KvDeleteIn_(
+            kvDeleteIn.getNamespace(),
+            key
+        );
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            kvDeleteIn,
+            body,
             KvDeleteOut.class
-            );
+        );
+    }
+
+    /** KV Delete */
+    public KvDeleteOut delete(
+        String key
+    ) throws IOException, ApiException {
+        return this.delete(
+            key,
+            new KvDeleteIn()
+        );
     }
 }

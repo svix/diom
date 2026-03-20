@@ -33,7 +33,7 @@ public class MsgStreamSeekIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
     @JsonProperty private String position;
-    public MsgStreamSeekIn () {}
+    public MsgStreamSeekIn() {}
 
     public MsgStreamSeekIn namespace(String namespace) {
         this.namespace = namespace;
@@ -52,44 +52,6 @@ public class MsgStreamSeekIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
-    }
-
-    public MsgStreamSeekIn topic(String topic) {
-        this.topic = topic;
-        return this;
-    }
-
-    /**
-    * Get topic
-    *
-     * @return topic
-     */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public MsgStreamSeekIn consumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-        return this;
-    }
-
-    /**
-    * Get consumerGroup
-    *
-     * @return consumerGroup
-     */
-    @javax.annotation.Nonnull
-    public String getConsumerGroup() {
-        return consumerGroup;
-    }
-
-    public void setConsumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
     }
 
     public MsgStreamSeekIn offset(Long offset) {
@@ -128,24 +90,5 @@ public class MsgStreamSeekIn {
 
     public void setPosition(String position) {
         this.position = position;
-    }
-    /**
-     * Create an instance of MsgStreamSeekIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgStreamSeekIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgStreamSeekIn
-     */
-    public static MsgStreamSeekIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgStreamSeekIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgStreamSeekIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

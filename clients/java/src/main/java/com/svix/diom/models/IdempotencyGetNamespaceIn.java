@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyGetNamespaceIn {
     @JsonProperty private String name;
-    public IdempotencyGetNamespaceIn () {}
+    public IdempotencyGetNamespaceIn() {}
 
     public IdempotencyGetNamespaceIn name(String name) {
         this.name = name;
@@ -49,6 +49,7 @@ public class IdempotencyGetNamespaceIn {
     public void setName(String name) {
         this.name = name;
     }
+
     /**
      * Create an instance of IdempotencyGetNamespaceIn given an JSON string
      *

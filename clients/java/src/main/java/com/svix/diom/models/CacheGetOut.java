@@ -30,7 +30,7 @@ import lombok.ToString;
 public class CacheGetOut {
     @JsonProperty private OffsetDateTime expiry;
     @JsonProperty private List<Byte> value;
-    public CacheGetOut () {}
+    public CacheGetOut() {}
 
     public CacheGetOut expiry(OffsetDateTime expiry) {
         this.expiry = expiry;
@@ -76,6 +76,7 @@ public class CacheGetOut {
     public void setValue(List<Byte> value) {
         this.value = value;
     }
+
     /**
      * Create an instance of CacheGetOut given an JSON string
      *
