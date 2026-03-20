@@ -2,7 +2,7 @@ use openraft::{AnyError, NodeId as RaftNodeId, StorageError, StorageIOError};
 
 macro_rules! build_openraft_storageio_error_helper {
     ($name:ident) => {
-        paste::paste! {
+        pastey::paste! {
             pub(crate) fn [< $name _err >]<N: RaftNodeId>(e: impl Into<AnyError>) -> StorageError<N> {
                 StorageError::IO {
                     source: StorageIOError::$name(e.into())

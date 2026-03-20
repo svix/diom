@@ -57,7 +57,7 @@ opentelemetry.workspace = true
 opentelemetry-http.workspace = true
 opentelemetry_sdk.workspace = true
 parking_lot.workspace = true
-paste.workspace = true
+pastey.workspace = true
 pnet.workspace = true
 rand.workspace = true
 regex.workspace = true
@@ -181,7 +181,7 @@ opentelemetry-otlp = { version = "0.31.0", default-features = false, features = 
 opentelemetry-semantic-conventions = "0.31.0"
 opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
 parking_lot = { version = "0.12", features = ["arc_lock", "send_guard"] }
-paste = "1.0.15"
+pastey = "0.2"
 pnet = "0.35"
 proc-macro2 = "1.0.78"
 quote = "1.0.15"
@@ -274,6 +274,3 @@ strip = true
 coyote-client.opt-level = 2
 hyper.opt-level = 2
 tokio.opt-level = 2
-
-[patch.crates-io]
-dotenvy = { git = "https://github.com/svix-jbrown/dotenvy.git", rev = "ffa0aa149e2c6da57113859001257f0d99b43431" }
