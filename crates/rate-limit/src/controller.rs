@@ -2,14 +2,16 @@ use std::time::Duration;
 
 use diom_error::Result;
 use diom_id::NamespaceId;
-use fjall_utils::TableRow;
+use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 
-use crate::{algorithms::TokenBucket, tables::TokenBucketRow};
+use crate::{
+    algorithms::TokenBucket,
+    tables::{ExpirationRow, TokenBucketRow},
+};
 
 #[derive(Clone)]
 pub struct RateLimitController {
-    #[allow(dead_code)]
     db: fjall::Database,
     tables: fjall::Keyspace,
 }
@@ -33,6 +35,7 @@ impl RateLimitController {
         .unwrap_or(TokenBucketRow {
             tokens: config.bucket_size,
             last_refill: now,
+            expiry: now,
         });
         Ok(config.get_new_capacity(bucket.tokens, now, bucket.last_refill))
     }
@@ -55,15 +58,26 @@ impl RateLimitController {
         }
 
         let remaining = capacity - wanted;
+        let expiry = now + config.calculate_when_full(capacity);
 
-        TokenBucketRow::insert(
+        let mut batch = self.db.batch();
+
+        batch.insert_row(
             &self.tables,
             TokenBucketRow::key_for(namespace_id, identifier),
             &TokenBucketRow {
                 tokens: remaining,
                 last_refill: new_last_refill,
+                expiry,
             },
         )?;
+        batch.insert_row(
+            &self.tables,
+            ExpirationRow::key_for(namespace_id, expiry, identifier),
+            &ExpirationRow {},
+        )?;
+
+        batch.commit()?;
 
         Ok((true, remaining, None))
     }
@@ -86,10 +100,28 @@ impl RateLimitController {
     }
 
     pub fn reset(&self, namespace_id: NamespaceId, identifier: &str) -> Result<()> {
-        TokenBucketRow::remove(
+        let row = TokenBucketRow::fetch(
             &self.tables,
             TokenBucketRow::key_for(namespace_id, identifier),
         )?;
+
+        if let Some(row) = row {
+            let mut batch = self.db.batch();
+
+            batch.remove_row(
+                &self.tables,
+                TokenBucketRow::key_for(namespace_id, identifier),
+            )?;
+            batch.remove_row(
+                &self.tables,
+                ExpirationRow::key_for(namespace_id, row.expiry, identifier),
+            )?;
+
+            batch.commit()?;
+        } else {
+            // FIXME: Should we error if not found?
+        }
+
         Ok(())
     }
 }
