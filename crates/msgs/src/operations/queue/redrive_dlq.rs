@@ -1,3 +1,4 @@
+use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::Error;
 use coyote_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -28,60 +29,67 @@ impl QueueRedriveDlqOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    fn apply_real(self, state: &State) -> coyote_operations::Result<QueueRedriveDlqResponseData> {
-        let topic_row = TopicRow::fetch(
-            &state.metadata_tables,
-            TopicRow::key_for(self.namespace_id, &self.topic),
-        )?
-        .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
-
-        let mut batch = state.db.batch();
-
-        for partition_idx in 0..topic_row.partitions {
-            let partition = Partition::new(partition_idx)?;
-
-            let Some(mut cursor) = StreamLeaseRow::fetch(
+    async fn apply_real(
+        self,
+        state: &State,
+    ) -> coyote_operations::Result<QueueRedriveDlqResponseData> {
+        let state = state.clone();
+        spawn_blocking_in_current_span(move || {
+            let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                TopicRow::key_for(self.namespace_id, &self.topic),
             )?
-            else {
-                continue;
-            };
+            .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
-            let leases = QueueLeaseRow::scan_partition(
-                &state.metadata_tables,
-                topic_row.id,
-                partition,
-                &self.consumer_group,
-            )?;
+            let mut batch = state.db.batch();
 
-            let mut min_redriven: Option<u64> = None;
-            for (msg_id, lease) in &leases {
-                if lease.is_dlq() {
-                    batch.remove(
+            for partition_idx in 0..topic_row.partitions {
+                let partition = Partition::new(partition_idx)?;
+
+                let Some(mut cursor) = StreamLeaseRow::fetch(
+                    &state.metadata_tables,
+                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                )?
+                else {
+                    continue;
+                };
+
+                let leases = QueueLeaseRow::scan_partition(
+                    &state.metadata_tables,
+                    topic_row.id,
+                    partition,
+                    &self.consumer_group,
+                )?;
+
+                let mut min_redriven: Option<u64> = None;
+                for (msg_id, lease) in &leases {
+                    if lease.is_dlq() {
+                        batch.remove(
+                            &state.metadata_tables,
+                            QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group)
+                                .into_fjall_key(),
+                        );
+                        min_redriven =
+                            Some(min_redriven.map_or(msg_id.offset, |m| m.min(msg_id.offset)));
+                    }
+                }
+
+                // Reset cursor to the earliest redriven offset so receive scans them again.
+                if let Some(new_offset) = min_redriven {
+                    cursor.offset = new_offset;
+                    batch.insert_row(
                         &state.metadata_tables,
-                        QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group)
-                            .into_fjall_key(),
-                    );
-                    min_redriven =
-                        Some(min_redriven.map_or(msg_id.offset, |m| m.min(msg_id.offset)));
+                        StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                        &cursor,
+                    )?;
                 }
             }
 
-            // Reset cursor to the earliest redriven offset so receive scans them again.
-            if let Some(new_offset) = min_redriven {
-                cursor.offset = new_offset;
-                batch.insert_row(
-                    &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
-                    &cursor,
-                )?;
-            }
-        }
+            batch.commit().map_err(Error::from)?;
 
-        batch.commit().map_err(Error::from)?;
-
-        Ok(QueueRedriveDlqResponseData {})
+            Ok(QueueRedriveDlqResponseData {})
+        })
+        .await?
     }
 }
 
@@ -89,11 +97,11 @@ impl QueueRedriveDlqOperation {
 pub struct QueueRedriveDlqResponseData {}
 
 impl MsgsRequest for QueueRedriveDlqOperation {
-    fn apply(
+    async fn apply(
         self,
         state: MsgsRaftState<'_>,
         _ctx: &coyote_operations::OpContext,
     ) -> QueueRedriveDlqResponse {
-        QueueRedriveDlqResponse(self.apply_real(state.msgs))
+        QueueRedriveDlqResponse(self.apply_real(state.msgs).await)
     }
 }

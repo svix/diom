@@ -1276,6 +1276,7 @@ dependencies = [
  "opentelemetry",
  "pastey",
  "serde",
+ "tokio",
  "tracing",
 ]
 

@@ -1,3 +1,4 @@
+use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::Error;
 use coyote_id::NamespaceId;
 use fjall_utils::WriteBatchExt;
@@ -39,37 +40,41 @@ impl QueueConfigureOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    fn apply_real(
+    async fn apply_real(
         self,
         state: &State,
         now: Timestamp,
     ) -> coyote_operations::Result<QueueConfigureResponseData> {
-        let mut batch = state.db.batch();
+        let state = state.clone();
+        spawn_blocking_in_current_span(move || {
+            let mut batch = state.db.batch();
 
-        let topic_row = TopicRow::fetch_or_create(
-            &state.metadata_tables,
-            &mut batch,
-            self.namespace_id,
-            &self.topic,
-            now,
-        )?;
+            let topic_row = TopicRow::fetch_or_create(
+                &state.metadata_tables,
+                &mut batch,
+                self.namespace_id,
+                &self.topic,
+                now,
+            )?;
 
-        let config = QueueConfigRow {
-            retry_schedule: self.retry_schedule,
-            dlq_topic: self.dlq_topic,
-        };
+            let config = QueueConfigRow {
+                retry_schedule: self.retry_schedule,
+                dlq_topic: self.dlq_topic,
+            };
 
-        batch.insert_row(
-            &state.metadata_tables,
-            QueueConfigRow::key_for(topic_row.id, &self.consumer_group),
-            &config,
-        )?;
-        batch.commit().map_err(Error::from)?;
+            batch.insert_row(
+                &state.metadata_tables,
+                QueueConfigRow::key_for(topic_row.id, &self.consumer_group),
+                &config,
+            )?;
+            batch.commit().map_err(Error::from)?;
 
-        Ok(QueueConfigureResponseData {
-            retry_schedule: config.retry_schedule,
-            dlq_topic: config.dlq_topic,
+            Ok(QueueConfigureResponseData {
+                retry_schedule: config.retry_schedule,
+                dlq_topic: config.dlq_topic,
+            })
         })
+        .await?
     }
 }
 
@@ -80,11 +85,11 @@ pub struct QueueConfigureResponseData {
 }
 
 impl MsgsRequest for QueueConfigureOperation {
-    fn apply(
+    async fn apply(
         self,
         state: MsgsRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> QueueConfigureResponse {
-        QueueConfigureResponse(self.apply_real(state.msgs, ctx.timestamp))
+        QueueConfigureResponse(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }
