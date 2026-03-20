@@ -17,6 +17,7 @@ use axum::{
     Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
     serve::ListenerExt as _,
 };
+use coyote_client::CoyoteClient;
 use coyote_core::Monotime;
 use coyote_error::Error;
 use fjall_utils::{Databases, ReadonlyDatabases};
@@ -94,6 +95,8 @@ pub struct AppState {
     pub meter: Meter,
     pub request_metrics: Arc<RequestMetrics>,
     pub conn_metrics: Arc<ConnectionMetrics>,
+
+    pub coyote_client: CoyoteClient,
 
     #[allow(unused)]
     pub(crate) time: Monotime,
@@ -196,6 +199,18 @@ impl AppState {
         let request_metrics = Arc::new(RequestMetrics::new(&meter));
         let conn_metrics = Arc::new(ConnectionMetrics::new(&meter));
 
+        let mut listen_addr = cfg.listen_address;
+        if listen_addr.ip().is_unspecified() {
+            listen_addr.set_ip(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST));
+        }
+        let coyote_client = CoyoteClient::new(
+            cfg.admin_token.clone().unwrap_or_default(),
+            Some(coyote_client::CoyoteOptions {
+                server_url: Some(format!("http://{listen_addr}")),
+                ..Default::default()
+            }),
+        );
+
         AppState {
             cfg,
             namespace_state,
@@ -204,6 +219,7 @@ impl AppState {
             meter,
             request_metrics,
             conn_metrics,
+            coyote_client,
             time,
         }
     }

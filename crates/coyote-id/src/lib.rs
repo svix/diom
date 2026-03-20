@@ -11,6 +11,7 @@ mod marker;
 use self::marker::{IdMarker, PublicIdMarker};
 pub use self::public::Public;
 
+pub type AuthTokenId = Id<m::AuthToken>;
 pub type NamespaceId = Id<m::Namespace>;
 pub type TopicId = Id<m::Topic>;
 
@@ -22,7 +23,7 @@ mod m {
     id_marker!(Topic);
 
     // Markers for public IDs
-    // id_marker!(Foo, "foo_");
+    id_marker!(AuthToken, "key_");
 }
 
 pub struct Id<M> {

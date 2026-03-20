@@ -13,7 +13,10 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 use self::{
     cmds::{
-        api::{AdminArgs, CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
+        api::{
+            AdminArgs, AuthTokenArgs, CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs,
+            RateLimitArgs,
+        },
         benchmark::BenchmarkArgs,
         cluster::ClusterAdminArgs,
     },
@@ -84,6 +87,7 @@ impl Cli {
 // N.b Ordering matters here for how clap presents the help.
 #[derive(Subcommand)]
 enum RootCommands {
+    AuthToken(AuthTokenArgs),
     Cache(CacheArgs),
     Idempotency(IdempotencyArgs),
     Kv(KvArgs),
@@ -132,6 +136,10 @@ async fn main() -> Result<()> {
         RootCommands::Completion { shell } => cmds::completion::generate(&shell)?,
 
         // Remote API calls
+        RootCommands::AuthToken(args) => {
+            let client = get_client(&cfg?)?;
+            args.command.exec(&client, color_mode).await?;
+        }
         RootCommands::Cache(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client, color_mode).await?;

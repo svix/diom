@@ -5,6 +5,22 @@ package coyote
 import coyote_models "github.com/svix/coyote/clients/go/internal/models"
 
 type (
+	AuthTokenCreateIn             = coyote_models.AuthTokenCreateIn
+	AuthTokenCreateNamespaceIn    = coyote_models.AuthTokenCreateNamespaceIn
+	AuthTokenCreateNamespaceOut   = coyote_models.AuthTokenCreateNamespaceOut
+	AuthTokenCreateOut            = coyote_models.AuthTokenCreateOut
+	AuthTokenDeleteIn             = coyote_models.AuthTokenDeleteIn
+	AuthTokenDeleteOut            = coyote_models.AuthTokenDeleteOut
+	AuthTokenExpireIn             = coyote_models.AuthTokenExpireIn
+	AuthTokenExpireOut            = coyote_models.AuthTokenExpireOut
+	AuthTokenGetNamespaceIn       = coyote_models.AuthTokenGetNamespaceIn
+	AuthTokenGetNamespaceOut      = coyote_models.AuthTokenGetNamespaceOut
+	AuthTokenListIn               = coyote_models.AuthTokenListIn
+	AuthTokenOut                  = coyote_models.AuthTokenOut
+	AuthTokenUpdateIn             = coyote_models.AuthTokenUpdateIn
+	AuthTokenUpdateOut            = coyote_models.AuthTokenUpdateOut
+	AuthTokenVerifyIn             = coyote_models.AuthTokenVerifyIn
+	AuthTokenVerifyOut            = coyote_models.AuthTokenVerifyOut
 	CacheCreateNamespaceIn        = coyote_models.CacheCreateNamespaceIn
 	CacheCreateNamespaceOut       = coyote_models.CacheCreateNamespaceOut
 	CacheDeleteIn                 = coyote_models.CacheDeleteIn
@@ -41,6 +57,7 @@ type (
 	KvGetOut                      = coyote_models.KvGetOut
 	KvSetIn                       = coyote_models.KvSetIn
 	KvSetOut                      = coyote_models.KvSetOut
+	ListResponseAuthTokenOut      = coyote_models.ListResponseAuthTokenOut
 	MsgIn                         = coyote_models.MsgIn
 	MsgNamespaceCreateIn          = coyote_models.MsgNamespaceCreateIn
 	MsgNamespaceCreateOut         = coyote_models.MsgNamespaceCreateOut

@@ -1,0 +1,28 @@
+[package]
+name = "coyote-auth-token"
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+base64.workspace = true
+coyote-core.workspace = true
+coyote-error.workspace = true
+coyote-id.workspace = true
+coyote-namespace.workspace = true
+coyote-operations.workspace = true
+fjall.workspace = true
+fjall-utils.workspace = true
+jiff.workspace = true
+rand.workspace = true
+serde.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

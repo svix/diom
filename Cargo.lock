@@ -962,11 +962,13 @@ dependencies = [
  "axum-extra",
  "byteorder",
  "constant_time_eq 0.4.2",
+ "coyote-auth-token",
  "coyote-cache",
  "coyote-client",
  "coyote-core",
  "coyote-derive",
  "coyote-error",
+ "coyote-id",
  "coyote-idempotency",
  "coyote-kv",
  "coyote-msgs",
@@ -1018,6 +1020,27 @@ dependencies = [
  "uuid",
  "validator",
  "zip",
+]
+
+[[package]]
+name = "coyote-auth-token"
+version = "0.0.1"
+dependencies = [
+ "base64 0.22.1",
+ "coyote-core",
+ "coyote-error",
+ "coyote-id",
+ "coyote-namespace",
+ "coyote-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "rand 0.9.2",
+ "serde",
+ "sha2",
+ "tempfile",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
