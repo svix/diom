@@ -2,7 +2,7 @@
 use clap::{Args, Subcommand};
 use coyote_client::CoyoteClient;
 
-use super::AdminClusterArgs;
+use super::{AdminAuthTokenArgs, AdminClusterArgs};
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -13,6 +13,7 @@ pub struct AdminArgs {
 
 #[derive(Subcommand)]
 pub enum AdminCommands {
+    AuthToken(AdminAuthTokenArgs),
     Cluster(AdminClusterArgs),
 }
 
@@ -23,6 +24,9 @@ impl AdminCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
+            Self::AuthToken(args) => {
+                args.command.exec(client, color_mode).await?;
+            }
             Self::Cluster(args) => {
                 args.command.exec(client, color_mode).await?;
             }

@@ -19,6 +19,10 @@ impl RoleId {
         Self("operator".to_owned())
     }
 
+    pub fn from_string(s: String) -> Self {
+        Self(s)
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }

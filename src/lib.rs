@@ -104,6 +104,8 @@ pub struct AppState {
 
     internal_client: InternalClient,
 
+    pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
+
     #[allow(unused)]
     pub(crate) time: Monotime,
 }
@@ -254,6 +256,9 @@ impl AppState {
             listen_addr.set_ip(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST));
         }
 
+        let auth_token_cache =
+            Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(10_000)));
+
         AppState {
             cfg,
             namespace_state,
@@ -263,6 +268,7 @@ impl AppState {
             request_metrics,
             conn_metrics,
             internal_client,
+            auth_token_cache,
             time,
         }
     }

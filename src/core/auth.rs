@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use axum::{
     RequestExt,
     extract::{Request, State},
@@ -12,8 +14,16 @@ use coyote_authorization::RoleId;
 use coyote_id::AuthTokenId;
 use tracing::Span;
 
-use crate::AppState;
-use coyote_error::Error;
+use crate::{
+    AppState,
+    core::INTERNAL_NAMESPACE,
+    v1::endpoints::auth_token::{AuthTokenVerifyIn, AuthTokenVerifyOut},
+};
+use coyote_error::{Error, ResultExt};
+
+const AUTH_TOKEN_CACHE_TTL: Duration = Duration::from_secs(1);
+
+pub(crate) use coyote_core::fifo_cache::FifoCache;
 
 fn constant_time_eq(a: &str, b: &str) -> bool {
     let a = a.as_bytes();
@@ -84,15 +94,49 @@ async fn authorization_inner(
 
     let token = bearer.token();
 
-    let perms = if let Some(admin_token) = state.cfg.admin_token.as_ref()
+    if let Some(admin_token) = state.cfg.admin_token.as_ref()
         && constant_time_eq(admin_token, token)
     {
-        Permissions {
+        let perms = Permissions {
             role: RoleId::admin(),
             auth_token_id: None,
-        }
+        };
+        return Ok(perms);
+    }
+
+    let cached = state
+        .auth_token_cache
+        .read()
+        .get(token, AUTH_TOKEN_CACHE_TTL)
+        .cloned();
+
+    let perms = if let Some(cached) = cached {
+        cached
     } else {
-        return Err(Error::authentication("invalid_token", "Invalid token.").into());
+        let out: AuthTokenVerifyOut = state
+            .internal_call(
+                "v1.auth-token.verify",
+                &AuthTokenVerifyIn {
+                    token: token.to_owned(),
+                    namespace: Some(INTERNAL_NAMESPACE.to_owned()),
+                },
+            )
+            .await
+            .or_internal_error()?;
+
+        if let Some(mut out_token) = out.token {
+            let perms = Permissions {
+                role: RoleId::from_string(out_token.metadata.remove("role").unwrap()),
+                auth_token_id: Some(out_token.id.into_inner()),
+            };
+            state
+                .auth_token_cache
+                .write()
+                .put(token.to_string(), perms.clone());
+            perms
+        } else {
+            return Err(Error::authentication("invalid_token", "Invalid token.").into());
+        }
     };
 
     Ok(perms)
