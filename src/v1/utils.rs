@@ -46,7 +46,6 @@ pub fn get_unix_timestamp() -> u64 {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
 #[schemars(rename = "ListResponse{T}")]
 pub struct ListResponse<T> {
     pub data: Vec<T>,
