@@ -1,3 +1,4 @@
+use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::Error;
 use coyote_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -55,47 +56,51 @@ impl StreamSeekOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    fn apply_real(self, state: &State) -> coyote_operations::Result<StreamSeekResponseData> {
-        let mut batch = state.db.batch();
+    async fn apply_real(self, state: &State) -> coyote_operations::Result<StreamSeekResponseData> {
+        let state = state.clone();
+        spawn_blocking_in_current_span(move || {
+            let mut batch = state.db.batch();
 
-        let topic_row = TopicRow::fetch(
-            &state.metadata_tables,
-            TopicRow::key_for(self.namespace_id, &self.topic),
-        )?
-        .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
-
-        let partitions = self
-            .partition
-            .map(|p| vec![p.get()])
-            .unwrap_or_else(|| (0..topic_row.partitions).collect());
-
-        for partition_idx in partitions {
-            let partition = Partition::new(partition_idx)?;
-
-            let offset = match &self.target {
-                SeekTarget::Position(SeekPosition::Earliest) => 0,
-                SeekTarget::Position(SeekPosition::Latest) => {
-                    MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?
-                }
-                SeekTarget::Offset(o) => *o,
-            };
-
-            let lease = StreamLeaseRow {
-                offset,
-                expiry: Timestamp::UNIX_EPOCH,
-                end_offset: 0,
-            };
-
-            batch.insert_row(
+            let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
-                &lease,
-            )?;
-        }
+                TopicRow::key_for(self.namespace_id, &self.topic),
+            )?
+            .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
-        batch.commit().map_err(Error::from)?;
+            let partitions = self
+                .partition
+                .map(|p| vec![p.get()])
+                .unwrap_or_else(|| (0..topic_row.partitions).collect());
 
-        Ok(StreamSeekResponseData {})
+            for partition_idx in partitions {
+                let partition = Partition::new(partition_idx)?;
+
+                let offset = match &self.target {
+                    SeekTarget::Position(SeekPosition::Earliest) => 0,
+                    SeekTarget::Position(SeekPosition::Latest) => {
+                        MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?
+                    }
+                    SeekTarget::Offset(o) => *o,
+                };
+
+                let lease = StreamLeaseRow {
+                    offset,
+                    expiry: Timestamp::UNIX_EPOCH,
+                    end_offset: 0,
+                };
+
+                batch.insert_row(
+                    &state.metadata_tables,
+                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    &lease,
+                )?;
+            }
+
+            batch.commit().map_err(Error::from)?;
+
+            Ok(StreamSeekResponseData {})
+        })
+        .await?
     }
 }
 
@@ -103,11 +108,11 @@ impl StreamSeekOperation {
 pub struct StreamSeekResponseData {}
 
 impl MsgsRequest for StreamSeekOperation {
-    fn apply(
+    async fn apply(
         self,
         state: MsgsRaftState<'_>,
         _ctx: &coyote_operations::OpContext,
     ) -> StreamSeekResponse {
-        StreamSeekResponse(self.apply_real(state.msgs))
+        StreamSeekResponse(self.apply_real(state.msgs).await)
     }
 }

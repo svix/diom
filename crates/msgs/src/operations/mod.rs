@@ -8,14 +8,14 @@ pub use self::{create_namespace::*, publish::*, queue::*, stream::*, topic_confi
 
 use crate::State;
 
-use coyote_operations::raft_module_operations;
+use coyote_operations::async_raft_module_operations;
 
 pub struct MsgsRaftState<'a> {
     pub msgs: &'a State,
     pub namespace: &'a coyote_namespace::State,
 }
 
-raft_module_operations!(
+async_raft_module_operations!(
     MsgsRequest,
     MsgsOperation {
         CreateNamespace(CreateNamespaceOperation) -> CreateNamespaceResponseData,

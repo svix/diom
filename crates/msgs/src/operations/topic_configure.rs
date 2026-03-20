@@ -3,6 +3,7 @@ use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
+use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::Error;
 
 use crate::{
@@ -38,39 +39,43 @@ impl TopicConfigureOperation {
         })
     }
 
-    fn apply_real(
+    async fn apply_real(
         self,
         state: &State,
         now: Timestamp,
     ) -> coyote_operations::Result<TopicConfigureResponseData> {
-        let mut topic_row = match TopicRow::fetch(
-            &state.metadata_tables,
-            TopicRow::key_for(self.namespace_id, &self.topic),
-        )? {
-            Some(topic_row) => topic_row,
-            None => TopicRow::new(self.topic.clone(), now),
-        };
+        let state = state.clone();
+        spawn_blocking_in_current_span(move || {
+            let mut topic_row = match TopicRow::fetch(
+                &state.metadata_tables,
+                TopicRow::key_for(self.namespace_id, &self.topic),
+            )? {
+                Some(topic_row) => topic_row,
+                None => TopicRow::new(self.topic.clone(), now),
+            };
 
-        if self.partitions < topic_row.partitions {
-            return Err(Error::invalid_user_input(
-                "Cannot decrease partition count. Only increases are allowed.",
-            )
-            .into());
-        }
+            if self.partitions < topic_row.partitions {
+                return Err(Error::invalid_user_input(
+                    "Cannot decrease partition count. Only increases are allowed.",
+                )
+                .into());
+            }
 
-        topic_row.partitions = self.partitions;
+            topic_row.partitions = self.partitions;
 
-        let mut batch = state.db.batch();
-        batch.insert_row(
-            &state.metadata_tables,
-            TopicRow::key_for(self.namespace_id, &self.topic),
-            &topic_row,
-        )?;
-        batch.commit().map_err(Error::from)?;
+            let mut batch = state.db.batch();
+            batch.insert_row(
+                &state.metadata_tables,
+                TopicRow::key_for(self.namespace_id, &self.topic),
+                &topic_row,
+            )?;
+            batch.commit().map_err(Error::from)?;
 
-        Ok(TopicConfigureResponseData {
-            partitions: self.partitions,
+            Ok(TopicConfigureResponseData {
+                partitions: self.partitions,
+            })
         })
+        .await?
     }
 }
 
@@ -80,11 +85,11 @@ pub struct TopicConfigureResponseData {
 }
 
 impl MsgsRequest for TopicConfigureOperation {
-    fn apply(
+    async fn apply(
         self,
         state: MsgsRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> TopicConfigureResponse {
-        TopicConfigureResponse(self.apply_real(state.msgs, ctx.timestamp))
+        TopicConfigureResponse(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }
