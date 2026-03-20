@@ -13,6 +13,9 @@ use super::{
 #[derive(
     Clone,
     Debug,
+    {%- if type.fields | selectattr("required") | length == 0 %}
+    Default,
+    {%- endif %}
     Deserialize,
     {%- if not has_positional_fields %}
     Serialize,
