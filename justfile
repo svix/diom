@@ -4,7 +4,7 @@ HERE := justfile_directory()
 
 # run all lints
 [group('lint')]
-lint: clippy machete fmt sort vacuum-openapi
+lint: clippy machete fmt sort vacuum-openapi audit
 
 # run clippy in --fix mode
 [group('lint')]
@@ -39,6 +39,11 @@ vacuum-openapi:
             --fail-severity error \
             --ruleset .vacuum.yaml \
             --min-score 0
+
+# run security lints
+[group('lint')]
+audit:
+    cargo deny check -c {{ HERE / "deny.toml" }}
 
 # Test the backend
 test *args='':

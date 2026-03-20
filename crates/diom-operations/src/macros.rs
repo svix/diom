@@ -29,7 +29,7 @@ macro_rules! raft_module_operations {
         state = $state_type:ty,
         response = $response_name:ident $(,)?
     ) => {
-        $crate::__reexports::paste::paste! {
+        $crate::__reexports::pastey::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
             where
                 Self: 'static,
@@ -154,7 +154,7 @@ macro_rules! async_raft_module_operations {
         state = $state_type:ty,
         response = $response_name:ident $(,)?
     ) => {
-        $crate::__reexports::paste::paste! {
+        $crate::__reexports::pastey::paste! {
             trait $trait_name: Into<$module_op_name> + $crate::OperationRequest
             where
                 Self: 'static,
