@@ -2,13 +2,43 @@ set quiet := true
 
 HERE := justfile_directory()
 
-lint:
+# run all lints
+[group('lint')]
+lint: clippy machete fmt sort vacuum-openapi
+
+# run clippy in --fix mode
+[group('lint')]
+clippy:
     # keep this beta to keep it in sync with CI
     cargo +beta clippy --workspace --fix --allow-dirty --all-features --all-targets
+
+# run cargo-machete in --fix mode
+[group('lint')]
+machete:
     cargo machete --fix
+
+# run cargo-fmt in --fix mode
+[group('lint')]
+fmt:
     # this has to be nightly to get import sorting working correctly
     cargo +nightly fmt
+
+# run cargo sort
+[group('lint')]
+sort:
     cargo sort --no-format --workspace -o package,lib,bin,features,dependencies,dev-dependencies,lints,workspace
+
+# run `vacuum` to check openapi
+[group('lint')]
+vacuum-openapi:
+    # keep this in sync with lint-openapi.yml
+    docker run --rm \
+            -v .:/work:ro \
+            dshanley/vacuum lint \
+            openapi.json \
+            --fail-severity error \
+            --ruleset .vacuum.yaml \
+            --min-score 0
 
 # Test the backend
 test *args='':
@@ -18,6 +48,7 @@ test *args='':
 test-sdks:
     cargo nextest run --package=diom-client --package=diom-cli
 
+# Invoke `docker-compose`
 [no-exit-message]
 test-dc *args='':
     docker compose -f {{ HERE / "testing-docker-compose.yml" }} {{ args }}
@@ -28,12 +59,14 @@ test-dc-rebuild service:
     docker compose -f {{ HERE / "testing-docker-compose.yml" }} rm -fs {{ service }}
     docker compose -f {{ HERE / "testing-docker-compose.yml" }} up --build -d {{ service }}
 
+# Generate all of the client libraries
 codegen:
     cargo codegen
 
 # Run all the test commands
 test-all: test test-sdks
 
+# Run benchmarks
 [working-directory('benchmarks')]
 bench:
     cargo bench
