@@ -30,8 +30,8 @@ pub struct CreateNamespaceOutput<C: ModuleConfig> {
     pub storage_type: StorageType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 }
 
 impl<C: ModuleConfig + 'static> CreateNamespace<C> {
@@ -79,7 +79,7 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
         let namespace = match Namespace::<C>::fetch(keyspace, &self.name)? {
             Some(mut namespace) => {
                 namespace.storage_type = self.storage_type;
-                namespace.updated_at = timestamp;
+                namespace.updated = timestamp;
                 namespace.max_storage_bytes = self.max_storage_bytes;
                 namespace.config = self.config;
                 namespace
@@ -91,8 +91,8 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                     name: self.name,
                     storage_type: self.storage_type,
                     max_storage_bytes: self.max_storage_bytes,
-                    created_at: timestamp,
-                    updated_at: timestamp,
+                    created: timestamp,
+                    updated: timestamp,
                     config: self.config,
                 }
             }
@@ -110,8 +110,8 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
             storage_type: namespace.storage_type,
             max_storage_bytes: namespace.max_storage_bytes,
             config: namespace.config,
-            created_at: namespace.created_at,
-            updated_at: namespace.updated_at,
+            created: namespace.created,
+            updated: namespace.updated,
         })
     }
 }

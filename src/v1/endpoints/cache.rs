@@ -258,8 +258,8 @@ async fn cache_get_namespace(
         max_storage_bytes: namespace.max_storage_bytes,
         storage_type: namespace.storage_type,
         eviction_policy: namespace.config.eviction_policy,
-        created: namespace.created_at,
-        updated: namespace.updated_at,
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

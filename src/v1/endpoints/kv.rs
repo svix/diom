@@ -262,8 +262,8 @@ async fn kv_get_namespace(
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
         storage_type: namespace.storage_type,
-        created: namespace.created_at,
-        updated: namespace.updated_at,
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

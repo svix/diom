@@ -111,8 +111,8 @@ async fn get_namespace(
         name: namespace.name,
         retention: Retention { millis, bytes },
         storage_type: namespace.storage_type,
-        created: namespace.created_at,
-        updated: namespace.updated_at,
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

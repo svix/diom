@@ -24,8 +24,8 @@ pub struct Namespace<C: ModuleConfig> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
 
-    pub created_at: Timestamp,
-    pub updated_at: Timestamp,
+    pub created: Timestamp,
+    pub updated: Timestamp,
 
     // Module-specific
     pub config: C,
