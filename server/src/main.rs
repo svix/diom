@@ -81,6 +81,7 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
+    #[allow(clippy::disallowed_methods)]
     if let Some(provider) = otel_tracer_provider {
         _ = tokio::task::spawn_blocking(move || {
             _ = provider.shutdown();

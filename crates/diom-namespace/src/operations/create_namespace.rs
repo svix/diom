@@ -5,6 +5,7 @@ use std::num::NonZeroU64;
 use fjall_utils::WriteBatchExt;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+use tracing::Span;
 
 use crate::{
     State,
@@ -56,8 +57,13 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
     ) -> Result<CreateNamespaceOutput<C>> {
         let db = state.db().clone();
         let keyspace = state.keyspace().clone();
-        tokio::task::spawn_blocking(move || self.apply_operation_inner(&db, &keyspace, timestamp))
-            .await?
+        let span = Span::current();
+        // can't use diom-core here because of circular deps
+        #[allow(clippy::disallowed_methods)]
+        tokio::task::spawn_blocking(move || {
+            span.in_scope(|| self.apply_operation_inner(&db, &keyspace, timestamp))
+        })
+        .await?
     }
 
     pub fn apply_operation(

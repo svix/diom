@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use diom_core::task::spawn_blocking_in_current_span;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use fjall_utils::TableRow;
@@ -46,7 +47,7 @@ impl RateLimitController {
     ) -> Result<(bool, u64, Option<Duration>)> {
         let tables = self.tables.clone();
 
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let identifier = identifier.as_ref();
             let (capacity, new_last_refill) =
                 Self::calculate_capacity(&tables, namespace_id, identifier, &config, now)?;
@@ -80,7 +81,7 @@ impl RateLimitController {
         config: TokenBucket,
     ) -> Result<(u64, Option<Duration>)> {
         let tables = self.tables.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let identifier = identifier.as_ref();
             let (capacity, _) =
                 Self::calculate_capacity(&tables, namespace_id, identifier, &config, now)?;
@@ -101,7 +102,7 @@ impl RateLimitController {
         identifier: I,
     ) -> Result<()> {
         let tables = self.tables.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             TokenBucketRow::remove(
                 &tables,
                 TokenBucketRow::key_for(namespace_id, identifier.as_ref()),
