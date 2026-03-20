@@ -61,3 +61,5 @@ cluster:
         value: "json"
       - name: COYOTE_OPENTELEMETRY_ADDRESS
         value: grpc://datadog-agent.datadog.svc.cluster.local:4317
+      - name: COYOTE_ADMIN_TOKEN
+        value: "admin_abcdefghijlmnopqrstuvwxyz12345"
