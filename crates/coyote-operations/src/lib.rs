@@ -95,7 +95,7 @@ impl<T, M: ModuleRequest> OperationWriter<M> for T where
 /// Macro support module
 #[doc(hidden)]
 pub mod __reexports {
-    pub use paste;
+    pub use pastey;
     pub use serde;
 }
 
