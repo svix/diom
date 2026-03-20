@@ -17,17 +17,8 @@ func NewAdmin(client *coyote_proto.HttpClient) Admin {
 	return Admin{client}
 }
 
-// Get information about the current cluster
-func (admin Admin) ClusterStatus(
-	ctx context.Context,
-) (*coyote_models.ClusterStatusOut, error) {
-	return coyote_proto.ExecuteRequest[any, coyote_models.ClusterStatusOut](
-		ctx,
-		admin.client,
-		"GET",
-		"/api/v1/admin/cluster/status",
-		nil,
-	)
+func (admin Admin) Cluster() AdminCluster {
+	return NewAdminCluster(admin.client)
 }
 
 // Remove a node from the cluster.

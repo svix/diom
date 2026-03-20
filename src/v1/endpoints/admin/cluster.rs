@@ -89,7 +89,7 @@ struct PartialNodeStatus {
 }
 
 /// Get information about the current cluster
-#[aide_annotate(op_id = "v1.admin.cluster-status")]
+#[aide_annotate(op_id = "v1.admin.cluster.status")]
 async fn cluster_status(
     State(app_state): State<AppState>,
     Extension(repl): Extension<RaftState>,
