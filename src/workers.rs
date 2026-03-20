@@ -19,7 +19,14 @@ impl Workers {
         {
             tracing::debug!("spawning KV module worker");
             let state = state.state_machine.kv_store().await;
+            let time = time.clone();
             self.spawn(coyote_kv::AllNodesWorker::new(state, time));
+        }
+        {
+            tracing::debug!("spawning cache module worker");
+            let state = state.state_machine.cache_store().await;
+            let time = time.clone();
+            self.spawn(coyote_cache::AllNodesWorker::new(state, time));
         }
     }
 
