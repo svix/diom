@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
+#[cfg(debug_assertions)]
+use aide::axum::routing::post;
 use aide::axum::{
     ApiRouter,
-    routing::{get_with, post, post_with},
+    routing::{get_with, post_with},
 };
 use diom_derive::aide_annotate;
 use diom_proto::MsgPackOrJson;

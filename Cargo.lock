@@ -4928,6 +4928,7 @@ dependencies = [
  "anyhow",
  "bytes",
  "diom",
+ "diom-core",
  "futures-util",
  "http",
  "http-body-util",
