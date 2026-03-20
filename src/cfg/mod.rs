@@ -467,6 +467,16 @@ pub struct ConfigurationInner {
     /// YAML bootstrap data. Takes precedence over `bootstrap_cfg_path`
     #[serde(default)]
     pub bootstrap_cfg: Option<String>,
+
+    /// A pre-set admin token to use instead of having coyote generate one automatically.
+    ///
+    /// Under normal circumstances you should not set this, and instead let coyote generate the
+    /// admin token on first boot and use that to create any additional tokens you need. Setting
+    /// this directly is useful in CI pipelines and other automated environments where you need a
+    /// stable, well-known token for testing or scripted setup.
+    #[validate(custom(function = "validators::validate_admin_token"))]
+    #[serde(default)]
+    pub admin_token: Option<String>,
 }
 
 impl Default for ConfigurationInner {
@@ -610,6 +620,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         environment,
         bootstrap_cfg_path,
         bootstrap_cfg,
+        admin_token,
         cluster:
             ClusterConfiguration {
                 advertised_address: cluster_advertised_address,
@@ -662,6 +673,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         opentelemetry_sample_ratio: "COYOTE_OPENTELEMETRY_SAMPLE_RATIO",
         bootstrap_cfg_path: "COYOTE_BOOTSTRAP_CFG_PATH",
         bootstrap_cfg: "COYOTE_BOOTSTRAP_CFG",
+        admin_token: "COYOTE_ADMIN_TOKEN",
         cluster_listen_address: "COYOTE_CLUSTER_LISTEN_ADDRESS",
         cluster_advertised_address: "COYOTE_CLUSTER_ADVERTISED_ADDRESS",
         cluster_snapshot_path: "COYOTE_CLUSTER_SNAPSHOT_PATH",
