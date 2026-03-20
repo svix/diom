@@ -1,0 +1,87 @@
+name: Deploy Operator To Svix Cloud EKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (e.g. git SHA or semver)"
+        required: true
+        type: string
+        default: "sha-0e90f15b9f3913b9e267078348c6e473443c468b"
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options: [svix-cloud-dev-apply, svix-cloud-staging-apply]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/diom-operator
+  OPERATOR_DIR: infra/operator
+
+jobs:
+  deploy:
+    name: Deploy to Svix Cloud EKS (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: read # required to pull from ghcr.io
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify image exists in GHCR
+        run: |
+          docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ vars.EKS_CLUSTER_NAME }} \
+            --region ${{ vars.AWS_REGION }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Deploy operator via Helm
+        run: |
+          helm upgrade --install diom-operator ./${{ env.OPERATOR_DIR }}/../helm-diom \
+            --set-string operator.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set-string cluster.image.tag=${{ inputs.image_tag }} \
+            --set image.pullPolicy=Always \
+            --set installCRDs=true \
+            --atomic \
+            --timeout=120s
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/diom-operator --timeout=120s
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods -A
+          echo "=== Events ==="
+          kubectl get events --sort-by='.lastTimestamp'
+          echo "=== Operator logs ==="
+          kubectl logs -l app.kubernetes.io/name=diom-operator --tail=100 || true
