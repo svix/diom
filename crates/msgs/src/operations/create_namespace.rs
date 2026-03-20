@@ -27,7 +27,7 @@ impl CreateNamespaceOperation {
         }
     }
 
-    fn apply_real(
+    async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
         now: Timestamp,
@@ -40,7 +40,7 @@ impl CreateNamespaceOperation {
             self.storage_type,
             Some(self.retention.bytes),
         );
-        let out = op.apply_operation(namespace_state, now)?;
+        let out = op.async_apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }
@@ -75,11 +75,11 @@ impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
 }
 
 impl MsgsRequest for CreateNamespaceOperation {
-    fn apply(
+    async fn apply(
         self,
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> CreateNamespaceResponse {
-        CreateNamespaceResponse(self.apply_real(state.namespace, ctx.timestamp))
+        CreateNamespaceResponse(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

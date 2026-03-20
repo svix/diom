@@ -3,6 +3,7 @@ use opentelemetry::{Context, trace::TraceContextExt};
 use std::{collections::HashMap, fmt::Debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use tokio::task::JoinError;
 
 mod context;
 pub use context::OpContext;
@@ -162,6 +163,15 @@ impl From<diom_error::Error> for OperationError {
 impl From<OperationError> for diom_error::Error {
     fn from(value: OperationError) -> Self {
         Self::operation(value.status, None)
+    }
+}
+
+impl From<JoinError> for OperationError {
+    fn from(value: JoinError) -> Self {
+        Self {
+            status: http::StatusCode::INTERNAL_SERVER_ERROR,
+            msg: format!("Error joining thread: {value}"),
+        }
     }
 }
 

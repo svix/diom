@@ -16,6 +16,7 @@ jiff.workspace = true
 opentelemetry.workspace = true
 pastey.workspace = true
 serde.workspace = true
+tokio.workspace = true
 tracing.workspace = true
 
 [lints]

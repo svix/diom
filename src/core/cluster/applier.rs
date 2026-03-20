@@ -91,7 +91,7 @@ async fn apply_request_with_context(
                 msgs: &stores.msgs_state,
                 namespace: &state_machine.state.namespace_state,
             };
-            Response::Msgs(req.apply(state, &context))
+            Response::Msgs(req.apply(state, &context).await)
         }
         Request::ClusterInternal(req) => {
             Response::ClusterInternal(req.apply(state_machine, &context).await)

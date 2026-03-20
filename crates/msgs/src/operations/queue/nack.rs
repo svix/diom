@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use diom_core::task::spawn_blocking_in_current_span;
 use diom_error::Error;
 use diom_id::{NamespaceId, TopicId};
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -38,73 +39,77 @@ impl QueueNackOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    fn apply_real(
+    async fn apply_real(
         self,
         state: &State,
         now: Timestamp,
     ) -> diom_operations::Result<QueueNackResponseData> {
-        let topic_row = TopicRow::fetch(
-            &state.metadata_tables,
-            TopicRow::key_for(self.namespace_id, &self.topic),
-        )?
-        .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
-
-        let config = QueueConfigRow::fetch(
-            &state.metadata_tables,
-            QueueConfigRow::key_for(topic_row.id, &self.consumer_group),
-        )?;
-
-        let retry_schedule = config
-            .as_ref()
-            .map(|c| c.retry_schedule.as_slice())
-            .unwrap_or_default();
-
-        let mut batch = state.db.batch();
-
-        for msg_id in &self.msg_ids {
-            let existing = QueueLeaseRow::fetch(
+        let state = state.clone();
+        spawn_blocking_in_current_span(move || {
+            let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                TopicRow::key_for(self.namespace_id, &self.topic),
+            )?
+            .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
+
+            let config = QueueConfigRow::fetch(
+                &state.metadata_tables,
+                QueueConfigRow::key_for(topic_row.id, &self.consumer_group),
             )?;
-            let attempt_count = existing.map(|r| r.attempt_count).unwrap_or(0);
 
-            if let Some(&delay_ms) = retry_schedule.get(attempt_count as usize) {
-                // Schedule for retry: set expiry to now + delay, message becomes available after
-                let expiry = now + Duration::from_millis(delay_ms);
-                batch.insert_row(
+            let retry_schedule = config
+                .as_ref()
+                .map(|c| c.retry_schedule.as_slice())
+                .unwrap_or_default();
+
+            let mut batch = state.db.batch();
+
+            for msg_id in &self.msg_ids {
+                let existing = QueueLeaseRow::fetch(
                     &state.metadata_tables,
                     QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
-                    &QueueLeaseRow {
-                        expiry,
-                        dlq: false,
-                        attempt_count: attempt_count + 1,
-                    },
                 )?;
-            } else if let Some(dlq_topic) = config.as_ref().and_then(|c| c.dlq_topic.as_ref()) {
-                // Retries exhausted, forward to DLQ topic
-                forward_to_dlq(
-                    state,
-                    &mut batch,
-                    self.namespace_id,
-                    topic_row.id,
-                    msg_id,
-                    dlq_topic,
-                    &self.consumer_group,
-                    now,
-                )?;
-            } else {
-                // No config or no DLQ topic — immediate DLQ
-                batch.insert_row(
-                    &state.metadata_tables,
-                    QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
-                    &QueueLeaseRow::dlq_marker(attempt_count),
-                )?;
+                let attempt_count = existing.map(|r| r.attempt_count).unwrap_or(0);
+
+                if let Some(&delay_ms) = retry_schedule.get(attempt_count as usize) {
+                    // Schedule for retry: set expiry to now + delay, message becomes available after
+                    let expiry = now + Duration::from_millis(delay_ms);
+                    batch.insert_row(
+                        &state.metadata_tables,
+                        QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                        &QueueLeaseRow {
+                            expiry,
+                            dlq: false,
+                            attempt_count: attempt_count + 1,
+                        },
+                    )?;
+                } else if let Some(dlq_topic) = config.as_ref().and_then(|c| c.dlq_topic.as_ref()) {
+                    // Retries exhausted, forward to DLQ topic
+                    forward_to_dlq(
+                        &state,
+                        &mut batch,
+                        self.namespace_id,
+                        topic_row.id,
+                        msg_id,
+                        dlq_topic,
+                        &self.consumer_group,
+                        now,
+                    )?;
+                } else {
+                    // No config or no DLQ topic — immediate DLQ
+                    batch.insert_row(
+                        &state.metadata_tables,
+                        QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                        &QueueLeaseRow::dlq_marker(attempt_count),
+                    )?;
+                }
             }
-        }
 
-        batch.commit().map_err(Error::from)?;
+            batch.commit().map_err(Error::from)?;
 
-        Ok(QueueNackResponseData {})
+            Ok(QueueNackResponseData {})
+        })
+        .await?
     }
 }
 
@@ -159,11 +164,11 @@ fn forward_to_dlq(
 pub struct QueueNackResponseData {}
 
 impl MsgsRequest for QueueNackOperation {
-    fn apply(
+    async fn apply(
         self,
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> QueueNackResponse {
-        QueueNackResponse(self.apply_real(state.msgs, ctx.timestamp))
+        QueueNackResponse(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }

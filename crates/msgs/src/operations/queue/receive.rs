@@ -1,6 +1,6 @@
 use std::{collections::HashMap, num::NonZeroU16};
 
-use diom_core::types::DurationMs;
+use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use diom_error::Error;
 use diom_id::{NamespaceId, TopicId};
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -49,111 +49,116 @@ impl QueueReceiveOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    fn apply_real(
+    async fn apply_real(
         self,
         state: &State,
         now: Timestamp,
     ) -> diom_operations::Result<QueueReceiveResponseData> {
-        let mut remaining = self.batch_size.get();
-        let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
+        let state = state.clone();
 
-        let expiry = now + self.lease_duration_millis;
+        spawn_blocking_in_current_span(move || {
+            let mut remaining = self.batch_size.get();
+            let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
 
-        let mut batch = state.db.batch();
+            let expiry = now + self.lease_duration_millis;
 
-        let topic_row = TopicRow::fetch_or_create(
-            &state.metadata_tables,
-            &mut batch,
-            self.namespace_id,
-            &self.topic,
-            now,
-        )?;
+            let mut batch = state.db.batch();
 
-        Span::current().record("partition_count", topic_row.partitions);
-
-        let partitions = self
-            .partition
-            .map(|p| vec![p.get()])
-            .unwrap_or_else(|| topic_row.partitions_shuffled());
-
-        for partition_idx in partitions {
-            let partition = Partition::new(partition_idx)?;
-
-            // Fetch or create cursor for this partition.
-            // Queue starts from offset 0 (earliest), unlike stream which starts from latest.
-            let mut cursor = match StreamLeaseRow::fetch(
+            let topic_row = TopicRow::fetch_or_create(
                 &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
-            )? {
-                Some(cursor) => cursor,
-                None => StreamLeaseRow::new()?,
-            };
+                &mut batch,
+                self.namespace_id,
+                &self.topic,
+                now,
+            )?;
 
-            let mut scan_offset = cursor.offset;
+            Span::current().record("partition_count", topic_row.partitions);
 
-            // Scan messages from cursor, skipping leased and acked ones
-            loop {
+            let partitions = self
+                .partition
+                .map(|p| vec![p.get()])
+                .unwrap_or_else(|| topic_row.partitions_shuffled());
+
+            for partition_idx in partitions {
+                let partition = Partition::new(partition_idx)?;
+
+                // Fetch or create cursor for this partition.
+                // Queue starts from offset 0 (earliest), unlike stream which starts from latest.
+                let mut cursor = match StreamLeaseRow::fetch(
+                    &state.metadata_tables,
+                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                )? {
+                    Some(cursor) => cursor,
+                    None => StreamLeaseRow::new()?,
+                };
+
+                let mut scan_offset = cursor.offset;
+
+                // Scan messages from cursor, skipping leased and acked ones
+                loop {
+                    if remaining == 0 {
+                        break;
+                    }
+
+                    let msgs = MsgRow::fetch_range(
+                        &state.msg_table,
+                        topic_row.id,
+                        partition,
+                        scan_offset,
+                        remaining,
+                    )?;
+
+                    if msgs.is_empty() {
+                        break;
+                    }
+
+                    let msgs_len = msgs.len() as u64;
+
+                    let n = lease_available_msgs(
+                        &state,
+                        &mut batch,
+                        &mut all_msgs,
+                        msgs,
+                        scan_offset,
+                        partition,
+                        topic_row.id,
+                        &self.consumer_group,
+                        now,
+                        expiry,
+                    )?;
+                    remaining = remaining.saturating_sub(n);
+
+                    scan_offset += msgs_len;
+                }
+
+                // Compact cursor: advance past contiguous acked messages
+                compact_cursor(
+                    &mut cursor,
+                    &mut batch,
+                    &state,
+                    topic_row.id,
+                    partition,
+                    &self.consumer_group,
+                )?;
+
+                batch.insert_row(
+                    &state.metadata_tables,
+                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    &cursor,
+                )?;
+
                 if remaining == 0 {
                     break;
                 }
-
-                let msgs = MsgRow::fetch_range(
-                    &state.msg_table,
-                    topic_row.id,
-                    partition,
-                    scan_offset,
-                    remaining,
-                )?;
-
-                if msgs.is_empty() {
-                    break;
-                }
-
-                let msgs_len = msgs.len() as u64;
-
-                let n = lease_available_msgs(
-                    state,
-                    &mut batch,
-                    &mut all_msgs,
-                    msgs,
-                    scan_offset,
-                    partition,
-                    topic_row.id,
-                    &self.consumer_group,
-                    now,
-                    expiry,
-                )?;
-                remaining = remaining.saturating_sub(n);
-
-                scan_offset += msgs_len;
             }
 
-            // Compact cursor: advance past contiguous acked messages
-            compact_cursor(
-                &mut cursor,
-                &mut batch,
-                state,
-                topic_row.id,
-                partition,
-                &self.consumer_group,
-            )?;
+            batch.commit().map_err(Error::from)?;
 
-            batch.insert_row(
-                &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
-                &cursor,
-            )?;
+            Span::current().record("msgs_returned", all_msgs.len());
 
-            if remaining == 0 {
-                break;
-            }
-        }
-
-        batch.commit().map_err(Error::from)?;
-
-        Span::current().record("msgs_returned", all_msgs.len());
-
-        Ok(QueueReceiveResponseData { msgs: all_msgs })
+            Ok(QueueReceiveResponseData { msgs: all_msgs })
+        })
+        .await?
     }
 }
 
@@ -262,11 +267,11 @@ pub struct QueueReceiveResponseData {
 }
 
 impl MsgsRequest for QueueReceiveOperation {
-    fn apply(
+    async fn apply(
         self,
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> QueueReceiveResponse {
-        QueueReceiveResponse(self.apply_real(state.msgs, ctx.timestamp))
+        QueueReceiveResponse(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }
