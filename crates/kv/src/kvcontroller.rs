@@ -374,6 +374,7 @@ impl KvController {
     }
 }
 
+#[allow(clippy::disallowed_methods)]
 #[cfg(test)]
 mod tests {
     use coyote_id::NamespaceId;

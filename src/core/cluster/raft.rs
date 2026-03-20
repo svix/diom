@@ -55,6 +55,7 @@ pub(super) async fn initialize_cluster(
         .await?;
     let new_id = ClusterId::generate();
     tracing::info!(cluster_id=%new_id, "cluster initialized, setting cluster_id");
+    #[allow(clippy::disallowed_methods)]
     raft.client_write(RequestWithContext::new(
         Request::ClusterInternal(SetClusterUuidOperation(new_id).into()),
         jiff::Timestamp::now(),
