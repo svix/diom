@@ -73,8 +73,8 @@ impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
             max_storage_bytes: value.max_storage_bytes,
             storage_type: value.storage_type,
             eviction_policy: value.config.eviction_policy,
-            created: value.created_at,
-            updated: value.updated_at,
+            created: value.created,
+            updated: value.updated,
         }
     }
 }
