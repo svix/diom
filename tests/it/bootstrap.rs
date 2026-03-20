@@ -58,15 +58,15 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
     assert_eq!(cache1["eviction_policy"], "LeastRecentlyUsed");
     assert_eq!(cache1["storage_type"], "Persistent");
 
-    let stream2 = client
+    let msgs2 = client
         .post("msgs/namespace/get")
-        .json(json!({"name": "stream2"}))
+        .json(json!({"name": "msgs2"}))
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(stream2["name"], "stream2");
-    assert!(stream2["retention"].is_object());
-    assert_eq!(stream2["storage_type"], "Persistent");
+    assert_eq!(msgs2["name"], "msgs2");
+    assert!(msgs2["retention"].is_object());
+    assert_eq!(msgs2["storage_type"], "Persistent");
 
     Ok(())
 }
@@ -74,9 +74,7 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
 #[tokio::test]
 async fn test_bootstrap_file_based() -> TestResult {
     let test_server = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| {
-            cfg.bootstrap_cfg_path = Some("tests/it/static/bootstrap.test.yaml".to_string())
-        })
+        .tap_cfg(|cfg| cfg.bootstrap_cfg_path = Some("tests/it/static/bootstrap.test".to_string()))
         .build()
         .await;
     assert_bootstrap_namespaces(&test_server.client).await
@@ -84,10 +82,9 @@ async fn test_bootstrap_file_based() -> TestResult {
 
 #[tokio::test]
 async fn test_bootstrap_env_var_based() -> TestResult {
+    let content = include_str!("static/bootstrap.test").to_string();
     let test_server = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| {
-            cfg.bootstrap_cfg_path = Some("tests/it/static/bootstrap.test.yaml".to_string())
-        })
+        .tap_cfg(|cfg| cfg.bootstrap_cfg = Some(content))
         .build()
         .await;
     assert_bootstrap_namespaces(&test_server.client).await
