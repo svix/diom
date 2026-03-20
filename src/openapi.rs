@@ -1,4 +1,7 @@
+use std::mem;
+
 use aide::openapi::{self, OpenApi};
+use serde_json::json;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -144,6 +147,38 @@ fn flatten_weird_nested_ref(openapi: &mut OpenApi) {
     }
 }
 
+/// Turn anyOf { { whatever }, { nullable: true, enum: [null] } } into { whatever, nullable: true }
+fn fix_stupid_nullable_repr(openapi: &mut OpenApi) {
+    let Some(components) = &mut openapi.components else {
+        return;
+    };
+
+    for schema in components.schemas.values_mut() {
+        let Some(schema) = schema.json_schema.as_object_mut() else {
+            continue;
+        };
+        let Some(props) = schema.get_mut("properties") else {
+            continue;
+        };
+        let Some(props) = props.as_object_mut() else {
+            continue;
+        };
+
+        for prop in props.values_mut() {
+            if let Some(schema) = prop.as_object_mut()
+                && let Some(any_of) = schema.get_mut("anyOf")
+                && let Some(any_of) = any_of.as_array_mut()
+                && any_of.len() == 2
+                && any_of[1] == json!({ "nullable": true, "enum": [null] })
+                && let Some(main_schema) = any_of[0].as_object_mut()
+            {
+                main_schema.insert("nullable".to_owned(), true.into());
+                *schema = mem::take(main_schema);
+            }
+        }
+    }
+}
+
 pub fn add_security_scheme(
     api: aide::transform::TransformOpenApi<'_>,
 ) -> aide::transform::TransformOpenApi<'_> {
@@ -164,6 +199,7 @@ pub fn postprocess_spec(openapi: &mut OpenApi) {
     let hacks = [
         sort_schemas_by_name,
         flatten_weird_nested_ref,
+        fix_stupid_nullable_repr,
         remove_unneeded_schemas,
     ];
 
