@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
 
     if std::env::args().any(|a| a == "--print-crd-json") {
         let json = serde_json::to_string_pretty(&DiomCluster::crd())?;
-        println!("{}", json);
+        println!("{json}");
         return Ok(());
     }
 
