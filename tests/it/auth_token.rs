@@ -242,6 +242,88 @@ async fn test_auth_token_namespace_create_and_get() -> TestResult {
 }
 
 #[tokio::test]
+async fn test_auth_token_rotate() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let (id, old_token) = create_token(&client, "rotate-me", "user-r1").await?;
+
+    let resp = client
+        .post("auth-token/rotate")
+        .json(json!({ "id": id }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+
+    let new_id = resp["id"].assert_str();
+    let new_token = resp["token"].assert_str();
+    assert_ne!(new_id, id);
+    assert_ne!(new_token, old_token);
+    assert!(resp["created"].is_string());
+
+    // Old token is immediately expired.
+    let resp = verify_token(&client, &old_token).await?;
+    assert!(resp["token"].is_null());
+
+    // New token is valid and has the same name/owner.
+    let resp = verify_token(&client, new_token).await?;
+    assert_eq!(resp["token"]["name"], "rotate-me");
+    assert_eq!(resp["token"]["owner_id"], "user-r1");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_auth_token_rotate_with_expiry() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        time,
+        ..
+    } = start_server().await;
+
+    let (id, old_token) = create_token(&client, "rotate-grace", "user-r2").await?;
+
+    client
+        .post("auth-token/rotate")
+        .json(json!({ "id": id, "expiry_millis": 1000 }))
+        .await?
+        .ensure(StatusCode::OK)?;
+
+    // Old token still valid during grace period.
+    let resp = verify_token(&client, &old_token).await?;
+    assert!(resp["token"].is_object());
+
+    time.fast_forward(Duration::from_secs(2));
+
+    // Old token expired after grace period.
+    let resp = verify_token(&client, &old_token).await?;
+    assert!(resp["token"].is_null());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_auth_token_rotate_nonexistent() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("auth-token/rotate")
+        .json(json!({ "id": "key_06egrha0d5x9x8wa4kfcy1prhr" }))
+        .await?
+        .ensure(StatusCode::NOT_FOUND)?;
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_auth_token_namespace_get_not_found() -> TestResult {
     let TestContext {
         client,

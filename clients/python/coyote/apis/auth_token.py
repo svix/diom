@@ -9,6 +9,8 @@ from ..models import (
     AuthTokenExpireIn,
     AuthTokenExpireOut,
     AuthTokenListIn,
+    AuthTokenRotateIn,
+    AuthTokenRotateOut,
     AuthTokenUpdateIn,
     AuthTokenUpdateOut,
     AuthTokenVerifyIn,
@@ -110,6 +112,20 @@ class AuthTokenAsync(ApiBase):
             response_type=AuthTokenUpdateOut,
         )
 
+    async def rotate(
+        self,
+        auth_token_rotate_in: AuthTokenRotateIn,
+    ) -> AuthTokenRotateOut:
+        """Rotate Auth Token"""
+        body = auth_token_rotate_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1/auth-token/rotate",
+            body=body,
+            response_type=AuthTokenRotateOut,
+        )
+
 
 class AuthToken(ApiBase):
     @property
@@ -198,4 +214,18 @@ class AuthToken(ApiBase):
             path="/api/v1/auth-token/update",
             body=body,
             response_type=AuthTokenUpdateOut,
+        )
+
+    def rotate(
+        self,
+        auth_token_rotate_in: AuthTokenRotateIn,
+    ) -> AuthTokenRotateOut:
+        """Rotate Auth Token"""
+        body = auth_token_rotate_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1/auth-token/rotate",
+            body=body,
+            response_type=AuthTokenRotateOut,
         )

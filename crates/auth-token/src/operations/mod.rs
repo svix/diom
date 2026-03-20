@@ -4,6 +4,7 @@ mod create;
 mod create_namespace;
 mod delete;
 mod expire;
+mod rotate;
 mod update;
 
 pub use create::{CreateAuthTokenOperation, CreateResponseData};
@@ -12,6 +13,7 @@ pub use create_namespace::{
 };
 pub use delete::{DeleteAuthTokenOperation, DeleteResponseData};
 pub use expire::{ExpireAuthTokenOperation, ExpireResponseData};
+pub use rotate::{RotateAuthTokenOperation, RotateResponseData};
 pub use update::{UpdateAuthTokenOperation, UpdateResponseData};
 
 use coyote_operations::async_raft_module_operations;
@@ -28,6 +30,7 @@ async_raft_module_operations!(
         Expire(ExpireAuthTokenOperation) -> ExpireResponseData,
         Delete(DeleteAuthTokenOperation) -> DeleteResponseData,
         Update(UpdateAuthTokenOperation) -> UpdateResponseData,
+        Rotate(RotateAuthTokenOperation) -> RotateResponseData,
         CreateNamespace(CreateAuthTokenNamespaceOperation) -> CreateAuthTokenNamespaceResponseData,
     },
     state = AuthTokenRaftState<'_>,
