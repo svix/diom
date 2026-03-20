@@ -4,13 +4,12 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-mod internal;
 mod public;
 #[macro_use]
 mod marker;
 
-use self::marker::{IdMarker, InternalUse, PublicIdMarker};
-pub use self::{internal::Internal, public::Public};
+use self::marker::{IdMarker, PublicIdMarker};
+pub use self::public::Public;
 
 pub type NamespaceId = Id<m::Namespace>;
 pub type TopicId = Id<m::Topic>;
@@ -59,10 +58,8 @@ impl<M: IdMarker> Id<M> {
         Uuid::from_slice(s).map(Self::from_uuid)
     }
 
-    pub fn internal(self) -> Internal<Self> {
-        Internal::new(self)
-    }
-
+    /// Wrap this Id in `Public<_>`, changing its serialization format to a less compact one
+    /// meant for use in the public API.
     pub fn public(self) -> Public<Self>
     where
         M: PublicIdMarker,
@@ -89,35 +86,25 @@ impl<M> fmt::Debug for Id<M> {
     }
 }
 
-impl<M> Serialize for Id<M>
-where
-    // if you get a trait solving error about this bound,
-    // wrap the ID in `id::Public<_>` or `id::Internal<_>`
-    // to select a serialization format explicitly.
-    M: IdMarker<Use = InternalUse>,
-{
+impl<M: IdMarker> Serialize for Id<M> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        self.internal().serialize(serializer)
+        self.inner.serialize(serializer)
     }
 }
 
-impl<'de, M> Deserialize<'de> for Id<M>
-where
-    // if you get a trait solving error about this bound,
-    // wrap the ID in `id::Public<_>` or `id::Internal<_>`
-    // to select a serialization format explicitly.
-    M: IdMarker<Use = InternalUse>,
-{
+impl<'de, M: IdMarker> Deserialize<'de> for Id<M> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        Ok(Id::from_uuid(Uuid::deserialize(deserializer)?))
+        Ok(Self::from_uuid(Uuid::deserialize(deserializer)?))
     }
 }
+
+// DO NOT implement JsonSchema for Id<M> (Public<Id<M>> should be used)
 
 #[cfg(test)]
 #[allow(unreachable_pub)]
@@ -131,7 +118,7 @@ mod tests {
     type PublicId = Id<Public>;
 
     #[test]
-    fn private_marker_serde() {
+    fn private_id_serde() {
         let id = PrivateId::new(jiff::Timestamp::now());
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, i.e. just a UUID
@@ -142,12 +129,12 @@ mod tests {
     }
 
     #[test]
-    fn public_marker_serde() {
+    fn public_id_serde() {
         let id = PublicId::new(jiff::Timestamp::now());
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, also just a UUID
 
-        let serialized = rmp_serde::to_vec_named(&id.internal()).unwrap();
+        let serialized = rmp_serde::to_vec_named(&id).unwrap();
         assert_eq!(serialized.len(), 18);
         assert_eq!(&serialized[2..], id.as_bytes());
 

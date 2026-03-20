@@ -1,5 +1,6 @@
 use data_encoding::Encoding;
 use data_encoding_macro::new_encoding;
+use schemars::{JsonSchema, json_schema};
 use serde::{Deserialize, Serialize, de};
 use uuid::Uuid;
 
@@ -35,6 +36,23 @@ impl<'de, M: PublicIdMarker> Deserialize<'de> for Public<Id<M>> {
         Ok(Self(Id::from_uuid(
             deserializer.deserialize_str(IdVisitor(M::PREFIX))?,
         )))
+    }
+}
+
+impl<M: PublicIdMarker> JsonSchema for Public<Id<M>> {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        format!("Id<{}>", std::any::type_name::<M>()).into()
+    }
+
+    fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        // FIXME: Add some more details
+        json_schema!({
+            "type": "string",
+        })
+    }
+
+    fn inline_schema() -> bool {
+        true
     }
 }
 

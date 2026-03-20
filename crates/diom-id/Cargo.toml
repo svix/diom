@@ -9,6 +9,7 @@ rust-version.workspace = true
 data-encoding = "2.10.0"
 data-encoding-macro = "0.1.19"
 jiff.workspace = true
+schemars.workspace = true
 serde.workspace = true
 uuid.workspace = true
 

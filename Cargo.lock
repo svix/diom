@@ -1158,6 +1158,7 @@ dependencies = [
  "data-encoding-macro",
  "jiff",
  "rmp-serde",
+ "schemars 1.2.1",
  "serde",
  "uuid",
 ]
