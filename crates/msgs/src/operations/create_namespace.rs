@@ -68,8 +68,8 @@ impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
             name: value.name,
             retention: Retention { millis, bytes },
             storage_type: value.storage_type,
-            created: value.created_at,
-            updated: value.updated_at,
+            created: value.created,
+            updated: value.updated,
         }
     }
 }

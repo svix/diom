@@ -66,8 +66,8 @@ impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
             storage_type: value.storage_type,
-            created: value.created_at,
-            updated: value.updated_at,
+            created: value.created,
+            updated: value.updated,
         }
     }
 }
