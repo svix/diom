@@ -35,7 +35,7 @@ public class KvDeleteIn_ {
     }
 
     /**
-     * Create an instance of KvDeleteIn_ given an JSON string
+     * Create an instance of KvDeleteIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of KvDeleteIn_
@@ -46,7 +46,7 @@ public class KvDeleteIn_ {
     }
 
     /**
-     * Convert an instance of KvDeleteIn_ to an JSON string
+     * Convert an instance of KvDeleteIn_ to a JSON string
      *
      * @return JSON string
      */

@@ -38,7 +38,7 @@ public class MsgPublishIn_ {
     }
 
     /**
-     * Create an instance of MsgPublishIn_ given an JSON string
+     * Create an instance of MsgPublishIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgPublishIn_
@@ -49,7 +49,7 @@ public class MsgPublishIn_ {
     }
 
     /**
-     * Convert an instance of MsgPublishIn_ to an JSON string
+     * Convert an instance of MsgPublishIn_ to a JSON string
      *
      * @return JSON string
      */

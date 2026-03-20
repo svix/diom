@@ -105,7 +105,7 @@ public class MsgIn {
     }
 
     /**
-     * Create an instance of MsgIn given an JSON string
+     * Create an instance of MsgIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgIn
@@ -116,7 +116,7 @@ public class MsgIn {
     }
 
     /**
-     * Convert an instance of MsgIn to an JSON string
+     * Convert an instance of MsgIn to a JSON string
      *
      * @return JSON string
      */

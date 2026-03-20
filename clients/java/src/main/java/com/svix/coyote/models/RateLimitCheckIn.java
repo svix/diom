@@ -111,7 +111,7 @@ public class RateLimitCheckIn {
     }
 
     /**
-     * Create an instance of RateLimitCheckIn given an JSON string
+     * Create an instance of RateLimitCheckIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitCheckIn
@@ -122,7 +122,7 @@ public class RateLimitCheckIn {
     }
 
     /**
-     * Convert an instance of RateLimitCheckIn to an JSON string
+     * Convert an instance of RateLimitCheckIn to a JSON string
      *
      * @return JSON string
      */

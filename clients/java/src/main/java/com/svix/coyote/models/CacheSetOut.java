@@ -31,7 +31,7 @@ public class CacheSetOut {
     public CacheSetOut() {}
 
     /**
-     * Create an instance of CacheSetOut given an JSON string
+     * Create an instance of CacheSetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheSetOut
@@ -42,7 +42,7 @@ public class CacheSetOut {
     }
 
     /**
-     * Convert an instance of CacheSetOut to an JSON string
+     * Convert an instance of CacheSetOut to a JSON string
      *
      * @return JSON string
      */

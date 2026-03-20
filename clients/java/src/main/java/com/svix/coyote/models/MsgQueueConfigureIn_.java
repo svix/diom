@@ -44,7 +44,7 @@ public class MsgQueueConfigureIn_ {
     }
 
     /**
-     * Create an instance of MsgQueueConfigureIn_ given an JSON string
+     * Create an instance of MsgQueueConfigureIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueConfigureIn_
@@ -55,7 +55,7 @@ public class MsgQueueConfigureIn_ {
     }
 
     /**
-     * Convert an instance of MsgQueueConfigureIn_ to an JSON string
+     * Convert an instance of MsgQueueConfigureIn_ to a JSON string
      *
      * @return JSON string
      */

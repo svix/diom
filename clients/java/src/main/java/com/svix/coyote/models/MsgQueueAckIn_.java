@@ -41,7 +41,7 @@ public class MsgQueueAckIn_ {
     }
 
     /**
-     * Create an instance of MsgQueueAckIn_ given an JSON string
+     * Create an instance of MsgQueueAckIn_ given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueAckIn_
@@ -52,7 +52,7 @@ public class MsgQueueAckIn_ {
     }
 
     /**
-     * Convert an instance of MsgQueueAckIn_ to an JSON string
+     * Convert an instance of MsgQueueAckIn_ to a JSON string
      *
      * @return JSON string
      */

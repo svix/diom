@@ -58,7 +58,7 @@ public class IdempotencyCompleted {
     }
 
     /**
-     * Create an instance of IdempotencyCompleted given an JSON string
+     * Create an instance of IdempotencyCompleted given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of IdempotencyCompleted
@@ -69,7 +69,7 @@ public class IdempotencyCompleted {
     }
 
     /**
-     * Convert an instance of IdempotencyCompleted to an JSON string
+     * Convert an instance of IdempotencyCompleted to a JSON string
      *
      * @return JSON string
      */

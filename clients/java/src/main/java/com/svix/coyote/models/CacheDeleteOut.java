@@ -51,7 +51,7 @@ public class CacheDeleteOut {
     }
 
     /**
-     * Create an instance of CacheDeleteOut given an JSON string
+     * Create an instance of CacheDeleteOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheDeleteOut
@@ -62,7 +62,7 @@ public class CacheDeleteOut {
     }
 
     /**
-     * Convert an instance of CacheDeleteOut to an JSON string
+     * Convert an instance of CacheDeleteOut to a JSON string
      *
      * @return JSON string
      */

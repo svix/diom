@@ -51,7 +51,7 @@ public class IdempotencyGetNamespaceIn {
     }
 
     /**
-     * Create an instance of IdempotencyGetNamespaceIn given an JSON string
+     * Create an instance of IdempotencyGetNamespaceIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of IdempotencyGetNamespaceIn
@@ -62,7 +62,7 @@ public class IdempotencyGetNamespaceIn {
     }
 
     /**
-     * Convert an instance of IdempotencyGetNamespaceIn to an JSON string
+     * Convert an instance of IdempotencyGetNamespaceIn to a JSON string
      *
      * @return JSON string
      */

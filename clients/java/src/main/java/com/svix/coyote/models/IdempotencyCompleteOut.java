@@ -31,7 +31,7 @@ public class IdempotencyCompleteOut {
     public IdempotencyCompleteOut() {}
 
     /**
-     * Create an instance of IdempotencyCompleteOut given an JSON string
+     * Create an instance of IdempotencyCompleteOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of IdempotencyCompleteOut
@@ -42,7 +42,7 @@ public class IdempotencyCompleteOut {
     }
 
     /**
-     * Convert an instance of IdempotencyCompleteOut to an JSON string
+     * Convert an instance of IdempotencyCompleteOut to a JSON string
      *
      * @return JSON string
      */
