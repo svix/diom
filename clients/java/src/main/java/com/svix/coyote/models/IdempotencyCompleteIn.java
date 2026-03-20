@@ -28,28 +28,29 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleteIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> response;
     @JsonProperty private Long ttl;
-    public IdempotencyCompleteIn () {}
+    public IdempotencyCompleteIn() {}
 
-    public IdempotencyCompleteIn key(String key) {
-        this.key = key;
+    public IdempotencyCompleteIn namespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 
     /**
-    * Get key
+    * Get namespace
     *
-     * @return key
+     * @return namespace
      */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public IdempotencyCompleteIn response(List<Byte> response) {
@@ -95,24 +96,5 @@ public class IdempotencyCompleteIn {
 
     public void setTtl(Long ttl) {
         this.ttl = ttl;
-    }
-    /**
-     * Create an instance of IdempotencyCompleteIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of IdempotencyCompleteIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to IdempotencyCompleteIn
-     */
-    public static IdempotencyCompleteIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, IdempotencyCompleteIn.class);
-    }
-
-    /**
-     * Convert an instance of IdempotencyCompleteIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

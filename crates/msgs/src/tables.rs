@@ -1,4 +1,4 @@
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::{NamespaceId, TopicId};
 use std::collections::HashMap;
 
 use coyote_error::{Result, ResultExt as _};
@@ -6,7 +6,7 @@ use fjall_utils::{TableKey, TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{ConsumerGroup, MsgId, Offset, Partition, TopicId, TopicName};
+use crate::entities::{ConsumerGroup, MsgId, Offset, Partition, TopicName};
 
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]
@@ -38,11 +38,7 @@ impl TopicRow {
 
     pub(crate) fn new(name: TopicName, now: Timestamp) -> Self {
         Self {
-            id: uuid::Uuid::new_v7(uuid::Timestamp::from_unix(
-                uuid::NoContext,
-                now.as_second() as u64,
-                now.subsec_nanosecond() as u32,
-            )),
+            id: TopicId::new(now),
             name,
             partitions: 1,
         }

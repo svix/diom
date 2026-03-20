@@ -6,14 +6,16 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-coyote-core = { version = "0.0.1", path = "../coyote-core" }
+coyote-core.workspace = true
 coyote-error.workspace = true
+coyote-id.workspace = true
 coyote-namespace.workspace = true
 coyote-operations.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 itertools.workspace = true
 jiff.workspace = true
+parking_lot.workspace = true
 schemars.workspace = true
 serde.workspace = true
 tap.workspace = true

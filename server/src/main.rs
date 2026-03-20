@@ -5,7 +5,7 @@
 #![forbid(unsafe_code)]
 
 use clap::{Parser, Subcommand};
-use coyote::{cfg, run_with_listeners};
+use coyote::{cfg, run};
 use dotenvy::dotenv;
 use mimalloc::MiMalloc;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -77,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Server) | None => {
             otel::setup_metrics(&cfg);
-            run_with_listeners(cfg, None, None).await
+            run(cfg).await
         }
     };
 

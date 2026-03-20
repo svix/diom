@@ -27,13 +27,14 @@ public class Health {
         
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/health/ping");
+
         return this.client.executeRequest(
             "GET",
             url.build(),
             null,
             null,
             PingOut.class
-            );
+        );
     }
 
     /** Intentionally return an error */
@@ -41,12 +42,13 @@ public class Health {
         
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/health/error");
+
         this.client.executeRequest(
             "POST",
             url.build(),
             null,
             null,
             null
-            );
+        );
     }
 }

@@ -28,9 +28,29 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitGetRemainingIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private RateLimitTokenBucketConfig config;
-    public RateLimitGetRemainingIn () {}
+    public RateLimitGetRemainingIn() {}
+
+    public RateLimitGetRemainingIn namespace(String namespace) {
+        this.namespace = namespace;
+        return this;
+    }
+
+    /**
+    * Get namespace
+    *
+     * @return namespace
+     */
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
 
     public RateLimitGetRemainingIn key(String key) {
         this.key = key;
@@ -69,8 +89,9 @@ public class RateLimitGetRemainingIn {
     public void setConfig(RateLimitTokenBucketConfig config) {
         this.config = config;
     }
+
     /**
-     * Create an instance of RateLimitGetRemainingIn given an JSON string
+     * Create an instance of RateLimitGetRemainingIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitGetRemainingIn
@@ -81,7 +102,7 @@ public class RateLimitGetRemainingIn {
     }
 
     /**
-     * Convert an instance of RateLimitGetRemainingIn to an JSON string
+     * Convert an instance of RateLimitGetRemainingIn to a JSON string
      *
      * @return JSON string
      */

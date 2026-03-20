@@ -33,7 +33,7 @@ public class RateLimitGetNamespaceOut {
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
-    public RateLimitGetNamespaceOut () {}
+    public RateLimitGetNamespaceOut() {}
 
     public RateLimitGetNamespaceOut name(String name) {
         this.name = name;
@@ -129,8 +129,9 @@ public class RateLimitGetNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
-     * Create an instance of RateLimitGetNamespaceOut given an JSON string
+     * Create an instance of RateLimitGetNamespaceOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitGetNamespaceOut
@@ -141,7 +142,7 @@ public class RateLimitGetNamespaceOut {
     }
 
     /**
-     * Convert an instance of RateLimitGetNamespaceOut to an JSON string
+     * Convert an instance of RateLimitGetNamespaceOut to a JSON string
      *
      * @return JSON string
      */

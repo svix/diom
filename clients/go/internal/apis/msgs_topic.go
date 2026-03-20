@@ -26,6 +26,7 @@ func (msgsTopic MsgsTopic) Configure(
 	msgTopicConfigureIn coyote_models.MsgTopicConfigureIn,
 ) (*coyote_models.MsgTopicConfigureOut, error) {
 	body := coyote_models.MsgTopicConfigureIn_{
+		Namespace:  msgTopicConfigureIn.Namespace,
 		Topic:      topic,
 		Partitions: msgTopicConfigureIn.Partitions,
 	}

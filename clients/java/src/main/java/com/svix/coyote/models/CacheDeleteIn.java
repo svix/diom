@@ -28,44 +28,26 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheDeleteIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
-    public CacheDeleteIn () {}
+    public CacheDeleteIn() {}
 
-    public CacheDeleteIn key(String key) {
-        this.key = key;
+    public CacheDeleteIn namespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 
     /**
-    * Get key
+    * Get namespace
     *
-     * @return key
+     * @return namespace
      */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-    /**
-     * Create an instance of CacheDeleteIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of CacheDeleteIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to CacheDeleteIn
-     */
-    public static CacheDeleteIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, CacheDeleteIn.class);
-    }
-
-    /**
-     * Convert an instance of CacheDeleteIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 }

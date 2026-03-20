@@ -1,12 +1,13 @@
 use std::num::NonZeroU64;
 
 use coyote_error::Result;
+use coyote_id::NamespaceId;
 use fjall::Keyspace;
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{ModuleConfig, NamespaceId, NamespaceName, StorageType};
+use crate::entities::{ModuleConfig, NamespaceName, StorageType};
 
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]

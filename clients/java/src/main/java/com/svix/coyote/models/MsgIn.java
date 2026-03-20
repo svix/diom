@@ -31,7 +31,7 @@ public class MsgIn {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private String key;
-    public MsgIn () {}
+    public MsgIn() {}
 
     public MsgIn value(List<Byte> value) {
         this.value = value;
@@ -103,8 +103,9 @@ public class MsgIn {
     public void setKey(String key) {
         this.key = key;
     }
+
     /**
-     * Create an instance of MsgIn given an JSON string
+     * Create an instance of MsgIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgIn
@@ -115,7 +116,7 @@ public class MsgIn {
     }
 
     /**
-     * Convert an instance of MsgIn to an JSON string
+     * Convert an instance of MsgIn to a JSON string
      *
      * @return JSON string
      */

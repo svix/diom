@@ -1,6 +1,6 @@
 use super::{AbortResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::IdempotencyNamespace;
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use coyote_operations::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};

@@ -28,44 +28,26 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvDeleteIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
-    public KvDeleteIn () {}
+    public KvDeleteIn() {}
 
-    public KvDeleteIn key(String key) {
-        this.key = key;
+    public KvDeleteIn namespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 
     /**
-    * Get key
+    * Get namespace
     *
-     * @return key
+     * @return namespace
      */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-    /**
-     * Create an instance of KvDeleteIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of KvDeleteIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to KvDeleteIn
-     */
-    public static KvDeleteIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, KvDeleteIn.class);
-    }
-
-    /**
-     * Convert an instance of KvDeleteIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 }

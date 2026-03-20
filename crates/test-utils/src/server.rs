@@ -8,6 +8,7 @@ use coyote::{
     core::cluster::{ClusterId, NodeId, proto::HealthResponse},
     run_with_listeners,
 };
+use coyote_core::Monotime;
 use futures_util::TryFutureExt;
 use tempfile::TempDir;
 use tokio::{
@@ -82,11 +83,7 @@ impl TestServerBuilder {
     }
 
     pub async fn build(self) -> TestContext {
-        let token = if let Some(token) = self.token {
-            token
-        } else {
-            "Stubbed token. Should probably be legit when we add auth.".to_string()
-        };
+        let token = self.token.unwrap_or_else(|| TEST_ADMIN_TOKEN.to_string());
 
         let listener = if let Some(listener) = self.listener {
             listener
@@ -113,10 +110,14 @@ impl TestServerBuilder {
 
         let base_uri = format!("http://{addr}/api/v1");
 
+        let time = Monotime::initial();
+        time.now();
+
         let server_handle = tokio::spawn({
             let cfg = cfg.clone();
+            let time = time.clone();
             async move {
-                run_with_listeners(cfg, Some(listener), Some(repl_listener)).await;
+                run_with_listeners(cfg, Some(listener), Some(repl_listener), time).await;
             }
         });
 
@@ -139,6 +140,7 @@ impl TestServerBuilder {
             repl_addr,
             node_id,
             cluster_id,
+            time,
         }
     }
 }
@@ -152,6 +154,7 @@ pub struct TestContext {
     pub repl_addr: SocketAddr,
     pub node_id: NodeId,
     pub cluster_id: ClusterId,
+    pub time: Monotime,
 }
 
 async fn check_initialized(
@@ -246,6 +249,8 @@ pub struct ServerlessTestContext {
     _workdir: TempDir,
 }
 
+pub const TEST_ADMIN_TOKEN: &str = "admin_abcdefghijlmnopqrstuvwxyz";
+
 pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
     let db_dir = workdir.join("db");
     let log_path = workdir.join("logs");
@@ -300,6 +305,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         },
         bootstrap_cfg: None,
         bootstrap_cfg_path: None,
+        admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
     }
 }
 

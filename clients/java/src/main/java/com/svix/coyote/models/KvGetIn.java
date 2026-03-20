@@ -28,27 +28,28 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvGetIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private Consistency consistency;
-    public KvGetIn () {}
+    public KvGetIn() {}
 
-    public KvGetIn key(String key) {
-        this.key = key;
+    public KvGetIn namespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 
     /**
-    * Get key
+    * Get namespace
     *
-     * @return key
+     * @return namespace
      */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public KvGetIn consistency(Consistency consistency) {
@@ -68,24 +69,5 @@ public class KvGetIn {
 
     public void setConsistency(Consistency consistency) {
         this.consistency = consistency;
-    }
-    /**
-     * Create an instance of KvGetIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of KvGetIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to KvGetIn
-     */
-    public static KvGetIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, KvGetIn.class);
-    }
-
-    /**
-     * Convert an instance of KvGetIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

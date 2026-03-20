@@ -30,7 +30,7 @@ import lombok.ToString;
 public class Retention {
     @JsonProperty private Long millis;
     @JsonProperty private Long bytes;
-    public Retention () {}
+    public Retention() {}
 
     public Retention millis(Long millis) {
         this.millis = millis;
@@ -69,8 +69,9 @@ public class Retention {
     public void setBytes(Long bytes) {
         this.bytes = bytes;
     }
+
     /**
-     * Create an instance of Retention given an JSON string
+     * Create an instance of Retention given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of Retention
@@ -81,7 +82,7 @@ public class Retention {
     }
 
     /**
-     * Convert an instance of Retention to an JSON string
+     * Convert an instance of Retention to a JSON string
      *
      * @return JSON string
      */

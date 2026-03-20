@@ -31,7 +31,7 @@ public class MsgPublishOutTopic {
     @JsonProperty private String topic;
     @JsonProperty("start_offset") private Long startOffset;
     @JsonProperty private Long offset;
-    public MsgPublishOutTopic () {}
+    public MsgPublishOutTopic() {}
 
     public MsgPublishOutTopic topic(String topic) {
         this.topic = topic;
@@ -89,8 +89,9 @@ public class MsgPublishOutTopic {
     public void setOffset(Long offset) {
         this.offset = offset;
     }
+
     /**
-     * Create an instance of MsgPublishOutTopic given an JSON string
+     * Create an instance of MsgPublishOutTopic given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgPublishOutTopic
@@ -101,7 +102,7 @@ public class MsgPublishOutTopic {
     }
 
     /**
-     * Convert an instance of MsgPublishOutTopic to an JSON string
+     * Convert an instance of MsgPublishOutTopic to a JSON string
      *
      * @return JSON string
      */

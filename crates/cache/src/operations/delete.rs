@@ -1,6 +1,6 @@
 use super::{CacheRaftState, CacheRequest, DeleteResponse};
 use crate::CacheNamespace;
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use coyote_operations::{OpContext, Result};
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};

@@ -28,30 +28,31 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvSetIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
     @JsonProperty private Long ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
-    public KvSetIn () {}
+    public KvSetIn() {}
 
-    public KvSetIn key(String key) {
-        this.key = key;
+    public KvSetIn namespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 
     /**
-    * Get key
+    * Get namespace
     *
-     * @return key
+     * @return namespace
      */
-    @javax.annotation.Nonnull
-    public String getKey() {
-        return key;
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public KvSetIn value(List<Byte> value) {
@@ -136,24 +137,5 @@ Use the `version` field from a prior `get` response.
 
     public void setVersion(Long version) {
         this.version = version;
-    }
-    /**
-     * Create an instance of KvSetIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of KvSetIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to KvSetIn
-     */
-    public static KvSetIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, KvSetIn.class);
-    }
-
-    /**
-     * Convert an instance of KvSetIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

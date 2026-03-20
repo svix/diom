@@ -1,0 +1,6 @@
+dependencies:
+- name: crds
+  repository: file://./charts/crds
+  version: 0.0.0
+digest: sha256:064ff09471a982ac3991ac31d54c1b07f0b45e44c94f912748651f88238b6830
+generated: "2026-03-19T13:37:42.334505461-05:00"

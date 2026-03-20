@@ -33,7 +33,7 @@ public class MsgNamespaceGetOut {
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
-    public MsgNamespaceGetOut () {}
+    public MsgNamespaceGetOut() {}
 
     public MsgNamespaceGetOut name(String name) {
         this.name = name;
@@ -129,8 +129,9 @@ public class MsgNamespaceGetOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
-     * Create an instance of MsgNamespaceGetOut given an JSON string
+     * Create an instance of MsgNamespaceGetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgNamespaceGetOut
@@ -141,7 +142,7 @@ public class MsgNamespaceGetOut {
     }
 
     /**
-     * Convert an instance of MsgNamespaceGetOut to an JSON string
+     * Convert an instance of MsgNamespaceGetOut to a JSON string
      *
      * @return JSON string
      */

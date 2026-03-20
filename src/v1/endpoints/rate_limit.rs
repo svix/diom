@@ -8,7 +8,7 @@ use axum::{Extension, extract::State};
 use coyote_core::types::{DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
-use coyote_namespace::entities::StorageType;
+use coyote_namespace::entities::{NamespaceName, StorageType};
 use coyote_proto::MsgPackOrJson;
 use coyote_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
 use jiff::Timestamp;
@@ -55,6 +55,9 @@ fn default_interval_millis() -> DurationMs {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimitCheckIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 
@@ -86,6 +89,9 @@ pub struct RateLimitCheckOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimitGetRemainingIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 
@@ -113,7 +119,7 @@ async fn rate_limit_limit(
 ) -> Result<MsgPackOrJson<RateLimitCheckOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let key = data.key.0.clone();
@@ -141,12 +147,12 @@ async fn rate_limit_get_remaining(
 ) -> Result<MsgPackOrJson<RateLimitGetRemainingOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     repl.wait_linearizable().await.or_internal_error()?;
 
-    let now = Timestamp::now();
+    let now = repl.time.last();
     // FIXME: this state should be passed, not created every time.
     let rate_limit_state = coyote_rate_limit::State::init(state.do_not_use_dbs.clone())?;
     let controller = rate_limit_state.controller(namespace.storage_type);
@@ -161,6 +167,9 @@ async fn rate_limit_get_remaining(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimitResetIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 
@@ -181,7 +190,7 @@ async fn rate_limit_reset(
 ) -> Result<MsgPackOrJson<RateLimitResetOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let key = data.key.0.clone();
@@ -195,7 +204,7 @@ async fn rate_limit_reset(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitCreateNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
@@ -203,7 +212,7 @@ struct RateLimitCreateNamespaceIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitCreateNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
@@ -213,12 +222,12 @@ struct RateLimitCreateNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,

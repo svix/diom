@@ -31,7 +31,7 @@ public class RateLimitCreateNamespaceIn {
     @JsonProperty private String name;
     @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-    public RateLimitCreateNamespaceIn () {}
+    public RateLimitCreateNamespaceIn() {}
 
     public RateLimitCreateNamespaceIn name(String name) {
         this.name = name;
@@ -89,8 +89,9 @@ public class RateLimitCreateNamespaceIn {
     public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
     }
+
     /**
-     * Create an instance of RateLimitCreateNamespaceIn given an JSON string
+     * Create an instance of RateLimitCreateNamespaceIn given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitCreateNamespaceIn
@@ -101,7 +102,7 @@ public class RateLimitCreateNamespaceIn {
     }
 
     /**
-     * Convert an instance of RateLimitCreateNamespaceIn to an JSON string
+     * Convert an instance of RateLimitCreateNamespaceIn to a JSON string
      *
      * @return JSON string
      */

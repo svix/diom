@@ -8,7 +8,6 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self},
 };
-use uuid::Uuid;
 use validator::Validate;
 
 pub type Offset = u64;
@@ -72,10 +71,6 @@ impl TopicName {
         } else {
             Ok(Self { namespace, topic })
         }
-    }
-
-    pub fn namespace(&self) -> Option<&str> {
-        self.namespace.as_ref().map(|x| &x[..])
     }
 }
 
@@ -141,10 +136,6 @@ pub struct TopicPartition {
 impl TopicPartition {
     pub fn new(raw: TopicName, partition: Partition) -> Self {
         Self { raw, partition }
-    }
-
-    pub fn namespace(&self) -> Option<&str> {
-        self.raw.namespace()
     }
 }
 
@@ -222,10 +213,6 @@ impl TopicIn {
             TopicIn::TopicName(topic_name) => topic_name,
             TopicIn::TopicPartition(topic_partition) => &topic_partition.raw,
         }
-    }
-
-    pub fn namespace(&self) -> Option<&str> {
-        self.topic_name().namespace()
     }
 }
 
@@ -484,9 +471,6 @@ impl JsonSchema for ConsumerGroup {
         String::json_schema(generator)
     }
 }
-
-// FIXME: should be a newtype
-pub type TopicId = Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {

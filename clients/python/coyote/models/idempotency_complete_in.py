@@ -1,9 +1,12 @@
 # this file is @generated
+import typing as t
 
 from ..internal.base_model import BaseModel
 
 
 class IdempotencyCompleteIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     response: bytes
     """The response to cache"""
 
@@ -12,6 +15,8 @@ class IdempotencyCompleteIn(BaseModel):
 
 
 class _IdempotencyCompleteIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     key: str
 
     response: bytes

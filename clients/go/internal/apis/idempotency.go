@@ -28,8 +28,9 @@ func (idempotency Idempotency) Start(
 	idempotencyStartIn coyote_models.IdempotencyStartIn,
 ) (*coyote_models.IdempotencyStartOut, error) {
 	body := coyote_models.IdempotencyStartIn_{
-		Key: key,
-		Ttl: idempotencyStartIn.Ttl,
+		Namespace: idempotencyStartIn.Namespace,
+		Key:       key,
+		Ttl:       idempotencyStartIn.Ttl,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyStartIn_, coyote_models.IdempotencyStartOut](
@@ -48,9 +49,10 @@ func (idempotency Idempotency) Complete(
 	idempotencyCompleteIn coyote_models.IdempotencyCompleteIn,
 ) (*coyote_models.IdempotencyCompleteOut, error) {
 	body := coyote_models.IdempotencyCompleteIn_{
-		Key:      key,
-		Response: idempotencyCompleteIn.Response,
-		Ttl:      idempotencyCompleteIn.Ttl,
+		Namespace: idempotencyCompleteIn.Namespace,
+		Key:       key,
+		Response:  idempotencyCompleteIn.Response,
+		Ttl:       idempotencyCompleteIn.Ttl,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyCompleteIn_, coyote_models.IdempotencyCompleteOut](
@@ -69,7 +71,8 @@ func (idempotency Idempotency) Abort(
 	idempotencyAbortIn coyote_models.IdempotencyAbortIn,
 ) (*coyote_models.IdempotencyAbortOut, error) {
 	body := coyote_models.IdempotencyAbortIn_{
-		Key: key,
+		Namespace: idempotencyAbortIn.Namespace,
+		Key:       key,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyAbortIn_, coyote_models.IdempotencyAbortOut](

@@ -32,7 +32,7 @@ public class QueueMsgOut {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private OffsetDateTime timestamp;
-    public QueueMsgOut () {}
+    public QueueMsgOut() {}
 
     public QueueMsgOut msgId(String msgId) {
         this.msgId = msgId;
@@ -123,8 +123,9 @@ public class QueueMsgOut {
     public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
     }
+
     /**
-     * Create an instance of QueueMsgOut given an JSON string
+     * Create an instance of QueueMsgOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of QueueMsgOut
@@ -135,7 +136,7 @@ public class QueueMsgOut {
     }
 
     /**
-     * Convert an instance of QueueMsgOut to an JSON string
+     * Convert an instance of QueueMsgOut to a JSON string
      *
      * @return JSON string
      */

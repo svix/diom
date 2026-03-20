@@ -28,47 +28,29 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamCommitIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
-    public MsgStreamCommitIn () {}
+    public MsgStreamCommitIn() {}
 
-    public MsgStreamCommitIn topic(String topic) {
-        this.topic = topic;
+    public MsgStreamCommitIn namespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 
     /**
-    * Get topic
+    * Get namespace
     *
-     * @return topic
+     * @return namespace
      */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public MsgStreamCommitIn consumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
-        return this;
-    }
-
-    /**
-    * Get consumerGroup
-    *
-     * @return consumerGroup
-     */
-    @javax.annotation.Nonnull
-    public String getConsumerGroup() {
-        return consumerGroup;
-    }
-
-    public void setConsumerGroup(String consumerGroup) {
-        this.consumerGroup = consumerGroup;
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public MsgStreamCommitIn offset(Long offset) {
@@ -88,24 +70,5 @@ public class MsgStreamCommitIn {
 
     public void setOffset(Long offset) {
         this.offset = offset;
-    }
-    /**
-     * Create an instance of MsgStreamCommitIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgStreamCommitIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgStreamCommitIn
-     */
-    public static MsgStreamCommitIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgStreamCommitIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgStreamCommitIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

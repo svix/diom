@@ -31,7 +31,7 @@ public class RateLimitTokenBucketConfig {
     @JsonProperty private Long capacity;
     @JsonProperty("refill_amount") private Long refillAmount;
     @JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
-    public RateLimitTokenBucketConfig () {}
+    public RateLimitTokenBucketConfig() {}
 
     public RateLimitTokenBucketConfig capacity(Long capacity) {
         this.capacity = capacity;
@@ -89,8 +89,9 @@ public class RateLimitTokenBucketConfig {
     public void setRefillIntervalMillis(Long refillIntervalMillis) {
         this.refillIntervalMillis = refillIntervalMillis;
     }
+
     /**
-     * Create an instance of RateLimitTokenBucketConfig given an JSON string
+     * Create an instance of RateLimitTokenBucketConfig given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of RateLimitTokenBucketConfig
@@ -101,7 +102,7 @@ public class RateLimitTokenBucketConfig {
     }
 
     /**
-     * Convert an instance of RateLimitTokenBucketConfig to an JSON string
+     * Convert an instance of RateLimitTokenBucketConfig to a JSON string
      *
      * @return JSON string
      */

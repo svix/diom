@@ -13,7 +13,7 @@ use coyote_kv::{
     kvcontroller::{KvModel, OperationBehavior},
     operations::{CreateKvOperation, DeleteOperation, SetOperation, SetResponseData},
 };
-use coyote_namespace::entities::StorageType;
+use coyote_namespace::entities::{NamespaceName, StorageType};
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -25,6 +25,9 @@ use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openap
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvSetIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 
@@ -52,6 +55,9 @@ pub struct KvSetOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvGetIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
     #[serde(default = "Consistency::strong")]
@@ -83,6 +89,9 @@ impl KvGetOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvDeleteIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 }
@@ -102,7 +111,7 @@ async fn kv_set(
 ) -> Result<MsgPackOrJson<KvSetOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(
@@ -112,6 +121,7 @@ async fn kv_set(
         data.ttl,
         data.behavior,
         data.version,
+        repl.time.last(),
     );
     let SetResponseData { version, success } =
         repl.client_write(operation).await.or_internal_error()?.0?;
@@ -129,7 +139,7 @@ async fn kv_get(
 ) -> Result<MsgPackOrJson<KvGetOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
@@ -162,7 +172,7 @@ async fn kv_del(
 ) -> Result<MsgPackOrJson<KvDeleteOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let key = data.key;
@@ -177,12 +187,12 @@ async fn kv_del(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
@@ -192,7 +202,7 @@ struct KvGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvCreateNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
@@ -200,7 +210,7 @@ struct KvCreateNamespaceIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvCreateNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,

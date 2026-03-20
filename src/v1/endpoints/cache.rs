@@ -15,7 +15,7 @@ use coyote_error::{OptionExt, ResultExt};
 use coyote_kv::kvcontroller::KvModel;
 use coyote_namespace::{
     Namespace,
-    entities::{CacheConfig, EvictionPolicy, StorageType},
+    entities::{CacheConfig, EvictionPolicy, NamespaceName, StorageType},
 };
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -30,6 +30,9 @@ pub type CacheNamespace = Namespace<CacheConfig>;
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheSetIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     pub key: EntityKey,
 
     pub value: Vec<u8>,
@@ -39,8 +42,8 @@ pub struct CacheSetIn {
 }
 
 impl CacheSetIn {
-    fn into_model(self) -> CacheModel {
-        let expiry = Timestamp::now() + self.ttl;
+    fn into_model(self, when: Timestamp) -> CacheModel {
+        let expiry = when + self.ttl;
         debug_assert!(expiry > Timestamp::UNIX_EPOCH);
 
         CacheModel {
@@ -56,6 +59,9 @@ pub struct CacheSetOut {}
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheGetIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
     #[serde(default = "Consistency::weak")]
@@ -82,6 +88,9 @@ impl CacheGetOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheDeleteIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+
     #[validate(nested)]
     pub key: EntityKey,
 }
@@ -93,7 +102,7 @@ pub struct CacheDeleteOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheGetNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
@@ -104,7 +113,7 @@ struct CacheGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheCreateNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
@@ -114,7 +123,7 @@ struct CacheCreateNamespaceIn {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheCreateNamespaceOut {
-    pub name: String,
+    pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub storage_type: StorageType,
@@ -132,10 +141,12 @@ async fn cache_set(
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model());
+    let now = repl.time.last();
+
+    let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model(now));
     repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
@@ -149,7 +160,7 @@ async fn cache_get(
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
@@ -181,7 +192,7 @@ async fn cache_del(
 ) -> Result<MsgPackOrJson<CacheDeleteOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.key.namespace())?
+        .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());
@@ -193,7 +204,7 @@ async fn cache_del(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheGetNamespaceIn {
-    pub name: String,
+    pub name: NamespaceName,
 }
 
 /// Create cache namespace

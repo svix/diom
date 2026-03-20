@@ -414,7 +414,8 @@ async fn seek_nonexistent_namespace() -> TestResult {
     client
         .post("msgs/stream/seek")
         .json(json!({
-            "topic": "does-not-exist:t1",
+            "namespace": "does-not-exist",
+            "topic": "t1",
             "consumer_group": "cg1",
             "position": "earliest",
         }))

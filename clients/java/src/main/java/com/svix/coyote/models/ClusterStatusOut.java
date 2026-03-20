@@ -34,7 +34,7 @@ public class ClusterStatusOut {
     @JsonProperty("this_node_state") private ServerState thisNodeState;
     @JsonProperty("this_node_last_committed_timestamp") private OffsetDateTime thisNodeLastCommittedTimestamp;
     @JsonProperty private List<NodeStatusOut> nodes;
-    public ClusterStatusOut () {}
+    public ClusterStatusOut() {}
 
     public ClusterStatusOut clusterId(String clusterId) {
         this.clusterId = clusterId;
@@ -160,8 +160,9 @@ This value is not replicated and should only be used for debugging.
     public void setNodes(List<NodeStatusOut> nodes) {
         this.nodes = nodes;
     }
+
     /**
-     * Create an instance of ClusterStatusOut given an JSON string
+     * Create an instance of ClusterStatusOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of ClusterStatusOut
@@ -172,7 +173,7 @@ This value is not replicated and should only be used for debugging.
     }
 
     /**
-     * Convert an instance of ClusterStatusOut to an JSON string
+     * Convert an instance of ClusterStatusOut to a JSON string
      *
      * @return JSON string
      */

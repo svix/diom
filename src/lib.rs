@@ -3,9 +3,13 @@
 
 #![warn(clippy::all)]
 
-#[cfg(test)]
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
 
 use ::serde::Serialize;
 use aide::axum::ApiRouter;
@@ -33,6 +37,7 @@ use crate::{
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
     },
+    workers::Workers,
 };
 use coyote_core::shutdown::{shutting_down_token, start_shut_down};
 
@@ -43,6 +48,7 @@ pub use coyote_error as error;
 pub mod openapi;
 mod serde;
 pub mod v1;
+mod workers;
 
 async fn graceful_shutdown_handler() {
     let ctrl_c = async {
@@ -203,19 +209,25 @@ impl AppState {
     }
 }
 
-// Made public for the purpose of E2E testing in which a queue prefix is necessary to avoid tests
-// consuming from each others' queues
+/// Run the server with the given configuration
+pub async fn run(cfg: Configuration) {
+    run_with_listeners(cfg, None, None, Monotime::initial()).await
+}
+
+/// Run the server with the given configuration and initial state
+///
+/// This is public for integration tests to use it, but should not be used
+/// by any callers other than integration tests
 pub async fn run_with_listeners(
     cfg: Configuration,
     listener: Option<TcpListener>,
     interserver_listener: Option<TcpListener>,
+    time: Monotime,
 ) {
     // OpenAPI/aide must be initialized before any routers are constructed
     // because its initialization sets generation-global settings which are
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
-
-    let time = Monotime::initial();
 
     // build our application with a route
     let app_state = AppState::new(cfg.clone(), time.clone());
@@ -262,6 +274,10 @@ pub async fn run_with_listeners(
     let router = api_router.merge(docs_router);
     let svc = router
         .layer((
+            TraceLayer::new_for_http()
+                .make_span_with(AxumOtelSpanCreator)
+                .on_response(AxumOtelOnResponse)
+                .on_failure(AxumOtelOnFailure),
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)
@@ -284,7 +300,7 @@ pub async fn run_with_listeners(
     };
     tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
-    bootstrap::run(cfg, raft_state)
+    bootstrap::run(cfg, raft_state.clone())
         .await
         .expect("bootstrapping failed");
 
@@ -297,6 +313,9 @@ pub async fn run_with_listeners(
             .accepted(node_id, ConnectionType::External);
     });
 
+    let mut workers = Workers::new();
+    workers.spawn_all(raft_state).await;
+
     axum::serve(listener, make_svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
         .await
@@ -305,11 +324,18 @@ pub async fn run_with_listeners(
     // Wait for workers to finish cleanup
     tracing::debug!("done serving; waiting for background tasks to finish");
     let _ = interserver.await;
+    let _ = workers.shutdown().await;
     tracing::debug!("we're outta here!");
 }
 
+static TEST_TRACING_INITIALIZED: AtomicBool = AtomicBool::new(false);
+
 pub fn setup_tracing_for_tests() {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+    if TEST_TRACING_INITIALIZED.load(Ordering::Acquire) {
+        return;
+    }
 
     tracing_subscriber::registry()
         .with(
@@ -322,18 +348,13 @@ pub fn setup_tracing_for_tests() {
         )
         .with(tracing_subscriber::fmt::layer().with_test_writer())
         .init();
+    TEST_TRACING_INITIALIZED.store(true, Ordering::Release);
 }
-
-#[cfg(test)]
-static TEST_TRACING_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 #[cfg(test)]
 #[ctor::ctor]
 fn test_setup() {
-    if !TEST_TRACING_INITIALIZED.load(Ordering::Acquire) {
-        setup_tracing_for_tests();
-        TEST_TRACING_INITIALIZED.store(true, Ordering::Release);
-    }
+    setup_tracing_for_tests();
 }
 
 mod docs {

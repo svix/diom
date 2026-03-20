@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueReceiveOut {
     @JsonProperty private List<QueueMsgOut> msgs;
-    public MsgQueueReceiveOut () {}
+    public MsgQueueReceiveOut() {}
 
     public MsgQueueReceiveOut msgs(List<QueueMsgOut> msgs) {
         this.msgs = msgs;
@@ -56,8 +56,9 @@ public class MsgQueueReceiveOut {
     public void setMsgs(List<QueueMsgOut> msgs) {
         this.msgs = msgs;
     }
+
     /**
-     * Create an instance of MsgQueueReceiveOut given an JSON string
+     * Create an instance of MsgQueueReceiveOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueReceiveOut
@@ -68,7 +69,7 @@ public class MsgQueueReceiveOut {
     }
 
     /**
-     * Convert an instance of MsgQueueReceiveOut to an JSON string
+     * Convert an instance of MsgQueueReceiveOut to a JSON string
      *
      * @return JSON string
      */

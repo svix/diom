@@ -30,13 +30,14 @@ public class RateLimitNamespace {
         final RateLimitCreateNamespaceIn rateLimitCreateNamespaceIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/namespace/create");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
             rateLimitCreateNamespaceIn,
             RateLimitCreateNamespaceOut.class
-            );
+        );
     }
 
     /** Get rate limiter namespace */
@@ -44,12 +45,13 @@ public class RateLimitNamespace {
         final RateLimitGetNamespaceIn rateLimitGetNamespaceIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/namespace/get");
+
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
             rateLimitGetNamespaceIn,
             RateLimitGetNamespaceOut.class
-            );
+        );
     }
 }

@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgTopicConfigureOut {
     @JsonProperty private Short partitions;
-    public MsgTopicConfigureOut () {}
+    public MsgTopicConfigureOut() {}
 
     public MsgTopicConfigureOut partitions(Short partitions) {
         this.partitions = partitions;
@@ -49,8 +49,9 @@ public class MsgTopicConfigureOut {
     public void setPartitions(Short partitions) {
         this.partitions = partitions;
     }
+
     /**
-     * Create an instance of MsgTopicConfigureOut given an JSON string
+     * Create an instance of MsgTopicConfigureOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgTopicConfigureOut
@@ -61,7 +62,7 @@ public class MsgTopicConfigureOut {
     }
 
     /**
-     * Convert an instance of MsgTopicConfigureOut to an JSON string
+     * Convert an instance of MsgTopicConfigureOut to a JSON string
      *
      * @return JSON string
      */

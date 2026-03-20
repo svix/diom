@@ -7,12 +7,12 @@ rust-version.workspace = true
 
 [dependencies]
 coyote-error.workspace = true
+coyote-id.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
-uuid.workspace = true
 
 [lints]
 workspace = true

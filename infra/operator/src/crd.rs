@@ -39,6 +39,7 @@ fn default_secret_key() -> String {
 pub(crate) struct CoyoteClusterSpec {
     /// Number of Coyote nodes. Should be odd for quorum (1, 3, 5...).
     #[serde(default = "default_nodes")]
+    #[schemars(schema_with = "nodes_schema")]
     pub nodes: i32,
 
     /// Container image to deploy.
@@ -220,6 +221,22 @@ pub(crate) struct ResourcesSpec {
     /// Resource limits — the maximum resources the container may use.
     #[serde(default)]
     pub limits: Option<BTreeMap<String, String>>,
+}
+
+impl CoyoteClusterSpec {
+    pub(crate) fn cluster_port(&self) -> u16 {
+        self.api_port + 10000
+    }
+}
+
+fn nodes_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "integer",
+        "format": "int32",
+        "default": 1,
+        "minimum": 1.0,
+        "description": "Number of Coyote nodes. Should be odd for quorum (1, 3, 5...)."
+    })
 }
 
 fn topology_spread_constraints_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {

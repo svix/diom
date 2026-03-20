@@ -31,6 +31,7 @@ class CacheAsync(ApiBase):
     ) -> CacheSetOut:
         """Cache Set"""
         body = _CacheSetIn(
+            namespace=cache_set_in.namespace,
             key=key,
             value=cache_set_in.value,
             ttl=cache_set_in.ttl,
@@ -50,6 +51,7 @@ class CacheAsync(ApiBase):
     ) -> CacheGetOut:
         """Cache Get"""
         body = _CacheGetIn(
+            namespace=cache_get_in.namespace,
             key=key,
             consistency=cache_get_in.consistency,
         ).model_dump(exclude_none=True)
@@ -68,6 +70,7 @@ class CacheAsync(ApiBase):
     ) -> CacheDeleteOut:
         """Cache Delete"""
         body = _CacheDeleteIn(
+            namespace=cache_delete_in.namespace,
             key=key,
         ).model_dump(exclude_none=True)
 
@@ -91,6 +94,7 @@ class Cache(ApiBase):
     ) -> CacheSetOut:
         """Cache Set"""
         body = _CacheSetIn(
+            namespace=cache_set_in.namespace,
             key=key,
             value=cache_set_in.value,
             ttl=cache_set_in.ttl,
@@ -110,6 +114,7 @@ class Cache(ApiBase):
     ) -> CacheGetOut:
         """Cache Get"""
         body = _CacheGetIn(
+            namespace=cache_get_in.namespace,
             key=key,
             consistency=cache_get_in.consistency,
         ).model_dump(exclude_none=True)
@@ -128,6 +133,7 @@ class Cache(ApiBase):
     ) -> CacheDeleteOut:
         """Cache Delete"""
         body = _CacheDeleteIn(
+            namespace=cache_delete_in.namespace,
             key=key,
         ).model_dump(exclude_none=True)
 

@@ -28,27 +28,28 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgPublishIn {
+    @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty private List<MsgIn> msgs;
-    public MsgPublishIn () {}
+    public MsgPublishIn() {}
 
-    public MsgPublishIn topic(String topic) {
-        this.topic = topic;
+    public MsgPublishIn namespace(String namespace) {
+        this.namespace = namespace;
         return this;
     }
 
     /**
-    * Get topic
+    * Get namespace
     *
-     * @return topic
+     * @return namespace
      */
-    @javax.annotation.Nonnull
-    public String getTopic() {
-        return topic;
+    @javax.annotation.Nullable
+    public String getNamespace() {
+        return namespace;
     }
 
-    public void setTopic(String topic) {
-        this.topic = topic;
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public MsgPublishIn msgs(List<MsgIn> msgs) {
@@ -75,24 +76,5 @@ public class MsgPublishIn {
 
     public void setMsgs(List<MsgIn> msgs) {
         this.msgs = msgs;
-    }
-    /**
-     * Create an instance of MsgPublishIn given an JSON string
-     *
-     * @param jsonString JSON string
-     * @return An instance of MsgPublishIn
-     * @throws JsonProcessingException if the JSON string is invalid with respect to MsgPublishIn
-     */
-    public static MsgPublishIn fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, MsgPublishIn.class);
-    }
-
-    /**
-     * Convert an instance of MsgPublishIn to an JSON string
-     *
-     * @return JSON string
-     */
-    public String toJson() throws JsonProcessingException {
-        return Utils.getObjectMapper().writeValueAsString(this);
     }
 }

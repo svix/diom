@@ -28,9 +28,10 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueAckOut {
-    public MsgQueueAckOut () {}
+    public MsgQueueAckOut() {}
+
     /**
-     * Create an instance of MsgQueueAckOut given an JSON string
+     * Create an instance of MsgQueueAckOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of MsgQueueAckOut
@@ -41,7 +42,7 @@ public class MsgQueueAckOut {
     }
 
     /**
-     * Convert an instance of MsgQueueAckOut to an JSON string
+     * Convert an instance of MsgQueueAckOut to a JSON string
      *
      * @return JSON string
      */

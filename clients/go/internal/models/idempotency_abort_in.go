@@ -3,8 +3,10 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 type IdempotencyAbortIn struct {
+	Namespace *string `json:"namespace,omitempty"`
 }
 
 type IdempotencyAbortIn_ struct {
-	Key string `json:"key"`
+	Namespace *string `json:"namespace,omitempty"`
+	Key       string  `json:"key"`
 }

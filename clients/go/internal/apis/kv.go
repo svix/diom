@@ -28,11 +28,12 @@ func (kv Kv) Set(
 	kvSetIn coyote_models.KvSetIn,
 ) (*coyote_models.KvSetOut, error) {
 	body := coyote_models.KvSetIn_{
-		Key:      key,
-		Value:    kvSetIn.Value,
-		Ttl:      kvSetIn.Ttl,
-		Behavior: kvSetIn.Behavior,
-		Version:  kvSetIn.Version,
+		Namespace: kvSetIn.Namespace,
+		Key:       key,
+		Value:     kvSetIn.Value,
+		Ttl:       kvSetIn.Ttl,
+		Behavior:  kvSetIn.Behavior,
+		Version:   kvSetIn.Version,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.KvSetIn_, coyote_models.KvSetOut](
@@ -51,6 +52,7 @@ func (kv Kv) Get(
 	kvGetIn coyote_models.KvGetIn,
 ) (*coyote_models.KvGetOut, error) {
 	body := coyote_models.KvGetIn_{
+		Namespace:   kvGetIn.Namespace,
 		Key:         key,
 		Consistency: kvGetIn.Consistency,
 	}
@@ -71,7 +73,8 @@ func (kv Kv) Delete(
 	kvDeleteIn coyote_models.KvDeleteIn,
 ) (*coyote_models.KvDeleteOut, error) {
 	body := coyote_models.KvDeleteIn_{
-		Key: key,
+		Namespace: kvDeleteIn.Namespace,
+		Key:       key,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.KvDeleteIn_, coyote_models.KvDeleteOut](

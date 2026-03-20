@@ -1044,6 +1044,7 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-kv",
  "coyote-namespace",
  "coyote-operations",
@@ -1112,7 +1113,6 @@ dependencies = [
 name = "coyote-core"
 version = "0.0.1"
 dependencies = [
- "coyote-namespace",
  "coyote-proto",
  "jiff",
  "rand 0.9.2",
@@ -1151,11 +1151,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "coyote-id"
+version = "0.0.1"
+dependencies = [
+ "data-encoding",
+ "data-encoding-macro",
+ "jiff",
+ "rmp-serde",
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "coyote-idempotency"
 version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-kv",
  "coyote-namespace",
  "coyote-operations",
@@ -1175,12 +1188,14 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-namespace",
  "coyote-operations",
  "fjall",
  "fjall-utils",
  "itertools 0.14.0",
  "jiff",
+ "parking_lot",
  "schemars 1.2.1",
  "serde",
  "tap",
@@ -1195,6 +1210,7 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-namespace",
  "coyote-operations",
  "fjall",
@@ -1205,7 +1221,6 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "tracing",
- "uuid",
  "validator",
 ]
 
@@ -1214,12 +1229,12 @@ name = "coyote-namespace"
 version = "0.0.1"
 dependencies = [
  "coyote-error",
+ "coyote-id",
  "fjall",
  "fjall-utils",
  "jiff",
  "schemars 1.2.1",
  "serde",
- "uuid",
 ]
 
 [[package]]
@@ -1227,13 +1242,16 @@ name = "coyote-operations"
 version = "0.0.1"
 dependencies = [
  "axum",
+ "coyote-core",
  "coyote-error",
+ "futures-util",
  "http",
  "http-serde",
  "jiff",
  "opentelemetry",
  "paste",
  "serde",
+ "tracing",
 ]
 
 [[package]]
@@ -1281,6 +1299,7 @@ version = "0.0.1"
 dependencies = [
  "coyote-core",
  "coyote-error",
+ "coyote-id",
  "coyote-namespace",
  "coyote-operations",
  "fjall",
@@ -1573,6 +1592,26 @@ name = "data-encoding"
 version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7a1e2f27636f116493b8b860f5546edb47c8d8f8ea73e1d2a20be88e28d1fea"
+
+[[package]]
+name = "data-encoding-macro"
+version = "0.1.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8142a83c17aa9461d637e649271eae18bf2edd00e91f2e105df36c3c16355bdb"
+dependencies = [
+ "data-encoding",
+ "data-encoding-macro-internal",
+]
+
+[[package]]
+name = "data-encoding-macro-internal"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ab67060fc6b8ef687992d439ca0fa36e7ed17e9a0b16b25b601e8757df720de"
+dependencies = [
+ "data-encoding",
+ "syn 2.0.117",
+]
 
 [[package]]
 name = "deflate64"
@@ -4889,6 +4928,7 @@ dependencies = [
  "anyhow",
  "bytes",
  "coyote",
+ "coyote-core",
  "futures-util",
  "http",
  "http-body-util",

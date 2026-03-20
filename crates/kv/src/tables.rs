@@ -1,5 +1,5 @@
 use coyote_error::{Result, ResultExt};
-use coyote_namespace::entities::NamespaceId;
+use coyote_id::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};

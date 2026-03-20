@@ -37,6 +37,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
     let refill_interval = 1;
@@ -95,7 +96,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     assert_eq!(response["remaining"], 0);
     assert!(response["retry_after_millis"].is_number());
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    time.fast_forward(Duration::from_secs(1));
 
     let response = client
         .post("rate-limit/get-remaining")
@@ -122,6 +123,7 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
     let refill_interval = 5;
@@ -139,7 +141,7 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
     )
     .await?;
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    time.fast_forward(Duration::from_secs(2));
 
     let response = call_limit_token_bucket(
         &client,
@@ -152,7 +154,7 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
     .await?;
     assert_eq!(response["remaining"], 3); // Does not refill between intervals
 
-    tokio::time::sleep(Duration::from_secs(3)).await;
+    time.fast_forward(Duration::from_secs(3));
 
     let response = client
         .post("rate-limit/get-remaining")

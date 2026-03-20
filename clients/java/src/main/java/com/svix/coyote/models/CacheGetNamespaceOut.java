@@ -34,7 +34,7 @@ public class CacheGetNamespaceOut {
     @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
-    public CacheGetNamespaceOut () {}
+    public CacheGetNamespaceOut() {}
 
     public CacheGetNamespaceOut name(String name) {
         this.name = name;
@@ -149,8 +149,9 @@ public class CacheGetNamespaceOut {
     public void setUpdated(OffsetDateTime updated) {
         this.updated = updated;
     }
+
     /**
-     * Create an instance of CacheGetNamespaceOut given an JSON string
+     * Create an instance of CacheGetNamespaceOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of CacheGetNamespaceOut
@@ -161,7 +162,7 @@ public class CacheGetNamespaceOut {
     }
 
     /**
-     * Convert an instance of CacheGetNamespaceOut to an JSON string
+     * Convert an instance of CacheGetNamespaceOut to a JSON string
      *
      * @return JSON string
      */

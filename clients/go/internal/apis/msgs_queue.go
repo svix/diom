@@ -29,6 +29,7 @@ func (msgsQueue MsgsQueue) Receive(
 	msgQueueReceiveIn coyote_models.MsgQueueReceiveIn,
 ) (*coyote_models.MsgQueueReceiveOut, error) {
 	body := coyote_models.MsgQueueReceiveIn_{
+		Namespace:           msgQueueReceiveIn.Namespace,
 		Topic:               topic,
 		ConsumerGroup:       consumerGroup,
 		BatchSize:           msgQueueReceiveIn.BatchSize,
@@ -54,6 +55,7 @@ func (msgsQueue MsgsQueue) Ack(
 	msgQueueAckIn coyote_models.MsgQueueAckIn,
 ) (*coyote_models.MsgQueueAckOut, error) {
 	body := coyote_models.MsgQueueAckIn_{
+		Namespace:     msgQueueAckIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		MsgIds:        msgQueueAckIn.MsgIds,
@@ -79,6 +81,7 @@ func (msgsQueue MsgsQueue) Configure(
 	msgQueueConfigureIn coyote_models.MsgQueueConfigureIn,
 ) (*coyote_models.MsgQueueConfigureOut, error) {
 	body := coyote_models.MsgQueueConfigureIn_{
+		Namespace:     msgQueueConfigureIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		RetrySchedule: msgQueueConfigureIn.RetrySchedule,
@@ -105,6 +108,7 @@ func (msgsQueue MsgsQueue) Nack(
 	msgQueueNackIn coyote_models.MsgQueueNackIn,
 ) (*coyote_models.MsgQueueNackOut, error) {
 	body := coyote_models.MsgQueueNackIn_{
+		Namespace:     msgQueueNackIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 		MsgIds:        msgQueueNackIn.MsgIds,
@@ -127,6 +131,7 @@ func (msgsQueue MsgsQueue) RedriveDlq(
 	msgQueueRedriveDlqIn coyote_models.MsgQueueRedriveDlqIn,
 ) (*coyote_models.MsgQueueRedriveDlqOut, error) {
 	body := coyote_models.MsgQueueRedriveDlqIn_{
+		Namespace:     msgQueueRedriveDlqIn.Namespace,
 		Topic:         topic,
 		ConsumerGroup: consumerGroup,
 	}

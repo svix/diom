@@ -30,7 +30,7 @@ import lombok.ToString;
 public class KvSetOut {
     @JsonProperty private Boolean success;
     @JsonProperty private Long version;
-    public KvSetOut () {}
+    public KvSetOut() {}
 
     public KvSetOut success(Boolean success) {
         this.success = success;
@@ -69,8 +69,9 @@ public class KvSetOut {
     public void setVersion(Long version) {
         this.version = version;
     }
+
     /**
-     * Create an instance of KvSetOut given an JSON string
+     * Create an instance of KvSetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of KvSetOut
@@ -81,7 +82,7 @@ public class KvSetOut {
     }
 
     /**
-     * Convert an instance of KvSetOut to an JSON string
+     * Convert an instance of KvSetOut to a JSON string
      *
      * @return JSON string
      */

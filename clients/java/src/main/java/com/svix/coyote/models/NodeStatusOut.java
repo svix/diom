@@ -33,7 +33,7 @@ public class NodeStatusOut {
     @JsonProperty private ServerState state;
     @JsonProperty("last_committed_log_index") private Long lastCommittedLogIndex;
     @JsonProperty("last_committed_term") private Long lastCommittedTerm;
-    public NodeStatusOut () {}
+    public NodeStatusOut() {}
 
     public NodeStatusOut nodeId(String nodeId) {
         this.nodeId = nodeId;
@@ -131,8 +131,9 @@ This will never change unless the node is erased and reset
     public void setLastCommittedTerm(Long lastCommittedTerm) {
         this.lastCommittedTerm = lastCommittedTerm;
     }
+
     /**
-     * Create an instance of NodeStatusOut given an JSON string
+     * Create an instance of NodeStatusOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of NodeStatusOut
@@ -143,7 +144,7 @@ This will never change unless the node is erased and reset
     }
 
     /**
-     * Convert an instance of NodeStatusOut to an JSON string
+     * Convert an instance of NodeStatusOut to a JSON string
      *
      * @return JSON string
      */

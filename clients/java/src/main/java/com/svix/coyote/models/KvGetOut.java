@@ -31,7 +31,7 @@ public class KvGetOut {
     @JsonProperty private OffsetDateTime expiry;
     @JsonProperty private List<Byte> value;
     @JsonProperty private Long version;
-    public KvGetOut () {}
+    public KvGetOut() {}
 
     public KvGetOut expiry(OffsetDateTime expiry) {
         this.expiry = expiry;
@@ -97,8 +97,9 @@ Pass as `version` in a subsequent `set` to perform a conditional write.
     public void setVersion(Long version) {
         this.version = version;
     }
+
     /**
-     * Create an instance of KvGetOut given an JSON string
+     * Create an instance of KvGetOut given a JSON string
      *
      * @param jsonString JSON string
      * @return An instance of KvGetOut
@@ -109,7 +110,7 @@ Pass as `version` in a subsequent `set` to perform a conditional write.
     }
 
     /**
-     * Convert an instance of KvGetOut to an JSON string
+     * Convert an instance of KvGetOut to a JSON string
      *
      * @return JSON string
      */

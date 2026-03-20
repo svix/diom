@@ -7,6 +7,8 @@ from .operation_behavior import OperationBehavior
 
 
 class KvSetIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     value: bytes
 
     ttl: t.Optional[int] = None
@@ -20,6 +22,8 @@ class KvSetIn(BaseModel):
 
 
 class _KvSetIn(BaseModel):
+    namespace: t.Optional[str] = None
+
     key: str
 
     value: bytes

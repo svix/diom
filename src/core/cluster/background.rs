@@ -1,5 +1,4 @@
 use std::{
-    panic::AssertUnwindSafe,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -10,8 +9,9 @@ use super::{
     operations::{RecordLogTimestampOperation, TickOperation},
 };
 use crate::cfg::Configuration;
-use coyote_operations::{BackgroundError, BackgroundResult, OperationWriter};
-use futures_util::FutureExt;
+use coyote_operations::{
+    BackgroundError, BackgroundResult, OperationWriter, workers::BackgroundWorker,
+};
 use openraft::error::{ClientWriteError, RaftError};
 use tap::TapFallible;
 use tokio::task::JoinSet;
@@ -38,24 +38,16 @@ impl CanBeForwardToLeader for BackgroundError {
     }
 }
 
-trait BackgroundJob: Send + Clone {
-    fn run_on_leader(self) -> impl Future<Output = BackgroundResult<()>> + Send;
-
-    fn name(&self) -> &'static str;
-}
-
 #[derive(Clone)]
 struct RecordLogTimestamps {
     cfg: Configuration,
     handle: RaftState,
 }
 
-impl BackgroundJob for RecordLogTimestamps {
-    fn name(&self) -> &'static str {
-        "record-log-timestamps"
-    }
+impl BackgroundWorker for RecordLogTimestamps {
+    const NAME: &str = "record-log-timestamps";
 
-    async fn run_on_leader(self) -> BackgroundResult<()> {
+    async fn run(self) -> BackgroundResult<()> {
         let mut ticker = tokio::time::interval(self.cfg.cluster.log_index_interval);
         loop {
             tracing::trace!("recording log timestamps");
@@ -71,12 +63,10 @@ struct Tick {
     handle: RaftState,
 }
 
-impl BackgroundJob for Tick {
-    fn name(&self) -> &'static str {
-        "tick"
-    }
+impl BackgroundWorker for Tick {
+    const NAME: &str = "tick";
 
-    async fn run_on_leader(self) -> BackgroundResult<()> {
+    async fn run(self) -> BackgroundResult<()> {
         let mut ticker = tokio::time::interval(Duration::from_secs(10));
         loop {
             // TODO: only do this if there haven't been any other
@@ -90,33 +80,14 @@ impl BackgroundJob for Tick {
 }
 
 #[derive(Clone)]
-struct KvBackground {
-    handle: RaftState,
-}
-
-impl BackgroundJob for KvBackground {
-    fn name(&self) -> &'static str {
-        "worker:kv"
-    }
-
-    async fn run_on_leader(self) -> BackgroundResult<()> {
-        let store = self.handle.state_machine.kv_store().await;
-        let time = self.handle.state_machine.time.clone();
-        coyote_kv::worker(store, self.handle, time).await
-    }
-}
-
-#[derive(Clone)]
 struct CacheBackground {
     handle: RaftState,
 }
 
-impl BackgroundJob for CacheBackground {
-    fn name(&self) -> &'static str {
-        "worker:cache"
-    }
+impl BackgroundWorker for CacheBackground {
+    const NAME: &str = "leader-worker:cache";
 
-    async fn run_on_leader(self) -> BackgroundResult<()> {
+    async fn run(self) -> BackgroundResult<()> {
         let store = self.handle.state_machine.cache_store().await;
         let time = self.handle.state_machine.time.clone();
         coyote_cache::worker(store, self.handle, time).await
@@ -128,12 +99,10 @@ struct IdempotencyBackground {
     handle: RaftState,
 }
 
-impl BackgroundJob for IdempotencyBackground {
-    fn name(&self) -> &'static str {
-        "worker:idempotency"
-    }
+impl BackgroundWorker for IdempotencyBackground {
+    const NAME: &str = "leader-worker:idempotency";
 
-    async fn run_on_leader(self) -> BackgroundResult<()> {
+    async fn run(self) -> BackgroundResult<()> {
         let store = self.handle.state_machine.idempotency_store().await;
         let time = self.handle.state_machine.time.clone();
         coyote_idempotency::worker(store, self.handle, time).await
@@ -144,77 +113,30 @@ struct BackgroundJobRunner {
     jobs: JoinSet<BackgroundResult<()>>,
 }
 
-const MAX_PANICS_PER_JOB: usize = 10;
-
-fn spawn_job<J: BackgroundJob + 'static>(jobs: &mut JoinSet<BackgroundResult<()>>, job: J) {
-    let shutting_down = coyote_core::shutdown::shutting_down_token();
-    let mut backoff = coyote_core::backoff::ExponentialBackoffWithJitter::new(
-        Duration::from_millis(10),
-        Duration::from_secs(5),
-    );
-    let mut failures = 0;
-    jobs.spawn(async move {
-        loop {
-            match AssertUnwindSafe(job.clone().run_on_leader())
-                .catch_unwind()
-                .await
-            {
-                Ok(v) => v?,
-                Err(err) => {
-                    failures += 1;
-                    if failures > MAX_PANICS_PER_JOB {
-                        tracing::error!(
-                            ?err,
-                            job_name = job.name(),
-                            "a panic occurred during a background job; shutting down the server"
-                        );
-                        coyote_core::shutdown::start_shut_down();
-                        shutting_down.cancelled().await;
-                        return Ok(());
-                    } else {
-                        tracing::error!(
-                            ?err,
-                            job_name = job.name(),
-                            "a panic occurred during a background job; restarting"
-                        );
-                    }
-                }
-            }
-            shutting_down.run_until_cancelled(backoff.backoff()).await;
-        }
-    });
-}
-
 impl BackgroundJobRunner {
-    fn spawn_all(cfg: Configuration, handle: RaftState) -> Self {
-        let mut jobs = JoinSet::new();
-        spawn_job(
-            &mut jobs,
-            RecordLogTimestamps {
-                cfg,
-                handle: handle.clone(),
-            },
-        );
-        spawn_job(
-            &mut jobs,
-            KvBackground {
-                handle: handle.clone(),
-            },
-        );
-        spawn_job(
-            &mut jobs,
-            CacheBackground {
-                handle: handle.clone(),
-            },
-        );
-        spawn_job(
-            &mut jobs,
-            IdempotencyBackground {
-                handle: handle.clone(),
-            },
-        );
-        jobs.spawn(Tick { handle }.run_on_leader());
-        Self { jobs }
+    fn new() -> Self {
+        Self {
+            jobs: JoinSet::new(),
+        }
+    }
+
+    fn spawn_job<J: BackgroundWorker + 'static>(&mut self, job: J) {
+        self.jobs
+            .spawn(async move { job.run_while_handling_panics().await });
+    }
+
+    fn spawn_all(&mut self, cfg: Configuration, handle: RaftState) {
+        self.spawn_job(RecordLogTimestamps {
+            cfg,
+            handle: handle.clone(),
+        });
+        self.spawn_job(CacheBackground {
+            handle: handle.clone(),
+        });
+        self.spawn_job(IdempotencyBackground {
+            handle: handle.clone(),
+        });
+        self.spawn_job(Tick { handle });
     }
 
     async fn stop_all(mut self) -> anyhow::Result<()> {
@@ -303,7 +225,8 @@ pub(super) async fn run_background_jobs_on_leader(
     let shutdown = crate::shutting_down_token();
     let mut chan = leadership_changes(handle.clone()).await;
     while wait_until_leader(handle.node_id, chan.resubscribe()).await {
-        let mut runner = BackgroundJobRunner::spawn_all(cfg.clone(), handle.clone());
+        let mut runner = BackgroundJobRunner::new();
+        runner.spawn_all(cfg.clone(), handle.clone());
         loop {
             tokio::select! {
                 new_leader = chan.recv() => {

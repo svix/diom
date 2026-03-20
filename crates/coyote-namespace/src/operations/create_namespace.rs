@@ -1,4 +1,5 @@
 use coyote_error::Result;
+use coyote_id::NamespaceId;
 use std::num::NonZeroU64;
 
 use fjall_utils::WriteBatchExt;
@@ -7,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     State,
-    entities::{ModuleConfig, NamespaceId, StorageType},
+    entities::{ModuleConfig, StorageType},
     tables::Namespace,
 };
 
@@ -64,11 +65,7 @@ impl<C: ModuleConfig> CreateNamespace<C> {
                 namespace
             }
             None => {
-                let id = NamespaceId::new_v7(uuid::Timestamp::from_unix(
-                    uuid::NoContext,
-                    timestamp.as_second() as u64,
-                    timestamp.subsec_nanosecond() as u32,
-                ));
+                let id = NamespaceId::new(timestamp);
                 Namespace {
                     id,
                     name: self.name,

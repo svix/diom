@@ -1,20 +1,14 @@
 ## Current K8s Deployment Process
 
-```bash
-# Get the current CRD
-cargo run -p coyote-operator -- --print-crd > ./infra/crd.yaml
+```sh
+export COYOTE_IMAGE_TAG=sha-f6e38276dc0f6f583aba7d916e57585915fe8b2a
 
-# Install the CRD
-kubectl apply -f crd.yaml
+# Generate the CRD, if needed:
 
-# Build the operator Docker image
-... This is all manual and hacked together at this point via ECR
-
-# Install the operator
-helm install coyote-operator ./helm-operator --set-string image.tag={tag of operator Docker image}
-
-# Install the Cluster CR
-kubectl apply -f cluster.yaml
+# Install the Helm chart -- right now this chart is everything in one: CRD, operator, and cluster spec. Must currently be installed from a local path:
+helm upgrade --install coyote ./helm-coyote --set operator.image.tag=$COYOTE_IMAGE_TAG --set cluster.image.tag=${COYOTE_IMAGE_TAG}
 
 # Look at your big, beautiful Coyote cluster running in a k8s cluster
+
+# Note that upgrading the CRD complicates things. Look at the chart README for details there.
 ```
