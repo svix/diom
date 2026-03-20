@@ -203,11 +203,17 @@ struct KvGetNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-struct KvCreateNamespaceIn {
+pub(crate) struct KvCreateNamespaceIn {
     pub name: NamespaceName,
     #[serde(default)]
     pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
+}
+
+impl From<KvCreateNamespaceIn> for CreateKvOperation {
+    fn from(v: KvCreateNamespaceIn) -> Self {
+        CreateKvOperation::new(v.name, v.storage_type, v.max_storage_bytes)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -226,7 +232,7 @@ async fn kv_create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<KvCreateNamespaceIn>,
 ) -> Result<MsgPackOrJson<KvCreateNamespaceOut>> {
-    let operation = CreateKvOperation::new(data.name, data.storage_type, data.max_storage_bytes);
+    let operation = CreateKvOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(KvCreateNamespaceOut {
         name: resp.name,

@@ -1,151 +1,215 @@
-use std::{
-    collections::{HashMap, hash_map::Entry},
-    fs::File,
-    num::NonZeroU64,
-    time::Instant,
+use std::{fs, str::FromStr, time::Instant};
+
+use crate::{
+    cfg::Configuration as AppConfig,
+    core::cluster::RaftState,
+    v1::endpoints::{
+        cache::CacheCreateNamespaceIn, idempotency::IdempotencyCreateNamespaceIn,
+        kv::KvCreateNamespaceIn, msgs::MsgNamespaceCreateIn,
+        rate_limit::RateLimitCreateNamespaceIn,
+    },
+};
+use anyhow::{Context, bail};
+use diom_msgs::entities::Retention;
+use diom_namespace::{
+    DEFAULT_NAMESPACE_NAME,
+    entities::{EvictionPolicy, StorageType},
 };
 
-use crate::{cfg::Configuration as AppConfig, core::cluster::RaftState};
-use anyhow::Context;
-use diom_msgs::entities::{Retention, default_retention_bytes, default_retention_millis};
-use diom_namespace::entities::{EvictionPolicy, StorageType};
-use serde::Deserialize;
-
-#[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum StorageTypeIn {
-    #[default]
-    Persistent,
-    Ephemeral,
+#[derive(Debug)]
+enum BootstrapCommand {
+    Kv(KvCreateNamespaceIn),
+    Cache(CacheCreateNamespaceIn),
+    Idempotency(IdempotencyCreateNamespaceIn),
+    RateLimit(RateLimitCreateNamespaceIn),
+    Msgs(MsgNamespaceCreateIn),
 }
 
-impl From<StorageTypeIn> for StorageType {
-    fn from(value: StorageTypeIn) -> Self {
-        match value {
-            StorageTypeIn::Persistent => StorageType::Persistent,
-            StorageTypeIn::Ephemeral => StorageType::Ephemeral,
+impl BootstrapCommand {
+    async fn apply(self, raft_state: &RaftState) -> anyhow::Result<()> {
+        match self {
+            BootstrapCommand::Kv(v) => {
+                tracing::debug!(name = v.name, "bootstrapping kv");
+                raft_state
+                    .client_write(diom_kv::operations::CreateKvOperation::from(v))
+                    .await?;
+            }
+            BootstrapCommand::Cache(v) => {
+                tracing::debug!(name = v.name, "bootstrapping cache");
+                raft_state
+                    .client_write(diom_cache::operations::CreateCacheOperation::from(v))
+                    .await?;
+            }
+            BootstrapCommand::Idempotency(v) => {
+                tracing::debug!(name = v.name, "bootstrapping idempotency");
+                raft_state
+                    .client_write(
+                        diom_idempotency::operations::CreateIdempotencyOperation::from(v),
+                    )
+                    .await?;
+            }
+            BootstrapCommand::RateLimit(v) => {
+                tracing::debug!(name = v.name, "bootstrapping rate-limit");
+                raft_state
+                    .client_write(diom_rate_limit::operations::CreateRateLimitOperation::from(v))
+                    .await?;
+            }
+            BootstrapCommand::Msgs(v) => {
+                tracing::debug!(name = v.name, "bootstrapping msgs");
+                raft_state
+                    .client_write(diom_msgs::operations::CreateNamespaceOperation::from(v))
+                    .await?;
+            }
+        }
+        Ok(())
+    }
+
+    fn name(&self) -> &str {
+        match self {
+            BootstrapCommand::Kv(v) => &v.name,
+            BootstrapCommand::Cache(v) => &v.name,
+            BootstrapCommand::Idempotency(v) => &v.name,
+            BootstrapCommand::RateLimit(v) => &v.name,
+            BootstrapCommand::Msgs(v) => &v.name,
         }
     }
 }
 
-#[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum EvictionPolicyIn {
-    #[default]
-    NoEviction,
-    LeastRecentlyUsed,
-}
+impl FromStr for BootstrapCommand {
+    type Err = anyhow::Error;
 
-impl From<EvictionPolicyIn> for EvictionPolicy {
-    fn from(value: EvictionPolicyIn) -> Self {
-        match value {
-            EvictionPolicyIn::NoEviction => EvictionPolicy::NoEviction,
-            EvictionPolicyIn::LeastRecentlyUsed => EvictionPolicy::LeastRecentlyUsed,
+    fn from_str(line: &str) -> anyhow::Result<Self> {
+        let (module, rest) = line.split_once(char::is_whitespace).with_context(|| {
+            format!("expected '<module> namespace create <json>', got: {line:?}")
+        })?;
+        let rest = rest.trim_start();
+
+        let (resource, rest) = rest
+            .split_once(char::is_whitespace)
+            .with_context(|| format!("expected 'namespace create <json>', got: {rest:?}"))?;
+        if resource != "namespace" {
+            bail!("expected 'namespace', got {resource:?}");
+        }
+        let rest = rest.trim_start();
+
+        let (action, json_str) = rest
+            .split_once(char::is_whitespace)
+            .with_context(|| format!("expected 'create <json>', got: {rest:?}"))?;
+        if action != "create" {
+            bail!("expected 'create', got {action:?}");
+        }
+        let json_str = json_str.trim();
+
+        match module {
+            "kv" => Ok(BootstrapCommand::Kv(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for kv namespace: {json_str:?}"))?,
+            )),
+            "cache" => Ok(BootstrapCommand::Cache(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for cache namespace: {json_str:?}"))?,
+            )),
+            "idempotency" => Ok(BootstrapCommand::Idempotency(
+                serde_json::from_str(json_str).with_context(|| {
+                    format!("invalid JSON for idempotency namespace: {json_str:?}")
+                })?,
+            )),
+            "rate-limit" => Ok(BootstrapCommand::RateLimit(
+                serde_json::from_str(json_str).with_context(|| {
+                    format!("invalid JSON for rate-limit namespace: {json_str:?}")
+                })?,
+            )),
+            "msgs" => Ok(BootstrapCommand::Msgs(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for msgs namespace: {json_str:?}"))?,
+            )),
+            _ => bail!("unknown module {module:?}"),
         }
     }
 }
 
-#[derive(Debug, Default, Deserialize)]
-struct NamespaceIn<C> {
-    #[serde(default)]
-    pub storage_type: StorageTypeIn,
-    pub max_storage_bytes: Option<NonZeroU64>,
-
-    #[serde(flatten)]
-    pub config: C,
+fn parse_bootstrap(content: &str) -> anyhow::Result<Vec<BootstrapCommand>> {
+    let mut commands = Vec::new();
+    for (i, line) in content.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let cmd = line
+            .parse::<BootstrapCommand>()
+            .with_context(|| format!("error on line {}", i + 1))?;
+        commands.push(cmd);
+    }
+    Ok(commands)
 }
 
-#[derive(Debug, Default, Deserialize)]
-struct KeyValueConfigIn {}
-
-#[derive(Debug, Default, Deserialize)]
-struct IdempotencyConfigIn {}
-
-#[derive(Debug, Default, Deserialize)]
-struct CacheConfigIn {
-    pub eviction_policy: Option<EvictionPolicyIn>,
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct RateLimitConfigIn {}
-
-#[derive(Debug, Default, Deserialize)]
-struct StreamConfigIn {
-    pub retention_period_ms: Option<NonZeroU64>,
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct BootstrapConfig {
-    cache: Option<HashMap<String, NamespaceIn<CacheConfigIn>>>,
-    idempotency: Option<HashMap<String, NamespaceIn<IdempotencyConfigIn>>>,
-    rate_limit: Option<HashMap<String, NamespaceIn<RateLimitConfigIn>>>,
-    kv: Option<HashMap<String, NamespaceIn<KeyValueConfigIn>>>,
-    stream: Option<HashMap<String, NamespaceIn<StreamConfigIn>>>,
-}
-
-impl BootstrapConfig {
-    fn load(
-        config_path: Option<&str>,
-        config_content: Option<&str>,
-    ) -> anyhow::Result<BootstrapConfig> {
-        let mut config = match (config_content, config_path) {
-            (Some(content), _) => {
-                yaml_serde::from_str(content).context("parsing bootstrap config")?
+fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
+    macro_rules! ensure_default {
+        ($variant:ident, $constructor:expr) => {
+            if !commands.iter().any(|c| {
+                matches!(c, BootstrapCommand::$variant(_)) && c.name() == DEFAULT_NAMESPACE_NAME
+            }) {
+                commands.insert(0, $constructor);
             }
-            (None, Some(path)) => {
-                let config_file = File::open(path).context("opening bootstrap config file")?;
-                yaml_serde::from_reader(config_file).context("parsing bootstrap config")?
-            }
-            (None, None) => BootstrapConfig::default(),
         };
-
-        // Configure default namespace for cache, if not part of the config file
-        if let Entry::Vacant(v) = config
-            .cache
-            .get_or_insert_default()
-            .entry("default".to_owned())
-        {
-            v.insert(NamespaceIn::default());
-        }
-
-        // Configure default namespace for idempotency, if not part of the config file
-        if let Entry::Vacant(v) = config
-            .idempotency
-            .get_or_insert_default()
-            .entry("default".to_owned())
-        {
-            v.insert(NamespaceIn::default());
-        }
-
-        // Configure default namespace for kv, if not part of the config file
-        if let Entry::Vacant(v) = config
-            .kv
-            .get_or_insert_default()
-            .entry("default".to_owned())
-        {
-            v.insert(NamespaceIn::default());
-        }
-
-        // Configure default namespace for idempotency, if not part of the config file
-        if let Entry::Vacant(v) = config
-            .rate_limit
-            .get_or_insert_default()
-            .entry("default".to_owned())
-        {
-            v.insert(NamespaceIn::default());
-        }
-
-        // Configure default namespace for stream (msgs), if not part of the config file
-        if let Entry::Vacant(v) = config
-            .stream
-            .get_or_insert_default()
-            .entry("default".to_owned())
-        {
-            v.insert(NamespaceIn::default());
-        }
-
-        Ok(config)
     }
+
+    ensure_default!(
+        Msgs,
+        BootstrapCommand::Msgs(MsgNamespaceCreateIn {
+            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            storage_type: StorageType::Persistent,
+            retention: Retention::default(),
+        })
+    );
+    ensure_default!(
+        RateLimit,
+        BootstrapCommand::RateLimit(RateLimitCreateNamespaceIn {
+            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            storage_type: StorageType::Persistent,
+            max_storage_bytes: None,
+        })
+    );
+    ensure_default!(
+        Idempotency,
+        BootstrapCommand::Idempotency(IdempotencyCreateNamespaceIn {
+            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            storage_type: StorageType::Persistent,
+            max_storage_bytes: None,
+        })
+    );
+    ensure_default!(
+        Cache,
+        BootstrapCommand::Cache(CacheCreateNamespaceIn {
+            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            storage_type: StorageType::Persistent,
+            max_storage_bytes: None,
+            eviction_policy: EvictionPolicy::NoEviction,
+        })
+    );
+    ensure_default!(
+        Kv,
+        BootstrapCommand::Kv(KvCreateNamespaceIn {
+            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            storage_type: StorageType::Persistent,
+            max_storage_bytes: None,
+        })
+    );
+}
+
+fn load_commands(
+    config_path: Option<&str>,
+    config_content: Option<&str>,
+) -> anyhow::Result<Vec<BootstrapCommand>> {
+    let content = match (config_content, config_path) {
+        (Some(content), _) => content.to_owned(),
+        (None, Some(path)) => fs::read_to_string(path)
+            .with_context(|| format!("opening bootstrap config {path:?}"))?,
+        (None, None) => String::new(),
+    };
+    let mut commands = parse_bootstrap(&content).context("parsing bootstrap config")?;
+    ensure_defaults(&mut commands);
+    Ok(commands)
 }
 
 pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result<()> {
@@ -164,86 +228,20 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
         }
     }
 
-    let bootstrap = BootstrapConfig::load(
+    let commands = load_commands(
         app_config.bootstrap_cfg_path.as_deref(),
         app_config.bootstrap_cfg.as_deref(),
     )?;
 
     tracing::debug!(
-        ?bootstrap,
-        persistent_db=?app_config.persistent_db,
-        ephemeral_db=?app_config.ephemeral_db,
+        num_commands = commands.len(),
+        persistent_db = ?app_config.persistent_db,
+        ephemeral_db = ?app_config.ephemeral_db,
         "Starting bootstrapping."
     );
 
-    if let Some(kv) = bootstrap.kv {
-        for (name, cfg) in kv {
-            tracing::debug!(?name, "bootstrapping kv");
-            let operation = diom_kv::operations::CreateKvOperation::new(
-                name,
-                cfg.storage_type.into(),
-                cfg.max_storage_bytes,
-            );
-            raft_state.client_write(operation).await?;
-        }
-    }
-
-    if let Some(cache) = bootstrap.cache {
-        for (name, cfg) in cache {
-            tracing::debug!(?name, "bootstrapping cache");
-            let operation = diom_cache::operations::CreateCacheOperation::new(
-                name,
-                cfg.config.eviction_policy.unwrap_or_default().into(),
-                cfg.storage_type.into(),
-                cfg.max_storage_bytes,
-            );
-            raft_state.client_write(operation).await?;
-        }
-    }
-
-    if let Some(idempotency) = bootstrap.idempotency {
-        for (name, cfg) in idempotency {
-            tracing::debug!(?name, "bootstrapping idemptency");
-            let operation = diom_idempotency::operations::CreateIdempotencyOperation::new(
-                name,
-                cfg.storage_type.into(),
-                cfg.max_storage_bytes,
-            );
-            raft_state.client_write(operation).await?;
-        }
-    }
-
-    if let Some(rate_limit) = bootstrap.rate_limit {
-        for (name, cfg) in rate_limit {
-            tracing::debug!(?name, "bootstrapping idemptency");
-            let operation = diom_rate_limit::operations::CreateRateLimitOperation::new(
-                name,
-                cfg.storage_type.into(),
-                cfg.max_storage_bytes,
-            );
-            raft_state.client_write(operation).await?;
-        }
-    }
-
-    if let Some(stream) = bootstrap.stream {
-        for (name, cfg) in stream {
-            tracing::debug!(?name, "bootstrapping stream");
-            let retention = Retention {
-                millis: cfg
-                    .config
-                    .retention_period_ms
-                    .unwrap_or_else(default_retention_millis),
-                bytes: cfg
-                    .max_storage_bytes
-                    .unwrap_or_else(default_retention_bytes),
-            };
-            let operation = diom_msgs::operations::CreateNamespaceOperation::new(
-                name,
-                retention,
-                cfg.storage_type.into(),
-            );
-            raft_state.client_write(operation).await?;
-        }
+    for cmd in commands {
+        cmd.apply(&raft_state).await?;
     }
 
     tracing::info!(
@@ -252,4 +250,248 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
     );
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn kv_defaults() {
+        let cmd: BootstrapCommand = r#"kv namespace create {"name":"myns"}"#.parse().unwrap();
+        let BootstrapCommand::Kv(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.name, "myns");
+        assert_eq!(v.storage_type, StorageType::Persistent);
+        assert_eq!(v.max_storage_bytes, None);
+    }
+
+    #[test]
+    fn kv_with_options() {
+        let cmd: BootstrapCommand =
+            r#"kv namespace create {"name":"myns","storage_type":"Ephemeral","max_storage_bytes":1024}"#
+                .parse()
+                .unwrap();
+        let BootstrapCommand::Kv(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.name, "myns");
+        assert_eq!(v.storage_type, StorageType::Ephemeral);
+        assert_eq!(v.max_storage_bytes.unwrap().get(), 1024);
+    }
+
+    #[test]
+    fn cache_defaults() {
+        let cmd: BootstrapCommand = r#"cache namespace create {"name":"myns"}"#.parse().unwrap();
+        let BootstrapCommand::Cache(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.eviction_policy, EvictionPolicy::NoEviction);
+    }
+
+    #[test]
+    fn cache_with_options() {
+        let cmd: BootstrapCommand =
+            r#"cache namespace create {"name":"myns","eviction_policy":"LeastRecentlyUsed"}"#
+                .parse()
+                .unwrap();
+        let BootstrapCommand::Cache(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.eviction_policy, EvictionPolicy::LeastRecentlyUsed);
+    }
+
+    #[test]
+    fn idempotency() {
+        let cmd: BootstrapCommand =
+            r#"idempotency namespace create {"name":"myns"}"#.parse().unwrap();
+        let BootstrapCommand::Idempotency(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.name, "myns");
+    }
+
+    #[test]
+    fn rate_limit() {
+        let cmd: BootstrapCommand =
+            r#"rate-limit namespace create {"name":"myns"}"#.parse().unwrap();
+        assert!(matches!(cmd, BootstrapCommand::RateLimit(v) if &v.name == "myns"));
+    }
+
+    #[test]
+    fn msgs_defaults() {
+        let cmd: BootstrapCommand = r#"msgs namespace create {"name":"myns"}"#.parse().unwrap();
+        let BootstrapCommand::Msgs(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.name, "myns");
+        assert_eq!(v.storage_type, StorageType::Persistent);
+        assert_eq!(v.retention, Retention::default());
+    }
+
+    #[test]
+    fn msgs_with_options() {
+        let cmd: BootstrapCommand =
+            r#"msgs namespace create {"name":"myns","retention":{"millis":60000,"bytes":500}}"#
+                .parse()
+                .unwrap();
+        let BootstrapCommand::Msgs(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.retention.millis.get(), 60000);
+        assert_eq!(v.retention.bytes.get(), 500);
+    }
+
+    #[test]
+    fn too_few_tokens() {
+        assert!("kv namespace create".parse::<BootstrapCommand>().is_err());
+    }
+
+    #[test]
+    fn wrong_resource() {
+        assert!(r#"kv config create {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
+    }
+
+    #[test]
+    fn wrong_action() {
+        assert!(r#"kv namespace update {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
+    }
+
+    #[test]
+    fn unknown_module() {
+        assert!(r#"blob namespace create {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
+    }
+
+    #[test]
+    fn invalid_json() {
+        assert!(
+            "kv namespace create not-json"
+                .parse::<BootstrapCommand>()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn missing_name_field() {
+        assert!(
+            r#"kv namespace create {"storage_type":"Ephemeral"}"#
+                .parse::<BootstrapCommand>()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn invalid_storage_type() {
+        assert!(
+            r#"kv namespace create {"name":"myns","storage_type":"flash"}"#
+                .parse::<BootstrapCommand>()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn invalid_eviction_policy() {
+        assert!(
+            r#"cache namespace create {"name":"myns","eviction_policy":"random"}"#
+                .parse::<BootstrapCommand>()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn zero_max_storage_bytes_rejected() {
+        assert!(
+            r#"kv namespace create {"name":"myns","max_storage_bytes":0}"#
+                .parse::<BootstrapCommand>()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn skips_blank_lines_and_comments() {
+        let input = r#"
+            # this is a comment
+            kv namespace create {"name":"foo"}
+
+            # another comment
+            cache namespace create {"name":"bar"}
+        "#;
+        let cmds = parse_bootstrap(input).unwrap();
+        assert_eq!(cmds.len(), 2);
+        assert!(matches!(&cmds[0], BootstrapCommand::Kv(v) if v.name == "foo"));
+        assert!(matches!(&cmds[1], BootstrapCommand::Cache(v) if v.name == "bar"));
+    }
+
+    #[test]
+    fn parse_error_includes_line_number() {
+        let input = "kv namespace create {\"name\":\"foo\"}\nkv namespace create not-json\n";
+        let err = parse_bootstrap(input).unwrap_err();
+        assert!(err.to_string().contains("line 2"), "error was: {err}");
+    }
+
+    #[test]
+    fn empty_input_produces_no_commands() {
+        assert!(parse_bootstrap("").unwrap().is_empty());
+    }
+
+    #[test]
+    fn ensure_defaults_injects_all_five_when_empty() {
+        let mut cmds = vec![];
+        ensure_defaults(&mut cmds);
+        assert_eq!(cmds.len(), 5);
+        assert!(
+            cmds.iter()
+                .any(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == DEFAULT_NAMESPACE_NAME))
+        );
+        assert!(
+            cmds.iter().any(
+                |c| matches!(c, BootstrapCommand::Cache(v) if v.name == DEFAULT_NAMESPACE_NAME)
+            )
+        );
+        assert!(cmds.iter().any(
+            |c| matches!(c, BootstrapCommand::Idempotency(v) if v.name == DEFAULT_NAMESPACE_NAME)
+        ));
+        assert!(cmds.iter().any(
+            |c| matches!(c, BootstrapCommand::RateLimit(v) if v.name == DEFAULT_NAMESPACE_NAME)
+        ));
+        assert!(
+            cmds.iter().any(
+                |c| matches!(c, BootstrapCommand::Msgs(v) if v.name == DEFAULT_NAMESPACE_NAME)
+            )
+        );
+    }
+
+    #[test]
+    fn ensure_defaults_does_not_duplicate_existing_default() {
+        let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
+            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            storage_type: StorageType::Ephemeral,
+            max_storage_bytes: None,
+        })];
+        ensure_defaults(&mut cmds);
+        let kv_defaults: Vec<_> = cmds
+            .iter()
+            .filter(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == DEFAULT_NAMESPACE_NAME))
+            .collect();
+        assert_eq!(kv_defaults.len(), 1);
+        assert!(
+            matches!(kv_defaults[0], BootstrapCommand::Kv(v) if v.storage_type == StorageType::Ephemeral)
+        );
+    }
+
+    #[test]
+    fn ensure_defaults_does_not_suppress_non_default_namespaces() {
+        let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
+            name: "other".to_string(),
+            storage_type: StorageType::Persistent,
+            max_storage_bytes: None,
+        })];
+        ensure_defaults(&mut cmds);
+        let kv_count = cmds
+            .iter()
+            .filter(|c| matches!(c, BootstrapCommand::Kv(_)))
+            .count();
+        assert_eq!(kv_count, 2);
+    }
 }
