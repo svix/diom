@@ -1,6 +1,7 @@
 use std::sync::LazyLock;
 
 pub mod backoff;
+pub mod instrumented_mutex;
 mod monotime;
 pub mod shutdown;
 pub mod types;

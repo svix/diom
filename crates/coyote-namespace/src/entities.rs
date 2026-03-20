@@ -41,7 +41,9 @@ pub enum EvictionPolicy {
     LeastRecentlyUsed,
 }
 
-pub trait ModuleConfig: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned {
+pub trait ModuleConfig:
+    Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned + Send + Sync
+{
     fn module() -> Module;
 
     fn eviction_policy(&self) -> EvictionPolicy {

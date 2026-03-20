@@ -1,15 +1,12 @@
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
+use coyote_core::instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard};
 use coyote_error::{Error, Result};
 use coyote_id::NamespaceId;
-use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
+use fjall::{Database, Keyspace, KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{StorageType, TableRow, WriteBatchExt};
 use itertools::Itertools;
 use jiff::Timestamp;
-use parking_lot::{Mutex, MutexGuard};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -63,13 +60,13 @@ impl From<KvPairRow> for KvModel {
 
 #[derive(Clone)]
 pub struct KvController {
-    db: Arc<Mutex<fjall::Database>>,
-    keyspace: fjall::Keyspace,
+    db: InstrumentedMutex<Database>,
+    keyspace: Keyspace,
     keyspace_name: &'static str,
 }
 
 impl KvController {
-    pub fn new(db: fjall::Database, keyspace_name: &'static str) -> Self {
+    pub fn new(db: Database, keyspace_name: &'static str) -> Self {
         let tables = {
             let opts = KeyspaceCreateOptions::default()
                 .with_kv_separation(Some(KvSeparationOptions::default()));
@@ -77,21 +74,20 @@ impl KvController {
         };
 
         Self {
-            db: Arc::new(Mutex::new(db)),
+            db: InstrumentedMutex::new(db),
             keyspace: tables,
             keyspace_name,
         }
     }
 
-    #[tracing::instrument(skip(self))]
-    pub fn fetch(
-        &self,
+    #[tracing::instrument(skip(keyspace))]
+    fn fetch_inner(
+        keyspace: &Keyspace,
         namespace_id: NamespaceId,
         key: &str,
         now: Timestamp,
     ) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(&self.keyspace, KvPairRow::key_for(namespace_id, key))?
-        else {
+        let Some(data) = KvPairRow::fetch(keyspace, KvPairRow::key_for(namespace_id, key))? else {
             return Ok(None);
         };
 
@@ -102,9 +98,23 @@ impl KvController {
         Ok(Some(data.into()))
     }
 
-    fn insert_with_expiration(
+    #[tracing::instrument(skip(self))]
+    pub async fn fetch<K: AsRef<str> + std::fmt::Debug + 'static + Send>(
         &self,
-        db: MutexGuard<'_, fjall::Database>,
+        namespace_id: NamespaceId,
+        key: K,
+        now: Timestamp,
+    ) -> Result<Option<KvModel>> {
+        let keyspace = self.keyspace.clone();
+        tokio::task::spawn_blocking(move || {
+            Self::fetch_inner(&keyspace, namespace_id, key.as_ref(), now)
+        })
+        .await?
+    }
+
+    fn insert_with_expiration(
+        db: InstrumentedMutexGuard<'_, Database>,
+        keyspace: &Keyspace,
         namespace_id: NamespaceId,
         key: &str,
         model: KvModel,
@@ -117,12 +127,12 @@ impl KvController {
             version: model.version,
         };
 
-        batch.insert_row(&self.keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
+        batch.insert_row(keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
 
         if let Some(expiry) = row.expiry {
             let expiration_row = ExpirationRow::new();
             let key = ExpirationRow::key_for(namespace_id, expiry, key);
-            batch.insert_row(&self.keyspace, key, &expiration_row)?;
+            batch.insert_row(keyspace, key, &expiration_row)?;
         }
 
         batch.commit()?;
@@ -131,103 +141,119 @@ impl KvController {
     }
 
     #[tracing::instrument(skip(self, model))]
-    pub fn set(
+    pub async fn set<K: AsRef<str> + std::fmt::Debug + 'static + Send>(
         &self,
         namespace_id: NamespaceId,
-        key: &str,
+        key: K,
         model: KvModelIn,
         behavior: OperationBehavior,
         now: Timestamp,
         // This is a monotonically increasing global counter (e.g. raft offset)
         global_counter: u64,
     ) -> Result<KvSetResult> {
-        let mut current = None;
-        // OCC check: if the caller supplied an expected version, verify it.
-        if let Some(expected) = model.version {
-            current = self.fetch(namespace_id, key, now)?;
-            let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
-            if current_version != expected {
-                return Err(Error::bad_request("version_mismatch", "version mismatch"));
-            }
-        }
+        let db = self.db.clone();
+        let keyspace = self.keyspace.clone();
 
-        let new_version = global_counter + 1;
-
-        let new_model = KvModel {
-            value: model.value,
-            expiry: model.expiry,
-            version: new_version,
-        };
-
-        let db = self.db.lock();
-
-        match behavior {
-            OperationBehavior::Upsert => {
-                self.insert_with_expiration(db, namespace_id, key, new_model)?;
-            }
-            OperationBehavior::Insert => {
-                current = if current.is_some() {
-                    current
-                } else {
-                    self.fetch(namespace_id, key, now)?
-                };
-
-                if let Some(current) = current {
-                    return Ok(KvSetResult {
-                        version: current.version,
-                        success: false,
-                    });
-                } else {
-                    self.insert_with_expiration(db, namespace_id, key, new_model)?;
+        tokio::task::spawn_blocking(move || {
+            let key = key.as_ref();
+            let mut current = None;
+            // OCC check: if the caller supplied an expected version, verify it.
+            if let Some(expected) = model.version {
+                current = Self::fetch_inner(&keyspace, namespace_id, key, now)?;
+                let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
+                if current_version != expected {
+                    return Err(Error::bad_request("version_mismatch", "version mismatch"));
                 }
             }
-            OperationBehavior::Update => {
-                current = if current.is_some() {
-                    current
-                } else {
-                    self.fetch(namespace_id, key, now)?
-                };
-                let exists = current.is_some();
 
-                if exists {
-                    self.insert_with_expiration(db, namespace_id, key, new_model)?;
-                } else {
-                    return Ok(KvSetResult {
-                        version: 0,
-                        success: false,
-                    });
+            let new_version = global_counter + 1;
+
+            let new_model = KvModel {
+                value: model.value,
+                expiry: model.expiry,
+                version: new_version,
+            };
+
+            let db = db.lock("kvcontroller::set");
+
+            match behavior {
+                OperationBehavior::Upsert => {
+                    Self::insert_with_expiration(db, &keyspace, namespace_id, key, new_model)?;
                 }
-            }
-        };
+                OperationBehavior::Insert => {
+                    current = if current.is_some() {
+                        current
+                    } else {
+                        Self::fetch_inner(&keyspace, namespace_id, key, now)?
+                    };
 
-        Ok(KvSetResult {
-            version: new_version,
-            success: true,
+                    if let Some(current) = current {
+                        return Ok(KvSetResult {
+                            version: current.version,
+                            success: false,
+                        });
+                    } else {
+                        Self::insert_with_expiration(db, &keyspace, namespace_id, key, new_model)?;
+                    }
+                }
+                OperationBehavior::Update => {
+                    current = if current.is_some() {
+                        current
+                    } else {
+                        Self::fetch_inner(&keyspace, namespace_id, key, now)?
+                    };
+                    let exists = current.is_some();
+
+                    if exists {
+                        Self::insert_with_expiration(db, &keyspace, namespace_id, key, new_model)?;
+                    } else {
+                        return Ok(KvSetResult {
+                            version: 0,
+                            success: false,
+                        });
+                    }
+                }
+            };
+
+            Ok(KvSetResult {
+                version: new_version,
+                success: true,
+            })
         })
+        .await?
     }
 
     #[tracing::instrument(skip(self))]
-    pub fn delete(&self, namespace_id: NamespaceId, key: &str) -> Result<bool> {
-        let db = self.db.lock();
+    pub async fn delete<T: AsRef<str> + std::fmt::Debug + 'static + Send>(
+        &self,
+        namespace_id: NamespaceId,
+        key: T,
+    ) -> Result<bool> {
+        let db = self.db.clone();
+        let keyspace = self.keyspace.clone();
 
-        if let Some(data) = KvPairRow::fetch(&self.keyspace, KvPairRow::key_for(namespace_id, key))?
-        {
-            let mut batch = db.batch();
+        tokio::task::spawn_blocking(move || {
+            let db = db.lock("kvcontroller::delete");
+            let key = key.as_ref();
 
-            // Delete from the expiration keyspace
-            if let Some(expiry) = data.expiry {
-                batch.remove_row(
-                    &self.keyspace,
-                    ExpirationRow::key_for(namespace_id, expiry, key),
-                )?;
+            if let Some(data) = KvPairRow::fetch(&keyspace, KvPairRow::key_for(namespace_id, key))?
+            {
+                let mut batch = db.batch();
+
+                // Delete from the expiration keyspace
+                if let Some(expiry) = data.expiry {
+                    batch
+                        .remove_row(&keyspace, ExpirationRow::key_for(namespace_id, expiry, key))?;
+                }
+                batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, key))?;
+
+                batch.commit()?;
+                Ok(true)
+            } else {
+                Ok(false)
             }
-            batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, key))?;
-
-            batch.commit()?;
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        })
+        .await?
     }
 
     pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
@@ -252,7 +278,7 @@ impl KvController {
         keyspace_name = self.keyspace_name,
         cleared,
     ))]
-    pub fn clear_expired(
+    pub async fn clear_expired(
         &self,
         now: Timestamp,
         max_expirations: usize,
@@ -262,27 +288,35 @@ impl KvController {
             ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
-        let mut cleared = 0;
         let start_time = Instant::now();
 
-        for chunk in &self
-            .keyspace
-            .range(start..=end)
-            .take(max_expirations)
-            .chunks(EXPIRATION_BATCH_SIZE)
-        {
-            let db = self.db.lock();
-            let mut batch = db.batch();
-            for item in chunk {
-                cleared += 1;
-                let k = item.key()?;
-                let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
-                batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, main_key))?;
+        let keyspace = self.keyspace.clone();
+        let db = self.db.clone();
 
-                batch.remove(&self.keyspace, k);
+        let cleared = tokio::task::spawn_blocking(move || {
+            let mut cleared = 0;
+
+            for chunk in &keyspace
+                .range(start..=end)
+                .take(max_expirations)
+                .chunks(EXPIRATION_BATCH_SIZE)
+            {
+                let db = db.lock("kvcontroller::clear_expired");
+                let mut batch = db.batch();
+                for item in chunk {
+                    cleared += 1;
+                    let k = item.key()?;
+                    let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
+                    batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, main_key))?;
+
+                    batch.remove(&keyspace, k);
+                }
+                batch.commit()?;
             }
-            batch.commit()?;
-        }
+
+            Ok::<_, Error>(cleared)
+        })
+        .await??;
 
         if cleared == max_expirations {
             tracing::warn!(cleared, elapsed=?start_time.elapsed(), "expiration loop is not keeping up");
@@ -331,7 +365,7 @@ impl KvController {
             let start_batch = Instant::now();
             let num_this_batch = tracing::debug_span!("clear_expired_in_background:remove_chunk")
                 .in_scope(|| {
-                let db = self.db.lock();
+                let db = self.db.lock("kv_controller::clear_expired_in_background");
                 let start_lock = Instant::now();
                 let mut batch = db.batch();
                 let mut num_this_batch = 0;
@@ -390,7 +424,7 @@ mod tests {
     impl SetupFixture {
         fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
-            let db = fjall::Database::builder(workdir.as_ref())
+            let db = Database::builder(workdir.as_ref())
                 .temporary(true)
                 .open()
                 .unwrap();
@@ -406,19 +440,22 @@ mod tests {
         NamespaceId::nil()
     }
 
-    fn key_exists_as_of(controller: &KvController, key: &str, now: Timestamp) -> bool {
-        controller.fetch(ns(), key, now).unwrap().is_some()
+    async fn key_exists_as_of(controller: &KvController, key: &str, now: Timestamp) -> bool {
+        let key = key.to_string();
+        controller.fetch(ns(), key, now).await.unwrap().is_some()
     }
 
-    fn key_exists(controller: &KvController, key: &str) -> bool {
+    async fn key_exists(controller: &KvController, key: &str) -> bool {
+        let key = key.to_string();
         controller
             .fetch(ns(), key, Timestamp::now())
+            .await
             .unwrap()
             .is_some()
     }
 
-    #[test]
-    fn test_insert_and_get() {
+    #[tokio::test]
+    async fn test_insert_and_get() {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
@@ -436,99 +473,118 @@ mod tests {
                 Timestamp::now(),
                 0,
             )
+            .await
             .unwrap();
 
-        assert!(key_exists(&controller, "test:key1"));
+        assert!(key_exists(&controller, "test:key1").await);
         let retrieved = controller
             .fetch(ns(), "test:key1", Timestamp::now())
+            .await
             .unwrap();
         assert!(retrieved.is_some());
         let retrieved = retrieved.unwrap();
         assert_eq!(retrieved.value, b"hello world");
         assert_eq!(retrieved.expiry, None);
 
-        assert!(!key_exists(&controller, "nonexistent:key"));
+        assert!(!key_exists(&controller, "nonexistent:key").await);
     }
 
-    #[test]
-    fn test_insert_behaviors() {
+    #[tokio::test]
+    async fn test_insert_behaviors() {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
         // Update on non-existent key returns false
-        let res = controller.set(
-            ns(),
-            "key1",
-            KvModelIn {
-                value: b"key1 updated".to_vec(),
-                expiry: None,
-                version: None,
-            },
-            OperationBehavior::Update,
-            Timestamp::now(),
-            0,
-        );
+        let res = controller
+            .set(
+                ns(),
+                "key1",
+                KvModelIn {
+                    value: b"key1 updated".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
+                OperationBehavior::Update,
+                Timestamp::now(),
+                0,
+            )
+            .await;
         assert!(!res.unwrap().success);
-        assert!(!key_exists(&controller, "key1"));
+        assert!(!key_exists(&controller, "key1").await);
 
-        let res = controller.set(
-            ns(),
-            "key1",
-            KvModelIn {
-                value: b"key1 inserted".to_vec(),
-                expiry: None,
-                version: None,
-            },
-            OperationBehavior::Insert,
-            Timestamp::now(),
-            0,
-        );
+        let res = controller
+            .set(
+                ns(),
+                "key1",
+                KvModelIn {
+                    value: b"key1 inserted".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
+                OperationBehavior::Insert,
+                Timestamp::now(),
+                0,
+            )
+            .await;
         assert!(res.unwrap().success);
-        assert!(key_exists(&controller, "key1"));
-        let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
+        assert!(key_exists(&controller, "key1").await);
+        let result = controller
+            .fetch(ns(), "key1", Timestamp::now())
+            .await
+            .unwrap();
         assert!(result.is_some());
 
         // Insert on existing key returns false
-        let res = controller.set(
-            ns(),
-            "key1",
-            KvModelIn {
-                value: b"another value".to_vec(),
-                expiry: None,
-                version: None,
-            },
-            OperationBehavior::Insert,
-            Timestamp::now(),
-            0,
-        );
+        let res = controller
+            .set(
+                ns(),
+                "key1",
+                KvModelIn {
+                    value: b"another value".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
+                OperationBehavior::Insert,
+                Timestamp::now(),
+                0,
+            )
+            .await;
         assert!(!res.unwrap().success);
-        assert!(key_exists(&controller, "key1"));
-        let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
+        assert!(key_exists(&controller, "key1").await);
+        let result = controller
+            .fetch(ns(), "key1", Timestamp::now())
+            .await
+            .unwrap();
         assert!(result.is_some());
 
         assert_eq!(result.unwrap().value, b"key1 inserted");
 
-        let res = controller.set(
-            ns(),
-            "key1",
-            KvModelIn {
-                value: b"key1 upserted".to_vec(),
-                expiry: None,
-                version: None,
-            },
-            OperationBehavior::Upsert,
-            Timestamp::now(),
-            0,
-        );
+        let res = controller
+            .set(
+                ns(),
+                "key1",
+                KvModelIn {
+                    value: b"key1 upserted".to_vec(),
+                    expiry: None,
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                Timestamp::now(),
+                0,
+            )
+            .await;
         assert!(res.unwrap().success);
-        assert!(key_exists(&controller, "key1"));
-        let result = controller.fetch(ns(), "key1", Timestamp::now()).unwrap();
+        assert!(key_exists(&controller, "key1").await);
+        let result = controller
+            .fetch(ns(), "key1", Timestamp::now())
+            .await
+            .unwrap();
         assert!(result.is_some());
         assert_eq!(result.unwrap().value, b"key1 upserted");
     }
 
-    #[test]
-    fn test_overwrite() {
+    #[tokio::test]
+    async fn test_overwrite() {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
@@ -546,6 +602,7 @@ mod tests {
                 Timestamp::now(),
                 0,
             )
+            .await
             .unwrap();
         controller
             .set(
@@ -560,18 +617,20 @@ mod tests {
                 Timestamp::now(),
                 0,
             )
+            .await
             .unwrap();
 
-        assert!(key_exists(&controller, "overwrite:key"));
+        assert!(key_exists(&controller, "overwrite:key").await);
         let retrieved = controller
             .fetch(ns(), "overwrite:key", Timestamp::now())
+            .await
             .unwrap()
             .unwrap();
         assert_eq!(retrieved.value, b"second value");
     }
 
-    #[test]
-    fn test_clear_expired_removes_expired_entries() {
+    #[tokio::test]
+    async fn test_clear_expired_removes_expired_entries() {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
@@ -590,6 +649,7 @@ mod tests {
                 now,
                 0,
             )
+            .await
             .unwrap();
 
         let expired_models = [
@@ -614,7 +674,7 @@ mod tests {
             controller
                 .set(
                     ns(),
-                    key,
+                    key.to_string(),
                     KvModelIn {
                         value: value.to_vec(),
                         expiry: Some(*expiry),
@@ -624,6 +684,7 @@ mod tests {
                     now,
                     0,
                 )
+                .await
                 .unwrap();
         }
 
@@ -641,6 +702,7 @@ mod tests {
                 now,
                 0,
             )
+            .await
             .unwrap();
 
         let permanent_key = "permanent:key";
@@ -657,49 +719,55 @@ mod tests {
                 now,
                 0,
             )
+            .await
             .unwrap();
 
         assert_eq!(controller.iter().unwrap().count(), 6);
 
         // the key should have expired by now, so key_exists should already be false
-        assert!(!key_exists(&controller, "expired:key"));
+        assert!(!key_exists(&controller, "expired:key").await);
         let then = Timestamp::now().checked_sub(6.hours()).unwrap();
         // but if we time travel to the past, it should still be there
-        assert!(key_exists_as_of(&controller, "expired:key", then));
+        assert!(key_exists_as_of(&controller, "expired:key", then).await);
         for (key, _, _) in &expired_models {
-            assert!(key_exists_as_of(&controller, key, then));
+            assert!(key_exists_as_of(&controller, key, then).await);
         }
 
         assert_eq!(
             controller
                 .clear_expired(Timestamp::now(), 100, StorageType::Persistent)
+                .await
                 .unwrap(),
             4
         );
 
         for (key, _, _) in &expired_models {
             // now it should really and truly be gone
-            assert!(!key_exists(&controller, key));
-            assert!(!key_exists_as_of(&controller, key, then));
+            assert!(!key_exists(&controller, key).await);
+            assert!(!key_exists_as_of(&controller, key, then).await);
         }
-        assert!(!key_exists(&controller, "expired:key"));
-        assert!(!key_exists_as_of(&controller, "expired:key", then));
+        assert!(!key_exists(&controller, "expired:key").await);
+        assert!(!key_exists_as_of(&controller, "expired:key", then).await);
 
-        assert!(key_exists(&controller, valid_key));
-        let valid = controller.fetch(ns(), valid_key, Timestamp::now()).unwrap();
+        assert!(key_exists(&controller, valid_key).await);
+        let valid = controller
+            .fetch(ns(), valid_key, Timestamp::now())
+            .await
+            .unwrap();
         assert!(valid.is_some());
         assert_eq!(valid.unwrap().value, b"valid data");
 
-        assert!(key_exists(&controller, permanent_key));
+        assert!(key_exists(&controller, permanent_key).await);
         let permanent = controller
             .fetch(ns(), permanent_key, Timestamp::now())
+            .await
             .unwrap();
         assert!(permanent.is_some());
         assert_eq!(permanent.unwrap().value, b"permanent data");
     }
 
-    #[test]
-    fn test_clear_expired_in_background_removes_expired_entries() {
+    #[tokio::test]
+    async fn test_clear_expired_in_background_removes_expired_entries() {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
@@ -718,6 +786,7 @@ mod tests {
                 now,
                 0,
             )
+            .await
             .unwrap();
 
         let expired_models = [
@@ -747,7 +816,7 @@ mod tests {
             controller
                 .set(
                     ns(),
-                    key,
+                    key.to_string(),
                     KvModelIn {
                         value: value.to_vec(),
                         expiry: Some(*expiry),
@@ -757,6 +826,7 @@ mod tests {
                     now,
                     0,
                 )
+                .await
                 .unwrap();
         }
 
@@ -774,6 +844,7 @@ mod tests {
                 now,
                 0,
             )
+            .await
             .unwrap();
 
         let permanent_key = "permanent:key";
@@ -790,17 +861,18 @@ mod tests {
                 now,
                 0,
             )
+            .await
             .unwrap();
 
         assert_eq!(controller.iter().unwrap().count(), 7);
 
         // the key should have expired by now, so key_exists should already be false
-        assert!(!key_exists(&controller, "expired:key"));
+        assert!(!key_exists(&controller, "expired:key").await);
         let then = Timestamp::now().checked_sub(6.hours()).unwrap();
         // but if we time travel to the past, it should still be there
-        assert!(key_exists_as_of(&controller, "expired:key", then));
+        assert!(key_exists_as_of(&controller, "expired:key", then).await);
         for (key, _, _) in &expired_models {
-            assert!(key_exists_as_of(&controller, key, then));
+            assert!(key_exists_as_of(&controller, key, then).await);
         }
 
         assert_eq!(
@@ -812,25 +884,29 @@ mod tests {
 
         for (key, _, _) in &expired_models {
             // now it should really and truly be gone
-            assert!(!key_exists(&controller, key));
+            assert!(!key_exists(&controller, key).await);
             if *key == "expired:key:4" {
                 // this one is in the grace period
-                assert!(key_exists_as_of(&controller, key, then));
+                assert!(key_exists_as_of(&controller, key, then).await);
             } else {
-                assert!(!key_exists_as_of(&controller, key, then));
+                assert!(!key_exists_as_of(&controller, key, then).await);
             }
         }
-        assert!(!key_exists(&controller, "expired:key"));
-        assert!(!key_exists_as_of(&controller, "expired:key", then));
+        assert!(!key_exists(&controller, "expired:key").await);
+        assert!(!key_exists_as_of(&controller, "expired:key", then).await);
 
-        assert!(key_exists(&controller, valid_key));
-        let valid = controller.fetch(ns(), valid_key, Timestamp::now()).unwrap();
+        assert!(key_exists(&controller, valid_key).await);
+        let valid = controller
+            .fetch(ns(), valid_key, Timestamp::now())
+            .await
+            .unwrap();
         assert!(valid.is_some());
         assert_eq!(valid.unwrap().value, b"valid data");
 
-        assert!(key_exists(&controller, permanent_key));
+        assert!(key_exists(&controller, permanent_key).await);
         let permanent = controller
             .fetch(ns(), permanent_key, Timestamp::now())
+            .await
             .unwrap();
         assert!(permanent.is_some());
         assert_eq!(permanent.unwrap().value, b"permanent data");

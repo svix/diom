@@ -181,7 +181,7 @@ opentelemetry-http = "0.31.0"
 opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto", "reqwest-client"] }
 opentelemetry-semantic-conventions = "0.31.0"
 opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt-tokio-current-thread", "experimental_metrics_periodicreader_with_async_runtime", "experimental_trace_batch_span_processor_with_async_runtime"] }
-parking_lot = { version = "0.12", features = ["arc_lock"] }
+parking_lot = { version = "0.12", features = ["arc_lock", "send_guard"] }
 paste = "1.0.15"
 pnet = "0.35"
 proc-macro2 = "1.0.78"
@@ -211,6 +211,7 @@ tower-service = "0.3.3"
 tracing = { version = "0.1.35", features = ["release_max_level_debug"] }
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "local-time", "fmt", "registry", "std"] }
+tracing-test = "0.2"
 url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
