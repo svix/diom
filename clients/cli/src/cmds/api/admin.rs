@@ -2,6 +2,8 @@
 use clap::{Args, Subcommand};
 use coyote_client::CoyoteClient;
 
+use super::AdminClusterArgs;
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct AdminArgs {
@@ -11,8 +13,7 @@ pub struct AdminArgs {
 
 #[derive(Subcommand)]
 pub enum AdminCommands {
-    /// Get information about the current cluster
-    ClusterStatus {},
+    Cluster(AdminClusterArgs),
     /// Remove a node from the cluster.
     ///
     /// This operation executes immediately and the node must be wiped and reset
@@ -29,9 +30,8 @@ impl AdminCommands {
         color_mode: colored_json::ColorMode,
     ) -> anyhow::Result<()> {
         match self {
-            Self::ClusterStatus {} => {
-                let resp = client.admin().cluster_status().await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+            Self::Cluster(args) => {
+                args.command.exec(client, color_mode).await?;
             }
             Self::ClusterRemoveNode {
                 cluster_remove_node_in,
