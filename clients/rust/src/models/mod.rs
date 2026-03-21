@@ -13,6 +13,8 @@ mod auth_token_get_namespace_in;
 mod auth_token_get_namespace_out;
 mod auth_token_list_in;
 mod auth_token_out;
+mod auth_token_rotate_in;
+mod auth_token_rotate_out;
 mod auth_token_update_in;
 mod auth_token_update_out;
 mod auth_token_verify_in;
@@ -109,7 +111,8 @@ pub use self::{
     auth_token_expire_out::AuthTokenExpireOut,
     auth_token_get_namespace_in::AuthTokenGetNamespaceIn,
     auth_token_get_namespace_out::AuthTokenGetNamespaceOut, auth_token_list_in::AuthTokenListIn,
-    auth_token_out::AuthTokenOut, auth_token_update_in::AuthTokenUpdateIn,
+    auth_token_out::AuthTokenOut, auth_token_rotate_in::AuthTokenRotateIn,
+    auth_token_rotate_out::AuthTokenRotateOut, auth_token_update_in::AuthTokenUpdateIn,
     auth_token_update_out::AuthTokenUpdateOut, auth_token_verify_in::AuthTokenVerifyIn,
     auth_token_verify_out::AuthTokenVerifyOut, cache_create_namespace_in::CacheCreateNamespaceIn,
     cache_create_namespace_out::CacheCreateNamespaceOut, cache_delete_in::CacheDeleteIn,

@@ -52,6 +52,15 @@ pub struct CreateTokenInput {
     pub now: Timestamp,
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+pub struct RotateTokenInput {
+    pub new_id: AuthTokenId,
+    pub new_token_hashed: TokenHashed,
+    /// When the old token expires.
+    pub old_expiry: Timestamp,
+    pub now: Timestamp,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PartialUpdateInput {
     pub name: Option<String>,
@@ -79,6 +88,45 @@ impl AuthTokenController {
         Self { db, keyspace }
     }
 
+    fn fetch_by_hash_non_expired(
+        keyspace: &fjall::Keyspace,
+        namespace_id: NamespaceId,
+        token_hashed: &TokenHashed,
+        now: Timestamp,
+    ) -> Result<Option<AuthTokenRow>> {
+        let Some(row) =
+            AuthTokenRow::fetch(keyspace, AuthTokenRow::key_for(namespace_id, token_hashed))?
+        else {
+            return Ok(None);
+        };
+        // FIXME: probably should throw an error instead.
+        if let Some(existing_expiry) = row.expiry
+            && existing_expiry <= now
+        {
+            return Ok(None);
+        }
+
+        Ok(Some(row))
+    }
+
+    fn fetch_by_id_non_expired(
+        keyspace: &fjall::Keyspace,
+        namespace_id: NamespaceId,
+        id: AuthTokenId,
+        now: Timestamp,
+    ) -> Result<Option<(IdIndexRow, AuthTokenRow)>> {
+        let Some(index_row) = IdIndexRow::fetch(keyspace, IdIndexRow::key_for(namespace_id, id))?
+        else {
+            return Ok(None);
+        };
+        let Some(row) =
+            Self::fetch_by_hash_non_expired(keyspace, namespace_id, &index_row.token_hashed, now)?
+        else {
+            return Ok(None);
+        };
+        Ok(Some((index_row, row)))
+    }
+
     /// Look up a token by its hash. Returns `None` if not found or expired.
     pub async fn fetch_non_expired(
         &self,
@@ -89,20 +137,9 @@ impl AuthTokenController {
         let keyspace = self.keyspace.clone();
         let token_hashed = token_hashed.clone();
         spawn_blocking_in_current_span(move || {
-            let Some(row) = AuthTokenRow::fetch(
-                &keyspace,
-                AuthTokenRow::key_for(namespace_id, &token_hashed),
-            )?
-            else {
-                return Ok(None);
-            };
-            let model: AuthTokenModel = row.into();
-            if let Some(expiry) = model.expiry
-                && expiry <= now
-            {
-                return Ok(None);
-            }
-            Ok(Some(model))
+            let model =
+                Self::fetch_by_hash_non_expired(&keyspace, namespace_id, &token_hashed, now)?;
+            Ok(model.map(|x| x.into()))
         })
         .await?
     }
@@ -139,6 +176,30 @@ impl AuthTokenController {
         .await?
     }
 
+    fn expire_internal(
+        batch: &mut fjall::OwnedWriteBatch,
+        keyspace: &fjall::Keyspace,
+        namespace_id: NamespaceId,
+        id: AuthTokenId,
+        expiry: Timestamp,
+        now: Timestamp,
+    ) -> Result<Option<AuthTokenModel>> {
+        let Some((index_row, mut row)) =
+            Self::fetch_by_id_non_expired(keyspace, namespace_id, id, now)?
+        else {
+            return Ok(None);
+        };
+        row.expiry = Some(expiry);
+        row.updated = now;
+        let entity = AuthTokenEntity {
+            namespace_id,
+            token_hashed: index_row.token_hashed,
+            row,
+        };
+        entity.upsert(batch, keyspace)?;
+        Ok(Some(entity.row.into()))
+    }
+
     pub async fn expire(
         &self,
         namespace_id: NamespaceId,
@@ -149,33 +210,10 @@ impl AuthTokenController {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            let Some(index_row) =
-                IdIndexRow::fetch(&keyspace, IdIndexRow::key_for(namespace_id, id))?
-            else {
-                return Ok(None);
-            };
-            let Some(mut row) = AuthTokenRow::fetch(
-                &keyspace,
-                AuthTokenRow::key_for(namespace_id, &index_row.token_hashed),
-            )?
-            else {
-                return Ok(None);
-            };
-            if let Some(existing_expiry) = row.expiry
-                && existing_expiry <= now
-            {
-                return Ok(None);
-            }
-            row.expiry = Some(expiry);
-            let entity = AuthTokenEntity {
-                namespace_id,
-                token_hashed: index_row.token_hashed,
-                row,
-            };
             let mut batch = db.batch();
-            entity.upsert(&mut batch, &keyspace)?;
+            let ret = Self::expire_internal(&mut batch, &keyspace, namespace_id, id, expiry, now)?;
             batch.commit()?;
-            Ok(Some(entity.row.into()))
+            Ok(ret)
         })
         .await?
     }
@@ -240,6 +278,54 @@ impl AuthTokenController {
         .await?
     }
 
+    /// Create a new token copied from an existing one, and expire the old token.
+    /// Returns `None` if the original token was not found.
+    pub async fn rotate(
+        &self,
+        namespace_id: NamespaceId,
+        old_id: AuthTokenId,
+        input: RotateTokenInput,
+    ) -> Result<Option<AuthTokenModel>> {
+        let db = self.db.clone();
+        let keyspace = self.keyspace.clone();
+        spawn_blocking_in_current_span(move || {
+            let Some((_old_id_index, old_row)) =
+                Self::fetch_by_id_non_expired(&keyspace, namespace_id, old_id, input.now)?
+            else {
+                return Ok(None);
+            };
+
+            let new_entity = AuthTokenEntity {
+                namespace_id,
+                token_hashed: input.new_token_hashed,
+                row: AuthTokenRow {
+                    id: input.new_id,
+                    name: old_row.name.clone(),
+                    expiry: old_row.expiry,
+                    metadata: old_row.metadata.clone(),
+                    owner_id: old_row.owner_id.clone(),
+                    scopes: old_row.scopes.clone(),
+                    enabled: old_row.enabled,
+                    created: input.now,
+                    updated: input.now,
+                },
+            };
+            let mut batch = db.batch();
+            Self::expire_internal(
+                &mut batch,
+                &keyspace,
+                namespace_id,
+                old_row.id,
+                input.old_expiry,
+                input.now,
+            )?;
+            new_entity.upsert(&mut batch, &keyspace)?;
+            batch.commit()?;
+            Ok(Some(new_entity.row.into()))
+        })
+        .await?
+    }
+
     pub async fn partial_update(
         &self,
         namespace_id: NamespaceId,
@@ -249,18 +335,12 @@ impl AuthTokenController {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            let Some(id_index) =
-                IdIndexRow::fetch(&keyspace, IdIndexRow::key_for(namespace_id, id))?
+            let Some((id_index, mut row)) =
+                Self::fetch_by_id_non_expired(&keyspace, namespace_id, id, input.now)?
             else {
                 return Ok(None);
             };
-            let Some(mut row) = AuthTokenRow::fetch(
-                &keyspace,
-                AuthTokenRow::key_for(namespace_id, &id_index.token_hashed),
-            )?
-            else {
-                return Ok(None);
-            };
+
             let PartialUpdateInput {
                 name,
                 expiry,

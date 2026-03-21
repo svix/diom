@@ -104,3 +104,17 @@ func (authToken AuthToken) Update(
 		&authTokenUpdateIn,
 	)
 }
+
+// Rotate Auth Token
+func (authToken AuthToken) Rotate(
+	ctx context.Context,
+	authTokenRotateIn diom_models.AuthTokenRotateIn,
+) (*diom_models.AuthTokenRotateOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.AuthTokenRotateIn, diom_models.AuthTokenRotateOut](
+		ctx,
+		authToken.client,
+		"POST",
+		"/api/v1/auth-token/rotate",
+		&authTokenRotateIn,
+	)
+}

@@ -11,7 +11,8 @@ use diom_auth_token::{
     entities::{TokenHashed, TokenPlaintext},
     operations::{
         CreateAuthTokenNamespaceOperation, CreateAuthTokenOperation, DeleteAuthTokenOperation,
-        DeleteResponseData, ExpireAuthTokenOperation, UpdateAuthTokenOperation,
+        DeleteResponseData, ExpireAuthTokenOperation, RotateAuthTokenOperation,
+        UpdateAuthTokenOperation,
     },
 };
 use diom_core::types::{DurationMs, Metadata};
@@ -313,6 +314,57 @@ async fn auth_token_update(
     Ok(MsgPackOrJson(AuthTokenUpdateOut {}))
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+pub struct AuthTokenRotateIn {
+    pub namespace: Option<String>,
+    pub id: Public<AuthTokenId>,
+    #[serde(default = "default_prefix")]
+    pub prefix: String,
+    pub suffix: Option<String>,
+    /// Milliseconds from now until the old token expires. `None` means expire immediately.
+    pub expiry_millis: Option<DurationMs>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+pub struct AuthTokenRotateOut {
+    pub id: Public<AuthTokenId>,
+    pub created: Timestamp,
+    pub updated: Timestamp,
+    pub token: String,
+}
+
+/// Rotate Auth Token
+#[aide_annotate(op_id = "v1.auth_token.rotate")]
+async fn auth_token_rotate(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<AuthTokenRotateIn>,
+) -> Result<MsgPackOrJson<AuthTokenRotateOut>> {
+    let namespace: AuthTokenNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_deref())?
+        .ok_or_not_found()?;
+
+    let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
+    let old_expiry = data.expiry_millis.map(|ms| repl.time.now() + ms);
+    let operation = RotateAuthTokenOperation::new(
+        namespace,
+        data.id.into_inner(),
+        token.hash(),
+        old_expiry,
+        repl.time.now(),
+    );
+    let resp = repl.client_write(operation).await.or_internal_error()?.0?;
+    let model = resp.model.ok_or_not_found()?;
+
+    Ok(MsgPackOrJson(AuthTokenRotateOut {
+        id: model.id.public(),
+        token: token.expose_plaintext_dangerously(),
+        created: model.created,
+        updated: model.updated,
+    }))
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenGetNamespaceIn {
     pub name: NamespaceName,
@@ -428,6 +480,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             "/auth-token/update",
             post_with(auth_token_update, auth_token_update_operation),
+            &tag,
+        )
+        .api_route_with(
+            "/auth-token/rotate",
+            post_with(auth_token_rotate, auth_token_rotate_operation),
             &tag,
         )
         .api_route_with(

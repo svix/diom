@@ -21,6 +21,8 @@ import com.svix.diom.models.AuthTokenDeleteOut;
 import com.svix.diom.models.AuthTokenExpireIn;
 import com.svix.diom.models.AuthTokenExpireOut;
 import com.svix.diom.models.AuthTokenListIn;
+import com.svix.diom.models.AuthTokenRotateIn;
+import com.svix.diom.models.AuthTokenRotateOut;
 import com.svix.diom.models.AuthTokenUpdateIn;
 import com.svix.diom.models.AuthTokenUpdateOut;
 import com.svix.diom.models.AuthTokenVerifyIn;
@@ -121,6 +123,21 @@ public class AuthToken {
             null,
             authTokenUpdateIn,
             AuthTokenUpdateOut.class
+        );
+    }
+
+    /** Rotate Auth Token */
+    public AuthTokenRotateOut rotate(
+        final AuthTokenRotateIn authTokenRotateIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/rotate");
+
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            authTokenRotateIn,
+            AuthTokenRotateOut.class
         );
     }
 }

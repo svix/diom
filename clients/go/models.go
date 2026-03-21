@@ -17,6 +17,8 @@ type (
 	AuthTokenGetNamespaceOut      = diom_models.AuthTokenGetNamespaceOut
 	AuthTokenListIn               = diom_models.AuthTokenListIn
 	AuthTokenOut                  = diom_models.AuthTokenOut
+	AuthTokenRotateIn             = diom_models.AuthTokenRotateIn
+	AuthTokenRotateOut            = diom_models.AuthTokenRotateOut
 	AuthTokenUpdateIn             = diom_models.AuthTokenUpdateIn
 	AuthTokenUpdateOut            = diom_models.AuthTokenUpdateOut
 	AuthTokenVerifyIn             = diom_models.AuthTokenVerifyIn
