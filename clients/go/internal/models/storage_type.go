@@ -3,9 +3,10 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
+
+	msgpack "github.com/vmihailenco/msgpack/v5"
 )
 
 type StorageType string
@@ -20,9 +21,9 @@ var allowedStorageType = []StorageType{
 	"Ephemeral",
 }
 
-func (v *StorageType) UnmarshalJSON(src []byte) error {
+func (v *StorageType) UnmarshalMsgpack(src []byte) error {
 	var value string
-	err := json.Unmarshal(src, &value)
+	err := msgpack.Unmarshal(src, &value)
 	if err != nil {
 		return err
 	}

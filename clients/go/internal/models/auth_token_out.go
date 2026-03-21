@@ -7,13 +7,13 @@ import (
 )
 
 type AuthTokenOut struct {
-	Id       string            `json:"id"`
-	Name     string            `json:"name"`
-	Created  time.Time         `json:"created"`
-	Updated  time.Time         `json:"updated"`
-	Expiry   *time.Time        `json:"expiry,omitempty"`
-	Metadata map[string]string `json:"metadata"`
-	OwnerId  string            `json:"owner_id"`
-	Scopes   []string          `json:"scopes"`
-	Enabled  bool              `json:"enabled"` // Whether this token is currently enabled.
+	Id       string            `msgpack:"id"`
+	Name     string            `msgpack:"name"`
+	Created  time.Time         `msgpack:"created"`
+	Updated  time.Time         `msgpack:"updated"`
+	Expiry   *time.Time        `msgpack:"expiry,omitempty"`
+	Metadata map[string]string `msgpack:"metadata"`
+	OwnerId  string            `msgpack:"owner_id"`
+	Scopes   []string          `msgpack:"scopes"`
+	Enabled  bool              `msgpack:"enabled"` // Whether this token is currently enabled.
 }

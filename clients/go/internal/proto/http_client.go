@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -15,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	msgpack "github.com/vmihailenco/msgpack/v5"
 )
 
 type HttpClient struct {
@@ -55,7 +56,7 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	var req *http.Request
 	var err error
 	if jsonBody != nil {
-		encodedBody, err := json.Marshal(jsonBody)
+		encodedBody, err := msgpack.Marshal(jsonBody)
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +64,7 @@ func ExecuteRequest[ReqBody any, ResBody any](
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("content-type", "application/json")
+		req.Header.Set("content-type", "application/msgpack")
 	} else {
 		req, err = http.NewRequestWithContext(ctx, method, urlStr, &bytes.Buffer{})
 		if err != nil {
@@ -93,7 +94,7 @@ func ExecuteRequest[ReqBody any, ResBody any](
 
 	if res.StatusCode >= 200 && res.StatusCode <= 299 {
 		var ret ResBody
-		err = json.Unmarshal(body, &ret)
+		err = msgpack.Unmarshal(body, &ret)
 		if err != nil {
 			return nil, err
 		}

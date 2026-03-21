@@ -23,7 +23,7 @@ type {{ type_name }} struct {
 		{%- if field.description is defined and "\n" in field.description %}
 {{ field.description | to_doc_comment(style="go") | indent(4) }}
 		{%- endif %}
-{{ f_name }} {{ f_type }} `json:"{{ field.name }}{{ json_annotation }}"`
+{{ f_name }} {{ f_type }} `msgpack:"{{ field.name }}{{ json_annotation }}"`
 		{%- if field.description is defined and "\n" not in field.description -%}
 		{{ field.description | to_doc_comment(style="go") }}
 		{%- endif %}

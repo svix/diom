@@ -7,9 +7,9 @@ import (
 )
 
 type MsgNamespaceCreateOut struct {
-	Name        string      `json:"name"`
-	Retention   Retention   `json:"retention"`
-	StorageType StorageType `json:"storage_type"`
-	Created     time.Time   `json:"created"`
-	Updated     time.Time   `json:"updated"`
+	Name        string      `msgpack:"name"`
+	Retention   Retention   `msgpack:"retention"`
+	StorageType StorageType `msgpack:"storage_type"`
+	Created     time.Time   `msgpack:"created"`
+	Updated     time.Time   `msgpack:"updated"`
 }
