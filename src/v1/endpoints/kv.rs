@@ -121,7 +121,7 @@ async fn kv_set(
         data.ttl,
         data.behavior,
         data.version,
-        repl.time.last(),
+        repl.time.now(),
     );
     let SetResponseData { version, success } =
         repl.client_write(operation).await.or_internal_error()?.0?;
@@ -151,7 +151,7 @@ async fn kv_get(
     let controller = kv_state.controller(namespace.storage_type);
 
     let model = controller
-        .fetch(namespace.id, data.key, repl.time.last())
+        .fetch(namespace.id, data.key, repl.time.now())
         .await?;
 
     let ret = match model {

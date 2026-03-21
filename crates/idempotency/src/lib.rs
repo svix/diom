@@ -95,7 +95,7 @@ where
         .await
         .is_some()
     {
-        worker_loop(&state, &writer, time.last()).await?;
+        worker_loop(&state, &writer, time.now()).await?;
     }
 
     Ok(())

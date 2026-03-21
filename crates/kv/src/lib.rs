@@ -70,7 +70,7 @@ impl coyote_operations::workers::BackgroundWorker for AllNodesWorker {
             .await
             .is_some()
         {
-            self.worker_loop(self.time.last()).await?;
+            self.worker_loop(self.time.now()).await?;
         }
 
         Ok(())

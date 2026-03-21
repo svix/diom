@@ -34,7 +34,7 @@ pub(super) async fn apply_request(
         child_span.set_attribute("hashed_key", Value::String(hash.into()));
     }
 
-    state_machine.time.bump(request.timestamp);
+    state_machine.time.update_from_other(request.timestamp);
 
     let context = coyote_operations::OpContext {
         timestamp: request.timestamp,
