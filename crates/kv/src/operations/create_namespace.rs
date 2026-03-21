@@ -46,7 +46,7 @@ impl CreateKvOperation {
         now: Timestamp,
     ) -> coyote_operations::Result<CreateKvResponseData> {
         let op: CreateNamespace<KeyValueConfig> = self.into();
-        let out = op.async_apply_operation(namespace_state, now).await?;
+        let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }

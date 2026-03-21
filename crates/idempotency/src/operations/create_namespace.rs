@@ -46,7 +46,7 @@ impl CreateIdempotencyOperation {
         now: Timestamp,
     ) -> coyote_operations::Result<CreateIdempotencyResponseData> {
         let op: CreateNamespace<IdempotencyConfig> = self.into();
-        let out = op.async_apply_operation(namespace_state, now).await?;
+        let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }

@@ -50,7 +50,7 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
         }
     }
 
-    pub async fn async_apply_operation(
+    pub async fn apply_operation(
         self,
         state: &State,
         timestamp: Timestamp,
@@ -61,63 +61,46 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
         // can't use coyote-core here because of circular deps
         #[allow(clippy::disallowed_methods)]
         tokio::task::spawn_blocking(move || {
-            span.in_scope(|| self.apply_operation_inner(&db, &keyspace, timestamp))
+            span.in_scope(|| {
+                let namespace = match Namespace::<C>::fetch(&keyspace, &self.name)? {
+                    Some(mut namespace) => {
+                        namespace.storage_type = self.storage_type;
+                        namespace.updated = timestamp;
+                        namespace.max_storage_bytes = self.max_storage_bytes;
+                        namespace.config = self.config;
+                        namespace
+                    }
+                    None => {
+                        let id = NamespaceId::new(timestamp);
+                        Namespace {
+                            id,
+                            name: self.name,
+                            storage_type: self.storage_type,
+                            max_storage_bytes: self.max_storage_bytes,
+                            created: timestamp,
+                            updated: timestamp,
+                            config: self.config,
+                        }
+                    }
+                };
+
+                {
+                    let k1 = Namespace::<C>::key_for(&namespace.name);
+                    let mut batch = db.batch().durability(Some(fjall::PersistMode::SyncAll));
+                    batch.insert_row(&keyspace, k1, &namespace)?;
+                    batch.commit()?;
+                }
+
+                Ok(CreateNamespaceOutput {
+                    name: namespace.name,
+                    storage_type: namespace.storage_type,
+                    max_storage_bytes: namespace.max_storage_bytes,
+                    config: namespace.config,
+                    created: namespace.created,
+                    updated: namespace.updated,
+                })
+            })
         })
         .await?
-    }
-
-    pub fn apply_operation(
-        self,
-        state: &State,
-        timestamp: Timestamp,
-    ) -> Result<CreateNamespaceOutput<C>> {
-        let db = state.db();
-        let keyspace = state.keyspace();
-        self.apply_operation_inner(db, keyspace, timestamp)
-    }
-
-    fn apply_operation_inner(
-        self,
-        db: &fjall::Database,
-        keyspace: &fjall::Keyspace,
-        timestamp: Timestamp,
-    ) -> Result<CreateNamespaceOutput<C>> {
-        let namespace = match Namespace::<C>::fetch(keyspace, &self.name)? {
-            Some(mut namespace) => {
-                namespace.storage_type = self.storage_type;
-                namespace.updated = timestamp;
-                namespace.max_storage_bytes = self.max_storage_bytes;
-                namespace.config = self.config;
-                namespace
-            }
-            None => {
-                let id = NamespaceId::new(timestamp);
-                Namespace {
-                    id,
-                    name: self.name,
-                    storage_type: self.storage_type,
-                    max_storage_bytes: self.max_storage_bytes,
-                    created: timestamp,
-                    updated: timestamp,
-                    config: self.config,
-                }
-            }
-        };
-
-        {
-            let k1 = Namespace::<C>::key_for(&namespace.name);
-            let mut batch = db.batch().durability(Some(fjall::PersistMode::SyncAll));
-            batch.insert_row(keyspace, k1, &namespace)?;
-            batch.commit()?;
-        }
-
-        Ok(CreateNamespaceOutput {
-            name: namespace.name,
-            storage_type: namespace.storage_type,
-            max_storage_bytes: namespace.max_storage_bytes,
-            config: namespace.config,
-            created: namespace.created,
-            updated: namespace.updated,
-        })
     }
 }
