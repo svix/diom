@@ -17,6 +17,8 @@ type (
 	AuthTokenGetNamespaceOut      = coyote_models.AuthTokenGetNamespaceOut
 	AuthTokenListIn               = coyote_models.AuthTokenListIn
 	AuthTokenOut                  = coyote_models.AuthTokenOut
+	AuthTokenRotateIn             = coyote_models.AuthTokenRotateIn
+	AuthTokenRotateOut            = coyote_models.AuthTokenRotateOut
 	AuthTokenUpdateIn             = coyote_models.AuthTokenUpdateIn
 	AuthTokenUpdateOut            = coyote_models.AuthTokenUpdateOut
 	AuthTokenVerifyIn             = coyote_models.AuthTokenVerifyIn

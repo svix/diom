@@ -11,6 +11,8 @@ from .auth_token_get_namespace_in import AuthTokenGetNamespaceIn
 from .auth_token_get_namespace_out import AuthTokenGetNamespaceOut
 from .auth_token_list_in import AuthTokenListIn
 from .auth_token_out import AuthTokenOut
+from .auth_token_rotate_in import AuthTokenRotateIn
+from .auth_token_rotate_out import AuthTokenRotateOut
 from .auth_token_update_in import AuthTokenUpdateIn
 from .auth_token_update_out import AuthTokenUpdateOut
 from .auth_token_verify_in import AuthTokenVerifyIn
@@ -112,6 +114,8 @@ __all__ = [
     "AuthTokenGetNamespaceOut",
     "AuthTokenListIn",
     "AuthTokenOut",
+    "AuthTokenRotateIn",
+    "AuthTokenRotateOut",
     "AuthTokenUpdateIn",
     "AuthTokenUpdateOut",
     "AuthTokenVerifyIn",

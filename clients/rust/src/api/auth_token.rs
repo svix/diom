@@ -80,4 +80,15 @@ impl<'a> AuthToken<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Rotate Auth Token
+    pub async fn rotate(
+        &self,
+        auth_token_rotate_in: AuthTokenRotateIn,
+    ) -> Result<AuthTokenRotateOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1/auth-token/rotate")
+            .with_body(auth_token_rotate_in)
+            .execute(self.cfg)
+            .await
+    }
 }

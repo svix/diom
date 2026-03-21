@@ -104,3 +104,17 @@ func (authToken AuthToken) Update(
 		&authTokenUpdateIn,
 	)
 }
+
+// Rotate Auth Token
+func (authToken AuthToken) Rotate(
+	ctx context.Context,
+	authTokenRotateIn coyote_models.AuthTokenRotateIn,
+) (*coyote_models.AuthTokenRotateOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.AuthTokenRotateIn, coyote_models.AuthTokenRotateOut](
+		ctx,
+		authToken.client,
+		"POST",
+		"/api/v1/auth-token/rotate",
+		&authTokenRotateIn,
+	)
+}

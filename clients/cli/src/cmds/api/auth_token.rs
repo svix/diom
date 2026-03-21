@@ -38,6 +38,10 @@ pub enum AuthTokenCommands {
     Update {
         auth_token_update_in: crate::json::JsonOf<coyote_client::models::AuthTokenUpdateIn>,
     },
+    /// Rotate Auth Token
+    Rotate {
+        auth_token_rotate_in: crate::json::JsonOf<coyote_client::models::AuthTokenRotateIn>,
+    },
 }
 
 impl AuthTokenCommands {
@@ -99,6 +103,15 @@ impl AuthTokenCommands {
                 let resp = client
                     .auth_token()
                     .update(auth_token_update_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Rotate {
+                auth_token_rotate_in,
+            } => {
+                let resp = client
+                    .auth_token()
+                    .rotate(auth_token_rotate_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

@@ -296,6 +296,43 @@
         ]
       }
     },
+    "/api/v1/auth-token/rotate": {
+      "post": {
+        "tags": [
+          "Auth Tokens"
+        ],
+        "summary": "Auth Token Rotate",
+        "description": "Rotate Auth Token",
+        "operationId": "v1.auth_token.rotate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthTokenRotateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenRotateOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/auth-token/namespace/create": {
       "post": {
         "tags": [
@@ -1898,6 +1935,60 @@
           "owner_id",
           "scopes",
           "enabled"
+        ]
+      },
+      "AuthTokenRotateIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string",
+            "default": "sk"
+          },
+          "suffix": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiry_millis": {
+            "description": "Milliseconds from now until the old token expires. `None` means expire immediately.",
+            "type": "integer",
+            "format": "uint64",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "AuthTokenRotateOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "token"
         ]
       },
       "AuthTokenUpdateIn": {

@@ -29,6 +29,14 @@ import {
     AuthTokenListInSerializer,
 } from '../models/authTokenListIn';
 import {
+    type AuthTokenRotateIn,
+    AuthTokenRotateInSerializer,
+} from '../models/authTokenRotateIn';
+import {
+    type AuthTokenRotateOut,
+    AuthTokenRotateOutSerializer,
+} from '../models/authTokenRotateOut';
+import {
     type AuthTokenUpdateIn,
     AuthTokenUpdateInSerializer,
 } from '../models/authTokenUpdateIn';
@@ -141,6 +149,20 @@ export class AuthToken {
         return request.send(
             this.requestCtx,
             AuthTokenUpdateOutSerializer._fromJsonObject,
+        );
+    }/** Rotate Auth Token */
+    public rotate(
+        authTokenRotateIn: AuthTokenRotateIn,
+    ): Promise<AuthTokenRotateOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/rotate");
+
+        request.setBody(
+            AuthTokenRotateInSerializer._toJsonObject(authTokenRotateIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            AuthTokenRotateOutSerializer._fromJsonObject,
         );
     }
 }
