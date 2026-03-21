@@ -180,7 +180,7 @@ impl Store {
 
         if let Some(timestamp) = logs.get_last_timestamp().await? {
             // if we've ever committed anything, make sure we don't rewind time on restarting
-            time.bump(timestamp);
+            time.update_from_other(timestamp);
         }
 
         anyhow::ensure!(
@@ -702,7 +702,7 @@ impl StoreHandle {
     }
 
     pub fn now(&self) -> jiff::Timestamp {
-        self.time.now()
+        self.time.update_now()
     }
 
     pub(crate) async fn kv_store(&self) -> diom_kv::State {

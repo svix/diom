@@ -319,7 +319,7 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     let cluster_id = state.state_machine.cluster_id().await;
     #[allow(clippy::disallowed_methods)]
     let wall_time = jiff::Timestamp::now();
-    let monotonic_time = state.state_machine.time.last();
+    let monotonic_time = state.state_machine.time.now();
     state
         .raft
         .with_raft_state(move |s| {

@@ -152,7 +152,7 @@ async fn rate_limit_get_remaining(
 
     repl.wait_linearizable().await.or_internal_error()?;
 
-    let now = repl.time.last();
+    let now = repl.time.now();
     // FIXME: this state should be passed, not created every time.
     let rate_limit_state = diom_rate_limit::State::init(state.do_not_use_dbs.clone())?;
     let controller = rate_limit_state.controller(namespace.storage_type);

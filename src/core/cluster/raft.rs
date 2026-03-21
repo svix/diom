@@ -204,7 +204,7 @@ mod tests {
             let edb = Database::builder(e_data_path).open()?;
 
             let time = diom_core::Monotime::initial();
-            let _ = time.now();
+            let _ = time.update_now();
 
             let app_state: AppState = AppState::new(cfg, time.clone());
 

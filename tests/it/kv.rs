@@ -94,7 +94,7 @@ async fn test_kv_set_and_get() -> TestResult {
     assert!(response["expiry"].is_null());
 
     let expires_in = 1000;
-    let now = time.last();
+    let now = time.now();
     kv_set(
         &client,
         "kv-key-1",

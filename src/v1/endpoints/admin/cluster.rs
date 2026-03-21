@@ -135,7 +135,7 @@ async fn cluster_status(
         .then(|| app_state.cfg.cluster.name.to_owned());
     let this_node_id = repl.node_id;
 
-    let this_node_last_committed_timestamp = repl.time.last();
+    let this_node_last_committed_timestamp = repl.time.now();
 
     let nodes = futures_util::stream::iter(pnodes)
         .map(|peer| {

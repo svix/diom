@@ -155,7 +155,7 @@ async fn cache_set(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let now = repl.time.last();
+    let now = repl.time.now();
 
     let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model(now));
     repl.client_write(operation).await.or_internal_error()?.0?;
@@ -183,7 +183,7 @@ async fn cache_get(
     let controller = cache_state.controller(namespace.storage_type);
 
     let model = controller
-        .fetch(namespace.id, data.key, repl.time.last())
+        .fetch(namespace.id, data.key, repl.time.now())
         .await?;
 
     let ret = match model {
