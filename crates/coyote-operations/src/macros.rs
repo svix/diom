@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! async_raft_module_operations {
+macro_rules! raft_module_operations {
     (
         $trait_name:ident,
         $module_op_name:ident {
@@ -9,7 +9,7 @@ macro_rules! async_raft_module_operations {
         },
         state = $state_type:ty $(,)?
     ) => {
-        $crate::async_raft_module_operations!(
+        $crate::raft_module_operations!(
             $trait_name,
             $module_op_name {
                 $($variant($operation) -> $response_data_type),*

@@ -10,14 +10,14 @@ pub use create_namespace::{CreateKvOperation, CreateKvResponseData};
 pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::{SetOperation, SetResponseData};
 
-use coyote_operations::async_raft_module_operations;
+use coyote_operations::raft_module_operations;
 
 pub struct KvRaftState<'a> {
     pub state: &'a State,
     pub namespace: &'a coyote_namespace::State,
 }
 
-async_raft_module_operations!(
+raft_module_operations!(
     KvRequest,
     KvOperation {
         Set(SetOperation) -> SetResponseData,
