@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use futures::StreamExt;
+use futures_util::StreamExt;
 use k8s_openapi::api::apps::v1::StatefulSet;
 use kube::{
     Api, Client,

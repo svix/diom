@@ -11,7 +11,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow.workspace = true
-futures = "0.3"
+futures-util.workspace = true
 k8s-openapi.workspace = true
 kube.workspace = true
 schemars.workspace = true

@@ -1285,7 +1285,7 @@ name = "diom-operator"
 version = "0.0.1"
 dependencies = [
  "anyhow",
- "futures",
+ "futures-util",
  "k8s-openapi",
  "kube",
  "schemars 1.2.1",
