@@ -9,15 +9,27 @@ on:
         type: string
         default: "sha-0e90f15b9f3913b9e267078348c6e473443c468b"
       environment:
-        description: "Target environment"
+        description: "Target environment (svix-cloud-staging-apply or svix-cloud-dev-apply)"
         required: true
-        type: choice
-        options: [svix-cloud-dev-apply, svix-cloud-staging-apply]
+        type: string
+        default: svix-cloud-staging-apply
+  workflow_call:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (e.g. git SHA or semver)"
+        required: true
+        type: string
+      environment:
+        description: "Target environment"
+        required: false
+        type: string
+        default: svix-cloud-staging-apply
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/coyote-operator
   OPERATOR_DIR: infra/operator
+  COYOTE_NAMESPACE: coyote-db
 
 jobs:
   deploy:
@@ -27,13 +39,14 @@ jobs:
     permissions:
       contents: read
       packages: read # required to pull from ghcr.io
+      id-token: write # required for OIDC auth to AWS
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Authenticate to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -44,10 +57,9 @@ jobs:
           docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Update kubeconfig for EKS
@@ -59,29 +71,31 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v3
-
       - name: Deploy operator via Helm
         run: |
           helm upgrade --install coyote-operator ./${{ env.OPERATOR_DIR }}/../helm-coyote \
             --set-string operator.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set-string operator.image.tag=${{ inputs.image_tag }} \
             --set-string cluster.image.tag=${{ inputs.image_tag }} \
-            --set image.pullPolicy=Always \
-            --set installCRDs=true \
+            --set operator.image.pullPolicy=Always \
+            --set crds.enabled=true \
             --atomic \
-            --timeout=120s
+            --timeout=120s \
+            --namespace=${{ env.COYOTE_NAMESPACE }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
 
       - name: Verify rollout
         run: |
-          kubectl rollout status deployment/coyote-operator --timeout=120s
+          kubectl rollout status deployment/coyote-operator --timeout=120s -n ${{ env.COYOTE_NAMESPACE }}
 
       - name: Dump logs on failure
         if: failure()
         run: |
           echo "=== Pods ==="
-          kubectl get pods -A
+          kubectl get pods -A -n ${{ env.COYOTE_NAMESPACE }}
           echo "=== Events ==="
-          kubectl get events --sort-by='.lastTimestamp'
+          kubectl get events --sort-by='.lastTimestamp' -n ${{ env.COYOTE_NAMESPACE }}
           echo "=== Operator logs ==="
-          kubectl logs -l app.kubernetes.io/name=coyote-operator --tail=100 || true
+          kubectl logs -l app.kubernetes.io/name=coyote-operator --tail=100 -n ${{ env.COYOTE_NAMESPACE }} || true
