@@ -1027,3 +1027,52 @@ async fn default_namespace_receive_and_commit() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn default_starting_position_earliest_gets_preexisting() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("msgs/namespace/create")
+        .json(json!({ "name": "ns-dsp" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish 5 messages before any consumer group exists
+    client
+        .post("msgs/publish")
+        .json(json!({
+            "topic": "ns-dsp:t1",
+            "msgs": (0..5)
+                .map(|i| json!({ "value": format!("msg-{i}").as_bytes(), "key": "k1" }))
+                .collect::<Vec<_>>(),
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive with default_starting_position=earliest — should get all 5 messages
+    let r1 = client
+        .post("msgs/stream/receive")
+        .json(json!({
+            "topic": "ns-dsp:t1",
+            "consumer_group": "cg1",
+            "default_starting_position": "earliest",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = r1["msgs"].assert_array();
+    assert_eq!(
+        msgs.len(),
+        5,
+        "earliest starting position should return all pre-existing messages"
+    );
+    assert_eq!(msgs[0]["offset"].assert_u64(), 0);
+
+    Ok(())
+}
