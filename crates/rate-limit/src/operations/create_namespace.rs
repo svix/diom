@@ -46,7 +46,7 @@ impl CreateRateLimitOperation {
         now: Timestamp,
     ) -> diom_operations::Result<CreateRateLimitResponseData> {
         let op: CreateNamespace<RateLimitConfig> = self.into();
-        let out = op.async_apply_operation(namespace_state, now).await?;
+        let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }

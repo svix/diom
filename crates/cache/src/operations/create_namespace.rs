@@ -51,7 +51,7 @@ impl CreateCacheOperation {
         now: Timestamp,
     ) -> diom_operations::Result<CreateCacheResponseData> {
         let op: CreateNamespace<CacheConfig> = self.into();
-        let out = op.async_apply_operation(namespace_state, now).await?;
+        let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }
