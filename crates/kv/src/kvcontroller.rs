@@ -121,6 +121,7 @@ impl KvController {
         namespace_id: NamespaceId,
         key: &str,
         model: KvModel,
+        old_expiry: Option<Timestamp>,
     ) -> Result<()> {
         let mut batch = db.batch();
 
@@ -131,6 +132,11 @@ impl KvController {
         };
 
         batch.insert_row(keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
+
+        if let Some(ts) = old_expiry {
+            let key = ExpirationRow::key_for(namespace_id, ts, key);
+            batch.remove_row(keyspace, key)?;
+        }
 
         if let Some(expiry) = row.expiry {
             let expiration_row = ExpirationRow::new();
@@ -159,10 +165,9 @@ impl KvController {
 
         spawn_blocking_in_current_span(move || {
             let key = key.as_ref();
-            let mut current = None;
+            let current = Self::fetch_inner(&keyspace, namespace_id, key, now)?;
             // OCC check: if the caller supplied an expected version, verify it.
             if let Some(expected) = model.version {
-                current = Self::fetch_inner(&keyspace, namespace_id, key, now)?;
                 let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
                 if current_version != expected {
                     return Err(Error::bad_request("version_mismatch", "version mismatch"));
@@ -181,34 +186,44 @@ impl KvController {
 
             match behavior {
                 OperationBehavior::Upsert => {
-                    Self::insert_with_expiration(db, &keyspace, namespace_id, key, new_model)?;
+                    Self::insert_with_expiration(
+                        db,
+                        &keyspace,
+                        namespace_id,
+                        key,
+                        new_model,
+                        current.and_then(|c| c.expiry),
+                    )?;
                 }
                 OperationBehavior::Insert => {
-                    current = if current.is_some() {
-                        current
-                    } else {
-                        Self::fetch_inner(&keyspace, namespace_id, key, now)?
-                    };
-
                     if let Some(current) = current {
                         return Ok(KvSetResult {
                             version: current.version,
                             success: false,
                         });
                     } else {
-                        Self::insert_with_expiration(db, &keyspace, namespace_id, key, new_model)?;
+                        Self::insert_with_expiration(
+                            db,
+                            &keyspace,
+                            namespace_id,
+                            key,
+                            new_model,
+                            current.and_then(|c| c.expiry),
+                        )?;
                     }
                 }
                 OperationBehavior::Update => {
-                    current = if current.is_some() {
-                        current
-                    } else {
-                        Self::fetch_inner(&keyspace, namespace_id, key, now)?
-                    };
                     let exists = current.is_some();
 
                     if exists {
-                        Self::insert_with_expiration(db, &keyspace, namespace_id, key, new_model)?;
+                        Self::insert_with_expiration(
+                            db,
+                            &keyspace,
+                            namespace_id,
+                            key,
+                            new_model,
+                            current.and_then(|c| c.expiry),
+                        )?;
                     } else {
                         return Ok(KvSetResult {
                             version: 0,
@@ -415,7 +430,7 @@ impl KvController {
 #[cfg(test)]
 mod tests {
     use coyote_id::NamespaceId;
-    use jiff::ToSpan;
+    use jiff::{SignedDuration, ToSpan};
 
     use super::*;
 
@@ -913,5 +928,80 @@ mod tests {
             .unwrap();
         assert!(permanent.is_some());
         assert_eq!(permanent.unwrap().value, b"permanent data");
+    }
+
+    #[tokio::test]
+    async fn test_bumping_expiration_deletes_stale_rows() {
+        let setup = SetupFixture::new();
+        let controller = setup.controller;
+
+        let ms = jiff::TimestampRound::new()
+            .smallest(jiff::Unit::Millisecond)
+            .mode(jiff::RoundMode::Trunc);
+
+        let expiry = (Timestamp::now() + SignedDuration::from_secs(10))
+            .round(ms)
+            .unwrap();
+
+        let key = "overwrite:key";
+        let ns = ns();
+        controller
+            .set(
+                ns,
+                key,
+                KvModelIn {
+                    value: b"first value".to_vec(),
+                    expiry: Some(expiry),
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                Timestamp::now(),
+                0,
+            )
+            .await
+            .unwrap();
+
+        let expiration_rows = ExpirationRow::keys(&controller.keyspace)
+            .unwrap()
+            .collect::<Vec<fjall::UserKey>>();
+        assert_eq!(expiration_rows.len(), 1);
+        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]).unwrap();
+        let (namespace_id, found_key) =
+            ExpirationRow::extract_key_from_fjall_key(&expiration_rows[0]).unwrap();
+        assert_eq!(ts, expiry);
+        assert_eq!(namespace_id, ns);
+        assert_eq!(found_key, key);
+
+        let later_expiry = (Timestamp::now() + SignedDuration::from_secs(90))
+            .round(ms)
+            .unwrap();
+        controller
+            .set(
+                ns,
+                key,
+                KvModelIn {
+                    value: b"first value".to_vec(),
+                    expiry: Some(later_expiry),
+                    version: None,
+                },
+                OperationBehavior::Upsert,
+                Timestamp::now(),
+                0,
+            )
+            .await
+            .unwrap();
+
+        let expiration_rows = ExpirationRow::keys(&controller.keyspace)
+            .unwrap()
+            .collect::<Vec<fjall::UserKey>>();
+        // the old index row should be deleted
+        assert_eq!(expiration_rows.len(), 1);
+        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]).unwrap();
+        let (namespace_id, found_key) =
+            ExpirationRow::extract_key_from_fjall_key(&expiration_rows[0]).unwrap();
+        // and the ts should be updated
+        assert_eq!(ts, later_expiry);
+        assert_eq!(namespace_id, ns);
+        assert_eq!(found_key, key);
     }
 }
