@@ -256,6 +256,8 @@ async fn flush_every_worker(
     // TODO: on openraft 0.10, we can actually do `.recv_many` to amortize this cost
     while let Some(callback) = channel.recv().await {
         let db = db.clone();
+        // this shouldn't inherit our span
+        #[allow(clippy::disallowed_methods)]
         let result = tokio::task::spawn_blocking(move || {
             let _guard = tracing::info_span!("logs:flush_worker:every").entered();
             tracing::trace!("fsyncing logs to disk");
@@ -619,7 +621,7 @@ impl DiomLogs {
                     _ = shutdown.cancelled() => break,
                 }
 
-                match tokio::task::spawn_blocking({
+                match spawn_blocking_in_current_span({
                     let db = db.clone();
                     move || db.disk_space()
                 })

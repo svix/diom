@@ -70,6 +70,7 @@ impl State {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn fetch_namespace<C: ModuleConfig>(
         &self,
         namespace_name: Option<&str>,
@@ -90,6 +91,7 @@ impl State {
     }
 
     /// Like `fetch_namespace` but allows passing `default` explicitly for admin purposes.
+    #[tracing::instrument(skip(self))]
     pub fn fetch_namespace_admin<C: ModuleConfig>(
         &self,
         namespace_name: &str,
@@ -97,6 +99,7 @@ impl State {
         Namespace::fetch(&self.keyspace, namespace_name)
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn fetch_all_namespaces<C: ModuleConfig>(
         &self,
     ) -> Result<impl Iterator<Item = Namespace<C>>> {
