@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io::{Seek, SeekFrom},
     path::{Path, PathBuf},
     pin::Pin,
@@ -27,8 +28,8 @@ use tokio::sync::RwLock as TokioRwLock;
 use uuid::Uuid;
 
 use super::{
-    Node, NodeId, errors::*, handle::Response, logs::DiomLogs, raft::TypeConfig,
-    serialized_state_machine,
+    Node, NodeId, errors::*, handle::{Request, RequestWithContext, Response}, logs::DiomLogs,
+    raft::TypeConfig, serialized_state_machine,
 };
 use crate::AppState;
 
@@ -394,44 +395,106 @@ impl Store {
         I: IntoIterator<Item = <TypeConfig as RaftTypeConfig>::Entry> + openraft::OptionalSend,
         I::IntoIter: openraft::OptionalSend,
     {
-        let mut replies = vec![];
+        // FIXME: I'm sure there's a way to do it without the allocation. E.g. by creating the
+        // closures as well in one loop.
+        let entries: Vec<_> = entries.into_iter().collect();
+        let n = entries.len();
+        let mut responses: Vec<Option<Response>> = vec![None; n];
         let mut changed_log_id = false;
         let mut changed_membership = false;
-        for item in entries {
-            self.last_applied_log_id = Some(item.log_id);
-            changed_log_id = true;
 
-            match item.payload {
+        // Step 1: Update all in-memory state upfront, though see readme below, I'm not sure it's
+        // even needed necessarily.
+        for entry in &entries {
+            self.last_applied_log_id = Some(entry.log_id);
+            changed_log_id = true;
+            match &entry.payload {
+                // FIXME: I updated the time in advance. Felt safe because we pass the request time
+                // to each module anyway. Probably just need to do it at the end?
+                EntryPayload::Normal(req) => self.time.update_from_other(req.timestamp),
+                EntryPayload::Membership(m) => {
+                    self.last_membership =
+                        StoredMembership::new(Some(entry.log_id), m.clone());
+                    changed_membership = true;
+                }
+                EntryPayload::Blank => {}
+            }
+        }
+
+        // Execute in parallel based on a conflict key (reported by operation).
+        // I also used ClusterInternal as a barrier, though I don't think it should be? I think we
+        // can just parallelize around that as well?
+        let stores = Arc::clone(&self.stores);
+        // Why is this separate here? I think can also just be an Arc?
+        let namespace_state = self.state.namespace_state.clone();
+
+        // Segment: (original_idx, wave, request, log_id)
+        let mut current_segment: Vec<(usize, usize, RequestWithContext, LogId<NodeId>)> = vec![];
+        let mut key_to_wave: HashMap<String, usize> = HashMap::new();
+
+        for (idx, entry) in entries.iter().enumerate() {
+            match &entry.payload {
                 EntryPayload::Blank => {
                     tracing::trace!("heartbeat");
-                    replies.push(Response::Blank)
+                    responses[idx] = Some(Response::Blank);
+                }
+                EntryPayload::Membership(_) => {
+                    tracing::trace!("changing cluster membership");
+                    responses[idx] = Some(Response::Blank);
                 }
                 EntryPayload::Normal(req) => {
-                    tracing::trace!(log_id=?item.log_id, request=?req, "applying user request");
-                    let reply = match super::applier::apply_request(req, self, item.log_id).await {
-                        Ok(o) => o,
-                        Err(e) => {
-                            tracing::error!("failed to apply raft log");
-                            return Err(StorageError::IO {
-                                source: StorageIOError::apply(item.log_id, e),
-                            });
-                        }
-                    };
-                    replies.push(reply);
-                }
-                EntryPayload::Membership(last_membership) => {
-                    tracing::trace!("changing cluster membership");
-                    self.last_membership =
-                        StoredMembership::new(Some(item.log_id), last_membership);
-                    changed_membership = true;
-                    replies.push(Response::Blank)
+                    if matches!(req.inner, Request::ClusterInternal(_)) {
+                        // ClusterInternal is a barrier: flush pending parallel work first.
+                        // FIXME: though should it be a barrier? I don't know.
+                        execute_parallel_segment(
+                            &current_segment,
+                            &stores,
+                            &namespace_state,
+                            &mut responses,
+                        )
+                        .await?;
+                        current_segment.clear();
+                        key_to_wave.clear();
+
+                        tracing::trace!(log_id=?entry.log_id, "applying cluster-internal request");
+                        let reply =
+                            match super::applier::apply_cluster_internal(req, self, entry.log_id)
+                                .await
+                            {
+                                Ok(r) => r,
+                                Err(e) => {
+                                    tracing::error!("failed to apply raft log");
+                                    return Err(StorageError::IO {
+                                        source: StorageIOError::apply(entry.log_id, e),
+                                    });
+                                }
+                            };
+                        responses[idx] = Some(reply);
+                    } else {
+                        tracing::trace!(log_id=?entry.log_id, request=?req, "scheduling user request");
+                        let key = apply_conflict_key(req);
+                        let wave = key_to_wave.get(&key).map(|&w| w + 1).unwrap_or(0);
+                        key_to_wave.insert(key, wave);
+                        current_segment.push((idx, wave, req.clone(), entry.log_id));
+                    }
                 }
             }
         }
+
+        // Flush any remaining parallel segment.
+        execute_parallel_segment(
+            &current_segment,
+            &stores,
+            &namespace_state,
+            &mut responses,
+        )
+        .await?;
+
         if changed_log_id || changed_membership {
             self.record_ids_().await.map_err(write_err)?;
         }
-        Ok(replies)
+
+        Ok(responses.into_iter().map(|r| r.unwrap()).collect())
     }
 
     async fn begin_receiving_snapshot_(
@@ -633,6 +696,78 @@ impl RaftSnapshotBuilder<TypeConfig> for StoreHandle {
     async fn build_snapshot(&mut self) -> StorageResult<Snapshot<TypeConfig>> {
         self.inner.write().await.build_snapshot_().await
     }
+}
+
+/// Compute the conflict key for a request, used to determine which entries
+/// can execute in parallel (different keys) vs must be sequential (same key).
+///
+/// Two entries with the same conflict key are placed in successive waves and
+/// run sequentially. Entries with different keys can run in the same wave.
+fn apply_conflict_key(req: &RequestWithContext) -> String {
+    let module = req.module();
+    match req.hashed_key() {
+        Some(hash) => format!("{module}:{hash}"),
+        // Operations with no key (e.g. AuthToken) are serialized within their module.
+        None => format!("{module}:__sequential__"),
+    }
+}
+
+/// Execute one parallel segment of log entries using wave scheduling.
+///
+/// Entries in the same wave have no key conflicts and run concurrently via
+/// `join_all`. Waves are executed in order so that entries sharing a conflict
+/// key still apply in log order overall.
+async fn execute_parallel_segment(
+    segment: &[(usize, usize, RequestWithContext, LogId<NodeId>)],
+    stores: &Arc<RwLock<Stores>>,
+    namespace_state: &diom_namespace::State,
+    responses: &mut Vec<Option<Response>>,
+) -> StorageResult<()> {
+    if segment.is_empty() {
+        return Ok(());
+    }
+
+    let max_wave = segment.iter().map(|(_, w, _, _)| *w).max().unwrap_or(0);
+
+    for wave_idx in 0..=max_wave {
+        let wave_futures: Vec<_> = segment
+            .iter()
+            .filter(|(_, w, _, _)| *w == wave_idx)
+            .map(|(original_idx, _, req, log_id)| {
+                let stores = Arc::clone(stores);
+                let namespace_state = namespace_state.clone();
+                let req = req.clone();
+                let log_id = *log_id;
+                let original_idx = *original_idx;
+                async move {
+                    let result = super::applier::apply_module_request(
+                        req,
+                        stores,
+                        namespace_state,
+                        log_id,
+                    )
+                    .await;
+                    (original_idx, log_id, result)
+                }
+            })
+            .collect();
+
+        let results = futures_util::future::join_all(wave_futures).await;
+
+        for (original_idx, log_id, result) in results {
+            match result {
+                Ok(response) => responses[original_idx] = Some(response),
+                Err(e) => {
+                    tracing::error!("failed to apply raft log");
+                    return Err(StorageError::IO {
+                        source: StorageIOError::apply(log_id, e),
+                    });
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
 impl RaftStateMachine<TypeConfig> for StoreHandle {
