@@ -114,12 +114,12 @@ async fn auth_token_create(
         namespace,
         data.name,
         token.hash(),
-        data.expiry_millis.map(|ms| repl.time.last() + ms),
+        data.expiry_millis.map(|ms| repl.time.now() + ms),
         data.metadata,
         data.owner_id,
         data.scopes,
         data.enabled,
-        repl.time.last(),
+        repl.time.now(),
     );
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
 
@@ -155,7 +155,7 @@ async fn auth_token_expire(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let expiry = data.expiry_millis.map(|ms| repl.time.last() + ms);
+    let expiry = data.expiry_millis.map(|ms| repl.time.now() + ms);
     let operation = ExpireAuthTokenOperation::new(namespace, data.id.into_inner(), expiry);
     let _ = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AuthTokenExpireOut {}))
@@ -226,7 +226,7 @@ async fn auth_token_verify(
     let auth_token_state = coyote_auth_token::State::init(state.do_not_use_dbs.clone())?;
     let token = auth_token_state
         .controller
-        .fetch_non_expired(namespace.id, &token_hashed, repl.time.last())
+        .fetch_non_expired(namespace.id, &token_hashed, repl.time.now())
         .await?;
 
     // FIXME: actually do something if expired, failed for other reasons, etc.
@@ -304,7 +304,7 @@ async fn auth_token_update(
         namespace,
         data.id.into_inner(),
         data.name,
-        data.expiry_millis.map(|ms| repl.time.last() + ms),
+        data.expiry_millis.map(|ms| repl.time.now() + ms),
         data.metadata,
         data.scopes,
         data.enabled,

@@ -111,7 +111,7 @@ impl TestServerBuilder {
         let base_uri = format!("http://{addr}/api/v1");
 
         let time = Monotime::initial();
-        time.now();
+        time.update_now();
 
         let server_handle = tokio::spawn({
             let cfg = cfg.clone();

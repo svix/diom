@@ -325,7 +325,7 @@ impl RaftState {
             > + Into<O::RequestParent>,
     {
         let inner: Request = op.into().into();
-        let now = self.time.now();
+        let now = self.time.update_now();
         let request =
             RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
         let response = match self.raft.client_write(request.clone()).await {
