@@ -11,7 +11,7 @@ use crate::{
     core::metrics::{DbMetrics, DbType},
 };
 use anyhow::Context;
-use coyote_core::Monotime;
+use coyote_core::{Monotime, task::spawn_blocking_in_current_span};
 use coyote_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
@@ -103,7 +103,7 @@ impl From<Store> for StoreHandle {
 pub struct Store {
     pub(super) state: AppState,
     // This is wrapped an an RwLock (even though the StoreHandle has its own RwLock)
-    // because it gets sent to `tokio::task::spawn_blocking` invocations all over the place,
+    // because it gets sent to `spawn_blocking` invocations all over the place,
     // and it's possible that we could get snapshot-unsafe behavior if one of them outlived
     // the lock on the outer structure, so we only actually lock it later; the lock should
     // almost never be contended unless we're dropping futures.
@@ -226,7 +226,7 @@ impl Store {
                     _ = shutdown.cancelled() => break,
                 }
 
-                match tokio::task::spawn_blocking({
+                match spawn_blocking_in_current_span({
                     let stores = Arc::clone(&stores);
                     move || {
                         let guard = stores.read();
@@ -250,7 +250,7 @@ impl Store {
 
     pub(super) async fn set_cluster_id(&mut self, id: ClusterId) -> anyhow::Result<()> {
         let keyspace = self.meta_keyspace.clone();
-        tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             CLUSTER_UUID.store(&keyspace, &id)?;
             Ok(())
         })
@@ -264,7 +264,7 @@ impl Store {
         let keyspace = self.readonly_meta_keyspace.clone();
 
         let (last_applied_log_id, last_membership, last_snapshot, cluster_id) =
-            tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
+            spawn_blocking_in_current_span(move || -> anyhow::Result<_> {
                 let last_applied_log_id = LAST_APPLIED_LOG_ID.get(&keyspace)?;
                 let last_membership = LAST_MEMBERSHIP
                     .get(&keyspace)?
@@ -307,7 +307,7 @@ impl Store {
             path: snapshot_path.clone(),
         };
         tracing::trace!(last_snapshot=?data, "setting last_snapshot");
-        let data = tokio::task::spawn_blocking(move || -> anyhow::Result<LastSnapshot> {
+        let data = spawn_blocking_in_current_span(move || -> anyhow::Result<LastSnapshot> {
             let db = &handle.read().databases.persistent;
             LAST_SNAPSHOT.store(&keyspace, &data)?;
             db.persist(PersistMode::SyncAll)?;
@@ -330,7 +330,7 @@ impl Store {
         let meta_keyspace = self.meta_keyspace.clone();
         let last_applied_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let mut tx = handle
                 .read()
                 .databases
@@ -375,7 +375,7 @@ impl Store {
         tracing::debug!("starting snapshot installation");
         let mut f = snapshot.file.into_std().await;
         let handle = self.stores.clone();
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking_in_current_span(move || {
             let stores = handle.write();
             serialized_state_machine::load_from_file(&stores.databases, &mut f)
         })
@@ -499,7 +499,7 @@ impl Store {
                 .collect()
         }
 
-        let targets = tokio::task::spawn_blocking(move || {
+        let targets = spawn_blocking_in_current_span(move || {
             let store = handle.write();
             let dbs = &store.databases;
 
@@ -616,7 +616,7 @@ impl StoredSnapshot {
         let file_name = format!("coyote-{}", metadata.snapshot_id);
         let path = directory.join(file_name);
         let path_c = path.clone();
-        let file = tokio::task::spawn_blocking(move || -> anyhow::Result<std::fs::File> {
+        let file = spawn_blocking_in_current_span(move || -> anyhow::Result<std::fs::File> {
             tracing::info!(path=%path_c.display(), "writing snapshot");
             let mut f = std::fs::File::create(path_c)?;
             serialized_state_machine::serialize_to_file(targets, &mut f)?;
