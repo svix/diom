@@ -40,7 +40,7 @@ impl CreateNamespaceOperation {
             self.storage_type,
             Some(self.retention.bytes),
         );
-        let out = op.async_apply_operation(namespace_state, now).await?;
+        let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
     }
 }
