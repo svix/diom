@@ -10,6 +10,14 @@ macro_rules! id_marker {
 
         impl $crate::marker::IdMarker for $name {}
 
+        impl PartialEq for $name {
+            fn eq(&self, _: &Self) -> bool {
+                true
+            }
+        }
+
+        impl Eq for $name {}
+
         $(
             impl $crate::marker::PublicIdMarker for $name {
                 const PREFIX: &str = $prefix;

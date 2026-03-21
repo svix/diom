@@ -29,7 +29,7 @@ impl KvPairRow {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct ExpirationRow {}
 
 impl ExpirationRow {
@@ -50,6 +50,16 @@ impl ExpirationRow {
             &[&ts_bytes, namespace_id.as_bytes()],
             &[key],
         )
+    }
+
+    #[cfg(test)]
+    pub(crate) fn extract_ts_from_fjall_key(key: &fjall::UserKey) -> Result<Timestamp> {
+        let offset = 1 /* row_type */;
+        let array: [u8; 8] = (&key[offset..=size_of::<i64>()])
+            .try_into()
+            .or_internal_error()?;
+        let millis = i64::from_be_bytes(array);
+        Timestamp::from_millisecond(millis).or_internal_error()
     }
 
     pub(crate) fn extract_key_from_fjall_key(key: &fjall::UserKey) -> Result<(NamespaceId, &str)> {

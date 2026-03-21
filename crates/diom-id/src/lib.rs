@@ -26,6 +26,7 @@ mod m {
     id_marker!(AuthToken, "key_");
 }
 
+#[derive(PartialEq, Eq, Hash)]
 pub struct Id<M> {
     inner: Uuid,
     _marker: PhantomData<M>,
