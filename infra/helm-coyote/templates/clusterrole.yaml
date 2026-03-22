@@ -38,4 +38,24 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "coyote-operator.fullname" . }}-view
+  labels:
+    {{- include "coyote-operator.labels" . | nindent 4 }}
+    {{- if .Values.operator.rbac.aggregateViewClusterRoles }}
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+    rbac.authorization.k8s.io/aggregate-to-cluster-reader: "true"
+    {{- end }}
+rules:
+  - apiGroups: ["coyote.svix.com"]
+    resources: ["coyoteclusters"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["coyote.svix.com"]
+    resources: ["coyoteclusters/status"]
+    verbs: ["get"]
 {{- end }}
