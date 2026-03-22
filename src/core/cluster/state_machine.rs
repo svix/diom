@@ -435,8 +435,7 @@ impl Store {
         let mut current_segment: Vec<(usize, usize, RequestWithContext, LogId<NodeId>)> = vec![];
         let mut key_to_wave: HashMap<String, usize> = HashMap::new();
 
-        let persistent_batch =
-            Arc::new(RwLock::new(self.state.do_not_use_dbs.persistent.batch()));
+        let persistent_batch = Arc::new(RwLock::new(self.state.do_not_use_dbs.persistent.batch()));
 
         for (idx, entry) in entries.iter().enumerate() {
             match &entry.payload {

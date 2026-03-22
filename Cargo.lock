@@ -1219,6 +1219,7 @@ dependencies = [
  "fjall-utils",
  "itertools 0.14.0",
  "jiff",
+ "parking_lot",
  "schemars 1.2.1",
  "serde",
  "tap",

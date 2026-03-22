@@ -59,7 +59,8 @@ impl SetOperation {
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
         let result = state
             .controller(self.storage_type)
-            .set(
+            .set_batch(
+                ctx.batch.clone(),
                 self.namespace_id,
                 self.key,
                 self.model,

@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use diom_core::{
     instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard},
@@ -6,10 +9,11 @@ use diom_core::{
 };
 use diom_error::{Error, Result};
 use diom_id::NamespaceId;
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, KvSeparationOptions};
+use fjall::{Database, Keyspace, KeyspaceCreateOptions, KvSeparationOptions, OwnedWriteBatch};
 use fjall_utils::{StorageType, TableRow, WriteBatchExt};
 use itertools::Itertools;
 use jiff::Timestamp;
+use parking_lot::RwLock;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -116,15 +120,13 @@ impl KvController {
     }
 
     fn insert_with_expiration(
-        db: InstrumentedMutexGuard<'_, Database>,
+        batch: &mut OwnedWriteBatch,
         keyspace: &Keyspace,
         namespace_id: NamespaceId,
         key: &str,
         model: KvModel,
         old_expiry: Option<Timestamp>,
     ) -> Result<()> {
-        let mut batch = db.batch();
-
         let row = KvPairRow {
             value: model.value,
             expiry: model.expiry,
@@ -143,8 +145,6 @@ impl KvController {
             let key = ExpirationRow::key_for(namespace_id, expiry, key);
             batch.insert_row(keyspace, key, &expiration_row)?;
         }
-
-        batch.commit()?;
 
         Ok(())
     }
@@ -183,11 +183,12 @@ impl KvController {
             };
 
             let db = db.lock("kvcontroller::set");
+            let mut batch = db.batch();
 
             match behavior {
                 OperationBehavior::Upsert => {
                     Self::insert_with_expiration(
-                        db,
+                        &mut batch,
                         &keyspace,
                         namespace_id,
                         key,
@@ -203,7 +204,7 @@ impl KvController {
                         });
                     } else {
                         Self::insert_with_expiration(
-                            db,
+                            &mut batch,
                             &keyspace,
                             namespace_id,
                             key,
@@ -217,7 +218,103 @@ impl KvController {
 
                     if exists {
                         Self::insert_with_expiration(
-                            db,
+                            &mut batch,
+                            &keyspace,
+                            namespace_id,
+                            key,
+                            new_model,
+                            current.and_then(|c| c.expiry),
+                        )?;
+                    } else {
+                        return Ok(KvSetResult {
+                            version: 0,
+                            success: false,
+                        });
+                    }
+                }
+            };
+
+            batch.commit()?;
+
+            Ok(KvSetResult {
+                version: new_version,
+                success: true,
+            })
+        })
+        .await?
+    }
+
+    // FIXME: code is duplicated just for illustration purposes. In practice the other function
+    // doesn't need to exist the moment we change this accordingly.
+    #[tracing::instrument(skip(self, batch, model))]
+    pub async fn set_batch<K: AsRef<str> + std::fmt::Debug + 'static + Send>(
+        &self,
+        batch: Arc<RwLock<OwnedWriteBatch>>,
+        namespace_id: NamespaceId,
+        key: K,
+        model: KvModelIn,
+        behavior: OperationBehavior,
+        now: Timestamp,
+        // This is a monotonically increasing global counter (e.g. raft offset)
+        global_counter: u64,
+    ) -> Result<KvSetResult> {
+        let keyspace = self.keyspace.clone();
+
+        spawn_blocking_in_current_span(move || {
+            let key = key.as_ref();
+            let current = Self::fetch_inner(&keyspace, namespace_id, key, now)?;
+            // OCC check: if the caller supplied an expected version, verify it.
+            if let Some(expected) = model.version {
+                let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
+                if current_version != expected {
+                    return Err(Error::bad_request("version_mismatch", "version mismatch"));
+                }
+            }
+
+            let new_version = global_counter + 1;
+
+            let new_model = KvModel {
+                value: model.value,
+                expiry: model.expiry,
+                version: new_version,
+            };
+
+            let mut batch = batch.write();
+
+            match behavior {
+                OperationBehavior::Upsert => {
+                    Self::insert_with_expiration(
+                        &mut batch,
+                        &keyspace,
+                        namespace_id,
+                        key,
+                        new_model,
+                        current.and_then(|c| c.expiry),
+                    )?;
+                }
+                OperationBehavior::Insert => {
+                    if let Some(current) = current {
+                        return Ok(KvSetResult {
+                            version: current.version,
+                            success: false,
+                        });
+                    } else {
+                        Self::insert_with_expiration(
+                            &mut batch,
+                            &keyspace,
+                            namespace_id,
+                            key,
+                            new_model,
+                            current.and_then(|c| c.expiry),
+                        )?;
+                    }
+                }
+                OperationBehavior::Update => {
+                    let exists = current.is_some();
+
+                    if exists {
+                        Self::insert_with_expiration(
+                            &mut batch,
                             &keyspace,
                             namespace_id,
                             key,
