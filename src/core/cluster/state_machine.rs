@@ -14,7 +14,7 @@ use crate::{
 use anyhow::Context;
 use diom_core::{Monotime, task::spawn_blocking_in_current_span};
 use diom_namespace::entities::StorageType;
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
+use fjall::{Database, Keyspace, KeyspaceCreateOptions, OwnedWriteBatch, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
@@ -28,8 +28,12 @@ use tokio::sync::RwLock as TokioRwLock;
 use uuid::Uuid;
 
 use super::{
-    Node, NodeId, errors::*, handle::{Request, RequestWithContext, Response}, logs::DiomLogs,
-    raft::TypeConfig, serialized_state_machine,
+    Node, NodeId,
+    errors::*,
+    handle::{Request, RequestWithContext, Response},
+    logs::DiomLogs,
+    raft::TypeConfig,
+    serialized_state_machine,
 };
 use crate::AppState;
 
@@ -413,8 +417,7 @@ impl Store {
                 // to each module anyway. Probably just need to do it at the end?
                 EntryPayload::Normal(req) => self.time.update_from_other(req.timestamp),
                 EntryPayload::Membership(m) => {
-                    self.last_membership =
-                        StoredMembership::new(Some(entry.log_id), m.clone());
+                    self.last_membership = StoredMembership::new(Some(entry.log_id), m.clone());
                     changed_membership = true;
                 }
                 EntryPayload::Blank => {}
@@ -431,6 +434,9 @@ impl Store {
         // Segment: (original_idx, wave, request, log_id)
         let mut current_segment: Vec<(usize, usize, RequestWithContext, LogId<NodeId>)> = vec![];
         let mut key_to_wave: HashMap<String, usize> = HashMap::new();
+
+        let persistent_batch =
+            Arc::new(RwLock::new(self.state.do_not_use_dbs.persistent.batch()));
 
         for (idx, entry) in entries.iter().enumerate() {
             match &entry.payload {
@@ -449,6 +455,7 @@ impl Store {
                         execute_parallel_segment(
                             &current_segment,
                             &stores,
+                            persistent_batch.clone(),
                             &namespace_state,
                             &mut responses,
                         )
@@ -457,18 +464,22 @@ impl Store {
                         key_to_wave.clear();
 
                         tracing::trace!(log_id=?entry.log_id, "applying cluster-internal request");
-                        let reply =
-                            match super::applier::apply_cluster_internal(req, self, entry.log_id)
-                                .await
-                            {
-                                Ok(r) => r,
-                                Err(e) => {
-                                    tracing::error!("failed to apply raft log");
-                                    return Err(StorageError::IO {
-                                        source: StorageIOError::apply(entry.log_id, e),
-                                    });
-                                }
-                            };
+                        let reply = match super::applier::apply_cluster_internal(
+                            req,
+                            self,
+                            persistent_batch.clone(),
+                            entry.log_id,
+                        )
+                        .await
+                        {
+                            Ok(r) => r,
+                            Err(e) => {
+                                tracing::error!("failed to apply raft log");
+                                return Err(StorageError::IO {
+                                    source: StorageIOError::apply(entry.log_id, e),
+                                });
+                            }
+                        };
                         responses[idx] = Some(reply);
                     } else {
                         tracing::trace!(log_id=?entry.log_id, request=?req, "scheduling user request");
@@ -485,10 +496,19 @@ impl Store {
         execute_parallel_segment(
             &current_segment,
             &stores,
+            persistent_batch.clone(),
             &namespace_state,
             &mut responses,
         )
         .await?;
+
+        // FIXME to not unwrap... It's very ugly, but the idea is to confirm we are the only ones
+        // here, which should be the case.
+        Arc::into_inner(persistent_batch)
+            .unwrap()
+            .into_inner()
+            .commit()
+            .unwrap();
 
         if changed_log_id || changed_membership {
             self.record_ids_().await.map_err(write_err)?;
@@ -720,6 +740,7 @@ fn apply_conflict_key(req: &RequestWithContext) -> String {
 async fn execute_parallel_segment(
     segment: &[(usize, usize, RequestWithContext, LogId<NodeId>)],
     stores: &Arc<RwLock<Stores>>,
+    batch: Arc<RwLock<OwnedWriteBatch>>,
     namespace_state: &diom_namespace::State,
     responses: &mut Vec<Option<Response>>,
 ) -> StorageResult<()> {
@@ -739,10 +760,12 @@ async fn execute_parallel_segment(
                 let req = req.clone();
                 let log_id = *log_id;
                 let original_idx = *original_idx;
+                let batch = batch.clone();
                 async move {
                     let result = super::applier::apply_module_request(
                         req,
                         stores,
+                        batch,
                         namespace_state,
                         log_id,
                     )

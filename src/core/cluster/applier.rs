@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use fjall::OwnedWriteBatch;
 use parking_lot::RwLock;
 
 use super::{
@@ -18,6 +19,7 @@ use tracing_opentelemetry::OpenTelemetrySpanExt;
 pub(super) async fn apply_module_request(
     request: RequestWithContext,
     stores: Arc<RwLock<Stores>>,
+    batch: Arc<RwLock<OwnedWriteBatch>>,
     namespace_state: diom_namespace::State,
     log_id: LogId<NodeId>,
 ) -> anyhow::Result<Response> {
@@ -44,6 +46,7 @@ pub(super) async fn apply_module_request(
         timestamp: request.timestamp,
         log_index: log_id.index,
         term: log_id.leader_id.term,
+        batch,
     };
 
     apply_module_request_inner(request.inner, stores, namespace_state, &context)
@@ -118,6 +121,7 @@ async fn apply_module_request_inner(
 pub(super) async fn apply_cluster_internal(
     request: &RequestWithContext,
     state_machine: &mut Store,
+    batch: Arc<RwLock<OwnedWriteBatch>>,
     log_id: LogId<NodeId>,
 ) -> anyhow::Result<Response> {
     let child_span = info_span!(
@@ -139,6 +143,7 @@ pub(super) async fn apply_cluster_internal(
         timestamp: request.timestamp,
         log_index: log_id.index,
         term: log_id.leader_id.term,
+        batch,
     };
 
     let Request::ClusterInternal(req) = &request.inner else {
