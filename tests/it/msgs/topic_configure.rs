@@ -249,7 +249,7 @@ async fn configure_nonexistent_namespace() -> TestResult {
             "partitions": 4,
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }

@@ -318,7 +318,7 @@ async fn test_auth_token_rotate_nonexistent() -> TestResult {
         .post("auth-token/rotate")
         .json(json!({ "id": "key_06egrha0d5x9x8wa4kfcy1prhr" }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?;
+        .ensure_not_found()?;
 
     Ok(())
 }
@@ -335,7 +335,7 @@ async fn test_auth_token_namespace_get_not_found() -> TestResult {
         .post("auth-token/namespace/get")
         .json(json!({ "name": "no-such-ns" }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?;
+        .ensure_not_found()?;
 
     Ok(())
 }

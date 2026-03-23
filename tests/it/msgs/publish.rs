@@ -221,7 +221,7 @@ async fn publish_to_nonexistent_namespace() -> TestResult {
             "msgs": [{ "value": "x".as_bytes() }],
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }

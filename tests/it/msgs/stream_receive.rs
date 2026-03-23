@@ -272,7 +272,7 @@ async fn stream_receive_nonexistent_namespace() -> TestResult {
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }
@@ -684,7 +684,7 @@ async fn commit_nonexistent_namespace() -> TestResult {
             "offset": 0,
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }
