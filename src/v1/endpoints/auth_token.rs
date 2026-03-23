@@ -71,7 +71,7 @@ pub struct AuthTokenCreateIn {
     pub prefix: String,
     pub suffix: Option<String>,
     /// Milliseconds from now until the token expires.
-    pub expiry_millis: Option<DurationMs>,
+    pub expiry_ms: Option<DurationMs>,
     #[serde(default)]
     pub metadata: Metadata,
     pub owner_id: String,
@@ -115,7 +115,7 @@ async fn auth_token_create(
         namespace,
         data.name,
         token.hash(),
-        data.expiry_millis.map(|ms| repl.time.now() + ms),
+        data.expiry_ms.map(|ms| repl.time.now() + ms),
         data.metadata,
         data.owner_id,
         data.scopes,
@@ -138,7 +138,7 @@ pub struct AuthTokenExpireIn {
     pub namespace: Option<String>,
     pub id: Public<AuthTokenId>,
     /// Milliseconds from now until the token expires. `None` means expire immediately.
-    pub expiry_millis: Option<DurationMs>,
+    pub expiry_ms: Option<DurationMs>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -156,7 +156,7 @@ async fn auth_token_expire(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let expiry = data.expiry_millis.map(|ms| repl.time.now() + ms);
+    let expiry = data.expiry_ms.map(|ms| repl.time.now() + ms);
     let operation = ExpireAuthTokenOperation::new(namespace, data.id.into_inner(), expiry);
     let _ = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AuthTokenExpireOut {}))
@@ -280,7 +280,7 @@ pub struct AuthTokenUpdateIn {
     pub namespace: Option<String>,
     pub id: Public<AuthTokenId>,
     pub name: Option<String>,
-    pub expiry_millis: Option<DurationMs>,
+    pub expiry_ms: Option<DurationMs>,
     pub metadata: Option<Metadata>,
     pub scopes: Option<Vec<String>>,
     pub enabled: Option<bool>,
@@ -305,7 +305,7 @@ async fn auth_token_update(
         namespace,
         data.id.into_inner(),
         data.name,
-        data.expiry_millis.map(|ms| repl.time.now() + ms),
+        data.expiry_ms.map(|ms| repl.time.now() + ms),
         data.metadata,
         data.scopes,
         data.enabled,
@@ -322,7 +322,7 @@ pub struct AuthTokenRotateIn {
     pub prefix: String,
     pub suffix: Option<String>,
     /// Milliseconds from now until the old token expires. `None` means expire immediately.
-    pub expiry_millis: Option<DurationMs>,
+    pub expiry_ms: Option<DurationMs>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -346,7 +346,7 @@ async fn auth_token_rotate(
         .ok_or_not_found()?;
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
-    let old_expiry = data.expiry_millis.map(|ms| repl.time.now() + ms);
+    let old_expiry = data.expiry_ms.map(|ms| repl.time.now() + ms);
     let operation = RotateAuthTokenOperation::new(
         namespace,
         data.id.into_inner(),

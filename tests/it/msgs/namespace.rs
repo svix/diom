@@ -24,7 +24,7 @@ async fn create_namespace_with_defaults() -> TestResult {
     assert_eq!(response["name"], "my-namespace");
     assert_eq!(response["storage_type"], "Persistent");
     // Default retention: 30 days in millis, 1TB in bytes
-    assert_eq!(response["retention"]["millis"], 2_592_000_000u64);
+    assert_eq!(response["retention"]["ms"], 2_592_000_000u64);
     assert_eq!(response["retention"]["bytes"], 1_000_000_000_000u64);
     assert!(response["created"].is_string());
     assert!(response["updated"].is_string());
@@ -47,7 +47,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
             "storage_type": "Ephemeral",
             "retention": {
                 "bytes": 4194304,
-                "millis": 604800000
+                "ms": 604800000
             }
         }))
         .await?
@@ -61,7 +61,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
         json!({
             "name": "custom-ns",
             "storage_type": "Ephemeral",
-            "retention": { "bytes": 4194304, "millis": 604800000 },
+            "retention": { "bytes": 4194304, "ms": 604800000 },
             "created": ts,
             "updated": ts,
         })
@@ -83,7 +83,7 @@ async fn create_namespace_upserts() -> TestResult {
         .json(json!({
             "name": "upsert-ns",
             "storage_type": "Ephemeral",
-            "retention": { "bytes": 1024, "millis": 9999 }
+            "retention": { "bytes": 1024, "ms": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -93,7 +93,7 @@ async fn create_namespace_upserts() -> TestResult {
     assert_eq!(first["name"], "upsert-ns");
     assert_eq!(first["storage_type"], "Ephemeral");
     assert_eq!(first["retention"]["bytes"], 1024);
-    assert_eq!(first["retention"]["millis"], 9999);
+    assert_eq!(first["retention"]["ms"], 9999);
 
     // Upsert with different retention and storage type
     let second = client
@@ -101,7 +101,7 @@ async fn create_namespace_upserts() -> TestResult {
         .json(json!({
             "name": "upsert-ns",
             "storage_type": "Persistent",
-            "retention": { "bytes": 2048, "millis": 60000 }
+            "retention": { "bytes": 2048, "ms": 60000 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -110,7 +110,7 @@ async fn create_namespace_upserts() -> TestResult {
     assert_eq!(second["name"], "upsert-ns");
     assert_eq!(second["storage_type"], "Persistent");
     assert_eq!(second["retention"]["bytes"], 2048);
-    assert_eq!(second["retention"]["millis"], 60000);
+    assert_eq!(second["retention"]["ms"], 60000);
     // created timestamp should remain the same
     assert_eq!(second["created"], created_ts);
     // updated timestamp should change
@@ -133,7 +133,7 @@ async fn get_namespace() -> TestResult {
         .json(json!({
             "name": "get-test-ns",
             "storage_type": "Ephemeral",
-            "retention": { "bytes": 5000, "millis": 30000 }
+            "retention": { "bytes": 5000, "ms": 30000 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -152,7 +152,7 @@ async fn get_namespace() -> TestResult {
     assert_eq!(response["name"], "get-test-ns");
     assert_eq!(response["storage_type"], "Ephemeral");
     assert_eq!(response["retention"]["bytes"], 5000);
-    assert_eq!(response["retention"]["millis"], 30000);
+    assert_eq!(response["retention"]["ms"], 30000);
     assert_eq!(response["created"], created["created"]);
     assert_eq!(response["updated"], created["updated"]);
 

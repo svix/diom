@@ -32,7 +32,7 @@ func (msgsStream MsgsStream) Receive(
 		Topic:                   topic,
 		ConsumerGroup:           consumerGroup,
 		BatchSize:               msgStreamReceiveIn.BatchSize,
-		LeaseDurationMillis:     msgStreamReceiveIn.LeaseDurationMillis,
+		LeaseDurationMs:         msgStreamReceiveIn.LeaseDurationMs,
 		DefaultStartingPosition: msgStreamReceiveIn.DefaultStartingPosition,
 	}
 

@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitGetRemainingOut {
     @JsonProperty private Long remaining;
-    @JsonProperty("retry_after_millis") private Long retryAfterMillis;
+    @JsonProperty("retry_after_ms") private Long retryAfterMs;
     public RateLimitGetRemainingOut() {}
 
     public RateLimitGetRemainingOut remaining(Long remaining) {
@@ -51,23 +51,23 @@ public class RateLimitGetRemainingOut {
         this.remaining = remaining;
     }
 
-    public RateLimitGetRemainingOut retryAfterMillis(Long retryAfterMillis) {
-        this.retryAfterMillis = retryAfterMillis;
+    public RateLimitGetRemainingOut retryAfterMs(Long retryAfterMs) {
+        this.retryAfterMs = retryAfterMs;
         return this;
     }
 
     /**
     * Milliseconds until at least one token is available (only present when remaining is 0)
     *
-     * @return retryAfterMillis
+     * @return retryAfterMs
      */
     @javax.annotation.Nullable
-    public Long getRetryAfterMillis() {
-        return retryAfterMillis;
+    public Long getRetryAfterMs() {
+        return retryAfterMs;
     }
 
-    public void setRetryAfterMillis(Long retryAfterMillis) {
-        this.retryAfterMillis = retryAfterMillis;
+    public void setRetryAfterMs(Long retryAfterMs) {
+        this.retryAfterMs = retryAfterMs;
     }
 
     /**

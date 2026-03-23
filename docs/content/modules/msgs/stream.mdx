@@ -48,11 +48,11 @@ diom.msgs.stream.receive(
     topic="topic-123",        // Topic (or specific partition) to consume from
     consumer_group="group1",  // The consumer group to use
     // Wait until batch_size messages are available,
-    // or batch_wait_millis has passed (whichever comes first).
+    // or batch_wait_ms has passed (whichever comes first).
     batch_size: 100,
-    batch_wait_millis: 10_000,
+    batch_wait_ms: 10_000,
     // How long a consumer holds a batch before it is considered abandoned.
-    lease_duration_millis: 500_000
+    lease_duration_ms: 500_000
 )
 ```
 

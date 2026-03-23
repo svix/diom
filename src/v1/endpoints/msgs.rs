@@ -10,7 +10,7 @@ use diom_msgs::{
     MsgsNamespace,
     entities::{
         ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, SeekPosition, StreamMsgOut, TopicIn,
-        TopicName, TopicPartition, default_retention_bytes, default_retention_millis,
+        TopicName, TopicPartition, default_retention_bytes, default_retention_ms,
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
@@ -99,17 +99,17 @@ async fn get_namespace(
         .fetch_namespace_admin(&data.name)?
         .ok_or_not_found()?;
 
-    let millis = u64::try_from(namespace.config.retention_period.as_millis())
+    let ms = u64::try_from(namespace.config.retention_period.as_millis())
         .ok()
         .and_then(|ms| ms.try_into().ok())
-        .unwrap_or_else(default_retention_millis);
+        .unwrap_or_else(default_retention_ms);
     let bytes = namespace
         .max_storage_bytes
         .unwrap_or_else(default_retention_bytes);
 
     Ok(MsgPackOrJson(MsgNamespaceGetOut {
         name: namespace.name,
-        retention: Retention { millis, bytes },
+        retention: Retention { ms, bytes },
         storage_type: namespace.storage_type,
         created: namespace.created,
         updated: namespace.updated,
@@ -173,7 +173,7 @@ fn default_batch_size() -> NonZeroU16 {
     NonZeroU16::new(10).unwrap()
 }
 
-fn default_lease_duration_millis() -> DurationMs {
+fn default_lease_duration_ms() -> DurationMs {
     DurationMs::from_mins(5)
 }
 
@@ -186,8 +186,8 @@ struct MsgStreamReceiveIn {
     pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
-    #[serde(default = "default_lease_duration_millis")]
-    pub lease_duration_millis: DurationMs,
+    #[serde(default = "default_lease_duration_ms")]
+    pub lease_duration_ms: DurationMs,
     #[serde(default)]
     pub default_starting_position: SeekPosition,
 }
@@ -217,7 +217,7 @@ async fn stream_receive(
         data.topic,
         data.consumer_group,
         data.batch_size,
-        data.lease_duration_millis,
+        data.lease_duration_ms,
         data.default_starting_position,
     )?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
@@ -331,7 +331,7 @@ async fn stream_seek(
 // queue/receive
 // ---------------------------------------------------------------------------
 
-fn default_queue_lease_duration_millis() -> DurationMs {
+fn default_queue_lease_duration_ms() -> DurationMs {
     DurationMs::from_secs(30)
 }
 
@@ -344,8 +344,8 @@ struct MsgQueueReceiveIn {
     pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
-    #[serde(default = "default_queue_lease_duration_millis")]
-    pub lease_duration_millis: DurationMs,
+    #[serde(default = "default_queue_lease_duration_ms")]
+    pub lease_duration_ms: DurationMs,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -374,7 +374,7 @@ async fn queue_receive(
         data.topic,
         data.consumer_group,
         data.batch_size,
-        data.lease_duration_millis,
+        data.lease_duration_ms,
     )?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 

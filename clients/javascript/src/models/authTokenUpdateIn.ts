@@ -4,7 +4,7 @@ export interface AuthTokenUpdateIn {
     namespace?: string | null;
     id: string;
     name?: string | null;
-    expiryMillis?: number | null;
+    expiryMs?: number | null;
     metadata?: { [key: string]: string } | null;
     scopes?: string[] | null;
     enabled?: boolean | null;
@@ -17,7 +17,7 @@ export const AuthTokenUpdateInSerializer = {
             namespace: object['namespace'],
             id: object['id'],
             name: object['name'],
-            expiryMillis: object['expiry_millis'],
+            expiryMs: object['expiry_ms'],
             metadata: object['metadata'],
             scopes: object['scopes'],
             enabled: object['enabled'],
@@ -30,7 +30,7 @@ export const AuthTokenUpdateInSerializer = {
             'namespace': self.namespace,
             'id': self.id,
             'name': self.name,
-            'expiry_millis': self.expiryMillis,
+            'expiry_ms': self.expiryMs,
             'metadata': self.metadata,
             'scopes': self.scopes,
             'enabled': self.enabled,

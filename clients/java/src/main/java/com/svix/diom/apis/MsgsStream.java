@@ -47,7 +47,7 @@ public class MsgsStream {
             topic,
             consumerGroup,
             msgStreamReceiveIn.getBatchSize(),
-            msgStreamReceiveIn.getLeaseDurationMillis(),
+            msgStreamReceiveIn.getLeaseDurationMs(),
             msgStreamReceiveIn.getDefaultStartingPosition()
         );
 

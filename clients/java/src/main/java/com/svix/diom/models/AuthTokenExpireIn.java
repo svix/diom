@@ -30,7 +30,7 @@ import lombok.ToString;
 public class AuthTokenExpireIn {
     @JsonProperty private String namespace;
     @JsonProperty private String id;
-    @JsonProperty("expiry_millis") private Long expiryMillis;
+    @JsonProperty("expiry_ms") private Long expiryMs;
     public AuthTokenExpireIn() {}
 
     public AuthTokenExpireIn namespace(String namespace) {
@@ -71,23 +71,23 @@ public class AuthTokenExpireIn {
         this.id = id;
     }
 
-    public AuthTokenExpireIn expiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public AuthTokenExpireIn expiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
         return this;
     }
 
     /**
     * Milliseconds from now until the token expires. `None` means expire immediately.
     *
-     * @return expiryMillis
+     * @return expiryMs
      */
     @javax.annotation.Nullable
-    public Long getExpiryMillis() {
-        return expiryMillis;
+    public Long getExpiryMs() {
+        return expiryMs;
     }
 
-    public void setExpiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public void setExpiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
     }
 
     /**

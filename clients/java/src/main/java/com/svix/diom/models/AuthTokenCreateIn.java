@@ -32,7 +32,7 @@ public class AuthTokenCreateIn {
     @JsonProperty private String name;
     @JsonProperty private String prefix;
     @JsonProperty private String suffix;
-    @JsonProperty("expiry_millis") private Long expiryMillis;
+    @JsonProperty("expiry_ms") private Long expiryMs;
     @JsonProperty private Map<String,String> metadata;
     @JsonProperty("owner_id") private String ownerId;
     @JsonProperty private List<String> scopes;
@@ -115,23 +115,23 @@ public class AuthTokenCreateIn {
         this.suffix = suffix;
     }
 
-    public AuthTokenCreateIn expiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public AuthTokenCreateIn expiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
         return this;
     }
 
     /**
     * Milliseconds from now until the token expires.
     *
-     * @return expiryMillis
+     * @return expiryMs
      */
     @javax.annotation.Nullable
-    public Long getExpiryMillis() {
-        return expiryMillis;
+    public Long getExpiryMs() {
+        return expiryMs;
     }
 
-    public void setExpiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public void setExpiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
     }
 
     public AuthTokenCreateIn metadata(Map<String,String> metadata) {

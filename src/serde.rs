@@ -24,7 +24,7 @@ pub(crate) mod duration {
     }
 
     /// Deserialize an Optional<Duration> as a number of milliseconds
-    pub(crate) mod opt_millis {
+    pub(crate) mod opt_ms {
         use serde::{Deserialize, Deserializer, Serialize, Serializer};
         use std::time::Duration;
 

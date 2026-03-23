@@ -3466,7 +3466,7 @@
             "type": "string",
             "nullable": true
           },
-          "expiry_millis": {
+          "expiry_ms": {
             "description": "Milliseconds from now until the token expires.",
             "type": "integer",
             "format": "uint64",
@@ -3613,7 +3613,7 @@
           "id": {
             "type": "string"
           },
-          "expiry_millis": {
+          "expiry_ms": {
             "description": "Milliseconds from now until the token expires. `None` means expire immediately.",
             "type": "integer",
             "format": "uint64",
@@ -3755,7 +3755,7 @@
             "type": "string",
             "nullable": true
           },
-          "expiry_millis": {
+          "expiry_ms": {
             "description": "Milliseconds from now until the old token expires. `None` means expire immediately.",
             "type": "integer",
             "format": "uint64",
@@ -3805,7 +3805,7 @@
             "type": "string",
             "nullable": true
           },
-          "expiry_millis": {
+          "expiry_ms": {
             "type": "integer",
             "format": "uint64",
             "nullable": true
@@ -4741,7 +4741,7 @@
           },
           "retention": {
             "default": {
-              "millis": 2592000000,
+              "ms": 2592000000,
               "bytes": 1000000000000
             },
             "$ref": "#/components/schemas/Retention"
@@ -5039,7 +5039,7 @@
             "maximum": 65535,
             "default": 10
           },
-          "lease_duration_millis": {
+          "lease_duration_ms": {
             "type": "integer",
             "format": "uint64",
             "default": 30000
@@ -5149,7 +5149,7 @@
             "maximum": 65535,
             "default": 10
           },
-          "lease_duration_millis": {
+          "lease_duration_ms": {
             "type": "integer",
             "format": "uint64",
             "default": 300000
@@ -5391,7 +5391,7 @@
             "format": "uint64",
             "minimum": 0
           },
-          "retry_after_millis": {
+          "retry_after_ms": {
             "description": "Milliseconds until enough tokens are available (only present when allowed is false)",
             "type": "integer",
             "format": "uint64",
@@ -5531,7 +5531,7 @@
             "format": "uint64",
             "minimum": 0
           },
-          "retry_after_millis": {
+          "retry_after_ms": {
             "description": "Milliseconds until at least one token is available (only present when remaining is 0)",
             "type": "integer",
             "format": "uint64",
@@ -5585,7 +5585,7 @@
             "format": "uint64",
             "minimum": 1
           },
-          "refill_interval_millis": {
+          "refill_interval_ms": {
             "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
             "type": "integer",
             "format": "uint64",
@@ -5601,7 +5601,7 @@
       "Retention": {
         "type": "object",
         "properties": {
-          "millis": {
+          "ms": {
             "type": "integer",
             "format": "uint64",
             "minimum": 1,

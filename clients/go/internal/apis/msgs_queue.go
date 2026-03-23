@@ -29,11 +29,11 @@ func (msgsQueue MsgsQueue) Receive(
 	msgQueueReceiveIn diom_models.MsgQueueReceiveIn,
 ) (*diom_models.MsgQueueReceiveOut, error) {
 	body := diom_models.MsgQueueReceiveIn_{
-		Namespace:           msgQueueReceiveIn.Namespace,
-		Topic:               topic,
-		ConsumerGroup:       consumerGroup,
-		BatchSize:           msgQueueReceiveIn.BatchSize,
-		LeaseDurationMillis: msgQueueReceiveIn.LeaseDurationMillis,
+		Namespace:       msgQueueReceiveIn.Namespace,
+		Topic:           topic,
+		ConsumerGroup:   consumerGroup,
+		BatchSize:       msgQueueReceiveIn.BatchSize,
+		LeaseDurationMs: msgQueueReceiveIn.LeaseDurationMs,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgQueueReceiveIn_, diom_models.MsgQueueReceiveOut](

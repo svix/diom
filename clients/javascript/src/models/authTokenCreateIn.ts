@@ -6,7 +6,7 @@ export interface AuthTokenCreateIn {
     prefix?: string;
     suffix?: string | null;
     /** Milliseconds from now until the token expires. */
-    expiryMillis?: number | null;
+    expiryMs?: number | null;
     metadata?: { [key: string]: string };
     ownerId: string;
     scopes?: string[];
@@ -22,7 +22,7 @@ export const AuthTokenCreateInSerializer = {
             name: object['name'],
             prefix: object['prefix'],
             suffix: object['suffix'],
-            expiryMillis: object['expiry_millis'],
+            expiryMs: object['expiry_ms'],
             metadata: object['metadata'],
             ownerId: object['owner_id'],
             scopes: object['scopes'],
@@ -37,7 +37,7 @@ export const AuthTokenCreateInSerializer = {
             'name': self.name,
             'prefix': self.prefix,
             'suffix': self.suffix,
-            'expiry_millis': self.expiryMillis,
+            'expiry_ms': self.expiryMs,
             'metadata': self.metadata,
             'owner_id': self.ownerId,
             'scopes': self.scopes,

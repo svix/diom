@@ -14,7 +14,7 @@ class AuthTokenCreateIn(BaseModel):
 
     suffix: t.Optional[str] = None
 
-    expiry_millis: t.Optional[int] = Field(default=None, alias="expiry_millis")
+    expiry_ms: t.Optional[int] = Field(default=None, alias="expiry_ms")
     """Milliseconds from now until the token expires."""
 
     metadata: t.Optional[t.Dict[str, str]] = None

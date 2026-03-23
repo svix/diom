@@ -19,7 +19,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 },
+//             "retention": { "bytes": 1024, "ms": 9999 },
 //             "storage_type": "Ephemeral"
 //         }))
 //         .await?
@@ -32,7 +32,7 @@
 //         response,
 //         json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 },
+//             "retention": { "bytes": 1024, "ms": 9999 },
 //             "storage_type": "Ephemeral",
 //             "created": ts,
 //             "updated": ts,
@@ -74,7 +74,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -183,7 +183,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -267,7 +267,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -357,7 +357,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -453,7 +453,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -586,7 +586,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -695,7 +695,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -789,7 +789,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -922,7 +922,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)
@@ -1028,7 +1028,7 @@
 //         .post("msgs/namespace/create")
 //         .json(json!({
 //             "name": "test-stream",
-//             "retention": { "bytes": 1024, "millis": 9999 }
+//             "retention": { "bytes": 1024, "ms": 9999 }
 //         }))
 //         .await?
 //         .expect(StatusCode::OK)

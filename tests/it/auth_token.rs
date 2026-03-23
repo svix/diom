@@ -121,7 +121,7 @@ async fn test_auth_token_expire_in_future() -> TestResult {
 
     client
         .post("auth-token/expire")
-        .json(json!({ "id": id, "expiry_millis": 500 }))
+        .json(json!({ "id": id, "expiry_ms": 500 }))
         .await?
         .ensure(StatusCode::OK)?;
 
@@ -289,7 +289,7 @@ async fn test_auth_token_rotate_with_expiry() -> TestResult {
 
     client
         .post("auth-token/rotate")
-        .json(json!({ "id": id, "expiry_millis": 1000 }))
+        .json(json!({ "id": id, "expiry_ms": 1000 }))
         .await?
         .ensure(StatusCode::OK)?;
 

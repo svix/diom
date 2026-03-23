@@ -4,7 +4,7 @@ export interface AuthTokenExpireIn {
     namespace?: string | null;
     id: string;
     /** Milliseconds from now until the token expires. `None` means expire immediately. */
-    expiryMillis?: number | null;
+    expiryMs?: number | null;
 }
 
 export const AuthTokenExpireInSerializer = {
@@ -13,7 +13,7 @@ export const AuthTokenExpireInSerializer = {
         return {
             namespace: object['namespace'],
             id: object['id'],
-            expiryMillis: object['expiry_millis'],
+            expiryMs: object['expiry_ms'],
         };
     },
 
@@ -22,7 +22,7 @@ export const AuthTokenExpireInSerializer = {
         return {
             'namespace': self.namespace,
             'id': self.id,
-            'expiry_millis': self.expiryMillis,
+            'expiry_ms': self.expiryMs,
         };
     }
 }

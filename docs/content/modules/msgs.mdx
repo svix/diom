@@ -22,7 +22,7 @@ A namespace groups topics together with shared retention and persistence setting
   "persistence": "ephemeral",
   "retention": {
     "bytes": 4194304,
-    "millis": 604800
+    "ms": 604800
   }
 }
 ```
@@ -104,8 +104,8 @@ Publishing is the same across all delivery modes.
   "topic": "orders",
   "consumer_group": "G1",
   "batch_size": 100,
-  "batch_wait_millis": 10000,
-  "lease_duration_millis": 300000
+  "batch_wait_ms": 10000,
+  "lease_duration_ms": 300000
 }
 ```
 
@@ -162,7 +162,7 @@ Queue and FIFO share the same API shape — substitute `fifo` for `queue` to use
   "topic": "orders",
   "consumer_group": "G1",
   "batch_size": 10,
-  "lease_duration_millis": 30000
+  "lease_duration_ms": 30000
 }
 ```
 
@@ -195,7 +195,7 @@ Extends the processing lease on a message you haven't finished yet. Use this whe
   "topic": "orders",
   "consumer_group": "G1",
   "msg_id": "msg-abc",
-  "lease_duration_millis": 10000
+  "lease_duration_ms": 10000
 }
 ```
 

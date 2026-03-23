@@ -32,7 +32,7 @@ public class MsgStreamReceiveIn {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
-    @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
+    @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
     @JsonProperty("default_starting_position") private String defaultStartingPosition;
     public MsgStreamReceiveIn() {}
 
@@ -74,23 +74,23 @@ public class MsgStreamReceiveIn {
         this.batchSize = batchSize;
     }
 
-    public MsgStreamReceiveIn leaseDurationMillis(Long leaseDurationMillis) {
-        this.leaseDurationMillis = leaseDurationMillis;
+    public MsgStreamReceiveIn leaseDurationMs(Long leaseDurationMs) {
+        this.leaseDurationMs = leaseDurationMs;
         return this;
     }
 
     /**
-    * Get leaseDurationMillis
+    * Get leaseDurationMs
     *
-     * @return leaseDurationMillis
+     * @return leaseDurationMs
      */
     @javax.annotation.Nullable
-    public Long getLeaseDurationMillis() {
-        return leaseDurationMillis;
+    public Long getLeaseDurationMs() {
+        return leaseDurationMs;
     }
 
-    public void setLeaseDurationMillis(Long leaseDurationMillis) {
-        this.leaseDurationMillis = leaseDurationMillis;
+    public void setLeaseDurationMs(Long leaseDurationMs) {
+        this.leaseDurationMs = leaseDurationMs;
     }
 
     public MsgStreamReceiveIn defaultStartingPosition(String defaultStartingPosition) {

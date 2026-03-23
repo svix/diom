@@ -54,7 +54,7 @@ public class MsgsQueue {
             topic,
             consumerGroup,
             msgQueueReceiveIn.getBatchSize(),
-            msgQueueReceiveIn.getLeaseDurationMillis()
+            msgQueueReceiveIn.getLeaseDurationMs()
         );
 
         return this.client.executeRequest(

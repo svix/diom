@@ -12,7 +12,7 @@ class AuthTokenUpdateIn(BaseModel):
 
     name: t.Optional[str] = None
 
-    expiry_millis: t.Optional[int] = Field(default=None, alias="expiry_millis")
+    expiry_ms: t.Optional[int] = Field(default=None, alias="expiry_ms")
 
     metadata: t.Optional[t.Dict[str, str]] = None
 
