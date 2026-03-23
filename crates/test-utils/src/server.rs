@@ -2,6 +2,7 @@ use std::{net::SocketAddr, path::Path, sync::Arc};
 
 use crate::TestClient;
 use coyote::{
+    Initialized,
     cfg::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, LogFormat, LogLevel,
     },
@@ -113,11 +114,15 @@ impl TestServerBuilder {
         let time = Monotime::initial();
         time.update_now();
 
+        let initialized = Initialized::new();
+
         let server_handle = tokio::spawn({
             let cfg = cfg.clone();
             let time = time.clone();
+            let initialized = initialized.clone();
             async move {
-                run_with_listeners(cfg, Some(listener), Some(repl_listener), time).await;
+                run_with_listeners(cfg, Some(listener), Some(repl_listener), time, initialized)
+                    .await;
             }
         });
 
@@ -126,6 +131,11 @@ impl TestServerBuilder {
             server_handle,
         };
         let client = TestClient::new(base_uri, &token);
+
+        initialized
+            .wait()
+            .await
+            .expect("initialization should finish");
 
         let (node_id, cluster_id) = wait_for_initialized(addr, repl_addr, Duration::from_secs(8))
             .await
@@ -208,7 +218,7 @@ async fn wait_for_initialized(
                 tracing::debug!("server not yet up");
             }
             Ok(Err(err)) => {
-                tracing::warn!(?err, "error waiting for server to boot");
+                tracing::warn!(%err, "error waiting for server to boot");
             }
             Err(_) => anyhow::bail!("timed out waiting for server to boot"),
         }
