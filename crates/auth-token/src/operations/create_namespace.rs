@@ -1,5 +1,6 @@
 use std::num::NonZeroU64;
 
+use coyote_error::Result;
 use coyote_namespace::{
     entities::{AuthTokenConfig, StorageType},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -44,7 +45,7 @@ impl CreateAuthTokenNamespaceOperation {
         self,
         namespace_state: &coyote_namespace::State,
         now: Timestamp,
-    ) -> coyote_operations::Result<CreateAuthTokenNamespaceResponseData> {
+    ) -> Result<CreateAuthTokenNamespaceResponseData> {
         let op: CreateNamespace<AuthTokenConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
@@ -78,6 +79,6 @@ impl AuthTokenRequest for CreateAuthTokenNamespaceOperation {
         state: AuthTokenRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> CreateNamespaceResponse {
-        CreateNamespaceResponse(self.apply_real(state.namespace, ctx.timestamp).await)
+        CreateNamespaceResponse::new(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

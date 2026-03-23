@@ -1,5 +1,5 @@
 use coyote_core::task::spawn_blocking_in_current_span;
-use coyote_error::Error;
+use coyote_error::{Error, Result};
 use coyote_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
@@ -29,10 +29,7 @@ impl QueueRedriveDlqOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(
-        self,
-        state: &State,
-    ) -> coyote_operations::Result<QueueRedriveDlqResponseData> {
+    async fn apply_real(self, state: &State) -> Result<QueueRedriveDlqResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let topic_row = TopicRow::fetch(
@@ -102,6 +99,6 @@ impl MsgsRequest for QueueRedriveDlqOperation {
         state: MsgsRaftState<'_>,
         _ctx: &coyote_operations::OpContext,
     ) -> QueueRedriveDlqResponse {
-        QueueRedriveDlqResponse(self.apply_real(state.msgs).await)
+        QueueRedriveDlqResponse::new(self.apply_real(state.msgs).await)
     }
 }

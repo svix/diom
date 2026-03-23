@@ -1,9 +1,9 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
 use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
 use coyote_core::types::DurationS;
+use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use coyote_operations::Result;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -86,6 +86,6 @@ impl IdempotencyRequest for TryStartOperation {
         state: IdempotencyRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> TryStartResponse {
-        TryStartResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
+        TryStartResponse::new(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
     }
 }

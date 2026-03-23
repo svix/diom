@@ -1,7 +1,8 @@
 use super::{CacheRaftState, CacheRequest, DeleteResponse};
 use crate::CacheNamespace;
+use coyote_error::Result;
 use coyote_id::NamespaceId;
-use coyote_operations::{OpContext, Result};
+use coyote_operations::OpContext;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
@@ -40,6 +41,6 @@ impl DeleteOperation {
 
 impl CacheRequest for DeleteOperation {
     async fn apply(self, state: CacheRaftState<'_>, _ctx: &OpContext) -> DeleteResponse {
-        DeleteResponse(self.apply_real(&state).await)
+        DeleteResponse::new(self.apply_real(&state).await)
     }
 }

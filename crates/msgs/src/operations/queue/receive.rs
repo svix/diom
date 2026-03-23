@@ -1,7 +1,7 @@
 use std::{collections::HashMap, num::NonZeroU16};
 
 use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
-use coyote_error::Error;
+use coyote_error::{Error, Result};
 use coyote_id::{NamespaceId, TopicId};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -33,7 +33,7 @@ impl QueueReceiveOperation {
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
         lease_duration_millis: DurationMs,
-    ) -> coyote_error::Result<Self> {
+    ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.raw, Some(tp.partition)),
             TopicIn::TopicName(tn) => (tn, None),
@@ -49,11 +49,7 @@ impl QueueReceiveOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    async fn apply_real(
-        self,
-        state: &State,
-        now: Timestamp,
-    ) -> coyote_operations::Result<QueueReceiveResponseData> {
+    async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueReceiveResponseData> {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
@@ -175,7 +171,7 @@ fn lease_available_msgs(
     consumer_group: &ConsumerGroup,
     now: Timestamp,
     expiry: Timestamp,
-) -> coyote_error::Result<u16> {
+) -> Result<u16> {
     let mut count = 0;
 
     for (i, msg) in msgs.into_iter().enumerate() {
@@ -229,7 +225,7 @@ pub(crate) fn compact_cursor(
     topic_id: TopicId,
     partition: Partition,
     consumer_group: &ConsumerGroup,
-) -> coyote_error::Result<()> {
+) -> Result<()> {
     loop {
         let check_id = MsgId::new(partition, cursor.offset);
         match QueueLeaseRow::fetch(
@@ -272,6 +268,6 @@ impl MsgsRequest for QueueReceiveOperation {
         state: MsgsRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> QueueReceiveResponse {
-        QueueReceiveResponse(self.apply_real(state.msgs, ctx.timestamp).await)
+        QueueReceiveResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }

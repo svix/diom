@@ -1,7 +1,7 @@
 use std::num::NonZeroU16;
 
 use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
-use coyote_error::Error;
+use coyote_error::{Error, Result};
 use coyote_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -37,7 +37,7 @@ impl StreamReceiveOperation {
         batch_size: NonZeroU16,
         lease_duration_millis: DurationMs,
         default_starting_position: SeekPosition,
-    ) -> coyote_error::Result<Self> {
+    ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.raw, Some(tp.partition)),
             TopicIn::TopicName(tn) => (tn, None),
@@ -54,11 +54,7 @@ impl StreamReceiveOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    async fn apply_real(
-        self,
-        state: &State,
-        now: Timestamp,
-    ) -> coyote_operations::Result<StreamReceiveResponseData> {
+    async fn apply_real(self, state: &State, now: Timestamp) -> Result<StreamReceiveResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let mut remaining = self.batch_size.get();
@@ -164,7 +160,7 @@ impl StreamReceiveOperation {
             }
 
             if no_lease_available {
-                return Err(Error::invalid_user_input("no available leases").into());
+                return Err(Error::invalid_user_input("no available leases"));
             }
 
             batch.commit().map_err(Error::from)?;
@@ -197,6 +193,6 @@ impl MsgsRequest for StreamReceiveOperation {
         state: MsgsRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> StreamReceiveResponse {
-        StreamReceiveResponse(self.apply_real(state.msgs, ctx.timestamp).await)
+        StreamReceiveResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }

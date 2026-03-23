@@ -1,15 +1,15 @@
 use std::time::Duration;
 
+use coyote_error::Result;
 use coyote_namespace::{
     entities::{NamespaceName, StorageType, StreamConfig},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
-
-use crate::entities::{Retention, default_retention_bytes, default_retention_millis};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
+use crate::entities::{Retention, default_retention_bytes, default_retention_millis};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNamespaceOperation {
@@ -31,7 +31,7 @@ impl CreateNamespaceOperation {
         self,
         namespace_state: &coyote_namespace::State,
         now: Timestamp,
-    ) -> coyote_operations::Result<CreateNamespaceResponseData> {
+    ) -> Result<CreateNamespaceResponseData> {
         let op = CreateNamespace::new(
             self.name,
             StreamConfig {
@@ -80,6 +80,6 @@ impl MsgsRequest for CreateNamespaceOperation {
         state: MsgsRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> CreateNamespaceResponse {
-        CreateNamespaceResponse(self.apply_real(state.namespace, ctx.timestamp).await)
+        CreateNamespaceResponse::new(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }
