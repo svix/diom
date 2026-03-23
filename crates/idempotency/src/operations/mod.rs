@@ -13,14 +13,14 @@ pub use try_start::{TryStartOperation, TryStartResponseData};
 
 pub use create_namespace::{CreateIdempotencyOperation, CreateIdempotencyResponseData};
 
-use diom_operations::async_raft_module_operations;
+use diom_operations::raft_module_operations;
 
 pub struct IdempotencyRaftState<'a> {
     pub state: &'a State,
     pub namespace: &'a diom_namespace::State,
 }
 
-async_raft_module_operations!(
+raft_module_operations!(
     IdempotencyRequest,
     IdempotencyOperation {
         TryStart(TryStartOperation) -> TryStartResponseData,

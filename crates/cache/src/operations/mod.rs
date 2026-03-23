@@ -10,14 +10,14 @@ pub use create_namespace::{CreateCacheOperation, CreateCacheResponseData};
 pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::SetOperation;
 
-use diom_operations::async_raft_module_operations;
+use diom_operations::raft_module_operations;
 
 pub struct CacheRaftState<'a> {
     pub state: &'a State,
     pub namespace: &'a diom_namespace::State,
 }
 
-async_raft_module_operations!(
+raft_module_operations!(
     CacheRequest,
     CacheOperation {
         Set(SetOperation) -> (),

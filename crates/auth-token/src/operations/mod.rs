@@ -16,14 +16,14 @@ pub use expire::{ExpireAuthTokenOperation, ExpireResponseData};
 pub use rotate::{RotateAuthTokenOperation, RotateResponseData};
 pub use update::{UpdateAuthTokenOperation, UpdateResponseData};
 
-use diom_operations::async_raft_module_operations;
+use diom_operations::raft_module_operations;
 
 pub struct AuthTokenRaftState<'a> {
     pub state: &'a State,
     pub namespace: &'a diom_namespace::State,
 }
 
-async_raft_module_operations!(
+raft_module_operations!(
     AuthTokenRequest,
     AuthTokenOperation {
         Create(CreateAuthTokenOperation) -> CreateResponseData,
