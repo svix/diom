@@ -3,5 +3,5 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 type CacheDeleteOut struct {
-	Success bool `json:"success"`
+	Success bool `msgpack:"success"`
 }

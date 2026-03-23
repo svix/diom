@@ -1,9 +1,10 @@
 {% set ty_name = type.name | to_upper_camel_case -%}
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
+
+	msgpack "github.com/vmihailenco/msgpack/v5"
 )
 
 {% if type.description is defined -%}
@@ -24,9 +25,9 @@ var allowed{{ ty_name }} = []{{ ty_name }}{
 }
 
 
-func (v *{{ ty_name }}) UnmarshalJSON(src []byte) error {
+func (v *{{ ty_name }}) UnmarshalMsgpack(src []byte) error {
 	var value int64
-	err := json.Unmarshal(src, &value)
+	err := msgpack.Unmarshal(src, &value)
 	if err != nil {
 		return err
 	}

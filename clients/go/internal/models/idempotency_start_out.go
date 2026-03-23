@@ -3,8 +3,9 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 import (
-	"encoding/json"
 	"fmt"
+
+	msgpack "github.com/vmihailenco/msgpack/v5"
 )
 
 // When creating an IdempotencyStartOut, use the appropriate data structure based on the Type:
@@ -12,8 +13,8 @@ import (
 // - "started","locked": No data needed (nil or just ignore the data field)
 // - "completed": Use IdempotencyCompleted
 type IdempotencyStartOut struct {
-	Status IdempotencyStartOutStatus `json:"status"`
-	Data   IdempotencyStartOutData   `json:"data"`
+	Status IdempotencyStartOutStatus `msgpack:"status"`
+	Data   IdempotencyStartOutData   `msgpack:"data"`
 }
 
 type IdempotencyStartOutStatus string
@@ -33,14 +34,14 @@ type idempotencyStartOutEmpty struct{}
 func (idempotencyStartOutEmpty) isIdempotencyStartOutData() {}
 func (IdempotencyCompleted) isIdempotencyStartOutData()     {}
 
-func (i *IdempotencyStartOut) UnmarshalJSON(data []byte) error {
+func (i *IdempotencyStartOut) UnmarshalMsgpack(data []byte) error {
 	type Alias IdempotencyStartOut
 	aux := struct {
 		*Alias
-		Data json.RawMessage `json:"data"`
+		Data msgpack.RawMessage `msgpack:"data"`
 	}{Alias: (*Alias)(i)}
 
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := msgpack.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 
@@ -49,7 +50,7 @@ func (i *IdempotencyStartOut) UnmarshalJSON(data []byte) error {
 	case "started", "locked":
 	case "completed":
 		var c IdempotencyCompleted
-		err = json.Unmarshal(aux.Data, &c)
+		err = msgpack.Unmarshal(aux.Data, &c)
 		i.Data = c
 	default:
 		// should be unreachable
@@ -63,12 +64,12 @@ var IdempotencyStartOutStatusWithNoData = map[string]bool{
 	"locked":  true,
 }
 
-func (i IdempotencyStartOut) MarshalJSON() ([]byte, error) {
+func (i IdempotencyStartOut) MarshalMsgpack() ([]byte, error) {
 	type Alias IdempotencyStartOut
 	if _, found := IdempotencyStartOutStatusWithNoData[string(i.Status)]; found {
 		i.Data = idempotencyStartOutEmpty{}
 	}
-	return json.Marshal(&struct{ Alias }{Alias: (Alias)(i)})
+	return msgpack.Marshal(&struct{ Alias }{Alias: (Alias)(i)})
 }
 
 var IdempotencyStartOutStatusFromString = map[string]IdempotencyStartOutStatus{

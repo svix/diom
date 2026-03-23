@@ -3,5 +3,5 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 type MsgStreamReceiveOut struct {
-	Msgs []StreamMsgOut `json:"msgs"`
+	Msgs []StreamMsgOut `msgpack:"msgs"`
 }

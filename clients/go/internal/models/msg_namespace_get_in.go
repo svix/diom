@@ -6,5 +6,5 @@ type MsgNamespaceGetIn struct {
 }
 
 type MsgNamespaceGetIn_ struct {
-	Name string `json:"name"`
+	Name string `msgpack:"name"`
 }

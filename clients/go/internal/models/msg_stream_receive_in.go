@@ -3,15 +3,15 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 type MsgStreamReceiveIn struct {
-	Namespace           *string `json:"namespace,omitempty"`
-	BatchSize           *uint16 `json:"batch_size,omitempty"`
-	LeaseDurationMillis *uint64 `json:"lease_duration_millis,omitempty"`
+	Namespace           *string `msgpack:"namespace,omitempty"`
+	BatchSize           *uint16 `msgpack:"batch_size,omitempty"`
+	LeaseDurationMillis *uint64 `msgpack:"lease_duration_millis,omitempty"`
 }
 
 type MsgStreamReceiveIn_ struct {
-	Namespace           *string `json:"namespace,omitempty"`
-	Topic               string  `json:"topic"`
-	ConsumerGroup       string  `json:"consumer_group"`
-	BatchSize           *uint16 `json:"batch_size,omitempty"`
-	LeaseDurationMillis *uint64 `json:"lease_duration_millis,omitempty"`
+	Namespace           *string `msgpack:"namespace,omitempty"`
+	Topic               string  `msgpack:"topic"`
+	ConsumerGroup       string  `msgpack:"consumer_group"`
+	BatchSize           *uint16 `msgpack:"batch_size,omitempty"`
+	LeaseDurationMillis *uint64 `msgpack:"lease_duration_millis,omitempty"`
 }

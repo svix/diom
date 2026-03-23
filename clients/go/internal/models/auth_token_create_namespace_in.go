@@ -3,7 +3,7 @@ package coyote_models
 // This file is @generated DO NOT EDIT
 
 type AuthTokenCreateNamespaceIn struct {
-	Name            string       `json:"name"`
-	StorageType     *StorageType `json:"storage_type,omitempty"`
-	MaxStorageBytes *uint64      `json:"max_storage_bytes,omitempty"`
+	Name            string       `msgpack:"name"`
+	StorageType     *StorageType `msgpack:"storage_type,omitempty"`
+	MaxStorageBytes *uint64      `msgpack:"max_storage_bytes,omitempty"`
 }
