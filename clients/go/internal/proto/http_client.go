@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	msgpack "github.com/vmihailenco/msgpack/v5"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type HttpClient struct {
