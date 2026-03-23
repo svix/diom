@@ -1,7 +1,7 @@
 // this file is @generated
 
 export interface Retention {
-    millis?: number;
+    ms?: number;
     bytes?: number;
 }
 
@@ -9,7 +9,7 @@ export const RetentionSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): Retention {
         return {
-            millis: object['millis'],
+            ms: object['ms'],
             bytes: object['bytes'],
         };
     },
@@ -17,7 +17,7 @@ export const RetentionSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: Retention): any {
         return {
-            'millis': self.millis,
+            'ms': self.ms,
             'bytes': self.bytes,
         };
     }

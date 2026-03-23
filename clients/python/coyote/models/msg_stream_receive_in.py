@@ -10,9 +10,7 @@ class MsgStreamReceiveIn(BaseModel):
 
     batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
 
-    lease_duration_millis: t.Optional[int] = Field(
-        default=None, alias="lease_duration_millis"
-    )
+    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
 
     default_starting_position: t.Optional[str] = Field(
         default=None, alias="default_starting_position"
@@ -28,9 +26,7 @@ class _MsgStreamReceiveIn(BaseModel):
 
     batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
 
-    lease_duration_millis: t.Optional[int] = Field(
-        default=None, alias="lease_duration_millis"
-    )
+    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
 
     default_starting_position: t.Optional[str] = Field(
         default=None, alias="default_starting_position"

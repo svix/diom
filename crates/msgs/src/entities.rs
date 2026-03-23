@@ -475,8 +475,8 @@ impl JsonSchema for ConsumerGroup {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {
-    #[serde(default = "default_retention_millis")]
-    pub millis: NonZeroU64,
+    #[serde(default = "default_retention_ms")]
+    pub ms: NonZeroU64,
     #[serde(default = "default_retention_bytes")]
     pub bytes: NonZeroU64,
 }
@@ -484,13 +484,13 @@ pub struct Retention {
 impl Default for Retention {
     fn default() -> Self {
         Self {
-            millis: default_retention_millis(),
+            ms: default_retention_ms(),
             bytes: default_retention_bytes(),
         }
     }
 }
 
-pub fn default_retention_millis() -> NonZeroU64 {
+pub fn default_retention_ms() -> NonZeroU64 {
     (Duration::from_hours(24 * 30).as_millis() as u64)
         .try_into()
         .unwrap()

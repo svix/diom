@@ -30,7 +30,7 @@ import lombok.ToString;
 public class RateLimitCheckOut {
     @JsonProperty private Boolean allowed;
     @JsonProperty private Long remaining;
-    @JsonProperty("retry_after_millis") private Long retryAfterMillis;
+    @JsonProperty("retry_after_ms") private Long retryAfterMs;
     public RateLimitCheckOut() {}
 
     public RateLimitCheckOut allowed(Boolean allowed) {
@@ -71,23 +71,23 @@ public class RateLimitCheckOut {
         this.remaining = remaining;
     }
 
-    public RateLimitCheckOut retryAfterMillis(Long retryAfterMillis) {
-        this.retryAfterMillis = retryAfterMillis;
+    public RateLimitCheckOut retryAfterMs(Long retryAfterMs) {
+        this.retryAfterMs = retryAfterMs;
         return this;
     }
 
     /**
     * Milliseconds until enough tokens are available (only present when allowed is false)
     *
-     * @return retryAfterMillis
+     * @return retryAfterMs
      */
     @javax.annotation.Nullable
-    public Long getRetryAfterMillis() {
-        return retryAfterMillis;
+    public Long getRetryAfterMs() {
+        return retryAfterMs;
     }
 
-    public void setRetryAfterMillis(Long retryAfterMillis) {
-        this.retryAfterMillis = retryAfterMillis;
+    public void setRetryAfterMs(Long retryAfterMs) {
+        this.retryAfterMs = retryAfterMs;
     }
 
     /**

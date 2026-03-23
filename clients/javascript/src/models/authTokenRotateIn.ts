@@ -6,7 +6,7 @@ export interface AuthTokenRotateIn {
     prefix?: string;
     suffix?: string | null;
     /** Milliseconds from now until the old token expires. `None` means expire immediately. */
-    expiryMillis?: number | null;
+    expiryMs?: number | null;
 }
 
 export const AuthTokenRotateInSerializer = {
@@ -17,7 +17,7 @@ export const AuthTokenRotateInSerializer = {
             id: object['id'],
             prefix: object['prefix'],
             suffix: object['suffix'],
-            expiryMillis: object['expiry_millis'],
+            expiryMs: object['expiry_ms'],
         };
     },
 
@@ -28,7 +28,7 @@ export const AuthTokenRotateInSerializer = {
             'id': self.id,
             'prefix': self.prefix,
             'suffix': self.suffix,
-            'expiry_millis': self.expiryMillis,
+            'expiry_ms': self.expiryMs,
         };
     }
 }

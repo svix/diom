@@ -6,7 +6,7 @@ export interface RateLimitCheckOut {
     /** Number of tokens remaining */
     remaining: number;
     /** Milliseconds until enough tokens are available (only present when allowed is false) */
-    retryAfterMillis?: number | null;
+    retryAfterMs?: number | null;
 }
 
 export const RateLimitCheckOutSerializer = {
@@ -15,7 +15,7 @@ export const RateLimitCheckOutSerializer = {
         return {
             allowed: object['allowed'],
             remaining: object['remaining'],
-            retryAfterMillis: object['retry_after_millis'],
+            retryAfterMs: object['retry_after_ms'],
         };
     },
 
@@ -24,7 +24,7 @@ export const RateLimitCheckOutSerializer = {
         return {
             'allowed': self.allowed,
             'remaining': self.remaining,
-            'retry_after_millis': self.retryAfterMillis,
+            'retry_after_ms': self.retryAfterMs,
         };
     }
 }

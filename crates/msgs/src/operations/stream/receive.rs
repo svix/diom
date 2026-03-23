@@ -25,7 +25,7 @@ pub struct StreamReceiveOperation {
     partition: Option<Partition>,
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
-    lease_duration_millis: DurationMs,
+    lease_duration_ms: DurationMs,
     default_starting_position: SeekPosition,
 }
 
@@ -35,7 +35,7 @@ impl StreamReceiveOperation {
         topic: TopicIn,
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
-        lease_duration_millis: DurationMs,
+        lease_duration_ms: DurationMs,
         default_starting_position: SeekPosition,
     ) -> Result<Self> {
         let (topic, partition) = match topic {
@@ -48,7 +48,7 @@ impl StreamReceiveOperation {
             partition,
             consumer_group,
             batch_size,
-            lease_duration_millis,
+            lease_duration_ms,
             default_starting_position,
         })
     }
@@ -59,7 +59,7 @@ impl StreamReceiveOperation {
         spawn_blocking_in_current_span(move || {
             let mut remaining = self.batch_size.get();
             let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
-            let expiry = now + self.lease_duration_millis;
+            let expiry = now + self.lease_duration_ms;
 
             let mut batch = state.db.batch();
 

@@ -25,13 +25,13 @@ impl TokenBucket {
         let mut new_last_refill = last_refill;
 
         if last_refill < now {
-            let elapsed_millis: u64 = now
+            let elapsed_ms: u64 = now
                 .duration_since(last_refill)
                 .as_millis()
                 .try_into()
                 .unwrap();
-            let refill_interval_millis: u64 = self.refill_interval.as_millis();
-            let intervals = elapsed_millis / refill_interval_millis;
+            let refill_interval_ms: u64 = self.refill_interval.as_millis();
+            let intervals = elapsed_ms / refill_interval_ms;
 
             capacity += intervals * self.refill_rate;
             capacity = capacity.min(self.bucket_size);

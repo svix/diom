@@ -28,27 +28,27 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class Retention {
-    @JsonProperty private Long millis;
+    @JsonProperty private Long ms;
     @JsonProperty private Long bytes;
     public Retention() {}
 
-    public Retention millis(Long millis) {
-        this.millis = millis;
+    public Retention ms(Long ms) {
+        this.ms = ms;
         return this;
     }
 
     /**
-    * Get millis
+    * Get ms
     *
-     * @return millis
+     * @return ms
      */
     @javax.annotation.Nullable
-    public Long getMillis() {
-        return millis;
+    public Long getMs() {
+        return ms;
     }
 
-    public void setMillis(Long millis) {
-        this.millis = millis;
+    public void setMs(Long ms) {
+        this.ms = ms;
     }
 
     public Retention bytes(Long bytes) {

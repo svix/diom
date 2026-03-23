@@ -3,7 +3,7 @@
 export interface MsgStreamReceiveIn {
     namespace?: string | null;
     batchSize?: number;
-    leaseDurationMillis?: number;
+    leaseDurationMs?: number;
     defaultStartingPosition?: string;
 }
 
@@ -12,7 +12,7 @@ export interface MsgStreamReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
-    leaseDurationMillis?: number;
+    leaseDurationMs?: number;
     defaultStartingPosition?: string;
 }
 
@@ -24,7 +24,7 @@ export const MsgStreamReceiveInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
-            leaseDurationMillis: object['lease_duration_millis'],
+            leaseDurationMs: object['lease_duration_ms'],
             defaultStartingPosition: object['default_starting_position'],
         };
     },
@@ -36,7 +36,7 @@ export const MsgStreamReceiveInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'batch_size': self.batchSize,
-            'lease_duration_millis': self.leaseDurationMillis,
+            'lease_duration_ms': self.leaseDurationMs,
             'default_starting_position': self.defaultStartingPosition,
         };
     }

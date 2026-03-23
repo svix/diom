@@ -31,7 +31,7 @@ class MsgsStreamAsync(ApiBase):
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_stream_receive_in.batch_size,
-            lease_duration_millis=msg_stream_receive_in.lease_duration_millis,
+            lease_duration_ms=msg_stream_receive_in.lease_duration_ms,
             default_starting_position=msg_stream_receive_in.default_starting_position,
         ).model_dump(exclude_none=True)
 
@@ -109,7 +109,7 @@ class MsgsStream(ApiBase):
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_stream_receive_in.batch_size,
-            lease_duration_millis=msg_stream_receive_in.lease_duration_millis,
+            lease_duration_ms=msg_stream_receive_in.lease_duration_ms,
             default_starting_position=msg_stream_receive_in.default_starting_position,
         ).model_dump(exclude_none=True)
 

@@ -9,7 +9,5 @@ class RateLimitGetRemainingOut(BaseModel):
     remaining: int
     """Number of tokens remaining"""
 
-    retry_after_millis: t.Optional[int] = Field(
-        default=None, alias="retry_after_millis"
-    )
+    retry_after_ms: t.Optional[int] = Field(default=None, alias="retry_after_ms")
     """Milliseconds until at least one token is available (only present when remaining is 0)"""

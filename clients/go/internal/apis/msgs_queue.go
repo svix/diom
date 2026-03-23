@@ -29,11 +29,11 @@ func (msgsQueue MsgsQueue) Receive(
 	msgQueueReceiveIn coyote_models.MsgQueueReceiveIn,
 ) (*coyote_models.MsgQueueReceiveOut, error) {
 	body := coyote_models.MsgQueueReceiveIn_{
-		Namespace:           msgQueueReceiveIn.Namespace,
-		Topic:               topic,
-		ConsumerGroup:       consumerGroup,
-		BatchSize:           msgQueueReceiveIn.BatchSize,
-		LeaseDurationMillis: msgQueueReceiveIn.LeaseDurationMillis,
+		Namespace:       msgQueueReceiveIn.Namespace,
+		Topic:           topic,
+		ConsumerGroup:   consumerGroup,
+		BatchSize:       msgQueueReceiveIn.BatchSize,
+		LeaseDurationMs: msgQueueReceiveIn.LeaseDurationMs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueReceiveIn_, coyote_models.MsgQueueReceiveOut](

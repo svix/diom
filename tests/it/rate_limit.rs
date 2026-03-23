@@ -23,7 +23,7 @@ async fn call_limit_token_bucket(
             "config": {
                 "capacity": capacity,
                 "refill_amount": refill_amount,
-                "refill_interval_millis": refill_interval_seconds * 1000
+                "refill_interval_ms": refill_interval_seconds * 1000
             }
         }))
         .await?
@@ -55,7 +55,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     .await?;
     assert_eq!(response["allowed"], true);
     assert_eq!(response["remaining"], 4);
-    assert_eq!(response["retry_after_millis"], json!(null));
+    assert_eq!(response["retry_after_ms"], json!(null));
 
     let response = call_limit_token_bucket(
         &client,
@@ -68,7 +68,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     .await?;
     assert_eq!(response["allowed"], true);
     assert_eq!(response["remaining"], 2);
-    assert_eq!(response["retry_after_millis"], json!(null));
+    assert_eq!(response["retry_after_ms"], json!(null));
 
     let response = call_limit_token_bucket(
         &client,
@@ -81,7 +81,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     .await?;
     assert_eq!(response["allowed"], true);
     assert_eq!(response["remaining"], 0);
-    assert_eq!(response["retry_after_millis"], json!(null));
+    assert_eq!(response["retry_after_ms"], json!(null));
 
     let response = call_limit_token_bucket(
         &client,
@@ -94,7 +94,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     .await?;
     assert_eq!(response["allowed"], false);
     assert_eq!(response["remaining"], 0);
-    assert!(response["retry_after_millis"].is_number());
+    assert!(response["retry_after_ms"].is_number());
 
     time.fast_forward(Duration::from_secs(1));
 
@@ -105,7 +105,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
             "config": {
                 "capacity": capacity,
                 "refill_amount": refill_amount,
-                "refill_interval_millis": refill_interval * 1000
+                "refill_interval_ms": refill_interval * 1000
             }
         }))
         .await?
@@ -113,7 +113,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
         .json();
 
     assert_eq!(response["remaining"], capacity);
-    assert_eq!(response["retry_after_millis"], json!(null));
+    assert_eq!(response["retry_after_ms"], json!(null));
 
     Ok(())
 }
@@ -163,7 +163,7 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
                 "config": {
                 "capacity": capacity,
                 "refill_amount": refill_amount,
-                "refill_interval_millis": refill_interval * 1000
+                "refill_interval_ms": refill_interval * 1000
             }
         }))
         .await?
@@ -171,7 +171,7 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
         .json();
 
     assert_eq!(response["remaining"], 6); // fill up to capacity
-    assert_eq!(response["retry_after_millis"], json!(null));
+    assert_eq!(response["retry_after_ms"], json!(null));
 
     Ok(())
 }
