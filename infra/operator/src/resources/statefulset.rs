@@ -4,10 +4,10 @@ use k8s_openapi::{
     api::{
         apps::v1::{StatefulSet, StatefulSetSpec},
         core::v1::{
-            Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, ObjectFieldSelector,
-            PersistentVolumeClaim, PersistentVolumeClaimSpec, PodSecurityContext, PodSpec,
-            PodTemplateSpec, Probe, ResourceRequirements, TopologySpreadConstraint, VolumeMount,
-            VolumeResourceRequirements,
+            Affinity, Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction,
+            ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
+            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, ResourceRequirements, Toleration,
+            TopologySpreadConstraint, VolumeMount, VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -52,6 +52,10 @@ pub(crate) fn build(cluster: &CoyoteCluster, ns: &str) -> Result<StatefulSet> {
     let topology_spread_constraints: Vec<TopologySpreadConstraint> =
         spec.topology_spread_constraints.clone();
 
+    let node_selector: Option<BTreeMap<String, String>> = spec.node_selector.clone();
+    let tolerations: Option<Vec<Toleration>> = spec.tolerations.clone();
+    let affinity: Option<Affinity> = spec.affinity.clone();
+
     let pod_spec = PodSpec {
         containers: vec![container],
         volumes: None,
@@ -66,6 +70,9 @@ pub(crate) fn build(cluster: &CoyoteCluster, ns: &str) -> Result<StatefulSet> {
         } else {
             Some(topology_spread_constraints)
         },
+        node_selector,
+        tolerations,
+        affinity,
         ..Default::default()
     };
 

@@ -69,3 +69,10 @@ cluster:
         value: grpc://datadog-agent.datadog.svc.cluster.local:4317
       - name: COYOTE_ADMIN_TOKEN
         value: "admin_abcdefghijlmnopqrstuvwxyz12345"
+    nodeSelector:
+      db-name: coyote
+    tolerations:
+      - key: db-name
+        operator: Equal
+        value: coyote
+        effect: NoSchedule
