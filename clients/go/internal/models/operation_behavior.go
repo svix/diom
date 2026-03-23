@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"slices"
 
-	msgpack "github.com/vmihailenco/msgpack/v5"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type OperationBehavior string

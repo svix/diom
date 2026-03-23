@@ -5,7 +5,7 @@ package coyote_models
 import (
 	"fmt"
 
-	msgpack "github.com/vmihailenco/msgpack/v5"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // When creating an IdempotencyStartOut, use the appropriate data structure based on the Type:
