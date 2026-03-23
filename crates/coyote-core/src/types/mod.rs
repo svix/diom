@@ -191,7 +191,7 @@ string_wrapper!(
     StringSchema {
         string_validation: Some(json_schema!({
             "maxLength": 256,
-            "pattern": r"^(?:[a-zA-Z0-9\-_.]+:)?[a-zA-Z0-9\-/_.]+$",
+            "pattern": r"^[a-zA-Z0-9\-/_.=+:]+$",
         })),
         example: Some("some_key".to_string()),
     }
@@ -201,7 +201,7 @@ impl Validate for EntityKey {
     fn validate(&self) -> Result<(), ValidationErrors> {
         const MAX_LENGTH: usize = 256;
         static RE: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"^(?:[a-zA-Z0-9\-_.]+:)?[a-zA-Z0-9\-/_.]+$").unwrap());
+            LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-/_.=+:]+$").unwrap());
         let mut errors = ValidationErrors::new();
         if self.0.is_empty() {
             errors.add(
@@ -221,7 +221,7 @@ impl Validate for EntityKey {
                 ALL_ERROR,
                 validation_error(
                     Some("invalid_entity_key"),
-                    Some(r"Entity key must match the following pattern: ^(?:[a-zA-Z0-9\-_.]+:)?[a-zA-Z0-9\-/_.]+$."),
+                    Some(r"Entity key must match the following pattern: ^[a-zA-Z0-9\-/_.=+:]+$."),
                 ),
             );
         }
@@ -287,15 +287,19 @@ mod tests {
         allowed("foo/bar/baz");
         allowed("foo:bar");
         allowed("foo:bar/baz");
+        allowed("foo/bar:baz");
+        allowed(":baz");
+        allowed("foo:");
+        allowed("foo:bar:baz");
+        allowed("1");
+        allowed("foo/+==");
     }
 
     #[test]
     fn test_rejected_entity_keys() {
         rejected("");
         rejected("foo bar");
-        rejected("foo/bar:baz");
-        rejected(":baz");
-        rejected("foo:");
-        rejected("foo:bar:baz");
+        rejected("foo&bar");
+        rejected("foo\\bar");
     }
 }
