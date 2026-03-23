@@ -3,11 +3,6 @@ name: Python
 on:
   workflow_dispatch:
   workflow_call:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/python.yml'
-      - 'clients/python/**'
 
 jobs:
   lint:

@@ -3,11 +3,6 @@ name: Java
 on:
   workflow_dispatch:
   workflow_call:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/java.yml'
-      - 'clients/java/**'
 
 jobs:
   build:
