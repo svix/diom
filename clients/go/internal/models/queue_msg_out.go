@@ -7,8 +7,8 @@ import (
 )
 
 type QueueMsgOut struct {
-	MsgId     string             `json:"msg_id"`
-	Value     []uint8            `json:"value"`
-	Headers   *map[string]string `json:"headers,omitempty"`
-	Timestamp time.Time          `json:"timestamp"`
+	MsgId     string             `msgpack:"msg_id"`
+	Value     []uint8            `msgpack:"value"`
+	Headers   *map[string]string `msgpack:"headers,omitempty"`
+	Timestamp time.Time          `msgpack:"timestamp"`
 }

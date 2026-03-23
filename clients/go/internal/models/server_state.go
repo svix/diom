@@ -3,9 +3,10 @@ package diom_models
 // This file is @generated DO NOT EDIT
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
+
+	msgpack "github.com/vmihailenco/msgpack/v5"
 )
 
 type ServerState string
@@ -28,9 +29,9 @@ var allowedServerState = []ServerState{
 	"Unknown",
 }
 
-func (v *ServerState) UnmarshalJSON(src []byte) error {
+func (v *ServerState) UnmarshalMsgpack(src []byte) error {
 	var value string
-	err := json.Unmarshal(src, &value)
+	err := msgpack.Unmarshal(src, &value)
 	if err != nil {
 		return err
 	}

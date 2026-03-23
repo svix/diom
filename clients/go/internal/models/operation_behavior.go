@@ -3,9 +3,10 @@ package diom_models
 // This file is @generated DO NOT EDIT
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
+
+	msgpack "github.com/vmihailenco/msgpack/v5"
 )
 
 type OperationBehavior string
@@ -22,9 +23,9 @@ var allowedOperationBehavior = []OperationBehavior{
 	"update",
 }
 
-func (v *OperationBehavior) UnmarshalJSON(src []byte) error {
+func (v *OperationBehavior) UnmarshalMsgpack(src []byte) error {
 	var value string
-	err := json.Unmarshal(src, &value)
+	err := msgpack.Unmarshal(src, &value)
 	if err != nil {
 		return err
 	}

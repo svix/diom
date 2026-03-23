@@ -3,22 +3,22 @@ package diom_models
 // This file is @generated DO NOT EDIT
 
 type KvSetIn struct {
-	Namespace *string            `json:"namespace,omitempty"`
-	Value     []uint8            `json:"value"`
-	Ttl       *uint64            `json:"ttl,omitempty"` // Time to live in milliseconds
-	Behavior  *OperationBehavior `json:"behavior,omitempty"`
+	Namespace *string            `msgpack:"namespace,omitempty"`
+	Value     []uint8            `msgpack:"value"`
+	Ttl       *uint64            `msgpack:"ttl,omitempty"` // Time to live in milliseconds
+	Behavior  *OperationBehavior `msgpack:"behavior,omitempty"`
 	// If set, the write only succeeds when the stored version matches this value.
 	// Use the `version` field from a prior `get` response.
-	Version *uint64 `json:"version,omitempty"`
+	Version *uint64 `msgpack:"version,omitempty"`
 }
 
 type KvSetIn_ struct {
-	Namespace *string            `json:"namespace,omitempty"`
-	Key       string             `json:"key"`
-	Value     []uint8            `json:"value"`
-	Ttl       *uint64            `json:"ttl,omitempty"` // Time to live in milliseconds
-	Behavior  *OperationBehavior `json:"behavior,omitempty"`
+	Namespace *string            `msgpack:"namespace,omitempty"`
+	Key       string             `msgpack:"key"`
+	Value     []uint8            `msgpack:"value"`
+	Ttl       *uint64            `msgpack:"ttl,omitempty"` // Time to live in milliseconds
+	Behavior  *OperationBehavior `msgpack:"behavior,omitempty"`
 	// If set, the write only succeeds when the stored version matches this value.
 	// Use the `version` field from a prior `get` response.
-	Version *uint64 `json:"version,omitempty"`
+	Version *uint64 `msgpack:"version,omitempty"`
 }

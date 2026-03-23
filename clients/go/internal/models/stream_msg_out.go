@@ -7,9 +7,9 @@ import (
 )
 
 type StreamMsgOut struct {
-	Offset    uint64             `json:"offset"`
-	Topic     string             `json:"topic"`
-	Value     []uint8            `json:"value"`
-	Headers   *map[string]string `json:"headers,omitempty"`
-	Timestamp time.Time          `json:"timestamp"`
+	Offset    uint64             `msgpack:"offset"`
+	Topic     string             `msgpack:"topic"`
+	Value     []uint8            `msgpack:"value"`
+	Headers   *map[string]string `msgpack:"headers,omitempty"`
+	Timestamp time.Time          `msgpack:"timestamp"`
 }

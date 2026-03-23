@@ -3,7 +3,7 @@ package diom_models
 // This file is @generated DO NOT EDIT
 
 type RateLimitTokenBucketConfig struct {
-	Capacity             uint64  `json:"capacity"`                         // Maximum capacity of the bucket
-	RefillAmount         uint64  `json:"refill_amount"`                    // Number of tokens to add per refill interval
-	RefillIntervalMillis *uint64 `json:"refill_interval_millis,omitempty"` // Interval in milliseconds between refills (minimum 1 millisecond)
+	Capacity             uint64  `msgpack:"capacity"`                         // Maximum capacity of the bucket
+	RefillAmount         uint64  `msgpack:"refill_amount"`                    // Number of tokens to add per refill interval
+	RefillIntervalMillis *uint64 `msgpack:"refill_interval_millis,omitempty"` // Interval in milliseconds between refills (minimum 1 millisecond)
 }

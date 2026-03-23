@@ -7,8 +7,8 @@ import (
 )
 
 type AuthTokenCreateOut struct {
-	Id      string    `json:"id"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
-	Token   string    `json:"token"`
+	Id      string    `msgpack:"id"`
+	Created time.Time `msgpack:"created"`
+	Updated time.Time `msgpack:"updated"`
+	Token   string    `msgpack:"token"`
 }

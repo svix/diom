@@ -1,6 +1,6 @@
 package diom_proto
 
-import "encoding/json"
+import msgpack "github.com/vmihailenco/msgpack/v5"
 
 type Nullable[T any] struct {
 	val   *T
@@ -42,14 +42,18 @@ func (v *Nullable[T]) Unset() {
 	v.isSet = false
 }
 
-func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
+func (n Nullable[T]) IsZero() bool {
+	return !n.isSet
+}
+
+func (n *Nullable[T]) UnmarshalMsgpack(data []byte) error {
 	n.isSet = true
-	if string(data) == "null" {
+	if len(data) == 0 {
 		return nil
 	}
 
 	var value T
-	if err := json.Unmarshal(data, &value); err != nil {
+	if err := msgpack.Unmarshal(data, &value); err != nil {
 		return err
 	}
 
@@ -57,10 +61,9 @@ func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (n Nullable[T]) MarshalJSON() ([]byte, error) {
+func (n Nullable[T]) MarshalMsgpack() ([]byte, error) {
 	if n.isSet {
-		return json.Marshal(n.val)
+		return msgpack.Marshal(n.val)
 	}
-	return nil, nil
-
+	return msgpack.Marshal(nil)
 }
