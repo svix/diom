@@ -72,6 +72,6 @@ jobs:
       id-token: write
     uses: ./.github/workflows/svix-cloud-operator.yml
     with:
-      image_tag: ${{ github.sha }}
+      image_tag: sha-${{ github.sha }}
       environment: svix-cloud-staging-apply
     secrets: inherit

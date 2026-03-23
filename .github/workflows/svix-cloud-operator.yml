@@ -7,12 +7,10 @@ on:
         description: "Image tag to deploy (e.g. git SHA or semver)"
         required: true
         type: string
-        default: "sha-0e90f15b9f3913b9e267078348c6e473443c468b"
       environment:
         description: "Target environment (svix-cloud-staging-apply or svix-cloud-dev-apply)"
         required: true
         type: string
-        default: svix-cloud-staging-apply
   workflow_call:
     inputs:
       image_tag:
