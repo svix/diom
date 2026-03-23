@@ -10,9 +10,7 @@ class MsgQueueReceiveIn(BaseModel):
 
     batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
 
-    lease_duration_millis: t.Optional[int] = Field(
-        default=None, alias="lease_duration_millis"
-    )
+    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
 
 
 class _MsgQueueReceiveIn(BaseModel):
@@ -24,6 +22,4 @@ class _MsgQueueReceiveIn(BaseModel):
 
     batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
 
-    lease_duration_millis: t.Optional[int] = Field(
-        default=None, alias="lease_duration_millis"
-    )
+    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")

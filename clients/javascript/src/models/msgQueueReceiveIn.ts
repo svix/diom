@@ -3,7 +3,7 @@
 export interface MsgQueueReceiveIn {
     namespace?: string | null;
     batchSize?: number;
-    leaseDurationMillis?: number;
+    leaseDurationMs?: number;
 }
 
 export interface MsgQueueReceiveIn_ {
@@ -11,7 +11,7 @@ export interface MsgQueueReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
-    leaseDurationMillis?: number;
+    leaseDurationMs?: number;
 }
 
 export const MsgQueueReceiveInSerializer = {
@@ -22,7 +22,7 @@ export const MsgQueueReceiveInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
-            leaseDurationMillis: object['lease_duration_millis'],
+            leaseDurationMs: object['lease_duration_ms'],
         };
     },
 
@@ -33,7 +33,7 @@ export const MsgQueueReceiveInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'batch_size': self.batchSize,
-            'lease_duration_millis': self.leaseDurationMillis,
+            'lease_duration_ms': self.leaseDurationMs,
         };
     }
 }

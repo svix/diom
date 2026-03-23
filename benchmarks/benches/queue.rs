@@ -120,7 +120,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                                 "bench-cg".to_owned(),
                                 MsgQueueReceiveIn::new()
                                     .with_batch_size(100u16)
-                                    .with_lease_duration_millis(100u64),
+                                    .with_lease_duration_ms(100u64),
                             )
                             .await
                             .unwrap(),

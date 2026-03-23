@@ -31,7 +31,7 @@ public class AuthTokenUpdateIn {
     @JsonProperty private String namespace;
     @JsonProperty private String id;
     @JsonProperty private String name;
-    @JsonProperty("expiry_millis") private Long expiryMillis;
+    @JsonProperty("expiry_ms") private Long expiryMs;
     @JsonProperty private Map<String,String> metadata;
     @JsonProperty private List<String> scopes;
     @JsonProperty private Boolean enabled;
@@ -94,23 +94,23 @@ public class AuthTokenUpdateIn {
         this.name = name;
     }
 
-    public AuthTokenUpdateIn expiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public AuthTokenUpdateIn expiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
         return this;
     }
 
     /**
-    * Get expiryMillis
+    * Get expiryMs
     *
-     * @return expiryMillis
+     * @return expiryMs
      */
     @javax.annotation.Nullable
-    public Long getExpiryMillis() {
-        return expiryMillis;
+    public Long getExpiryMs() {
+        return expiryMs;
     }
 
-    public void setExpiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public void setExpiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
     }
 
     public AuthTokenUpdateIn metadata(Map<String,String> metadata) {

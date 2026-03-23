@@ -356,7 +356,7 @@ pub struct ClusterConfiguration {
     /// Trigger a background snapshot after this many milliseconds
     #[serde(
         rename = "snapshot_after_ms",
-        with = "crate::serde::duration::opt_millis",
+        with = "crate::serde::duration::opt_ms",
         default = "defaults::cluster_snapshot_after_time"
     )]
     pub snapshot_after_time: Option<Duration>,

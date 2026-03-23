@@ -263,7 +263,7 @@ pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result
     }
 
     tracing::info!(
-        duration_millis = (Instant::now() - t).as_millis(),
+        duration_ms = (Instant::now() - t).as_millis(),
         "Finished bootstrapping."
     );
 
@@ -351,7 +351,7 @@ mod tests {
     #[test]
     fn msgs_with_options() {
         let cmd: BootstrapCommand =
-            r#"msgs namespace create {"name":"myns","retention":{"millis":60000,"bytes":500}}"#
+            r#"msgs namespace create {"name":"myns","retention":{"ms":60000,"bytes":500}}"#
                 .parse()
                 .unwrap();
         let BootstrapCommand::Msgs(v) = cmd else {

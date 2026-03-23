@@ -17,7 +17,7 @@ coyote.msgs.queue.receive(
     topic="topic-123",  // Topic to consume from
     consumer_group: "group1", // The consumer group to use
     // Wait until batch_size messages are available,
-    // or batch_wait_millis has passed (whichever comes first).
+    // or batch_wait_ms has passed (whichever comes first).
     batch_size: 100,
     batch_wait_ms: 10_000,
     // How long a consumer owns a message before it goes back to the queue if unacknowledged.

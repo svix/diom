@@ -9,7 +9,7 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
-use crate::entities::{Retention, default_retention_bytes, default_retention_millis};
+use crate::entities::{Retention, default_retention_bytes, default_retention_ms};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNamespaceOperation {
@@ -35,7 +35,7 @@ impl CreateNamespaceOperation {
         let op = CreateNamespace::new(
             self.name,
             StreamConfig {
-                retention_period: Duration::from_millis(self.retention.millis.get()),
+                retention_period: Duration::from_millis(self.retention.ms.get()),
             },
             self.storage_type,
             Some(self.retention.bytes),
@@ -56,17 +56,17 @@ pub struct CreateNamespaceResponseData {
 
 impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
     fn from(value: CreateNamespaceOutput<StreamConfig>) -> Self {
-        let millis = u64::try_from(value.config.retention_period.as_millis())
+        let ms = u64::try_from(value.config.retention_period.as_millis())
             .ok()
             .and_then(|ms| ms.try_into().ok())
-            .unwrap_or_else(default_retention_millis);
+            .unwrap_or_else(default_retention_ms);
         let bytes = value
             .max_storage_bytes
             .unwrap_or_else(default_retention_bytes);
 
         Self {
             name: value.name,
-            retention: Retention { millis, bytes },
+            retention: Retention { ms, bytes },
             storage_type: value.storage_type,
             created: value.created,
             updated: value.updated,

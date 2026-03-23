@@ -30,7 +30,7 @@ import lombok.ToString;
 public class RateLimitTokenBucketConfig {
     @JsonProperty private Long capacity;
     @JsonProperty("refill_amount") private Long refillAmount;
-    @JsonProperty("refill_interval_millis") private Long refillIntervalMillis;
+    @JsonProperty("refill_interval_ms") private Long refillIntervalMs;
     public RateLimitTokenBucketConfig() {}
 
     public RateLimitTokenBucketConfig capacity(Long capacity) {
@@ -71,23 +71,23 @@ public class RateLimitTokenBucketConfig {
         this.refillAmount = refillAmount;
     }
 
-    public RateLimitTokenBucketConfig refillIntervalMillis(Long refillIntervalMillis) {
-        this.refillIntervalMillis = refillIntervalMillis;
+    public RateLimitTokenBucketConfig refillIntervalMs(Long refillIntervalMs) {
+        this.refillIntervalMs = refillIntervalMs;
         return this;
     }
 
     /**
     * Interval in milliseconds between refills (minimum 1 millisecond)
     *
-     * @return refillIntervalMillis
+     * @return refillIntervalMs
      */
     @javax.annotation.Nullable
-    public Long getRefillIntervalMillis() {
-        return refillIntervalMillis;
+    public Long getRefillIntervalMs() {
+        return refillIntervalMs;
     }
 
-    public void setRefillIntervalMillis(Long refillIntervalMillis) {
-        this.refillIntervalMillis = refillIntervalMillis;
+    public void setRefillIntervalMs(Long refillIntervalMs) {
+        this.refillIntervalMs = refillIntervalMs;
     }
 
     /**

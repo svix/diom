@@ -166,7 +166,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
         .json(json!({
             "topic": "ns-q-ack:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 1000,
+            "lease_duration_ms": 1000,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -241,7 +241,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
         .json(json!({
             "topic": "ns-q-redeliver:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 1000,
+            "lease_duration_ms": 1000,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -382,7 +382,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
         .json(json!({
             "topic": "ns-q-partial:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 1000,
+            "lease_duration_ms": 1000,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -628,7 +628,7 @@ async fn nack_sends_to_dlq() -> TestResult {
         .json(json!({
             "topic": "ns-q-nack:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 1000,
+            "lease_duration_ms": 1000,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -922,7 +922,7 @@ async fn nack_retries_before_dlq() -> TestResult {
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 500,
+            "lease_duration_ms": 500,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -968,7 +968,7 @@ async fn nack_retries_before_dlq() -> TestResult {
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 500,
+            "lease_duration_ms": 500,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -1057,7 +1057,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 500,
+            "lease_duration_ms": 500,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -1084,7 +1084,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
-            "lease_duration_millis": 500,
+            "lease_duration_ms": 500,
         }))
         .await?
         .expect(StatusCode::OK)

@@ -32,7 +32,7 @@ public class AuthTokenRotateIn {
     @JsonProperty private String id;
     @JsonProperty private String prefix;
     @JsonProperty private String suffix;
-    @JsonProperty("expiry_millis") private Long expiryMillis;
+    @JsonProperty("expiry_ms") private Long expiryMs;
     public AuthTokenRotateIn() {}
 
     public AuthTokenRotateIn namespace(String namespace) {
@@ -111,23 +111,23 @@ public class AuthTokenRotateIn {
         this.suffix = suffix;
     }
 
-    public AuthTokenRotateIn expiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public AuthTokenRotateIn expiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
         return this;
     }
 
     /**
     * Milliseconds from now until the old token expires. `None` means expire immediately.
     *
-     * @return expiryMillis
+     * @return expiryMs
      */
     @javax.annotation.Nullable
-    public Long getExpiryMillis() {
-        return expiryMillis;
+    public Long getExpiryMs() {
+        return expiryMs;
     }
 
-    public void setExpiryMillis(Long expiryMillis) {
-        this.expiryMillis = expiryMillis;
+    public void setExpiryMs(Long expiryMs) {
+        this.expiryMs = expiryMs;
     }
 
     /**

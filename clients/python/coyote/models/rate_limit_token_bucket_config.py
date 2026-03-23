@@ -12,7 +12,7 @@ class RateLimitTokenBucketConfig(BaseModel):
     refill_amount: int = Field(alias="refill_amount")
     """Number of tokens to add per refill interval"""
 
-    refill_interval_millis: t.Optional[int] = Field(
-        default=None, alias="refill_interval_millis"
+    refill_interval_ms: t.Optional[int] = Field(
+        default=None, alias="refill_interval_ms"
     )
     """Interval in milliseconds between refills (minimum 1 millisecond)"""

@@ -856,7 +856,7 @@ impl<'a> BenchShard for BenchMsgsQueueReceive<'a> {
                 self.consumer_group.to_owned(),
                 MsgQueueReceiveIn::new()
                     .with_batch_size(self.batch_size)
-                    .with_lease_duration_millis(300_000u64),
+                    .with_lease_duration_ms(300_000u64),
             )
             .await?;
         let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;

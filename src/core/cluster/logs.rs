@@ -135,7 +135,7 @@ impl TableRow for Log {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LogIndex {
-    unix_timestamp_millis: u64,
+    unix_timestamp_ms: u64,
     log_id: u64,
 }
 
@@ -144,7 +144,7 @@ impl TableRow for LogIndex {
     type Key = u64;
 
     fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Owned(self.unix_timestamp_millis)
+        Cow::Owned(self.unix_timestamp_ms)
     }
 }
 
@@ -397,7 +397,7 @@ impl CoyoteLogs {
         log_index: u64,
     ) -> anyhow::Result<()> {
         let rec = LogIndex {
-            unix_timestamp_millis: timestamp.as_millisecond() as u64,
+            unix_timestamp_ms: timestamp.as_millisecond() as u64,
             log_id: log_index,
         };
         tracing::trace!(?rec, "recording log/timestamp checkpoint");

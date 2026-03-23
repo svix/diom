@@ -310,7 +310,7 @@ async fn stream_receive_with_defaults() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    // Call without specifying batch_size or lease_duration_millis
+    // Call without specifying batch_size or lease_duration_ms
     let response = client
         .post("msgs/stream/receive")
         .json(json!({
