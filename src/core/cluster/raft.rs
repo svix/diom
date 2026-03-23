@@ -165,6 +165,7 @@ pub async fn initialize_raft(
 mod tests {
     use std::time::Duration;
 
+    use coyote_proto::InternalClient;
     use fjall::Database;
     use openraft::{StorageIOError, testing::StoreBuilder};
     use tempfile::TempDir;
@@ -206,7 +207,9 @@ mod tests {
             let time = coyote_core::Monotime::initial();
             let _ = time.update_now();
 
-            let app_state: AppState = AppState::new(cfg, time.clone());
+            // FIXME: Should we be spawning an internal API server task here?
+            let internal_client = InternalClient::useless_instance_for_tests();
+            let app_state = AppState::new(cfg, time.clone(), internal_client);
 
             let store = Store::new(
                 db,
