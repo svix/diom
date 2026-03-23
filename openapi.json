@@ -1386,7 +1386,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           }
         },
@@ -1419,7 +1419,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "consistency": {
@@ -1512,7 +1512,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "value": {
@@ -1631,7 +1631,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           }
         },
@@ -1656,7 +1656,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "response": {
@@ -1810,7 +1810,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "ttl": {
@@ -1944,7 +1944,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           }
         },
@@ -1978,7 +1978,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "consistency": {
@@ -2076,7 +2076,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "value": {
@@ -2783,7 +2783,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "tokens": {
@@ -2934,7 +2934,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "config": {
@@ -2979,7 +2979,7 @@
           "key": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^(?:[a-zA-Z0-9\\-_.]+:)?[a-zA-Z0-9\\-/_.=+]+$",
+            "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
           "config": {
