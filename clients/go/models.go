@@ -102,6 +102,7 @@ type (
 	RateLimitResetOut             = coyote_models.RateLimitResetOut
 	RateLimitTokenBucketConfig    = coyote_models.RateLimitTokenBucketConfig
 	Retention                     = coyote_models.Retention
+	SeekPosition                  = coyote_models.SeekPosition
 	ServerState                   = coyote_models.ServerState
 	StorageType                   = coyote_models.StorageType
 	StreamMsgOut                  = coyote_models.StreamMsgOut
