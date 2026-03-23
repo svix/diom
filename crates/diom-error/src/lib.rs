@@ -10,7 +10,7 @@ use axum::{
     Json,
     response::{IntoResponse, Response},
 };
-use diom_proto::{StandardErrorBody, ValidationErrorBody, ValidationErrorItem};
+use diom_proto::{MsgPackOrJson, StandardErrorBody, ValidationErrorBody, ValidationErrorItem};
 use hyper::StatusCode;
 use serde_json::json;
 use tokio::task::JoinError;
@@ -142,6 +142,25 @@ impl IntoResponse for Error {
 
 impl OperationOutput for Error {
     type Inner = Self;
+
+    fn inferred_responses(
+        ctx: &mut aide::generate::GenContext,
+        operation: &mut aide::openapi::Operation,
+    ) -> Vec<(Option<aide::openapi::StatusCode>, aide::openapi::Response)> {
+        use aide::openapi::StatusCode::Code;
+
+        let standard_error_body_response =
+            MsgPackOrJson::<StandardErrorBody>::operation_response(ctx, operation).unwrap();
+        let validation_error_body_response =
+            MsgPackOrJson::<ValidationErrorBody>::operation_response(ctx, operation).unwrap();
+
+        vec![
+            (Some(Code(400)), standard_error_body_response.clone()),
+            (Some(Code(401)), standard_error_body_response.clone()),
+            (Some(Code(403)), standard_error_body_response),
+            (Some(Code(422)), validation_error_body_response),
+        ]
+    }
 }
 
 pub trait Traceable<T> {
