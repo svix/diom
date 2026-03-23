@@ -1,5 +1,6 @@
 use std::num::NonZeroU64;
 
+use diom_error::Result;
 use diom_namespace::{
     entities::{KeyValueConfig, StorageType},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -44,7 +45,7 @@ impl CreateKvOperation {
         self,
         namespace_state: &diom_namespace::State,
         now: Timestamp,
-    ) -> diom_operations::Result<CreateKvResponseData> {
+    ) -> Result<CreateKvResponseData> {
         let op: CreateNamespace<KeyValueConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
@@ -78,6 +79,6 @@ impl KvRequest for CreateKvOperation {
         state: KvRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> CreateKvResponse {
-        CreateKvResponse(self.apply_real(state.namespace, ctx.timestamp).await)
+        CreateKvResponse::new(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

@@ -1,5 +1,5 @@
 use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Error;
+use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall_utils::WriteBatchExt;
 use jiff::Timestamp;
@@ -40,11 +40,7 @@ impl QueueConfigureOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(
-        self,
-        state: &State,
-        now: Timestamp,
-    ) -> diom_operations::Result<QueueConfigureResponseData> {
+    async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueConfigureResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let mut batch = state.db.batch();
@@ -90,6 +86,6 @@ impl MsgsRequest for QueueConfigureOperation {
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> QueueConfigureResponse {
-        QueueConfigureResponse(self.apply_real(state.msgs, ctx.timestamp).await)
+        QueueConfigureResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }

@@ -44,7 +44,7 @@ impl std::error::Error for BackgroundError {
     }
 }
 
-pub type BackgroundResult<T> = std::result::Result<T, BackgroundError>;
+pub type BackgroundResult<T> = Result<T, BackgroundError>;
 
 // Not part of the trait below so do_write_request only has to be codegen'ed once
 pub trait OperationWriterBase {
@@ -77,9 +77,7 @@ pub trait OperationWriter<M: ModuleRequest>:
         let module_request: O::RequestParent = op.into();
         let top_level_request: Self::Request = module_request.into();
         let top_level_response = self.do_write_request(top_level_request).await?;
-        let Ok(module_response): std::result::Result<M::Response, _> =
-            top_level_response.try_into()
-        else {
+        let Ok(module_response): Result<M::Response, _> = top_level_response.try_into() else {
             return Err(BackgroundError::InvalidResponse);
         };
         module_response
@@ -96,6 +94,7 @@ impl<T, M: ModuleRequest> OperationWriter<M> for T where
 /// Macro support module
 #[doc(hidden)]
 pub mod __reexports {
+    pub use diom_error;
     pub use pastey;
     pub use serde;
 }
@@ -174,5 +173,3 @@ impl From<JoinError> for OperationError {
         }
     }
 }
-
-pub type Result<T> = std::result::Result<T, OperationError>;

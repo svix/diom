@@ -1,12 +1,7 @@
 use std::collections::BTreeMap;
 
-use crate::{
-    State,
-    entities::{MsgIn, Offset, Partition, TopicIn, TopicName, TopicPartition, partition_for_key},
-    tables::{MsgRow, TopicRow},
-};
 use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Error;
+use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -15,6 +10,11 @@ use serde::{Deserialize, Serialize};
 use tracing::Span;
 
 use super::{MsgsRaftState, MsgsRequest, PublishResponse};
+use crate::{
+    State,
+    entities::{MsgIn, Offset, Partition, TopicIn, TopicName, TopicPartition, partition_for_key},
+    tables::{MsgRow, TopicRow},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishOperation {
@@ -25,11 +25,7 @@ pub struct PublishOperation {
 }
 
 impl PublishOperation {
-    pub fn new(
-        namespace_id: NamespaceId,
-        topic: TopicIn,
-        msgs: Vec<MsgIn>,
-    ) -> diom_error::Result<Self> {
+    pub fn new(namespace_id: NamespaceId, topic: TopicIn, msgs: Vec<MsgIn>) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => {
                 if msgs.iter().any(|m| m.key.is_some()) {
@@ -51,11 +47,7 @@ impl PublishOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
-    async fn apply_real(
-        self,
-        state: &State,
-        now: Timestamp,
-    ) -> diom_operations::Result<PublishResponseData> {
+    async fn apply_real(self, state: &State, now: Timestamp) -> Result<PublishResponseData> {
         let state = state.clone();
 
         let results = spawn_blocking_in_current_span(move || {
@@ -130,7 +122,7 @@ impl MsgsRequest for PublishOperation {
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> PublishResponse {
-        PublishResponse(self.apply_real(state.msgs, ctx.timestamp).await)
+        PublishResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }
 
@@ -157,7 +149,7 @@ fn write_msg_batch(
     topic_id: TopicId,
     msgs_by_partition: BTreeMap<Partition, Vec<MsgIn>>,
     now: Timestamp,
-) -> diom_operations::Result<Vec<PublishedTopic>> {
+) -> Result<Vec<PublishedTopic>> {
     let mut results: Vec<PublishedTopic> = Vec::with_capacity(msgs_by_partition.len());
 
     for (partition, msgs) in msgs_by_partition {

@@ -1,5 +1,6 @@
 use std::num::NonZeroU64;
 
+use diom_error::Result;
 use diom_namespace::{
     entities::{CacheConfig, EvictionPolicy, StorageType},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -49,7 +50,7 @@ impl CreateCacheOperation {
         self,
         namespace_state: &diom_namespace::State,
         now: Timestamp,
-    ) -> diom_operations::Result<CreateCacheResponseData> {
+    ) -> Result<CreateCacheResponseData> {
         let op: CreateNamespace<CacheConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
@@ -85,6 +86,6 @@ impl CacheRequest for CreateCacheOperation {
         state: CacheRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> CreateCacheResponse {
-        CreateCacheResponse(self.apply_real(state.namespace, ctx.timestamp).await)
+        CreateCacheResponse::new(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

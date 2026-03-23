@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Error;
+use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -39,11 +39,7 @@ impl QueueNackOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(
-        self,
-        state: &State,
-        now: Timestamp,
-    ) -> diom_operations::Result<QueueNackResponseData> {
+    async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueNackResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let topic_row = TopicRow::fetch(
@@ -124,7 +120,7 @@ fn forward_to_dlq(
     dlq_topic: &TopicName,
     consumer_group: &ConsumerGroup,
     now: Timestamp,
-) -> diom_error::Result<()> {
+) -> Result<()> {
     let original = MsgRow::fetch(
         &state.msg_table,
         MsgRow::key_for(source_topic_id, msg_id.partition, msg_id.offset),
@@ -169,6 +165,6 @@ impl MsgsRequest for QueueNackOperation {
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> QueueNackResponse {
-        QueueNackResponse(self.apply_real(state.msgs, ctx.timestamp).await)
+        QueueNackResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }

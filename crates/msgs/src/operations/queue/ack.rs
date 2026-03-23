@@ -1,5 +1,5 @@
 use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Error;
+use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
@@ -39,7 +39,7 @@ impl QueueAckOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(self, state: &State) -> diom_operations::Result<QueueAckResponseData> {
+    async fn apply_real(self, state: &State) -> Result<QueueAckResponseData> {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
@@ -108,6 +108,6 @@ impl MsgsRequest for QueueAckOperation {
         state: MsgsRaftState<'_>,
         _ctx: &diom_operations::OpContext,
     ) -> QueueAckResponse {
-        QueueAckResponse(self.apply_real(state.msgs).await)
+        QueueAckResponse::new(self.apply_real(state.msgs).await)
     }
 }

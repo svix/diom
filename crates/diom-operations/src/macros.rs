@@ -164,13 +164,19 @@ macro_rules! async_raft_module_operations {
 
             $(
                 #[derive(
-                Debug,
-                Clone,
-                $crate::__reexports::serde::Serialize,
-                $crate::__reexports::serde::Deserialize,
-            )]
-            #[serde(crate = "diom_operations::__reexports::serde")]
-                pub struct [<$variant Response>](pub $crate::Result<$response_data_type>);
+                    Debug,
+                    Clone,
+                    $crate::__reexports::serde::Serialize,
+                    $crate::__reexports::serde::Deserialize,
+                )]
+                #[serde(crate = "diom_operations::__reexports::serde")]
+                pub struct [<$variant Response>](pub Result<$response_data_type, $crate::OperationError>);
+
+                impl [<$variant Response>] {
+                    pub fn new(inner: $crate::__reexports::diom_error::Result<$response_data_type>) -> Self {
+                        Self(inner.map_err(Into::into))
+                    }
+                }
             )*
 
             #[derive(

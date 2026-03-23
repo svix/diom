@@ -1,7 +1,7 @@
 use super::{RateLimitRaftState, RateLimitRequest, ResetResponse};
 use crate::{RateLimitNamespace, TokenBucket};
+use diom_error::Result;
 use diom_id::NamespaceId;
-use diom_operations::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
@@ -41,6 +41,6 @@ impl RateLimitRequest for ResetOperation {
         state: RateLimitRaftState<'_>,
         _ctx: &diom_operations::OpContext,
     ) -> ResetResponse {
-        ResetResponse(self.apply_real(&state).await)
+        ResetResponse::new(self.apply_real(&state).await)
     }
 }

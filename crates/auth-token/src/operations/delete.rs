@@ -4,8 +4,9 @@ use crate::{
     AuthTokenNamespace, State,
     operations::{AuthTokenRaftState, AuthTokenRequest, DeleteResponse},
 };
+use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
-use diom_operations::{OpContext, Result};
+use diom_operations::OpContext;
 use fjall_utils::StorageType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,6 +38,6 @@ impl DeleteAuthTokenOperation {
 
 impl AuthTokenRequest for DeleteAuthTokenOperation {
     async fn apply(self, state: AuthTokenRaftState<'_>, _ctx: &OpContext) -> DeleteResponse {
-        DeleteResponse(self.apply_real(state.state).await)
+        DeleteResponse::new(self.apply_real(state.state).await)
     }
 }

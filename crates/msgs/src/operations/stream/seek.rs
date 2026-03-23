@@ -1,5 +1,5 @@
 use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Error;
+use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -34,7 +34,7 @@ impl StreamSeekOperation {
         topic: TopicIn,
         consumer_group: ConsumerGroup,
         target: SeekTarget,
-    ) -> diom_error::Result<Self> {
+    ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.raw, Some(tp.partition)),
             TopicIn::TopicName(tn) => (tn, None),
@@ -56,7 +56,7 @@ impl StreamSeekOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(self, state: &State) -> diom_operations::Result<StreamSeekResponseData> {
+    async fn apply_real(self, state: &State) -> Result<StreamSeekResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let mut batch = state.db.batch();
@@ -113,6 +113,6 @@ impl MsgsRequest for StreamSeekOperation {
         state: MsgsRaftState<'_>,
         _ctx: &diom_operations::OpContext,
     ) -> StreamSeekResponse {
-        StreamSeekResponse(self.apply_real(state.msgs).await)
+        StreamSeekResponse::new(self.apply_real(state.msgs).await)
     }
 }

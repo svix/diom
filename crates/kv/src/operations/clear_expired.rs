@@ -1,6 +1,6 @@
 use super::{ClearExpiredResponse, KvRequest};
 use crate::{State, operations::KvRaftState};
-use diom_operations::Result;
+use diom_error::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +35,6 @@ impl KvRequest for ClearExpiredOperation {
         state: KvRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp).await)
+        ClearExpiredResponse::new(self.apply_real(state.state, ctx.timestamp).await)
     }
 }

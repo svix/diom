@@ -1,8 +1,8 @@
 use super::{DeleteResponse, KvRequest};
 use crate::{KvNamespace, State, operations::KvRaftState};
 use diom_core::types::EntityKey;
+use diom_error::Result;
 use diom_id::NamespaceId;
-use diom_operations::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
@@ -44,6 +44,6 @@ impl KvRequest for DeleteOperation {
         state: KvRaftState<'_>,
         _ctx: &diom_operations::OpContext,
     ) -> DeleteResponse {
-        DeleteResponse(self.apply_real(state.state).await)
+        DeleteResponse::new(self.apply_real(state.state).await)
     }
 }

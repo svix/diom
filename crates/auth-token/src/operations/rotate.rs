@@ -7,8 +7,9 @@ use crate::{
     entities::TokenHashed,
     operations::{AuthTokenRaftState, AuthTokenRequest, RotateResponse},
 };
+use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
-use diom_operations::{OpContext, Result};
+use diom_operations::OpContext;
 use fjall_utils::StorageType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,6 +69,6 @@ impl RotateAuthTokenOperation {
 
 impl AuthTokenRequest for RotateAuthTokenOperation {
     async fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> RotateResponse {
-        RotateResponse(self.apply_real(state.state, ctx).await)
+        RotateResponse::new(self.apply_real(state.state, ctx).await)
     }
 }

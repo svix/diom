@@ -1,8 +1,10 @@
-use super::{CacheRequest, ClearExpiredResponse};
-use crate::{State, operations::CacheRaftState};
-use diom_operations::{OpContext, Result};
+use diom_error::Result;
+use diom_operations::OpContext;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
+
+use super::{CacheRequest, ClearExpiredResponse};
+use crate::{State, operations::CacheRaftState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClearExpiredOperation {
@@ -31,6 +33,6 @@ impl ClearExpiredOperation {
 
 impl CacheRequest for ClearExpiredOperation {
     async fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp).await)
+        ClearExpiredResponse::new(self.apply_real(state.state, ctx.timestamp).await)
     }
 }

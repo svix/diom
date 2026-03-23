@@ -6,8 +6,9 @@ use crate::{
 
 use super::{KvRequest, SetResponse};
 use diom_core::types::{DurationMs, EntityKey};
+use diom_error::Result;
 use diom_id::NamespaceId;
-use diom_operations::{OpContext, Result};
+use diom_operations::OpContext;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -77,6 +78,6 @@ impl SetOperation {
 
 impl KvRequest for SetOperation {
     async fn apply(self, state: KvRaftState<'_>, ctx: &OpContext) -> SetResponse {
-        SetResponse(self.apply_real(state.state, ctx).await)
+        SetResponse::new(self.apply_real(state.state, ctx).await)
     }
 }

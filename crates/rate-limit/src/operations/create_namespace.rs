@@ -1,5 +1,6 @@
 use std::num::NonZeroU64;
 
+use diom_error::Result;
 use diom_namespace::{
     entities::{RateLimitConfig, StorageType},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -44,7 +45,7 @@ impl CreateRateLimitOperation {
         self,
         namespace_state: &diom_namespace::State,
         now: Timestamp,
-    ) -> diom_operations::Result<CreateRateLimitResponseData> {
+    ) -> Result<CreateRateLimitResponseData> {
         let op: CreateNamespace<RateLimitConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
@@ -78,6 +79,6 @@ impl RateLimitRequest for CreateRateLimitOperation {
         state: RateLimitRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> CreateRateLimitResponse {
-        CreateRateLimitResponse(self.apply_real(state.namespace, ctx.timestamp).await)
+        CreateRateLimitResponse::new(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

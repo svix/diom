@@ -1,10 +1,9 @@
+use diom_core::task::spawn_blocking_in_current_span;
+use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-
-use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Error;
 
 use crate::{
     State,
@@ -22,11 +21,7 @@ pub struct TopicConfigureOperation {
 }
 
 impl TopicConfigureOperation {
-    pub fn new(
-        namespace_id: NamespaceId,
-        topic: TopicName,
-        partitions: u16,
-    ) -> Result<Self, Error> {
+    pub fn new(namespace_id: NamespaceId, topic: TopicName, partitions: u16) -> Result<Self> {
         if partitions == 0 || partitions > MAX_PARTITION_COUNT {
             return Err(Error::invalid_user_input(format!(
                 "Partition count must be between 1 and {MAX_PARTITION_COUNT}."
@@ -39,11 +34,7 @@ impl TopicConfigureOperation {
         })
     }
 
-    async fn apply_real(
-        self,
-        state: &State,
-        now: Timestamp,
-    ) -> diom_operations::Result<TopicConfigureResponseData> {
+    async fn apply_real(self, state: &State, now: Timestamp) -> Result<TopicConfigureResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let mut topic_row = match TopicRow::fetch(
@@ -57,8 +48,7 @@ impl TopicConfigureOperation {
             if self.partitions < topic_row.partitions {
                 return Err(Error::invalid_user_input(
                     "Cannot decrease partition count. Only increases are allowed.",
-                )
-                .into());
+                ));
             }
 
             topic_row.partitions = self.partitions;
@@ -90,6 +80,6 @@ impl MsgsRequest for TopicConfigureOperation {
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> TopicConfigureResponse {
-        TopicConfigureResponse(self.apply_real(state.msgs, ctx.timestamp).await)
+        TopicConfigureResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
     }
 }

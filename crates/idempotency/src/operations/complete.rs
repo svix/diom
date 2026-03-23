@@ -1,9 +1,9 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, IdempotencyState};
 use diom_core::types::DurationS;
+use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use diom_operations::Result;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -72,6 +72,6 @@ impl IdempotencyRequest for CompleteOperation {
         state: IdempotencyRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> CompleteResponse {
-        CompleteResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
+        CompleteResponse::new(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
     }
 }

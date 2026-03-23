@@ -1,9 +1,9 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
 use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
 use diom_core::types::DurationS;
+use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use diom_operations::Result;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -86,6 +86,6 @@ impl IdempotencyRequest for TryStartOperation {
         state: IdempotencyRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> TryStartResponse {
-        TryStartResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
+        TryStartResponse::new(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
     }
 }

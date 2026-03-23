@@ -1,6 +1,6 @@
 use super::{ClearExpiredResponse, IdempotencyRequest};
 use crate::{State, operations::IdempotencyRaftState};
-use diom_operations::Result;
+use diom_error::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +35,6 @@ impl IdempotencyRequest for ClearExpiredOperation {
         state: IdempotencyRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> ClearExpiredResponse {
-        ClearExpiredResponse(self.apply_real(state.state, ctx.timestamp).await)
+        ClearExpiredResponse::new(self.apply_real(state.state, ctx.timestamp).await)
     }
 }
