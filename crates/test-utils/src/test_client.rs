@@ -198,6 +198,12 @@ impl TestResponse {
         Ok(self)
     }
 
+    pub fn ensure_not_found(self) -> anyhow::Result<()> {
+        let response = self.ensure(StatusCode::BAD_REQUEST)?.json();
+        anyhow::ensure!(response["code"] == "not_found");
+        Ok(())
+    }
+
     #[track_caller]
     pub fn expect(self, expected_status: StatusCode) -> Self {
         self.ensure(expected_status).unwrap()

@@ -104,8 +104,8 @@ impl IntoResponse for Error {
                 (StatusCode::BAD_REQUEST, Json(body)).into_response()
             }
             ErrorType::NotFound(body) => {
-                tracing::debug!(error = %body, "not found");
-                (StatusCode::NOT_FOUND, Json(body)).into_response()
+                tracing::debug!(error = %body, "entity not found");
+                (StatusCode::BAD_REQUEST, Json(body)).into_response()
             }
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
