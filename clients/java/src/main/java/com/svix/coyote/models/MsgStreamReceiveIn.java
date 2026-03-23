@@ -33,6 +33,7 @@ public class MsgStreamReceiveIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_millis") private Long leaseDurationMillis;
+    @JsonProperty("default_starting_position") private String defaultStartingPosition;
     public MsgStreamReceiveIn() {}
 
     public MsgStreamReceiveIn namespace(String namespace) {
@@ -90,5 +91,24 @@ public class MsgStreamReceiveIn {
 
     public void setLeaseDurationMillis(Long leaseDurationMillis) {
         this.leaseDurationMillis = leaseDurationMillis;
+    }
+
+    public MsgStreamReceiveIn defaultStartingPosition(String defaultStartingPosition) {
+        this.defaultStartingPosition = defaultStartingPosition;
+        return this;
+    }
+
+    /**
+    * Get defaultStartingPosition
+    *
+     * @return defaultStartingPosition
+     */
+    @javax.annotation.Nullable
+    public String getDefaultStartingPosition() {
+        return defaultStartingPosition;
+    }
+
+    public void setDefaultStartingPosition(String defaultStartingPosition) {
+        this.defaultStartingPosition = defaultStartingPosition;
     }
 }

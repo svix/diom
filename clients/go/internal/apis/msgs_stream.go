@@ -28,11 +28,12 @@ func (msgsStream MsgsStream) Receive(
 	msgStreamReceiveIn coyote_models.MsgStreamReceiveIn,
 ) (*coyote_models.MsgStreamReceiveOut, error) {
 	body := coyote_models.MsgStreamReceiveIn_{
-		Namespace:           msgStreamReceiveIn.Namespace,
-		Topic:               topic,
-		ConsumerGroup:       consumerGroup,
-		BatchSize:           msgStreamReceiveIn.BatchSize,
-		LeaseDurationMillis: msgStreamReceiveIn.LeaseDurationMillis,
+		Namespace:               msgStreamReceiveIn.Namespace,
+		Topic:                   topic,
+		ConsumerGroup:           consumerGroup,
+		BatchSize:               msgStreamReceiveIn.BatchSize,
+		LeaseDurationMillis:     msgStreamReceiveIn.LeaseDurationMillis,
+		DefaultStartingPosition: msgStreamReceiveIn.DefaultStartingPosition,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamReceiveIn_, coyote_models.MsgStreamReceiveOut](

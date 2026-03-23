@@ -361,10 +361,11 @@ pub struct QueueMsgOut {
     pub timestamp: Timestamp,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SeekPosition {
     Earliest,
+    #[default]
     Latest,
 }
 
