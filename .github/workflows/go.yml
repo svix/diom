@@ -1,0 +1,16 @@
+name: Go
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build:
+    name: Build Go SDK
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: clients/go
+    steps:
+      - uses: actions/checkout@v6
+      - run: go build

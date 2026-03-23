@@ -12,6 +12,7 @@ jobs:
       pull-requests: read
     outputs:
       openapi: ${{ steps.filter.outputs.openapi }}
+      go: ${{ steps.filter.outputs.go }}
       java: ${{ steps.filter.outputs.java }}
       javascript: ${{ steps.filter.outputs.javascript }}
       python: ${{ steps.filter.outputs.python }}
@@ -24,6 +25,9 @@ jobs:
             openapi:
               - '.github/workflows/lint-openapi.yml'
               - 'openapi.json'
+            go:
+              - '.github/workflows/go.yml'
+              - 'clients/go/**'
             java:
               - '.github/workflows/java.yml'
               - 'clients/java/**'
@@ -50,6 +54,11 @@ jobs:
     uses: ./.github/workflows/lint-openapi.yml
     secrets: inherit
 
+  go:
+    needs: filter
+    if: needs.filter.outputs.go == 'true'
+    uses: ./.github/workflows/go.yml
+
   java:
     needs: filter
     if: needs.filter.outputs.java == 'true'
@@ -71,6 +80,8 @@ jobs:
     needs:
       - ci
       - lint-openapi
+      - go
+      - java
       - javascript
       - python
     # Always run so that this job is a stable required status check: if an
