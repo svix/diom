@@ -966,7 +966,6 @@ dependencies = [
  "coyote-auth-token",
  "coyote-authorization",
  "coyote-cache",
- "coyote-client",
  "coyote-core",
  "coyote-derive",
  "coyote-error",

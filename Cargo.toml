@@ -32,7 +32,6 @@ constant_time_eq.workspace = true
 coyote-auth-token.workspace = true
 coyote-authorization.workspace = true
 coyote-cache.workspace = true
-coyote-client.workspace = true
 coyote-core.workspace = true
 coyote-derive.workspace = true
 coyote-error.workspace = true
