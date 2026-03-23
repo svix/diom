@@ -1,8 +1,9 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
 use crate::{CacheModel, CacheNamespace};
+use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use coyote_operations::{OpContext, Result};
+use coyote_operations::OpContext;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -55,6 +56,6 @@ impl SetOperation {
 
 impl CacheRequest for SetOperation {
     async fn apply(self, state: CacheRaftState<'_>, ctx: &OpContext) -> SetResponse {
-        SetResponse(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
+        SetResponse::new(self.apply_real(&state, ctx.timestamp, ctx.log_index).await)
     }
 }

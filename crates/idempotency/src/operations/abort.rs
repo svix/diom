@@ -1,7 +1,7 @@
 use super::{AbortResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::IdempotencyNamespace;
+use coyote_error::Result;
 use coyote_id::NamespaceId;
-use coyote_operations::Result;
 use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
@@ -40,6 +40,6 @@ impl IdempotencyRequest for AbortOperation {
         state: IdempotencyRaftState<'_>,
         _ctx: &coyote_operations::OpContext,
     ) -> AbortResponse {
-        AbortResponse(self.apply_real(&state).await)
+        AbortResponse::new(self.apply_real(&state).await)
     }
 }

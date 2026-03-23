@@ -6,8 +6,9 @@ use crate::{
 
 use super::{KvRequest, SetResponse};
 use coyote_core::types::{DurationMs, EntityKey};
+use coyote_error::Result;
 use coyote_id::NamespaceId;
-use coyote_operations::{OpContext, Result};
+use coyote_operations::OpContext;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -77,6 +78,6 @@ impl SetOperation {
 
 impl KvRequest for SetOperation {
     async fn apply(self, state: KvRaftState<'_>, ctx: &OpContext) -> SetResponse {
-        SetResponse(self.apply_real(state.state, ctx).await)
+        SetResponse::new(self.apply_real(state.state, ctx).await)
     }
 }

@@ -1,9 +1,8 @@
 use coyote_core::task::spawn_blocking_in_current_span;
+use coyote_error::{Error, Result};
 use coyote_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
 use serde::{Deserialize, Serialize};
-
-use coyote_error::Error;
 
 use crate::{
     State,
@@ -37,10 +36,7 @@ impl StreamCommitOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(
-        self,
-        state: &State,
-    ) -> coyote_operations::Result<StreamCommitResponseData> {
+    async fn apply_real(self, state: &State) -> Result<StreamCommitResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let mut batch = state.db.batch();
@@ -86,6 +82,6 @@ impl MsgsRequest for StreamCommitOperation {
         state: MsgsRaftState<'_>,
         _ctx: &coyote_operations::OpContext,
     ) -> StreamCommitResponse {
-        StreamCommitResponse(self.apply_real(state.msgs).await)
+        StreamCommitResponse::new(self.apply_real(state.msgs).await)
     }
 }

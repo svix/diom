@@ -7,8 +7,9 @@ use crate::{
     operations::{AuthTokenRaftState, AuthTokenRequest, UpdateResponse},
 };
 use coyote_core::types::Metadata;
+use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
-use coyote_operations::{OpContext, Result};
+use coyote_operations::OpContext;
 use fjall_utils::StorageType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,6 +74,6 @@ impl UpdateAuthTokenOperation {
 
 impl AuthTokenRequest for UpdateAuthTokenOperation {
     async fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> UpdateResponse {
-        UpdateResponse(self.apply_real(state.state, ctx).await)
+        UpdateResponse::new(self.apply_real(state.state, ctx).await)
     }
 }

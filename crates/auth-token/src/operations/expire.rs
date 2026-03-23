@@ -6,8 +6,9 @@ use crate::{
     controller::AuthTokenModel,
     operations::{AuthTokenRaftState, AuthTokenRequest, ExpireResponse},
 };
+use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
-use coyote_operations::{OpContext, Result};
+use coyote_operations::OpContext;
 use fjall_utils::StorageType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,6 +48,6 @@ impl ExpireAuthTokenOperation {
 
 impl AuthTokenRequest for ExpireAuthTokenOperation {
     async fn apply(self, state: AuthTokenRaftState<'_>, ctx: &OpContext) -> ExpireResponse {
-        ExpireResponse(self.apply_real(state.state, ctx).await)
+        ExpireResponse::new(self.apply_real(state.state, ctx).await)
     }
 }

@@ -1,5 +1,6 @@
 use std::num::NonZeroU64;
 
+use coyote_error::Result;
 use coyote_namespace::{
     entities::{IdempotencyConfig, StorageType},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -44,7 +45,7 @@ impl CreateIdempotencyOperation {
         self,
         namespace_state: &coyote_namespace::State,
         now: Timestamp,
-    ) -> coyote_operations::Result<CreateIdempotencyResponseData> {
+    ) -> Result<CreateIdempotencyResponseData> {
         let op: CreateNamespace<IdempotencyConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
@@ -78,6 +79,6 @@ impl IdempotencyRequest for CreateIdempotencyOperation {
         state: IdempotencyRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> CreateIdempotencyResponse {
-        CreateIdempotencyResponse(self.apply_real(state.namespace, ctx.timestamp).await)
+        CreateIdempotencyResponse::new(self.apply_real(state.namespace, ctx.timestamp).await)
     }
 }

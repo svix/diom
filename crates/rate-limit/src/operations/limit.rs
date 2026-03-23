@@ -2,8 +2,9 @@ use std::time::Duration;
 
 use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
 use crate::{RateLimitNamespace, TokenBucket};
+use coyote_error::Result;
 use coyote_id::NamespaceId;
-use coyote_operations::{OpContext, Result};
+use coyote_operations::OpContext;
 use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -62,6 +63,6 @@ impl LimitOperation {
 
 impl RateLimitRequest for LimitOperation {
     async fn apply(self, state: RateLimitRaftState<'_>, ctx: &OpContext) -> LimitResponse {
-        LimitResponse(self.apply_real(&state, ctx.timestamp).await)
+        LimitResponse::new(self.apply_real(&state, ctx.timestamp).await)
     }
 }
