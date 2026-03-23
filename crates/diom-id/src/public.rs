@@ -109,7 +109,8 @@ fn decode_base32(prefix: &'static str, input: &str) -> Result<Uuid, String> {
 mod tests {
     use std::iter::zip;
 
-    use uuid::uuid;
+    use itertools::Itertools;
+    use uuid::{Uuid, uuid};
 
     use super::{decode_base32, encode_base32};
 
@@ -141,6 +142,24 @@ mod tests {
         for (e, d) in zip(encoded, decoded) {
             assert_eq!(e, encode_base32("prefix_", &d));
             assert_eq!(decode_base32("prefix_", e).unwrap(), d);
+        }
+    }
+
+    #[test]
+    fn test_big_range_ordering() {
+        let start = (u128::MAX - u16::MAX as u128) / 2;
+        let end = start + u16::MAX as u128;
+
+        for (a, b) in (start..end).tuple_windows() {
+            let uuid_a = Uuid::from_u128(a);
+            let uuid_b = Uuid::from_u128(b);
+
+            assert!(uuid_a < uuid_b);
+
+            let encoded_a = encode_base32("", &uuid_a);
+            let encoded_b = encode_base32("", &uuid_b);
+
+            assert!(encoded_a < encoded_b);
         }
     }
 }
