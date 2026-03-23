@@ -14,6 +14,10 @@ class MsgStreamReceiveIn(BaseModel):
         default=None, alias="lease_duration_millis"
     )
 
+    default_starting_position: t.Optional[str] = Field(
+        default=None, alias="default_starting_position"
+    )
+
 
 class _MsgStreamReceiveIn(BaseModel):
     namespace: t.Optional[str] = None
@@ -26,4 +30,8 @@ class _MsgStreamReceiveIn(BaseModel):
 
     lease_duration_millis: t.Optional[int] = Field(
         default=None, alias="lease_duration_millis"
+    )
+
+    default_starting_position: t.Optional[str] = Field(
+        default=None, alias="default_starting_position"
     )

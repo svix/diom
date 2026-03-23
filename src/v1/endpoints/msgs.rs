@@ -188,6 +188,8 @@ struct MsgStreamReceiveIn {
     pub batch_size: NonZeroU16,
     #[serde(default = "default_lease_duration_millis")]
     pub lease_duration_millis: DurationMs,
+    #[serde(default)]
+    pub default_starting_position: SeekPosition,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -216,6 +218,7 @@ async fn stream_receive(
         data.consumer_group,
         data.batch_size,
         data.lease_duration_millis,
+        data.default_starting_position,
     )?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 

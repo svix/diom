@@ -3353,6 +3353,10 @@
             "type": "integer",
             "format": "uint64",
             "default": 300000
+          },
+          "default_starting_position": {
+            "type": "string",
+            "default": "latest"
           }
         },
         "required": [

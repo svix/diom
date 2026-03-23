@@ -28,11 +28,12 @@ func (msgsStream MsgsStream) Receive(
 	msgStreamReceiveIn diom_models.MsgStreamReceiveIn,
 ) (*diom_models.MsgStreamReceiveOut, error) {
 	body := diom_models.MsgStreamReceiveIn_{
-		Namespace:           msgStreamReceiveIn.Namespace,
-		Topic:               topic,
-		ConsumerGroup:       consumerGroup,
-		BatchSize:           msgStreamReceiveIn.BatchSize,
-		LeaseDurationMillis: msgStreamReceiveIn.LeaseDurationMillis,
+		Namespace:               msgStreamReceiveIn.Namespace,
+		Topic:                   topic,
+		ConsumerGroup:           consumerGroup,
+		BatchSize:               msgStreamReceiveIn.BatchSize,
+		LeaseDurationMillis:     msgStreamReceiveIn.LeaseDurationMillis,
+		DefaultStartingPosition: msgStreamReceiveIn.DefaultStartingPosition,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgStreamReceiveIn_, diom_models.MsgStreamReceiveOut](

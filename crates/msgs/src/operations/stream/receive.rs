@@ -10,7 +10,9 @@ use tracing::Span;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, Offset, Partition, TopicIn, TopicName, TopicPartition},
+    entities::{
+        ConsumerGroup, Offset, Partition, SeekPosition, TopicIn, TopicName, TopicPartition,
+    },
     tables::{MsgRow, StreamLeaseRow, TopicRow},
 };
 
@@ -24,6 +26,7 @@ pub struct StreamReceiveOperation {
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
     lease_duration_millis: DurationMs,
+    default_starting_position: SeekPosition,
 }
 
 impl StreamReceiveOperation {
@@ -33,6 +36,7 @@ impl StreamReceiveOperation {
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
         lease_duration_millis: DurationMs,
+        default_starting_position: SeekPosition,
     ) -> diom_error::Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.raw, Some(tp.partition)),
@@ -45,6 +49,7 @@ impl StreamReceiveOperation {
             consumer_group,
             batch_size,
             lease_duration_millis,
+            default_starting_position,
         })
     }
 
@@ -88,8 +93,14 @@ impl StreamReceiveOperation {
                     Some(lease) => (lease, false),
                     None => {
                         let mut lease = StreamLeaseRow::new()?;
-                        lease.offset =
-                            MsgRow::next_offset(&state.msg_table, topic_row.id, topic.partition)?;
+                        lease.offset = match self.default_starting_position {
+                            SeekPosition::Earliest => 0,
+                            SeekPosition::Latest => MsgRow::next_offset(
+                                &state.msg_table,
+                                topic_row.id,
+                                topic.partition,
+                            )?,
+                        };
                         (lease, true)
                     }
                 };
