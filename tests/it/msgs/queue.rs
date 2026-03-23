@@ -297,7 +297,7 @@ async fn queue_receive_nonexistent_namespace() -> TestResult {
             "consumer_group": "test-cg",
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }
@@ -772,7 +772,7 @@ async fn nack_nonexistent_namespace() -> TestResult {
             "msg_ids": ["0:0"],
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }
@@ -793,7 +793,7 @@ async fn redrive_dlq_nonexistent_namespace() -> TestResult {
             "consumer_group": "test-cg",
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }

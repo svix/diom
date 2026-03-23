@@ -56,7 +56,7 @@ async fn test_cache_set_and_get() -> TestResult {
             "behavior": "upsert",
         }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?;
+        .ensure_not_found()?;
 
     Ok(())
 }
@@ -264,7 +264,7 @@ async fn get_namespace_not_found() -> TestResult {
             "name": "nonexistent-ns",
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }

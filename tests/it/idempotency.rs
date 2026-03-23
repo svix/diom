@@ -364,7 +364,7 @@ async fn get_namespace_not_found() -> TestResult {
             "name": "nonexistent-ns",
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }

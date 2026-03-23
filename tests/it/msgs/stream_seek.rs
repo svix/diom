@@ -420,7 +420,7 @@ async fn seek_nonexistent_namespace() -> TestResult {
             "position": "earliest",
         }))
         .await?
-        .expect(StatusCode::NOT_FOUND);
+        .ensure_not_found()?;
 
     Ok(())
 }
