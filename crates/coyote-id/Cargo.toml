@@ -14,6 +14,7 @@ serde.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
+itertools.workspace = true
 rmp-serde.workspace = true
 
 [lints]
