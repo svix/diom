@@ -280,6 +280,10 @@ mod tests {
         allowed("foo/bar/baz");
         allowed("foo:bar");
         allowed("foo:bar/baz");
+        allowed("foo/bar:baz");
+        allowed(":baz");
+        allowed("foo:");
+        allowed("foo:bar:baz");
         allowed("1");
         allowed("foo/+==");
     }
