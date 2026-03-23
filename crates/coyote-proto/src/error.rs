@@ -1,8 +1,9 @@
 use std::fmt;
 
+use schemars::JsonSchema;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct StandardErrorBody {
     code: &'static str,
     detail: String,

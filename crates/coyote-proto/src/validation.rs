@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use validator::ValidationError;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct ValidationErrorBody {
     pub(crate) detail: Vec<ValidationErrorItem>,
 }
