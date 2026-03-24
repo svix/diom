@@ -100,12 +100,12 @@ workspace = true
 [workspace]
 members = [
     "benchmarks",
-    "clients/cli",
-    "clients/rust",
     "codegen",
     "crates/*",
     "infra/operator",
     "server",
+    "z-clients/cli",
+    "z-clients/rust",
 ]
 # By default, don't build extra helpers like codegen.
 default-members = [".", "server", "crates/*"]
@@ -136,7 +136,7 @@ constant_time_eq = "0.4"
 diom.path = "."
 diom-auth-token.path = "crates/auth-token"
 diom-cache.path = "crates/cache"
-diom-client.path = "clients/rust"
+diom-client.path = "z-clients/rust"
 diom-core.path = "crates/diom-core"
 diom-derive.path = "crates/diom-derive"
 diom-error.path = "crates/diom-error"

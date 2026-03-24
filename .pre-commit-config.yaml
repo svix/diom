@@ -3,10 +3,10 @@ repos:
     hooks:
       - id: end-of-file-fixer
         # temporarily exclude some SDKs, needs openapi-codegen fix
-        exclude: "(^.yarn/)|(.svg$)|(^clients/javascript)|(^clients/java)"
+        exclude: "(^.yarn/)|(.svg$)|(^z-clients/javascript)|(^z-clients/java)"
       - id: trailing-whitespace
         # temporarily exclude some SDKs, needs auto-formatting
-        exclude: "(^.yarn/)|(.svg$)|(^clients/javascript)|(^clients/java)"
+        exclude: "(^.yarn/)|(.svg$)|(^z-clients/javascript)|(^z-clients/java)"
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks

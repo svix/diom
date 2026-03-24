@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: clients/javascript
+        working-directory: z-clients/javascript
     steps:
       - uses: actions/checkout@v6
       - run: npm ci
