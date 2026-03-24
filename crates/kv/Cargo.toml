@@ -13,7 +13,6 @@ coyote-namespace.workspace = true
 coyote-operations.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
-itertools.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true

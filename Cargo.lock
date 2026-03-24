@@ -1219,7 +1219,6 @@ dependencies = [
  "coyote-operations",
  "fjall",
  "fjall-utils",
- "itertools 0.14.0",
  "jiff",
  "schemars 1.2.1",
  "serde",
