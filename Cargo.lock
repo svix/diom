@@ -964,6 +964,7 @@ dependencies = [
  "byteorder",
  "constant_time_eq 0.4.2",
  "coyote-auth-token",
+ "coyote-authorization",
  "coyote-cache",
  "coyote-client",
  "coyote-core",
@@ -1041,6 +1042,14 @@ dependencies = [
  "sha2",
  "tempfile",
  "tracing",
+]
+
+[[package]]
+name = "coyote-authorization"
+version = "0.0.1"
+dependencies = [
+ "schemars 1.2.1",
+ "serde",
 ]
 
 [[package]]
