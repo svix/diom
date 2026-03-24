@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 
-use k8s_openapi::api::core::v1::TopologySpreadConstraint;
+use k8s_openapi::api::core::v1::{Affinity, Toleration, TopologySpreadConstraint};
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -88,6 +88,20 @@ pub(crate) struct CoyoteClusterSpec {
     #[serde(default)]
     #[schemars(schema_with = "topology_spread_constraints_schema")]
     pub topology_spread_constraints: Vec<TopologySpreadConstraint>,
+
+    /// Node selector for scheduling pods onto nodes with matching labels.
+    #[serde(default)]
+    pub node_selector: Option<BTreeMap<String, String>>,
+
+    /// Tolerations to allow pods to be scheduled onto nodes with matching taints.
+    #[serde(default)]
+    #[schemars(schema_with = "tolerations_schema")]
+    pub tolerations: Option<Vec<Toleration>>,
+
+    /// Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).
+    #[serde(default)]
+    #[schemars(schema_with = "affinity_schema")]
+    pub affinity: Option<Affinity>,
 }
 
 /// Storage configuration for a Coyote cluster.
@@ -244,4 +258,15 @@ fn topology_spread_constraints_schema(_gen: &mut schemars::SchemaGenerator) -> s
         "type": "array",
         "items": { "type": "object" }
     })
+}
+
+fn tolerations_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "array",
+        "items": { "type": "object" }
+    })
+}
+
+fn affinity_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({ "type": "object" })
 }
