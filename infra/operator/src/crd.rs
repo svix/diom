@@ -256,17 +256,17 @@ fn nodes_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
 fn topology_spread_constraints_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({
         "type": "array",
-        "items": { "type": "object" }
+        "items": { "type": "object", "x-kubernetes-preserve-unknown-fields": true }
     })
 }
 
 fn tolerations_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({
         "type": "array",
-        "items": { "type": "object" }
+        "items": { "type": "object", "x-kubernetes-preserve-unknown-fields": true }
     })
 }
 
 fn affinity_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({ "type": "object" })
+    schemars::json_schema!({ "type": "object", "x-kubernetes-preserve-unknown-fields": true })
 }
