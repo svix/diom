@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use data_encoding::Encoding;
 use data_encoding_macro::new_encoding;
 use schemars::{JsonSchema, json_schema};
@@ -17,6 +19,12 @@ impl<T> Public<T> {
 
     pub fn into_inner(self) -> T {
         self.0
+    }
+}
+
+impl<M: PublicIdMarker> Display for Public<Id<M>> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        display_base32(f, M::PREFIX, &self.0.inner)
     }
 }
 
@@ -62,7 +70,7 @@ struct IdVisitor(&'static str);
 impl<'de> de::Visitor<'de> for IdVisitor {
     type Value = Uuid;
 
-    fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "an ID prefixed by {}", self.0)
     }
 
@@ -82,6 +90,11 @@ impl<'de> de::Visitor<'de> for IdVisitor {
 const BASE32_ENCODING: Encoding = new_encoding! {
     symbols: "0123456789abcdefghjkmnpqrstvwxyz",
 };
+
+fn display_base32(f: &mut fmt::Formatter<'_>, prefix: &str, uuid: &Uuid) -> fmt::Result {
+    f.write_str(prefix)?;
+    BASE32_ENCODING.encode_display(uuid.as_bytes()).fmt(f)
+}
 
 fn encode_base32(prefix: &'static str, uuid: &Uuid) -> String {
     let mut result = String::with_capacity(prefix.len() + BASE32_ENCODING.encode_len(16));

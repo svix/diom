@@ -8,6 +8,7 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
+use diom_id::AuthTokenId;
 use tracing::Span;
 
 use crate::AppState;
@@ -35,8 +36,7 @@ pub struct Permissions {
     /// FIXME: probably want to use the right type.
     pub role: String,
     /// The auth token id, if we used auth token
-    /// FIXME: probably want to use the right type.
-    pub auth_token_id: Option<String>,
+    pub auth_token_id: Option<AuthTokenId>,
 }
 
 pub async fn authorization(
@@ -77,16 +77,16 @@ async fn authorization_inner(
         && constant_time_eq(admin_token, token)
     {
         Permissions {
-            role: "admin".to_string(),
-            auth_token_id: Some("admin".to_string()),
+            role: "admin".to_owned(),
+            auth_token_id: None,
         }
     } else {
         return Err(Error::authentication("invalid_token", "Invalid token.").into());
     };
 
     http_request_span.record("role", perms.role.as_str());
-    if let Some(role) = perms.auth_token_id.as_ref() {
-        http_request_span.record("role", role);
+    if let Some(token_id) = &perms.auth_token_id {
+        http_request_span.record("token_id", tracing::field::display(token_id.public()));
     }
 
     Ok(perms)
