@@ -3,7 +3,7 @@ package coyote
 // This file is @generated DO NOT EDIT
 
 import (
-	coyote_apis "github.com/svix/coyote/clients/go/internal/apis"
+	coyote_apis "github.com/svix/coyote/z-clients/go/internal/apis"
 )
 
 type Admin = coyote_apis.Admin

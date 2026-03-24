@@ -27,16 +27,16 @@ jobs:
               - 'openapi.json'
             go:
               - '.github/workflows/go.yml'
-              - 'clients/go/**'
+              - 'z-clients/go/**'
             java:
               - '.github/workflows/java.yml'
-              - 'clients/java/**'
+              - 'z-clients/java/**'
             javascript:
               - '.github/workflows/javascript.yml'
-              - 'clients/javascript/**'
+              - 'z-clients/javascript/**'
             python:
               - '.github/workflows/python.yml'
-              - 'clients/python/**'
+              - 'z-clients/python/**'
 
   ci:
     permissions:

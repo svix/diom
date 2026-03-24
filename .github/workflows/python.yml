@@ -13,4 +13,4 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - run: uv run --only-dev ruff check coyote
-        working-directory: clients/python
+        working-directory: z-clients/python

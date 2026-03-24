@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	coyote_proto "github.com/svix/coyote/clients/go/internal/proto"
+	coyote_proto "github.com/svix/coyote/z-clients/go/internal/proto"
 )
 
 type CoyoteOptions struct {

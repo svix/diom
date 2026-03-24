@@ -5,8 +5,8 @@ package coyote_apis
 import (
 	"context"
 
-	coyote_models "github.com/svix/coyote/clients/go/internal/models"
-	coyote_proto "github.com/svix/coyote/clients/go/internal/proto"
+	coyote_models "github.com/svix/coyote/z-clients/go/internal/models"
+	coyote_proto "github.com/svix/coyote/z-clients/go/internal/proto"
 )
 
 type RateLimit struct {
