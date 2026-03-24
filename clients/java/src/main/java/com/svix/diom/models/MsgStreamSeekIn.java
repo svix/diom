@@ -32,7 +32,7 @@ public class MsgStreamSeekIn {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
-    @JsonProperty private String position;
+    @JsonProperty private SeekPosition position;
     public MsgStreamSeekIn() {}
 
     public MsgStreamSeekIn namespace(String namespace) {
@@ -73,7 +73,7 @@ public class MsgStreamSeekIn {
         this.offset = offset;
     }
 
-    public MsgStreamSeekIn position(String position) {
+    public MsgStreamSeekIn position(SeekPosition position) {
         this.position = position;
         return this;
     }
@@ -84,11 +84,11 @@ public class MsgStreamSeekIn {
      * @return position
      */
     @javax.annotation.Nullable
-    public String getPosition() {
+    public SeekPosition getPosition() {
         return position;
     }
 
-    public void setPosition(String position) {
+    public void setPosition(SeekPosition position) {
         this.position = position;
     }
 }

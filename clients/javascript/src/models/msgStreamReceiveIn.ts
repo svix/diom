@@ -1,10 +1,14 @@
 // this file is @generated
+import {
+    type SeekPosition,
+    SeekPositionSerializer,
+} from './seekPosition';
 
 export interface MsgStreamReceiveIn {
     namespace?: string | null;
     batchSize?: number;
     leaseDurationMs?: number;
-    defaultStartingPosition?: string;
+    defaultStartingPosition?: SeekPosition;
 }
 
 export interface MsgStreamReceiveIn_ {
@@ -13,7 +17,7 @@ export interface MsgStreamReceiveIn_ {
     consumerGroup: string;
     batchSize?: number;
     leaseDurationMs?: number;
-    defaultStartingPosition?: string;
+    defaultStartingPosition?: SeekPosition;
 }
 
 export const MsgStreamReceiveInSerializer = {
@@ -25,7 +29,7 @@ export const MsgStreamReceiveInSerializer = {
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
             leaseDurationMs: object['lease_duration_ms'],
-            defaultStartingPosition: object['default_starting_position'],
+            defaultStartingPosition: object['default_starting_position'] != null ? SeekPositionSerializer._fromJsonObject(object['default_starting_position']): undefined,
         };
     },
 
@@ -37,7 +41,7 @@ export const MsgStreamReceiveInSerializer = {
             'consumer_group': self.consumerGroup,
             'batch_size': self.batchSize,
             'lease_duration_ms': self.leaseDurationMs,
-            'default_starting_position': self.defaultStartingPosition,
+            'default_starting_position': self.defaultStartingPosition != null ? SeekPositionSerializer._toJsonObject(self.defaultStartingPosition) : undefined,
         };
     }
 }

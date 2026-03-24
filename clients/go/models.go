@@ -102,6 +102,7 @@ type (
 	RateLimitResetOut             = diom_models.RateLimitResetOut
 	RateLimitTokenBucketConfig    = diom_models.RateLimitTokenBucketConfig
 	Retention                     = diom_models.Retention
+	SeekPosition                  = diom_models.SeekPosition
 	ServerState                   = diom_models.ServerState
 	StorageType                   = diom_models.StorageType
 	StreamMsgOut                  = diom_models.StreamMsgOut

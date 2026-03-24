@@ -4,13 +4,15 @@ from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
+from .seek_position import SeekPosition
+
 
 class MsgStreamSeekIn(BaseModel):
     namespace: t.Optional[str] = None
 
     offset: t.Optional[int] = None
 
-    position: t.Optional[str] = None
+    position: t.Optional[SeekPosition] = None
 
 
 class _MsgStreamSeekIn(BaseModel):
@@ -22,4 +24,4 @@ class _MsgStreamSeekIn(BaseModel):
 
     offset: t.Optional[int] = None
 
-    position: t.Optional[str] = None
+    position: t.Optional[SeekPosition] = None

@@ -361,33 +361,12 @@ pub struct QueueMsgOut {
     pub timestamp: Timestamp,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum SeekPosition {
     Earliest,
     #[default]
     Latest,
-}
-
-/// FIXME(@svix-gabriel): making this look like a string in the SDK for expediency.
-/// I had trouble getting the enum version to work. There's definitely a way to do it
-/// though.
-impl JsonSchema for SeekPosition {
-    fn inline_schema() -> bool {
-        String::inline_schema()
-    }
-
-    fn schema_id() -> std::borrow::Cow<'static, str> {
-        String::schema_id()
-    }
-
-    fn schema_name() -> std::borrow::Cow<'static, str> {
-        String::schema_name()
-    }
-
-    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
-    }
 }
 
 /// A validated consumer group identifier.

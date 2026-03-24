@@ -5155,8 +5155,8 @@
             "default": 300000
           },
           "default_starting_position": {
-            "type": "string",
-            "default": "latest"
+            "default": "latest",
+            "$ref": "#/components/schemas/SeekPosition"
           }
         },
         "required": [
@@ -5203,7 +5203,7 @@
             "nullable": true
           },
           "position": {
-            "type": "string",
+            "$ref": "#/components/schemas/SeekPosition",
             "nullable": true
           }
         },
@@ -5614,6 +5614,13 @@
             "default": 1000000000000
           }
         }
+      },
+      "SeekPosition": {
+        "type": "string",
+        "enum": [
+          "earliest",
+          "latest"
+        ]
       },
       "ServerState": {
         "type": "string",

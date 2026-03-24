@@ -96,6 +96,7 @@ from .rate_limit_reset_in import RateLimitResetIn
 from .rate_limit_reset_out import RateLimitResetOut
 from .rate_limit_token_bucket_config import RateLimitTokenBucketConfig
 from .retention import Retention
+from .seek_position import SeekPosition
 from .server_state import ServerState
 from .storage_type import StorageType
 from .stream_msg_out import StreamMsgOut
@@ -199,6 +200,7 @@ __all__ = [
     "RateLimitResetOut",
     "RateLimitTokenBucketConfig",
     "Retention",
+    "SeekPosition",
     "ServerState",
     "StorageType",
     "StreamMsgOut",
