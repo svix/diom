@@ -17,6 +17,7 @@ use axum::{
     Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
     serve::ListenerExt as _,
 };
+use coyote_authorization::RoleId;
 use coyote_core::Monotime;
 use coyote_error::Error;
 use coyote_proto::{InternalClient, InternalRequest, InternalRequestError};
@@ -38,6 +39,7 @@ use tower_http::{
 use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
+        auth::Permissions,
         cluster::RaftState,
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
@@ -207,13 +209,18 @@ async fn run_internal(
     // FIXME: Do we want to delay graceful shutdown of the internal API server
     //        a little compared to public / inter-server?
     let shutdown_tok = shutting_down_token();
-    while let Some(Some(req)) = shutdown_tok
+    while let Some(Some(mut req)) = shutdown_tok
         .run_until_cancelled(internal_req_rx.recv())
         .await
     {
         // FIXME: Do we want to limit the maximum number of concurrently-running internal requests?
         let svc = svc.clone();
         tokio::spawn(async move {
+            req.inner.extensions_mut().insert(Permissions {
+                role: RoleId::operator(),
+                auth_token_id: None,
+            });
+
             // FIXME: Do we want to cancel request handling when the response channel is closed?
             //        As-is, we always complete request processing even if the internal caller
             //        loses interest (e.g. because it is cancelled itself).

@@ -44,11 +44,23 @@ pub async fn authorization(
     mut request: Request,
     next: Next,
 ) -> axum::response::Result<Response> {
+    let perms = match request.extensions().get::<Permissions>() {
+        Some(perms) => perms.to_owned(),
+        None => {
+            let perms = authorization_inner(state, &mut request).await?;
+            request.extensions_mut().insert(perms.clone());
+            perms
+        }
+    };
+
     // FIXME - get this explicitly from `AxumOtelSpanCreator`, instead of relying on
     // this middleware being invoked with that span active
-    let span = Span::current();
-    let perms = authorization_inner(state, &mut request, span).await?;
-    request.extensions_mut().insert(perms.clone());
+    let http_request_span = Span::current();
+    http_request_span.record("role", perms.role.as_str());
+    if let Some(token_id) = &perms.auth_token_id {
+        http_request_span.record("token_id", tracing::field::display(token_id.public()));
+    }
+
     // This is run outside of the `tracing::instrument` function, so that the
     // route handler execution time isn't included in the span
     let mut response = next.run(request).await;
@@ -64,7 +76,6 @@ pub async fn authorization(
 async fn authorization_inner(
     State(state): State<AppState>,
     request: &mut Request,
-    http_request_span: Span,
 ) -> axum::response::Result<Permissions> {
     let TypedHeader(Authorization(bearer)) = request
         .extract_parts::<TypedHeader<Authorization<Bearer>>>()
@@ -83,11 +94,6 @@ async fn authorization_inner(
     } else {
         return Err(Error::authentication("invalid_token", "Invalid token.").into());
     };
-
-    http_request_span.record("role", perms.role.as_str());
-    if let Some(token_id) = &perms.auth_token_id {
-        http_request_span.record("token_id", tracing::field::display(token_id.public()));
-    }
 
     Ok(perms)
 }
