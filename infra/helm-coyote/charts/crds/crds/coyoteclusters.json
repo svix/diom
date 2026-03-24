@@ -45,7 +45,8 @@
                 "properties": {
                   "affinity": {
                     "description": "Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).",
-                    "type": "object"
+                    "type": "object",
+                    "x-kubernetes-preserve-unknown-fields": true
                   },
                   "apiPort": {
                     "default": 8080,
@@ -312,7 +313,8 @@
                   "tolerations": {
                     "description": "Tolerations to allow pods to be scheduled onto nodes with matching taints.",
                     "items": {
-                      "type": "object"
+                      "type": "object",
+                      "x-kubernetes-preserve-unknown-fields": true
                     },
                     "type": "array"
                   },
@@ -320,7 +322,8 @@
                     "default": [],
                     "description": "Topology spread constraints for pod scheduling.\nUse this to spread pods across availability zones or nodes.\nSee: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
                     "items": {
-                      "type": "object"
+                      "type": "object",
+                      "x-kubernetes-preserve-unknown-fields": true
                     },
                     "type": "array"
                   }
