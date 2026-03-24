@@ -43,6 +43,10 @@
               "spec": {
                 "description": "A Coyote cluster deployment.",
                 "properties": {
+                  "affinity": {
+                    "description": "Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).",
+                    "type": "object"
+                  },
                   "apiPort": {
                     "default": 8080,
                     "description": "Port for the external API. The inter-node port is this value + 10000.",
@@ -167,6 +171,14 @@
                     "description": "Image pull policy (Always, IfNotPresent, Never).",
                     "nullable": true,
                     "type": "string"
+                  },
+                  "nodeSelector": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Node selector for scheduling pods onto nodes with matching labels.",
+                    "nullable": true,
+                    "type": "object"
                   },
                   "nodes": {
                     "default": 1,
@@ -296,6 +308,13 @@
                       "persistent"
                     ],
                     "type": "object"
+                  },
+                  "tolerations": {
+                    "description": "Tolerations to allow pods to be scheduled onto nodes with matching taints.",
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
                   },
                   "topologySpreadConstraints": {
                     "default": [],

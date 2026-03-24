@@ -126,6 +126,29 @@ jobs:
           else
             echo 'all good.'
           fi
+  check-crd:
+    name: Check CRD JSON freshness
+    runs-on: ubicloud-standard-4-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ubicloud/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Regenerate CRD JSON
+        run: cargo run -p coyote-operator -- --print-crd-json > infra/helm-coyote/charts/crds/crds/coyoteclusters.json
+      - name: Check for uncommitted changes
+        run: |
+          gs=$(git status -s)
+          if [[ -n "$gs" ]]; then
+            echo 'CRD JSON is out of date!'
+            # shellcheck disable=SC2016
+            echo 'please run `cargo run -p coyote-operator -- --print-crd-json` and commit the result'
+            git diff
+            exit 1
+          else
+            echo 'all good.'
+          fi
   security-audit:
     runs-on: ubuntu-24.04
     steps:
