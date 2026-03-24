@@ -30,6 +30,7 @@ axum-extra.workspace = true
 byteorder.workspace = true
 constant_time_eq.workspace = true
 coyote-auth-token.workspace = true
+coyote-authorization.workspace = true
 coyote-cache.workspace = true
 coyote-client.workspace = true
 coyote-core.workspace = true
@@ -135,6 +136,7 @@ config = { version = "0.15.19", default-features = false, features = ["toml", "y
 constant_time_eq = "0.4"
 coyote.path = "."
 coyote-auth-token.path = "crates/auth-token"
+coyote-authorization.path = "crates/coyote-authorization"
 coyote-cache.path = "crates/cache"
 coyote-client.path = "z-clients/rust"
 coyote-core.path = "crates/coyote-core"
