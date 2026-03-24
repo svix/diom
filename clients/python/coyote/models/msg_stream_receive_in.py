@@ -4,6 +4,8 @@ from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
+from .seek_position import SeekPosition
+
 
 class MsgStreamReceiveIn(BaseModel):
     namespace: t.Optional[str] = None
@@ -12,7 +14,7 @@ class MsgStreamReceiveIn(BaseModel):
 
     lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
 
-    default_starting_position: t.Optional[str] = Field(
+    default_starting_position: t.Optional[SeekPosition] = Field(
         default=None, alias="default_starting_position"
     )
 
@@ -28,6 +30,6 @@ class _MsgStreamReceiveIn(BaseModel):
 
     lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
 
-    default_starting_position: t.Optional[str] = Field(
+    default_starting_position: t.Optional[SeekPosition] = Field(
         default=None, alias="default_starting_position"
     )

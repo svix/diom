@@ -27,14 +27,14 @@ public class MsgStreamSeekIn_ {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
-    @JsonProperty private String position;
+    @JsonProperty private SeekPosition position;
 
     public MsgStreamSeekIn_(
         String namespace,
         String topic,
         String consumerGroup,
         Long offset,
-        String position
+        SeekPosition position
     ) {
         this.namespace = namespace;
         this.topic = topic;

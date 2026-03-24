@@ -1,9 +1,13 @@
 // this file is @generated
+import {
+    type SeekPosition,
+    SeekPositionSerializer,
+} from './seekPosition';
 
 export interface MsgStreamSeekIn {
     namespace?: string | null;
     offset?: number | null;
-    position?: string | null;
+    position?: SeekPosition | null;
 }
 
 export interface MsgStreamSeekIn_ {
@@ -11,7 +15,7 @@ export interface MsgStreamSeekIn_ {
     topic: string;
     consumerGroup: string;
     offset?: number | null;
-    position?: string | null;
+    position?: SeekPosition | null;
 }
 
 export const MsgStreamSeekInSerializer = {
@@ -22,7 +26,7 @@ export const MsgStreamSeekInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             offset: object['offset'],
-            position: object['position'],
+            position: object['position'] != null ? SeekPositionSerializer._fromJsonObject(object['position']): undefined,
         };
     },
 
@@ -33,7 +37,7 @@ export const MsgStreamSeekInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'offset': self.offset,
-            'position': self.position,
+            'position': self.position != null ? SeekPositionSerializer._toJsonObject(self.position) : undefined,
         };
     }
 }
