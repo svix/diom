@@ -84,7 +84,7 @@
         ],
         "summary": "Cluster Remove Node",
         "description": "Remove a node from the cluster.\n\nThis operation executes immediately and the node must be wiped and reset\nbefore it can safely be added to the cluster.",
-        "operationId": "v1.admin.cluster-remove-node",
+        "operationId": "v1.admin.cluster.remove-node",
         "requestBody": {
           "content": {
             "application/json": {
@@ -161,7 +161,7 @@
         ],
         "summary": "Auth Token Create",
         "description": "Create Auth Token",
-        "operationId": "v1.auth_token.create",
+        "operationId": "v1.auth-token.create",
         "requestBody": {
           "content": {
             "application/json": {
@@ -238,7 +238,7 @@
         ],
         "summary": "Auth Token Expire",
         "description": "Expire Auth Token",
-        "operationId": "v1.auth_token.expire",
+        "operationId": "v1.auth-token.expire",
         "requestBody": {
           "content": {
             "application/json": {
@@ -315,7 +315,7 @@
         ],
         "summary": "Auth Token Delete",
         "description": "Delete Auth Token",
-        "operationId": "v1.auth_token.delete",
+        "operationId": "v1.auth-token.delete",
         "requestBody": {
           "content": {
             "application/json": {
@@ -392,7 +392,7 @@
         ],
         "summary": "Auth Token Verify",
         "description": "Verify Auth Token",
-        "operationId": "v1.auth_token.verify",
+        "operationId": "v1.auth-token.verify",
         "requestBody": {
           "content": {
             "application/json": {
@@ -469,7 +469,7 @@
         ],
         "summary": "Auth Token List",
         "description": "List Auth Tokens",
-        "operationId": "v1.auth_token.list",
+        "operationId": "v1.auth-token.list",
         "requestBody": {
           "content": {
             "application/json": {
@@ -546,7 +546,7 @@
         ],
         "summary": "Auth Token Update",
         "description": "Update Auth Token",
-        "operationId": "v1.auth_token.update",
+        "operationId": "v1.auth-token.update",
         "requestBody": {
           "content": {
             "application/json": {
@@ -623,7 +623,7 @@
         ],
         "summary": "Auth Token Rotate",
         "description": "Rotate Auth Token",
-        "operationId": "v1.auth_token.rotate",
+        "operationId": "v1.auth-token.rotate",
         "requestBody": {
           "content": {
             "application/json": {
@@ -700,7 +700,7 @@
         ],
         "summary": "Auth Token Create Namespace",
         "description": "Create Auth Token namespace",
-        "operationId": "v1.auth_token.namespace.create",
+        "operationId": "v1.auth-token.namespace.create",
         "requestBody": {
           "content": {
             "application/json": {
@@ -777,7 +777,7 @@
         ],
         "summary": "Auth Token Get Namespace",
         "description": "Get Auth Token namespace",
-        "operationId": "v1.auth_token.namespace.get",
+        "operationId": "v1.auth-token.namespace.get",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1624,7 +1624,7 @@
         ],
         "summary": "Rate Limit Limit",
         "description": "Rate Limiter Check and Consume",
-        "operationId": "v1.rate_limit.limit",
+        "operationId": "v1.rate-limit.limit",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1701,7 +1701,7 @@
         ],
         "summary": "Rate Limit Get Remaining",
         "description": "Rate Limiter Get Remaining",
-        "operationId": "v1.rate_limit.get_remaining",
+        "operationId": "v1.rate-limit.get-remaining",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1778,7 +1778,7 @@
         ],
         "summary": "Rate Limit Reset",
         "description": "Rate Limiter Reset",
-        "operationId": "v1.rate_limit.reset",
+        "operationId": "v1.rate-limit.reset",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1855,7 +1855,7 @@
         ],
         "summary": "Rate Limit Create Namespace",
         "description": "Create rate limiter namespace",
-        "operationId": "v1.rate_limit.namespace.create",
+        "operationId": "v1.rate-limit.namespace.create",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1932,7 +1932,7 @@
         ],
         "summary": "Rate Limit Get Namespace",
         "description": "Get rate limiter namespace",
-        "operationId": "v1.rate_limit.namespace.get",
+        "operationId": "v1.rate-limit.namespace.get",
         "requestBody": {
           "content": {
             "application/json": {

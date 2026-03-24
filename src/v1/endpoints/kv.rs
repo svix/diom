@@ -265,17 +265,17 @@ pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Key Value Store");
 
     ApiRouter::new()
-        .api_route_with("/kv/set", post_with(kv_set, kv_set_operation), &tag)
-        .api_route_with("/kv/get", post_with(kv_get, kv_get_operation), &tag)
+        .api_route_with(kv_set_path, post_with(kv_set, kv_set_operation), &tag)
+        .api_route_with(kv_get_path, post_with(kv_get, kv_get_operation), &tag)
         .api_route_with(
-            "/kv/namespace/create",
+            kv_create_namespace_path,
             post_with(kv_create_namespace, kv_create_namespace_operation),
             &tag,
         )
         .api_route_with(
-            "/kv/namespace/get",
+            kv_get_namespace_path,
             post_with(kv_get_namespace, kv_get_namespace_operation),
             &tag,
         )
-        .api_route_with("/kv/delete", post_with(kv_del, kv_del_operation), &tag)
+        .api_route_with(kv_del_path, post_with(kv_del, kv_del_operation), &tag)
 }

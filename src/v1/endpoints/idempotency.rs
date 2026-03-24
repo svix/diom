@@ -249,22 +249,22 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/idempotency/start",
+            idempotency_start_path,
             post_with(idempotency_start, idempotency_start_operation),
             &tag,
         )
         .api_route_with(
-            "/idempotency/complete",
+            idempotency_complete_path,
             post_with(idempotency_complete, idempotency_complete_operation),
             &tag,
         )
         .api_route_with(
-            "/idempotency/abort",
+            idempotency_abort_path,
             post_with(idempotency_abort, idempotency_abort_operation),
             &tag,
         )
         .api_route_with(
-            "/idempotency/namespace/create",
+            idempotency_create_namespace_path,
             post_with(
                 idempotency_create_namespace,
                 idempotency_create_namespace_operation,
@@ -272,7 +272,7 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/idempotency/namespace/get",
+            idempotency_get_namespace_path,
             post_with(
                 idempotency_get_namespace,
                 idempotency_get_namespace_operation,

@@ -256,27 +256,27 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/cache/set",
+            cache_set_path,
             post_with(cache_set, cache_set_operation),
             &tag,
         )
         .api_route_with(
-            "/cache/get",
+            cache_get_path,
             post_with(cache_get, cache_get_operation),
             &tag,
         )
         .api_route_with(
-            "/cache/namespace/create",
+            cache_create_namespace_path,
             post_with(cache_create_namespace, cache_create_namespace_operation),
             &tag,
         )
         .api_route_with(
-            "/cache/namespace/get",
+            cache_get_namespace_path,
             post_with(cache_get_namespace, cache_get_namespace_operation),
             &tag,
         )
         .api_route_with(
-            "/cache/delete",
+            cache_del_path,
             post_with(cache_del, cache_del_operation),
             &tag,
         )

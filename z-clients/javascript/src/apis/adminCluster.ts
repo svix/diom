@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type ClusterRemoveNodeIn,
+    ClusterRemoveNodeInSerializer,
+} from '../models/clusterRemoveNodeIn';
+import {
+    type ClusterRemoveNodeOut,
+    ClusterRemoveNodeOutSerializer,
+} from '../models/clusterRemoveNodeOut';
+import {
     type ClusterStatusOut,
     ClusterStatusOutSerializer,
 } from '../models/clusterStatusOut';
@@ -18,6 +26,25 @@ export class AdminCluster {
         return request.send(
             this.requestCtx,
             ClusterStatusOutSerializer._fromJsonObject,
+        );
+    }/**
+* Remove a node from the cluster.
+* 
+* This operation executes immediately and the node must be wiped and reset
+* before it can safely be added to the cluster.
+*/
+    public removeNode(
+        clusterRemoveNodeIn: ClusterRemoveNodeIn,
+    ): Promise<ClusterRemoveNodeOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/admin/cluster/remove-node");
+
+        request.setBody(
+            ClusterRemoveNodeInSerializer._toJsonObject(clusterRemoveNodeIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            ClusterRemoveNodeOutSerializer._fromJsonObject,
         );
     }
 }

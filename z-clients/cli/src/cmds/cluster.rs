@@ -154,7 +154,8 @@ async fn remove_node(args: RemoveNodeArgs, client: &CoyoteClient) -> anyhow::Res
     );
     client
         .admin()
-        .cluster_remove_node(ClusterRemoveNodeIn {
+        .cluster()
+        .remove_node(ClusterRemoveNodeIn {
             node_id: args.node_id,
         })
         .await?;

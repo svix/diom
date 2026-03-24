@@ -99,7 +99,7 @@ pub struct AuthTokenCreateOut {
 }
 
 /// Create Auth Token
-#[aide_annotate(op_id = "v1.auth_token.create")]
+#[aide_annotate(op_id = "v1.auth-token.create")]
 async fn auth_token_create(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -145,7 +145,7 @@ pub struct AuthTokenExpireIn {
 pub struct AuthTokenExpireOut {}
 
 /// Expire Auth Token
-#[aide_annotate(op_id = "v1.auth_token.expire")]
+#[aide_annotate(op_id = "v1.auth-token.expire")]
 async fn auth_token_expire(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -182,7 +182,7 @@ impl From<DeleteResponseData> for AuthTokenDeleteOut {
 }
 
 /// Delete Auth Token
-#[aide_annotate(op_id = "v1.auth_token.delete")]
+#[aide_annotate(op_id = "v1.auth-token.delete")]
 async fn auth_token_delete(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -210,7 +210,7 @@ pub struct AuthTokenVerifyOut {
 }
 
 /// Verify Auth Token
-#[aide_annotate(op_id = "v1.auth_token.verify")]
+#[aide_annotate(op_id = "v1.auth-token.verify")]
 async fn auth_token_verify(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -246,7 +246,7 @@ pub struct AuthTokenListIn {
 pub type AuthTokenListOut = ListResponse<AuthTokenOut>;
 
 /// List Auth Tokens
-#[aide_annotate(op_id = "v1.auth_token.list")]
+#[aide_annotate(op_id = "v1.auth-token.list")]
 async fn auth_token_list(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -290,7 +290,7 @@ pub struct AuthTokenUpdateIn {
 pub struct AuthTokenUpdateOut {}
 
 /// Update Auth Token
-#[aide_annotate(op_id = "v1.auth_token.update")]
+#[aide_annotate(op_id = "v1.auth-token.update")]
 async fn auth_token_update(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -334,7 +334,7 @@ pub struct AuthTokenRotateOut {
 }
 
 /// Rotate Auth Token
-#[aide_annotate(op_id = "v1.auth_token.rotate")]
+#[aide_annotate(op_id = "v1.auth-token.rotate")]
 async fn auth_token_rotate(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -401,7 +401,7 @@ struct AuthTokenCreateNamespaceOut {
 }
 
 /// Create Auth Token namespace
-#[aide_annotate(op_id = "v1.auth_token.namespace.create")]
+#[aide_annotate(op_id = "v1.auth-token.namespace.create")]
 async fn auth_token_create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AuthTokenCreateNamespaceIn>,
@@ -417,7 +417,7 @@ async fn auth_token_create_namespace(
 }
 
 /// Get Auth Token namespace
-#[aide_annotate(op_id = "v1.auth_token.namespace.get")]
+#[aide_annotate(op_id = "v1.auth-token.namespace.get")]
 async fn auth_token_get_namespace(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -443,42 +443,42 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/auth-token/create",
+            auth_token_create_path,
             post_with(auth_token_create, auth_token_create_operation),
             &tag,
         )
         .api_route_with(
-            "/auth-token/expire",
+            auth_token_expire_path,
             post_with(auth_token_expire, auth_token_expire_operation),
             &tag,
         )
         .api_route_with(
-            "/auth-token/delete",
+            auth_token_delete_path,
             post_with(auth_token_delete, auth_token_delete_operation),
             &tag,
         )
         .api_route_with(
-            "/auth-token/verify",
+            auth_token_verify_path,
             post_with(auth_token_verify, auth_token_verify_operation),
             &tag,
         )
         .api_route_with(
-            "/auth-token/list",
+            auth_token_list_path,
             post_with(auth_token_list, auth_token_list_operation),
             &tag,
         )
         .api_route_with(
-            "/auth-token/update",
+            auth_token_update_path,
             post_with(auth_token_update, auth_token_update_operation),
             &tag,
         )
         .api_route_with(
-            "/auth-token/rotate",
+            auth_token_rotate_path,
             post_with(auth_token_rotate, auth_token_rotate_operation),
             &tag,
         )
         .api_route_with(
-            "/auth-token/namespace/create",
+            auth_token_create_namespace_path,
             post_with(
                 auth_token_create_namespace,
                 auth_token_create_namespace_operation,
@@ -486,7 +486,7 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/auth-token/namespace/get",
+            auth_token_get_namespace_path,
             post_with(auth_token_get_namespace, auth_token_get_namespace_operation),
             &tag,
         )
