@@ -32,7 +32,6 @@ constant_time_eq.workspace = true
 coyote-auth-token.workspace = true
 coyote-authorization.workspace = true
 coyote-cache.workspace = true
-coyote-client.workspace = true
 coyote-core.workspace = true
 coyote-derive.workspace = true
 coyote-error.workspace = true
@@ -221,7 +220,6 @@ url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
 which = "8"
-yaml_serde = "0.10.3"
 zip = "7"
 
 [workspace.lints.rust]

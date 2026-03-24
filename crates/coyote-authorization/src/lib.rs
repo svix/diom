@@ -12,6 +12,13 @@ impl RoleId {
         Self("admin".to_owned())
     }
 
+    /// Role used by requests to the internal API server.
+    ///
+    /// Might be split into multiple roles down the line.
+    pub fn operator() -> Self {
+        Self("operator".to_owned())
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
