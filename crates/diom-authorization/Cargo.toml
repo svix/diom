@@ -1,0 +1,13 @@
+[package]
+name = "diom-authorization"
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+schemars.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

@@ -8,6 +8,7 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
+use diom_authorization::RoleId;
 use diom_id::AuthTokenId;
 use tracing::Span;
 
@@ -33,8 +34,7 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
 pub struct Permissions {
     // pub scopes: ScopePermissions,
     /// The role of the requester
-    /// FIXME: probably want to use the right type.
-    pub role: String,
+    pub role: RoleId,
     /// The auth token id, if we used auth token
     pub auth_token_id: Option<AuthTokenId>,
 }
@@ -77,7 +77,7 @@ async fn authorization_inner(
         && constant_time_eq(admin_token, token)
     {
         Permissions {
-            role: "admin".to_owned(),
+            role: RoleId::admin(),
             auth_token_id: None,
         }
     } else {
