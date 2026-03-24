@@ -2,7 +2,7 @@ package coyote
 
 // This file is @generated DO NOT EDIT
 
-import coyote_models "github.com/svix/coyote/clients/go/internal/models"
+import coyote_models "github.com/svix/coyote/z-clients/go/internal/models"
 
 type (
 	AuthTokenCreateIn             = coyote_models.AuthTokenCreateIn
