@@ -32,7 +32,6 @@ constant_time_eq.workspace = true
 diom-auth-token.workspace = true
 diom-authorization.workspace = true
 diom-cache.workspace = true
-diom-client.workspace = true
 diom-core.workspace = true
 diom-derive.workspace = true
 diom-error.workspace = true
@@ -221,7 +220,6 @@ url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
 which = "8"
-yaml_serde = "0.10.3"
 zip = "7"
 
 [workspace.lints.rust]

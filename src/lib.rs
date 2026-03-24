@@ -11,18 +11,23 @@ use std::{
     time::Duration,
 };
 
-use ::serde::Serialize;
+use ::serde::{Serialize, de::DeserializeOwned};
 use aide::axum::ApiRouter;
 use axum::{
     Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
     serve::ListenerExt as _,
 };
-use diom_client::DiomClient;
+use diom_authorization::RoleId;
 use diom_core::Monotime;
 use diom_error::Error;
+use diom_proto::{InternalClient, InternalRequest, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::metrics::Meter;
-use tokio::{net::TcpListener, sync::Barrier};
+use tokio::{
+    net::TcpListener,
+    sync::{Barrier, mpsc},
+};
+use tower::ServiceExt as _;
 use tower_http::{
     ServiceExt,
     catch_panic::CatchPanicLayer,
@@ -34,6 +39,7 @@ use tower_http::{
 use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
+        auth::Permissions,
         cluster::RaftState,
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
@@ -96,7 +102,7 @@ pub struct AppState {
     pub request_metrics: Arc<RequestMetrics>,
     pub conn_metrics: Arc<ConnectionMetrics>,
 
-    pub diom_client: DiomClient,
+    internal_client: InternalClient,
 
     #[allow(unused)]
     pub(crate) time: Monotime,
@@ -183,8 +189,52 @@ async fn run_interserver(
     raft.raft.shutdown().await.unwrap();
 }
 
+async fn run_internal(
+    api_router: axum::Router,
+    mut internal_req_rx: mpsc::Receiver<InternalRequest>,
+) {
+    let svc = api_router
+        .layer((
+            TraceLayer::new_for_http()
+                .make_span_with(AxumOtelSpanCreator)
+                .on_response(AxumOtelOnResponse)
+                .on_failure(AxumOtelOnFailure),
+            middleware::from_fn(diom_proto::capture_accept_hdr),
+            CatchPanicLayer::custom(handle_panic),
+        ))
+        // It is important that this service wraps the router instead of being
+        // applied via `Router::layer`, as it would run after routing then.
+        .trim_trailing_slash();
+
+    // FIXME: Do we want to delay graceful shutdown of the internal API server
+    //        a little compared to public / inter-server?
+    let shutdown_tok = shutting_down_token();
+    while let Some(Some(mut req)) = shutdown_tok
+        .run_until_cancelled(internal_req_rx.recv())
+        .await
+    {
+        // FIXME: Do we want to limit the maximum number of concurrently-running internal requests?
+        let svc = svc.clone();
+        tokio::spawn(async move {
+            req.inner.extensions_mut().insert(Permissions {
+                role: RoleId::operator(),
+                auth_token_id: None,
+            });
+
+            // FIXME: Do we want to cancel request handling when the response channel is closed?
+            //        As-is, we always complete request processing even if the internal caller
+            //        loses interest (e.g. because it is cancelled itself).
+            let response = svc
+                .oneshot(req.inner)
+                .await
+                .unwrap_or_else(|never| match never {});
+            _ = req.response_tx.send(response);
+        });
+    }
+}
+
 impl AppState {
-    fn new(cfg: Configuration, time: Monotime) -> Self {
+    fn new(cfg: Configuration, time: Monotime, internal_client: InternalClient) -> Self {
         let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
         let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
 
@@ -203,13 +253,6 @@ impl AppState {
         if listen_addr.ip().is_unspecified() {
             listen_addr.set_ip(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST));
         }
-        let diom_client = DiomClient::new(
-            cfg.admin_token.clone().unwrap_or_default(),
-            Some(diom_client::DiomOptions {
-                server_url: Some(format!("http://{listen_addr}")),
-                ..Default::default()
-            }),
-        );
 
         AppState {
             cfg,
@@ -219,9 +262,18 @@ impl AppState {
             meter,
             request_metrics,
             conn_metrics,
-            diom_client,
+            internal_client,
             time,
         }
+    }
+
+    /// Make a POST request to the internal API server.
+    pub async fn internal_post<T: Serialize, U: DeserializeOwned>(
+        &self,
+        path: &'static str,
+        body: &T,
+    ) -> Result<U, InternalRequestError> {
+        self.internal_client.post(path, body).await
     }
 }
 
@@ -245,8 +297,9 @@ pub async fn run_with_listeners(
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
-    // build our application with a route
-    let app_state = AppState::new(cfg.clone(), time.clone());
+    let (internal_req_tx, internal_req_rx) = mpsc::channel(1);
+    let internal_client = InternalClient::new(internal_req_tx);
+    let app_state = AppState::new(cfg.clone(), time.clone(), internal_client);
 
     let raft_state = core::cluster::initialize_raft(&cfg, app_state.clone(), time)
         .await
@@ -284,6 +337,8 @@ pub async fn run_with_listeners(
     let api_router = ApiRouter::new()
         .nest_api_service("/api/v1", v1_router)
         .finish_api(&mut openapi);
+
+    tokio::spawn(run_internal(api_router.clone(), internal_req_rx));
 
     openapi::postprocess_spec(&mut openapi);
     let docs_router = docs::router(openapi);
