@@ -19,7 +19,20 @@ impl Workers {
         {
             tracing::debug!("spawning KV module worker");
             let state = state.state_machine.kv_store().await;
+            let time = time.clone();
             self.spawn(diom_kv::AllNodesWorker::new(state, time));
+        }
+        {
+            tracing::debug!("spawning cache module worker");
+            let state = state.state_machine.cache_store().await;
+            let time = time.clone();
+            self.spawn(diom_cache::AllNodesWorker::new(state, time));
+        }
+        {
+            tracing::debug!("spawning idempotency module worker");
+            let state = state.state_machine.idempotency_store().await;
+            let time = time.clone();
+            self.spawn(diom_idempotency::AllNodesWorker::new(state, time));
         }
     }
 

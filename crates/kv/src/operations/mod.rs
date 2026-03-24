@@ -1,11 +1,9 @@
 use crate::State;
 
-mod clear_expired;
 mod create_namespace;
 mod delete;
 mod set;
 
-pub use clear_expired::ClearExpiredOperation;
 pub use create_namespace::{CreateKvOperation, CreateKvResponseData};
 pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::{SetOperation, SetResponseData};
@@ -23,7 +21,6 @@ raft_module_operations!(
         Set(SetOperation) -> SetResponseData,
         Delete(DeleteOperation) -> DeleteResponseData,
         CreateKv(CreateKvOperation) -> CreateKvResponseData,
-        ClearExpired(ClearExpiredOperation) -> (),
     },
     state = KvRaftState<'_>,
 );
@@ -34,7 +31,6 @@ impl KvOperation {
             Self::Set(op) => Some(&op.key),
             Self::Delete(op) => Some(&op.key),
             Self::CreateKv(op) => Some(&op.name),
-            Self::ClearExpired(_) => None,
         }
     }
 }
