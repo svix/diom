@@ -65,7 +65,9 @@ jobs:
       security-events: write
 
   svix-cloud-deploy:
-    needs: docker_publish_operator
+    needs:
+      - docker_publish_server
+      - docker_publish_operator
     permissions:
       contents: read
       packages: read
