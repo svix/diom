@@ -26,7 +26,6 @@ use super::{
     {% set enum_type_name = type_name %}
 {% endif %}
 
-#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "{{ type.discriminator_field }}", content = "{{ type.content_field }}")]
 pub enum {{ enum_type_name }} {

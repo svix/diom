@@ -3,7 +3,6 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-#[non_exhaustive]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum SeekPosition {
     #[serde(rename = "earliest")]
