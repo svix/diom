@@ -2,6 +2,7 @@
 
 use std::{fmt, str::FromStr};
 
+use diom_id::Module;
 use itertools::Itertools;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
@@ -12,16 +13,6 @@ pub struct ResourcePattern {
     pub module: Module,
     pub namespace: NamespacePattern,
     pub key: KeyPattern,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum Module {
-    AuthToken,
-    Cache,
-    Idempotency,
-    Kv,
-    Msgs,
-    RateLimit,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -82,37 +73,6 @@ impl<'de> Deserialize<'de> for ResourcePattern {
     {
         let s = String::deserialize(deserializer)?;
         s.parse().map_err(de::Error::custom)
-    }
-}
-
-impl fmt::Display for Module {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::AuthToken => "auth_token",
-            Self::Cache => "cache",
-            Self::Idempotency => "idempotency",
-            Self::Kv => "kv",
-            Self::Msgs => "msgs",
-            Self::RateLimit => "rate_limit",
-        };
-
-        f.write_str(s)
-    }
-}
-
-impl FromStr for Module {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "auth_token" => Ok(Self::AuthToken),
-            "cache" => Ok(Self::Cache),
-            "idempotency" => Ok(Self::Idempotency),
-            "kv" => Ok(Self::Kv),
-            "msgs" => Ok(Self::Msgs),
-            "rate_limit" => Ok(Self::RateLimit),
-            _ => Err("unknown module"),
-        }
     }
 }
 

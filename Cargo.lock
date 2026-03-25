@@ -1047,6 +1047,7 @@ dependencies = [
 name = "diom-authorization"
 version = "0.0.1"
 dependencies = [
+ "diom-id",
  "itertools 0.14.0",
  "schemars 1.2.1",
  "serde",
