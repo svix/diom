@@ -5,6 +5,7 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use coyote_authorization::RequestedOperation;
 use coyote_cache::{
     CacheModel,
     operations::{CreateCacheOperation, DeleteOperation, SetOperation},
@@ -12,18 +13,42 @@ use coyote_cache::{
 use coyote_core::types::{Consistency, DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
+use coyote_id::Module;
 use coyote_kv::kvcontroller::KvModel;
 use coyote_namespace::{
     Namespace,
     entities::{CacheConfig, EvictionPolicy, NamespaceName},
 };
-use coyote_proto::MsgPackOrJson;
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
+
+fn cache_access_metadata<'a>(
+    ns: Option<&'a str>,
+    key: &'a EntityKey,
+    action: &'static str,
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::Cache,
+        namespace: ns,
+        key: Some(key.as_str()),
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                cache_access_metadata(self.namespace.as_deref(), &self.key, $action)
+            }
+        }
+    };
+}
 
 pub type CacheNamespace = Namespace<CacheConfig>;
 
@@ -40,6 +65,8 @@ pub struct CacheSetIn {
     /// Time to live in milliseconds
     pub ttl: DurationMs,
 }
+
+request_input!(CacheSetIn, "Set");
 
 impl CacheSetIn {
     fn into_model(self, when: Timestamp) -> CacheModel {
@@ -68,6 +95,8 @@ pub struct CacheGetIn {
     pub consistency: Consistency,
 }
 
+request_input!(CacheGetIn, "Get");
+
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheGetOut {
     /// Time of expiry
@@ -95,6 +124,8 @@ pub struct CacheDeleteIn {
     pub key: EntityKey,
 }
 
+request_input!(CacheDeleteIn, "Delete");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheDeleteOut {
     pub success: bool,
@@ -117,6 +148,8 @@ pub(crate) struct CacheCreateNamespaceIn {
     #[serde(default)]
     pub eviction_policy: EvictionPolicy,
 }
+
+admin_request_input!(CacheCreateNamespaceIn);
 
 impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
     fn from(v: CacheCreateNamespaceIn) -> Self {
@@ -209,6 +242,8 @@ async fn cache_del(
 struct CacheGetNamespaceIn {
     pub name: NamespaceName,
 }
+
+admin_request_input!(CacheGetNamespaceIn);
 
 /// Create cache namespace
 #[aide_annotate(op_id = "v1.cache.namespace.create")]

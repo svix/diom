@@ -5,11 +5,13 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use coyote_authorization::RequestedOperation;
 use coyote_core::types::{DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
+use coyote_id::Module;
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::MsgPackOrJson;
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use coyote_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -22,6 +24,29 @@ use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openap
 pub use coyote_rate_limit::TokenBucket;
 
 pub use coyote_rate_limit::RateLimitNamespace;
+
+fn rate_limit_metadata<'a>(
+    ns: Option<&'a str>,
+    key: &'a EntityKey,
+    action: &'static str,
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::RateLimit,
+        namespace: ns,
+        key: Some(key.as_str()),
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                rate_limit_metadata(self.namespace.as_deref(), &self.key, $action)
+            }
+        }
+    };
+}
 
 impl From<RateLimitTokenBucketConfig> for TokenBucket {
     fn from(val: RateLimitTokenBucketConfig) -> Self {
@@ -70,6 +95,8 @@ pub struct RateLimitCheckIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
+request_input!(RateLimitCheckIn, "Check");
+
 fn default_tokens() -> u64 {
     1
 }
@@ -99,6 +126,8 @@ pub struct RateLimitGetRemainingIn {
     #[validate(nested)]
     pub config: RateLimitTokenBucketConfig,
 }
+
+request_input!(RateLimitGetRemainingIn, "Read");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitGetRemainingOut {
@@ -179,6 +208,8 @@ pub struct RateLimitResetIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
+request_input!(RateLimitResetIn, "Reset");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct RateLimitResetOut {}
 
@@ -209,6 +240,8 @@ pub(crate) struct RateLimitCreateNamespaceIn {
     pub max_storage_bytes: Option<NonZeroU64>,
 }
 
+admin_request_input!(RateLimitCreateNamespaceIn);
+
 impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
     fn from(v: RateLimitCreateNamespaceIn) -> Self {
         CreateRateLimitOperation::new(v.name, v.max_storage_bytes)
@@ -228,6 +261,8 @@ struct RateLimitCreateNamespaceOut {
 struct RateLimitGetNamespaceIn {
     pub name: NamespaceName,
 }
+
+admin_request_input!(RateLimitGetNamespaceIn);
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceOut {

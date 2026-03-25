@@ -3,9 +3,11 @@ use std::num::NonZeroU16;
 use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use coyote_authorization::RequestedOperation;
 use coyote_core::types::DurationMs;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, OptionExt, Result, ResultExt};
+use coyote_id::Module;
 use coyote_msgs::{
     MsgsNamespace,
     entities::{
@@ -20,11 +22,34 @@ use coyote_msgs::{
     },
 };
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::MsgPackOrJson;
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
+
+fn msgs_metadata<'a>(
+    ns: Option<&'a str>,
+    tp: &'a TopicName,
+    action: &'static str,
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::Msgs,
+        namespace: ns,
+        key: Some(tp),
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                msgs_metadata(self.namespace.as_deref(), self.topic.name(), $action)
+            }
+        }
+    };
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
@@ -33,6 +58,8 @@ pub(crate) struct MsgNamespaceCreateIn {
     #[serde(default)]
     pub retention: Retention,
 }
+
+admin_request_input!(MsgNamespaceCreateIn);
 
 impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
     fn from(v: MsgNamespaceCreateIn) -> Self {
@@ -70,6 +97,8 @@ async fn create_namespace(
 struct MsgNamespaceGetIn {
     pub name: NamespaceName,
 }
+
+admin_request_input!(MsgNamespaceGetIn);
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgNamespaceGetOut {
@@ -118,6 +147,8 @@ struct MsgPublishIn {
     pub topic: TopicIn,
     pub msgs: Vec<coyote_msgs::entities::MsgIn>,
 }
+
+request_input!(MsgPublishIn, "Publish");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgPublishOutTopic {
@@ -186,6 +217,8 @@ struct MsgStreamReceiveIn {
     pub default_starting_position: SeekPosition,
 }
 
+request_input!(MsgStreamReceiveIn, "Receive");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgStreamReceiveOut {
     pub msgs: Vec<StreamMsgOut>,
@@ -246,6 +279,8 @@ struct MsgStreamCommitIn {
     pub offset: u64,
 }
 
+request_input!(MsgStreamCommitIn, "Commit");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgStreamCommitOut {}
 
@@ -285,6 +320,8 @@ struct MsgStreamSeekIn {
     pub offset: Option<Offset>,
     pub position: Option<SeekPosition>,
 }
+
+request_input!(MsgStreamSeekIn, "Seek");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgStreamSeekOut {}
@@ -342,6 +379,8 @@ struct MsgQueueReceiveIn {
     #[serde(default = "default_queue_lease_duration_ms")]
     pub lease_duration_ms: DurationMs,
 }
+
+request_input!(MsgQueueReceiveIn, "Receive");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueReceiveOut {
@@ -402,6 +441,8 @@ struct MsgQueueAckIn {
     pub msg_ids: Vec<MsgId>,
 }
 
+request_input!(MsgQueueAckIn, "Ack");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueAckOut {}
 
@@ -441,6 +482,8 @@ struct MsgQueueConfigureIn {
     pub retry_schedule: Vec<u64>,
     pub dlq_topic: Option<TopicName>,
 }
+
+request_input!(MsgQueueConfigureIn, "Configure");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueConfigureOut {
@@ -492,6 +535,8 @@ struct MsgQueueNackIn {
     pub msg_ids: Vec<MsgId>,
 }
 
+request_input!(MsgQueueNackIn, "Nack");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueNackOut {}
 
@@ -530,6 +575,8 @@ struct MsgQueueRedriveDlqIn {
     pub consumer_group: ConsumerGroup,
 }
 
+request_input!(MsgQueueRedriveDlqIn, "RedriveDlq");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueRedriveDlqOut {}
 
@@ -563,6 +610,8 @@ struct MsgTopicConfigureIn {
     pub topic: TopicName,
     pub partitions: u16,
 }
+
+request_input!(MsgTopicConfigureIn, "Configure");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgTopicConfigureOut {
