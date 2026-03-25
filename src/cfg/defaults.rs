@@ -44,7 +44,7 @@ pub(super) fn cluster_replication_request_timeout() -> Duration {
 }
 
 pub(super) fn cluster_discovery_request_timeout() -> Duration {
-    Duration::from_millis(100)
+    Duration::from_secs(3)
 }
 
 pub(super) fn cluster_discovery_timeout() -> Duration {
