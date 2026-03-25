@@ -25,7 +25,8 @@ async fn stream_receive_returns_published_messages() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-recv:my-topic",
+            "namespace": "ns-recv",
+            "topic": "my-topic",
             "consumer_group": "cg1",
         }))
         .await?
@@ -34,7 +35,8 @@ async fn stream_receive_returns_published_messages() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-recv:my-topic",
+            "namespace": "ns-recv",
+            "topic": "my-topic",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "user-1" },
                 { "value": "b".as_bytes(), "key": "user-1" },
@@ -47,7 +49,8 @@ async fn stream_receive_returns_published_messages() -> TestResult {
     let response = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-recv:my-topic",
+            "namespace": "ns-recv",
+            "topic": "my-topic",
             "consumer_group": "cg1",
         }))
         .await?
@@ -61,7 +64,7 @@ async fn stream_receive_returns_published_messages() -> TestResult {
         assert!(m["offset"].is_u64());
         let topic = m["topic"].assert_str();
         assert!(
-            topic.starts_with("ns-recv:my-topic~"),
+            topic.starts_with("my-topic~"),
             "topic should be partition-level: {topic}"
         );
         assert!(!m["value"].is_null());
@@ -94,7 +97,8 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-nodup:t1",
+            "namespace": "ns-nodup",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -103,7 +107,8 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-nodup:t1",
+            "namespace": "ns-nodup",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -116,7 +121,8 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-nodup:t1",
+            "namespace": "ns-nodup",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -128,14 +134,14 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     let _r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-nodup:t1",
+            "namespace": "ns-nodup",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
         .expect(StatusCode::BAD_REQUEST);
 
-    // Commit the first batch to unlock the partition.
-    // The response topic already includes the namespace, so we can pass it directly.
+    // Commit the first batch to unlock the partition (same namespace as receive).
     let msgs = r1["msgs"].assert_array();
     let partition_topic = msgs[0]["topic"].assert_str();
     let last_offset = msgs[1]["offset"].assert_u64();
@@ -143,6 +149,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
+            "namespace": "ns-nodup",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -154,7 +161,8 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-nodup:t1",
+            "namespace": "ns-nodup",
+            "topic": "t1",
             "msgs": [
                 { "value": "c".as_bytes(), "key": "k1" },
             ],
@@ -166,7 +174,8 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     let r3 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-nodup:t1",
+            "namespace": "ns-nodup",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -195,7 +204,8 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-cg:t1",
+            "namespace": "ns-cg",
+            "topic": "t1",
             "consumer_group": "group-a",
         }))
         .await?
@@ -204,7 +214,8 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-cg:t1",
+            "namespace": "ns-cg",
+            "topic": "t1",
             "consumer_group": "group-b",
         }))
         .await?
@@ -213,7 +224,8 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-cg:t1",
+            "namespace": "ns-cg",
+            "topic": "t1",
             "msgs": [
                 { "value": "x".as_bytes(), "key": "k1" },
                 { "value": "y".as_bytes(), "key": "k1" },
@@ -225,7 +237,8 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     let r_a = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-cg:t1",
+            "namespace": "ns-cg",
+            "topic": "t1",
             "consumer_group": "group-a",
         }))
         .await?
@@ -235,7 +248,8 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     let r_b = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-cg:t1",
+            "namespace": "ns-cg",
+            "topic": "t1",
             "consumer_group": "group-b",
         }))
         .await?
@@ -295,7 +309,8 @@ async fn stream_receive_with_defaults() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-def:t1",
+            "namespace": "ns-def",
+            "topic": "t1",
             "consumer_group": "cg-default",
         }))
         .await?
@@ -304,7 +319,8 @@ async fn stream_receive_with_defaults() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-def:t1",
+            "namespace": "ns-def",
+            "topic": "t1",
             "msgs": [{ "value": "hello".as_bytes(), "key": "k1" }],
         }))
         .await?
@@ -314,7 +330,8 @@ async fn stream_receive_with_defaults() -> TestResult {
     let response = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-def:t1",
+            "namespace": "ns-def",
+            "topic": "t1",
             "consumer_group": "cg-default",
         }))
         .await?
@@ -345,7 +362,8 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-lock:t1",
+            "namespace": "ns-lock",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -354,7 +372,8 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-lock:t1",
+            "namespace": "ns-lock",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -370,7 +389,8 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     let r_a = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-lock:t1",
+            "namespace": "ns-lock",
+            "topic": "t1",
             "consumer_group": "cg1",
             "batch_size": 2,
         }))
@@ -383,14 +403,14 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     let _ = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-lock:t1",
+            "namespace": "ns-lock",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
         .expect(StatusCode::BAD_REQUEST);
 
     // Consumer A commits — unlocks the partition.
-    // The response topic already includes the namespace.
     let msgs_a = r_a["msgs"].assert_array();
     let partition_topic = msgs_a[0]["topic"].assert_str();
     let last_offset = msgs_a[1]["offset"].assert_u64();
@@ -398,6 +418,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
+            "namespace": "ns-lock",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -409,7 +430,8 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     let r_b = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-lock:t1",
+            "namespace": "ns-lock",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -442,7 +464,8 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-concurrent:t1",
+            "namespace": "ns-concurrent",
+            "topic": "t1",
             "partitions": 16,
         }))
         .await?
@@ -452,7 +475,8 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-concurrent:t1",
+            "namespace": "ns-concurrent",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -462,7 +486,8 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-concurrent:t1",
+            "namespace": "ns-concurrent",
+            "topic": "t1",
             "msgs": [
                 { "value": "a1".as_bytes(), "key": "k1" },
                 { "value": "a2".as_bytes(), "key": "k1" },
@@ -483,7 +508,8 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     let r_a = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-concurrent:t1",
+            "namespace": "ns-concurrent",
+            "topic": "t1",
             "consumer_group": "cg1",
             "batch_size": 5,
         }))
@@ -498,7 +524,8 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     let r_b = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-concurrent:t1",
+            "namespace": "ns-concurrent",
+            "topic": "t1",
             "consumer_group": "cg1",
             "batch_size": 10,
         }))
@@ -549,7 +576,8 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-commit:t1",
+            "namespace": "ns-commit",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -558,7 +586,8 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-commit:t1",
+            "namespace": "ns-commit",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -572,7 +601,8 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-commit:t1",
+            "namespace": "ns-commit",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -582,8 +612,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let msgs = r1["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
-    // Extract partition-level topic and last offset in the batch.
-    // The response topic already includes the namespace.
+    // Extract partition-level topic and last offset in the batch (commit uses the same namespace).
     let partition_topic = msgs[0]["topic"].assert_str();
     let last_offset = msgs[2]["offset"].assert_u64();
 
@@ -591,6 +620,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
+            "namespace": "ns-commit",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -602,7 +632,8 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-commit:t1",
+            "namespace": "ns-commit",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -614,7 +645,8 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-commit:t1",
+            "namespace": "ns-commit",
+            "topic": "t1",
             "msgs": [
                 { "value": "d".as_bytes(), "key": "k1" },
             ],
@@ -628,7 +660,8 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let r3 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-commit:t1",
+            "namespace": "ns-commit",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -657,7 +690,8 @@ async fn commit_requires_partition_topic() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
-            "topic": "ns-commit-pt:t1",
+            "namespace": "ns-commit-pt",
+            "topic": "t1",
             "consumer_group": "cg1",
             "offset": 0,
         }))
@@ -707,7 +741,8 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-race:t1",
+            "namespace": "ns-race",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -717,7 +752,8 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-race:t1",
+            "namespace": "ns-race",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -734,9 +770,10 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
         handles.push(tokio::spawn(async move {
             c.post("v1.msgs.stream.receive")
                 .json(json!({
-                    "topic": "ns-race:t1",
-                    "consumer_group": "cg1",
-                }))
+                        "namespace": "ns-race",
+                "topic": "t1",
+                        "consumer_group": "cg1",
+                    }))
                 .await
         }));
     }
@@ -780,7 +817,8 @@ async fn partial_commit_preserves_lease() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-partial:t1",
+            "namespace": "ns-partial",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -790,7 +828,8 @@ async fn partial_commit_preserves_lease() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-partial:t1",
+            "namespace": "ns-partial",
+            "topic": "t1",
             "msgs": (0..10)
                 .map(|i| json!({ "value": format!("msg-{i}").as_bytes(), "key": "k1" }))
                 .collect::<Vec<_>>(),
@@ -802,7 +841,8 @@ async fn partial_commit_preserves_lease() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-partial:t1",
+            "namespace": "ns-partial",
+            "topic": "t1",
             "consumer_group": "cg1",
             "batch_size": 5,
         }))
@@ -821,6 +861,7 @@ async fn partial_commit_preserves_lease() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
+            "namespace": "ns-partial",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": first_offset,
@@ -832,7 +873,8 @@ async fn partial_commit_preserves_lease() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-partial:t1",
+            "namespace": "ns-partial",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -842,6 +884,7 @@ async fn partial_commit_preserves_lease() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
+            "namespace": "ns-partial",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -853,7 +896,8 @@ async fn partial_commit_preserves_lease() -> TestResult {
     let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-partial:t1",
+            "namespace": "ns-partial",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -886,7 +930,8 @@ async fn new_consumer_group_starts_from_latest() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-latest:t1",
+            "namespace": "ns-latest",
+            "topic": "t1",
             "msgs": (0..5)
                 .map(|i| json!({ "value": format!("old-{i}").as_bytes(), "key": "k1" }))
                 .collect::<Vec<_>>(),
@@ -898,7 +943,8 @@ async fn new_consumer_group_starts_from_latest() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-latest:t1",
+            "namespace": "ns-latest",
+            "topic": "t1",
             "consumer_group": "cg-new",
         }))
         .await?
@@ -914,7 +960,8 @@ async fn new_consumer_group_starts_from_latest() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-latest:t1",
+            "namespace": "ns-latest",
+            "topic": "t1",
             "msgs": (0..3)
                 .map(|i| json!({ "value": format!("new-{i}").as_bytes(), "key": "k1" }))
                 .collect::<Vec<_>>(),
@@ -926,7 +973,8 @@ async fn new_consumer_group_starts_from_latest() -> TestResult {
     let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-latest:t1",
+            "namespace": "ns-latest",
+            "topic": "t1",
             "consumer_group": "cg-new",
         }))
         .await?
@@ -1046,7 +1094,8 @@ async fn default_starting_position_earliest_gets_preexisting() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-dsp:t1",
+            "namespace": "ns-dsp",
+            "topic": "t1",
             "msgs": (0..5)
                 .map(|i| json!({ "value": format!("msg-{i}").as_bytes(), "key": "k1" }))
                 .collect::<Vec<_>>(),
@@ -1058,7 +1107,8 @@ async fn default_starting_position_earliest_gets_preexisting() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-dsp:t1",
+            "namespace": "ns-dsp",
+            "topic": "t1",
             "consumer_group": "cg1",
             "default_starting_position": "earliest",
         }))

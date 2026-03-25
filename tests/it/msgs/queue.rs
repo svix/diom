@@ -24,7 +24,8 @@ async fn queue_receive_returns_published_messages() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-queue:my-topic",
+            "namespace": "ns-queue",
+            "topic": "my-topic",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -37,7 +38,8 @@ async fn queue_receive_returns_published_messages() -> TestResult {
     let response = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-queue:my-topic",
+            "namespace": "ns-queue",
+            "topic": "my-topic",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -73,7 +75,8 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-lease:t1",
+            "namespace": "ns-q-lease",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -86,7 +89,8 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-lease:t1",
+            "namespace": "ns-q-lease",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "batch_size": 1,
         }))
@@ -102,7 +106,8 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-lease:t1",
+            "namespace": "ns-q-lease",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "batch_size": 1,
         }))
@@ -118,7 +123,8 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
     let r3 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-lease:t1",
+            "namespace": "ns-q-lease",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -150,7 +156,8 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-ack:t1",
+            "namespace": "ns-q-ack",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -164,7 +171,8 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-ack:t1",
+            "namespace": "ns-q-ack",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 1000,
         }))
@@ -180,7 +188,8 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     client
         .post("v1.msgs.queue.ack")
         .json(json!({
-            "topic": "ns-q-ack:t1",
+            "namespace": "ns-q-ack",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": msg_ids,
         }))
@@ -194,7 +203,8 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-ack:t1",
+            "namespace": "ns-q-ack",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -226,7 +236,8 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-redeliver:t1",
+            "namespace": "ns-q-redeliver",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -239,7 +250,8 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-redeliver:t1",
+            "namespace": "ns-q-redeliver",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 1000,
         }))
@@ -255,7 +267,8 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-redeliver:t1",
+            "namespace": "ns-q-redeliver",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -320,7 +333,8 @@ async fn queue_starts_from_earliest() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-earliest:t1",
+            "namespace": "ns-q-earliest",
+            "topic": "t1",
             "msgs": (0..5)
                 .map(|i| json!({ "value": format!("msg-{i}").as_bytes(), "key": "k1" }))
                 .collect::<Vec<_>>(),
@@ -332,7 +346,8 @@ async fn queue_starts_from_earliest() -> TestResult {
     let response = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-earliest:t1",
+            "namespace": "ns-q-earliest",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -366,7 +381,8 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-partial:t1",
+            "namespace": "ns-q-partial",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -380,7 +396,8 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-partial:t1",
+            "namespace": "ns-q-partial",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 1000,
         }))
@@ -397,7 +414,8 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     client
         .post("v1.msgs.queue.ack")
         .json(json!({
-            "topic": "ns-q-partial:t1",
+            "namespace": "ns-q-partial",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": [first_id, last_id],
         }))
@@ -411,7 +429,8 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-partial:t1",
+            "namespace": "ns-q-partial",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -450,7 +469,8 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-concurrent:t1",
+            "namespace": "ns-q-concurrent",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -467,7 +487,8 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
     let r_a = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-concurrent:t1",
+            "namespace": "ns-q-concurrent",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "batch_size": 3,
         }))
@@ -482,7 +503,8 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
     let r_b = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-concurrent:t1",
+            "namespace": "ns-q-concurrent",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "batch_size": 3,
         }))
@@ -507,7 +529,8 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
     let r_c = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-concurrent:t1",
+            "namespace": "ns-q-concurrent",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -539,7 +562,8 @@ async fn queue_consumer_groups_independent() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-cg:t1",
+            "namespace": "ns-q-cg",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -553,7 +577,8 @@ async fn queue_consumer_groups_independent() -> TestResult {
     let r_a = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-cg:t1",
+            "namespace": "ns-q-cg",
+            "topic": "t1",
             "consumer_group": "group-a",
         }))
         .await?
@@ -568,7 +593,8 @@ async fn queue_consumer_groups_independent() -> TestResult {
     client
         .post("v1.msgs.queue.ack")
         .json(json!({
-            "topic": "ns-q-cg:t1",
+            "namespace": "ns-q-cg",
+            "topic": "t1",
             "consumer_group": "group-a",
             "msg_ids": msg_ids_a,
         }))
@@ -579,7 +605,8 @@ async fn queue_consumer_groups_independent() -> TestResult {
     let r_b = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-cg:t1",
+            "namespace": "ns-q-cg",
+            "topic": "t1",
             "consumer_group": "group-b",
         }))
         .await?
@@ -613,7 +640,8 @@ async fn nack_sends_to_dlq() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-nack:t1",
+            "namespace": "ns-q-nack",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -626,7 +654,8 @@ async fn nack_sends_to_dlq() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-nack:t1",
+            "namespace": "ns-q-nack",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 1000,
         }))
@@ -642,7 +671,8 @@ async fn nack_sends_to_dlq() -> TestResult {
     client
         .post("v1.msgs.queue.nack")
         .json(json!({
-            "topic": "ns-q-nack:t1",
+            "namespace": "ns-q-nack",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": msg_ids,
         }))
@@ -656,7 +686,8 @@ async fn nack_sends_to_dlq() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-nack:t1",
+            "namespace": "ns-q-nack",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -689,7 +720,8 @@ async fn nack_then_redrive_makes_available() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-redrive:t1",
+            "namespace": "ns-q-redrive",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -702,7 +734,8 @@ async fn nack_then_redrive_makes_available() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-redrive:t1",
+            "namespace": "ns-q-redrive",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -718,7 +751,8 @@ async fn nack_then_redrive_makes_available() -> TestResult {
     client
         .post("v1.msgs.queue.nack")
         .json(json!({
-            "topic": "ns-q-redrive:t1",
+            "namespace": "ns-q-redrive",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": msg_ids,
         }))
@@ -729,7 +763,8 @@ async fn nack_then_redrive_makes_available() -> TestResult {
     client
         .post("v1.msgs.queue.redrive-dlq")
         .json(json!({
-            "topic": "ns-q-redrive:t1",
+            "namespace": "ns-q-redrive",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -739,7 +774,8 @@ async fn nack_then_redrive_makes_available() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-redrive:t1",
+            "namespace": "ns-q-redrive",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -816,7 +852,8 @@ async fn redrive_dlq_no_dlq_messages() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-redrive-noop:t1",
+            "namespace": "ns-q-redrive-noop",
+            "topic": "t1",
             "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
         }))
         .await?
@@ -826,7 +863,8 @@ async fn redrive_dlq_no_dlq_messages() -> TestResult {
     client
         .post("v1.msgs.queue.redrive-dlq")
         .json(json!({
-            "topic": "ns-q-redrive-noop:t1",
+            "namespace": "ns-q-redrive-noop",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -852,7 +890,8 @@ async fn configure_retry_schedule() -> TestResult {
     let response = client
         .post("v1.msgs.queue.configure")
         .json(json!({
-            "topic": "ns-q-cfg:t1",
+            "namespace": "ns-q-cfg",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "retry_schedule": [1000, 5000, 10000],
         }))
@@ -867,17 +906,18 @@ async fn configure_retry_schedule() -> TestResult {
     let response2 = client
         .post("v1.msgs.queue.configure")
         .json(json!({
-            "topic": "ns-q-cfg:t1",
+            "namespace": "ns-q-cfg",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "retry_schedule": [2000],
-            "dlq_topic": "ns-q-cfg:t1-dlq",
+            "dlq_topic": "t1-dlq",
         }))
         .await?
         .expect(StatusCode::OK)
         .json();
 
     assert_eq!(response2["retry_schedule"], json!([2000]));
-    assert_eq!(response2["dlq_topic"], json!("ns-q-cfg:t1-dlq"));
+    assert_eq!(response2["dlq_topic"], json!("t1-dlq"));
 
     Ok(())
 }
@@ -900,7 +940,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     client
         .post("v1.msgs.queue.configure")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+                "namespace": "ns-q-retry",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "retry_schedule": [1000],
         }))
@@ -910,7 +951,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+            "namespace": "ns-q-retry",
+            "topic": "t1",
             "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
         }))
         .await?
@@ -920,7 +962,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+            "namespace": "ns-q-retry",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 500,
         }))
@@ -936,7 +979,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     client
         .post("v1.msgs.queue.nack")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+            "namespace": "ns-q-retry",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": [msg_id],
         }))
@@ -947,7 +991,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+            "namespace": "ns-q-retry",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -966,7 +1011,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     let r3 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+            "namespace": "ns-q-retry",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 500,
         }))
@@ -986,7 +1032,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     client
         .post("v1.msgs.queue.nack")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+            "namespace": "ns-q-retry",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": [msg_id],
         }))
@@ -1000,7 +1047,8 @@ async fn nack_retries_before_dlq() -> TestResult {
     let r4 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-retry:t1",
+            "namespace": "ns-q-retry",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -1034,10 +1082,11 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     client
         .post("v1.msgs.queue.configure")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "retry_schedule": [1000],
-            "dlq_topic": "ns-q-dlqfwd:t1-dlq",
+            "dlq_topic": "t1-dlq",
         }))
         .await?
         .expect(StatusCode::OK);
@@ -1045,7 +1094,8 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1",
             "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
         }))
         .await?
@@ -1055,7 +1105,8 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     let r1 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 500,
         }))
@@ -1068,7 +1119,8 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     client
         .post("v1.msgs.queue.nack")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": [msg_id],
         }))
@@ -1082,7 +1134,8 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     let r2 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "lease_duration_ms": 500,
         }))
@@ -1095,7 +1148,8 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     client
         .post("v1.msgs.queue.nack")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1",
             "consumer_group": "test-cg",
             "msg_ids": [msg_id],
         }))
@@ -1107,7 +1161,8 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     let r3 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1",
             "consumer_group": "test-cg",
         }))
         .await?
@@ -1119,7 +1174,8 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     let r_dlq = client
         .post("v1.msgs.queue.receive")
         .json(json!({
-            "topic": "ns-q-dlqfwd:t1-dlq",
+            "namespace": "ns-q-dlqfwd",
+            "topic": "t1-dlq",
             "consumer_group": "test-cg",
         }))
         .await?

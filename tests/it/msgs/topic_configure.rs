@@ -24,7 +24,8 @@ async fn default_is_one_partition() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-def-part:t1",
+            "namespace": "ns-def-part",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -34,7 +35,8 @@ async fn default_is_one_partition() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-def-part:t1",
+            "namespace": "ns-def-part",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "alpha" },
                 { "value": "b".as_bytes(), "key": "beta" },
@@ -47,7 +49,8 @@ async fn default_is_one_partition() -> TestResult {
     let response = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-def-part:t1",
+            "namespace": "ns-def-part",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -61,8 +64,8 @@ async fn default_is_one_partition() -> TestResult {
     let topics: HashSet<&str> = msgs.iter().map(|m| m["topic"].assert_str()).collect();
     assert_eq!(topics.len(), 1, "all messages should be on one partition");
     assert!(
-        topics.contains("ns-def-part:t1~0"),
-        "single partition should be ns-def-part:t1~0"
+        topics.contains("t1~0"),
+        "single partition should be t1~0"
     );
 
     Ok(())
@@ -85,7 +88,8 @@ async fn configure_topic_partitions() -> TestResult {
     let response = client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-conf:t1",
+            "namespace": "ns-conf",
+            "topic": "t1",
             "partitions": 4,
         }))
         .await?
@@ -98,7 +102,8 @@ async fn configure_topic_partitions() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-conf:t1",
+            "namespace": "ns-conf",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -108,7 +113,8 @@ async fn configure_topic_partitions() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-conf:t1",
+            "namespace": "ns-conf",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "alpha" },
                 { "value": "b".as_bytes(), "key": "beta" },
@@ -121,7 +127,8 @@ async fn configure_topic_partitions() -> TestResult {
     let response = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-conf:t1",
+            "namespace": "ns-conf",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -131,14 +138,14 @@ async fn configure_topic_partitions() -> TestResult {
     let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 3);
 
-    // All partition-level topics should be within ns-conf:t1~0..ns-conf:t1~3
+    // All partition-level topics should be within t1~0..t1~3 (namespace ns-conf).
     for m in msgs {
         let topic = m["topic"].assert_str();
         assert!(
-            topic.starts_with("ns-conf:t1~"),
+            topic.starts_with("t1~"),
             "expected partition-level topic: {topic}"
         );
-        let partition: u16 = topic.strip_prefix("ns-conf:t1~").unwrap().parse()?;
+        let partition: u16 = topic.strip_prefix("t1~").unwrap().parse()?;
         assert!(partition < 4, "partition {partition} should be < 4");
     }
 
@@ -162,7 +169,8 @@ async fn cannot_decrease_partitions() -> TestResult {
     client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-dec:t1",
+            "namespace": "ns-dec",
+            "topic": "t1",
             "partitions": 4,
         }))
         .await?
@@ -172,7 +180,8 @@ async fn cannot_decrease_partitions() -> TestResult {
     client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-dec:t1",
+            "namespace": "ns-dec",
+            "topic": "t1",
             "partitions": 2,
         }))
         .await?
@@ -198,7 +207,8 @@ async fn configure_rejects_zero() -> TestResult {
     client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-zero:t1",
+            "namespace": "ns-zero",
+            "topic": "t1",
             "partitions": 0,
         }))
         .await?
@@ -224,7 +234,8 @@ async fn configure_rejects_over_max() -> TestResult {
     client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-max:t1",
+            "namespace": "ns-max",
+            "topic": "t1",
             "partitions": 65,
         }))
         .await?
@@ -271,7 +282,8 @@ async fn receive_respects_configured_partitions() -> TestResult {
     client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-recv-conf:t1",
+            "namespace": "ns-recv-conf",
+            "topic": "t1",
             "partitions": 16,
         }))
         .await?
@@ -281,7 +293,8 @@ async fn receive_respects_configured_partitions() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-recv-conf:t1",
+            "namespace": "ns-recv-conf",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -291,7 +304,8 @@ async fn receive_respects_configured_partitions() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-recv-conf:t1",
+            "namespace": "ns-recv-conf",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k2" },
@@ -303,7 +317,8 @@ async fn receive_respects_configured_partitions() -> TestResult {
     let response = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-recv-conf:t1",
+            "namespace": "ns-recv-conf",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -323,10 +338,10 @@ async fn receive_respects_configured_partitions() -> TestResult {
 
     for topic in &topics {
         assert!(
-            topic.starts_with("ns-recv-conf:t1~"),
+            topic.starts_with("t1~"),
             "expected partition-level topic: {topic}"
         );
-        let partition: u16 = topic.strip_prefix("ns-recv-conf:t1~").unwrap().parse()?;
+        let partition: u16 = topic.strip_prefix("t1~").unwrap().parse()?;
         assert!(partition < 16, "partition {partition} should be < 16");
     }
 
