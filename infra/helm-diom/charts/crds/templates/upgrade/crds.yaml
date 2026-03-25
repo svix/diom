@@ -1,0 +1,16 @@
+{{- if .Values.upgrade.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "diom.crds.upgrade.name" . }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,pre-rollback
+    "helm.sh/hook-weight": "-2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    {{- include "diom.crds.upgrade.labels" . | nindent 4 }}
+data:
+  crd.json: |
+{{ .Files.Get "crds/diomclusters.json" | indent 4 }}
+{{- end }}
