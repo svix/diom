@@ -27,6 +27,8 @@ on_exit() {
 
 trap on_exit INT EXIT TERM QUIT
 
+export COYOTE_ADMIN_TOKEN=admin_abcdefghijlmnopqrstuvwxyz012345
+
 TAG=""
 OFF=""
 
