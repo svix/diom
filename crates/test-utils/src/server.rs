@@ -294,7 +294,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             discovery_timeout: Duration::from_secs(10),
             secret: None,
             seed_nodes: vec![],
-            replication_request_timeout: Duration::from_millis(50),
+            replication_request_timeout: Duration::from_secs(3),
             startup_discovery_delay: Duration::from_millis(0),
             log_index_interval: Duration::from_millis(500),
             snapshot_after_writes: None,
