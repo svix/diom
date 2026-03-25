@@ -32,6 +32,7 @@ public class QueueMsgOut {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private OffsetDateTime timestamp;
+    @JsonProperty("scheduled_at") private OffsetDateTime scheduledAt;
     public QueueMsgOut() {}
 
     public QueueMsgOut msgId(String msgId) {
@@ -122,6 +123,25 @@ public class QueueMsgOut {
 
     public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public QueueMsgOut scheduledAt(OffsetDateTime scheduledAt) {
+        this.scheduledAt = scheduledAt;
+        return this;
+    }
+
+    /**
+    * Get scheduledAt
+    *
+     * @return scheduledAt
+     */
+    @javax.annotation.Nullable
+    public OffsetDateTime getScheduledAt() {
+        return scheduledAt;
+    }
+
+    public void setScheduledAt(OffsetDateTime scheduledAt) {
+        this.scheduledAt = scheduledAt;
     }
 
     /**
