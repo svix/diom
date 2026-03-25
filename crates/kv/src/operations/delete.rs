@@ -3,7 +3,6 @@ use crate::{KvNamespace, State, operations::KvRaftState};
 use coyote_core::types::EntityKey;
 use coyote_error::Result;
 use coyote_id::NamespaceId;
-use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -14,7 +13,6 @@ pub struct DeleteResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub(crate) key: EntityKey,
 }
 
@@ -23,7 +21,6 @@ impl DeleteOperation {
         Self {
             key,
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
         }
     }
 }
@@ -31,7 +28,7 @@ impl DeleteOperation {
 impl DeleteOperation {
     async fn apply_real(self, state: &State) -> Result<DeleteResponseData> {
         let success = state
-            .controller(self.storage_type)
+            .controller()
             .delete(self.namespace_id, self.key)
             .await?;
         Ok(DeleteResponseData { success })

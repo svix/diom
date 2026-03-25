@@ -25,16 +25,13 @@ import java.util.Objects;
 public class MsgNamespaceCreateIn_ {
     @JsonProperty private String name;
     @JsonProperty private Retention retention;
-    @JsonProperty("storage_type") private StorageType storageType;
 
     public MsgNamespaceCreateIn_(
         String name,
-        Retention retention,
-        StorageType storageType
+        Retention retention
     ) {
         this.name = name;
         this.retention = retention;
-        this.storageType = storageType;
     }
 
     /**

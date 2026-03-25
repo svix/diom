@@ -7,7 +7,7 @@ use coyote_core::{
 use coyote_error::{Error, Result};
 use coyote_id::NamespaceId;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, KvSeparationOptions};
-use fjall_utils::{StorageType, TableRow, WriteBatchExt};
+use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -295,11 +295,7 @@ impl KvController {
         keyspace_name = self.keyspace_name,
         cleared
     ))]
-    pub fn clear_expired_in_background(
-        &self,
-        now: Timestamp,
-        storage_type: StorageType,
-    ) -> Result<usize> {
+    pub fn clear_expired_in_background(&self, now: Timestamp) -> Result<usize> {
         let grace_period = now - jiff::SignedDuration::from_secs(10);
         let start =
             ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
@@ -701,7 +697,7 @@ mod tests {
 
         assert_eq!(
             controller
-                .clear_expired_in_background(Timestamp::now(), StorageType::Persistent)
+                .clear_expired_in_background(Timestamp::now())
                 .unwrap(),
             4
         );

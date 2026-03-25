@@ -10,7 +10,6 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(default_kv["max_storage_bytes"], 1000);
-    assert_eq!(default_kv["storage_type"], "Ephemeral");
 
     let default_cache = client
         .post("cache/namespace/get")
@@ -37,7 +36,6 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .json();
     assert_eq!(kv1["name"], "kv1");
     assert_eq!(kv1["max_storage_bytes"], 2000);
-    assert_eq!(kv1["storage_type"], "Ephemeral");
 
     let kv2 = client
         .post("kv/namespace/get")
@@ -56,7 +54,6 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .json();
     assert_eq!(cache1["name"], "cache1");
     assert_eq!(cache1["eviction_policy"], "LeastRecentlyUsed");
-    assert_eq!(cache1["storage_type"], "Persistent");
 
     let msgs2 = client
         .post("msgs/namespace/get")
@@ -66,7 +63,6 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .json();
     assert_eq!(msgs2["name"], "msgs2");
     assert!(msgs2["retention"].is_object());
-    assert_eq!(msgs2["storage_type"], "Persistent");
 
     Ok(())
 }

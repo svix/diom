@@ -30,7 +30,6 @@ import lombok.ToString;
 public class AuthTokenCreateNamespaceOut {
     @JsonProperty private String name;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-    @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
     public AuthTokenCreateNamespaceOut() {}
@@ -71,25 +70,6 @@ public class AuthTokenCreateNamespaceOut {
 
     public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
-    }
-
-    public AuthTokenCreateNamespaceOut storageType(StorageType storageType) {
-        this.storageType = storageType;
-        return this;
-    }
-
-    /**
-    * Get storageType
-    *
-     * @return storageType
-     */
-    @javax.annotation.Nonnull
-    public StorageType getStorageType() {
-        return storageType;
-    }
-
-    public void setStorageType(StorageType storageType) {
-        this.storageType = storageType;
     }
 
     public AuthTokenCreateNamespaceOut created(OffsetDateTime created) {

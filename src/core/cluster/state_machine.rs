@@ -12,9 +12,8 @@ use crate::{
 };
 use anyhow::Context;
 use coyote_core::{Monotime, task::spawn_blocking_in_current_span};
-use coyote_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
-use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace};
+use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace, StorageType};
 use openraft::{
     EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
     StorageIOError, StoredMembership, storage::RaftStateMachine,

@@ -3,7 +3,6 @@ use crate::CacheNamespace;
 use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_operations::OpContext;
-use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -14,7 +13,6 @@ pub struct DeleteResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub(crate) key: String,
 }
 
@@ -22,7 +20,6 @@ impl DeleteOperation {
     pub fn new(namespace: CacheNamespace, key: String) -> Self {
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             key,
         }
     }
@@ -32,7 +29,7 @@ impl DeleteOperation {
     async fn apply_real(self, state: &CacheRaftState<'_>) -> Result<DeleteResponseData> {
         let success = state
             .state
-            .controller(self.storage_type)
+            .controller()
             .delete(self.namespace_id, self.key)
             .await?;
         Ok(DeleteResponseData { success })

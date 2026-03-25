@@ -30,7 +30,6 @@ import lombok.ToString;
 public class MsgNamespaceCreateIn {
     @JsonProperty private String name;
     @JsonProperty private Retention retention;
-    @JsonProperty("storage_type") private StorageType storageType;
     public MsgNamespaceCreateIn() {}
 
     public MsgNamespaceCreateIn retention(Retention retention) {
@@ -50,24 +49,5 @@ public class MsgNamespaceCreateIn {
 
     public void setRetention(Retention retention) {
         this.retention = retention;
-    }
-
-    public MsgNamespaceCreateIn storageType(StorageType storageType) {
-        this.storageType = storageType;
-        return this;
-    }
-
-    /**
-    * Get storageType
-    *
-     * @return storageType
-     */
-    @javax.annotation.Nullable
-    public StorageType getStorageType() {
-        return storageType;
-    }
-
-    public void setStorageType(StorageType storageType) {
-        this.storageType = storageType;
     }
 }

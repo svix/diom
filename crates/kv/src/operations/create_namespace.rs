@@ -2,7 +2,7 @@ use std::num::NonZeroU64;
 
 use coyote_error::Result;
 use coyote_namespace::{
-    entities::{KeyValueConfig, StorageType},
+    entities::KeyValueConfig,
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -13,30 +13,19 @@ use crate::operations::{CreateKvResponse, KvRaftState, KvRequest};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateKvOperation {
     pub(crate) name: String,
-    storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<CreateKvOperation> for CreateNamespace<KeyValueConfig> {
     fn from(value: CreateKvOperation) -> Self {
-        CreateNamespace::new(
-            value.name,
-            KeyValueConfig {},
-            value.storage_type,
-            value.max_storage_bytes,
-        )
+        CreateNamespace::new(value.name, KeyValueConfig {}, value.max_storage_bytes)
     }
 }
 
 impl CreateKvOperation {
-    pub fn new(
-        name: String,
-        storage_type: StorageType,
-        max_storage_bytes: Option<NonZeroU64>,
-    ) -> Self {
+    pub fn new(name: String, max_storage_bytes: Option<NonZeroU64>) -> Self {
         Self {
             name,
-            storage_type,
             max_storage_bytes,
         }
     }
@@ -56,7 +45,6 @@ impl CreateKvOperation {
 pub struct CreateKvResponseData {
     pub name: String,
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -66,7 +54,6 @@ impl From<CreateNamespaceOutput<KeyValueConfig>> for CreateKvResponseData {
         Self {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
-            storage_type: value.storage_type,
             created: value.created,
             updated: value.updated,
         }

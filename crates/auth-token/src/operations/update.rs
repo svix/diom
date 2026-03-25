@@ -10,8 +10,6 @@ use coyote_core::types::Metadata;
 use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
 use coyote_operations::OpContext;
-use fjall_utils::StorageType;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateResponseData {
     /// `None` if the token was not found.
@@ -21,7 +19,6 @@ pub struct UpdateResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateAuthTokenOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub id: AuthTokenId,
     pub name: Option<String>,
     pub expiry: Option<Timestamp>,
@@ -42,7 +39,6 @@ impl UpdateAuthTokenOperation {
     ) -> Self {
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             id,
             name,
             expiry,

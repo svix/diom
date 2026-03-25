@@ -2,7 +2,7 @@ use coyote_core::Monotime;
 use coyote_error::Result;
 use coyote_namespace::{Namespace, entities::KeyValueConfig};
 use coyote_operations::{BackgroundError, BackgroundResult};
-use fjall_utils::{Databases, StorageType};
+use fjall_utils::Databases;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -17,23 +17,18 @@ const KV_KEYSPACE: &str = "mod_kv";
 
 #[derive(Clone)]
 pub struct State {
-    persistent_controller: KvController,
-    ephemeral_controller: KvController,
+    controller: KvController,
 }
 
 impl State {
     pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            persistent_controller: KvController::new(dbs.persistent, KV_KEYSPACE),
-            ephemeral_controller: KvController::new(dbs.ephemeral, KV_KEYSPACE),
+            controller: KvController::new(dbs.persistent, KV_KEYSPACE),
         })
     }
 
-    pub fn controller(&self, storage_type: StorageType) -> &KvController {
-        match storage_type {
-            StorageType::Persistent => &self.persistent_controller,
-            StorageType::Ephemeral => &self.ephemeral_controller,
-        }
+    pub fn controller(&self) -> &KvController {
+        &self.controller
     }
 }
 
@@ -86,17 +81,7 @@ impl AllNodesWorker {
     async fn worker_loop(&self, now: jiff::Timestamp) -> BackgroundResult<()> {
         let mut tasks = tokio::task::JoinSet::new();
         let state = self.state.clone();
-        tasks.spawn_blocking(move || {
-            state
-                .persistent_controller
-                .clear_expired_in_background(now, StorageType::Persistent)
-        });
-        let state = self.state.clone();
-        tasks.spawn_blocking(move || {
-            state
-                .ephemeral_controller
-                .clear_expired_in_background(now, StorageType::Ephemeral)
-        });
+        tasks.spawn_blocking(move || state.controller.clear_expired_in_background(now));
         for result in tasks.join_all().await {
             result.map_err(BackgroundError::Other)?;
         }

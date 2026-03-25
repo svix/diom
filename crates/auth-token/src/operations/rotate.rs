@@ -10,8 +10,6 @@ use crate::{
 use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
 use coyote_operations::OpContext;
-use fjall_utils::StorageType;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RotateResponseData {
     /// `None` if the original token was not found.
@@ -21,7 +19,6 @@ pub struct RotateResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RotateAuthTokenOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     old_id: AuthTokenId,
     new_id: AuthTokenId,
     new_token_hashed: TokenHashed,
@@ -40,7 +37,6 @@ impl RotateAuthTokenOperation {
         let new_id = AuthTokenId::new(now);
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             old_id,
             new_id,
             new_token_hashed,

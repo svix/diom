@@ -54,18 +54,13 @@ impl MsgsOperation {
 #[cfg(test)]
 mod tests {
     use coyote_id::NamespaceId;
-    use coyote_namespace::entities::StorageType;
 
     use super::*;
     use crate::entities::{Retention, TopicIn, TopicName};
 
     #[test]
     fn test_msgs_operation_key_name() {
-        let op = CreateNamespaceOperation::new(
-            "my-namespace".to_string(),
-            Retention::default(),
-            StorageType::Persistent,
-        );
+        let op = CreateNamespaceOperation::new("my-namespace".to_string(), Retention::default());
         assert_eq!(
             MsgsOperation::CreateNamespace(op).key_name(),
             "my-namespace"

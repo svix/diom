@@ -5,9 +5,8 @@ use std::{
 
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use coyote_namespace::entities::StorageType;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, Readable};
-use fjall_utils::Databases;
+use fjall_utils::{Databases, StorageType};
 use serde::{Deserialize, Serialize};
 use zip::{ZipArchive, write::SimpleFileOptions};
 
@@ -247,7 +246,7 @@ mod tests {
     use fjall_utils::Databases;
 
     use super::{load_from_file, serialize_to_file};
-    use coyote_namespace::entities::StorageType;
+    use fjall_utils::StorageType;
 
     #[test]
     fn test_serialize_to_file_round_trip() -> anyhow::Result<()> {

@@ -6,11 +6,10 @@ pub mod tables;
 use std::time::Duration;
 
 pub use crate::{algorithms::TokenBucket, controller::RateLimitController};
-use coyote_error::{Result, ResultExt as _};
+use coyote_error::Result;
 use coyote_namespace::Namespace;
 pub use coyote_namespace::entities::RateLimitConfig;
-use fjall::KeyspaceCreateOptions;
-use fjall_utils::{Databases, StorageType};
+use fjall_utils::Databases;
 
 pub type RateLimitNamespace = Namespace<RateLimitConfig>;
 
@@ -18,32 +17,18 @@ const RATE_LIMIT_KEYSPACE: &str = "mod_rate_limit";
 
 #[derive(Clone)]
 pub struct State {
-    persistent: RateLimitController,
-    ephemeral: RateLimitController,
+    controller: RateLimitController,
 }
 
 impl State {
     pub fn init(dbs: Databases) -> Result<Self> {
-        let opts = || KeyspaceCreateOptions::default();
-        let persistent_tables = dbs
-            .persistent
-            .keyspace(RATE_LIMIT_KEYSPACE, opts)
-            .or_internal_error()?;
-        let ephemeral_tables = dbs
-            .ephemeral
-            .keyspace(RATE_LIMIT_KEYSPACE, opts)
-            .or_internal_error()?;
         Ok(Self {
-            persistent: RateLimitController::new(dbs.persistent, persistent_tables),
-            ephemeral: RateLimitController::new(dbs.ephemeral, ephemeral_tables),
+            controller: RateLimitController::new(dbs.ephemeral)?,
         })
     }
 
-    pub fn controller(&self, storage_type: StorageType) -> &RateLimitController {
-        match storage_type {
-            StorageType::Persistent => &self.persistent,
-            StorageType::Ephemeral => &self.ephemeral,
-        }
+    pub fn controller(&self) -> &RateLimitController {
+        &self.controller
     }
 }
 

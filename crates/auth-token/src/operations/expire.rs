@@ -9,8 +9,6 @@ use crate::{
 use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
 use coyote_operations::OpContext;
-use fjall_utils::StorageType;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExpireResponseData {
     /// `None` if the token was not found.
@@ -20,7 +18,6 @@ pub struct ExpireResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExpireAuthTokenOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub id: AuthTokenId,
     /// The timestamp at which the token expires. `None` means expire immediately (now).
     pub expiry: Option<Timestamp>,
@@ -30,7 +27,6 @@ impl ExpireAuthTokenOperation {
     pub fn new(namespace: AuthTokenNamespace, id: AuthTokenId, expiry: Option<Timestamp>) -> Self {
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             id,
             expiry,
         }
