@@ -75,7 +75,6 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
     }
 
     let unauthenticated = axum::Router::new()
-        .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/discover", get(discover))
         .route("/repl/node-id", get(get_node_id))
         .route("/repl/raft/admin/force-snapshot", post(force_snapshot)) // TODO: should this be unauth?
@@ -233,12 +232,6 @@ async fn discover(
         cluster,
     };
     MsgPack(response)
-}
-
-async fn metrics(Extension(state): Extension<RaftState>) -> impl IntoResponse {
-    let metrics = state.raft.metrics().borrow().clone();
-
-    Json(metrics)
 }
 
 async fn add_learner(
