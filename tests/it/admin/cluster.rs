@@ -67,6 +67,7 @@ async fn test_cluster_remove() -> TestResult {
         .await;
 
     let TestContext {
+        client: second_client,
         handle: _second_handle,
         node_id: second_node_id,
         ..
@@ -97,6 +98,15 @@ async fn test_cluster_remove() -> TestResult {
     );
     // ideally, the first node is still the leader before we evict the second node
     assert_eq!(cluster_status["this_node_state"], "Leader");
+    let cluster_status_from_second_node = second_client
+        .get("v1.admin.cluster.status")
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(
+        cluster_status_from_second_node["this_node_state"],
+        "Follower"
+    );
 
     // now remove the second node
     let resp = client
