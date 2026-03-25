@@ -8,7 +8,7 @@ use axum::extract::{Extension, State};
 use coyote_authorization::RoleId;
 use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
-use coyote_error::ResultExt;
+use coyote_error::{Error, ResultExt};
 use coyote_id::{AuthTokenId, Public};
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -244,16 +244,22 @@ async fn auth_token_list(
     let data = out
         .data
         .into_iter()
-        .map(|t| AdminAuthTokenOut {
-            id: t.id,
-            name: t.name,
-            created: t.created,
-            updated: t.updated,
-            expiry: t.expiry,
-            role: t.metadata.get("role").unwrap().to_string(),
-            enabled: t.enabled,
+        .map(|t| {
+            Ok(AdminAuthTokenOut {
+                id: t.id,
+                name: t.name,
+                created: t.created,
+                updated: t.updated,
+                expiry: t.expiry,
+                role: t
+                    .metadata
+                    .get("role")
+                    .ok_or_else(|| Error::internal("Failed fetching role"))?
+                    .to_string(),
+                enabled: t.enabled,
+            })
         })
-        .collect();
+        .collect::<Result<Vec<_>>>()?;
 
     // FIXME: use the iterators from the API, pass limit, etc.
     Ok(MsgPackOrJson(ListResponse {
