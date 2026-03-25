@@ -63,10 +63,7 @@ async fn default_is_one_partition() -> TestResult {
     // All messages should be on the same single partition
     let topics: HashSet<&str> = msgs.iter().map(|m| m["topic"].assert_str()).collect();
     assert_eq!(topics.len(), 1, "all messages should be on one partition");
-    assert!(
-        topics.contains("t1~0"),
-        "single partition should be t1~0"
-    );
+    assert!(topics.contains("t1~0"), "single partition should be t1~0");
 
     Ok(())
 }
