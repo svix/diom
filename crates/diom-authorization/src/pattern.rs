@@ -9,9 +9,9 @@ use serde::{Deserialize, Serialize, de};
 #[derive(JsonSchema)]
 #[schemars(schema_with = "String::json_schema")]
 pub struct ResourcePattern {
-    module: Module,
-    namespace: NamespacePattern,
-    key: KeyPattern,
+    pub module: Module,
+    pub namespace: NamespacePattern,
+    pub key: KeyPattern,
 }
 
 pub enum Module {
