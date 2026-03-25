@@ -1047,6 +1047,7 @@ dependencies = [
 name = "coyote-authorization"
 version = "0.0.1"
 dependencies = [
+ "itertools 0.14.0",
  "schemars 1.2.1",
  "serde",
 ]
