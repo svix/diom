@@ -5,7 +5,6 @@ use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
-use tokio::time::sleep;
 
 #[tokio::test]
 async fn queue_receive_returns_published_messages() -> TestResult {
@@ -138,6 +137,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -188,7 +188,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
         .expect(StatusCode::OK);
 
     // Wait for lease to expire
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     // Receive again — all messages were acked, should get nothing
     let r2 = client
@@ -214,6 +214,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -249,7 +250,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
     assert_eq!(r1["msgs"].assert_array().len(), 2);
 
     // Don't ack — wait for lease to expire
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     // Receive again — should get the same messages
     let r2 = client
@@ -354,6 +355,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -405,7 +407,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
         .expect(StatusCode::OK);
 
     // Wait for lease to expire
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     // Receive again — only the un-acked middle message should be returned
     let r2 = client
@@ -601,6 +603,7 @@ async fn nack_sends_to_dlq() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -650,7 +653,7 @@ async fn nack_sends_to_dlq() -> TestResult {
         .expect(StatusCode::OK);
 
     // Wait for original lease to expire
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     // Receive again — nacked messages are in DLQ, should get nothing
     let r2 = client
@@ -887,6 +890,7 @@ async fn nack_retries_before_dlq() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -960,7 +964,7 @@ async fn nack_retries_before_dlq() -> TestResult {
     );
 
     // Wait for the retry delay to elapse
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     // Message should now be available again (retried, not DLQ'd)
     let r3 = client
@@ -994,7 +998,7 @@ async fn nack_retries_before_dlq() -> TestResult {
         .expect(StatusCode::OK);
 
     // Wait for any delay
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     // Message should now be in DLQ — not available
     let r4 = client
@@ -1021,6 +1025,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -1076,7 +1081,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .expect(StatusCode::OK);
 
     // Wait for retry delay
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
 
     // Receive the retried message and nack again (exhausts retries → forwards to DLQ topic)
     let r2 = client
@@ -1103,7 +1108,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .expect(StatusCode::OK);
 
     // Original topic should have no messages available
-    sleep(Duration::from_millis(1500)).await;
+    time.fast_forward(Duration::from_millis(1500));
     let r3 = client
         .post("v1.msgs.queue.receive")
         .json(json!({
