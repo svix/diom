@@ -3,6 +3,10 @@ use std::{collections::HashMap, fmt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+mod pattern;
+
+pub use self::pattern::{KeyPattern, Module, NamespacePattern, ResourcePattern};
+
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct RoleId(String);
@@ -68,7 +72,7 @@ pub struct AccessPolicy {
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct AccessRule {
     effect: AccessRuleEffect,
-    resource: String,
+    resource: ResourcePattern,
     actions: Vec<String>,
 }
 
