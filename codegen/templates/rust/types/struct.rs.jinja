@@ -1,4 +1,4 @@
-{% from "types/macros.rs.jinja" import ident -%}
+{% from "types/macros.rs.jinja" import ident, field_decl -%}
 {% set type_name = type.name | to_upper_camel_case -%}
 {% set positional_fields = type.fields | selectattr("positional") -%}
 use serde::{Deserialize, Serialize};
@@ -22,68 +22,35 @@ use super::{
     {%- endif %}
 )]
 pub struct {{ type_name }} {
-    {% for field in type.fields %}
-    {% if not field.positional -%}
-    {% if field.description is defined -%}
-        {{ field.description | to_doc_comment(style="rust") }}
-    {% endif -%}
-
-    {% if field.deprecated -%}
-        #[deprecated]
-    {% endif -%}
-
-    {% if field.name != field.name | to_snake_case -%}
-        #[serde(rename = "{{ field.name }}")]
-    {% endif -%}
-
-    {#
-        we only have defaults on optional fields now,
-        so leave them alone here as well, for now
-    -#}
-    {# {% if field.default is defined and field.default is not none -%}
-    #[serde(default = "{{ field.name | to_snake_case }}_default")]
-    {% endif -%} -#}
-    {% set field_ty = field.type.to_rust() -%}
-
-    {% if not field.required or field.nullable -%}
-        {% set field_ty %}Option<{{ field_ty }}>{% endset -%}
-        #[serde(skip_serializing_if = "Option::is_none")]
-    {% endif -%}
-
-    pub {{ ident(field.name | to_snake_case) }}: {{ field_ty }},
-    {%- endif %}
+{%- for field in type.fields | selectattr("positional", "false") %}
+    {{ field_decl(field) }}
 {% endfor %}
 }
 
 impl {{ type_name }} {
     pub fn new(
-        {% for field in type.fields -%}
-        {% if not field.positional -%}
+        {% for field in type.fields | selectattr("positional", "false") -%}
             {% set field_ty = field.type.to_rust() -%}
             {% if field.required and not field.nullable -%}
                 {{ ident(field.name | to_snake_case) }}: {{ field_ty }},
             {% endif -%}
-        {% endif -%}
         {% endfor -%}
     ) -> Self {
         {% if type.fields | selectattr("deprecated") | length > 0 -%}
             #[allow(deprecated)]
         {% endif -%}
         Self {
-            {% for field in type.fields -%}
-            {% if not field.positional -%}
+            {% for field in type.fields | selectattr("positional", "false") -%}
                 {% if field.required and not field.nullable -%}
                     {{ ident(field.name | to_snake_case) }},
                 {% else -%}
                     {{ ident(field.name | to_snake_case) }}: None,
                 {% endif -%}
-            {% endif -%}
             {% endfor -%}
         }
     }
 
-    {% for field in type.fields -%}
-    {% if not field.required -%}
+    {% for field in type.fields | selectattr("required", "false") -%}
     pub fn with_{{ ident(field.name | to_snake_case) }}(
         mut self,
         value: impl Into<Option<{{ field.type.to_rust() }}>>,
@@ -92,7 +59,6 @@ impl {{ type_name }} {
         self
     }
 
-    {% endif -%}
     {% endfor -%}
 }
 
@@ -100,6 +66,8 @@ impl {{ type_name }} {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct {{ type_name }}_ {
-    {% include "types/struct_fields.rs.jinja" %}
+{%- for field in type.fields %}
+    {{ field_decl(field) }}
+{% endfor %}
 }
 {%- endif %}

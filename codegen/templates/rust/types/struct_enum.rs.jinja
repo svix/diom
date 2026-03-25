@@ -1,3 +1,4 @@
+{% from "types/macros.rs.jinja" import field_decl -%}
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -13,7 +14,9 @@ use super::{
     {{ doc_comment }}
     #[derive(Clone, Debug, Deserialize, Serialize)]
     pub struct {{ type_name }} {
-        {% include "types/struct_fields.rs.jinja" %}
+    {%- for field in type.fields | selectattr("positional", "false") %}
+        {{ field_decl(field) }}
+    {% endfor %}
 
         #[serde(flatten)]
         {% set enum_field_name = type.content_field | to_snake_case %}
