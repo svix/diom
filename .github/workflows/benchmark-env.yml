@@ -1,0 +1,70 @@
+name: Benchmark Against Environment
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+      environment:
+        required: false
+        type: string
+    secrets:
+      COYOTE_AUTH_TOKEN:
+        required: true
+      AWS_IAM_ROLE_ARN:
+        required: true
+      AWS_REGION:
+        required: true
+      EKS_CLUSTER_NAME:
+        required: true
+
+jobs:
+  benchmark:
+    name: Benchmark Against Environment
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE: ghcr.io/svix/coyote-server:${{ inputs.image_tag }}
+      NAMESPACE: coyote
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ secrets.EKS_CLUSTER_NAME }} \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Run benchmark
+        run: |
+          kubectl run benchmark \
+            --image=${{ env.IMAGE }} \
+            --restart=Never \
+            --rm \
+            --attach \
+            -n ${{ env.NAMESPACE }} \
+            --env="COYOTE_AUTH_TOKEN=${{ secrets.COYOTE_AUTH_TOKEN }}" \
+            -- coyote benchmark http://coyote:8080 \
+            | tee /tmp/benchmark-output.txt
+
+      - name: Post benchmark results
+        if: always()
+        run: |
+          {
+            echo '## Benchmark Results'
+            echo '```'
+            cat /tmp/benchmark-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
