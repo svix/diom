@@ -19,3 +19,4 @@ pub mod idempotency;
 pub mod kv;
 pub mod msgs;
 pub mod rate_limit;
+pub mod transformations;

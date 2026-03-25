@@ -12,6 +12,7 @@ import com.svix.diom.apis.Idempotency;
 import com.svix.diom.apis.Kv;
 import com.svix.diom.apis.Msgs;
 import com.svix.diom.apis.RateLimit;
+import com.svix.diom.apis.Transformations;
 
 import okhttp3.HttpUrl;
 
@@ -70,5 +71,9 @@ public class Diom {
 
     public RateLimit getRateLimit() {
         return new RateLimit(this.httpClient);
+    }
+
+    public Transformations getTransformations() {
+        return new Transformations(this.httpClient);
     }
 }

@@ -1,0 +1,26 @@
+[package]
+name = "diom-transformations"
+publish = false
+version.workspace = true
+license.workspace = true
+rust-version.workspace = true
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+diom-error.workspace = true
+hex.workspace = true
+rand.workspace = true
+rquickjs = { version = "0.11.0", features = ["futures", "macro", "array-buffer", "parallel"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "2"
+tokio.workspace = true
+tracing.workspace = true
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tracing-test.workspace = true
+
+[lints]
+workspace = true

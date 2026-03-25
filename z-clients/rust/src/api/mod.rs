@@ -20,6 +20,7 @@ mod msgs_stream;
 mod msgs_topic;
 mod rate_limit;
 mod rate_limit_namespace;
+mod transformations;
 
 pub use self::{
     admin::Admin, admin_auth_token::AdminAuthToken, admin_cluster::AdminCluster,
@@ -28,6 +29,7 @@ pub use self::{
     idempotency_namespace::IdempotencyNamespace, kv::Kv, kv_namespace::KvNamespace, msgs::Msgs,
     msgs_namespace::MsgsNamespace, msgs_queue::MsgsQueue, msgs_stream::MsgsStream,
     msgs_topic::MsgsTopic, rate_limit::RateLimit, rate_limit_namespace::RateLimitNamespace,
+    transformations::Transformations,
 };
 
 impl DiomClient {
@@ -61,5 +63,9 @@ impl DiomClient {
 
     pub fn rate_limit(&self) -> RateLimit<'_> {
         RateLimit::new(&self.cfg)
+    }
+
+    pub fn transformations(&self) -> Transformations<'_> {
+        Transformations::new(&self.cfg)
     }
 }

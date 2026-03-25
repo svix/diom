@@ -4004,6 +4004,83 @@
         ]
       }
     },
+    "/api/v1.transformations.execute": {
+      "post": {
+        "tags": [
+          "Transformations"
+        ],
+        "summary": "Execute",
+        "description": "Execute a JavaScript transformation script against a payload and return the result.",
+        "operationId": "v1.transformations.execute",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransformIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1.health.ping": {
       "get": {
         "tags": [
@@ -6602,6 +6679,41 @@
           "topic",
           "value",
           "timestamp"
+        ]
+      },
+      "TransformIn": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "description": "JSON-encoded payload passed to the script as `input`.",
+            "type": "string"
+          },
+          "script": {
+            "description": "JavaScript source. Must define a `handler(input)` function.",
+            "type": "string"
+          },
+          "max_duration_ms": {
+            "description": "How long to let the script run before being killed.",
+            "type": "integer",
+            "format": "uint64",
+            "default": 500
+          }
+        },
+        "required": [
+          "input",
+          "script"
+        ]
+      },
+      "TransformOut": {
+        "type": "object",
+        "properties": {
+          "output": {
+            "description": "JSON-encoded value returned by the script's `handler` function.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "output"
         ]
       },
       "ValidationErrorBody": {

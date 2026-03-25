@@ -124,4 +124,6 @@ type (
 	SeekPosition                  = diom_models.SeekPosition
 	ServerState                   = diom_models.ServerState
 	StreamMsgOut                  = diom_models.StreamMsgOut
+	TransformIn                   = diom_models.TransformIn
+	TransformOut                  = diom_models.TransformOut
 )

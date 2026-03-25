@@ -53,3 +53,9 @@ type RateLimit = diom_apis.RateLimit
 func (diom Diom) RateLimit() RateLimit {
 	return diom_apis.NewRateLimit(&diom.inner)
 }
+
+type Transformations = diom_apis.Transformations
+
+func (diom Diom) Transformations() Transformations {
+	return diom_apis.NewTransformations(&diom.inner)
+}
