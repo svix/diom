@@ -48,7 +48,7 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueReceiveIn msgQueueReceiveIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/receive");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.receive");
         MsgQueueReceiveIn_ body = new MsgQueueReceiveIn_(
             msgQueueReceiveIn.getNamespace(),
             topic,
@@ -94,7 +94,7 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueAckIn msgQueueAckIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/ack");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.ack");
         MsgQueueAckIn_ body = new MsgQueueAckIn_(
             msgQueueAckIn.getNamespace(),
             topic,
@@ -122,7 +122,7 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueConfigureIn msgQueueConfigureIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/configure");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.configure");
         MsgQueueConfigureIn_ body = new MsgQueueConfigureIn_(
             msgQueueConfigureIn.getNamespace(),
             topic,
@@ -168,7 +168,7 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueNackIn msgQueueNackIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/nack");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.nack");
         MsgQueueNackIn_ body = new MsgQueueNackIn_(
             msgQueueNackIn.getNamespace(),
             topic,
@@ -191,7 +191,7 @@ public class MsgsQueue {
         String consumerGroup,
         final MsgQueueRedriveDlqIn msgQueueRedriveDlqIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/queue/redrive-dlq");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.redrive-dlq");
         MsgQueueRedriveDlqIn_ body = new MsgQueueRedriveDlqIn_(
             msgQueueRedriveDlqIn.getNamespace(),
             topic,

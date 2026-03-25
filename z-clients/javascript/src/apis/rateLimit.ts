@@ -38,7 +38,7 @@ export class RateLimit {
     public limit(
         rateLimitCheckIn: RateLimitCheckIn,
     ): Promise<RateLimitCheckOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/rate-limit/limit");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.rate-limit.limit");
 
         request.setBody(
             RateLimitCheckInSerializer._toJsonObject(rateLimitCheckIn)
@@ -52,7 +52,7 @@ export class RateLimit {
     public getRemaining(
         rateLimitGetRemainingIn: RateLimitGetRemainingIn,
     ): Promise<RateLimitGetRemainingOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/rate-limit/get-remaining");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.rate-limit.get-remaining");
 
         request.setBody(
             RateLimitGetRemainingInSerializer._toJsonObject(rateLimitGetRemainingIn)
@@ -66,7 +66,7 @@ export class RateLimit {
     public reset(
         rateLimitResetIn: RateLimitResetIn,
     ): Promise<RateLimitResetOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/rate-limit/reset");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.rate-limit.reset");
 
         request.setBody(
             RateLimitResetInSerializer._toJsonObject(rateLimitResetIn)

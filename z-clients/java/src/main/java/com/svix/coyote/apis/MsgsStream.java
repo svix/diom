@@ -41,7 +41,7 @@ public class MsgsStream {
         String consumerGroup,
         final MsgStreamReceiveIn msgStreamReceiveIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/receive");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.stream.receive");
         MsgStreamReceiveIn_ body = new MsgStreamReceiveIn_(
             msgStreamReceiveIn.getNamespace(),
             topic,
@@ -88,7 +88,7 @@ public class MsgsStream {
         String consumerGroup,
         final MsgStreamCommitIn msgStreamCommitIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/commit");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.stream.commit");
         MsgStreamCommitIn_ body = new MsgStreamCommitIn_(
             msgStreamCommitIn.getNamespace(),
             topic,
@@ -117,7 +117,7 @@ public class MsgsStream {
         String consumerGroup,
         final MsgStreamSeekIn msgStreamSeekIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/stream/seek");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.stream.seek");
         MsgStreamSeekIn_ body = new MsgStreamSeekIn_(
             msgStreamSeekIn.getNamespace(),
             topic,

@@ -16,13 +16,13 @@ async fn queue_receive_returns_published_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-queue" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-queue:my-topic",
             "msgs": [
@@ -35,7 +35,7 @@ async fn queue_receive_returns_published_messages() -> TestResult {
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-queue:my-topic",
             "consumer_group": "test-cg",
@@ -65,13 +65,13 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-lease" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-lease:t1",
             "msgs": [
@@ -84,7 +84,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
 
     // First receive gets message "a"
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-lease:t1",
             "consumer_group": "test-cg",
@@ -100,7 +100,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
 
     // Second receive gets message "b" (message "a" is leased, skipped)
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-lease:t1",
             "consumer_group": "test-cg",
@@ -116,7 +116,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
 
     // Third receive — all messages leased, should be empty
     let r3 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-lease:t1",
             "consumer_group": "test-cg",
@@ -142,13 +142,13 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-ack" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-ack:t1",
             "msgs": [
@@ -162,7 +162,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
 
     // Receive with a short lease
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-ack:t1",
             "consumer_group": "test-cg",
@@ -178,7 +178,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     // Ack all messages
     let msg_ids: Vec<&str> = msgs.iter().map(|m| m["msg_id"].assert_str()).collect();
     client
-        .post("msgs/queue/ack")
+        .post("v1.msgs.queue.ack")
         .json(json!({
             "topic": "ns-q-ack:t1",
             "consumer_group": "test-cg",
@@ -192,7 +192,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
 
     // Receive again — all messages were acked, should get nothing
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-ack:t1",
             "consumer_group": "test-cg",
@@ -218,13 +218,13 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-redeliver" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-redeliver:t1",
             "msgs": [
@@ -237,7 +237,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
 
     // Receive with a very short lease
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-redeliver:t1",
             "consumer_group": "test-cg",
@@ -253,7 +253,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
 
     // Receive again — should get the same messages
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-redeliver:t1",
             "consumer_group": "test-cg",
@@ -290,7 +290,7 @@ async fn queue_receive_nonexistent_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "namespace": "does-not-exist",
             "topic": "t1",
@@ -311,14 +311,14 @@ async fn queue_starts_from_earliest() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-earliest" }))
         .await?
         .expect(StatusCode::OK);
 
     // Publish messages BEFORE any queue consumer exists
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-earliest:t1",
             "msgs": (0..5)
@@ -330,7 +330,7 @@ async fn queue_starts_from_earliest() -> TestResult {
 
     // First queue.receive should get ALL existing messages (unlike stream which starts from latest)
     let response = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-earliest:t1",
             "consumer_group": "test-cg",
@@ -358,13 +358,13 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-partial" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-partial:t1",
             "msgs": [
@@ -378,7 +378,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
 
     // Receive with short lease
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-partial:t1",
             "consumer_group": "test-cg",
@@ -395,7 +395,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     let first_id = msgs[0]["msg_id"].assert_str();
     let last_id = msgs[2]["msg_id"].assert_str();
     client
-        .post("msgs/queue/ack")
+        .post("v1.msgs.queue.ack")
         .json(json!({
             "topic": "ns-q-partial:t1",
             "consumer_group": "test-cg",
@@ -409,7 +409,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
 
     // Receive again — only the un-acked middle message should be returned
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-partial:t1",
             "consumer_group": "test-cg",
@@ -442,13 +442,13 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-concurrent" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-concurrent:t1",
             "msgs": [
@@ -465,7 +465,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
 
     // Consumer A receives 3 messages
     let r_a = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-concurrent:t1",
             "consumer_group": "test-cg",
@@ -480,7 +480,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
 
     // Consumer B receives remaining 3 messages (first 3 are leased)
     let r_b = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-concurrent:t1",
             "consumer_group": "test-cg",
@@ -505,7 +505,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
 
     // Consumer C — all messages leased, should be empty
     let r_c = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-concurrent:t1",
             "consumer_group": "test-cg",
@@ -531,13 +531,13 @@ async fn queue_consumer_groups_independent() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-cg" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-cg:t1",
             "msgs": [
@@ -551,7 +551,7 @@ async fn queue_consumer_groups_independent() -> TestResult {
 
     // Group A receives all messages
     let r_a = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-cg:t1",
             "consumer_group": "group-a",
@@ -566,7 +566,7 @@ async fn queue_consumer_groups_independent() -> TestResult {
     // Ack all messages for group A
     let msg_ids_a: Vec<&str> = msgs_a.iter().map(|m| m["msg_id"].assert_str()).collect();
     client
-        .post("msgs/queue/ack")
+        .post("v1.msgs.queue.ack")
         .json(json!({
             "topic": "ns-q-cg:t1",
             "consumer_group": "group-a",
@@ -577,7 +577,7 @@ async fn queue_consumer_groups_independent() -> TestResult {
 
     // Group B should independently receive all the same messages
     let r_b = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-cg:t1",
             "consumer_group": "group-b",
@@ -605,13 +605,13 @@ async fn nack_sends_to_dlq() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-nack" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-nack:t1",
             "msgs": [
@@ -624,7 +624,7 @@ async fn nack_sends_to_dlq() -> TestResult {
 
     // Receive messages
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-nack:t1",
             "consumer_group": "test-cg",
@@ -640,7 +640,7 @@ async fn nack_sends_to_dlq() -> TestResult {
     // Nack all messages
     let msg_ids: Vec<&str> = msgs.iter().map(|m| m["msg_id"].assert_str()).collect();
     client
-        .post("msgs/queue/nack")
+        .post("v1.msgs.queue.nack")
         .json(json!({
             "topic": "ns-q-nack:t1",
             "consumer_group": "test-cg",
@@ -654,7 +654,7 @@ async fn nack_sends_to_dlq() -> TestResult {
 
     // Receive again — nacked messages are in DLQ, should get nothing
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-nack:t1",
             "consumer_group": "test-cg",
@@ -681,13 +681,13 @@ async fn nack_then_redrive_makes_available() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-redrive" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-redrive:t1",
             "msgs": [
@@ -700,7 +700,7 @@ async fn nack_then_redrive_makes_available() -> TestResult {
 
     // Receive and nack
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-redrive:t1",
             "consumer_group": "test-cg",
@@ -716,7 +716,7 @@ async fn nack_then_redrive_makes_available() -> TestResult {
         .collect();
 
     client
-        .post("msgs/queue/nack")
+        .post("v1.msgs.queue.nack")
         .json(json!({
             "topic": "ns-q-redrive:t1",
             "consumer_group": "test-cg",
@@ -727,7 +727,7 @@ async fn nack_then_redrive_makes_available() -> TestResult {
 
     // Redrive DLQ
     client
-        .post("msgs/queue/redrive-dlq")
+        .post("v1.msgs.queue.redrive-dlq")
         .json(json!({
             "topic": "ns-q-redrive:t1",
             "consumer_group": "test-cg",
@@ -737,7 +737,7 @@ async fn nack_then_redrive_makes_available() -> TestResult {
 
     // Receive again — redriven messages should be available
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-redrive:t1",
             "consumer_group": "test-cg",
@@ -764,7 +764,7 @@ async fn nack_nonexistent_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/queue/nack")
+        .post("v1.msgs.queue.nack")
         .json(json!({
             "namespace": "does-not-exist",
             "topic": "t1",
@@ -786,7 +786,7 @@ async fn redrive_dlq_nonexistent_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/queue/redrive-dlq")
+        .post("v1.msgs.queue.redrive-dlq")
         .json(json!({
             "namespace": "does-not-exist",
             "topic": "t1",
@@ -807,14 +807,14 @@ async fn redrive_dlq_no_dlq_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-redrive-noop" }))
         .await?
         .expect(StatusCode::OK);
 
     // Publish a message to create the topic
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-redrive-noop:t1",
             "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
@@ -824,7 +824,7 @@ async fn redrive_dlq_no_dlq_messages() -> TestResult {
 
     // Redrive with no DLQ messages should succeed as a no-op
     client
-        .post("msgs/queue/redrive-dlq")
+        .post("v1.msgs.queue.redrive-dlq")
         .json(json!({
             "topic": "ns-q-redrive-noop:t1",
             "consumer_group": "test-cg",
@@ -844,13 +844,13 @@ async fn configure_retry_schedule() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-cfg" }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/queue/configure")
+        .post("v1.msgs.queue.configure")
         .json(json!({
             "topic": "ns-q-cfg:t1",
             "consumer_group": "test-cg",
@@ -865,7 +865,7 @@ async fn configure_retry_schedule() -> TestResult {
 
     // Updating the config should overwrite
     let response2 = client
-        .post("msgs/queue/configure")
+        .post("v1.msgs.queue.configure")
         .json(json!({
             "topic": "ns-q-cfg:t1",
             "consumer_group": "test-cg",
@@ -891,14 +891,14 @@ async fn nack_retries_before_dlq() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-retry" }))
         .await?
         .expect(StatusCode::OK);
 
     // Configure a single retry with 1s delay
     client
-        .post("msgs/queue/configure")
+        .post("v1.msgs.queue.configure")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
@@ -908,7 +908,7 @@ async fn nack_retries_before_dlq() -> TestResult {
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
@@ -918,7 +918,7 @@ async fn nack_retries_before_dlq() -> TestResult {
 
     // Receive the message
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
@@ -934,7 +934,7 @@ async fn nack_retries_before_dlq() -> TestResult {
 
     // Nack — should schedule for retry, NOT DLQ
     client
-        .post("msgs/queue/nack")
+        .post("v1.msgs.queue.nack")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
@@ -945,7 +945,7 @@ async fn nack_retries_before_dlq() -> TestResult {
 
     // Immediately after nack, message should NOT be available (retry delay not elapsed)
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
@@ -964,7 +964,7 @@ async fn nack_retries_before_dlq() -> TestResult {
 
     // Message should now be available again (retried, not DLQ'd)
     let r3 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
@@ -984,7 +984,7 @@ async fn nack_retries_before_dlq() -> TestResult {
 
     // Nack again — retries exhausted, should go to DLQ
     client
-        .post("msgs/queue/nack")
+        .post("v1.msgs.queue.nack")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
@@ -998,7 +998,7 @@ async fn nack_retries_before_dlq() -> TestResult {
 
     // Message should now be in DLQ — not available
     let r4 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-retry:t1",
             "consumer_group": "test-cg",
@@ -1025,14 +1025,14 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-q-dlqfwd" }))
         .await?
         .expect(StatusCode::OK);
 
     // Configure with retry schedule and DLQ topic
     client
-        .post("msgs/queue/configure")
+        .post("v1.msgs.queue.configure")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
@@ -1043,7 +1043,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
@@ -1053,7 +1053,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
 
     // Receive and nack (first retry)
     let r1 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
@@ -1066,7 +1066,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     let msg_id = r1["msgs"].assert_array()[0]["msg_id"].assert_str();
 
     client
-        .post("msgs/queue/nack")
+        .post("v1.msgs.queue.nack")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
@@ -1080,7 +1080,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
 
     // Receive the retried message and nack again (exhausts retries → forwards to DLQ topic)
     let r2 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
@@ -1093,7 +1093,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     assert_eq!(r2["msgs"].assert_array().len(), 1);
 
     client
-        .post("msgs/queue/nack")
+        .post("v1.msgs.queue.nack")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
@@ -1105,7 +1105,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     // Original topic should have no messages available
     sleep(Duration::from_millis(1500)).await;
     let r3 = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1",
             "consumer_group": "test-cg",
@@ -1117,7 +1117,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
 
     // The DLQ topic should have the message
     let r_dlq = client
-        .post("msgs/queue/receive")
+        .post("v1.msgs.queue.receive")
         .json(json!({
             "topic": "ns-q-dlqfwd:t1-dlq",
             "consumer_group": "test-cg",

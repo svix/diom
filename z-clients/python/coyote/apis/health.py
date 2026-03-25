@@ -14,7 +14,7 @@ class HealthAsync(ApiBase):
 
         return await self._request_asyncio(
             method="get",
-            path="/api/v1/health/ping",
+            path="/api/v1.health.ping",
             response_type=PingOut,
         )
 
@@ -25,7 +25,7 @@ class HealthAsync(ApiBase):
 
         await self._request_asyncio(
             method="post",
-            path="/api/v1/health/error",
+            path="/api/v1.health.error",
         )
 
 
@@ -37,7 +37,7 @@ class Health(ApiBase):
 
         return self._request_sync(
             method="get",
-            path="/api/v1/health/ping",
+            path="/api/v1.health.ping",
             response_type=PingOut,
         )
 
@@ -48,5 +48,5 @@ class Health(ApiBase):
 
         self._request_sync(
             method="post",
-            path="/api/v1/health/error",
+            path="/api/v1.health.error",
         )

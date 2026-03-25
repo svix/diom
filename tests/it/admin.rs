@@ -24,7 +24,7 @@ async fn test_cluster_status() -> TestResult {
         .await;
 
     let cluster_status = client
-        .get("admin/cluster/status")
+        .get("v1.admin.cluster.status")
         .await?
         .expect(StatusCode::OK)
         .json();
@@ -81,7 +81,7 @@ async fn test_cluster_remove() -> TestResult {
 
     // make sure both nodes are present
     let cluster_status = client
-        .get("admin/cluster/status")
+        .get("v1.admin.cluster.status")
         .await?
         .expect(StatusCode::OK)
         .json();
@@ -100,7 +100,7 @@ async fn test_cluster_remove() -> TestResult {
 
     // now remove the second node
     let resp = client
-        .post("admin/cluster/remove-node")
+        .post("v1.admin.cluster.remove-node")
         .json(json!({"node_id": second_node_id}))
         .await?
         .expect(StatusCode::OK)
@@ -108,7 +108,7 @@ async fn test_cluster_remove() -> TestResult {
     assert_eq!(resp["node_id"].assert_str(), second_node_id.to_string());
 
     let cluster_status = client
-        .get("admin/cluster/status")
+        .get("v1.admin.cluster.status")
         .await?
         .expect(StatusCode::OK)
         .json();

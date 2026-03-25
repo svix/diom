@@ -25,7 +25,7 @@ func (adminCluster AdminCluster) Status(
 		ctx,
 		adminCluster.client,
 		"GET",
-		"/api/v1/admin/cluster/status",
+		"/api/v1.admin.cluster.status",
 		nil,
 	)
 }
@@ -42,7 +42,7 @@ func (adminCluster AdminCluster) RemoveNode(
 		ctx,
 		adminCluster.client,
 		"POST",
-		"/api/v1/admin/cluster/remove-node",
+		"/api/v1.admin.cluster.remove-node",
 		&clusterRemoveNodeIn,
 	)
 }

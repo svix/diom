@@ -29,7 +29,7 @@ public class RateLimitNamespace {
     public RateLimitCreateNamespaceOut create(
         final RateLimitCreateNamespaceIn rateLimitCreateNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/namespace/create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.rate-limit.namespace.create");
 
         return this.client.executeRequest(
             "POST",
@@ -44,7 +44,7 @@ public class RateLimitNamespace {
     public RateLimitGetNamespaceOut get(
         final RateLimitGetNamespaceIn rateLimitGetNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/namespace/get");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.rate-limit.namespace.get");
 
         return this.client.executeRequest(
             "POST",

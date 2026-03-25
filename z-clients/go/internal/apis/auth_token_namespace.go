@@ -26,7 +26,7 @@ func (authTokenNamespace AuthTokenNamespace) Create(
 		ctx,
 		authTokenNamespace.client,
 		"POST",
-		"/api/v1/auth-token/namespace/create",
+		"/api/v1.auth-token.namespace.create",
 		&authTokenCreateNamespaceIn,
 	)
 }
@@ -40,7 +40,7 @@ func (authTokenNamespace AuthTokenNamespace) Get(
 		ctx,
 		authTokenNamespace.client,
 		"POST",
-		"/api/v1/auth-token/namespace/get",
+		"/api/v1.auth-token.namespace.get",
 		&authTokenGetNamespaceIn,
 	)
 }

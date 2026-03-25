@@ -12,7 +12,7 @@ impl<'a> AdminCluster<'a> {
 
     /// Get information about the current cluster
     pub async fn status(&self) -> Result<ClusterStatusOut> {
-        crate::request::Request::new(http::Method::GET, "/api/v1/admin/cluster/status")
+        crate::request::Request::new(http::Method::GET, "/api/v1.admin.cluster.status")
             .execute(self.cfg)
             .await
     }
@@ -25,7 +25,7 @@ impl<'a> AdminCluster<'a> {
         &self,
         cluster_remove_node_in: ClusterRemoveNodeIn,
     ) -> Result<ClusterRemoveNodeOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1/admin/cluster/remove-node")
+        crate::request::Request::new(http::Method::POST, "/api/v1.admin.cluster.remove-node")
             .with_body(cluster_remove_node_in)
             .execute(self.cfg)
             .await

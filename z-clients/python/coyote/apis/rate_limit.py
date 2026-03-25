@@ -29,7 +29,7 @@ class RateLimitAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/rate-limit/limit",
+            path="/api/v1.rate-limit.limit",
             body=body,
             response_type=RateLimitCheckOut,
         )
@@ -43,7 +43,7 @@ class RateLimitAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/rate-limit/get-remaining",
+            path="/api/v1.rate-limit.get-remaining",
             body=body,
             response_type=RateLimitGetRemainingOut,
         )
@@ -57,7 +57,7 @@ class RateLimitAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/rate-limit/reset",
+            path="/api/v1.rate-limit.reset",
             body=body,
             response_type=RateLimitResetOut,
         )
@@ -77,7 +77,7 @@ class RateLimit(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/rate-limit/limit",
+            path="/api/v1.rate-limit.limit",
             body=body,
             response_type=RateLimitCheckOut,
         )
@@ -91,7 +91,7 @@ class RateLimit(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/rate-limit/get-remaining",
+            path="/api/v1.rate-limit.get-remaining",
             body=body,
             response_type=RateLimitGetRemainingOut,
         )
@@ -105,7 +105,7 @@ class RateLimit(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/rate-limit/reset",
+            path="/api/v1.rate-limit.reset",
             body=body,
             response_type=RateLimitResetOut,
         )

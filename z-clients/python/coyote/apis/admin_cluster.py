@@ -16,7 +16,7 @@ class AdminClusterAsync(ApiBase):
 
         return await self._request_asyncio(
             method="get",
-            path="/api/v1/admin/cluster/status",
+            path="/api/v1.admin.cluster.status",
             response_type=ClusterStatusOut,
         )
 
@@ -32,7 +32,7 @@ class AdminClusterAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/admin/cluster/remove-node",
+            path="/api/v1.admin.cluster.remove-node",
             body=body,
             response_type=ClusterRemoveNodeOut,
         )
@@ -46,7 +46,7 @@ class AdminCluster(ApiBase):
 
         return self._request_sync(
             method="get",
-            path="/api/v1/admin/cluster/status",
+            path="/api/v1.admin.cluster.status",
             response_type=ClusterStatusOut,
         )
 
@@ -62,7 +62,7 @@ class AdminCluster(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/admin/cluster/remove-node",
+            path="/api/v1.admin.cluster.remove-node",
             body=body,
             response_type=ClusterRemoveNodeOut,
         )

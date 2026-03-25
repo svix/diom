@@ -27,7 +27,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("idempotency/start").json(json!({
+                    std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                         "key": &key,
                         "ttl": 60
                     })))
@@ -37,7 +37,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
 
                     std::hint::black_box(
                         client
-                            .post("idempotency/abort")
+                            .post("v1.idempotency.abort")
                             .json(json!({ "key": &key })),
                     )
                     .await
@@ -54,7 +54,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("idempotency/start").json(json!({
+                    std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                         "key": &key,
                         "ttl": 60
                     })))
@@ -62,7 +62,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
                     .unwrap()
                     .expect(StatusCode::OK);
 
-                    std::hint::black_box(client.post("idempotency/complete").json(json!({
+                    std::hint::black_box(client.post("v1.idempotency.complete").json(json!({
                         "key": &key,
                         "response": "ok".as_bytes(),
                         "ttl": 60
@@ -79,7 +79,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
     let initialize_idempotency = |key: &str, payload: &[u8]| {
         rt.block_on(async {
             client
-                .post("idempotency/start")
+                .post("v1.idempotency.start")
                 .json(json!({
                     "key": key,
                     "ttl": 60
@@ -90,7 +90,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
 
         rt.block_on(async {
             client
-                .post("idempotency/complete")
+                .post("v1.idempotency.complete")
                 .json(json!({
                 "key": key,
                 "response": payload,
@@ -110,7 +110,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
     group.bench_function("idempotency_small_payload", |b| {
         b.iter(|| {
             rt.block_on(async {
-                std::hint::black_box(client.post("idempotency/start").json(json!({
+                std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                     "key": &test_key,
                     "ttl": 60
                 })))
@@ -129,7 +129,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
     group.bench_function("idempotency_medium_payload", |b| {
         b.iter(|| {
             rt.block_on(async {
-                std::hint::black_box(client.post("idempotency/start").json(json!({
+                std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                     "key": &test_key,
                     "ttl": 60
                 })))
@@ -148,7 +148,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
     group.bench_function("idempotency_large_payload", |b| {
         b.iter(|| {
             rt.block_on(async {
-                std::hint::black_box(client.post("idempotency/start").json(json!({
+                std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                     "key": &test_key,
                     "ttl": 60
                 })))

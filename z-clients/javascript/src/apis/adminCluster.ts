@@ -20,7 +20,7 @@ export class AdminCluster {
     /** Get information about the current cluster */
     public status(
     ): Promise<ClusterStatusOut> {
-        const request = new CoyoteRequest(HttpMethod.GET, "/api/v1/admin/cluster/status");
+        const request = new CoyoteRequest(HttpMethod.GET, "/api/v1.admin.cluster.status");
 
         
         return request.send(
@@ -36,7 +36,7 @@ export class AdminCluster {
     public removeNode(
         clusterRemoveNodeIn: ClusterRemoveNodeIn,
     ): Promise<ClusterRemoveNodeOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/admin/cluster/remove-node");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.admin.cluster.remove-node");
 
         request.setBody(
             ClusterRemoveNodeInSerializer._toJsonObject(clusterRemoveNodeIn)

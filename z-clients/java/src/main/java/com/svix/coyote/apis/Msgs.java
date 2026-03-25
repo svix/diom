@@ -30,7 +30,7 @@ public class Msgs {
         String topic,
         final MsgPublishIn msgPublishIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/publish");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.publish");
         MsgPublishIn_ body = new MsgPublishIn_(
             msgPublishIn.getNamespace(),
             topic,

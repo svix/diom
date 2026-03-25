@@ -26,7 +26,7 @@ export class MsgsNamespace {
         name: string,
         msgNamespaceCreateIn: MsgNamespaceCreateIn,
     ): Promise<MsgNamespaceCreateOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/namespace/create");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.namespace.create");
 
         request.setBody(
             MsgNamespaceCreateInSerializer._toJsonObject({
@@ -44,7 +44,7 @@ export class MsgsNamespace {
         name: string,
         msgNamespaceGetIn: MsgNamespaceGetIn,
     ): Promise<MsgNamespaceGetOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/namespace/get");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.namespace.get");
 
         request.setBody(
             MsgNamespaceGetInSerializer._toJsonObject({

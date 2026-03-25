@@ -19,7 +19,7 @@ class AuthTokenNamespaceAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/namespace/create",
+            path="/api/v1.auth-token.namespace.create",
             body=body,
             response_type=AuthTokenCreateNamespaceOut,
         )
@@ -33,7 +33,7 @@ class AuthTokenNamespaceAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/namespace/get",
+            path="/api/v1.auth-token.namespace.get",
             body=body,
             response_type=AuthTokenGetNamespaceOut,
         )
@@ -49,7 +49,7 @@ class AuthTokenNamespace(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/namespace/create",
+            path="/api/v1.auth-token.namespace.create",
             body=body,
             response_type=AuthTokenCreateNamespaceOut,
         )
@@ -63,7 +63,7 @@ class AuthTokenNamespace(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/namespace/get",
+            path="/api/v1.auth-token.namespace.get",
             body=body,
             response_type=AuthTokenGetNamespaceOut,
         )

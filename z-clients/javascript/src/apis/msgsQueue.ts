@@ -57,7 +57,7 @@ export class MsgsQueue {
         consumer_group: string,
         msgQueueReceiveIn: MsgQueueReceiveIn,
     ): Promise<MsgQueueReceiveOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/queue/receive");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.queue.receive");
 
         request.setBody(
             MsgQueueReceiveInSerializer._toJsonObject({
@@ -81,7 +81,7 @@ export class MsgsQueue {
         consumer_group: string,
         msgQueueAckIn: MsgQueueAckIn,
     ): Promise<MsgQueueAckOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/queue/ack");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.queue.ack");
 
         request.setBody(
             MsgQueueAckInSerializer._toJsonObject({
@@ -106,7 +106,7 @@ export class MsgsQueue {
         consumer_group: string,
         msgQueueConfigureIn: MsgQueueConfigureIn,
     ): Promise<MsgQueueConfigureOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/queue/configure");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.queue.configure");
 
         request.setBody(
             MsgQueueConfigureInSerializer._toJsonObject({
@@ -131,7 +131,7 @@ export class MsgsQueue {
         consumer_group: string,
         msgQueueNackIn: MsgQueueNackIn,
     ): Promise<MsgQueueNackOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/queue/nack");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.queue.nack");
 
         request.setBody(
             MsgQueueNackInSerializer._toJsonObject({
@@ -151,7 +151,7 @@ export class MsgsQueue {
         consumer_group: string,
         msgQueueRedriveDlqIn: MsgQueueRedriveDlqIn,
     ): Promise<MsgQueueRedriveDlqOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/queue/redrive-dlq");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.queue.redrive-dlq");
 
         request.setBody(
             MsgQueueRedriveDlqInSerializer._toJsonObject({

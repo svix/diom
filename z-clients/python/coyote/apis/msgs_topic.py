@@ -26,7 +26,7 @@ class MsgsTopicAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/topic/configure",
+            path="/api/v1.msgs.topic.configure",
             body=body,
             response_type=MsgTopicConfigureOut,
         )
@@ -49,7 +49,7 @@ class MsgsTopic(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/topic/configure",
+            path="/api/v1.msgs.topic.configure",
             body=body,
             response_type=MsgTopicConfigureOut,
         )

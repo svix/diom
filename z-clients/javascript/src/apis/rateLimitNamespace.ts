@@ -25,7 +25,7 @@ export class RateLimitNamespace {
     public create(
         rateLimitCreateNamespaceIn: RateLimitCreateNamespaceIn,
     ): Promise<RateLimitCreateNamespaceOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/rate-limit/namespace/create");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.rate-limit.namespace.create");
 
         request.setBody(
             RateLimitCreateNamespaceInSerializer._toJsonObject(rateLimitCreateNamespaceIn)
@@ -39,7 +39,7 @@ export class RateLimitNamespace {
     public get(
         rateLimitGetNamespaceIn: RateLimitGetNamespaceIn,
     ): Promise<RateLimitGetNamespaceOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/rate-limit/namespace/get");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.rate-limit.namespace.get");
 
         request.setBody(
             RateLimitGetNamespaceInSerializer._toJsonObject(rateLimitGetNamespaceIn)

@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
     if let Some(Commands::Healthcheck { server_url }) = args.command {
         let client = reqwest::Client::new();
         let response = client
-            .head(format!("{server_url}/api/v1/health"))
+            .head(format!("{server_url}/api/v1.health"))
             .send()
             .await?;
 

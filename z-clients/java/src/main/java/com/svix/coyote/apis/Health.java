@@ -26,7 +26,7 @@ public class Health {
     public PingOut ping(
         
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/health/ping");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.health.ping");
 
         return this.client.executeRequest(
             "GET",
@@ -41,7 +41,7 @@ public class Health {
     public void error(
         
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/health/error");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.health.error");
 
         this.client.executeRequest(
             "POST",

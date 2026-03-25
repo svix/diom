@@ -16,7 +16,7 @@
 //     } = start_server().await;
 
 //     let response = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 },
@@ -40,7 +40,7 @@
 //     );
 
 //     let update = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream"
 //         }))
@@ -71,7 +71,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -180,7 +180,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -264,7 +264,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -354,7 +354,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -450,7 +450,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -583,7 +583,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -692,7 +692,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -786,7 +786,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -919,7 +919,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }
@@ -1025,7 +1025,7 @@
 //     } = start_server().await;
 
 //     let _stream = client
-//         .post("msgs/namespace/create")
+//         .post("v1.msgs.namespace.create")
 //         .json(json!({
 //             "name": "test-stream",
 //             "retention": { "bytes": 1024, "ms": 9999 }

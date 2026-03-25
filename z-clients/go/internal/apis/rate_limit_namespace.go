@@ -26,7 +26,7 @@ func (rateLimitNamespace RateLimitNamespace) Create(
 		ctx,
 		rateLimitNamespace.client,
 		"POST",
-		"/api/v1/rate-limit/namespace/create",
+		"/api/v1.rate-limit.namespace.create",
 		&rateLimitCreateNamespaceIn,
 	)
 }
@@ -40,7 +40,7 @@ func (rateLimitNamespace RateLimitNamespace) Get(
 		ctx,
 		rateLimitNamespace.client,
 		"POST",
-		"/api/v1/rate-limit/namespace/get",
+		"/api/v1.rate-limit.namespace.get",
 		&rateLimitGetNamespaceIn,
 	)
 }

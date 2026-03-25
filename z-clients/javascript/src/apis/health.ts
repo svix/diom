@@ -12,7 +12,7 @@ export class Health {
     /** Verify the server is up and running. */
     public ping(
     ): Promise<PingOut> {
-        const request = new CoyoteRequest(HttpMethod.GET, "/api/v1/health/ping");
+        const request = new CoyoteRequest(HttpMethod.GET, "/api/v1.health.ping");
 
         
         return request.send(
@@ -22,7 +22,7 @@ export class Health {
     }/** Intentionally return an error */
     public error(
     ): Promise<void> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/health/error");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.health.error");
 
         
         return request.sendNoResponseBody(this.requestCtx);

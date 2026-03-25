@@ -19,7 +19,7 @@ class RateLimitNamespaceAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/rate-limit/namespace/create",
+            path="/api/v1.rate-limit.namespace.create",
             body=body,
             response_type=RateLimitCreateNamespaceOut,
         )
@@ -33,7 +33,7 @@ class RateLimitNamespaceAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/rate-limit/namespace/get",
+            path="/api/v1.rate-limit.namespace.get",
             body=body,
             response_type=RateLimitGetNamespaceOut,
         )
@@ -49,7 +49,7 @@ class RateLimitNamespace(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/rate-limit/namespace/create",
+            path="/api/v1.rate-limit.namespace.create",
             body=body,
             response_type=RateLimitCreateNamespaceOut,
         )
@@ -63,7 +63,7 @@ class RateLimitNamespace(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/rate-limit/namespace/get",
+            path="/api/v1.rate-limit.namespace.get",
             body=body,
             response_type=RateLimitGetNamespaceOut,
         )

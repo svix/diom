@@ -13,13 +13,13 @@ async fn publish_to_topic() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns1" }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns1:my-topic",
             "msgs": [
@@ -56,13 +56,13 @@ async fn publish_with_partition_key() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-key" }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-key:keyed-topic",
             "msgs": [
@@ -104,20 +104,20 @@ async fn publish_directly_to_partition() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-direct" }))
         .await?
         .expect(StatusCode::OK);
 
     // Configure the topic to have 4 partitions.
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({ "topic": "ns-direct:my-topic", "partitions": 4 }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-direct:my-topic~2",
             "msgs": [
@@ -158,7 +158,7 @@ async fn publish_rejects_out_of_range_partition() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-range" }))
         .await?
         .expect(StatusCode::OK);
@@ -166,7 +166,7 @@ async fn publish_rejects_out_of_range_partition() -> TestResult {
     // Default topic has 1 partition (index 0 only).
     // Publishing to partition 1 should fail.
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "namespace": "ns-range",
             "topic": "my-topic~1",
@@ -187,13 +187,13 @@ async fn publish_rejects_malformed_partition_topic() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-bad" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "namespace": "ns-bad",
             "topic": "my-topic~abc",
@@ -214,7 +214,7 @@ async fn publish_to_nonexistent_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "namespace": "does-not-exist",
             "topic": "topic",
@@ -235,13 +235,13 @@ async fn publish_keyless_same_partition() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-kl" }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "namespace": "ns-kl",
             "topic": "keyless-topic",
@@ -281,7 +281,7 @@ async fn publish_to_default_namespace() -> TestResult {
 
     // No namespace creation — default namespace is auto-created.
     let response = client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "my-topic",
             "msgs": [
@@ -318,14 +318,14 @@ async fn default_namespace_isolated_from_named() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "other" }))
         .await?
         .expect(StatusCode::OK);
 
     // Register consumer groups before publishing
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "shared-name",
             "consumer_group": "cg1",
@@ -334,7 +334,7 @@ async fn default_namespace_isolated_from_named() -> TestResult {
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "namespace": "other",
             "topic": "shared-name",
@@ -345,7 +345,7 @@ async fn default_namespace_isolated_from_named() -> TestResult {
 
     // Publish to default namespace (no prefix)
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "shared-name",
             "msgs": [{ "value": "default-msg".as_bytes() }],
@@ -355,7 +355,7 @@ async fn default_namespace_isolated_from_named() -> TestResult {
 
     // Publish to "other" namespace
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "namespace": "other",
             "topic": "shared-name",
@@ -366,7 +366,7 @@ async fn default_namespace_isolated_from_named() -> TestResult {
 
     // Receive from default — should only see 1 message
     let response = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "shared-name",
             "consumer_group": "cg1",
@@ -386,7 +386,7 @@ async fn default_namespace_isolated_from_named() -> TestResult {
 
     // Receive from "other" — should only see 1 message
     let response = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "namespace": "other",
             "topic": "shared-name",

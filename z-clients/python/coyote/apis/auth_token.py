@@ -37,7 +37,7 @@ class AuthTokenAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/create",
+            path="/api/v1.auth-token.create",
             body=body,
             response_type=AuthTokenCreateOut,
         )
@@ -51,7 +51,7 @@ class AuthTokenAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/expire",
+            path="/api/v1.auth-token.expire",
             body=body,
             response_type=AuthTokenExpireOut,
         )
@@ -65,7 +65,7 @@ class AuthTokenAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/delete",
+            path="/api/v1.auth-token.delete",
             body=body,
             response_type=AuthTokenDeleteOut,
         )
@@ -79,7 +79,7 @@ class AuthTokenAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/verify",
+            path="/api/v1.auth-token.verify",
             body=body,
             response_type=AuthTokenVerifyOut,
         )
@@ -93,7 +93,7 @@ class AuthTokenAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/list",
+            path="/api/v1.auth-token.list",
             body=body,
             response_type=ListResponseAuthTokenOut,
         )
@@ -107,7 +107,7 @@ class AuthTokenAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/update",
+            path="/api/v1.auth-token.update",
             body=body,
             response_type=AuthTokenUpdateOut,
         )
@@ -121,7 +121,7 @@ class AuthTokenAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/auth-token/rotate",
+            path="/api/v1.auth-token.rotate",
             body=body,
             response_type=AuthTokenRotateOut,
         )
@@ -141,7 +141,7 @@ class AuthToken(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/create",
+            path="/api/v1.auth-token.create",
             body=body,
             response_type=AuthTokenCreateOut,
         )
@@ -155,7 +155,7 @@ class AuthToken(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/expire",
+            path="/api/v1.auth-token.expire",
             body=body,
             response_type=AuthTokenExpireOut,
         )
@@ -169,7 +169,7 @@ class AuthToken(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/delete",
+            path="/api/v1.auth-token.delete",
             body=body,
             response_type=AuthTokenDeleteOut,
         )
@@ -183,7 +183,7 @@ class AuthToken(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/verify",
+            path="/api/v1.auth-token.verify",
             body=body,
             response_type=AuthTokenVerifyOut,
         )
@@ -197,7 +197,7 @@ class AuthToken(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/list",
+            path="/api/v1.auth-token.list",
             body=body,
             response_type=ListResponseAuthTokenOut,
         )
@@ -211,7 +211,7 @@ class AuthToken(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/update",
+            path="/api/v1.auth-token.update",
             body=body,
             response_type=AuthTokenUpdateOut,
         )
@@ -225,7 +225,7 @@ class AuthToken(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/auth-token/rotate",
+            path="/api/v1.auth-token.rotate",
             body=body,
             response_type=AuthTokenRotateOut,
         )

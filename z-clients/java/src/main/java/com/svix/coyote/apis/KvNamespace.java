@@ -29,7 +29,7 @@ public class KvNamespace {
     public KvCreateNamespaceOut create(
         final KvCreateNamespaceIn kvCreateNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/namespace/create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.namespace.create");
 
         return this.client.executeRequest(
             "POST",
@@ -44,7 +44,7 @@ public class KvNamespace {
     public KvGetNamespaceOut get(
         final KvGetNamespaceIn kvGetNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/namespace/get");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.namespace.get");
 
         return this.client.executeRequest(
             "POST",

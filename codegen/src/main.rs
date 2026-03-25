@@ -29,7 +29,7 @@ fn main() -> anyhow::Result<ExitCode> {
 
     let router = coyote::v1::router(None);
     _ = aide::axum::ApiRouter::new()
-        .nest("/api/v1", router)
+        .nest("/api", router)
         .finish_api_with(&mut openapi, coyote::openapi::add_security_scheme);
 
     coyote::openapi::postprocess_spec(&mut openapi);

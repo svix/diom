@@ -46,7 +46,7 @@ func (msgs Msgs) Publish(
 		ctx,
 		msgs.client,
 		"POST",
-		"/api/v1/msgs/publish",
+		"/api/v1.msgs.publish",
 		&body,
 	)
 }

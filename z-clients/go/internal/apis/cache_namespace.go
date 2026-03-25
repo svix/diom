@@ -26,7 +26,7 @@ func (cacheNamespace CacheNamespace) Create(
 		ctx,
 		cacheNamespace.client,
 		"POST",
-		"/api/v1/cache/namespace/create",
+		"/api/v1.cache.namespace.create",
 		&cacheCreateNamespaceIn,
 	)
 }
@@ -40,7 +40,7 @@ func (cacheNamespace CacheNamespace) Get(
 		ctx,
 		cacheNamespace.client,
 		"POST",
-		"/api/v1/cache/namespace/get",
+		"/api/v1.cache.namespace.get",
 		&cacheGetNamespaceIn,
 	)
 }

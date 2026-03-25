@@ -75,13 +75,7 @@ pub(crate) fn expand_aide_annotate(
         }
     }
 
-    let operation_path = format!(
-        "/{}",
-        operation_id
-            .strip_prefix("v1.")
-            .unwrap_or(&operation_id)
-            .replace('.', "/")
-    );
+    let operation_path = format!("/{operation_id}");
 
     let description = doc_comment_from_attributes(&item.attrs);
 

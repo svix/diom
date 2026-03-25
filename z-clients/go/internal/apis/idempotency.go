@@ -37,7 +37,7 @@ func (idempotency Idempotency) Start(
 		ctx,
 		idempotency.client,
 		"POST",
-		"/api/v1/idempotency/start",
+		"/api/v1.idempotency.start",
 		&body,
 	)
 }
@@ -59,7 +59,7 @@ func (idempotency Idempotency) Complete(
 		ctx,
 		idempotency.client,
 		"POST",
-		"/api/v1/idempotency/complete",
+		"/api/v1.idempotency.complete",
 		&body,
 	)
 }
@@ -79,7 +79,7 @@ func (idempotency Idempotency) Abort(
 		ctx,
 		idempotency.client,
 		"POST",
-		"/api/v1/idempotency/abort",
+		"/api/v1.idempotency.abort",
 		&body,
 	)
 }
