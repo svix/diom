@@ -6,7 +6,7 @@ use itertools::Itertools;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
-#[derive(PartialEq, Eq, JsonSchema)]
+#[derive(Debug, PartialEq, Eq, JsonSchema)]
 #[schemars(schema_with = "String::json_schema")]
 pub struct ResourcePattern {
     pub module: Module,
@@ -14,7 +14,7 @@ pub struct ResourcePattern {
     pub key: KeyPattern,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Module {
     AuthToken,
     Cache,
@@ -24,7 +24,7 @@ pub enum Module {
     RateLimit,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum NamespacePattern {
     Default,
     Named(String),
@@ -32,7 +32,7 @@ pub enum NamespacePattern {
     // FIXME: Do namespaces have any sort of hierarchy?
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum KeyPattern {
     Exactly(String),
     Prefix(String),
