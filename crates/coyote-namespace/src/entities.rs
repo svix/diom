@@ -1,38 +1,10 @@
-use std::{
-    fmt::{self, Debug, Display, Formatter},
-    time::Duration,
-};
+use std::{fmt::Debug, time::Duration};
 
+use coyote_id::Module;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 pub type NamespaceName = String;
-
-#[derive(Serialize, Deserialize)]
-#[repr(u8)]
-pub enum Module {
-    Cache = 1,
-    Idempotency = 2,
-    KeyValue = 3,
-    RateLimit = 4,
-    Stream = 5,
-    AuthToken = 6,
-}
-
-// This shouldn't be needed when we're writing keys as bytes
-impl Display for Module {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let value = match self {
-            Module::Cache => 1,
-            Module::Idempotency => 2,
-            Module::KeyValue => 3,
-            Module::RateLimit => 4,
-            Module::Stream => 5,
-            Module::AuthToken => 6,
-        };
-        write!(f, "{value}")
-    }
-}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
 pub enum EvictionPolicy {
@@ -60,7 +32,7 @@ impl KeyValueConfig {
 
 impl ModuleConfig for KeyValueConfig {
     fn module() -> Module {
-        Module::KeyValue
+        Module::Kv
     }
 }
 
@@ -84,14 +56,14 @@ impl ModuleConfig for CacheConfig {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct StreamConfig {
+pub struct MsgsConfig {
     #[serde(with = "fjall_utils::duration_millis")]
     pub retention_period: Duration,
 }
 
-impl ModuleConfig for StreamConfig {
+impl ModuleConfig for MsgsConfig {
     fn module() -> Module {
-        Module::Stream
+        Module::Msgs
     }
 }
 

@@ -7,9 +7,10 @@ use uuid::Uuid;
 mod public;
 #[macro_use]
 mod marker;
+mod module;
 
 use self::marker::{IdMarker, PublicIdMarker};
-pub use self::public::Public;
+pub use self::{module::Module, public::Public};
 
 pub type AuthTokenId = Id<m::AuthToken>;
 pub type NamespaceId = Id<m::Namespace>;

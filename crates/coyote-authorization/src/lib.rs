@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 mod pattern;
 
-pub use self::pattern::{KeyPattern, Module, NamespacePattern, ResourcePattern};
+pub use self::pattern::{KeyPattern, NamespacePattern, ResourcePattern};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]

@@ -1,5 +1,5 @@
 use coyote_error::Error;
-use coyote_namespace::{Namespace, entities::StreamConfig};
+use coyote_namespace::{Namespace, entities::MsgsConfig};
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 
 pub mod entities;
@@ -9,7 +9,7 @@ pub(crate) mod tables;
 const MSG_KEYSPACE: &str = "mod_msgs";
 const METADATA_KEYSPACE: &str = "mod_msgs_metadata";
 
-pub type MsgsNamespace = Namespace<StreamConfig>;
+pub type MsgsNamespace = Namespace<MsgsConfig>;
 
 #[derive(Clone)]
 pub struct State {
