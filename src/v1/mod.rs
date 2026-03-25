@@ -31,7 +31,6 @@ pub fn router(state: Option<AppState>) -> ApiRouter<AppState> {
         .merge(endpoints::kv::router())
         .merge(endpoints::rate_limit::router())
         .merge(endpoints::idempotency::router())
-        .merge(endpoints::queue::router())
         .merge(endpoints::msgs::router());
 
     if let Some(state) = state {
