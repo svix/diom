@@ -8,7 +8,7 @@ use axum::{Extension, extract::State};
 use diom_core::types::{DurationMs, EntityKey};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
-use diom_namespace::entities::{NamespaceName, StorageType};
+use diom_namespace::entities::NamespaceName;
 use diom_proto::MsgPackOrJson;
 use diom_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
 use jiff::Timestamp;
@@ -155,7 +155,7 @@ async fn rate_limit_get_remaining(
     let now = repl.time.now();
     // FIXME: this state should be passed, not created every time.
     let rate_limit_state = diom_rate_limit::State::init(state.do_not_use_dbs.clone())?;
-    let controller = rate_limit_state.controller(namespace.storage_type);
+    let controller = rate_limit_state.controller();
     let (remaining, retry_after) = controller
         .get_remaining(now, namespace.id, data.key, data.config.into())
         .await?;
@@ -206,14 +206,12 @@ async fn rate_limit_reset(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct RateLimitCreateNamespaceIn {
     pub name: NamespaceName,
-    #[serde(default)]
-    pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
     fn from(v: RateLimitCreateNamespaceIn) -> Self {
-        CreateRateLimitOperation::new(v.name, v.storage_type, v.max_storage_bytes)
+        CreateRateLimitOperation::new(v.name, v.max_storage_bytes)
     }
 }
 
@@ -222,7 +220,6 @@ struct RateLimitCreateNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -237,7 +234,6 @@ struct RateLimitGetNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -253,7 +249,6 @@ async fn rate_limit_create_namespace(
     Ok(MsgPackOrJson(RateLimitCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
-        storage_type: resp.storage_type,
         created: resp.created,
         updated: resp.updated,
     }))
@@ -276,7 +271,6 @@ async fn rate_limit_get_namespace(
     Ok(MsgPackOrJson(RateLimitGetNamespaceOut {
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
-        storage_type: namespace.storage_type,
         created: namespace.created,
         updated: namespace.updated,
     }))

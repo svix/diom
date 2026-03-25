@@ -7,9 +7,8 @@ import (
 )
 
 type KvCreateNamespaceOut struct {
-	Name            string      `msgpack:"name"`
-	MaxStorageBytes *uint64     `msgpack:"max_storage_bytes,omitempty"`
-	StorageType     StorageType `msgpack:"storage_type"`
-	Created         time.Time   `msgpack:"created"`
-	Updated         time.Time   `msgpack:"updated"`
+	Name            string    `msgpack:"name"`
+	MaxStorageBytes *uint64   `msgpack:"max_storage_bytes,omitempty"`
+	Created         time.Time `msgpack:"created"`
+	Updated         time.Time `msgpack:"updated"`
 }

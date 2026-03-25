@@ -2,7 +2,7 @@ use diom_error::Result;
 use fjall::{Error, KeyspaceCreateOptions};
 use fjall_utils::Databases;
 
-use crate::entities::{ModuleConfig, StorageType};
+use crate::entities::ModuleConfig;
 
 pub mod entities;
 pub mod operations;
@@ -59,17 +59,6 @@ impl State {
         &self.keyspace
     }
 
-    pub fn flush_and_sync(&self) -> Result<(), Error> {
-        self.db.persist(fjall::PersistMode::SyncAll)?;
-        self.both_dbs
-            .persistent
-            .persist(fjall::PersistMode::SyncAll)?;
-        self.both_dbs
-            .ephemeral
-            .persist(fjall::PersistMode::SyncAll)?;
-        Ok(())
-    }
-
     #[tracing::instrument(skip(self))]
     pub fn fetch_namespace<C: ModuleConfig>(
         &self,
@@ -104,16 +93,6 @@ impl State {
         &self,
     ) -> Result<impl Iterator<Item = Namespace<C>>> {
         Namespace::fetch_all(&self.keyspace)
-    }
-
-    pub fn give_me_the_right_db<C: ModuleConfig>(
-        &self,
-        namespace: &Namespace<C>,
-    ) -> fjall::Database {
-        match namespace.storage_type {
-            StorageType::Persistent => self.both_dbs.persistent.clone(),
-            StorageType::Ephemeral => self.both_dbs.ephemeral.clone(),
-        }
     }
 }
 

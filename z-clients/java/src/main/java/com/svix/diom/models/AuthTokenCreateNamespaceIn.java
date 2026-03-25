@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class AuthTokenCreateNamespaceIn {
     @JsonProperty private String name;
-    @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
     public AuthTokenCreateNamespaceIn() {}
 
@@ -50,25 +49,6 @@ public class AuthTokenCreateNamespaceIn {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public AuthTokenCreateNamespaceIn storageType(StorageType storageType) {
-        this.storageType = storageType;
-        return this;
-    }
-
-    /**
-    * Get storageType
-    *
-     * @return storageType
-     */
-    @javax.annotation.Nullable
-    public StorageType getStorageType() {
-        return storageType;
-    }
-
-    public void setStorageType(StorageType storageType) {
-        this.storageType = storageType;
     }
 
     public AuthTokenCreateNamespaceIn maxStorageBytes(Long maxStorageBytes) {

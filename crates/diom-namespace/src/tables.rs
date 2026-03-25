@@ -7,7 +7,7 @@ use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{ModuleConfig, NamespaceName, StorageType};
+use crate::entities::{ModuleConfig, NamespaceName};
 
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]
@@ -20,7 +20,6 @@ enum RowType {
 pub struct Namespace<C: ModuleConfig> {
     pub id: NamespaceId,
     pub name: NamespaceName,
-    pub storage_type: StorageType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
 

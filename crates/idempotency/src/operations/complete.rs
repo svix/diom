@@ -4,14 +4,12 @@ use diom_core::types::DurationS;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub(crate) key: String,
     pub(crate) response: Vec<u8>,
     pub(crate) ttl_seconds: DurationS,
@@ -26,7 +24,6 @@ impl CompleteOperation {
     ) -> Self {
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             key,
             response,
             ttl_seconds,
@@ -44,7 +41,7 @@ impl CompleteOperation {
         let expiry = now + self.ttl_seconds;
         state
             .state
-            .controller(self.storage_type)
+            .controller()
             .set(
                 self.namespace_id,
                 self.key,

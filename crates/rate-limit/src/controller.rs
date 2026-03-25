@@ -1,12 +1,13 @@
 use std::time::Duration;
 
 use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Result;
+use diom_error::{Result, ResultExt as _};
 use diom_id::NamespaceId;
+use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 
-use crate::{algorithms::TokenBucket, tables::TokenBucketRow};
+use crate::{RATE_LIMIT_KEYSPACE, algorithms::TokenBucket, tables::TokenBucketRow};
 
 #[derive(Clone)]
 pub struct RateLimitController {
@@ -16,8 +17,10 @@ pub struct RateLimitController {
 }
 
 impl RateLimitController {
-    pub fn new(db: fjall::Database, tables: fjall::Keyspace) -> Self {
-        Self { db, tables }
+    pub fn new(db: fjall::Database) -> Result<Self> {
+        let opts = || KeyspaceCreateOptions::default();
+        let tables = db.keyspace(RATE_LIMIT_KEYSPACE, opts).or_internal_error()?;
+        Ok(Self { db, tables })
     }
 
     fn calculate_capacity(
@@ -120,13 +123,10 @@ mod tests {
 
     use diom_core::types::DurationMs;
     use diom_id::NamespaceId;
-    use fjall::KeyspaceCreateOptions;
     use jiff::Timestamp;
     use tempfile::tempdir;
 
     use super::*;
-
-    const TEST_KEYSPACE: &str = "mod_rate_limit";
 
     fn create_test_controller() -> (RateLimitController, tempfile::TempDir) {
         let dir = tempdir().unwrap();
@@ -134,9 +134,7 @@ mod tests {
             .temporary(true)
             .open()
             .unwrap();
-        let opts = || KeyspaceCreateOptions::default();
-        let tables = db.keyspace(TEST_KEYSPACE, opts).unwrap();
-        (RateLimitController::new(db, tables), dir)
+        (RateLimitController::new(db).unwrap(), dir)
     }
 
     fn ns() -> NamespaceId {

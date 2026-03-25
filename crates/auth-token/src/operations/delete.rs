@@ -7,8 +7,6 @@ use crate::{
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
 use diom_operations::OpContext;
-use fjall_utils::StorageType;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteResponseData {
     pub success: bool,
@@ -17,7 +15,6 @@ pub struct DeleteResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteAuthTokenOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub id: AuthTokenId,
 }
 
@@ -25,7 +22,6 @@ impl DeleteAuthTokenOperation {
     pub fn new(namespace: AuthTokenNamespace, id: AuthTokenId) -> Self {
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             id,
         }
     }

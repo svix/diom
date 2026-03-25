@@ -7,9 +7,8 @@ import (
 )
 
 type MsgNamespaceGetOut struct {
-	Name        string      `msgpack:"name"`
-	Retention   Retention   `msgpack:"retention"`
-	StorageType StorageType `msgpack:"storage_type"`
-	Created     time.Time   `msgpack:"created"`
-	Updated     time.Time   `msgpack:"updated"`
+	Name      string    `msgpack:"name"`
+	Retention Retention `msgpack:"retention"`
+	Created   time.Time `msgpack:"created"`
+	Updated   time.Time `msgpack:"updated"`
 }

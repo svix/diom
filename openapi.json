@@ -3506,10 +3506,6 @@
           "name": {
             "type": "string"
           },
-          "storage_type": {
-            "default": "Persistent",
-            "$ref": "#/components/schemas/StorageType"
-          },
           "max_storage_bytes": {
             "type": "integer",
             "format": "uint64",
@@ -3533,9 +3529,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -3547,7 +3540,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -3650,9 +3642,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -3664,7 +3653,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -3866,10 +3854,6 @@
           "name": {
             "type": "string"
           },
-          "storage_type": {
-            "default": "Persistent",
-            "$ref": "#/components/schemas/StorageType"
-          },
           "max_storage_bytes": {
             "type": "integer",
             "format": "uint64",
@@ -3897,9 +3881,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "eviction_policy": {
             "$ref": "#/components/schemas/EvictionPolicy"
           },
@@ -3914,7 +3895,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "eviction_policy",
           "created",
           "updated"
@@ -4002,9 +3982,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "eviction_policy": {
             "$ref": "#/components/schemas/EvictionPolicy"
           },
@@ -4019,7 +3996,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "eviction_policy",
           "created",
           "updated"
@@ -4256,10 +4232,6 @@
           "name": {
             "type": "string"
           },
-          "storage_type": {
-            "default": "Persistent",
-            "$ref": "#/components/schemas/StorageType"
-          },
           "max_storage_bytes": {
             "type": "integer",
             "format": "uint64",
@@ -4283,9 +4255,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -4297,7 +4266,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -4325,9 +4293,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -4339,7 +4304,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -4432,10 +4396,6 @@
           "name": {
             "type": "string"
           },
-          "storage_type": {
-            "default": "Persistent",
-            "$ref": "#/components/schemas/StorageType"
-          },
           "max_storage_bytes": {
             "type": "integer",
             "format": "uint64",
@@ -4459,9 +4419,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -4473,7 +4430,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -4561,9 +4517,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -4575,7 +4528,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -4745,10 +4697,6 @@
               "bytes": 1000000000000
             },
             "$ref": "#/components/schemas/Retention"
-          },
-          "storage_type": {
-            "default": "Persistent",
-            "$ref": "#/components/schemas/StorageType"
           }
         },
         "required": [
@@ -4767,9 +4715,6 @@
           "retention": {
             "$ref": "#/components/schemas/Retention"
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -4782,7 +4727,6 @@
         "required": [
           "name",
           "retention",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -4810,9 +4754,6 @@
           "retention": {
             "$ref": "#/components/schemas/Retention"
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -4825,7 +4766,6 @@
         "required": [
           "name",
           "retention",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -5410,10 +5350,6 @@
           "name": {
             "type": "string"
           },
-          "storage_type": {
-            "default": "Persistent",
-            "$ref": "#/components/schemas/StorageType"
-          },
           "max_storage_bytes": {
             "type": "integer",
             "format": "uint64",
@@ -5437,9 +5373,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -5451,7 +5384,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -5479,9 +5411,6 @@
             "minimum": 1,
             "nullable": true
           },
-          "storage_type": {
-            "$ref": "#/components/schemas/StorageType"
-          },
           "created": {
             "type": "string",
             "format": "date-time"
@@ -5493,7 +5422,6 @@
         },
         "required": [
           "name",
-          "storage_type",
           "created",
           "updated"
         ]
@@ -5646,13 +5574,6 @@
         "required": [
           "code",
           "detail"
-        ]
-      },
-      "StorageType": {
-        "type": "string",
-        "enum": [
-          "Persistent",
-          "Ephemeral"
         ]
       },
       "StreamMsgOut": {

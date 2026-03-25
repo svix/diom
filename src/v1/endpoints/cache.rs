@@ -15,7 +15,7 @@ use diom_error::{OptionExt, ResultExt};
 use diom_kv::kvcontroller::KvModel;
 use diom_namespace::{
     Namespace,
-    entities::{CacheConfig, EvictionPolicy, NamespaceName, StorageType},
+    entities::{CacheConfig, EvictionPolicy, NamespaceName},
 };
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -105,7 +105,6 @@ struct CacheGetNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub eviction_policy: EvictionPolicy,
     pub created: Timestamp,
     pub updated: Timestamp,
@@ -114,8 +113,6 @@ struct CacheGetNamespaceOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct CacheCreateNamespaceIn {
     pub name: NamespaceName,
-    #[serde(default)]
-    pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
     #[serde(default)]
     pub eviction_policy: EvictionPolicy,
@@ -123,12 +120,7 @@ pub(crate) struct CacheCreateNamespaceIn {
 
 impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
     fn from(v: CacheCreateNamespaceIn) -> Self {
-        CreateCacheOperation::new(
-            v.name,
-            v.eviction_policy,
-            v.storage_type,
-            v.max_storage_bytes,
-        )
+        CreateCacheOperation::new(v.name, v.eviction_policy, v.max_storage_bytes)
     }
 }
 
@@ -137,7 +129,6 @@ struct CacheCreateNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub eviction_policy: EvictionPolicy,
     pub created: Timestamp,
     pub updated: Timestamp,
@@ -178,9 +169,8 @@ async fn cache_get(
         repl.wait_linearizable().await.or_internal_error()?;
     }
 
-    // FIXME: support more than just persistent, etc.
     let cache_state = diom_cache::State::init(state.do_not_use_dbs.clone())?;
-    let controller = cache_state.controller(namespace.storage_type);
+    let controller = cache_state.controller();
 
     let model = controller
         .fetch(namespace.id, data.key, repl.time.now())
@@ -231,7 +221,6 @@ async fn cache_create_namespace(
     Ok(MsgPackOrJson(CacheCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
-        storage_type: resp.storage_type,
         eviction_policy: resp.eviction_policy,
         created: resp.created,
         updated: resp.updated,
@@ -256,7 +245,6 @@ async fn cache_get_namespace(
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
-        storage_type: namespace.storage_type,
         eviction_policy: namespace.config.eviction_policy,
         created: namespace.created,
         updated: namespace.updated,

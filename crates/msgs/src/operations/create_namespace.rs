@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use diom_error::Result;
 use diom_namespace::{
-    entities::{NamespaceName, StorageType, StreamConfig},
+    entities::{NamespaceName, StreamConfig},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -15,16 +15,11 @@ use crate::entities::{Retention, default_retention_bytes, default_retention_ms};
 pub struct CreateNamespaceOperation {
     pub name: NamespaceName,
     pub retention: Retention,
-    pub storage_type: StorageType,
 }
 
 impl CreateNamespaceOperation {
-    pub fn new(name: NamespaceName, retention: Retention, storage_type: StorageType) -> Self {
-        Self {
-            name,
-            retention,
-            storage_type,
-        }
+    pub fn new(name: NamespaceName, retention: Retention) -> Self {
+        Self { name, retention }
     }
 
     async fn apply_real(
@@ -37,7 +32,6 @@ impl CreateNamespaceOperation {
             StreamConfig {
                 retention_period: Duration::from_millis(self.retention.ms.get()),
             },
-            self.storage_type,
             Some(self.retention.bytes),
         );
         let out = op.apply_operation(namespace_state, now).await?;
@@ -49,7 +43,6 @@ impl CreateNamespaceOperation {
 pub struct CreateNamespaceResponseData {
     pub name: NamespaceName,
     pub retention: Retention,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -67,7 +60,6 @@ impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
         Self {
             name: value.name,
             retention: Retention { ms, bytes },
-            storage_type: value.storage_type,
             created: value.created,
             updated: value.updated,
         }

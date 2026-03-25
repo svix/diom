@@ -16,7 +16,7 @@ use diom_idempotency::{
 };
 use diom_namespace::{
     Namespace,
-    entities::{IdempotencyConfig, NamespaceName, StorageType},
+    entities::{IdempotencyConfig, NamespaceName},
 };
 use diom_proto::MsgPackOrJson;
 use jiff::Timestamp;
@@ -176,7 +176,6 @@ struct IdempotencyGetNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -184,14 +183,12 @@ struct IdempotencyGetNamespaceOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct IdempotencyCreateNamespaceIn {
     pub name: NamespaceName,
-    #[serde(default)]
-    pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
     fn from(v: IdempotencyCreateNamespaceIn) -> Self {
-        CreateIdempotencyOperation::new(v.name, v.storage_type, v.max_storage_bytes)
+        CreateIdempotencyOperation::new(v.name, v.max_storage_bytes)
     }
 }
 
@@ -200,7 +197,6 @@ struct IdempotencyCreateNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -216,7 +212,6 @@ async fn idempotency_create_namespace(
     Ok(MsgPackOrJson(IdempotencyCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
-        storage_type: resp.storage_type,
         created: resp.created,
         updated: resp.updated,
     }))
@@ -240,7 +235,6 @@ async fn idempotency_get_namespace(
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
-        storage_type: namespace.storage_type,
         created: namespace.created,
         updated: namespace.updated,
     }))

@@ -16,7 +16,7 @@ use diom_error::Result;
 use diom_kv::kvcontroller::KvController;
 use diom_namespace::{Namespace, entities::IdempotencyConfig};
 use diom_operations::{BackgroundError, BackgroundResult};
-use fjall_utils::{Databases, StorageType};
+use fjall_utils::Databases;
 use serde::{Deserialize, Serialize};
 
 pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
@@ -54,23 +54,18 @@ impl From<Vec<u8>> for IdempotencyState {
 
 #[derive(Clone)]
 pub struct State {
-    persistent_controller: KvController,
-    ephemeral_controller: KvController,
+    controller: KvController,
 }
 
 impl State {
     pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            persistent_controller: KvController::new(dbs.persistent, IDEMPOTENCY_KEYSPACE),
-            ephemeral_controller: KvController::new(dbs.ephemeral, IDEMPOTENCY_KEYSPACE),
+            controller: KvController::new(dbs.persistent, IDEMPOTENCY_KEYSPACE),
         })
     }
 
-    pub fn controller(&self, storage_type: StorageType) -> &KvController {
-        match storage_type {
-            StorageType::Persistent => &self.persistent_controller,
-            StorageType::Ephemeral => &self.ephemeral_controller,
-        }
+    pub fn controller(&self) -> &KvController {
+        &self.controller
     }
 }
 
@@ -113,17 +108,7 @@ impl AllNodesWorker {
     async fn worker_loop(&self, now: jiff::Timestamp) -> BackgroundResult<()> {
         let mut tasks = tokio::task::JoinSet::new();
         let state = self.state.clone();
-        tasks.spawn_blocking(move || {
-            state
-                .persistent_controller
-                .clear_expired_in_background(now, StorageType::Persistent)
-        });
-        let state = self.state.clone();
-        tasks.spawn_blocking(move || {
-            state
-                .ephemeral_controller
-                .clear_expired_in_background(now, StorageType::Ephemeral)
-        });
+        tasks.spawn_blocking(move || state.controller.clear_expired_in_background(now));
         for result in tasks.join_all().await {
             result.map_err(BackgroundError::Other)?;
         }

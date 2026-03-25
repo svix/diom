@@ -2,7 +2,7 @@ use std::num::NonZeroU64;
 
 use diom_error::Result;
 use diom_namespace::{
-    entities::{AuthTokenConfig, StorageType},
+    entities::AuthTokenConfig,
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -13,30 +13,19 @@ use crate::operations::{AuthTokenRaftState, AuthTokenRequest, CreateNamespaceRes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAuthTokenNamespaceOperation {
     pub(crate) name: String,
-    storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<CreateAuthTokenNamespaceOperation> for CreateNamespace<AuthTokenConfig> {
     fn from(value: CreateAuthTokenNamespaceOperation) -> Self {
-        CreateNamespace::new(
-            value.name,
-            AuthTokenConfig {},
-            value.storage_type,
-            value.max_storage_bytes,
-        )
+        CreateNamespace::new(value.name, AuthTokenConfig {}, value.max_storage_bytes)
     }
 }
 
 impl CreateAuthTokenNamespaceOperation {
-    pub fn new(
-        name: String,
-        storage_type: StorageType,
-        max_storage_bytes: Option<NonZeroU64>,
-    ) -> Self {
+    pub fn new(name: String, max_storage_bytes: Option<NonZeroU64>) -> Self {
         Self {
             name,
-            storage_type,
             max_storage_bytes,
         }
     }
@@ -56,7 +45,6 @@ impl CreateAuthTokenNamespaceOperation {
 pub struct CreateAuthTokenNamespaceResponseData {
     pub name: String,
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -66,7 +54,6 @@ impl From<CreateNamespaceOutput<AuthTokenConfig>> for CreateAuthTokenNamespaceRe
         Self {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
-            storage_type: value.storage_type,
             created: value.created,
             updated: value.updated,
         }

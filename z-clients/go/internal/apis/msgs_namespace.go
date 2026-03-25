@@ -24,9 +24,8 @@ func (msgsNamespace MsgsNamespace) Create(
 	msgNamespaceCreateIn diom_models.MsgNamespaceCreateIn,
 ) (*diom_models.MsgNamespaceCreateOut, error) {
 	body := diom_models.MsgNamespaceCreateIn_{
-		Name:        name,
-		Retention:   msgNamespaceCreateIn.Retention,
-		StorageType: msgNamespaceCreateIn.StorageType,
+		Name:      name,
+		Retention: msgNamespaceCreateIn.Retention,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgNamespaceCreateIn_, diom_models.MsgNamespaceCreateOut](
