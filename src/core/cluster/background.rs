@@ -357,6 +357,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         if should_snapshot {
             last_snapshot_time = std::time::Instant::now();
             last_snapshot_index = committed;
+            #[allow(clippy::disallowed_methods)]
             let last_snapshot_timestamp = jiff::Timestamp::now();
             let payload = if trigger_snapshot(&handle, state, purge_by, committed).await?
                 && let Some(index) = last_snapshot_index
