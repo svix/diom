@@ -77,3 +77,11 @@ jobs:
       image_tag: sha-${{ github.sha }}
       environment: svix-cloud-staging-apply
     secrets: inherit
+
+  benchmark-environment:
+    needs: svix-cloud-deploy
+    uses: ./.github/workflows/benchmark-env.yml
+    secrets: inherit
+    with:
+      image_tag: sha-${{ github.sha }}
+      environment: svix-cloud-staging-apply

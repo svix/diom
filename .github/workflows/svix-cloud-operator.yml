@@ -21,7 +21,6 @@ on:
         description: "Target environment"
         required: false
         type: string
-        default: svix-cloud-staging-apply
 
 env:
   REGISTRY: ghcr.io
