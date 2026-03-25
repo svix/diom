@@ -340,6 +340,10 @@ pub struct MsgIn {
     pub headers: HashMap<String, String>,
     /// Optional partition key. Messages with the same key are routed to the same partition.
     pub key: Option<String>,
+    /// Optional delay in milliseconds. The message will not be delivered to queue consumers
+    /// until `delay_ms` has elapsed from the time of publish.
+    #[serde(default)]
+    pub delay_ms: Option<u64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -350,6 +354,8 @@ pub struct StreamMsgOut {
     #[serde(default)]
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scheduled_at: Option<Timestamp>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -359,6 +365,8 @@ pub struct QueueMsgOut {
     #[serde(default)]
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scheduled_at: Option<Timestamp>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

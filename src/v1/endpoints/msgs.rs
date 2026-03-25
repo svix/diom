@@ -226,6 +226,7 @@ async fn stream_receive(
                 value: m.value,
                 headers: m.headers,
                 timestamp: m.timestamp,
+                scheduled_at: m.scheduled_at,
             })
             .collect(),
     }))
@@ -381,6 +382,7 @@ async fn queue_receive(
                 value: m.value,
                 headers: m.headers,
                 timestamp: m.timestamp,
+                scheduled_at: m.scheduled_at,
             })
             .collect(),
     }))

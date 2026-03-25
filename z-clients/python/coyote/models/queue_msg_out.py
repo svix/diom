@@ -14,3 +14,5 @@ class QueueMsgOut(BaseModel):
     headers: t.Optional[t.Dict[str, str]] = None
 
     timestamp: datetime
+
+    scheduled_at: t.Optional[datetime] = Field(default=None, alias="scheduled_at")

@@ -33,6 +33,7 @@ public class StreamMsgOut {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private OffsetDateTime timestamp;
+    @JsonProperty("scheduled_at") private OffsetDateTime scheduledAt;
     public StreamMsgOut() {}
 
     public StreamMsgOut offset(Long offset) {
@@ -142,6 +143,25 @@ public class StreamMsgOut {
 
     public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public StreamMsgOut scheduledAt(OffsetDateTime scheduledAt) {
+        this.scheduledAt = scheduledAt;
+        return this;
+    }
+
+    /**
+    * Get scheduledAt
+    *
+     * @return scheduledAt
+     */
+    @javax.annotation.Nullable
+    public OffsetDateTime getScheduledAt() {
+        return scheduledAt;
+    }
+
+    public void setScheduledAt(OffsetDateTime scheduledAt) {
+        this.scheduledAt = scheduledAt;
     }
 
     /**
