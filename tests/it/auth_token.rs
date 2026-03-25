@@ -223,7 +223,6 @@ async fn test_auth_token_namespace_create_and_get() -> TestResult {
         .json();
 
     assert_eq!(resp["name"], "at-ns-1");
-    assert_eq!(resp["storage_type"], "Persistent");
     assert!(resp["created"].is_string());
     assert!(resp["updated"].is_string());
 

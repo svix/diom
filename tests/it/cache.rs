@@ -127,7 +127,6 @@ async fn create_namespace_with_defaults() -> TestResult {
         .json();
 
     assert_eq!(response["name"], "my-namespace");
-    assert_eq!(response["storage_type"], "Persistent");
     assert_eq!(response["eviction_policy"], "NoEviction");
     assert!(response["created"].is_string());
     assert!(response["updated"].is_string());
@@ -147,7 +146,6 @@ async fn create_namespace_with_custom_config() -> TestResult {
         .post("cache/namespace/create")
         .json(json!({
             "name": "custom-ns",
-            "storage_type": "Ephemeral",
             "eviction_policy": "LeastRecentlyUsed",
         }))
         .await?
@@ -160,7 +158,6 @@ async fn create_namespace_with_custom_config() -> TestResult {
         response,
         json!({
             "name": "custom-ns",
-            "storage_type": "Ephemeral",
             "eviction_policy": "LeastRecentlyUsed",
             "created": ts,
             "updated": ts,
@@ -182,7 +179,6 @@ async fn create_namespace_upserts() -> TestResult {
         .post("cache/namespace/create")
         .json(json!({
             "name": "upsert-ns",
-            "storage_type": "Ephemeral",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -190,21 +186,18 @@ async fn create_namespace_upserts() -> TestResult {
 
     let created_ts = first["created"].assert_str().to_owned();
     assert_eq!(first["name"], "upsert-ns");
-    assert_eq!(first["storage_type"], "Ephemeral");
 
     // Upsert
     let second = client
         .post("cache/namespace/create")
         .json(json!({
             "name": "upsert-ns",
-            "storage_type": "Persistent",
         }))
         .await?
         .expect(StatusCode::OK)
         .json();
 
     assert_eq!(second["name"], "upsert-ns");
-    assert_eq!(second["storage_type"], "Persistent");
     // created timestamp should remain the same
     assert_eq!(second["created"], created_ts);
     // updated timestamp should change
@@ -226,7 +219,6 @@ async fn get_namespace() -> TestResult {
         .post("cache/namespace/create")
         .json(json!({
             "name": "get-test-ns",
-            "storage_type": "Ephemeral",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -243,7 +235,6 @@ async fn get_namespace() -> TestResult {
         .json();
 
     assert_eq!(response["name"], "get-test-ns");
-    assert_eq!(response["storage_type"], "Ephemeral");
     assert_eq!(response["created"], created["created"]);
     assert_eq!(response["updated"], created["updated"]);
 

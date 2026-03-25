@@ -6,8 +6,6 @@ use std::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-pub use fjall_utils::StorageType;
-
 pub type NamespaceName = String;
 
 #[derive(Serialize, Deserialize)]

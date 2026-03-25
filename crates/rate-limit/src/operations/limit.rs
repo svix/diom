@@ -5,14 +5,12 @@ use crate::{RateLimitNamespace, TokenBucket};
 use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_operations::OpContext;
-use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LimitOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub(crate) key: String,
     pub(crate) tokens: u64,
     pub(crate) method: TokenBucket,
@@ -27,7 +25,6 @@ impl LimitOperation {
     ) -> Self {
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             key,
             tokens,
             method,
@@ -50,7 +47,7 @@ impl LimitOperation {
     ) -> Result<LimitResponseData> {
         let (allowed, remaining, retry_after) = state
             .state
-            .controller(self.storage_type)
+            .controller()
             .limit(now, self.namespace_id, self.key, self.tokens, self.method)
             .await?;
         Ok(LimitResponseData {

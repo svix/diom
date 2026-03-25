@@ -7,18 +7,12 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
-use crate::{
-    State,
-    entities::{ModuleConfig, StorageType},
-    tables::Namespace,
-};
+use crate::{State, entities::ModuleConfig, tables::Namespace};
 
 #[derive(Deserialize, Serialize)]
 #[serde(bound = "C: ModuleConfig")]
 pub struct CreateNamespace<C: ModuleConfig> {
     name: String,
-    #[serde(default)]
-    storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
     config: C,
 }
@@ -28,7 +22,6 @@ pub struct CreateNamespace<C: ModuleConfig> {
 pub struct CreateNamespaceOutput<C: ModuleConfig> {
     pub name: String,
     pub config: C,
-    pub storage_type: StorageType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
@@ -36,16 +29,10 @@ pub struct CreateNamespaceOutput<C: ModuleConfig> {
 }
 
 impl<C: ModuleConfig + 'static> CreateNamespace<C> {
-    pub fn new(
-        name: String,
-        config: C,
-        storage_type: StorageType,
-        max_storage_bytes: Option<NonZeroU64>,
-    ) -> Self {
+    pub fn new(name: String, config: C, max_storage_bytes: Option<NonZeroU64>) -> Self {
         Self {
             name,
             config,
-            storage_type,
             max_storage_bytes,
         }
     }
@@ -64,7 +51,6 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
             span.in_scope(|| {
                 let namespace = match Namespace::<C>::fetch(&keyspace, &self.name)? {
                     Some(mut namespace) => {
-                        namespace.storage_type = self.storage_type;
                         namespace.updated = timestamp;
                         namespace.max_storage_bytes = self.max_storage_bytes;
                         namespace.config = self.config;
@@ -75,7 +61,6 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                         Namespace {
                             id,
                             name: self.name,
-                            storage_type: self.storage_type,
                             max_storage_bytes: self.max_storage_bytes,
                             created: timestamp,
                             updated: timestamp,
@@ -93,7 +78,6 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
 
                 Ok(CreateNamespaceOutput {
                     name: namespace.name,
-                    storage_type: namespace.storage_type,
                     max_storage_bytes: namespace.max_storage_bytes,
                     config: namespace.config,
                     created: namespace.created,

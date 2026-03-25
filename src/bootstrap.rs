@@ -11,10 +11,7 @@ use crate::{
 };
 use anyhow::{Context, bail};
 use coyote_msgs::entities::Retention;
-use coyote_namespace::{
-    DEFAULT_NAMESPACE_NAME,
-    entities::{EvictionPolicy, StorageType},
-};
+use coyote_namespace::{DEFAULT_NAMESPACE_NAME, entities::EvictionPolicy};
 
 #[derive(Debug)]
 enum BootstrapCommand {
@@ -168,7 +165,6 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         AuthToken,
         BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            storage_type: StorageType::Persistent,
             max_storage_bytes: None,
         })
     );
@@ -176,7 +172,6 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         Msgs,
         BootstrapCommand::Msgs(MsgNamespaceCreateIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            storage_type: StorageType::Persistent,
             retention: Retention::default(),
         })
     );
@@ -184,7 +179,6 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         RateLimit,
         BootstrapCommand::RateLimit(RateLimitCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            storage_type: StorageType::Persistent,
             max_storage_bytes: None,
         })
     );
@@ -192,7 +186,6 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         Idempotency,
         BootstrapCommand::Idempotency(IdempotencyCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            storage_type: StorageType::Persistent,
             max_storage_bytes: None,
         })
     );
@@ -200,7 +193,6 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         Cache,
         BootstrapCommand::Cache(CacheCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            storage_type: StorageType::Persistent,
             max_storage_bytes: None,
             eviction_policy: EvictionPolicy::NoEviction,
         })
@@ -209,7 +201,6 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         Kv,
         BootstrapCommand::Kv(KvCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            storage_type: StorageType::Persistent,
             max_storage_bytes: None,
         })
     );
@@ -281,21 +272,19 @@ mod tests {
             panic!()
         };
         assert_eq!(v.name, "myns");
-        assert_eq!(v.storage_type, StorageType::Persistent);
         assert_eq!(v.max_storage_bytes, None);
     }
 
     #[test]
     fn kv_with_options() {
         let cmd: BootstrapCommand =
-            r#"kv namespace create {"name":"myns","storage_type":"Ephemeral","max_storage_bytes":1024}"#
+            r#"kv namespace create {"name":"myns","max_storage_bytes":1024}"#
                 .parse()
                 .unwrap();
         let BootstrapCommand::Kv(v) = cmd else {
             panic!()
         };
         assert_eq!(v.name, "myns");
-        assert_eq!(v.storage_type, StorageType::Ephemeral);
         assert_eq!(v.max_storage_bytes.unwrap().get(), 1024);
     }
 
@@ -344,7 +333,6 @@ mod tests {
             panic!()
         };
         assert_eq!(v.name, "myns");
-        assert_eq!(v.storage_type, StorageType::Persistent);
         assert_eq!(v.retention, Retention::default());
     }
 
@@ -392,20 +380,7 @@ mod tests {
 
     #[test]
     fn missing_name_field() {
-        assert!(
-            r#"kv namespace create {"storage_type":"Ephemeral"}"#
-                .parse::<BootstrapCommand>()
-                .is_err()
-        );
-    }
-
-    #[test]
-    fn invalid_storage_type() {
-        assert!(
-            r#"kv namespace create {"name":"myns","storage_type":"flash"}"#
-                .parse::<BootstrapCommand>()
-                .is_err()
-        );
+        assert!(r#"kv namespace create {}"#.parse::<BootstrapCommand>().is_err());
     }
 
     #[test]
@@ -485,7 +460,6 @@ mod tests {
     fn ensure_defaults_does_not_duplicate_existing_default() {
         let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            storage_type: StorageType::Ephemeral,
             max_storage_bytes: None,
         })];
         ensure_defaults(&mut cmds);
@@ -494,16 +468,12 @@ mod tests {
             .filter(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == DEFAULT_NAMESPACE_NAME))
             .collect();
         assert_eq!(kv_defaults.len(), 1);
-        assert!(
-            matches!(kv_defaults[0], BootstrapCommand::Kv(v) if v.storage_type == StorageType::Ephemeral)
-        );
     }
 
     #[test]
     fn ensure_defaults_does_not_suppress_non_default_namespaces() {
         let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
             name: "other".to_string(),
-            storage_type: StorageType::Persistent,
             max_storage_bytes: None,
         })];
         ensure_defaults(&mut cmds);

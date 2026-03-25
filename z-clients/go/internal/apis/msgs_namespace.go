@@ -24,9 +24,8 @@ func (msgsNamespace MsgsNamespace) Create(
 	msgNamespaceCreateIn coyote_models.MsgNamespaceCreateIn,
 ) (*coyote_models.MsgNamespaceCreateOut, error) {
 	body := coyote_models.MsgNamespaceCreateIn_{
-		Name:        name,
-		Retention:   msgNamespaceCreateIn.Retention,
-		StorageType: msgNamespaceCreateIn.StorageType,
+		Name:      name,
+		Retention: msgNamespaceCreateIn.Retention,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgNamespaceCreateIn_, coyote_models.MsgNamespaceCreateOut](

@@ -2,13 +2,11 @@ use super::{AbortResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::IdempotencyNamespace;
 use coyote_error::Result;
 use coyote_id::NamespaceId;
-use fjall_utils::StorageType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AbortOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub(crate) key: String,
 }
 
@@ -16,7 +14,6 @@ impl AbortOperation {
     pub fn new(namespace: IdempotencyNamespace, key: String) -> Self {
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             key,
         }
     }
@@ -26,7 +23,7 @@ impl AbortOperation {
     async fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
         state
             .state
-            .controller(self.storage_type)
+            .controller()
             .delete(self.namespace_id, self.key)
             .await?;
 

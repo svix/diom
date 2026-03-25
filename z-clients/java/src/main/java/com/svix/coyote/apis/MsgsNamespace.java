@@ -35,8 +35,7 @@ public class MsgsNamespace {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/namespace/create");
         MsgNamespaceCreateIn_ body = new MsgNamespaceCreateIn_(
             name,
-            msgNamespaceCreateIn.getRetention(),
-            msgNamespaceCreateIn.getStorageType()
+            msgNamespaceCreateIn.getRetention()
         );
 
         return this.client.executeRequest(

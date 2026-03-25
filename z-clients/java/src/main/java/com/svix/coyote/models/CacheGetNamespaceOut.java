@@ -30,7 +30,6 @@ import lombok.ToString;
 public class CacheGetNamespaceOut {
     @JsonProperty private String name;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-    @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
@@ -72,25 +71,6 @@ public class CacheGetNamespaceOut {
 
     public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
-    }
-
-    public CacheGetNamespaceOut storageType(StorageType storageType) {
-        this.storageType = storageType;
-        return this;
-    }
-
-    /**
-    * Get storageType
-    *
-     * @return storageType
-     */
-    @javax.annotation.Nonnull
-    public StorageType getStorageType() {
-        return storageType;
-    }
-
-    public void setStorageType(StorageType storageType) {
-        this.storageType = storageType;
     }
 
     public CacheGetNamespaceOut evictionPolicy(EvictionPolicy evictionPolicy) {

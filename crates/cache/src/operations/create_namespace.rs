@@ -2,7 +2,7 @@ use std::num::NonZeroU64;
 
 use coyote_error::Result;
 use coyote_namespace::{
-    entities::{CacheConfig, EvictionPolicy, StorageType},
+    entities::{CacheConfig, EvictionPolicy},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -14,7 +14,6 @@ use crate::operations::{CacheRaftState, CacheRequest, CreateCacheResponse};
 pub struct CreateCacheOperation {
     pub(crate) name: String,
     eviction_policy: EvictionPolicy,
-    storage_type: StorageType,
     max_storage_bytes: Option<NonZeroU64>,
 }
 
@@ -25,7 +24,6 @@ impl From<CreateCacheOperation> for CreateNamespace<CacheConfig> {
             CacheConfig {
                 eviction_policy: value.eviction_policy,
             },
-            value.storage_type,
             value.max_storage_bytes,
         )
     }
@@ -35,13 +33,11 @@ impl CreateCacheOperation {
     pub fn new(
         name: String,
         eviction_policy: EvictionPolicy,
-        storage_type: StorageType,
         max_storage_bytes: Option<NonZeroU64>,
     ) -> Self {
         Self {
             name,
             eviction_policy,
-            storage_type,
             max_storage_bytes,
         }
     }
@@ -61,7 +57,6 @@ impl CreateCacheOperation {
 pub struct CreateCacheResponseData {
     pub name: String,
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub eviction_policy: EvictionPolicy,
     pub created: Timestamp,
     pub updated: Timestamp,
@@ -72,7 +67,6 @@ impl From<CreateNamespaceOutput<CacheConfig>> for CreateCacheResponseData {
         Self {
             name: value.name,
             max_storage_bytes: value.max_storage_bytes,
-            storage_type: value.storage_type,
             eviction_policy: value.config.eviction_policy,
             created: value.created,
             updated: value.updated,

@@ -11,8 +11,6 @@ use coyote_core::types::Metadata;
 use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
 use coyote_operations::OpContext;
-use fjall_utils::StorageType;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateResponseData {
     pub model: AuthTokenModel,
@@ -21,7 +19,6 @@ pub struct CreateResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAuthTokenOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub(crate) id: AuthTokenId,
     name: String,
     token_hashed: TokenHashed,
@@ -50,7 +47,6 @@ impl CreateAuthTokenOperation {
         let id = AuthTokenId::new(now);
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             id,
             name,
             token_hashed,

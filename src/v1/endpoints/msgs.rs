@@ -19,7 +19,7 @@ use coyote_msgs::{
         TopicConfigureOperation,
     },
 };
-use coyote_namespace::entities::{NamespaceName, StorageType};
+use coyote_namespace::entities::NamespaceName;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -32,13 +32,11 @@ pub(crate) struct MsgNamespaceCreateIn {
     pub name: NamespaceName,
     #[serde(default)]
     pub retention: Retention,
-    #[serde(default)]
-    pub storage_type: StorageType,
 }
 
 impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
     fn from(v: MsgNamespaceCreateIn) -> Self {
-        CreateNamespaceOperation::new(v.name, v.retention, v.storage_type)
+        CreateNamespaceOperation::new(v.name, v.retention)
     }
 }
 
@@ -46,7 +44,6 @@ impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
 struct MsgNamespaceCreateOut {
     pub name: NamespaceName,
     pub retention: Retention,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -63,7 +60,6 @@ async fn create_namespace(
     Ok(MsgPackOrJson(MsgNamespaceCreateOut {
         name: response.name,
         retention: response.retention,
-        storage_type: response.storage_type,
         created: response.created,
         updated: response.updated,
     }))
@@ -79,7 +75,6 @@ struct MsgNamespaceGetIn {
 struct MsgNamespaceGetOut {
     pub name: NamespaceName,
     pub retention: Retention,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -110,7 +105,6 @@ async fn get_namespace(
     Ok(MsgPackOrJson(MsgNamespaceGetOut {
         name: namespace.name,
         retention: Retention { ms, bytes },
-        storage_type: namespace.storage_type,
         created: namespace.created,
         updated: namespace.updated,
     }))

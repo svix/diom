@@ -9,7 +9,6 @@ use coyote_core::types::{DurationMs, EntityKey};
 use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_operations::OpContext;
-use fjall_utils::StorageType;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tap::TapOptional;
@@ -23,7 +22,6 @@ pub struct SetResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
-    storage_type: StorageType,
     pub(crate) key: EntityKey,
     model: KvModelIn,
     behavior: OperationBehavior,
@@ -44,7 +42,6 @@ impl SetOperation {
             .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
         Self {
             namespace_id: namespace.id,
-            storage_type: namespace.storage_type,
             key,
             model: KvModelIn {
                 value,
@@ -59,7 +56,7 @@ impl SetOperation {
 impl SetOperation {
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
         let result = state
-            .controller(self.storage_type)
+            .controller()
             .set(
                 self.namespace_id,
                 self.key,

@@ -30,7 +30,6 @@ import lombok.ToString;
 public class KvCreateNamespaceOut {
     @JsonProperty private String name;
     @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
-    @JsonProperty("storage_type") private StorageType storageType;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
     public KvCreateNamespaceOut() {}
@@ -71,25 +70,6 @@ public class KvCreateNamespaceOut {
 
     public void setMaxStorageBytes(Long maxStorageBytes) {
         this.maxStorageBytes = maxStorageBytes;
-    }
-
-    public KvCreateNamespaceOut storageType(StorageType storageType) {
-        this.storageType = storageType;
-        return this;
-    }
-
-    /**
-    * Get storageType
-    *
-     * @return storageType
-     */
-    @javax.annotation.Nonnull
-    public StorageType getStorageType() {
-        return storageType;
-    }
-
-    public void setStorageType(StorageType storageType) {
-        this.storageType = storageType;
     }
 
     public KvCreateNamespaceOut created(OffsetDateTime created) {

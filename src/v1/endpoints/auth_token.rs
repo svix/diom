@@ -19,7 +19,7 @@ use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_id::{AuthTokenId, Public};
-use coyote_namespace::entities::{NamespaceName, StorageType};
+use coyote_namespace::entities::NamespaceName;
 use coyote_proto::MsgPackOrJson;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -375,7 +375,6 @@ struct AuthTokenGetNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -383,14 +382,12 @@ struct AuthTokenGetNamespaceOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct AuthTokenCreateNamespaceIn {
     pub name: NamespaceName,
-    #[serde(default)]
-    pub storage_type: StorageType,
     pub max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
     fn from(v: AuthTokenCreateNamespaceIn) -> Self {
-        CreateAuthTokenNamespaceOperation::new(v.name, v.storage_type, v.max_storage_bytes)
+        CreateAuthTokenNamespaceOperation::new(v.name, v.max_storage_bytes)
     }
 }
 
@@ -399,7 +396,6 @@ struct AuthTokenCreateNamespaceOut {
     pub name: NamespaceName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_storage_bytes: Option<NonZeroU64>,
-    pub storage_type: StorageType,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -410,16 +406,11 @@ async fn auth_token_create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AuthTokenCreateNamespaceIn>,
 ) -> Result<MsgPackOrJson<AuthTokenCreateNamespaceOut>> {
-    let operation = CreateAuthTokenNamespaceOperation::new(
-        data.name,
-        data.storage_type,
-        data.max_storage_bytes,
-    );
+    let operation = CreateAuthTokenNamespaceOperation::new(data.name, data.max_storage_bytes);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AuthTokenCreateNamespaceOut {
         name: resp.name,
         max_storage_bytes: resp.max_storage_bytes,
-        storage_type: resp.storage_type,
         created: resp.created,
         updated: resp.updated,
     }))
@@ -442,7 +433,6 @@ async fn auth_token_get_namespace(
     Ok(MsgPackOrJson(AuthTokenGetNamespaceOut {
         name: namespace.name,
         max_storage_bytes: namespace.max_storage_bytes,
-        storage_type: namespace.storage_type,
         created: namespace.created,
         updated: namespace.updated,
     }))
