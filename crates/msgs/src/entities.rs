@@ -199,7 +199,7 @@ impl TopicIn {
     pub fn topic_name(&self) -> &TopicName {
         match self {
             TopicIn::TopicName(topic_name) => topic_name,
-            TopicIn::TopicPartition(topic_partition) => &topic_partition.raw,
+            TopicIn::TopicPartition(topic_partition) => &topic_partition.topic,
         }
     }
 }

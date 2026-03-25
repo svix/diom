@@ -33,7 +33,7 @@ impl PublishOperation {
                         "msg key cannot be specified alongside a specific partition",
                     ));
                 }
-                (tp.raw, Some(tp.partition))
+                (tp.topic, Some(tp.partition))
             }
             TopicIn::TopicName(tn) => (tn, None),
         };

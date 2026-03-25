@@ -44,7 +44,7 @@ impl StreamCommitOperation {
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &topic.raw),
+                TopicRow::key_for(self.namespace_id, &topic.topic),
             )?
             .ok_or_else(|| Error::invalid_user_input("partition must exist"))?;
 
