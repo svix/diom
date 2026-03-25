@@ -1,0 +1,42 @@
+use std::{fmt, str::FromStr};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Module {
+    Cache = 1,
+    Idempotency = 2,
+    Kv = 3,
+    RateLimit = 4,
+    Msgs = 5,
+    AuthToken = 6,
+}
+
+impl fmt::Display for Module {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::Cache => "cache",
+            Self::AuthToken => "auth_token",
+            Self::Idempotency => "idempotency",
+            Self::Kv => "kv",
+            Self::Msgs => "msgs",
+            Self::RateLimit => "rate_limit",
+        };
+
+        f.write_str(s)
+    }
+}
+
+impl FromStr for Module {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "auth_token" => Ok(Self::AuthToken),
+            "cache" => Ok(Self::Cache),
+            "idempotency" => Ok(Self::Idempotency),
+            "kv" => Ok(Self::Kv),
+            "msgs" => Ok(Self::Msgs),
+            "rate_limit" => Ok(Self::RateLimit),
+            _ => Err("unknown module"),
+        }
+    }
+}

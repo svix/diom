@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use coyote_error::Result;
 use coyote_namespace::{
-    entities::{NamespaceName, StreamConfig},
+    entities::{MsgsConfig, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -29,7 +29,7 @@ impl CreateNamespaceOperation {
     ) -> Result<CreateNamespaceResponseData> {
         let op = CreateNamespace::new(
             self.name,
-            StreamConfig {
+            MsgsConfig {
                 retention_period: Duration::from_millis(self.retention.ms.get()),
             },
             Some(self.retention.bytes),
@@ -47,8 +47,8 @@ pub struct CreateNamespaceResponseData {
     pub updated: Timestamp,
 }
 
-impl From<CreateNamespaceOutput<StreamConfig>> for CreateNamespaceResponseData {
-    fn from(value: CreateNamespaceOutput<StreamConfig>) -> Self {
+impl From<CreateNamespaceOutput<MsgsConfig>> for CreateNamespaceResponseData {
+    fn from(value: CreateNamespaceOutput<MsgsConfig>) -> Self {
         let ms = u64::try_from(value.config.retention_period.as_millis())
             .ok()
             .and_then(|ms| ms.try_into().ok())

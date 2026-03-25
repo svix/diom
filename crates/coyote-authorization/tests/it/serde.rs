@@ -3,9 +3,10 @@
 use std::collections::HashMap;
 
 use coyote_authorization::{
-    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, Module,
-    NamespacePattern, ResourcePattern, Role, RoleId,
+    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, NamespacePattern,
+    ResourcePattern, Role, RoleId,
 };
+use coyote_id::Module;
 use serde_json::json;
 
 fn example_rules() -> Vec<AccessRule> {

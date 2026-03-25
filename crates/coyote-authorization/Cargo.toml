@@ -6,6 +6,7 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+coyote-id.workspace = true
 itertools.workspace = true
 schemars.workspace = true
 serde.workspace = true
