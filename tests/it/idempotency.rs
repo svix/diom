@@ -9,7 +9,7 @@ use test_utils::{
 #[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
 async fn start(client: &TestClient, key: &str, ttl_seconds: u64) -> TestResult<serde_json::Value> {
     let response = client
-        .post("idempotency/start")
+        .post("v1.idempotency.start")
         .json(json!({
             "key": key,
             "ttl": ttl_seconds
@@ -27,7 +27,7 @@ async fn complete(
     ttl_seconds: u64,
 ) -> TestResult<()> {
     client
-        .post("idempotency/complete")
+        .post("v1.idempotency.complete")
         .json(json!({
             "key": key,
             "response": response.as_bytes(),
@@ -40,7 +40,7 @@ async fn complete(
 
 async fn abandon(client: &TestClient, key: &str) -> TestResult<()> {
     client
-        .post("idempotency/abort")
+        .post("v1.idempotency.abort")
         .json(json!({
             "key": key
         }))
@@ -64,7 +64,7 @@ async fn test_idempotency_start_and_complete() -> TestResult {
 
     // start again should return locked
     let response = client
-        .post("idempotency/start")
+        .post("v1.idempotency.start")
         .json(json!({
             "key": "k2",
             "ttl": 60
@@ -192,7 +192,7 @@ async fn test_idempotency_validation() -> TestResult {
     } = start_server().await;
 
     client
-        .post("idempotency/start")
+        .post("v1.idempotency.start")
         .json(json!({
             "key": "k",
             "ttl": 0
@@ -201,7 +201,7 @@ async fn test_idempotency_validation() -> TestResult {
         .expect(StatusCode::UNPROCESSABLE_ENTITY);
 
     client
-        .post("idempotency/start")
+        .post("v1.idempotency.start")
         .json(json!({
             "key": "k"
             // TTL missing
@@ -221,7 +221,7 @@ async fn create_namespace_with_defaults() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("idempotency/namespace/create")
+        .post("v1.idempotency.namespace.create")
         .json(json!({
             "name": "my-namespace",
         }))
@@ -245,7 +245,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("idempotency/namespace/create")
+        .post("v1.idempotency.namespace.create")
         .json(json!({
             "name": "custom-ns",
             "max_storage_bytes": 1024,
@@ -278,7 +278,7 @@ async fn create_namespace_upserts() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("idempotency/namespace/create")
+        .post("v1.idempotency.namespace.create")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -291,7 +291,7 @@ async fn create_namespace_upserts() -> TestResult {
 
     // Upsert
     let second = client
-        .post("idempotency/namespace/create")
+        .post("v1.idempotency.namespace.create")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -318,7 +318,7 @@ async fn get_namespace() -> TestResult {
 
     // Create a namespace first
     let created = client
-        .post("idempotency/namespace/create")
+        .post("v1.idempotency.namespace.create")
         .json(json!({
             "name": "get-test-ns",
         }))
@@ -328,7 +328,7 @@ async fn get_namespace() -> TestResult {
 
     // Get it back
     let response = client
-        .post("idempotency/namespace/get")
+        .post("v1.idempotency.namespace.get")
         .json(json!({
             "name": "get-test-ns",
         }))
@@ -352,7 +352,7 @@ async fn get_namespace_not_found() -> TestResult {
     } = start_server().await;
 
     client
-        .post("idempotency/namespace/get")
+        .post("v1.idempotency.namespace.get")
         .json(json!({
             "name": "nonexistent-ns",
         }))

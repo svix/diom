@@ -186,7 +186,7 @@ struct ClusterRemoveNodeOut {
 ///
 /// This operation executes immediately and the node must be wiped and reset
 /// before it can safely be added to the cluster.
-#[aide_annotate(op_id = "v1.admin.cluster-remove-node")]
+#[aide_annotate(op_id = "v1.admin.cluster.remove-node")]
 async fn cluster_remove_node(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<ClusterRemoveNodeIn>,
@@ -203,12 +203,12 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/admin/cluster/status",
+            cluster_status_path,
             get_with(cluster_status, cluster_status_operation),
             &tag,
         )
         .api_route_with(
-            "/admin/cluster/remove-node",
+            cluster_remove_node_path,
             post_with(cluster_remove_node, cluster_remove_node_operation),
             &tag,
         )

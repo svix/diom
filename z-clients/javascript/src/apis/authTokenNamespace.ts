@@ -25,7 +25,7 @@ export class AuthTokenNamespace {
     public create(
         authTokenCreateNamespaceIn: AuthTokenCreateNamespaceIn,
     ): Promise<AuthTokenCreateNamespaceOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/auth-token/namespace/create");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.auth-token.namespace.create");
 
         request.setBody(
             AuthTokenCreateNamespaceInSerializer._toJsonObject(authTokenCreateNamespaceIn)
@@ -39,7 +39,7 @@ export class AuthTokenNamespace {
     public get(
         authTokenGetNamespaceIn: AuthTokenGetNamespaceIn,
     ): Promise<AuthTokenGetNamespaceOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/auth-token/namespace/get");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.auth-token.namespace.get");
 
         request.setBody(
             AuthTokenGetNamespaceInSerializer._toJsonObject(authTokenGetNamespaceIn)

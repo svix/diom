@@ -38,7 +38,7 @@ export class Msgs {
         topic: string,
         msgPublishIn: MsgPublishIn,
     ): Promise<MsgPublishOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/msgs/publish");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.msgs.publish");
 
         request.setBody(
             MsgPublishInSerializer._toJsonObject({

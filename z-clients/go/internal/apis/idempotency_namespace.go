@@ -26,7 +26,7 @@ func (idempotencyNamespace IdempotencyNamespace) Create(
 		ctx,
 		idempotencyNamespace.client,
 		"POST",
-		"/api/v1/idempotency/namespace/create",
+		"/api/v1.idempotency.namespace.create",
 		&idempotencyCreateNamespaceIn,
 	)
 }
@@ -40,7 +40,7 @@ func (idempotencyNamespace IdempotencyNamespace) Get(
 		ctx,
 		idempotencyNamespace.client,
 		"POST",
-		"/api/v1/idempotency/namespace/get",
+		"/api/v1.idempotency.namespace.get",
 		&idempotencyGetNamespaceIn,
 	)
 }

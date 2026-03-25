@@ -40,7 +40,7 @@ public class AuthToken {
     public AuthTokenCreateOut create(
         final AuthTokenCreateIn authTokenCreateIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.create");
 
         return this.client.executeRequest(
             "POST",
@@ -55,7 +55,7 @@ public class AuthToken {
     public AuthTokenExpireOut expire(
         final AuthTokenExpireIn authTokenExpireIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/expire");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.expire");
 
         return this.client.executeRequest(
             "POST",
@@ -70,7 +70,7 @@ public class AuthToken {
     public AuthTokenDeleteOut delete(
         final AuthTokenDeleteIn authTokenDeleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/delete");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.delete");
 
         return this.client.executeRequest(
             "POST",
@@ -85,7 +85,7 @@ public class AuthToken {
     public AuthTokenVerifyOut verify(
         final AuthTokenVerifyIn authTokenVerifyIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/verify");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.verify");
 
         return this.client.executeRequest(
             "POST",
@@ -100,7 +100,7 @@ public class AuthToken {
     public ListResponseAuthTokenOut list(
         final AuthTokenListIn authTokenListIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/list");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.list");
 
         return this.client.executeRequest(
             "POST",
@@ -115,7 +115,7 @@ public class AuthToken {
     public AuthTokenUpdateOut update(
         final AuthTokenUpdateIn authTokenUpdateIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/update");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.update");
 
         return this.client.executeRequest(
             "POST",
@@ -130,7 +130,7 @@ public class AuthToken {
     public AuthTokenRotateOut rotate(
         final AuthTokenRotateIn authTokenRotateIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/rotate");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.rotate");
 
         return this.client.executeRequest(
             "POST",

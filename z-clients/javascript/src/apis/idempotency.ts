@@ -39,7 +39,7 @@ export class Idempotency {
         key: string,
         idempotencyStartIn: IdempotencyStartIn,
     ): Promise<IdempotencyStartOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/idempotency/start");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.idempotency.start");
 
         request.setBody(
             IdempotencyStartInSerializer._toJsonObject({
@@ -57,7 +57,7 @@ export class Idempotency {
         key: string,
         idempotencyCompleteIn: IdempotencyCompleteIn,
     ): Promise<IdempotencyCompleteOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/idempotency/complete");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.idempotency.complete");
 
         request.setBody(
             IdempotencyCompleteInSerializer._toJsonObject({
@@ -75,7 +75,7 @@ export class Idempotency {
         key: string,
         idempotencyAbortIn: IdempotencyAbortIn,
     ): Promise<IdempotencyAbortOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/idempotency/abort");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.idempotency.abort");
 
         request.setBody(
             IdempotencyAbortInSerializer._toJsonObject({

@@ -40,7 +40,7 @@ func (msgsQueue MsgsQueue) Receive(
 		ctx,
 		msgsQueue.client,
 		"POST",
-		"/api/v1/msgs/queue/receive",
+		"/api/v1.msgs.queue.receive",
 		&body,
 	)
 }
@@ -65,7 +65,7 @@ func (msgsQueue MsgsQueue) Ack(
 		ctx,
 		msgsQueue.client,
 		"POST",
-		"/api/v1/msgs/queue/ack",
+		"/api/v1.msgs.queue.ack",
 		&body,
 	)
 }
@@ -92,7 +92,7 @@ func (msgsQueue MsgsQueue) Configure(
 		ctx,
 		msgsQueue.client,
 		"POST",
-		"/api/v1/msgs/queue/configure",
+		"/api/v1.msgs.queue.configure",
 		&body,
 	)
 }
@@ -118,7 +118,7 @@ func (msgsQueue MsgsQueue) Nack(
 		ctx,
 		msgsQueue.client,
 		"POST",
-		"/api/v1/msgs/queue/nack",
+		"/api/v1.msgs.queue.nack",
 		&body,
 	)
 }
@@ -140,7 +140,7 @@ func (msgsQueue MsgsQueue) RedriveDlq(
 		ctx,
 		msgsQueue.client,
 		"POST",
-		"/api/v1/msgs/queue/redrive-dlq",
+		"/api/v1.msgs.queue.redrive-dlq",
 		&body,
 	)
 }

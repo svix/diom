@@ -15,14 +15,14 @@ async fn default_is_one_partition() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-def-part" }))
         .await?
         .expect(StatusCode::OK);
 
     // Register consumer group before publishing
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-def-part:t1",
             "consumer_group": "cg1",
@@ -32,7 +32,7 @@ async fn default_is_one_partition() -> TestResult {
 
     // Publish messages with different keys — with 1 partition they all land on the same one.
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-def-part:t1",
             "msgs": [
@@ -45,7 +45,7 @@ async fn default_is_one_partition() -> TestResult {
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-def-part:t1",
             "consumer_group": "cg1",
@@ -77,13 +77,13 @@ async fn configure_topic_partitions() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-conf" }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "ns-conf:t1",
             "partitions": 4,
@@ -96,7 +96,7 @@ async fn configure_topic_partitions() -> TestResult {
 
     // Register consumer group before publishing
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-conf:t1",
             "consumer_group": "cg1",
@@ -106,7 +106,7 @@ async fn configure_topic_partitions() -> TestResult {
 
     // Publish messages with different keys to spread across partitions
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-conf:t1",
             "msgs": [
@@ -119,7 +119,7 @@ async fn configure_topic_partitions() -> TestResult {
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-conf:t1",
             "consumer_group": "cg1",
@@ -154,13 +154,13 @@ async fn cannot_decrease_partitions() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-dec" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "ns-dec:t1",
             "partitions": 4,
@@ -170,7 +170,7 @@ async fn cannot_decrease_partitions() -> TestResult {
 
     // Attempt to decrease — should be rejected
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "ns-dec:t1",
             "partitions": 2,
@@ -190,13 +190,13 @@ async fn configure_rejects_zero() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-zero" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "ns-zero:t1",
             "partitions": 0,
@@ -216,13 +216,13 @@ async fn configure_rejects_over_max() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-max" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "ns-max:t1",
             "partitions": 65,
@@ -242,7 +242,7 @@ async fn configure_nonexistent_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "namespace": "does-not-exist",
             "topic": "t1",
@@ -263,13 +263,13 @@ async fn receive_respects_configured_partitions() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-recv-conf" }))
         .await?
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "ns-recv-conf:t1",
             "partitions": 16,
@@ -279,7 +279,7 @@ async fn receive_respects_configured_partitions() -> TestResult {
 
     // Register consumer group after configure so we can receive from the start of the stream
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-recv-conf:t1",
             "consumer_group": "cg1",
@@ -289,7 +289,7 @@ async fn receive_respects_configured_partitions() -> TestResult {
 
     // "k1" and "k2" hash to different partitions with 16 partitions
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-recv-conf:t1",
             "msgs": [
@@ -301,7 +301,7 @@ async fn receive_respects_configured_partitions() -> TestResult {
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-recv-conf:t1",
             "consumer_group": "cg1",
@@ -343,7 +343,7 @@ async fn configure_default_namespace_topic() -> TestResult {
 
     // No namespace creation — default namespace is auto-created.
     let response = client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "def-t1",
             "partitions": 4,
@@ -356,7 +356,7 @@ async fn configure_default_namespace_topic() -> TestResult {
 
     // Register consumer group before publishing
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "def-t1",
             "consumer_group": "cg1",
@@ -366,7 +366,7 @@ async fn configure_default_namespace_topic() -> TestResult {
 
     // Publish with different keys to spread across partitions
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "def-t1",
             "msgs": [
@@ -379,7 +379,7 @@ async fn configure_default_namespace_topic() -> TestResult {
         .expect(StatusCode::OK);
 
     let response = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "def-t1",
             "consumer_group": "cg1",

@@ -56,7 +56,7 @@ class MsgsAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/publish",
+            path="/api/v1.msgs.publish",
             body=body,
             response_type=MsgPublishOut,
         )
@@ -93,7 +93,7 @@ class Msgs(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/publish",
+            path="/api/v1.msgs.publish",
             body=body,
             response_type=MsgPublishOut,
         )

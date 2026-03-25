@@ -32,7 +32,7 @@ func (msgsNamespace MsgsNamespace) Create(
 		ctx,
 		msgsNamespace.client,
 		"POST",
-		"/api/v1/msgs/namespace/create",
+		"/api/v1.msgs.namespace.create",
 		&body,
 	)
 }
@@ -51,7 +51,7 @@ func (msgsNamespace MsgsNamespace) Get(
 		ctx,
 		msgsNamespace.client,
 		"POST",
-		"/api/v1/msgs/namespace/get",
+		"/api/v1.msgs.namespace.get",
 		&body,
 	)
 }

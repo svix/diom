@@ -13,7 +13,7 @@ import (
 
 
 type {{ resource_type_name }} struct {
-	{% if resource.operations | length > 0 -%}
+	{% if resource.operations | length > 0 or resource.subresources | length > 0 -%}
 	client *diom_proto.HttpClient
 	{%- endif %}
 }

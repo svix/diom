@@ -238,7 +238,7 @@ fn build_container(
     volume_mounts: Vec<VolumeMount>,
 ) -> Container {
     let cluster_port = spec.cluster_port();
-    const API_HEALTH_ENDPOINT: &str = "/api/v1/health/ping";
+    const API_HEALTH_ENDPOINT: &str = "/api/v1.health.ping";
     const CLUSTER_HEALTH_ENDPOINT: &str = "/repl/health";
 
     Container {

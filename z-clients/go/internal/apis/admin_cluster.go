@@ -25,7 +25,24 @@ func (adminCluster AdminCluster) Status(
 		ctx,
 		adminCluster.client,
 		"GET",
-		"/api/v1/admin/cluster/status",
+		"/api/v1.admin.cluster.status",
 		nil,
+	)
+}
+
+// Remove a node from the cluster.
+//
+// This operation executes immediately and the node must be wiped and reset
+// before it can safely be added to the cluster.
+func (adminCluster AdminCluster) RemoveNode(
+	ctx context.Context,
+	clusterRemoveNodeIn diom_models.ClusterRemoveNodeIn,
+) (*diom_models.ClusterRemoveNodeOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.ClusterRemoveNodeIn, diom_models.ClusterRemoveNodeOut](
+		ctx,
+		adminCluster.client,
+		"POST",
+		"/api/v1.admin.cluster.remove-node",
+		&clusterRemoveNodeIn,
 	)
 }

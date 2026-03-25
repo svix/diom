@@ -14,13 +14,6 @@ pub struct AdminArgs {
 #[derive(Subcommand)]
 pub enum AdminCommands {
     Cluster(AdminClusterArgs),
-    /// Remove a node from the cluster.
-    ///
-    /// This operation executes immediately and the node must be wiped and reset
-    /// before it can safely be added to the cluster.
-    ClusterRemoveNode {
-        cluster_remove_node_in: crate::json::JsonOf<diom_client::models::ClusterRemoveNodeIn>,
-    },
 }
 
 impl AdminCommands {
@@ -32,15 +25,6 @@ impl AdminCommands {
         match self {
             Self::Cluster(args) => {
                 args.command.exec(client, color_mode).await?;
-            }
-            Self::ClusterRemoveNode {
-                cluster_remove_node_in,
-            } => {
-                let resp = client
-                    .admin()
-                    .cluster_remove_node(cluster_remove_node_in.into_inner())
-                    .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
             }
         }
 

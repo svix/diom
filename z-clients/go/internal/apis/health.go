@@ -25,7 +25,7 @@ func (health Health) Ping(
 		ctx,
 		health.client,
 		"GET",
-		"/api/v1/health/ping",
+		"/api/v1.health.ping",
 		nil,
 	)
 }
@@ -38,7 +38,7 @@ func (health Health) Error(
 		ctx,
 		health.client,
 		"POST",
-		"/api/v1/health/error",
+		"/api/v1.health.error",
 		nil,
 	)
 	return err

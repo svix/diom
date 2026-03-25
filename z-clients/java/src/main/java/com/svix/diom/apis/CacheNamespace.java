@@ -29,7 +29,7 @@ public class CacheNamespace {
     public CacheCreateNamespaceOut create(
         final CacheCreateNamespaceIn cacheCreateNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/namespace/create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.namespace.create");
 
         return this.client.executeRequest(
             "POST",
@@ -44,7 +44,7 @@ public class CacheNamespace {
     public CacheGetNamespaceOut get(
         final CacheGetNamespaceIn cacheGetNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/namespace/get");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.namespace.get");
 
         return this.client.executeRequest(
             "POST",

@@ -32,7 +32,7 @@ public class RateLimit {
     public RateLimitCheckOut limit(
         final RateLimitCheckIn rateLimitCheckIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/limit");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.rate-limit.limit");
 
         return this.client.executeRequest(
             "POST",
@@ -47,7 +47,7 @@ public class RateLimit {
     public RateLimitGetRemainingOut getRemaining(
         final RateLimitGetRemainingIn rateLimitGetRemainingIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/get-remaining");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.rate-limit.get-remaining");
 
         return this.client.executeRequest(
             "POST",
@@ -62,7 +62,7 @@ public class RateLimit {
     public RateLimitResetOut reset(
         final RateLimitResetIn rateLimitResetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/rate-limit/reset");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.rate-limit.reset");
 
         return this.client.executeRequest(
             "POST",

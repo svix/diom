@@ -39,7 +39,7 @@ export class Cache {
         key: string,
         cacheSetIn: CacheSetIn,
     ): Promise<CacheSetOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/set");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cache.set");
 
         request.setBody(
             CacheSetInSerializer._toJsonObject({
@@ -57,7 +57,7 @@ export class Cache {
         key: string,
         cacheGetIn: CacheGetIn,
     ): Promise<CacheGetOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/get");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cache.get");
 
         request.setBody(
             CacheGetInSerializer._toJsonObject({
@@ -75,7 +75,7 @@ export class Cache {
         key: string,
         cacheDeleteIn: CacheDeleteIn,
     ): Promise<CacheDeleteOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/cache/delete");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cache.delete");
 
         request.setBody(
             CacheDeleteInSerializer._toJsonObject({

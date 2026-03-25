@@ -38,7 +38,7 @@ func (cache Cache) Set(
 		ctx,
 		cache.client,
 		"POST",
-		"/api/v1/cache/set",
+		"/api/v1.cache.set",
 		&body,
 	)
 }
@@ -59,7 +59,7 @@ func (cache Cache) Get(
 		ctx,
 		cache.client,
 		"POST",
-		"/api/v1/cache/get",
+		"/api/v1.cache.get",
 		&body,
 	)
 }
@@ -79,7 +79,7 @@ func (cache Cache) Delete(
 		ctx,
 		cache.client,
 		"POST",
-		"/api/v1/cache/delete",
+		"/api/v1.cache.delete",
 		&body,
 	)
 }

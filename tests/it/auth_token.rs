@@ -12,7 +12,7 @@ async fn create_token(
     owner_id: &str,
 ) -> TestResult<(String, String)> {
     let resp = client
-        .post("auth-token/create")
+        .post("v1.auth-token.create")
         .json(json!({
             "name": name,
             "owner_id": owner_id,
@@ -29,7 +29,7 @@ async fn create_token(
 #[allow(clippy::disallowed_types)]
 async fn verify_token(client: &TestClient, token: &str) -> TestResult<serde_json::Value> {
     let resp = client
-        .post("auth-token/verify")
+        .post("v1.auth-token.verify")
         .json(json!({ "token": token }))
         .await?
         .ensure(StatusCode::OK)?
@@ -44,7 +44,7 @@ async fn verify_token_with_namespace(
     namespace: Option<&str>,
 ) -> TestResult<serde_json::Value> {
     let resp = client
-        .post("auth-token/verify")
+        .post("v1.auth-token.verify")
         .json(json!({ "token": token, "namespace": namespace }))
         .await?
         .ensure(StatusCode::OK)?
@@ -97,7 +97,7 @@ async fn test_auth_token_expire_immediately() -> TestResult {
     let (id, token) = create_token(&client, "expire-now", "user-2").await?;
 
     client
-        .post("auth-token/expire")
+        .post("v1.auth-token.expire")
         .json(json!({ "id": id }))
         .await?
         .ensure(StatusCode::OK)?;
@@ -120,7 +120,7 @@ async fn test_auth_token_expire_in_future() -> TestResult {
     let (id, token) = create_token(&client, "expire-future", "user-3").await?;
 
     client
-        .post("auth-token/expire")
+        .post("v1.auth-token.expire")
         .json(json!({ "id": id, "expiry_ms": 500 }))
         .await?
         .ensure(StatusCode::OK)?;
@@ -148,7 +148,7 @@ async fn test_auth_token_delete() -> TestResult {
     verify_token(&client, &token).await?;
 
     let resp = client
-        .post("auth-token/delete")
+        .post("v1.auth-token.delete")
         .json(json!({ "id": id }))
         .await?
         .ensure(StatusCode::OK)?
@@ -170,7 +170,7 @@ async fn test_auth_token_delete_nonexistent() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("auth-token/delete")
+        .post("v1.auth-token.delete")
         .json(json!({ "id": "key_06egrha0d5x9x8wa4kfcy1prhr" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -191,7 +191,7 @@ async fn test_auth_token_update() -> TestResult {
     let (id, token) = create_token(&client, "original-name", "user-5").await?;
 
     client
-        .post("auth-token/update")
+        .post("v1.auth-token.update")
         .json(json!({
             "id": id,
             "name": "renamed",
@@ -216,7 +216,7 @@ async fn test_auth_token_namespace_create_and_get() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("auth-token/namespace/create")
+        .post("v1.auth-token.namespace.create")
         .json(json!({ "name": "at-ns-1" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -227,7 +227,7 @@ async fn test_auth_token_namespace_create_and_get() -> TestResult {
     assert!(resp["updated"].is_string());
 
     let get_resp = client
-        .post("auth-token/namespace/get")
+        .post("v1.auth-token.namespace.get")
         .json(json!({ "name": "at-ns-1" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -251,7 +251,7 @@ async fn test_auth_token_rotate() -> TestResult {
     let (id, old_token) = create_token(&client, "rotate-me", "user-r1").await?;
 
     let resp = client
-        .post("auth-token/rotate")
+        .post("v1.auth-token.rotate")
         .json(json!({ "id": id }))
         .await?
         .ensure(StatusCode::OK)?
@@ -287,7 +287,7 @@ async fn test_auth_token_rotate_with_expiry() -> TestResult {
     let (id, old_token) = create_token(&client, "rotate-grace", "user-r2").await?;
 
     client
-        .post("auth-token/rotate")
+        .post("v1.auth-token.rotate")
         .json(json!({ "id": id, "expiry_ms": 1000 }))
         .await?
         .ensure(StatusCode::OK)?;
@@ -314,7 +314,7 @@ async fn test_auth_token_rotate_nonexistent() -> TestResult {
     } = start_server().await;
 
     client
-        .post("auth-token/rotate")
+        .post("v1.auth-token.rotate")
         .json(json!({ "id": "key_06egrha0d5x9x8wa4kfcy1prhr" }))
         .await?
         .ensure_not_found()?;
@@ -331,7 +331,7 @@ async fn test_auth_token_namespace_get_not_found() -> TestResult {
     } = start_server().await;
 
     client
-        .post("auth-token/namespace/get")
+        .post("v1.auth-token.namespace.get")
         .json(json!({ "name": "no-such-ns" }))
         .await?
         .ensure_not_found()?;
@@ -348,13 +348,13 @@ async fn test_auth_token_in_custom_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("auth-token/namespace/create")
+        .post("v1.auth-token.namespace.create")
         .json(json!({ "name": "custom-at-ns" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     let resp = client
-        .post("auth-token/create")
+        .post("v1.auth-token.create")
         .json(json!({
             "namespace": "custom-at-ns",
             "name": "ns-token",
@@ -367,7 +367,7 @@ async fn test_auth_token_in_custom_namespace() -> TestResult {
     let token = resp["token"].assert_str();
 
     client
-        .post("auth-token/verify")
+        .post("v1.auth-token.verify")
         .json(json!({
             "namespace": "custom-at-ns",
             "token": token,

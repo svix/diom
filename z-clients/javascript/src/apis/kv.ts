@@ -39,7 +39,7 @@ export class Kv {
         key: string,
         kvSetIn: KvSetIn,
     ): Promise<KvSetOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/set");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.kv.set");
 
         request.setBody(
             KvSetInSerializer._toJsonObject({
@@ -57,7 +57,7 @@ export class Kv {
         key: string,
         kvGetIn: KvGetIn,
     ): Promise<KvGetOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/get");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.kv.get");
 
         request.setBody(
             KvGetInSerializer._toJsonObject({
@@ -75,7 +75,7 @@ export class Kv {
         key: string,
         kvDeleteIn: KvDeleteIn,
     ): Promise<KvDeleteOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1/kv/delete");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.kv.delete");
 
         request.setBody(
             KvDeleteInSerializer._toJsonObject({

@@ -15,7 +15,7 @@ async fn kv_set(
     behavior: &str,
 ) -> anyhow::Result<()> {
     let response = client
-        .post("kv/set")
+        .post("v1.kv.set")
         .json(json!({
             "key": key,
             "ttl": expire_in,
@@ -37,7 +37,7 @@ async fn kv_set_unsuccessful(
     behavior: &str,
 ) -> anyhow::Result<()> {
     let response = client
-        .post("kv/set")
+        .post("v1.kv.set")
         .json(json!({
             "key": key,
             "ttl": expire_in,
@@ -54,7 +54,7 @@ async fn kv_set_unsuccessful(
 #[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
 async fn kv_get(client: &TestClient, key: &str) -> TestResult<serde_json::Value> {
     let response = client
-        .post("kv/get")
+        .post("v1.kv.get")
         .json(json!({
             "key": key
         }))
@@ -66,7 +66,7 @@ async fn kv_get(client: &TestClient, key: &str) -> TestResult<serde_json::Value>
 
 async fn kv_not_found(client: &TestClient, key: &str) -> anyhow::Result<()> {
     let response = client
-        .post("kv/get")
+        .post("v1.kv.get")
         .json(json!({
             "key": key
         }))
@@ -116,7 +116,7 @@ async fn test_kv_set_and_get() -> TestResult {
 
     // set should fail if namespace doesn't exist:
     client
-        .post("kv/set")
+        .post("v1.kv.set")
         .json(json!({
             "namespace": "nonexistentnamespace",
             "key": "key1",
@@ -151,7 +151,7 @@ async fn test_kv_set_with_insert_and_delete() -> TestResult {
     assert_eq!(response["expiry"], json!(null));
 
     let delete_response = client
-        .post("kv/delete")
+        .post("v1.kv.delete")
         .json(json!({
             "key": "kv-key-2"
         }))
@@ -244,7 +244,7 @@ async fn test_kv_binary_data() -> TestResult {
 
     let binary_data = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     client
-        .post("kv/set")
+        .post("v1.kv.set")
         .json(json!({
             "key": "kv-key-4",
             "value": binary_data,
@@ -258,7 +258,7 @@ async fn test_kv_binary_data() -> TestResult {
 
     let empty_vec: Vec<u8> = vec![];
     client
-        .post("kv/set")
+        .post("v1.kv.set")
         .json(json!({
             "key": "kv-key-4",
             "value": empty_vec,
@@ -285,7 +285,7 @@ async fn test_kv_validation() -> TestResult {
 
     for key in invalid_keys {
         client
-            .post("kv/set")
+            .post("v1.kv.set")
             .json(json!({
                 "key": key,
                 "value": "test".as_bytes(),
@@ -296,7 +296,7 @@ async fn test_kv_validation() -> TestResult {
     }
 
     client
-        .post("kv/set")
+        .post("v1.kv.set")
         .json(json!({
             "key": "kv-key-3",
             "value": "test".as_bytes(),
@@ -307,7 +307,7 @@ async fn test_kv_validation() -> TestResult {
         .expect(StatusCode::UNPROCESSABLE_ENTITY);
 
     client
-        .post("kv/set")
+        .post("v1.kv.set")
         .json(json!({
             "key": "kv-key-3",
             "value": "test".as_bytes(),
@@ -329,7 +329,7 @@ async fn test_kv_delete() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("kv/delete")
+        .post("v1.kv.delete")
         .json(json!({
             "key": "kv-key-5"
         }))
@@ -342,7 +342,7 @@ async fn test_kv_delete() -> TestResult {
     kv_set(&client, "kv-key-5", None, "value-5", "upsert").await?;
 
     let response = client
-        .post("kv/delete")
+        .post("v1.kv.delete")
         .json(json!({
             "key": "kv-key-5"
         }))
@@ -365,7 +365,7 @@ async fn create_namespace_with_defaults() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("kv/namespace/create")
+        .post("v1.kv.namespace.create")
         .json(json!({
             "name": "my-namespace",
         }))
@@ -389,7 +389,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("kv/namespace/create")
+        .post("v1.kv.namespace.create")
         .json(json!({
             "name": "custom-ns",
             "max_storage_bytes": 1024,
@@ -422,7 +422,7 @@ async fn create_namespace_upserts() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("kv/namespace/create")
+        .post("v1.kv.namespace.create")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -435,7 +435,7 @@ async fn create_namespace_upserts() -> TestResult {
 
     // Upsert
     let second = client
-        .post("kv/namespace/create")
+        .post("v1.kv.namespace.create")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -462,7 +462,7 @@ async fn get_namespace() -> TestResult {
 
     // Create a namespace first
     let created = client
-        .post("kv/namespace/create")
+        .post("v1.kv.namespace.create")
         .json(json!({
             "name": "get-test-ns",
         }))
@@ -472,7 +472,7 @@ async fn get_namespace() -> TestResult {
 
     // Get it back
     let response = client
-        .post("kv/namespace/get")
+        .post("v1.kv.namespace.get")
         .json(json!({
             "name": "get-test-ns",
         }))
@@ -496,7 +496,7 @@ async fn get_namespace_not_found() -> TestResult {
     } = start_server().await;
 
     client
-        .post("kv/namespace/get")
+        .post("v1.kv.namespace.get")
         .json(json!({
             "name": "nonexistent-ns",
         }))

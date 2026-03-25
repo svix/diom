@@ -108,7 +108,7 @@ impl TestServerBuilder {
             Arc::new(cfg)
         };
 
-        let base_uri = format!("http://{addr}/api/v1");
+        let base_uri = format!("http://{addr}/api");
 
         let time = Monotime::initial();
         time.update_now();
@@ -189,7 +189,7 @@ async fn wait_for_initialized(
     max_wait: Duration,
 ) -> anyhow::Result<(NodeId, ClusterId)> {
     tracing::info!("waiting for server to boot up");
-    let main_url = format!("http://{main_addr}/api/v1/health/ping");
+    let main_url = format!("http://{main_addr}/api/v1.health.ping");
     let url = format!("http://{repl_addr}/repl/health");
     let deadline = Instant::now() + max_wait;
     let client = reqwest::Client::new();

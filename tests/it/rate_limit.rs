@@ -16,7 +16,7 @@ async fn call_limit_token_bucket(
     refill_interval_seconds: u64,
 ) -> TestResult<serde_json::Value> {
     let response = client
-        .post("rate-limit/limit")
+        .post("v1.rate-limit.limit")
         .json(json!({
             "key": key,
             "tokens": units,
@@ -99,7 +99,7 @@ async fn test_rate_limiter_limit_token_bucket() -> TestResult {
     time.fast_forward(Duration::from_secs(1));
 
     let response = client
-        .post("rate-limit/get-remaining")
+        .post("v1.rate-limit.get-remaining")
         .json(json!({
             "key": "rl-key-1",
             "config": {
@@ -157,7 +157,7 @@ async fn test_rate_limiter_refill_interval() -> TestResult {
     time.fast_forward(Duration::from_secs(3));
 
     let response = client
-        .post("rate-limit/get-remaining")
+        .post("v1.rate-limit.get-remaining")
         .json(json!({
                 "key": "rl-key-1",
                 "config": {

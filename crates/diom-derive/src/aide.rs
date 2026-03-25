@@ -25,6 +25,8 @@ pub(crate) fn expand_aide_annotate(
     // The documentation function's name will always be the name of the
     // original function suffixed with `_operation`.
     let operation_ident = format_ident!("{}_operation", item.sig.ident);
+    // The route path const will be the function name suffixed with `_path`.
+    let path_ident = format_ident!("{}_path", item.sig.ident);
     let visibility = item.vis.clone();
 
     // Allow overriding operation ID and summary via arguments
@@ -49,6 +51,12 @@ pub(crate) fn expand_aide_annotate(
 
         if arg.path.is_ident("op_id") {
             operation_id = arg_as_litstr()?.value();
+            if operation_id.contains('_') {
+                return Err(syn::Error::new_spanned(
+                    &arg.value,
+                    "op_id must not contain underscores; use hyphens instead",
+                ));
+            }
         } else if arg.path.is_ident("op_summary") {
             operation_summary = arg_as_litstr()?.value();
         } else if arg.path.is_ident("op_deprecated") {
@@ -66,6 +74,8 @@ pub(crate) fn expand_aide_annotate(
             return Err(syn::Error::new_spanned(arg.path, msg));
         }
     }
+
+    let operation_path = format!("/{operation_id}");
 
     let description = doc_comment_from_attributes(&item.attrs);
 
@@ -103,6 +113,9 @@ pub(crate) fn expand_aide_annotate(
 
     Ok(quote! {
         #item
+
+        #[allow(non_upper_case_globals)]
+        #visibility const #path_ident: &str = #operation_path;
 
         #visibility fn #operation_ident(
             op: ::aide::transform::TransformOperation,

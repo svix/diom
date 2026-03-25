@@ -36,7 +36,7 @@ public class Kv {
         String key,
         final KvSetIn kvSetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/set");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.set");
         KvSetIn_ body = new KvSetIn_(
             kvSetIn.getNamespace(),
             key,
@@ -60,7 +60,7 @@ public class Kv {
         String key,
         final KvGetIn kvGetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/get");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.get");
         KvGetIn_ body = new KvGetIn_(
             kvGetIn.getNamespace(),
             key,
@@ -91,7 +91,7 @@ public class Kv {
         String key,
         final KvDeleteIn kvDeleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/kv/delete");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.delete");
         KvDeleteIn_ body = new KvDeleteIn_(
             kvDeleteIn.getNamespace(),
             key

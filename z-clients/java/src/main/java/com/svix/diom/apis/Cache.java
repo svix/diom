@@ -36,7 +36,7 @@ public class Cache {
         String key,
         final CacheSetIn cacheSetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/set");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.set");
         CacheSetIn_ body = new CacheSetIn_(
             cacheSetIn.getNamespace(),
             key,
@@ -58,7 +58,7 @@ public class Cache {
         String key,
         final CacheGetIn cacheGetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/get");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.get");
         CacheGetIn_ body = new CacheGetIn_(
             cacheGetIn.getNamespace(),
             key,
@@ -89,7 +89,7 @@ public class Cache {
         String key,
         final CacheDeleteIn cacheDeleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/cache/delete");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.delete");
         CacheDeleteIn_ body = new CacheDeleteIn_(
             cacheDeleteIn.getNamespace(),
             key

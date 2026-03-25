@@ -30,7 +30,7 @@ func (authToken AuthToken) Create(
 		ctx,
 		authToken.client,
 		"POST",
-		"/api/v1/auth-token/create",
+		"/api/v1.auth-token.create",
 		&authTokenCreateIn,
 	)
 }
@@ -44,7 +44,7 @@ func (authToken AuthToken) Expire(
 		ctx,
 		authToken.client,
 		"POST",
-		"/api/v1/auth-token/expire",
+		"/api/v1.auth-token.expire",
 		&authTokenExpireIn,
 	)
 }
@@ -58,7 +58,7 @@ func (authToken AuthToken) Delete(
 		ctx,
 		authToken.client,
 		"POST",
-		"/api/v1/auth-token/delete",
+		"/api/v1.auth-token.delete",
 		&authTokenDeleteIn,
 	)
 }
@@ -72,7 +72,7 @@ func (authToken AuthToken) Verify(
 		ctx,
 		authToken.client,
 		"POST",
-		"/api/v1/auth-token/verify",
+		"/api/v1.auth-token.verify",
 		&authTokenVerifyIn,
 	)
 }
@@ -86,7 +86,7 @@ func (authToken AuthToken) List(
 		ctx,
 		authToken.client,
 		"POST",
-		"/api/v1/auth-token/list",
+		"/api/v1.auth-token.list",
 		&authTokenListIn,
 	)
 }
@@ -100,7 +100,7 @@ func (authToken AuthToken) Update(
 		ctx,
 		authToken.client,
 		"POST",
-		"/api/v1/auth-token/update",
+		"/api/v1.auth-token.update",
 		&authTokenUpdateIn,
 	)
 }
@@ -114,7 +114,7 @@ func (authToken AuthToken) Rotate(
 		ctx,
 		authToken.client,
 		"POST",
-		"/api/v1/auth-token/rotate",
+		"/api/v1.auth-token.rotate",
 		&authTokenRotateIn,
 	)
 }

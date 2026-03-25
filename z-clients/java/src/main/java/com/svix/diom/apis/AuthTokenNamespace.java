@@ -29,7 +29,7 @@ public class AuthTokenNamespace {
     public AuthTokenCreateNamespaceOut create(
         final AuthTokenCreateNamespaceIn authTokenCreateNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/namespace/create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.namespace.create");
 
         return this.client.executeRequest(
             "POST",
@@ -44,7 +44,7 @@ public class AuthTokenNamespace {
     public AuthTokenGetNamespaceOut get(
         final AuthTokenGetNamespaceIn authTokenGetNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/auth-token/namespace/get");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.auth-token.namespace.get");
 
         return this.client.executeRequest(
             "POST",

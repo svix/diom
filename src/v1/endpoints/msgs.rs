@@ -594,58 +594,58 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/msgs/namespace/create",
+            create_namespace_path,
             post_with(create_namespace, create_namespace_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/namespace/get",
+            get_namespace_path,
             post_with(get_namespace, get_namespace_operation),
             &tag,
         )
-        .api_route_with("/msgs/publish", post_with(publish, publish_operation), &tag)
+        .api_route_with(publish_path, post_with(publish, publish_operation), &tag)
         .api_route_with(
-            "/msgs/stream/receive",
+            stream_receive_path,
             post_with(stream_receive, stream_receive_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/stream/commit",
+            stream_commit_path,
             post_with(stream_commit, stream_commit_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/stream/seek",
+            stream_seek_path,
             post_with(stream_seek, stream_seek_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/queue/receive",
+            queue_receive_path,
             post_with(queue_receive, queue_receive_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/queue/ack",
+            queue_ack_path,
             post_with(queue_ack, queue_ack_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/queue/configure",
+            queue_configure_path,
             post_with(queue_configure, queue_configure_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/queue/nack",
+            queue_nack_path,
             post_with(queue_nack, queue_nack_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/queue/redrive-dlq",
+            queue_redrive_dlq_path,
             post_with(queue_redrive_dlq, queue_redrive_dlq_operation),
             &tag,
         )
         .api_route_with(
-            "/msgs/topic/configure",
+            topic_configure_path,
             post_with(topic_configure, topic_configure_operation),
             &tag,
         )

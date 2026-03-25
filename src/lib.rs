@@ -335,7 +335,7 @@ pub async fn run_with_listeners(
 
     // Initialize all routes which need to be part of OpenAPI first.
     let api_router = ApiRouter::new()
-        .nest_api_service("/api/v1", v1_router)
+        .nest_api_service("/api", v1_router)
         .finish_api(&mut openapi);
 
     tokio::spawn(run_internal(api_router.clone(), internal_req_rx));
