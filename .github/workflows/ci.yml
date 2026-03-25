@@ -57,8 +57,7 @@ jobs:
     runs-on: ubicloud-standard-4-ubuntu-2404
     timeout-minutes: 15
     env:
-      RUST_LOG: debug
-      "COYOTE_LOG_LEVEL": debug
+      COYOTE_LOG_LEVEL: debug
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
