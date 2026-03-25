@@ -141,13 +141,13 @@ fn handle_caught_error(e: rquickjs::CaughtError<'_>) -> ScriptError {
 }
 
 #[tracing::instrument(skip_all, level = "debug", fields(runtime_us = Empty, max_memory_bytes = Empty))]
-pub async fn run_script(
+pub(crate) async fn run_script(
     script: impl Into<String>,
-    payload_json: &str,
+    payload_json: impl Into<String>,
     max_duration: Duration,
 ) -> Result<String, ScriptError> {
     let start = Instant::now();
-    let result = run_script_inner(script.into(), payload_json, max_duration)
+    let result = run_script_inner(script.into(), payload_json.into(), max_duration)
         .instrument(tracing::Span::current())
         .await;
     if let Err(e) = &result {
@@ -160,9 +160,9 @@ pub async fn run_script(
     result
 }
 
-async fn run_script_inner(
+pub(crate) async fn run_script_inner(
     script: String,
-    payload_json: &str,
+    payload_json: String,
     max_duration: Duration,
 ) -> Result<String, ScriptError> {
     let runtime = rquickjs::AsyncRuntime::new().map_err(ScriptError::InternalError)?;
@@ -178,7 +178,7 @@ async fn run_script_inner(
         .map_err(ScriptError::InternalError)?;
 
     context
-        .with(|ctx| {
+        .with(|ctx| -> Result<(), ScriptError> {
             let globals = ctx.globals();
             globals
                 .set("crypto", CoyoteCrypto {})
@@ -187,7 +187,7 @@ async fn run_script_inner(
                 .set("console", Console {})
                 .map_err(ScriptError::InternalError)?;
             globals
-                .set("script_input", payload_json)
+                .set("script_input", payload_json.as_str())
                 .map_err(ScriptError::InternalError)?;
             Ok(())
         })
@@ -234,6 +234,7 @@ async fn run_script_inner(
 
 #[cfg(test)]
 mod tests {
+    #[allow(clippy::disallowed_types)]
     use serde_json::Value;
     use std::{
         str::FromStr,
@@ -270,6 +271,7 @@ mod tests {
             "null",
         )
         .await?;
+        #[allow(clippy::disallowed_types)]
         let parsed: Value = serde_json::from_str(&response)?;
         let Some(Value::Array(ints)) = parsed.pointer("/small") else {
             anyhow::bail!("Unexpected return type, got {parsed:?}");
