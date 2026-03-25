@@ -6,7 +6,6 @@ version.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-axum.workspace = true
 coyote-core.workspace = true
 coyote-error.workspace = true
 futures-util.workspace = true

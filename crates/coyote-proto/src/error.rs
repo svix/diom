@@ -18,6 +18,16 @@ impl StandardErrorBody {
     }
 }
 
+impl StandardErrorBody {
+    pub fn code(&self) -> &str {
+        self.code
+    }
+
+    pub fn detail(&self) -> &str {
+        &self.detail
+    }
+}
+
 impl fmt::Display for StandardErrorBody {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self { code, detail } = self;

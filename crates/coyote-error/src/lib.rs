@@ -76,7 +76,52 @@ impl Error {
     }
 
     pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
-        Self::new(ErrorType::Operation { code, detail })
+        Self::new(ErrorType::Operation {
+            status: code,
+            error_code: None,
+            detail,
+        })
+    }
+
+    pub fn operation_with_code(status: StatusCode, error_code: String, detail: String) -> Self {
+        Self::new(ErrorType::Operation {
+            status,
+            error_code: Some(error_code),
+            detail: Some(detail),
+        })
+    }
+
+    /// Decompose into HTTP status, optional error code, and optional detail message.
+    pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
+        match *self.0 {
+            ErrorType::BadRequest(body) => (
+                StatusCode::BAD_REQUEST,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
+            ErrorType::NotFound(body) => (
+                StatusCode::NOT_FOUND,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
+            ErrorType::Authentication(body) => (
+                StatusCode::UNAUTHORIZED,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
+            ErrorType::Authorization(body) => (
+                StatusCode::FORBIDDEN,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
+            ErrorType::Validation(_) => (StatusCode::UNPROCESSABLE_ENTITY, None, None),
+            ErrorType::Operation {
+                status,
+                error_code,
+                detail,
+            } => (status, error_code, detail),
+            ErrorType::Internal { .. } => (StatusCode::INTERNAL_SERVER_ERROR, None, None),
+        }
     }
 
     #[track_caller]
@@ -120,10 +165,20 @@ impl IntoResponse for Error {
                 (StatusCode::FORBIDDEN, Json(body)).into_response()
             }
             ErrorType::Operation {
-                code,
+                status,
+                error_code: Some(error_code),
                 detail: Some(detail),
-            } => (code, detail).into_response(),
-            ErrorType::Operation { code, detail: _ } => code.into_response(),
+            } => (
+                status,
+                Json(json!({ "code": error_code, "detail": detail })),
+            )
+                .into_response(),
+            ErrorType::Operation {
+                status,
+                detail: Some(detail),
+                ..
+            } => (status, detail).into_response(),
+            ErrorType::Operation { status, .. } => status.into_response(),
             ErrorType::Internal { trace, message } => {
                 tracing::error!(
                     location = ?trace.into_iter().map(ToString::to_string).collect::<Vec<_>>(),
@@ -204,7 +259,8 @@ pub enum ErrorType {
 
     /// An error from an Operation application
     Operation {
-        code: StatusCode,
+        status: StatusCode,
+        error_code: Option<String>,
         detail: Option<String>,
     },
 }
@@ -218,11 +274,11 @@ impl fmt::Display for ErrorType {
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
             Self::Validation(s) => s.fmt(f),
-            Self::Operation { detail, code } => {
+            Self::Operation { detail, status, .. } => {
                 if let Some(detail) = detail {
                     detail.fmt(f)
                 } else {
-                    write!(f, "code {code}")
+                    write!(f, "code {status}")
                 }
             }
         }

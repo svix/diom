@@ -1278,7 +1278,6 @@ dependencies = [
 name = "coyote-operations"
 version = "0.0.1"
 dependencies = [
- "axum",
  "coyote-core",
  "coyote-error",
  "futures-util",
