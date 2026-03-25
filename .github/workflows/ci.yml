@@ -73,7 +73,8 @@ jobs:
         id: test
         run: bash .github/test-report.sh
       - name: Upload Test Report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
+        id: upload-report
         if: always()
         with:
           name: test-report
@@ -97,26 +98,24 @@ jobs:
           check_name: 'Coyote CI JUnit'
           job_name: 'Coyote CI'
       - name: Find Comment
-        uses: peter-evans/find-comment@v1
+        uses: peter-evans/find-comment@v4
         if: github.ref != 'refs/heads/main'
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: 'Test Coverage:'
-      - name: Create comment
-        if: github.ref != 'refs/heads/main' && steps.fc.outputs.comment-id == ''
-        uses: peter-evans/create-or-update-comment@v1
+      - name: Upsert comment
+        if: github.ref != 'refs/heads/main'
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body: 'Test Coverage: ${{ steps.test.outputs.coverage_percent }}%'
-      - name: Update comment
-        if: github.ref != 'refs/heads/main' && steps.fc.outputs.comment-id != ''
-        uses: peter-evans/create-or-update-comment@v1
-        with:
+          body: |
+            Test Coverage: ${{ steps.test.outputs.coverage_percent }}%
+
+            [Artifact download](${{ steps.upload-report.outputs.artifact-url}})
           comment-id: ${{ steps.fc.outputs.comment-id }}
           edit-mode: replace
-          body: 'Test Coverage: ${{ steps.test.outputs.coverage_percent }}%'
   check-codegen:
     name: Check openapi.json and SDK freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
