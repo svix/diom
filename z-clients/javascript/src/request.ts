@@ -96,7 +96,7 @@ export class CoyoteRequest {
     private path: string
   ) { }
 
-  private body?: Uint8Array;
+  private body?: BodyInit;
   private queryParams: Record<string, string> = {};
   private headerParams: Record<string, string> = {};
 
@@ -146,7 +146,7 @@ export class CoyoteRequest {
 
   // biome-ignore lint/suspicious/noExplicitAny: intentional any
   public setBody(value: any) {
-    this.body = MSGPACK_CODEC.pack(value);
+    this.body = MSGPACK_CODEC.pack(value) as BodyInit;
   }
 
   /**
@@ -197,7 +197,7 @@ export class CoyoteRequest {
       url,
       {
         method: this.method.toString(),
-        body: this.body as BodyInit | undefined,
+        body: this.body,
         headers: {
           accept: APPLICATION_MSGPACK,
           authorization: `Bearer ${ctx.token}`,
