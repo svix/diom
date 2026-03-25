@@ -30,6 +30,23 @@ func (adminCluster AdminCluster) Status(
 	)
 }
 
+// Initialize this node as the leader of a new cluster
+//
+// This operation may only be performed against a node which has not been
+// initialized and is not currently a member of a cluster.
+func (adminCluster AdminCluster) Initialize(
+	ctx context.Context,
+	clusterInitializeIn coyote_models.ClusterInitializeIn,
+) (*coyote_models.ClusterInitializeOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.ClusterInitializeIn, coyote_models.ClusterInitializeOut](
+		ctx,
+		adminCluster.client,
+		"POST",
+		"/api/v1.admin.cluster.initialize",
+		&clusterInitializeIn,
+	)
+}
+
 // Remove a node from the cluster.
 //
 // This operation executes immediately and the node must be wiped and reset

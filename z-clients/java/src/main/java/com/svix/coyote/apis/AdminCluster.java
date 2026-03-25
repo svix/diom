@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.coyote.models.ClusterInitializeIn;
+import com.svix.coyote.models.ClusterInitializeOut;
 import com.svix.coyote.models.ClusterRemoveNodeIn;
 import com.svix.coyote.models.ClusterRemoveNodeOut;
 import com.svix.coyote.models.ClusterStatusOut;
@@ -36,6 +38,40 @@ public class AdminCluster {
             null,
             null,
             ClusterStatusOut.class
+        );
+    }
+
+    /**
+* Initialize this node as the leader of a new cluster
+* 
+* This operation may only be performed against a node which has not been
+* initialized and is not currently a member of a cluster.
+*/
+    public ClusterInitializeOut initialize(
+        final ClusterInitializeIn clusterInitializeIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.initialize");
+
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            clusterInitializeIn,
+            ClusterInitializeOut.class
+        );
+    }
+
+    /**
+* Initialize this node as the leader of a new cluster
+* 
+* This operation may only be performed against a node which has not been
+* initialized and is not currently a member of a cluster.
+*/
+    public ClusterInitializeOut initialize(
+        
+    ) throws IOException, ApiException {
+        return this.initialize(
+            new ClusterInitializeIn()
         );
     }
 

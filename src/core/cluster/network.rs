@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::cfg::Configuration;
+use crate::cfg::{Configuration, PeerAddr};
 
 use super::{Node, NodeId, proto, raft::TypeConfig};
 use anyhow::Context;
@@ -19,10 +19,11 @@ use tap::Pipe;
 
 pub(super) fn build_client(
     cfg: &Configuration,
-    _request_timeout: Duration,
+    request_timeout: Duration,
+    include_secret: bool,
 ) -> anyhow::Result<reqwest::Client> {
     let mut headers = HeaderMap::new();
-    if let Some(secret) = &cfg.cluster.secret {
+    if include_secret && let Some(secret) = &cfg.cluster.secret {
         let header_value = format!("Bearer {secret}");
         let header_value =
             HeaderValue::from_str(&header_value).context("invalid interserver secret")?;
@@ -30,6 +31,7 @@ pub(super) fn build_client(
     }
     let client = reqwest::Client::builder()
         .connect_timeout(cfg.cluster.connection_timeout)
+        .timeout(request_timeout)
         .http2_prior_knowledge()
         .default_headers(headers)
         .build()
@@ -46,7 +48,7 @@ pub(super) struct NetworkFactory {
 impl NetworkFactory {
     pub(super) fn new(cfg: &Configuration) -> anyhow::Result<Self> {
         Ok(Self {
-            client: build_client(cfg, cfg.cluster.replication_request_timeout)?,
+            client: build_client(cfg, cfg.cluster.replication_request_timeout, true)?,
             cfg: cfg.clone(),
         })
     }
@@ -268,16 +270,72 @@ impl NetworkFactory {
     }
 }
 
-pub(super) fn detect_address(cfg: &Configuration) -> anyhow::Result<SocketAddr> {
-    // TODO: this should handle the address changing, which it currently can't
+fn is_unspecified(s: &SocketAddr) -> bool {
+    match s {
+        SocketAddr::V4(s) => s.ip().is_unspecified(),
+        SocketAddr::V6(s) => s.ip().is_unspecified(),
+    }
+}
+
+async fn search_for_self_in_peers(
+    seeds: &[PeerAddr],
+    cfg: &Configuration,
+    my_node_id: NodeId,
+) -> anyhow::Result<Option<PeerAddr>> {
+    let client = build_client(cfg, Duration::from_secs(2), false)?;
+    for peer in seeds {
+        let url = peer.as_base_url().join("/repl/node-id")?;
+        let Ok(response) = client.get(url).send().await else {
+            tracing::debug!(?peer, "skipping seed peer because it is not responding");
+            continue;
+        };
+        let Ok(body) = response.msgpack::<proto::GetNodeIdResponse>().await else {
+            tracing::debug!(
+                ?peer,
+                "skipping seed peer because it returned an invalid body"
+            );
+            continue;
+        };
+        if body.node_id == my_node_id {
+            return Ok(Some(peer.clone()));
+        }
+    }
+    Ok(None)
+}
+
+pub(crate) async fn detect_address(
+    cfg: &Configuration,
+    my_node_id: NodeId,
+) -> anyhow::Result<PeerAddr> {
+    if let Some(addr) = &cfg.cluster.advertised_address {
+        tracing::debug!(?addr, "using configured advertised_address");
+        return Ok(addr.clone());
+    }
+
+    let cluster_addr = cfg.cluster.listen_address(cfg);
+    if !is_unspecified(&cluster_addr) {
+        tracing::debug!(addr=?cluster_addr, "using configured cluster listen_address");
+        return Ok(PeerAddr::SocketAddr(cluster_addr));
+    }
+
+    if !cfg.cluster.seed_nodes.is_empty()
+        && let Some(addr) =
+            search_for_self_in_peers(&cfg.cluster.seed_nodes, cfg, my_node_id).await?
+    {
+        tracing::debug!(?addr, "using address from seed_nodes");
+        return Ok(addr);
+    }
+
+    tracing::debug!("falling back to looking on all local interfaces");
+
     // TODO: this should handle dual-homed (ipv4 + ipv6) systems
-    let port = cfg.cluster.listen_address(cfg).port();
+    let port = cluster_addr.port();
     for interface in pnet::datalink::interfaces() {
         if !interface.is_up() || interface.is_loopback() || interface.ips.is_empty() {
             continue;
         }
         if let Some(ip) = interface.ips.iter().find(|i| i.is_ipv4()) {
-            return Ok(SocketAddr::new(ip.ip(), port));
+            return Ok(PeerAddr::SocketAddr(SocketAddr::new(ip.ip(), port)));
         }
     }
     anyhow::bail!("unable to find any valid interfaces");

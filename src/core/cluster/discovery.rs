@@ -1,6 +1,5 @@
 use std::{
     collections::BTreeMap,
-    net::SocketAddr,
     time::{Duration, Instant},
 };
 
@@ -34,31 +33,15 @@ pub(super) struct Discovery {
     network: NetworkFactory,
 }
 
-fn is_not_any(s: &SocketAddr) -> bool {
-    match s {
-        SocketAddr::V4(s) => s.ip().is_unspecified(),
-        SocketAddr::V6(s) => s.ip().is_unspecified(),
-    }
-}
-
 impl Discovery {
-    pub(super) fn new(
+    pub(super) async fn new(
         cfg: Configuration,
         raft: Raft,
         my_node_id: NodeId,
         network: NetworkFactory,
     ) -> anyhow::Result<Self> {
-        let client = build_client(&cfg, cfg.cluster.discovery_request_timeout)?;
-        let cluster_addr = cfg.cluster.listen_address(&cfg);
-        let my_addr = if let Some(addr) = &cfg.cluster.advertised_address {
-            addr.clone()
-        } else if is_not_any(&cluster_addr) {
-            tracing::debug!(listen_address=?cluster_addr, "advertised_address not passed, but listen_address is not INADDR_ANY, so using that");
-            cluster_addr.into()
-        } else {
-            tracing::debug!("advertised_address not passed, attempting to detect local socketaddr");
-            PeerAddr::SocketAddr(detect_address(&cfg)?)
-        };
+        let client = build_client(&cfg, cfg.cluster.discovery_request_timeout, false)?;
+        let my_addr = detect_address(&cfg, my_node_id).await?;
         Ok(Self {
             my_addr,
             client,

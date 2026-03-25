@@ -1,7 +1,10 @@
 use clap::{Args, Subcommand};
 use colored_json::Paint;
 use comfy_table::{Attribute, Cell, Table};
-use coyote_client::{CoyoteClient, models::ClusterRemoveNodeIn};
+use coyote_client::{
+    CoyoteClient,
+    models::{ClusterInitializeIn, ClusterInitializeOut, ClusterRemoveNodeIn},
+};
 use itertools::Itertools;
 
 #[derive(Args)]
@@ -29,6 +32,8 @@ pub enum ClusterCommands {
     },
     /// Remove a node immediately from the cluster
     RemoveNode(RemoveNodeArgs),
+    /// Initialize a new single-node cluster
+    Initialize,
 }
 
 impl ClusterCommands {
@@ -40,6 +45,7 @@ impl ClusterCommands {
         match self {
             Self::Status { json } => print_status(json, client, color_mode).await,
             Self::RemoveNode(args) => remove_node(args, client).await,
+            Self::Initialize => initialize(client).await,
         }
     }
 }
@@ -160,4 +166,21 @@ async fn remove_node(args: RemoveNodeArgs, client: &CoyoteClient) -> anyhow::Res
         })
         .await?;
     Ok(())
+}
+
+async fn initialize(client: &CoyoteClient) -> anyhow::Result<()> {
+    match client
+        .admin()
+        .cluster()
+        .initialize(ClusterInitializeIn::default())
+        .await
+    {
+        Ok(ClusterInitializeOut { cluster_id, .. }) => {
+            println!("cluster successfully initialized with ID {cluster_id}");
+            Ok(())
+        }
+        Err(err) => {
+            anyhow::bail!("error initializing cluster: {:?}", err);
+        }
+    }
 }

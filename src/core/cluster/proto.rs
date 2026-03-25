@@ -14,6 +14,11 @@ use super::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
+pub(super) struct GetNodeIdResponse {
+    pub node_id: NodeId,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub(super) struct DiscoverClusterResponse {
     pub cluster_name: String,
     pub cluster_id: Option<ClusterId>,

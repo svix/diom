@@ -468,6 +468,16 @@ pub struct ConfigurationInner {
     #[serde(default)]
     pub bootstrap_cfg: Option<String>,
 
+    /// Maximum time to wait for cluster initialization at startup
+    ///
+    /// If this is unset, we will wait indefinitely.
+    #[serde(
+        rename = "bootstrap_max_wait_ms",
+        with = "crate::serde::duration::opt_ms",
+        default
+    )]
+    pub bootstrap_max_wait_time: Option<Duration>,
+
     /// A pre-set admin token to use instead of having coyote generate one automatically.
     ///
     /// Under normal circumstances you should not set this, and instead let coyote generate the
@@ -620,6 +630,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         environment,
         bootstrap_cfg_path,
         bootstrap_cfg,
+        bootstrap_max_wait_time,
         admin_token,
         cluster:
             ClusterConfiguration {
@@ -701,6 +712,9 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     }
     if let Some(value) = env_var_ms("COYOTE_CLUSTER_SNAPSHOT_AFTER_MS")? {
         *cluster_snapshot_after_time = Some(value);
+    }
+    if let Some(value) = env_var_ms("COYOTE_BOOTSTRAP_MAX_WAIT_MS")? {
+        *bootstrap_max_wait_time = Some(value);
     }
 
     config.validate()?;
