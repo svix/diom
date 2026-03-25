@@ -118,13 +118,13 @@ impl JsonSchema for TopicName {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TopicPartition {
-    pub raw: TopicName,
+    pub topic: TopicName,
     pub partition: Partition,
 }
 
 impl TopicPartition {
-    pub fn new(raw: TopicName, partition: Partition) -> Self {
-        Self { raw, partition }
+    pub fn new(topic: TopicName, partition: Partition) -> Self {
+        Self { topic, partition }
     }
 }
 
@@ -139,8 +139,8 @@ impl TryFrom<String> for TopicPartition {
             .parse()
             .map_err(|_| Error::internal("invalid partition index in topic"))?;
         let partition = Partition::new(idx)?;
-        let raw = TopicName::new(topic.to_owned())?;
-        Ok(Self { raw, partition })
+        let topic = TopicName::new(topic.to_owned())?;
+        Ok(Self { topic, partition })
     }
 }
 
@@ -149,7 +149,7 @@ impl fmt::Display for TopicPartition {
         write!(
             f,
             "{}{}{}",
-            self.raw, TOPIC_PARTITION_DELIMITER, self.partition.0
+            self.topic, TOPIC_PARTITION_DELIMITER, self.partition.0
         )
     }
 }
