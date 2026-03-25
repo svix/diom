@@ -1,4 +1,18 @@
 # this file is @generated
+from .admin_auth_token_create_in import AdminAuthTokenCreateIn
+from .admin_auth_token_create_out import AdminAuthTokenCreateOut
+from .admin_auth_token_delete_in import AdminAuthTokenDeleteIn
+from .admin_auth_token_delete_out import AdminAuthTokenDeleteOut
+from .admin_auth_token_expire_in import AdminAuthTokenExpireIn
+from .admin_auth_token_expire_out import AdminAuthTokenExpireOut
+from .admin_auth_token_list_in import AdminAuthTokenListIn
+from .admin_auth_token_out import AdminAuthTokenOut
+from .admin_auth_token_rotate_in import AdminAuthTokenRotateIn
+from .admin_auth_token_rotate_out import AdminAuthTokenRotateOut
+from .admin_auth_token_update_in import AdminAuthTokenUpdateIn
+from .admin_auth_token_update_out import AdminAuthTokenUpdateOut
+from .admin_auth_token_whoami_in import AdminAuthTokenWhoamiIn
+from .admin_auth_token_whoami_out import AdminAuthTokenWhoamiOut
 from .auth_token_create_in import AuthTokenCreateIn
 from .auth_token_create_namespace_in import AuthTokenCreateNamespaceIn
 from .auth_token_create_namespace_out import AuthTokenCreateNamespaceOut
@@ -53,6 +67,7 @@ from .kv_get_namespace_out import KvGetNamespaceOut
 from .kv_get_out import KvGetOut
 from .kv_set_in import KvSetIn
 from .kv_set_out import KvSetOut
+from .list_response_admin_auth_token_out import ListResponseAdminAuthTokenOut
 from .list_response_auth_token_out import ListResponseAuthTokenOut
 from .msg_in import MsgIn
 from .msg_namespace_create_in import MsgNamespaceCreateIn
@@ -102,6 +117,20 @@ from .stream_msg_out import StreamMsgOut
 
 
 __all__ = [
+    "AdminAuthTokenCreateIn",
+    "AdminAuthTokenCreateOut",
+    "AdminAuthTokenDeleteIn",
+    "AdminAuthTokenDeleteOut",
+    "AdminAuthTokenExpireIn",
+    "AdminAuthTokenExpireOut",
+    "AdminAuthTokenListIn",
+    "AdminAuthTokenOut",
+    "AdminAuthTokenRotateIn",
+    "AdminAuthTokenRotateOut",
+    "AdminAuthTokenUpdateIn",
+    "AdminAuthTokenUpdateOut",
+    "AdminAuthTokenWhoamiIn",
+    "AdminAuthTokenWhoamiOut",
     "AuthTokenCreateIn",
     "AuthTokenCreateNamespaceIn",
     "AuthTokenCreateNamespaceOut",
@@ -156,6 +185,7 @@ __all__ = [
     "KvGetOut",
     "KvSetIn",
     "KvSetOut",
+    "ListResponseAdminAuthTokenOut",
     "ListResponseAuthTokenOut",
     "MsgIn",
     "MsgNamespaceCreateIn",

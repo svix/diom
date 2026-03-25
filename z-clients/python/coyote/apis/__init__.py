@@ -1,5 +1,6 @@
 # this file is @generated
 from .admin import Admin, AdminAsync
+from .admin_auth_token import AdminAuthToken, AdminAuthTokenAsync
 from .admin_cluster import AdminCluster, AdminClusterAsync
 from .auth_token import AuthToken, AuthTokenAsync
 from .auth_token_namespace import AuthTokenNamespace, AuthTokenNamespaceAsync
@@ -22,6 +23,8 @@ from .rate_limit_namespace import RateLimitNamespace, RateLimitNamespaceAsync
 __all__ = [
     "Admin",
     "AdminAsync",
+    "AdminAuthToken",
+    "AdminAuthTokenAsync",
     "AdminCluster",
     "AdminClusterAsync",
     "AuthToken",

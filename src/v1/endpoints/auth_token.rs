@@ -86,7 +86,7 @@ fn default_true() -> bool {
     true
 }
 
-fn default_prefix() -> String {
+pub fn default_prefix() -> String {
     "sk".to_string()
 }
 
