@@ -53,3 +53,9 @@ type RateLimit = coyote_apis.RateLimit
 func (coyote Coyote) RateLimit() RateLimit {
 	return coyote_apis.NewRateLimit(&coyote.inner)
 }
+
+type Transformations = coyote_apis.Transformations
+
+func (coyote Coyote) Transformations() Transformations {
+	return coyote_apis.NewTransformations(&coyote.inner)
+}

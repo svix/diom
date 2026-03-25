@@ -12,6 +12,7 @@ import com.svix.coyote.apis.Idempotency;
 import com.svix.coyote.apis.Kv;
 import com.svix.coyote.apis.Msgs;
 import com.svix.coyote.apis.RateLimit;
+import com.svix.coyote.apis.Transformations;
 
 import okhttp3.HttpUrl;
 
@@ -70,5 +71,9 @@ public class Coyote {
 
     public RateLimit getRateLimit() {
         return new RateLimit(this.httpClient);
+    }
+
+    public Transformations getTransformations() {
+        return new Transformations(this.httpClient);
     }
 }

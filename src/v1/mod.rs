@@ -21,7 +21,8 @@ pub fn router(state: Option<AppState>) -> ApiRouter<AppState> {
         .merge(endpoints::kv::router())
         .merge(endpoints::rate_limit::router())
         .merge(endpoints::idempotency::router())
-        .merge(endpoints::msgs::router());
+        .merge(endpoints::msgs::router())
+        .merge(endpoints::transformations::router());
 
     if let Some(state) = state {
         authenticated_router =

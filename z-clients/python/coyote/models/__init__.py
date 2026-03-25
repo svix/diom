@@ -118,6 +118,8 @@ from .retention import Retention
 from .seek_position import SeekPosition
 from .server_state import ServerState
 from .stream_msg_out import StreamMsgOut
+from .transform_in import TransformIn
+from .transform_out import TransformOut
 
 
 __all__ = [
@@ -240,4 +242,6 @@ __all__ = [
     "SeekPosition",
     "ServerState",
     "StreamMsgOut",
+    "TransformIn",
+    "TransformOut",
 ]

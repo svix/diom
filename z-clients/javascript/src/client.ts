@@ -9,6 +9,7 @@ import { Idempotency } from "./apis/idempotency";
 import { Kv } from "./apis/kv";
 import { Msgs } from "./apis/msgs";
 import { RateLimit } from "./apis/rateLimit";
+import { Transformations } from "./apis/transformations";
 
 export {
   Admin,
@@ -19,6 +20,7 @@ export {
   Kv,
   Msgs,
   RateLimit,
+  Transformations,
 };
 
 export class Coyote {
@@ -58,5 +60,9 @@ export class Coyote {
 
   public get rateLimit(){
     return new RateLimit(this.requestCtx);
+  }
+
+  public get transformations(){
+    return new Transformations(this.requestCtx);
   }
 }

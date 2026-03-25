@@ -124,4 +124,6 @@ type (
 	SeekPosition                  = coyote_models.SeekPosition
 	ServerState                   = coyote_models.ServerState
 	StreamMsgOut                  = coyote_models.StreamMsgOut
+	TransformIn                   = coyote_models.TransformIn
+	TransformOut                  = coyote_models.TransformOut
 )
