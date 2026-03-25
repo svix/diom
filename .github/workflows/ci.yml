@@ -62,6 +62,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: taiki-e/install-action@cargo-nextest
       - uses: ubicloud/rust-cache@v2
@@ -70,6 +72,30 @@ jobs:
       - name: Run tests
         id: test
         run: bash .github/test-report.sh
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: test-report
+          path: |
+            ./junit.xml
+            ./coverage-html
+          retention-days: 7
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: ${{ always() && github.ref != 'refs/heads/main' }}
+        with:
+          report_paths: './junit.xml'
+          comment: true
+          check_retries: true
+          job_summary: true
+          detailed_summary: true
+          fail_on_parse_error: true
+          include_time_in_summary: true
+          group_suite: true
+          skip_annotations: true
+          check_name: 'Coyote CI JUnit'
+          job_name: 'Coyote CI'
       - name: Find Comment
         uses: peter-evans/find-comment@v1
         if: github.ref != 'refs/heads/main'
@@ -91,15 +117,6 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           edit-mode: replace
           body: 'Test Coverage: ${{ steps.test.outputs.coverage_percent }}%'
-      - name: Upload Test Report
-        uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: test-report
-          path: |
-            ./junit.xml
-            ./coverage-html
-          retention-days: 7
   check-codegen:
     name: Check openapi.json and SDK freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
