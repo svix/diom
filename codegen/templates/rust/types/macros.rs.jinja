@@ -2,6 +2,25 @@
     {%- if name in ["ref", "type"] %}r#{% endif -%}
     {{ name }}
 {%- endmacro -%}
+{% macro field_name(field) -%}
+    {{ ident(field.name | to_snake_case) }}
+{%- endmacro %}
+{% macro field_type(field) -%}
+    {% set field_ty = field.type.to_rust() -%}
+    {% if not field.required or field.nullable -%}
+        {% set field_ty %}Option<{{ field_ty }}>{% endset -%}
+    {% endif -%}
+    {{ field_ty }}
+{%- endmacro %}
+{% macro serde_attr_args(field) -%}
+    {% set name = field_name(field) -%}
+    {% if name != name | to_snake_case -%}
+        rename = "{{ name }}",
+    {% endif -%}
+    {% if not field.required or field.nullable -%}
+        skip_serializing_if = "Option::is_none",
+    {% endif -%}
+{%- endmacro %}
 {% macro field_decl(field) -%}
     {% if field.description is defined -%}
         {{ field.description | to_doc_comment(style="rust") }}
@@ -11,16 +30,10 @@
         #[deprecated]
     {% endif -%}
 
-    {% if field.name != field.name | to_snake_case -%}
-        #[serde(rename = "{{ field.name }}")]
+    {% set saa = serde_attr_args(field) -%}
+    {% if saa != "" -%}
+        #[serde({{ saa }})]
     {% endif -%}
 
-    {% set field_ty = field.type.to_rust() -%}
-
-    {% if not field.required or field.nullable -%}
-        {% set field_ty %}Option<{{ field_ty }}>{% endset -%}
-        #[serde(skip_serializing_if = "Option::is_none")]
-    {% endif -%}
-
-    pub {{ ident(field.name | to_snake_case) }}: {{ field_ty }},
+    pub {{ field_name(field) }}: {{ field_type(field) }},
 {%- endmacro -%}
