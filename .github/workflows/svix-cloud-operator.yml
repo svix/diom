@@ -71,6 +71,7 @@ jobs:
       - name: Deploy operator via Helm
         run: |
           helm upgrade --install coyote-operator ./${{ env.OPERATOR_DIR }}/../helm-coyote \
+            --values ./${{ env.OPERATOR_DIR }}/../svix-values.yaml \
             --set-string operator.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
             --set-string operator.image.tag=${{ inputs.image_tag }} \
             --set-string cluster.image.tag=${{ inputs.image_tag }} \

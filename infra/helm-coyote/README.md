@@ -1,4 +1,4 @@
-# coyote-operator Helm chart
+# Coyote Helm chart
 
 Installs the Coyote CRD, operator and cluster.
 
