@@ -29,6 +29,7 @@ pub(super) fn build_client(
             HeaderValue::from_str(&header_value).context("invalid interserver secret")?;
         headers.insert(header::AUTHORIZATION, header_value);
     }
+    tracing::debug!(connect_timeout = ?cfg.cluster.connection_timeout, ?request_timeout, "initializing interserver client");
     let client = reqwest::Client::builder()
         .connect_timeout(cfg.cluster.connection_timeout)
         .timeout(request_timeout)
