@@ -9,15 +9,6 @@ on:
       environment:
         required: false
         type: string
-    secrets:
-      COYOTE_AUTH_TOKEN:
-        required: true
-      AWS_IAM_ROLE_ARN:
-        required: true
-      AWS_REGION:
-        required: true
-      EKS_CLUSTER_NAME:
-        required: true
 
 jobs:
   benchmark:
@@ -35,14 +26,14 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Update kubeconfig for EKS
         run: |
           aws eks update-kubeconfig \
-            --name ${{ secrets.EKS_CLUSTER_NAME }} \
-            --region ${{ secrets.AWS_REGION }}
+            --name ${{ vars.EKS_CLUSTER_NAME }} \
+            --region ${{ vars.AWS_REGION }}
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
