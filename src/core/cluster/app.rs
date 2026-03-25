@@ -1,6 +1,6 @@
 #![expect(clippy::disallowed_types)] // we can't use MsgPackOrJson because these endpoints are not OpenAPI-based
 
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     Extension, Json,
@@ -20,7 +20,7 @@ use openraft::{
 use serde::Serialize;
 use tap::{Pipe, TapFallible};
 
-use super::{Node, NodeId, handle::RaftState, network::detect_address, proto::*, raft::TypeConfig};
+use super::{Node, NodeId, handle::RaftState, proto::*, raft::TypeConfig};
 use crate::{AppState, Configuration};
 
 #[derive(Clone)]
@@ -66,8 +66,7 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
         .route(
             "/repl/raft/admin/change-membership",
             post(change_membership),
-        )
-        .route("/repl/raft/admin/initialize", post(initialize));
+        );
 
     if let Some(secret) = &cfg.cluster.secret {
         authenticated = authenticated
@@ -78,6 +77,7 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
     let unauthenticated = axum::Router::new()
         .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/discover", get(discover))
+        .route("/repl/node-id", get(get_node_id))
         .route("/repl/raft/admin/force-snapshot", post(force_snapshot)) // TODO: should this be unauth?
         .route("/repl/health", get(health));
 
@@ -192,6 +192,12 @@ async fn handle_forwarded_write(
 
 // Administrative functions
 
+async fn get_node_id(Extension(raft_state): Extension<RaftState>) -> MsgPack<GetNodeIdResponse> {
+    MsgPack(GetNodeIdResponse {
+        node_id: raft_state.node_id,
+    })
+}
+
 async fn discover(
     State(app_state): State<AppState>,
     Extension(raft_state): Extension<RaftState>,
@@ -278,23 +284,6 @@ async fn change_membership(
     state
         .raft
         .change_membership(request.desired_node_ids.clone(), false)
-        .await
-        .pipe(admin_response)
-}
-
-async fn initialize(
-    State(app_state): State<AppState>,
-    Extension(state): Extension<RaftState>,
-) -> impl IntoResponse {
-    let addr = match detect_address(&app_state.cfg) {
-        Ok(a) => a,
-        Err(_e) => return internal_error("could not find any valid addresses"),
-    };
-    let my_node = Node::new(addr);
-    let nodes = [(state.node_id, my_node)]
-        .into_iter()
-        .collect::<BTreeMap<_, _>>();
-    super::raft::initialize_cluster(&state.raft, nodes)
         .await
         .pipe(admin_response)
 }

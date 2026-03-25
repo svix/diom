@@ -7,11 +7,11 @@ mod discovery;
 mod errors;
 mod handle;
 mod logs;
-mod network;
+pub(crate) mod network;
 mod node;
 mod operations;
 pub mod proto;
-mod raft;
+pub(crate) mod raft;
 mod serialized_state_machine;
 mod state_machine;
 

@@ -388,7 +388,8 @@ impl RaftState {
             tracing::debug!("node already has cluster information; skipping discovery");
         } else {
             tracing::debug!("node has no cluster information; kicking off discovery");
-            let disco = Discovery::new(self.cfg.clone(), self.raft.clone(), self.node_id, network)?;
+            let disco =
+                Discovery::new(self.cfg.clone(), self.raft.clone(), self.node_id, network).await?;
             if let Err(err) = disco.discover_cluster().await {
                 tracing::error!(
                     ?err,

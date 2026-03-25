@@ -13,6 +13,14 @@ pub struct AdminClusterArgs {
 pub enum AdminClusterCommands {
     /// Get information about the current cluster
     Status {},
+    /// Initialize this node as the leader of a new cluster
+    ///
+    /// This operation may only be performed against a node which has not been
+    /// initialized and is not currently a member of a cluster.
+    Initialize {
+        cluster_initialize_in:
+            Option<crate::json::JsonOf<diom_client::models::ClusterInitializeIn>>,
+    },
     /// Remove a node from the cluster.
     ///
     /// This operation executes immediately and the node must be wiped and reset
@@ -31,6 +39,16 @@ impl AdminClusterCommands {
         match self {
             Self::Status {} => {
                 let resp = client.admin().cluster().status().await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::Initialize {
+                cluster_initialize_in,
+            } => {
+                let resp = client
+                    .admin()
+                    .cluster()
+                    .initialize(cluster_initialize_in.unwrap_or_default().into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }
             Self::RemoveNode {

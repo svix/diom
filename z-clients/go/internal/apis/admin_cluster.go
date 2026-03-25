@@ -30,6 +30,23 @@ func (adminCluster AdminCluster) Status(
 	)
 }
 
+// Initialize this node as the leader of a new cluster
+//
+// This operation may only be performed against a node which has not been
+// initialized and is not currently a member of a cluster.
+func (adminCluster AdminCluster) Initialize(
+	ctx context.Context,
+	clusterInitializeIn diom_models.ClusterInitializeIn,
+) (*diom_models.ClusterInitializeOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.ClusterInitializeIn, diom_models.ClusterInitializeOut](
+		ctx,
+		adminCluster.client,
+		"POST",
+		"/api/v1.admin.cluster.initialize",
+		&clusterInitializeIn,
+	)
+}
+
 // Remove a node from the cluster.
 //
 // This operation executes immediately and the node must be wiped and reset

@@ -9,7 +9,7 @@ use aide::axum::{
 };
 use axum::{Extension, extract::State};
 use diom_derive::aide_annotate;
-use diom_error::ResultExt;
+use diom_error::{Error, ResultExt};
 use diom_proto::MsgPackOrJson;
 use futures_util::StreamExt;
 use schemars::JsonSchema;
@@ -173,6 +173,40 @@ async fn cluster_status(
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
+struct ClusterInitializeIn {}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterInitializeOut {
+    cluster_id: ClusterId,
+}
+
+/// Initialize this node as the leader of a new cluster
+///
+/// This operation may only be performed against a node which has not been
+/// initialized and is not currently a member of a cluster.
+#[aide_annotate(op_id = "v1.admin.cluster.initialize")]
+async fn cluster_initialize(
+    State(app_state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(_data): MsgPackOrJson<ClusterInitializeIn>,
+) -> Result<MsgPackOrJson<ClusterInitializeOut>> {
+    let node_id = repl.node_id;
+    let addr = crate::core::cluster::network::detect_address(&app_state.cfg, node_id)
+        .await
+        .map_err(|err| {
+            Error::internal(format!("Could not discover local node address: {err:?}"))
+        })?;
+    let my_node = Node::from(addr);
+    let nodes = [(node_id, my_node)]
+        .into_iter()
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let cluster_id = crate::core::cluster::raft::initialize_cluster(&repl.raft, nodes)
+        .await
+        .or_internal_error()?;
+    Ok(MsgPackOrJson(ClusterInitializeOut { cluster_id }))
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
 struct ClusterRemoveNodeIn {
     node_id: NodeId,
 }
@@ -205,6 +239,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             cluster_status_path,
             get_with(cluster_status, cluster_status_operation),
+            &tag,
+        )
+        .api_route_with(
+            cluster_initialize_path,
+            post_with(cluster_initialize, cluster_initialize_operation),
             &tag,
         )
         .api_route_with(
