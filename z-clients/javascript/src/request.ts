@@ -146,8 +146,7 @@ export class CoyoteRequest {
 
   // biome-ignore lint/suspicious/noExplicitAny: intentional any
   public setBody(value: any) {
-    const packed = MSGPACK_CODEC.pack(value);
-    this.body = packed instanceof Uint8Array ? packed : new Uint8Array(packed);
+    this.body = MSGPACK_CODEC.pack(value);
   }
 
   /**
