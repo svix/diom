@@ -150,32 +150,33 @@ async fn test_idempotency_expiration() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
     // start again after expired
     start(&client, "k1", 1).await?;
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    time.fast_forward(Duration::from_secs(2));
     let response = start(&client, "k1", 1).await?;
     assert_eq!(response["status"], "started");
 
     // start again after expired (completed)
     complete(&client, "k2", "v1", 1).await?;
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    time.fast_forward(Duration::from_secs(2));
     let response = start(&client, "k2", 1).await?;
     assert_eq!(response["status"], "started");
 
     // complete TTL shorter than start
     start(&client, "k4", 60).await?;
     complete(&client, "k4", "v1", 1).await?;
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    time.fast_forward(Duration::from_secs(2));
     let response = start(&client, "k4", 60).await?;
     assert_eq!(response["status"], "started");
 
     // complete TTL longer than start
     start(&client, "k5", 1).await?;
     complete(&client, "k5", "v1", 60).await?;
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    time.fast_forward(Duration::from_secs(1));
     let response = start(&client, "k5", 1).await?;
     assert_eq!(response["status"], "completed");
     assert_eq!(response["data"]["response"], json!("v1".as_bytes()));
