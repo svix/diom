@@ -145,6 +145,7 @@ impl StreamReceiveOperation {
                             headers: msg.headers,
                             offset: lease.offset + i as u64,
                             topic: topic.clone(),
+                            scheduled_at: msg.scheduled_at,
                         }),
                 );
 
@@ -180,6 +181,7 @@ pub struct StreamReceiveMsg {
     pub value: Vec<u8>,
     pub headers: std::collections::HashMap<String, String>,
     pub timestamp: Timestamp,
+    pub scheduled_at: Option<Timestamp>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

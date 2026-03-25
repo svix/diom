@@ -141,6 +141,7 @@ fn forward_to_dlq(
             value: original.value,
             headers: original.headers,
             timestamp: original.timestamp,
+            scheduled_at: None,
         },
     )?;
 

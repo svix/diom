@@ -190,6 +190,24 @@ fn lease_available_msgs(
             continue;
         }
 
+        // If the message is scheduled for future delivery, write a synthetic lease with
+        // expiry = scheduled_at so subsequent scans skip it via the lease table without
+        // re-checking the message body.
+        if let Some(scheduled_at) = msg.scheduled_at
+            && scheduled_at > now
+        {
+            batch.insert_row(
+                &state.metadata_tables,
+                QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
+                &QueueLeaseRow {
+                    expiry: scheduled_at,
+                    dlq: false,
+                    attempt_count: 0,
+                },
+            )?;
+            continue;
+        }
+
         // Preserve retry_count from previous lease so nack retries are tracked correctly
         let attempt_count = existing_lease.map(|l| l.attempt_count).unwrap_or(0);
 
@@ -208,6 +226,7 @@ fn lease_available_msgs(
             value: msg.value,
             headers: msg.headers,
             timestamp: msg.timestamp,
+            scheduled_at: msg.scheduled_at,
         });
 
         count += 1;
@@ -255,6 +274,7 @@ pub struct QueueReceiveMsg {
     pub value: Vec<u8>,
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
+    pub scheduled_at: Option<Timestamp>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

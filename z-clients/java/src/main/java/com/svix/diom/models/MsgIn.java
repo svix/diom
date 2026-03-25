@@ -31,6 +31,7 @@ public class MsgIn {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private String key;
+    @JsonProperty("delay_ms") private Long delayMs;
     public MsgIn() {}
 
     public MsgIn value(List<Byte> value) {
@@ -102,6 +103,26 @@ public class MsgIn {
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public MsgIn delayMs(Long delayMs) {
+        this.delayMs = delayMs;
+        return this;
+    }
+
+    /**
+    * Optional delay in milliseconds. The message will not be delivered to queue consumers
+until `delay_ms` has elapsed from the time of publish.
+    *
+     * @return delayMs
+     */
+    @javax.annotation.Nullable
+    public Long getDelayMs() {
+        return delayMs;
+    }
+
+    public void setDelayMs(Long delayMs) {
+        this.delayMs = delayMs;
     }
 
     /**

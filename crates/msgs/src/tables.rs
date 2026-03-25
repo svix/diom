@@ -253,6 +253,8 @@ pub(crate) struct MsgRow {
     pub value: Vec<u8>,
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
+    #[serde(default)]
+    pub scheduled_at: Option<Timestamp>,
 }
 
 impl MsgRow {
