@@ -8,7 +8,6 @@ edition = "2024"
 
 [dependencies]
 coyote-proto.workspace = true
-indexmap.workspace = true
 jiff.workspace = true
 parking_lot.workspace = true
 rand.workspace = true

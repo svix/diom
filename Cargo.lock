@@ -1144,7 +1144,6 @@ name = "coyote-core"
 version = "0.0.1"
 dependencies = [
  "coyote-proto",
- "indexmap 2.13.0",
  "jiff",
  "parking_lot",
  "rand 0.9.2",
