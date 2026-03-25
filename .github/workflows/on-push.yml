@@ -80,6 +80,9 @@ jobs:
 
   benchmark-environment:
     needs: svix-cloud-deploy
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/benchmark-env.yml
     secrets: inherit
     with:
