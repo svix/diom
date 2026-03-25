@@ -1,0 +1,49 @@
+## Upgrade job settings.
+## When enabled, a pre-install/pre-upgrade/pre-rollback Job will apply the CRD
+## via `kubectl apply --server-side`, allowing Helm upgrades to update the CRD
+## schema without manual intervention.
+upgrade:
+  enabled: false
+
+  # If true, pass --force-conflicts to kubectl apply (resolves field-manager
+  # conflicts that can arise when the CRD was previously applied by another tool)
+  forceConflicts: false
+
+  image:
+    kubectl:
+      registry: registry.k8s.io
+      repository: kubectl
+      # Defaults to the Kubernetes server version if left empty.
+      tag: ""
+      pullPolicy: IfNotPresent
+
+  serviceAccount:
+    create: true
+    # Defaults to the job name if left empty.
+    name: ""
+    annotations: {}
+    automountServiceAccountToken: true
+
+  resources: {}
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  annotations: {}
+  labels: {}
+  podAnnotations: {}
+  podLabels: {}

@@ -1,6 +1,12 @@
 crds:
   # Install the CoyoteCluster CRD.
   enabled: true
+  # Run a pre-install/pre-upgrade Job that applies the CRD via
+  # `kubectl apply --server-side`, enabling automatic CRD schema upgrades.
+  # See charts/crds/values.yaml for full configuration options.
+  upgrade:
+    enabled: true
+    forceConflicts: true
 
 operator:
   image:

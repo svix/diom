@@ -1,0 +1,81 @@
+{{- if .Values.upgrade.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "coyote.crds.upgrade.name" . }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,pre-rollback
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- with .Values.upgrade.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "coyote.crds.upgrade.labels" . | nindent 4 }}
+    {{- with .Values.upgrade.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      {{- with .Values.upgrade.podLabels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upgrade.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "coyote.crds.upgrade.serviceAccountName" . }}
+      containers:
+        - name: kubectl
+          {{- $kubeVersion := (ternary (printf "%s.0" .Capabilities.KubeVersion.Version) (regexFind "v\\d+\\.\\d+\\.\\d+" .Capabilities.KubeVersion.Version) (regexMatch "^v\\d+\\.\\d+$" .Capabilities.KubeVersion.Version)) }}
+          {{- $tag := .Values.upgrade.image.kubectl.tag | default $kubeVersion }}
+          image: "{{ .Values.upgrade.image.kubectl.registry }}/{{ .Values.upgrade.image.kubectl.repository }}:{{ $tag }}"
+          imagePullPolicy: "{{ .Values.upgrade.image.kubectl.pullPolicy }}"
+          command:
+            - kubectl
+          args:
+            - apply
+            - --server-side
+            {{- if .Values.upgrade.forceConflicts }}
+            - --force-conflicts
+            {{- end }}
+            - --filename
+            - /crds/crd.json
+          {{- with .Values.upgrade.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.upgrade.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: /crds/
+              name: crds
+      volumes:
+        - name: crds
+          configMap:
+            name: {{ include "coyote.crds.upgrade.name" . }}
+      restartPolicy: OnFailure
+      {{- with .Values.upgrade.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upgrade.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upgrade.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upgrade.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
