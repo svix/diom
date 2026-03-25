@@ -5,7 +5,6 @@ use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
-use tokio::time::sleep;
 
 #[tokio::test]
 async fn stream_receive_returns_published_messages() -> TestResult {
@@ -536,6 +535,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -622,7 +622,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    sleep(Duration::from_secs(5)).await;
+    time.fast_forward(Duration::from_secs(5));
 
     // Receive — only the new message
     let r3 = client
