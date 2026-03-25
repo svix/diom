@@ -50,7 +50,7 @@ impl fmt::Display for AccessPolicyId {
     }
 }
 
-#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct Role {
     pub id: RoleId,
     pub description: String,
@@ -62,21 +62,21 @@ pub struct Role {
     pub context: HashMap<String, String>,
 }
 
-#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct AccessPolicy {
     pub id: AccessPolicyId,
     pub description: String,
     pub rules: Vec<AccessRule>,
 }
 
-#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct AccessRule {
     pub effect: AccessRuleEffect,
     pub resource: ResourcePattern,
     pub actions: Vec<String>,
 }
 
-#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessRuleEffect {
     Allow,
