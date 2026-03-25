@@ -88,6 +88,7 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
+diom-transformations.workspace = true
 ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
@@ -209,7 +210,7 @@ tap = "1"
 tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
 thiserror = "2.0.18"
-tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "fs"] }
+tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "fs", "process", "sync", "io-util", "io-std"] }
 tokio-util = "0.7"
 toml = { version = "1.0.3", default-features = false, features = ["parse", "serde"] }
 tower = "0.5.1"
