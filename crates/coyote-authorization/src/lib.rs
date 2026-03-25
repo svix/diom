@@ -9,7 +9,7 @@ pub use self::pattern::{KeyPattern, Module, NamespacePattern, ResourcePattern};
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
-pub struct RoleId(String);
+pub struct RoleId(pub String);
 
 impl RoleId {
     pub fn admin() -> Self {
@@ -36,7 +36,7 @@ impl fmt::Display for RoleId {
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
-pub struct AccessPolicyId(String);
+pub struct AccessPolicyId(pub String);
 
 impl AccessPolicyId {
     pub fn as_str(&self) -> &str {
@@ -52,28 +52,28 @@ impl fmt::Display for AccessPolicyId {
 
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct Role {
-    id: RoleId,
-    description: String,
+    pub id: RoleId,
+    pub description: String,
     #[serde(default)]
-    rules: Vec<AccessRule>,
+    pub rules: Vec<AccessRule>,
     #[serde(default)]
-    policies: Vec<AccessPolicyId>,
+    pub policies: Vec<AccessPolicyId>,
     #[serde(default)]
-    context: HashMap<String, String>,
+    pub context: HashMap<String, String>,
 }
 
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct AccessPolicy {
-    id: AccessPolicyId,
-    description: String,
-    rules: Vec<AccessRule>,
+    pub id: AccessPolicyId,
+    pub description: String,
+    pub rules: Vec<AccessRule>,
 }
 
 #[derive(Deserialize, Serialize, JsonSchema)]
 pub struct AccessRule {
-    effect: AccessRuleEffect,
-    resource: ResourcePattern,
-    actions: Vec<String>,
+    pub effect: AccessRuleEffect,
+    pub resource: ResourcePattern,
+    pub actions: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize, JsonSchema)]
