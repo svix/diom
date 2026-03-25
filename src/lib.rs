@@ -267,13 +267,14 @@ impl AppState {
         }
     }
 
-    /// Make a POST request to the internal API server.
-    pub async fn internal_post<T: Serialize, U: DeserializeOwned>(
+    /// Make an internal call to a specific op id
+    pub async fn internal_call<T: Serialize, U: DeserializeOwned>(
         &self,
-        path: &'static str,
+        op_id: &'static str,
         body: &T,
     ) -> Result<U, InternalRequestError> {
-        self.internal_client.post(path, body).await
+        let path = format!("/api/{op_id}");
+        self.internal_client.post(&path, body).await
     }
 }
 

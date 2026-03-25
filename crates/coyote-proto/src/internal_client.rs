@@ -28,7 +28,7 @@ impl InternalClient {
 
     pub async fn post<T: Serialize, U: DeserializeOwned>(
         &self,
-        path: &'static str,
+        path: &str,
         body: &T,
     ) -> Result<U, InternalRequestError> {
         let body = rmp_serde::to_vec_named(body)?;
@@ -36,11 +36,7 @@ impl InternalClient {
         Ok(rmp_serde::decode::from_slice(&resp_body)?)
     }
 
-    async fn post_impl(
-        &self,
-        path: &'static str,
-        body: Vec<u8>,
-    ) -> Result<Bytes, InternalRequestError> {
+    async fn post_impl(&self, path: &str, body: Vec<u8>) -> Result<Bytes, InternalRequestError> {
         let uri = path.parse::<http::Uri>()?;
         let http_req = http::Request::new(Body::from(body)).tap_mut(|req| {
             *req.method_mut() = http::Method::POST;
