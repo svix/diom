@@ -5,6 +5,7 @@ use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
     server::{TestContext, start_server},
 };
+use tokio::task::yield_now;
 
 #[tokio::test]
 async fn queue_receive_returns_published_messages() -> TestResult {
@@ -1190,6 +1191,239 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     let dlq_msgs = r_dlq["msgs"].assert_array();
     assert_eq!(dlq_msgs.len(), 1, "message should appear in DLQ topic");
     assert_eq!(dlq_msgs[0]["value"], json!("a".as_bytes()));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_receive_max_wait_returns_when_batch_filled() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-qwait-full" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish exactly 3 messages before receiving (queue starts from earliest)
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "ns-qwait-full:t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+                { "value": "c".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive with max_wait — batch is already full, should return immediately
+    let response = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "topic": "ns-qwait-full:t1",
+            "consumer_group": "test-cg",
+            "batch_size": 3,
+            "batch_wait_ms": 5000,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(msgs.len(), 3, "should return all 3 messages");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_receive_max_wait_returns_partial_batch_on_timeout() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        time,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-qwait-partial" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish only 2 messages — less than batch_size
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "ns-qwait-partial:t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Start a receive wanting batch_size=5 with a short wait
+    let recv_client = client.clone();
+    let recv_handle = tokio::spawn(async move {
+        recv_client
+            .post("v1.msgs.queue.receive")
+            .json(json!({
+                "topic": "ns-qwait-partial:t1",
+                "consumer_group": "test-cg",
+                "batch_size": 5,
+                "batch_wait_ms": 500,
+            }))
+            .await
+    });
+
+    // Let the receive request reach the server
+    yield_now().await;
+
+    // Advance past the max_wait deadline
+    time.fast_forward(Duration::from_millis(500));
+
+    let response = recv_handle.await??.expect(StatusCode::OK).json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(
+        msgs.len(),
+        2,
+        "should return the 2 available messages after timeout"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_receive_max_wait_times_out_with_no_messages() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        time,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-qtimeout" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive with a short max_wait — no messages will arrive
+    let recv_client = client.clone();
+    let recv_handle = tokio::spawn(async move {
+        recv_client
+            .post("v1.msgs.queue.receive")
+            .json(json!({
+                "topic": "ns-qtimeout:t1",
+                "consumer_group": "test-cg",
+                "batch_wait_ms": 500,
+            }))
+            .await
+    });
+
+    // Let the receive request reach the server
+    yield_now().await;
+
+    // Advance past the max_wait deadline
+    time.fast_forward(Duration::from_millis(500));
+
+    let response = recv_handle.await??.expect(StatusCode::OK).json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(msgs.len(), 0, "should return empty after timeout");
+
+    Ok(())
+}
+
+/// Queue partitions are not locked by active leases (unlike stream). The max_wait
+/// estimate must not skip partitions that have an existing cursor, otherwise consumers
+/// would unnecessarily wait even when messages are available.
+#[tokio::test]
+async fn queue_receive_max_wait_does_not_skip_partitions_with_existing_cursor() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-qwait-cursor" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Publish 3 messages
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "ns-qwait-cursor:t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+                { "value": "c".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Consumer A leases the first 2 messages, creating a cursor on the partition
+    let r1 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "topic": "ns-qwait-cursor:t1",
+            "consumer_group": "cg1",
+            "batch_size": 2,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(r1["msgs"].assert_array().len(), 2);
+
+    // Publish 3 more messages
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "ns-qwait-cursor:t1",
+            "msgs": [
+                { "value": "d".as_bytes(), "key": "k1" },
+                { "value": "e".as_bytes(), "key": "k1" },
+                { "value": "f".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Consumer B calls receive with max_wait. The partition already has a cursor from
+    // consumer A's receive, but queue partitions aren't locked — new messages should
+    // be available immediately without waiting.
+    let response = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "topic": "ns-qwait-cursor:t1",
+            "consumer_group": "cg1",
+            "batch_size": 3,
+            "batch_wait_ms": 5000,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    // Should get the 1 unleased message from the first batch + 3 new messages = 4
+    // (or at least > 0 — the point is it didn't wait 5 seconds)
+    let msgs = response["msgs"].assert_array();
+    assert!(
+        !msgs.is_empty(),
+        "should return messages immediately, not wait for max_wait"
+    );
 
     Ok(())
 }

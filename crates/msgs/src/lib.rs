@@ -1,13 +1,19 @@
-use coyote_error::Error;
+use coyote_error::{Error, Result};
+use coyote_id::NamespaceId;
 use coyote_namespace::{Namespace, entities::MsgsConfig};
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
+use jiff::Timestamp;
+
+use entities::{ConsumerGroup, Partition, TopicName};
+use fjall_utils::{ReadableKeyspace, TableRow};
+use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
 pub mod entities;
 pub mod operations;
 pub(crate) mod tables;
 
-const MSG_KEYSPACE: &str = "mod_msgs";
-const METADATA_KEYSPACE: &str = "mod_msgs_metadata";
+pub const MSG_KEYSPACE: &str = "mod_msgs";
+pub const METADATA_KEYSPACE: &str = "mod_msgs_metadata";
 
 pub type MsgsNamespace = Namespace<MsgsConfig>;
 
@@ -38,4 +44,91 @@ impl State {
             msg_table,
         })
     }
+}
+
+/// Counts available queue messages across all partitions.
+///
+/// For each partition, scans all `QueueLeaseRow` entries and counts messages that
+/// are available (no lease, or lease expired and not in DLQ).
+pub fn estimate_available_queue_messages(
+    metadata_tables: &impl ReadableKeyspace,
+    msg_table: &impl ReadableKeyspace,
+    namespace_id: NamespaceId,
+    topic: &TopicName,
+    consumer_group: &ConsumerGroup,
+    now: Timestamp,
+) -> Result<u64> {
+    let Some(topic_row) = TopicRow::fetch(metadata_tables, TopicRow::key_for(namespace_id, topic))?
+    else {
+        return Ok(0);
+    };
+
+    let mut total = 0u64;
+    for partition_idx in 0..topic_row.partitions {
+        let partition = Partition::new(partition_idx)?;
+
+        // SMH should probably rename StreamLeaseRow to CursorRow or something,
+        // the name is misleading here.
+        let cursor_offset = StreamLeaseRow::fetch(
+            metadata_tables,
+            StreamLeaseRow::key_for(topic_row.id, partition, consumer_group),
+        )?
+        .map(|c| c.offset)
+        .unwrap_or(0);
+
+        let next_offset = MsgRow::next_offset(msg_table, topic_row.id, partition)?;
+        let total_msgs = next_offset.saturating_sub(cursor_offset);
+
+        let leases = QueueLeaseRow::scan_partition(
+            metadata_tables,
+            topic_row.id,
+            partition,
+            consumer_group,
+        )?;
+        let unavailable = leases.iter().filter(|(_, l)| !l.is_available(now)).count() as u64;
+
+        total += total_msgs.saturating_sub(unavailable);
+    }
+
+    Ok(total)
+}
+
+// NOTE - I'm not thrilled about the location of this method, but I didn't want to expose the
+// tables module outside the msgs crate, and I wasn't sure where else to put this. 🤷
+/// Cheap offset-based estimate of available stream messages across all partitions.
+///
+/// Partitions with active leases are skipped — stream semantics lock at the partition level.
+pub fn estimate_available_stream_messages(
+    metadata_tables: &impl ReadableKeyspace,
+    msg_table: &impl ReadableKeyspace,
+    namespace_id: NamespaceId,
+    topic: &TopicName,
+    consumer_group: &ConsumerGroup,
+    now: Timestamp,
+) -> Result<u64> {
+    let Some(topic_row) = TopicRow::fetch(metadata_tables, TopicRow::key_for(namespace_id, topic))?
+    else {
+        return Ok(0);
+    };
+
+    let mut total = 0u64;
+    for partition_idx in 0..topic_row.partitions {
+        let partition = Partition::new(partition_idx)?;
+
+        let cursor = StreamLeaseRow::fetch(
+            metadata_tables,
+            StreamLeaseRow::key_for(topic_row.id, partition, consumer_group),
+        )?;
+
+        // Skip partitions with active leases
+        if cursor.as_ref().is_some_and(|c| c.expiry > now) {
+            continue;
+        }
+
+        let cursor_offset = cursor.map(|c| c.offset).unwrap_or(0);
+        let next_offset = MsgRow::next_offset(msg_table, topic_row.id, partition)?;
+        total += next_offset.saturating_sub(cursor_offset);
+    }
+
+    Ok(total)
 }
