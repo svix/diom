@@ -94,7 +94,7 @@ async fn authorization_inner(
 
     let token = bearer.token();
 
-    if let Some(admin_token) = state.cfg.admin_token.as_ref()
+    if let Some(admin_token) = &state.cfg.admin_token
         && constant_time_eq(admin_token, token)
     {
         let perms = Permissions {
