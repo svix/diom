@@ -39,7 +39,7 @@ class CacheAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/cache/set",
+            path="/api/v1.cache.set",
             body=body,
             response_type=CacheSetOut,
         )
@@ -58,7 +58,7 @@ class CacheAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/cache/get",
+            path="/api/v1.cache.get",
             body=body,
             response_type=CacheGetOut,
         )
@@ -76,7 +76,7 @@ class CacheAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/cache/delete",
+            path="/api/v1.cache.delete",
             body=body,
             response_type=CacheDeleteOut,
         )
@@ -102,7 +102,7 @@ class Cache(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/cache/set",
+            path="/api/v1.cache.set",
             body=body,
             response_type=CacheSetOut,
         )
@@ -121,7 +121,7 @@ class Cache(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/cache/get",
+            path="/api/v1.cache.get",
             body=body,
             response_type=CacheGetOut,
         )
@@ -139,7 +139,7 @@ class Cache(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/cache/delete",
+            path="/api/v1.cache.delete",
             body=body,
             response_type=CacheDeleteOut,
         )

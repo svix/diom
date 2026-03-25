@@ -37,7 +37,7 @@ class MsgsStreamAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/stream/receive",
+            path="/api/v1.msgs.stream.receive",
             body=body,
             response_type=MsgStreamReceiveOut,
         )
@@ -61,7 +61,7 @@ class MsgsStreamAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/stream/commit",
+            path="/api/v1.msgs.stream.commit",
             body=body,
             response_type=MsgStreamCommitOut,
         )
@@ -87,7 +87,7 @@ class MsgsStreamAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/stream/seek",
+            path="/api/v1.msgs.stream.seek",
             body=body,
             response_type=MsgStreamSeekOut,
         )
@@ -115,7 +115,7 @@ class MsgsStream(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/stream/receive",
+            path="/api/v1.msgs.stream.receive",
             body=body,
             response_type=MsgStreamReceiveOut,
         )
@@ -139,7 +139,7 @@ class MsgsStream(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/stream/commit",
+            path="/api/v1.msgs.stream.commit",
             body=body,
             response_type=MsgStreamCommitOut,
         )
@@ -165,7 +165,7 @@ class MsgsStream(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/stream/seek",
+            path="/api/v1.msgs.stream.seek",
             body=body,
             response_type=MsgStreamSeekOut,
         )

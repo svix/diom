@@ -41,7 +41,7 @@ class KvAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/kv/set",
+            path="/api/v1.kv.set",
             body=body,
             response_type=KvSetOut,
         )
@@ -60,7 +60,7 @@ class KvAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/kv/get",
+            path="/api/v1.kv.get",
             body=body,
             response_type=KvGetOut,
         )
@@ -78,7 +78,7 @@ class KvAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/kv/delete",
+            path="/api/v1.kv.delete",
             body=body,
             response_type=KvDeleteOut,
         )
@@ -106,7 +106,7 @@ class Kv(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/kv/set",
+            path="/api/v1.kv.set",
             body=body,
             response_type=KvSetOut,
         )
@@ -125,7 +125,7 @@ class Kv(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/kv/get",
+            path="/api/v1.kv.get",
             body=body,
             response_type=KvGetOut,
         )
@@ -143,7 +143,7 @@ class Kv(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/kv/delete",
+            path="/api/v1.kv.delete",
             body=body,
             response_type=KvDeleteOut,
         )

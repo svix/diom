@@ -22,7 +22,7 @@ export class MsgsTopic {
         topic: string,
         msgTopicConfigureIn: MsgTopicConfigureIn,
     ): Promise<MsgTopicConfigureOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/topic/configure");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.topic.configure");
 
         request.setBody(
             MsgTopicConfigureInSerializer._toJsonObject({

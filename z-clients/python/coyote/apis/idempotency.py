@@ -38,7 +38,7 @@ class IdempotencyAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/idempotency/start",
+            path="/api/v1.idempotency.start",
             body=body,
             response_type=IdempotencyStartOut,
         )
@@ -58,7 +58,7 @@ class IdempotencyAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/idempotency/complete",
+            path="/api/v1.idempotency.complete",
             body=body,
             response_type=IdempotencyCompleteOut,
         )
@@ -76,7 +76,7 @@ class IdempotencyAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/idempotency/abort",
+            path="/api/v1.idempotency.abort",
             body=body,
             response_type=IdempotencyAbortOut,
         )
@@ -101,7 +101,7 @@ class Idempotency(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/idempotency/start",
+            path="/api/v1.idempotency.start",
             body=body,
             response_type=IdempotencyStartOut,
         )
@@ -121,7 +121,7 @@ class Idempotency(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/idempotency/complete",
+            path="/api/v1.idempotency.complete",
             body=body,
             response_type=IdempotencyCompleteOut,
         )
@@ -139,7 +139,7 @@ class Idempotency(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/idempotency/abort",
+            path="/api/v1.idempotency.abort",
             body=body,
             response_type=IdempotencyAbortOut,
         )

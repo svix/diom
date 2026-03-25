@@ -25,7 +25,7 @@ export class KvNamespace {
     public create(
         kvCreateNamespaceIn: KvCreateNamespaceIn,
     ): Promise<KvCreateNamespaceOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/create");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.kv.namespace.create");
 
         request.setBody(
             KvCreateNamespaceInSerializer._toJsonObject(kvCreateNamespaceIn)
@@ -39,7 +39,7 @@ export class KvNamespace {
     public get(
         kvGetNamespaceIn: KvGetNamespaceIn,
     ): Promise<KvGetNamespaceOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/kv/namespace/get");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.kv.namespace.get");
 
         request.setBody(
             KvGetNamespaceInSerializer._toJsonObject(kvGetNamespaceIn)

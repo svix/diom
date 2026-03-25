@@ -70,7 +70,7 @@ export class AuthToken {
     public create(
         authTokenCreateIn: AuthTokenCreateIn,
     ): Promise<AuthTokenCreateOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/create");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.auth-token.create");
 
         request.setBody(
             AuthTokenCreateInSerializer._toJsonObject(authTokenCreateIn)
@@ -84,7 +84,7 @@ export class AuthToken {
     public expire(
         authTokenExpireIn: AuthTokenExpireIn,
     ): Promise<AuthTokenExpireOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/expire");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.auth-token.expire");
 
         request.setBody(
             AuthTokenExpireInSerializer._toJsonObject(authTokenExpireIn)
@@ -98,7 +98,7 @@ export class AuthToken {
     public delete(
         authTokenDeleteIn: AuthTokenDeleteIn,
     ): Promise<AuthTokenDeleteOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/delete");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.auth-token.delete");
 
         request.setBody(
             AuthTokenDeleteInSerializer._toJsonObject(authTokenDeleteIn)
@@ -112,7 +112,7 @@ export class AuthToken {
     public verify(
         authTokenVerifyIn: AuthTokenVerifyIn,
     ): Promise<AuthTokenVerifyOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/verify");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.auth-token.verify");
 
         request.setBody(
             AuthTokenVerifyInSerializer._toJsonObject(authTokenVerifyIn)
@@ -126,7 +126,7 @@ export class AuthToken {
     public list(
         authTokenListIn: AuthTokenListIn,
     ): Promise<ListResponseAuthTokenOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/list");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.auth-token.list");
 
         request.setBody(
             AuthTokenListInSerializer._toJsonObject(authTokenListIn)
@@ -140,7 +140,7 @@ export class AuthToken {
     public update(
         authTokenUpdateIn: AuthTokenUpdateIn,
     ): Promise<AuthTokenUpdateOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/update");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.auth-token.update");
 
         request.setBody(
             AuthTokenUpdateInSerializer._toJsonObject(authTokenUpdateIn)
@@ -154,7 +154,7 @@ export class AuthToken {
     public rotate(
         authTokenRotateIn: AuthTokenRotateIn,
     ): Promise<AuthTokenRotateOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/auth-token/rotate");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.auth-token.rotate");
 
         request.setBody(
             AuthTokenRotateInSerializer._toJsonObject(authTokenRotateIn)

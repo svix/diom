@@ -32,7 +32,7 @@ public class MsgsNamespace {
         String name,
         final MsgNamespaceCreateIn msgNamespaceCreateIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/namespace/create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.namespace.create");
         MsgNamespaceCreateIn_ body = new MsgNamespaceCreateIn_(
             name,
             msgNamespaceCreateIn.getRetention()
@@ -62,7 +62,7 @@ public class MsgsNamespace {
         String name,
         final MsgNamespaceGetIn msgNamespaceGetIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/msgs/namespace/get");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.namespace.get");
         MsgNamespaceGetIn_ body = new MsgNamespaceGetIn_(
             name
         );

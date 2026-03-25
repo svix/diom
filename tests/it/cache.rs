@@ -6,7 +6,7 @@ use test_utils::{
 
 async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) -> TestResult<()> {
     client
-        .post("cache/set")
+        .post("v1.cache.set")
         .json(json!({
             "key": key,
             "ttl": expire_in,
@@ -20,7 +20,7 @@ async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) 
 #[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
 async fn cache_get(client: &TestClient, key: &str) -> TestResult<serde_json::Value> {
     let response = client
-        .post("cache/get")
+        .post("v1.cache.get")
         .json(json!({
             "key": key
         }))
@@ -47,7 +47,7 @@ async fn test_cache_set_and_get() -> TestResult {
 
     // set should fail if namespace doesn't exist:
     client
-        .post("cache/set")
+        .post("v1.cache.set")
         .json(json!({
             "namespace": "nonexistentnamespace",
             "key": "key1",
@@ -70,7 +70,7 @@ async fn test_cache_set_get_and_delete() -> TestResult {
     } = start_server().await;
 
     let delete_response = client
-        .post("cache/delete")
+        .post("v1.cache.delete")
         .json(json!({
             "key": "test-key-2"
         }))
@@ -86,7 +86,7 @@ async fn test_cache_set_get_and_delete() -> TestResult {
     assert_eq!(response["value"], json!("another-value".as_bytes()));
 
     let delete_response = client
-        .post("cache/delete")
+        .post("v1.cache.delete")
         .json(json!({
             "key": "test-key-2"
         }))
@@ -97,7 +97,7 @@ async fn test_cache_set_get_and_delete() -> TestResult {
     assert_eq!(delete_response["success"], true);
 
     let response = client
-        .post("cache/get")
+        .post("v1.cache.get")
         .json(json!({
             "key": "test-key-2"
         }))
@@ -118,7 +118,7 @@ async fn create_namespace_with_defaults() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("cache/namespace/create")
+        .post("v1.cache.namespace.create")
         .json(json!({
             "name": "my-namespace",
         }))
@@ -143,7 +143,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("cache/namespace/create")
+        .post("v1.cache.namespace.create")
         .json(json!({
             "name": "custom-ns",
             "eviction_policy": "LeastRecentlyUsed",
@@ -176,7 +176,7 @@ async fn create_namespace_upserts() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("cache/namespace/create")
+        .post("v1.cache.namespace.create")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -189,7 +189,7 @@ async fn create_namespace_upserts() -> TestResult {
 
     // Upsert
     let second = client
-        .post("cache/namespace/create")
+        .post("v1.cache.namespace.create")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -216,7 +216,7 @@ async fn get_namespace() -> TestResult {
 
     // Create a namespace first
     let created = client
-        .post("cache/namespace/create")
+        .post("v1.cache.namespace.create")
         .json(json!({
             "name": "get-test-ns",
         }))
@@ -226,7 +226,7 @@ async fn get_namespace() -> TestResult {
 
     // Get it back
     let response = client
-        .post("cache/namespace/get")
+        .post("v1.cache.namespace.get")
         .json(json!({
             "name": "get-test-ns",
         }))
@@ -250,7 +250,7 @@ async fn get_namespace_not_found() -> TestResult {
     } = start_server().await;
 
     client
-        .post("cache/namespace/get")
+        .post("v1.cache.namespace.get")
         .json(json!({
             "name": "nonexistent-ns",
         }))

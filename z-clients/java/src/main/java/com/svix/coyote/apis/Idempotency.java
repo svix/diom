@@ -36,7 +36,7 @@ public class Idempotency {
         String key,
         final IdempotencyStartIn idempotencyStartIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/start");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.start");
         IdempotencyStartIn_ body = new IdempotencyStartIn_(
             idempotencyStartIn.getNamespace(),
             key,
@@ -57,7 +57,7 @@ public class Idempotency {
         String key,
         final IdempotencyCompleteIn idempotencyCompleteIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/complete");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.complete");
         IdempotencyCompleteIn_ body = new IdempotencyCompleteIn_(
             idempotencyCompleteIn.getNamespace(),
             key,
@@ -79,7 +79,7 @@ public class Idempotency {
         String key,
         final IdempotencyAbortIn idempotencyAbortIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/idempotency/abort");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.abort");
         IdempotencyAbortIn_ body = new IdempotencyAbortIn_(
             idempotencyAbortIn.getNamespace(),
             key

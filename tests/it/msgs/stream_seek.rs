@@ -13,14 +13,14 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-seek-earliest" }))
         .await?
         .expect(StatusCode::OK);
 
     // Register consumer group
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-earliest:t1",
             "consumer_group": "cg1",
@@ -30,7 +30,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
 
     // Publish messages
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-seek-earliest:t1",
             "msgs": [
@@ -44,7 +44,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
 
     // Receive all messages
     let r1 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-earliest:t1",
             "consumer_group": "cg1",
@@ -60,7 +60,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     let partition_topic = msgs[0]["topic"].assert_str();
     let last_offset = msgs[2]["offset"].assert_u64();
     client
-        .post("msgs/stream/commit")
+        .post("v1.msgs.stream.commit")
         .json(json!({
             "topic": partition_topic,
             "consumer_group": "cg1",
@@ -71,7 +71,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
 
     // Verify nothing left to consume
     let r2 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-earliest:t1",
             "consumer_group": "cg1",
@@ -83,7 +83,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
 
     // Seek to earliest
     client
-        .post("msgs/stream/seek")
+        .post("v1.msgs.stream.seek")
         .json(json!({
             "topic": "ns-seek-earliest:t1",
             "consumer_group": "cg1",
@@ -94,7 +94,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
 
     // Receive again — should replay all 3 messages
     let r3 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-earliest:t1",
             "consumer_group": "cg1",
@@ -121,14 +121,14 @@ async fn seek_latest_skips_existing() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-seek-latest" }))
         .await?
         .expect(StatusCode::OK);
 
     // Publish messages before any consumer exists
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-seek-latest:t1",
             "msgs": [
@@ -141,7 +141,7 @@ async fn seek_latest_skips_existing() -> TestResult {
 
     // Seek to latest (creates consumer group at the end of the stream)
     client
-        .post("msgs/stream/seek")
+        .post("v1.msgs.stream.seek")
         .json(json!({
             "topic": "ns-seek-latest:t1",
             "consumer_group": "cg1",
@@ -152,7 +152,7 @@ async fn seek_latest_skips_existing() -> TestResult {
 
     // Receive — should get nothing (all messages are before "latest")
     let r1 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-latest:t1",
             "consumer_group": "cg1",
@@ -168,7 +168,7 @@ async fn seek_latest_skips_existing() -> TestResult {
 
     // Publish new messages
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-seek-latest:t1",
             "msgs": [
@@ -181,7 +181,7 @@ async fn seek_latest_skips_existing() -> TestResult {
 
     // Receive — should get only the new messages
     let r2 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-latest:t1",
             "consumer_group": "cg1",
@@ -207,14 +207,14 @@ async fn seek_to_specific_offset() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-seek-offset" }))
         .await?
         .expect(StatusCode::OK);
 
     // Register consumer group
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-offset:t1",
             "consumer_group": "cg1",
@@ -224,7 +224,7 @@ async fn seek_to_specific_offset() -> TestResult {
 
     // Publish 5 messages
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-seek-offset:t1",
             "msgs": (0..5)
@@ -236,7 +236,7 @@ async fn seek_to_specific_offset() -> TestResult {
 
     // Receive to discover the partition topic
     let r1 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-offset:t1",
             "consumer_group": "cg1",
@@ -252,7 +252,7 @@ async fn seek_to_specific_offset() -> TestResult {
     // Commit past all messages
     let last_offset = msgs[4]["offset"].assert_u64();
     client
-        .post("msgs/stream/commit")
+        .post("v1.msgs.stream.commit")
         .json(json!({
             "topic": partition_topic,
             "consumer_group": "cg1",
@@ -263,7 +263,7 @@ async fn seek_to_specific_offset() -> TestResult {
 
     // Seek to offset 2 (next-to-read semantics: will read from offset 2)
     client
-        .post("msgs/stream/seek")
+        .post("v1.msgs.stream.seek")
         .json(json!({
             "topic": partition_topic,
             "consumer_group": "cg1",
@@ -274,7 +274,7 @@ async fn seek_to_specific_offset() -> TestResult {
 
     // Receive — should get messages starting at offset 2 (3 messages: 2, 3, 4)
     let r2 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-offset:t1",
             "consumer_group": "cg1",
@@ -303,14 +303,14 @@ async fn seek_offset_requires_partition_topic() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-seek-pt" }))
         .await?
         .expect(StatusCode::OK);
 
     // Offset-based seek on a bare topic (no ~partition) should fail
     client
-        .post("msgs/stream/seek")
+        .post("v1.msgs.stream.seek")
         .json(json!({
             "topic": "ns-seek-pt:t1",
             "consumer_group": "cg1",
@@ -331,14 +331,14 @@ async fn seek_position_works_on_topic_level() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-seek-topic" }))
         .await?
         .expect(StatusCode::OK);
 
     // Configure multiple partitions to ensure we can seek on a per-partition basis
     client
-        .post("msgs/topic/configure")
+        .post("v1.msgs.topic.configure")
         .json(json!({
             "topic": "ns-seek-topic:t1",
             "partitions": 16,
@@ -348,7 +348,7 @@ async fn seek_position_works_on_topic_level() -> TestResult {
 
     // Register consumer group
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-topic:t1",
             "consumer_group": "cg1",
@@ -358,7 +358,7 @@ async fn seek_position_works_on_topic_level() -> TestResult {
 
     // Publish messages to different partitions
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-seek-topic:t1",
             "msgs": [
@@ -373,7 +373,7 @@ async fn seek_position_works_on_topic_level() -> TestResult {
 
     // Seek to earliest on the topic level (applies to all partitions)
     client
-        .post("msgs/stream/seek")
+        .post("v1.msgs.stream.seek")
         .json(json!({
             "topic": "ns-seek-topic:t1",
             "consumer_group": "cg1",
@@ -384,7 +384,7 @@ async fn seek_position_works_on_topic_level() -> TestResult {
 
     // Receive — should get all messages from all partitions
     let r1 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-topic:t1",
             "consumer_group": "cg1",
@@ -412,7 +412,7 @@ async fn seek_nonexistent_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/stream/seek")
+        .post("v1.msgs.stream.seek")
         .json(json!({
             "namespace": "does-not-exist",
             "topic": "t1",
@@ -434,14 +434,14 @@ async fn seek_clears_lease() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({ "name": "ns-seek-lease" }))
         .await?
         .expect(StatusCode::OK);
 
     // Register consumer group
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-lease:t1",
             "consumer_group": "cg1",
@@ -450,7 +450,7 @@ async fn seek_clears_lease() -> TestResult {
         .expect(StatusCode::OK);
 
     client
-        .post("msgs/publish")
+        .post("v1.msgs.publish")
         .json(json!({
             "topic": "ns-seek-lease:t1",
             "msgs": [
@@ -463,7 +463,7 @@ async fn seek_clears_lease() -> TestResult {
 
     // Receive — locks the partition
     let r1 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-lease:t1",
             "consumer_group": "cg1",
@@ -475,7 +475,7 @@ async fn seek_clears_lease() -> TestResult {
 
     // Verify partition is locked
     client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-lease:t1",
             "consumer_group": "cg1",
@@ -485,7 +485,7 @@ async fn seek_clears_lease() -> TestResult {
 
     // Seek to earliest — should clear the lease
     client
-        .post("msgs/stream/seek")
+        .post("v1.msgs.stream.seek")
         .json(json!({
             "topic": "ns-seek-lease:t1",
             "consumer_group": "cg1",
@@ -496,7 +496,7 @@ async fn seek_clears_lease() -> TestResult {
 
     // Receive again — should succeed (lease cleared) and replay messages
     let r2 = client
-        .post("msgs/stream/receive")
+        .post("v1.msgs.stream.receive")
         .json(json!({
             "topic": "ns-seek-lease:t1",
             "consumer_group": "cg1",

@@ -111,7 +111,7 @@ pub struct RateLimitGetRemainingOut {
 }
 
 /// Rate Limiter Check and Consume
-#[aide_annotate(op_id = "v1.rate_limit.limit")]
+#[aide_annotate(op_id = "v1.rate-limit.limit")]
 async fn rate_limit_limit(
     Extension(repl): Extension<RaftState>,
     State(state): State<AppState>,
@@ -139,7 +139,7 @@ async fn rate_limit_limit(
 }
 
 /// Rate Limiter Get Remaining
-#[aide_annotate(op_id = "v1.rate_limit.get_remaining")]
+#[aide_annotate(op_id = "v1.rate-limit.get-remaining")]
 async fn rate_limit_get_remaining(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -183,7 +183,7 @@ pub struct RateLimitResetIn {
 pub struct RateLimitResetOut {}
 
 /// Rate Limiter Reset
-#[aide_annotate(op_id = "v1.rate_limit.reset")]
+#[aide_annotate(op_id = "v1.rate-limit.reset")]
 async fn rate_limit_reset(
     Extension(repl): Extension<RaftState>,
     State(state): State<AppState>,
@@ -239,7 +239,7 @@ struct RateLimitGetNamespaceOut {
 }
 
 /// Create rate limiter namespace
-#[aide_annotate(op_id = "v1.rate_limit.namespace.create")]
+#[aide_annotate(op_id = "v1.rate-limit.namespace.create")]
 async fn rate_limit_create_namespace(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<RateLimitCreateNamespaceIn>,
@@ -255,7 +255,7 @@ async fn rate_limit_create_namespace(
 }
 
 /// Get rate limiter namespace
-#[aide_annotate(op_id = "v1.rate_limit.namespace.get")]
+#[aide_annotate(op_id = "v1.rate-limit.namespace.get")]
 async fn rate_limit_get_namespace(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -281,22 +281,22 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            "/rate-limit/limit",
+            rate_limit_limit_path,
             post_with(rate_limit_limit, rate_limit_limit_operation),
             &tag,
         )
         .api_route_with(
-            "/rate-limit/get-remaining",
+            rate_limit_get_remaining_path,
             post_with(rate_limit_get_remaining, rate_limit_get_remaining_operation),
             &tag,
         )
         .api_route_with(
-            "/rate-limit/reset",
+            rate_limit_reset_path,
             post_with(rate_limit_reset, rate_limit_reset_operation),
             &tag,
         )
         .api_route_with(
-            "/rate-limit/namespace/create",
+            rate_limit_create_namespace_path,
             post_with(
                 rate_limit_create_namespace,
                 rate_limit_create_namespace_operation,
@@ -304,7 +304,7 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            "/rate-limit/namespace/get",
+            rate_limit_get_namespace_path,
             post_with(rate_limit_get_namespace, rate_limit_get_namespace_operation),
             &tag,
         )

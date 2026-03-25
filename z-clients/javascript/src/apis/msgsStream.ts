@@ -40,7 +40,7 @@ export class MsgsStream {
         consumer_group: string,
         msgStreamReceiveIn: MsgStreamReceiveIn,
     ): Promise<MsgStreamReceiveOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/receive");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.stream.receive");
 
         request.setBody(
             MsgStreamReceiveInSerializer._toJsonObject({
@@ -65,7 +65,7 @@ export class MsgsStream {
         consumer_group: string,
         msgStreamCommitIn: MsgStreamCommitIn,
     ): Promise<MsgStreamCommitOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/commit");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.stream.commit");
 
         request.setBody(
             MsgStreamCommitInSerializer._toJsonObject({
@@ -91,7 +91,7 @@ export class MsgsStream {
         consumer_group: string,
         msgStreamSeekIn: MsgStreamSeekIn,
     ): Promise<MsgStreamSeekOut> {
-        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1/msgs/stream/seek");
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.stream.seek");
 
         request.setBody(
             MsgStreamSeekInSerializer._toJsonObject({

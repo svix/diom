@@ -44,8 +44,8 @@ pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Health");
 
     let router = ApiRouter::new()
-        .api_route_with("/health/ping", get_with(ping, ping_operation), &tag)
-        .api_route_with("/health/error", post_with(error, error_operation), &tag);
+        .api_route_with(ping_path, get_with(ping, ping_operation), &tag)
+        .api_route_with(error_path, post_with(error, error_operation), &tag);
 
     #[cfg(debug_assertions)]
     let router = router.route("/health/panic", post(panic));

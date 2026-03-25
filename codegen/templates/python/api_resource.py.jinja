@@ -5,11 +5,13 @@ from dataclasses import dataclass
 from deprecated import deprecated
 
 from ..internal.api_common import ApiBase, BaseOptions, serialize_params
+{%- if referenced_components %}
 from ..models import (
     {%- for c in referenced_components %}
     {{ c | to_upper_camel_case }},
     {%- endfor %}
 )
+{%- endif %}
 {% for _, sub in resource.subresources | items -%}
 from .{{ sub.name | to_snake_case }} import (
     {{ sub.name | to_upper_camel_case }},

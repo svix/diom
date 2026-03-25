@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.coyote.models.ClusterRemoveNodeIn;
+import com.svix.coyote.models.ClusterRemoveNodeOut;
 import com.svix.coyote.models.ClusterStatusOut;
 
 public class AdminCluster {
@@ -26,7 +28,7 @@ public class AdminCluster {
     public ClusterStatusOut status(
         
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1/admin/cluster/status");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.status");
 
         return this.client.executeRequest(
             "GET",
@@ -34,6 +36,26 @@ public class AdminCluster {
             null,
             null,
             ClusterStatusOut.class
+        );
+    }
+
+    /**
+* Remove a node from the cluster.
+* 
+* This operation executes immediately and the node must be wiped and reset
+* before it can safely be added to the cluster.
+*/
+    public ClusterRemoveNodeOut removeNode(
+        final ClusterRemoveNodeIn clusterRemoveNodeIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.remove-node");
+
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            clusterRemoveNodeIn,
+            ClusterRemoveNodeOut.class
         );
     }
 }

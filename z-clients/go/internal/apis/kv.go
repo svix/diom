@@ -40,7 +40,7 @@ func (kv Kv) Set(
 		ctx,
 		kv.client,
 		"POST",
-		"/api/v1/kv/set",
+		"/api/v1.kv.set",
 		&body,
 	)
 }
@@ -61,7 +61,7 @@ func (kv Kv) Get(
 		ctx,
 		kv.client,
 		"POST",
-		"/api/v1/kv/get",
+		"/api/v1.kv.get",
 		&body,
 	)
 }
@@ -81,7 +81,7 @@ func (kv Kv) Delete(
 		ctx,
 		kv.client,
 		"POST",
-		"/api/v1/kv/delete",
+		"/api/v1.kv.delete",
 		&body,
 	)
 }

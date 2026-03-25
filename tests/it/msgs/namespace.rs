@@ -13,7 +13,7 @@ async fn create_namespace_with_defaults() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "my-namespace",
         }))
@@ -40,7 +40,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "custom-ns",
             "retention": {
@@ -76,7 +76,7 @@ async fn create_namespace_upserts() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "upsert-ns",
             "retention": { "bytes": 1024, "ms": 9999 }
@@ -92,7 +92,7 @@ async fn create_namespace_upserts() -> TestResult {
 
     // Upsert with different retention
     let second = client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "upsert-ns",
             "retention": { "bytes": 2048, "ms": 60000 }
@@ -122,7 +122,7 @@ async fn get_namespace() -> TestResult {
 
     // Create a namespace first
     let created = client
-        .post("msgs/namespace/create")
+        .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "get-test-ns",
             "retention": { "bytes": 5000, "ms": 30000 }
@@ -133,7 +133,7 @@ async fn get_namespace() -> TestResult {
 
     // Get it back
     let response = client
-        .post("msgs/namespace/get")
+        .post("v1.msgs.namespace.get")
         .json(json!({
             "name": "get-test-ns",
         }))
@@ -159,7 +159,7 @@ async fn get_namespace_not_found() -> TestResult {
     } = start_server().await;
 
     client
-        .post("msgs/namespace/get")
+        .post("v1.msgs.namespace.get")
         .json(json!({
             "name": "nonexistent-ns",
         }))

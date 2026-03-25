@@ -43,7 +43,7 @@ class MsgsQueueAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/queue/receive",
+            path="/api/v1.msgs.queue.receive",
             body=body,
             response_type=MsgQueueReceiveOut,
         )
@@ -66,7 +66,7 @@ class MsgsQueueAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/queue/ack",
+            path="/api/v1.msgs.queue.ack",
             body=body,
             response_type=MsgQueueAckOut,
         )
@@ -91,7 +91,7 @@ class MsgsQueueAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/queue/configure",
+            path="/api/v1.msgs.queue.configure",
             body=body,
             response_type=MsgQueueConfigureOut,
         )
@@ -115,7 +115,7 @@ class MsgsQueueAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/queue/nack",
+            path="/api/v1.msgs.queue.nack",
             body=body,
             response_type=MsgQueueNackOut,
         )
@@ -135,7 +135,7 @@ class MsgsQueueAsync(ApiBase):
 
         return await self._request_asyncio(
             method="post",
-            path="/api/v1/msgs/queue/redrive-dlq",
+            path="/api/v1.msgs.queue.redrive-dlq",
             body=body,
             response_type=MsgQueueRedriveDlqOut,
         )
@@ -163,7 +163,7 @@ class MsgsQueue(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/queue/receive",
+            path="/api/v1.msgs.queue.receive",
             body=body,
             response_type=MsgQueueReceiveOut,
         )
@@ -186,7 +186,7 @@ class MsgsQueue(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/queue/ack",
+            path="/api/v1.msgs.queue.ack",
             body=body,
             response_type=MsgQueueAckOut,
         )
@@ -211,7 +211,7 @@ class MsgsQueue(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/queue/configure",
+            path="/api/v1.msgs.queue.configure",
             body=body,
             response_type=MsgQueueConfigureOut,
         )
@@ -235,7 +235,7 @@ class MsgsQueue(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/queue/nack",
+            path="/api/v1.msgs.queue.nack",
             body=body,
             response_type=MsgQueueNackOut,
         )
@@ -255,7 +255,7 @@ class MsgsQueue(ApiBase):
 
         return self._request_sync(
             method="post",
-            path="/api/v1/msgs/queue/redrive-dlq",
+            path="/api/v1.msgs.queue.redrive-dlq",
             body=body,
             response_type=MsgQueueRedriveDlqOut,
         )

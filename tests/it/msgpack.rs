@@ -27,7 +27,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
     } = start_server().await;
 
     client
-        .post("cache/set")
+        .post("v1.cache.set")
         .header("accept", "application/json")
         .msgpack(CacheSetIn {
             key: "test-key-1",
@@ -38,7 +38,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         .expect(StatusCode::OK);
 
     let response = client
-        .post("cache/get")
+        .post("v1.cache.get")
         .header("accept", "application/json")
         .msgpack(CacheGetIn { key: "test-key-1" })
         .await?
@@ -67,7 +67,7 @@ async fn test_cache_set_and_get_msgpack_out() -> TestResult {
     } = start_server().await;
 
     client
-        .post("cache/set")
+        .post("v1.cache.set")
         .json(json!({
             "key": "test-key-1",
             "ttl": 60000,
@@ -77,7 +77,7 @@ async fn test_cache_set_and_get_msgpack_out() -> TestResult {
         .expect(StatusCode::OK);
 
     let response = client
-        .post("cache/get")
+        .post("v1.cache.get")
         .header("accept", "application/msgpack")
         .json(json!({ "key": "test-key-1" }))
         .await?
