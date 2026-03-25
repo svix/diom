@@ -78,7 +78,6 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
         .route("/repl/raft/admin/metrics", get(metrics))
         .route("/repl/discover", get(discover))
         .route("/repl/node-id", get(get_node_id))
-        .route("/repl/raft/admin/force-snapshot", post(force_snapshot)) // TODO: should this be unauth?
         .route("/repl/health", get(health));
 
     authenticated.merge(unauthenticated)
@@ -286,10 +285,6 @@ async fn change_membership(
         .change_membership(request.desired_node_ids.clone(), false)
         .await
         .pipe(admin_response)
-}
-
-async fn force_snapshot(Extension(state): Extension<RaftState>) -> impl IntoResponse {
-    state.trigger_snapshot().await.pipe(admin_response)
 }
 
 async fn last_id(Extension(state): Extension<RaftState>) -> impl IntoResponse {

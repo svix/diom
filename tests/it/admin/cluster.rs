@@ -127,3 +127,50 @@ async fn test_cluster_remove() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_cluster_force_snapshot() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = TestServerBuilder::with_default_config().build().await;
+    let cluster_status = client
+        .get("v1.admin.cluster.status")
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    let previous_snapshot = &cluster_status["this_node_last_snapshot_id"];
+
+    // do some write so that the txn ID increases
+    client
+        .post("v1.kv.set")
+        .json(json!({
+            "key": "foo",
+            "ttl": 900,
+            "value": b"bar"
+        }))
+        .await?
+        .ensure(StatusCode::OK)?;
+
+    let response = client
+        .post("v1.admin.cluster.force-snapshot")
+        .json(json!({}))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert!(response["snapshot_log_index"].is_number());
+    assert!(response["snapshot_time"].is_string());
+
+    let later_cluster_status = client
+        .get("v1.admin.cluster.status")
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_ne!(
+        &later_cluster_status["this_node_last_snapshot_id"],
+        previous_snapshot
+    );
+
+    Ok(())
+}

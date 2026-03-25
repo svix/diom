@@ -6,14 +6,15 @@ use crate::{
 };
 
 use super::{
-    Node, NodeId, discovery::Discovery, network::NetworkFactory, operations::InternalOperation,
-    raft::Raft,
+    LogId, Node, NodeId, discovery::Discovery, network::NetworkFactory,
+    operations::InternalOperation, raft::Raft,
 };
 use anyhow::Context;
 use coyote_core::Monotime;
 use coyote_error::ResultExt;
 use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use itertools::Itertools;
+use jiff::Timestamp;
 use maplit::btreeset;
 use openraft::{
     RaftNetworkFactory,
@@ -62,7 +63,7 @@ pub struct RequestWithContext {
         rename = "t",
         with = "jiff::fmt::serde::timestamp::millisecond::required"
     )]
-    pub timestamp: jiff::Timestamp,
+    pub timestamp: Timestamp,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<OperationRequestMetadata>,
 }
@@ -84,7 +85,7 @@ impl fmt::Display for RequestWithContext {
 impl RequestWithContext {
     pub(crate) fn new(
         req: Request,
-        timestamp: jiff::Timestamp,
+        timestamp: Timestamp,
         ctx: Option<OperationRequestMetadata>,
     ) -> Self {
         Self {
@@ -250,9 +251,9 @@ impl TryFrom<Response> for coyote_auth_token::operations::Response {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum BackgroundCommand {
-    Snapshot,
+    Snapshot(tokio::sync::oneshot::Sender<Option<(Timestamp, LogId)>>),
 }
 
 #[derive(Debug, Clone)]
@@ -445,11 +446,13 @@ impl RaftState {
             .context("error reading server state")
     }
 
-    pub(crate) async fn trigger_snapshot(&self) -> anyhow::Result<()> {
+    pub(crate) async fn trigger_snapshot(&self) -> anyhow::Result<Option<(Timestamp, LogId)>> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
         self.background_channel
-            .send(BackgroundCommand::Snapshot)
+            .send(BackgroundCommand::Snapshot(tx))
             .await
-            .context("attempting to send background command to trigger snapshot")
+            .context("attempting to send background command to trigger snapshot")?;
+        rx.await.context("receiving from background worker")
     }
 
     /// Accomplish a linearizable wait for the caller

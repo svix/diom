@@ -41,6 +41,8 @@ from .cache_get_namespace_out import CacheGetNamespaceOut
 from .cache_get_out import CacheGetOut
 from .cache_set_in import CacheSetIn
 from .cache_set_out import CacheSetOut
+from .cluster_force_snapshot_in import ClusterForceSnapshotIn
+from .cluster_force_snapshot_out import ClusterForceSnapshotOut
 from .cluster_initialize_in import ClusterInitializeIn
 from .cluster_initialize_out import ClusterInitializeOut
 from .cluster_remove_node_in import ClusterRemoveNodeIn
@@ -161,6 +163,8 @@ __all__ = [
     "CacheGetOut",
     "CacheSetIn",
     "CacheSetOut",
+    "ClusterForceSnapshotIn",
+    "ClusterForceSnapshotOut",
     "ClusterInitializeIn",
     "ClusterInitializeOut",
     "ClusterRemoveNodeIn",

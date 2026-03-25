@@ -728,4 +728,10 @@ impl StoreHandle {
         handle.logs.poison(cluster_id).await?;
         Ok(())
     }
+
+    pub(crate) async fn last_snapshot_id(&self) -> Option<String> {
+        let handle = self.inner.read().await;
+        let snap = handle.last_snapshot.read();
+        snap.as_ref().map(|s| s.meta.snapshot_id.clone())
+    }
 }

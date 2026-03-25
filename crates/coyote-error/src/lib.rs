@@ -15,10 +15,11 @@ use hyper::StatusCode;
 use serde_json::json;
 use tokio::task::JoinError;
 
+mod can_fail_ext;
 mod option_ext;
 mod result_ext;
 
-pub use self::{option_ext::OptionExt, result_ext::ResultExt};
+pub use self::{can_fail_ext::CanFailExt, option_ext::OptionExt, result_ext::ResultExt};
 
 /// A short-hand version of a [`std::result::Result`] that defaults to Coyote'es [Error].
 pub type Result<T, E = Error> = std::result::Result<T, E>;

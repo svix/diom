@@ -106,6 +106,16 @@ async fn print_status(
                 }
             }),
         ],
+        [
+            Cell::new("Last Snapshot ID").add_attribute(Attribute::Bold),
+            Cell::new({
+                if let Some(id) = raw_status.this_node_last_snapshot_id {
+                    id.clone()
+                } else {
+                    "(none)".to_string()
+                }
+            }),
+        ],
     ]);
     println!("{table}");
     let header = "Nodes".underline();

@@ -63,7 +63,7 @@ pub struct NodeStatusOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ClusterStatusOut {
-    /// The unique ID of this cluster.pub(crate)
+    /// The unique ID of this cluster.
     ///
     /// This value is populated on cluster initialization and will never change.
     pub cluster_id: Option<ClusterId>,
@@ -77,6 +77,8 @@ pub struct ClusterStatusOut {
     pub this_node_state: ServerState,
     /// The timestamp of the last transaction committed on this node
     pub this_node_last_committed_timestamp: jiff::Timestamp,
+    /// The last snapshot taken on this node
+    pub this_node_last_snapshot_id: Option<String>,
     /// A list of all nodes known to be in the cluster
     pub nodes: Vec<NodeStatusOut>,
 }
@@ -136,6 +138,7 @@ async fn cluster_status(
     let this_node_id = repl.node_id;
 
     let this_node_last_committed_timestamp = repl.time.now();
+    let this_node_last_snapshot_id = repl.state_machine.last_snapshot_id().await;
 
     let nodes = futures_util::stream::iter(pnodes)
         .map(|peer| {
@@ -168,6 +171,7 @@ async fn cluster_status(
         this_node_id,
         this_node_state,
         this_node_last_committed_timestamp,
+        this_node_last_snapshot_id,
         nodes,
     }))
 }
@@ -232,6 +236,34 @@ async fn cluster_remove_node(
     Ok(MsgPackOrJson(ClusterRemoveNodeOut { node_id }))
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
+struct ClusterForceSnapshotIn {}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+struct ClusterForceSnapshotOut {
+    snapshot_time: jiff::Timestamp,
+    snapshot_log_index: u64,
+}
+
+/// Force the cluster to take a snapshot immediately
+#[aide_annotate(op_id = "v1.admin.cluster.force-snapshot")]
+async fn cluster_force_snapshot(
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(_data): MsgPackOrJson<ClusterForceSnapshotIn>,
+) -> Result<MsgPackOrJson<ClusterForceSnapshotOut>> {
+    let Some((snapshot_time, log_id)) = repl.trigger_snapshot().await.or_internal_error()? else {
+        return Err(Error::bad_request(
+            "snapshot_unavailable",
+            "a snapshot cannot be taken at this time",
+        ));
+    };
+
+    Ok(MsgPackOrJson(ClusterForceSnapshotOut {
+        snapshot_time,
+        snapshot_log_index: log_id.index,
+    }))
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Admin");
 
@@ -249,6 +281,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             cluster_remove_node_path,
             post_with(cluster_remove_node, cluster_remove_node_operation),
+            &tag,
+        )
+        .api_route_with(
+            cluster_force_snapshot_path,
+            post_with(cluster_force_snapshot, cluster_force_snapshot_operation),
             &tag,
         )
 }

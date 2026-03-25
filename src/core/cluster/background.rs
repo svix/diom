@@ -4,11 +4,12 @@ use std::{
 };
 
 use super::{
-    Node, NodeId,
+    LogId, Node, NodeId,
     handle::{BackgroundCommand, RaftState},
     operations::{RecordLogTimestampOperation, TickOperation},
 };
 use crate::cfg::Configuration;
+use coyote_error::CanFailExt;
 use coyote_operations::{
     BackgroundError, BackgroundResult, OperationWriter, workers::BackgroundWorker,
 };
@@ -247,6 +248,55 @@ enum PurgeBy {
     Nothing,
 }
 
+async fn trigger_snapshot(
+    handle: &RaftState,
+    state: openraft::ServerState,
+    purge_by: PurgeBy,
+    committed: Option<LogId>,
+) -> anyhow::Result<bool> {
+    if committed.is_none() {
+        tracing::warn!("refusing to snapshot without any committed logs");
+        return Ok(false);
+    }
+    if state.is_learner() {
+        tracing::warn!("refusing to snapshot a learner");
+        return Ok(false);
+    } else {
+        tracing::debug!("triggering background snapshot");
+        if let Err(err) = handle.raft.trigger().snapshot().await {
+            tracing::error!(?err, "error triggering background snapshot; ignoring");
+            return Ok(false);
+        }
+    }
+
+    let offset_to_purge = match purge_by {
+        PurgeBy::Time(duration) => {
+            #[allow(clippy::disallowed_methods)]
+            let then = jiff::Timestamp::now() - duration;
+            handle
+                .state_machine
+                .log_id_before_time(then)
+                .await
+                .tap_err(|err| {
+                    tracing::warn!(?err, "unable to find index for timestamp; not purging logs")
+                })
+                .ok()
+                .flatten()
+        }
+        PurgeBy::Index(log_id) => Some(log_id),
+        PurgeBy::Nothing => None,
+    };
+
+    if let Some(offset_to_purge) = offset_to_purge {
+        tracing::debug!(offset_to_purge, "triggering purge of old logs");
+        if let Err(err) = handle.raft.trigger().purge_log(offset_to_purge).await {
+            tracing::error!(?err, "failed to purge old logs");
+        }
+    }
+
+    Ok(true)
+}
+
 pub(super) async fn run_background_jobs_on_all_nodes(
     cfg: Configuration,
     handle: RaftState,
@@ -283,10 +333,11 @@ pub(super) async fn run_background_jobs_on_all_nodes(
             (Some(a), None) => Some(a.index),
             _ => None,
         };
-        let (should_snapshot, purge_by) = if let Some(threshold) = cfg.cluster.snapshot_after_time
+        let (should_snapshot, purge_by, responder) = if let Some(threshold) =
+            cfg.cluster.snapshot_after_time
             && last_snapshot_time.elapsed() > threshold
         {
-            (true, PurgeBy::Time(threshold))
+            (true, PurgeBy::Time(threshold), None)
         } else if let Some(threshold) = cfg.cluster.snapshot_after_writes
             && let Some(delta) = delta
             && delta > (threshold as u64)
@@ -296,51 +347,27 @@ pub(super) async fn run_background_jobs_on_all_nodes(
             } else {
                 PurgeBy::Nothing
             };
-            (true, purge_by)
-        } else if event == Some(BackgroundCommand::Snapshot) {
-            (true, PurgeBy::Nothing)
+            (true, purge_by, None)
+        } else if let Some(BackgroundCommand::Snapshot(tx)) = event {
+            (true, PurgeBy::Nothing, Some(tx))
         } else {
-            (false, PurgeBy::Nothing)
+            (false, PurgeBy::Nothing, None)
         };
 
         if should_snapshot {
-            if state.is_learner() {
-                tracing::warn!("refusing to snapshot a learner");
+            last_snapshot_time = std::time::Instant::now();
+            last_snapshot_index = committed;
+            let last_snapshot_timestamp = jiff::Timestamp::now();
+            let payload = if trigger_snapshot(&handle, state, purge_by, committed).await?
+                && let Some(index) = last_snapshot_index
+            {
+                Some((last_snapshot_timestamp, index))
             } else {
-                last_snapshot_time = std::time::Instant::now();
-                last_snapshot_index = committed;
-                tracing::debug!("triggering background snapshot");
-                if let Err(err) = handle.raft.trigger().snapshot().await {
-                    tracing::error!(?err, "error triggering background snapshot; ignoring");
-                }
-            }
-
-            let offset_to_purge = match purge_by {
-                PurgeBy::Time(duration) => {
-                    #[allow(clippy::disallowed_methods)]
-                    let then = jiff::Timestamp::now() - duration;
-                    handle
-                        .state_machine
-                        .log_id_before_time(then)
-                        .await
-                        .tap_err(|err| {
-                            tracing::warn!(
-                                ?err,
-                                "unable to find index for timestamp; not purging logs"
-                            )
-                        })
-                        .ok()
-                        .flatten()
-                }
-                PurgeBy::Index(log_id) => Some(log_id),
-                PurgeBy::Nothing => None,
+                None
             };
-
-            if let Some(offset_to_purge) = offset_to_purge {
-                tracing::debug!(offset_to_purge, "triggering purge of old logs");
-                if let Err(err) = handle.raft.trigger().purge_log(offset_to_purge).await {
-                    tracing::error!(?err, "failed to purge old logs");
-                }
+            if let Some(tx) = responder {
+                tx.send(payload)
+                    .can_fail("error sending response to snapshot request");
             }
         }
     }
