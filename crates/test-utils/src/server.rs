@@ -278,6 +278,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         opentelemetry_sample_ratio: None,
         opentelemetry_service_name: "coyote-test".to_string(),
         environment: Environment::Dev,
+        bootstrap_max_wait_time: Some(Duration::from_secs(1)),
         cluster: ClusterConfiguration {
             advertised_address: None,
             listen_address: Some(cluster_addr),

@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type ClusterInitializeIn,
+    ClusterInitializeInSerializer,
+} from '../models/clusterInitializeIn';
+import {
+    type ClusterInitializeOut,
+    ClusterInitializeOutSerializer,
+} from '../models/clusterInitializeOut';
+import {
     type ClusterRemoveNodeIn,
     ClusterRemoveNodeInSerializer,
 } from '../models/clusterRemoveNodeIn';
@@ -26,6 +34,25 @@ export class AdminCluster {
         return request.send(
             this.requestCtx,
             ClusterStatusOutSerializer._fromJsonObject,
+        );
+    }/**
+* Initialize this node as the leader of a new cluster
+* 
+* This operation may only be performed against a node which has not been
+* initialized and is not currently a member of a cluster.
+*/
+    public initialize(
+        clusterInitializeIn: ClusterInitializeIn,
+    ): Promise<ClusterInitializeOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.admin.cluster.initialize");
+
+        request.setBody(
+            ClusterInitializeInSerializer._toJsonObject(clusterInitializeIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            ClusterInitializeOutSerializer._fromJsonObject,
         );
     }/**
 * Remove a node from the cluster.

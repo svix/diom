@@ -33,6 +33,8 @@ type (
 	CacheGetOut                   = coyote_models.CacheGetOut
 	CacheSetIn                    = coyote_models.CacheSetIn
 	CacheSetOut                   = coyote_models.CacheSetOut
+	ClusterInitializeIn           = coyote_models.ClusterInitializeIn
+	ClusterInitializeOut          = coyote_models.ClusterInitializeOut
 	ClusterRemoveNodeIn           = coyote_models.ClusterRemoveNodeIn
 	ClusterRemoveNodeOut          = coyote_models.ClusterRemoveNodeOut
 	ClusterStatusOut              = coyote_models.ClusterStatusOut

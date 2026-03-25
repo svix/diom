@@ -2,6 +2,8 @@
 
 from ..internal.api_common import ApiBase
 from ..models import (
+    ClusterInitializeIn,
+    ClusterInitializeOut,
     ClusterRemoveNodeIn,
     ClusterRemoveNodeOut,
     ClusterStatusOut,
@@ -18,6 +20,23 @@ class AdminClusterAsync(ApiBase):
             method="get",
             path="/api/v1.admin.cluster.status",
             response_type=ClusterStatusOut,
+        )
+
+    async def initialize(
+        self,
+        cluster_initialize_in: ClusterInitializeIn = ClusterInitializeIn(),
+    ) -> ClusterInitializeOut:
+        """Initialize this node as the leader of a new cluster
+
+        This operation may only be performed against a node which has not been
+        initialized and is not currently a member of a cluster."""
+        body = cluster_initialize_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.admin.cluster.initialize",
+            body=body,
+            response_type=ClusterInitializeOut,
         )
 
     async def remove_node(
@@ -48,6 +67,23 @@ class AdminCluster(ApiBase):
             method="get",
             path="/api/v1.admin.cluster.status",
             response_type=ClusterStatusOut,
+        )
+
+    def initialize(
+        self,
+        cluster_initialize_in: ClusterInitializeIn = ClusterInitializeIn(),
+    ) -> ClusterInitializeOut:
+        """Initialize this node as the leader of a new cluster
+
+        This operation may only be performed against a node which has not been
+        initialized and is not currently a member of a cluster."""
+        body = cluster_initialize_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.admin.cluster.initialize",
+            body=body,
+            response_type=ClusterInitializeOut,
         )
 
     def remove_node(

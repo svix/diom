@@ -22,6 +22,7 @@ use coyote_core::Monotime;
 use coyote_error::Error;
 use coyote_proto::{InternalClient, InternalRequest, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
+use http::StatusCode;
 use opentelemetry::metrics::Meter;
 use tokio::{
     net::TcpListener,
@@ -108,11 +109,12 @@ pub struct AppState {
     pub(crate) time: Monotime,
 }
 
+#[derive(Debug, Serialize)]
+struct MinimalError {
+    message: &'static str,
+}
+
 fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
-    #[derive(Debug, Serialize)]
-    struct MinimalError {
-        message: &'static str,
-    }
     if let Some(err) = err.downcast_ref::<String>() {
         tracing::error!(?err, "Unhandled panic");
     } else if let Some(err) = err.downcast_ref::<&'static str>() {
@@ -121,7 +123,7 @@ fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response:
         tracing::error!("Unhandled non-string panic");
     }
     (
-        http::StatusCode::INTERNAL_SERVER_ERROR,
+        StatusCode::INTERNAL_SERVER_ERROR,
         coyote_proto::MsgPackOrJson(MinimalError {
             message: "unhandled internal panic",
         }),
@@ -283,6 +285,29 @@ pub async fn run(cfg: Configuration) {
     run_with_listeners(cfg, None, None, Monotime::initial()).await
 }
 
+static BOOTSTRAPPED: AtomicBool = AtomicBool::new(false);
+
+async fn fail_until_bootstrapped(
+    path: Option<axum::extract::MatchedPath>,
+    request: axum::extract::Request,
+    next: middleware::Next,
+) -> axum::response::Response {
+    let ignore_bootstrap = if let Some(path) = path {
+        path.as_str().starts_with("/api/v1.admin.cluster.")
+    } else {
+        // don't wait for bootstrap for things axum will return a 404 on
+        true
+    };
+    if !(ignore_bootstrap || BOOTSTRAPPED.load(Ordering::Relaxed)) {
+        let response = coyote_proto::MsgPackOrJson(MinimalError {
+            message: "this node has not yet finished bootstarpping",
+        });
+        return (StatusCode::INTERNAL_SERVER_ERROR, response).into_response();
+    }
+
+    next.run(request).await
+}
+
 /// Run the server with the given configuration and initial state
 ///
 /// This is public for integration tests to use it, but should not be used
@@ -309,7 +334,8 @@ pub async fn run_with_listeners(
 
     let v1_router = v1::router(Some(app_state.clone()))
         .with_state::<()>(app_state.clone())
-        .layer(Extension(raft_state.clone()));
+        .layer(Extension(raft_state.clone()))
+        .layer(middleware::from_fn(fail_until_bootstrapped));
 
     let interserver_started_barrier = Arc::new(Barrier::new(2));
 
@@ -370,11 +396,19 @@ pub async fn run_with_listeners(
             .await
             .expect("Error binding to listen_address"),
     };
-    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
+    tokio::task::spawn({
+        let cfg = cfg.clone();
+        let raft_state = raft_state.clone();
+        async move {
+            if let Err(err) = bootstrap::run(cfg, raft_state).await {
+                tracing::error!(?err, "bootstrap failed");
+                start_shut_down();
+            }
+            BOOTSTRAPPED.store(true, Ordering::SeqCst);
+        }
+    });
 
-    bootstrap::run(cfg, raft_state.clone())
-        .await
-        .expect("bootstrapping failed");
+    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
     let listener = listener.tap_io(move |tcp_stream| {
         if let Err(err) = tcp_stream.set_nodelay(true) {

@@ -221,21 +221,38 @@ fn load_commands(
     Ok(commands)
 }
 
-pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result<()> {
-    let t = Instant::now();
-    // FIXME: Do something smarter here:
-    let mut retries = 100;
+async fn wait_for_up(config: &AppConfig, raft_state: &RaftState) -> anyhow::Result<()> {
+    let mut deadline: std::pin::Pin<Box<dyn Future<Output = ()> + Send>> =
+        if let Some(time) = config.bootstrap_max_wait_time {
+            Box::pin(tokio::time::sleep(time))
+        } else {
+            Box::pin(futures_util::future::pending())
+        };
     let shutdown = crate::shutting_down_token();
-    while !raft_state.is_up().await && retries > 0 {
-        retries -= 1;
-        if shutdown
-            .run_until_cancelled(tokio::time::sleep(std::time::Duration::from_millis(100)))
-            .await
-            .is_none()
-        {
-            anyhow::bail!("shut down before bootstrap finished");
+    let mut interval = tokio::time::interval(std::time::Duration::from_millis(100));
+
+    loop {
+        tokio::select! {
+            _ = shutdown.cancelled() => {
+                anyhow::bail!("process shut down before bootstrap finished");
+            }
+            _ = deadline.as_mut() => {
+                anyhow::bail!("bootstrap timeout exceeded");
+            },
+            _ = interval.tick() => {
+                if raft_state.is_up().await {
+                    tracing::trace!("cluster is up");
+                    return Ok(())
+                }
+            }
         }
     }
+}
+
+pub async fn run(app_config: AppConfig, raft_state: RaftState) -> anyhow::Result<()> {
+    let t = Instant::now();
+
+    wait_for_up(&app_config, &raft_state).await?;
 
     let commands = load_commands(
         app_config.bootstrap_cfg_path.as_deref(),

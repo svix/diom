@@ -33,17 +33,16 @@ openraft::declare_raft_types!(
 
 pub type Raft = openraft::Raft<TypeConfig>;
 
-pub(super) async fn initialize_cluster(
+pub(crate) async fn initialize_cluster(
     raft: &Raft,
     cluster: BTreeMap<NodeId, Node>,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<ClusterId> {
     let start = Instant::now();
     let voters = cluster.keys().copied().collect::<Vec<_>>();
     match raft.initialize(cluster).await {
         Ok(_) => {}
         Err(RaftError::APIError(InitializeError::NotAllowed(_))) => {
-            tracing::debug!("cluster already initialized, ignoring");
-            return Ok(());
+            anyhow::bail!("cluster already initialized");
         }
         Err(err) => {
             tracing::error!(?err, "error initializing cluster");
@@ -64,7 +63,7 @@ pub(super) async fn initialize_cluster(
     .await
     .tap_err(|err| tracing::error!(?err, "failed to set initial cluster id"))?;
     tracing::debug!(elapsed=?start.elapsed(), "initialization finished");
-    Ok(())
+    Ok(new_id)
 }
 
 pub async fn initialize_raft(

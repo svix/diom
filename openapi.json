@@ -77,6 +77,83 @@
         ]
       }
     },
+    "/api/v1.admin.cluster.initialize": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cluster Initialize",
+        "description": "Initialize this node as the leader of a new cluster\n\nThis operation may only be performed against a node which has not been\ninitialized and is not currently a member of a cluster.",
+        "operationId": "v1.admin.cluster.initialize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClusterInitializeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterInitializeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1.admin.cluster.remove-node": {
       "post": {
         "tags": [
@@ -4062,6 +4139,20 @@
       },
       "CacheSetOut": {
         "type": "object"
+      },
+      "ClusterInitializeIn": {
+        "type": "object"
+      },
+      "ClusterInitializeOut": {
+        "type": "object",
+        "properties": {
+          "cluster_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cluster_id"
+        ]
       },
       "ClusterRemoveNodeIn": {
         "type": "object",
