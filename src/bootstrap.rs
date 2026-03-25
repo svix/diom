@@ -2,7 +2,7 @@ use std::{fs, str::FromStr, time::Instant};
 
 use crate::{
     cfg::Configuration as AppConfig,
-    core::cluster::RaftState,
+    core::{INTERNAL_NAMESPACE, cluster::RaftState},
     v1::endpoints::{
         auth_token::AuthTokenCreateNamespaceIn, cache::CacheCreateNamespaceIn,
         idempotency::IdempotencyCreateNamespaceIn, kv::KvCreateNamespaceIn,
@@ -167,6 +167,13 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
             max_storage_bytes: None,
         })
+    );
+    commands.insert(
+        0,
+        BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
+            name: INTERNAL_NAMESPACE.to_string(),
+            max_storage_bytes: None,
+        }),
     );
     ensure_default!(
         Msgs,

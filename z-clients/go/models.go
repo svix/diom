@@ -5,6 +5,20 @@ package diom
 import diom_models "github.com/svix/diom/z-clients/go/internal/models"
 
 type (
+	AdminAuthTokenCreateIn        = diom_models.AdminAuthTokenCreateIn
+	AdminAuthTokenCreateOut       = diom_models.AdminAuthTokenCreateOut
+	AdminAuthTokenDeleteIn        = diom_models.AdminAuthTokenDeleteIn
+	AdminAuthTokenDeleteOut       = diom_models.AdminAuthTokenDeleteOut
+	AdminAuthTokenExpireIn        = diom_models.AdminAuthTokenExpireIn
+	AdminAuthTokenExpireOut       = diom_models.AdminAuthTokenExpireOut
+	AdminAuthTokenListIn          = diom_models.AdminAuthTokenListIn
+	AdminAuthTokenOut             = diom_models.AdminAuthTokenOut
+	AdminAuthTokenRotateIn        = diom_models.AdminAuthTokenRotateIn
+	AdminAuthTokenRotateOut       = diom_models.AdminAuthTokenRotateOut
+	AdminAuthTokenUpdateIn        = diom_models.AdminAuthTokenUpdateIn
+	AdminAuthTokenUpdateOut       = diom_models.AdminAuthTokenUpdateOut
+	AdminAuthTokenWhoamiIn        = diom_models.AdminAuthTokenWhoamiIn
+	AdminAuthTokenWhoamiOut       = diom_models.AdminAuthTokenWhoamiOut
 	AuthTokenCreateIn             = diom_models.AuthTokenCreateIn
 	AuthTokenCreateNamespaceIn    = diom_models.AuthTokenCreateNamespaceIn
 	AuthTokenCreateNamespaceOut   = diom_models.AuthTokenCreateNamespaceOut
@@ -59,6 +73,7 @@ type (
 	KvGetOut                      = diom_models.KvGetOut
 	KvSetIn                       = diom_models.KvSetIn
 	KvSetOut                      = diom_models.KvSetOut
+	ListResponseAdminAuthTokenOut = diom_models.ListResponseAdminAuthTokenOut
 	ListResponseAuthTokenOut      = diom_models.ListResponseAuthTokenOut
 	MsgIn                         = diom_models.MsgIn
 	MsgNamespaceCreateIn          = diom_models.MsgNamespaceCreateIn

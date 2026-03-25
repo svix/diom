@@ -1,6 +1,7 @@
 use std::sync::LazyLock;
 
 pub mod backoff;
+pub mod fifo_cache;
 pub mod instrumented_mutex;
 mod monotime;
 pub mod shutdown;
