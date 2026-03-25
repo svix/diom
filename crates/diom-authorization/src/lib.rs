@@ -7,7 +7,7 @@ mod pattern;
 
 pub use self::pattern::{KeyPattern, Module, NamespacePattern, ResourcePattern};
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct RoleId(pub String);
 
@@ -34,7 +34,7 @@ impl fmt::Display for RoleId {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct AccessPolicyId(pub String);
 
@@ -50,7 +50,7 @@ impl fmt::Display for AccessPolicyId {
     }
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct Role {
     pub id: RoleId,
     pub description: String,
@@ -62,21 +62,21 @@ pub struct Role {
     pub context: HashMap<String, String>,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct AccessPolicy {
     pub id: AccessPolicyId,
     pub description: String,
     pub rules: Vec<AccessRule>,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct AccessRule {
     pub effect: AccessRuleEffect,
     pub resource: ResourcePattern,
     pub actions: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessRuleEffect {
     Allow,
