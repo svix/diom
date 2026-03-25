@@ -4,7 +4,6 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 {{ doc_comment }}
 #[repr(i64)]
-#[non_exhaustive]
 #[derive(Clone, Copy, Debug, Serialize_repr, Deserialize_repr)]
 pub enum {{ type.name | to_upper_camel_case }} {
     {% for name, value in type.variants -%}
