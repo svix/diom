@@ -17,7 +17,7 @@ use axum::{
     Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
     serve::ListenerExt as _,
 };
-use coyote_authorization::RoleId;
+use coyote_authorization::{Permissions, RoleId};
 use coyote_core::Monotime;
 use coyote_error::Error;
 use coyote_proto::{InternalClient, InternalRequest, InternalRequestError};
@@ -40,7 +40,6 @@ use tower_http::{
 use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
-        auth::Permissions,
         cluster::RaftState,
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
@@ -223,6 +222,7 @@ async fn run_internal(
             req.inner.extensions_mut().insert(Permissions {
                 role: RoleId::operator(),
                 auth_token_id: None,
+                access_rules: [].into(),
             });
 
             // FIXME: Do we want to cancel request handling when the response channel is closed?
