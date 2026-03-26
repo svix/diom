@@ -68,12 +68,10 @@ mod tests {
 
         let op = PublishOperation::new(
             NamespaceId::nil(),
-            TopicIn::TopicName(
-                TopicName::new(Some("my-ns".to_string()), "my-topic".to_string()).unwrap(),
-            ),
+            TopicIn::TopicName(TopicName::new("my-topic".to_string()).unwrap()),
             vec![],
         )
         .unwrap();
-        assert_eq!(MsgsOperation::Publish(op).key_name(), "my-ns:my-topic");
+        assert_eq!(MsgsOperation::Publish(op).key_name(), "my-topic");
     }
 }

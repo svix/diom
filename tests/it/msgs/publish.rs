@@ -21,7 +21,8 @@ async fn publish_to_topic() -> TestResult {
     let response = client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns1:my-topic",
+            "namespace": "ns1",
+            "topic": "my-topic",
             "msgs": [
                 { "value": "hello".as_bytes() },
                 { "value": "world".as_bytes() },
@@ -41,7 +42,7 @@ async fn publish_to_topic() -> TestResult {
 
     // Each topic should have a partition
     for topic in topics {
-        assert!(topic["topic"].assert_str().starts_with("ns1:my-topic~"));
+        assert!(topic["topic"].assert_str().starts_with("my-topic~"));
     }
 
     Ok(())
@@ -64,7 +65,8 @@ async fn publish_with_partition_key() -> TestResult {
     let response = client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-key:keyed-topic",
+            "namespace": "ns-key",
+            "topic": "keyed-topic",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "user-123" },
                 { "value": "b".as_bytes(), "key": "user-123" },
@@ -85,11 +87,7 @@ async fn publish_with_partition_key() -> TestResult {
 
     // Each topic should have a partition
     for topic in topics {
-        assert!(
-            topic["topic"]
-                .assert_str()
-                .starts_with("ns-key:keyed-topic~")
-        );
+        assert!(topic["topic"].assert_str().starts_with("keyed-topic~"));
     }
 
     Ok(())
@@ -112,14 +110,15 @@ async fn publish_directly_to_partition() -> TestResult {
     // Configure the topic to have 4 partitions.
     client
         .post("v1.msgs.topic.configure")
-        .json(json!({ "topic": "ns-direct:my-topic", "partitions": 4 }))
+        .json(json!({ "namespace": "ns-direct", "topic": "my-topic", "partitions": 4 }))
         .await?
         .expect(StatusCode::OK);
 
     let response = client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-direct:my-topic~2",
+            "namespace": "ns-direct",
+            "topic": "my-topic~2",
             "msgs": [
                 { "value": "a".as_bytes() },
                 { "value": "b".as_bytes() },
@@ -139,11 +138,7 @@ async fn publish_directly_to_partition() -> TestResult {
 
     // Each topic should have a partition
     for topic in topics {
-        assert!(
-            topic["topic"]
-                .assert_str()
-                .starts_with("ns-direct:my-topic~2")
-        );
+        assert!(topic["topic"].assert_str().starts_with("my-topic~2"));
     }
 
     Ok(())
