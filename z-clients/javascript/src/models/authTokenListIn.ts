@@ -3,6 +3,10 @@
 export interface AuthTokenListIn {
     namespace?: string | null;
     ownerId: string;
+    /** Limit the number of returned items */
+    limit?: number;
+    /** The iterator returned from a prior invocation */
+    iterator?: string | null;
 }
 
 export const AuthTokenListInSerializer = {
@@ -11,6 +15,8 @@ export const AuthTokenListInSerializer = {
         return {
             namespace: object['namespace'],
             ownerId: object['owner_id'],
+            limit: object['limit'],
+            iterator: object['iterator'],
         };
     },
 
@@ -19,6 +25,8 @@ export const AuthTokenListInSerializer = {
         return {
             'namespace': self.namespace,
             'owner_id': self.ownerId,
+            'limit': self.limit,
+            'iterator': self.iterator,
         };
     }
 }
