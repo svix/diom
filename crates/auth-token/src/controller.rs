@@ -6,6 +6,7 @@ use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+use std::ops::Bound;
 
 use crate::tables::{AuthTokenEntity, AuthTokenRow, IdIndexRow, OwnerIndexRow};
 
@@ -255,22 +256,32 @@ impl AuthTokenController {
         &self,
         namespace_id: NamespaceId,
         owner_id: &str,
+        limit: usize,
+        iterator: Option<AuthTokenId>,
     ) -> Result<Vec<AuthTokenModel>> {
         let keyspace = self.keyspace.clone();
         let owner_id = owner_id.to_owned();
         spawn_blocking_in_current_span(move || {
             let prefix = OwnerIndexRow::owner_prefix(namespace_id, &owner_id);
+
+            let start_id = iterator.unwrap_or(AuthTokenId::nil());
+            let start = OwnerIndexRow::owner_iter_start(namespace_id, &owner_id, start_id);
             let mut tokens = Vec::new();
-            for item in keyspace.prefix(&prefix) {
+            for item in keyspace.range((Bound::Excluded(start), Bound::Unbounded)) {
                 let key = item.key()?;
+                if !key.starts_with(&prefix) {
+                    break;
+                }
                 let token_hashed = OwnerIndexRow::extract_token_hashed(&key)?;
-                if let Some(row) = AuthTokenRow::fetch(
+                match AuthTokenRow::fetch(
                     &keyspace,
                     AuthTokenRow::key_for(namespace_id, &token_hashed),
                 )? {
-                    tokens.push(row.into());
-                } else {
-                    tracing::warn!("Skipping missing owner.");
+                    Some(row) => tokens.push(row.into()),
+                    None => tracing::warn!("Skipping missing owner."),
+                }
+                if tokens.len() == limit {
+                    break;
                 }
             }
             Ok(tokens)
@@ -376,5 +387,105 @@ impl AuthTokenController {
             Ok(Some(entity.row.into()))
         })
         .await?
+    }
+}
+
+#[allow(clippy::disallowed_methods)]
+#[cfg(test)]
+mod tests {
+    use coyote_id::NamespaceId;
+    use fjall::Database;
+    use jiff::{Timestamp, ToSpan};
+
+    use super::*;
+    use crate::entities::TokenPlaintext;
+
+    struct Fixture {
+        _workdir: tempfile::TempDir,
+        controller: AuthTokenController,
+    }
+
+    impl Fixture {
+        fn new() -> Self {
+            let workdir = tempfile::tempdir().unwrap();
+            let db = Database::builder(workdir.as_ref())
+                .temporary(true)
+                .open()
+                .unwrap();
+            let controller = AuthTokenController::new(db, "test_auth_tokens");
+            Self {
+                _workdir: workdir,
+                controller,
+            }
+        }
+    }
+
+    fn ns() -> NamespaceId {
+        NamespaceId::nil()
+    }
+
+    async fn create_token(
+        controller: &AuthTokenController,
+        name: &str,
+        owner_id: &str,
+        ts: Timestamp,
+    ) -> AuthTokenModel {
+        let token = TokenPlaintext::generate("sk", None).unwrap();
+        let input = CreateTokenInput {
+            id: AuthTokenId::new(ts),
+            name: name.to_string(),
+            token_hashed: token.hash(),
+            expiry: None,
+            metadata: Default::default(),
+            owner_id: owner_id.to_string(),
+            scopes: vec![],
+            enabled: true,
+            now: ts,
+        };
+        controller.create(ns(), input).await.unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_list_sorted_and_iterator() {
+        let fx = Fixture::new();
+        let c = &fx.controller;
+        let owner = "owner1";
+
+        // Create 5 tokens at spread-out timestamps to get stable UUIDv7 ordering.
+        let base = Timestamp::UNIX_EPOCH;
+        let mut created = Vec::new();
+        for i in 0..5i32 {
+            let ts = base.checked_add((i + 1).seconds()).unwrap();
+            created.push(create_token(c, &format!("token-{i}"), owner, ts).await);
+        }
+        created.sort_by_key(|t| *t.id.as_bytes());
+
+        // All 5 returned in ID order when limit is generous.
+        let page = c.list_by_owner(ns(), owner, 10, None).await.unwrap();
+        assert_eq!(
+            page.iter().map(|t| t.id).collect::<Vec<_>>(),
+            created.iter().map(|t| t.id).collect::<Vec<_>>()
+        );
+
+        // Limit is respected.
+        let page = c.list_by_owner(ns(), owner, 3, None).await.unwrap();
+        assert_eq!(page.len(), 3);
+        assert_eq!(page[0].id, created[0].id);
+
+        // Iterator skips up to and including the given ID.
+        let page = c
+            .list_by_owner(ns(), owner, 10, Some(created[1].id))
+            .await
+            .unwrap();
+        assert_eq!(page.len(), 3);
+        assert_eq!(page[0].id, created[2].id);
+        assert_eq!(page[2].id, created[4].id);
+
+        // Unknown iterator returns empty.
+        let page = c
+            .list_by_owner(ns(), owner, 10, Some(AuthTokenId::max()))
+            .await
+            .unwrap();
+        assert!(page.is_empty());
     }
 }
