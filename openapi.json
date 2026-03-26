@@ -4235,7 +4235,22 @@
         "type": "object"
       },
       "AdminAuthTokenListIn": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "limit": {
+            "description": "Limit the number of returned items",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50
+          },
+          "iterator": {
+            "description": "The iterator returned from a prior invocation",
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "AdminAuthTokenOut": {
         "type": "object",
@@ -4571,6 +4586,19 @@
           },
           "owner_id": {
             "type": "string"
+          },
+          "limit": {
+            "description": "Limit the number of returned items",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "maximum": 250,
+            "default": 50
+          },
+          "iterator": {
+            "description": "The iterator returned from a prior invocation",
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [

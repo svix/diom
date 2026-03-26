@@ -82,21 +82,39 @@ impl TableRow for OwnerIndexRow {
 }
 
 impl OwnerIndexRow {
-    /// Key layout: [ROW_TYPE(1)][namespace_id(16)][owner_id(var)]['\0'][token_hashed(32)]
+    /// Key layout: [ROW_TYPE(1)][namespace_id(16)][owner_id(var)]['\0'][token_id(16)][token_hashed(32)]
     pub fn key_for(
         namespace_id: NamespaceId,
         owner_id: &str,
+        id: AuthTokenId,
         token_hashed: &TokenHashed,
     ) -> TableKey<Self> {
-        let mut key = Vec::with_capacity(
-            1 + size_of::<NamespaceId>() + owner_id.len() + 1 + size_of::<NamespaceId>(),
-        );
+        let mut key =
+            Vec::with_capacity(1 + size_of::<NamespaceId>() + owner_id.len() + 1 + 16 + 32);
         key.push(Self::ROW_TYPE);
         key.extend_from_slice(namespace_id.as_bytes());
         key.extend_from_slice(owner_id.as_bytes());
         key.push(b'\0');
+        key.extend_from_slice(id.as_bytes());
         key.extend_from_slice(token_hashed.inner());
         TableKey::init_from_bytes(&key)
+    }
+
+    /// Returns the exclusive range-start key for scanning tokens after `after_id`.
+    ///
+    /// Using `Bound::Excluded` on this key skips the entry for `after_id` and
+    /// starts at the next token_id.
+    pub fn owner_iter_start(
+        namespace_id: NamespaceId,
+        owner_id: &str,
+        after_id: AuthTokenId,
+    ) -> Vec<u8> {
+        let prefix = Self::owner_prefix(namespace_id, owner_id);
+        let mut key = Vec::with_capacity(prefix.len() + 16 + 32);
+        key.extend_from_slice(&prefix);
+        key.extend_from_slice(after_id.as_bytes());
+        key.extend(std::iter::repeat_n(0xFF, 32));
+        key
     }
 
     /// Extracts `token_hashed` from the trailing 32 bytes of a raw fjall key.
@@ -148,7 +166,12 @@ impl AuthTokenEntity {
         )?;
         batch.insert_row(
             ks,
-            OwnerIndexRow::key_for(self.namespace_id, &self.row.owner_id, &self.token_hashed),
+            OwnerIndexRow::key_for(
+                self.namespace_id,
+                &self.row.owner_id,
+                self.row.id,
+                &self.token_hashed,
+            ),
             &OwnerIndexRow {},
         )?;
         Ok(())
@@ -166,7 +189,12 @@ impl AuthTokenEntity {
         batch.remove_row(ks, IdIndexRow::key_for(self.namespace_id, self.row.id))?;
         batch.remove_row(
             ks,
-            OwnerIndexRow::key_for(self.namespace_id, &self.row.owner_id, &self.token_hashed),
+            OwnerIndexRow::key_for(
+                self.namespace_id,
+                &self.row.owner_id,
+                self.row.id,
+                &self.token_hashed,
+            ),
         )?;
         Ok(())
     }
