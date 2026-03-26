@@ -5,8 +5,12 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 mod pattern;
+mod verification;
 
-pub use self::pattern::{KeyPattern, NamespacePattern, ResourcePattern};
+pub use self::{
+    pattern::{KeyPattern, NamespacePattern, ResourcePattern},
+    verification::verify_operation,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
@@ -81,6 +85,12 @@ pub struct AccessRule {
     pub actions: Vec<String>,
 }
 
+impl AccessRule {
+    pub fn matches(&self, operation: &RequestedOperation<'_>) -> bool {
+        self.resource.matches(operation) && self.actions.iter().any(|a| a == operation.action)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessRuleEffect {
@@ -88,6 +98,7 @@ pub enum AccessRuleEffect {
     Deny,
 }
 
+#[derive(Debug)]
 pub struct RequestedOperation<'a> {
     pub module: Module,
     pub namespace: Option<&'a str>,
