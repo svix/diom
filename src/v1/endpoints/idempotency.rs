@@ -5,9 +5,11 @@ use std::num::NonZeroU64;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
+use coyote_authorization::RequestedOperation;
 use coyote_core::types::{DurationS, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt as _, ResultExt};
+use coyote_id::Module;
 use coyote_idempotency::{
     IdempotencyStartResult,
     operations::{
@@ -18,13 +20,36 @@ use coyote_namespace::{
     Namespace,
     entities::{IdempotencyConfig, NamespaceName},
 };
-use coyote_proto::MsgPackOrJson;
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
+
+fn idempotency_metadata<'a>(
+    ns: Option<&'a str>,
+    key: &'a EntityKey,
+    action: &'static str,
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::Idempotency,
+        namespace: ns,
+        key: Some(key.as_str()),
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                idempotency_metadata(self.namespace.as_deref(), &self.key, $action)
+            }
+        }
+    };
+}
 
 pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 
@@ -45,6 +70,8 @@ pub struct IdempotencyStartIn {
     #[validate(range(min = 1))]
     pub ttl: DurationS,
 }
+
+request_input!(IdempotencyStartIn, "Start");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "status", content = "data", rename_all = "snake_case")]
@@ -91,6 +118,8 @@ pub struct IdempotencyCompleteIn {
     pub ttl: DurationS,
 }
 
+request_input!(IdempotencyCompleteIn, "Complete");
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyCompleteOut {}
 
@@ -103,6 +132,8 @@ pub struct IdempotencyAbortIn {
     #[validate(nested)]
     pub key: EntityKey,
 }
+
+request_input!(IdempotencyAbortIn, "Abort");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyAbortOut {}
@@ -171,6 +202,8 @@ struct IdempotencyGetNamespaceIn {
     pub name: NamespaceName,
 }
 
+admin_request_input!(IdempotencyGetNamespaceIn);
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
     pub name: NamespaceName,
@@ -185,6 +218,8 @@ pub(crate) struct IdempotencyCreateNamespaceIn {
     pub name: NamespaceName,
     pub max_storage_bytes: Option<NonZeroU64>,
 }
+
+admin_request_input!(IdempotencyCreateNamespaceIn);
 
 impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
     fn from(v: IdempotencyCreateNamespaceIn) -> Self {

@@ -15,12 +15,13 @@ use coyote_auth_token::{
         UpdateAuthTokenOperation,
     },
 };
+use coyote_authorization::RequestedOperation;
 use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
-use coyote_id::{AuthTokenId, Public};
+use coyote_id::{AuthTokenId, Module, Public};
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::MsgPackOrJson;
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -32,6 +33,25 @@ use crate::{
     error::Result,
     v1::utils::{ListResponse, openapi_tag},
 };
+
+fn auth_token_access_metadata<'a>(ns: Option<&'a str>, action: &'static str) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::AuthToken,
+        namespace: ns,
+        key: None,
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                auth_token_access_metadata(self.namespace.as_deref(), $action)
+            }
+        }
+    };
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenOut {
@@ -81,6 +101,8 @@ pub struct AuthTokenCreateIn {
     #[serde(default = "default_true")]
     pub enabled: bool,
 }
+
+request_input!(AuthTokenCreateIn, "Create");
 
 fn default_true() -> bool {
     true
@@ -141,6 +163,8 @@ pub struct AuthTokenExpireIn {
     pub expiry_ms: Option<DurationMs>,
 }
 
+request_input!(AuthTokenExpireIn, "Expire");
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenExpireOut {}
 
@@ -167,6 +191,8 @@ pub struct AuthTokenDeleteIn {
     pub namespace: Option<String>,
     pub id: Public<AuthTokenId>,
 }
+
+request_input!(AuthTokenDeleteIn, "Delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenDeleteOut {
@@ -203,6 +229,8 @@ pub struct AuthTokenVerifyIn {
     pub namespace: Option<String>,
     pub token: String,
 }
+
+request_input!(AuthTokenVerifyIn, "Verify");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenVerifyOut {
@@ -242,6 +270,8 @@ pub struct AuthTokenListIn {
     pub namespace: Option<String>,
     pub owner_id: String,
 }
+
+request_input!(AuthTokenListIn, "List");
 
 pub type AuthTokenListOut = ListResponse<AuthTokenOut>;
 
@@ -286,6 +316,8 @@ pub struct AuthTokenUpdateIn {
     pub enabled: Option<bool>,
 }
 
+request_input!(AuthTokenUpdateIn, "Update");
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenUpdateOut {}
 
@@ -324,6 +356,8 @@ pub struct AuthTokenRotateIn {
     /// Milliseconds from now until the old token expires. `None` means expire immediately.
     pub expiry_ms: Option<DurationMs>,
 }
+
+request_input!(AuthTokenRotateIn, "Rotate");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenRotateOut {
@@ -370,6 +404,8 @@ struct AuthTokenGetNamespaceIn {
     pub name: NamespaceName,
 }
 
+admin_request_input!(AuthTokenGetNamespaceIn);
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenGetNamespaceOut {
     pub name: NamespaceName,
@@ -384,6 +420,8 @@ pub(crate) struct AuthTokenCreateNamespaceIn {
     pub name: NamespaceName,
     pub max_storage_bytes: Option<NonZeroU64>,
 }
+
+admin_request_input!(AuthTokenCreateNamespaceIn);
 
 impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
     fn from(v: AuthTokenCreateNamespaceIn) -> Self {

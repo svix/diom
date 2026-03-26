@@ -58,6 +58,8 @@ pub struct AdminAuthTokenCreateIn {
     pub enabled: bool,
 }
 
+admin_request_input!(AdminAuthTokenCreateIn);
+
 fn default_true() -> bool {
     true
 }
@@ -114,6 +116,8 @@ pub struct AdminAuthTokenExpireIn {
     pub expiry_ms: Option<DurationMs>,
 }
 
+admin_request_input!(AdminAuthTokenExpireIn);
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenExpireOut {}
 
@@ -144,6 +148,8 @@ async fn auth_token_expire(
 pub struct AdminAuthTokenRotateIn {
     pub id: Public<AuthTokenId>,
 }
+
+admin_request_input!(AdminAuthTokenRotateIn);
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenRotateOut {
@@ -188,6 +194,8 @@ pub struct AdminAuthTokenDeleteIn {
     pub id: Public<AuthTokenId>,
 }
 
+admin_request_input!(AdminAuthTokenDeleteIn);
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenDeleteOut {
     pub success: bool,
@@ -219,6 +227,8 @@ async fn auth_token_delete(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AdminAuthTokenListIn {}
+
+admin_request_input!(AdminAuthTokenListIn);
 
 pub type AdminAuthTokenListOut = ListResponse<AdminAuthTokenOut>;
 
@@ -278,6 +288,8 @@ pub struct AdminAuthTokenUpdateIn {
     pub enabled: Option<bool>,
 }
 
+admin_request_input!(AdminAuthTokenUpdateIn);
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenUpdateOut {}
 
@@ -310,6 +322,8 @@ async fn auth_token_update(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AdminAuthTokenWhoamiIn {}
+
+admin_request_input!(AdminAuthTokenWhoamiIn);
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenWhoamiOut {
