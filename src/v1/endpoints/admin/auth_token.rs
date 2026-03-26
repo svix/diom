@@ -241,6 +241,7 @@ async fn auth_token_list(
         .await
         .or_internal_error()?;
 
+    // FIXME: pass limits on the response.
     let data = out
         .data
         .into_iter()
@@ -261,12 +262,11 @@ async fn auth_token_list(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    // FIXME: use the iterators from the API, pass limit, etc.
     Ok(MsgPackOrJson(ListResponse {
         data,
-        iterator: None,
-        prev_iterator: None,
-        done: true,
+        iterator: out.iterator,
+        prev_iterator: out.prev_iterator,
+        done: out.done,
     }))
 }
 
