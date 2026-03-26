@@ -1,4 +1,4 @@
-name: Benchmark Against Environment
+name: Benchmark Environment
 
 on:
   workflow_call:
@@ -9,10 +9,13 @@ on:
       environment:
         required: false
         type: string
+      namespace:
+        description: "K8s namespace"
+        type: string
 
 jobs:
   benchmark:
-    name: Benchmark Against Environment
+    name: Benchmark Env
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
@@ -20,7 +23,6 @@ jobs:
       id-token: write
     env:
       IMAGE: ghcr.io/svix/coyote-server:${{ inputs.image_tag }}
-      NAMESPACE: coyote
 
     steps:
       - name: Configure AWS credentials
@@ -46,7 +48,7 @@ jobs:
             --restart=Never \
             --rm \
             --attach \
-            -n ${{ env.NAMESPACE }} \
+            -n ${{ inputs.namespace }} \
             --env="COYOTE_AUTH_TOKEN=${{ secrets.COYOTE_AUTH_TOKEN }}" \
             -- coyote benchmark http://coyote:8080 \
             | tee /tmp/benchmark-output.txt

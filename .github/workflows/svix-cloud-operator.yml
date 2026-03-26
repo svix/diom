@@ -19,14 +19,15 @@ on:
         type: string
       environment:
         description: "Target environment"
-        required: false
+        type: string
+      namespace:
+        description: "K8s namespace"
         type: string
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/coyote-operator
   OPERATOR_DIR: infra/operator
-  COYOTE_NAMESPACE: coyote-db
 
 jobs:
   deploy:
@@ -79,21 +80,21 @@ jobs:
             --set crds.enabled=true \
             --atomic \
             --timeout=120s \
-            --namespace=${{ env.COYOTE_NAMESPACE }}
+            --namespace=${{ inputs.namespace }}
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
 
       - name: Verify rollout
         run: |
-          kubectl rollout status deployment/coyote-operator --timeout=120s -n ${{ env.COYOTE_NAMESPACE }}
+          kubectl rollout status deployment/coyote-operator --timeout=120s -n ${{ inputs.namespace }}
 
       - name: Dump logs on failure
         if: failure()
         run: |
           echo "=== Pods ==="
-          kubectl get pods -A -n ${{ env.COYOTE_NAMESPACE }}
+          kubectl get pods -A -n ${{ inputs.namespace }}
           echo "=== Events ==="
-          kubectl get events --sort-by='.lastTimestamp' -n ${{ env.COYOTE_NAMESPACE }}
+          kubectl get events --sort-by='.lastTimestamp' -n ${{ inputs.namespace }}
           echo "=== Operator logs ==="
-          kubectl logs -l app.kubernetes.io/name=coyote-operator --tail=100 -n ${{ env.COYOTE_NAMESPACE }} || true
+          kubectl logs -l app.kubernetes.io/name=coyote-operator --tail=100 -n ${{ inputs.namespace }} || true
