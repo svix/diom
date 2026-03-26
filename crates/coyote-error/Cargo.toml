@@ -9,6 +9,7 @@ edition = "2024"
 [dependencies]
 aide.workspace = true
 axum.workspace = true
+coyote-core.workspace = true
 coyote-proto.workspace = true
 fjall.workspace = true
 hyper.workspace = true

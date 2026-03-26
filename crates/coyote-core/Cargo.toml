@@ -7,7 +7,6 @@ rust-version.workspace = true
 edition = "2024"
 
 [dependencies]
-coyote-proto.workspace = true
 jiff.workspace = true
 parking_lot.workspace = true
 rand.workspace = true

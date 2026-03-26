@@ -10,7 +10,8 @@ use axum::{
     Json,
     response::{IntoResponse, Response},
 };
-use coyote_proto::{MsgPackOrJson, StandardErrorBody, ValidationErrorBody, ValidationErrorItem};
+use coyote_core::validation::{ValidationErrorBody, ValidationErrorItem};
+use coyote_proto::{MsgPackOrJson, StandardErrorBody};
 use hyper::StatusCode;
 use serde_json::json;
 use tokio::task::JoinError;
