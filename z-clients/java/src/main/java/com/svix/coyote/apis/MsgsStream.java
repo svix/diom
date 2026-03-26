@@ -48,7 +48,8 @@ public class MsgsStream {
             consumerGroup,
             msgStreamReceiveIn.getBatchSize(),
             msgStreamReceiveIn.getLeaseDurationMs(),
-            msgStreamReceiveIn.getDefaultStartingPosition()
+            msgStreamReceiveIn.getDefaultStartingPosition(),
+            msgStreamReceiveIn.getBatchWaitMs()
         );
 
         return this.client.executeRequest(

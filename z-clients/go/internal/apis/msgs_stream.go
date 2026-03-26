@@ -34,6 +34,7 @@ func (msgsStream MsgsStream) Receive(
 		BatchSize:               msgStreamReceiveIn.BatchSize,
 		LeaseDurationMs:         msgStreamReceiveIn.LeaseDurationMs,
 		DefaultStartingPosition: msgStreamReceiveIn.DefaultStartingPosition,
+		BatchWaitMs:             msgStreamReceiveIn.BatchWaitMs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamReceiveIn_, coyote_models.MsgStreamReceiveOut](

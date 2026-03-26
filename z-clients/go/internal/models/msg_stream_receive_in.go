@@ -7,6 +7,7 @@ type MsgStreamReceiveIn struct {
 	BatchSize               *uint16       `msgpack:"batch_size,omitempty"`
 	LeaseDurationMs         *uint64       `msgpack:"lease_duration_ms,omitempty"`
 	DefaultStartingPosition *SeekPosition `msgpack:"default_starting_position,omitempty"`
+	BatchWaitMs             *uint64       `msgpack:"batch_wait_ms,omitempty"` // Maximum time (in milliseconds) to wait for messages before returning.
 }
 
 type MsgStreamReceiveIn_ struct {
@@ -16,4 +17,5 @@ type MsgStreamReceiveIn_ struct {
 	BatchSize               *uint16       `msgpack:"batch_size,omitempty"`
 	LeaseDurationMs         *uint64       `msgpack:"lease_duration_ms,omitempty"`
 	DefaultStartingPosition *SeekPosition `msgpack:"default_starting_position,omitempty"`
+	BatchWaitMs             *uint64       `msgpack:"batch_wait_ms,omitempty"` // Maximum time (in milliseconds) to wait for messages before returning.
 }

@@ -5962,6 +5962,13 @@
             "type": "integer",
             "format": "uint64",
             "default": 30000
+          },
+          "batch_wait_ms": {
+            "description": "Maximum time (in milliseconds) to wait for messages before returning.",
+            "type": "integer",
+            "format": "uint64",
+            "default": null,
+            "nullable": true
           }
         },
         "required": [
@@ -6076,6 +6083,13 @@
           "default_starting_position": {
             "default": "latest",
             "$ref": "#/components/schemas/SeekPosition"
+          },
+          "batch_wait_ms": {
+            "description": "Maximum time (in milliseconds) to wait for messages before returning.",
+            "type": "integer",
+            "format": "uint64",
+            "default": null,
+            "nullable": true
           }
         },
         "required": [
