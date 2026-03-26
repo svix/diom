@@ -7,6 +7,8 @@ use itertools::Itertools;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
+use crate::RequestedOperation;
+
 #[derive(Debug, PartialEq, Eq, JsonSchema)]
 #[schemars(schema_with = "String::json_schema")]
 pub struct ResourcePattern {
@@ -22,12 +24,18 @@ pub enum NamespacePattern {
     Any,
     // FIXME: Do namespaces have any sort of hierarchy?
 }
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum KeyPattern {
     Exactly(String),
     Prefix(String),
+    Any,
     // FIXME: Add single star wildcards
+}
+
+impl ResourcePattern {
+    pub fn matches(&self, op: &RequestedOperation<'_>) -> bool {
+        self.module == op.module && self.namespace.matches(op.namespace) && self.key.matches(op.key)
+    }
 }
 
 impl fmt::Display for ResourcePattern {
@@ -76,6 +84,16 @@ impl<'de> Deserialize<'de> for ResourcePattern {
     }
 }
 
+impl NamespacePattern {
+    fn matches(&self, namespace: Option<&str>) -> bool {
+        match self {
+            Self::Default => namespace.is_none(),
+            Self::Named(ns) => namespace == Some(ns),
+            Self::Any => true,
+        }
+    }
+}
+
 impl fmt::Display for NamespacePattern {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -108,14 +126,25 @@ impl FromStr for NamespacePattern {
     }
 }
 
+impl KeyPattern {
+    fn matches(&self, key: Option<&str>) -> bool {
+        match self {
+            Self::Exactly(k) => key == Some(k),
+            Self::Prefix(p) => key.is_some_and(|k| k.starts_with(p)),
+            Self::Any => true,
+        }
+    }
+}
+
 impl fmt::Display for KeyPattern {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Exactly(s) => f.write_str(s),
             Self::Prefix(s) => {
                 f.write_str(s)?;
-                f.write_str("/**")
+                f.write_str("**")
             }
+            Self::Any => f.write_str("**"),
         }
     }
 }
@@ -124,7 +153,12 @@ impl FromStr for KeyPattern {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some(prefix) = s.strip_suffix("/**") {
+        if s == "**" {
+            return Ok(Self::Any);
+        }
+
+        if s.ends_with("/**") {
+            let prefix = &s[..s.len() - 2]; // keep the /
             if prefix.contains("*") {
                 return Err("single-asterisk key patterns not yet supported");
             }
