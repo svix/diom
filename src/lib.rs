@@ -222,6 +222,11 @@ async fn run_internal(
             req.inner.extensions_mut().insert(Permissions {
                 role: RoleId::operator(),
                 auth_token_id: None,
+                // FIXME: need to load the operator role and see what access it has.
+                // We want to FORCE giving it at least access to `_internal` namespace in every
+                // module (we use it for auth). Though please note that users can create the
+                // operator role to override context/policies/etc. so we should probably hardcode
+                // here the fact that it has access to all `_internal`.
                 access_rules: [].into(),
             });
 

@@ -72,7 +72,10 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
         .ensure(StatusCode::OK)?
         .json();
 
-    assert_eq!(second["created"], created_at, "created should be preserved on update");
+    assert_eq!(
+        second["created"], created_at,
+        "created should be preserved on update"
+    );
     assert_eq!(second["id"], "viewer");
 
     let get_resp = client

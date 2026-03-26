@@ -10,7 +10,11 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use coyote_authorization::{Permissions, RoleId};
+use coyote_authorization::{
+    AccessRule, AccessRuleEffect, KeyPattern, NamespacePattern, Permissions, ResourcePattern,
+    RoleId,
+};
+use coyote_id::Module;
 use tracing::Span;
 
 use crate::{
@@ -18,6 +22,7 @@ use crate::{
     core::INTERNAL_NAMESPACE,
     v1::endpoints::auth_token::{AuthTokenVerifyIn, AuthTokenVerifyOut},
 };
+use coyote_admin_auth::State as AdminAuthState;
 use coyote_error::{Error, ResultExt};
 
 const AUTH_TOKEN_CACHE_TTL: Duration = Duration::from_secs(1);
@@ -86,10 +91,31 @@ async fn authorization_inner(
     if let Some(admin_token) = &state.cfg.admin_token
         && constant_time_eq(admin_token, token)
     {
+        // FIXME: we should block creating admin tokens on disk (so dynamic such tokens).
+        // FIXME: ResourcePattern should support `*` for the module instead of having to hardcode.
         let perms = Permissions {
             role: RoleId::admin(),
             auth_token_id: None,
-            access_rules: [].into(),
+            access_rules: [
+                Module::Cache,
+                Module::Idempotency,
+                Module::Kv,
+                Module::RateLimit,
+                Module::Msgs,
+                Module::AuthToken,
+            ]
+            .into_iter()
+            .map(|module| AccessRule {
+                effect: AccessRuleEffect::Allow,
+                resource: ResourcePattern {
+                    module,
+                    namespace: NamespacePattern::Any,
+                    key: KeyPattern::Any,
+                },
+                actions: vec!["*".to_string()],
+            })
+            .collect::<Vec<_>>()
+            .into(),
         };
         return Ok(perms);
     }
@@ -115,11 +141,36 @@ async fn authorization_inner(
             .or_internal_error()?;
 
         if let Some(mut out_token) = out.token {
+            let role_id = RoleId::from_string(out_token.metadata.remove("role").unwrap());
+            let admin_auth =
+                AdminAuthState::init(state.do_not_use_dbs.clone()).or_internal_error()?;
+            // FIXME: this is bad, we probably want to store the normalized role structure in a
+            // forever or very long cache (never leaves RAM, can be invalidated by raft).
+            let access_rules: Vec<_> = if let Some(role) = admin_auth
+                .controller
+                .get_role(&role_id)
+                .await
+                .or_internal_error()?
+            {
+                let mut rules = role.rules;
+                for policy_id in &role.policies {
+                    if let Some(policy) = admin_auth
+                        .controller
+                        .get_policy(policy_id)
+                        .await
+                        .or_internal_error()?
+                    {
+                        rules.extend(policy.rules);
+                    }
+                }
+                rules
+            } else {
+                vec![]
+            };
             let perms = Permissions {
-                role: RoleId::from_string(out_token.metadata.remove("role").unwrap()),
+                role: role_id,
                 auth_token_id: Some(out_token.id.into_inner()),
-                // FIXME: Resolve access rules from auth token
-                access_rules: [].into(),
+                access_rules: access_rules.into(),
             };
             state
                 .auth_token_cache
