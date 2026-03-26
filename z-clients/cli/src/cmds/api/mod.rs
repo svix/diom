@@ -27,5 +27,5 @@ pub(crate) use self::{
     idempotency_namespace::IdempotencyNamespaceArgs, kv::KvArgs, kv_namespace::KvNamespaceArgs,
     msgs::MsgsArgs, msgs_namespace::MsgsNamespaceArgs, msgs_queue::MsgsQueueArgs,
     msgs_stream::MsgsStreamArgs, msgs_topic::MsgsTopicArgs, rate_limit::RateLimitArgs,
-    rate_limit_namespace::RateLimitNamespaceArgs, transformations::TransformationsArgs,
+    rate_limit_namespace::RateLimitNamespaceArgs,
 };
