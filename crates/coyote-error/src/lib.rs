@@ -93,6 +93,10 @@ impl Error {
         })
     }
 
+    pub fn shutting_down() -> Self {
+        Self::new(ErrorType::ShuttingDown)
+    }
+
     /// Decompose into HTTP status, optional error code, and optional detail message.
     pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
         match *self.0 {
@@ -123,6 +127,7 @@ impl Error {
                 detail,
             } => (status, error_code, detail),
             ErrorType::Internal { .. } => (StatusCode::INTERNAL_SERVER_ERROR, None, None),
+            ErrorType::ShuttingDown => (StatusCode::SERVICE_UNAVAILABLE, None, None),
         }
     }
 
@@ -193,6 +198,11 @@ impl IntoResponse for Error {
                 )
                     .into_response()
             }
+            ErrorType::ShuttingDown => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(json!({"error": "server shutting down"})),
+            )
+                .into_response(),
         }
     }
 }
@@ -265,6 +275,9 @@ pub enum ErrorType {
         error_code: Option<String>,
         detail: Option<String>,
     },
+
+    /// The operation cannot proceed because the server is shutting down
+    ShuttingDown,
 }
 
 impl fmt::Display for ErrorType {
@@ -276,6 +289,7 @@ impl fmt::Display for ErrorType {
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
             Self::Validation(s) => s.fmt(f),
+            Self::ShuttingDown => write!(f, "shutting_down"),
             Self::Operation { detail, status, .. } => {
                 if let Some(detail) = detail {
                     detail.fmt(f)

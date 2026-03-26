@@ -310,6 +310,36 @@ async fn fail_until_bootstrapped(
     next.run(request).await
 }
 
+#[derive(Debug, Clone)]
+pub struct Initialized {
+    inner: Arc<tokio::sync::SetOnce<()>>,
+}
+
+impl Initialized {
+    fn new() -> Self {
+        Self {
+            inner: Arc::new(tokio::sync::SetOnce::new()),
+        }
+    }
+
+    fn set(&self) -> Result<(), tokio::sync::SetOnceError<()>> {
+        self.inner.set(())
+    }
+
+    // Wait until initialization is finished or the server shuts down
+    pub async fn wait(self) -> coyote_error::Result<()> {
+        let shutting_down_token = shutting_down_token();
+        if shutting_down_token
+            .run_until_cancelled(self.inner.wait())
+            .await
+            .is_none()
+        {
+            return Err(Error::shutting_down());
+        }
+        Ok(())
+    }
+}
+
 /// Run the server with the given configuration and initial state
 ///
 /// This is public for integration tests to use it, but should not be used
@@ -325,13 +355,16 @@ pub async fn run_with_listeners(
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
 
+    let initialized = Initialized::new();
+
     let (internal_req_tx, internal_req_rx) = mpsc::channel(1);
     let internal_client = InternalClient::new(internal_req_tx);
     let app_state = AppState::new(cfg.clone(), time.clone(), internal_client);
 
-    let raft_state = core::cluster::initialize_raft(&cfg, app_state.clone(), time)
-        .await
-        .expect("failed to initialize cluster");
+    let raft_state =
+        core::cluster::initialize_raft(&cfg, app_state.clone(), time, initialized.clone())
+            .await
+            .expect("failed to initialize cluster");
     let node_id = raft_state.node_id;
 
     let v1_router = v1::router(Some(app_state.clone()))
@@ -405,12 +438,16 @@ pub async fn run_with_listeners(
     tokio::task::spawn({
         let cfg = cfg.clone();
         let raft_state = raft_state.clone();
+        let initialized = initialized.clone();
         async move {
             if let Err(err) = bootstrap::run(cfg, raft_state).await {
                 tracing::error!(?err, "bootstrap failed");
                 start_shut_down();
             }
             BOOTSTRAPPED.store(true, Ordering::SeqCst);
+            if initialized.set().is_err() {
+                tracing::error!("bootstrap ran twice???");
+            }
         }
     });
 
@@ -425,8 +462,18 @@ pub async fn run_with_listeners(
             .accepted(node_id, ConnectionType::External);
     });
 
-    let mut workers = Workers::new();
-    workers.spawn_all(raft_state).await;
+    let worker_handle = tokio::task::spawn({
+        let raft_state = raft_state.clone();
+        let shutting_down = shutting_down_token();
+        async move {
+            initialized.wait().await?;
+            let mut workers = Workers::new();
+            workers.spawn_all(raft_state).await;
+            shutting_down.cancelled().await;
+            workers.shutdown().await;
+            Ok::<(), Error>(())
+        }
+    });
 
     axum::serve(listener, make_svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
@@ -435,8 +482,8 @@ pub async fn run_with_listeners(
 
     // Wait for workers to finish cleanup
     tracing::debug!("done serving; waiting for background tasks to finish");
+    let _ = worker_handle.await;
     let _ = interserver.await;
-    let _ = workers.shutdown().await;
     tracing::debug!("we're outta here!");
 }
 
