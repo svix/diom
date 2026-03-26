@@ -297,7 +297,7 @@ async fn test_admin_auth_token_use_for_kv() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({
             "id": "editor",
             "description": "Can edit things",

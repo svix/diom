@@ -63,7 +63,7 @@ pub struct AdminAccessPolicyUpsertOut {
 }
 
 /// Create or update an access policy
-#[aide_annotate(op_id = "v1.admin.access-policy.upsert")]
+#[aide_annotate(op_id = "v1.admin.auth-policy.upsert")]
 async fn access_policy_upsert(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminAccessPolicyUpsertIn>,
@@ -92,7 +92,7 @@ pub struct AdminAccessPolicyDeleteOut {
 }
 
 /// Delete an access policy
-#[aide_annotate(op_id = "v1.admin.access-policy.delete")]
+#[aide_annotate(op_id = "v1.admin.auth-policy.delete")]
 async fn access_policy_delete(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminAccessPolicyDeleteIn>,
@@ -114,7 +114,7 @@ pub struct AdminAccessPolicyGetIn {
 admin_request_input!(AdminAccessPolicyGetIn);
 
 /// Get an access policy by ID
-#[aide_annotate(op_id = "v1.admin.access-policy.get")]
+#[aide_annotate(op_id = "v1.admin.auth-policy.get")]
 async fn access_policy_get(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -140,7 +140,7 @@ admin_request_input!(AdminAccessPolicyListIn);
 pub type AdminAccessPolicyListOut = ListResponse<AdminAccessPolicyOut>;
 
 /// List all access policies
-#[aide_annotate(op_id = "v1.admin.access-policy.list")]
+#[aide_annotate(op_id = "v1.admin.auth-policy.list")]
 async fn access_policy_list(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,

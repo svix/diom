@@ -13,7 +13,7 @@ async fn test_admin_role_upsert_and_get() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({
             "id": "editor",
             "description": "Can edit things",
@@ -30,7 +30,7 @@ async fn test_admin_role_upsert_and_get() -> TestResult {
     assert!(resp["updated"].is_string());
 
     let get_resp = client
-        .post("v1.admin.role.get")
+        .post("v1.admin.auth-role.get")
         .json(json!({ "id": "editor" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -51,7 +51,7 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({
             "id": "viewer",
             "description": "Read-only access",
@@ -63,7 +63,7 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
     let created_at = first["created"].assert_str().to_owned();
 
     let second = client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({
             "id": "viewer",
             "description": "Updated description",
@@ -79,7 +79,7 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
     assert_eq!(second["id"], "viewer");
 
     let get_resp = client
-        .post("v1.admin.role.get")
+        .post("v1.admin.auth-role.get")
         .json(json!({ "id": "viewer" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -99,7 +99,7 @@ async fn test_admin_role_upsert_with_rules_and_policies() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({
             "id": "kv-reader",
             "description": "Can read KV",
@@ -117,7 +117,7 @@ async fn test_admin_role_upsert_with_rules_and_policies() -> TestResult {
         .ensure(StatusCode::OK)?;
 
     let get_resp = client
-        .post("v1.admin.role.get")
+        .post("v1.admin.auth-role.get")
         .json(json!({ "id": "kv-reader" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -141,19 +141,19 @@ async fn test_admin_role_list() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({ "id": "role-a", "description": "Role A" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({ "id": "role-b", "description": "Role B" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     let resp = client
-        .post("v1.admin.role.list")
+        .post("v1.admin.auth-role.list")
         .json(json!({}))
         .await?
         .ensure(StatusCode::OK)?
@@ -176,13 +176,13 @@ async fn test_admin_role_delete() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.role.upsert")
+        .post("v1.admin.auth-role.upsert")
         .json(json!({ "id": "to-delete", "description": "Temporary role" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     let del_resp = client
-        .post("v1.admin.role.delete")
+        .post("v1.admin.auth-role.delete")
         .json(json!({ "id": "to-delete" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -191,7 +191,7 @@ async fn test_admin_role_delete() -> TestResult {
     assert_eq!(del_resp["success"], true);
 
     client
-        .post("v1.admin.role.get")
+        .post("v1.admin.auth-role.get")
         .json(json!({ "id": "to-delete" }))
         .await?
         .ensure_not_found()?;
@@ -208,7 +208,7 @@ async fn test_admin_role_delete_nonexistent() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.role.delete")
+        .post("v1.admin.auth-role.delete")
         .json(json!({ "id": "does-not-exist" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -228,7 +228,7 @@ async fn test_admin_role_get_nonexistent() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.role.get")
+        .post("v1.admin.auth-role.get")
         .json(json!({ "id": "no-such-role" }))
         .await?
         .ensure_not_found()?;
