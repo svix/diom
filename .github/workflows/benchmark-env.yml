@@ -43,15 +43,23 @@ jobs:
       - name: Run benchmark
         timeout-minutes: 10
         run: |
-          kubectl run benchmark-${{ inputs.image_tag }}-${{ github.run_attempt }} \
+          POD_NAME="benchmark-${{ inputs.image_tag }}-${{ github.run_attempt }}"
+          kubectl run "$POD_NAME" \
             --image=${{ env.IMAGE }} \
             --restart=Never \
-            --rm \
-            --attach \
             -n ${{ inputs.namespace }} \
             --env="COYOTE_AUTH_TOKEN=${{ secrets.COYOTE_AUTH_TOKEN }}" \
-            -- coyote benchmark http://coyote:8080 \
+            -- coyote benchmark http://coyote:8080
+          kubectl wait "pod/$POD_NAME" \
+            -n ${{ inputs.namespace }} \
+            --for=jsonpath='{.status.phase}'=Succeeded \
+            --timeout=9m
+          kubectl logs "$POD_NAME" \
+            -n ${{ inputs.namespace }} \
             | tee /tmp/benchmark-output.txt
+          kubectl delete pod "$POD_NAME" \
+            -n ${{ inputs.namespace }} \
+            --ignore-not-found
 
       - name: Post benchmark results
         if: always()
