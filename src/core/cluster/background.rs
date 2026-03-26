@@ -261,12 +261,12 @@ async fn trigger_snapshot(
     if state.is_learner() {
         tracing::warn!("refusing to snapshot a learner");
         return Ok(false);
-    } else {
-        tracing::debug!("triggering background snapshot");
-        if let Err(err) = handle.raft.trigger().snapshot().await {
-            tracing::error!(?err, "error triggering background snapshot; ignoring");
-            return Ok(false);
-        }
+    }
+
+    tracing::debug!("triggering background snapshot");
+    if let Err(err) = handle.raft.trigger().snapshot().await {
+        tracing::error!(?err, "error triggering background snapshot; ignoring");
+        return Ok(false);
     }
 
     let offset_to_purge = match purge_by {
@@ -357,6 +357,8 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         if should_snapshot {
             last_snapshot_time = std::time::Instant::now();
             last_snapshot_index = committed;
+            // this timestamp is just for debugging so that users can see
+            // when their request was actually processed
             #[allow(clippy::disallowed_methods)]
             let last_snapshot_timestamp = jiff::Timestamp::now();
             let payload = if trigger_snapshot(&handle, state, purge_by, committed).await?
