@@ -4,6 +4,15 @@ crds:
     enabled: true
     forceConflicts: true
 
+operator:
+  nodeSelector:
+    db-name: coyote
+  tolerations:
+    - key: db-name
+      operator: Equal
+      value: coyote
+      effect: NoSchedule
+
 cluster:
   image:
     tag: ""
