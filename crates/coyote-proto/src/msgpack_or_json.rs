@@ -17,7 +17,9 @@ use http::{HeaderMap, HeaderValue, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
 use validator::Validate;
 
-use crate::{StandardErrorBody, ValidationErrorBody, ValidationErrorItem, validation_errors};
+use crate::{
+    RequestInput, StandardErrorBody, ValidationErrorBody, ValidationErrorItem, validation_errors,
+};
 
 tokio::task_local! {
     static RESPONSE_CONTENT_TYPE: SupportedContentType;
@@ -69,8 +71,7 @@ pub struct MsgPackOrJson<T>(pub T);
 
 impl<T, S> FromRequest<S> for MsgPackOrJson<T>
 where
-    // FIXME(@svix-jplatte): extra bound commented out to avoid merge issues
-    T: DeserializeOwned + Validate, // + RequestInput,
+    T: DeserializeOwned + Validate + RequestInput,
     S: Send + Sync,
 {
     type Rejection = MsgPackOrJsonRejection;
