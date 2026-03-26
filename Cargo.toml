@@ -29,6 +29,7 @@ axum.workspace = true
 axum-extra.workspace = true
 byteorder.workspace = true
 constant_time_eq.workspace = true
+diom-admin-auth.workspace = true
 diom-auth-token.workspace = true
 diom-authorization.workspace = true
 diom-cache.workspace = true
@@ -134,6 +135,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
 diom.path = "."
+diom-admin-auth.path = "crates/diom-admin-auth"
 diom-auth-token.path = "crates/auth-token"
 diom-authorization.path = "crates/diom-authorization"
 diom-cache.path = "crates/cache"

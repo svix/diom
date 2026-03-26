@@ -963,6 +963,7 @@ dependencies = [
  "axum-extra",
  "byteorder",
  "constant_time_eq 0.4.2",
+ "diom-admin-auth",
  "diom-auth-token",
  "diom-authorization",
  "diom-cache",
@@ -1021,6 +1022,21 @@ dependencies = [
  "uuid",
  "validator",
  "zip",
+]
+
+[[package]]
+name = "diom-admin-auth"
+version = "0.0.1"
+dependencies = [
+ "diom-authorization",
+ "diom-core",
+ "diom-error",
+ "diom-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "serde",
+ "tracing",
 ]
 
 [[package]]

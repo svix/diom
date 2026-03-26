@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-pub mod auth;
-pub mod cluster;
+pub mod policy;
+pub mod role;
+pub mod token;
 
 use aide::axum::ApiRouter;
 
@@ -10,6 +11,7 @@ use crate::AppState;
 
 pub fn router() -> ApiRouter<AppState> {
     ApiRouter::new()
-        .merge(cluster::router())
-        .merge(auth::router())
+        .merge(token::router())
+        .merge(role::router())
+        .merge(policy::router())
 }
