@@ -60,6 +60,41 @@ impl Monotime {
         self.time.load(Ordering::Acquire)
     }
 
+    /// Sleeps for the given duration.
+    ///
+    /// In debug builds, polls with short real-time sleeps so that
+    /// [`Monotime::fast_forward`] causes the sleep to exit promptly.
+    /// In release builds, delegates to [`tokio::time::sleep`].
+    ///
+    /// IMPORTANT: You cannot call this within the raft layer, or you risk deadlocking.
+    #[cfg(debug_assertions)]
+    pub async fn sleep(&self, duration: std::time::Duration) {
+        use std::time::Instant;
+
+        /// Completely arbitrary, but used to make sure we don't inadvertently run forever in case you forget to fast forward time.
+        const MAX_SLEEP_REAL_TIME: std::time::Duration = std::time::Duration::from_secs(20);
+
+        let deadline = self.now() + duration;
+        let poll_interval = std::time::Duration::from_millis(10);
+        let t0 = Instant::now();
+        while t0.elapsed() < MAX_SLEEP_REAL_TIME {
+            tokio::time::sleep(poll_interval).await;
+            if self.now() >= deadline {
+                return;
+            }
+        }
+
+        panic!("Failed to fast forward time after {:?}", t0.elapsed())
+    }
+
+    /// Sleeps for the given duration.
+    ///
+    /// Delegates directly to [`tokio::time::sleep`].
+    #[cfg(not(debug_assertions))]
+    pub async fn sleep(&self, duration: std::time::Duration) {
+        tokio::time::sleep(duration).await;
+    }
+
     /// Advance time by the given amount. This should only be used in integration tests.
     #[cfg(debug_assertions)]
     pub fn fast_forward(&self, by: std::time::Duration) -> Timestamp {

@@ -28,19 +28,22 @@ public class MsgQueueReceiveIn_ {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
+    @JsonProperty("batch_wait_ms") private Long batchWaitMs;
 
     public MsgQueueReceiveIn_(
         String namespace,
         String topic,
         String consumerGroup,
         Short batchSize,
-        Long leaseDurationMs
+        Long leaseDurationMs,
+        Long batchWaitMs
     ) {
         this.namespace = namespace;
         this.topic = topic;
         this.consumerGroup = consumerGroup;
         this.batchSize = batchSize;
         this.leaseDurationMs = leaseDurationMs;
+        this.batchWaitMs = batchWaitMs;
     }
 
     /**

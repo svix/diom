@@ -33,6 +33,7 @@ class MsgsStreamAsync(ApiBase):
             batch_size=msg_stream_receive_in.batch_size,
             lease_duration_ms=msg_stream_receive_in.lease_duration_ms,
             default_starting_position=msg_stream_receive_in.default_starting_position,
+            batch_wait_ms=msg_stream_receive_in.batch_wait_ms,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -111,6 +112,7 @@ class MsgsStream(ApiBase):
             batch_size=msg_stream_receive_in.batch_size,
             lease_duration_ms=msg_stream_receive_in.lease_duration_ms,
             default_starting_position=msg_stream_receive_in.default_starting_position,
+            batch_wait_ms=msg_stream_receive_in.batch_wait_ms,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

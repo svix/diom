@@ -91,9 +91,6 @@ pub struct AppState {
 
     namespace_state: coyote_namespace::State,
 
-    // FIXME: do we need this?
-    // OTHERFIXME: yes, I think so.
-    #[allow(unused)]
     pub(crate) ro_dbs: ReadonlyDatabases,
 
     // FIXME: temporarily here until we make ro_dbs usable.
@@ -107,7 +104,6 @@ pub struct AppState {
 
     pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
 
-    #[allow(unused)]
     pub(crate) time: Monotime,
 }
 

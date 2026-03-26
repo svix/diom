@@ -34,6 +34,7 @@ func (msgsQueue MsgsQueue) Receive(
 		ConsumerGroup:   consumerGroup,
 		BatchSize:       msgQueueReceiveIn.BatchSize,
 		LeaseDurationMs: msgQueueReceiveIn.LeaseDurationMs,
+		BatchWaitMs:     msgQueueReceiveIn.BatchWaitMs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueReceiveIn_, coyote_models.MsgQueueReceiveOut](
