@@ -73,7 +73,7 @@ pub struct AdminRoleUpsertOut {
 }
 
 /// Create or update a role
-#[aide_annotate(op_id = "v1.admin.role.upsert")]
+#[aide_annotate(op_id = "v1.admin.auth-role.upsert")]
 async fn role_upsert(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminRoleUpsertIn>,
@@ -108,7 +108,7 @@ pub struct AdminRoleDeleteOut {
 }
 
 /// Delete a role
-#[aide_annotate(op_id = "v1.admin.role.delete")]
+#[aide_annotate(op_id = "v1.admin.auth-role.delete")]
 async fn role_delete(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminRoleDeleteIn>,
@@ -130,7 +130,7 @@ pub struct AdminRoleGetIn {
 admin_request_input!(AdminRoleGetIn);
 
 /// Get a role by ID
-#[aide_annotate(op_id = "v1.admin.role.get")]
+#[aide_annotate(op_id = "v1.admin.auth-role.get")]
 async fn role_get(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -156,7 +156,7 @@ admin_request_input!(AdminRoleListIn);
 pub type AdminRoleListOut = ListResponse<AdminRoleOut>;
 
 /// List all roles
-#[aide_annotate(op_id = "v1.admin.role.list")]
+#[aide_annotate(op_id = "v1.admin.auth-role.list")]
 async fn role_list(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,

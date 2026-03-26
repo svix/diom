@@ -13,7 +13,7 @@ async fn test_admin_access_policy_upsert_and_get() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.access-policy.upsert")
+        .post("v1.admin.auth-policy.upsert")
         .json(json!({
             "id": "read-only",
             "description": "Allows reading everything",
@@ -28,7 +28,7 @@ async fn test_admin_access_policy_upsert_and_get() -> TestResult {
     assert!(resp["updated"].is_string());
 
     let get_resp = client
-        .post("v1.admin.access-policy.get")
+        .post("v1.admin.auth-policy.get")
         .json(json!({ "id": "read-only" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -49,7 +49,7 @@ async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("v1.admin.access-policy.upsert")
+        .post("v1.admin.auth-policy.upsert")
         .json(json!({
             "id": "base-policy",
             "description": "Initial description",
@@ -61,7 +61,7 @@ async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
     let created_at = first["created"].assert_str().to_owned();
 
     let second = client
-        .post("v1.admin.access-policy.upsert")
+        .post("v1.admin.auth-policy.upsert")
         .json(json!({
             "id": "base-policy",
             "description": "Updated description",
@@ -77,7 +77,7 @@ async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
     assert_eq!(second["id"], "base-policy");
 
     let get_resp = client
-        .post("v1.admin.access-policy.get")
+        .post("v1.admin.auth-policy.get")
         .json(json!({ "id": "base-policy" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -97,7 +97,7 @@ async fn test_admin_access_policy_upsert_with_rules() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.access-policy.upsert")
+        .post("v1.admin.auth-policy.upsert")
         .json(json!({
             "id": "kv-policy",
             "description": "KV access policy",
@@ -118,7 +118,7 @@ async fn test_admin_access_policy_upsert_with_rules() -> TestResult {
         .ensure(StatusCode::OK)?;
 
     let get_resp = client
-        .post("v1.admin.access-policy.get")
+        .post("v1.admin.auth-policy.get")
         .json(json!({ "id": "kv-policy" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -141,19 +141,19 @@ async fn test_admin_access_policy_list() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.access-policy.upsert")
+        .post("v1.admin.auth-policy.upsert")
         .json(json!({ "id": "policy-a", "description": "Policy A" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     client
-        .post("v1.admin.access-policy.upsert")
+        .post("v1.admin.auth-policy.upsert")
         .json(json!({ "id": "policy-b", "description": "Policy B" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     let resp = client
-        .post("v1.admin.access-policy.list")
+        .post("v1.admin.auth-policy.list")
         .json(json!({}))
         .await?
         .ensure(StatusCode::OK)?
@@ -176,13 +176,13 @@ async fn test_admin_access_policy_delete() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.access-policy.upsert")
+        .post("v1.admin.auth-policy.upsert")
         .json(json!({ "id": "to-delete", "description": "Temporary policy" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     let del_resp = client
-        .post("v1.admin.access-policy.delete")
+        .post("v1.admin.auth-policy.delete")
         .json(json!({ "id": "to-delete" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -191,7 +191,7 @@ async fn test_admin_access_policy_delete() -> TestResult {
     assert_eq!(del_resp["success"], true);
 
     client
-        .post("v1.admin.access-policy.get")
+        .post("v1.admin.auth-policy.get")
         .json(json!({ "id": "to-delete" }))
         .await?
         .ensure_not_found()?;
@@ -208,7 +208,7 @@ async fn test_admin_access_policy_delete_nonexistent() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.access-policy.delete")
+        .post("v1.admin.auth-policy.delete")
         .json(json!({ "id": "does-not-exist" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -228,7 +228,7 @@ async fn test_admin_access_policy_get_nonexistent() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.access-policy.get")
+        .post("v1.admin.auth-policy.get")
         .json(json!({ "id": "no-such-policy" }))
         .await?
         .ensure_not_found()?;
