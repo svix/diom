@@ -33,8 +33,6 @@ use crate::{
 
 use crate::core::INTERNAL_NAMESPACE;
 
-const TOKEN_OWNER: &str = "admin";
-
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenOut {
     pub id: Public<AuthTokenId>,
@@ -91,7 +89,7 @@ async fn auth_token_create(
                 suffix: None,
                 expiry_ms: data.expiry_ms,
                 metadata: Metadata(metadata),
-                owner_id: TOKEN_OWNER.to_string(),
+                owner_id: RoleId::operator().0,
                 scopes: vec![],
                 enabled: data.enabled,
             },
@@ -235,7 +233,7 @@ async fn auth_token_list(
             "v1.auth-token.list",
             &AuthTokenListIn {
                 namespace: Some(INTERNAL_NAMESPACE.to_owned()),
-                owner_id: TOKEN_OWNER.to_owned(),
+                owner_id: RoleId::operator().0,
             },
         )
         .await
