@@ -1,0 +1,40 @@
+name: Helm Publish
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  helm-publish:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tags
+        run: |
+          sed -i 's/tag: ""/tag: "${{ inputs.image_tag }}"/g' infra/helm-coyote/values.yaml
+
+      - name: Package and push chart
+        run: |
+          helm package ./infra/helm-coyote --version ${{ inputs.version }}
+          helm push coyote-${{ inputs.version }}.tgz oci://ghcr.io/svix/charts
