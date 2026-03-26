@@ -14,6 +14,7 @@ aide.workspace = true
 axum.workspace = true
 bytes.workspace = true
 coyote-authorization.workspace = true
+coyote-core.workspace = true
 http.workspace = true
 http-body-util.workspace = true
 mime.workspace = true

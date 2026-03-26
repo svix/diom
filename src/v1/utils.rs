@@ -7,7 +7,7 @@ use std::{
 };
 
 use aide::transform::{TransformOperation, TransformPathItem};
-use coyote_proto::validation_error;
+use coyote_core::validation::validation_error;
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -67,7 +67,7 @@ impl<T> ListResponse<T> {
 
 #[cfg(test)]
 mod tests {
-    use coyote_proto::{ValidationErrorItem, validation_errors};
+    use coyote_core::validation::{ValidationErrorItem, validation_errors};
     use validator::Validate;
 
     use super::validate_no_control_characters;
