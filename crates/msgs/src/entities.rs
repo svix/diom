@@ -134,7 +134,7 @@ impl TopicPartition {
     }
 
     pub fn name(&self) -> &TopicName {
-        &self.raw
+        &self.topic
     }
 }
 
@@ -205,18 +205,11 @@ pub enum TopicIn {
 }
 
 impl TopicIn {
-    /// Returns the raw topic name (without partition suffix).
-    pub fn topic_name(&self) -> &TopicName {
-        match self {
-            TopicIn::TopicName(topic_name) => topic_name,
-            TopicIn::TopicPartition(topic_partition) => &topic_partition.topic,
-        }
-    }
-
+    /// Returns the topic name (without partition suffix).
     pub fn name(&self) -> &TopicName {
         match self {
             Self::TopicName(name) => name,
-            Self::TopicPartition(part) => &part.raw,
+            Self::TopicPartition(part) => &part.topic,
         }
     }
 }
