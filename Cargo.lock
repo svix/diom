@@ -1316,6 +1316,7 @@ dependencies = [
  "aide 0.16.0-alpha.2",
  "axum",
  "bytes",
+ "diom-authorization",
  "http",
  "http-body-util",
  "mime",

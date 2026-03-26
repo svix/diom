@@ -66,6 +66,12 @@ impl TopicName {
             Ok(Self(topic))
         }
     }
+
+    // FIXME(@svix-jplatte): This is used by the macro in endpoints/msgs.rs
+    // Update the macro to be less stupid and remove this weird identity method.
+    pub fn name(&self) -> &Self {
+        self
+    }
 }
 
 /// Derefs to the topic name (without namespace or partition).
@@ -125,6 +131,10 @@ pub struct TopicPartition {
 impl TopicPartition {
     pub fn new(topic: TopicName, partition: Partition) -> Self {
         Self { topic, partition }
+    }
+
+    pub fn name(&self) -> &TopicName {
+        &self.raw
     }
 }
 
@@ -200,6 +210,13 @@ impl TopicIn {
         match self {
             TopicIn::TopicName(topic_name) => topic_name,
             TopicIn::TopicPartition(topic_partition) => &topic_partition.topic,
+        }
+    }
+
+    pub fn name(&self) -> &TopicName {
+        match self {
+            Self::TopicName(name) => name,
+            Self::TopicPartition(part) => &part.raw,
         }
     }
 }

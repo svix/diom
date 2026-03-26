@@ -175,6 +175,8 @@ async fn cluster_status(
 #[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
 struct ClusterInitializeIn {}
 
+admin_request_input!(ClusterInitializeIn);
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterInitializeOut {
     cluster_id: ClusterId,
@@ -210,6 +212,8 @@ async fn cluster_initialize(
 struct ClusterRemoveNodeIn {
     node_id: NodeId,
 }
+
+admin_request_input!(ClusterRemoveNodeIn);
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterRemoveNodeOut {

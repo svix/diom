@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt};
 
+use diom_id::Module;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -85,4 +86,11 @@ pub struct AccessRule {
 pub enum AccessRuleEffect {
     Allow,
     Deny,
+}
+
+pub struct RequestedOperation<'a> {
+    pub module: Module,
+    pub namespace: Option<&'a str>,
+    pub key: Option<&'a str>,
+    pub action: &'static str,
 }

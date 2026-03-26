@@ -69,7 +69,8 @@ pub struct MsgPackOrJson<T>(pub T);
 
 impl<T, S> FromRequest<S> for MsgPackOrJson<T>
 where
-    T: DeserializeOwned + Validate,
+    // FIXME(@svix-jplatte): extra bound commented out to avoid merge issues
+    T: DeserializeOwned + Validate, // + RequestInput,
     S: Send + Sync,
 {
     type Rejection = MsgPackOrJsonRejection;
