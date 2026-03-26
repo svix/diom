@@ -1,9 +1,25 @@
+import { Packr } from "msgpackr";
 import { ApiException, type XOR } from "./util";
 import type { HttpErrorOut, HTTPValidationError } from "./HttpErrors";
 import type { DiomOptions } from "./options";
 
 export const LIB_VERSION = "1.85.0";
 const USER_AGENT = `svix-libs/${LIB_VERSION}/javascript`;
+
+/**
+ * Matches Diom's `rmp_serde` map encoding (not msgpackr's record extensions).
+ *
+ * `skipValues: [undefined]` is required so that optional fields (e.g. `retention.bytes`)
+ * are encoded as "missing key" rather than as MessagePack `nil` / extension values.
+ */
+const MSGPACK_CODEC = new Packr({
+  useRecords: false,
+  encodeUndefinedAsNil: true,
+  skipValues: [undefined],
+  // biome-ignore lint/suspicious/noExplicitAny: msgpackr type definitions missing `skipValues`
+} as any);
+
+const APPLICATION_MSGPACK = "application/msgpack";
 
 export enum HttpMethod {
   GET = "GET",
@@ -78,9 +94,9 @@ export class DiomRequest {
   constructor(
     private readonly method: HttpMethod,
     private path: string
-  ) {}
+  ) { }
 
-  private body?: string;
+  private body?: BodyInit;
   private queryParams: Record<string, string> = {};
   private headerParams: Record<string, string> = {};
 
@@ -130,7 +146,7 @@ export class DiomRequest {
 
   // biome-ignore lint/suspicious/noExplicitAny: intentional any
   public setBody(value: any) {
-    this.body = JSON.stringify(value);
+    this.body = MSGPACK_CODEC.pack(value) as BodyInit;
   }
 
   /**
@@ -145,14 +161,15 @@ export class DiomRequest {
   public async send<R>(
     ctx: DiomRequestContext,
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
-    parseResponseBody: (jsonObject: any) => R
+    parseResponseBody: (decoded: any) => R
   ): Promise<R> {
     const response = await this.sendInner(ctx);
     if (response.status === 204) {
       return <R>null;
     }
-    const responseBody = await response.text();
-    return parseResponseBody(JSON.parse(responseBody));
+    const raw = new Uint8Array(await response.arrayBuffer());
+    const decoded = decodeMsgpackBody(raw);
+    return parseResponseBody(decoded);
   }
 
   /** Same as `send`, but the response body is discarded, not parsed. */
@@ -169,7 +186,7 @@ export class DiomRequest {
     const randomId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 
     if (this.body != null) {
-      this.headerParams["content-type"] = "application/json";
+      this.headerParams["content-type"] = APPLICATION_MSGPACK;
     }
     // Cloudflare Workers fail if the credentials option is used in a fetch call.
     // This work around that. Source:
@@ -182,7 +199,7 @@ export class DiomRequest {
         method: this.method.toString(),
         body: this.body,
         headers: {
-          accept: "application/json, */*;q=0.8",
+          accept: APPLICATION_MSGPACK,
           authorization: `Bearer ${ctx.token}`,
           "user-agent": USER_AGENT,
           "svix-req-id": randomId.toString(),
@@ -205,12 +222,13 @@ async function filterResponseForErrors(response: Response): Promise<Response> {
     return response;
   }
 
-  const responseBody = await response.text();
+  const raw = new Uint8Array(await response.arrayBuffer());
+  const decoded = decodeMsgpackBody(raw);
 
   if (response.status === 422) {
     throw new ApiException<HTTPValidationError>(
       response.status,
-      JSON.parse(responseBody) as HTTPValidationError,
+      decoded as HTTPValidationError,
       response.headers
     );
   }
@@ -218,11 +236,18 @@ async function filterResponseForErrors(response: Response): Promise<Response> {
   if (response.status >= 400 && response.status <= 499) {
     throw new ApiException<HttpErrorOut>(
       response.status,
-      JSON.parse(responseBody) as HttpErrorOut,
+      decoded as HttpErrorOut,
       response.headers
     );
   }
-  throw new ApiException(response.status, responseBody, response.headers);
+  throw new ApiException(response.status, decoded, response.headers);
+}
+
+function decodeMsgpackBody(raw: Uint8Array): unknown {
+  if (raw.byteLength === 0) {
+    return null;
+  }
+  return MSGPACK_CODEC.unpack(raw);
 }
 
 type SvixRequestInit = RequestInit & {
