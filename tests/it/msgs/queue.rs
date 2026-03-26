@@ -1427,3 +1427,57 @@ async fn queue_receive_max_wait_does_not_skip_partitions_with_existing_cursor() 
 
     Ok(())
 }
+
+#[tokio::test]
+async fn queue_receive_wakes_on_publish_notification() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-qnotify" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Start a receive wanting 3 messages with a very long timeout.
+    // Uses mock time, so the timeout will never fire — the receive can only
+    // return if the publish notifier wakes it up.
+    let recv_client = client.clone();
+    let recv_handle = tokio::spawn(async move {
+        recv_client
+            .post("v1.msgs.queue.receive")
+            .json(json!({
+                "topic": "ns-qnotify:t1",
+                "consumer_group": "cg1",
+                "batch_size": 3,
+                "batch_wait_ms": 3_000_000,
+            }))
+            .await
+    });
+
+    yield_now().await;
+
+    // Publish 3 messages — should wake the waiting receive via the notifier
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "topic": "ns-qnotify:t1",
+            "msgs": [
+                { "value": "a".as_bytes(), "key": "k1" },
+                { "value": "b".as_bytes(), "key": "k1" },
+                { "value": "c".as_bytes(), "key": "k1" },
+            ],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = recv_handle.await??.expect(StatusCode::OK).json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(msgs.len(), 3, "should receive all 3 published messages");
+
+    Ok(())
+}
