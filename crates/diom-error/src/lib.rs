@@ -10,7 +10,8 @@ use axum::{
     Json,
     response::{IntoResponse, Response},
 };
-use diom_proto::{MsgPackOrJson, StandardErrorBody, ValidationErrorBody, ValidationErrorItem};
+use diom_core::validation::{ValidationErrorBody, ValidationErrorItem};
+use diom_proto::{MsgPackOrJson, StandardErrorBody};
 use hyper::StatusCode;
 use serde_json::json;
 use tokio::task::JoinError;

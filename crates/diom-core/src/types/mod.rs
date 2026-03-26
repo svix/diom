@@ -3,13 +3,14 @@
 
 use std::{ops::Deref, sync::LazyLock};
 
-use diom_proto::validation_error;
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
 use schemars::{Schema, json_schema};
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
+
+use crate::validation::validation_error;
 
 mod duration_ms;
 mod duration_s;

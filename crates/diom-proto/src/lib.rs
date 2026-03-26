@@ -5,7 +5,6 @@ mod msgpack_client;
 mod msgpack_or_json;
 pub mod prelude;
 mod request_input;
-mod validation;
 
 pub use self::{
     error::StandardErrorBody,
@@ -13,5 +12,4 @@ pub use self::{
     msgpack::MsgPack,
     msgpack_or_json::{MsgPackOrJson, capture_accept_hdr},
     request_input::{AccessMetadata, RequestInput},
-    validation::{ValidationErrorBody, ValidationErrorItem, validation_error, validation_errors},
 };

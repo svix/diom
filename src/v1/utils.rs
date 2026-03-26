@@ -7,7 +7,7 @@ use std::{
 };
 
 use aide::transform::{TransformOperation, TransformPathItem};
-use diom_proto::validation_error;
+use diom_core::validation::validation_error;
 use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -67,7 +67,7 @@ impl<T> ListResponse<T> {
 
 #[cfg(test)]
 mod tests {
-    use diom_proto::{ValidationErrorItem, validation_errors};
+    use diom_core::validation::{ValidationErrorItem, validation_errors};
     use validator::Validate;
 
     use super::validate_no_control_characters;
