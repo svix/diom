@@ -3,6 +3,9 @@
     // Basic Options
     "strict": true,
     "target": "es2017",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true, // msgpackr types are outdated, needs to be fixed upstream
     "outDir": "dist",
     "composite": true,
     "removeComments": true,
@@ -12,12 +15,6 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true, // Report error when not all code paths in function return a value
     "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statement
-    // Workaround for https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/67406
-    "paths": {
-      "undici-types": [
-        "./node_modules/undici-types/index.d.ts"
-      ],
-    }
   },
   "include": [
     "src/**/*.ts"
