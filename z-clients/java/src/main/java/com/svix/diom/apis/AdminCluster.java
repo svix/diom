@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.diom.models.ClusterForceSnapshotIn;
+import com.svix.diom.models.ClusterForceSnapshotOut;
 import com.svix.diom.models.ClusterInitializeIn;
 import com.svix.diom.models.ClusterInitializeOut;
 import com.svix.diom.models.ClusterRemoveNodeIn;
@@ -92,6 +94,30 @@ public class AdminCluster {
             null,
             clusterRemoveNodeIn,
             ClusterRemoveNodeOut.class
+        );
+    }
+
+    /** Force the cluster to take a snapshot immediately */
+    public ClusterForceSnapshotOut forceSnapshot(
+        final ClusterForceSnapshotIn clusterForceSnapshotIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.force-snapshot");
+
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            clusterForceSnapshotIn,
+            ClusterForceSnapshotOut.class
+        );
+    }
+
+    /** Force the cluster to take a snapshot immediately */
+    public ClusterForceSnapshotOut forceSnapshot(
+        
+    ) throws IOException, ApiException {
+        return this.forceSnapshot(
+            new ClusterForceSnapshotIn()
         );
     }
 }

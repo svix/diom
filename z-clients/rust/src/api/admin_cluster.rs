@@ -44,4 +44,15 @@ impl<'a> AdminCluster<'a> {
             .execute(self.cfg)
             .await
     }
+
+    /// Force the cluster to take a snapshot immediately
+    pub async fn force_snapshot(
+        &self,
+        cluster_force_snapshot_in: ClusterForceSnapshotIn,
+    ) -> Result<ClusterForceSnapshotOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.admin.cluster.force-snapshot")
+            .with_body(cluster_force_snapshot_in)
+            .execute(self.cfg)
+            .await
+    }
 }

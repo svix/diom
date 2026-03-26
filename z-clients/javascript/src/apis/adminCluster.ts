@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type ClusterForceSnapshotIn,
+    ClusterForceSnapshotInSerializer,
+} from '../models/clusterForceSnapshotIn';
+import {
+    type ClusterForceSnapshotOut,
+    ClusterForceSnapshotOutSerializer,
+} from '../models/clusterForceSnapshotOut';
+import {
     type ClusterInitializeIn,
     ClusterInitializeInSerializer,
 } from '../models/clusterInitializeIn';
@@ -72,6 +80,20 @@ export class AdminCluster {
         return request.send(
             this.requestCtx,
             ClusterRemoveNodeOutSerializer._fromJsonObject,
+        );
+    }/** Force the cluster to take a snapshot immediately */
+    public forceSnapshot(
+        clusterForceSnapshotIn: ClusterForceSnapshotIn,
+    ): Promise<ClusterForceSnapshotOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.cluster.force-snapshot");
+
+        request.setBody(
+            ClusterForceSnapshotInSerializer._toJsonObject(clusterForceSnapshotIn)
+        );
+        
+        return request.send(
+            this.requestCtx,
+            ClusterForceSnapshotOutSerializer._fromJsonObject,
         );
     }
 }

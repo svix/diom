@@ -28,6 +28,11 @@ pub enum AdminClusterCommands {
     RemoveNode {
         cluster_remove_node_in: crate::json::JsonOf<diom_client::models::ClusterRemoveNodeIn>,
     },
+    /// Force the cluster to take a snapshot immediately
+    ForceSnapshot {
+        cluster_force_snapshot_in:
+            Option<crate::json::JsonOf<diom_client::models::ClusterForceSnapshotIn>>,
+    },
 }
 
 impl AdminClusterCommands {
@@ -58,6 +63,16 @@ impl AdminClusterCommands {
                     .admin()
                     .cluster()
                     .remove_node(cluster_remove_node_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp, color_mode)?;
+            }
+            Self::ForceSnapshot {
+                cluster_force_snapshot_in,
+            } => {
+                let resp = client
+                    .admin()
+                    .cluster()
+                    .force_snapshot(cluster_force_snapshot_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp, color_mode)?;
             }

@@ -33,6 +33,7 @@ public class ClusterStatusOut {
     @JsonProperty("this_node_id") private String thisNodeId;
     @JsonProperty("this_node_state") private ServerState thisNodeState;
     @JsonProperty("this_node_last_committed_timestamp") private OffsetDateTime thisNodeLastCommittedTimestamp;
+    @JsonProperty("this_node_last_snapshot_id") private String thisNodeLastSnapshotId;
     @JsonProperty private List<NodeStatusOut> nodes;
     public ClusterStatusOut() {}
 
@@ -42,7 +43,7 @@ public class ClusterStatusOut {
     }
 
     /**
-    * The unique ID of this cluster.pub(crate)
+    * The unique ID of this cluster.
 
 This value is populated on cluster initialization and will never change.
     *
@@ -133,6 +134,25 @@ This value is not replicated and should only be used for debugging.
 
     public void setThisNodeLastCommittedTimestamp(OffsetDateTime thisNodeLastCommittedTimestamp) {
         this.thisNodeLastCommittedTimestamp = thisNodeLastCommittedTimestamp;
+    }
+
+    public ClusterStatusOut thisNodeLastSnapshotId(String thisNodeLastSnapshotId) {
+        this.thisNodeLastSnapshotId = thisNodeLastSnapshotId;
+        return this;
+    }
+
+    /**
+    * The last snapshot taken on this node
+    *
+     * @return thisNodeLastSnapshotId
+     */
+    @javax.annotation.Nullable
+    public String getThisNodeLastSnapshotId() {
+        return thisNodeLastSnapshotId;
+    }
+
+    public void setThisNodeLastSnapshotId(String thisNodeLastSnapshotId) {
+        this.thisNodeLastSnapshotId = thisNodeLastSnapshotId;
     }
 
     public ClusterStatusOut nodes(List<NodeStatusOut> nodes) {

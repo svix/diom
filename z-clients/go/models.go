@@ -47,6 +47,8 @@ type (
 	CacheGetOut                   = diom_models.CacheGetOut
 	CacheSetIn                    = diom_models.CacheSetIn
 	CacheSetOut                   = diom_models.CacheSetOut
+	ClusterForceSnapshotIn        = diom_models.ClusterForceSnapshotIn
+	ClusterForceSnapshotOut       = diom_models.ClusterForceSnapshotOut
 	ClusterInitializeIn           = diom_models.ClusterInitializeIn
 	ClusterInitializeOut          = diom_models.ClusterInitializeOut
 	ClusterRemoveNodeIn           = diom_models.ClusterRemoveNodeIn
