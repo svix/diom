@@ -43,7 +43,7 @@ jobs:
       - name: Run benchmark
         timeout-minutes: 10
         run: |
-          kubectl run benchmark \
+          kubectl run benchmark-${{ inputs.image_tag }}-${{ github.run_attempt }} \
             --image=${{ env.IMAGE }} \
             --restart=Never \
             --rm \
