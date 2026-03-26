@@ -7,6 +7,8 @@ use itertools::Itertools;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
+use crate::RequestedOperation;
+
 #[derive(Debug, PartialEq, Eq, JsonSchema)]
 #[schemars(schema_with = "String::json_schema")]
 pub struct ResourcePattern {
@@ -28,6 +30,12 @@ pub enum KeyPattern {
     Prefix(String),
     Any,
     // FIXME: Add single star wildcards
+}
+
+impl ResourcePattern {
+    pub fn matches(&self, op: &RequestedOperation<'_>) -> bool {
+        self.module == op.module && self.namespace.matches(op.namespace) && self.key.matches(op.key)
+    }
 }
 
 impl fmt::Display for ResourcePattern {
@@ -76,6 +84,16 @@ impl<'de> Deserialize<'de> for ResourcePattern {
     }
 }
 
+impl NamespacePattern {
+    fn matches(&self, namespace: Option<&str>) -> bool {
+        match self {
+            Self::Default => namespace.is_none(),
+            Self::Named(ns) => namespace == Some(ns),
+            Self::Any => true,
+        }
+    }
+}
+
 impl fmt::Display for NamespacePattern {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -105,6 +123,16 @@ impl FromStr for NamespacePattern {
         // so skipping that for now.
 
         Ok(Self::Named(s.to_owned()))
+    }
+}
+
+impl KeyPattern {
+    fn matches(&self, key: Option<&str>) -> bool {
+        match self {
+            Self::Exactly(k) => key == Some(k),
+            Self::Prefix(p) => key.is_some_and(|k| k.starts_with(p)),
+            Self::Any => true,
+        }
     }
 }
 
