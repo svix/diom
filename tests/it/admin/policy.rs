@@ -104,12 +104,12 @@ async fn test_admin_access_policy_upsert_with_rules() -> TestResult {
             "rules": [
                 {
                     "effect": "allow",
-                    "resource": "kv:**:**",
+                    "resource": "kv:*:**",
                     "actions": ["Get", "Set", "Delete"],
                 },
                 {
                     "effect": "deny",
-                    "resource": "kv:restricted:*",
+                    "resource": "kv:restricted:**",
                     "actions": ["Set", "Delete"],
                 },
             ],
@@ -194,7 +194,7 @@ async fn test_admin_access_policy_delete() -> TestResult {
         .post("v1.admin.access-policy.get")
         .json(json!({ "id": "to-delete" }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?;
+        .ensure_not_found()?;
 
     Ok(())
 }
@@ -231,7 +231,7 @@ async fn test_admin_access_policy_get_nonexistent() -> TestResult {
         .post("v1.admin.access-policy.get")
         .json(json!({ "id": "no-such-policy" }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?;
+        .ensure_not_found()?;
 
     Ok(())
 }
