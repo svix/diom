@@ -64,6 +64,14 @@ jobs:
       packages: write
       security-events: write
 
+  helm-publish:
+    needs: ci
+    uses: ./.github/workflows/helm-publish.yml
+    secrets: inherit
+    with:
+      version: 0.0.0-${{ github.sha }}
+      image_tag: sha-${{ github.sha }}
+
   svix-cloud-deploy:
     needs:
       - docker_publish_server
