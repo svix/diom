@@ -1,5 +1,6 @@
 use std::{
     io::{Seek, SeekFrom},
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     pin::Pin,
     sync::Arc,
@@ -190,7 +191,7 @@ impl Store {
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
             state: app_state,
-            snapshot_directory: snapshot_directory.into(),
+            snapshot_directory: snapshot_directory.as_path().canonicalize()?,
             readonly_meta_keyspace: ReadonlyKeyspace::from(meta_keyspace.clone()),
             meta_keyspace,
             last_snapshot: Arc::new(RwLock::new(None)),
@@ -614,11 +615,16 @@ impl StoredSnapshot {
     ) -> anyhow::Result<Self> {
         let file_name = format!("coyote-{}", metadata.snapshot_id);
         let path = directory.join(file_name);
+        let directory = directory.to_owned();
         let path_c = path.clone();
         let file = spawn_blocking_in_current_span(move || -> anyhow::Result<std::fs::File> {
-            tracing::info!(path=%path_c.display(), "writing snapshot");
-            let mut f = std::fs::File::create(path_c)?;
-            serialized_state_machine::serialize_to_file(targets, &mut f)?;
+            let mut tf = tempfile::Builder::new()
+                .permissions(std::fs::Permissions::from_mode(0o600))
+                .tempfile_in(directory)?;
+            tracing::debug!(final_path=%path_c.display(), temp_path = %tf.path().display(), "writing snapshot");
+            serialized_state_machine::serialize_to_file(targets, tf.as_file_mut())?;
+            tf.as_file_mut().sync_all()?;
+            let mut f = tf.persist_noclobber(path_c)?;
             f.seek(SeekFrom::Start(0))?;
             Ok(f)
         })
