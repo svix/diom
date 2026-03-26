@@ -296,7 +296,25 @@ async fn test_admin_auth_token_use_for_kv() -> TestResult {
         ..
     } = start_server().await;
 
-    let (_id, token) = create_admin_token(&client, "kv-token", "reader").await?;
+    client
+        .post("v1.admin.role.upsert")
+        .json(json!({
+            "id": "editor",
+            "description": "Can edit things",
+            "rules": [
+                {
+                    "effect": "allow",
+                    "resource": "kv:*:**",
+                    "actions": ["Get", "Set", "List"],
+                }
+            ],
+            "policies": [],
+            "context": {},
+        }))
+        .await?
+        .ensure(StatusCode::OK)?;
+
+    let (_id, token) = create_admin_token(&client, "kv-token", "editor").await?;
 
     // Use the created token to make KV API calls
     let token_client = TestClient::new(format!("http://{addr}/api"), &token);

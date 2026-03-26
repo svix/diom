@@ -106,7 +106,7 @@ async fn test_admin_role_upsert_with_rules_and_policies() -> TestResult {
             "rules": [
                 {
                     "effect": "allow",
-                    "resource": "kv:**:**",
+                    "resource": "kv:*:**",
                     "actions": ["Get", "List"],
                 }
             ],
@@ -194,7 +194,7 @@ async fn test_admin_role_delete() -> TestResult {
         .post("v1.admin.role.get")
         .json(json!({ "id": "to-delete" }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?;
+        .ensure_not_found()?;
 
     Ok(())
 }
@@ -231,7 +231,7 @@ async fn test_admin_role_get_nonexistent() -> TestResult {
         .post("v1.admin.role.get")
         .json(json!({ "id": "no-such-role" }))
         .await?
-        .ensure(StatusCode::NOT_FOUND)?;
+        .ensure_not_found()?;
 
     Ok(())
 }
