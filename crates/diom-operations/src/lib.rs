@@ -1,4 +1,3 @@
-use axum::response::IntoResponse;
 use opentelemetry::{Context, trace::TraceContextExt};
 use std::{collections::HashMap, fmt::Debug};
 
@@ -146,22 +145,29 @@ impl From<Context> for OperationRequestMetadata {
 pub struct OperationError {
     #[serde(with = "http_serde::status_code")]
     status: http::StatusCode,
-    msg: String,
+    error_code: Option<String>,
+    detail: Option<String>,
 }
 
 impl From<diom_error::Error> for OperationError {
     fn from(value: diom_error::Error) -> Self {
-        let msg = value.to_string();
+        let (status, error_code, detail) = value.into_parts();
         Self {
-            status: value.into_response().status(),
-            msg,
+            status,
+            error_code,
+            detail,
         }
     }
 }
 
 impl From<OperationError> for diom_error::Error {
     fn from(value: OperationError) -> Self {
-        Self::operation(value.status, None)
+        match value.error_code {
+            Some(code) => {
+                Self::operation_with_code(value.status, code, value.detail.unwrap_or_default())
+            }
+            None => Self::operation(value.status, value.detail),
+        }
     }
 }
 
@@ -169,7 +175,8 @@ impl From<JoinError> for OperationError {
     fn from(value: JoinError) -> Self {
         Self {
             status: http::StatusCode::INTERNAL_SERVER_ERROR,
-            msg: format!("Error joining thread: {value}"),
+            error_code: None,
+            detail: Some(format!("Error joining thread: {value}")),
         }
     }
 }

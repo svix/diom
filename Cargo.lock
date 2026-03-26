@@ -1278,7 +1278,6 @@ dependencies = [
 name = "diom-operations"
 version = "0.0.1"
 dependencies = [
- "axum",
  "diom-core",
  "diom-error",
  "futures-util",

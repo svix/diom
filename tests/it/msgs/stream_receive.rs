@@ -130,7 +130,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     assert_eq!(r1["msgs"].assert_array().len(), 2);
 
     // Second receive with the same CG — partition is locked, returns error
-    let _r2 = client
+    let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
             "namespace": "ns-nodup",
@@ -138,7 +138,9 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::BAD_REQUEST)
+        .json();
+    assert_eq!(r2["code"], "no_available_leases");
 
     // Commit the first batch to unlock the partition (same namespace as receive).
     let msgs = r1["msgs"].assert_array();
@@ -399,7 +401,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     assert_eq!(r_a["msgs"].assert_array().len(), 2);
 
     // Consumer B (same CG) — partition is locked, returns error
-    let _ = client
+    let r_b_locked = client
         .post("v1.msgs.stream.receive")
         .json(json!({
             "namespace": "ns-lock",
@@ -407,7 +409,9 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::BAD_REQUEST)
+        .json();
+    assert_eq!(r_b_locked["code"], "no_available_leases");
 
     // Consumer A commits — unlocks the partition.
     let msgs_a = r_a["msgs"].assert_array();
@@ -787,6 +791,7 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
             total_msgs += msgs.len();
         } else {
             assert!(matches!(resp.status(), StatusCode::BAD_REQUEST));
+            assert_eq!(resp.json()["code"], "no_available_leases");
         }
     }
 
@@ -870,7 +875,7 @@ async fn partial_commit_preserves_lease() -> TestResult {
         .expect(StatusCode::OK);
 
     // Lease should still be held — second receive must fail
-    client
+    let locked = client
         .post("v1.msgs.stream.receive")
         .json(json!({
             "namespace": "ns-partial",
@@ -878,7 +883,9 @@ async fn partial_commit_preserves_lease() -> TestResult {
             "consumer_group": "cg1",
         }))
         .await?
-        .expect(StatusCode::BAD_REQUEST);
+        .expect(StatusCode::BAD_REQUEST)
+        .json();
+    assert_eq!(locked["code"], "no_available_leases");
 
     // Commit the last offset in the batch — should release the lease
     client
