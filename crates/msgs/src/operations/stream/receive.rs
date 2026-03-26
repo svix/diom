@@ -161,7 +161,10 @@ impl StreamReceiveOperation {
             }
 
             if no_lease_available {
-                return Err(Error::invalid_user_input("no available leases"));
+                return Err(Error::bad_request(
+                    "no_available_leases",
+                    "no available leases",
+                ));
             }
 
             batch.commit().map_err(Error::from)?;
