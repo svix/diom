@@ -243,6 +243,8 @@ async fn cluster_remove_node(
 #[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
 struct ClusterForceSnapshotIn {}
 
+admin_request_input!(ClusterForceSnapshotIn);
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterForceSnapshotOut {
     snapshot_time: jiff::Timestamp,
