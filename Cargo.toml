@@ -72,6 +72,7 @@ serde_json.workspace = true
 sha2.workspace = true
 sysinfo.workspace = true
 tap.workspace = true
+tempfile.workspace = true
 tokio.workspace = true
 toml.workspace = true
 tower.workspace = true
@@ -90,7 +91,6 @@ ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
 rmpv.workspace = true
-tempfile.workspace = true
 test-utils.workspace = true
 
 [lints]

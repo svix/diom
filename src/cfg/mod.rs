@@ -137,6 +137,10 @@ impl Dir {
     pub fn join<P: AsRef<Path>>(&self, path: P) -> PathBuf {
         self.inner.join(path.as_ref())
     }
+
+    pub fn as_path(&self) -> &Path {
+        &self.inner
+    }
 }
 
 impl From<Dir> for PathBuf {
