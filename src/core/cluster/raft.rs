@@ -70,6 +70,7 @@ pub async fn initialize_raft(
     cfg: &Configuration,
     app_state: AppState,
     time: Monotime,
+    initialized: crate::Initialized,
 ) -> anyhow::Result<RaftState> {
     let mut logs = super::DiomLogs::new(
         cfg.cluster.log_path(cfg)?,
@@ -142,6 +143,9 @@ pub async fn initialize_raft(
         let handle = handle.clone();
         let cfg = cfg.clone();
         async move {
+            if initialized.wait().await.is_err() {
+                return;
+            }
             if let Err(err) = super::background::run_background_jobs_on_all_nodes(
                 cfg.clone(),
                 handle.clone(),
