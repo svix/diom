@@ -3,23 +3,13 @@
 
 use aide::axum::ApiRouter;
 
-use crate::{
-    AppState,
-    core::{auth::authorization, otel_spans::request_metrics_middleware},
-};
+use crate::{AppState, core::auth::authorization};
 
 pub mod endpoints;
 pub mod utils;
 
 pub fn router(state: Option<AppState>) -> ApiRouter<AppState> {
     let mut ret: ApiRouter<AppState> = ApiRouter::new();
-
-    if let Some(state) = &state {
-        ret = ret.layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            request_metrics_middleware,
-        ));
-    }
 
     let unauthenticated_router: ApiRouter<AppState> =
         ApiRouter::new().merge(endpoints::health::router());
