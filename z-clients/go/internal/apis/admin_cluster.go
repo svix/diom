@@ -63,3 +63,17 @@ func (adminCluster AdminCluster) RemoveNode(
 		&clusterRemoveNodeIn,
 	)
 }
+
+// Force the cluster to take a snapshot immediately
+func (adminCluster AdminCluster) ForceSnapshot(
+	ctx context.Context,
+	clusterForceSnapshotIn coyote_models.ClusterForceSnapshotIn,
+) (*coyote_models.ClusterForceSnapshotOut, error) {
+	return coyote_proto.ExecuteRequest[coyote_models.ClusterForceSnapshotIn, coyote_models.ClusterForceSnapshotOut](
+		ctx,
+		adminCluster.client,
+		"POST",
+		"/api/v1.admin.cluster.force-snapshot",
+		&clusterForceSnapshotIn,
+	)
+}

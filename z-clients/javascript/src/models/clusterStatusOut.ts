@@ -10,7 +10,7 @@ import {
 
 export interface ClusterStatusOut {
     /**
-     * The unique ID of this cluster.pub(crate)
+     * The unique ID of this cluster.
      * 
      * This value is populated on cluster initialization and will never change.
      */
@@ -27,6 +27,8 @@ export interface ClusterStatusOut {
     thisNodeState: ServerState;
     /** The timestamp of the last transaction committed on this node */
     thisNodeLastCommittedTimestamp: Date;
+    /** The last snapshot taken on this node */
+    thisNodeLastSnapshotId?: string | null;
     /** A list of all nodes known to be in the cluster */
     nodes: NodeStatusOut[];
 }
@@ -40,6 +42,7 @@ export const ClusterStatusOutSerializer = {
             thisNodeId: object['this_node_id'],
             thisNodeState: ServerStateSerializer._fromJsonObject(object['this_node_state']),
             thisNodeLastCommittedTimestamp: new Date(object['this_node_last_committed_timestamp']),
+            thisNodeLastSnapshotId: object['this_node_last_snapshot_id'],
             nodes: object['nodes'].map((item: NodeStatusOut) => NodeStatusOutSerializer._fromJsonObject(item)),
         };
     },
@@ -52,6 +55,7 @@ export const ClusterStatusOutSerializer = {
             'this_node_id': self.thisNodeId,
             'this_node_state': ServerStateSerializer._toJsonObject(self.thisNodeState),
             'this_node_last_committed_timestamp': self.thisNodeLastCommittedTimestamp,
+            'this_node_last_snapshot_id': self.thisNodeLastSnapshotId,
             'nodes': self.nodes.map((item) => NodeStatusOutSerializer._toJsonObject(item)),
         };
     }

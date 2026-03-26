@@ -11,7 +11,7 @@ from .server_state import ServerState
 
 class ClusterStatusOut(BaseModel):
     cluster_id: t.Optional[str] = Field(default=None, alias="cluster_id")
-    """The unique ID of this cluster.pub(crate)
+    """The unique ID of this cluster.
 
     This value is populated on cluster initialization and will never change."""
 
@@ -30,6 +30,11 @@ class ClusterStatusOut(BaseModel):
         alias="this_node_last_committed_timestamp"
     )
     """The timestamp of the last transaction committed on this node"""
+
+    this_node_last_snapshot_id: t.Optional[str] = Field(
+        default=None, alias="this_node_last_snapshot_id"
+    )
+    """The last snapshot taken on this node"""
 
     nodes: t.List[NodeStatusOut]
     """A list of all nodes known to be in the cluster"""

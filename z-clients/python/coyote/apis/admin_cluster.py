@@ -2,6 +2,8 @@
 
 from ..internal.api_common import ApiBase
 from ..models import (
+    ClusterForceSnapshotIn,
+    ClusterForceSnapshotOut,
     ClusterInitializeIn,
     ClusterInitializeOut,
     ClusterRemoveNodeIn,
@@ -56,6 +58,20 @@ class AdminClusterAsync(ApiBase):
             response_type=ClusterRemoveNodeOut,
         )
 
+    async def force_snapshot(
+        self,
+        cluster_force_snapshot_in: ClusterForceSnapshotIn = ClusterForceSnapshotIn(),
+    ) -> ClusterForceSnapshotOut:
+        """Force the cluster to take a snapshot immediately"""
+        body = cluster_force_snapshot_in.model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.admin.cluster.force-snapshot",
+            body=body,
+            response_type=ClusterForceSnapshotOut,
+        )
+
 
 class AdminCluster(ApiBase):
     def status(
@@ -101,4 +117,18 @@ class AdminCluster(ApiBase):
             path="/api/v1.admin.cluster.remove-node",
             body=body,
             response_type=ClusterRemoveNodeOut,
+        )
+
+    def force_snapshot(
+        self,
+        cluster_force_snapshot_in: ClusterForceSnapshotIn = ClusterForceSnapshotIn(),
+    ) -> ClusterForceSnapshotOut:
+        """Force the cluster to take a snapshot immediately"""
+        body = cluster_force_snapshot_in.model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.admin.cluster.force-snapshot",
+            body=body,
+            response_type=ClusterForceSnapshotOut,
         )
