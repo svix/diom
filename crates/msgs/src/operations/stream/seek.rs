@@ -36,7 +36,7 @@ impl StreamSeekOperation {
         target: SeekTarget,
     ) -> Result<Self> {
         let (topic, partition) = match topic {
-            TopicIn::TopicPartition(tp) => (tp.raw, Some(tp.partition)),
+            TopicIn::TopicPartition(tp) => (tp.topic, Some(tp.partition)),
             TopicIn::TopicName(tn) => (tn, None),
         };
 

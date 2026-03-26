@@ -22,7 +22,8 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-earliest:t1",
+            "namespace": "ns-seek-earliest",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -32,7 +33,8 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-seek-earliest:t1",
+            "namespace": "ns-seek-earliest",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -46,7 +48,8 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-earliest:t1",
+            "namespace": "ns-seek-earliest",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -62,6 +65,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
+            "namespace": "ns-seek-earliest",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -73,7 +77,8 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-earliest:t1",
+            "namespace": "ns-seek-earliest",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -85,7 +90,8 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     client
         .post("v1.msgs.stream.seek")
         .json(json!({
-            "topic": "ns-seek-earliest:t1",
+            "namespace": "ns-seek-earliest",
+            "topic": "t1",
             "consumer_group": "cg1",
             "position": "earliest",
         }))
@@ -96,7 +102,8 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     let r3 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-earliest:t1",
+            "namespace": "ns-seek-earliest",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -130,7 +137,8 @@ async fn seek_latest_skips_existing() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-seek-latest:t1",
+            "namespace": "ns-seek-latest",
+            "topic": "t1",
             "msgs": [
                 { "value": "old-a".as_bytes(), "key": "k1" },
                 { "value": "old-b".as_bytes(), "key": "k1" },
@@ -143,7 +151,8 @@ async fn seek_latest_skips_existing() -> TestResult {
     client
         .post("v1.msgs.stream.seek")
         .json(json!({
-            "topic": "ns-seek-latest:t1",
+            "namespace": "ns-seek-latest",
+            "topic": "t1",
             "consumer_group": "cg1",
             "position": "latest",
         }))
@@ -154,7 +163,8 @@ async fn seek_latest_skips_existing() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-latest:t1",
+            "namespace": "ns-seek-latest",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -170,7 +180,8 @@ async fn seek_latest_skips_existing() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-seek-latest:t1",
+            "namespace": "ns-seek-latest",
+            "topic": "t1",
             "msgs": [
                 { "value": "new-a".as_bytes(), "key": "k1" },
                 { "value": "new-b".as_bytes(), "key": "k1" },
@@ -183,7 +194,8 @@ async fn seek_latest_skips_existing() -> TestResult {
     let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-latest:t1",
+            "namespace": "ns-seek-latest",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -216,7 +228,8 @@ async fn seek_to_specific_offset() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-offset:t1",
+            "namespace": "ns-seek-offset",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -226,7 +239,8 @@ async fn seek_to_specific_offset() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-seek-offset:t1",
+            "namespace": "ns-seek-offset",
+            "topic": "t1",
             "msgs": (0..5)
                 .map(|i| json!({ "value": format!("msg-{i}").as_bytes(), "key": "k1" }))
                 .collect::<Vec<_>>(),
@@ -238,7 +252,8 @@ async fn seek_to_specific_offset() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-offset:t1",
+            "namespace": "ns-seek-offset",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -254,6 +269,7 @@ async fn seek_to_specific_offset() -> TestResult {
     client
         .post("v1.msgs.stream.commit")
         .json(json!({
+            "namespace": "ns-seek-offset",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": last_offset,
@@ -265,6 +281,7 @@ async fn seek_to_specific_offset() -> TestResult {
     client
         .post("v1.msgs.stream.seek")
         .json(json!({
+            "namespace": "ns-seek-offset",
             "topic": partition_topic,
             "consumer_group": "cg1",
             "offset": 2,
@@ -276,7 +293,8 @@ async fn seek_to_specific_offset() -> TestResult {
     let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-offset:t1",
+            "namespace": "ns-seek-offset",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -312,7 +330,8 @@ async fn seek_offset_requires_partition_topic() -> TestResult {
     client
         .post("v1.msgs.stream.seek")
         .json(json!({
-            "topic": "ns-seek-pt:t1",
+            "namespace": "ns-seek-pt",
+            "topic": "t1",
             "consumer_group": "cg1",
             "offset": 0,
         }))
@@ -340,7 +359,8 @@ async fn seek_position_works_on_topic_level() -> TestResult {
     client
         .post("v1.msgs.topic.configure")
         .json(json!({
-            "topic": "ns-seek-topic:t1",
+            "namespace": "ns-seek-topic",
+            "topic": "t1",
             "partitions": 16,
         }))
         .await?
@@ -350,7 +370,8 @@ async fn seek_position_works_on_topic_level() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-topic:t1",
+            "namespace": "ns-seek-topic",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -360,7 +381,8 @@ async fn seek_position_works_on_topic_level() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-seek-topic:t1",
+            "namespace": "ns-seek-topic",
+            "topic": "t1",
             "msgs": [
                 { "value": "a1".as_bytes(), "key": "k1" },
                 { "value": "a2".as_bytes(), "key": "k1" },
@@ -375,7 +397,8 @@ async fn seek_position_works_on_topic_level() -> TestResult {
     client
         .post("v1.msgs.stream.seek")
         .json(json!({
-            "topic": "ns-seek-topic:t1",
+            "namespace": "ns-seek-topic",
+            "topic": "t1",
             "consumer_group": "cg1",
             "position": "earliest",
         }))
@@ -386,7 +409,8 @@ async fn seek_position_works_on_topic_level() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-topic:t1",
+            "namespace": "ns-seek-topic",
+            "topic": "t1",
             "consumer_group": "cg1",
             "batch_size": 10,
         }))
@@ -443,7 +467,8 @@ async fn seek_clears_lease() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-lease:t1",
+            "namespace": "ns-seek-lease",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -452,7 +477,8 @@ async fn seek_clears_lease() -> TestResult {
     client
         .post("v1.msgs.publish")
         .json(json!({
-            "topic": "ns-seek-lease:t1",
+            "namespace": "ns-seek-lease",
+            "topic": "t1",
             "msgs": [
                 { "value": "a".as_bytes(), "key": "k1" },
                 { "value": "b".as_bytes(), "key": "k1" },
@@ -465,7 +491,8 @@ async fn seek_clears_lease() -> TestResult {
     let r1 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-lease:t1",
+            "namespace": "ns-seek-lease",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -477,7 +504,8 @@ async fn seek_clears_lease() -> TestResult {
     client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-lease:t1",
+            "namespace": "ns-seek-lease",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
@@ -487,7 +515,8 @@ async fn seek_clears_lease() -> TestResult {
     client
         .post("v1.msgs.stream.seek")
         .json(json!({
-            "topic": "ns-seek-lease:t1",
+            "namespace": "ns-seek-lease",
+            "topic": "t1",
             "consumer_group": "cg1",
             "position": "earliest",
         }))
@@ -498,7 +527,8 @@ async fn seek_clears_lease() -> TestResult {
     let r2 = client
         .post("v1.msgs.stream.receive")
         .json(json!({
-            "topic": "ns-seek-lease:t1",
+            "namespace": "ns-seek-lease",
+            "topic": "t1",
             "consumer_group": "cg1",
         }))
         .await?
