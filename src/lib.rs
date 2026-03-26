@@ -329,14 +329,11 @@ impl Initialized {
     // Wait until initialization is finished or the server shuts down
     pub async fn wait(self) -> coyote_error::Result<()> {
         let shutting_down_token = shutting_down_token();
-        if shutting_down_token
+        shutting_down_token
             .run_until_cancelled(self.inner.wait())
             .await
-            .is_none()
-        {
-            return Err(Error::shutting_down());
-        }
-        Ok(())
+            .copied()
+            .ok_or_else(Error::shutting_down)
     }
 }
 
