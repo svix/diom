@@ -51,6 +51,7 @@ async fn authenticate(
 
 pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
     let mut authenticated = axum::Router::new()
+        .route("/repl/discover", get(discover))
         .route("/repl/raft/append_entries", post(append_entries))
         .route("/repl/raft/vote", post(vote))
         .route("/repl/raft/stream-snapshot", post(stream_snapshot))
@@ -75,7 +76,6 @@ pub fn router(cfg: &Configuration) -> axum::Router<AppState> {
     }
 
     let unauthenticated = axum::Router::new()
-        .route("/repl/discover", get(discover))
         .route("/repl/node-id", get(get_node_id))
         .route("/repl/health", get(health));
 
