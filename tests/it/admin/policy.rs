@@ -70,7 +70,10 @@ async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
         .ensure(StatusCode::OK)?
         .json();
 
-    assert_eq!(second["created"], created_at, "created should be preserved on update");
+    assert_eq!(
+        second["created"], created_at,
+        "created should be preserved on update"
+    );
     assert_eq!(second["id"], "base-policy");
 
     let get_resp = client

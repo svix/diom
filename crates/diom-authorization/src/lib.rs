@@ -87,7 +87,11 @@ pub struct AccessRule {
 
 impl AccessRule {
     pub fn matches(&self, operation: &RequestedOperation<'_>) -> bool {
-        self.resource.matches(operation) && self.actions.iter().any(|a| a == operation.action)
+        self.resource.matches(operation)
+            && self
+                .actions
+                .iter()
+                .any(|a| a == "*" || a == operation.action)
     }
 }
 
