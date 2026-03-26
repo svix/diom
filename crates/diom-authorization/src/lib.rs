@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, fmt, sync::Arc};
 
-use diom_id::Module;
+use diom_id::{AuthTokenId, Module};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ mod verification;
 
 pub use self::{
     pattern::{KeyPattern, NamespacePattern, ResourcePattern},
-    verification::verify_operation,
+    verification::{Forbidden, verify_operation},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
@@ -78,7 +78,7 @@ pub struct AccessPolicy {
     pub rules: Vec<AccessRule>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct AccessRule {
     pub effect: AccessRuleEffect,
     pub resource: ResourcePattern,
@@ -91,7 +91,7 @@ impl AccessRule {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessRuleEffect {
     Allow,
@@ -104,4 +104,15 @@ pub struct RequestedOperation<'a> {
     pub namespace: Option<&'a str>,
     pub key: Option<&'a str>,
     pub action: &'static str,
+}
+
+/// The `Permissions` for a request
+#[derive(Clone)]
+pub struct Permissions {
+    /// The role of the requester
+    pub role: RoleId,
+    /// The auth token id, if we used auth token
+    pub auth_token_id: Option<AuthTokenId>,
+    /// The access rules of the requester's role
+    pub access_rules: Arc<[AccessRule]>,
 }

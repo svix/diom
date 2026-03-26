@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize, de};
 
 use crate::RequestedOperation;
 
-#[derive(Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[schemars(schema_with = "String::json_schema")]
 pub struct ResourcePattern {
     pub module: Module,
@@ -17,14 +17,15 @@ pub struct ResourcePattern {
     pub key: KeyPattern,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NamespacePattern {
     Default,
     Named(String),
     Any,
     // FIXME: Do namespaces have any sort of hierarchy?
 }
-#[derive(Debug, PartialEq, Eq)]
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum KeyPattern {
     Exactly(String),
     Prefix(String),

@@ -13,12 +13,14 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use bytes::{BufMut as _, Bytes, BytesMut};
+use diom_authorization::{Permissions, verify_operation};
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
 use validator::Validate;
 
 use crate::{
-    RequestInput, StandardErrorBody, ValidationErrorBody, ValidationErrorItem, validation_errors,
+    AccessMetadata, RequestInput, StandardErrorBody, ValidationErrorBody, ValidationErrorItem,
+    validation_errors,
 };
 
 tokio::task_local! {
@@ -124,6 +126,8 @@ where
             }
         }
 
+        let permissions = req.extensions().get::<Permissions>().cloned();
+
         let content_type = classify_content_type(req.headers())?;
         let b: Bytes = req.extract().await.map_err(map_bytes_error)?;
         let value: T = match content_type {
@@ -137,6 +141,18 @@ where
             }
         };
         value.validate().map_err(make_validation_error)?;
+
+        if let Some(perms) = permissions {
+            match value.access_metadata() {
+                AccessMetadata::AdminOnly => {}
+                AccessMetadata::RuleProtected(op) => {
+                    // FIXME: Figure out what to do for access rules of operator / admin.
+                    if perms.auth_token_id.is_some() {
+                        verify_operation(&op, &perms.access_rules)?;
+                    }
+                }
+            }
+        }
 
         Ok(MsgPackOrJson(value))
     }
@@ -238,11 +254,18 @@ pub enum MsgPackOrJsonRejection {
     InternalServerError { msg: String },
     ContentType { code: &'static str },
     Validation { errors: Vec<ValidationErrorItem> },
+    Forbidden,
 }
 
 impl MsgPackOrJsonRejection {
     fn content_type(code: &'static str) -> Self {
         Self::ContentType { code }
+    }
+}
+
+impl From<diom_authorization::Forbidden> for MsgPackOrJsonRejection {
+    fn from(_: diom_authorization::Forbidden) -> Self {
+        Self::Forbidden
     }
 }
 
@@ -265,6 +288,11 @@ impl IntoResponse for MsgPackOrJsonRejection {
             Self::Validation { errors } => error_response(
                 StatusCode::UNPROCESSABLE_ENTITY,
                 ValidationErrorBody::new(errors),
+            ),
+            Self::Forbidden => standard_error_response(
+                StatusCode::FORBIDDEN,
+                "forbidden",
+                "You do not have permission to use this operation",
             ),
         }
     }
