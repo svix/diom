@@ -29,6 +29,7 @@ public class MsgStreamReceiveIn_ {
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
     @JsonProperty("default_starting_position") private SeekPosition defaultStartingPosition;
+    @JsonProperty("batch_wait_ms") private Long batchWaitMs;
 
     public MsgStreamReceiveIn_(
         String namespace,
@@ -36,7 +37,8 @@ public class MsgStreamReceiveIn_ {
         String consumerGroup,
         Short batchSize,
         Long leaseDurationMs,
-        SeekPosition defaultStartingPosition
+        SeekPosition defaultStartingPosition,
+        Long batchWaitMs
     ) {
         this.namespace = namespace;
         this.topic = topic;
@@ -44,6 +46,7 @@ public class MsgStreamReceiveIn_ {
         this.batchSize = batchSize;
         this.leaseDurationMs = leaseDurationMs;
         this.defaultStartingPosition = defaultStartingPosition;
+        this.batchWaitMs = batchWaitMs;
     }
 
     /**

@@ -23,6 +23,7 @@ use diom_msgs::{
 };
 use diom_namespace::entities::NamespaceName;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use fjall_utils::{ReadableDatabase, ReadonlyConnection, StorageType};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -215,6 +216,9 @@ struct MsgStreamReceiveIn {
     pub lease_duration_ms: DurationMs,
     #[serde(default)]
     pub default_starting_position: SeekPosition,
+    /// Maximum time (in milliseconds) to wait for messages before returning.
+    #[serde(default)]
+    pub batch_wait_ms: Option<DurationMs>,
 }
 
 request_input!(MsgStreamReceiveIn, "Receive");
@@ -238,6 +242,41 @@ async fn stream_receive(
         .namespace_state
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
+
+    // FIXME(@svix-gabriel) - there's potentially optimizations we can do using fancy tokio
+    // Notifiers to avoid sleeping the max duration. But this is simplest for now.
+    if let Some(max_wait) = data.batch_wait_ms {
+        let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
+        let metadata_ks = ro_db
+            .keyspace(diom_msgs::METADATA_KEYSPACE)
+            .or_internal_error()?;
+        let msg_ks = ro_db
+            .keyspace(diom_msgs::MSG_KEYSPACE)
+            .or_internal_error()?;
+
+        let ns_id = namespace.id;
+        let topic_name = data.topic.name().clone();
+        let cg = data.consumer_group.clone();
+        let now = state.time.now();
+        let batch_size = data.batch_size;
+
+        let estimated = diom_core::task::spawn_blocking_in_current_span(move || {
+            diom_msgs::estimate_available_stream_messages(
+                &metadata_ks,
+                &msg_ks,
+                ns_id,
+                &topic_name,
+                &cg,
+                now,
+            )
+        })
+        .await
+        .or_internal_error()??;
+
+        if (estimated as usize) < batch_size.get() as usize {
+            state.time.sleep(max_wait.into()).await;
+        }
+    }
 
     let operation = StreamReceiveOperation::new(
         namespace.id,
@@ -378,6 +417,9 @@ struct MsgQueueReceiveIn {
     pub batch_size: NonZeroU16,
     #[serde(default = "default_queue_lease_duration_ms")]
     pub lease_duration_ms: DurationMs,
+    /// Maximum time (in milliseconds) to wait for messages before returning.
+    #[serde(default)]
+    pub batch_wait_ms: Option<DurationMs>,
 }
 
 request_input!(MsgQueueReceiveIn, "Receive");
@@ -402,6 +444,41 @@ async fn queue_receive(
         .namespace_state
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
+
+    // FIXME(@svix-gabriel) - there's potentially optimizations we can do using fancy tokio
+    // Notifiers to avoid sleeping the max duration. But this is simplest for now.
+    if let Some(max_wait) = data.batch_wait_ms {
+        let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
+        let metadata_ks = ro_db
+            .keyspace(diom_msgs::METADATA_KEYSPACE)
+            .or_internal_error()?;
+        let msg_ks = ro_db
+            .keyspace(diom_msgs::MSG_KEYSPACE)
+            .or_internal_error()?;
+
+        let ns_id = namespace.id;
+        let topic_name = data.topic.name().clone();
+        let cg = data.consumer_group.clone();
+        let now = state.time.now();
+        let batch_size = data.batch_size;
+
+        let estimated = diom_core::task::spawn_blocking_in_current_span(move || {
+            diom_msgs::estimate_available_queue_messages(
+                &metadata_ks,
+                &msg_ks,
+                ns_id,
+                &topic_name,
+                &cg,
+                now,
+            )
+        })
+        .await
+        .or_internal_error()??;
+
+        if (estimated as usize) < batch_size.get() as usize {
+            state.time.sleep(max_wait.into()).await;
+        }
+    }
 
     let operation = QueueReceiveOperation::new(
         namespace.id,

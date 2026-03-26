@@ -34,6 +34,7 @@ public class MsgStreamReceiveIn {
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
     @JsonProperty("default_starting_position") private SeekPosition defaultStartingPosition;
+    @JsonProperty("batch_wait_ms") private Long batchWaitMs;
     public MsgStreamReceiveIn() {}
 
     public MsgStreamReceiveIn namespace(String namespace) {
@@ -110,5 +111,24 @@ public class MsgStreamReceiveIn {
 
     public void setDefaultStartingPosition(SeekPosition defaultStartingPosition) {
         this.defaultStartingPosition = defaultStartingPosition;
+    }
+
+    public MsgStreamReceiveIn batchWaitMs(Long batchWaitMs) {
+        this.batchWaitMs = batchWaitMs;
+        return this;
+    }
+
+    /**
+    * Maximum time (in milliseconds) to wait for messages before returning.
+    *
+     * @return batchWaitMs
+     */
+    @javax.annotation.Nullable
+    public Long getBatchWaitMs() {
+        return batchWaitMs;
+    }
+
+    public void setBatchWaitMs(Long batchWaitMs) {
+        this.batchWaitMs = batchWaitMs;
     }
 }

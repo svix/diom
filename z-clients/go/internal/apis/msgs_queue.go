@@ -34,6 +34,7 @@ func (msgsQueue MsgsQueue) Receive(
 		ConsumerGroup:   consumerGroup,
 		BatchSize:       msgQueueReceiveIn.BatchSize,
 		LeaseDurationMs: msgQueueReceiveIn.LeaseDurationMs,
+		BatchWaitMs:     msgQueueReceiveIn.BatchWaitMs,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgQueueReceiveIn_, diom_models.MsgQueueReceiveOut](

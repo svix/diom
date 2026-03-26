@@ -33,6 +33,7 @@ public class MsgQueueReceiveIn {
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
     @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
+    @JsonProperty("batch_wait_ms") private Long batchWaitMs;
     public MsgQueueReceiveIn() {}
 
     public MsgQueueReceiveIn namespace(String namespace) {
@@ -90,5 +91,24 @@ public class MsgQueueReceiveIn {
 
     public void setLeaseDurationMs(Long leaseDurationMs) {
         this.leaseDurationMs = leaseDurationMs;
+    }
+
+    public MsgQueueReceiveIn batchWaitMs(Long batchWaitMs) {
+        this.batchWaitMs = batchWaitMs;
+        return this;
+    }
+
+    /**
+    * Maximum time (in milliseconds) to wait for messages before returning.
+    *
+     * @return batchWaitMs
+     */
+    @javax.annotation.Nullable
+    public Long getBatchWaitMs() {
+        return batchWaitMs;
+    }
+
+    public void setBatchWaitMs(Long batchWaitMs) {
+        this.batchWaitMs = batchWaitMs;
     }
 }

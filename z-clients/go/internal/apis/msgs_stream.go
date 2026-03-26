@@ -34,6 +34,7 @@ func (msgsStream MsgsStream) Receive(
 		BatchSize:               msgStreamReceiveIn.BatchSize,
 		LeaseDurationMs:         msgStreamReceiveIn.LeaseDurationMs,
 		DefaultStartingPosition: msgStreamReceiveIn.DefaultStartingPosition,
+		BatchWaitMs:             msgStreamReceiveIn.BatchWaitMs,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgStreamReceiveIn_, diom_models.MsgStreamReceiveOut](

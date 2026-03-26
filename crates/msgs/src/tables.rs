@@ -188,7 +188,7 @@ impl QueueLeaseRow {
     // with a proper range/prefix scan API on TableRow.
     /// Returns all lease rows for a given (topic, partition, consumer_group) via prefix scan.
     pub(crate) fn scan_partition(
-        keyspace: &fjall::Keyspace,
+        keyspace: &impl fjall_utils::ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
         consumer_group: &ConsumerGroup,
@@ -276,7 +276,7 @@ impl MsgRow {
 
     #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn next_offset(
-        keyspace: &fjall::Keyspace,
+        keyspace: &impl fjall_utils::ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
     ) -> Result<Offset> {

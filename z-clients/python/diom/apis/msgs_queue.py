@@ -39,6 +39,7 @@ class MsgsQueueAsync(ApiBase):
             consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
             lease_duration_ms=msg_queue_receive_in.lease_duration_ms,
+            batch_wait_ms=msg_queue_receive_in.batch_wait_ms,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -159,6 +160,7 @@ class MsgsQueue(ApiBase):
             consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
             lease_duration_ms=msg_queue_receive_in.lease_duration_ms,
+            batch_wait_ms=msg_queue_receive_in.batch_wait_ms,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(
