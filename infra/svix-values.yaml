@@ -1,0 +1,42 @@
+crds:
+  enabled: true
+  upgrade:
+    enabled: true
+    forceConflicts: true
+
+cluster:
+  image:
+    tag: ""
+  spec:
+    service:
+      type: LoadBalancer
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-type: "external"
+        service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    storage:
+      persistent:
+        size: 64Gi
+        storageClass: gp3-encrypted
+    extraEnv:
+      - name: DIOM_OPENTELEMETRY_METRICS_ADDRESS
+        value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+      - name: DIOM_OPENTELEMETRY_METRICS_USE_HTTP
+        value: "true"
+      - name: DIOM_LOG_LEVEL
+        value: debug
+      - name: RUST_BACKTRACE
+        value: "1"
+      - name: DIOM_LOG_FORMAT
+        value: "json"
+      - name: DIOM_OPENTELEMETRY_ADDRESS
+        value: grpc://datadog-agent.datadog.svc.cluster.local:4317
+      - name: DIOM_ADMIN_TOKEN
+        value: "admin_abcdefghijlmnopqrstuvwxyz012345"
+    nodeSelector:
+      db-name: diom
+    tolerations:
+      - key: db-name
+        operator: Equal
+        value: diom
+        effect: NoSchedule

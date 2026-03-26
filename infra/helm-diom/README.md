@@ -1,4 +1,4 @@
-# diom-operator Helm chart
+# Diom Helm chart
 
 Installs the Diom CRD, operator and cluster.
 

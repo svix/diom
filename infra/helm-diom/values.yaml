@@ -1,12 +1,13 @@
 crds:
-  # Install the DiomCluster CRD.
+  # Install the DiomCluster CRD. If not enabled, you will
+  # need to manage installing the CRD yourself.
   enabled: true
   # Run a pre-install/pre-upgrade Job that applies the CRD via
   # `kubectl apply --server-side`, enabling automatic CRD schema upgrades.
   # See charts/crds/values.yaml for full configuration options.
   upgrade:
-    enabled: true
-    forceConflicts: true
+    enabled: false
+    forceConflicts: false
 
 operator:
   image:
@@ -41,44 +42,23 @@ operator:
 
   affinity: {}
 
-# Definition for diom cluster
+# Definition for the DiomCluster resource managed by the operator.
 cluster:
   enabled: true
   name: diom
   image:
     repository: ghcr.io/svix/diom-server
+    # tag is required when cluster.enabled=true.
     tag: ""
   spec:
     nodes: 3
     service:
-      type: LoadBalancer
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: "external"
-        service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
-        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+      type: ClusterIP
+      # annotations: {}
     storage:
       persistent:
-        size: 64Gi
-        storageClass: gp3-encrypted
-    extraEnv:
-      - name: DIOM_OPENTELEMETRY_METRICS_ADDRESS
-        value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
-      - name: DIOM_OPENTELEMETRY_METRICS_USE_HTTP
-        value: "true"
-      - name: RUST_LOG
-        value: debug
-      - name: RUST_BACKTRACE
-        value: "1"
-      - name: DIOM_LOG_FORMAT
-        value: "json"
-      - name: DIOM_OPENTELEMETRY_ADDRESS
-        value: grpc://datadog-agent.datadog.svc.cluster.local:4317
-      - name: DIOM_ADMIN_TOKEN
-        value: "admin_abcdefghijlmnopqrstuvwxyz12345"
-    nodeSelector:
-      db-name: diom
-    tolerations:
-      - key: db-name
-        operator: Equal
-        value: diom
-        effect: NoSchedule
+        size: 10Gi
+        # storageClass: ""
+    # extraEnv: []
+    # nodeSelector: {}
+    # tolerations: []
