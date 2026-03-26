@@ -963,6 +963,7 @@ dependencies = [
  "axum-extra",
  "byteorder",
  "constant_time_eq 0.4.2",
+ "coyote-admin-auth",
  "coyote-auth-token",
  "coyote-authorization",
  "coyote-cache",
@@ -1021,6 +1022,21 @@ dependencies = [
  "uuid",
  "validator",
  "zip",
+]
+
+[[package]]
+name = "coyote-admin-auth"
+version = "0.0.1"
+dependencies = [
+ "coyote-authorization",
+ "coyote-core",
+ "coyote-error",
+ "coyote-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "serde",
+ "tracing",
 ]
 
 [[package]]

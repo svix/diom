@@ -54,6 +54,7 @@ pub enum Request {
     Cache(coyote_cache::operations::CacheOperation),
     Msgs(coyote_msgs::operations::MsgsOperation),
     AuthToken(coyote_auth_token::operations::AuthTokenOperation),
+    AdminAuth(coyote_admin_auth::operations::AdminAuthOperation),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -78,6 +79,7 @@ impl fmt::Display for RequestWithContext {
             Request::Cache(_) => write!(f, "cache"),
             Request::Msgs(_) => write!(f, "msgs"),
             Request::AuthToken(_) => write!(f, "auth_token"),
+            Request::AdminAuth(_) => write!(f, "admin_auth"),
         }
     }
 }
@@ -102,7 +104,9 @@ impl RequestWithContext {
             Request::Kv(op) => Sha256::digest(op.key_name()?),
             Request::Msgs(op) => Sha256::digest(op.key_name()),
             Request::RateLimit(op) => Sha256::digest(op.key_name()),
-            Request::ClusterInternal(_) | Request::AuthToken(_) => return None,
+            Request::ClusterInternal(_) | Request::AuthToken(_) | Request::AdminAuth(_) => {
+                return None;
+            }
         };
         Some(hex::encode(digest))
     }
@@ -116,6 +120,7 @@ impl RequestWithContext {
             Request::Msgs(_) => "msgs",
             Request::RateLimit(_) => "rate-limit",
             Request::AuthToken(_) => "auth-token",
+            Request::AdminAuth(_) => "admin-auth",
         }
     }
 }
@@ -156,6 +161,12 @@ impl From<coyote_auth_token::operations::AuthTokenOperation> for Request {
     }
 }
 
+impl From<coyote_admin_auth::operations::AdminAuthOperation> for Request {
+    fn from(value: coyote_admin_auth::operations::AdminAuthOperation) -> Self {
+        Request::AdminAuth(value)
+    }
+}
+
 impl From<InternalOperation> for Request {
     fn from(value: InternalOperation) -> Self {
         Self::ClusterInternal(value)
@@ -172,6 +183,7 @@ pub enum Response {
     Cache(coyote_cache::operations::Response),
     Msgs(coyote_msgs::operations::Response),
     AuthToken(coyote_auth_token::operations::Response),
+    AdminAuth(coyote_admin_auth::operations::Response),
 }
 
 impl TryFrom<Response> for coyote_kv::operations::Response {
@@ -246,6 +258,17 @@ impl TryFrom<Response> for coyote_auth_token::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::AuthToken(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for coyote_admin_auth::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::AdminAuth(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

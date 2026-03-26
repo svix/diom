@@ -29,6 +29,7 @@ axum.workspace = true
 axum-extra.workspace = true
 byteorder.workspace = true
 constant_time_eq.workspace = true
+coyote-admin-auth.workspace = true
 coyote-auth-token.workspace = true
 coyote-authorization.workspace = true
 coyote-cache.workspace = true
@@ -134,6 +135,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
 coyote.path = "."
+coyote-admin-auth.path = "crates/coyote-admin-auth"
 coyote-auth-token.path = "crates/auth-token"
 coyote-authorization.path = "crates/coyote-authorization"
 coyote-cache.path = "crates/cache"
