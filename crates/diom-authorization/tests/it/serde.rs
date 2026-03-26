@@ -16,7 +16,7 @@ fn example_rules() -> Vec<AccessRule> {
             resource: ResourcePattern {
                 module: Module::Cache,
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Prefix("foo".to_owned()),
+                key: KeyPattern::Prefix("foo/".to_owned()),
             },
             actions: vec!["Read".to_owned(), "List".to_owned()],
         },
@@ -34,7 +34,7 @@ fn example_rules() -> Vec<AccessRule> {
             resource: ResourcePattern {
                 module: Module::Kv,
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Prefix("some-data".to_owned()),
+                key: KeyPattern::Prefix("some-data/".to_owned()),
             },
             actions: vec!["Read".to_owned(), "List".to_owned()],
         },
