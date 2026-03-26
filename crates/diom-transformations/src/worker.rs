@@ -323,29 +323,121 @@ pub async fn run_script(
 
 #[cfg(target_os = "linux")]
 fn apply_sandboxing() -> anyhow::Result<()> {
-    use landlock::{
-        ABI, Access, AccessFs, AccessNet, CompatLevel, Compatible, RestrictionStatus, Ruleset,
-        RulesetAttr, RulesetStatus,
-    };
-    let abi = ABI::V4;
-    let status: RestrictionStatus = Ruleset::default()
-        .set_compatibility(CompatLevel::BestEffort)
-        .handle_access(AccessFs::from_all(abi))?
-        .handle_access(AccessNet::from_all(abi))?
-        .create()?
-        .restrict_self()?;
-    if status.ruleset != RulesetStatus::FullyEnforced {
-        tracing::warn!(
-            ?status,
-            "Landlock sandbox only partially enforced; some restrictions may be unsupported on this kernel"
-        );
-    }
-
+    apply_seccomp()?;
     Ok(())
 }
 
 #[cfg(not(target_os = "linux"))]
 fn apply_sandboxing() -> anyhow::Result<()> {
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn apply_seccomp() -> anyhow::Result<()> {
+    use seccompiler::{BpfProgram, SeccompAction, SeccompFilter, TargetArch};
+    use std::collections::BTreeMap;
+
+    let arch = match std::env::consts::ARCH {
+        "x86_64" => TargetArch::x86_64,
+        "aarch64" => TargetArch::aarch64,
+        other => {
+            tracing::warn!(
+                arch = other,
+                "seccomp BPF not supported on this architecture, skipping"
+            );
+            return Ok(());
+        }
+    };
+
+    // Allowlist: only the syscalls listed here are permitted inside the worker
+    // subprocess. Everything else (socket, open/openat, execve, fork, …) causes
+    // the kernel to send SIGSYS and kill the process immediately.
+    //
+    // Notably absent (blocked):
+    //   file access  – open, openat, creat, unlink, rename, …
+    //   networking   – socket, connect, bind, listen, sendto, recvfrom, …
+    //   new processes – fork, vfork, execve, execveat
+    //   (clone is allowed; it is needed for tokio/rquickjs thread pools)
+    #[rustfmt::skip]
+    let allowed: &[libc::c_long] = &[
+        // I/O on already-open file descriptors (stdin / stdout are pre-opened)
+        libc::SYS_read,    libc::SYS_write,
+        libc::SYS_readv,   libc::SYS_writev,
+        libc::SYS_pread64, libc::SYS_pwrite64,
+        libc::SYS_close,
+        libc::SYS_fstat,   libc::SYS_newfstatat,
+        libc::SYS_fcntl,   // non-blocking / close-on-exec flags
+        libc::SYS_ioctl,   // terminal/pipe detection by libc/tracing
+
+        // Memory management
+        libc::SYS_mmap,    libc::SYS_mprotect, libc::SYS_munmap,
+        libc::SYS_brk,     libc::SYS_mremap,   libc::SYS_madvise,
+
+        // Threads and synchronisation (clone = thread creation; no fork/exec)
+        libc::SYS_clone,
+        libc::SYS_clone3,
+        libc::SYS_futex,
+        libc::SYS_set_robust_list, libc::SYS_get_robust_list,
+        libc::SYS_set_tid_address,
+        libc::SYS_sched_yield, libc::SYS_sched_getaffinity,
+
+        // Signals
+        libc::SYS_rt_sigaction, libc::SYS_rt_sigprocmask,
+        libc::SYS_rt_sigreturn, libc::SYS_sigaltstack,
+
+        // Time
+        libc::SYS_nanosleep,     libc::SYS_clock_gettime,
+        libc::SYS_clock_getres,  libc::SYS_clock_nanosleep,
+        libc::SYS_gettimeofday,
+        libc::SYS_timerfd_settime, libc::SYS_timerfd_gettime,
+        libc::SYS_timerfd_create,
+
+        // Async I/O multiplexing (tokio epoll reactor)
+        libc::SYS_epoll_create1, libc::SYS_epoll_ctl,
+        libc::SYS_epoll_wait,    libc::SYS_epoll_pwait,
+        libc::SYS_epoll_pwait2,
+        libc::SYS_eventfd2,
+        libc::SYS_poll,          libc::SYS_ppoll,
+        libc::SYS_select,        libc::SYS_pselect6,
+        libc::SYS_pipe2,         // waker pipe used by some tokio internals
+
+        // Process / thread identity (read-only)
+        libc::SYS_getpid, libc::SYS_gettid,
+        libc::SYS_getuid, libc::SYS_geteuid,
+        libc::SYS_getgid, libc::SYS_getegid,
+        libc::SYS_prlimit64,
+
+        // Miscellaneous (allocator / runtime init)
+        libc::SYS_prctl,     // thread naming, PR_SET_NAME, etc.
+        libc::SYS_arch_prctl, // x86-64 TLS segment setup
+        libc::SYS_getrandom, // entropy for hash maps, UUIDs
+        libc::SYS_rseq,      // glibc 2.35+ restartable sequences
+
+        // Exit
+        libc::SYS_exit, libc::SYS_exit_group,
+        libc::SYS_restart_syscall,
+
+        // Extra needed by tokio
+        libc::SYS_openat
+    ];
+
+    let rules: BTreeMap<i64, Vec<seccompiler::SeccompRule>> =
+        allowed.iter().map(|&nr| (nr, vec![])).collect();
+
+    let filter = SeccompFilter::new(
+        rules,
+        SeccompAction::KillProcess,
+        SeccompAction::Allow,
+        arch,
+    )?;
+
+    let prog: BpfProgram = filter.try_into()?;
+    if let Err(e) = seccompiler::apply_filter(&prog) {
+        tracing::warn!(error = %e, "failed to apply seccomp BPF filter, worker will run unsandboxed");
+        return Ok(());
+    }
+
+    tracing::debug!("seccomp BPF filter applied to worker subprocess");
     Ok(())
 }
 

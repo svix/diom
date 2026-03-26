@@ -39,9 +39,13 @@ async fn execute(
     State(_state): State<AppState>,
     MsgPackOrJson(data): MsgPackOrJson<TransformIn>,
 ) -> Result<MsgPackOrJson<TransformOut>> {
-    let output = run_script(&data.script, &data.input, Duration::from_millis(data.max_duration_ms.as_millis()))
-        .await
-        .map_err(diom_error::Error::from)?;
+    let output = run_script(
+        &data.script,
+        &data.input,
+        Duration::from_millis(data.max_duration_ms.as_millis()),
+    )
+    .await
+    .map_err(diom_error::Error::from)?;
     Ok(MsgPackOrJson(TransformOut { output }))
 }
 
