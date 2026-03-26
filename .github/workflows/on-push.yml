@@ -68,6 +68,9 @@ jobs:
     needs: ci
     uses: ./.github/workflows/helm-publish.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
     with:
       version: 0.0.0-${{ github.sha }}
       image_tag: sha-${{ github.sha }}
