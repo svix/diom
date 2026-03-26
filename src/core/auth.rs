@@ -10,8 +10,7 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use coyote_authorization::RoleId;
-use coyote_id::AuthTokenId;
+use coyote_authorization::{Permissions, RoleId};
 use tracing::Span;
 
 use crate::{
@@ -37,16 +36,6 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
         .zip(b.iter())
         .fold(0u8, |acc, (x, y)| acc | (x ^ y))
         == 0
-}
-
-/// The `Permissions` for a request
-#[derive(Clone)]
-pub struct Permissions {
-    // pub scopes: ScopePermissions,
-    /// The role of the requester
-    pub role: RoleId,
-    /// The auth token id, if we used auth token
-    pub auth_token_id: Option<AuthTokenId>,
 }
 
 pub async fn authorization(
@@ -100,6 +89,7 @@ async fn authorization_inner(
         let perms = Permissions {
             role: RoleId::admin(),
             auth_token_id: None,
+            access_rules: [].into(),
         };
         return Ok(perms);
     }
@@ -128,6 +118,8 @@ async fn authorization_inner(
             let perms = Permissions {
                 role: RoleId::from_string(out_token.metadata.remove("role").unwrap()),
                 auth_token_id: Some(out_token.id.into_inner()),
+                // FIXME: Resolve access rules from auth token
+                access_rules: [].into(),
             };
             state
                 .auth_token_cache
