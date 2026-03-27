@@ -4,6 +4,7 @@
 #![warn(clippy::all)]
 
 use std::{
+    net::SocketAddr,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -14,8 +15,11 @@ use std::{
 use ::serde::{Serialize, de::DeserializeOwned};
 use aide::axum::ApiRouter;
 use axum::{
-    Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
-    serve::ListenerExt as _,
+    Extension,
+    extract::DefaultBodyLimit,
+    middleware,
+    response::IntoResponse as _,
+    serve::{Listener as _, ListenerExt as _},
 };
 use coyote_authorization::{Permissions, RoleId};
 use coyote_core::Monotime;
@@ -37,7 +41,7 @@ use tower_http::{
 use crate::{
     cfg::{Configuration, DatabaseConfig},
     core::{
-        cluster::RaftState,
+        cluster::{NodeId, RaftState},
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
         otel_spans::trace_layer,
     },
@@ -125,6 +129,28 @@ fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response:
         .into_response()
 }
 
+async fn axum_tcp_listener(
+    state: AppState,
+    listener: Option<TcpListener>,
+    listen_address: SocketAddr,
+    node_id: NodeId,
+    connection_type: ConnectionType,
+) -> axum::serve::TapIo<TcpListener, impl FnMut(&mut tokio::net::TcpStream)> {
+    let listener = match listener {
+        Some(l) => l,
+        None => TcpListener::bind(listen_address)
+            .await
+            .expect("Error binding to listen_address"),
+    };
+
+    listener.tap_io(move |tcp_stream| {
+        if let Err(err) = tcp_stream.set_nodelay(true) {
+            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
+        }
+        state.conn_metrics.accepted(node_id, connection_type);
+    })
+}
+
 async fn run_interserver(
     cfg: Configuration,
     state: AppState,
@@ -132,13 +158,15 @@ async fn run_interserver(
     listener: Option<TcpListener>,
     bind_barrier: Arc<Barrier>,
 ) {
-    let listen_address = cfg.cluster.listen_address(&cfg);
-    let listener = match listener {
-        Some(l) => l,
-        None => TcpListener::bind(listen_address)
-            .await
-            .expect("Error binding to listen_address"),
-    };
+    let listener = axum_tcp_listener(
+        state.clone(),
+        listener,
+        cfg.cluster.listen_address(&cfg),
+        raft.node_id,
+        ConnectionType::Internal,
+    )
+    .await;
+
     tracing::debug!(
         "Inter-Server: Listening on {}",
         listener.local_addr().unwrap()
@@ -153,22 +181,9 @@ async fn run_interserver(
             middleware::from_fn(coyote_proto::capture_accept_hdr),
             DefaultBodyLimit::disable(),
             Extension(raft.clone()),
-            middleware::from_fn_with_state(
-                state.clone(),
-                core::otel_spans::request_metrics_middleware,
-            ),
+            middleware::from_fn_with_state(state, core::otel_spans::request_metrics_middleware),
         ))
         .into_make_service();
-
-    let node_id = raft.node_id;
-    let listener = listener.tap_io(move |tcp_stream| {
-        if let Err(err) = tcp_stream.set_nodelay(true) {
-            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
-        }
-        state
-            .conn_metrics
-            .accepted(node_id, ConnectionType::Internal);
-    });
 
     axum::serve(listener, svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
@@ -345,7 +360,6 @@ pub async fn run_with_listeners(
         core::cluster::initialize_raft(&cfg, app_state.clone(), time, initialized.clone())
             .await
             .expect("failed to initialize cluster");
-    let node_id = raft_state.node_id;
 
     let v1_router = v1::router(Some(app_state.clone()))
         .with_state::<()>(app_state.clone())
@@ -402,13 +416,6 @@ pub async fn run_with_listeners(
         ))
         .into_make_service();
 
-    let listen_address = cfg.listen_address;
-    let listener = match listener {
-        Some(l) => l,
-        None => TcpListener::bind(listen_address)
-            .await
-            .expect("Error binding to listen_address"),
-    };
     tokio::task::spawn({
         let cfg = cfg.clone();
         let raft_state = raft_state.clone();
@@ -425,16 +432,16 @@ pub async fn run_with_listeners(
         }
     });
 
-    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
+    let listener = axum_tcp_listener(
+        app_state,
+        listener,
+        cfg.listen_address,
+        raft_state.node_id,
+        ConnectionType::External,
+    )
+    .await;
 
-    let listener = listener.tap_io(move |tcp_stream| {
-        if let Err(err) = tcp_stream.set_nodelay(true) {
-            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
-        }
-        app_state
-            .conn_metrics
-            .accepted(node_id, ConnectionType::External);
-    });
+    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
     let worker_handle = tokio::task::spawn({
         let raft_state = raft_state.clone();

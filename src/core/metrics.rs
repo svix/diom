@@ -90,6 +90,7 @@ impl LogMetrics {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ConnectionType {
     Internal,
     External,
