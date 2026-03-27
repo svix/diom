@@ -23,6 +23,7 @@ cluster:
         service.beta.kubernetes.io/aws-load-balancer-type: "external"
         service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
         service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+        external-dns.alpha.kubernetes.io/hostname: "coyote.svix.local"
     storage:
       persistent:
         size: 64Gi
