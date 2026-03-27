@@ -30,6 +30,8 @@ import lombok.ToString;
 public class AuthTokenListIn {
     @JsonProperty private String namespace;
     @JsonProperty("owner_id") private String ownerId;
+    @JsonProperty private Long limit;
+    @JsonProperty private String iterator;
     public AuthTokenListIn() {}
 
     public AuthTokenListIn namespace(String namespace) {
@@ -68,6 +70,44 @@ public class AuthTokenListIn {
 
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public AuthTokenListIn limit(Long limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    /**
+    * Limit the number of returned items
+    *
+     * @return limit
+     */
+    @javax.annotation.Nullable
+    public Long getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Long limit) {
+        this.limit = limit;
+    }
+
+    public AuthTokenListIn iterator(String iterator) {
+        this.iterator = iterator;
+        return this;
+    }
+
+    /**
+    * The iterator returned from a prior invocation
+    *
+     * @return iterator
+     */
+    @javax.annotation.Nullable
+    public String getIterator() {
+        return iterator;
+    }
+
+    public void setIterator(String iterator) {
+        this.iterator = iterator;
     }
 
     /**

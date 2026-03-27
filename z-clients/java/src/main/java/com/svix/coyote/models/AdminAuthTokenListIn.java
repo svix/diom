@@ -28,7 +28,47 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class AdminAuthTokenListIn {
+    @JsonProperty private Long limit;
+    @JsonProperty private String iterator;
     public AdminAuthTokenListIn() {}
+
+    public AdminAuthTokenListIn limit(Long limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    /**
+    * Limit the number of returned items
+    *
+     * @return limit
+     */
+    @javax.annotation.Nullable
+    public Long getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Long limit) {
+        this.limit = limit;
+    }
+
+    public AdminAuthTokenListIn iterator(String iterator) {
+        this.iterator = iterator;
+        return this;
+    }
+
+    /**
+    * The iterator returned from a prior invocation
+    *
+     * @return iterator
+     */
+    @javax.annotation.Nullable
+    public String getIterator() {
+        return iterator;
+    }
+
+    public void setIterator(String iterator) {
+        this.iterator = iterator;
+    }
 
     /**
      * Create an instance of AdminAuthTokenListIn given a JSON string
