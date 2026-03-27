@@ -6,7 +6,6 @@
 use std::{net::SocketAddr, time::Instant};
 
 use axum::{
-    Extension,
     extract::{ConnectInfo, MatchedPath, Request, State},
     middleware::Next,
     response::Response,
@@ -22,15 +21,15 @@ use tracing_opentelemetry::OpenTelemetrySpanExt;
 use uuid::Uuid;
 
 pub(crate) async fn request_metrics_middleware(
-    State(state): State<crate::AppState>,
-    Extension(raft_state): Extension<super::cluster::RaftState>,
+    State(request_metrics): State<super::metrics::RequestMetrics>,
     matched_path: Option<MatchedPath>,
     req: Request,
     next: Next,
 ) -> Response {
     let route = matched_path
-        .map(|p| p.as_str().to_owned())
-        .unwrap_or_else(|| "unknown".to_owned());
+        .as_ref()
+        .map(|p| p.as_str())
+        .unwrap_or_else(|| "unknown");
     let content_length = req
         .headers()
         .get(header::CONTENT_LENGTH)
@@ -40,13 +39,7 @@ pub(crate) async fn request_metrics_middleware(
     let response = next.run(req).await;
     let duration = start.elapsed().as_millis() as _;
 
-    state.request_metrics.record(
-        &route,
-        raft_state.node_id,
-        response.status(),
-        duration,
-        content_length,
-    );
+    request_metrics.record(route, response.status(), duration, content_length);
     response
 }
 
