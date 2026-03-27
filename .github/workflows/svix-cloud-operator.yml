@@ -72,6 +72,7 @@ jobs:
       - name: Deploy operator via Helm
         run: |
           helm upgrade --install diom-operator ./${{ env.OPERATOR_DIR }}/../helm-diom \
+            --force-conflicts \
             --values ./${{ env.OPERATOR_DIR }}/../svix-values.yaml \
             --set-string operator.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
             --set-string operator.image.tag=${{ inputs.image_tag }} \
