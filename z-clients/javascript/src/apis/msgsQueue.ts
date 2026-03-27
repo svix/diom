@@ -62,8 +62,8 @@ export class MsgsQueue {
         request.setBody(
             MsgQueueReceiveInSerializer._toJsonObject({
                 ...msgQueueReceiveIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         
@@ -86,8 +86,8 @@ export class MsgsQueue {
         request.setBody(
             MsgQueueAckInSerializer._toJsonObject({
                 ...msgQueueAckIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         
@@ -111,8 +111,8 @@ export class MsgsQueue {
         request.setBody(
             MsgQueueConfigureInSerializer._toJsonObject({
                 ...msgQueueConfigureIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         
@@ -136,8 +136,8 @@ export class MsgsQueue {
         request.setBody(
             MsgQueueNackInSerializer._toJsonObject({
                 ...msgQueueNackIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         
@@ -156,8 +156,8 @@ export class MsgsQueue {
         request.setBody(
             MsgQueueRedriveDlqInSerializer._toJsonObject({
                 ...msgQueueRedriveDlqIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         

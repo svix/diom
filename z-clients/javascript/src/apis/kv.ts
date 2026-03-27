@@ -44,7 +44,7 @@ export class Kv {
         request.setBody(
             KvSetInSerializer._toJsonObject({
                 ...kvSetIn,
-                key,
+                key: key,
             })
         );
         
@@ -62,7 +62,7 @@ export class Kv {
         request.setBody(
             KvGetInSerializer._toJsonObject({
                 ...kvGetIn,
-                key,
+                key: key,
             })
         );
         
@@ -80,7 +80,7 @@ export class Kv {
         request.setBody(
             KvDeleteInSerializer._toJsonObject({
                 ...kvDeleteIn,
-                key,
+                key: key,
             })
         );
         
