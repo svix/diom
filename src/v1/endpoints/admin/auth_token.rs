@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::{Extension, State};
-use diom_authorization::RoleId;
+use diom_authorization::{Permissions, RoleId};
 use diom_core::types::{DurationMs, Metadata};
 use diom_derive::aide_annotate;
 use diom_error::{Error, ResultExt};
@@ -18,7 +18,6 @@ use validator::Validate;
 
 use crate::{
     AppState,
-    core::auth::Permissions,
     error::Result,
     v1::{
         endpoints::auth_token::{

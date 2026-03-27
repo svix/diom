@@ -5,6 +5,7 @@ pub trait RequestInput {
 }
 
 pub enum AccessMetadata<'a> {
+    // FIXME: Get rid of this in favor of proper access metadata for everything
     AdminOnly,
     RuleProtected(RequestedOperation<'a>),
 }
