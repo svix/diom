@@ -1,8 +1,12 @@
 // this file is @generated
 
 export interface ClusterForceSnapshotOut {
+    /** The wall-clock time at which the snapshot was initiated */
     snapshotTime: Date;
+    /** The log index at which the snapshot was initiated */
     snapshotLogIndex: number;
+    /** If this is `null`, the snapshot is still building in the background */
+    snapshotId?: string | null;
 }
 
 export const ClusterForceSnapshotOutSerializer = {
@@ -11,6 +15,7 @@ export const ClusterForceSnapshotOutSerializer = {
         return {
             snapshotTime: new Date(object['snapshot_time']),
             snapshotLogIndex: object['snapshot_log_index'],
+            snapshotId: object['snapshot_id'],
         };
     },
 
@@ -19,6 +24,7 @@ export const ClusterForceSnapshotOutSerializer = {
         return {
             'snapshot_time': self.snapshotTime,
             'snapshot_log_index': self.snapshotLogIndex,
+            'snapshot_id': self.snapshotId,
         };
     }
 }

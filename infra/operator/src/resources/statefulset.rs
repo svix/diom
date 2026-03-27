@@ -221,7 +221,7 @@ fn build_env(
     }
 
     // Extra user-provided env vars.
-    for extra in &spec.extra_env {
+    for extra in &spec.env_var {
         env.push(EnvVar {
             name: extra.name.clone(),
             value: extra.value.clone(),

@@ -1,4 +1,5 @@
 use anyhow::Context;
+use opentelemetry::{KeyValue, Value};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
@@ -8,7 +9,9 @@ use uuid::Uuid;
 
 use crate::cfg::PeerAddr;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema, Hash, PartialOrd, Ord,
+)]
 pub enum Node {
     #[default]
     NoAddress,
@@ -122,5 +125,20 @@ impl From<u64> for NodeId {
     fn from(value: u64) -> Self {
         let inner = Uuid::from_u64_pair(value, value);
         Self { inner }
+    }
+}
+
+impl From<NodeId> for Value {
+    fn from(value: NodeId) -> Self {
+        // we want to make this cheaply cloneable since we use it in
+        // metrics all the time, and it's low-cardinality
+        let value: std::sync::Arc<str> = value.to_string().into();
+        Self::String(value.into())
+    }
+}
+
+impl From<NodeId> for KeyValue {
+    fn from(value: NodeId) -> Self {
+        KeyValue::new("node_id", value)
     }
 }

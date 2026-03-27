@@ -3,13 +3,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use jiff::Timestamp;
-use openraft::{LogId, ServerState};
+use openraft::ServerState;
 use serde::{Deserialize, Serialize};
 
 use crate::cfg::PeerAddr;
 
 use super::{
-    ClusterId, NodeId,
+    ClusterId, LogId, NodeId,
     handle::{RequestWithContext, Response},
 };
 
@@ -24,7 +24,7 @@ pub(super) struct DiscoverClusterResponse {
     pub cluster_id: Option<ClusterId>,
     pub known_peers: BTreeMap<NodeId, PeerAddr>,
     pub state: ServerState,
-    pub last_committed_log_id: Option<LogId<NodeId>>,
+    pub last_committed_log_id: Option<LogId>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -91,7 +91,7 @@ pub struct ForwardedWriteRequest {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ForwardedWriteResponse {
-    pub log_id: LogId<NodeId>,
+    pub log_id: LogId,
     pub response: Response,
 }
 
@@ -100,5 +100,5 @@ pub struct LastIdRequest {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LastIdResponse {
-    pub last_committed_log_id: Option<LogId<NodeId>>,
+    pub last_committed_log_id: Option<LogId>,
 }

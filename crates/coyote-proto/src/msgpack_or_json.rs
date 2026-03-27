@@ -123,6 +123,8 @@ where
             }
         }
 
+        // let permissions = req.extensions().get::<Permissions>().cloned();
+
         let content_type = classify_content_type(req.headers())?;
         let b: Bytes = req.extract().await.map_err(map_bytes_error)?;
         let value: T = match content_type {
@@ -136,6 +138,25 @@ where
             }
         };
         value.validate().map_err(make_validation_error)?;
+
+        // FIXME: Disabled for now because we have some useful auth token tests
+        // that this breaks as things are incomplete at the moment.
+        /* if let Some(perms) = permissions {
+            match value.access_metadata() {
+                AccessMetadata::AdminOnly => {}
+                AccessMetadata::RuleProtected(op) => {
+                    // FIXME: Figure out what to do for access rules of operator / admin.
+                    if perms.auth_token_id.is_some()
+                        && verify_operation(&op, &perms.access_rules).is_err()
+                    {
+                        return Err(MsgPackOrJsonRejection::Forbidden {
+                            resource: op.resource_str(),
+                            action: op.action,
+                        });
+                    }
+                }
+            }
+        } */
 
         Ok(MsgPackOrJson(value))
     }
@@ -234,9 +255,19 @@ fn classify_content_type(
 
 pub enum MsgPackOrJsonRejection {
     PayloadTooLarge,
-    InternalServerError { msg: String },
-    ContentType { code: &'static str },
-    Validation { errors: Vec<ValidationErrorItem> },
+    InternalServerError {
+        msg: String,
+    },
+    ContentType {
+        code: &'static str,
+    },
+    Validation {
+        errors: Vec<ValidationErrorItem>,
+    },
+    Forbidden {
+        resource: String,
+        action: &'static str,
+    },
 }
 
 impl MsgPackOrJsonRejection {
@@ -264,6 +295,11 @@ impl IntoResponse for MsgPackOrJsonRejection {
             Self::Validation { errors } => error_response(
                 StatusCode::UNPROCESSABLE_ENTITY,
                 ValidationErrorBody::new(errors),
+            ),
+            Self::Forbidden { resource, action } => standard_error_response(
+                StatusCode::FORBIDDEN,
+                "forbidden",
+                format!("You do not have permission to perform `{action}` on `{resource}`"),
             ),
         }
     }

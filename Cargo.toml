@@ -19,6 +19,8 @@ ignored = [
 # FIXME: Make this actually effective by switching from using schemars'
 #        derive directly to using our own wrapper (like webhooks-private)
 openapi = []
+# This causes the replication layer to periodically dump stats to stdout
+raft-runtime-stats = ["openraft/runtime-stats"]
 
 [dependencies]
 addr.workspace = true
@@ -60,7 +62,6 @@ opentelemetry.workspace = true
 opentelemetry-http.workspace = true
 opentelemetry_sdk.workspace = true
 parking_lot.workspace = true
-pastey.workspace = true
 pnet.workspace = true
 rand.workspace = true
 regex.workspace = true
@@ -179,7 +180,7 @@ maplit = "1"
 mimalloc = "0.1.48"
 mime = "0.3"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "73153ca9ff9450231eb4018d4cdb2ef070331c62" }
-openraft = { version = "0.9.21", features = ["tracing-log", "anyhow", "serde", "storage-v2"] }
+openraft = { version = "0.10.0-alpha.17", features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
 opentelemetry = { version = "0.31.0", features = ["metrics"] }
 opentelemetry-http = "0.31.0"
 opentelemetry-otlp = { version = "0.31.0", default-features = false, features = ["internal-logs", "metrics", "grpc-tonic", "http-proto", "reqwest-client"] }

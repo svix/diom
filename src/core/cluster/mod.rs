@@ -1,10 +1,9 @@
-use openraft::RaftTypeConfig;
+use openraft::type_config::alias::{LogIdOf, NodeIdOf, NodeOf};
 
 pub(crate) mod app;
 mod applier;
 mod background;
 mod discovery;
-mod errors;
 mod handle;
 mod logs;
 pub(crate) mod network;
@@ -14,6 +13,7 @@ pub mod proto;
 pub(crate) mod raft;
 mod serialized_state_machine;
 mod state_machine;
+mod streaming_snapshot;
 
 pub use self::{
     app::router,
@@ -23,8 +23,10 @@ pub use self::{
     state_machine::Stores,
 };
 
-pub type NodeId = <TypeConfig as RaftTypeConfig>::NodeId;
-pub type Node = <TypeConfig as RaftTypeConfig>::Node;
-pub type LogId = openraft::LogId<NodeId>;
+pub(crate) type LogId = LogIdOf<TypeConfig>;
+pub type NodeId = NodeIdOf<TypeConfig>;
+pub(crate) type Node = NodeOf<TypeConfig>;
+pub(crate) type RaftError<C> = openraft::error::RaftError<TypeConfig, C>;
+pub(crate) type ClientWriteError = openraft::error::ClientWriteError<TypeConfig>;
 
 pub use state_machine::ClusterId;

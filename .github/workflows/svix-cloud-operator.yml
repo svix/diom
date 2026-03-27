@@ -72,11 +72,13 @@ jobs:
       - name: Deploy operator via Helm
         run: |
           helm upgrade --install coyote-operator ./${{ env.OPERATOR_DIR }}/../helm-coyote \
+            --force-conflicts \
             --values ./${{ env.OPERATOR_DIR }}/../svix-values.yaml \
             --set-string operator.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
             --set-string operator.image.tag=${{ inputs.image_tag }} \
             --set-string cluster.image.tag=${{ inputs.image_tag }} \
             --set operator.image.pullPolicy=Always \
+            --set operator.rbac.aggregateViewClusterRoles=true \
             --set crds.enabled=true \
             --atomic \
             --timeout=120s \
