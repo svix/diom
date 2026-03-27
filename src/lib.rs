@@ -363,12 +363,14 @@ pub async fn run_with_listeners(
 
     let v1_router = v1::router(Some(app_state.clone()))
         .with_state::<()>(app_state.clone())
-        .layer(middleware::from_fn_with_state(
-            app_state.clone(),
-            core::otel_spans::request_metrics_middleware,
-        ))
-        .layer(Extension(raft_state.clone()))
-        .layer(middleware::from_fn(fail_until_bootstrapped));
+        .layer((
+            middleware::from_fn(fail_until_bootstrapped),
+            Extension(raft_state.clone()),
+            middleware::from_fn_with_state(
+                app_state.clone(),
+                core::otel_spans::request_metrics_middleware,
+            ),
+        ));
 
     let interserver_started_barrier = Arc::new(Barrier::new(2));
 
