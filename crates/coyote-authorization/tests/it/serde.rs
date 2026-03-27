@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 
 use coyote_authorization::{
-    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, ModulePattern,
-    NamespacePattern, ResourcePattern, Role, RoleId,
+    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, KeyPatternSegment,
+    ModulePattern, NamespacePattern, ResourcePattern, Role, RoleId, SegmentedKeyPattern,
 };
 use coyote_id::Module;
 use serde_json::json;
@@ -34,7 +34,13 @@ fn example_rules() -> Vec<AccessRule> {
             resource: ResourcePattern {
                 module: ModulePattern::Exactly(Module::Kv),
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Prefix("some-data/".to_owned()),
+                key: KeyPattern::Segmented(SegmentedKeyPattern {
+                    segments: vec![
+                        KeyPatternSegment::Fixed("x".to_owned()),
+                        KeyPatternSegment::Placeholder("role".to_owned()),
+                    ],
+                    trailing_any: true,
+                }),
             },
             actions: vec!["get".to_owned(), "set".to_owned()],
         },
@@ -60,7 +66,7 @@ fn example_rules_serialized() -> serde_json::Value {
         },
         {
             "effect": "allow",
-            "resource": "kv::some-data/*",
+            "resource": "kv::x/${role}/*",
             "actions": [
                 "get",
                 "set"
