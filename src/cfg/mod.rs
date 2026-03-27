@@ -286,6 +286,17 @@ pub struct ClusterConfiguration {
     )]
     pub election_timeout_max: Duration,
 
+    /// The minimum time to let an election run for.
+    ///
+    /// This should be set to at least 5x the RTT of your farthest-apart nodes
+    /// and must not be less than `cluster_election_timeout_max`.
+    #[serde(
+        rename = "send_snapshot_ms",
+        with = "crate::serde::duration::millis",
+        default = "defaults::cluster_send_snapshot_timeout"
+    )]
+    pub send_snapshot_timeout: Duration,
+
     /// Address that other nodes should use to communicate with this one.
     ///
     /// If not passed, we'll attempt to discover it at boot time.
@@ -660,6 +671,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
                 log_ack_immediately: cluster_log_ack_immediately,
                 snapshot_after_writes: cluster_snapshot_after_writes,
                 snapshot_after_time: cluster_snapshot_after_time,
+                send_snapshot_timeout: cluster_send_snapshot_timeout,
                 shut_down_on_go_away: _,
             },
     } = &mut config;
@@ -707,7 +719,8 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         cluster_discovery_timeout: "COYOTE_CLUSTER_DISCOVERY_TIMEOUT_MS",
         cluster_startup_discovery_delay: "COYOTE_CLUSTER_STARTUP_DISCOVERY_DELAY_MS",
         cluster_log_index_interval: "COYOTE_LOG_INDEX_INTERVAL_MS",
-        cluster_log_sync_interval_duration: "COYOTE_CLUSTER_LOG_SYNC_INTERVAL_MS"
+        cluster_log_sync_interval_duration: "COYOTE_CLUSTER_LOG_SYNC_INTERVAL_MS",
+        cluster_send_snapshot_timeout: "COYOTE_CLUSTER_SEND_SNAPSHOT_TIMEOUT_MS",
     );
 
     // Fields that require different parsing

@@ -377,10 +377,14 @@ impl Store {
     async fn install_snapshot_(
         &mut self,
         meta: &SnapshotMeta,
-        snapshot: StoredSnapshot,
+        mut snapshot: StoredSnapshot,
     ) -> anyhow::Result<()> {
         tracing::debug!("starting snapshot installation");
-        let mut f = snapshot.file.into_std().await;
+        if !snapshot.is_final {
+            snapshot.persist(meta, &self.snapshot_directory)?;
+        }
+        let mut f = snapshot.file.try_clone().await?.into_std().await;
+        f.seek(SeekFrom::Start(0))?;
         let handle = self.stores.clone();
         spawn_blocking_in_current_span(move || {
             let stores = handle.write();
@@ -392,7 +396,8 @@ impl Store {
         self.record_ids_().await?;
         self.delete_unused_snapshots(snapshot.path.as_path())
             .await?;
-        self.set_last_snapshot_(meta.clone(), snapshot.path).await?;
+        self.set_last_snapshot_(meta.clone(), snapshot.path.clone())
+            .await?;
         Ok(())
     }
 
@@ -448,14 +453,17 @@ impl Store {
     }
 
     async fn begin_receiving_snapshot_(&mut self) -> anyhow::Result<SnapshotData> {
-        let path = self
-            .snapshot_directory
-            .with_file_name(format!("coyote-incoming-snapshot-{}", self.snapshot_idx));
+        let tempfile = tempfile::Builder::new()
+            .permissions(std::fs::Permissions::from_mode(0o600))
+            .tempfile_in(&self.snapshot_directory)?;
+        let (f, path) = tempfile.keep()?;
         self.snapshot_idx += 1;
-        let f = tokio::fs::File::create_new(path.clone())
-            .await
-            .context("failed to create snapshot")?;
-        Ok(StoredSnapshot { path, file: f })
+        let f = tokio::fs::File::from_std(f);
+        Ok(StoredSnapshot {
+            path,
+            file: f,
+            is_final: false,
+        })
     }
 
     fn prep_snapshot_builder_(&mut self) {
@@ -476,6 +484,7 @@ impl Store {
                 snapshot: StoredSnapshot {
                     file: f,
                     path: last_snapshot.path.clone(),
+                    is_final: true,
                 },
             }))
         } else {
@@ -549,11 +558,26 @@ impl Store {
 pub struct StoredSnapshot {
     file: tokio::fs::File,
     path: PathBuf,
+    is_final: bool,
+}
+
+impl Drop for StoredSnapshot {
+    fn drop(&mut self) {
+        if !self.is_final
+            && let Err(err) = std::fs::remove_file(&self.path)
+        {
+            tracing::warn!(?err, "error unlinking in-progress snapshot");
+        }
+    }
 }
 
 impl std::fmt::Debug for StoredSnapshot {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "StoredSnapshot {{ path: {:?} }}", self.path)
+        write!(
+            f,
+            "StoredSnapshot {{ path: {:?}, final: {:?} }}",
+            self.path, self.is_final
+        )
     }
 }
 
@@ -639,7 +663,28 @@ impl StoredSnapshot {
         })
         .await??;
         let file = tokio::fs::File::from_std(file);
-        Ok(Self { file, path })
+        Ok(Self {
+            file,
+            path,
+            is_final: true,
+        })
+    }
+
+    fn persist(&mut self, metadata: &SnapshotMeta, directory: &Path) -> anyhow::Result<()> {
+        if self.is_final {
+            anyhow::bail!("cannot persist a final snapshot");
+        }
+        let file_name = format!("coyote-{}", metadata.snapshot_id);
+        let path = directory.join(file_name);
+        tracing::debug!(
+            current_path = %self.path.display(),
+            target_path = %path.display(),
+            "persisting incoming snapshot"
+        );
+        std::fs::rename(&self.path, &path).context("renaming snapshot into place")?;
+        self.path = path;
+        self.is_final = true;
+        Ok(())
     }
 }
 
@@ -704,12 +749,8 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
         meta: &SnapshotMeta,
         snapshot: StoredSnapshot,
     ) -> StorageResult<()> {
-        self.inner
-            .write()
-            .await
-            .install_snapshot_(meta, snapshot)
-            .await
-            .map_err(io_err)
+        let mut this = self.inner.write().await;
+        this.install_snapshot_(meta, snapshot).await.map_err(io_err)
     }
 }
 
