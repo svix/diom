@@ -41,7 +41,11 @@ impl QueueNackOperation {
     #[tracing::instrument(skip_all, level = "debug")]
     async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueNackResponseData> {
         let state = state.clone();
+
         spawn_blocking_in_current_span(move || {
+            let topic = self.topic.to_string();
+            let consumer_group = self.consumer_group.to_string();
+            let nack_count = self.msg_ids.len() as u64;
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
                 TopicRow::key_for(self.namespace_id, &self.topic),
@@ -59,6 +63,8 @@ impl QueueNackOperation {
                 .unwrap_or_default();
 
             let mut batch = state.db.batch();
+            let mut retried_count: u64 = 0;
+            let mut dlq_count: u64 = 0;
 
             for msg_id in &self.msg_ids {
                 let existing = QueueLeaseRow::fetch(
@@ -79,6 +85,7 @@ impl QueueNackOperation {
                             attempt_count: attempt_count + 1,
                         },
                     )?;
+                    retried_count += 1;
                 } else if let Some(dlq_topic) = config.as_ref().and_then(|c| c.dlq_topic.as_ref()) {
                     // Retries exhausted, forward to DLQ topic
                     forward_to_dlq(
@@ -91,6 +98,7 @@ impl QueueNackOperation {
                         &self.consumer_group,
                         now,
                     )?;
+                    dlq_count += 1;
                 } else {
                     // No config or no DLQ topic — immediate DLQ
                     batch.insert_row(
@@ -98,11 +106,19 @@ impl QueueNackOperation {
                         QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
                         &QueueLeaseRow::dlq_marker(attempt_count),
                     )?;
+                    dlq_count += 1;
                 }
             }
 
             batch.commit().map_err(Error::from)?;
 
+            state.metrics.record_queue_nacked(
+                &topic,
+                &consumer_group,
+                nack_count,
+                retried_count,
+                dlq_count,
+            );
             Ok(QueueNackResponseData {})
         })
         .await?

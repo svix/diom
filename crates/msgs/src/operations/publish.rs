@@ -53,6 +53,9 @@ impl PublishOperation {
         let state = state.clone();
 
         let results = spawn_blocking_in_current_span(move || {
+            let bytes: u64 = self.msgs.iter().map(|m| m.value.len() as u64).sum();
+            let topic = self.topic.to_string();
+
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
                 TopicRow::key_for(self.namespace_id, &self.topic),
@@ -96,6 +99,13 @@ impl PublishOperation {
             )?;
 
             batch.commit().map_err(Error::from)?;
+
+            let msg_count: u64 = results
+                .iter()
+                .map(|r| r.offset.saturating_sub(r.start_offset))
+                .sum();
+            state.metrics.record_published(&topic, msg_count, bytes);
+
             Ok::<_, Error>(results)
         })
         .await??;

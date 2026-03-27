@@ -31,7 +31,10 @@ impl QueueRedriveDlqOperation {
     #[tracing::instrument(skip_all, level = "debug")]
     async fn apply_real(self, state: &State) -> Result<QueueRedriveDlqResponseData> {
         let state = state.clone();
+
         spawn_blocking_in_current_span(move || {
+            let topic = self.topic.to_string();
+            let consumer_group = self.consumer_group.to_string();
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
                 TopicRow::key_for(self.namespace_id, &self.topic),
@@ -39,6 +42,7 @@ impl QueueRedriveDlqOperation {
             .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
             let mut batch = state.db.batch();
+            let mut total_redriven: u64 = 0;
 
             for partition_idx in 0..topic_row.partitions {
                 let partition = Partition::new(partition_idx)?;
@@ -59,6 +63,7 @@ impl QueueRedriveDlqOperation {
                 )?;
 
                 let mut min_redriven: Option<u64> = None;
+                let mut partition_redriven: u64 = 0;
                 for (msg_id, lease) in &leases {
                     if lease.is_dlq() {
                         batch.remove(
@@ -68,6 +73,7 @@ impl QueueRedriveDlqOperation {
                         );
                         min_redriven =
                             Some(min_redriven.map_or(msg_id.offset, |m| m.min(msg_id.offset)));
+                        partition_redriven += 1;
                     }
                 }
 
@@ -80,10 +86,15 @@ impl QueueRedriveDlqOperation {
                         &cursor,
                     )?;
                 }
+
+                total_redriven += partition_redriven;
             }
 
             batch.commit().map_err(Error::from)?;
 
+            state
+                .metrics
+                .record_queue_redrive(&topic, &consumer_group, total_redriven);
             Ok(QueueRedriveDlqResponseData {})
         })
         .await?
