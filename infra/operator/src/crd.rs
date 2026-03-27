@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 
-use k8s_openapi::api::core::v1::{Affinity, Toleration, TopologySpreadConstraint};
+use k8s_openapi::api::core::v1::{Affinity, EnvVar, Toleration, TopologySpreadConstraint};
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -65,8 +65,11 @@ pub(crate) struct CoyoteClusterSpec {
     pub api_port: u16,
 
     /// Additional environment variables to inject into pods.
-    #[serde(default)]
-    pub extra_env: Vec<EnvVar>,
+    /// Follows the Kubernetes EnvVar API spec (v1.EnvVar): supports plain `value`
+    /// and `valueFrom` (secretKeyRef, configMapKeyRef, fieldRef, resourceFieldRef)
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schemars(schema_with = "env_var_schema")]
+    pub env_var: Vec<EnvVar>,
 
     /// CPU and memory resource requests and limits for the coyote container.
     #[serde(default)]
@@ -196,14 +199,6 @@ pub(crate) struct ServiceSpec {
     pub annotations: BTreeMap<String, String>,
 }
 
-/// An environment variable to inject into pods.
-#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
-pub(crate) struct EnvVar {
-    pub name: String,
-    #[serde(default)]
-    pub value: Option<String>,
-}
-
 /// Status of a CoyoteCluster.
 #[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -250,6 +245,13 @@ fn nodes_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
         "default": 1,
         "minimum": 1.0,
         "description": "Number of Coyote nodes. Should be odd for quorum (1, 3, 5...)."
+    })
+}
+
+fn env_var_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "array",
+        "items": { "type": "object", "x-kubernetes-preserve-unknown-fields": true }
     })
 }
 
