@@ -111,6 +111,8 @@ impl AdminAuthController {
     ) -> Result<Vec<RoleModel>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
+            // FIXME: actually use the iterator on fjall (like we do in auth_token) rather than
+            // doing it in rust.
             let models = RoleRow::values(&keyspace)?
                 .map(RoleModel::from)
                 .filter(|m| start_after.as_deref().is_none_or(|s| m.id.as_str() > s))
@@ -179,6 +181,8 @@ impl AdminAuthController {
     ) -> Result<Vec<AccessPolicyModel>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
+            // FIXME: actually use the iterator on fjall (like we do in auth_token) rather than
+            // doing it in rust.
             let models = AccessPolicyRow::values(&keyspace)?
                 .map(AccessPolicyModel::from)
                 .filter(|m| start_after.as_deref().is_none_or(|s| m.id.as_str() > s))
