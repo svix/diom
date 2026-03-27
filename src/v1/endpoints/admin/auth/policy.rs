@@ -21,7 +21,7 @@ use crate::{
     AppState,
     core::cluster::RaftState,
     error::Result,
-    v1::utils::{ListResponse, openapi_tag},
+    v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
 fn policy_out(model: AccessPolicyModel) -> AdminAccessPolicyOut {
@@ -41,6 +41,12 @@ pub struct AdminAccessPolicyOut {
     pub rules: Vec<AccessRule>,
     pub created: Timestamp,
     pub updated: Timestamp,
+}
+
+impl ListResponseItem for AdminAccessPolicyOut {
+    fn id(&self) -> String {
+        self.id.as_str().to_owned()
+    }
 }
 
 // Upsert
@@ -132,8 +138,11 @@ async fn access_policy_get(
 
 // List
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
-pub struct AdminAccessPolicyListIn {}
+#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
+pub struct AdminAccessPolicyListIn {
+    #[serde(flatten)]
+    pub pagination: Pagination<String>,
+}
 
 admin_request_input!(AdminAccessPolicyListIn);
 
@@ -144,17 +153,20 @@ pub type AdminAccessPolicyListOut = ListResponse<AdminAccessPolicyOut>;
 async fn access_policy_list(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(_data): MsgPackOrJson<AdminAccessPolicyListIn>,
+    MsgPackOrJson(data): MsgPackOrJson<AdminAccessPolicyListIn>,
 ) -> Result<MsgPackOrJson<AdminAccessPolicyListOut>> {
     repl.wait_linearizable().await.or_internal_error()?;
     let admin_auth_state = AdminAuthState::init(state.do_not_use_dbs.clone())?;
-    let models = admin_auth_state.controller.list_policies().await?;
-    Ok(MsgPackOrJson(ListResponse {
-        data: models.into_iter().map(policy_out).collect(),
-        iterator: None,
-        prev_iterator: None,
-        done: true,
-    }))
+    let limit = data.pagination.limit.into();
+    let iterator = data.pagination.iterator;
+    let models = admin_auth_state
+        .controller
+        .list_policies(limit + 1, iterator.clone())
+        .await?;
+    let items = models.into_iter().map(policy_out).collect();
+    Ok(MsgPackOrJson(ListResponse::list_response(
+        items, limit, iterator,
+    )))
 }
 
 pub fn router() -> ApiRouter<AppState> {

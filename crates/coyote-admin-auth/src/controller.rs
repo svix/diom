@@ -104,10 +104,18 @@ impl AdminAuthController {
         .await?
     }
 
-    pub async fn list_roles(&self) -> Result<Vec<RoleModel>> {
+    pub async fn list_roles(
+        &self,
+        limit: usize,
+        start_after: Option<String>,
+    ) -> Result<Vec<RoleModel>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            let models = RoleRow::values(&keyspace)?.map(RoleModel::from).collect();
+            let models = RoleRow::values(&keyspace)?
+                .map(RoleModel::from)
+                .filter(|m| start_after.as_deref().map_or(true, |s| m.id.as_str() > s))
+                .take(limit)
+                .collect();
             Ok(models)
         })
         .await?
@@ -164,11 +172,17 @@ impl AdminAuthController {
         .await?
     }
 
-    pub async fn list_policies(&self) -> Result<Vec<AccessPolicyModel>> {
+    pub async fn list_policies(
+        &self,
+        limit: usize,
+        start_after: Option<String>,
+    ) -> Result<Vec<AccessPolicyModel>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
             let models = AccessPolicyRow::values(&keyspace)?
                 .map(AccessPolicyModel::from)
+                .filter(|m| start_after.as_deref().map_or(true, |s| m.id.as_str() > s))
+                .take(limit)
                 .collect();
             Ok(models)
         })

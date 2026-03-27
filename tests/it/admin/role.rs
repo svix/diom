@@ -168,6 +168,53 @@ async fn test_admin_role_list() -> TestResult {
 }
 
 #[tokio::test]
+async fn test_admin_role_list_pagination() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // Create 3 roles with IDs that sort lexicographically: role-aa < role-ab < role-ac
+    for (id, desc) in [("role-aa", "Role AA"), ("role-ab", "Role AB"), ("role-ac", "Role AC")] {
+        client
+            .post("v1.admin.auth-role.upsert")
+            .json(json!({ "id": id, "description": desc }))
+            .await?
+            .ensure(StatusCode::OK)?;
+    }
+
+    // First page: limit=2, no iterator
+    let resp = client
+        .post("v1.admin.auth-role.list")
+        .json(json!({ "limit": 2 }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+
+    let data = resp["data"].assert_array();
+    assert_eq!(data.len(), 2, "first page should have 2 items");
+    assert_eq!(resp["done"], false, "should not be done after first page");
+    let iterator = resp["iterator"].assert_str().to_owned();
+    assert_eq!(iterator, "role-ab", "iterator should be id of last returned item");
+
+    // Second page: limit=2, pass iterator from first page
+    let resp2 = client
+        .post("v1.admin.auth-role.list")
+        .json(json!({ "limit": 2, "iterator": iterator }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+
+    let data2 = resp2["data"].assert_array();
+    assert_eq!(data2.len(), 1, "second page should have 1 item");
+    assert_eq!(data2[0]["id"], "role-ac");
+    assert_eq!(resp2["done"], true, "should be done on last page");
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_admin_role_delete() -> TestResult {
     let TestContext {
         client,
