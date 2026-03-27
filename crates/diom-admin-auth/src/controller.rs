@@ -55,11 +55,10 @@ pub struct AccessPolicyModel {
     pub created: Timestamp,
     pub updated: Timestamp,
 }
-
-impl From<AccessPolicyRow> for AccessPolicyModel {
-    fn from(row: AccessPolicyRow) -> Self {
+impl AccessPolicyModel {
+    fn new(id: AccessPolicyId, row: AccessPolicyRow) -> Self {
         Self {
-            id: row.id,
+            id,
             description: row.description,
             rules: row.rules,
             created: row.created,
@@ -169,7 +168,7 @@ impl AdminAuthController {
         let id = id.clone();
         spawn_blocking_in_current_span(move || {
             let row = AccessPolicyRow::fetch(&keyspace, AccessPolicyRow::key_for(&id))?;
-            Ok(row.map(AccessPolicyModel::from))
+            Ok(row.map(|r| AccessPolicyModel::new(id, r)))
         })
         .await?
     }
@@ -181,13 +180,27 @@ impl AdminAuthController {
     ) -> Result<Vec<AccessPolicyModel>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            // FIXME: actually use the iterator on fjall (like we do in auth_token) rather than
-            // doing it in rust.
-            let models = AccessPolicyRow::values(&keyspace)?
-                .map(AccessPolicyModel::from)
-                .filter(|m| start_after.as_deref().is_none_or(|s| m.id.as_str() > s))
-                .take(limit)
-                .collect();
+            let mut models = Vec::new();
+
+            for (key, row) in AccessPolicyRow::iter(&keyspace) {
+                let id = AccessPolicyRow::decode_fjall_key(&key)?;
+                let model = AccessPolicyModel::new(id, row);
+
+                // FIXME: actually use the iterator on fjall (like we do in auth_token) rather than
+                // doing it in rust.
+                if start_after
+                    .as_deref()
+                    .is_some_and(|s| s > model.id.as_str())
+                {
+                    continue;
+                }
+
+                models.push(model);
+                if models.len() >= limit {
+                    break;
+                }
+            }
+
             Ok(models)
         })
         .await?
@@ -200,16 +213,15 @@ impl AdminAuthController {
             let existing = AccessPolicyRow::fetch(&keyspace, AccessPolicyRow::key_for(&input.id))?;
             let created = existing.map(|r| r.created).unwrap_or(input.now);
             let row = AccessPolicyRow {
-                id: input.id,
                 description: input.description,
                 rules: input.rules,
                 created,
                 updated: input.now,
             };
             let mut batch = db.batch();
-            batch.insert_row(&keyspace, AccessPolicyRow::key_for(&row.id), &row)?;
+            batch.insert_row(&keyspace, AccessPolicyRow::key_for(&input.id), &row)?;
             batch.commit()?;
-            Ok(AccessPolicyModel::from(row))
+            Ok(AccessPolicyModel::new(input.id, row))
         })
         .await?
     }
