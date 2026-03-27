@@ -149,7 +149,11 @@ pub async fn initialize_raft(
     tokio::spawn({
         let handle = handle.clone();
         let cfg = cfg.clone();
+        let initialized = initialized.clone();
         async move {
+            if initialized.wait().await.is_err() {
+                return;
+            }
             if let Err(err) =
                 super::background::run_background_jobs_on_leader(cfg.clone(), handle.clone()).await
             {
@@ -164,6 +168,7 @@ pub async fn initialize_raft(
     tokio::spawn({
         let handle = handle.clone();
         let cfg = cfg.clone();
+        let initialized = initialized.clone();
         async move {
             if initialized.wait().await.is_err() {
                 return;
