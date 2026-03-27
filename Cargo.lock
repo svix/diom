@@ -1024,6 +1024,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "diom-admin-auth"
+version = "0.0.1"
+dependencies = [
+ "diom-authorization",
+ "diom-core",
+ "diom-error",
+ "diom-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "serde",
+]
+
+[[package]]
 name = "diom-auth-token"
 version = "0.0.1"
 dependencies = [

@@ -78,7 +78,7 @@ pub struct AccessPolicy {
     pub rules: Vec<AccessRule>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 pub struct AccessRule {
     pub effect: AccessRuleEffect,
     pub resource: ResourcePattern,
@@ -91,7 +91,7 @@ impl AccessRule {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessRuleEffect {
     Allow,
