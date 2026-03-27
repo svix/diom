@@ -36,6 +36,7 @@ use tokio::{
 use tower::ServiceExt as _;
 use tower_http::{
     catch_panic::CatchPanicLayer,
+    compression::CompressionLayer,
     cors::{AllowHeaders, Any, CorsLayer},
 };
 
@@ -431,6 +432,7 @@ pub async fn run_with_listeners(
                 .allow_methods(Any)
                 .allow_headers(AllowHeaders::mirror_request())
                 .max_age(Duration::from_secs(600)),
+            CompressionLayer::new(),
         ))
         .into_make_service();
 
