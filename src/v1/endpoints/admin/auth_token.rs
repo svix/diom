@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::{Extension, State};
-use coyote_authorization::RoleId;
+use coyote_authorization::{Permissions, RoleId};
 use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, ResultExt};
@@ -18,7 +18,6 @@ use validator::Validate;
 
 use crate::{
     AppState,
-    core::auth::Permissions,
     error::Result,
     v1::{
         endpoints::auth_token::{

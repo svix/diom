@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, fmt, sync::Arc};
 
-use coyote_id::Module;
+use coyote_id::{AuthTokenId, Module};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ mod verification;
 
 pub use self::{
     pattern::{KeyPattern, NamespacePattern, ResourcePattern},
-    verification::verify_operation,
+    verification::{Forbidden, verify_operation},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
@@ -104,4 +104,24 @@ pub struct RequestedOperation<'a> {
     pub namespace: Option<&'a str>,
     pub key: Option<&'a str>,
     pub action: &'static str,
+}
+
+impl RequestedOperation<'_> {
+    pub fn resource_str(&self) -> String {
+        let module = self.module;
+        let namespace = self.namespace.unwrap_or("");
+        let key = self.key.unwrap_or("**");
+        format!("{module}:{namespace}:{key}")
+    }
+}
+
+/// The `Permissions` for a request
+#[derive(Clone)]
+pub struct Permissions {
+    /// The role of the requester
+    pub role: RoleId,
+    /// The auth token id, if we used auth token
+    pub auth_token_id: Option<AuthTokenId>,
+    /// The access rules of the requester's role
+    pub access_rules: Arc<[AccessRule]>,
 }
