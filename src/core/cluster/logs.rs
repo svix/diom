@@ -15,15 +15,16 @@ use fjall_utils::{
 };
 use jiff::Timestamp;
 use openraft::{
-    Entry, EntryPayload, LogId, OptionalSend, RaftLogReader, RaftTypeConfig, StorageError, Vote,
-    storage::{LogFlushed, RaftLogStorage},
+    EntryPayload, OptionalSend, RaftLogReader, RaftTypeConfig,
+    storage::{IOFlushed, RaftLogStorage},
+    type_config::alias::{LogIdOf, VoteOf},
 };
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tap::{Pipe, Tap, TapFallible, TapOptional};
 use tracing::{Instrument, Span};
 
-use super::{NodeId, errors::*, raft::TypeConfig};
+use super::{NodeId, raft::TypeConfig};
 use crate::{
     cfg::Dir,
     core::{cluster::ClusterId, metrics::LogMetrics},
@@ -32,9 +33,9 @@ use coyote_core::task::spawn_blocking_in_current_span;
 
 // This is an implementation of an openraft Logs store backed by fjall
 
-type StorageResult<T> = Result<T, StorageError<NodeId>>;
-
 type LogEntry = <TypeConfig as RaftTypeConfig>::Entry;
+type LogId = LogIdOf<TypeConfig>;
+type Vote = VoteOf<TypeConfig>;
 
 #[derive(Debug)]
 struct LogCacheInner {
@@ -111,15 +112,6 @@ impl LogCache {
     }
 }
 
-#[derive(Clone)]
-pub struct CoyoteLogs {
-    db: Database,
-    meta_keyspace: Keyspace,
-    log_keyspace: Keyspace,
-    flush_tx: tokio::sync::mpsc::Sender<LogFlushed<TypeConfig>>,
-    log_cache: LogCache,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 struct Log(LogEntry);
@@ -148,18 +140,27 @@ impl TableRow for LogIndex {
     }
 }
 
+fn io_err(error: anyhow::Error) -> std::io::Error {
+    std::io::Error::other(error)
+}
+
 impl RaftLogReader<TypeConfig> for CoyoteLogs {
     #[tracing::instrument(skip(self), fields(num_entries_found))]
     async fn try_get_log_entries<RB: RangeBounds<u64> + Clone + Debug + OptionalSend>(
         &mut self,
         range: RB,
-    ) -> Result<Vec<LogEntry>, StorageError<NodeId>> {
+    ) -> std::io::Result<Vec<LogEntry>> {
         let output = self
             .read_log_entries::<RB>(range.clone())
             .await
-            .map_err(read_logs_err)?;
+            .map_err(io_err)?;
         Span::current().record("num_entries_found", output.len());
         Ok(output)
+    }
+
+    #[tracing::instrument(skip(self))]
+    async fn read_vote(&mut self) -> std::io::Result<Option<Vote>> {
+        self.read_vote_().await.map_err(io_err)
     }
 }
 
@@ -171,29 +172,24 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn get_log_state(
-        &mut self,
-    ) -> Result<openraft::LogState<TypeConfig>, StorageError<NodeId>> {
-        self.get_log_state_().await.map_err(read_err)
+    async fn get_log_state(&mut self) -> std::io::Result<openraft::LogState<TypeConfig>> {
+        self.get_log_state_().await.map_err(io_err)
     }
 
     #[tracing::instrument(skip(self))]
-    async fn save_vote(&mut self, vote: &Vote<NodeId>) -> Result<(), StorageError<NodeId>> {
-        self.save_vote_(vote.to_owned())
-            .await
-            .map_err(write_vote_err)?;
+    async fn save_vote(&mut self, vote: &Vote) -> std::io::Result<()> {
+        self.save_vote_(vote.to_owned()).await.map_err(io_err)?;
         Ok(())
     }
 
-    #[tracing::instrument(skip(self))]
-    async fn read_vote(&mut self) -> Result<Option<Vote<NodeId>>, StorageError<NodeId>> {
-        self.read_vote_().await.map_err(read_vote_err)
-    }
-
     #[tracing::instrument(skip_all)]
-    async fn append<I>(&mut self, entries: I, callback: LogFlushed<TypeConfig>) -> StorageResult<()>
+    async fn append<I>(
+        &mut self,
+        entries: I,
+        callback: IOFlushed<TypeConfig>,
+    ) -> std::io::Result<()>
     where
-        I: IntoIterator<Item = Entry<TypeConfig>> + Send,
+        I: IntoIterator<Item = LogEntry> + Send,
         I::IntoIter: Send,
     {
         // TODO: figure out a way to do this without collecting into a vec here; the problem
@@ -201,35 +197,35 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
         let entries = entries.into_iter().collect();
         self.append_entries_(entries, callback)
             .await
-            .map_err(write_logs_err)?;
+            .map_err(io_err)?;
         Ok(())
     }
 
     #[tracing::instrument(skip(self))]
-    async fn truncate(&mut self, log_id: LogId<NodeId>) -> Result<(), StorageError<NodeId>> {
-        self.truncate_entries_(log_id).await.map_err(write_logs_err)
+    async fn truncate_after(&mut self, log_id: Option<LogId>) -> std::io::Result<()> {
+        self.truncate_entries_(log_id).await.map_err(io_err)
     }
 
     #[tracing::instrument(skip(self))]
-    async fn purge(&mut self, log_id: LogId<NodeId>) -> Result<(), StorageError<NodeId>> {
-        self.purge_entries_(log_id).await.map_err(write_logs_err)
+    async fn purge(&mut self, log_id: LogId) -> std::io::Result<()> {
+        self.purge_entries_(log_id).await.map_err(io_err)
     }
 
     #[tracing::instrument(skip(self))]
-    async fn save_committed(&mut self, committed: Option<LogId<NodeId>>) -> StorageResult<()> {
-        self.save_committed_(committed).await.map_err(write_err)
+    async fn save_committed(&mut self, committed: Option<LogId>) -> std::io::Result<()> {
+        self.save_committed_(committed).await.map_err(io_err)
     }
 
     #[tracing::instrument(skip(self))]
-    async fn read_committed(&mut self) -> Result<Option<LogId<NodeId>>, StorageError<NodeId>> {
-        self.read_committed_().await.map_err(write_err)
+    async fn read_committed(&mut self) -> std::io::Result<Option<LogId>> {
+        self.read_committed_().await.map_err(io_err)
     }
 }
 
 static NODE_ID: FjallFixedKey<NodeId> = FjallFixedKey::new("node_id");
-static LAST_PURGED_LOG_ID: FjallFixedKey<LogId<NodeId>> = FjallFixedKey::new("last_purged_log_id");
-static VOTE: FjallFixedKey<Vote<NodeId>> = FjallFixedKey::new("vote");
-static COMMITTED: FjallFixedKey<Option<LogId<NodeId>>> = FjallFixedKey::new("committed");
+static LAST_PURGED_LOG_ID: FjallFixedKey<LogId> = FjallFixedKey::new("last_purged_log_id");
+static VOTE: FjallFixedKey<Vote> = FjallFixedKey::new("vote");
+static COMMITTED: FjallFixedKey<Option<LogId>> = FjallFixedKey::new("committed");
 static POISONED: FjallFixedKey<ClusterId> = FjallFixedKey::new("poisoned");
 
 #[derive(Debug, Clone)]
@@ -251,9 +247,8 @@ impl std::error::Error for BackgroundFsyncFailedError {
 // that ack_immediately is false) which just fsyncs as fast as it can.
 async fn flush_every_worker(
     db: Database,
-    mut channel: tokio::sync::mpsc::Receiver<LogFlushed<TypeConfig>>,
+    mut channel: tokio::sync::mpsc::Receiver<IOFlushed<TypeConfig>>,
 ) {
-    // TODO: on openraft 0.10, we can actually do `.recv_many` to amortize this cost
     while let Some(callback) = channel.recv().await {
         let db = db.clone();
         // this shouldn't inherit our span
@@ -270,14 +265,14 @@ async fn flush_every_worker(
         })
         .await
         .expect("failed joining blocking task");
-        callback.log_io_completed(result.map_err(std::io::Error::other));
+        callback.io_completed(result.map_err(std::io::Error::other));
     }
 }
 
 /// General background worker for flushing the fjall database
 async fn flush_worker(
     db: Database,
-    mut channel: tokio::sync::mpsc::Receiver<LogFlushed<TypeConfig>>,
+    mut channel: tokio::sync::mpsc::Receiver<IOFlushed<TypeConfig>>,
     commits_before_fsync: usize,
     duration_before_fsync: Duration,
     ack_immediately: bool,
@@ -293,20 +288,20 @@ async fn flush_worker(
             tokio::select! {
                 message = channel.recv() => {
                     if let Some(callback) = message {
-                        let db = db.clone();
-                        let result = spawn_blocking_in_current_span(move || {
-                            let _guard = tracing::info_span!("logs:flush_worker:buffer").entered();
-                            db.persist(PersistMode::Buffer)
-                                // fjall::Error isn't Clone
-                                .map_err(|err| {
-                                    tracing::error!(?err, "error flushing fjall in background");
-                                    BackgroundFsyncFailedError(err.to_string())
-                                })
-                        })
-                        .await
-                        .expect("failed joining blocking task");
                         if ack_immediately {
-                            callback.log_io_completed(result.map_err(std::io::Error::other));
+                            let db = db.clone();
+                            let result = spawn_blocking_in_current_span(move || {
+                                let _guard = tracing::info_span!("logs:flush_worker:buffer").entered();
+                                db.persist(PersistMode::Buffer)
+                                    // fjall::Error isn't Clone
+                                    .map_err(|err| {
+                                        tracing::error!(?err, "error flushing fjall in background");
+                                        BackgroundFsyncFailedError(err.to_string())
+                                    })
+                            })
+                            .await
+                            .expect("failed joining blocking task");
+                            callback.io_completed(result.map_err(std::io::Error::other));
                             pending.push(None);
                         } else {
                             pending.push(Some(callback))
@@ -339,9 +334,10 @@ async fn flush_worker(
                 )
                 .await
                 .expect("failed joining blocking task");
+                tracing::trace!(num_pending = pending.len(), "committed for some items");
                 tracing::info_span!("logs:flush_worker:drain").in_scope(|| {
                     for callback in pending.drain(..).flatten() {
-                        callback.log_io_completed(result.clone().map_err(std::io::Error::other))
+                        callback.io_completed(result.clone().map_err(std::io::Error::other))
                     }
                 });
             }
@@ -352,6 +348,17 @@ async fn flush_worker(
     if let Err(err) = db.persist(PersistMode::SyncAll) {
         tracing::error!(?err, "error flushing fjall at shutdown");
     }
+}
+
+#[derive(Clone)]
+pub struct CoyoteLogs {
+    db: Database,
+    meta_keyspace: Keyspace,
+    log_keyspace: Keyspace,
+    flush_tx: tokio::sync::mpsc::Sender<IOFlushed<TypeConfig>>,
+    log_cache: LogCache,
+    metrics: Option<LogMetrics>,
+    last_vote: Arc<Mutex<Option<Vote>>>,
 }
 
 impl CoyoteLogs {
@@ -369,7 +376,7 @@ impl CoyoteLogs {
                 .expect_point_read_hits(true)
         })?;
         let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
-        let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(1000);
+        let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(65536);
         if commits_before_fsync == 1 {
             tokio::spawn(flush_every_worker(db.clone(), flush_rx));
         } else {
@@ -387,7 +394,23 @@ impl CoyoteLogs {
             meta_keyspace,
             flush_tx,
             log_cache: LogCache::new(100),
+            metrics: None,
+            last_vote: Arc::new(Mutex::new(None)),
         })
+    }
+
+    pub(crate) fn enable_metrics(&mut self, metrics: LogMetrics) {
+        self.metrics = Some(metrics.clone());
+        self.start_metrics(metrics);
+    }
+
+    fn metric_record<F>(&self, f: F)
+    where
+        F: FnOnce(&LogMetrics),
+    {
+        if let Some(metrics) = &self.metrics {
+            f(metrics)
+        }
     }
 
     #[tracing::instrument(skip(self))]
@@ -433,10 +456,12 @@ impl CoyoteLogs {
     #[tracing::instrument(skip_all, fields(num_entries))]
     async fn append_entries_(
         &mut self,
-        entries: Vec<Entry<TypeConfig>>,
-        callback: LogFlushed<TypeConfig>,
+        entries: Vec<LogEntry>,
+        callback: IOFlushed<TypeConfig>,
     ) -> anyhow::Result<()> {
         Span::current().record("num_entries", entries.len());
+
+        self.metric_record(|m| m.record_append(entries.len()));
 
         let keyspace = self.log_keyspace.clone();
         let persisted_entries = entries.clone();
@@ -459,6 +484,8 @@ impl CoyoteLogs {
             .await
             .context("requesting background fsync")?;
 
+        tracing::trace!(num_entries = entries.len(), "appended some entries");
+
         for entry in entries {
             self.log_cache.push(entry);
         }
@@ -466,13 +493,14 @@ impl CoyoteLogs {
         Ok(())
     }
 
-    /// Truncate logs since log_id, inclusive
-    async fn truncate_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
-        self.log_cache.truncate(log_id.index);
+    /// Truncate logs since log_id, exclusive
+    async fn truncate_entries_(&self, log_id: Option<LogId>) -> anyhow::Result<()> {
+        let start = log_id.map(|l| l.index + 1).unwrap_or(0);
+        self.log_cache.truncate(start);
         let log_keyspace = self.log_keyspace.clone();
         let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            for key in Log::keys_in_range(&log_keyspace, log_id.index..)? {
+            for key in Log::keys_in_range(&log_keyspace, start..)? {
                 tx.remove(&log_keyspace, key);
             }
             tx.commit()?;
@@ -482,7 +510,7 @@ impl CoyoteLogs {
     }
 
     /// Purge logs upto log_id, inclusive
-    async fn purge_entries_(&self, log_id: LogId<NodeId>) -> anyhow::Result<()> {
+    async fn purge_entries_(&self, log_id: LogId) -> anyhow::Result<()> {
         self.log_cache.purge(log_id.index);
         let meta_keyspace = self.meta_keyspace.clone();
         let log_keyspace = self.log_keyspace.clone();
@@ -548,7 +576,7 @@ impl CoyoteLogs {
             Bound::Included(i) => Some(*i + 1),
             Bound::Excluded(i) => Some(*i),
         };
-        spawn_blocking_in_current_span(move || {
+        let value = spawn_blocking_in_current_span(move || -> anyhow::Result<_> {
             let mut output = vec![];
             for row in Log::range(&log_keyspace, send_range) {
                 let (key, value) =
@@ -563,33 +591,49 @@ impl CoyoteLogs {
             }
             Ok(output)
         })
-        .await?
+        .await??;
+        self.metric_record(|m| m.record_log_read(value.len()));
+        Ok(value)
     }
 
-    async fn save_vote_(&self, vote: Vote<NodeId>) -> anyhow::Result<()> {
+    async fn save_vote_(&self, vote: Vote) -> anyhow::Result<()> {
         tracing::trace!(?vote, "saving a vote");
         let db = self.db.clone();
         let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
+        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             VOTE.store(&meta_keyspace, &vote)?;
             tracing::info_span!("save_vote:persist")
                 .in_scope(|| db.persist(PersistMode::SyncAll))?;
             Ok(())
         })
         .await?
+        .context("saving vote")?;
+        let mut guard = self.last_vote.lock();
+        *guard = Some(vote);
+        Ok(())
     }
 
-    async fn read_vote_(&self) -> anyhow::Result<Option<Vote<NodeId>>> {
+    async fn read_vote_(&self) -> anyhow::Result<Option<Vote>> {
+        {
+            let guard = self.last_vote.lock();
+            if let Some(vote) = &*guard {
+                return Ok(Some(*vote));
+            }
+        }
         let keyspace = self.meta_keyspace.clone();
         let Some(vote) = spawn_blocking_in_current_span(move || VOTE.get(&keyspace)).await?? else {
             tracing::trace!("couldn't find a vote");
             return Ok(None);
         };
         tracing::trace!(?vote, "read a vote");
+        {
+            let mut guard = self.last_vote.lock();
+            *guard = Some(vote);
+        }
         Ok(Some(vote))
     }
 
-    async fn save_committed_(&self, committed: Option<LogId<NodeId>>) -> anyhow::Result<()> {
+    async fn save_committed_(&self, committed: Option<LogId>) -> anyhow::Result<()> {
         let meta_keyspace = self.meta_keyspace.clone();
         tracing::trace!(?committed, "saving committed state");
         spawn_blocking_in_current_span(move || COMMITTED.store(&meta_keyspace, &committed))
@@ -597,7 +641,7 @@ impl CoyoteLogs {
             .context("saving committed state")
     }
 
-    async fn read_committed_(&self) -> anyhow::Result<Option<LogId<NodeId>>> {
+    async fn read_committed_(&self) -> anyhow::Result<Option<LogId>> {
         let meta_keyspace = self.meta_keyspace.clone();
         spawn_blocking_in_current_span(move || {
             COMMITTED
@@ -609,18 +653,13 @@ impl CoyoteLogs {
         .await?
     }
 
-    pub fn start_metrics(&self, metrics: LogMetrics) {
+    fn start_metrics(&self, metrics: LogMetrics) {
         let mut logs = self.clone();
         let db = self.db.clone();
         let shutdown = crate::shutting_down_token();
         tokio::spawn(async move {
             let mut ticker = tokio::time::interval(Duration::from_secs(60));
-            loop {
-                tokio::select! {
-                    _ = ticker.tick() => {}
-                    _ = shutdown.cancelled() => break,
-                }
-
+            while shutdown.run_until_cancelled(ticker.tick()).await.is_some() {
                 match spawn_blocking_in_current_span({
                     let db = db.clone();
                     move || db.disk_space()

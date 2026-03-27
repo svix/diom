@@ -1,9 +1,8 @@
 use super::{
-    NodeId,
+    LogId,
     handle::{Request, RequestWithContext, Response},
     state_machine::Store,
 };
-use openraft::LogId;
 use opentelemetry::{Value, propagation::TextMapPropagator};
 use opentelemetry_sdk::propagation::TraceContextPropagator;
 use tracing::{Instrument, info_span};
@@ -12,7 +11,7 @@ use tracing_opentelemetry::OpenTelemetrySpanExt;
 pub(super) async fn apply_request(
     request: RequestWithContext,
     state_machine: &mut Store,
-    log_id: LogId<NodeId>,
+    log_id: LogId,
 ) -> anyhow::Result<Response> {
     let child_span = info_span!(
         "apply_request",

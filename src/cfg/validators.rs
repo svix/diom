@@ -25,11 +25,6 @@ pub(super) fn validate_log_sync_interval_duration(d: &Duration) -> Result<(), Va
 pub(super) fn validate_cluster_configuration(
     c: &ClusterConfiguration,
 ) -> Result<(), ValidationError> {
-    if !(c.log_ack_immediately || c.log_sync_interval_commits == 1) {
-        return Err(ValidationError::new(
-            "If log_sync_interval_commits != 1, log_ack_immediately must be true (until openraft 0.10)",
-        ));
-    }
     if c.election_timeout_min >= c.election_timeout_max {
         return Err(ValidationError::new(
             "election_timeout_min must be < election_timeout_max",

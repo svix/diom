@@ -1,14 +1,14 @@
 use std::{fmt, time::Duration};
 
+use super::{
+    ClientWriteError, LogId, Node, NodeId, RaftError, discovery::Discovery,
+    network::NetworkFactory, operations::InternalOperation, raft::Raft,
+};
 use crate::{
     cfg::Configuration,
     core::cluster::{ClusterId, state_machine::StoreHandle},
 };
 
-use super::{
-    LogId, Node, NodeId, discovery::Discovery, network::NetworkFactory,
-    operations::InternalOperation, raft::Raft,
-};
 use anyhow::Context;
 use coyote_core::Monotime;
 use coyote_error::ResultExt;
@@ -16,10 +16,7 @@ use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationRes
 use itertools::Itertools;
 use jiff::Timestamp;
 use maplit::btreeset;
-use openraft::{
-    RaftNetworkFactory,
-    error::{ClientWriteError, RaftError},
-};
+use openraft::RaftNetworkFactory;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc::Sender;
@@ -280,8 +277,8 @@ impl From<coyote_error::Error> for CoyoteErrorOrForwardToLeader {
     }
 }
 
-impl From<RaftError<NodeId, ClientWriteError<NodeId, Node>>> for CoyoteErrorOrForwardToLeader {
-    fn from(value: RaftError<NodeId, ClientWriteError<NodeId, Node>>) -> Self {
+impl From<RaftError<ClientWriteError>> for CoyoteErrorOrForwardToLeader {
+    fn from(value: RaftError<ClientWriteError>) -> Self {
         if let Some(leader) = value.forward_to_leader() {
             let Some(leader_id) = leader.leader_id else {
                 return Self::internal("wanted to forward to leader, but do not know leader ID");
@@ -344,12 +341,10 @@ impl RaftState {
                         let mut network_handle = self.network.clone();
                         let client = network_handle.new_client(leader_id, leader_node).await;
                         client
-                            .forward_request::<openraft::AnyError>(
-                                super::proto::ForwardedWriteRequest {
-                                    source_node_id: self.node_id,
-                                    request,
-                                },
-                            )
+                            .forward_request(super::proto::ForwardedWriteRequest {
+                                source_node_id: self.node_id,
+                                request,
+                            })
                             .await
                             .map(|r| r.response)
                             .map_err(|e| anyhow::anyhow!(e))?
@@ -381,7 +376,7 @@ impl RaftState {
         let has_cluster = self
             .raft
             .with_raft_state(|s| {
-                s.committed.is_some() || s.membership_state.effective().nodes().count() > 0
+                s.committed().is_some() || s.membership_state.effective().nodes().count() > 0
             })
             .await
             .context("reading cluster state")?;
@@ -462,7 +457,9 @@ impl RaftState {
         let leader_id = match self.raft.current_leader().await {
             Some(n) if n == self.node_id => {
                 tracing::trace!("performing a linearizable read on the leader");
-                self.raft.ensure_linearizable().await?;
+                self.raft
+                    .ensure_linearizable(openraft::ReadPolicy::LeaseRead)
+                    .await?;
                 return Ok(());
             }
             Some(leader) => leader,
@@ -500,7 +497,7 @@ impl RaftState {
         &self,
         node_id: NodeId,
         address: &Node,
-    ) -> anyhow::Result<Option<openraft::LogId<NodeId>>> {
+    ) -> anyhow::Result<Option<LogId>> {
         let mut network_handle = self.network.clone();
         let client = network_handle.new_client(node_id, address).await;
         client
