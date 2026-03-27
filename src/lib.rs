@@ -146,15 +146,17 @@ async fn run_interserver(
 
     let svc = core::cluster::router(&cfg)
         .with_state(state.clone())
-        .layer(DefaultBodyLimit::disable())
-        .layer(middleware::from_fn(coyote_proto::capture_accept_hdr))
-        .layer(trace_layer())
-        .layer(middleware::from_fn_with_state(
-            request_metrics,
-            core::otel_spans::request_metrics_middleware,
-        ))
-        .layer(CatchPanicLayer::custom(handle_panic))
-        .layer(Extension(raft.clone()));
+        .layer((
+            Extension(raft.clone()),
+            CatchPanicLayer::custom(handle_panic),
+            middleware::from_fn_with_state(
+                request_metrics,
+                core::otel_spans::request_metrics_middleware,
+            ),
+            trace_layer(),
+            middleware::from_fn(coyote_proto::capture_accept_hdr),
+            DefaultBodyLimit::disable(),
+        ));
 
     let listener = listener.tap_io(move |tcp_stream| {
         if let Err(err) = tcp_stream.set_nodelay(true) {
