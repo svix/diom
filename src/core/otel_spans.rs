@@ -14,8 +14,11 @@ use axum::{
 use http::header;
 use opentelemetry::trace::TraceContextExt;
 use tower_http::{
-    classify::ServerErrorsFailureClass,
-    trace::{MakeSpan, OnFailure, OnResponse},
+    classify::{ServerErrorsAsFailures, ServerErrorsFailureClass, SharedClassifier},
+    trace::{
+        DefaultOnBodyChunk, DefaultOnEos, DefaultOnRequest, MakeSpan, OnFailure, OnResponse,
+        TraceLayer,
+    },
 };
 use tracing::field::debug;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
@@ -48,6 +51,21 @@ pub(crate) async fn request_metrics_middleware(
         content_length,
     );
     response
+}
+
+pub fn trace_layer() -> TraceLayer<
+    SharedClassifier<ServerErrorsAsFailures>,
+    AxumOtelSpanCreator,
+    DefaultOnRequest,
+    AxumOtelOnResponse,
+    DefaultOnBodyChunk,
+    DefaultOnEos,
+    AxumOtelOnFailure,
+> {
+    TraceLayer::new_for_http()
+        .make_span_with(AxumOtelSpanCreator)
+        .on_response(AxumOtelOnResponse)
+        .on_failure(AxumOtelOnFailure)
 }
 
 /// An implementor of [`MakeSpan`] which creates `tracing` spans populated with information about

@@ -32,7 +32,6 @@ use tower::ServiceExt as _;
 use tower_http::{
     catch_panic::CatchPanicLayer,
     cors::{AllowHeaders, Any, CorsLayer},
-    trace::TraceLayer,
 };
 
 use crate::{
@@ -40,7 +39,7 @@ use crate::{
     core::{
         cluster::RaftState,
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
-        otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
+        otel_spans::trace_layer,
     },
     workers::Workers,
 };
@@ -156,12 +155,7 @@ async fn run_interserver(
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(coyote_proto::capture_accept_hdr))
         .layer(CatchPanicLayer::custom(handle_panic))
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(AxumOtelSpanCreator)
-                .on_response(AxumOtelOnResponse)
-                .on_failure(AxumOtelOnFailure),
-        )
+        .layer(trace_layer())
         .into_make_service();
 
     let node_id = raft.node_id;
@@ -187,10 +181,7 @@ async fn run_internal(
     mut internal_req_rx: mpsc::Receiver<InternalRequest>,
 ) {
     let svc = api_router.layer((
-        TraceLayer::new_for_http()
-            .make_span_with(AxumOtelSpanCreator)
-            .on_response(AxumOtelOnResponse)
-            .on_failure(AxumOtelOnFailure),
+        trace_layer(),
         middleware::from_fn(coyote_proto::capture_accept_hdr),
         CatchPanicLayer::custom(handle_panic),
     ));
@@ -398,10 +389,7 @@ pub async fn run_with_listeners(
     let router = api_router.merge(docs_router);
     let svc = router
         .layer((
-            TraceLayer::new_for_http()
-                .make_span_with(AxumOtelSpanCreator)
-                .on_response(AxumOtelOnResponse)
-                .on_failure(AxumOtelOnFailure),
+            trace_layer(),
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)
