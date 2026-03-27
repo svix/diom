@@ -113,7 +113,7 @@ impl AdminAuthController {
         spawn_blocking_in_current_span(move || {
             let models = RoleRow::values(&keyspace)?
                 .map(RoleModel::from)
-                .filter(|m| start_after.as_deref().map_or(true, |s| m.id.as_str() > s))
+                .filter(|m| start_after.as_deref().is_none_or(|s| m.id.as_str() > s))
                 .take(limit)
                 .collect();
             Ok(models)
@@ -181,7 +181,7 @@ impl AdminAuthController {
         spawn_blocking_in_current_span(move || {
             let models = AccessPolicyRow::values(&keyspace)?
                 .map(AccessPolicyModel::from)
-                .filter(|m| start_after.as_deref().map_or(true, |s| m.id.as_str() > s))
+                .filter(|m| start_after.as_deref().is_none_or(|s| m.id.as_str() > s))
                 .take(limit)
                 .collect();
             Ok(models)
