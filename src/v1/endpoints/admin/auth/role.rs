@@ -180,7 +180,7 @@ async fn role_list(
         .list_roles(limit + 1, iterator.clone())
         .await?;
     let items = models.into_iter().map(role_out).collect();
-    Ok(MsgPackOrJson(ListResponse::list_response(
+    Ok(MsgPackOrJson(ListResponse::create(
         items, limit, iterator,
     )))
 }
