@@ -147,15 +147,17 @@ async fn run_interserver(
 
     let svc = core::cluster::router(&cfg)
         .with_state(state.clone())
-        .layer(middleware::from_fn_with_state(
-            state.clone(),
-            core::otel_spans::request_metrics_middleware,
+        .layer((
+            trace_layer(),
+            CatchPanicLayer::custom(handle_panic),
+            middleware::from_fn(coyote_proto::capture_accept_hdr),
+            DefaultBodyLimit::disable(),
+            Extension(raft.clone()),
+            middleware::from_fn_with_state(
+                state.clone(),
+                core::otel_spans::request_metrics_middleware,
+            ),
         ))
-        .layer(Extension(raft.clone()))
-        .layer(DefaultBodyLimit::disable())
-        .layer(middleware::from_fn(coyote_proto::capture_accept_hdr))
-        .layer(CatchPanicLayer::custom(handle_panic))
-        .layer(trace_layer())
         .into_make_service();
 
     let node_id = raft.node_id;
