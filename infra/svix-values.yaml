@@ -41,7 +41,10 @@ cluster:
       - name: DIOM_OPENTELEMETRY_ADDRESS
         value: grpc://datadog-agent.datadog.svc.cluster.local:4317
       - name: DIOM_ADMIN_TOKEN
-        value: "admin_abcdefghijlmnopqrstuvwxyz012345"
+        valueFrom:
+          secretKeyRef:
+            name: diom-admin-token
+            key: DIOM_ADMIN_TOKEN
     nodeSelector:
       db-name: diom
     tolerations:
