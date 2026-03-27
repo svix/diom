@@ -468,17 +468,21 @@ pub struct ConfigurationInner {
     pub log_format: LogFormat,
 
     /// The OpenTelemetry address to send events to if given.
+    ///
+    /// Currently only GRPC exports are supported.
     pub opentelemetry_address: Option<String>,
 
     /// The OpenTelemetry address to send metrics to if given.
     ///
     /// If not specified, the server will attempt to fall back
-    /// to `opentelemetry_address`
+    /// to `opentelemetry_address`.
     pub opentelemetry_metrics_address: Option<String>,
 
-    /// By default, `opentelemetry_address` is expected to be a GRPC server.
+    /// Send OpenTelemetry metrics via HTTP.
     ///
-    /// When this is set to true, HTTP is used instead.
+    /// By default, `opentelemetry_address` and `opentelemetry_metrics_address`
+    /// are expected to be a GRPC servers. When this is set to true,
+    /// HTTP is used instead for metrics exports.
     #[serde(default)]
     pub opentelemetry_metrics_use_http: bool,
 

@@ -8,7 +8,7 @@ use crate::{crd::CoyoteCluster, error::Result, labels};
 
 pub(crate) fn build(cluster: &CoyoteCluster, ns: &str) -> Result<PodDisruptionBudget> {
     let cluster_name = cluster.name_any();
-    let replicas = cluster.spec.nodes;
+    let replicas = cluster.spec.coyote.nodes;
 
     // Require a strict majority to be available at all times, which maintains quorum.
     let min_available = (replicas / 2) + 1;

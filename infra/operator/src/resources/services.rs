@@ -21,7 +21,7 @@ pub(crate) fn client_name(cluster_name: &str) -> String {
 pub(crate) fn build_headless(cluster: &CoyoteCluster, ns: &str) -> Result<Service> {
     let cluster_name = cluster.name_any();
     let spec = &cluster.spec;
-    let cluster_port = spec.api_port + 10000;
+    let cluster_port = spec.coyote.api_port + 10000;
 
     Ok(Service {
         metadata: ObjectMeta {
@@ -38,8 +38,8 @@ pub(crate) fn build_headless(cluster: &CoyoteCluster, ns: &str) -> Result<Servic
             ports: Some(vec![
                 ServicePort {
                     name: Some("api".into()),
-                    port: spec.api_port as i32,
-                    target_port: Some(IntOrString::Int(spec.api_port as i32)),
+                    port: spec.coyote.api_port as i32,
+                    target_port: Some(IntOrString::Int(spec.coyote.api_port as i32)),
                     ..Default::default()
                 },
                 ServicePort {
@@ -86,8 +86,8 @@ pub(crate) fn build_client(cluster: &CoyoteCluster, ns: &str) -> Result<Service>
             traffic_distribution: Some("PreferSameZone".into()),
             ports: Some(vec![ServicePort {
                 name: Some("api".into()),
-                port: spec.api_port as i32,
-                target_port: Some(IntOrString::Int(spec.api_port as i32)),
+                port: spec.coyote.api_port as i32,
+                target_port: Some(IntOrString::Int(spec.coyote.api_port as i32)),
                 ..Default::default()
             }]),
             ..Default::default()
