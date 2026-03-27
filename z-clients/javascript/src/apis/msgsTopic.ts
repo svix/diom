@@ -27,7 +27,7 @@ export class MsgsTopic {
         request.setBody(
             MsgTopicConfigureInSerializer._toJsonObject({
                 ...msgTopicConfigureIn,
-                topic,
+                topic: topic,
             })
         );
         

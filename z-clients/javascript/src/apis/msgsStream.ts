@@ -45,8 +45,8 @@ export class MsgsStream {
         request.setBody(
             MsgStreamReceiveInSerializer._toJsonObject({
                 ...msgStreamReceiveIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         
@@ -70,8 +70,8 @@ export class MsgsStream {
         request.setBody(
             MsgStreamCommitInSerializer._toJsonObject({
                 ...msgStreamCommitIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         
@@ -96,8 +96,8 @@ export class MsgsStream {
         request.setBody(
             MsgStreamSeekInSerializer._toJsonObject({
                 ...msgStreamSeekIn,
-                topic,
-                consumer_group,
+                topic: topic,
+                consumerGroup: consumer_group,
             })
         );
         

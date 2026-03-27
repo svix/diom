@@ -44,7 +44,7 @@ export class Idempotency {
         request.setBody(
             IdempotencyStartInSerializer._toJsonObject({
                 ...idempotencyStartIn,
-                key,
+                key: key,
             })
         );
         
@@ -62,7 +62,7 @@ export class Idempotency {
         request.setBody(
             IdempotencyCompleteInSerializer._toJsonObject({
                 ...idempotencyCompleteIn,
-                key,
+                key: key,
             })
         );
         
@@ -80,7 +80,7 @@ export class Idempotency {
         request.setBody(
             IdempotencyAbortInSerializer._toJsonObject({
                 ...idempotencyAbortIn,
-                key,
+                key: key,
             })
         );
         

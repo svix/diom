@@ -43,7 +43,7 @@ export class Msgs {
         request.setBody(
             MsgPublishInSerializer._toJsonObject({
                 ...msgPublishIn,
-                topic,
+                topic: topic,
             })
         );
         

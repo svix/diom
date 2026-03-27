@@ -31,7 +31,7 @@ export class MsgsNamespace {
         request.setBody(
             MsgNamespaceCreateInSerializer._toJsonObject({
                 ...msgNamespaceCreateIn,
-                name,
+                name: name,
             })
         );
         
@@ -49,7 +49,7 @@ export class MsgsNamespace {
         request.setBody(
             MsgNamespaceGetInSerializer._toJsonObject({
                 ...msgNamespaceGetIn,
-                name,
+                name: name,
             })
         );
         

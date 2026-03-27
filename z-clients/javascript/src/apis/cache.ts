@@ -44,7 +44,7 @@ export class Cache {
         request.setBody(
             CacheSetInSerializer._toJsonObject({
                 ...cacheSetIn,
-                key,
+                key: key,
             })
         );
         
@@ -62,7 +62,7 @@ export class Cache {
         request.setBody(
             CacheGetInSerializer._toJsonObject({
                 ...cacheGetIn,
-                key,
+                key: key,
             })
         );
         
@@ -80,7 +80,7 @@ export class Cache {
         request.setBody(
             CacheDeleteInSerializer._toJsonObject({
                 ...cacheDeleteIn,
-                key,
+                key: key,
             })
         );
         
