@@ -31,7 +31,7 @@ use crate::{
     AppState,
     core::cluster::RaftState,
     error::Result,
-    v1::utils::{ListResponse, openapi_tag},
+    v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
 fn auth_token_access_metadata<'a>(ns: Option<&'a str>, action: &'static str) -> AccessMetadata<'a> {
@@ -65,6 +65,12 @@ pub struct AuthTokenOut {
     pub scopes: Vec<String>,
     /// Whether this token is currently enabled.
     pub enabled: bool,
+}
+
+impl ListResponseItem for AuthTokenOut {
+    fn id(&self) -> String {
+        self.id.to_string()
+    }
 }
 
 impl From<AuthTokenModel> for AuthTokenOut {
@@ -265,10 +271,12 @@ async fn auth_token_verify(
     }))
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenListIn {
     pub namespace: Option<String>,
     pub owner_id: String,
+    #[serde(flatten)]
+    pub pagination: Pagination<Public<AuthTokenId>>,
 }
 
 request_input!(AuthTokenListIn, "List");
@@ -289,20 +297,22 @@ async fn auth_token_list(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
+    let limit = data.pagination.limit.0 as usize;
+    let iterator = data.pagination.iterator.map(|id| id.into_inner());
+
     let auth_token_state = diom_auth_token::State::init(state.do_not_use_dbs.clone())?;
     let models = auth_token_state
         .controller
-        .list_by_owner(namespace.id, &data.owner_id)
+        .list_by_owner(namespace.id, &data.owner_id, limit + 1, iterator)
         .await?;
 
-    let data = models.into_iter().map(AuthTokenOut::from).collect();
+    let items = models.into_iter().map(AuthTokenOut::from).collect();
 
-    Ok(MsgPackOrJson(ListResponse {
-        data,
-        iterator: None,
-        prev_iterator: None,
-        done: true,
-    }))
+    Ok(MsgPackOrJson(ListResponse::create(
+        items,
+        limit,
+        iterator.map(|x| x.public().to_string()),
+    )))
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]

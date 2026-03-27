@@ -27,7 +27,7 @@ use crate::{
             AuthTokenRotateIn, AuthTokenRotateOut, AuthTokenUpdateIn, AuthTokenUpdateOut,
             default_prefix,
         },
-        utils::{ListResponse, openapi_tag},
+        utils::{ListResponse, Pagination, openapi_tag},
     },
 };
 
@@ -225,8 +225,11 @@ async fn auth_token_delete(
 
 // List
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
-pub struct AdminAuthTokenListIn {}
+#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
+pub struct AdminAuthTokenListIn {
+    #[serde(flatten)]
+    pub pagination: Pagination<Public<AuthTokenId>>,
+}
 
 admin_request_input!(AdminAuthTokenListIn);
 
@@ -236,7 +239,7 @@ pub type AdminAuthTokenListOut = ListResponse<AdminAuthTokenOut>;
 #[aide_annotate(op_id = "v1.admin.auth-token.list")]
 async fn auth_token_list(
     State(app_state): State<AppState>,
-    MsgPackOrJson(_data): MsgPackOrJson<AdminAuthTokenListIn>,
+    MsgPackOrJson(data): MsgPackOrJson<AdminAuthTokenListIn>,
 ) -> Result<MsgPackOrJson<AdminAuthTokenListOut>> {
     let out: AuthTokenListOut = app_state
         .internal_call(
@@ -244,6 +247,7 @@ async fn auth_token_list(
             &AuthTokenListIn {
                 namespace: Some(INTERNAL_NAMESPACE.to_owned()),
                 owner_id: RoleId::operator().0,
+                pagination: data.pagination,
             },
         )
         .await

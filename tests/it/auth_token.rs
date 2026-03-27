@@ -380,3 +380,107 @@ async fn test_auth_token_in_custom_namespace() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_auth_token_list_pagination() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let owner = "list-owner";
+
+    // Create 5 tokens.
+    let mut ids = Vec::new();
+    for i in 0..5u32 {
+        let (id, _) = create_token(&client, &format!("tok-{i}"), owner).await?;
+        ids.push(id);
+    }
+
+    // List all (limit > count): done=true, no iterator.
+    let resp = client
+        .post("v1.auth-token.list")
+        .json(json!({ "owner_id": owner, "limit": 10 }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+    assert_eq!(resp["done"], true);
+    assert!(!resp["iterator"].is_null());
+    assert_eq!(resp["data"].as_array().unwrap().len(), 5);
+    // Now fetch again with the iterator
+    let resp = client
+        .post("v1.auth-token.list")
+        .json(json!({ "owner_id": owner, "iterator": resp["iterator"].as_str(), "limit": 10 }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+    assert_eq!(resp["done"], true);
+    assert!(!resp["iterator"].is_null());
+    assert_eq!(resp["data"].as_array().unwrap().len(), 0);
+
+    // First page (limit=2): done=false
+    let resp = client
+        .post("v1.auth-token.list")
+        .json(json!({ "owner_id": owner, "limit": 2 }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+    assert_eq!(resp["done"], false);
+    let iter = resp["iterator"].assert_str().to_owned();
+    let page1_ids: Vec<String> = resp["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["id"].assert_str().to_owned())
+        .collect();
+    assert_eq!(page1_ids.len(), 2);
+
+    // Second page: 2 more items, done=false.
+    let resp = client
+        .post("v1.auth-token.list")
+        .json(json!({ "owner_id": owner, "limit": 2, "iterator": iter }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+    assert_eq!(resp["done"], false);
+    let iter = resp["iterator"].assert_str().to_owned();
+    let page2_ids: Vec<String> = resp["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["id"].assert_str().to_owned())
+        .collect();
+    assert_eq!(page2_ids.len(), 2);
+
+    // Pages don't overlap.
+    for id in &page1_ids {
+        assert!(!page2_ids.contains(id));
+    }
+
+    // Third page: 1 item, done=true.
+    let resp = client
+        .post("v1.auth-token.list")
+        .json(json!({ "owner_id": owner, "limit": 2, "iterator": iter }))
+        .await?
+        .ensure(StatusCode::OK)?
+        .json();
+    assert_eq!(resp["done"], true);
+    let page3_ids: Vec<String> = resp["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v["id"].assert_str().to_owned())
+        .collect();
+    assert_eq!(page3_ids.len(), 1);
+
+    // All 5 tokens accounted for across 3 pages, no duplicates.
+    let mut all_ids = page1_ids;
+    all_ids.extend(page2_ids);
+    all_ids.extend(page3_ids);
+    all_ids.sort();
+    all_ids.dedup();
+    assert_eq!(all_ids.len(), 5);
+
+    Ok(())
+}
