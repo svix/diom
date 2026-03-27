@@ -17,8 +17,7 @@ class {{ type_name }}(BaseModel):
 {%- if type.fields | selectattr("positional", "false") | length == 0 %}
     pass
 {%- endif %}
-{%- for field in type.fields %}
-    {%- if not field.positional %}
+{%- for field in type.fields | selectattr("positional", "false") %}
     {%- if field.required and not field.nullable %}
         {%- if field.name | to_lower_camel_case != field.name %}
     {{ field.name | to_snake_case }}: {{ field.type.to_python() }} = Field(alias="{{ field.name }}")
@@ -40,7 +39,6 @@ class {{ type_name }}(BaseModel):
     {%- endif %}
     {%- if field.description is defined %}
     {{ field.description | to_doc_comment(style="python") | indent(4) }}
-    {%- endif %}
     {%- endif %}
 {% endfor %}
 
