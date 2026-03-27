@@ -23,7 +23,7 @@ use crate::{
     AppState,
     core::cluster::RaftState,
     error::Result,
-    v1::utils::{ListResponse, openapi_tag},
+    v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
 fn role_out(model: RoleModel) -> AdminRoleOut {
@@ -47,6 +47,12 @@ pub struct AdminRoleOut {
     pub context: HashMap<String, String>,
     pub created: Timestamp,
     pub updated: Timestamp,
+}
+
+impl ListResponseItem for AdminRoleOut {
+    fn id(&self) -> String {
+        self.id.as_str().to_owned()
+    }
 }
 
 // Upsert
@@ -148,8 +154,11 @@ async fn role_get(
 
 // List
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
-pub struct AdminRoleListIn {}
+#[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
+pub struct AdminRoleListIn {
+    #[serde(flatten)]
+    pub pagination: Pagination<String>,
+}
 
 admin_request_input!(AdminRoleListIn);
 
@@ -160,17 +169,20 @@ pub type AdminRoleListOut = ListResponse<AdminRoleOut>;
 async fn role_list(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(_data): MsgPackOrJson<AdminRoleListIn>,
+    MsgPackOrJson(data): MsgPackOrJson<AdminRoleListIn>,
 ) -> Result<MsgPackOrJson<AdminRoleListOut>> {
     repl.wait_linearizable().await.or_internal_error()?;
     let admin_auth_state = AdminAuthState::init(state.do_not_use_dbs.clone())?;
-    let models = admin_auth_state.controller.list_roles().await?;
-    Ok(MsgPackOrJson(ListResponse {
-        data: models.into_iter().map(role_out).collect(),
-        iterator: None,
-        prev_iterator: None,
-        done: true,
-    }))
+    let limit = data.pagination.limit.into();
+    let iterator = data.pagination.iterator;
+    let models = admin_auth_state
+        .controller
+        .list_roles(limit + 1, iterator.clone())
+        .await?;
+    let items = models.into_iter().map(role_out).collect();
+    Ok(MsgPackOrJson(ListResponse::list_response(
+        items, limit, iterator,
+    )))
 }
 
 pub fn router() -> ApiRouter<AppState> {
