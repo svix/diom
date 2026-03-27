@@ -27,7 +27,7 @@ cluster:
       persistent:
         size: 64Gi
         storageClass: gp3-encrypted
-    extraEnv:
+    envVar:
       - name: DIOM_OPENTELEMETRY_METRICS_ADDRESS
         value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
       - name: DIOM_OPENTELEMETRY_METRICS_USE_HTTP
