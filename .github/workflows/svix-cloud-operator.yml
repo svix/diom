@@ -11,6 +11,13 @@ on:
         description: "Target environment (svix-cloud-staging-apply or svix-cloud-dev-apply)"
         required: true
         type: string
+      namespace:
+        description: "K8s namespace"
+        type: string
+      coyote_admin_token:
+        description: "Coyote admin token"
+        type: string
+        default: "admin_abcdefghijlmnopqrstuvwxyz012345"
   workflow_call:
     inputs:
       image_tag:
@@ -23,6 +30,10 @@ on:
       namespace:
         description: "K8s namespace"
         type: string
+      coyote_admin_token:
+        description: "Coyote admin token"
+        type: string
+        default: "admin_abcdefghijlmnopqrstuvwxyz012345"
 
 env:
   REGISTRY: ghcr.io
@@ -66,6 +77,19 @@ jobs:
             --name ${{ vars.EKS_CLUSTER_NAME }} \
             --region ${{ vars.AWS_REGION }}
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Create COYOTE_ADMIN_TOKEN secret if not present
+        run: |
+          if kubectl get secret coyote-admin-token -n ${{ inputs.namespace }} > /dev/null 2>&1; then
+            echo "Secret coyote-admin-token is already present, skipping creation."
+          else
+            kubectl create secret generic coyote-admin-token \
+              --from-literal=COYOTE_ADMIN_TOKEN=${{ inputs.coyote_admin_token }} \
+              --namespace=${{ inputs.namespace }}
+          fi
+
       - name: Install Helm
         uses: azure/setup-helm@v4
 
@@ -82,9 +106,6 @@ jobs:
             --atomic \
             --timeout=120s \
             --namespace=${{ inputs.namespace }}
-
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
 
       - name: Verify rollout
         run: |
