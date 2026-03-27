@@ -14,8 +14,7 @@ import {
 
 {{ doc_comment }}
 export interface {{ type_name }} {
-{%- for field in type.fields %}
-    {%- if not field.positional %}
+{%- for field in type.fields | selectattr("positional", "false") %}
     {% if field.description is defined -%}
         {{ field.description | with_javadoc_deprecation(field.deprecated) | to_doc_comment(style="js") | indent(5) }}
     {% endif -%}
@@ -24,7 +23,6 @@ export interface {{ type_name }} {
     {% set ty = field.type.to_js() -%}
     {% if field.nullable %}{% set ty %}{{ ty }} | null{% endset %}{% endif -%}
     {{ field_lhs }}: {{ ty }};
-    {%- endif %}
 {%- endfor %}
 }
 
