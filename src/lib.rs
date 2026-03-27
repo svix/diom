@@ -4,6 +4,8 @@
 #![warn(clippy::all)]
 
 use std::{
+    fmt,
+    net::SocketAddr,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -14,8 +16,11 @@ use std::{
 use ::serde::{Serialize, de::DeserializeOwned};
 use aide::axum::ApiRouter;
 use axum::{
-    Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
-    serve::ListenerExt as _,
+    Extension,
+    extract::DefaultBodyLimit,
+    middleware,
+    response::IntoResponse as _,
+    serve::{Listener, ListenerExt as _},
 };
 use diom_authorization::{Permissions, RoleId};
 use diom_core::Monotime;
@@ -122,6 +127,27 @@ fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response:
         .into_response()
 }
 
+async fn axum_tcp_listener(
+    listener: Option<TcpListener>,
+    listen_address: SocketAddr,
+    conn_metrics: ConnectionMetrics,
+    connection_type: ConnectionType,
+) -> impl Listener<Addr: fmt::Display + fmt::Debug> {
+    let listener = match listener {
+        Some(l) => l,
+        None => TcpListener::bind(listen_address)
+            .await
+            .expect("Error binding to listen_address"),
+    };
+
+    listener.tap_io(move |tcp_stream| {
+        if let Err(err) = tcp_stream.set_nodelay(true) {
+            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
+        }
+        conn_metrics.accepted(connection_type);
+    })
+}
+
 async fn run_interserver(
     cfg: Configuration,
     state: AppState,
@@ -131,13 +157,14 @@ async fn run_interserver(
     conn_metrics: ConnectionMetrics,
     request_metrics: RequestMetrics,
 ) {
-    let listen_address = cfg.cluster.listen_address(&cfg);
-    let listener = match listener {
-        Some(l) => l,
-        None => TcpListener::bind(listen_address)
-            .await
-            .expect("Error binding to listen_address"),
-    };
+    let listener = axum_tcp_listener(
+        listener,
+        cfg.cluster.listen_address(&cfg),
+        conn_metrics.clone(),
+        ConnectionType::Internal,
+    )
+    .await;
+
     tracing::debug!(
         "Inter-Server: Listening on {}",
         listener.local_addr().unwrap()
@@ -157,13 +184,6 @@ async fn run_interserver(
             middleware::from_fn(diom_proto::capture_accept_hdr),
             DefaultBodyLimit::disable(),
         ));
-
-    let listener = listener.tap_io(move |tcp_stream| {
-        if let Err(err) = tcp_stream.set_nodelay(true) {
-            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
-        }
-        conn_metrics.accepted(ConnectionType::Internal);
-    });
 
     axum::serve(listener, svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
@@ -412,13 +432,6 @@ pub async fn run_with_listeners(
         ))
         .into_make_service();
 
-    let listen_address = cfg.listen_address;
-    let listener = match listener {
-        Some(l) => l,
-        None => TcpListener::bind(listen_address)
-            .await
-            .expect("Error binding to listen_address"),
-    };
     tokio::task::spawn({
         let cfg = cfg.clone();
         let raft_state = raft_state.clone();
@@ -435,14 +448,15 @@ pub async fn run_with_listeners(
         }
     });
 
-    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
+    let listener = axum_tcp_listener(
+        listener,
+        cfg.listen_address,
+        connection_metrics,
+        ConnectionType::External,
+    )
+    .await;
 
-    let listener = listener.tap_io(move |tcp_stream| {
-        if let Err(err) = tcp_stream.set_nodelay(true) {
-            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
-        }
-        connection_metrics.accepted(ConnectionType::External);
-    });
+    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
     let worker_handle = tokio::task::spawn({
         let raft_state = raft_state.clone();
