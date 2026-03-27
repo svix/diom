@@ -64,8 +64,7 @@ public class {{ class_name }} {
 {%- endfor %}
     public {{ class_name }}() {}
 
-{%- for field in type.fields %}
-    {%- if not field.positional %}
+{%- for field in type.fields | selectattr("positional", "false") %}
     {%- set f_ty = field.type.to_java() %}
     {%- set f_varname = field.name | to_lower_camel_case %}
     {%- set f_deprecated = "" %}
@@ -149,7 +148,6 @@ public class {{ class_name }} {
             return {{ field.type.string_const_val() | to_upper_snake_case }};
         }
     }
-    {%- endif %}
     {%- endif %}
 {%- endfor %}
 {%- if positional_fields | length == 0 %}
