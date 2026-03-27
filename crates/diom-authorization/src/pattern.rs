@@ -1,4 +1,8 @@
-use std::{borrow::Cow, fmt, str::FromStr};
+use std::{
+    borrow::Cow,
+    fmt::{self, Write},
+    str::FromStr,
+};
 
 use diom_id::Module;
 use itertools::Itertools;
@@ -49,8 +53,23 @@ pub enum NamespacePattern {
 pub enum KeyPattern {
     Exactly(String),
     Prefix(String),
+    Segmented(SegmentedKeyPattern),
     Any,
-    // FIXME: Add single star wildcards
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SegmentedKeyPattern {
+    pub segments: Vec<KeyPatternSegment>,
+    /// Whether the pattern has a trailing `*` segment.
+    ///
+    /// `*` is only allowed at the very end.
+    pub trailing_any: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum KeyPatternSegment {
+    Fixed(String),
+    Placeholder(String),
 }
 
 impl ResourcePattern {
@@ -184,6 +203,7 @@ impl KeyPattern {
             Self::Exactly(k) => key == Some(k),
             Self::Prefix(p) => key.is_some_and(|k| k.starts_with(p)),
             Self::Any => true,
+            Self::Segmented(s) => key.is_some_and(|k| s.matches(k)),
         }
     }
 }
@@ -196,6 +216,7 @@ impl fmt::Display for KeyPattern {
                 f.write_str(s)?;
                 f.write_str("*")
             }
+            Self::Segmented(s) => s.fmt(f),
             Self::Any => f.write_str("*"),
         }
     }
@@ -210,16 +231,126 @@ impl FromStr for KeyPattern {
         }
 
         if s.ends_with("/*") {
+            if s.contains(['$', '{', '}']) {
+                return s.parse::<SegmentedKeyPattern>().map(Self::Segmented);
+            }
+
             let prefix = &s[..s.len() - 1]; // keep the /
             return Ok(Self::Prefix(prefix.to_owned()));
         }
 
-        if s.contains("*") {
-            return Err("wildcard in key pattern mut be at the end");
+        if s.contains(['$', '*', '{', '}']) {
+            return s.parse::<SegmentedKeyPattern>().map(Self::Segmented);
         }
 
         // FIXME: Could forbid special characters other than `*`
         // but they'll just never match anything so skipping that for now.
         Ok(Self::Exactly(s.to_owned()))
+    }
+}
+
+impl SegmentedKeyPattern {
+    fn matches(&self, key: &str) -> bool {
+        let mut pat_segments = self.segments.iter();
+        for key_seg in key.split('/') {
+            let Some(pat_seg) = pat_segments.next() else {
+                // key has more segments than pattern (excl. trailing `*`)
+                // if trailing `*` exists, match.
+                // if it doesn't, no match.
+                return self.trailing_any;
+            };
+
+            if !pat_seg.matches(key_seg) {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+impl fmt::Display for SegmentedKeyPattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut segments = self.segments.iter();
+        segments
+            .next()
+            .expect("SegmentedKeyPattern always consists of at least one segment")
+            .fmt(f)?;
+
+        for segment in segments {
+            f.write_char('/')?;
+            segment.fmt(f)?;
+        }
+
+        if self.trailing_any {
+            f.write_str("/*")?;
+        }
+
+        Ok(())
+    }
+}
+
+impl FromStr for SegmentedKeyPattern {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (s, trailing_any) = match s.strip_suffix("/*") {
+            Some(rest) => (rest, true),
+            None => (s, false),
+        };
+
+        let segments = s
+            .split('/')
+            .map(KeyPatternSegment::from_str)
+            .collect::<Result<_, _>>()?;
+
+        Ok(Self {
+            segments,
+            trailing_any,
+        })
+    }
+}
+
+impl KeyPatternSegment {
+    fn matches(&self, key_seg: &str) -> bool {
+        match self {
+            Self::Fixed(s) => s == key_seg,
+            // FIXME: Add support for context stuff
+            Self::Placeholder(_) => false,
+        }
+    }
+}
+
+impl fmt::Display for KeyPatternSegment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Fixed(s) => f.write_str(s),
+            Self::Placeholder(p) => write!(f, "${{{p}}}"),
+        }
+    }
+}
+
+impl FromStr for KeyPatternSegment {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.contains('*') {
+            return Err("asterisk may only be used as a standalone slash-separated segment");
+        }
+
+        if let Some(rest) = s.strip_prefix("${")
+            && let Some(placeholder) = rest.strip_suffix('}')
+        {
+            // FIXME: probably disallow most characters inside?
+            // Though the pattern will just never match if invalid anyways.
+            return Ok(Self::Placeholder(placeholder.to_owned()));
+        }
+
+        if s.contains(['$', '{', '}']) {
+            // FIXME: could use a better error message
+            return Err("invalid key pattern segment");
+        }
+
+        Ok(Self::Fixed(s.to_owned()))
     }
 }

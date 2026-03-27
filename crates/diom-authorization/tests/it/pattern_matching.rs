@@ -56,6 +56,14 @@ fn test_any_namespace_wrong_exact_key_pattern() {
     }
 }
 
+#[test]
+fn test_missing_context() {
+    let pat = "kv:*:foo/${context.bar}"
+        .parse::<ResourcePattern>()
+        .unwrap();
+    assert!(!pat.matches(&EXAMPLE_OP_KV));
+}
+
 static EXAMPLE_OP_AUTH_TOKEN: RequestedOperation<'static> = RequestedOperation {
     module: Module::AuthToken,
     namespace: Some("my-ns"),

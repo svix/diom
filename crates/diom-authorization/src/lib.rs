@@ -12,7 +12,10 @@ mod pattern;
 mod verification;
 
 pub use self::{
-    pattern::{KeyPattern, ModulePattern, NamespacePattern, ResourcePattern},
+    pattern::{
+        KeyPattern, KeyPatternSegment, ModulePattern, NamespacePattern, ResourcePattern,
+        SegmentedKeyPattern,
+    },
     verification::{Forbidden, verify_operation},
 };
 
