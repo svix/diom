@@ -184,8 +184,8 @@ async fn run_internal(
 ) {
     let svc = api_router.layer((
         trace_layer(),
-        middleware::from_fn(coyote_proto::capture_accept_hdr),
         CatchPanicLayer::custom(handle_panic),
+        middleware::from_fn(coyote_proto::capture_accept_hdr),
     ));
 
     // FIXME: Do we want to delay graceful shutdown of the internal API server
@@ -392,13 +392,13 @@ pub async fn run_with_listeners(
     let svc = router
         .layer((
             trace_layer(),
+            CatchPanicLayer::custom(handle_panic),
+            middleware::from_fn(coyote_proto::capture_accept_hdr),
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)
                 .allow_headers(AllowHeaders::mirror_request())
                 .max_age(Duration::from_secs(600)),
-            middleware::from_fn(coyote_proto::capture_accept_hdr),
-            CatchPanicLayer::custom(handle_panic),
         ))
         .into_make_service();
 
