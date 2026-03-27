@@ -143,24 +143,11 @@
                     },
                     "type": "object"
                   },
-                  "extraEnv": {
-                    "default": [],
-                    "description": "Additional environment variables to inject into pods.",
+                  "envVar": {
+                    "description": "Additional environment variables to inject into pods.\nFollows the Kubernetes EnvVar API spec (v1.EnvVar): supports plain `value`\nand `valueFrom` (secretKeyRef, configMapKeyRef, fieldRef, resourceFieldRef)",
                     "items": {
-                      "description": "An environment variable to inject into pods.",
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "value": {
-                          "nullable": true,
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
+                      "type": "object",
+                      "x-kubernetes-preserve-unknown-fields": true
                     },
                     "type": "array"
                   },
