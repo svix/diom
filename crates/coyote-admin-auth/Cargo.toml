@@ -1,0 +1,19 @@
+[package]
+name = "coyote-admin-auth"
+edition = "2024"
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+coyote-authorization.workspace = true
+coyote-core.workspace = true
+coyote-error.workspace = true
+coyote-operations.workspace = true
+fjall.workspace = true
+fjall-utils.workspace = true
+jiff.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true
