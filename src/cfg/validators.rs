@@ -36,9 +36,9 @@ pub(super) fn validate_cluster_configuration(
         ));
     }
     if c.heartbeat_interval < c.replication_request_timeout {
-        return Err(ValidationError::new(
-            "heartbeat_interval must be >= replication_request_teimout",
-        ));
+        tracing::warn!(
+            "setting replication_request_timeout greater than heartbeat_interval may cause election timeouts"
+        );
     }
     Ok(())
 }

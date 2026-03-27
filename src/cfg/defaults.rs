@@ -40,7 +40,7 @@ pub(super) fn cluster_name() -> String {
 }
 
 pub(super) fn cluster_replication_request_timeout() -> Duration {
-    Duration::from_secs(10)
+    Duration::from_secs(5)
 }
 
 pub(super) fn cluster_discovery_request_timeout() -> Duration {
