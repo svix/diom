@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use coyote_authorization::{AccessPolicyId, AccessRule, RoleId};
+use coyote_error::{Result, ResultExt as _};
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -38,8 +39,6 @@ impl RoleRow {
 /// Primary row for an AccessPolicy, keyed by `[ROW_TYPE][policy_id_bytes]`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessPolicyRow {
-    // FIXME: remove the id from this, we don't want it serialized.
-    pub id: AccessPolicyId,
     pub description: String,
     pub rules: Vec<AccessRule>,
     pub created: Timestamp,
@@ -53,5 +52,15 @@ impl TableRow for AccessPolicyRow {
 impl AccessPolicyRow {
     pub fn key_for(id: &AccessPolicyId) -> TableKey<Self> {
         TableKey::init_key(Self::ROW_TYPE, &[], &[id.as_str()])
+    }
+
+    pub fn decode_fjall_key(key: &fjall::UserKey) -> Result<AccessPolicyId> {
+        assert!(key.len() >= 3);
+        assert!(key[0] == Self::ROW_TYPE);
+
+        let s = str::from_utf8(&key[1..key.len() - 1])
+            .or_internal_error()?
+            .to_owned();
+        Ok(AccessPolicyId(s))
     }
 }
