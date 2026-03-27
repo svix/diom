@@ -96,9 +96,6 @@ pub struct AppState {
     pub(crate) do_not_use_dbs: Databases,
 
     pub meter: Meter,
-    pub request_metrics: Arc<RequestMetrics>,
-    pub conn_metrics: Arc<ConnectionMetrics>,
-
     internal_client: InternalClient,
 
     pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
@@ -134,6 +131,8 @@ async fn run_interserver(
     raft: RaftState,
     listener: Option<TcpListener>,
     bind_barrier: Arc<Barrier>,
+    conn_metrics: ConnectionMetrics,
+    request_metrics: RequestMetrics,
 ) {
     let listen_address = cfg.cluster.listen_address(&cfg);
     let listener = match listener {
@@ -150,34 +149,31 @@ async fn run_interserver(
 
     let app = core::cluster::router(&cfg)
         .with_state(state.clone())
-        .layer(middleware::from_fn_with_state(
-            state.clone(),
-            core::otel_spans::request_metrics_middleware,
-        ))
-        .layer(Extension(raft.clone()))
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(diom_proto::capture_accept_hdr))
-        .layer(CatchPanicLayer::custom(handle_panic))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(AxumOtelSpanCreator)
                 .on_response(AxumOtelOnResponse)
                 .on_failure(AxumOtelOnFailure),
-        );
+        )
+        .layer(middleware::from_fn_with_state(
+            request_metrics,
+            core::otel_spans::request_metrics_middleware,
+        ))
+        .layer(CatchPanicLayer::custom(handle_panic))
+        .layer(Extension(raft.clone()));
     let svc = tower::make::Shared::new(
         // It is important that this service wraps the router instead of being
         // applied via `Router::layer`, as it would run after routing then.
         NormalizePath::trim_trailing_slash(app),
     );
 
-    let node_id = raft.node_id;
     let listener = listener.tap_io(move |tcp_stream| {
         if let Err(err) = tcp_stream.set_nodelay(true) {
             tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
         }
-        state
-            .conn_metrics
-            .accepted(node_id, ConnectionType::Internal);
+        conn_metrics.accepted(ConnectionType::Internal);
     });
 
     axum::serve(listener, svc)
@@ -191,6 +187,7 @@ async fn run_interserver(
 async fn run_internal(
     api_router: axum::Router,
     mut internal_req_rx: mpsc::Receiver<InternalRequest>,
+    request_metrics: RequestMetrics,
 ) {
     let svc = api_router
         .layer((
@@ -198,6 +195,10 @@ async fn run_internal(
                 .make_span_with(AxumOtelSpanCreator)
                 .on_response(AxumOtelOnResponse)
                 .on_failure(AxumOtelOnFailure),
+            middleware::from_fn_with_state(
+                request_metrics,
+                core::otel_spans::request_metrics_middleware,
+            ),
             middleware::from_fn(diom_proto::capture_accept_hdr),
             CatchPanicLayer::custom(handle_panic),
         ))
@@ -246,9 +247,6 @@ impl AppState {
 
         let meter = opentelemetry::global::meter("diom.svix.com");
 
-        let request_metrics = Arc::new(RequestMetrics::new(&meter));
-        let conn_metrics = Arc::new(ConnectionMetrics::new(&meter));
-
         let mut listen_addr = cfg.listen_address;
         if listen_addr.ip().is_unspecified() {
             listen_addr.set_ip(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST));
@@ -263,8 +261,6 @@ impl AppState {
             ro_dbs,
             do_not_use_dbs: dbs,
             meter,
-            request_metrics,
-            conn_metrics,
             internal_client,
             auth_token_cache,
             time,
@@ -369,10 +365,12 @@ pub async fn run_with_listeners(
             .expect("failed to initialize cluster");
     let node_id = raft_state.node_id;
 
+    let request_metrics = RequestMetrics::new(&app_state.meter, node_id);
+
     let v1_router = v1::router(Some(app_state.clone()))
         .with_state::<()>(app_state.clone())
         .layer(middleware::from_fn_with_state(
-            app_state.clone(),
+            request_metrics.with_connection_type(ConnectionType::External),
             core::otel_spans::request_metrics_middleware,
         ))
         .layer(Extension(raft_state.clone()))
@@ -382,12 +380,16 @@ pub async fn run_with_listeners(
 
     tokio::spawn(graceful_shutdown_handler());
 
+    let connection_metrics = ConnectionMetrics::new(&app_state.meter, node_id);
+
     let interserver = tokio::spawn(run_interserver(
         cfg.clone(),
         app_state.clone(),
         raft_state.clone(),
         interserver_listener,
         Arc::clone(&interserver_started_barrier),
+        connection_metrics.clone(),
+        request_metrics.with_connection_type(ConnectionType::Interserver),
     ));
 
     tokio::spawn({
@@ -406,7 +408,11 @@ pub async fn run_with_listeners(
         .nest_api_service("/api", v1_router)
         .finish_api(&mut openapi);
 
-    tokio::spawn(run_internal(api_router.clone(), internal_req_rx));
+    tokio::spawn(run_internal(
+        api_router.clone(),
+        internal_req_rx,
+        request_metrics.with_connection_type(ConnectionType::Internal),
+    ));
 
     openapi::postprocess_spec(&mut openapi);
     let docs_router = docs::router(openapi);
@@ -459,9 +465,7 @@ pub async fn run_with_listeners(
         if let Err(err) = tcp_stream.set_nodelay(true) {
             tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
         }
-        app_state
-            .conn_metrics
-            .accepted(node_id, ConnectionType::External);
+        connection_metrics.accepted(ConnectionType::External);
     });
 
     let worker_handle = tokio::task::spawn({

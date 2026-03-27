@@ -1,5 +1,3 @@
-use std::fmt::{self, Display, Formatter};
-
 use http::StatusCode;
 use opentelemetry::{
     KeyValue,
@@ -22,12 +20,18 @@ impl From<DbType> for opentelemetry::Value {
     }
 }
 
+impl From<DbType> for KeyValue {
+    fn from(db_type: DbType) -> Self {
+        KeyValue::new("db_type", db_type)
+    }
+}
+
 #[derive(Clone)]
 pub struct DbMetrics {
     bytes_used: Gauge<u64>,
     apply_operations: Gauge<u64>,
     apply_batch_size: Histogram<u64>,
-    node_id: NodeId,
+    node_id_kv: KeyValue,
 }
 
 impl DbMetrics {
@@ -46,27 +50,20 @@ impl DbMetrics {
                 .u64_histogram("diom.raft.apply_batch_size")
                 .with_description("Raft apply operation batch sizes")
                 .build(),
-            node_id,
+            node_id_kv: node_id.into(),
         }
     }
 
     pub fn record_apply(&self, batch_size: usize) {
         self.apply_operations
-            .record(1, &[KeyValue::new("node_id", self.node_id.to_string())]);
-        self.apply_batch_size.record(
-            batch_size as u64,
-            &[KeyValue::new("node_id", self.node_id.to_string())],
-        );
+            .record(1, std::slice::from_ref(&self.node_id_kv));
+        self.apply_batch_size
+            .record(batch_size as u64, std::slice::from_ref(&self.node_id_kv));
     }
 
     pub fn bytes_used(&self, bytes: u64, db_type: DbType) {
-        self.bytes_used.record(
-            bytes,
-            &[
-                KeyValue::new("node_id", self.node_id.to_string()),
-                KeyValue::new("db_type", db_type),
-            ],
-        );
+        self.bytes_used
+            .record(bytes, &[self.node_id_kv.clone(), db_type.into()]);
     }
 }
 
@@ -86,7 +83,7 @@ pub struct LogMetrics {
 
 impl LogMetrics {
     pub fn new(meter: &Meter, node_id: NodeId) -> Self {
-        let context = vec![KeyValue::new("node_id", node_id.to_string())];
+        let context = vec![node_id.into()];
         Self {
             bytes_used: meter
                 .u64_gauge("diom.raft.log.bytes_used")
@@ -140,53 +137,64 @@ impl LogMetrics {
 
 pub enum ConnectionType {
     Internal,
+    Interserver,
     External,
+    Unknown,
 }
 
-impl Display for ConnectionType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let value = match self {
+impl From<ConnectionType> for opentelemetry::Value {
+    fn from(value: ConnectionType) -> Self {
+        match value {
             ConnectionType::Internal => "internal",
+            ConnectionType::Interserver => "interserver",
             ConnectionType::External => "external",
-        };
-        write!(f, "{value}")
+            ConnectionType::Unknown => "unknown",
+        }
+        .into()
     }
 }
+
+impl From<ConnectionType> for KeyValue {
+    fn from(value: ConnectionType) -> Self {
+        KeyValue::new("connection_type", value)
+    }
+}
+
+#[derive(Clone)]
 pub struct ConnectionMetrics {
     pub total: Counter<u64>,
+    node_id_kv: KeyValue,
 }
 
 impl ConnectionMetrics {
-    pub fn new(meter: &Meter) -> Self {
+    pub fn new(meter: &Meter, node_id: NodeId) -> Self {
         Self {
             total: meter
                 .u64_counter("diom.connections.total")
                 .with_description("Total number of accepted connections")
                 .build(),
+            node_id_kv: node_id.into(),
         }
     }
 
-    pub fn accepted(&self, node_id: NodeId, t: ConnectionType) {
-        self.total.add(
-            1,
-            &[
-                KeyValue::new("node_id", node_id.to_string()),
-                KeyValue::new("connection_type", t.to_string()),
-            ],
-        );
+    pub fn accepted(&self, t: ConnectionType) {
+        self.total.add(1, &[self.node_id_kv.clone(), t.into()]);
     }
 }
 
+#[derive(Clone)]
 pub struct RequestMetrics {
     success: Counter<u64>,
     client_error: Counter<u64>,
     server_error: Counter<u64>,
     latency: Histogram<u64>,
     content_length: Histogram<u64>,
+    node_id_kv: KeyValue,
+    connection_type_kv: KeyValue,
 }
 
 impl RequestMetrics {
-    pub fn new(meter: &Meter) -> Self {
+    pub fn new(meter: &Meter, node_id: NodeId) -> Self {
         Self {
             success: meter
                 .u64_counter("diom.request.success")
@@ -210,20 +218,29 @@ impl RequestMetrics {
                 .with_description("Content length")
                 .with_unit("By")
                 .build(),
+            node_id_kv: node_id.into(),
+            connection_type_kv: ConnectionType::Unknown.into(),
         }
+    }
+
+    /// Make a clone of this RequestMetrics (sharing the same meters) with the given
+    /// ConnectionType as context
+    pub fn with_connection_type(&self, connection_type: ConnectionType) -> Self {
+        let mut cloned = self.clone();
+        cloned.connection_type_kv = connection_type.into();
+        cloned
     }
 
     pub fn record(
         &self,
         route: &str,
-        node_id: NodeId,
         status: StatusCode,
         duration: u64,
         content_length: Option<u64>,
     ) {
         let attrs = &[
             KeyValue::new("route", route.to_owned()),
-            KeyValue::new("node_id", node_id.to_string()),
+            self.node_id_kv.clone(),
         ];
 
         if status.is_success() {
