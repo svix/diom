@@ -6,7 +6,10 @@ use super::{
 };
 use crate::{
     cfg::Configuration,
-    core::cluster::{ClusterId, state_machine::StoreHandle},
+    core::{
+        cluster::{ClusterId, state_machine::StoreHandle},
+        metrics::{ClusterMetrics, WriteType},
+    },
 };
 
 use anyhow::Context;
@@ -330,6 +333,7 @@ pub struct RaftState {
     pub(super) network: NetworkFactory,
     pub background_channel: Sender<BackgroundCommand>,
     pub time: Monotime,
+    pub metrics: ClusterMetrics,
 }
 
 impl RaftState {
@@ -345,10 +349,12 @@ impl RaftState {
                 >,
             > + Into<O::RequestParent>,
     {
+        let start = std::time::Instant::now();
         let inner: Request = op.into().into();
         let now = self.time.update_now();
         let request =
             RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
+        let mut write_type = WriteType::Local;
         let response = match self.raft.client_write(request.clone()).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");
@@ -363,6 +369,7 @@ impl RaftState {
                         tracing::trace!("received write to non-leader, forwarding");
                         let mut network_handle = self.network.clone();
                         let client = network_handle.new_client(leader_id, leader_node).await;
+                        write_type = WriteType::Forwarded;
                         client
                             .forward_request(super::proto::ForwardedWriteRequest {
                                 source_node_id: self.node_id,
@@ -382,6 +389,7 @@ impl RaftState {
                 }
             }
         };
+        self.metrics.record_write(write_type, start.elapsed());
         let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
             response,
         )
@@ -477,6 +485,7 @@ impl RaftState {
     ///
     /// On the leader, this is implemented by calling `openraft::Raft::ensure_linearizable`.
     pub async fn wait_linearizable(&self) -> anyhow::Result<()> {
+        self.metrics.record_linearizable_read();
         let leader_id = match self.raft.current_leader().await {
             Some(n) if n == self.node_id => {
                 tracing::trace!("performing a linearizable read on the leader");
