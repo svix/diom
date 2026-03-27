@@ -38,4 +38,24 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "diom-operator.fullname" . }}-view
+  labels:
+    {{- include "diom-operator.labels" . | nindent 4 }}
+    {{- if .Values.operator.rbac.aggregateViewClusterRoles }}
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+    rbac.authorization.k8s.io/aggregate-to-cluster-reader: "true"
+    {{- end }}
+rules:
+  - apiGroups: ["diom.svix.com"]
+    resources: ["diomclusters"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["diom.svix.com"]
+    resources: ["diomclusters/status"]
+    verbs: ["get"]
 {{- end }}

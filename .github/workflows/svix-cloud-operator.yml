@@ -78,6 +78,7 @@ jobs:
             --set-string operator.image.tag=${{ inputs.image_tag }} \
             --set-string cluster.image.tag=${{ inputs.image_tag }} \
             --set operator.image.pullPolicy=Always \
+            --set operator.rbac.aggregateViewClusterRoles=true \
             --set crds.enabled=true \
             --atomic \
             --timeout=120s \
