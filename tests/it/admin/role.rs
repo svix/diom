@@ -176,7 +176,11 @@ async fn test_admin_role_list_pagination() -> TestResult {
     } = start_server().await;
 
     // Create 3 roles with IDs that sort lexicographically: role-aa < role-ab < role-ac
-    for (id, desc) in [("role-aa", "Role AA"), ("role-ab", "Role AB"), ("role-ac", "Role AC")] {
+    for (id, desc) in [
+        ("role-aa", "Role AA"),
+        ("role-ab", "Role AB"),
+        ("role-ac", "Role AC"),
+    ] {
         client
             .post("v1.admin.auth-role.upsert")
             .json(json!({ "id": id, "description": desc }))
@@ -196,7 +200,10 @@ async fn test_admin_role_list_pagination() -> TestResult {
     assert_eq!(data.len(), 2, "first page should have 2 items");
     assert_eq!(resp["done"], false, "should not be done after first page");
     let iterator = resp["iterator"].assert_str().to_owned();
-    assert_eq!(iterator, "role-ab", "iterator should be id of last returned item");
+    assert_eq!(
+        iterator, "role-ab",
+        "iterator should be id of last returned item"
+    );
 
     // Second page: limit=2, pass iterator from first page
     let resp2 = client
