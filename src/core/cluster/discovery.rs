@@ -40,7 +40,7 @@ impl Discovery {
         my_node_id: NodeId,
         network: NetworkFactory,
     ) -> anyhow::Result<Self> {
-        let client = build_client(&cfg, cfg.cluster.discovery_request_timeout, true)?;
+        let client = build_client(&cfg, Some(cfg.cluster.discovery_request_timeout), true)?;
         let my_addr = detect_address(&cfg, my_node_id).await?;
         Ok(Self {
             my_addr,

@@ -5003,13 +5003,20 @@
         "type": "object",
         "properties": {
           "snapshot_time": {
+            "description": "The wall-clock time at which the snapshot was initiated",
             "type": "string",
             "format": "date-time"
           },
           "snapshot_log_index": {
+            "description": "The log index at which the snapshot was initiated",
             "type": "integer",
             "format": "uint64",
             "minimum": 0
+          },
+          "snapshot_id": {
+            "description": "If this is `null`, the snapshot is still building in the background",
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [

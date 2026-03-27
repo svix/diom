@@ -15,10 +15,8 @@ use anyhow::Context;
 use diom_core::{Monotime, task::spawn_blocking_in_current_span};
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace, StorageType};
-use openraft::{
-    EntryPayload, LogId, RaftSnapshotBuilder, RaftTypeConfig, Snapshot, SnapshotMeta,
-    StorageIOError, StoredMembership, storage::RaftStateMachine,
-};
+use futures_util::{Stream, StreamExt};
+use openraft::{EntryPayload, RaftSnapshotBuilder, storage::RaftStateMachine};
 use parking_lot::RwLock;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -27,18 +25,25 @@ use tokio::sync::RwLock as TokioRwLock;
 use uuid::Uuid;
 
 use super::{
-    Node, NodeId, errors::*, handle::Response, logs::DiomLogs, raft::TypeConfig,
-    serialized_state_machine,
+    LogId, NodeId, handle::Response, logs::DiomLogs, raft::TypeConfig, serialized_state_machine,
 };
 use crate::AppState;
 
-type StorageError = openraft::StorageError<NodeId>;
-type StorageResult<T> = Result<T, StorageError>;
+type StorageResult<T> = std::io::Result<T>;
+type StoredMembership = openraft::type_config::alias::StoredMembershipOf<TypeConfig>;
+type SnapshotMeta = openraft::type_config::alias::SnapshotMetaOf<TypeConfig>;
+type Snapshot = openraft::type_config::alias::SnapshotOf<TypeConfig>;
+type SnapshotData = openraft::type_config::alias::SnapshotDataOf<TypeConfig>;
+type EntryResponder = openraft::storage::EntryResponder<TypeConfig>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct LastSnapshot {
-    meta: SnapshotMeta<NodeId, Node>,
+    meta: SnapshotMeta,
     path: PathBuf,
+}
+
+fn io_err(e: anyhow::Error) -> std::io::Error {
+    std::io::Error::other(e)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
@@ -115,19 +120,20 @@ pub struct Store {
     meta_keyspace: Keyspace,
     readonly_meta_keyspace: ReadonlyKeyspace,
     snapshot_idx: u64,
-    last_applied_log_id: Option<LogId<NodeId>>,
-    last_membership: StoredMembership<NodeId, Node>,
+    last_applied_log_id: Option<LogId>,
+    last_membership: StoredMembership,
     last_snapshot: Arc<RwLock<Option<LastSnapshot>>>,
     cluster_id: Option<ClusterId>,
     pub(super) time: Monotime,
     pub(super) logs: DiomLogs,
+    metrics: DbMetrics,
 }
 
 trait SnapshotIdx {
     fn snapshot_idx(&self) -> anyhow::Result<u64>;
 }
 
-impl SnapshotIdx for SnapshotMeta<NodeId, Node> {
+impl SnapshotIdx for SnapshotMeta {
     fn snapshot_idx(&self) -> anyhow::Result<u64> {
         let last = self
             .snapshot_id
@@ -141,11 +147,9 @@ impl SnapshotIdx for SnapshotMeta<NodeId, Node> {
 
 const METADATA_KEYSPACE: &str = "_raft_metadata";
 
-static LAST_APPLIED_LOG_ID: FjallFixedKey<LogId<NodeId>> =
-    FjallFixedKey::new("last_applied_log_id");
+static LAST_APPLIED_LOG_ID: FjallFixedKey<LogId> = FjallFixedKey::new("last_applied_log_id");
 static LAST_SNAPSHOT: FjallFixedKey<LastSnapshot> = FjallFixedKey::new("last_snapshot");
-static LAST_MEMBERSHIP: FjallFixedKey<StoredMembership<NodeId, Node>> =
-    FjallFixedKey::new("last_membership");
+static LAST_MEMBERSHIP: FjallFixedKey<StoredMembership> = FjallFixedKey::new("last_membership");
 static CLUSTER_UUID: FjallFixedKey<ClusterId> = FjallFixedKey::new("cluster_uuid");
 
 impl Store {
@@ -188,6 +192,7 @@ impl Store {
             "this node was previously removed from a cluster and must be erased before it can be re-added"
         );
 
+        let metrics = DbMetrics::new(&app_state.meter, node_id);
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
             state: app_state,
@@ -201,9 +206,10 @@ impl Store {
             cluster_id: None,
             time,
             logs,
+            metrics,
         };
         this.load_information().await?;
-        this.start_metrics(DbMetrics::new(&this.state.meter, node_id));
+        this.start_metrics();
         Ok(this)
     }
 
@@ -215,9 +221,10 @@ impl Store {
         self.stores.read_arc()
     }
 
-    pub fn start_metrics(&self, metrics: DbMetrics) {
+    pub fn start_metrics(&self) {
         let stores = Arc::clone(&self.stores);
         let shutdown = crate::shutting_down_token();
+        let metrics = self.metrics.clone();
         tokio::spawn(async move {
             let mut ticker = tokio::time::interval(Duration::from_secs(60));
             loop {
@@ -242,7 +249,7 @@ impl Store {
                         metrics.bytes_used(persistent_bytes, DbType::Persistent);
                         metrics.bytes_used(ephemeral_bytes, DbType::Ephemeral);
                     }
-                    Err(err) => tracing::info!(?err, "failed to read db disk space"),
+                    Err(err) => tracing::warn!(?err, "failed to read db disk space"),
                 }
             }
         });
@@ -296,7 +303,7 @@ impl Store {
 
     async fn set_last_snapshot_(
         &mut self,
-        meta: SnapshotMeta<NodeId, Node>,
+        meta: SnapshotMeta,
         snapshot_path: PathBuf,
     ) -> anyhow::Result<()> {
         let handle = self.stores.clone();
@@ -369,8 +376,8 @@ impl Store {
 
     async fn install_snapshot_(
         &mut self,
-        meta: &SnapshotMeta<NodeId, Node>,
-        snapshot: Box<StoredSnapshot>,
+        meta: &SnapshotMeta,
+        snapshot: StoredSnapshot,
     ) -> anyhow::Result<()> {
         tracing::debug!("starting snapshot installation");
         let mut f = snapshot.file.into_std().await;
@@ -389,62 +396,66 @@ impl Store {
         Ok(())
     }
 
-    async fn apply_<I>(&mut self, entries: I) -> StorageResult<Vec<Response>>
+    #[tracing::instrument(skip_all, fields(num_entries))]
+    async fn apply_<S>(&mut self, mut entries: S) -> anyhow::Result<()>
     where
-        I: IntoIterator<Item = <TypeConfig as RaftTypeConfig>::Entry> + openraft::OptionalSend,
-        I::IntoIter: openraft::OptionalSend,
+        S: Stream<Item = std::io::Result<EntryResponder>> + Unpin + Send,
     {
-        let mut replies = vec![];
         let mut changed_log_id = false;
         let mut changed_membership = false;
-        for item in entries {
+        let mut num_entries = 0;
+        while let Some(entry) = entries.next().await {
+            let (item, responder) = entry?;
+
             self.last_applied_log_id = Some(item.log_id);
             changed_log_id = true;
 
-            match item.payload {
+            let reply = match item.payload {
                 EntryPayload::Blank => {
                     tracing::trace!("heartbeat");
-                    replies.push(Response::Blank)
+                    Response::Blank
                 }
                 EntryPayload::Normal(req) => {
                     tracing::trace!(log_id=?item.log_id, request=?req, "applying user request");
-                    let reply = match super::applier::apply_request(req, self, item.log_id).await {
-                        Ok(o) => o,
-                        Err(e) => {
-                            tracing::error!("failed to apply raft log");
-                            return Err(StorageError::IO {
-                                source: StorageIOError::apply(item.log_id, e),
-                            });
-                        }
-                    };
-                    replies.push(reply);
+
+                    super::applier::apply_request(req, self, item.log_id)
+                        .await
+                        .map_err(|err| {
+                            tracing::error!(?err, "failed to apply raft log");
+                            std::io::Error::other(err)
+                        })?
                 }
                 EntryPayload::Membership(last_membership) => {
                     tracing::trace!("changing cluster membership");
                     self.last_membership =
                         StoredMembership::new(Some(item.log_id), last_membership);
                     changed_membership = true;
-                    replies.push(Response::Blank)
+                    Response::Blank
                 }
+            };
+            if let Some(responder) = responder {
+                responder.send(reply);
             }
+            num_entries += 1;
         }
+        self.metrics.record_apply(num_entries);
+        tracing::Span::current().record("num_entries", num_entries);
+        tracing::trace!(num_entries, "applied some entries");
         if changed_log_id || changed_membership {
-            self.record_ids_().await.map_err(write_err)?;
+            self.record_ids_().await.context("recording updated IDs")?;
         }
-        Ok(replies)
+        Ok(())
     }
 
-    async fn begin_receiving_snapshot_(
-        &mut self,
-    ) -> StorageResult<Box<<TypeConfig as RaftTypeConfig>::SnapshotData>> {
+    async fn begin_receiving_snapshot_(&mut self) -> anyhow::Result<SnapshotData> {
         let path = self
             .snapshot_directory
             .with_file_name(format!("diom-incoming-snapshot-{}", self.snapshot_idx));
         self.snapshot_idx += 1;
         let f = tokio::fs::File::create_new(path.clone())
             .await
-            .map_err(|e| write_snapshot_err(&e))?;
-        Ok(Box::new(StoredSnapshot { path, file: f }))
+            .context("failed to create snapshot")?;
+        Ok(StoredSnapshot { path, file: f })
     }
 
     fn prep_snapshot_builder_(&mut self) {
@@ -452,20 +463,20 @@ impl Store {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn get_current_snapshot_(&mut self) -> StorageResult<Option<Snapshot<TypeConfig>>> {
+    async fn get_current_snapshot_(&mut self) -> anyhow::Result<Option<Snapshot>> {
         // clone to avoid holding a lock over an await point
         let last_snapshot = self.last_snapshot.read().clone();
         if let Some(last_snapshot) = last_snapshot {
             tracing::trace!(?last_snapshot, "found last_snapshot");
             let f = tokio::fs::File::open(&last_snapshot.path)
                 .await
-                .map_err(|e| read_snapshot_err(&e))?;
+                .context("failed to open snapshot")?;
             Ok(Some(Snapshot {
                 meta: last_snapshot.meta.clone(),
-                snapshot: Box::new(StoredSnapshot {
+                snapshot: StoredSnapshot {
                     file: f,
                     path: last_snapshot.path.clone(),
-                }),
+                },
             }))
         } else {
             tracing::trace!("found no last_snapshot");
@@ -473,7 +484,7 @@ impl Store {
         }
     }
 
-    async fn build_snapshot_(&mut self) -> StorageResult<Snapshot<TypeConfig>> {
+    async fn build_snapshot_(&mut self) -> anyhow::Result<Snapshot> {
         let last_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
 
@@ -519,17 +530,15 @@ impl Store {
             ]
         })
         .await
-        .map_err(|err| write_snapshot_err(anyhow::anyhow!(err)))?;
+        .context("failed to generate snapshot targets")?;
 
         let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets)
             .await
-            .map_err(write_snapshot_err)?;
+            .context("failed to build snapshot")?;
 
         self.set_last_snapshot_(meta.clone(), snapshot.path.clone())
             .await
-            .map_err(write_snapshot_err)?;
-
-        let snapshot = Box::new(snapshot);
+            .context("failed to set last snapshot")?;
 
         Ok(Snapshot { meta, snapshot })
     }
@@ -609,7 +618,7 @@ impl tokio::io::AsyncSeek for StoredSnapshot {
 
 impl StoredSnapshot {
     async fn new(
-        metadata: &SnapshotMeta<NodeId, Node>,
+        metadata: &SnapshotMeta,
         directory: &Path,
         targets: Vec<(StorageType, Database, fjall::Snapshot, Vec<String>)>,
     ) -> anyhow::Result<Self> {
@@ -635,33 +644,43 @@ impl StoredSnapshot {
 }
 
 impl RaftSnapshotBuilder<TypeConfig> for StoreHandle {
-    async fn build_snapshot(&mut self) -> StorageResult<Snapshot<TypeConfig>> {
-        self.inner.write().await.build_snapshot_().await
+    async fn build_snapshot(&mut self) -> StorageResult<Snapshot> {
+        self.inner
+            .write()
+            .await
+            .build_snapshot_()
+            .await
+            .map_err(io_err)
     }
 }
 
 impl RaftStateMachine<TypeConfig> for StoreHandle {
     type SnapshotBuilder = Self;
 
-    async fn applied_state(
-        &mut self,
-    ) -> StorageResult<(Option<LogId<NodeId>>, StoredMembership<NodeId, Node>)> {
+    async fn applied_state(&mut self) -> StorageResult<(Option<LogId>, StoredMembership)> {
         let this = self.inner.read().await;
         Ok((this.last_applied_log_id, this.last_membership.clone()))
     }
 
-    async fn apply<I>(&mut self, entries: I) -> StorageResult<Vec<Response>>
+    async fn apply<S>(&mut self, entries: S) -> std::io::Result<()>
     where
-        I: IntoIterator<Item = <TypeConfig as RaftTypeConfig>::Entry> + openraft::OptionalSend,
-        I::IntoIter: openraft::OptionalSend,
+        S: Stream<Item = std::io::Result<EntryResponder>> + Unpin + Send,
     {
-        self.inner.write().await.apply_(entries).await
+        self.inner
+            .write()
+            .await
+            .apply_(entries)
+            .await
+            .map_err(io_err)
     }
 
-    async fn begin_receiving_snapshot(
-        &mut self,
-    ) -> StorageResult<Box<<TypeConfig as RaftTypeConfig>::SnapshotData>> {
-        self.inner.write().await.begin_receiving_snapshot_().await
+    async fn begin_receiving_snapshot(&mut self) -> StorageResult<SnapshotData> {
+        self.inner
+            .write()
+            .await
+            .begin_receiving_snapshot_()
+            .await
+            .map_err(io_err)
     }
 
     async fn get_snapshot_builder(&mut self) -> Self::SnapshotBuilder {
@@ -670,22 +689,27 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
     }
 
     #[tracing::instrument(skip(self))]
-    async fn get_current_snapshot(&mut self) -> StorageResult<Option<Snapshot<TypeConfig>>> {
-        self.inner.write().await.get_current_snapshot_().await
+    async fn get_current_snapshot(&mut self) -> StorageResult<Option<Snapshot>> {
+        self.inner
+            .write()
+            .await
+            .get_current_snapshot_()
+            .await
+            .map_err(io_err)
     }
 
     #[tracing::instrument(skip(self, meta))]
     async fn install_snapshot(
         &mut self,
-        meta: &SnapshotMeta<NodeId, Node>,
-        snapshot: Box<StoredSnapshot>,
+        meta: &SnapshotMeta,
+        snapshot: StoredSnapshot,
     ) -> StorageResult<()> {
         self.inner
             .write()
             .await
             .install_snapshot_(meta, snapshot)
             .await
-            .map_err(read_snapshot_err)
+            .map_err(io_err)
     }
 }
 

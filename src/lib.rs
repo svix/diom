@@ -284,7 +284,7 @@ impl AppState {
 
 /// Run the server with the given configuration
 pub async fn run(cfg: Configuration) {
-    run_with_listeners(cfg, None, None, Monotime::initial()).await
+    run_with_listeners(cfg, None, None, Monotime::initial(), Initialized::new()).await
 }
 
 static BOOTSTRAPPED: AtomicBool = AtomicBool::new(false);
@@ -315,8 +315,14 @@ pub struct Initialized {
     inner: Arc<tokio::sync::SetOnce<()>>,
 }
 
+impl Default for Initialized {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Initialized {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             inner: Arc::new(tokio::sync::SetOnce::new()),
         }
@@ -346,13 +352,12 @@ pub async fn run_with_listeners(
     listener: Option<TcpListener>,
     interserver_listener: Option<TcpListener>,
     time: Monotime,
+    initialized: Initialized,
 ) {
     // OpenAPI/aide must be initialized before any routers are constructed
     // because its initialization sets generation-global settings which are
     // needed at router-construction time.
     let mut openapi = openapi::initialize_openapi();
-
-    let initialized = Initialized::new();
 
     let (internal_req_tx, internal_req_rx) = mpsc::channel(1);
     let internal_client = InternalClient::new(internal_req_tx);

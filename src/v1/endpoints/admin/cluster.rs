@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, time::Duration};
 
 use aide::axum::{
     ApiRouter,
@@ -102,7 +102,7 @@ async fn cluster_status(
         .raft
         .with_raft_state(move |s| {
             let this_node_state = s.server_state.into();
-            let committed = s.committed;
+            let committed = s.committed().copied();
             let members = s.membership_state.effective().membership();
             let voters = members.voter_ids().collect::<BTreeSet<NodeId>>();
             let learners = members.voter_ids().collect::<BTreeSet<NodeId>>();
@@ -157,7 +157,7 @@ async fn cluster_status(
                     address: peer.node.to_string(),
                     state: peer.state,
                     last_committed_log_index: last_log.map(|l| l.index),
-                    last_committed_term: last_log.map(|l| l.leader_id.term),
+                    last_committed_term: last_log.map(|l| l.committed_leader_id().term),
                 }
             }
         })
@@ -247,8 +247,37 @@ admin_request_input!(ClusterForceSnapshotIn);
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterForceSnapshotOut {
+    /// The wall-clock time at which the snapshot was initiated
     snapshot_time: jiff::Timestamp,
+    /// The log index at which the snapshot was initiated
     snapshot_log_index: u64,
+    /// If this is `null`, the snapshot is still building in the background
+    snapshot_id: Option<String>,
+}
+
+async fn wait_for_snapshot_to_update(
+    repl: &RaftState,
+    previous_snapshot_id: String,
+) -> Result<String> {
+    let mut ticker = tokio::time::interval(Duration::from_millis(500));
+    loop {
+        let previous_snapshot_id = previous_snapshot_id.clone();
+        if let Some(new_snapshot_id) = repl
+            .raft
+            .with_raft_state(move |s| {
+                if s.snapshot_meta.snapshot_id != previous_snapshot_id {
+                    Some(s.snapshot_meta.snapshot_id.clone())
+                } else {
+                    None
+                }
+            })
+            .await
+            .or_internal_error()?
+        {
+            return Ok(new_snapshot_id);
+        }
+        ticker.tick().await;
+    }
 }
 
 /// Force the cluster to take a snapshot immediately
@@ -257,6 +286,12 @@ async fn cluster_force_snapshot(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(_data): MsgPackOrJson<ClusterForceSnapshotIn>,
 ) -> Result<MsgPackOrJson<ClusterForceSnapshotOut>> {
+    let previous_snapshot_id = repl
+        .raft
+        .with_raft_state(|s| s.snapshot_meta.snapshot_id.clone())
+        .await
+        .or_internal_error()?;
+
     let Some((snapshot_time, log_id)) = repl.trigger_snapshot().await.or_internal_error()? else {
         return Err(Error::bad_request(
             "snapshot_unavailable",
@@ -264,9 +299,28 @@ async fn cluster_force_snapshot(
         ));
     };
 
+    // in openraft 0.10, trigger_snapshot() doesn't block, so we need to poll for completion
+    let snapshot_id = match tokio::time::timeout(
+        Duration::from_secs(30),
+        wait_for_snapshot_to_update(&repl, previous_snapshot_id),
+    )
+    .await
+    {
+        Ok(Ok(value)) => Some(value),
+        Ok(Err(err)) => {
+            tracing::warn!(?err, "error waiting for snapshot to run");
+            return Err(Error::internal(err));
+        }
+        Err(err) => {
+            tracing::debug!(?err, "timed out waiting for snapshot to finish");
+            None
+        }
+    };
+
     Ok(MsgPackOrJson(ClusterForceSnapshotOut {
         snapshot_time,
         snapshot_log_index: log_id.index,
+        snapshot_id,
     }))
 }
 

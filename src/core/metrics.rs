@@ -1,7 +1,10 @@
 use std::fmt::{self, Display, Formatter};
 
 use http::StatusCode;
-use opentelemetry::metrics::{Counter, Gauge, Histogram, Meter};
+use opentelemetry::{
+    KeyValue,
+    metrics::{Counter, Gauge, Histogram, Meter},
+};
 
 use super::cluster::NodeId;
 
@@ -19,8 +22,11 @@ impl From<DbType> for opentelemetry::Value {
     }
 }
 
+#[derive(Clone)]
 pub struct DbMetrics {
     bytes_used: Gauge<u64>,
+    apply_operations: Gauge<u64>,
+    apply_batch_size: Histogram<u64>,
     node_id: NodeId,
 }
 
@@ -32,29 +38,55 @@ impl DbMetrics {
                 .with_description("DB size in bytes")
                 .with_unit("By")
                 .build(),
+            apply_operations: meter
+                .u64_gauge("diom.raft.apply_count")
+                .with_description("Raft apply operations")
+                .build(),
+            apply_batch_size: meter
+                .u64_histogram("diom.raft.apply_batch_size")
+                .with_description("Raft apply operation batch sizes")
+                .build(),
             node_id,
         }
+    }
+
+    pub fn record_apply(&self, batch_size: usize) {
+        self.apply_operations
+            .record(1, &[KeyValue::new("node_id", self.node_id.to_string())]);
+        self.apply_batch_size.record(
+            batch_size as u64,
+            &[KeyValue::new("node_id", self.node_id.to_string())],
+        );
     }
 
     pub fn bytes_used(&self, bytes: u64, db_type: DbType) {
         self.bytes_used.record(
             bytes,
             &[
-                opentelemetry::KeyValue::new("node_id", self.node_id.to_string()),
-                opentelemetry::KeyValue::new("db_type", db_type),
+                KeyValue::new("node_id", self.node_id.to_string()),
+                KeyValue::new("db_type", db_type),
             ],
         );
     }
 }
 
+#[derive(Clone)]
 pub struct LogMetrics {
     bytes_used: Gauge<u64>,
     entry_count: Gauge<u64>,
-    node_id: NodeId,
+
+    append_operations: Gauge<u64>,
+    append_batch_size: Histogram<u64>,
+
+    read_operations: Gauge<u64>,
+    read_batch_size: Histogram<u64>,
+
+    context: Vec<KeyValue>,
 }
 
 impl LogMetrics {
     pub fn new(meter: &Meter, node_id: NodeId) -> Self {
+        let context = vec![KeyValue::new("node_id", node_id.to_string())];
         Self {
             bytes_used: meter
                 .u64_gauge("diom.raft.log.bytes_used")
@@ -65,28 +97,44 @@ impl LogMetrics {
                 .u64_gauge("diom.raft.log.entry_count")
                 .with_description("Raft log entry count")
                 .build(),
-            node_id,
+            append_operations: meter
+                .u64_gauge("diom.raft.log.append_count")
+                .with_description("Raft log append operations")
+                .build(),
+            append_batch_size: meter
+                .u64_histogram("diom.raft.log.append_batch_size")
+                .with_description("Raft log append operation batch sizes")
+                .build(),
+            read_operations: meter
+                .u64_gauge("diom.raft.log.read_count")
+                .with_description("Raft log read operations")
+                .build(),
+            read_batch_size: meter
+                .u64_histogram("diom.raft.log.read_batch_size")
+                .with_description("Raft log read operation batch sizes")
+                .build(),
+            context,
         }
     }
 
+    pub fn record_append(&self, batch_size: usize) {
+        self.append_operations.record(1, &self.context);
+        self.append_batch_size
+            .record(batch_size as u64, &self.context);
+    }
+
+    pub fn record_log_read(&self, batch_size: usize) {
+        self.read_operations.record(1, &self.context);
+        self.read_batch_size
+            .record(batch_size as u64, &self.context);
+    }
+
     pub fn bytes_used(&self, bytes: u64) {
-        self.bytes_used.record(
-            bytes,
-            &[opentelemetry::KeyValue::new(
-                "node_id",
-                self.node_id.to_string(),
-            )],
-        );
+        self.bytes_used.record(bytes, &self.context);
     }
 
     pub fn entry_count(&self, count: u64) {
-        self.entry_count.record(
-            count,
-            &[opentelemetry::KeyValue::new(
-                "node_id",
-                self.node_id.to_string(),
-            )],
-        );
+        self.entry_count.record(count, &self.context);
     }
 }
 
@@ -122,8 +170,8 @@ impl ConnectionMetrics {
         self.total.add(
             1,
             &[
-                opentelemetry::KeyValue::new("node_id", node_id.to_string()),
-                opentelemetry::KeyValue::new("connection_type", t.to_string()),
+                KeyValue::new("node_id", node_id.to_string()),
+                KeyValue::new("connection_type", t.to_string()),
             ],
         );
     }
@@ -174,8 +222,8 @@ impl RequestMetrics {
         content_length: Option<u64>,
     ) {
         let attrs = &[
-            opentelemetry::KeyValue::new("route", route.to_owned()),
-            opentelemetry::KeyValue::new("node_id", node_id.to_string()),
+            KeyValue::new("route", route.to_owned()),
+            KeyValue::new("node_id", node_id.to_string()),
         ];
 
         if status.is_success() {

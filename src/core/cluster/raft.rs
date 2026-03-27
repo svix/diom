@@ -31,7 +31,7 @@ openraft::declare_raft_types!(
         SnapshotData = StoredSnapshot
 );
 
-pub type Raft = openraft::Raft<TypeConfig>;
+pub type Raft = openraft::Raft<TypeConfig, StoreHandle>;
 
 pub(crate) async fn initialize_cluster(
     raft: &Raft,
@@ -79,10 +79,11 @@ pub async fn initialize_raft(
         cfg.cluster.log_ack_immediately,
     )
     .context("setting up log store")?;
-    let id = logs
+    let id: NodeId = logs
         .get_node_id()
         .await
         .context("reading node ID from logs")?;
+    logs.enable_metrics(LogMetrics::new(&app_state.meter, id));
     let config = openraft::Config {
         heartbeat_interval: cfg.cluster.heartbeat_interval.as_millis() as u64,
         election_timeout_min: cfg.cluster.election_timeout_min.as_millis() as u64,
@@ -109,11 +110,10 @@ pub async fn initialize_raft(
     .await?;
     let state_machine: StoreHandle = state_machine.into();
 
-    logs.start_metrics(LogMetrics::new(&app_state.meter, id));
-
     let raft = Raft::new(id, config, network.clone(), logs, state_machine.clone())
         .await
         .context("initializing openraft")?;
+
     let (bgtx, bgrx) = tokio::sync::mpsc::channel(10);
     let handle = RaftState {
         raft,
@@ -124,6 +124,28 @@ pub async fn initialize_raft(
         time,
         cfg: cfg.clone(),
     };
+    #[cfg(feature = "raft-runtime-stats")]
+    tokio::spawn({
+        let handle = handle.clone();
+        async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(1));
+            let shutdown = diom_core::shutdown::shutting_down_token();
+            while shutdown
+                .run_until_cancelled(interval.tick())
+                .await
+                .is_some()
+            {
+                let stats = match handle.raft.runtime_stats().await {
+                    Ok(s) => s,
+                    Err(err) => {
+                        tracing::warn!(?err, "unable to get runtime stats");
+                        continue;
+                    }
+                };
+                println!("{}", stats.display().human_readable());
+            }
+        }
+    });
     tokio::spawn({
         let handle = handle.clone();
         let cfg = cfg.clone();
@@ -170,7 +192,7 @@ mod tests {
 
     use diom_proto::InternalClient;
     use fjall::Database;
-    use openraft::{StorageIOError, testing::StoreBuilder};
+    use openraft::testing::log::StoreBuilder;
     use tempfile::TempDir;
 
     use crate::{AppState, cfg::ConfigurationInner};
@@ -180,7 +202,7 @@ mod tests {
             logs::DiomLogs,
             state_machine::{Store, StoreHandle},
         },
-        NodeId, TypeConfig,
+        TypeConfig,
     };
     use crate::cfg::Dir;
 
@@ -232,16 +254,15 @@ mod tests {
     impl StoreBuilder<TypeConfig, DiomLogs, StoreHandle, TempDir> for DiomStoreBuilder {
         async fn build(
             &self,
-        ) -> Result<(TempDir, DiomLogs, StoreHandle), openraft::StorageError<NodeId>> {
-            Self::setup().await.map_err(|e| openraft::StorageError::IO {
-                source: StorageIOError::write(e),
-            })
+        ) -> Result<(TempDir, DiomLogs, StoreHandle), openraft::StorageError<TypeConfig>>
+        {
+            Ok(Self::setup().await.unwrap())
         }
     }
 
-    #[test]
-    fn test_storage_openraft_slow() -> anyhow::Result<()> {
-        openraft::testing::Suite::test_all(DiomStoreBuilder)?;
+    #[tokio::test]
+    async fn test_storage_openraft_slow() -> anyhow::Result<()> {
+        openraft::testing::log::Suite::test_all(DiomStoreBuilder).await?;
         Ok(())
     }
 }

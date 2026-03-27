@@ -5,21 +5,24 @@ use std::{
 
 use crate::cfg::{Configuration, PeerAddr};
 
-use super::{Node, NodeId, proto, raft::TypeConfig};
+use super::{LogId, Node, NodeId, proto, raft::TypeConfig};
 use anyhow::Context;
 use diom_proto::prelude::*;
 use http::{HeaderMap, HeaderValue, header};
 use openraft::{
-    RaftNetwork, RaftNetworkFactory, RaftTypeConfig,
-    error::{NetworkError, RPCError, Unreachable},
+    RaftNetworkFactory, RaftNetworkV2,
+    error::{NetworkError, Unreachable},
     network::RPCOption,
 };
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Serialize, de::DeserializeOwned};
 use tap::Pipe;
+
+type RPCError<E = openraft::errors::Infallible> = openraft::error::RPCError<TypeConfig, E>;
+type RPCResult<T, E = openraft::errors::Infallible> = Result<T, RPCError<E>>;
 
 pub(super) fn build_client(
     cfg: &Configuration,
-    request_timeout: Duration,
+    request_timeout: Option<Duration>,
     include_secret: bool,
 ) -> anyhow::Result<reqwest::Client> {
     let mut headers = HeaderMap::new();
@@ -32,7 +35,13 @@ pub(super) fn build_client(
     tracing::debug!(connect_timeout = ?cfg.cluster.connection_timeout, ?request_timeout, "initializing interserver client");
     let client = reqwest::Client::builder()
         .connect_timeout(cfg.cluster.connection_timeout)
-        .timeout(request_timeout)
+        .pipe(|client| {
+            if let Some(timeout) = request_timeout {
+                client.timeout(timeout)
+            } else {
+                client
+            }
+        })
         .http2_prior_knowledge()
         .default_headers(headers)
         .build()
@@ -49,24 +58,9 @@ pub(super) struct NetworkFactory {
 impl NetworkFactory {
     pub(super) fn new(cfg: &Configuration) -> anyhow::Result<Self> {
         Ok(Self {
-            client: build_client(cfg, cfg.cluster.replication_request_timeout, true)?,
+            client: build_client(cfg, None, true)?,
             cfg: cfg.clone(),
         })
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub(super) struct UnreachableError {}
-
-impl std::fmt::Display for UnreachableError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "impossible")
-    }
-}
-
-impl std::error::Error for UnreachableError {
-    fn description(&self) -> &str {
-        "this is unreachable"
     }
 }
 
@@ -79,15 +73,27 @@ pub(super) struct NetworkClient {
 
 impl NetworkClient {
     #[allow(clippy::result_large_err)]
-    async fn send_request<Req, Resp, Err>(
+    async fn send_request<Req, Resp, Err>(&self, path: &str, req: Req) -> RPCResult<Resp, Err>
+    where
+        Req: Serialize + Sized,
+        Resp: DeserializeOwned + Sized,
+        Err: std::error::Error + DeserializeOwned + Sized,
+    {
+        self.send_request_with_timeout(path, req, self.cfg.cluster.replication_request_timeout)
+            .await
+    }
+
+    #[allow(clippy::result_large_err)]
+    async fn send_request_with_timeout<Req, Resp, Err>(
         &self,
         path: &str,
         req: Req,
-    ) -> Result<Resp, RPCError<NodeId, Node, Err>>
+        timeout: Duration,
+    ) -> RPCResult<Resp, Err>
     where
-        Req: Serialize,
-        Err: std::error::Error + DeserializeOwned,
-        Resp: DeserializeOwned,
+        Req: Serialize + Sized,
+        Resp: DeserializeOwned + Sized,
+        Err: std::error::Error + DeserializeOwned + Sized,
     {
         let start = Instant::now();
         // TODO(jbrown|2026-02-20) handle multiple addresses
@@ -102,6 +108,7 @@ impl NetworkClient {
         let response = self
             .client
             .post(url)
+            .timeout(timeout)
             .msgpack(&req)
             .map_err(|err| {
                 tracing::warn!(
@@ -114,20 +121,18 @@ impl NetworkClient {
                 header::ACCEPT,
                 "application/msgpack;q=0.9, application/json;q=0.5",
             )
-            .pipe(
-                |this| -> Result<reqwest::RequestBuilder, RPCError<NodeId, Node, Err>> {
-                    if let Some(secret) = &self.cfg.cluster.secret {
-                        let auth = format!("Bearer {secret}");
-                        let auth = HeaderValue::from_str(&auth).map_err(|err| {
-                            tracing::warn!("invalid interserver secret value");
-                            RPCError::Network::<NodeId, Node, Err>(NetworkError::new(&err))
-                        })?;
-                        Ok(this.header(header::AUTHORIZATION, auth))
-                    } else {
-                        Ok(this)
-                    }
-                },
-            )?
+            .pipe(|this| -> Result<reqwest::RequestBuilder, RPCError<Err>> {
+                if let Some(secret) = &self.cfg.cluster.secret {
+                    let auth = format!("Bearer {secret}");
+                    let auth = HeaderValue::from_str(&auth).map_err(|err| {
+                        tracing::warn!("invalid interserver secret value");
+                        RPCError::<Err>::Network(NetworkError::new(&err))
+                    })?;
+                    Ok(this.header(header::AUTHORIZATION, auth))
+                } else {
+                    Ok(this)
+                }
+            })?
             .send()
             .await
             .map_err(|e| {
@@ -156,13 +161,10 @@ impl NetworkClient {
     }
 
     #[tracing::instrument(skip_all)]
-    pub(crate) async fn forward_request<Err>(
+    pub(crate) async fn forward_request(
         &self,
         req: proto::ForwardedWriteRequest,
-    ) -> Result<proto::ForwardedWriteResponse, RPCError<NodeId, Node, Err>>
-    where
-        Err: std::error::Error + DeserializeOwned,
-    {
+    ) -> RPCResult<proto::ForwardedWriteResponse> {
         self.send_request("/repl/raft/handle-forwarded-write", req)
             .await
     }
@@ -170,14 +172,14 @@ impl NetworkClient {
     pub(super) async fn add_learner(
         &self,
         req: proto::AddLearnerRequest,
-    ) -> Result<proto::AddLearnerResponse, RPCError<NodeId, Node, UnreachableError>> {
+    ) -> Result<proto::AddLearnerResponse, RPCError> {
         self.send_request("/repl/raft/admin/add-learner", req).await
     }
 
     pub(super) async fn upgrade_learner(
         &self,
         req: proto::UpgradeLearnerRequest,
-    ) -> Result<proto::UpgradeLearnerResponse, RPCError<NodeId, Node, UnreachableError>> {
+    ) -> Result<proto::UpgradeLearnerResponse, RPCError> {
         self.send_request("/repl/raft/admin/upgrade-learner", req)
             .await
     }
@@ -185,20 +187,18 @@ impl NetworkClient {
     pub(super) async fn remove_node(
         &self,
         req: proto::RemoveNodeRequest,
-    ) -> Result<proto::RemoveNodeResponse, RPCError<NodeId, Node, UnreachableError>> {
+    ) -> Result<proto::RemoveNodeResponse, RPCError> {
         self.send_request("/repl/raft/admin/remove-node", req).await
     }
 
     pub(super) async fn go_away(
         &self,
         req: proto::GoAwayRequest,
-    ) -> Result<proto::GoAwayResponse, RPCError<NodeId, Node, UnreachableError>> {
+    ) -> Result<proto::GoAwayResponse, RPCError> {
         self.send_request("/repl/raft/go-away", req).await
     }
 
-    pub(super) async fn get_last_committed_log_id(
-        &self,
-    ) -> Result<Option<openraft::LogId<NodeId>>, RPCError<NodeId, Node, UnreachableError>> {
+    pub(super) async fn get_last_committed_log_id(&self) -> Result<Option<LogId>, RPCError> {
         let proto::LastIdResponse {
             last_committed_log_id,
         } = self
@@ -206,55 +206,59 @@ impl NetworkClient {
             .await?;
         Ok(last_committed_log_id)
     }
+
+    pub(super) async fn install_snapshot(
+        &mut self,
+        rpc: openraft::raft::InstallSnapshotRequest<TypeConfig>,
+        option: RPCOption,
+    ) -> Result<
+        openraft::raft::InstallSnapshotResponse<TypeConfig>,
+        RPCError<openraft::errors::RaftError<TypeConfig, openraft::errors::InstallSnapshotError>>,
+    > {
+        self.send_request_with_timeout("/repl/raft/stream-snapshot", rpc, option.soft_ttl())
+            .await
+    }
 }
 
-impl RaftNetwork<TypeConfig> for NetworkClient {
+impl RaftNetworkV2<TypeConfig> for NetworkClient {
     async fn append_entries(
         &mut self,
         rpc: openraft::raft::AppendEntriesRequest<TypeConfig>,
-        _option: RPCOption,
-    ) -> Result<
-        openraft::raft::AppendEntriesResponse<NodeId>,
-        RPCError<NodeId, Node, openraft::error::RaftError<NodeId>>,
-    > {
-        self.send_request("/repl/raft/append_entries", rpc).await
+        option: RPCOption,
+    ) -> Result<openraft::raft::AppendEntriesResponse<TypeConfig>, RPCError> {
+        self.send_request_with_timeout("/repl/raft/append_entries", rpc, option.soft_ttl())
+            .await
     }
 
     async fn vote(
         &mut self,
-        rpc: openraft::raft::VoteRequest<<TypeConfig as RaftTypeConfig>::NodeId>,
-        _option: RPCOption,
-    ) -> Result<
-        openraft::raft::VoteResponse<NodeId>,
-        RPCError<NodeId, Node, openraft::error::RaftError<NodeId>>,
-    > {
-        self.send_request("/repl/raft/vote", rpc).await
+        rpc: openraft::raft::VoteRequest<TypeConfig>,
+        option: RPCOption,
+    ) -> Result<openraft::raft::VoteResponse<TypeConfig>, RPCError> {
+        self.send_request_with_timeout("/repl/raft/vote", rpc, option.soft_ttl())
+            .await
     }
 
-    async fn install_snapshot(
+    async fn full_snapshot(
         &mut self,
-        rpc: openraft::raft::InstallSnapshotRequest<TypeConfig>,
-        _option: RPCOption,
+        vote: openraft::type_config::alias::VoteOf<TypeConfig>,
+        snapshot: openraft::type_config::alias::SnapshotOf<TypeConfig>,
+        cancel: impl Future<Output = openraft::error::ReplicationClosed>
+        + openraft::OptionalSend
+        + 'static,
+        option: RPCOption,
     ) -> Result<
-        openraft::raft::InstallSnapshotResponse<NodeId>,
-        RPCError<
-            NodeId,
-            Node,
-            openraft::error::RaftError<NodeId, openraft::error::InstallSnapshotError>,
-        >,
+        openraft::raft::SnapshotResponse<TypeConfig>,
+        openraft::error::StreamingError<TypeConfig>,
     > {
-        self.send_request("/repl/raft/stream-snapshot", rpc).await
+        super::streaming_snapshot::Sender::send_snapshot(self, vote, snapshot, cancel, option).await
     }
 }
 
 impl RaftNetworkFactory<TypeConfig> for NetworkFactory {
     type Network = NetworkClient;
 
-    async fn new_client(
-        &mut self,
-        target: <TypeConfig as RaftTypeConfig>::NodeId,
-        node: &<TypeConfig as RaftTypeConfig>::Node,
-    ) -> Self::Network {
+    async fn new_client(&mut self, target: NodeId, node: &Node) -> Self::Network {
         self.client_for(target, node)
     }
 }
@@ -283,7 +287,7 @@ async fn search_for_self_in_peers(
     cfg: &Configuration,
     my_node_id: NodeId,
 ) -> anyhow::Result<Option<PeerAddr>> {
-    let client = build_client(cfg, Duration::from_secs(2), false)?;
+    let client = build_client(cfg, Some(Duration::from_secs(2)), false)?;
     for peer in seeds {
         let url = peer.as_base_url().join("/repl/node-id")?;
         let Ok(response) = client.get(url).send().await else {

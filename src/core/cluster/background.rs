@@ -4,9 +4,10 @@ use std::{
 };
 
 use super::{
-    LogId, Node, NodeId,
+    LogId, NodeId,
     handle::{BackgroundCommand, RaftState},
     operations::{RecordLogTimestampOperation, TickOperation},
+    raft::TypeConfig,
 };
 use crate::cfg::Configuration;
 use diom_error::CanFailExt;
@@ -24,7 +25,7 @@ trait CanBeForwardToLeader {
 impl CanBeForwardToLeader for anyhow::Error {
     fn is_forward_to_leader_err(&self) -> bool {
         if let Some(raft_err) =
-            self.downcast_ref::<RaftError<NodeId, ClientWriteError<NodeId, Node>>>()
+            self.downcast_ref::<RaftError<TypeConfig, ClientWriteError<TypeConfig>>>()
         {
             raft_err.forward_to_leader().is_some()
         } else {
@@ -303,7 +304,10 @@ pub(super) async fn run_background_jobs_on_all_nodes(
     mut receiver: tokio::sync::mpsc::Receiver<BackgroundCommand>,
 ) -> anyhow::Result<()> {
     let mut last_snapshot_time = std::time::Instant::now();
-    let mut last_snapshot_index = handle.raft.with_raft_state(|st| st.committed).await?;
+    let mut last_snapshot_index = handle
+        .raft
+        .with_raft_state(|st| st.committed().copied())
+        .await?;
     let mut ticker = tokio::time::interval(Duration::from_secs(60));
     let shutdown = crate::shutting_down_token();
 
@@ -321,13 +325,9 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         };
         let (committed, state) = handle
             .raft
-            .with_raft_state(|st| (st.committed, st.server_state))
+            .with_raft_state(|st| (st.committed().copied(), st.server_state))
             .await?;
-        // even if the time interval has passed, if we haven't written anything it would be dumb to
-        // snapshot
-        if committed == last_snapshot_index {
-            continue;
-        }
+
         let delta = match (committed, last_snapshot_index) {
             (Some(a), Some(b)) => Some(a.index - b.index),
             (Some(a), None) => Some(a.index),
@@ -355,6 +355,10 @@ pub(super) async fn run_background_jobs_on_all_nodes(
         };
 
         if should_snapshot {
+            if committed == last_snapshot_index && responder.is_none() {
+                tracing::trace!("skipping background snapshot because nothing has changed");
+                continue;
+            }
             last_snapshot_time = std::time::Instant::now();
             last_snapshot_index = committed;
             // this timestamp is just for debugging so that users can see

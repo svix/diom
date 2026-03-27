@@ -5,9 +5,10 @@ environment = "dev"
 opentelemetry_metrics_use_http=true
 opentelemetry_service_name="diom"
 opentelemetry_address="http://localhost:4317"
-opentelemetry_sample_ratio=1
+opentelemetry_metrics_address="http://localhost:9090/api/v1/otlp/v1/metrics"
+opentelemetry_sample_ratio=0.1
 
 [cluster]
 log_sync_interval_commits = 0
-log_sync_interval_ms = 10000
+log_sync_interval_ms = 100
 log_ack_immediately = true

@@ -8,7 +8,9 @@ use uuid::Uuid;
 
 use crate::cfg::PeerAddr;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema, Hash, PartialOrd, Ord,
+)]
 pub enum Node {
     #[default]
     NoAddress,

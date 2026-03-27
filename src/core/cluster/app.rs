@@ -20,7 +20,10 @@ use openraft::{
 use serde::Serialize;
 use tap::{Pipe, TapFallible};
 
-use super::{Node, NodeId, handle::RaftState, proto::*, raft::TypeConfig};
+use super::{
+    Node, handle::RaftState, proto::*, raft::TypeConfig,
+    streaming_snapshot::ChunkedSnapshotReceiver as _,
+};
 use crate::{AppState, Configuration};
 
 #[derive(Clone)]
@@ -144,7 +147,7 @@ async fn append_entries(
 #[tracing::instrument(skip_all)]
 async fn vote(
     Extension(state): Extension<RaftState>,
-    MsgPack(body): MsgPack<VoteRequest<NodeId>>,
+    MsgPack(body): MsgPack<VoteRequest<TypeConfig>>,
 ) -> impl IntoResponse {
     tracing::trace!(
         vote=?body.vote,
@@ -205,7 +208,7 @@ async fn discover(
     let cluster = raft_state
         .raft
         .with_raft_state(move |state| DiscoverClusterResponse {
-            last_committed_log_id: state.committed,
+            last_committed_log_id: state.committed().copied(),
             cluster_name,
             state: state.server_state,
             cluster_id,
@@ -284,7 +287,7 @@ async fn last_id(Extension(state): Extension<RaftState>) -> impl IntoResponse {
     state
         .raft
         .with_raft_state(move |s| LastIdResponse {
-            last_committed_log_id: s.committed,
+            last_committed_log_id: s.committed().copied(),
         })
         .await
         .pipe(rpc_response)
@@ -302,7 +305,7 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
         .with_raft_state(move |s| {
             let response = HealthResponse {
                 node_id: me,
-                last_committed_log_index: s.committed.map(|l| l.index),
+                last_committed_log_index: s.committed().map(|l| l.index),
                 server_state: s.server_state,
                 cluster_id,
                 leader,

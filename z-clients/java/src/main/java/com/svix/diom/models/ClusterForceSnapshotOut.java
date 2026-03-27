@@ -30,6 +30,7 @@ import lombok.ToString;
 public class ClusterForceSnapshotOut {
     @JsonProperty("snapshot_time") private OffsetDateTime snapshotTime;
     @JsonProperty("snapshot_log_index") private Long snapshotLogIndex;
+    @JsonProperty("snapshot_id") private String snapshotId;
     public ClusterForceSnapshotOut() {}
 
     public ClusterForceSnapshotOut snapshotTime(OffsetDateTime snapshotTime) {
@@ -38,7 +39,7 @@ public class ClusterForceSnapshotOut {
     }
 
     /**
-    * Get snapshotTime
+    * The wall-clock time at which the snapshot was initiated
     *
      * @return snapshotTime
      */
@@ -57,7 +58,7 @@ public class ClusterForceSnapshotOut {
     }
 
     /**
-    * Get snapshotLogIndex
+    * The log index at which the snapshot was initiated
     *
      * @return snapshotLogIndex
      */
@@ -68,6 +69,25 @@ public class ClusterForceSnapshotOut {
 
     public void setSnapshotLogIndex(Long snapshotLogIndex) {
         this.snapshotLogIndex = snapshotLogIndex;
+    }
+
+    public ClusterForceSnapshotOut snapshotId(String snapshotId) {
+        this.snapshotId = snapshotId;
+        return this;
+    }
+
+    /**
+    * If this is `null`, the snapshot is still building in the background
+    *
+     * @return snapshotId
+     */
+    @javax.annotation.Nullable
+    public String getSnapshotId() {
+        return snapshotId;
+    }
+
+    public void setSnapshotId(String snapshotId) {
+        this.snapshotId = snapshotId;
     }
 
     /**

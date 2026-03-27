@@ -135,11 +135,16 @@ async fn test_cluster_force_snapshot() -> TestResult {
         handle: _handle,
         ..
     } = TestServerBuilder::with_default_config().build().await;
+
+    // don't race with the startup processes
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
     let cluster_status = client
         .get("v1.admin.cluster.status")
         .await?
         .expect(StatusCode::OK)
         .json();
+    // this is usually null but it's possible a a snapshot will be triggered here
     let previous_snapshot = &cluster_status["this_node_last_snapshot_id"];
 
     // do some write so that the txn ID increases
