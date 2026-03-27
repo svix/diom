@@ -50,7 +50,7 @@ export class {{ resource_type_name }} {
             {
                 ...{{ req_body_schema_name }},
             {%- for field in positional_fields %}
-                {{ field.name | to_snake_case }},
+                {{ field.name | to_lower_camel_case }}: {{ field.name | to_snake_case }},
             {%- endfor %}
             }
         {%- endset -%}
