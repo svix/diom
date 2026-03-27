@@ -15,8 +15,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "pack": "tsdown --sourcemap",
-    "prepublishOnly": "npm run build && npm run pack",
+    "bundle": "tsdown",
+    "prepublishOnly": "npm run build && npm run bundle",
     "check": "biome check",
     "check:fix": "biome check --write",
     "lint": "biome lint",
