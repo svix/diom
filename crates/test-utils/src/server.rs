@@ -19,7 +19,7 @@ use tokio::{
 
 /// Handle to an isolated test server.
 ///
-/// Once it's DROPed, the server and it's resources are cleaned up automatically (or at least, that's the intent.)
+/// Once it's DROPed, the server and its resources are cleaned up automatically (or at least, that's the intent.)
 pub struct IsolatedServerHandle {
     _dir: Option<TempDir>,
     server_handle: JoinHandle<()>,
