@@ -164,7 +164,7 @@ async fn access_policy_list(
         .list_policies(limit + 1, iterator.clone())
         .await?;
     let items = models.into_iter().map(policy_out).collect();
-    Ok(MsgPackOrJson(ListResponse::list_response(
+    Ok(MsgPackOrJson(ListResponse::create(
         items, limit, iterator,
     )))
 }
