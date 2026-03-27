@@ -11,6 +11,9 @@ on:
         description: "Target environment (svix-cloud-staging-apply or svix-cloud-dev-apply)"
         required: true
         type: string
+      namespace:
+        description: "K8s namespace"
+        type: string
   workflow_call:
     inputs:
       image_tag:
