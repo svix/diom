@@ -30,10 +30,8 @@ use tokio::{
 };
 use tower::ServiceExt as _;
 use tower_http::{
-    ServiceExt,
     catch_panic::CatchPanicLayer,
     cors::{AllowHeaders, Any, CorsLayer},
-    normalize_path::NormalizePath,
     trace::TraceLayer,
 };
 
@@ -148,7 +146,7 @@ async fn run_interserver(
     );
     bind_barrier.wait().await;
 
-    let app = core::cluster::router(&cfg)
+    let svc = core::cluster::router(&cfg)
         .with_state(state.clone())
         .layer(middleware::from_fn_with_state(
             state.clone(),
@@ -163,12 +161,8 @@ async fn run_interserver(
                 .make_span_with(AxumOtelSpanCreator)
                 .on_response(AxumOtelOnResponse)
                 .on_failure(AxumOtelOnFailure),
-        );
-    let svc = tower::make::Shared::new(
-        // It is important that this service wraps the router instead of being
-        // applied via `Router::layer`, as it would run after routing then.
-        NormalizePath::trim_trailing_slash(app),
-    );
+        )
+        .into_make_service();
 
     let node_id = raft.node_id;
     let listener = listener.tap_io(move |tcp_stream| {
@@ -192,18 +186,14 @@ async fn run_internal(
     api_router: axum::Router,
     mut internal_req_rx: mpsc::Receiver<InternalRequest>,
 ) {
-    let svc = api_router
-        .layer((
-            TraceLayer::new_for_http()
-                .make_span_with(AxumOtelSpanCreator)
-                .on_response(AxumOtelOnResponse)
-                .on_failure(AxumOtelOnFailure),
-            middleware::from_fn(coyote_proto::capture_accept_hdr),
-            CatchPanicLayer::custom(handle_panic),
-        ))
-        // It is important that this service wraps the router instead of being
-        // applied via `Router::layer`, as it would run after routing then.
-        .trim_trailing_slash();
+    let svc = api_router.layer((
+        TraceLayer::new_for_http()
+            .make_span_with(AxumOtelSpanCreator)
+            .on_response(AxumOtelOnResponse)
+            .on_failure(AxumOtelOnFailure),
+        middleware::from_fn(coyote_proto::capture_accept_hdr),
+        CatchPanicLayer::custom(handle_panic),
+    ));
 
     // FIXME: Do we want to delay graceful shutdown of the internal API server
     //        a little compared to public / inter-server?
@@ -420,10 +410,7 @@ pub async fn run_with_listeners(
             middleware::from_fn(coyote_proto::capture_accept_hdr),
             CatchPanicLayer::custom(handle_panic),
         ))
-        // It is important that this service wraps the router instead of being
-        // applied via `Router::layer`, as it would run after routing then.
-        .trim_trailing_slash();
-    let make_svc = tower::make::Shared::new(svc);
+        .into_make_service();
 
     let listen_address = cfg.listen_address;
     let listener = match listener {
@@ -472,7 +459,7 @@ pub async fn run_with_listeners(
         }
     });
 
-    axum::serve(listener, make_svc)
+    axum::serve(listener, svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
         .await
         .unwrap();
