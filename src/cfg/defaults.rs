@@ -90,3 +90,7 @@ pub(super) fn cluster_log_sync_interval_commits() -> usize {
 pub(super) fn cluster_log_sync_interval_duration() -> Duration {
     Duration::from_secs(10)
 }
+
+pub(super) fn cluster_send_snapshot_timeout() -> Duration {
+    Duration::from_secs(30)
+}
