@@ -34,9 +34,13 @@ impl Workers {
             let time = time.clone();
             self.spawn(diom_idempotency::AllNodesWorker::new(state, time));
         }
-        if let Some(kafka_sink_cfg) = app_state.cfg.kafka_sink.clone() {
+        if app_state.cfg.kafka_sink.enabled {
             tracing::debug!("spawning kafka sink worker");
-            match KafkaSinkWorker::new(raft_state, app_state.namespace_state, kafka_sink_cfg) {
+            match KafkaSinkWorker::new(
+                raft_state,
+                app_state.namespace_state,
+                app_state.cfg.kafka_sink.clone(),
+            ) {
                 Ok(worker) => self.spawn(worker),
                 Err(err) => tracing::error!(?err, "failed to initialize kafka sink worker"),
             }
