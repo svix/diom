@@ -1,0 +1,10 @@
+[package]
+name = "diom-example"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+diom-client = { path = "../z-clients/rust" }
+tokio = { version = "1", features = ["full"] }
+
+[workspace]
