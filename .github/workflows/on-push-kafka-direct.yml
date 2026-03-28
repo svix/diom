@@ -1,0 +1,18 @@
+name: CI on Push to tom/kafka-direct
+
+on:
+  push:
+    branches: [tom/kafka-direct]
+
+jobs:
+  docker_publish_server:
+    uses: ./.github/workflows/docker-publish.yml
+    secrets: inherit
+    with:
+      image_name: svix/diom-server
+      target: prod
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+      security-events: write

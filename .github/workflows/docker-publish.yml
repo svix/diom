@@ -84,7 +84,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=long
-            type=raw,value=latest
 
       - name: Build ${{ matrix.os.arch }} Docker image
         uses: docker/build-push-action@v6
