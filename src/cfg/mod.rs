@@ -458,24 +458,6 @@ pub struct KafkaSinkConfig {
     pub security_protocol: Option<String>,
 }
 
-impl Default for KafkaSinkConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            brokers: String::new(),
-            source_topic: String::new(),
-            source_namespace: None,
-            consumer_group: String::new(),
-            kafka_topic: String::new(),
-            batch_size: defaults::kafka_sink_batch_size(),
-            sasl_mechanism: None,
-            sasl_username: None,
-            sasl_password: None,
-            security_protocol: None,
-        }
-    }
-}
-
 fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Error> {
     let empty: [(String, String); 0] = [];
     T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
@@ -567,7 +549,7 @@ pub struct ConfigurationInner {
     /// Configuration for the built-in Kafka sink. The sink runs only on the cluster leader
     /// and forwards messages from a Diom stream topic to a Kafka topic.
     #[serde(default)]
-    pub kafka_sink: KafkaSinkConfig,
+    pub kafka_sink: Option<KafkaSinkConfig>,
 }
 
 impl Default for ConfigurationInner {
@@ -713,20 +695,7 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         bootstrap_cfg,
         bootstrap_max_wait_time,
         admin_token,
-        kafka_sink:
-            KafkaSinkConfig {
-                enabled: kafka_sink_enabled,
-                brokers: kafka_sink_brokers,
-                source_topic: kafka_sink_source_topic,
-                source_namespace: kafka_sink_source_namespace,
-                consumer_group: kafka_sink_consumer_group,
-                kafka_topic: kafka_sink_kafka_topic,
-                batch_size: kafka_sink_batch_size,
-                sasl_mechanism: kafka_sink_sasl_mechanism,
-                sasl_username: kafka_sink_sasl_username,
-                sasl_password: kafka_sink_sasl_password,
-                security_protocol: kafka_sink_security_protocol,
-            },
+        kafka_sink,
         cluster:
             ClusterConfiguration {
                 advertised_address: cluster_advertised_address,
@@ -757,12 +726,6 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     } = &mut config;
 
     env_overrides!(
-        kafka_sink_enabled: "DIOM_KAFKA_SINK_ENABLED",
-        kafka_sink_brokers: "DIOM_KAFKA_SINK_BROKERS",
-        kafka_sink_source_topic: "DIOM_KAFKA_SINK_SOURCE_TOPIC",
-        kafka_sink_consumer_group: "DIOM_KAFKA_SINK_CONSUMER_GROUP",
-        kafka_sink_kafka_topic: "DIOM_KAFKA_SINK_KAFKA_TOPIC",
-        kafka_sink_batch_size: "DIOM_KAFKA_SINK_BATCH_SIZE",
         listen_address: "DIOM_LISTEN_ADDRESS",
         persistent_db_path: "DIOM_PERSISTENT_DB_PATH",
         ephemeral_db_path: "DIOM_EPHEMERAL_DB_PATH",
@@ -779,11 +742,6 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     );
 
     opt_env_overrides!(
-        kafka_sink_source_namespace: "DIOM_KAFKA_SINK_SOURCE_NAMESPACE",
-        kafka_sink_sasl_mechanism: "DIOM_KAFKA_SINK_SASL_MECHANISM",
-        kafka_sink_sasl_username: "DIOM_KAFKA_SINK_SASL_USERNAME",
-        kafka_sink_sasl_password: "DIOM_KAFKA_SINK_SASL_PASSWORD",
-        kafka_sink_security_protocol: "DIOM_KAFKA_SINK_SECURITY_PROTOCOL",
         persistent_db_filename: "DIOM_PERSISTENT_DB_FILENAME",
         ephemeral_db_filename: "DIOM_EPHEMERAL_DB_FILENAME",
         opentelemetry_address: "DIOM_OPENTELEMETRY_ADDRESS",
@@ -813,6 +771,53 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         cluster_log_sync_interval_duration: "DIOM_CLUSTER_LOG_SYNC_INTERVAL_MS",
         cluster_send_snapshot_timeout: "DIOM_CLUSTER_SEND_SNAPSHOT_TIMEOUT_MS",
     );
+
+    // Auto-initialize from env vars even when no [kafka_sink] section is present in the config.
+    // All fields have serde defaults, so deserializing from an empty map gives a valid base config.
+    if kafka_sink.is_none()
+        && [
+            "DIOM_KAFKA_SINK_ENABLED",
+            "DIOM_KAFKA_SINK_BROKERS",
+            "DIOM_KAFKA_SINK_SOURCE_TOPIC",
+            "DIOM_KAFKA_SINK_CONSUMER_GROUP",
+            "DIOM_KAFKA_SINK_KAFKA_TOPIC",
+        ]
+        .iter()
+        .any(|var| std::env::var_os(var).is_some())
+    {
+        *kafka_sink = Some(default_from_serde().expect("kafka sink defaults are valid"));
+    }
+
+    if let Some(KafkaSinkConfig {
+        enabled: kafka_sink_enabled,
+        brokers: kafka_sink_brokers,
+        source_topic: kafka_sink_source_topic,
+        source_namespace: kafka_sink_source_namespace,
+        consumer_group: kafka_sink_consumer_group,
+        kafka_topic: kafka_sink_kafka_topic,
+        batch_size: kafka_sink_batch_size,
+        sasl_mechanism: kafka_sink_sasl_mechanism,
+        sasl_username: kafka_sink_sasl_username,
+        sasl_password: kafka_sink_sasl_password,
+        security_protocol: kafka_sink_security_protocol,
+    }) = kafka_sink.as_mut()
+    {
+        env_overrides!(
+            kafka_sink_enabled: "DIOM_KAFKA_SINK_ENABLED",
+            kafka_sink_brokers: "DIOM_KAFKA_SINK_BROKERS",
+            kafka_sink_source_topic: "DIOM_KAFKA_SINK_SOURCE_TOPIC",
+            kafka_sink_consumer_group: "DIOM_KAFKA_SINK_CONSUMER_GROUP",
+            kafka_sink_kafka_topic: "DIOM_KAFKA_SINK_KAFKA_TOPIC",
+            kafka_sink_batch_size: "DIOM_KAFKA_SINK_BATCH_SIZE",
+        );
+        opt_env_overrides!(
+            kafka_sink_source_namespace: "DIOM_KAFKA_SINK_SOURCE_NAMESPACE",
+            kafka_sink_sasl_mechanism: "DIOM_KAFKA_SINK_SASL_MECHANISM",
+            kafka_sink_sasl_username: "DIOM_KAFKA_SINK_SASL_USERNAME",
+            kafka_sink_sasl_password: "DIOM_KAFKA_SINK_SASL_PASSWORD",
+            kafka_sink_security_protocol: "DIOM_KAFKA_SINK_SECURITY_PROTOCOL",
+        );
+    }
 
     // Fields that require different parsing
     if let Some(value) = env_var_comma_separated("DIOM_CLUSTER_SEED_NODES")? {
