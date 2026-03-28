@@ -24,6 +24,14 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -q
     apt-get install -y \
+        build-essential=12.* \
+        checkinstall=1.* \
+        zlib1g-dev=1:* \
+        pkg-config=1.8.* \
+        libzstd-dev \
+        libssl-dev=* \
+        libclang-19-dev \
+        cmake \
         mold \
         --no-install-recommends
 EOF
