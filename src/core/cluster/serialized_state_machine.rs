@@ -182,7 +182,7 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
     for (db_name, db, snapshot, keyspaces) in targets {
         let mut keyspace_manifests = KeyspaceManifest::default();
         for keyspace_name in keyspaces {
-            tracing::debug!(keyspace=%keyspace_name, "serializing a keyspce");
+            tracing::debug!(keyspace=%keyspace_name, "serializing a keyspace");
             // TODO: we should be copying keyspace create options from the source;
             // see https://github.com/fjall-rs/fjall/issues/262
             let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;

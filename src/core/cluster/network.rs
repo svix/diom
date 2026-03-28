@@ -69,6 +69,7 @@ pub(super) struct NetworkClient {
     node: Node,
     client: reqwest::Client,
     cfg: Configuration,
+    default_timeout: Duration,
 }
 
 impl NetworkClient {
@@ -79,7 +80,7 @@ impl NetworkClient {
         Resp: DeserializeOwned + Sized,
         Err: std::error::Error + DeserializeOwned + Sized,
     {
-        self.send_request_with_timeout(path, req, self.cfg.cluster.replication_request_timeout)
+        self.send_request_with_timeout(path, req, self.default_timeout)
             .await
     }
 
@@ -207,6 +208,7 @@ impl NetworkClient {
         Ok(last_committed_log_id)
     }
 
+    #[tracing::instrument(skip(self, rpc))]
     pub(super) async fn install_snapshot(
         &mut self,
         rpc: openraft::raft::InstallSnapshotRequest<TypeConfig>,
@@ -221,6 +223,7 @@ impl NetworkClient {
 }
 
 impl RaftNetworkV2<TypeConfig> for NetworkClient {
+    #[tracing::instrument(skip(self, rpc))]
     async fn append_entries(
         &mut self,
         rpc: openraft::raft::AppendEntriesRequest<TypeConfig>,
@@ -230,6 +233,7 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
             .await
     }
 
+    #[tracing::instrument(skip(self, rpc))]
     async fn vote(
         &mut self,
         rpc: openraft::raft::VoteRequest<TypeConfig>,
@@ -239,6 +243,7 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
             .await
     }
 
+    #[tracing::instrument(skip(self, vote, snapshot, cancel))]
     async fn full_snapshot(
         &mut self,
         vote: openraft::type_config::alias::VoteOf<TypeConfig>,
@@ -271,6 +276,7 @@ impl NetworkFactory {
             node: node.clone(),
             client: self.client.clone(),
             cfg: self.cfg.clone(),
+            default_timeout: Duration::from_secs(60),
         }
     }
 }

@@ -145,6 +145,11 @@ pub(super) trait ChunkedSnapshotReceiver {
 }
 
 impl<SM> ChunkedSnapshotReceiver for Raft<TypeConfig, SM> {
+    #[tracing::instrument(skip(self, req), fields(
+        snapshot_id = %req.meta.snapshot_id,
+        offset = req.offset,
+        done = req.done
+    ))]
     async fn install_snapshot(
         &self,
         req: InstallSnapshotRequest<TypeConfig>,
@@ -154,13 +159,6 @@ impl<SM> ChunkedSnapshotReceiver for Raft<TypeConfig, SM> {
         let snapshot_id = &req.meta.snapshot_id;
         let snapshot_meta = req.meta.clone();
         let done = req.done;
-
-        tracing::info!(
-            snapshot_id = display(snapshot_id),
-            offset = req.offset,
-            done,
-            "ChunkedSnapshotReceiver::install_snapshot"
-        );
 
         // Get or create streaming state via extension()
         let state: StreamingState = self.extension();
@@ -194,10 +192,12 @@ impl<SM> ChunkedSnapshotReceiver for Raft<TypeConfig, SM> {
             *streaming = Some(Streaming::new(snapshot_id.clone(), snapshot_data));
         }
 
+        let chunk_size = req.data.len();
+
         // Write the chunk
         streaming.as_mut().unwrap().receive_chunk(&req).await?;
 
-        tracing::info!("Received snapshot chunk");
+        tracing::debug!(?snapshot_id, chunk_size, "Received snapshot chunk");
 
         // If done, finalize the snapshot
         if done {
@@ -211,7 +211,7 @@ impl<SM> ChunkedSnapshotReceiver for Raft<TypeConfig, SM> {
                 )))
             })?;
 
-            tracing::info!(
+            tracing::debug!(
                 snapshot_meta = debug(&snapshot_meta),
                 "Finished streaming snapshot"
             );
