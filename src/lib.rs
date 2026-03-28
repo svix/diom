@@ -52,6 +52,7 @@ pub mod bootstrap;
 pub mod cfg;
 pub mod core;
 pub use diom_error as error;
+mod kafka_sink;
 pub mod openapi;
 mod serde;
 pub mod v1;
@@ -86,9 +87,9 @@ async fn graceful_shutdown_handler() {
 
 #[derive(Clone)]
 pub struct AppState {
-    cfg: Configuration,
+    pub(crate) cfg: Configuration,
 
-    namespace_state: diom_namespace::State,
+    pub(crate) namespace_state: diom_namespace::State,
 
     pub(crate) ro_dbs: ReadonlyDatabases,
 
@@ -470,11 +471,12 @@ pub async fn run_with_listeners(
 
     let worker_handle = tokio::task::spawn({
         let raft_state = raft_state.clone();
+        let app_state = app_state.clone();
         let shutting_down = shutting_down_token();
         async move {
             initialized.wait().await?;
             let mut workers = Workers::new();
-            workers.spawn_all(raft_state).await;
+            workers.spawn_all(raft_state, app_state).await;
             shutting_down.cancelled().await;
             workers.shutdown().await;
             Ok::<(), Error>(())

@@ -94,3 +94,7 @@ pub(super) fn cluster_log_sync_interval_duration() -> Duration {
 pub(super) fn cluster_send_snapshot_timeout() -> Duration {
     Duration::from_secs(30)
 }
+
+pub(super) fn kafka_sink_batch_size() -> std::num::NonZeroU16 {
+    std::num::NonZeroU16::new(10).unwrap()
+}

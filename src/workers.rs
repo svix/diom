@@ -1,4 +1,4 @@
-use crate::core::cluster::RaftState;
+use crate::{AppState, core::cluster::RaftState, kafka_sink::KafkaSinkWorker};
 use diom_operations::{BackgroundError, BackgroundResult, workers::BackgroundWorker};
 use tokio::task::JoinSet;
 
@@ -13,26 +13,37 @@ impl Workers {
         }
     }
 
-    pub(crate) async fn spawn_all(&mut self, state: RaftState) {
+    pub(crate) async fn spawn_all(&mut self, raft_state: RaftState, app_state: AppState) {
         tracing::debug!("spawning background workers");
-        let time = state.state_machine.time.clone();
+        let time = raft_state.state_machine.time.clone();
         {
             tracing::debug!("spawning KV module worker");
-            let state = state.state_machine.kv_store().await;
+            let state = raft_state.state_machine.kv_store().await;
             let time = time.clone();
             self.spawn(diom_kv::AllNodesWorker::new(state, time));
         }
         {
             tracing::debug!("spawning cache module worker");
-            let state = state.state_machine.cache_store().await;
+            let state = raft_state.state_machine.cache_store().await;
             let time = time.clone();
             self.spawn(diom_cache::AllNodesWorker::new(state, time));
         }
         {
             tracing::debug!("spawning idempotency module worker");
-            let state = state.state_machine.idempotency_store().await;
+            let state = raft_state.state_machine.idempotency_store().await;
             let time = time.clone();
             self.spawn(diom_idempotency::AllNodesWorker::new(state, time));
+        }
+        if app_state.cfg.kafka_sink.enabled {
+            tracing::debug!("spawning kafka sink worker");
+            match KafkaSinkWorker::new(
+                raft_state,
+                app_state.namespace_state,
+                app_state.cfg.kafka_sink.clone(),
+            ) {
+                Ok(worker) => self.spawn(worker),
+                Err(err) => tracing::error!(?err, "failed to initialize kafka sink worker"),
+            }
         }
     }
 

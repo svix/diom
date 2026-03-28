@@ -5,6 +5,7 @@ use std::{
     fmt,
     io::ErrorKind,
     net::SocketAddr,
+    num::NonZeroU16,
     path::{Path, PathBuf},
     str::FromStr,
     sync::Arc,
@@ -415,6 +416,66 @@ impl Default for ClusterConfiguration {
     }
 }
 
+/// Configuration for the Kafka sink background worker.
+///
+/// When `enabled` is true, the leader node will continuously read from `source_topic`
+/// (using `consumer_group` as the Diom stream consumer group) and produce each
+/// message's raw bytes to the target Kafka `kafka_topic`.
+#[derive(Clone, Debug, Deserialize)]
+pub struct KafkaSinkConfig {
+    /// Set to true to activate the sink. All other fields are required when enabled.
+    #[serde(default)]
+    pub enabled: bool,
+    /// Comma-separated list of Kafka bootstrap brokers, e.g. `"broker1:9092,broker2:9092"`.
+    #[serde(default)]
+    pub brokers: String,
+    /// Name of the Diom topic to read from.
+    #[serde(default)]
+    pub source_topic: String,
+    /// Diom namespace containing `source_topic`. Omit or leave empty to use the default namespace.
+    #[serde(default)]
+    pub source_namespace: Option<String>,
+    /// Diom consumer group used by this sink. Should be dedicated to the sink.
+    #[serde(default)]
+    pub consumer_group: String,
+    /// Name of the Kafka topic to write to.
+    #[serde(default)]
+    pub kafka_topic: String,
+    /// Number of messages to pull from Diom per poll cycle.
+    #[serde(default = "defaults::kafka_sink_batch_size")]
+    pub batch_size: NonZeroU16,
+    /// SASL mechanism, e.g. `"PLAIN"` or `"SCRAM-SHA-256"`. Leave unset for no SASL.
+    #[serde(default)]
+    pub sasl_mechanism: Option<String>,
+    /// SASL username.
+    #[serde(default)]
+    pub sasl_username: Option<String>,
+    /// SASL password.
+    #[serde(default)]
+    pub sasl_password: Option<String>,
+    /// Kafka security protocol, e.g. `"PLAINTEXT"`, `"SSL"`, `"SASL_SSL"`.
+    #[serde(default)]
+    pub security_protocol: Option<String>,
+}
+
+impl Default for KafkaSinkConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            brokers: String::new(),
+            source_topic: String::new(),
+            source_namespace: None,
+            consumer_group: String::new(),
+            kafka_topic: String::new(),
+            batch_size: defaults::kafka_sink_batch_size(),
+            sasl_mechanism: None,
+            sasl_username: None,
+            sasl_password: None,
+            security_protocol: None,
+        }
+    }
+}
+
 fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Error> {
     let empty: [(String, String); 0] = [];
     T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
@@ -502,6 +563,11 @@ pub struct ConfigurationInner {
     #[validate(custom(function = "validators::validate_admin_token"))]
     #[serde(default)]
     pub admin_token: Option<String>,
+
+    /// Configuration for the built-in Kafka sink. The sink runs only on the cluster leader
+    /// and forwards messages from a Diom stream topic to a Kafka topic.
+    #[serde(default)]
+    pub kafka_sink: KafkaSinkConfig,
 }
 
 impl Default for ConfigurationInner {
@@ -647,6 +713,20 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         bootstrap_cfg,
         bootstrap_max_wait_time,
         admin_token,
+        kafka_sink:
+            KafkaSinkConfig {
+                enabled: kafka_sink_enabled,
+                brokers: kafka_sink_brokers,
+                source_topic: kafka_sink_source_topic,
+                source_namespace: kafka_sink_source_namespace,
+                consumer_group: kafka_sink_consumer_group,
+                kafka_topic: kafka_sink_kafka_topic,
+                batch_size: kafka_sink_batch_size,
+                sasl_mechanism: kafka_sink_sasl_mechanism,
+                sasl_username: kafka_sink_sasl_username,
+                sasl_password: kafka_sink_sasl_password,
+                security_protocol: kafka_sink_security_protocol,
+            },
         cluster:
             ClusterConfiguration {
                 advertised_address: cluster_advertised_address,
@@ -677,6 +757,12 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     } = &mut config;
 
     env_overrides!(
+        kafka_sink_enabled: "DIOM_KAFKA_SINK_ENABLED",
+        kafka_sink_brokers: "DIOM_KAFKA_SINK_BROKERS",
+        kafka_sink_source_topic: "DIOM_KAFKA_SINK_SOURCE_TOPIC",
+        kafka_sink_consumer_group: "DIOM_KAFKA_SINK_CONSUMER_GROUP",
+        kafka_sink_kafka_topic: "DIOM_KAFKA_SINK_KAFKA_TOPIC",
+        kafka_sink_batch_size: "DIOM_KAFKA_SINK_BATCH_SIZE",
         listen_address: "DIOM_LISTEN_ADDRESS",
         persistent_db_path: "DIOM_PERSISTENT_DB_PATH",
         ephemeral_db_path: "DIOM_EPHEMERAL_DB_PATH",
@@ -693,6 +779,11 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
     );
 
     opt_env_overrides!(
+        kafka_sink_source_namespace: "DIOM_KAFKA_SINK_SOURCE_NAMESPACE",
+        kafka_sink_sasl_mechanism: "DIOM_KAFKA_SINK_SASL_MECHANISM",
+        kafka_sink_sasl_username: "DIOM_KAFKA_SINK_SASL_USERNAME",
+        kafka_sink_sasl_password: "DIOM_KAFKA_SINK_SASL_PASSWORD",
+        kafka_sink_security_protocol: "DIOM_KAFKA_SINK_SECURITY_PROTOCOL",
         persistent_db_filename: "DIOM_PERSISTENT_DB_FILENAME",
         ephemeral_db_filename: "DIOM_EPHEMERAL_DB_FILENAME",
         opentelemetry_address: "DIOM_OPENTELEMETRY_ADDRESS",
