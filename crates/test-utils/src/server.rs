@@ -270,6 +270,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
     let cluster_addr: SocketAddr = "0.0.0.0:0".parse().unwrap();
 
     ConfigurationInner {
+        kafka_sink: Default::default(),
         listen_address: addr,
         ephemeral_db: DatabaseConfig {
             path: db_dir.clone(),
