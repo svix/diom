@@ -110,8 +110,9 @@ impl Discovery {
         let Some(log_id) = leader_cluster.last_committed_log_id else {
             anyhow::bail!("existing cluster has no logs");
         };
-        // TODO: if any of these steps fail, how do we recover?
         let client = self.network.client_for(leader_node_id, &leader_addr.into());
+        // add_learner and upgrade_learner are both safe to retry if a node shuts down
+        // so on failure, just try try again
         client
             .add_learner(AddLearnerRequest {
                 node_id: self.my_node_id,
