@@ -1,0 +1,10 @@
+{% macro field_annotation(field) -%}
+    {%- if field.name != field.name | to_lower_camel_case -%}
+        @JsonProperty("{{ field.name }}")
+    {%- else -%}
+        @JsonProperty
+    {%- endif -%}
+{%- endmacro -%}
+{% macro field_decl(field, annotate=true) -%}
+    {% if annotate %}{{ field_annotation(field) }} {% endif %}private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
+{%- endmacro -%}
