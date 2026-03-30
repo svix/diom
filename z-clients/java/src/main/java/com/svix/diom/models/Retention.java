@@ -28,46 +28,46 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class Retention {
-    @JsonProperty private Long ms;
-    @JsonProperty private Long bytes;
+    @JsonProperty("period_ms") private Long periodMs;
+    @JsonProperty("size_bytes") private Long sizeBytes;
     public Retention() {}
 
-    public Retention ms(Long ms) {
-        this.ms = ms;
+    public Retention periodMs(Long periodMs) {
+        this.periodMs = periodMs;
         return this;
     }
 
     /**
-    * Get ms
+    * Get periodMs
     *
-     * @return ms
+     * @return periodMs
      */
     @javax.annotation.Nullable
-    public Long getMs() {
-        return ms;
+    public Long getPeriodMs() {
+        return periodMs;
     }
 
-    public void setMs(Long ms) {
-        this.ms = ms;
+    public void setPeriodMs(Long periodMs) {
+        this.periodMs = periodMs;
     }
 
-    public Retention bytes(Long bytes) {
-        this.bytes = bytes;
+    public Retention sizeBytes(Long sizeBytes) {
+        this.sizeBytes = sizeBytes;
         return this;
     }
 
     /**
-    * Get bytes
+    * Get sizeBytes
     *
-     * @return bytes
+     * @return sizeBytes
      */
     @javax.annotation.Nullable
-    public Long getBytes() {
-        return bytes;
+    public Long getSizeBytes() {
+        return sizeBytes;
     }
 
-    public void setBytes(Long bytes) {
-        this.bytes = bytes;
+    public void setSizeBytes(Long sizeBytes) {
+        this.sizeBytes = sizeBytes;
     }
 
     /**

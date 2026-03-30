@@ -343,14 +343,14 @@ mod tests {
     #[test]
     fn msgs_with_options() {
         let cmd: BootstrapCommand =
-            r#"msgs namespace create {"name":"myns","retention":{"ms":60000,"bytes":500}}"#
+            r#"msgs namespace create {"name":"myns","retention":{"period_ms":60000,"size_bytes":500}}"#
                 .parse()
                 .unwrap();
         let BootstrapCommand::Msgs(v) = cmd else {
             panic!()
         };
-        assert_eq!(v.retention.ms.as_millis(), 60000);
-        assert_eq!(v.retention.bytes.get(), 500);
+        assert_eq!(v.retention.period_ms.unwrap().as_millis(), 60000);
+        assert_eq!(v.retention.size_bytes.unwrap().get(), 500);
     }
 
     #[test]

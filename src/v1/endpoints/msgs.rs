@@ -127,8 +127,8 @@ async fn get_namespace(
     Ok(MsgPackOrJson(MsgNamespaceGetOut {
         name: namespace.name,
         retention: Retention {
-            ms: namespace.config.retention_period,
-            bytes: namespace.config.retention_bytes,
+            period_ms: namespace.config.retention_period,
+            size_bytes: namespace.config.retention_bytes,
         },
         created: namespace.created,
         updated: namespace.updated,

@@ -5635,8 +5635,8 @@
           },
           "retention": {
             "default": {
-              "ms": 2592000000,
-              "bytes": 1000000000000
+              "period_ms": null,
+              "size_bytes": null
             },
             "$ref": "#/components/schemas/Retention"
           }
@@ -6472,16 +6472,16 @@
       "Retention": {
         "type": "object",
         "properties": {
-          "ms": {
+          "period_ms": {
             "type": "integer",
             "format": "uint64",
-            "default": 2592000000
+            "nullable": true
           },
-          "bytes": {
+          "size_bytes": {
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
-            "default": 1000000000000
+            "nullable": true
           }
         }
       },
