@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgTopicConfigureIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String topic;
     @JsonProperty private Short partitions;
     public MsgTopicConfigureIn() {}
 

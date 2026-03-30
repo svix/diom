@@ -29,8 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueConfigureIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String topic;
-    @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("retry_schedule") private List<Long> retrySchedule;
     @JsonProperty("dlq_topic") private String dlqTopic;
     public MsgQueueConfigureIn() {}

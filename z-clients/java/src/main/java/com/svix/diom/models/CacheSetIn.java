@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheSetIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
     @JsonProperty("ttl_ms") private Long ttlMs;
     public CacheSetIn() {}

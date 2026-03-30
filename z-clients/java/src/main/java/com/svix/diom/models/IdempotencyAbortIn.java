@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyAbortIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String key;
     public IdempotencyAbortIn() {}
 
     public IdempotencyAbortIn namespace(String namespace) {

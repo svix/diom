@@ -50,7 +50,7 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class {{ class_name }} {
-{%- for field in type.fields %}
+{%- for field in type.fields | selectattr("positional", "false") %}
     {{ field_decl(field) }}
 {%- endfor %}
     public {{ class_name }}() {}

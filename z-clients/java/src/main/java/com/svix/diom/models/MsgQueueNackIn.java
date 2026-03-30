@@ -29,8 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgQueueNackIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String topic;
-    @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("msg_ids") private List<String> msgIds;
     public MsgQueueNackIn() {}
 

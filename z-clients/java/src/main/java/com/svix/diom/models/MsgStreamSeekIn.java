@@ -29,8 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgStreamSeekIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String topic;
-    @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty private Long offset;
     @JsonProperty private SeekPosition position;
     public MsgStreamSeekIn() {}

@@ -28,7 +28,6 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgNamespaceCreateIn {
-    @JsonProperty private String name;
     @JsonProperty private Retention retention;
     public MsgNamespaceCreateIn() {}
 
