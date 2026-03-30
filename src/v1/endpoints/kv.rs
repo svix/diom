@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::num::NonZeroU64;
-
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
@@ -228,8 +226,6 @@ admin_request_input!(KvGetNamespaceIn);
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceOut {
     pub name: NamespaceName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -237,22 +233,19 @@ struct KvGetNamespaceOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct KvCreateNamespaceIn {
     pub name: NamespaceName,
-    pub max_storage_bytes: Option<NonZeroU64>,
 }
 
 admin_request_input!(KvCreateNamespaceIn);
 
 impl From<KvCreateNamespaceIn> for CreateKvOperation {
     fn from(v: KvCreateNamespaceIn) -> Self {
-        CreateKvOperation::new(v.name, v.max_storage_bytes)
+        CreateKvOperation::new(v.name)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvCreateNamespaceOut {
     pub name: NamespaceName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -267,7 +260,6 @@ async fn kv_create_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(KvCreateNamespaceOut {
         name: resp.name,
-        max_storage_bytes: resp.max_storage_bytes,
         created: resp.created,
         updated: resp.updated,
     }))
@@ -290,7 +282,6 @@ async fn kv_get_namespace(
 
     Ok(MsgPackOrJson(KvGetNamespaceOut {
         name: namespace.name,
-        max_storage_bytes: namespace.max_storage_bytes,
         created: namespace.created,
         updated: namespace.updated,
     }))

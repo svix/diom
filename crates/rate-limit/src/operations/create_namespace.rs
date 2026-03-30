@@ -1,5 +1,3 @@
-use std::num::NonZeroU64;
-
 use diom_error::Result;
 use diom_namespace::{
     entities::RateLimitConfig,
@@ -13,21 +11,17 @@ use super::{CreateRateLimitResponse, RateLimitRaftState, RateLimitRequest};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateRateLimitOperation {
     pub(crate) name: String,
-    max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<CreateRateLimitOperation> for CreateNamespace<RateLimitConfig> {
     fn from(value: CreateRateLimitOperation) -> Self {
-        CreateNamespace::new(value.name, RateLimitConfig {}, value.max_storage_bytes)
+        CreateNamespace::new(value.name, RateLimitConfig {})
     }
 }
 
 impl CreateRateLimitOperation {
-    pub fn new(name: String, max_storage_bytes: Option<NonZeroU64>) -> Self {
-        Self {
-            name,
-            max_storage_bytes,
-        }
+    pub fn new(name: String) -> Self {
+        Self { name }
     }
 
     async fn apply_real(
@@ -44,7 +38,6 @@ impl CreateRateLimitOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateRateLimitResponseData {
     pub name: String,
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -53,7 +46,6 @@ impl From<CreateNamespaceOutput<RateLimitConfig>> for CreateRateLimitResponseDat
     fn from(value: CreateNamespaceOutput<RateLimitConfig>) -> Self {
         Self {
             name: value.name,
-            max_storage_bytes: value.max_storage_bytes,
             created: value.created,
             updated: value.updated,
         }

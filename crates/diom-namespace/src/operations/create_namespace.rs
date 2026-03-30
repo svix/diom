@@ -1,6 +1,5 @@
 use diom_error::Result;
 use diom_id::NamespaceId;
-use std::num::NonZeroU64;
 
 use fjall_utils::WriteBatchExt;
 use jiff::Timestamp;
@@ -13,7 +12,6 @@ use crate::{State, entities::ModuleConfig, tables::Namespace};
 #[serde(bound = "C: ModuleConfig")]
 pub struct CreateNamespace<C: ModuleConfig> {
     name: String,
-    max_storage_bytes: Option<NonZeroU64>,
     config: C,
 }
 
@@ -22,19 +20,13 @@ pub struct CreateNamespace<C: ModuleConfig> {
 pub struct CreateNamespaceOutput<C: ModuleConfig> {
     pub name: String,
     pub config: C,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
 
 impl<C: ModuleConfig + 'static> CreateNamespace<C> {
-    pub fn new(name: String, config: C, max_storage_bytes: Option<NonZeroU64>) -> Self {
-        Self {
-            name,
-            config,
-            max_storage_bytes,
-        }
+    pub fn new(name: String, config: C) -> Self {
+        Self { name, config }
     }
 
     pub async fn apply_operation(
@@ -52,7 +44,6 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                 let namespace = match Namespace::<C>::fetch(&keyspace, &self.name)? {
                     Some(mut namespace) => {
                         namespace.updated = timestamp;
-                        namespace.max_storage_bytes = self.max_storage_bytes;
                         namespace.config = self.config;
                         namespace
                     }
@@ -61,7 +52,6 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                         Namespace {
                             id,
                             name: self.name,
-                            max_storage_bytes: self.max_storage_bytes,
                             created: timestamp,
                             updated: timestamp,
                             config: self.config,
@@ -78,7 +68,6 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
 
                 Ok(CreateNamespaceOutput {
                     name: namespace.name,
-                    max_storage_bytes: namespace.max_storage_bytes,
                     config: namespace.config,
                     created: namespace.created,
                     updated: namespace.updated,

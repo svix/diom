@@ -1,5 +1,3 @@
-use std::num::NonZeroU64;
-
 use diom_error::Result;
 use diom_namespace::{
     entities::AuthTokenConfig,
@@ -13,21 +11,17 @@ use crate::operations::{AuthTokenRaftState, AuthTokenRequest, CreateNamespaceRes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAuthTokenNamespaceOperation {
     pub(crate) name: String,
-    max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<CreateAuthTokenNamespaceOperation> for CreateNamespace<AuthTokenConfig> {
     fn from(value: CreateAuthTokenNamespaceOperation) -> Self {
-        CreateNamespace::new(value.name, AuthTokenConfig {}, value.max_storage_bytes)
+        CreateNamespace::new(value.name, AuthTokenConfig {})
     }
 }
 
 impl CreateAuthTokenNamespaceOperation {
-    pub fn new(name: String, max_storage_bytes: Option<NonZeroU64>) -> Self {
-        Self {
-            name,
-            max_storage_bytes,
-        }
+    pub fn new(name: String) -> Self {
+        Self { name }
     }
 
     async fn apply_real(
@@ -44,7 +38,6 @@ impl CreateAuthTokenNamespaceOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAuthTokenNamespaceResponseData {
     pub name: String,
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -53,7 +46,6 @@ impl From<CreateNamespaceOutput<AuthTokenConfig>> for CreateAuthTokenNamespaceRe
     fn from(value: CreateNamespaceOutput<AuthTokenConfig>) -> Self {
         Self {
             name: value.name,
-            max_storage_bytes: value.max_storage_bytes,
             created: value.created,
             updated: value.updated,
         }

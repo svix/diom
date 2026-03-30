@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::num::NonZeroU64;
-
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
@@ -237,22 +235,19 @@ async fn rate_limit_reset(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct RateLimitCreateNamespaceIn {
     pub name: NamespaceName,
-    pub max_storage_bytes: Option<NonZeroU64>,
 }
 
 admin_request_input!(RateLimitCreateNamespaceIn);
 
 impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
     fn from(v: RateLimitCreateNamespaceIn) -> Self {
-        CreateRateLimitOperation::new(v.name, v.max_storage_bytes)
+        CreateRateLimitOperation::new(v.name)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitCreateNamespaceOut {
     pub name: NamespaceName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -267,8 +262,6 @@ admin_request_input!(RateLimitGetNamespaceIn);
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceOut {
     pub name: NamespaceName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -283,7 +276,6 @@ async fn rate_limit_create_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(RateLimitCreateNamespaceOut {
         name: resp.name,
-        max_storage_bytes: resp.max_storage_bytes,
         created: resp.created,
         updated: resp.updated,
     }))
@@ -305,7 +297,6 @@ async fn rate_limit_get_namespace(
 
     Ok(MsgPackOrJson(RateLimitGetNamespaceOut {
         name: namespace.name,
-        max_storage_bytes: namespace.max_storage_bytes,
         created: namespace.created,
         updated: namespace.updated,
     }))

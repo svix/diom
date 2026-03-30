@@ -2,7 +2,6 @@
 
 export interface KvCreateNamespaceOut {
     name: string;
-    maxStorageBytes?: number | null;
     created: Date;
     updated: Date;
 }
@@ -12,7 +11,6 @@ export const KvCreateNamespaceOutSerializer = {
     _fromJsonObject(object: any): KvCreateNamespaceOut {
         return {
             name: object['name'],
-            maxStorageBytes: object['max_storage_bytes'],
             created: new Date(object['created']),
             updated: new Date(object['updated']),
         };
@@ -22,7 +20,6 @@ export const KvCreateNamespaceOutSerializer = {
     _toJsonObject(self: KvCreateNamespaceOut): any {
         return {
             'name': self.name,
-            'max_storage_bytes': self.maxStorageBytes,
             'created': self.created,
             'updated': self.updated,
         };

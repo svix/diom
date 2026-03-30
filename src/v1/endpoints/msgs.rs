@@ -12,7 +12,7 @@ use diom_msgs::{
     MsgsNamespace,
     entities::{
         ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, SeekPosition, StreamMsgOut, TopicIn,
-        TopicName, TopicPartition, default_retention_bytes,
+        TopicName, TopicPartition,
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
@@ -124,14 +124,12 @@ async fn get_namespace(
         .fetch_namespace_admin(&data.name)?
         .ok_or_not_found()?;
 
-    let ms = namespace.config.retention_period;
-    let bytes = namespace
-        .max_storage_bytes
-        .unwrap_or_else(default_retention_bytes);
-
     Ok(MsgPackOrJson(MsgNamespaceGetOut {
         name: namespace.name,
-        retention: Retention { ms, bytes },
+        retention: Retention {
+            ms: namespace.config.retention_period,
+            bytes: namespace.config.retention_bytes,
+        },
         created: namespace.created,
         updated: namespace.updated,
     }))

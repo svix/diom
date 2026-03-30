@@ -244,7 +244,6 @@ async fn create_namespace_with_custom_config() -> TestResult {
         .post("v1.idempotency.namespace.create")
         .json(json!({
             "name": "custom-ns",
-            "max_storage_bytes": 1024,
         }))
         .await?
         .expect(StatusCode::OK)
@@ -256,7 +255,6 @@ async fn create_namespace_with_custom_config() -> TestResult {
         response,
         json!({
             "name": "custom-ns",
-            "max_storage_bytes": 1024,
             "created": ts,
             "updated": ts,
         })
