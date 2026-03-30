@@ -1,5 +1,3 @@
-use std::num::NonZeroU64;
-
 use coyote_error::Result;
 use coyote_namespace::{
     entities::IdempotencyConfig,
@@ -13,21 +11,17 @@ use crate::operations::{CreateIdempotencyResponse, IdempotencyRaftState, Idempot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateIdempotencyOperation {
     pub(crate) name: String,
-    max_storage_bytes: Option<NonZeroU64>,
 }
 
 impl From<CreateIdempotencyOperation> for CreateNamespace<IdempotencyConfig> {
     fn from(value: CreateIdempotencyOperation) -> Self {
-        CreateNamespace::new(value.name, IdempotencyConfig {}, value.max_storage_bytes)
+        CreateNamespace::new(value.name, IdempotencyConfig {})
     }
 }
 
 impl CreateIdempotencyOperation {
-    pub fn new(name: String, max_storage_bytes: Option<NonZeroU64>) -> Self {
-        Self {
-            name,
-            max_storage_bytes,
-        }
+    pub fn new(name: String) -> Self {
+        Self { name }
     }
 
     async fn apply_real(
@@ -44,7 +38,6 @@ impl CreateIdempotencyOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateIdempotencyResponseData {
     pub name: String,
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
@@ -53,7 +46,6 @@ impl From<CreateNamespaceOutput<IdempotencyConfig>> for CreateIdempotencyRespons
     fn from(value: CreateNamespaceOutput<IdempotencyConfig>) -> Self {
         Self {
             name: value.name,
-            max_storage_bytes: value.max_storage_bytes,
             created: value.created,
             updated: value.updated,
         }

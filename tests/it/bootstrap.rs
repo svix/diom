@@ -9,7 +9,7 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .await?
         .expect(StatusCode::OK)
         .json();
-    assert_eq!(default_kv["max_storage_bytes"], 1000);
+    assert_eq!(default_kv["name"], "default");
 
     let default_cache = client
         .post("v1.cache.namespace.get")
@@ -35,7 +35,6 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(kv1["name"], "kv1");
-    assert_eq!(kv1["max_storage_bytes"], 2000);
 
     let kv2 = client
         .post("v1.kv.namespace.get")
@@ -44,7 +43,6 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(kv2["name"], "kv2");
-    assert_eq!(kv2["max_storage_bytes"], 3000);
 
     let cache1 = client
         .post("v1.cache.namespace.get")

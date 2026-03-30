@@ -7,7 +7,7 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
-use crate::entities::{Retention, default_retention_bytes};
+use crate::entities::Retention;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNamespaceOperation {
@@ -29,8 +29,8 @@ impl CreateNamespaceOperation {
             self.name,
             MsgsConfig {
                 retention_period: self.retention.ms,
+                retention_bytes: self.retention.bytes,
             },
-            Some(self.retention.bytes),
         );
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
@@ -47,14 +47,12 @@ pub struct CreateNamespaceResponseData {
 
 impl From<CreateNamespaceOutput<MsgsConfig>> for CreateNamespaceResponseData {
     fn from(value: CreateNamespaceOutput<MsgsConfig>) -> Self {
-        let ms = value.config.retention_period;
-        let bytes = value
-            .max_storage_bytes
-            .unwrap_or_else(default_retention_bytes);
-
         Self {
             name: value.name,
-            retention: Retention { ms, bytes },
+            retention: Retention {
+                ms: value.config.retention_period,
+                bytes: value.config.retention_bytes,
+            },
             created: value.created,
             updated: value.updated,
         }

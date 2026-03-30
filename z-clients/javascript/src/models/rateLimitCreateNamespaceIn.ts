@@ -2,7 +2,6 @@
 
 export interface RateLimitCreateNamespaceIn {
     name: string;
-    maxStorageBytes?: number | null;
 }
 
 export const RateLimitCreateNamespaceInSerializer = {
@@ -10,7 +9,6 @@ export const RateLimitCreateNamespaceInSerializer = {
     _fromJsonObject(object: any): RateLimitCreateNamespaceIn {
         return {
             name: object['name'],
-            maxStorageBytes: object['max_storage_bytes'],
         };
     },
 
@@ -18,7 +16,6 @@ export const RateLimitCreateNamespaceInSerializer = {
     _toJsonObject(self: RateLimitCreateNamespaceIn): any {
         return {
             'name': self.name,
-            'max_storage_bytes': self.maxStorageBytes,
         };
     }
 }

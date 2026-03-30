@@ -6,7 +6,6 @@ import {
 
 export interface CacheCreateNamespaceOut {
     name: string;
-    maxStorageBytes?: number | null;
     evictionPolicy: EvictionPolicy;
     created: Date;
     updated: Date;
@@ -17,7 +16,6 @@ export const CacheCreateNamespaceOutSerializer = {
     _fromJsonObject(object: any): CacheCreateNamespaceOut {
         return {
             name: object['name'],
-            maxStorageBytes: object['max_storage_bytes'],
             evictionPolicy: EvictionPolicySerializer._fromJsonObject(object['eviction_policy']),
             created: new Date(object['created']),
             updated: new Date(object['updated']),
@@ -28,7 +26,6 @@ export const CacheCreateNamespaceOutSerializer = {
     _toJsonObject(self: CacheCreateNamespaceOut): any {
         return {
             'name': self.name,
-            'max_storage_bytes': self.maxStorageBytes,
             'eviction_policy': EvictionPolicySerializer._toJsonObject(self.evictionPolicy),
             'created': self.created,
             'updated': self.updated,

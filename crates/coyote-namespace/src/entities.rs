@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, num::NonZeroU64};
 
 use coyote_core::types::DurationMs;
 use coyote_id::Module;
@@ -59,6 +59,12 @@ impl ModuleConfig for CacheConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MsgsConfig {
     pub retention_period: DurationMs,
+    #[serde(default = "default_msgs_retention_bytes")]
+    pub retention_bytes: NonZeroU64,
+}
+
+fn default_msgs_retention_bytes() -> NonZeroU64 {
+    NonZeroU64::new(1_000_000_000_000).expect("constant is non-zero")
 }
 
 impl ModuleConfig for MsgsConfig {
