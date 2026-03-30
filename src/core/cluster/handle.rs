@@ -51,6 +51,7 @@ pub enum Request {
     Cache(diom_cache::operations::CacheOperation),
     Msgs(diom_msgs::operations::MsgsOperation),
     AuthToken(diom_auth_token::operations::AuthTokenOperation),
+    AdminAuth(diom_admin_auth::operations::AdminAuthOperation),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -75,6 +76,7 @@ impl fmt::Display for RequestWithContext {
             Request::Cache(_) => write!(f, "cache"),
             Request::Msgs(_) => write!(f, "msgs"),
             Request::AuthToken(_) => write!(f, "auth_token"),
+            Request::AdminAuth(_) => write!(f, "admin_auth"),
         }
     }
 }
@@ -99,7 +101,9 @@ impl RequestWithContext {
             Request::Kv(op) => Sha256::digest(op.key_name()?),
             Request::Msgs(op) => Sha256::digest(op.key_name()),
             Request::RateLimit(op) => Sha256::digest(op.key_name()),
-            Request::ClusterInternal(_) | Request::AuthToken(_) => return None,
+            Request::ClusterInternal(_) | Request::AuthToken(_) | Request::AdminAuth(_) => {
+                return None;
+            }
         };
         Some(hex::encode(digest))
     }
@@ -113,6 +117,7 @@ impl RequestWithContext {
             Request::Msgs(_) => "msgs",
             Request::RateLimit(_) => "rate-limit",
             Request::AuthToken(_) => "auth-token",
+            Request::AdminAuth(_) => "admin-auth",
         }
     }
 }
@@ -153,6 +158,12 @@ impl From<diom_auth_token::operations::AuthTokenOperation> for Request {
     }
 }
 
+impl From<diom_admin_auth::operations::AdminAuthOperation> for Request {
+    fn from(value: diom_admin_auth::operations::AdminAuthOperation) -> Self {
+        Request::AdminAuth(value)
+    }
+}
+
 impl From<InternalOperation> for Request {
     fn from(value: InternalOperation) -> Self {
         Self::ClusterInternal(value)
@@ -169,6 +180,7 @@ pub enum Response {
     Cache(diom_cache::operations::Response),
     Msgs(diom_msgs::operations::Response),
     AuthToken(diom_auth_token::operations::Response),
+    AdminAuth(diom_admin_auth::operations::Response),
 }
 
 impl TryFrom<Response> for diom_kv::operations::Response {
@@ -243,6 +255,17 @@ impl TryFrom<Response> for diom_auth_token::operations::Response {
     fn try_from(value: Response) -> Result<Self, Self::Error> {
         match value {
             Response::AuthToken(v) => Ok(v),
+            _ => Err(ResponseParseError::InvalidVariant),
+        }
+    }
+}
+
+impl TryFrom<Response> for diom_admin_auth::operations::Response {
+    type Error = ResponseParseError;
+
+    fn try_from(value: Response) -> Result<Self, Self::Error> {
+        match value {
+            Response::AdminAuth(v) => Ok(v),
             _ => Err(ResponseParseError::InvalidVariant),
         }
     }

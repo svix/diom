@@ -92,6 +92,7 @@ pub struct Stores {
     pub idempotency_state: diom_idempotency::State,
     pub rate_limit_state: diom_rate_limit::State,
     pub auth_token_state: diom_auth_token::State,
+    pub admin_auth_state: diom_admin_auth::State,
 }
 
 impl From<Store> for StoreHandle {
@@ -180,6 +181,8 @@ impl Store {
                 .context("initializing rate limit state")?,
             auth_token_state: diom_auth_token::State::init(databases.clone())
                 .context("initializing auth token state")?,
+            admin_auth_state: diom_admin_auth::State::init(databases.clone())
+                .context("initializing admin auth state")?,
         };
 
         if let Some(timestamp) = logs.get_last_timestamp().await? {

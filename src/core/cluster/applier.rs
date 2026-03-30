@@ -103,5 +103,12 @@ async fn apply_request_with_context(
             };
             Response::AuthToken(req.apply(state, &context).await)
         }
+        Request::AdminAuth(req) => {
+            let stores = state_machine.db_handle();
+            let state = diom_admin_auth::operations::AdminAuthRaftState {
+                state: &stores.admin_auth_state,
+            };
+            Response::AdminAuth(req.apply(state, &context).await)
+        }
     })
 }
