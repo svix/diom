@@ -11,17 +11,21 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{Context, anyhow};
+use anyhow::Context;
+use coyote_derive::EnvOverridable;
 use fs_err as fs;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use tap::Pipe;
 use tracing::Level;
 use validator::Validate;
 
 use crate::error::{Error, Result};
 
 mod defaults;
+pub(crate) mod env_overridable;
 mod validators;
+
+use env_overridable::EnvOverridable as _;
+pub use env_overridable::Variable;
 
 pub type Configuration = Arc<ConfigurationInner>;
 
@@ -97,9 +101,11 @@ impl Serialize for PeerAddr {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, EnvOverridable, Serialize)]
 pub struct DatabaseConfig {
+    /// Directory in which this database is stored
     pub path: PathBuf,
+    /// Filename under the directory specified in `path`
     pub filename: Option<String>,
 }
 
@@ -190,7 +196,7 @@ impl DatabaseConfig {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
+#[derive(Clone, Debug, Deserialize, Serialize, Validate, EnvOverridable)]
 #[validate(schema(
     function = "validators::validate_cluster_configuration",
     skip_on_field_errors = true
@@ -201,6 +207,9 @@ pub struct ClusterConfiguration {
     #[serde(default)]
     pub listen_address: Option<SocketAddr>,
 
+    /// Human-facing name for this cluster.
+    ///
+    /// Only used in discovery and debugging.
     #[serde(default = "defaults::cluster_name")]
     pub name: String,
 
@@ -218,6 +227,9 @@ pub struct ClusterConfiguration {
     #[serde(default)]
     pub log_path: Option<PathBuf>,
 
+    /// Shared secret for intra-cluster communications
+    ///
+    /// This must be the same on all nodes.
     #[serde(default)]
     pub secret: Option<String>,
 
@@ -380,6 +392,7 @@ pub struct ClusterConfiguration {
     ///
     /// This should be true unless you are testing internal details of the replication system
     #[serde(default = "defaults::default_true")]
+    #[env_overridable(skip)]
     pub shut_down_on_go_away: bool,
 }
 
@@ -420,15 +433,17 @@ fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Erro
     T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
+#[derive(Clone, Debug, Serialize, Deserialize, Validate, EnvOverridable)]
 pub struct ConfigurationInner {
     /// The address to listen on
     #[serde(default = "defaults::listen_address")]
     pub listen_address: SocketAddr,
 
     #[serde(default = "defaults::persistent_db")]
+    #[env_overridable(nest_with_prefix("PERSISTENT_DB"))]
     pub persistent_db: DatabaseConfig,
     #[serde(default = "defaults::ephemeral_db")]
+    #[env_overridable(nest_with_prefix("EPHEMERAL_DB"))]
     pub ephemeral_db: DatabaseConfig,
 
     /// The log level to run the service with. Supported: info, debug, trace
@@ -473,6 +488,7 @@ pub struct ConfigurationInner {
 
     #[validate(nested)]
     #[serde(default)]
+    #[env_overridable(nest_with_prefix("CLUSTER"))]
     pub cluster: ClusterConfiguration,
 
     /// The path to a YAML bootstrap file
@@ -592,193 +608,15 @@ fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner
         None => ConfigurationInner::default(),
     };
 
-    macro_rules! env_overrides {
-        ( $( $field:ident: $env_var:literal ),* $(,)? ) => {
-            $(
-                if let Some(value) = env_var($env_var)? {
-                    *$field = value;
-                }
-            )*
-        };
-    }
-
-    macro_rules! opt_env_overrides {
-        ( $( $field:ident: $env_var:literal ),* $(,)? ) => {
-            $(
-                if let Some(value) = env_var($env_var)? {
-                    *$field = Some(value);
-                }
-            )*
-        };
-    }
-
-    macro_rules! env_ms_overrides {
-        ( $( $field:ident: $env_var:literal ),* $(,)? ) => {
-            $(
-                if let Some(value) = env_var_ms($env_var)? {
-                    *$field = value;
-                }
-            )*
-        };
-    }
-
-    let ConfigurationInner {
-        listen_address,
-        persistent_db:
-            DatabaseConfig {
-                path: persistent_db_path,
-                filename: persistent_db_filename,
-            },
-        ephemeral_db:
-            DatabaseConfig {
-                path: ephemeral_db_path,
-                filename: ephemeral_db_filename,
-            },
-        log_level,
-        log_format,
-        opentelemetry_address,
-        opentelemetry_metrics_address,
-        opentelemetry_metrics_use_http,
-        opentelemetry_metrics_period_seconds,
-        opentelemetry_sample_ratio,
-        opentelemetry_service_name,
-        environment,
-        bootstrap_cfg_path,
-        bootstrap_cfg,
-        bootstrap_max_wait_time,
-        admin_token,
-        cluster:
-            ClusterConfiguration {
-                advertised_address: cluster_advertised_address,
-                listen_address: cluster_listen_address,
-                name: cluster_name,
-                snapshot_path: cluster_snapshot_path,
-                log_path: cluster_log_path,
-                secret: cluster_secret,
-                replication_request_timeout: cluster_replication_request_timeout,
-                discovery_request_timeout: cluster_discovery_request_timeout,
-                connection_timeout: cluster_connection_timeout,
-                heartbeat_interval: cluster_heartbeat_interval,
-                election_timeout_min: cluster_election_timeout_min,
-                election_timeout_max: cluster_election_timeout_max,
-                seed_nodes: cluster_seed_nodes,
-                auto_initialize: cluster_auto_initialize,
-                discovery_timeout: cluster_discovery_timeout,
-                startup_discovery_delay: cluster_startup_discovery_delay,
-                log_index_interval: cluster_log_index_interval,
-                log_sync_interval_commits: cluster_log_sync_interval_commits,
-                log_sync_interval_duration: cluster_log_sync_interval_duration,
-                log_ack_immediately: cluster_log_ack_immediately,
-                snapshot_after_writes: cluster_snapshot_after_writes,
-                snapshot_after_time: cluster_snapshot_after_time,
-                send_snapshot_timeout: cluster_send_snapshot_timeout,
-                shut_down_on_go_away: _,
-            },
-    } = &mut config;
-
-    env_overrides!(
-        listen_address: "COYOTE_LISTEN_ADDRESS",
-        persistent_db_path: "COYOTE_PERSISTENT_DB_PATH",
-        ephemeral_db_path: "COYOTE_EPHEMERAL_DB_PATH",
-        log_level: "COYOTE_LOG_LEVEL",
-        log_format: "COYOTE_LOG_FORMAT",
-        opentelemetry_metrics_use_http: "COYOTE_OPENTELEMETRY_METRICS_USE_HTTP",
-        opentelemetry_metrics_period_seconds: "COYOTE_OPENTELEMETRY_METRICS_PERIOD_SECONDS",
-        opentelemetry_service_name: "COYOTE_OPENTELEMETRY_SERVICE_NAME",
-        environment: "COYOTE_ENVIRONMENT",
-        cluster_name: "COYOTE_CLUSTER_NAME",
-        cluster_auto_initialize: "COYOTE_CLUSTER_AUTO_INITIALIZE",
-        cluster_log_sync_interval_commits: "COYOTE_CLUSTER_LOG_SYNC_INTERVAL_COMMITS",
-        cluster_log_ack_immediately: "COYOTE_CLUSTER_LOG_ACK_IMMEDIATELY"
-    );
-
-    opt_env_overrides!(
-        persistent_db_filename: "COYOTE_PERSISTENT_DB_FILENAME",
-        ephemeral_db_filename: "COYOTE_EPHEMERAL_DB_FILENAME",
-        opentelemetry_address: "COYOTE_OPENTELEMETRY_ADDRESS",
-        opentelemetry_metrics_address: "COYOTE_OPENTELEMETRY_METRICS_ADDRESS",
-        opentelemetry_sample_ratio: "COYOTE_OPENTELEMETRY_SAMPLE_RATIO",
-        bootstrap_cfg_path: "COYOTE_BOOTSTRAP_CFG_PATH",
-        bootstrap_cfg: "COYOTE_BOOTSTRAP_CFG",
-        admin_token: "COYOTE_ADMIN_TOKEN",
-        cluster_listen_address: "COYOTE_CLUSTER_LISTEN_ADDRESS",
-        cluster_advertised_address: "COYOTE_CLUSTER_ADVERTISED_ADDRESS",
-        cluster_snapshot_path: "COYOTE_CLUSTER_SNAPSHOT_PATH",
-        cluster_log_path: "COYOTE_CLUSTER_LOG_PATH",
-        cluster_secret: "COYOTE_CLUSTER_SECRET",
-        cluster_snapshot_after_writes: "COYOTE_SNAPSHOT_AFTER_WRITES"
-    );
-
-    env_ms_overrides!(
-        cluster_heartbeat_interval: "COYOTE_CLUSTER_HEARTBEAT_INTERVAL_MS",
-        cluster_election_timeout_min: "COYOTE_CLUSTER_ELECTION_TIMEOUT_MIN_MS",
-        cluster_election_timeout_max: "COYOTE_CLUSTER_ELECTION_TIMEOUT_MAX_MS",
-        cluster_replication_request_timeout: "COYOTE_CLUSTER_REPLICATION_REQUEST_TIMEOUT_MS",
-        cluster_discovery_request_timeout: "COYOTE_CLUSTER_DISCOVERY_REQUEST_TIMEOUT_MS",
-        cluster_connection_timeout: "COYOTE_CLUSTER_CONNECTION_TIMEOUT_MS",
-        cluster_discovery_timeout: "COYOTE_CLUSTER_DISCOVERY_TIMEOUT_MS",
-        cluster_startup_discovery_delay: "COYOTE_CLUSTER_STARTUP_DISCOVERY_DELAY_MS",
-        cluster_log_index_interval: "COYOTE_LOG_INDEX_INTERVAL_MS",
-        cluster_log_sync_interval_duration: "COYOTE_CLUSTER_LOG_SYNC_INTERVAL_MS",
-        cluster_send_snapshot_timeout: "COYOTE_CLUSTER_SEND_SNAPSHOT_TIMEOUT_MS",
-    );
-
-    // Fields that require different parsing
-    if let Some(value) = env_var_comma_separated("COYOTE_CLUSTER_SEED_NODES")? {
-        *cluster_seed_nodes = value;
-    }
-    if let Some(value) = env_var_ms("COYOTE_CLUSTER_SNAPSHOT_AFTER_MS")? {
-        *cluster_snapshot_after_time = Some(value);
-    }
-    if let Some(value) = env_var_ms("COYOTE_BOOTSTRAP_MAX_WAIT_MS")? {
-        *bootstrap_max_wait_time = Some(value);
-    }
+    config.load_environment()?;
 
     config.validate()?;
 
     Ok(Arc::from(config))
 }
 
-fn env_var<T>(name: &'static str) -> anyhow::Result<Option<T>>
-where
-    T: FromStr<Err: fmt::Display>,
-{
-    env_var_parse(name, FromStr::from_str)
-}
-
-fn env_var_ms(name: &'static str) -> anyhow::Result<Option<Duration>> {
-    env_var::<u64>(name)?.map(Duration::from_millis).pipe(Ok)
-}
-
-fn env_var_comma_separated<T>(name: &'static str) -> anyhow::Result<Option<Vec<T>>>
-where
-    T: FromStr<Err: fmt::Display>,
-{
-    env_var_parse(name, |value| {
-        value
-            .split(',')
-            .map(str::trim_ascii)
-            .map(FromStr::from_str)
-            .collect()
-    })
-}
-
-fn env_var_parse<T, E>(
-    name: &'static str,
-    parse: impl FnOnce(&str) -> Result<T, E>,
-) -> anyhow::Result<Option<T>>
-where
-    E: fmt::Display,
-{
-    match std::env::var(name) {
-        Ok(value) => parse(&value)
-            .map_err(|e| anyhow!("invalid format for `{name}`: {e}"))
-            .map(Some),
-        Err(std::env::VarError::NotPresent) => Ok(None),
-        Err(std::env::VarError::NotUnicode(_)) => {
-            Err(anyhow!("invalid format for `{name}`: invalid UTF-8"))
-        }
-    }
+pub fn describe_environment() -> Vec<Variable> {
+    ConfigurationInner::list_environment_variables()
 }
 
 #[cfg(test)]
