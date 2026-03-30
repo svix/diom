@@ -4456,7 +4456,7 @@
             "$ref": "#/components/schemas/AccessRuleEffect"
           },
           "resource": {
-            "$ref": "#/components/schemas/ResourcePattern"
+            "type": "string"
           },
           "actions": {
             "type": "array",
@@ -6984,9 +6984,6 @@
           "capacity",
           "refill_amount"
         ]
-      },
-      "ResourcePattern": {
-        "type": "string"
       },
       "Retention": {
         "type": "object",

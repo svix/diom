@@ -3,14 +3,10 @@ import {
     type AccessRuleEffect,
     AccessRuleEffectSerializer,
 } from './accessRuleEffect';
-import {
-    type ResourcePattern,
-    ResourcePatternSerializer,
-} from './resourcePattern';
 
 export interface AccessRule {
     effect: AccessRuleEffect;
-    resource: ResourcePattern;
+    resource: string;
     actions: string[];
 }
 
@@ -19,7 +15,7 @@ export const AccessRuleSerializer = {
     _fromJsonObject(object: any): AccessRule {
         return {
             effect: AccessRuleEffectSerializer._fromJsonObject(object['effect']),
-            resource: ResourcePatternSerializer._fromJsonObject(object['resource']),
+            resource: object['resource'],
             actions: object['actions'],
         };
     },
@@ -28,7 +24,7 @@ export const AccessRuleSerializer = {
     _toJsonObject(self: AccessRule): any {
         return {
             'effect': AccessRuleEffectSerializer._toJsonObject(self.effect),
-            'resource': ResourcePatternSerializer._toJsonObject(self.resource),
+            'resource': self.resource,
             'actions': self.actions,
         };
     }

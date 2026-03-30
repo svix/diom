@@ -4,6 +4,6 @@ package coyote_models
 
 type AccessRule struct {
 	Effect   AccessRuleEffect `msgpack:"effect"`
-	Resource ResourcePattern  `msgpack:"resource"`
+	Resource string           `msgpack:"resource"`
 	Actions  []string         `msgpack:"actions"`
 }

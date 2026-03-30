@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class AccessRule {
     @JsonProperty private AccessRuleEffect effect;
-    @JsonProperty private ResourcePattern resource;
+    @JsonProperty private String resource;
     @JsonProperty private List<String> actions;
     public AccessRule() {}
 
@@ -52,7 +52,7 @@ public class AccessRule {
         this.effect = effect;
     }
 
-    public AccessRule resource(ResourcePattern resource) {
+    public AccessRule resource(String resource) {
         this.resource = resource;
         return this;
     }
@@ -63,11 +63,11 @@ public class AccessRule {
      * @return resource
      */
     @javax.annotation.Nonnull
-    public ResourcePattern getResource() {
+    public String getResource() {
         return resource;
     }
 
-    public void setResource(ResourcePattern resource) {
+    public void setResource(String resource) {
         this.resource = resource;
     }
 
