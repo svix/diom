@@ -7,15 +7,16 @@
     "typescript"
   ],
   "license": "MIT",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "sideEffects": false,
   "files": [
-    "src",
     "dist"
   ],
   "scripts": {
     "build": "tsc",
-    "test": "tsc -p tsconfig.test.json && node --enable-source-maps test_build/src/index.test.js",
+    "bundle": "tsdown",
+    "prepublishOnly": "npm run build && npm run bundle",
     "check": "biome check",
     "check:fix": "biome check --write",
     "lint": "biome lint",
@@ -24,7 +25,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.15",
-    "mockttp": "^3.15.5",
+    "tsdown": "^0.21.6",
     "typescript": "^5.9.3"
   },
   "dependencies": {
