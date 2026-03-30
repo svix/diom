@@ -2,7 +2,6 @@
 
 export enum EvictionPolicy {
     NoEviction = 'NoEviction',
-    LeastRecentlyUsed = 'LeastRecentlyUsed',
     }
 
 export const EvictionPolicySerializer = {

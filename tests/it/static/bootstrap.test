@@ -1,5 +1,5 @@
 kv namespace create {"name":"default"}
 kv namespace create {"name":"kv1"}
 kv namespace create {"name":"kv2"}
-cache namespace create {"name":"cache1","eviction_policy":"LeastRecentlyUsed"}
+cache namespace create {"name":"cache1"}
 msgs namespace create {"name":"msgs2"}
