@@ -2,7 +2,6 @@
 
 export interface AuthTokenCreateNamespaceIn {
     name: string;
-    maxStorageBytes?: number | null;
 }
 
 export const AuthTokenCreateNamespaceInSerializer = {
@@ -10,7 +9,6 @@ export const AuthTokenCreateNamespaceInSerializer = {
     _fromJsonObject(object: any): AuthTokenCreateNamespaceIn {
         return {
             name: object['name'],
-            maxStorageBytes: object['max_storage_bytes'],
         };
     },
 
@@ -18,7 +16,6 @@ export const AuthTokenCreateNamespaceInSerializer = {
     _toJsonObject(self: AuthTokenCreateNamespaceIn): any {
         return {
             'name': self.name,
-            'max_storage_bytes': self.maxStorageBytes,
         };
     }
 }

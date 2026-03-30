@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use std::num::NonZeroU64;
-
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
@@ -134,8 +132,6 @@ pub struct CacheDeleteOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheGetNamespaceOut {
     pub name: NamespaceName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub eviction_policy: EvictionPolicy,
     pub created: Timestamp,
     pub updated: Timestamp,
@@ -144,7 +140,6 @@ struct CacheGetNamespaceOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct CacheCreateNamespaceIn {
     pub name: NamespaceName,
-    pub max_storage_bytes: Option<NonZeroU64>,
     #[serde(default)]
     pub eviction_policy: EvictionPolicy,
 }
@@ -153,15 +148,13 @@ admin_request_input!(CacheCreateNamespaceIn);
 
 impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
     fn from(v: CacheCreateNamespaceIn) -> Self {
-        CreateCacheOperation::new(v.name, v.eviction_policy, v.max_storage_bytes)
+        CreateCacheOperation::new(v.name, v.eviction_policy)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheCreateNamespaceOut {
     pub name: NamespaceName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
     pub eviction_policy: EvictionPolicy,
     pub created: Timestamp,
     pub updated: Timestamp,
@@ -255,7 +248,6 @@ async fn cache_create_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheCreateNamespaceOut {
         name: resp.name,
-        max_storage_bytes: resp.max_storage_bytes,
         eviction_policy: resp.eviction_policy,
         created: resp.created,
         updated: resp.updated,
@@ -279,7 +271,6 @@ async fn cache_get_namespace(
 
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
         name: namespace.name,
-        max_storage_bytes: namespace.max_storage_bytes,
         eviction_policy: namespace.config.eviction_policy,
         created: namespace.created,
         updated: namespace.updated,

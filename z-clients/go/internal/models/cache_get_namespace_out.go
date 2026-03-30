@@ -7,9 +7,8 @@ import (
 )
 
 type CacheGetNamespaceOut struct {
-	Name            string         `msgpack:"name"`
-	MaxStorageBytes *uint64        `msgpack:"max_storage_bytes,omitempty"`
-	EvictionPolicy  EvictionPolicy `msgpack:"eviction_policy"`
-	Created         time.Time      `msgpack:"created"`
-	Updated         time.Time      `msgpack:"updated"`
+	Name           string         `msgpack:"name"`
+	EvictionPolicy EvictionPolicy `msgpack:"eviction_policy"`
+	Created        time.Time      `msgpack:"created"`
+	Updated        time.Time      `msgpack:"updated"`
 }
