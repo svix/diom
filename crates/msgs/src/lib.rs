@@ -1,12 +1,15 @@
 use coyote_error::{Error, Result};
 use coyote_id::NamespaceId;
 use coyote_namespace::{Namespace, entities::MsgsConfig};
+use coyote_operations::BackgroundResult;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use jiff::Timestamp;
 
 use entities::{ConsumerGroup, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, TableRow};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
+
+use crate::metrics::record_stream_lag_metrics;
 
 pub mod entities;
 pub mod metrics;
@@ -136,4 +139,46 @@ pub fn estimate_available_stream_messages(
     }
 
     Ok(total)
+}
+
+#[derive(Clone)]
+pub struct AllNodesWorker {
+    state: State,
+}
+
+impl AllNodesWorker {
+    pub fn new(state: State) -> Self {
+        Self { state }
+    }
+
+    async fn worker_loop(&self) -> BackgroundResult<()> {
+        let state = self.state.clone();
+        match coyote_core::task::spawn_blocking_in_current_span(move || {
+            record_stream_lag_metrics(&state)
+        })
+        .await
+        {
+            Ok(Ok(())) => {}
+            Ok(Err(err)) => tracing::warn!(?err, "failed to collect stream lag metrics"),
+            Err(err) => tracing::warn!(?err, "stream lag metrics task panicked"),
+        }
+        Ok(())
+    }
+}
+
+impl coyote_operations::workers::BackgroundWorker for AllNodesWorker {
+    const NAME: &'static str = "bg-worker:msgs";
+
+    async fn run(self) -> BackgroundResult<()> {
+        let mut timer = tokio::time::interval(std::time::Duration::from_secs(60));
+        let shutting_down = coyote_core::shutdown::shutting_down_token();
+        while shutting_down
+            .run_until_cancelled(timer.tick())
+            .await
+            .is_some()
+        {
+            self.worker_loop().await?;
+        }
+        Ok(())
+    }
 }

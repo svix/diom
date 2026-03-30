@@ -78,6 +78,22 @@ pub(crate) struct StreamLeaseRow {
 }
 
 impl StreamLeaseRow {
+    const CONSUMER_GROUP_OFFSET: usize =
+        size_of::<fjall_utils::TableKeyType>() + size_of::<TopicId>() + size_of::<Partition>();
+
+    pub(crate) fn consumer_group_from_key(key: &[u8]) -> Option<&str> {
+        std::str::from_utf8(key.get(Self::CONSUMER_GROUP_OFFSET..)?).ok()
+    }
+
+    /// Returns the key prefix for scanning all `StreamLeaseRow`s for a given topic.
+    pub(crate) fn topic_scan_prefix(topic_id: TopicId) -> Vec<u8> {
+        let mut prefix =
+            Vec::with_capacity(size_of::<fjall_utils::TableKeyType>() + size_of::<TopicId>());
+        prefix.push(Self::ROW_TYPE);
+        prefix.extend_from_slice(topic_id.as_bytes());
+        prefix
+    }
+
     pub(crate) fn key_for(
         topic_id: TopicId,
         partition: Partition,
@@ -322,4 +338,25 @@ impl MsgRow {
 
 impl TableRow for MsgRow {
     const ROW_TYPE: u8 = RowType::Msg as u8;
+}
+
+#[cfg(test)]
+mod tests {
+    use jiff::Timestamp;
+
+    use super::*;
+    use crate::entities::{ConsumerGroup, Partition};
+
+    #[test]
+    fn test_consumer_group_from_key() {
+        use coyote_id::TopicId;
+        let topic_id = TopicId::new(Timestamp::UNIX_EPOCH);
+        let partition = Partition::new(0).unwrap();
+        let cg = ConsumerGroup::try_from("my-group").unwrap();
+        let key = StreamLeaseRow::key_for(topic_id, partition, &cg).into_fjall_key();
+        assert_eq!(
+            StreamLeaseRow::consumer_group_from_key(&key),
+            Some("my-group")
+        );
+    }
 }
