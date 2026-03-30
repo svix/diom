@@ -1,5 +1,6 @@
-use std::{fmt::Debug, time::Duration};
+use std::fmt::Debug;
 
+use diom_core::types::DurationMs;
 use diom_id::Module;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -57,8 +58,7 @@ impl ModuleConfig for CacheConfig {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MsgsConfig {
-    #[serde(with = "fjall_utils::duration_millis")]
-    pub retention_period: Duration,
+    pub retention_period: DurationMs,
 }
 
 impl ModuleConfig for MsgsConfig {

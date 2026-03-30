@@ -1291,6 +1291,7 @@ dependencies = [
 name = "diom-namespace"
 version = "0.0.1"
 dependencies = [
+ "diom-core",
  "diom-error",
  "diom-id",
  "fjall",
