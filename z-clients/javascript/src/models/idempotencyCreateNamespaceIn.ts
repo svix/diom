@@ -2,7 +2,6 @@
 
 export interface IdempotencyCreateNamespaceIn {
     name: string;
-    maxStorageBytes?: number | null;
 }
 
 export const IdempotencyCreateNamespaceInSerializer = {
@@ -10,7 +9,6 @@ export const IdempotencyCreateNamespaceInSerializer = {
     _fromJsonObject(object: any): IdempotencyCreateNamespaceIn {
         return {
             name: object['name'],
-            maxStorageBytes: object['max_storage_bytes'],
         };
     },
 
@@ -18,7 +16,6 @@ export const IdempotencyCreateNamespaceInSerializer = {
     _toJsonObject(self: IdempotencyCreateNamespaceIn): any {
         return {
             'name': self.name,
-            'max_storage_bytes': self.maxStorageBytes,
         };
     }
 }

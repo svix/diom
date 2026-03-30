@@ -1,5 +1,3 @@
-use std::num::NonZeroU64;
-
 use coyote_error::Result;
 use coyote_id::NamespaceId;
 use fjall::Keyspace;
@@ -20,8 +18,6 @@ enum RowType {
 pub struct Namespace<C: ModuleConfig> {
     pub id: NamespaceId,
     pub name: NamespaceName,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_storage_bytes: Option<NonZeroU64>,
 
     pub created: Timestamp,
     pub updated: Timestamp,

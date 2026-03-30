@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitGetNamespaceOut {
     @JsonProperty private String name;
-    @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
     public RateLimitGetNamespaceOut() {}
@@ -51,25 +50,6 @@ public class RateLimitGetNamespaceOut {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public RateLimitGetNamespaceOut maxStorageBytes(Long maxStorageBytes) {
-        this.maxStorageBytes = maxStorageBytes;
-        return this;
-    }
-
-    /**
-    * Get maxStorageBytes
-    *
-     * @return maxStorageBytes
-     */
-    @javax.annotation.Nullable
-    public Long getMaxStorageBytes() {
-        return maxStorageBytes;
-    }
-
-    public void setMaxStorageBytes(Long maxStorageBytes) {
-        this.maxStorageBytes = maxStorageBytes;
     }
 
     public RateLimitGetNamespaceOut created(OffsetDateTime created) {
