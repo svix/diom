@@ -21,6 +21,11 @@ fn example_rules() -> Vec<AccessRule> {
         },
         {
             "effect": "allow",
+            "resource": "cache::foo/baz",
+            "actions": ["*"]
+        },
+        {
+            "effect": "allow",
             "resource": "kv:xyz:some-data/*",
             "actions": [
                 "Create"
@@ -68,6 +73,15 @@ fn test_verify_cache_example() {
     };
     // no matching rule for action
     assert!(verify_operation(&op, &rules).is_err());
+
+    let op = RequestedOperation {
+        module: Module::Cache,
+        namespace: None,
+        key: Some("foo/baz"),
+        action: "Create",
+    };
+    // wildcard action allowed for this key
+    assert!(verify_operation(&op, &rules).is_ok());
 
     let op = RequestedOperation {
         module: Module::Cache,
