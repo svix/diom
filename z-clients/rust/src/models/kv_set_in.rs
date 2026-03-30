@@ -12,7 +12,11 @@ pub struct KvSetIn {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    #[serde(rename = "ttl_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "ttl_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub ttl: Option<std::time::Duration>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -67,7 +71,11 @@ pub(crate) struct KvSetIn_ {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    #[serde(rename = "ttl_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "ttl_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub ttl: Option<std::time::Duration>,
 
     #[serde(skip_serializing_if = "Option::is_none")]

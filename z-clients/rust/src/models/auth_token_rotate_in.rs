@@ -15,7 +15,11 @@ pub struct AuthTokenRotateIn {
     pub suffix: Option<String>,
 
     /// Milliseconds from now until the old token expires. `None` means expire immediately.
-    #[serde(rename = "expiry_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "expiry_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub expiry: Option<std::time::Duration>,
 }
 

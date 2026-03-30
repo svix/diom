@@ -10,7 +10,7 @@ pub struct CacheSetIn {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    #[serde(rename = "ttl_ms")]
+    #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]
     pub ttl: std::time::Duration,
 }
 
@@ -40,6 +40,6 @@ pub(crate) struct CacheSetIn_ {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    #[serde(rename = "ttl_ms")]
+    #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]
     pub ttl: std::time::Duration,
 }

@@ -9,11 +9,19 @@ pub struct MsgQueueReceiveIn {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub batch_size: Option<u16>,
 
-    #[serde(rename = "lease_duration_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "lease_duration_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub lease_duration: Option<std::time::Duration>,
 
     /// Maximum time (in milliseconds) to wait for messages before returning.
-    #[serde(rename = "batch_wait_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "batch_wait_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub batch_wait: Option<std::time::Duration>,
 }
 
@@ -60,10 +68,18 @@ pub(crate) struct MsgQueueReceiveIn_ {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub batch_size: Option<u16>,
 
-    #[serde(rename = "lease_duration_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "lease_duration_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub lease_duration: Option<std::time::Duration>,
 
     /// Maximum time (in milliseconds) to wait for messages before returning.
-    #[serde(rename = "batch_wait_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "batch_wait_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub batch_wait: Option<std::time::Duration>,
 }

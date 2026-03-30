@@ -7,7 +7,7 @@ pub struct IdempotencyStartIn {
     pub namespace: Option<String>,
 
     /// TTL in milliseconds for the lock/response
-    #[serde(rename = "ttl_ms")]
+    #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]
     pub ttl: std::time::Duration,
 }
 
@@ -33,6 +33,6 @@ pub(crate) struct IdempotencyStartIn_ {
     pub key: String,
 
     /// TTL in milliseconds for the lock/response
-    #[serde(rename = "ttl_ms")]
+    #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]
     pub ttl: std::time::Duration,
 }
