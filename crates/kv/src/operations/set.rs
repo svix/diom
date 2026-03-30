@@ -23,7 +23,9 @@ pub struct SetResponseData {
 pub struct SetOperation {
     namespace_id: NamespaceId,
     pub(crate) key: EntityKey,
-    model: KvModelIn,
+    value: Vec<u8>,
+    version: Option<u64>,
+    ttl: Option<DurationMs>,
     behavior: OperationBehavior,
 }
 
@@ -35,19 +37,13 @@ impl SetOperation {
         ttl: Option<DurationMs>,
         behavior: OperationBehavior,
         version: Option<u64>,
-        now: Timestamp,
     ) -> Self {
-        let expiry = ttl
-            .map(|ttl| now + ttl)
-            .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
         Self {
             namespace_id: namespace.id,
             key,
-            model: KvModelIn {
-                value,
-                expiry,
-                version,
-            },
+            value,
+            version,
+            ttl,
             behavior,
         }
     }
@@ -55,12 +51,24 @@ impl SetOperation {
 
 impl SetOperation {
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
+        let now = ctx.timestamp;
+        let expiry = self
+            .ttl
+            .map(|ttl| now + ttl)
+            .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
+
+        let model = KvModelIn {
+            value: self.value,
+            expiry,
+            version: self.version,
+        };
+
         let result = state
             .controller()
             .set(
                 self.namespace_id,
                 self.key,
-                self.model,
+                model,
                 self.behavior,
                 ctx.timestamp,
                 ctx.log_index,

@@ -4,10 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_cache::{
-    CacheModel,
-    operations::{CreateCacheOperation, DeleteOperation, SetOperation},
-};
+use diom_cache::operations::{CreateCacheOperation, DeleteOperation, SetOperation};
 use diom_core::types::{Consistency, DurationMs, EntityKey};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
@@ -65,18 +62,6 @@ pub struct CacheSetIn {
 }
 
 request_input!(CacheSetIn, "Set");
-
-impl CacheSetIn {
-    fn into_model(self, when: Timestamp) -> CacheModel {
-        let expiry = when + self.ttl_ms;
-        debug_assert!(expiry > Timestamp::UNIX_EPOCH);
-
-        CacheModel {
-            expiry: Some(expiry),
-            value: self.value,
-        }
-    }
-}
 
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheSetOut {}
@@ -172,9 +157,12 @@ async fn cache_set(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let now = repl.time.now();
-
-    let operation = SetOperation::new(namespace, data.key.to_string(), data.into_model(now));
+    let operation = SetOperation::new(
+        namespace,
+        data.key.to_string(),
+        Some(data.ttl_ms),
+        data.value,
+    );
     repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
