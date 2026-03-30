@@ -3,6 +3,10 @@ use std::{io::Read, str::FromStr};
 use anyhow::{Context, Error, Result};
 use serde::{Serialize, de::DeserializeOwned};
 
+mod format;
+
+use self::format::PrettyFormatter;
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct JsonOf<T>(T);
 
@@ -33,7 +37,12 @@ pub fn print_json_output<T>(val: &T) -> Result<()>
 where
     T: Serialize,
 {
-    let s = serde_json::to_string_pretty(val)?;
+    let mut output = Vec::new();
+    let mut serializer =
+        serde_json::Serializer::with_formatter(&mut output, PrettyFormatter::default());
+    val.serialize(&mut serializer)?;
+    let s = String::from_utf8(output).expect("JSON is always valid utf-8");
+
     println!("{s}");
     Ok(())
 }
