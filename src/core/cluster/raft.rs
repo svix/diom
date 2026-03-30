@@ -18,7 +18,7 @@ use crate::{
             operations::SetClusterUuidOperation,
             state_machine::{ClusterId, StoreHandle},
         },
-        metrics::LogMetrics,
+        metrics::{ClusterMetrics, LogMetrics},
     },
 };
 
@@ -102,6 +102,8 @@ pub async fn initialize_raft(
     let db = app_state.namespace_state.both_dbs.persistent.clone();
     let edb = app_state.namespace_state.both_dbs.ephemeral.clone();
 
+    let metrics = ClusterMetrics::new(&app_state.meter, id);
+
     let state_machine = super::state_machine::Store::new(
         db,
         edb,
@@ -127,7 +129,26 @@ pub async fn initialize_raft(
         background_channel: bgtx,
         time,
         cfg: cfg.clone(),
+        metrics: metrics.clone(),
     };
+
+    tokio::spawn({
+        let handle = handle.clone();
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(10));
+        let shutdown = diom_core::shutdown::shutting_down_token();
+        async move {
+            while shutdown
+                .run_until_cancelled(interval.tick())
+                .await
+                .is_some()
+            {
+                if let Ok(state) = handle.state().await {
+                    metrics.record_state(state);
+                }
+            }
+        }
+    });
+
     #[cfg(feature = "raft-runtime-stats")]
     tokio::spawn({
         let handle = handle.clone();

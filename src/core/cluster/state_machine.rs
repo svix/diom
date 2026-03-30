@@ -412,6 +412,7 @@ impl Store {
         let mut changed_log_id = false;
         let mut changed_membership = false;
         let mut num_entries = 0;
+        let start = std::time::Instant::now();
         while let Some(entry) = entries.next().await {
             let (item, responder) = entry?;
 
@@ -446,12 +447,12 @@ impl Store {
             }
             num_entries += 1;
         }
-        self.metrics.record_apply(num_entries);
         tracing::Span::current().record("num_entries", num_entries);
         tracing::trace!(num_entries, "applied some entries");
         if changed_log_id || changed_membership {
             self.record_ids_().await.context("recording updated IDs")?;
         }
+        self.metrics.record_apply(num_entries, start.elapsed());
         Ok(())
     }
 
@@ -551,6 +552,15 @@ impl Store {
         self.set_last_snapshot_(meta.clone(), snapshot.path.clone())
             .await
             .context("failed to set last snapshot")?;
+
+        let path = snapshot.path.clone();
+
+        let size =
+            spawn_blocking_in_current_span(move || std::fs::metadata(&path).map(|m| m.len()))
+                .await?
+                .context("getting size of snapshot")?;
+
+        self.metrics.record_snapshot(size);
 
         Ok(Snapshot { meta, snapshot })
     }
