@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use coyote_client::{
     CoyoteClient,
     models::{CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn},
@@ -58,7 +60,10 @@ async fn test_cache_set_get_delete() {
     // Set (ttl_ms = 60000)
     client
         .cache()
-        .set(key.clone(), CacheSetIn::new(value.clone(), 60000))
+        .set(
+            key.clone(),
+            CacheSetIn::new(value.clone(), Duration::new(60, 0)),
+        )
         .await
         .unwrap();
 
