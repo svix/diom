@@ -58,6 +58,7 @@ impl StreamSeekOperation {
     #[tracing::instrument(skip_all, level = "debug")]
     async fn apply_real(self, state: &State) -> Result<StreamSeekResponseData> {
         let state = state.clone();
+
         spawn_blocking_in_current_span(move || {
             let mut batch = state.db.batch();
 
@@ -98,6 +99,9 @@ impl StreamSeekOperation {
 
             batch.commit().map_err(Error::from)?;
 
+            state
+                .metrics
+                .record_stream_seek(&self.topic, &self.consumer_group);
             Ok(StreamSeekResponseData {})
         })
         .await?

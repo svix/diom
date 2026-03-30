@@ -9,6 +9,7 @@ use fjall_utils::{ReadableKeyspace, TableRow};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
 pub mod entities;
+pub mod metrics;
 pub mod operations;
 pub(crate) mod tables;
 
@@ -22,6 +23,7 @@ pub struct State {
     pub(crate) db: fjall::Database,
     pub(crate) metadata_tables: fjall::Keyspace,
     pub(crate) msg_table: fjall::Keyspace,
+    pub(crate) metrics: metrics::MsgMetrics,
 }
 
 impl State {
@@ -38,10 +40,13 @@ impl State {
             db.keyspace(MSG_KEYSPACE, || opts)?
         };
 
+        let meter = opentelemetry::global::meter("diom.svix.com");
+
         Ok(Self {
             db,
             metadata_tables,
             msg_table,
+            metrics: metrics::MsgMetrics::new(&meter),
         })
     }
 }

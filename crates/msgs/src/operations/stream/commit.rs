@@ -38,6 +38,7 @@ impl StreamCommitOperation {
     #[tracing::instrument(skip_all, level = "debug")]
     async fn apply_real(self, state: &State) -> Result<StreamCommitResponseData> {
         let state = state.clone();
+
         spawn_blocking_in_current_span(move || {
             let mut batch = state.db.batch();
             let topic = self.topic;
@@ -67,6 +68,9 @@ impl StreamCommitOperation {
 
             batch.commit().map_err(Error::from)?;
 
+            state
+                .metrics
+                .record_stream_committed(&topic.topic, &self.consumer_group);
             Ok(StreamCommitResponseData {})
         })
         .await?

@@ -151,7 +151,11 @@ impl QueueReceiveOperation {
             batch.commit().map_err(Error::from)?;
 
             Span::current().record("msgs_returned", all_msgs.len());
-
+            state.metrics.record_queue_received(
+                &self.topic,
+                &self.consumer_group,
+                all_msgs.len() as u64,
+            );
             Ok(QueueReceiveResponseData { msgs: all_msgs })
         })
         .await?

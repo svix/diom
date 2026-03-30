@@ -43,6 +43,8 @@ impl QueueAckOperation {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
+            let ack_count = self.msg_ids.len() as u64;
+
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
                 TopicRow::key_for(self.namespace_id, &self.topic),
@@ -93,6 +95,9 @@ impl QueueAckOperation {
 
             batch.commit().map_err(Error::from)?;
 
+            state
+                .metrics
+                .record_queue_acked(&self.topic, &self.consumer_group, ack_count);
             Ok(QueueAckResponseData {})
         })
         .await?
