@@ -3,7 +3,9 @@
 
 use std::collections::BTreeMap;
 
-use k8s_openapi::api::core::v1::{Affinity, EnvVar, Toleration, TopologySpreadConstraint};
+use k8s_openapi::api::core::v1::{
+    Affinity, EnvVar, SecretKeySelector, Toleration, TopologySpreadConstraint,
+};
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,10 +18,6 @@ fn default_api_port() -> u16 {
 
 fn default_nodes() -> i32 {
     1
-}
-
-fn default_secret_key() -> String {
-    "secret".into()
 }
 
 /// A Diom cluster deployment.
@@ -105,6 +103,12 @@ pub(crate) struct DiomClusterSpec {
     #[serde(default)]
     #[schemars(schema_with = "affinity_schema")]
     pub affinity: Option<Affinity>,
+
+    /// Admin token for privileged API access.
+    /// Must reference a Secret key containing the plaintext token.
+    #[serde(default)]
+    #[schemars(schema_with = "secret_key_selector_schema")]
+    pub admin_token: Option<SecretKeySelector>,
 }
 
 /// Storage configuration for a Diom cluster.
@@ -144,8 +148,8 @@ pub(crate) struct VolumeSpec {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ClusterSpec {
     /// Reference to a Secret containing the inter-node authentication token.
-    /// The referenced key (default: "secret") must contain a plaintext secret string.
     #[serde(default)]
+    #[schemars(schema_with = "secret_key_selector_schema")]
     pub secret_ref: Option<SecretKeySelector>,
 
     /// Heartbeat interval in milliseconds.
@@ -175,16 +179,6 @@ pub(crate) struct ClusterSpec {
     /// Log level (info, debug, trace). Defaults to info.
     #[serde(default)]
     pub log_level: Option<String>,
-}
-
-/// Reference to a key within a Kubernetes Secret.
-#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
-pub(crate) struct SecretKeySelector {
-    /// Name of the Secret.
-    pub name: String,
-    /// Key within the Secret containing the value.
-    #[serde(default = "default_secret_key")]
-    pub key: String,
 }
 
 /// Configuration for the client-facing Service.
@@ -271,4 +265,15 @@ fn tolerations_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema 
 
 fn affinity_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({ "type": "object", "x-kubernetes-preserve-unknown-fields": true })
+}
+
+fn secret_key_selector_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "object",
+        "required": ["name", "key"],
+        "properties": {
+            "name": { "type": "string", "description": "Name of the Secret." },
+            "key": { "type": "string", "description": "Key within the Secret." }
+        }
+    })
 }

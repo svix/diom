@@ -150,11 +150,7 @@ fn build_env(
         env.push(EnvVar {
             name: "DIOM_CLUSTER_SECRET".into(),
             value_from: Some(EnvVarSource {
-                secret_key_ref: Some(k8s_openapi::api::core::v1::SecretKeySelector {
-                    name: secret_ref.name.clone(),
-                    key: secret_ref.key.clone(),
-                    ..Default::default()
-                }),
+                secret_key_ref: Some(secret_ref.clone()),
                 ..Default::default()
             }),
             ..Default::default()
@@ -221,10 +217,16 @@ fn build_env(
     }
 
     // Extra user-provided env vars.
-    for extra in &spec.env_var {
+    env.extend(spec.env_var.iter().cloned());
+
+    // Admin token — appended last so it overwrites any DIOM_ADMIN_TOKEN set via env_var.
+    if let Some(admin_token) = &spec.admin_token {
         env.push(EnvVar {
-            name: extra.name.clone(),
-            value: extra.value.clone(),
+            name: "DIOM_ADMIN_TOKEN".into(),
+            value_from: Some(EnvVarSource {
+                secret_key_ref: Some(admin_token.clone()),
+                ..Default::default()
+            }),
             ..Default::default()
         });
     }
