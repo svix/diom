@@ -43,6 +43,24 @@
               "spec": {
                 "description": "A Coyote cluster deployment.",
                 "properties": {
+                  "adminToken": {
+                    "description": "Admin token for privileged API access.\nMust reference a Secret key containing the plaintext token.",
+                    "properties": {
+                      "key": {
+                        "description": "Key within the Secret.",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "Name of the Secret.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
                   "affinity": {
                     "description": "Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).",
                     "type": "object",
@@ -108,12 +126,10 @@
                         "type": "integer"
                       },
                       "secretRef": {
-                        "description": "Reference to a Secret containing the inter-node authentication token.\nThe referenced key (default: \"secret\") must contain a plaintext secret string.",
-                        "nullable": true,
+                        "description": "Reference to a Secret containing the inter-node authentication token.",
                         "properties": {
                           "key": {
-                            "default": "secret",
-                            "description": "Key within the Secret containing the value.",
+                            "description": "Key within the Secret.",
                             "type": "string"
                           },
                           "name": {
@@ -122,6 +138,7 @@
                           }
                         },
                         "required": [
+                          "key",
                           "name"
                         ],
                         "type": "object"
