@@ -31,6 +31,7 @@ axum.workspace = true
 axum-extra.workspace = true
 byteorder.workspace = true
 constant_time_eq.workspace = true
+coyote-admin-auth.workspace = true
 coyote-auth-token.workspace = true
 coyote-authorization.workspace = true
 coyote-cache.workspace = true
