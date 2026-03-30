@@ -79,6 +79,10 @@ impl TableRow for OwnerIndexRow {
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
         Ok(b"".into())
     }
+
+    fn from_fjall_value(_value: fjall::UserValue) -> Result<Self> {
+        Ok(Self {})
+    }
 }
 
 impl OwnerIndexRow {

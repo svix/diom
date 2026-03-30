@@ -6,7 +6,6 @@ use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use std::ops::Bound;
 
 use crate::tables::{AuthTokenEntity, AuthTokenRow, IdIndexRow, OwnerIndexRow};
 
@@ -261,15 +260,10 @@ impl AuthTokenController {
         let owner_id = owner_id.to_owned();
         spawn_blocking_in_current_span(move || {
             let prefix = OwnerIndexRow::owner_prefix(namespace_id, &owner_id);
-
-            let start_id = iterator.unwrap_or(AuthTokenId::nil());
-            let start = OwnerIndexRow::owner_iter_start(namespace_id, &owner_id, start_id);
+            let iterator =
+                iterator.map(|id| OwnerIndexRow::owner_iter_start(namespace_id, &owner_id, id));
             let mut tokens = Vec::new();
-            for item in keyspace.range((Bound::Excluded(start), Bound::Unbounded)) {
-                let key = item.key()?;
-                if !key.starts_with(&prefix) {
-                    break;
-                }
+            for (key, _) in OwnerIndexRow::list_range(&keyspace, &prefix, iterator, limit)? {
                 let token_hashed = OwnerIndexRow::extract_token_hashed(&key)?;
                 match AuthTokenRow::fetch(
                     &keyspace,
@@ -277,9 +271,6 @@ impl AuthTokenController {
                 )? {
                     Some(row) => tokens.push(row.into()),
                     None => tracing::warn!("Skipping missing owner."),
-                }
-                if tokens.len() == limit {
-                    break;
                 }
             }
             Ok(tokens)
