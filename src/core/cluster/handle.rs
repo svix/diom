@@ -6,7 +6,10 @@ use super::{
 };
 use crate::{
     cfg::Configuration,
-    core::cluster::{ClusterId, state_machine::StoreHandle},
+    core::{
+        cluster::{ClusterId, state_machine::StoreHandle},
+        metrics::{ClusterMetrics, WriteType},
+    },
 };
 
 use anyhow::Context;
@@ -16,7 +19,7 @@ use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationRes
 use itertools::Itertools;
 use jiff::Timestamp;
 use maplit::btreeset;
-use openraft::RaftNetworkFactory;
+use openraft::{RaftNetworkFactory, ServerState};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc::Sender;
@@ -330,6 +333,7 @@ pub struct RaftState {
     pub(super) network: NetworkFactory,
     pub background_channel: Sender<BackgroundCommand>,
     pub time: Monotime,
+    pub metrics: ClusterMetrics,
 }
 
 impl RaftState {
@@ -345,10 +349,12 @@ impl RaftState {
                 >,
             > + Into<O::RequestParent>,
     {
+        let start = std::time::Instant::now();
         let inner: Request = op.into().into();
         let now = self.time.update_now();
         let request =
             RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
+        let mut write_type = WriteType::Local;
         let response = match self.raft.client_write(request.clone()).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");
@@ -363,6 +369,7 @@ impl RaftState {
                         tracing::trace!("received write to non-leader, forwarding");
                         let mut network_handle = self.network.clone();
                         let client = network_handle.new_client(leader_id, leader_node).await;
+                        write_type = WriteType::Forwarded;
                         client
                             .forward_request(super::proto::ForwardedWriteRequest {
                                 source_node_id: self.node_id,
@@ -382,6 +389,7 @@ impl RaftState {
                 }
             }
         };
+        self.metrics.record_write(write_type, start.elapsed());
         let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
             response,
         )
@@ -395,18 +403,31 @@ impl RaftState {
     }
 
     pub async fn run_discovery_if_necessary(&self) -> anyhow::Result<()> {
+        let node_id = self.node_id;
         let network = NetworkFactory::new(&self.cfg)?;
-        let has_cluster = self
+        let (has_cluster, server_state) = self
             .raft
-            .with_raft_state(|s| {
-                s.committed().is_some() || s.membership_state.effective().nodes().count() > 0
+            .with_raft_state(move |s| {
+                let has_committed_ids = s.committed().is_some();
+                let has_nodes = s.membership_state.effective().nodes().count() > 0;
+                let self_in_nodes = s.membership_state.effective().get_node(&node_id).is_some();
+                let valid_state =
+                    !matches!(s.server_state, ServerState::Shutdown | ServerState::Learner);
+                let has_cluster = (has_committed_ids || has_nodes) && self_in_nodes && valid_state;
+                (has_cluster, s.server_state)
             })
             .await
             .context("reading cluster state")?;
         if has_cluster {
-            tracing::debug!("node already has cluster information; skipping discovery");
+            tracing::debug!(
+                ?server_state,
+                "node already has cluster information; skipping discovery"
+            );
         } else {
-            tracing::debug!("node has no cluster information; kicking off discovery");
+            tracing::debug!(
+                ?server_state,
+                "node is not live in cluster; kicking off discovery"
+            );
             let disco =
                 Discovery::new(self.cfg.clone(), self.raft.clone(), self.node_id, network).await?;
             if let Err(err) = disco.discover_cluster().await {
@@ -457,7 +478,7 @@ impl RaftState {
         }
     }
 
-    pub async fn state(&self) -> anyhow::Result<openraft::ServerState> {
+    pub async fn state(&self) -> anyhow::Result<ServerState> {
         self.raft
             .with_raft_state(|s| s.server_state)
             .await
@@ -477,6 +498,7 @@ impl RaftState {
     ///
     /// On the leader, this is implemented by calling `openraft::Raft::ensure_linearizable`.
     pub async fn wait_linearizable(&self) -> anyhow::Result<()> {
+        self.metrics.record_linearizable_read();
         let leader_id = match self.raft.current_leader().await {
             Some(n) if n == self.node_id => {
                 tracing::trace!("performing a linearizable read on the leader");

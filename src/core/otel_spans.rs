@@ -37,9 +37,8 @@ pub(crate) async fn request_metrics_middleware(
         .and_then(|v| v.parse::<u64>().ok());
     let start = Instant::now();
     let response = next.run(req).await;
-    let duration = start.elapsed().as_millis() as _;
 
-    request_metrics.record(route, response.status(), duration, content_length);
+    request_metrics.record(route, response.status(), start.elapsed(), content_length);
     response
 }
 

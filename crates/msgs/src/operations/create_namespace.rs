@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use coyote_error::Result;
 use coyote_namespace::{
     entities::{MsgsConfig, NamespaceName},
@@ -9,7 +7,7 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
-use crate::entities::{Retention, default_retention_bytes, default_retention_ms};
+use crate::entities::Retention;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateNamespaceOperation {
@@ -30,9 +28,9 @@ impl CreateNamespaceOperation {
         let op = CreateNamespace::new(
             self.name,
             MsgsConfig {
-                retention_period: Duration::from_millis(self.retention.ms.get()),
+                retention_period: self.retention.period_ms,
+                retention_bytes: self.retention.size_bytes,
             },
-            Some(self.retention.bytes),
         );
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())
@@ -49,17 +47,12 @@ pub struct CreateNamespaceResponseData {
 
 impl From<CreateNamespaceOutput<MsgsConfig>> for CreateNamespaceResponseData {
     fn from(value: CreateNamespaceOutput<MsgsConfig>) -> Self {
-        let ms = u64::try_from(value.config.retention_period.as_millis())
-            .ok()
-            .and_then(|ms| ms.try_into().ok())
-            .unwrap_or_else(default_retention_ms);
-        let bytes = value
-            .max_storage_bytes
-            .unwrap_or_else(default_retention_bytes);
-
         Self {
             name: value.name,
-            retention: Retention { ms, bytes },
+            retention: Retention {
+                period_ms: value.config.retention_period,
+                size_bytes: value.config.retention_bytes,
+            },
             created: value.created,
             updated: value.updated,
         }

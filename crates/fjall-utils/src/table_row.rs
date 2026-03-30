@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ops::Bound};
 
 use super::readonly_db::ReadableKeyspace;
 use coyote_error::{Result, ResultExt};
@@ -60,6 +60,32 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
             let v = g.value().expect("iter error?");
             Self::from_fjall_value(v).expect("deserialize error?")
         }))
+    }
+
+    /// Scan rows in key order within `prefix`, stopping after `limit` rows.
+    ///
+    /// `iterator` is an exclusive start key: pass `None` to start from the beginning of the
+    /// prefix, or `Some(key)` to resume after that key.
+    fn list_range<K: ReadableKeyspace>(
+        keyspace: &K,
+        prefix: &[u8],
+        iterator: Option<Vec<u8>>,
+        limit: usize,
+    ) -> Result<Vec<(fjall::Slice, Self)>> {
+        let start = match iterator {
+            None => Bound::Included(prefix.to_vec()),
+            Some(key) => Bound::Excluded(key),
+        };
+        let mut results = Vec::new();
+        for item in keyspace.range((start, Bound::Unbounded)).take(limit) {
+            let (key, value) = item.into_inner()?;
+            if !key.starts_with(prefix) {
+                break;
+            }
+            let row = Self::from_fjall_value(value)?;
+            results.push((key, row));
+        }
+        Ok(results)
     }
 }
 

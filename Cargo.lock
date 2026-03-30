@@ -1291,6 +1291,7 @@ dependencies = [
 name = "coyote-namespace"
 version = "0.0.1"
 dependencies = [
+ "coyote-core",
  "coyote-error",
  "coyote-id",
  "fjall",
@@ -1388,6 +1389,7 @@ dependencies = [
  "coyote",
  "coyote-core",
  "dotenvy",
+ "fs-err",
  "mimalloc",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -1395,6 +1397,7 @@ dependencies = [
  "opentelemetry_sdk",
  "reqwest 0.13.2",
  "tokio",
+ "toml",
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
@@ -3351,7 +3354,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 [[package]]
 name = "openapi-codegen"
 version = "0.1.0"
-source = "git+https://github.com/svix/openapi-codegen?rev=73153ca9ff9450231eb4018d4cdb2ef070331c62#73153ca9ff9450231eb4018d4cdb2ef070331c62"
+source = "git+https://github.com/svix/openapi-codegen?rev=0c7a69adaa8faddf38b872f7661435da116d8386#0c7a69adaa8faddf38b872f7661435da116d8386"
 dependencies = [
  "aide 0.14.2",
  "anyhow",
@@ -5274,6 +5277,7 @@ dependencies = [
  "serde_spanned",
  "toml_datetime",
  "toml_parser",
+ "toml_writer",
  "winnow",
 ]
 
@@ -5306,6 +5310,12 @@ checksum = "2334f11ee363607eb04df9b8fc8a13ca1715a72ba8662a26ac285c98aabb4011"
 dependencies = [
  "winnow",
 ]
+
+[[package]]
+name = "toml_writer"
+version = "1.1.0+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d282ade6016312faf3e41e57ebbba0c073e4056dab1232ab1cb624199648f8ed"
 
 [[package]]
 name = "tonic"

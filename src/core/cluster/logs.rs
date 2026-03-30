@@ -460,8 +460,8 @@ impl CoyoteLogs {
         callback: IOFlushed<TypeConfig>,
     ) -> anyhow::Result<()> {
         Span::current().record("num_entries", entries.len());
-
-        self.metric_record(|m| m.record_append(entries.len()));
+        let start = std::time::Instant::now();
+        let num_entries = entries.len();
 
         let keyspace = self.log_keyspace.clone();
         let persisted_entries = entries.clone();
@@ -484,11 +484,13 @@ impl CoyoteLogs {
             .await
             .context("requesting background fsync")?;
 
-        tracing::trace!(num_entries = entries.len(), "appended some entries");
+        tracing::trace!(num_entries, "appended some entries");
 
         for entry in entries {
             self.log_cache.push(entry);
         }
+
+        self.metric_record(|m| m.record_append(num_entries, start.elapsed()));
 
         Ok(())
     }

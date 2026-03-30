@@ -1,5 +1,6 @@
-use std::{fmt::Debug, time::Duration};
+use std::{fmt::Debug, num::NonZeroU64};
 
+use coyote_core::types::DurationMs;
 use coyote_id::Module;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -10,17 +11,12 @@ pub type NamespaceName = String;
 pub enum EvictionPolicy {
     #[default]
     NoEviction,
-    LeastRecentlyUsed,
 }
 
 pub trait ModuleConfig:
     Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned + Send + Sync
 {
     fn module() -> Module;
-
-    fn eviction_policy(&self) -> EvictionPolicy {
-        EvictionPolicy::NoEviction
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
@@ -43,10 +39,6 @@ pub struct CacheConfig {
 
 impl CacheConfig {
     pub const NAMESPACE: &'static str = "cache_store";
-
-    pub fn eviction_policy(&self) -> EvictionPolicy {
-        self.eviction_policy
-    }
 }
 
 impl ModuleConfig for CacheConfig {
@@ -57,8 +49,8 @@ impl ModuleConfig for CacheConfig {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MsgsConfig {
-    #[serde(with = "fjall_utils::duration_millis")]
-    pub retention_period: Duration,
+    pub retention_period: Option<DurationMs>,
+    pub retention_bytes: Option<NonZeroU64>,
 }
 
 impl ModuleConfig for MsgsConfig {
@@ -87,10 +79,6 @@ impl ModuleConfig for IdempotencyConfig {
 
 impl IdempotencyConfig {
     pub const NAMESPACE: &'static str = "idempotency_store";
-
-    pub fn eviction_policy(&self) -> EvictionPolicy {
-        EvictionPolicy::NoEviction
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]

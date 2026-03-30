@@ -6,7 +6,7 @@ fn example_rules() -> Vec<AccessRule> {
     serde_json::from_value(json!([
         {
             "effect": "allow",
-            "resource": "cache::foo/**",
+            "resource": "cache::foo/*",
             "actions": [
                 "Read",
                 "List"
@@ -21,14 +21,19 @@ fn example_rules() -> Vec<AccessRule> {
         },
         {
             "effect": "allow",
-            "resource": "kv:xyz:some-data/**",
+            "resource": "cache::foo/baz",
+            "actions": ["*"]
+        },
+        {
+            "effect": "allow",
+            "resource": "kv:xyz:some-data/*",
             "actions": [
                 "Create"
             ],
         },
         {
             "effect": "allow",
-            "resource": "kv:*:some-data/**",
+            "resource": "kv:*:some-data/*",
             "actions": [
                 "Read",
                 "List"
@@ -68,6 +73,15 @@ fn test_verify_cache_example() {
     };
     // no matching rule for action
     assert!(verify_operation(&op, &rules).is_err());
+
+    let op = RequestedOperation {
+        module: Module::Cache,
+        namespace: None,
+        key: Some("foo/baz"),
+        action: "Create",
+    };
+    // wildcard action allowed for this key
+    assert!(verify_operation(&op, &rules).is_ok());
 
     let op = RequestedOperation {
         module: Module::Cache,

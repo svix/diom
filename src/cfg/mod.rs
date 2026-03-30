@@ -13,7 +13,7 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use fs_err as fs;
-use serde::{Deserialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tap::Pipe;
 use tracing::Level;
 use validator::Validate;
@@ -88,7 +88,7 @@ impl<'d> Deserialize<'d> for PeerAddr {
     }
 }
 
-impl serde::Serialize for PeerAddr {
+impl Serialize for PeerAddr {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -97,7 +97,7 @@ impl serde::Serialize for PeerAddr {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct DatabaseConfig {
     pub path: PathBuf,
     pub filename: Option<String>,
@@ -190,7 +190,7 @@ impl DatabaseConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Validate)]
+#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
 #[validate(schema(
     function = "validators::validate_cluster_configuration",
     skip_on_field_errors = true
@@ -420,7 +420,7 @@ fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Erro
     T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
 }
 
-#[derive(Clone, Debug, Deserialize, Validate)]
+#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
 pub struct ConfigurationInner {
     /// The address to listen on
     #[serde(default = "defaults::listen_address")]
@@ -521,7 +521,7 @@ macro_rules! from_str_via_serde {
     };
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
     #[default]
@@ -532,7 +532,7 @@ pub enum LogLevel {
 
 from_str_via_serde!(LogLevel);
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogFormat {
     #[default]
@@ -542,7 +542,7 @@ pub enum LogFormat {
 
 from_str_via_serde!(LogFormat);
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Environment {
     #[default]
@@ -578,7 +578,7 @@ impl fmt::Display for LogLevel {
     }
 }
 
-pub fn load(config_path: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner>> {
+pub fn load(config_path: Option<&Path>) -> anyhow::Result<Arc<ConfigurationInner>> {
     let config_toml = match config_path {
         Some(path) => Some(fs::read_to_string(path).context("reading config file")?),
         None => None,

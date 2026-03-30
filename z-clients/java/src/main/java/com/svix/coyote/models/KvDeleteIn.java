@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvDeleteIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String key;
     public KvDeleteIn() {}
 
     public KvDeleteIn namespace(String namespace) {

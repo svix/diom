@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvGetNamespaceOut {
     @JsonProperty private String name;
-    @JsonProperty("max_storage_bytes") private Long maxStorageBytes;
     @JsonProperty private OffsetDateTime created;
     @JsonProperty private OffsetDateTime updated;
     public KvGetNamespaceOut() {}
@@ -51,25 +50,6 @@ public class KvGetNamespaceOut {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public KvGetNamespaceOut maxStorageBytes(Long maxStorageBytes) {
-        this.maxStorageBytes = maxStorageBytes;
-        return this;
-    }
-
-    /**
-    * Get maxStorageBytes
-    *
-     * @return maxStorageBytes
-     */
-    @javax.annotation.Nullable
-    public Long getMaxStorageBytes() {
-        return maxStorageBytes;
-    }
-
-    public void setMaxStorageBytes(Long maxStorageBytes) {
-        this.maxStorageBytes = maxStorageBytes;
     }
 
     public KvGetNamespaceOut created(OffsetDateTime created) {

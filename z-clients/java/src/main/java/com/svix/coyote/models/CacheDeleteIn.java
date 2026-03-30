@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheDeleteIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String key;
     public CacheDeleteIn() {}
 
     public CacheDeleteIn namespace(String namespace) {

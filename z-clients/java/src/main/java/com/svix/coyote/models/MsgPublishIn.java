@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgPublishIn {
     @JsonProperty private String namespace;
-    @JsonProperty private String topic;
     @JsonProperty private List<MsgIn> msgs;
     public MsgPublishIn() {}
 

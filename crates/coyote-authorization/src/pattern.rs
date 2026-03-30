@@ -143,9 +143,9 @@ impl fmt::Display for KeyPattern {
             Self::Exactly(s) => f.write_str(s),
             Self::Prefix(s) => {
                 f.write_str(s)?;
-                f.write_str("**")
+                f.write_str("*")
             }
-            Self::Any => f.write_str("**"),
+            Self::Any => f.write_str("*"),
         }
     }
 }
@@ -154,21 +154,17 @@ impl FromStr for KeyPattern {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "**" {
+        if s == "*" {
             return Ok(Self::Any);
         }
 
-        if s.ends_with("/**") {
-            let prefix = &s[..s.len() - 2]; // keep the /
-            if prefix.contains("*") {
-                return Err("single-asterisk key patterns not yet supported");
-            }
-
+        if s.ends_with("/*") {
+            let prefix = &s[..s.len() - 1]; // keep the /
             return Ok(Self::Prefix(prefix.to_owned()));
         }
 
         if s.contains("*") {
-            return Err("single-asterisk key patterns not yet supported");
+            return Err("wildcard in key pattern mut be at the end");
         }
 
         // FIXME: Could forbid special characters other than `*`

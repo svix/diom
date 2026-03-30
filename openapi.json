@@ -4425,12 +4425,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           }
         },
         "required": [
@@ -4442,12 +4436,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -4555,12 +4543,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -4787,12 +4769,6 @@
           "name": {
             "type": "string"
           },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
-          },
           "eviction_policy": {
             "default": "NoEviction",
             "$ref": "#/components/schemas/EvictionPolicy"
@@ -4807,12 +4783,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "eviction_policy": {
             "$ref": "#/components/schemas/EvictionPolicy"
@@ -4908,12 +4878,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "eviction_policy": {
             "$ref": "#/components/schemas/EvictionPolicy"
@@ -5117,8 +5081,7 @@
       "EvictionPolicy": {
         "type": "string",
         "enum": [
-          "NoEviction",
-          "LeastRecentlyUsed"
+          "NoEviction"
         ]
       },
       "IdempotencyAbortIn": {
@@ -5211,12 +5174,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           }
         },
         "required": [
@@ -5228,12 +5185,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -5266,12 +5217,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -5375,12 +5320,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           }
         },
         "required": [
@@ -5392,12 +5331,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -5490,12 +5423,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -5707,8 +5634,8 @@
           },
           "retention": {
             "default": {
-              "ms": 2592000000,
-              "bytes": 1000000000000
+              "period_ms": null,
+              "size_bytes": null
             },
             "$ref": "#/components/schemas/Retention"
           }
@@ -6382,12 +6309,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           }
         },
         "required": [
@@ -6399,12 +6320,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -6437,12 +6352,6 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "max_storage_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           },
           "created": {
             "type": "string",
@@ -6562,17 +6471,16 @@
       "Retention": {
         "type": "object",
         "properties": {
-          "ms": {
+          "period_ms": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 1,
-            "default": 2592000000
+            "nullable": true
           },
-          "bytes": {
+          "size_bytes": {
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
-            "default": 1000000000000
+            "nullable": true
           }
         }
       },

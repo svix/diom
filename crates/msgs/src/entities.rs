@@ -1,5 +1,6 @@
-use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr, time::Duration};
+use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
+use coyote_core::types::DurationMs;
 use coyote_error::Error;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -457,29 +458,8 @@ impl JsonSchema for ConsumerGroup {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {
-    #[serde(default = "default_retention_ms")]
-    pub ms: NonZeroU64,
-    #[serde(default = "default_retention_bytes")]
-    pub bytes: NonZeroU64,
-}
-
-impl Default for Retention {
-    fn default() -> Self {
-        Self {
-            ms: default_retention_ms(),
-            bytes: default_retention_bytes(),
-        }
-    }
-}
-
-pub fn default_retention_ms() -> NonZeroU64 {
-    (Duration::from_hours(24 * 30).as_millis() as u64)
-        .try_into()
-        .unwrap()
-}
-
-pub fn default_retention_bytes() -> NonZeroU64 {
-    NonZeroU64::new(1_000_000_000_000).expect("constant is non-zero")
+    pub period_ms: Option<DurationMs>,
+    pub size_bytes: Option<NonZeroU64>,
 }

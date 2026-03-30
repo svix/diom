@@ -165,14 +165,12 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         AuthToken,
         BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            max_storage_bytes: None,
         })
     );
     commands.insert(
         0,
         BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
             name: INTERNAL_NAMESPACE.to_string(),
-            max_storage_bytes: None,
         }),
     );
     ensure_default!(
@@ -186,21 +184,18 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         RateLimit,
         BootstrapCommand::RateLimit(RateLimitCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            max_storage_bytes: None,
         })
     );
     ensure_default!(
         Idempotency,
         BootstrapCommand::Idempotency(IdempotencyCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            max_storage_bytes: None,
         })
     );
     ensure_default!(
         Cache,
         BootstrapCommand::Cache(CacheCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            max_storage_bytes: None,
             eviction_policy: EvictionPolicy::NoEviction,
         })
     );
@@ -208,7 +203,6 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
         Kv,
         BootstrapCommand::Kv(KvCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            max_storage_bytes: None,
         })
     );
 }
@@ -296,20 +290,6 @@ mod tests {
             panic!()
         };
         assert_eq!(v.name, "myns");
-        assert_eq!(v.max_storage_bytes, None);
-    }
-
-    #[test]
-    fn kv_with_options() {
-        let cmd: BootstrapCommand =
-            r#"kv namespace create {"name":"myns","max_storage_bytes":1024}"#
-                .parse()
-                .unwrap();
-        let BootstrapCommand::Kv(v) = cmd else {
-            panic!()
-        };
-        assert_eq!(v.name, "myns");
-        assert_eq!(v.max_storage_bytes.unwrap().get(), 1024);
     }
 
     #[test]
@@ -319,18 +299,6 @@ mod tests {
             panic!()
         };
         assert_eq!(v.eviction_policy, EvictionPolicy::NoEviction);
-    }
-
-    #[test]
-    fn cache_with_options() {
-        let cmd: BootstrapCommand =
-            r#"cache namespace create {"name":"myns","eviction_policy":"LeastRecentlyUsed"}"#
-                .parse()
-                .unwrap();
-        let BootstrapCommand::Cache(v) = cmd else {
-            panic!()
-        };
-        assert_eq!(v.eviction_policy, EvictionPolicy::LeastRecentlyUsed);
     }
 
     #[test]
@@ -363,14 +331,14 @@ mod tests {
     #[test]
     fn msgs_with_options() {
         let cmd: BootstrapCommand =
-            r#"msgs namespace create {"name":"myns","retention":{"ms":60000,"bytes":500}}"#
+            r#"msgs namespace create {"name":"myns","retention":{"period_ms":60000,"size_bytes":500}}"#
                 .parse()
                 .unwrap();
         let BootstrapCommand::Msgs(v) = cmd else {
             panic!()
         };
-        assert_eq!(v.retention.ms.get(), 60000);
-        assert_eq!(v.retention.bytes.get(), 500);
+        assert_eq!(v.retention.period_ms.unwrap().as_millis(), 60000);
+        assert_eq!(v.retention.size_bytes.unwrap().get(), 500);
     }
 
     #[test]
@@ -411,15 +379,6 @@ mod tests {
     fn invalid_eviction_policy() {
         assert!(
             r#"cache namespace create {"name":"myns","eviction_policy":"random"}"#
-                .parse::<BootstrapCommand>()
-                .is_err()
-        );
-    }
-
-    #[test]
-    fn zero_max_storage_bytes_rejected() {
-        assert!(
-            r#"kv namespace create {"name":"myns","max_storage_bytes":0}"#
                 .parse::<BootstrapCommand>()
                 .is_err()
         );
@@ -484,7 +443,6 @@ mod tests {
     fn ensure_defaults_does_not_duplicate_existing_default() {
         let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
-            max_storage_bytes: None,
         })];
         ensure_defaults(&mut cmds);
         let kv_defaults: Vec<_> = cmds
@@ -498,7 +456,6 @@ mod tests {
     fn ensure_defaults_does_not_suppress_non_default_namespaces() {
         let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
             name: "other".to_string(),
-            max_storage_bytes: None,
         })];
         ensure_defaults(&mut cmds);
         let kv_count = cmds
