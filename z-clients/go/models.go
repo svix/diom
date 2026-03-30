@@ -5,6 +5,8 @@ package coyote
 import coyote_models "github.com/svix/coyote/z-clients/go/internal/models"
 
 type (
+	AccessRule                    = coyote_models.AccessRule
+	AccessRuleEffect              = coyote_models.AccessRuleEffect
 	AdminAuthTokenCreateIn        = coyote_models.AdminAuthTokenCreateIn
 	AdminAuthTokenCreateOut       = coyote_models.AdminAuthTokenCreateOut
 	AdminAuthTokenDeleteIn        = coyote_models.AdminAuthTokenDeleteIn
@@ -19,6 +21,13 @@ type (
 	AdminAuthTokenUpdateOut       = coyote_models.AdminAuthTokenUpdateOut
 	AdminAuthTokenWhoamiIn        = coyote_models.AdminAuthTokenWhoamiIn
 	AdminAuthTokenWhoamiOut       = coyote_models.AdminAuthTokenWhoamiOut
+	AdminRoleDeleteIn             = coyote_models.AdminRoleDeleteIn
+	AdminRoleDeleteOut            = coyote_models.AdminRoleDeleteOut
+	AdminRoleGetIn                = coyote_models.AdminRoleGetIn
+	AdminRoleListIn               = coyote_models.AdminRoleListIn
+	AdminRoleOut                  = coyote_models.AdminRoleOut
+	AdminRoleUpsertIn             = coyote_models.AdminRoleUpsertIn
+	AdminRoleUpsertOut            = coyote_models.AdminRoleUpsertOut
 	AuthTokenCreateIn             = coyote_models.AuthTokenCreateIn
 	AuthTokenCreateNamespaceIn    = coyote_models.AuthTokenCreateNamespaceIn
 	AuthTokenCreateNamespaceOut   = coyote_models.AuthTokenCreateNamespaceOut
@@ -78,6 +87,7 @@ type (
 	KvSetIn                       = coyote_models.KvSetIn
 	KvSetOut                      = coyote_models.KvSetOut
 	ListResponseAdminAuthTokenOut = coyote_models.ListResponseAdminAuthTokenOut
+	ListResponseAdminRoleOut      = coyote_models.ListResponseAdminRoleOut
 	ListResponseAuthTokenOut      = coyote_models.ListResponseAuthTokenOut
 	MsgIn                         = coyote_models.MsgIn
 	MsgNamespaceCreateIn          = coyote_models.MsgNamespaceCreateIn

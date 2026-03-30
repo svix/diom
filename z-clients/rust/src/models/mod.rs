@@ -1,6 +1,8 @@
 // this file is @generated
 #![allow(clippy::too_many_arguments)]
 
+mod access_rule;
+mod access_rule_effect;
 mod admin_auth_token_create_in;
 mod admin_auth_token_create_out;
 mod admin_auth_token_delete_in;
@@ -15,6 +17,13 @@ mod admin_auth_token_update_in;
 mod admin_auth_token_update_out;
 mod admin_auth_token_whoami_in;
 mod admin_auth_token_whoami_out;
+mod admin_role_delete_in;
+mod admin_role_delete_out;
+mod admin_role_get_in;
+mod admin_role_list_in;
+mod admin_role_out;
+mod admin_role_upsert_in;
+mod admin_role_upsert_out;
 mod auth_token_create_in;
 mod auth_token_create_namespace_in;
 mod auth_token_create_namespace_out;
@@ -74,6 +83,7 @@ mod kv_get_out;
 mod kv_set_in;
 mod kv_set_out;
 mod list_response_admin_auth_token_out;
+mod list_response_admin_role_out;
 mod list_response_auth_token_out;
 mod msg_in;
 mod msg_namespace_create_in;
@@ -122,6 +132,7 @@ mod server_state;
 mod stream_msg_out;
 
 pub use self::{
+    access_rule::AccessRule, access_rule_effect::AccessRuleEffect,
     admin_auth_token_create_in::AdminAuthTokenCreateIn,
     admin_auth_token_create_out::AdminAuthTokenCreateOut,
     admin_auth_token_delete_in::AdminAuthTokenDeleteIn,
@@ -134,7 +145,11 @@ pub use self::{
     admin_auth_token_update_in::AdminAuthTokenUpdateIn,
     admin_auth_token_update_out::AdminAuthTokenUpdateOut,
     admin_auth_token_whoami_in::AdminAuthTokenWhoamiIn,
-    admin_auth_token_whoami_out::AdminAuthTokenWhoamiOut, auth_token_create_in::AuthTokenCreateIn,
+    admin_auth_token_whoami_out::AdminAuthTokenWhoamiOut, admin_role_delete_in::AdminRoleDeleteIn,
+    admin_role_delete_out::AdminRoleDeleteOut, admin_role_get_in::AdminRoleGetIn,
+    admin_role_list_in::AdminRoleListIn, admin_role_out::AdminRoleOut,
+    admin_role_upsert_in::AdminRoleUpsertIn, admin_role_upsert_out::AdminRoleUpsertOut,
+    auth_token_create_in::AuthTokenCreateIn,
     auth_token_create_namespace_in::AuthTokenCreateNamespaceIn,
     auth_token_create_namespace_out::AuthTokenCreateNamespaceOut,
     auth_token_create_out::AuthTokenCreateOut, auth_token_delete_in::AuthTokenDeleteIn,
@@ -168,6 +183,7 @@ pub use self::{
     kv_get_namespace_in::KvGetNamespaceIn, kv_get_namespace_out::KvGetNamespaceOut,
     kv_get_out::KvGetOut, kv_set_in::KvSetIn, kv_set_out::KvSetOut,
     list_response_admin_auth_token_out::ListResponseAdminAuthTokenOut,
+    list_response_admin_role_out::ListResponseAdminRoleOut,
     list_response_auth_token_out::ListResponseAuthTokenOut, msg_in::MsgIn,
     msg_namespace_create_in::MsgNamespaceCreateIn, msg_namespace_create_out::MsgNamespaceCreateOut,
     msg_namespace_get_in::MsgNamespaceGetIn, msg_namespace_get_out::MsgNamespaceGetOut,
