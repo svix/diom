@@ -45,6 +45,7 @@ coyote-namespace.workspace = true
 coyote-operations.workspace = true
 coyote-proto.workspace = true
 coyote-rate-limit.workspace = true
+coyote-transformations.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
 fs-err.workspace = true
@@ -88,6 +89,7 @@ zip.workspace = true
 
 [dev-dependencies]
 assert_matches.workspace = true
+coyote-transformations.workspace = true
 ctor.workspace = true
 rand.workspace = true
 rmp-serde.workspace = true
@@ -151,6 +153,7 @@ coyote-namespace.path = "crates/coyote-namespace"
 coyote-operations.path = "crates/coyote-operations"
 coyote-proto.path = "crates/coyote-proto"
 coyote-rate-limit.path = "crates/rate-limit"
+coyote-transformations.path = "crates/coyote-transformations"
 criterion = "0.8.2"
 ctor = "0.6.3"
 dirs = "6.0.0"
@@ -209,7 +212,7 @@ tap = "1"
 tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
 thiserror = "2.0.18"
-tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "fs"] }
+tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "fs", "process", "sync", "io-util", "io-std"] }
 tokio-util = "0.7"
 toml = { version = "1.0.3", default-features = false, features = ["parse", "serde"] }
 tower = "0.5.1"

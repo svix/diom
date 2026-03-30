@@ -120,6 +120,8 @@ mod retention;
 mod seek_position;
 mod server_state;
 mod stream_msg_out;
+mod transform_in;
+mod transform_out;
 
 pub use self::{
     admin_auth_token_create_in::AdminAuthTokenCreateIn,
@@ -193,6 +195,7 @@ pub use self::{
     rate_limit_reset_out::RateLimitResetOut,
     rate_limit_token_bucket_config::RateLimitTokenBucketConfig, retention::Retention,
     seek_position::SeekPosition, server_state::ServerState, stream_msg_out::StreamMsgOut,
+    transform_in::TransformIn, transform_out::TransformOut,
 };
 
 pub(crate) use self::{

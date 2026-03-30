@@ -18,6 +18,7 @@ mod msgs_stream;
 mod msgs_topic;
 mod rate_limit;
 mod rate_limit_namespace;
+mod transformations;
 
 pub(crate) use self::{
     admin::AdminArgs, admin_auth_token::AdminAuthTokenArgs, admin_cluster::AdminClusterArgs,

@@ -18,6 +18,7 @@ from .msgs_stream import MsgsStream, MsgsStreamAsync
 from .msgs_topic import MsgsTopic, MsgsTopicAsync
 from .rate_limit import RateLimit, RateLimitAsync
 from .rate_limit_namespace import RateLimitNamespace, RateLimitNamespaceAsync
+from .transformations import Transformations, TransformationsAsync
 
 
 __all__ = [
@@ -59,4 +60,6 @@ __all__ = [
     "RateLimitAsync",
     "RateLimitNamespace",
     "RateLimitNamespaceAsync",
+    "Transformations",
+    "TransformationsAsync",
 ]

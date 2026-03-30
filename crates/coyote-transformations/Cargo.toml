@@ -1,0 +1,34 @@
+[package]
+name = "coyote-transformations"
+publish = false
+version.workspace = true
+license.workspace = true
+rust-version.workspace = true
+edition = "2024"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+seccompiler = "0.4"
+
+[dependencies]
+anyhow.workspace = true
+bytes.workspace = true
+coyote-error.workspace = true
+futures-util = { workspace = true, features = ["sink"] }
+hex.workspace = true
+rand.workspace = true
+rmp-serde.workspace = true
+rquickjs = { version = "0.11.0", features = ["futures", "macro", "array-buffer", "parallel"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "2"
+tokio.workspace = true
+tokio-util = { workspace = true, features = ["codec"] }
+tracing.workspace = true
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tracing-test.workspace = true
+
+[lints]
+workspace = true

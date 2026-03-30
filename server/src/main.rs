@@ -37,13 +37,20 @@ enum Commands {
     },
     /// Run the server (this is also the default if no subcommand is passed)
     Server,
+    #[clap(hide = true)]
+    TransformWorker,
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv();
-
     let args = Args::parse();
+
+    if matches!(args.command, Some(Commands::TransformWorker)) {
+        coyote_transformations::run_as_worker().await?;
+        return Ok(());
+    }
+
+    _ = dotenv();
 
     // Handle commands that don't need configuration first
     if let Some(Commands::Healthcheck { server_url }) = args.command {
@@ -78,6 +85,9 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Server) | None => {
             otel::setup_metrics(&cfg);
             run(cfg).await
+        }
+        Some(Commands::TransformWorker) => {
+            unreachable!("TransformWorker is handled before config loading")
         }
     };
 

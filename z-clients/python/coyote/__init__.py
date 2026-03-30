@@ -17,6 +17,8 @@ from .apis import (
     MsgsAsync,
     RateLimit,
     RateLimitAsync,
+    Transformations,
+    TransformationsAsync,
 )
 from .client_base import ClientBase
 from .options import CoyoteOptions
@@ -55,6 +57,10 @@ class Coyote(ClientBase):
     def rate_limit(self) -> RateLimit:
         return RateLimit(self._client)
 
+    @property
+    def transformations(self) -> Transformations:
+        return Transformations(self._client)
+
 
 class CoyoteAsync(ClientBase):
     @property
@@ -88,6 +94,10 @@ class CoyoteAsync(ClientBase):
     @property
     def rate_limit(self) -> RateLimitAsync:
         return RateLimitAsync(self._client)
+
+    @property
+    def transformations(self) -> TransformationsAsync:
+        return TransformationsAsync(self._client)
 
 
 __all__ = ["Coyote", "CoyoteAsync", "CoyoteOptions"]
