@@ -40,6 +40,15 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         Ok(())
     }
 
+    fn iter<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = (fjall::Slice, Self)> {
+        let prefix = &[Self::ROW_TYPE];
+        keyspace.prefix(prefix).map(|g| {
+            let (k, v) = g.into_inner().expect("io error");
+            let v = Self::from_fjall_value(v).expect("deserialize error?");
+            (k, v)
+        })
+    }
+
     fn keys<K: ReadableKeyspace>(keyspace: &K) -> Result<impl Iterator<Item = fjall::Slice>> {
         let prefix = &[Self::ROW_TYPE];
         Ok(keyspace.prefix(prefix).map(|g| g.key().expect("key error")))
