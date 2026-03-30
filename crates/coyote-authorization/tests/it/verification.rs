@@ -6,7 +6,7 @@ fn example_rules() -> Vec<AccessRule> {
     serde_json::from_value(json!([
         {
             "effect": "allow",
-            "resource": "cache::foo/**",
+            "resource": "cache::foo/*",
             "actions": [
                 "Read",
                 "List"
@@ -21,14 +21,14 @@ fn example_rules() -> Vec<AccessRule> {
         },
         {
             "effect": "allow",
-            "resource": "kv:xyz:some-data/**",
+            "resource": "kv:xyz:some-data/*",
             "actions": [
                 "Create"
             ],
         },
         {
             "effect": "allow",
-            "resource": "kv:*:some-data/**",
+            "resource": "kv:*:some-data/*",
             "actions": [
                 "Read",
                 "List"
