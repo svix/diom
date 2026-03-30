@@ -20,6 +20,7 @@ pub type NamespaceId = Id<m::Namespace>;
 pub type TopicId = Id<m::Topic>;
 
 pub fn random_v7_bytes() -> UuidV7RandomBytes {
+    // FIXME: maybe this should come from the raft state? it could also guarantee sub millisecond ordering.
     rand::random()
 }
 
