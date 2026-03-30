@@ -135,6 +135,7 @@ concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
 coyote.path = "."
+coyote-admin-auth.path = "crates/coyote-admin-auth"
 coyote-auth-token.path = "crates/auth-token"
 coyote-authorization.path = "crates/coyote-authorization"
 coyote-cache.path = "crates/cache"

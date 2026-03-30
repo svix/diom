@@ -1038,6 +1038,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "coyote-admin-auth"
+version = "0.0.1"
+dependencies = [
+ "coyote-authorization",
+ "coyote-core",
+ "coyote-error",
+ "coyote-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "serde",
+]
+
+[[package]]
 name = "coyote-auth-token"
 version = "0.0.1"
 dependencies = [
