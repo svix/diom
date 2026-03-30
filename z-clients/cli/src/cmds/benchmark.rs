@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
@@ -7,7 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Args;
 use comfy_table::{Table, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL_CONDENSED};
 use coyote_client::{
@@ -33,6 +33,82 @@ use tokio::sync::Barrier;
 
 type BenchHistogram = Histogram<u64>;
 
+#[derive(Debug, Clone)]
+pub enum Concurrency {
+    Single(Option<u64>),
+    Range(u64, u64),
+    Several(VecDeque<u64>),
+}
+
+impl std::fmt::Display for Concurrency {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Single(Some(v)) => write!(f, "{v}"),
+            Self::Single(None) => write!(f, "(none)"),
+            Self::Range(lower, upper) => write!(f, "{lower}-{upper}"),
+            Self::Several(values) => {
+                let formatted = values
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",");
+                write!(f, "{formatted}")
+            }
+        }
+    }
+}
+
+impl std::str::FromStr for Concurrency {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        if let Some((lower, upper)) = s.split_once('-') {
+            let lower = lower.parse().context("cannot parse lower value")?;
+            let upper = upper.parse().context("cannot parse upper value")?;
+            if lower >= upper {
+                anyhow::bail!("lower must be strictly less than upper");
+            }
+            return Ok(Self::Range(lower, upper));
+        }
+        if s.contains(",") {
+            let values = s
+                .split(',')
+                .map(|s| s.trim())
+                .map(|s| s.parse().context("parsing value for concurrency"))
+                .collect::<Result<VecDeque<_>>>()?;
+            return Ok(Self::Several(values));
+        }
+        let value = s.parse()?;
+        Ok(Self::Single(Some(value)))
+    }
+}
+
+impl Concurrency {
+    fn single(val: u64) -> Self {
+        Self::Single(Some(val))
+    }
+}
+
+impl Iterator for Concurrency {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Single(value) => value.take(),
+            Self::Range(lower, upper) => {
+                let next = *lower;
+                if lower > upper {
+                    None
+                } else {
+                    *self = Self::Range(*lower + 1, *upper);
+                    Some(next)
+                }
+            }
+            Self::Several(values) => values.pop_front(),
+        }
+    }
+}
+
 #[derive(Args)]
 pub struct BenchmarkArgs {
     /// Server URL to benchmark against (overrides config)
@@ -44,8 +120,10 @@ pub struct BenchmarkArgs {
     iterations: u64,
 
     /// Concurrent tasks per operation type
-    #[arg(short = 'c', long, default_value_t = 4)]
-    pub concurrency: u64,
+    ///
+    /// Can specify a comma-separated list to run with several different values
+    #[arg(short = 'c', long, default_value_t = Concurrency::single(4))]
+    pub concurrency: Concurrency,
 
     /// Output results as JSON instead of a table
     #[arg(long)]
@@ -63,11 +141,9 @@ pub struct BenchmarkArgs {
 impl BenchmarkArgs {
     pub async fn exec(self, client: Arc<CoyoteClient>) -> Result<()> {
         let iterations = self.iterations;
-        let concurrency = self.concurrency;
+        let concurrency_values = self.concurrency;
         let batch_size = self.batch_size;
-        eprintln!(
-            "Running benchmark: {iterations} iterations · {concurrency} concurrent · batch_size {batch_size}",
-        );
+        eprintln!("Running benchmark: {iterations} iterations · batch_size {batch_size}",);
 
         let filter = self
             .filter
@@ -84,35 +160,38 @@ impl BenchmarkArgs {
         // Each op type's wall-clock time: rounds run sequentially, tasks within a round run concurrently.
         let mut all_stats: Vec<Stats> = Vec::new();
 
-        let bench_cfg = Arc::new(BenchConfig {
-            client: Arc::clone(&client),
-            concurrency,
-            iterations,
-        });
+        for concurrency in concurrency_values {
+            let bench_cfg = Arc::new(BenchConfig {
+                client: Arc::clone(&client),
+                concurrency,
+                iterations,
+            });
 
-        eprintln!();
-        bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
-        bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
-        bench_msgs_stream(
-            Arc::clone(&bench_cfg),
-            batch_size,
-            &mut all_stats,
-            filter.as_ref(),
-        )
-        .await?;
-        bench_msgs_queue(
-            Arc::clone(&bench_cfg),
-            batch_size,
-            &mut all_stats,
-            filter.as_ref(),
-        )
-        .await?;
+            eprintln!();
+            bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+            bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+            bench_msgs_stream(
+                Arc::clone(&bench_cfg),
+                batch_size,
+                &mut all_stats,
+                filter.as_ref(),
+            )
+            .await?;
+            bench_msgs_queue(
+                Arc::clone(&bench_cfg),
+                batch_size,
+                &mut all_stats,
+                filter.as_ref(),
+            )
+            .await?;
+        }
 
         eprintln!("\n");
 
         if self.json {
             println!("{}", serde_json::to_string_pretty(&all_stats)?);
         } else {
+            all_stats.sort_by_key(|r| (r.op.clone(), r.concurrency));
             print_table(&all_stats);
         }
 
@@ -122,13 +201,25 @@ impl BenchmarkArgs {
 
 // Statistics
 
+fn geomean(i: impl Iterator<Item = u64>) -> f64 {
+    let mut product = 1.0f64;
+    let mut count = 0.0;
+    for item in i {
+        product *= item as f64;
+        count += 1.0;
+    }
+    product.powf(1.0 / count)
+}
+
 #[derive(Debug, Serialize)]
 struct Stats {
     op: String,
+    concurrency: u64,
     ops_per_sec: u64,
     op_batch_size: u16,
     mean_us: u64,
     std_dev_us: u64,
+    min_us: u64,
     p50_us: u64,
     p75_us: u64,
     p99_us: u64,
@@ -137,11 +228,40 @@ struct Stats {
     bytes_per_sec: u64,
 }
 
+struct MergedStats {
+    ops_per_sec: f64,
+    mean_us: f64,
+    min_us: u64,
+    max_us: u64,
+    bytes_per_sec: f64,
+}
+
+impl MergedStats {
+    fn merge(some: &[Stats]) -> Self {
+        Self {
+            ops_per_sec: geomean(some.iter().map(|s| s.ops_per_sec)),
+            mean_us: geomean(some.iter().map(|s| s.mean_us)),
+            min_us: some
+                .iter()
+                .map(|s| s.min_us)
+                .min()
+                .expect("should be non-empty"),
+            max_us: some
+                .iter()
+                .map(|s| s.max_us)
+                .max()
+                .expect("should be non-empty"),
+            bytes_per_sec: geomean(some.iter().map(|s| s.bytes_per_sec)),
+        }
+    }
+}
+
 fn hist_compute_stats(
     op: impl Into<String>,
     hist: BenchHistogram,
     total_time_ms: u64,
     operations: u64,
+    concurrency: u64,
     total_bytes: u64,
     batch_size: u16,
 ) -> Stats {
@@ -151,12 +271,14 @@ fn hist_compute_stats(
         op_batch_size: batch_size,
         mean_us: hist.mean() as u64,
         std_dev_us: hist.stdev() as u64,
+        min_us: hist.min(),
         p50_us: hist.value_at_quantile(0.50),
         p75_us: hist.value_at_quantile(0.75),
         p99_us: hist.value_at_quantile(0.99),
         p999_us: hist.value_at_quantile(0.999),
         max_us: hist.max(),
         bytes_per_sec: calculate_per_sec(total_bytes, total_time_ms),
+        concurrency,
     }
 }
 
@@ -166,22 +288,39 @@ fn calculate_per_sec(count: u64, total_time_ms: u64) -> u64 {
 
 // Formatting helpers
 
-fn fmt_us(us: u64) -> String {
-    if us >= 1_000_000 {
-        format!("{:.2}s", us as f64 / 1_000_000.0)
-    } else if us >= 1_000 {
-        format!("{:.2}ms", us as f64 / 1_000.0)
-    } else {
-        format!("{:.2}µs", us)
+trait TimeResult {
+    fn as_f64(&self) -> f64;
+}
+
+impl TimeResult for u64 {
+    fn as_f64(&self) -> f64 {
+        *self as f64
     }
 }
 
-fn format_bytes(n: u64) -> String {
-    if n == 0 {
+impl TimeResult for f64 {
+    fn as_f64(&self) -> f64 {
+        *self
+    }
+}
+
+fn fmt_us<T: TimeResult>(us: T) -> String {
+    let us = us.as_f64();
+    if us >= 1_000_000.0 {
+        format!("{:.1}s", us)
+    } else if us >= 1_000.0 {
+        format!("{:.1}ms", us)
+    } else {
+        format!("{:.1}µs", us)
+    }
+}
+
+fn format_bytes<T: TimeResult>(n: T) -> String {
+    let mut n = n.as_f64();
+    if n == 0.0 {
         return "--".to_string();
     }
 
-    let mut n = n as f64;
     for unit in &["B", "KB", "MB", "GB", "TB", "PB"] {
         if n.abs() < 1000.0 {
             return format!("{:.2} {}", n, unit);
@@ -198,9 +337,11 @@ fn print_table(all_stats: &[Stats]) {
         .apply_modifier(UTF8_ROUND_CORNERS)
         .set_header(vec![
             "op",
+            "concurrency",
             "ops/sec",
             "mean",
             "±",
+            "min",
             "p50",
             "p75",
             "p99",
@@ -212,9 +353,11 @@ fn print_table(all_stats: &[Stats]) {
     for s in all_stats {
         table.add_row(vec![
             s.op.clone(),
+            s.concurrency.to_string(),
             format!("{}", s.ops_per_sec),
             fmt_us(s.mean_us),
             fmt_us(s.std_dev_us),
+            fmt_us(s.min_us),
             fmt_us(s.p50_us),
             fmt_us(s.p75_us),
             fmt_us(s.p99_us),
@@ -222,6 +365,25 @@ fn print_table(all_stats: &[Stats]) {
             fmt_us(s.max_us),
             format_bytes(s.bytes_per_sec),
             format!("{}", s.ops_per_sec * (s.op_batch_size as u64)),
+        ]);
+    }
+    if all_stats.len() > 1 {
+        let combined = MergedStats::merge(all_stats);
+
+        table.add_row(vec![
+            "(COMBINED)".to_string(),
+            "".to_string(),
+            format!("{:.1}", combined.ops_per_sec),
+            fmt_us(combined.mean_us),
+            "".to_string(),
+            fmt_us(combined.min_us),
+            "".to_string(),
+            "".to_string(),
+            "".to_string(),
+            "".to_string(),
+            fmt_us(combined.max_us),
+            format_bytes(combined.bytes_per_sec),
+            "".to_string(),
         ]);
     }
     println!("{table}");
@@ -300,6 +462,7 @@ impl BenchResult {
             combined,
             total_time_ms,
             cfg.iterations * cfg.concurrency,
+            cfg.concurrency,
             total_bytes,
             batch_size,
         ));
@@ -368,8 +531,8 @@ trait BenchShard {
 
         let concurrency = cfg.concurrency;
         let iterations = cfg.iterations;
-        let test_name = self.test_name();
-        let pb = new_bar(test_name.to_string(), concurrency * iterations);
+        let label = format!("{} (conc={})", self.test_name(), cfg.concurrency);
+        let pb = new_bar(label, concurrency * iterations);
         let barrier = Arc::new(Barrier::new(concurrency as usize));
         let progress = Arc::new(AtomicU64::new(0));
         let handles = (0..concurrency).map(|shard_id| {
