@@ -1,24 +1,24 @@
 // this file is @generated
 
 export interface Retention {
-    ms?: number;
-    bytes?: number;
+    periodMs?: number | null;
+    sizeBytes?: number | null;
 }
 
 export const RetentionSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): Retention {
         return {
-            ms: object['ms'],
-            bytes: object['bytes'],
+            periodMs: object['period_ms'],
+            sizeBytes: object['size_bytes'],
         };
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: Retention): any {
         return {
-            'ms': self.ms,
-            'bytes': self.bytes,
+            'period_ms': self.periodMs,
+            'size_bytes': self.sizeBytes,
         };
     }
 }

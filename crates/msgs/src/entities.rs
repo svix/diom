@@ -458,27 +458,8 @@ impl JsonSchema for ConsumerGroup {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {
-    #[serde(default = "default_retention_ms")]
-    pub ms: DurationMs,
-    #[serde(default = "default_retention_bytes")]
-    pub bytes: NonZeroU64,
-}
-
-impl Default for Retention {
-    fn default() -> Self {
-        Self {
-            ms: default_retention_ms(),
-            bytes: default_retention_bytes(),
-        }
-    }
-}
-
-pub fn default_retention_ms() -> DurationMs {
-    DurationMs::from_hours(24 * 30)
-}
-
-pub fn default_retention_bytes() -> NonZeroU64 {
-    NonZeroU64::new(1_000_000_000_000).expect("constant is non-zero")
+    pub period_ms: Option<DurationMs>,
+    pub size_bytes: Option<NonZeroU64>,
 }

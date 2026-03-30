@@ -22,9 +22,9 @@ async fn create_namespace_with_defaults() -> TestResult {
         .json();
 
     assert_eq!(response["name"], "my-namespace");
-    // Default retention: 30 days in millis, 1TB in bytes
-    assert_eq!(response["retention"]["ms"], 2_592_000_000u64);
-    assert_eq!(response["retention"]["bytes"], 1_000_000_000_000u64);
+    // Retention fields are optional; omitting them means no enforcement
+    assert!(response["retention"]["period_ms"].is_null());
+    assert!(response["retention"]["size_bytes"].is_null());
     assert!(response["created"].is_string());
     assert!(response["updated"].is_string());
 
@@ -44,8 +44,8 @@ async fn create_namespace_with_custom_config() -> TestResult {
         .json(json!({
             "name": "custom-ns",
             "retention": {
-                "bytes": 4194304,
-                "ms": 604800000
+                "size_bytes": 4194304,
+                "period_ms": 604800000
             }
         }))
         .await?
@@ -58,7 +58,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
         response,
         json!({
             "name": "custom-ns",
-            "retention": { "bytes": 4194304, "ms": 604800000 },
+            "retention": { "size_bytes": 4194304, "period_ms": 604800000 },
             "created": ts,
             "updated": ts,
         })
@@ -79,7 +79,7 @@ async fn create_namespace_upserts() -> TestResult {
         .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "upsert-ns",
-            "retention": { "bytes": 1024, "ms": 9999 }
+            "retention": { "size_bytes": 1024, "period_ms": 9999 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -87,23 +87,23 @@ async fn create_namespace_upserts() -> TestResult {
 
     let created_ts = first["created"].assert_str().to_owned();
     assert_eq!(first["name"], "upsert-ns");
-    assert_eq!(first["retention"]["bytes"], 1024);
-    assert_eq!(first["retention"]["ms"], 9999);
+    assert_eq!(first["retention"]["size_bytes"], 1024);
+    assert_eq!(first["retention"]["period_ms"], 9999);
 
     // Upsert with different retention
     let second = client
         .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "upsert-ns",
-            "retention": { "bytes": 2048, "ms": 60000 }
+            "retention": { "size_bytes": 2048, "period_ms": 60000 }
         }))
         .await?
         .expect(StatusCode::OK)
         .json();
 
     assert_eq!(second["name"], "upsert-ns");
-    assert_eq!(second["retention"]["bytes"], 2048);
-    assert_eq!(second["retention"]["ms"], 60000);
+    assert_eq!(second["retention"]["size_bytes"], 2048);
+    assert_eq!(second["retention"]["period_ms"], 60000);
     // created timestamp should remain the same
     assert_eq!(second["created"], created_ts);
     // updated timestamp should change
@@ -125,7 +125,7 @@ async fn get_namespace() -> TestResult {
         .post("v1.msgs.namespace.create")
         .json(json!({
             "name": "get-test-ns",
-            "retention": { "bytes": 5000, "ms": 30000 }
+            "retention": { "size_bytes": 5000, "period_ms": 30000 }
         }))
         .await?
         .expect(StatusCode::OK)
@@ -142,8 +142,8 @@ async fn get_namespace() -> TestResult {
         .json();
 
     assert_eq!(response["name"], "get-test-ns");
-    assert_eq!(response["retention"]["bytes"], 5000);
-    assert_eq!(response["retention"]["ms"], 30000);
+    assert_eq!(response["retention"]["size_bytes"], 5000);
+    assert_eq!(response["retention"]["period_ms"], 30000);
     assert_eq!(response["created"], created["created"]);
     assert_eq!(response["updated"], created["updated"]);
 
