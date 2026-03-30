@@ -63,14 +63,14 @@ pub struct CacheSetIn {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    pub ttl: DurationMs,
+    pub ttl_ms: DurationMs,
 }
 
 request_input!(CacheSetIn, "Set");
 
 impl CacheSetIn {
     fn into_model(self, when: Timestamp) -> CacheModel {
-        let expiry = when + self.ttl;
+        let expiry = when + self.ttl_ms;
         debug_assert!(expiry > Timestamp::UNIX_EPOCH);
 
         CacheModel {

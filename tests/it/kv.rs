@@ -18,7 +18,7 @@ async fn kv_set(
         .post("v1.kv.set")
         .json(json!({
             "key": key,
-            "ttl": expire_in,
+            "ttl_ms": expire_in,
             "value": value.as_bytes(),
             "behavior": behavior
         }))
@@ -40,7 +40,7 @@ async fn kv_set_unsuccessful(
         .post("v1.kv.set")
         .json(json!({
             "key": key,
-            "ttl": expire_in,
+            "ttl_ms": expire_in,
             "value": value.as_bytes(),
             "behavior": behavior
         }))
@@ -120,7 +120,7 @@ async fn test_kv_set_and_get() -> TestResult {
         .json(json!({
             "namespace": "nonexistentnamespace",
             "key": "key1",
-            "ttl": Some(expires_in),
+            "ttl_ms": Some(expires_in),
             "value": "123".as_bytes(),
             "behavior": "upsert",
         }))
@@ -300,7 +300,7 @@ async fn test_kv_validation() -> TestResult {
         .json(json!({
             "key": "kv-key-3",
             "value": "test".as_bytes(),
-            "ttl": 0,
+            "ttl_ms": 0,
             "behavior": "upsert"
         }))
         .await?
@@ -311,7 +311,7 @@ async fn test_kv_validation() -> TestResult {
         .json(json!({
             "key": "kv-key-3",
             "value": "test".as_bytes(),
-            "ttl": -1,
+            "ttl_ms": -1,
             "behavior": "upsert"
         }))
         .await?

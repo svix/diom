@@ -31,7 +31,7 @@ func (cache Cache) Set(
 		Namespace: cacheSetIn.Namespace,
 		Key:       key,
 		Value:     cacheSetIn.Value,
-		Ttl:       cacheSetIn.Ttl,
+		TtlMs:     cacheSetIn.TtlMs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.CacheSetIn_, coyote_models.CacheSetOut](

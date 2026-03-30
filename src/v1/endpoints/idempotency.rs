@@ -6,7 +6,7 @@ use std::num::NonZeroU64;
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_authorization::RequestedOperation;
-use coyote_core::types::{DurationS, EntityKey};
+use coyote_core::types::{DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt as _, ResultExt};
 use coyote_id::Module;
@@ -66,9 +66,9 @@ pub struct IdempotencyStartIn {
     #[validate(nested)]
     pub key: EntityKey,
 
-    /// TTL in seconds for the lock/response
+    /// TTL in milliseconds for the lock/response
     #[validate(range(min = 1))]
-    pub ttl: DurationS,
+    pub ttl_ms: DurationMs,
 }
 
 request_input!(IdempotencyStartIn, "Start");
@@ -113,9 +113,9 @@ pub struct IdempotencyCompleteIn {
     /// The response to cache
     pub response: Vec<u8>,
 
-    /// TTL in seconds for the cached response
+    /// TTL in milliseconds for the cached response
     #[validate(range(min = 1))]
-    pub ttl: DurationS,
+    pub ttl_ms: DurationMs,
 }
 
 request_input!(IdempotencyCompleteIn, "Complete");
@@ -154,7 +154,7 @@ async fn idempotency_start(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
+    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl_ms);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
@@ -173,7 +173,7 @@ async fn idempotency_complete(
         .ok_or_not_found()?;
 
     let operation =
-        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl);
+        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl_ms);
     repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))

@@ -26,18 +26,18 @@ public class CacheSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
-    @JsonProperty private Long ttl;
+    @JsonProperty("ttl_ms") private Long ttlMs;
 
     public CacheSetIn_(
         String namespace,
         String key,
         List<Byte> value,
-        Long ttl
+        Long ttlMs
     ) {
         this.namespace = namespace;
         this.key = key;
         this.value = value;
-        this.ttl = ttl;
+        this.ttlMs = ttlMs;
     }
 
     /**

@@ -4,11 +4,11 @@ package coyote_models
 
 type IdempotencyStartIn struct {
 	Namespace *string `msgpack:"namespace,omitempty"`
-	Ttl       uint64  `msgpack:"ttl"` // TTL in seconds for the lock/response
+	TtlMs     uint64  `msgpack:"ttl_ms"` // TTL in milliseconds for the lock/response
 }
 
 type IdempotencyStartIn_ struct {
 	Namespace *string `msgpack:"namespace,omitempty"`
 	Key       string  `msgpack:"key"`
-	Ttl       uint64  `msgpack:"ttl"` // TTL in seconds for the lock/response
+	TtlMs     uint64  `msgpack:"ttl_ms"` // TTL in milliseconds for the lock/response
 }

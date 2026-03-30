@@ -26,7 +26,7 @@ public class KvSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
-    @JsonProperty private Long ttl;
+    @JsonProperty("ttl_ms") private Long ttlMs;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
 
@@ -34,14 +34,14 @@ public class KvSetIn_ {
         String namespace,
         String key,
         List<Byte> value,
-        Long ttl,
+        Long ttlMs,
         OperationBehavior behavior,
         Long version
     ) {
         this.namespace = namespace;
         this.key = key;
         this.value = value;
-        this.ttl = ttl;
+        this.ttlMs = ttlMs;
         this.behavior = behavior;
         this.version = version;
     }

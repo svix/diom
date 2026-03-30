@@ -1,6 +1,6 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, IdempotencyState};
-use coyote_core::types::DurationS;
+use coyote_core::types::DurationMs;
 use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
@@ -12,7 +12,7 @@ pub struct CompleteOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
     pub(crate) response: Vec<u8>,
-    pub(crate) ttl_seconds: DurationS,
+    pub(crate) ttl_ms: DurationMs,
 }
 
 impl CompleteOperation {
@@ -20,13 +20,13 @@ impl CompleteOperation {
         namespace: IdempotencyNamespace,
         key: String,
         response: Vec<u8>,
-        ttl_seconds: DurationS,
+        ttl_ms: DurationMs,
     ) -> Self {
         Self {
             namespace_id: namespace.id,
             key,
             response,
-            ttl_seconds,
+            ttl_ms,
         }
     }
 }
@@ -38,7 +38,7 @@ impl CompleteOperation {
         now: Timestamp,
         log_index: u64,
     ) -> Result<()> {
-        let expiry = now + self.ttl_seconds;
+        let expiry = now + self.ttl_ms;
         state
             .state
             .controller()

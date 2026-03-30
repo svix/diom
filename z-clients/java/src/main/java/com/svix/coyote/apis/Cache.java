@@ -41,7 +41,7 @@ public class Cache {
             cacheSetIn.getNamespace(),
             key,
             cacheSetIn.getValue(),
-            cacheSetIn.getTtl()
+            cacheSetIn.getTtlMs()
         );
 
         return this.client.executeRequest(
