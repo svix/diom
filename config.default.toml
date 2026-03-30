@@ -1,0 +1,31 @@
+listen_address = "0.0.0.0:8050"
+log_level = "info"
+log_format = "default"
+opentelemetry_metrics_use_http = false
+opentelemetry_metrics_period_seconds = 60
+opentelemetry_service_name = "diom"
+
+[persistent_db]
+path = "./db"
+
+[ephemeral_db]
+path = "./db"
+
+[cluster]
+name = "diom"
+replication_request_timeout_ms = 5000
+discovery_request_timeout_ms = 10000
+connection_timeout_ms = 3100
+heartbeat_interval_ms = 500
+election_timeout_min_ms = 1500
+election_timeout_max_ms = 3500
+send_snapshot_ms = 30000
+seed_nodes = []
+auto_initialize = true
+discovery_timeout_ms = 30000
+startup_discovery_delay_ms = 10
+log_index_interval_ms = 600000
+log_sync_interval_commits = 0
+log_sync_interval_ms = 10000
+log_ack_immediately = true
+snapshot_after_ms = 900000

@@ -13,15 +13,16 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use fs_err as fs;
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize};
 use tap::Pipe;
 use tracing::Level;
 use validator::Validate;
 
 use crate::error::{Error, Result};
 
-mod defaults;
 mod validators;
+
+const DEFAULT_CONFIG: &str = include_str!("../../config.default.toml");
 
 pub type Configuration = Arc<ConfigurationInner>;
 
@@ -201,7 +202,6 @@ pub struct ClusterConfiguration {
     #[serde(default)]
     pub listen_address: Option<SocketAddr>,
 
-    #[serde(default = "defaults::cluster_name")]
     pub name: String,
 
     /// Location to store snapshots.
@@ -226,8 +226,7 @@ pub struct ClusterConfiguration {
     /// This should be set to approximately 2X the RTT of your farthest-apart nodes.
     #[serde(
         rename = "replication_request_timeout_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_replication_request_timeout"
+        with = "crate::serde::duration::millis"
     )]
     pub replication_request_timeout: Duration,
 
@@ -236,8 +235,7 @@ pub struct ClusterConfiguration {
     /// This should be set to approximately 2X the RTT of your farthest-apart nodes.
     #[serde(
         rename = "discovery_request_timeout_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_discovery_request_timeout"
+        with = "crate::serde::duration::millis"
     )]
     pub discovery_request_timeout: Duration,
 
@@ -248,8 +246,7 @@ pub struct ClusterConfiguration {
     /// depending on your operating system).
     #[serde(
         rename = "connection_timeout_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_connection_timeout"
+        with = "crate::serde::duration::millis"
     )]
     pub connection_timeout: Duration,
 
@@ -259,8 +256,7 @@ pub struct ClusterConfiguration {
     /// Must not be less than `replication_request_timeout`.
     #[serde(
         rename = "heartbeat_interval_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_heartbeat_interval"
+        with = "crate::serde::duration::millis"
     )]
     pub heartbeat_interval: Duration,
 
@@ -270,8 +266,7 @@ pub struct ClusterConfiguration {
     /// and must not be less than `heartbeat_interval_ms`.
     #[serde(
         rename = "election_timeout_min_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_election_timeout_min"
+        with = "crate::serde::duration::millis"
     )]
     pub election_timeout_min: Duration,
 
@@ -281,8 +276,7 @@ pub struct ClusterConfiguration {
     /// and must not be less than `cluster_election_timeout_max`.
     #[serde(
         rename = "election_timeout_max_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_election_timeout_max"
+        with = "crate::serde::duration::millis"
     )]
     pub election_timeout_max: Duration,
 
@@ -290,11 +284,7 @@ pub struct ClusterConfiguration {
     ///
     /// This should be set to at least 5x the RTT of your farthest-apart nodes
     /// and must not be less than `cluster_election_timeout_max`.
-    #[serde(
-        rename = "send_snapshot_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_send_snapshot_timeout"
-    )]
+    #[serde(rename = "send_snapshot_ms", with = "crate::serde::duration::millis")]
     pub send_snapshot_timeout: Duration,
 
     /// Address that other nodes should use to communicate with this one.
@@ -312,27 +302,23 @@ pub struct ClusterConfiguration {
     /// peers and we don't have any existing state.
     ///
     /// If you initialize all peers at exactly the same time, this can potentially cause errors.
-    #[serde(default = "defaults::cluster_auto_initialize")]
     pub auto_initialize: bool,
 
     #[serde(
         rename = "discovery_timeout_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_discovery_timeout"
+        with = "crate::serde::duration::millis"
     )]
     pub discovery_timeout: Duration,
 
     #[serde(
         rename = "startup_discovery_delay_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::cluster_startup_discovery_delay"
+        with = "crate::serde::duration::millis"
     )]
     pub startup_discovery_delay: Duration,
 
     #[serde(
         rename = "log_index_interval_ms",
-        with = "crate::serde::duration::millis",
-        default = "defaults::log_index_interval"
+        with = "crate::serde::duration::millis"
     )]
     pub log_index_interval: Duration,
 
@@ -345,13 +331,11 @@ pub struct ClusterConfiguration {
     /// should be removed from the cluster and rebuilt. If set to 0, logs will only be fsynced on a
     /// timer
     #[validate(range(min = 0, max = 1024))]
-    #[serde(default = "defaults::cluster_log_sync_interval_commits")]
     pub log_sync_interval_commits: usize,
 
     /// Interval (in milliseconds) between fsyncing the commit log.
     #[validate(custom(function = "validators::validate_log_sync_interval_duration"))]
     #[serde(
-        default = "defaults::cluster_log_sync_interval_duration",
         rename = "log_sync_interval_ms",
         with = "crate::serde::duration::millis"
     )]
@@ -362,7 +346,6 @@ pub struct ClusterConfiguration {
     /// This should be set to `false` for full ACID compliance, but can be set to `true` to enable
     /// higher throughput than your fsync rate. Note that we always flush to the OS buffers before
     /// acking, so data will only be lost of the OS crashes.
-    #[serde(default = "defaults::default_true")]
     pub log_ack_immediately: bool,
 
     /// Trigger a background snapshot after this many writes
@@ -372,14 +355,13 @@ pub struct ClusterConfiguration {
     #[serde(
         rename = "snapshot_after_ms",
         with = "crate::serde::duration::opt_ms",
-        default = "defaults::cluster_snapshot_after_time"
+        default
     )]
     pub snapshot_after_time: Option<Duration>,
 
     /// Shut down the process when the it is evicted from the cluster
     ///
     /// This should be true unless you are testing internal details of the replication system
-    #[serde(default = "defaults::default_true")]
     pub shut_down_on_go_away: bool,
 }
 
@@ -411,24 +393,16 @@ impl ClusterConfiguration {
 
 impl Default for ClusterConfiguration {
     fn default() -> Self {
-        default_from_serde().unwrap()
+        ConfigurationInner::default().cluster
     }
-}
-
-fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Error> {
-    let empty: [(String, String); 0] = [];
-    T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Validate)]
 pub struct ConfigurationInner {
     /// The address to listen on
-    #[serde(default = "defaults::listen_address")]
     pub listen_address: SocketAddr,
 
-    #[serde(default = "defaults::persistent_db")]
     pub persistent_db: DatabaseConfig,
-    #[serde(default = "defaults::ephemeral_db")]
     pub ephemeral_db: DatabaseConfig,
 
     /// The log level to run the service with. Supported: info, debug, trace
@@ -451,10 +425,8 @@ pub struct ConfigurationInner {
     /// By default, `opentelemetry_address` is expected to be a GRPC server.
     ///
     /// When this is set to true, HTTP is used instead.
-    #[serde(default)]
     pub opentelemetry_metrics_use_http: bool,
 
-    #[serde(default = "defaults::opentelemetry_metrics_period")]
     pub opentelemetry_metrics_period_seconds: u64,
 
     /// The ratio at which to sample spans when sending to OpenTelemetry.
@@ -464,7 +436,6 @@ pub struct ConfigurationInner {
     pub opentelemetry_sample_ratio: Option<f64>,
 
     /// The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
-    #[serde(default = "defaults::opentelemetry_service_name")]
     pub opentelemetry_service_name: String,
 
     /// The environment (dev, staging, or prod) that the server is running in.
@@ -506,7 +477,7 @@ pub struct ConfigurationInner {
 
 impl Default for ConfigurationInner {
     fn default() -> Self {
-        default_from_serde().unwrap()
+        toml::from_str(DEFAULT_CONFIG).expect("built-in default configuration must be valid")
     }
 }
 
@@ -586,11 +557,36 @@ pub fn load(config_path: Option<&Path>) -> anyhow::Result<Arc<ConfigurationInner
     load_toml(config_toml.as_deref())
 }
 
+fn merge_toml(base: &mut toml::Value, overrides: toml::Value) {
+    match overrides {
+        toml::Value::Table(override_table) => {
+            if let toml::Value::Table(base_table) = base {
+                for (key, val) in override_table {
+                    match base_table.get_mut(&key) {
+                        Some(base_val) => merge_toml(base_val, val),
+                        None => {
+                            base_table.insert(key, val);
+                        }
+                    }
+                }
+            } else {
+                *base = toml::Value::Table(override_table);
+            }
+        }
+        other => *base = other,
+    }
+}
+
 fn load_toml(config_toml: Option<&str>) -> anyhow::Result<Arc<ConfigurationInner>> {
-    let mut config = match config_toml {
-        Some(config_toml) => toml::from_str(config_toml).context("parsing config file")?,
-        None => ConfigurationInner::default(),
-    };
+    let mut base: toml::Value =
+        toml::from_str(DEFAULT_CONFIG).expect("built-in default configuration must be valid");
+
+    if let Some(runtime_toml) = config_toml {
+        let runtime: toml::Value = toml::from_str(runtime_toml).context("parsing config file")?;
+        merge_toml(&mut base, runtime);
+    }
+
+    let mut config: ConfigurationInner = base.try_into().context("deserializing configuration")?;
 
     macro_rules! env_overrides {
         ( $( $field:ident: $env_var:literal ),* $(,)? ) => {
