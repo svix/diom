@@ -1388,6 +1388,7 @@ dependencies = [
  "coyote",
  "coyote-core",
  "dotenvy",
+ "fs-err",
  "mimalloc",
  "opentelemetry",
  "opentelemetry-otlp",

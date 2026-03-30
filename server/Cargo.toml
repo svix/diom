@@ -10,6 +10,7 @@ clap.workspace = true
 coyote.workspace = true
 coyote-core.workspace = true
 dotenvy.workspace = true
+fs-err.workspace = true
 mimalloc.workspace = true
 opentelemetry.workspace = true
 opentelemetry-otlp.workspace = true

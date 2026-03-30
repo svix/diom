@@ -12,7 +12,6 @@ use coyote::{
 use dotenvy::dotenv;
 use mimalloc::MiMalloc;
 use std::{
-    fs::File,
     io::{BufWriter, Write},
     path::PathBuf,
 };
@@ -58,7 +57,7 @@ fn dump_config(cfg: Configuration, path: Option<PathBuf>) -> anyhow::Result<()> 
     if let Some(path) = path
         && path.to_str() != Some("-")
     {
-        let f = File::open(path)?;
+        let f = fs_err::File::open(path)?;
         let mut bf = BufWriter::new(f);
         write!(bf, "{str}")?;
     } else {
