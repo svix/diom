@@ -60,9 +60,9 @@ fn dump_config(cfg: Configuration, path: Option<PathBuf>) -> anyhow::Result<()> 
     {
         let f = File::open(path)?;
         let mut bf = BufWriter::new(f);
-        write!(bf, "{}", str)?;
+        write!(bf, "{str}")?;
     } else {
-        print!("{}", str);
+        print!("{str}");
     }
     Ok(())
 }
@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 cfg.listen_address.to_string()
             };
-            format!("http://{}", server_address)
+            format!("http://{server_address}")
         };
         let client = reqwest::Client::new();
         let response = client
