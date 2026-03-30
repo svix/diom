@@ -1,11 +1,11 @@
 use clap::{Args, Subcommand};
-use colored_json::Paint;
 use comfy_table::{Attribute, Cell, Table};
 use coyote_client::{
     CoyoteClient,
     models::{ClusterInitializeIn, ClusterInitializeOut, ClusterRemoveNodeIn},
 };
 use itertools::Itertools;
+use yansi::Paint;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -37,27 +37,19 @@ pub enum ClusterCommands {
 }
 
 impl ClusterCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
-            Self::Status { json } => print_status(json, client, color_mode).await,
+            Self::Status { json } => print_status(json, client).await,
             Self::RemoveNode(args) => remove_node(args, client).await,
             Self::Initialize => initialize(client).await,
         }
     }
 }
 
-async fn print_status(
-    json: bool,
-    client: &CoyoteClient,
-    color_mode: colored_json::ColorMode,
-) -> anyhow::Result<()> {
+async fn print_status(json: bool, client: &CoyoteClient) -> anyhow::Result<()> {
     let raw_status = client.admin().cluster().status().await?;
     if json {
-        return crate::json::print_json_output(&raw_status, color_mode);
+        return crate::json::print_json_output(&raw_status);
     }
 
     let header = "Cluster Information".underline();

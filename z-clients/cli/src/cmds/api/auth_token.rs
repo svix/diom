@@ -45,14 +45,10 @@ pub enum AuthTokenCommands {
 }
 
 impl AuthTokenCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Create {
                 auth_token_create_in,
@@ -61,7 +57,7 @@ impl AuthTokenCommands {
                     .auth_token()
                     .create(auth_token_create_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Expire {
                 auth_token_expire_in,
@@ -70,7 +66,7 @@ impl AuthTokenCommands {
                     .auth_token()
                     .expire(auth_token_expire_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Delete {
                 auth_token_delete_in,
@@ -79,7 +75,7 @@ impl AuthTokenCommands {
                     .auth_token()
                     .delete(auth_token_delete_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Verify {
                 auth_token_verify_in,
@@ -88,14 +84,14 @@ impl AuthTokenCommands {
                     .auth_token()
                     .verify(auth_token_verify_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::List { auth_token_list_in } => {
                 let resp = client
                     .auth_token()
                     .list(auth_token_list_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Update {
                 auth_token_update_in,
@@ -104,7 +100,7 @@ impl AuthTokenCommands {
                     .auth_token()
                     .update(auth_token_update_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Rotate {
                 auth_token_rotate_in,
@@ -113,7 +109,7 @@ impl AuthTokenCommands {
                     .auth_token()
                     .rotate(auth_token_rotate_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

@@ -29,7 +29,6 @@ rustls-tls = ["coyote-client/rustls-tls"]
 anyhow.workspace = true
 clap = { workspace = true, features = ["derive", "env"] }
 clap_complete.workspace = true
-colored_json.workspace = true
 comfy-table = "7"
 concolor-clap.workspace = true
 config.workspace = true
@@ -50,3 +49,4 @@ serde_json.workspace = true
 tokio = { workspace = true, features = ["macros", "time", "rt-multi-thread"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
+yansi.workspace = true

@@ -3,8 +3,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use clap_complete::Shell;
-use colored_json::{ColorMode, Output};
-use concolor_clap::{Color, ColorChoice};
+use concolor_clap::Color;
 use coyote_client::{CoyoteClient, CoyoteOptions, DEFAULT_URL};
 use mimalloc::MiMalloc;
 
@@ -62,18 +61,6 @@ struct Cli {
 }
 
 impl Cli {
-    /// Converts the selected `ColorChoice` from the CLI to a `ColorMode` as used by the JSON printer.
-    ///
-    /// When the color choice is "auto", this considers whether stdout is a tty or not so that
-    /// color codes are only produced when actually writing directly to a terminal.
-    fn color_mode(&self) -> ColorMode {
-        match self.color.color {
-            ColorChoice::Auto => ColorMode::Auto(Output::StdOut),
-            ColorChoice::Always => ColorMode::On,
-            ColorChoice::Never => ColorMode::Off,
-        }
-    }
-
     fn log_level(&self) -> tracing::Level {
         match self.verbose {
             3.. => tracing::Level::TRACE,
@@ -113,7 +100,6 @@ enum RootCommands {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    let color_mode = cli.color_mode();
 
     tracing_subscriber::fmt()
         .with_max_level(cli.log_level())
@@ -138,36 +124,36 @@ async fn main() -> Result<()> {
         // Remote API calls
         RootCommands::AuthToken(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::Cache(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::Idempotency(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::Kv(args) => {
             let cfg = cfg?;
             let client = get_client(&cfg)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::Msgs(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::RateLimit(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::Health(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::RawAdmin(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
         RootCommands::Benchmark(args) => {
             let cfg = cfg?;
@@ -180,7 +166,7 @@ async fn main() -> Result<()> {
         }
         RootCommands::ClusterAdmin(args) => {
             let client = get_client(&cfg?)?;
-            args.command.exec(&client, color_mode).await?;
+            args.command.exec(&client).await?;
         }
     }
 
