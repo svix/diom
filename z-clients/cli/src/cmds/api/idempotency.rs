@@ -27,7 +27,8 @@ pub enum IdempotencyCommands {
     /// Abandon an idempotent request (remove lock without saving response)
     Abort {
         key: String,
-        idempotency_abort_in: crate::json::JsonOf<coyote_client::models::IdempotencyAbortIn>,
+        idempotency_abort_in:
+            Option<crate::json::JsonOf<coyote_client::models::IdempotencyAbortIn>>,
     },
 }
 
@@ -63,7 +64,7 @@ impl IdempotencyCommands {
             } => {
                 let resp = client
                     .idempotency()
-                    .abort(key, idempotency_abort_in.into_inner())
+                    .abort(key, idempotency_abort_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
