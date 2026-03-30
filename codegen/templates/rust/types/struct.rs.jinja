@@ -1,4 +1,4 @@
-{% from "types/macros.rs.jinja" import ident, field_decl -%}
+{% from "types/macros.rs.jinja" import field_decl, field_name, field_type -%}
 {% set type_name = type.name | to_upper_camel_case -%}
 {% set positional_fields = type.fields | selectattr("positional") -%}
 use serde::{Deserialize, Serialize};
@@ -29,11 +29,11 @@ pub struct {{ type_name }} {
 
 impl {{ type_name }} {
     pub fn new(
-        {% for field in type.fields | selectattr("positional", "false") -%}
-            {% set field_ty = field.type.to_rust() -%}
-            {% if field.required and not field.nullable -%}
-                {{ ident(field.name | to_snake_case) }}: {{ field_ty }},
-            {% endif -%}
+        {% for field in type.fields
+            | selectattr("positional", "false")
+            | selectattr("required")
+            | selectattr("nullable", "false") -%}
+            {{ field_name(field) }}: {{ field_type(field) }},
         {% endfor -%}
     ) -> Self {
         {% if type.fields | selectattr("deprecated") | length > 0 -%}
@@ -41,21 +41,19 @@ impl {{ type_name }} {
         {% endif -%}
         Self {
             {% for field in type.fields | selectattr("positional", "false") -%}
-                {% if field.required and not field.nullable -%}
-                    {{ ident(field.name | to_snake_case) }},
-                {% else -%}
-                    {{ ident(field.name | to_snake_case) }}: None,
-                {% endif -%}
+                {{ field_name(field) }}
+                {%- if not field.required or field.nullable -%}: None{% endif -%}
+                ,
             {% endfor -%}
         }
     }
 
     {% for field in type.fields | selectattr("required", "false") -%}
-    pub fn with_{{ ident(field.name | to_snake_case) }}(
+    pub fn with_{{ field_name(field, as_ident=false) }}(
         mut self,
-        value: impl Into<Option<{{ field.type.to_rust() }}>>,
+        value: impl Into<{{ field_type(field) }}>,
     ) -> Self {
-        self.{{ ident(field.name | to_snake_case) }} = value.into();
+        self.{{ field_name(field) }} = value.into();
         self
     }
 

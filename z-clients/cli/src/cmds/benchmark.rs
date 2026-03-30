@@ -543,7 +543,7 @@ impl BenchShard for BenchCacheSet {
         shard_id: u64,
         iteration: u64,
     ) -> Result<()> {
-        let ttl_bench_ms = 300_000; // 5 minutes
+        let ttl_bench = Duration::from_mins(5);
         let key = bench_generate_key(shard_id, iteration);
         let mut value = vec![0u8; 2562];
         rng.fill(&mut value[..]);
@@ -553,7 +553,7 @@ impl BenchShard for BenchCacheSet {
         let t = Instant::now();
         client
             .cache()
-            .set(key, CacheSetIn::new(value, ttl_bench_ms))
+            .set(key, CacheSetIn::new(value, ttl_bench))
             .await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
@@ -856,7 +856,7 @@ impl<'a> BenchShard for BenchMsgsQueueReceive<'a> {
                 self.consumer_group.to_owned(),
                 MsgQueueReceiveIn::new()
                     .with_batch_size(self.batch_size)
-                    .with_lease_duration_ms(300_000u64),
+                    .with_lease_duration(Duration::from_mins(5)),
             )
             .await?;
         let rcv_bytes = out.msgs.iter().fold(0, |acc, e| acc + e.value.len()) as u64;
