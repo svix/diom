@@ -35,7 +35,10 @@ pub enum {{ resource_type_name }}Commands {
             {% if op.request_body_schema_name is defined -%}
                 {# positional body parameters -#}
                 {% set body_schema = api.types[op.request_body_schema_name] -%}
-                {% set body_schema_all_optional = body_schema.fields | selectattr("required") | length == 0 %}
+                {% set body_schema_all_optional = body_schema.fields
+                    | selectattr("required")
+                    | selectattr("positional", "false")
+                    | length == 0 %}
                 {% for field in body_schema.fields | selectattr("positional") -%}
                     {% if field.description is defined -%}
                         {{ field.description | to_doc_comment(style="rust") }}
@@ -91,7 +94,10 @@ impl {{ resource_type_name }}Commands {
                             {% if op.request_body_schema_name is defined -%}
                                 {# positional body parameters -#}
                                 {% set body_schema = api.types[op.request_body_schema_name] -%}
-                                {% set body_schema_all_optional = body_schema.fields | selectattr("required") | length == 0 %}
+                                {% set body_schema_all_optional = body_schema.fields
+                                    | selectattr("required")
+                                    | selectattr("positional", "false")
+                                    | length == 0 %}
                                 {% for field in body_schema.fields | selectattr("positional") -%}
                                     {{ field.name | to_snake_case }},
                                 {% endfor -%}

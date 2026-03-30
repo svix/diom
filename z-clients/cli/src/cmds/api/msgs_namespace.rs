@@ -14,12 +14,13 @@ pub enum MsgsNamespaceCommands {
     /// Creates or updates a msgs namespace with the given name.
     Create {
         name: String,
-        msg_namespace_create_in: crate::json::JsonOf<diom_client::models::MsgNamespaceCreateIn>,
+        msg_namespace_create_in:
+            Option<crate::json::JsonOf<diom_client::models::MsgNamespaceCreateIn>>,
     },
     /// Gets a msgs namespace by name.
     Get {
         name: String,
-        msg_namespace_get_in: crate::json::JsonOf<diom_client::models::MsgNamespaceGetIn>,
+        msg_namespace_get_in: Option<crate::json::JsonOf<diom_client::models::MsgNamespaceGetIn>>,
     },
 }
 
@@ -33,7 +34,10 @@ impl MsgsNamespaceCommands {
                 let resp = client
                     .msgs()
                     .namespace()
-                    .create(name, msg_namespace_create_in.into_inner())
+                    .create(
+                        name,
+                        msg_namespace_create_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
@@ -44,7 +48,7 @@ impl MsgsNamespaceCommands {
                 let resp = client
                     .msgs()
                     .namespace()
-                    .get(name, msg_namespace_get_in.into_inner())
+                    .get(name, msg_namespace_get_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

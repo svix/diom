@@ -19,7 +19,7 @@ pub enum MsgsQueueCommands {
     Receive {
         topic: String,
         consumer_group: String,
-        msg_queue_receive_in: crate::json::JsonOf<diom_client::models::MsgQueueReceiveIn>,
+        msg_queue_receive_in: Option<crate::json::JsonOf<diom_client::models::MsgQueueReceiveIn>>,
     },
     /// Acknowledges messages by their opaque msg_ids.
     ///
@@ -36,7 +36,8 @@ pub enum MsgsQueueCommands {
     Configure {
         topic: String,
         consumer_group: String,
-        msg_queue_configure_in: crate::json::JsonOf<diom_client::models::MsgQueueConfigureIn>,
+        msg_queue_configure_in:
+            Option<crate::json::JsonOf<diom_client::models::MsgQueueConfigureIn>>,
     },
     /// Rejects messages, sending them to the dead-letter queue.
     ///
@@ -51,7 +52,8 @@ pub enum MsgsQueueCommands {
     RedriveDlq {
         topic: String,
         consumer_group: String,
-        msg_queue_redrive_dlq_in: crate::json::JsonOf<diom_client::models::MsgQueueRedriveDlqIn>,
+        msg_queue_redrive_dlq_in:
+            Option<crate::json::JsonOf<diom_client::models::MsgQueueRedriveDlqIn>>,
     },
 }
 
@@ -66,7 +68,11 @@ impl MsgsQueueCommands {
                 let resp = client
                     .msgs()
                     .queue()
-                    .receive(topic, consumer_group, msg_queue_receive_in.into_inner())
+                    .receive(
+                        topic,
+                        consumer_group,
+                        msg_queue_receive_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
@@ -90,7 +96,11 @@ impl MsgsQueueCommands {
                 let resp = client
                     .msgs()
                     .queue()
-                    .configure(topic, consumer_group, msg_queue_configure_in.into_inner())
+                    .configure(
+                        topic,
+                        consumer_group,
+                        msg_queue_configure_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
@@ -114,7 +124,11 @@ impl MsgsQueueCommands {
                 let resp = client
                     .msgs()
                     .queue()
-                    .redrive_dlq(topic, consumer_group, msg_queue_redrive_dlq_in.into_inner())
+                    .redrive_dlq(
+                        topic,
+                        consumer_group,
+                        msg_queue_redrive_dlq_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

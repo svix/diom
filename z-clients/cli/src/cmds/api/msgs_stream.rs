@@ -18,7 +18,8 @@ pub enum MsgsStreamCommands {
     Receive {
         topic: String,
         consumer_group: String,
-        msg_stream_receive_in: crate::json::JsonOf<diom_client::models::MsgStreamReceiveIn>,
+        msg_stream_receive_in:
+            Option<crate::json::JsonOf<diom_client::models::MsgStreamReceiveIn>>,
     },
     /// Commits an offset for a consumer group on a specific partition.
     ///
@@ -37,7 +38,7 @@ pub enum MsgsStreamCommands {
     Seek {
         topic: String,
         consumer_group: String,
-        msg_stream_seek_in: crate::json::JsonOf<diom_client::models::MsgStreamSeekIn>,
+        msg_stream_seek_in: Option<crate::json::JsonOf<diom_client::models::MsgStreamSeekIn>>,
     },
 }
 
@@ -52,7 +53,11 @@ impl MsgsStreamCommands {
                 let resp = client
                     .msgs()
                     .stream()
-                    .receive(topic, consumer_group, msg_stream_receive_in.into_inner())
+                    .receive(
+                        topic,
+                        consumer_group,
+                        msg_stream_receive_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
@@ -76,7 +81,11 @@ impl MsgsStreamCommands {
                 let resp = client
                     .msgs()
                     .stream()
-                    .seek(topic, consumer_group, msg_stream_seek_in.into_inner())
+                    .seek(
+                        topic,
+                        consumer_group,
+                        msg_stream_seek_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

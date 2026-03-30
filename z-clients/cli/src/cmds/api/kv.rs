@@ -22,12 +22,12 @@ pub enum KvCommands {
     /// KV Get
     Get {
         key: String,
-        kv_get_in: crate::json::JsonOf<diom_client::models::KvGetIn>,
+        kv_get_in: Option<crate::json::JsonOf<diom_client::models::KvGetIn>>,
     },
     /// KV Delete
     Delete {
         key: String,
-        kv_delete_in: crate::json::JsonOf<diom_client::models::KvDeleteIn>,
+        kv_delete_in: Option<crate::json::JsonOf<diom_client::models::KvDeleteIn>>,
     },
 }
 
@@ -42,11 +42,17 @@ impl KvCommands {
                 crate::json::print_json_output(&resp)?;
             }
             Self::Get { key, kv_get_in } => {
-                let resp = client.kv().get(key, kv_get_in.into_inner()).await?;
+                let resp = client
+                    .kv()
+                    .get(key, kv_get_in.unwrap_or_default().into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp)?;
             }
             Self::Delete { key, kv_delete_in } => {
-                let resp = client.kv().delete(key, kv_delete_in.into_inner()).await?;
+                let resp = client
+                    .kv()
+                    .delete(key, kv_delete_in.unwrap_or_default().into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp)?;
             }
         }

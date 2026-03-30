@@ -22,12 +22,12 @@ pub enum CacheCommands {
     /// Cache Get
     Get {
         key: String,
-        cache_get_in: crate::json::JsonOf<diom_client::models::CacheGetIn>,
+        cache_get_in: Option<crate::json::JsonOf<diom_client::models::CacheGetIn>>,
     },
     /// Cache Delete
     Delete {
         key: String,
-        cache_delete_in: crate::json::JsonOf<diom_client::models::CacheDeleteIn>,
+        cache_delete_in: Option<crate::json::JsonOf<diom_client::models::CacheDeleteIn>>,
     },
 }
 
@@ -42,7 +42,10 @@ impl CacheCommands {
                 crate::json::print_json_output(&resp)?;
             }
             Self::Get { key, cache_get_in } => {
-                let resp = client.cache().get(key, cache_get_in.into_inner()).await?;
+                let resp = client
+                    .cache()
+                    .get(key, cache_get_in.unwrap_or_default().into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp)?;
             }
             Self::Delete {
@@ -51,7 +54,7 @@ impl CacheCommands {
             } => {
                 let resp = client
                     .cache()
-                    .delete(key, cache_delete_in.into_inner())
+                    .delete(key, cache_delete_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
