@@ -4,7 +4,7 @@ use coyote_authorization::{AccessPolicyId, AccessRule, RoleId};
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::Result;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
-use fjall_utils::{TableRow, WriteBatchExt};
+use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -77,6 +77,7 @@ pub struct UpsertAccessPolicyInput {
 
 #[derive(Clone)]
 pub struct AdminAuthController {
+    #[expect(unused)] // until we add some db.batch() operations
     pub(crate) db: fjall::Database,
     pub(crate) keyspace: fjall::Keyspace,
 }
@@ -123,7 +124,6 @@ impl AdminAuthController {
     }
 
     pub async fn upsert_role(&self, input: UpsertRoleInput) -> Result<RoleModel> {
-        let db = self.db.clone();
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
             let existing = RoleRow::fetch(&keyspace, RoleRow::key_for(&input.id))?;
@@ -137,25 +137,23 @@ impl AdminAuthController {
                 created,
                 updated: input.now,
             };
-            let mut batch = db.batch();
-            batch.insert_row(&keyspace, RoleRow::key_for(&row.id), &row)?;
-            batch.commit()?;
+            keyspace.insert(
+                RoleRow::key_for(&row.id).into_fjall_key(),
+                row.to_fjall_value()?,
+            )?;
             Ok(RoleModel::from(row))
         })
         .await?
     }
 
     pub async fn delete_role(&self, id: &RoleId) -> Result<bool> {
-        let db = self.db.clone();
         let keyspace = self.keyspace.clone();
         let id = id.clone();
         spawn_blocking_in_current_span(move || {
             if RoleRow::fetch(&keyspace, RoleRow::key_for(&id))?.is_none() {
                 return Ok(false);
             }
-            let mut batch = db.batch();
-            batch.remove_row(&keyspace, RoleRow::key_for(&id))?;
-            batch.commit()?;
+            keyspace.remove(RoleRow::key_for(&id).into_fjall_key())?;
             Ok(true)
         })
         .await?
@@ -207,7 +205,6 @@ impl AdminAuthController {
     }
 
     pub async fn upsert_policy(&self, input: UpsertAccessPolicyInput) -> Result<AccessPolicyModel> {
-        let db = self.db.clone();
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
             let existing = AccessPolicyRow::fetch(&keyspace, AccessPolicyRow::key_for(&input.id))?;
@@ -218,25 +215,23 @@ impl AdminAuthController {
                 created,
                 updated: input.now,
             };
-            let mut batch = db.batch();
-            batch.insert_row(&keyspace, AccessPolicyRow::key_for(&input.id), &row)?;
-            batch.commit()?;
+            keyspace.insert(
+                AccessPolicyRow::key_for(&input.id).into_fjall_key(),
+                row.to_fjall_value()?,
+            )?;
             Ok(AccessPolicyModel::new(input.id, row))
         })
         .await?
     }
 
     pub async fn delete_policy(&self, id: &AccessPolicyId) -> Result<bool> {
-        let db = self.db.clone();
         let keyspace = self.keyspace.clone();
         let id = id.clone();
         spawn_blocking_in_current_span(move || {
             if AccessPolicyRow::fetch(&keyspace, AccessPolicyRow::key_for(&id))?.is_none() {
                 return Ok(false);
             }
-            let mut batch = db.batch();
-            batch.remove_row(&keyspace, AccessPolicyRow::key_for(&id))?;
-            batch.commit()?;
+            keyspace.remove(AccessPolicyRow::key_for(&id).into_fjall_key())?;
             Ok(true)
         })
         .await?
