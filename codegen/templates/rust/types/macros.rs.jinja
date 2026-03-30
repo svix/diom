@@ -17,6 +17,13 @@
     {% if name != name | to_snake_case -%}
         rename = "{{ name }}",
     {% endif -%}
+    {% if field.type.is_bytes() -%}
+        {% if not field.required or field.nullable -%}
+            with = "crate::serde_bytes_opt",
+        {% else -%}
+            with = "serde_bytes",
+        {% endif -%}
+    {% endif -%}
     {% if not field.required or field.nullable -%}
         skip_serializing_if = "Option::is_none",
     {% endif -%}

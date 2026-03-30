@@ -1,8 +1,11 @@
 use std::{io::Read, str::FromStr};
 
 use anyhow::{Context, Error, Result};
-use colored_json::{Color, ColorMode, ToColoredJson};
 use serde::{Serialize, de::DeserializeOwned};
+
+mod format;
+
+use self::format::PrettyFormatter;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct JsonOf<T>(T);
@@ -30,19 +33,15 @@ impl<T> JsonOf<T> {
     }
 }
 
-pub fn print_json_output<T>(val: &T, color_mode: ColorMode) -> Result<()>
+pub fn print_json_output<T>(val: &T) -> Result<()>
 where
     T: Serialize,
 {
-    let styler = colored_json::Styler {
-        integer_value: Color::Green.foreground(),
-        float_value: Color::Green.foreground(),
-        bool_value: Color::Yellow.foreground(),
-        nil_value: Color::Magenta.foreground(),
-        string_include_quotation: true,
-        ..Default::default()
-    };
-    let s = serde_json::to_string_pretty(val)?.to_colored_json_with_styler(color_mode, styler)?;
+    let mut output = Vec::new();
+    let mut serializer =
+        serde_json::Serializer::with_formatter(&mut output, PrettyFormatter::default());
+    val.serialize(&mut serializer)?;
+    let s = String::from_utf8(output).expect("JSON is always valid utf-8");
 
     println!("{s}");
     Ok(())

@@ -23,11 +23,7 @@ pub enum CacheNamespaceCommands {
 }
 
 impl CacheNamespaceCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 cache_create_namespace_in,
@@ -37,7 +33,7 @@ impl CacheNamespaceCommands {
                     .namespace()
                     .create(cache_create_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get {
                 cache_get_namespace_in,
@@ -47,7 +43,7 @@ impl CacheNamespaceCommands {
                     .namespace()
                     .get(cache_get_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

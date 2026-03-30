@@ -21,11 +21,7 @@ pub enum MsgsTopicCommands {
 }
 
 impl MsgsTopicCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Configure {
                 topic,
@@ -36,7 +32,7 @@ impl MsgsTopicCommands {
                     .topic()
                     .configure(topic, msg_topic_configure_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

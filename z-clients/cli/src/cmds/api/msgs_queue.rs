@@ -56,11 +56,7 @@ pub enum MsgsQueueCommands {
 }
 
 impl MsgsQueueCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Receive {
                 topic,
@@ -72,7 +68,7 @@ impl MsgsQueueCommands {
                     .queue()
                     .receive(topic, consumer_group, msg_queue_receive_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Ack {
                 topic,
@@ -84,7 +80,7 @@ impl MsgsQueueCommands {
                     .queue()
                     .ack(topic, consumer_group, msg_queue_ack_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Configure {
                 topic,
@@ -96,7 +92,7 @@ impl MsgsQueueCommands {
                     .queue()
                     .configure(topic, consumer_group, msg_queue_configure_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Nack {
                 topic,
@@ -108,7 +104,7 @@ impl MsgsQueueCommands {
                     .queue()
                     .nack(topic, consumer_group, msg_queue_nack_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::RedriveDlq {
                 topic,
@@ -120,7 +116,7 @@ impl MsgsQueueCommands {
                     .queue()
                     .redrive_dlq(topic, consumer_group, msg_queue_redrive_dlq_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

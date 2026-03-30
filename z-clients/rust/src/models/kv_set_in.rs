@@ -8,6 +8,7 @@ pub struct KvSetIn {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub namespace: Option<String>,
 
+    #[serde(with = "serde_bytes")]
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
@@ -62,6 +63,7 @@ pub(crate) struct KvSetIn_ {
 
     pub key: String,
 
+    #[serde(with = "serde_bytes")]
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
