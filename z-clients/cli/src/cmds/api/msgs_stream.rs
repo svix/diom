@@ -42,11 +42,7 @@ pub enum MsgsStreamCommands {
 }
 
 impl MsgsStreamCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Receive {
                 topic,
@@ -58,7 +54,7 @@ impl MsgsStreamCommands {
                     .stream()
                     .receive(topic, consumer_group, msg_stream_receive_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Commit {
                 topic,
@@ -70,7 +66,7 @@ impl MsgsStreamCommands {
                     .stream()
                     .commit(topic, consumer_group, msg_stream_commit_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Seek {
                 topic,
@@ -82,7 +78,7 @@ impl MsgsStreamCommands {
                     .stream()
                     .seek(topic, consumer_group, msg_stream_seek_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

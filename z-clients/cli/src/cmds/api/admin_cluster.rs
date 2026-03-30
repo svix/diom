@@ -36,15 +36,11 @@ pub enum AdminClusterCommands {
 }
 
 impl AdminClusterCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Status {} => {
                 let resp = client.admin().cluster().status().await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Initialize {
                 cluster_initialize_in,
@@ -54,7 +50,7 @@ impl AdminClusterCommands {
                     .cluster()
                     .initialize(cluster_initialize_in.unwrap_or_default().into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::RemoveNode {
                 cluster_remove_node_in,
@@ -64,7 +60,7 @@ impl AdminClusterCommands {
                     .cluster()
                     .remove_node(cluster_remove_node_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::ForceSnapshot {
                 cluster_force_snapshot_in,
@@ -74,7 +70,7 @@ impl AdminClusterCommands {
                     .cluster()
                     .force_snapshot(cluster_force_snapshot_in.unwrap_or_default().into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

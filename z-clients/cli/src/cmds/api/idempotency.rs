@@ -32,14 +32,10 @@ pub enum IdempotencyCommands {
 }
 
 impl IdempotencyCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Start {
                 key,
@@ -49,7 +45,7 @@ impl IdempotencyCommands {
                     .idempotency()
                     .start(key, idempotency_start_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Complete {
                 key,
@@ -59,7 +55,7 @@ impl IdempotencyCommands {
                     .idempotency()
                     .complete(key, idempotency_complete_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Abort {
                 key,
@@ -69,7 +65,7 @@ impl IdempotencyCommands {
                     .idempotency()
                     .abort(key, idempotency_abort_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

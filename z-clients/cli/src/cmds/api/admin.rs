@@ -18,17 +18,13 @@ pub enum AdminCommands {
 }
 
 impl AdminCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::AuthToken(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Cluster(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
         }
 

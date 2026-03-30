@@ -24,11 +24,7 @@ pub enum RateLimitNamespaceCommands {
 }
 
 impl RateLimitNamespaceCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 rate_limit_create_namespace_in,
@@ -38,7 +34,7 @@ impl RateLimitNamespaceCommands {
                     .namespace()
                     .create(rate_limit_create_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get {
                 rate_limit_get_namespace_in,
@@ -48,7 +44,7 @@ impl RateLimitNamespaceCommands {
                     .namespace()
                     .get(rate_limit_get_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

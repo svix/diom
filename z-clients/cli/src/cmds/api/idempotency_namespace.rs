@@ -24,11 +24,7 @@ pub enum IdempotencyNamespaceCommands {
 }
 
 impl IdempotencyNamespaceCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 idempotency_create_namespace_in,
@@ -38,7 +34,7 @@ impl IdempotencyNamespaceCommands {
                     .namespace()
                     .create(idempotency_create_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get {
                 idempotency_get_namespace_in,
@@ -48,7 +44,7 @@ impl IdempotencyNamespaceCommands {
                     .namespace()
                     .get(idempotency_get_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

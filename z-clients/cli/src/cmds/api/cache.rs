@@ -32,22 +32,18 @@ pub enum CacheCommands {
 }
 
 impl CacheCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Set { key, cache_set_in } => {
                 let resp = client.cache().set(key, cache_set_in.into_inner()).await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get { key, cache_get_in } => {
                 let resp = client.cache().get(key, cache_get_in.into_inner()).await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Delete {
                 key,
@@ -57,7 +53,7 @@ impl CacheCommands {
                     .cache()
                     .delete(key, cache_delete_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

@@ -18,15 +18,11 @@ pub enum HealthCommands {
 }
 
 impl HealthCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Ping {} => {
                 let resp = client.health().ping().await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Error {} => {
                 client.health().error().await?;

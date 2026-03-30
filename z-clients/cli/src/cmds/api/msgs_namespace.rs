@@ -24,11 +24,7 @@ pub enum MsgsNamespaceCommands {
 }
 
 impl MsgsNamespaceCommands {
-    pub async fn exec(
-        self,
-        client: &CoyoteClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &CoyoteClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 name,
@@ -39,7 +35,7 @@ impl MsgsNamespaceCommands {
                     .namespace()
                     .create(name, msg_namespace_create_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get {
                 name,
@@ -50,7 +46,7 @@ impl MsgsNamespaceCommands {
                     .namespace()
                     .get(name, msg_namespace_get_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 
