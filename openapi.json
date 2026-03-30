@@ -6565,7 +6565,6 @@
           "ms": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 1,
             "default": 2592000000
           },
           "bytes": {

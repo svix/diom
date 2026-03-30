@@ -36,6 +36,16 @@ impl DurationMs {
         Self(mins.checked_mul(60_000).expect("integer overflow"))
     }
 
+    /// Create a duration from the given number of hours.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `hours * 3_600_000` overflows the `u64` range.
+    #[track_caller]
+    pub fn from_hours(hours: u64) -> Self {
+        Self(hours.checked_mul(3_600_000).expect("integer overflow"))
+    }
+
     pub fn as_millis(self) -> u64 {
         self.0
     }

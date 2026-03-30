@@ -12,7 +12,7 @@ use coyote_msgs::{
     MsgsNamespace,
     entities::{
         ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, SeekPosition, StreamMsgOut, TopicIn,
-        TopicName, TopicPartition, default_retention_bytes, default_retention_ms,
+        TopicName, TopicPartition, default_retention_bytes,
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
@@ -124,10 +124,7 @@ async fn get_namespace(
         .fetch_namespace_admin(&data.name)?
         .ok_or_not_found()?;
 
-    let ms = u64::try_from(namespace.config.retention_period.as_millis())
-        .ok()
-        .and_then(|ms| ms.try_into().ok())
-        .unwrap_or_else(default_retention_ms);
+    let ms = namespace.config.retention_period;
     let bytes = namespace
         .max_storage_bytes
         .unwrap_or_else(default_retention_bytes);

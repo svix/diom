@@ -1291,6 +1291,7 @@ dependencies = [
 name = "coyote-namespace"
 version = "0.0.1"
 dependencies = [
+ "coyote-core",
  "coyote-error",
  "coyote-id",
  "fjall",
