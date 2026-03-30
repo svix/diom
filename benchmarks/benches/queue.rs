@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use diom_client::models::{
     MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn,
@@ -120,7 +122,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                                 "bench-cg".to_owned(),
                                 MsgQueueReceiveIn::new()
                                     .with_batch_size(100u16)
-                                    .with_lease_duration_ms(100u64),
+                                    .with_lease_duration(Duration::from_millis(100)),
                             )
                             .await
                             .unwrap(),

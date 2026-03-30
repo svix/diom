@@ -9,8 +9,8 @@ pub struct AuthTokenExpireIn {
     pub id: String,
 
     /// Milliseconds from now until the token expires. `None` means expire immediately.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiry_ms: Option<u64>,
+    #[serde(rename = "expiry_ms", skip_serializing_if = "Option::is_none")]
+    pub expiry: Option<std::time::Duration>,
 }
 
 impl AuthTokenExpireIn {
@@ -18,7 +18,7 @@ impl AuthTokenExpireIn {
         Self {
             namespace: None,
             id,
-            expiry_ms: None,
+            expiry: None,
         }
     }
 
@@ -27,8 +27,8 @@ impl AuthTokenExpireIn {
         self
     }
 
-    pub fn with_expiry_ms(mut self, value: impl Into<Option<u64>>) -> Self {
-        self.expiry_ms = value.into();
+    pub fn with_expiry(mut self, value: impl Into<Option<std::time::Duration>>) -> Self {
+        self.expiry = value.into();
         self
     }
 }
