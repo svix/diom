@@ -49,7 +49,7 @@ jobs:
             -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
             -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
             coyote-server
-          for i in $(seq 1 60); do
+          for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
               exit 0
@@ -91,7 +91,7 @@ jobs:
             -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
             -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
             coyote-server
-          for i in $(seq 1 60); do
+          for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
               exit 0
@@ -131,7 +131,7 @@ jobs:
             -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
             -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
             coyote-server
-          for i in $(seq 1 60); do
+          for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
               exit 0
@@ -173,7 +173,7 @@ jobs:
             -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
             -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
             coyote-server
-          for i in $(seq 1 60); do
+          for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
               exit 0
@@ -215,7 +215,7 @@ jobs:
             -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
             -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
             coyote-server
-          for i in $(seq 1 60); do
+          for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
               exit 0

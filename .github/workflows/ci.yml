@@ -141,6 +141,9 @@ jobs:
           else
             echo 'all good.'
           fi
+  sdk-integration:
+    uses: ./.github/workflows/sdk-integration.yml
+    secrets: inherit
   check-crd:
     name: Check CRD JSON freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
