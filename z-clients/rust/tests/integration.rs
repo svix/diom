@@ -1,8 +1,6 @@
 use coyote_client::{
     CoyoteClient,
-    models::{
-        CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn,
-    },
+    models::{CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn},
 };
 
 const TOKEN: &str = "admin_abcdefghijlmnopqrstuvwxyz012345";
@@ -34,11 +32,7 @@ async fn test_kv_set_get_delete() {
     assert!(set_resp.success);
 
     // Get
-    let get_resp = client
-        .kv()
-        .get(key.clone(), KvGetIn::new())
-        .await
-        .unwrap();
+    let get_resp = client.kv().get(key.clone(), KvGetIn::new()).await.unwrap();
     assert_eq!(get_resp.value, Some(value));
 
     // Delete
