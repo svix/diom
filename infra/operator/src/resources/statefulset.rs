@@ -6,9 +6,8 @@ use k8s_openapi::{
         core::v1::{
             Affinity, Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction,
             ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
-            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, ResourceRequirements,
-            SecretKeySelector, Toleration, TopologySpreadConstraint, VolumeMount,
-            VolumeResourceRequirements,
+            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, ResourceRequirements, Toleration,
+            TopologySpreadConstraint, VolumeMount, VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -151,11 +150,7 @@ fn build_env(
         env.push(EnvVar {
             name: "COYOTE_CLUSTER_SECRET".into(),
             value_from: Some(EnvVarSource {
-                secret_key_ref: Some(SecretKeySelector {
-                    name: secret_ref.name.clone(),
-                    key: secret_ref.key.clone(),
-                    ..Default::default()
-                }),
+                secret_key_ref: Some(secret_ref.clone()),
                 ..Default::default()
             }),
             ..Default::default()
@@ -411,9 +406,9 @@ fn push_opt_env(env: &mut Vec<EnvVar>, name: &str, value: Option<impl ToString>)
     }
 }
 
-fn pvc_template(name: &str, size: &str, storage_class: Option<&str>) -> PersistentVolumeClaim {
+fn pvc_template(name: &str, size: &Quantity, storage_class: Option<&str>) -> PersistentVolumeClaim {
     let mut resources: BTreeMap<String, Quantity> = BTreeMap::new();
-    resources.insert("storage".into(), Quantity(size.into()));
+    resources.insert("storage".into(), size.clone());
 
     PersistentVolumeClaim {
         metadata: ObjectMeta {
