@@ -107,16 +107,15 @@ impl AdminAuthController {
     pub async fn list_roles(
         &self,
         limit: usize,
-        start_after: Option<String>,
+        iterator: Option<RoleId>,
     ) -> Result<Vec<RoleModel>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            // FIXME: actually use the iterator on fjall (like we do in auth_token) rather than
-            // doing it in rust.
-            let models = RoleRow::values(&keyspace)?
-                .map(RoleModel::from)
-                .filter(|m| start_after.as_deref().is_none_or(|s| m.id.as_str() > s))
-                .take(limit)
+            let prefix = vec![RoleRow::ROW_TYPE];
+            let iterator = iterator.map(|id| RoleRow::key_for(&id).into_fjall_key().to_vec());
+            let models = RoleRow::list_range(&keyspace, &prefix, iterator, limit)?
+                .into_iter()
+                .map(|(_, row)| RoleModel::from(row))
                 .collect();
             Ok(models)
         })
@@ -174,31 +173,20 @@ impl AdminAuthController {
     pub async fn list_policies(
         &self,
         limit: usize,
-        start_after: Option<String>,
+        iterator: Option<AccessPolicyId>,
     ) -> Result<Vec<AccessPolicyModel>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            let mut models = Vec::new();
-
-            for (key, row) in AccessPolicyRow::iter(&keyspace) {
-                let id = AccessPolicyRow::decode_fjall_key(&key)?;
-                let model = AccessPolicyModel::new(id, row);
-
-                // FIXME: actually use the iterator on fjall (like we do in auth_token) rather than
-                // doing it in rust.
-                if start_after
-                    .as_deref()
-                    .is_some_and(|s| s > model.id.as_str())
-                {
-                    continue;
-                }
-
-                models.push(model);
-                if models.len() >= limit {
-                    break;
-                }
-            }
-
+            let prefix = vec![AccessPolicyRow::ROW_TYPE];
+            let iterator =
+                iterator.map(|id| AccessPolicyRow::key_for(&id).into_fjall_key().to_vec());
+            let models = AccessPolicyRow::list_range(&keyspace, &prefix, iterator, limit)?
+                .into_iter()
+                .map(|(key, row)| {
+                    let id = AccessPolicyRow::decode_fjall_key(&key)?;
+                    Ok(AccessPolicyModel::new(id, row))
+                })
+                .collect::<Result<Vec<_>>>()?;
             Ok(models)
         })
         .await?
