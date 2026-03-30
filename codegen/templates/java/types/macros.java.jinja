@@ -5,6 +5,6 @@
         @JsonProperty
     {%- endif -%}
 {%- endmacro -%}
-{% macro field_decl(field) -%}
-    {{ field_annotation(field) }} private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
+{% macro field_decl(field, annotate=true) -%}
+    {% if annotate %}{{ field_annotation(field) }} {% endif %}private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
 {%- endmacro -%}
