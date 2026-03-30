@@ -16,7 +16,7 @@ use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationRes
 use itertools::Itertools;
 use jiff::Timestamp;
 use maplit::btreeset;
-use openraft::RaftNetworkFactory;
+use openraft::{RaftNetworkFactory, ServerState};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc::Sender;
@@ -395,18 +395,31 @@ impl RaftState {
     }
 
     pub async fn run_discovery_if_necessary(&self) -> anyhow::Result<()> {
+        let node_id = self.node_id;
         let network = NetworkFactory::new(&self.cfg)?;
-        let has_cluster = self
+        let (has_cluster, server_state) = self
             .raft
-            .with_raft_state(|s| {
-                s.committed().is_some() || s.membership_state.effective().nodes().count() > 0
+            .with_raft_state(move |s| {
+                let has_committed_ids = s.committed().is_some();
+                let has_nodes = s.membership_state.effective().nodes().count() > 0;
+                let self_in_nodes = s.membership_state.effective().get_node(&node_id).is_some();
+                let valid_state =
+                    !matches!(s.server_state, ServerState::Shutdown | ServerState::Learner);
+                let has_cluster = (has_committed_ids || has_nodes) && self_in_nodes && valid_state;
+                (has_cluster, s.server_state)
             })
             .await
             .context("reading cluster state")?;
         if has_cluster {
-            tracing::debug!("node already has cluster information; skipping discovery");
+            tracing::debug!(
+                ?server_state,
+                "node already has cluster information; skipping discovery"
+            );
         } else {
-            tracing::debug!("node has no cluster information; kicking off discovery");
+            tracing::debug!(
+                ?server_state,
+                "node is not live in cluster; kicking off discovery"
+            );
             let disco =
                 Discovery::new(self.cfg.clone(), self.raft.clone(), self.node_id, network).await?;
             if let Err(err) = disco.discover_cluster().await {
@@ -457,7 +470,7 @@ impl RaftState {
         }
     }
 
-    pub async fn state(&self) -> anyhow::Result<openraft::ServerState> {
+    pub async fn state(&self) -> anyhow::Result<ServerState> {
         self.raft
             .with_raft_state(|s| s.server_state)
             .await
