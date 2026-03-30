@@ -150,7 +150,6 @@ async fn kv_set(
         data.ttl_ms,
         data.behavior,
         data.version,
-        repl.time.now(),
     );
     let SetResponseData { version, success } =
         repl.client_write(operation).await.or_internal_error()?.0?;
