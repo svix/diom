@@ -9,7 +9,7 @@ async fn cache_set(client: &TestClient, key: &str, expire_in: u64, value: &str) 
         .post("v1.cache.set")
         .json(json!({
             "key": key,
-            "ttl": expire_in,
+            "ttl_ms": expire_in,
             "value": value.as_bytes()
         }))
         .await?
@@ -51,7 +51,7 @@ async fn test_cache_set_and_get() -> TestResult {
         .json(json!({
             "namespace": "nonexistentnamespace",
             "key": "key1",
-            "ttl": 1,
+            "ttl_ms": 1,
             "value": "123".as_bytes(),
             "behavior": "upsert",
         }))

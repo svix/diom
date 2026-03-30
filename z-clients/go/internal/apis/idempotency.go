@@ -30,7 +30,7 @@ func (idempotency Idempotency) Start(
 	body := coyote_models.IdempotencyStartIn_{
 		Namespace: idempotencyStartIn.Namespace,
 		Key:       key,
-		Ttl:       idempotencyStartIn.Ttl,
+		TtlMs:     idempotencyStartIn.TtlMs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyStartIn_, coyote_models.IdempotencyStartOut](
@@ -52,7 +52,7 @@ func (idempotency Idempotency) Complete(
 		Namespace: idempotencyCompleteIn.Namespace,
 		Key:       key,
 		Response:  idempotencyCompleteIn.Response,
-		Ttl:       idempotencyCompleteIn.Ttl,
+		TtlMs:     idempotencyCompleteIn.TtlMs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyCompleteIn_, coyote_models.IdempotencyCompleteOut](

@@ -31,7 +31,7 @@ public class KvSetIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
-    @JsonProperty private Long ttl;
+    @JsonProperty("ttl_ms") private Long ttlMs;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
     public KvSetIn() {}
@@ -81,23 +81,23 @@ public class KvSetIn {
         this.value = value;
     }
 
-    public KvSetIn ttl(Long ttl) {
-        this.ttl = ttl;
+    public KvSetIn ttlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
         return this;
     }
 
     /**
     * Time to live in milliseconds
     *
-     * @return ttl
+     * @return ttlMs
      */
     @javax.annotation.Nullable
-    public Long getTtl() {
-        return ttl;
+    public Long getTtlMs() {
+        return ttlMs;
     }
 
-    public void setTtl(Long ttl) {
-        this.ttl = ttl;
+    public void setTtlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
     }
 
     public KvSetIn behavior(OperationBehavior behavior) {

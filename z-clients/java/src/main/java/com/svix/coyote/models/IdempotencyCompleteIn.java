@@ -31,7 +31,7 @@ public class IdempotencyCompleteIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> response;
-    @JsonProperty private Long ttl;
+    @JsonProperty("ttl_ms") private Long ttlMs;
     public IdempotencyCompleteIn() {}
 
     public IdempotencyCompleteIn namespace(String namespace) {
@@ -79,22 +79,22 @@ public class IdempotencyCompleteIn {
         this.response = response;
     }
 
-    public IdempotencyCompleteIn ttl(Long ttl) {
-        this.ttl = ttl;
+    public IdempotencyCompleteIn ttlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
         return this;
     }
 
     /**
-    * TTL in seconds for the cached response
+    * TTL in milliseconds for the cached response
     *
-     * @return ttl
+     * @return ttlMs
      */
     @javax.annotation.Nonnull
-    public Long getTtl() {
-        return ttl;
+    public Long getTtlMs() {
+        return ttlMs;
     }
 
-    public void setTtl(Long ttl) {
-        this.ttl = ttl;
+    public void setTtlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
     }
 }
