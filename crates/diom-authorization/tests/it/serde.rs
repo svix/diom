@@ -45,7 +45,7 @@ fn example_rules_serialized() -> serde_json::Value {
     json!([
         {
             "effect": "allow",
-            "resource": "cache::foo/**",
+            "resource": "cache::foo/*",
             "actions": [
                 "Read",
                 "List"
@@ -60,7 +60,7 @@ fn example_rules_serialized() -> serde_json::Value {
         },
         {
             "effect": "allow",
-            "resource": "kv::some-data/**",
+            "resource": "kv::some-data/*",
             "actions": [
                 "Read",
                 "List"
