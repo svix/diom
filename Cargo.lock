@@ -978,6 +978,7 @@ dependencies = [
  "axum-extra",
  "byteorder",
  "constant_time_eq 0.4.2",
+ "coyote-admin-auth",
  "coyote-auth-token",
  "coyote-authorization",
  "coyote-cache",
