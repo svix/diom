@@ -1,2 +1,5 @@
 [default.extend-words]
 ser = "ser" # Java com.fasterxml.jackson.databind.ser
+
+[default.extend-identifiers]
+ANDed = "ANDed"
