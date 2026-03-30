@@ -302,18 +302,6 @@ mod tests {
     }
 
     #[test]
-    fn cache_with_options() {
-        let cmd: BootstrapCommand =
-            r#"cache namespace create {"name":"myns","eviction_policy":"LeastRecentlyUsed"}"#
-                .parse()
-                .unwrap();
-        let BootstrapCommand::Cache(v) = cmd else {
-            panic!()
-        };
-        assert_eq!(v.eviction_policy, EvictionPolicy::LeastRecentlyUsed);
-    }
-
-    #[test]
     fn idempotency() {
         let cmd: BootstrapCommand =
             r#"idempotency namespace create {"name":"myns"}"#.parse().unwrap();

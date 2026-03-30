@@ -11,17 +11,12 @@ pub type NamespaceName = String;
 pub enum EvictionPolicy {
     #[default]
     NoEviction,
-    LeastRecentlyUsed,
 }
 
 pub trait ModuleConfig:
     Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned + Send + Sync
 {
     fn module() -> Module;
-
-    fn eviction_policy(&self) -> EvictionPolicy {
-        EvictionPolicy::NoEviction
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
@@ -44,10 +39,6 @@ pub struct CacheConfig {
 
 impl CacheConfig {
     pub const NAMESPACE: &'static str = "cache_store";
-
-    pub fn eviction_policy(&self) -> EvictionPolicy {
-        self.eviction_policy
-    }
 }
 
 impl ModuleConfig for CacheConfig {
@@ -88,10 +79,6 @@ impl ModuleConfig for IdempotencyConfig {
 
 impl IdempotencyConfig {
     pub const NAMESPACE: &'static str = "idempotency_store";
-
-    pub fn eviction_policy(&self) -> EvictionPolicy {
-        EvictionPolicy::NoEviction
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]

@@ -135,39 +135,6 @@ async fn create_namespace_with_defaults() -> TestResult {
 }
 
 #[tokio::test]
-async fn create_namespace_with_custom_config() -> TestResult {
-    let TestContext {
-        client,
-        handle: _handle,
-        ..
-    } = start_server().await;
-
-    let response = client
-        .post("v1.cache.namespace.create")
-        .json(json!({
-            "name": "custom-ns",
-            "eviction_policy": "LeastRecentlyUsed",
-        }))
-        .await?
-        .expect(StatusCode::OK)
-        .json();
-
-    let ts = &response["created"];
-
-    assert_eq!(
-        response,
-        json!({
-            "name": "custom-ns",
-            "eviction_policy": "LeastRecentlyUsed",
-            "created": ts,
-            "updated": ts,
-        })
-    );
-
-    Ok(())
-}
-
-#[tokio::test]
 async fn create_namespace_upserts() -> TestResult {
     let TestContext {
         client,

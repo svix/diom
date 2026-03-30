@@ -12,13 +12,11 @@ import (
 type EvictionPolicy string
 
 const (
-	EVICTIONPOLICY_NO_EVICTION         EvictionPolicy = "NoEviction"
-	EVICTIONPOLICY_LEAST_RECENTLY_USED EvictionPolicy = "LeastRecentlyUsed"
+	EVICTIONPOLICY_NO_EVICTION EvictionPolicy = "NoEviction"
 )
 
 var allowedEvictionPolicy = []EvictionPolicy{
 	"NoEviction",
-	"LeastRecentlyUsed",
 }
 
 func (v *EvictionPolicy) UnmarshalMsgpack(src []byte) error {
@@ -37,6 +35,5 @@ func (v *EvictionPolicy) UnmarshalMsgpack(src []byte) error {
 }
 
 var EvictionPolicyFromString = map[string]EvictionPolicy{
-	"NoEviction":        EVICTIONPOLICY_NO_EVICTION,
-	"LeastRecentlyUsed": EVICTIONPOLICY_LEAST_RECENTLY_USED,
+	"NoEviction": EVICTIONPOLICY_NO_EVICTION,
 }
