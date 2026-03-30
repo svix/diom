@@ -572,6 +572,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "buf-min"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22d5698cf6842742ed64805705798f8b351fff53fa546fd45c52184bee58dc90"
+
+[[package]]
 name = "bumpalo"
 version = "3.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1135,6 +1141,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "v_jsonescape",
  "yansi",
 ]
 
@@ -1154,6 +1161,7 @@ dependencies = [
  "rmp-serde",
  "rustls",
  "serde",
+ "serde_bytes",
  "serde_json",
  "tokio",
  "tower-service",
@@ -4725,6 +4733,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_bytes"
+version = "0.11.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5d440709e79d88e51ac01c4b72fc6cb7314017bb7da9eeff678aa94c10e3ea8"
+dependencies = [
+ "serde",
+ "serde_core",
+]
+
+[[package]]
 name = "serde_core"
 version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5619,6 +5637,15 @@ dependencies = [
  "js-sys",
  "serde_core",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "v_jsonescape"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be8219cc464ba10c48c3231a6871f11d26d831c5c45a47467eea387ea7bb10e8"
+dependencies = [
+ "buf-min",
 ]
 
 [[package]]

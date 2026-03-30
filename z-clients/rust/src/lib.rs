@@ -9,6 +9,7 @@ mod connector;
 mod error;
 pub mod models;
 mod request;
+mod serde_bytes_opt;
 
 use self::connector::Connector;
 pub use self::{

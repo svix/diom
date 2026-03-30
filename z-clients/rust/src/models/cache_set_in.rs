@@ -6,6 +6,7 @@ pub struct CacheSetIn {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub namespace: Option<String>,
 
+    #[serde(with = "serde_bytes")]
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
@@ -34,6 +35,7 @@ pub(crate) struct CacheSetIn_ {
 
     pub key: String,
 
+    #[serde(with = "serde_bytes")]
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
