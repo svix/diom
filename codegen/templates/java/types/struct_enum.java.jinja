@@ -47,7 +47,7 @@ import java.time.OffsetDateTime;
 @JsonDeserialize(using = {{ type_name }}Deserializer.class)
 public class {{ type_name }} {
     {% for f in type.fields -%}
-    {{ field_decl(f, false) }}
+    {{ field_decl(f, annotate=false) }}
     {% endfor -%}
     private {{ enum_type_name }} {{ content_field_name }};
 
