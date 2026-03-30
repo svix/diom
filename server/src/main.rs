@@ -5,9 +5,17 @@
 #![forbid(unsafe_code)]
 
 use clap::{Parser, Subcommand};
-use coyote::{cfg, run};
+use coyote::{
+    cfg::{self, Configuration},
+    run,
+};
 use dotenvy::dotenv;
 use mimalloc::MiMalloc;
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
 use tracing_subscriber::util::SubscriberInitExt;
 
 #[global_allocator]
@@ -20,7 +28,7 @@ mod tracing_panic_hook;
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
 struct Args {
     #[clap(long)]
-    config_path: Option<String>,
+    config_path: Option<PathBuf>,
 
     #[clap(subcommand)]
     command: Option<Commands>,
@@ -30,13 +38,33 @@ struct Args {
 enum Commands {
     /// Health check command
     Healthcheck {
-        // FIXME: we should make it optional and default to localhost with the settings (when ran
-        // in docker)
-        /// The server URL, for example http://localhost:8050
-        server_url: String,
+        /// If not passed, will use the port in the config
+        server_url: Option<String>,
     },
     /// Run the server (this is also the default if no subcommand is passed)
     Server,
+    /// Write the current config out as a TOML file
+    ///
+    /// This will take into account any environment variables passed, as well as
+    /// the contents of --config-path.
+    WriteConfig {
+        /// Path to write to; if not specified, writes to stdout
+        path: Option<PathBuf>,
+    },
+}
+
+fn dump_config(cfg: Configuration, path: Option<PathBuf>) -> anyhow::Result<()> {
+    let str = toml::to_string_pretty(&cfg)?;
+    if let Some(path) = path
+        && path.to_str() != Some("-")
+    {
+        let f = File::open(path)?;
+        let mut bf = BufWriter::new(f);
+        write!(bf, "{}", str)?;
+    } else {
+        print!("{}", str);
+    }
+    Ok(())
 }
 
 #[tokio::main]
@@ -45,8 +73,19 @@ async fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
-    // Handle commands that don't need configuration first
     if let Some(Commands::Healthcheck { server_url }) = args.command {
+        let server_url = if let Some(url) = server_url {
+            url
+        } else {
+            // only load the cfg if we didn't pass --server-url
+            let cfg = cfg::load(args.config_path.as_deref())?;
+            let server_address = if cfg.listen_address.ip().is_unspecified() {
+                format!("http://localhost:{}", cfg.listen_address.port())
+            } else {
+                cfg.listen_address.to_string()
+            };
+            format!("http://{}", server_address)
+        };
         let client = reqwest::Client::new();
         let response = client
             .head(format!("{server_url}/api/v1.health"))
@@ -79,6 +118,7 @@ async fn main() -> anyhow::Result<()> {
             otel::setup_metrics(&cfg);
             run(cfg).await
         }
+        Some(Commands::WriteConfig { path }) => dump_config(cfg, path)?,
     };
 
     #[allow(clippy::disallowed_methods)]

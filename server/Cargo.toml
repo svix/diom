@@ -17,6 +17,7 @@ opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
+toml.workspace = true
 tracing.workspace = true
 tracing-opentelemetry.workspace = true
 tracing-subscriber.workspace = true
