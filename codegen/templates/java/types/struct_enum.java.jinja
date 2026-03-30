@@ -1,3 +1,4 @@
+{% from "types/macros.java.jinja" import field_decl -%}
 {% set type_name = type.name | to_upper_camel_case -%}
 {% set enum_type_name %}{{ type_name }}Config{% endset -%}
 {% set discriminator_field_name = type.discriminator_field | to_lower_camel_case -%}
@@ -46,7 +47,7 @@ import java.time.OffsetDateTime;
 @JsonDeserialize(using = {{ type_name }}Deserializer.class)
 public class {{ type_name }} {
     {% for f in type.fields -%}
-    private {{ f.type.to_java() }} {{ f.name | to_lower_camel_case }};
+    {{ field_decl(f, annotate=false) }}
     {% endfor -%}
     private {{ enum_type_name }} {{ content_field_name }};
 
@@ -74,7 +75,7 @@ public class {{ type_name }} {
 @NoArgsConstructor
 class {{ type_name }}Surrogate {
     {% for f in type.fields -%}
-    @JsonProperty("{{ f.name }}") {{ f.type.to_java() }} {{ f.name | to_lower_camel_case }};
+    {{ field_decl(f) }}
     {% endfor -%}
     @JsonProperty("{{ type.discriminator_field }}") String {{ discriminator_field_name }};
     @JsonProperty("{{ type.content_field }}") JsonNode {{ content_field_name }};
