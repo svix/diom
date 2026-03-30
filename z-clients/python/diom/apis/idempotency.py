@@ -33,7 +33,7 @@ class IdempotencyAsync(ApiBase):
         body = _IdempotencyStartIn(
             namespace=idempotency_start_in.namespace,
             key=key,
-            ttl=idempotency_start_in.ttl,
+            ttl_ms=idempotency_start_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -53,7 +53,7 @@ class IdempotencyAsync(ApiBase):
             namespace=idempotency_complete_in.namespace,
             key=key,
             response=idempotency_complete_in.response,
-            ttl=idempotency_complete_in.ttl,
+            ttl_ms=idempotency_complete_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -96,7 +96,7 @@ class Idempotency(ApiBase):
         body = _IdempotencyStartIn(
             namespace=idempotency_start_in.namespace,
             key=key,
-            ttl=idempotency_start_in.ttl,
+            ttl_ms=idempotency_start_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(
@@ -116,7 +116,7 @@ class Idempotency(ApiBase):
             namespace=idempotency_complete_in.namespace,
             key=key,
             response=idempotency_complete_in.response,
-            ttl=idempotency_complete_in.ttl,
+            ttl_ms=idempotency_complete_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

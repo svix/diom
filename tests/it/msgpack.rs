@@ -9,7 +9,7 @@ use test_utils::{
 #[derive(Serialize)]
 struct CacheSetIn<'a> {
     key: &'a str,
-    ttl: u32,
+    ttl_ms: u32,
     value: &'a [u8],
 }
 
@@ -31,7 +31,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         .header("accept", "application/json")
         .msgpack(CacheSetIn {
             key: "test-key-1",
-            ttl: 60000,
+            ttl_ms: 60000,
             value: b"test-value-123",
         })
         .await?
@@ -70,7 +70,7 @@ async fn test_cache_set_and_get_msgpack_out() -> TestResult {
         .post("v1.cache.set")
         .json(json!({
             "key": "test-key-1",
-            "ttl": 60000,
+            "ttl_ms": 60000,
             "value": "test-value-123".as_bytes(),
         }))
         .await?

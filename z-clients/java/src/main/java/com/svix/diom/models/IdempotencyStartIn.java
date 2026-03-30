@@ -30,7 +30,7 @@ import lombok.ToString;
 public class IdempotencyStartIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty private Long ttl;
+    @JsonProperty("ttl_ms") private Long ttlMs;
     public IdempotencyStartIn() {}
 
     public IdempotencyStartIn namespace(String namespace) {
@@ -52,22 +52,22 @@ public class IdempotencyStartIn {
         this.namespace = namespace;
     }
 
-    public IdempotencyStartIn ttl(Long ttl) {
-        this.ttl = ttl;
+    public IdempotencyStartIn ttlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
         return this;
     }
 
     /**
-    * TTL in seconds for the lock/response
+    * TTL in milliseconds for the lock/response
     *
-     * @return ttl
+     * @return ttlMs
      */
     @javax.annotation.Nonnull
-    public Long getTtl() {
-        return ttl;
+    public Long getTtlMs() {
+        return ttlMs;
     }
 
-    public void setTtl(Long ttl) {
-        this.ttl = ttl;
+    public void setTtlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
     }
 }

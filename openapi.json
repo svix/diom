@@ -4978,7 +4978,7 @@
               "maximum": 255
             }
           },
-          "ttl": {
+          "ttl_ms": {
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64"
@@ -4987,7 +4987,7 @@
         "required": [
           "key",
           "value",
-          "ttl"
+          "ttl_ms"
         ],
         "x-positional": [
           "key"
@@ -5170,8 +5170,8 @@
               "maximum": 255
             }
           },
-          "ttl": {
-            "description": "TTL in seconds for the cached response",
+          "ttl_ms": {
+            "description": "TTL in milliseconds for the cached response",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
@@ -5180,7 +5180,7 @@
         "required": [
           "key",
           "response",
-          "ttl"
+          "ttl_ms"
         ],
         "x-positional": [
           "key"
@@ -5302,8 +5302,8 @@
             "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
-          "ttl": {
-            "description": "TTL in seconds for the lock/response",
+          "ttl_ms": {
+            "description": "TTL in milliseconds for the lock/response",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
@@ -5311,7 +5311,7 @@
         },
         "required": [
           "key",
-          "ttl"
+          "ttl_ms"
         ],
         "x-positional": [
           "key"
@@ -5565,7 +5565,7 @@
               "maximum": 255
             }
           },
-          "ttl": {
+          "ttl_ms": {
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",

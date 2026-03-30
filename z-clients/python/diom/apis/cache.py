@@ -34,7 +34,7 @@ class CacheAsync(ApiBase):
             namespace=cache_set_in.namespace,
             key=key,
             value=cache_set_in.value,
-            ttl=cache_set_in.ttl,
+            ttl_ms=cache_set_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -97,7 +97,7 @@ class Cache(ApiBase):
             namespace=cache_set_in.namespace,
             key=key,
             value=cache_set_in.value,
-            ttl=cache_set_in.ttl,
+            ttl_ms=cache_set_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

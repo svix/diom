@@ -9,15 +9,15 @@ pub struct CacheSetIn {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    pub ttl: u64,
+    pub ttl_ms: u64,
 }
 
 impl CacheSetIn {
-    pub fn new(value: Vec<u8>, ttl: u64) -> Self {
+    pub fn new(value: Vec<u8>, ttl_ms: u64) -> Self {
         Self {
             namespace: None,
             value,
-            ttl,
+            ttl_ms,
         }
     }
 
@@ -37,5 +37,5 @@ pub(crate) struct CacheSetIn_ {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    pub ttl: u64,
+    pub ttl_ms: u64,
 }

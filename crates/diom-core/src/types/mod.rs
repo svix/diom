@@ -13,10 +13,9 @@ use validator::{Validate, ValidationErrors};
 use crate::validation::validation_error;
 
 mod duration_ms;
-mod duration_s;
 mod metadata;
 
-pub use self::{duration_ms::DurationMs, duration_s::DurationS, metadata::Metadata};
+pub use self::{duration_ms::DurationMs, metadata::Metadata};
 
 const ALL_ERROR: &str = "__all__";
 

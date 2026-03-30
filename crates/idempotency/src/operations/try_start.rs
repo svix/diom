@@ -1,6 +1,6 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
 use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
-use diom_core::types::DurationS;
+use diom_core::types::DurationMs;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
@@ -11,15 +11,15 @@ use serde::{Deserialize, Serialize};
 pub struct TryStartOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
-    pub(crate) ttl_seconds: DurationS,
+    pub(crate) ttl_ms: DurationMs,
 }
 
 impl TryStartOperation {
-    pub fn new(namespace: IdempotencyNamespace, key: String, ttl_seconds: DurationS) -> Self {
+    pub fn new(namespace: IdempotencyNamespace, key: String, ttl_ms: DurationMs) -> Self {
         Self {
             namespace_id: namespace.id,
             key,
-            ttl_seconds,
+            ttl_ms,
         }
     }
 }
@@ -36,7 +36,7 @@ impl TryStartOperation {
         now: Timestamp,
         log_index: u64,
     ) -> Result<TryStartResponseData> {
-        let expiry = now + self.ttl_seconds;
+        let expiry = now + self.ttl_ms;
 
         let controller = state.state.controller();
 

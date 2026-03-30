@@ -31,7 +31,7 @@ public class CacheSetIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
-    @JsonProperty private Long ttl;
+    @JsonProperty("ttl_ms") private Long ttlMs;
     public CacheSetIn() {}
 
     public CacheSetIn namespace(String namespace) {
@@ -79,22 +79,22 @@ public class CacheSetIn {
         this.value = value;
     }
 
-    public CacheSetIn ttl(Long ttl) {
-        this.ttl = ttl;
+    public CacheSetIn ttlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
         return this;
     }
 
     /**
     * Time to live in milliseconds
     *
-     * @return ttl
+     * @return ttlMs
      */
     @javax.annotation.Nonnull
-    public Long getTtl() {
-        return ttl;
+    public Long getTtlMs() {
+        return ttlMs;
     }
 
-    public void setTtl(Long ttl) {
-        this.ttl = ttl;
+    public void setTtlMs(Long ttlMs) {
+        this.ttlMs = ttlMs;
     }
 }

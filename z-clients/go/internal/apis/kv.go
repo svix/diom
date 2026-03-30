@@ -31,7 +31,7 @@ func (kv Kv) Set(
 		Namespace: kvSetIn.Namespace,
 		Key:       key,
 		Value:     kvSetIn.Value,
-		Ttl:       kvSetIn.Ttl,
+		TtlMs:     kvSetIn.TtlMs,
 		Behavior:  kvSetIn.Behavior,
 		Version:   kvSetIn.Version,
 	}

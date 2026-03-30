@@ -30,7 +30,7 @@ func (idempotency Idempotency) Start(
 	body := diom_models.IdempotencyStartIn_{
 		Namespace: idempotencyStartIn.Namespace,
 		Key:       key,
-		Ttl:       idempotencyStartIn.Ttl,
+		TtlMs:     idempotencyStartIn.TtlMs,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.IdempotencyStartIn_, diom_models.IdempotencyStartOut](
@@ -52,7 +52,7 @@ func (idempotency Idempotency) Complete(
 		Namespace: idempotencyCompleteIn.Namespace,
 		Key:       key,
 		Response:  idempotencyCompleteIn.Response,
-		Ttl:       idempotencyCompleteIn.Ttl,
+		TtlMs:     idempotencyCompleteIn.TtlMs,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.IdempotencyCompleteIn_, diom_models.IdempotencyCompleteOut](

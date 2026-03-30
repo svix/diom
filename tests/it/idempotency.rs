@@ -7,12 +7,12 @@ use test_utils::{
 };
 
 #[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
-async fn start(client: &TestClient, key: &str, ttl_seconds: u64) -> TestResult<serde_json::Value> {
+async fn start(client: &TestClient, key: &str, ttl_ms: u64) -> TestResult<serde_json::Value> {
     let response = client
         .post("v1.idempotency.start")
         .json(json!({
             "key": key,
-            "ttl": ttl_seconds
+            "ttl_ms": ttl_ms
         }))
         .await?
         .expect(StatusCode::OK)
@@ -20,18 +20,13 @@ async fn start(client: &TestClient, key: &str, ttl_seconds: u64) -> TestResult<s
     Ok(response)
 }
 
-async fn complete(
-    client: &TestClient,
-    key: &str,
-    response: &str,
-    ttl_seconds: u64,
-) -> TestResult<()> {
+async fn complete(client: &TestClient, key: &str, response: &str, ttl_ms: u64) -> TestResult<()> {
     client
         .post("v1.idempotency.complete")
         .json(json!({
             "key": key,
             "response": response.as_bytes(),
-            "ttl": ttl_seconds
+            "ttl_ms": ttl_ms
         }))
         .await?
         .expect(StatusCode::OK);
@@ -57,62 +52,62 @@ async fn test_idempotency_start_and_complete() -> TestResult {
         ..
     } = start_server().await;
 
-    let response = start(&client, "k1", 60).await?;
+    let response = start(&client, "k1", 60_000).await?;
     assert_eq!(response["status"], "started");
 
-    start(&client, "k2", 60).await?;
+    start(&client, "k2", 60_000).await?;
 
     // start again should return locked
     let response = client
         .post("v1.idempotency.start")
         .json(json!({
             "key": "k2",
-            "ttl": 60
+            "ttl_ms": 60_000
         }))
         .await?
         .expect(StatusCode::OK)
         .json();
     assert_eq!(response["status"], "locked");
 
-    start(&client, "k3", 60).await?;
-    complete(&client, "k3", "v1", 60).await?;
-    complete(&client, "k3", "v2", 60).await?; // can complete same key again
+    start(&client, "k3", 60_000).await?;
+    complete(&client, "k3", "v1", 60_000).await?;
+    complete(&client, "k3", "v2", 60_000).await?; // can complete same key again
 
-    let response = start(&client, "k3", 60).await?;
+    let response = start(&client, "k3", 60_000).await?;
     assert_eq!(response["status"], "completed");
     assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
 
-    start(&client, "k4", 60).await?;
+    start(&client, "k4", 60_000).await?;
     abandon(&client, "k4").await?;
-    let response = start(&client, "k4", 60).await?;
+    let response = start(&client, "k4", 60_000).await?;
     assert_eq!(response["status"], "started");
 
-    start(&client, "k5", 60).await?;
-    complete(&client, "k5", "v2", 60).await?;
-    let response = start(&client, "k5", 60).await?;
+    start(&client, "k5", 60_000).await?;
+    complete(&client, "k5", "v2", 60_000).await?;
+    let response = start(&client, "k5", 60_000).await?;
     assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
 
-    complete(&client, "k5", "v3", 60).await?;
-    let response = start(&client, "k5", 60).await?;
+    complete(&client, "k5", "v3", 60_000).await?;
+    let response = start(&client, "k5", 60_000).await?;
     assert_eq!(response["status"], "completed");
     assert_eq!(response["data"]["response"], json!("v3".as_bytes()));
 
-    start(&client, "k6", 60).await?;
-    complete(&client, "k6", "v4", 60).await?;
+    start(&client, "k6", 60_000).await?;
+    complete(&client, "k6", "v4", 60_000).await?;
 
-    let response = start(&client, "k6", 60).await?;
+    let response = start(&client, "k6", 60_000).await?;
     assert_eq!(response["data"]["response"], json!("v4".as_bytes()));
 
     abandon(&client, "k6").await?;
 
-    let response = start(&client, "k6", 60).await?;
+    let response = start(&client, "k6", 60_000).await?;
     assert_eq!(response["status"], "started");
 
-    start(&client, "k7", 60).await?;
-    complete(&client, "k7", "v1", 60).await?;
+    start(&client, "k7", 60_000).await?;
+    complete(&client, "k7", "v1", 60_000).await?;
     // can abandon after completing
     abandon(&client, "k7").await?;
-    let response = start(&client, "k7", 60).await?;
+    let response = start(&client, "k7", 60_000).await?;
     assert_eq!(response["status"], "started");
 
     Ok(())
@@ -126,20 +121,20 @@ async fn test_idempotency_abandon() -> TestResult {
         ..
     } = start_server().await;
 
-    start(&client, "k1", 1).await?;
-    complete(&client, "k1", "v1", 1).await?;
+    start(&client, "k1", 1_000).await?;
+    complete(&client, "k1", "v1", 1_000).await?;
     // can abandon after completing
     abandon(&client, "k1").await?;
-    let response = start(&client, "k1", 1).await?;
+    let response = start(&client, "k1", 1_000).await?;
     assert_eq!(response["status"], "started");
 
     // can abandon before starting
     abandon(&client, "k2").await?;
 
-    start(&client, "k3", 1).await?;
+    start(&client, "k3", 1_000).await?;
     // can abandon before completing
     abandon(&client, "k3").await?;
-    let response = start(&client, "k3", 1).await?;
+    let response = start(&client, "k3", 1_000).await?;
     assert_eq!(response["status"], "started");
 
     Ok(())
@@ -155,29 +150,29 @@ async fn test_idempotency_expiration() -> TestResult {
     } = start_server().await;
 
     // start again after expired
-    start(&client, "k1", 1).await?;
+    start(&client, "k1", 1_000).await?;
     time.fast_forward(Duration::from_secs(2));
-    let response = start(&client, "k1", 1).await?;
+    let response = start(&client, "k1", 1_000).await?;
     assert_eq!(response["status"], "started");
 
     // start again after expired (completed)
-    complete(&client, "k2", "v1", 1).await?;
+    complete(&client, "k2", "v1", 1_000).await?;
     time.fast_forward(Duration::from_secs(2));
-    let response = start(&client, "k2", 1).await?;
+    let response = start(&client, "k2", 1_000).await?;
     assert_eq!(response["status"], "started");
 
     // complete TTL shorter than start
-    start(&client, "k4", 60).await?;
-    complete(&client, "k4", "v1", 1).await?;
+    start(&client, "k4", 60_000).await?;
+    complete(&client, "k4", "v1", 1_000).await?;
     time.fast_forward(Duration::from_secs(2));
-    let response = start(&client, "k4", 60).await?;
+    let response = start(&client, "k4", 60_000).await?;
     assert_eq!(response["status"], "started");
 
     // complete TTL longer than start
-    start(&client, "k5", 1).await?;
-    complete(&client, "k5", "v1", 60).await?;
+    start(&client, "k5", 1_000).await?;
+    complete(&client, "k5", "v1", 60_000).await?;
     time.fast_forward(Duration::from_secs(1));
-    let response = start(&client, "k5", 1).await?;
+    let response = start(&client, "k5", 1_000).await?;
     assert_eq!(response["status"], "completed");
     assert_eq!(response["data"]["response"], json!("v1".as_bytes()));
 
@@ -196,7 +191,7 @@ async fn test_idempotency_validation() -> TestResult {
         .post("v1.idempotency.start")
         .json(json!({
             "key": "k",
-            "ttl": 0
+            "ttl_ms": 0
         }))
         .await?
         .expect(StatusCode::UNPROCESSABLE_ENTITY);
