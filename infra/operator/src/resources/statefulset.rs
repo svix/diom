@@ -6,7 +6,7 @@ use k8s_openapi::{
         core::v1::{
             Affinity, Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction,
             ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
-            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, ResourceRequirements, Toleration,
+            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, Toleration,
             TopologySpreadConstraint, VolumeMount, VolumeResourceRequirements,
         },
     },
@@ -271,19 +271,7 @@ fn build_container(
             },
         ]),
         volume_mounts: Some(volume_mounts),
-        resources: Some(ResourceRequirements {
-            requests: spec.resources.requests.as_ref().map(|r| {
-                r.iter()
-                    .map(|(k, v)| (k.clone(), Quantity(v.clone())))
-                    .collect()
-            }),
-            limits: spec.resources.limits.as_ref().map(|l| {
-                l.iter()
-                    .map(|(k, v)| (k.clone(), Quantity(v.clone())))
-                    .collect()
-            }),
-            ..Default::default()
-        }),
+        resources: Some(spec.resources.clone()),
         liveness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
                 path: Some(API_HEALTH_ENDPOINT.into()),
