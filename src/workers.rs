@@ -39,9 +39,11 @@ impl Workers {
     pub(crate) async fn shutdown(mut self) {
         tracing::debug!("shutting down all background workers");
         self.join_set.abort_all();
-        for item in self.join_set.join_all().await {
-            if let Err(err) = item {
-                tracing::warn!(?err, "error from background job at shutdown");
+        while let Some(job) = self.join_set.join_next().await {
+            match job {
+                Ok(_) => {}
+                Err(e) if e.is_cancelled() => {}
+                Err(err) => tracing::warn!(?err, "error from background job at shutdown"),
             }
         }
     }
