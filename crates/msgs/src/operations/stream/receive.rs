@@ -58,9 +58,6 @@ impl StreamReceiveOperation {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
-            let topic = self.topic.to_string();
-            let consumer_group = self.consumer_group.to_string();
-
             let mut remaining = self.batch_size.get();
             let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
             let expiry = now + self.lease_duration_ms;
@@ -167,7 +164,7 @@ impl StreamReceiveOperation {
             if no_lease_available {
                 state
                     .metrics
-                    .record_stream_no_lease(&topic, &consumer_group);
+                    .record_stream_no_lease(&self.topic, &self.consumer_group);
                 return Err(Error::bad_request(
                     "no_available_leases",
                     "no available leases",
@@ -177,9 +174,11 @@ impl StreamReceiveOperation {
             batch.commit().map_err(Error::from)?;
 
             Span::current().record("msgs_returned", all_msgs.len());
-            state
-                .metrics
-                .record_stream_received(&topic, &consumer_group, all_msgs.len() as u64);
+            state.metrics.record_stream_received(
+                &self.topic,
+                &self.consumer_group,
+                all_msgs.len() as u64,
+            );
             Ok(StreamReceiveResponseData { msgs: all_msgs })
         })
         .await?

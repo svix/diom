@@ -40,10 +40,8 @@ impl StreamCommitOperation {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
-            let consumer_group = self.consumer_group.to_string();
             let mut batch = state.db.batch();
             let topic = self.topic;
-            let topic_name = topic.topic.to_string();
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
@@ -72,7 +70,7 @@ impl StreamCommitOperation {
 
             state
                 .metrics
-                .record_stream_committed(&topic_name, &consumer_group);
+                .record_stream_committed(&topic.topic, &self.consumer_group);
             Ok(StreamCommitResponseData {})
         })
         .await?

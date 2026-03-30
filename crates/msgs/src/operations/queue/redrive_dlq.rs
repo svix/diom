@@ -33,8 +33,6 @@ impl QueueRedriveDlqOperation {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
-            let topic = self.topic.to_string();
-            let consumer_group = self.consumer_group.to_string();
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
                 TopicRow::key_for(self.namespace_id, &self.topic),
@@ -94,7 +92,7 @@ impl QueueRedriveDlqOperation {
 
             state
                 .metrics
-                .record_queue_redrive(&topic, &consumer_group, total_redriven);
+                .record_queue_redrive(&self.topic, &self.consumer_group, total_redriven);
             Ok(QueueRedriveDlqResponseData {})
         })
         .await?

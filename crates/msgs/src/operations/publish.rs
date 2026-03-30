@@ -54,7 +54,6 @@ impl PublishOperation {
 
         let results = spawn_blocking_in_current_span(move || {
             let bytes: u64 = self.msgs.iter().map(|m| m.value.len() as u64).sum();
-            let topic = self.topic.to_string();
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
@@ -104,7 +103,9 @@ impl PublishOperation {
                 .iter()
                 .map(|r| r.offset.saturating_sub(r.start_offset))
                 .sum();
-            state.metrics.record_published(&topic, msg_count, bytes);
+            state
+                .metrics
+                .record_published(&self.topic, msg_count, bytes);
 
             Ok::<_, Error>(results)
         })

@@ -53,8 +53,6 @@ impl QueueReceiveOperation {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
-            let topic = self.topic.to_string();
-            let consumer_group = self.consumer_group.to_string();
             let mut remaining = self.batch_size.get();
             let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
 
@@ -153,9 +151,11 @@ impl QueueReceiveOperation {
             batch.commit().map_err(Error::from)?;
 
             Span::current().record("msgs_returned", all_msgs.len());
-            state
-                .metrics
-                .record_queue_received(&topic, &consumer_group, all_msgs.len() as u64);
+            state.metrics.record_queue_received(
+                &self.topic,
+                &self.consumer_group,
+                all_msgs.len() as u64,
+            );
             Ok(QueueReceiveResponseData { msgs: all_msgs })
         })
         .await?

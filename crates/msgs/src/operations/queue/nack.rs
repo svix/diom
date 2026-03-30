@@ -43,8 +43,6 @@ impl QueueNackOperation {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
-            let topic = self.topic.to_string();
-            let consumer_group = self.consumer_group.to_string();
             let nack_count = self.msg_ids.len() as u64;
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
@@ -113,8 +111,8 @@ impl QueueNackOperation {
             batch.commit().map_err(Error::from)?;
 
             state.metrics.record_queue_nacked(
-                &topic,
-                &consumer_group,
+                &self.topic,
+                &self.consumer_group,
                 nack_count,
                 retried_count,
                 dlq_count,
