@@ -3,7 +3,7 @@ use diom_core::{task::spawn_blocking_in_current_span, types::Metadata};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
-use fjall_utils::{TableRow, WriteBatchExt};
+use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::ops::Bound;
@@ -234,9 +234,7 @@ impl AuthTokenController {
             )?
             else {
                 tracing::warn!(?id, ?id_index.token_hashed, "Found idx but not token. Cleaning up index.");
-                let mut batch = db.batch();
-                batch.remove_row(&keyspace, IdIndexRow::key_for(namespace_id, id))?;
-                batch.commit()?;
+                keyspace.remove(IdIndexRow::key_for(namespace_id, id).into_fjall_key())?;
                 return Ok(true);
             };
             let entity = AuthTokenEntity {
