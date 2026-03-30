@@ -22,11 +22,7 @@ pub enum KvNamespaceCommands {
 }
 
 impl KvNamespaceCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 kv_create_namespace_in,
@@ -36,7 +32,7 @@ impl KvNamespaceCommands {
                     .namespace()
                     .create(kv_create_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get {
                 kv_get_namespace_in,
@@ -46,7 +42,7 @@ impl KvNamespaceCommands {
                     .namespace()
                     .get(kv_get_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

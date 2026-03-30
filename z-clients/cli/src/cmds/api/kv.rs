@@ -32,26 +32,22 @@ pub enum KvCommands {
 }
 
 impl KvCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Set { key, kv_set_in } => {
                 let resp = client.kv().set(key, kv_set_in.into_inner()).await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get { key, kv_get_in } => {
                 let resp = client.kv().get(key, kv_get_in.into_inner()).await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Delete { key, kv_delete_in } => {
                 let resp = client.kv().delete(key, kv_delete_in.into_inner()).await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

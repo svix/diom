@@ -826,17 +826,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
 
 [[package]]
-name = "colored_json"
-version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e35980a1b846f8e3e359fd18099172a0857140ba9230affc4f71348081e039b6"
-dependencies = [
- "serde",
- "serde_json",
- "yansi",
-]
-
-[[package]]
 name = "combine"
 version = "4.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1126,7 +1115,6 @@ dependencies = [
  "anyhow",
  "clap",
  "clap_complete",
- "colored_json",
  "comfy-table",
  "concolor-clap",
  "config",
@@ -1147,6 +1135,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "yansi",
 ]
 
 [[package]]

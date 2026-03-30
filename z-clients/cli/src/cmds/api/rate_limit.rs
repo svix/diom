@@ -30,14 +30,10 @@ pub enum RateLimitCommands {
 }
 
 impl RateLimitCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Limit {
                 rate_limit_check_in,
@@ -46,7 +42,7 @@ impl RateLimitCommands {
                     .rate_limit()
                     .limit(rate_limit_check_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::GetRemaining {
                 rate_limit_get_remaining_in,
@@ -55,7 +51,7 @@ impl RateLimitCommands {
                     .rate_limit()
                     .get_remaining(rate_limit_get_remaining_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Reset {
                 rate_limit_reset_in,
@@ -64,7 +60,7 @@ impl RateLimitCommands {
                     .rate_limit()
                     .reset(rate_limit_reset_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

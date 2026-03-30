@@ -130,7 +130,6 @@ byteorder = "1.5.0"
 bytes = "1.11.1"
 clap = { version = "4.1.8", features = ["derive"] }
 clap_complete = "4.5.38"
-colored_json = "5.0.0"
 concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
@@ -223,6 +222,7 @@ url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
 which = "8"
+yansi = "1.0.1"
 zip = "7"
 
 [workspace.lints.rust]

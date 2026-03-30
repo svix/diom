@@ -49,11 +49,7 @@ pub enum AdminAuthTokenCommands {
 }
 
 impl AdminAuthTokenCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 admin_auth_token_create_in,
@@ -63,7 +59,7 @@ impl AdminAuthTokenCommands {
                     .auth_token()
                     .create(admin_auth_token_create_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Expire {
                 admin_auth_token_expire_in,
@@ -73,7 +69,7 @@ impl AdminAuthTokenCommands {
                     .auth_token()
                     .expire(admin_auth_token_expire_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Rotate {
                 admin_auth_token_rotate_in,
@@ -83,7 +79,7 @@ impl AdminAuthTokenCommands {
                     .auth_token()
                     .rotate(admin_auth_token_rotate_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Delete {
                 admin_auth_token_delete_in,
@@ -93,7 +89,7 @@ impl AdminAuthTokenCommands {
                     .auth_token()
                     .delete(admin_auth_token_delete_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::List {
                 admin_auth_token_list_in,
@@ -103,7 +99,7 @@ impl AdminAuthTokenCommands {
                     .auth_token()
                     .list(admin_auth_token_list_in.unwrap_or_default().into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Update {
                 admin_auth_token_update_in,
@@ -113,7 +109,7 @@ impl AdminAuthTokenCommands {
                     .auth_token()
                     .update(admin_auth_token_update_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Whoami {
                 admin_auth_token_whoami_in,
@@ -123,7 +119,7 @@ impl AdminAuthTokenCommands {
                     .auth_token()
                     .whoami(admin_auth_token_whoami_in.unwrap_or_default().into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

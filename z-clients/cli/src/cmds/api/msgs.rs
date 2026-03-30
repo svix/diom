@@ -25,23 +25,19 @@ pub enum MsgsCommands {
 }
 
 impl MsgsCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Namespace(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Queue(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Stream(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Topic(args) => {
-                args.command.exec(client, color_mode).await?;
+                args.command.exec(client).await?;
             }
             Self::Publish {
                 topic,
@@ -51,7 +47,7 @@ impl MsgsCommands {
                     .msgs()
                     .publish(topic, msg_publish_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 

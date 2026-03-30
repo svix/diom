@@ -24,11 +24,7 @@ pub enum AuthTokenNamespaceCommands {
 }
 
 impl AuthTokenNamespaceCommands {
-    pub async fn exec(
-        self,
-        client: &DiomClient,
-        color_mode: colored_json::ColorMode,
-    ) -> anyhow::Result<()> {
+    pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Create {
                 auth_token_create_namespace_in,
@@ -38,7 +34,7 @@ impl AuthTokenNamespaceCommands {
                     .namespace()
                     .create(auth_token_create_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
             Self::Get {
                 auth_token_get_namespace_in,
@@ -48,7 +44,7 @@ impl AuthTokenNamespaceCommands {
                     .namespace()
                     .get(auth_token_get_namespace_in.into_inner())
                     .await?;
-                crate::json::print_json_output(&resp, color_mode)?;
+                crate::json::print_json_output(&resp)?;
             }
         }
 
