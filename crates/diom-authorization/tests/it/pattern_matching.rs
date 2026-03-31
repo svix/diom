@@ -5,7 +5,7 @@ static EXAMPLE_OP_KV: RequestedOperation<'static> = RequestedOperation {
     module: Module::Kv,
     namespace: None,
     key: Some("foo/bar"),
-    action: "Read",
+    action: "get",
 };
 
 #[test]
@@ -60,7 +60,7 @@ static EXAMPLE_OP_AUTH_TOKEN: RequestedOperation<'static> = RequestedOperation {
     module: Module::AuthToken,
     namespace: Some("my-ns"),
     key: None,
-    action: "Create",
+    action: "create",
 };
 
 #[test]
