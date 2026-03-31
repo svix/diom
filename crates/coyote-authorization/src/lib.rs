@@ -114,7 +114,7 @@ impl RequestedOperation<'_> {
     pub fn resource_str(&self) -> String {
         let module = self.module;
         let namespace = self.namespace.unwrap_or("");
-        let key = self.key.unwrap_or("**");
+        let key = self.key.unwrap_or("*");
         format!("{module}:{namespace}:{key}")
     }
 }

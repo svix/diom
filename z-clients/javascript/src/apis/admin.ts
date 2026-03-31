@@ -1,5 +1,6 @@
 // this file is @generated
 
+import { AdminAuthPolicy } from './adminAuthPolicy';
 import { AdminAuthRole } from './adminAuthRole';
 import { AdminAuthToken } from './adminAuthToken';
 import { AdminCluster } from './adminCluster';
@@ -7,6 +8,10 @@ import { HttpMethod, CoyoteRequest, type CoyoteRequestContext } from "../request
 
 export class Admin {
     public constructor(private readonly requestCtx: CoyoteRequestContext) {}
+
+    public get auth_policy() {
+        return new AdminAuthPolicy(this.requestCtx);
+    }
 
     public get auth_role() {
         return new AdminAuthRole(this.requestCtx);
