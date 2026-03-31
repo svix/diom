@@ -6,11 +6,13 @@ This is a multimodal, clustered database being developed by [Svix](https://www.s
 
 Diom is designed to be run on a cluster of machines with stable network identities (e.g., a Kubernetes StatefulSet). It can also be run in a single-node configuration, although this is not recommended for a production deployment.
 
-Diom is configured through a TOML file which can be passed with the `--config-path` command line option. Settings can also be overridden by setting environment variables.
+The `diom-server` binary is configured through a TOML file which can be passed with the `--config-path` command line option. Settings can also be overridden by setting environment variables.
 
 ## Interacting with Diom
 
-Diom ships with client libraries for Rust, Python, Go, Java, and JavaScript, as well as a CLI named `diom-cli`.
+Diom ships with client libraries for Rust, Python, Go, Java, and JavaScript, as well as a CLI named `diom`.
+
+The CLI includes a benchmark feature, which can be used as `diom benchmark`.
 
 ## Developing
 
