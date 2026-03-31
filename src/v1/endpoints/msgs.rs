@@ -22,7 +22,7 @@ use coyote_msgs::{
     },
 };
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use coyote_proto::{MsgPackOrJson, RequestInput};
 use fjall_utils::{ReadableDatabase, ReadonlyConnection, StorageType};
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -33,19 +33,19 @@ fn msgs_metadata<'a>(
     ns: Option<&'a str>,
     tp: &'a TopicName,
     action: &'static str,
-) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::Msgs,
         namespace: ns,
         key: Some(tp),
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
+            fn operation(&self) -> RequestedOperation<'_> {
                 msgs_metadata(self.namespace.as_deref(), self.topic.name(), $action)
             }
         }

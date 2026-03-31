@@ -11,5 +11,5 @@ pub use self::{
     internal_client::{InternalClient, InternalRequest, InternalRequestError},
     msgpack::MsgPack,
     msgpack_or_json::{MsgPackOrJson, capture_accept_hdr},
-    request_input::{AccessMetadata, RequestInput},
+    request_input::RequestInput,
 };
