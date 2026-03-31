@@ -1,3 +1,5 @@
+# This is a configuration used for benchmarking, not for general use
+
 listen_address = "0.0.0.0:8050"
 log_level="info"
 environment = "dev"
@@ -6,9 +8,13 @@ opentelemetry_metrics_use_http=true
 opentelemetry_service_name="coyote"
 opentelemetry_address="http://localhost:4317"
 opentelemetry_metrics_address="http://localhost:9090/api/v1/otlp/v1/metrics"
-opentelemetry_sample_ratio=0.1
+opentelemetry_sample_ratio=0.001
+# for the primary data, write to the OS but do not fsync
+sync_mode = "buffer"
 
 [cluster]
+# fsync very infrequently
 log_sync_interval_commits = 0
-log_sync_interval_ms = 10
+log_sync_interval_ms = 10000
+# acknowledge commits before we fsync
 log_ack_immediately = false

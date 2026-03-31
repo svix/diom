@@ -319,6 +319,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         background_cleanup_interval: Duration::from_secs(10),
         bootstrap_cfg: None,
         bootstrap_cfg_path: None,
+        sync_mode: coyote::cfg::SyncMode::Buffer,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
         jwt: None,
     }

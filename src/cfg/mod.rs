@@ -101,6 +101,15 @@ impl Serialize for PeerAddr {
     }
 }
 
+impl From<SyncMode> for fjall::PersistMode {
+    fn from(value: SyncMode) -> Self {
+        match value {
+            SyncMode::Buffer => fjall::PersistMode::Buffer,
+            SyncMode::Sync => fjall::PersistMode::SyncAll,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, EnvOverridable, Serialize)]
 pub struct DatabaseConfig {
     /// Directory in which this database is stored
@@ -177,6 +186,7 @@ impl DatabaseConfig {
         // FIXME: we should probably make the cache size a config.
         fjall::Database::builder(path)
             .cache_size(Self::default_cache_size())
+            .manual_journal_persist(true)
             .open()
             .map_err(|err| {
                 tracing::error!(?err, "error building database");
@@ -540,6 +550,14 @@ pub struct ConfigurationInner {
     )]
     pub background_cleanup_interval: Duration,
 
+    /// How to persist data to the actual underlying database
+    ///
+    /// This is similar to the `cluster.log_sync` options, but applies to the actual
+    /// primary data as opposed to the log, and is applied at every batch commit from the
+    /// underlying replication system.
+    #[serde(default)]
+    pub sync_mode: SyncMode,
+
     /// An auth token for admin access to Coyote
     ///
     /// It's useful for bootstrapping a new Coyote cluster, or using it in CI pipelines or other
@@ -634,7 +652,7 @@ macro_rules! from_str_via_serde {
     };
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
     #[default]
@@ -645,7 +663,17 @@ pub enum LogLevel {
 
 from_str_via_serde!(LogLevel);
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+impl From<LogLevel> for Level {
+    fn from(value: LogLevel) -> Self {
+        match value {
+            LogLevel::Info => Level::INFO,
+            LogLevel::Debug => Level::DEBUG,
+            LogLevel::Trace => Level::TRACE,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogFormat {
     #[default]
@@ -655,7 +683,7 @@ pub enum LogFormat {
 
 from_str_via_serde!(LogFormat);
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Environment {
     #[default]
@@ -682,14 +710,22 @@ impl fmt::Display for Environment {
 
 impl fmt::Display for LogLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Info => Level::INFO,
-            Self::Debug => Level::DEBUG,
-            Self::Trace => Level::TRACE,
-        }
-        .fmt(f)
+        Level::from(*self).fmt(f)
     }
 }
+
+/// How data is synchronized to the underlying database
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum SyncMode {
+    /// Write data to the OS, but do not fsync
+    #[default]
+    Buffer,
+    /// fsync the data on every batch apply
+    Sync,
+}
+
+from_str_via_serde!(SyncMode);
 
 pub fn load(config_path: Option<&Path>) -> anyhow::Result<Arc<ConfigurationInner>> {
     let config_toml = match config_path {
