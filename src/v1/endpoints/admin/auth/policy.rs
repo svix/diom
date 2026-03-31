@@ -24,16 +24,6 @@ use crate::{
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
-fn policy_out(model: AccessPolicyModel) -> AdminAccessPolicyOut {
-    AdminAccessPolicyOut {
-        id: model.id,
-        description: model.description,
-        rules: model.rules,
-        created: model.created,
-        updated: model.updated,
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAccessPolicyOut {
     pub id: AccessPolicyId,
@@ -46,6 +36,18 @@ pub struct AdminAccessPolicyOut {
 impl ListResponseItem for AdminAccessPolicyOut {
     fn id(&self) -> String {
         self.id.as_str().to_owned()
+    }
+}
+
+impl From<AccessPolicyModel> for AdminAccessPolicyOut {
+    fn from(model: AccessPolicyModel) -> Self {
+        Self {
+            id: model.id,
+            description: model.description,
+            rules: model.rules,
+            created: model.created,
+            updated: model.updated,
+        }
     }
 }
 
@@ -133,7 +135,7 @@ async fn access_policy_get(
         .get_policy(&data.id)
         .await?
         .ok_or_not_found()?;
-    Ok(MsgPackOrJson(policy_out(model)))
+    Ok(MsgPackOrJson(model.into()))
 }
 
 // List
@@ -163,7 +165,7 @@ async fn access_policy_list(
         .controller
         .list_policies(limit + 1, iterator.clone())
         .await?;
-    let items = models.into_iter().map(policy_out).collect();
+    let items = models.into_iter().map(Into::into).collect();
     Ok(MsgPackOrJson(ListResponse::create(
         items,
         limit,
