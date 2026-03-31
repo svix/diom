@@ -223,7 +223,7 @@ impl Store {
         self.cluster_id.as_ref()
     }
 
-    pub fn db_handle(&self) -> impl std::ops::Deref<Target = Stores> + Send {
+    pub fn db_handle(&self) -> parking_lot::ArcRwLockReadGuard<parking_lot::RawRwLock, Stores> {
         self.stores.read_arc()
     }
 
@@ -416,6 +416,7 @@ impl Store {
         let mut changed_membership = false;
         let mut num_entries = 0;
         let start = std::time::Instant::now();
+        let context = super::applier::ApplyContext::new(self);
         while let Some(entry) = entries.next().await {
             let (item, responder) = entry?;
 
@@ -430,7 +431,7 @@ impl Store {
                 EntryPayload::Normal(req) => {
                     tracing::trace!(log_id=?item.log_id, request=?req, "applying user request");
 
-                    super::applier::apply_request(req, self, item.log_id)
+                    super::applier::apply_request(&context, req, self, item.log_id)
                         .await
                         .map_err(|err| {
                             tracing::error!(?err, "failed to apply raft log");

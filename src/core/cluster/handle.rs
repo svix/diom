@@ -1,4 +1,4 @@
-use std::{fmt, time::Duration};
+use std::{fmt, sync::Arc, time::Duration};
 
 use super::{
     ClientWriteError, LogId, Node, NodeId, RaftError, discovery::Discovery,
@@ -354,8 +354,9 @@ impl RaftState {
         let now = self.time.update_now();
         let request =
             RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
+        let request = Arc::new(request);
         let mut write_type = WriteType::Local;
-        let response = match self.raft.client_write(request.clone()).await {
+        let response = match self.raft.client_write(Arc::clone(&request)).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");
                 resp.data
@@ -373,7 +374,7 @@ impl RaftState {
                         client
                             .forward_request(super::proto::ForwardedWriteRequest {
                                 source_node_id: self.node_id,
-                                request,
+                                request: Arc::unwrap_or_clone(request),
                             })
                             .await
                             .map(|r| r.response)
@@ -711,6 +712,7 @@ impl coyote_operations::OperationWriterBase for RaftState {
         let now = self.state_machine.now();
         let request =
             RequestWithContext::new(request, now, Some(opentelemetry::Context::current().into()));
+        let request = Arc::new(request);
         match self.raft.client_write(request.clone()).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");
