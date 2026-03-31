@@ -122,6 +122,7 @@ jobs:
           aws lambda invoke --function-name staging-cac1_lambda-run-tests \
             --region ca-central-1 \
             --invocation-type Event \
+            --cli-binary-format raw-in-base64-out \
             --payload '{ "build_name": "${{ inputs.image_tag }}", "repo": "webhooks", "notify_user": "${{ github.actor }}" }' \
             out --output text
 
