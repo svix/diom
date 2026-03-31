@@ -3,6 +3,13 @@
 
 mod access_rule;
 mod access_rule_effect;
+mod admin_access_policy_delete_in;
+mod admin_access_policy_delete_out;
+mod admin_access_policy_get_in;
+mod admin_access_policy_list_in;
+mod admin_access_policy_out;
+mod admin_access_policy_upsert_in;
+mod admin_access_policy_upsert_out;
 mod admin_auth_token_create_in;
 mod admin_auth_token_create_out;
 mod admin_auth_token_delete_in;
@@ -82,6 +89,7 @@ mod kv_get_namespace_out;
 mod kv_get_out;
 mod kv_set_in;
 mod kv_set_out;
+mod list_response_admin_access_policy_out;
 mod list_response_admin_auth_token_out;
 mod list_response_admin_role_out;
 mod list_response_auth_token_out;
@@ -133,6 +141,13 @@ mod stream_msg_out;
 
 pub use self::{
     access_rule::AccessRule, access_rule_effect::AccessRuleEffect,
+    admin_access_policy_delete_in::AdminAccessPolicyDeleteIn,
+    admin_access_policy_delete_out::AdminAccessPolicyDeleteOut,
+    admin_access_policy_get_in::AdminAccessPolicyGetIn,
+    admin_access_policy_list_in::AdminAccessPolicyListIn,
+    admin_access_policy_out::AdminAccessPolicyOut,
+    admin_access_policy_upsert_in::AdminAccessPolicyUpsertIn,
+    admin_access_policy_upsert_out::AdminAccessPolicyUpsertOut,
     admin_auth_token_create_in::AdminAuthTokenCreateIn,
     admin_auth_token_create_out::AdminAuthTokenCreateOut,
     admin_auth_token_delete_in::AdminAuthTokenDeleteIn,
@@ -182,6 +197,7 @@ pub use self::{
     kv_delete_in::KvDeleteIn, kv_delete_out::KvDeleteOut, kv_get_in::KvGetIn,
     kv_get_namespace_in::KvGetNamespaceIn, kv_get_namespace_out::KvGetNamespaceOut,
     kv_get_out::KvGetOut, kv_set_in::KvSetIn, kv_set_out::KvSetOut,
+    list_response_admin_access_policy_out::ListResponseAdminAccessPolicyOut,
     list_response_admin_auth_token_out::ListResponseAdminAuthTokenOut,
     list_response_admin_role_out::ListResponseAdminRoleOut,
     list_response_auth_token_out::ListResponseAuthTokenOut, msg_in::MsgIn,

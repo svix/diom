@@ -58,9 +58,7 @@ impl AccessPolicyRow {
         assert!(key.len() >= 3);
         assert!(key[0] == Self::ROW_TYPE);
 
-        let s = str::from_utf8(&key[1..key.len() - 1])
-            .or_internal_error()?
-            .to_owned();
+        let s = str::from_utf8(&key[1..]).or_internal_error()?.to_owned();
         Ok(AccessPolicyId(s))
     }
 }

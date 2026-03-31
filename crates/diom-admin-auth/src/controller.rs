@@ -55,6 +55,7 @@ pub struct AccessPolicyModel {
     pub created: Timestamp,
     pub updated: Timestamp,
 }
+
 impl AccessPolicyModel {
     fn new(id: AccessPolicyId, row: AccessPolicyRow) -> Self {
         Self {

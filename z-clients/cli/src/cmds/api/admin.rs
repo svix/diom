@@ -2,7 +2,7 @@
 use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
-use super::{AdminAuthRoleArgs, AdminAuthTokenArgs, AdminClusterArgs};
+use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs, AdminClusterArgs};
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -13,6 +13,7 @@ pub struct AdminArgs {
 
 #[derive(Subcommand)]
 pub enum AdminCommands {
+    AuthPolicy(AdminAuthPolicyArgs),
     AuthRole(AdminAuthRoleArgs),
     AuthToken(AdminAuthTokenArgs),
     Cluster(AdminClusterArgs),
@@ -21,6 +22,9 @@ pub enum AdminCommands {
 impl AdminCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
+            Self::AuthPolicy(args) => {
+                args.command.exec(client).await?;
+            }
             Self::AuthRole(args) => {
                 args.command.exec(client).await?;
             }
