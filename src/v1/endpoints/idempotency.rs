@@ -200,7 +200,7 @@ struct IdempotencyGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(IdempotencyGetNamespaceIn);
+namespace_request_input!(IdempotencyGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
@@ -214,7 +214,7 @@ pub(crate) struct IdempotencyCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(IdempotencyCreateNamespaceIn);
+namespace_request_input!(IdempotencyCreateNamespaceIn, "create");
 
 impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
     fn from(v: IdempotencyCreateNamespaceIn) -> Self {

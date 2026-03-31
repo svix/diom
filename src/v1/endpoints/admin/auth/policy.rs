@@ -8,10 +8,11 @@ use diom_admin_auth::{
     controller::AccessPolicyModel,
     operations::{DeleteAccessPolicyOperation, UpsertAccessPolicyOperation},
 };
-use diom_authorization::{AccessPolicyId, AccessRule};
+use diom_authorization::{AccessPolicyId, AccessRule, RequestedOperation};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
-use diom_proto::MsgPackOrJson;
+use diom_id::Module;
+use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -23,6 +24,28 @@ use crate::{
     error::Result,
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
+
+fn admin_access_policy_access_metadata<'a>(
+    id: Option<&'a AccessPolicyId>,
+    action: &'static str,
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::AdminAccessPolicy,
+        namespace: None,
+        key: id.map(|AccessPolicyId(id)| id.as_str()),
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                admin_access_policy_access_metadata(Some(&self.id), $action)
+            }
+        }
+    };
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAccessPolicyOut {
@@ -61,7 +84,7 @@ pub struct AdminAccessPolicyUpsertIn {
     pub rules: Vec<AccessRule>,
 }
 
-admin_request_input!(AdminAccessPolicyUpsertIn);
+request_input!(AdminAccessPolicyUpsertIn, "upsert");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAccessPolicyUpsertOut {
@@ -92,7 +115,7 @@ pub struct AdminAccessPolicyDeleteIn {
     pub id: AccessPolicyId,
 }
 
-admin_request_input!(AdminAccessPolicyDeleteIn);
+request_input!(AdminAccessPolicyDeleteIn, "delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAccessPolicyDeleteOut {
@@ -119,7 +142,7 @@ pub struct AdminAccessPolicyGetIn {
     pub id: AccessPolicyId,
 }
 
-admin_request_input!(AdminAccessPolicyGetIn);
+request_input!(AdminAccessPolicyGetIn, "get");
 
 /// Get an access policy by ID
 #[aide_annotate(op_id = "v1.admin.auth-policy.get")]
@@ -146,7 +169,11 @@ pub struct AdminAccessPolicyListIn {
     pub pagination: Pagination<AccessPolicyId>,
 }
 
-admin_request_input!(AdminAccessPolicyListIn);
+impl RequestInput for AdminAccessPolicyListIn {
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        admin_access_policy_access_metadata(None, "list")
+    }
+}
 
 pub type AdminAccessPolicyListOut = ListResponse<AdminAccessPolicyOut>;
 

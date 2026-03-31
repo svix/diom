@@ -60,7 +60,7 @@ pub(crate) struct MsgNamespaceCreateIn {
     pub retention: Retention,
 }
 
-admin_request_input!(MsgNamespaceCreateIn);
+namespace_request_input!(MsgNamespaceCreateIn, "create");
 
 impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
     fn from(v: MsgNamespaceCreateIn) -> Self {
@@ -99,7 +99,7 @@ struct MsgNamespaceGetIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(MsgNamespaceGetIn);
+namespace_request_input!(MsgNamespaceGetIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgNamespaceGetOut {
