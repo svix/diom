@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt, str::FromStr, time::Duration};
+use std::{fmt, str::FromStr, time::Duration};
 use tap::Pipe;
 
 pub(super) fn env_var<T, S>(name: S) -> anyhow::Result<Option<T>>
@@ -56,16 +56,18 @@ pub struct Variable {
     pub docstring: Option<&'static str>,
 }
 
+const ENV_VAR_PREFIX: &str = "COYOTE";
+
 pub(crate) trait EnvOverridable {
-    fn load_environment_with_prefix(&mut self, prefix: Cow<'_, str>) -> anyhow::Result<()>;
+    fn load_environment_with_prefix(&mut self, prefix: String) -> anyhow::Result<()>;
 
     fn load_environment(&mut self) -> anyhow::Result<()> {
-        self.load_environment_with_prefix(Cow::Borrowed("COYOTE"))
+        self.load_environment_with_prefix(ENV_VAR_PREFIX.to_owned())
     }
 
-    fn list_environment_variables_with_prefix(prefix: Cow<'_, str>) -> Vec<Variable>;
+    fn list_environment_variables_with_prefix(prefix: String) -> Vec<Variable>;
 
     fn list_environment_variables() -> Vec<Variable> {
-        Self::list_environment_variables_with_prefix(Cow::Borrowed("COYOTE"))
+        Self::list_environment_variables_with_prefix(ENV_VAR_PREFIX.to_string())
     }
 }

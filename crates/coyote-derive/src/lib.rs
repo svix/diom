@@ -1,7 +1,7 @@
 use quote::quote;
 use syn::{
     DeriveInput, GenericParam, Generics, Ident, ItemFn, LitStr, parenthesized, parse_macro_input,
-    parse_quote, spanned::Spanned,
+    parse_quote,
 };
 
 mod aide;
@@ -88,63 +88,37 @@ fn ungroup(mut ty: &syn::Type) -> &syn::Type {
     ty
 }
 
-fn is_ty_option(ty: &syn::Type) -> Option<&syn::Type> {
-    let path = match ungroup(ty) {
-        syn::Type::Path(ty) => &ty.path,
-        _ => {
-            return None;
-        }
+/// Determine if the given type is an option and, if so, extract its inner type name
+fn as_ty_option(ty: &syn::Type) -> Option<&syn::Type> {
+    let syn::Type::Path(ty) = ungroup(ty) else {
+        return None;
     };
-    let seg = path.segments.last()?;
-    let args = match &seg.arguments {
-        syn::PathArguments::AngleBracketed(bracketed) => &bracketed.args,
-        _ => {
-            return None;
-        }
+    let seg = ty.path.segments.last()?;
+    let syn::PathArguments::AngleBracketed(bracketed) = &seg.arguments else {
+        return None;
     };
-    if seg.ident == "Option" && args.len() == 1 {
-        let Some(syn::GenericArgument::Type(arg)) = args.get(0) else {
-            return None;
-        };
-        Some(arg)
-    } else {
-        None
+    if seg.ident != "Option" || bracketed.args.len() != 1 {
+        return None;
     }
+    let Some(syn::GenericArgument::Type(arg)) = bracketed.args.get(0) else {
+        return None;
+    };
+    Some(arg)
 }
 
-fn is_ty_vec(ty: &syn::Type) -> bool {
-    let path = match ungroup(ty) {
-        syn::Type::Path(ty) => &ty.path,
-        _ => {
-            return false;
-        }
-    };
-    let Some(seg) = path.segments.last() else {
+/// Determine whether the final segment of the given type has the given name
+fn is_ty_name(name: &str, ty: &syn::Type) -> bool {
+    let syn::Type::Path(ty) = ungroup(ty) else {
         return false;
     };
-    let args = match &seg.arguments {
-        syn::PathArguments::AngleBracketed(bracketed) => &bracketed.args,
-        _ => {
-            return false;
-        }
-    };
-    seg.ident == "Vec" && args.len() == 1
+    ty.path
+        .segments
+        .last()
+        .map(|s| s.ident == name)
+        .unwrap_or(false)
 }
 
-fn is_ty_duration(ty: &syn::Type) -> bool {
-    let path = match ungroup(ty) {
-        syn::Type::Path(ty) => &ty.path,
-        _ => {
-            return false;
-        }
-    };
-    let Some(seg) = path.segments.last() else {
-        return false;
-    };
-    seg.ident == "Duration"
-}
-
-struct EOField {
+struct EoField {
     variable: String,
     field: Ident,
     is_optional: bool,
@@ -154,7 +128,7 @@ struct EOField {
     nest: Option<(String, syn::Type)>,
 }
 
-impl EOField {
+impl EoField {
     fn parse(field: &syn::Field) -> Result<Option<Self>, syn::Error> {
         let mut render = true;
         let Some(ident) = &field.ident else {
@@ -167,14 +141,14 @@ impl EOField {
         let is_optional;
         let mut docstring = vec![];
 
-        if let Some(option_inner) = is_ty_option(&field.ty) {
+        if let Some(option_inner) = as_ty_option(&field.ty) {
             is_optional = true;
-            is_duration = is_ty_duration(option_inner);
-            is_vec = is_ty_vec(option_inner);
+            is_duration = is_ty_name("Duration", option_inner);
+            is_vec = is_ty_name("Vec", option_inner);
         } else {
             is_optional = false;
-            is_duration = is_ty_duration(&field.ty);
-            is_vec = is_ty_vec(&field.ty);
+            is_duration = is_ty_name("Duration", &field.ty);
+            is_vec = is_ty_name("Vec", &field.ty);
         }
 
         let mut variable = ident.to_string().to_uppercase();
@@ -238,13 +212,7 @@ pub fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_macro::Tok
     let input = parse_macro_input!(input as DeriveInput);
 
     let syn::Data::Struct(obj) = input.data else {
-        return proc_macro::TokenStream::from(
-            syn::Error::new(
-                input.ident.span(),
-                "This macro may only be applied to structs".to_string(),
-            )
-            .to_compile_error(),
-        );
+        return quote! { compile_error!("This macro may only be applied to structs") }.into();
     };
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
@@ -252,26 +220,18 @@ pub fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_macro::Tok
     let mut fields = Vec::with_capacity(obj.fields.len());
     let mut lists = Vec::with_capacity(obj.fields.len());
     for field in obj.fields.iter() {
-        let parsed = match EOField::parse(field) {
+        let parsed = match EoField::parse(field) {
             Ok(Some(field)) => field,
             Ok(None) => continue,
-            Err(e) => {
-                return proc_macro::TokenStream::from(
-                    syn::Error::new(
-                        field.span(),
-                        format!("Invalid field while parsing structure: {e}"),
-                    )
-                    .to_compile_error(),
-                );
-            }
+            Err(e) => return e.to_compile_error().into(),
         };
         let variable = parsed.variable;
         let field = parsed.field;
 
         let setter = if parsed.is_optional {
-            quote! { self.#field = Some(value) }
+            quote! { Some(value) }
         } else {
-            quote! { self.#field = value }
+            quote! { value }
         };
 
         let loader = if parsed.is_vec {
@@ -284,24 +244,15 @@ pub fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_macro::Tok
 
         let field_parser = if let Some((recurse_name, _recurse_ty)) = &parsed.nest {
             quote! {
-                let name = if prefix.is_empty() {
-                    std::borrow::Cow::Borrowed(#recurse_name)
-                } else {
-                    std::borrow::Cow::Owned(format!("{}_{}", prefix, #recurse_name))
-                };
-
+                let name = format!("{}_{}", prefix, #recurse_name);
                 self.#field.load_environment_with_prefix(name)?;
             }
         } else {
             quote! {
-                let name = if prefix.is_empty() {
-                    std::borrow::Cow::Borrowed(#variable)
-                } else {
-                    std::borrow::Cow::Owned(format!("{}_{}", prefix, #variable))
-                };
+                let name = format!("{}_{}", prefix, #variable);
 
                 if let Some(value) = #loader(name)? {
-                    #setter;
+                    self.#field = #setter;
                 }
             }
         };
@@ -309,11 +260,7 @@ pub fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_macro::Tok
 
         let lister = if let Some((recurse_name, recurse_ty)) = &parsed.nest {
             quote! {
-                let name = if prefix.is_empty() {
-                    std::borrow::Cow::Borrowed(#recurse_name)
-                } else {
-                    std::borrow::Cow::Owned(format!("{}_{}", prefix, #recurse_name))
-                };
+                let name = format!("{}_{}", prefix, #recurse_name);
 
                 variables.extend(#recurse_ty::list_environment_variables_with_prefix(name));
             }
@@ -346,12 +293,12 @@ pub fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_macro::Tok
 
     let expanded = quote! {
         impl #impl_generics crate::cfg::env_overridable::EnvOverridable for #name #ty_generics #where_clause {
-            fn load_environment_with_prefix(&mut self, prefix: std::borrow::Cow<'_, str>) -> anyhow::Result<()> {
+            fn load_environment_with_prefix(&mut self, prefix: String) -> anyhow::Result<()> {
                 #(#fields)*;
                 Ok(())
             }
 
-            fn list_environment_variables_with_prefix(prefix: std::borrow::Cow<'_, str>) -> Vec<crate::cfg::env_overridable::Variable> {
+            fn list_environment_variables_with_prefix(prefix: String) -> Vec<crate::cfg::env_overridable::Variable> {
                 let mut variables = vec![];
                 #(#lists)*;
                 variables
