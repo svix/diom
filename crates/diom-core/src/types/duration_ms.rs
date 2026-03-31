@@ -100,7 +100,7 @@ impl Mul<DurationMs> for u64 {
     type Output = DurationMs;
 
     fn mul(self, rhs: DurationMs) -> DurationMs {
-        DurationMs(self * rhs.0)
+        DurationMs(self.saturating_mul(rhs.0))
     }
 }
 
@@ -108,7 +108,7 @@ impl Mul<u64> for DurationMs {
     type Output = DurationMs;
 
     fn mul(self, rhs: u64) -> DurationMs {
-        DurationMs(self.0 * rhs)
+        DurationMs(self.0.saturating_mul(rhs))
     }
 }
 
