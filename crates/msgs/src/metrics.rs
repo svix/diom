@@ -19,6 +19,12 @@ impl From<&ConsumerGroup> for opentelemetry::KeyValue {
     }
 }
 
+impl From<&Partition> for opentelemetry::KeyValue {
+    fn from(partition: &Partition) -> Self {
+        opentelemetry::KeyValue::new("partition", partition.get() as i64)
+    }
+}
+
 #[derive(Clone)]
 pub struct MsgMetrics {
     pub(crate) published: Counter<u64>,
@@ -199,13 +205,10 @@ impl MsgMetrics {
     pub(crate) fn record_topic_end_offset(
         &self,
         topic: &TopicName,
-        partition: Partition,
+        partition: &Partition,
         end_offset: u64,
     ) {
-        let attrs = &[
-            topic.into(),
-            opentelemetry::KeyValue::new("partition", partition.get() as i64),
-        ];
+        let attrs = &[topic.into(), partition.into()];
         self.topic_end_offset.record(end_offset, attrs);
     }
 
@@ -213,14 +216,10 @@ impl MsgMetrics {
         &self,
         topic: &TopicName,
         consumer_group: &ConsumerGroup,
-        partition: Partition,
+        partition: &Partition,
         lag: u64,
     ) {
-        let attrs = &[
-            topic.into(),
-            consumer_group.into(),
-            opentelemetry::KeyValue::new("partition", partition.get() as i64),
-        ];
+        let attrs = &[topic.into(), consumer_group.into(), partition.into()];
         self.topic_lag.record(lag, attrs);
     }
 }
@@ -293,7 +292,7 @@ pub(crate) fn record_end_offsets(state: &State) -> Result<()> {
             let end_offset = MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?;
             state
                 .metrics
-                .record_topic_end_offset(&topic_row.name, partition, end_offset);
+                .record_topic_end_offset(&topic_row.name, &partition, end_offset);
         }
     }
     Ok(())
@@ -304,7 +303,7 @@ pub(crate) fn record_topic_lag_metrics(state: &State) -> Result<()> {
         state.metrics.record_topic_lag(
             &entry.topic_name,
             &entry.consumer_group,
-            entry.partition,
+            &entry.partition,
             entry.lag,
         );
     }
