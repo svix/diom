@@ -788,6 +788,10 @@ impl StoreHandle {
         self.time.update_now()
     }
 
+    pub(crate) async fn msgs_store(&self) -> coyote_msgs::State {
+        self.inner.read().await.stores.read().msgs_state.clone()
+    }
+
     pub(crate) async fn kv_store(&self) -> coyote_kv::State {
         self.inner.read().await.stores.read().kv_state.clone()
     }
