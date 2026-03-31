@@ -13,6 +13,7 @@ use crate::{
 };
 use anyhow::Context;
 use coyote_core::{Monotime, task::spawn_blocking_in_current_span};
+use coyote_error::CanFailExt;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace, StorageType};
 use futures_util::{Stream, StreamExt};
@@ -227,35 +228,44 @@ impl Store {
         self.stores.read_arc()
     }
 
-    pub fn start_metrics(&self) {
+    /// Run a background task to collect metrics from the database
+    fn start_metrics(&self) {
         let stores = Arc::clone(&self.stores);
-        let shutdown = crate::shutting_down_token();
         let metrics = self.metrics.clone();
         tokio::spawn(async move {
-            let mut ticker = tokio::time::interval(Duration::from_secs(60));
-            loop {
-                tokio::select! {
-                    _ = ticker.tick() => {}
-                    _ = shutdown.cancelled() => break,
-                }
+            let shutdown = crate::shutting_down_token();
+            let mut ticker = tokio::time::interval(Duration::from_secs(10));
+            let mut last_fetched_size = std::time::Instant::now();
 
-                match spawn_blocking_in_current_span({
+            while shutdown.run_until_cancelled(ticker.tick()).await.is_some() {
+                let should_fetch_size = last_fetched_size.elapsed() > Duration::from_secs(120);
+
+                spawn_blocking_in_current_span({
                     let stores = Arc::clone(&stores);
+                    let metrics = metrics.clone();
                     move || {
                         let guard = stores.read();
-                        let persistent_bytes = guard.databases.persistent.disk_space()?;
-                        let ephemeral_bytes = guard.databases.ephemeral.disk_space()?;
-                        Ok::<_, fjall::Error>((persistent_bytes, ephemeral_bytes))
+                        metrics
+                            .record_db(
+                                DbType::Persistent,
+                                &guard.databases.persistent,
+                                should_fetch_size,
+                            )
+                            .warn_on_fail("error fetching persistent DB metrics");
+                        metrics
+                            .record_db(
+                                DbType::Ephemeral,
+                                &guard.databases.ephemeral,
+                                should_fetch_size,
+                            )
+                            .warn_on_fail("error fetching ephemeral DB metrics");
                     }
                 })
                 .await
-                .expect("Failed joining blocking task")
-                {
-                    Ok((persistent_bytes, ephemeral_bytes)) => {
-                        metrics.bytes_used(persistent_bytes, DbType::Persistent);
-                        metrics.bytes_used(ephemeral_bytes, DbType::Ephemeral);
-                    }
-                    Err(err) => tracing::warn!(?err, "failed to read db disk space"),
+                .expect("Failed joining blocking task");
+
+                if should_fetch_size {
+                    last_fetched_size = std::time::Instant::now();
                 }
             }
         });
