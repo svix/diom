@@ -19,7 +19,7 @@ use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::{AuthTokenId, Module, Public};
 use diom_namespace::entities::NamespaceName;
-use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -32,20 +32,20 @@ use crate::{
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
-fn auth_token_access_metadata<'a>(ns: Option<&'a str>, action: &'static str) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+fn auth_token_operation<'a>(ns: Option<&'a str>, action: &'static str) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::AuthToken,
         namespace: ns,
         key: None,
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
-                auth_token_access_metadata(self.namespace.as_deref(), $action)
+            fn operation(&self) -> RequestedOperation<'_> {
+                auth_token_operation(self.namespace.as_deref(), $action)
             }
         }
     };
@@ -106,7 +106,7 @@ pub struct AuthTokenCreateIn {
     pub enabled: bool,
 }
 
-request_input!(AuthTokenCreateIn, "Create");
+request_input!(AuthTokenCreateIn, "create");
 
 fn default_true() -> bool {
     true
@@ -167,7 +167,7 @@ pub struct AuthTokenExpireIn {
     pub expiry_ms: Option<DurationMs>,
 }
 
-request_input!(AuthTokenExpireIn, "Expire");
+request_input!(AuthTokenExpireIn, "expire");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenExpireOut {}
@@ -196,7 +196,7 @@ pub struct AuthTokenDeleteIn {
     pub id: Public<AuthTokenId>,
 }
 
-request_input!(AuthTokenDeleteIn, "Delete");
+request_input!(AuthTokenDeleteIn, "delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenDeleteOut {
@@ -234,7 +234,7 @@ pub struct AuthTokenVerifyIn {
     pub token: String,
 }
 
-request_input!(AuthTokenVerifyIn, "Verify");
+request_input!(AuthTokenVerifyIn, "verify");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenVerifyOut {
@@ -277,7 +277,7 @@ pub struct AuthTokenListIn {
     pub pagination: Pagination<Public<AuthTokenId>>,
 }
 
-request_input!(AuthTokenListIn, "List");
+request_input!(AuthTokenListIn, "list");
 
 pub type AuthTokenListOut = ListResponse<AuthTokenOut>;
 
@@ -324,7 +324,7 @@ pub struct AuthTokenUpdateIn {
     pub enabled: Option<bool>,
 }
 
-request_input!(AuthTokenUpdateIn, "Update");
+request_input!(AuthTokenUpdateIn, "update");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenUpdateOut {}
@@ -365,7 +365,7 @@ pub struct AuthTokenRotateIn {
     pub expiry_ms: Option<DurationMs>,
 }
 
-request_input!(AuthTokenRotateIn, "Rotate");
+request_input!(AuthTokenRotateIn, "rotate");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenRotateOut {
@@ -412,7 +412,7 @@ struct AuthTokenGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(AuthTokenGetNamespaceIn);
+namespace_request_input!(AuthTokenGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenGetNamespaceOut {
@@ -426,7 +426,7 @@ pub(crate) struct AuthTokenCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(AuthTokenCreateNamespaceIn);
+namespace_request_input!(AuthTokenCreateNamespaceIn, "create");
 
 impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
     fn from(v: AuthTokenCreateNamespaceIn) -> Self {

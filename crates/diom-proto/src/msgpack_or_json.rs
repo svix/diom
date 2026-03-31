@@ -144,7 +144,7 @@ where
         /* if let Some(perms) = permissions {
             match value.access_metadata() {
                 AccessMetadata::AdminOnly => {}
-                AccessMetadata::RuleProtected(op) => {
+                (op) => {
                     // FIXME: Figure out what to do for access rules of operator / admin.
                     if perms.auth_token_id.is_some()
                         && verify_operation(&op, &perms.access_rules).is_err()
