@@ -80,8 +80,14 @@ public class HttpClient {
         this.baseUrl = baseUrl;
         this.defaultHeaders = defaultHeaders;
         this.retrySchedule = retrySchedule;
+        List<Protocol> protocols;
+        if ("http" == baseUrl.scheme()) {
+            protocols = Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE);
+        } else {
+            protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1);
+        }
         this.client = new OkHttpClient.Builder()
-            .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .protocols(protocols)
             .socketFactory(new HelpImTrappedInANagleFactory())
             .build();
 
