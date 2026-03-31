@@ -23,6 +23,7 @@ impl From<&ConsumerGroup> for opentelemetry::KeyValue {
 pub struct MsgMetrics {
     pub(crate) published: Counter<u64>,
     pub(crate) published_bytes: Counter<u64>,
+    pub(crate) topic_lag: Gauge<u64>,
 
     pub(crate) queue_received: Counter<u64>,
     pub(crate) queue_acked: Counter<u64>,
@@ -35,7 +36,6 @@ pub struct MsgMetrics {
     pub(crate) stream_committed: Counter<u64>,
     pub(crate) stream_no_lease: Counter<u64>,
     pub(crate) stream_seeks: Counter<u64>,
-    pub(crate) stream_topic_lag: Gauge<u64>,
 }
 
 impl MsgMetrics {
@@ -101,9 +101,9 @@ impl MsgMetrics {
                 .with_description("Stream seek operations")
                 .with_unit("{event}")
                 .build(),
-            stream_topic_lag: meter
-                .u64_gauge("coyote.msgs.stream.lag")
-                .with_description("Estimated stream lag")
+            topic_lag: meter
+                .u64_gauge("coyote.msgs.topic.lag")
+                .with_description("Estimated topic lag")
                 .with_unit("{message}")
                 .build(),
         }
@@ -190,7 +190,7 @@ impl MsgMetrics {
         self.stream_seeks.add(1, attrs);
     }
 
-    pub(crate) fn record_stream_topic_lag(
+    pub(crate) fn record_topic_lag(
         &self,
         topic: &TopicName,
         consumer_group: &ConsumerGroup,
@@ -202,7 +202,7 @@ impl MsgMetrics {
             consumer_group.into(),
             opentelemetry::KeyValue::new("partition", partition.get() as i64),
         ];
-        self.stream_topic_lag.record(lag, attrs);
+        self.topic_lag.record(lag, attrs);
     }
 }
 
@@ -213,7 +213,7 @@ pub(crate) struct PartitionLag {
     pub lag: u64,
 }
 
-fn compute_stream_lag(
+fn compute_topic_lag(
     metadata_tables: &impl fjall_utils::ReadableKeyspace,
     msg_table: &impl fjall_utils::ReadableKeyspace,
 ) -> Result<Vec<PartitionLag>> {
@@ -261,9 +261,9 @@ fn compute_stream_lag(
     Ok(results)
 }
 
-pub(crate) fn record_stream_lag_metrics(state: &State) -> Result<()> {
-    for entry in compute_stream_lag(&state.metadata_tables, &state.msg_table)? {
-        state.metrics.record_stream_topic_lag(
+pub(crate) fn record_topic_lag_metrics(state: &State) -> Result<()> {
+    for entry in compute_topic_lag(&state.metadata_tables, &state.msg_table)? {
+        state.metrics.record_topic_lag(
             &entry.topic_name,
             &entry.consumer_group,
             entry.partition,
@@ -356,7 +356,7 @@ mod tests {
             .keyspace(crate::METADATA_KEYSPACE, Default::default)
             .unwrap();
         let msgs = db.keyspace(crate::MSG_KEYSPACE, Default::default).unwrap();
-        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        let results = compute_topic_lag(&meta, &msgs).unwrap();
         assert!(results.is_empty());
     }
 
@@ -375,7 +375,7 @@ mod tests {
 
         insert_topic(&db, &meta, &topic_row);
 
-        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        let results = compute_topic_lag(&meta, &msgs).unwrap();
         assert!(results.is_empty());
 
         // 5 messages, cursor at 0
@@ -384,14 +384,14 @@ mod tests {
         }
         insert_cursor(&db, &meta, &topic_row, partition, &cg, 0);
 
-        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        let results = compute_topic_lag(&meta, &msgs).unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].lag, 5);
 
         // Advance cursor to 2
         insert_cursor(&db, &meta, &topic_row, partition, &cg, 2);
 
-        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        let results = compute_topic_lag(&meta, &msgs).unwrap();
         assert_eq!(results[0].lag, 3);
     }
 }
