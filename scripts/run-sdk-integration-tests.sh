@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(dirname "$0")"
+ROOT_DIR="$SCRIPT_DIR/.."
 
 COYOTE_TOKEN="admin_abcdefghijlmnopqrstuvwxyz012345"
 CONTAINER_NAME="coyote-test"
