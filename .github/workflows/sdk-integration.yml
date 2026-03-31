@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: ubicloud/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build server binary
@@ -52,7 +52,7 @@ jobs:
         run: cargo test --package coyote-client -- --ignored
       - name: Stop server
         if: always()
-        run: kill %1 || true
+        run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-python:
     name: Python SDK
@@ -75,7 +75,7 @@ jobs:
         run: COYOTE_INTEGRATION=1 uv run --group dev pytest tests/ -v
       - name: Stop server
         if: always()
-        run: kill %1 || true
+        run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-javascript:
     name: JavaScript SDK
@@ -100,7 +100,7 @@ jobs:
         run: node --test tests/integration.test.mjs
       - name: Stop server
         if: always()
-        run: kill %1 || true
+        run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-go:
     name: Go SDK
@@ -125,7 +125,7 @@ jobs:
         run: go test -tags=integration -v -count=1 ./...
       - name: Stop server
         if: always()
-        run: kill %1 || true
+        run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-java:
     name: Java SDK
@@ -151,4 +151,4 @@ jobs:
         run: ./gradlew integrationTest
       - name: Stop server
         if: always()
-        run: kill %1 || true
+        run: kill "$(cat /tmp/coyote-server.pid)" || true

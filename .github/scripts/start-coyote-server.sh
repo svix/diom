@@ -11,6 +11,8 @@ COYOTE_CLUSTER_AUTO_INITIALIZE=true \
 COYOTE_ADMIN_TOKEN="${COYOTE_ADMIN_TOKEN:?}" \
   "$BINARY" &
 
+echo $! > /tmp/coyote-server.pid
+
 for _i in $(seq 1 60); do
   if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
     echo "Server is ready"
