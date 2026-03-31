@@ -9,7 +9,7 @@ use entities::{ConsumerGroup, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, TableRow};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
-use crate::metrics::record_topic_lag_metrics;
+use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
 
 pub mod entities;
 pub mod metrics;
@@ -153,14 +153,15 @@ impl AllNodesWorker {
 
     async fn worker_loop(&self) -> BackgroundResult<()> {
         let state = self.state.clone();
-        match coyote_core::task::spawn_blocking_in_current_span(move || {
-            record_topic_lag_metrics(&state)
-        })
-        .await
-        {
-            Ok(Ok(())) => {}
-            Ok(Err(err)) => tracing::warn!(?err, "failed to collect stream lag metrics"),
-            Err(err) => tracing::warn!(?err, "stream lag metrics task panicked"),
+
+        let mut tasks = tokio::task::JoinSet::new();
+        tasks.spawn_blocking(move || record_topic_lag_metrics(&state));
+        let state = self.state.clone();
+        tasks.spawn_blocking(move || record_end_offsets(&state));
+        for result in tasks.join_all().await {
+            if let Err(e) = result {
+                tracing::warn!(error = %e, "Failed to collect msgs metrics");
+            }
         }
         Ok(())
     }
