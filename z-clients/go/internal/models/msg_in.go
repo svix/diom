@@ -12,6 +12,6 @@ type MsgIn struct {
 	// Optional delay in milliseconds.
 	//
 	// The message will not be delivered to queue consumers
-	// until `delay_ms` has elapsed from the time of publish.
+	// until the delay has elapsed from the time of publish.
 	DelayMs *uint64 `msgpack:"delay_ms,omitempty"`
 }

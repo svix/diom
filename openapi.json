@@ -6591,10 +6591,9 @@
             "nullable": true
           },
           "delay_ms": {
-            "description": "Optional delay in milliseconds.\n\nThe message will not be delivered to queue consumers\nuntil `delay_ms` has elapsed from the time of publish.",
+            "description": "Optional delay in milliseconds.\n\nThe message will not be delivered to queue consumers\nuntil the delay has elapsed from the time of publish.",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0,
             "default": null,
             "nullable": true
           }
@@ -7272,7 +7271,6 @@
             "description": "Milliseconds until enough tokens are available (only present when allowed is false)",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0,
             "nullable": true
           }
         },
@@ -7382,7 +7380,6 @@
             "description": "Milliseconds until at least one token is available (only present when remaining is 0)",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0,
             "nullable": true
           }
         },
