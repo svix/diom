@@ -336,9 +336,13 @@ pub struct MsgIn {
     pub value: Vec<u8>,
     #[serde(default)]
     pub headers: HashMap<String, String>,
-    /// Optional partition key. Messages with the same key are routed to the same partition.
+    /// Optional partition key.
+    ///
+    /// Messages with the same key are routed to the same partition.
     pub key: Option<String>,
-    /// Optional delay in milliseconds. The message will not be delivered to queue consumers
+    /// Optional delay in milliseconds.
+    ///
+    /// The message will not be delivered to queue consumers
     /// until `delay_ms` has elapsed from the time of publish.
     #[serde(default)]
     pub delay_ms: Option<u64>,

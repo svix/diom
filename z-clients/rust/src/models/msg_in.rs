@@ -9,11 +9,15 @@ pub struct MsgIn {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub headers: Option<std::collections::HashMap<String, String>>,
 
-    /// Optional partition key. Messages with the same key are routed to the same partition.
+    /// Optional partition key.
+    ///
+    /// Messages with the same key are routed to the same partition.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
 
-    /// Optional delay in milliseconds. The message will not be delivered to queue consumers
+    /// Optional delay in milliseconds.
+    ///
+    /// The message will not be delivered to queue consumers
     /// until `delay_ms` has elapsed from the time of publish.
     #[serde(
         rename = "delay_ms",
