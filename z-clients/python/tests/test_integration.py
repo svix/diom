@@ -21,11 +21,11 @@ pytestmark = pytest.mark.skipif(
     reason="Set COYOTE_INTEGRATION=1 to run integration tests",
 )
 
-
+@pytest.fixture
 def make_client() -> Coyote:
     return Coyote(TOKEN, CoyoteOptions(server_url=SERVER_URL))
 
-
+@pytest.fixture
 def make_async_client() -> CoyoteAsync:
     return CoyoteAsync(TOKEN, CoyoteOptions(server_url=SERVER_URL))
 
