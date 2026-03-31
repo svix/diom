@@ -161,8 +161,14 @@ async fn test_admin_access_policy_list() -> TestResult {
 
     let data = resp["data"].assert_array();
     let ids: Vec<_> = data.iter().map(|p| p["id"].assert_str()).collect();
-    assert!(ids.contains(&"policy-a"), "policy-a should be in list");
-    assert!(ids.contains(&"policy-b"), "policy-b should be in list");
+    assert!(
+        ids.contains(&"policy-a"),
+        "policy-a should be in list {ids:?}"
+    );
+    assert!(
+        ids.contains(&"policy-b"),
+        "policy-b should be in list {ids:?}"
+    );
 
     Ok(())
 }
