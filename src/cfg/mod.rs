@@ -374,7 +374,7 @@ pub struct ClusterConfiguration {
     /// This should be set to `false` for full ACID compliance, but can be set to `true` to enable
     /// higher throughput than your fsync rate. Note that we always flush to the OS buffers before
     /// acking, so data will only be lost of the OS crashes.
-    #[serde(default = "defaults::default_true")]
+    #[serde(default = "defaults::default_false")]
     pub log_ack_immediately: bool,
 
     /// Trigger a background snapshot after this many writes
