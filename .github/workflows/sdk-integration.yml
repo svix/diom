@@ -41,22 +41,9 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: |
-          chmod +x /tmp/coyote-server
-          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-          COYOTE_ENVIRONMENT=dev \
-          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            /tmp/coyote-server &
-          for _i in $(seq 1 60); do
-            if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
-              echo "Server is ready"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server failed to start"
-          exit 1
+        run: .github/scripts/start-coyote-server.sh
+        env:
+          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -79,22 +66,9 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: |
-          chmod +x /tmp/coyote-server
-          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-          COYOTE_ENVIRONMENT=dev \
-          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            /tmp/coyote-server &
-          for _i in $(seq 1 60); do
-            if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
-              echo "Server is ready"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server failed to start"
-          exit 1
+        run: .github/scripts/start-coyote-server.sh
+        env:
+          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
       - uses: astral-sh/setup-uv@v7
       - name: Run Python SDK integration tests
         working-directory: z-clients/python
@@ -115,22 +89,9 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: |
-          chmod +x /tmp/coyote-server
-          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-          COYOTE_ENVIRONMENT=dev \
-          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            /tmp/coyote-server &
-          for _i in $(seq 1 60); do
-            if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
-              echo "Server is ready"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server failed to start"
-          exit 1
+        run: .github/scripts/start-coyote-server.sh
+        env:
+          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
       - name: Install dependencies and build
         working-directory: z-clients/javascript
         run: npm ci && npm run build && npm run bundle
@@ -153,22 +114,9 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: |
-          chmod +x /tmp/coyote-server
-          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-          COYOTE_ENVIRONMENT=dev \
-          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            /tmp/coyote-server &
-          for _i in $(seq 1 60); do
-            if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
-              echo "Server is ready"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server failed to start"
-          exit 1
+        run: .github/scripts/start-coyote-server.sh
+        env:
+          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
       - uses: actions/setup-go@v5
         with:
           go-version-file: z-clients/go/go.mod
@@ -191,22 +139,9 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: |
-          chmod +x /tmp/coyote-server
-          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-          COYOTE_ENVIRONMENT=dev \
-          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            /tmp/coyote-server &
-          for _i in $(seq 1 60); do
-            if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
-              echo "Server is ready"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server failed to start"
-          exit 1
+        run: .github/scripts/start-coyote-server.sh
+        env:
+          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
