@@ -170,8 +170,11 @@ impl Store {
 
         let stores = Stores {
             databases: databases.clone(),
-            msgs_state: coyote_msgs::State::init(persistent_db.clone())
-                .context("initializing msgs state")?,
+            msgs_state: coyote_msgs::State::init(
+                persistent_db.clone(),
+                app_state.topic_publish_notifier.clone(),
+            )
+            .context("initializing msgs state")?,
             kv_state: coyote_kv::State::init(databases.clone()).context("initializing kv state")?,
             cache_state: coyote_cache::State::init(databases.clone())
                 .context("initializing cache state")?,
