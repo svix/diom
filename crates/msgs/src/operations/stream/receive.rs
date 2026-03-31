@@ -2,7 +2,7 @@ use std::num::NonZeroU16;
 
 use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -52,7 +52,7 @@ impl StreamReceiveOperation {
             batch_size,
             lease_duration,
             default_starting_position,
-            topic_id_random_bytes: random_v7_bytes(),
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 

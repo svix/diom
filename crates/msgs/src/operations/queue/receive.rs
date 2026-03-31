@@ -2,7 +2,7 @@ use std::{collections::HashMap, num::NonZeroU16};
 
 use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -47,7 +47,7 @@ impl QueueReceiveOperation {
             consumer_group,
             batch_size,
             lease_duration,
-            topic_id_random_bytes: random_v7_bytes(),
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 

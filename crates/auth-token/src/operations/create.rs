@@ -9,7 +9,7 @@ use crate::{
 };
 use coyote_core::types::Metadata;
 use coyote_error::Result;
-use coyote_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes};
 use coyote_operations::OpContext;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateResponseData {
@@ -45,7 +45,7 @@ impl CreateAuthTokenOperation {
     ) -> Self {
         Self {
             namespace_id: namespace.id,
-            id_random_bytes: random_v7_bytes(),
+            id_random_bytes: UuidV7RandomBytes::new_random(),
             name,
             token_hashed,
             expiry,

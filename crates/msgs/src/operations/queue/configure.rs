@@ -1,6 +1,6 @@
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::WriteBatchExt;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -37,7 +37,7 @@ impl QueueConfigureOperation {
             consumer_group,
             retry_schedule,
             dlq_topic,
-            topic_id_random_bytes: random_v7_bytes(),
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         }
     }
 

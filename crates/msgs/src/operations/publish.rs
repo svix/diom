@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -44,7 +44,7 @@ impl PublishOperation {
             topic,
             partition,
             msgs,
-            topic_id_random_bytes: random_v7_bytes(),
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 

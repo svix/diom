@@ -8,7 +8,7 @@ use crate::{
     operations::{AuthTokenRaftState, AuthTokenRequest, RotateResponse},
 };
 use coyote_error::Result;
-use coyote_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes};
 use coyote_operations::OpContext;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RotateResponseData {
@@ -36,7 +36,7 @@ impl RotateAuthTokenOperation {
         Self {
             namespace_id: namespace.id,
             old_id,
-            new_id_random_bytes: random_v7_bytes(),
+            new_id_random_bytes: UuidV7RandomBytes::new_random(),
             new_token_hashed,
             old_expiry,
         }

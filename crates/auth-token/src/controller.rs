@@ -382,7 +382,7 @@ impl AuthTokenController {
 #[allow(clippy::disallowed_methods)]
 #[cfg(test)]
 mod tests {
-    use coyote_id::{NamespaceId, UuidV7RandomBytes, random_v7_bytes};
+    use coyote_id::{NamespaceId, UuidV7RandomBytes};
     use fjall::Database;
     use jiff::{Timestamp, ToSpan};
 
@@ -446,8 +446,16 @@ mod tests {
         let mut created = Vec::new();
         for i in 0..5i32 {
             let ts = base.checked_add((i + 1).seconds()).unwrap();
-            created
-                .push(create_token(c, &format!("token-{i}"), owner, ts, random_v7_bytes()).await);
+            created.push(
+                create_token(
+                    c,
+                    &format!("token-{i}"),
+                    owner,
+                    ts,
+                    UuidV7RandomBytes::new_random(),
+                )
+                .await,
+            );
         }
         created.sort_by_key(|t| *t.id.as_bytes());
 

@@ -13,16 +13,20 @@ use self::marker::{IdMarker, PublicIdMarker};
 pub use self::{module::Module, public::Public};
 
 const V7_RANDOM_BYTES_LEN: usize = 10;
-pub type UuidV7RandomBytes = [u8; V7_RANDOM_BYTES_LEN];
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[serde(transparent)]
+pub struct UuidV7RandomBytes([u8; V7_RANDOM_BYTES_LEN]);
+
+impl UuidV7RandomBytes {
+    pub fn new_random() -> Self {
+        Self(rand::random())
+    }
+}
 
 pub type AuthTokenId = Id<m::AuthToken>;
 pub type NamespaceId = Id<m::Namespace>;
 pub type TopicId = Id<m::Topic>;
-
-pub fn random_v7_bytes() -> UuidV7RandomBytes {
-    // FIXME: maybe this should come from the raft state? it could also guarantee sub millisecond ordering.
-    rand::random()
-}
 
 // Don't want these types to be nameable,
 // so they're defined in a private submodule
@@ -51,7 +55,7 @@ impl<M: IdMarker> Id<M> {
 
     pub fn new(now: Timestamp, random_bytes: UuidV7RandomBytes) -> Self {
         let millis = now.as_millisecond() as u64;
-        Self::from_uuid(Builder::from_unix_timestamp_millis(millis, &random_bytes).into_uuid())
+        Self::from_uuid(Builder::from_unix_timestamp_millis(millis, &random_bytes.0).into_uuid())
     }
 
     pub fn nil() -> Self {
@@ -117,7 +121,7 @@ impl<'de, M: IdMarker> Deserialize<'de> for Id<M> {
 #[cfg(test)]
 #[allow(unreachable_pub)]
 mod tests {
-    use super::{Id, V7_RANDOM_BYTES_LEN};
+    use super::{Id, UuidV7RandomBytes};
 
     id_marker!(Private);
     id_marker!(Public, "pub_");
@@ -127,7 +131,7 @@ mod tests {
 
     #[test]
     fn private_id_serde() {
-        let id = PrivateId::new(jiff::Timestamp::UNIX_EPOCH, [0; V7_RANDOM_BYTES_LEN]);
+        let id = PrivateId::new(jiff::Timestamp::UNIX_EPOCH, UuidV7RandomBytes::new_random());
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, i.e. just a UUID
 
@@ -138,7 +142,7 @@ mod tests {
 
     #[test]
     fn public_id_serde() {
-        let id = PublicId::new(jiff::Timestamp::UNIX_EPOCH, [0; V7_RANDOM_BYTES_LEN]);
+        let id = PublicId::new(jiff::Timestamp::UNIX_EPOCH, UuidV7RandomBytes::new_random());
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, also just a UUID
 
@@ -154,7 +158,7 @@ mod tests {
     #[test]
     fn new_is_deterministic() {
         let now = jiff::Timestamp::UNIX_EPOCH;
-        let random_bytes = [7; V7_RANDOM_BYTES_LEN];
+        let random_bytes = UuidV7RandomBytes::new_random();
 
         assert_eq!(
             PrivateId::new(now, random_bytes),

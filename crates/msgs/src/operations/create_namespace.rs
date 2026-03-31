@@ -1,5 +1,5 @@
 use coyote_error::Result;
-use coyote_id::{UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::UuidV7RandomBytes;
 use coyote_namespace::{
     entities::{MsgsConfig, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -22,7 +22,7 @@ impl CreateNamespaceOperation {
         Self {
             name,
             retention,
-            id_random_bytes: random_v7_bytes(),
+            id_random_bytes: UuidV7RandomBytes::new_random(),
         }
     }
 

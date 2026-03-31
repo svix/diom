@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes, random_v7_bytes};
+use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,7 @@ impl QueueNackOperation {
             topic,
             consumer_group,
             msg_ids,
-            dlq_topic_id_random_bytes: random_v7_bytes(),
+            dlq_topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         }
     }
 
