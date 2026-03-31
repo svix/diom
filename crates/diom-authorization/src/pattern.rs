@@ -50,15 +50,7 @@ pub enum NamespacePattern {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum KeyPattern {
-    Exactly(String),
-    Prefix(String),
-    Segmented(SegmentedKeyPattern),
-    Any,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SegmentedKeyPattern {
+pub struct KeyPattern {
     pub segments: Vec<KeyPatternSegment>,
     /// Whether the pattern has a trailing `*` segment.
     ///
@@ -198,59 +190,18 @@ impl FromStr for NamespacePattern {
 }
 
 impl KeyPattern {
+    pub fn any() -> Self {
+        Self {
+            segments: vec![],
+            trailing_any: true,
+        }
+    }
+
     fn matches(&self, key: Option<&str>) -> bool {
-        match self {
-            Self::Exactly(k) => key == Some(k),
-            Self::Prefix(p) => key.is_some_and(|k| k.starts_with(p)),
-            Self::Any => true,
-            Self::Segmented(s) => key.is_some_and(|k| s.matches(k)),
-        }
-    }
-}
+        let Some(key) = key else {
+            return self.segments.is_empty() && self.trailing_any;
+        };
 
-impl fmt::Display for KeyPattern {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Exactly(s) => f.write_str(s),
-            Self::Prefix(s) => {
-                f.write_str(s)?;
-                f.write_str("*")
-            }
-            Self::Segmented(s) => s.fmt(f),
-            Self::Any => f.write_str("*"),
-        }
-    }
-}
-
-impl FromStr for KeyPattern {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "*" {
-            return Ok(Self::Any);
-        }
-
-        if s.ends_with("/*") {
-            if s.contains(['$', '{', '}']) {
-                return s.parse::<SegmentedKeyPattern>().map(Self::Segmented);
-            }
-
-            let prefix = &s[..s.len() - 1]; // keep the /
-            return Ok(Self::Prefix(prefix.to_owned()));
-        }
-
-        if s.contains(['$', '*', '{', '}']) {
-            return s.parse::<SegmentedKeyPattern>().map(Self::Segmented);
-        }
-
-        // FIXME: Could forbid special characters other than `*`
-        // but they'll just never match anything so skipping that for now.
-        Ok(Self::Exactly(s.to_owned()))
-    }
-}
-
-impl SegmentedKeyPattern {
-    fn matches(&self, key: &str) -> bool {
         let mut pat_segments = self.segments.iter();
         for key_seg in key.split('/') {
             let Some(pat_seg) = pat_segments.next() else {
@@ -269,31 +220,39 @@ impl SegmentedKeyPattern {
     }
 }
 
-impl fmt::Display for SegmentedKeyPattern {
+impl fmt::Display for KeyPattern {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut segments = self.segments.iter();
-        segments
-            .next()
-            .expect("SegmentedKeyPattern always consists of at least one segment")
-            .fmt(f)?;
+        if let Some(first) = segments.next() {
+            first.fmt(f)?;
 
-        for segment in segments {
-            f.write_char('/')?;
-            segment.fmt(f)?;
-        }
+            for segment in segments {
+                f.write_char('/')?;
+                segment.fmt(f)?;
+            }
 
-        if self.trailing_any {
-            f.write_str("/*")?;
+            if self.trailing_any {
+                f.write_str("/*")?;
+            }
+        } else if self.trailing_any {
+            f.write_char('*')?;
         }
 
         Ok(())
     }
 }
 
-impl FromStr for SegmentedKeyPattern {
+impl FromStr for KeyPattern {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "*" {
+            return Ok(Self {
+                segments: vec![],
+                trailing_any: true,
+            });
+        }
+
         let (s, trailing_any) = match s.strip_suffix("/*") {
             Some(rest) => (rest, true),
             None => (s, false),

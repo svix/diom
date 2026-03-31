@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use diom_authorization::{
     AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, KeyPatternSegment,
-    ModulePattern, NamespacePattern, ResourcePattern, Role, RoleId, SegmentedKeyPattern,
+    ModulePattern, NamespacePattern, ResourcePattern, Role, RoleId,
 };
 use diom_id::Module;
 use serde_json::json;
@@ -16,7 +16,10 @@ fn example_rules() -> Vec<AccessRule> {
             resource: ResourcePattern {
                 module: ModulePattern::Exactly(Module::Cache),
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Prefix("foo/".to_owned()),
+                key: KeyPattern {
+                    segments: vec![KeyPatternSegment::Fixed("foo".to_owned())],
+                    trailing_any: true,
+                },
             },
             actions: vec!["get".to_owned(), "set".to_owned()],
         },
@@ -25,7 +28,13 @@ fn example_rules() -> Vec<AccessRule> {
             resource: ResourcePattern {
                 module: ModulePattern::Exactly(Module::Cache),
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Exactly("foo/bar".to_owned()),
+                key: KeyPattern {
+                    segments: vec![
+                        KeyPatternSegment::Fixed("foo".to_owned()),
+                        KeyPatternSegment::Fixed("bar".to_owned()),
+                    ],
+                    trailing_any: false,
+                },
             },
             actions: vec!["get".to_owned()],
         },
@@ -34,13 +43,13 @@ fn example_rules() -> Vec<AccessRule> {
             resource: ResourcePattern {
                 module: ModulePattern::Exactly(Module::Kv),
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Segmented(SegmentedKeyPattern {
+                key: KeyPattern {
                     segments: vec![
                         KeyPatternSegment::Fixed("x".to_owned()),
                         KeyPatternSegment::Placeholder("role".to_owned()),
                     ],
                     trailing_any: true,
-                }),
+                },
             },
             actions: vec!["get".to_owned(), "set".to_owned()],
         },
