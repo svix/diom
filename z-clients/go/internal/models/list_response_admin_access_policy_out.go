@@ -1,0 +1,10 @@
+package coyote_models
+
+// This file is @generated DO NOT EDIT
+
+type ListResponseAdminAccessPolicyOut struct {
+	Data         []AdminAccessPolicyOut `msgpack:"data"`
+	Iterator     *string                `msgpack:"iterator,omitempty"`
+	PrevIterator *string                `msgpack:"prev_iterator,omitempty"`
+	Done         bool                   `msgpack:"done"`
+}

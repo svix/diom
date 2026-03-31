@@ -14,6 +14,9 @@ func NewAdmin(client *coyote_proto.HttpClient) Admin {
 	return Admin{client}
 }
 
+func (admin Admin) AuthPolicy() AdminAuthPolicy {
+	return NewAdminAuthPolicy(admin.client)
+}
 func (admin Admin) AuthRole() AdminAuthRole {
 	return NewAdminAuthRole(admin.client)
 }
