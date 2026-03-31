@@ -92,7 +92,9 @@ public class MsgIn {
     }
 
     /**
-    * Optional partition key. Messages with the same key are routed to the same partition.
+    * Optional partition key.
+
+Messages with the same key are routed to the same partition.
     *
      * @return key
      */
@@ -111,8 +113,10 @@ public class MsgIn {
     }
 
     /**
-    * Optional delay in milliseconds. The message will not be delivered to queue consumers
-until `delay_ms` has elapsed from the time of publish.
+    * Optional delay in milliseconds.
+
+The message will not be delivered to queue consumers
+until the delay has elapsed from the time of publish.
     *
      * @return delayMs
      */

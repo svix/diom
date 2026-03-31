@@ -16,8 +16,6 @@ use crate::{
     tables::{MsgRow, TopicRow},
 };
 
-use jiff::SignedDuration;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishOperation {
     namespace_id: NamespaceId,
@@ -181,10 +179,9 @@ fn write_msg_batch(
         let start_offset = offset;
 
         for msg in msgs {
-            let scheduled_at = msg.delay_ms.map(|ms| {
-                now.checked_add(SignedDuration::from_millis(ms as i64))
-                    .expect("scheduled_at overflow")
-            });
+            let scheduled_at = msg
+                .delay
+                .map(|ms| now.checked_add(ms).expect("scheduled_at overflow"));
             let msg = MsgRow {
                 value: msg.value,
                 headers: msg.headers,

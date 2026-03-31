@@ -57,8 +57,9 @@ pub struct KvSetIn {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
+    #[serde(rename = "ttl_ms")]
     #[validate(range(min = 1))]
-    pub ttl_ms: Option<DurationMs>,
+    pub ttl: Option<DurationMs>,
 
     #[serde(default)]
     pub behavior: OperationBehavior,
@@ -147,7 +148,7 @@ async fn kv_set(
         namespace,
         data.key,
         data.value,
-        data.ttl_ms,
+        data.ttl,
         data.behavior,
         data.version,
     );

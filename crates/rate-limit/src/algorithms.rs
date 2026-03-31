@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use diom_core::types::DurationMs;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -42,9 +40,9 @@ impl TokenBucket {
         (capacity, new_last_refill)
     }
 
-    pub(crate) fn calculate_retry_after(&self, current: u64, wanted: u64) -> Duration {
+    pub(crate) fn calculate_retry_after(&self, current: u64, wanted: u64) -> DurationMs {
         let wanted = wanted.saturating_sub(current);
         let intervals = wanted.div_ceil(self.refill_rate);
-        Duration::from_millis(intervals * self.refill_interval.as_millis())
+        intervals * self.refill_interval
     }
 }

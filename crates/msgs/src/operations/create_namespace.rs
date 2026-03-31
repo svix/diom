@@ -28,7 +28,7 @@ impl CreateNamespaceOperation {
         let op = CreateNamespace::new(
             self.name,
             MsgsConfig {
-                retention_period: self.retention.period_ms,
+                retention_period: self.retention.period,
                 retention_bytes: self.retention.size_bytes,
             },
         );
@@ -50,7 +50,7 @@ impl From<CreateNamespaceOutput<MsgsConfig>> for CreateNamespaceResponseData {
         Self {
             name: value.name,
             retention: Retention {
-                period_ms: value.config.retention_period,
+                period: value.config.retention_period,
                 size_bytes: value.config.retention_bytes,
             },
             created: value.created,

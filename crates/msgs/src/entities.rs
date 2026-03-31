@@ -336,12 +336,16 @@ pub struct MsgIn {
     pub value: Vec<u8>,
     #[serde(default)]
     pub headers: HashMap<String, String>,
-    /// Optional partition key. Messages with the same key are routed to the same partition.
+    /// Optional partition key.
+    ///
+    /// Messages with the same key are routed to the same partition.
     pub key: Option<String>,
-    /// Optional delay in milliseconds. The message will not be delivered to queue consumers
-    /// until `delay_ms` has elapsed from the time of publish.
-    #[serde(default)]
-    pub delay_ms: Option<u64>,
+    /// Optional delay in milliseconds.
+    ///
+    /// The message will not be delivered to queue consumers
+    /// until the delay has elapsed from the time of publish.
+    #[serde(default, rename = "delay_ms")]
+    pub delay: Option<DurationMs>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -460,6 +464,7 @@ impl JsonSchema for ConsumerGroup {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {
-    pub period_ms: Option<DurationMs>,
+    #[serde(rename = "period_ms")]
+    pub period: Option<DurationMs>,
     pub size_bytes: Option<NonZeroU64>,
 }

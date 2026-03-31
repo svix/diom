@@ -23,7 +23,8 @@ pub struct QueueReceiveOperation {
     partition: Option<Partition>,
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
-    lease_duration_ms: DurationMs,
+    #[serde(rename = "lease_duration_ms")]
+    lease_duration: DurationMs,
 }
 
 impl QueueReceiveOperation {
@@ -32,7 +33,7 @@ impl QueueReceiveOperation {
         topic: TopicIn,
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
-        lease_duration_ms: DurationMs,
+        lease_duration: DurationMs,
     ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.topic, Some(tp.partition)),
@@ -44,7 +45,7 @@ impl QueueReceiveOperation {
             partition,
             consumer_group,
             batch_size,
-            lease_duration_ms,
+            lease_duration,
         })
     }
 
@@ -56,7 +57,7 @@ impl QueueReceiveOperation {
             let mut remaining = self.batch_size.get();
             let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
 
-            let expiry = now + self.lease_duration_ms;
+            let expiry = now + self.lease_duration;
 
             let mut batch = state.db.batch();
 

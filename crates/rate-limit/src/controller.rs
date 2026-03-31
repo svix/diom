@@ -1,6 +1,4 @@
-use std::time::Duration;
-
-use diom_core::task::spawn_blocking_in_current_span;
+use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use diom_error::{Result, ResultExt as _};
 use diom_id::NamespaceId;
 use fjall::KeyspaceCreateOptions;
@@ -47,7 +45,7 @@ impl RateLimitController {
         identifier: I,
         wanted: u64,
         config: TokenBucket,
-    ) -> Result<(bool, u64, Option<Duration>)> {
+    ) -> Result<(bool, u64, Option<DurationMs>)> {
         let tables = self.tables.clone();
 
         spawn_blocking_in_current_span(move || {
@@ -82,7 +80,7 @@ impl RateLimitController {
         namespace_id: NamespaceId,
         identifier: I,
         config: TokenBucket,
-    ) -> Result<(u64, Option<Duration>)> {
+    ) -> Result<(u64, Option<DurationMs>)> {
         let tables = self.tables.clone();
         spawn_blocking_in_current_span(move || {
             let identifier = identifier.as_ref();
@@ -179,7 +177,7 @@ mod tests {
             limiter.limit(clock, ns(), id, 1, config()).await.unwrap();
         assert!(!result);
         assert_eq!(remaining, 0);
-        assert_eq!(retry_after, Some(Duration::from_millis(100)));
+        assert_eq!(retry_after, Some(DurationMs::from(100)));
     }
 
     #[tokio::test]

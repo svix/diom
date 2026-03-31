@@ -4925,6 +4925,7 @@
             "description": "Milliseconds from now until the token expires.",
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           },
           "enabled": {
@@ -4995,6 +4996,7 @@
             "description": "Milliseconds from now until the token expires. `None` means expire immediately.",
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           }
         },
@@ -5111,6 +5113,7 @@
           "expiry_ms": {
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           },
           "enabled": {
@@ -5315,6 +5318,7 @@
             "description": "Milliseconds from now until the token expires.",
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           },
           "metadata": {
@@ -5442,6 +5446,7 @@
             "description": "Milliseconds from now until the token expires. `None` means expire immediately.",
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           }
         },
@@ -5587,6 +5592,7 @@
             "description": "Milliseconds from now until the old token expires. `None` means expire immediately.",
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           }
         },
@@ -5636,6 +5642,7 @@
           "expiry_ms": {
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           },
           "metadata": {
@@ -5870,7 +5877,8 @@
           "ttl_ms": {
             "description": "Time to live in milliseconds",
             "type": "integer",
-            "format": "uint64"
+            "format": "uint64",
+            "minimum": 0
           }
         },
         "required": [
@@ -6586,12 +6594,12 @@
             }
           },
           "key": {
-            "description": "Optional partition key. Messages with the same key are routed to the same partition.",
+            "description": "Optional partition key.\n\nMessages with the same key are routed to the same partition.",
             "type": "string",
             "nullable": true
           },
           "delay_ms": {
-            "description": "Optional delay in milliseconds. The message will not be delivered to queue consumers\nuntil `delay_ms` has elapsed from the time of publish.",
+            "description": "Optional delay in milliseconds.\n\nThe message will not be delivered to queue consumers\nuntil the delay has elapsed from the time of publish.",
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
@@ -6900,12 +6908,14 @@
           "lease_duration_ms": {
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "default": 30000
           },
           "batch_wait_ms": {
             "description": "Maximum time (in milliseconds) to wait for messages before returning.",
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "default": null,
             "nullable": true
           }
@@ -7017,6 +7027,7 @@
           "lease_duration_ms": {
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "default": 300000
           },
           "default_starting_position": {
@@ -7027,6 +7038,7 @@
             "description": "Maximum time (in milliseconds) to wait for messages before returning.",
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "default": null,
             "nullable": true
           }
@@ -7451,6 +7463,7 @@
           "period_ms": {
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
             "nullable": true
           },
           "size_bytes": {

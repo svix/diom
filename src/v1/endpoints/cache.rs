@@ -58,7 +58,8 @@ pub struct CacheSetIn {
     pub value: Vec<u8>,
 
     /// Time to live in milliseconds
-    pub ttl_ms: DurationMs,
+    #[serde(rename = "ttl_ms")]
+    pub ttl: DurationMs,
 }
 
 request_input!(CacheSetIn, "set");
@@ -157,12 +158,7 @@ async fn cache_set(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = SetOperation::new(
-        namespace,
-        data.key.to_string(),
-        Some(data.ttl_ms),
-        data.value,
-    );
+    let operation = SetOperation::new(namespace, data.key.to_string(), Some(data.ttl), data.value);
     repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
