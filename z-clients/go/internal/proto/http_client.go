@@ -72,6 +72,7 @@ func ExecuteRequest[ReqBody any, ResBody any](
 		}
 	}
 
+	req.Header.Set("accept", "application/msgpack")
 	req.Header.Set("svix-req-id", strconv.FormatUint(rand.Uint64(), 10))
 	for hKey, hVal := range client.DefaultHeaders {
 		req.Header.Add(hKey, hVal)
