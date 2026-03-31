@@ -19,8 +19,12 @@ rand.workspace = true
 rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
+tokio.workspace = true
 tracing.workspace = true
 validator.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
 
 [lints]
 workspace = true

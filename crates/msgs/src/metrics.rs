@@ -1,6 +1,11 @@
-use opentelemetry::metrics::{Counter, Meter};
+use opentelemetry::metrics::{Counter, Gauge, Meter};
 
-use crate::entities::{ConsumerGroup, TopicName};
+use crate::{
+    State,
+    entities::{ConsumerGroup, Partition, TopicName},
+    tables::{MsgRow, StreamLeaseRow, TopicRow},
+};
+use diom_error::{Result, ResultExt as _};
 
 impl From<&TopicName> for opentelemetry::KeyValue {
     fn from(topic: &TopicName) -> Self {
@@ -30,6 +35,7 @@ pub struct MsgMetrics {
     pub(crate) stream_committed: Counter<u64>,
     pub(crate) stream_no_lease: Counter<u64>,
     pub(crate) stream_seeks: Counter<u64>,
+    pub(crate) stream_topic_lag: Gauge<u64>,
 }
 
 impl MsgMetrics {
@@ -94,6 +100,11 @@ impl MsgMetrics {
                 .u64_counter("diom.msgs.stream.seek")
                 .with_description("Stream seek operations")
                 .with_unit("{event}")
+                .build(),
+            stream_topic_lag: meter
+                .u64_gauge("diom.msgs.stream.lag")
+                .with_description("Estimated stream lag")
+                .with_unit("{message}")
                 .build(),
         }
     }
@@ -177,5 +188,210 @@ impl MsgMetrics {
     pub(crate) fn record_stream_seek(&self, topic: &TopicName, consumer_group: &ConsumerGroup) {
         let attrs = &[topic.into(), consumer_group.into()];
         self.stream_seeks.add(1, attrs);
+    }
+
+    pub(crate) fn record_stream_topic_lag(
+        &self,
+        topic: &TopicName,
+        consumer_group: &ConsumerGroup,
+        partition: Partition,
+        lag: u64,
+    ) {
+        let attrs = &[
+            topic.into(),
+            consumer_group.into(),
+            opentelemetry::KeyValue::new("partition", partition.get() as i64),
+        ];
+        self.stream_topic_lag.record(lag, attrs);
+    }
+}
+
+pub(crate) struct PartitionLag {
+    pub topic_name: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub partition: Partition,
+    pub lag: u64,
+}
+
+fn compute_stream_lag(
+    metadata_tables: &impl fjall_utils::ReadableKeyspace,
+    msg_table: &impl fjall_utils::ReadableKeyspace,
+) -> Result<Vec<PartitionLag>> {
+    use fjall_utils::TableRow as _;
+    use std::collections::HashSet;
+
+    let mut results = Vec::new();
+    for guard in metadata_tables.prefix([TopicRow::ROW_TYPE]) {
+        let (_, val) = guard.into_inner()?;
+        let topic_row: TopicRow = rmp_serde::from_slice(&val).or_internal_error()?;
+
+        let prefix = StreamLeaseRow::topic_scan_prefix(topic_row.id);
+
+        let mut consumer_groups = HashSet::new();
+        for guard in metadata_tables.prefix(&prefix) {
+            let (key, _) = guard.into_inner()?;
+            if let Some(cg_str) = StreamLeaseRow::consumer_group_from_key(&key)
+                && let Ok(consumer_group) = ConsumerGroup::try_from(cg_str)
+            {
+                consumer_groups.insert(consumer_group);
+            }
+        }
+
+        for cg in consumer_groups {
+            for partition_idx in 0..topic_row.partitions {
+                let Ok(partition) = Partition::new(partition_idx) else {
+                    continue;
+                };
+                let cursor_offset = StreamLeaseRow::fetch(
+                    metadata_tables,
+                    StreamLeaseRow::key_for(topic_row.id, partition, &cg),
+                )?
+                .map(|c| c.offset)
+                .unwrap_or(0);
+                let tail = MsgRow::next_offset(msg_table, topic_row.id, partition)?;
+                results.push(PartitionLag {
+                    topic_name: topic_row.name.clone(),
+                    consumer_group: cg.clone(),
+                    partition,
+                    lag: tail.saturating_sub(cursor_offset),
+                });
+            }
+        }
+    }
+    Ok(results)
+}
+
+pub(crate) fn record_stream_lag_metrics(state: &State) -> Result<()> {
+    for entry in compute_stream_lag(&state.metadata_tables, &state.msg_table)? {
+        state.metrics.record_stream_topic_lag(
+            &entry.topic_name,
+            &entry.consumer_group,
+            entry.partition,
+            entry.lag,
+        );
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use fjall_utils::WriteBatchExt as _;
+    use jiff::Timestamp;
+
+    use super::*;
+    use crate::tables::{MsgRow, StreamLeaseRow, TopicRow};
+
+    fn make_db() -> (fjall::Database, tempfile::TempDir) {
+        let dir = tempfile::tempdir().unwrap();
+        let db = fjall::Database::builder(dir.path())
+            .temporary(true)
+            .open()
+            .unwrap();
+        (db, dir)
+    }
+
+    fn insert_topic(db: &fjall::Database, meta: &fjall::Keyspace, topic_row: &TopicRow) {
+        use diom_id::NamespaceId;
+        let mut batch = db.batch();
+        batch
+            .insert_row(
+                meta,
+                TopicRow::key_for(NamespaceId::nil(), &topic_row.name),
+                topic_row,
+            )
+            .unwrap();
+        batch.commit().unwrap();
+    }
+
+    fn insert_msg(
+        db: &fjall::Database,
+        msgs: &fjall::Keyspace,
+        topic_row: &TopicRow,
+        partition: Partition,
+        offset: u64,
+    ) {
+        let mut batch = db.batch();
+        let row = MsgRow {
+            value: vec![],
+            headers: HashMap::new(),
+            timestamp: Timestamp::UNIX_EPOCH,
+            scheduled_at: None,
+        };
+        batch
+            .insert_row(msgs, MsgRow::key_for(topic_row.id, partition, offset), &row)
+            .unwrap();
+        batch.commit().unwrap();
+    }
+
+    fn insert_cursor(
+        db: &fjall::Database,
+        meta: &fjall::Keyspace,
+        topic_row: &TopicRow,
+        partition: Partition,
+        cg: &ConsumerGroup,
+        offset: u64,
+    ) {
+        let mut batch = db.batch();
+        let row = StreamLeaseRow {
+            offset,
+            expiry: Timestamp::UNIX_EPOCH,
+            end_offset: offset,
+        };
+        batch
+            .insert_row(
+                meta,
+                StreamLeaseRow::key_for(topic_row.id, partition, cg),
+                &row,
+            )
+            .unwrap();
+        batch.commit().unwrap();
+    }
+
+    #[test]
+    fn no_topics_returns_empty() {
+        let (db, _dir) = make_db();
+        let meta = db
+            .keyspace(crate::METADATA_KEYSPACE, Default::default)
+            .unwrap();
+        let msgs = db.keyspace(crate::MSG_KEYSPACE, Default::default).unwrap();
+        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn lag_is_tail_minus_cursor() {
+        let (db, _dir) = make_db();
+        let meta = db
+            .keyspace(crate::METADATA_KEYSPACE, Default::default)
+            .unwrap();
+        let msgs = db.keyspace(crate::MSG_KEYSPACE, Default::default).unwrap();
+
+        let topic_name = TopicName::new("test-topic".to_string()).unwrap();
+        let topic_row = TopicRow::new(topic_name, Timestamp::UNIX_EPOCH);
+        let cg = ConsumerGroup::try_from("my-group").unwrap();
+        let partition = Partition::new(0).unwrap();
+
+        insert_topic(&db, &meta, &topic_row);
+
+        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        assert!(results.is_empty());
+
+        // 5 messages, cursor at 0
+        for offset in 0..5 {
+            insert_msg(&db, &msgs, &topic_row, partition, offset);
+        }
+        insert_cursor(&db, &meta, &topic_row, partition, &cg, 0);
+
+        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].lag, 5);
+
+        // Advance cursor to 2
+        insert_cursor(&db, &meta, &topic_row, partition, &cg, 2);
+
+        let results = compute_stream_lag(&meta, &msgs).unwrap();
+        assert_eq!(results[0].lag, 3);
     }
 }
