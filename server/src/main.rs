@@ -26,7 +26,8 @@ mod tracing_panic_hook;
 #[derive(Parser)]
 #[clap(author, version, about = env!("CARGO_PKG_DESCRIPTION"), long_about = None)]
 struct Args {
-    #[clap(long)]
+    /// Path to a TOML configuration file
+    #[clap(short = 'C', long)]
     config_path: Option<PathBuf>,
 
     #[clap(subcommand)]
