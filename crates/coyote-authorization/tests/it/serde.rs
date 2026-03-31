@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 
 use coyote_authorization::{
-    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, NamespacePattern,
-    ResourcePattern, Role, RoleId,
+    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, ModulePattern,
+    NamespacePattern, ResourcePattern, Role, RoleId,
 };
 use coyote_id::Module;
 use serde_json::json;
@@ -14,7 +14,7 @@ fn example_rules() -> Vec<AccessRule> {
         AccessRule {
             effect: AccessRuleEffect::Allow,
             resource: ResourcePattern {
-                module: Module::Cache,
+                module: ModulePattern::Exactly(Module::Cache),
                 namespace: NamespacePattern::Default,
                 key: KeyPattern::Prefix("foo/".to_owned()),
             },
@@ -23,7 +23,7 @@ fn example_rules() -> Vec<AccessRule> {
         AccessRule {
             effect: AccessRuleEffect::Deny,
             resource: ResourcePattern {
-                module: Module::Cache,
+                module: ModulePattern::Exactly(Module::Cache),
                 namespace: NamespacePattern::Default,
                 key: KeyPattern::Exactly("foo/bar".to_owned()),
             },
@@ -32,7 +32,7 @@ fn example_rules() -> Vec<AccessRule> {
         AccessRule {
             effect: AccessRuleEffect::Allow,
             resource: ResourcePattern {
-                module: Module::Kv,
+                module: ModulePattern::Exactly(Module::Kv),
                 namespace: NamespacePattern::Default,
                 key: KeyPattern::Prefix("some-data/".to_owned()),
             },
