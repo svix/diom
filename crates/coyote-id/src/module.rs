@@ -8,6 +8,12 @@ pub enum Module {
     RateLimit = 4,
     Msgs = 5,
     AuthToken = 6,
+
+    AdminCluster = 200,
+    AdminNamespace = 201,
+    AdminAuthToken = 202,
+    AdminRole = 203,
+    AdminAccessPolicy = 204,
 }
 
 impl fmt::Display for Module {
@@ -19,6 +25,12 @@ impl fmt::Display for Module {
             Self::Kv => "kv",
             Self::Msgs => "msgs",
             Self::RateLimit => "rate_limit",
+
+            Self::AdminCluster => "admin/cluster",
+            Self::AdminNamespace => "admin/namespace",
+            Self::AdminAuthToken => "admin/auth_token",
+            Self::AdminRole => "admin/role",
+            Self::AdminAccessPolicy => "admin/access_policy",
         };
 
         f.write_str(s)
@@ -36,6 +48,12 @@ impl FromStr for Module {
             "kv" => Ok(Self::Kv),
             "msgs" => Ok(Self::Msgs),
             "rate_limit" => Ok(Self::RateLimit),
+
+            "admin/namespace" => Ok(Self::AdminNamespace),
+            "admin/auth_token" => Ok(Self::AdminAuthToken),
+            "admin/role" => Ok(Self::AdminRole),
+            "admin/access_policy" => Ok(Self::AdminAccessPolicy),
+
             _ => Err("unknown module"),
         }
     }
