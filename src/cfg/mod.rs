@@ -509,6 +509,16 @@ pub struct ConfigurationInner {
     )]
     pub bootstrap_max_wait_time: Option<Duration>,
 
+    /// How often to run background cleanup/garbage collection jobs
+    ///
+    /// Correctness should never be affected by this, just wasted memory/disk.
+    #[serde(
+        rename = "background_cleanup_interval_ms",
+        with = "crate::serde::duration::millis",
+        default = "defaults::background_cleanup_interval"
+    )]
+    pub background_cleanup_interval: Duration,
+
     /// A pre-set admin token to use instead of having coyote generate one automatically.
     ///
     /// Under normal circumstances you should not set this, and instead let coyote generate the

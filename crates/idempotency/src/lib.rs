@@ -11,6 +11,8 @@
 
 pub mod operations;
 
+use std::time::Duration;
+
 use coyote_core::Monotime;
 use coyote_error::Result;
 use coyote_kv::kvcontroller::KvController;
@@ -73,6 +75,7 @@ impl State {
 pub struct AllNodesWorker {
     state: State,
     time: Monotime,
+    cleanup_interval: Duration,
 }
 
 impl coyote_operations::workers::BackgroundWorker for AllNodesWorker {
@@ -83,7 +86,7 @@ impl coyote_operations::workers::BackgroundWorker for AllNodesWorker {
     /// It should not mutate the database in any way that could possibly be customer- or
     /// replication-visible; all  mutations should be written through the writer function
     async fn run(self) -> BackgroundResult<()> {
-        let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+        let mut timer = tokio::time::interval(self.cleanup_interval);
 
         let shutting_down = coyote_core::shutdown::shutting_down_token();
 
@@ -100,8 +103,12 @@ impl coyote_operations::workers::BackgroundWorker for AllNodesWorker {
 }
 
 impl AllNodesWorker {
-    pub fn new(state: State, time: Monotime) -> Self {
-        Self { state, time }
+    pub fn new(state: State, time: Monotime, cleanup_interval: Duration) -> Self {
+        Self {
+            state,
+            time,
+            cleanup_interval,
+        }
     }
 
     #[tracing::instrument(skip_all)]
