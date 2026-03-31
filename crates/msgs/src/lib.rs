@@ -175,12 +175,15 @@ impl AllNodesWorker {
     }
 
     async fn worker_loop(&self) -> BackgroundResult<()> {
-        let state = self.state.clone();
-
         let mut tasks = tokio::task::JoinSet::new();
-        tasks.spawn_blocking(move || record_topic_lag_metrics(&state));
-        let state = self.state.clone();
-        tasks.spawn_blocking(move || record_end_offsets(&state));
+        tasks.spawn_blocking({
+            let state = self.state.clone();
+            move || record_topic_lag_metrics(&state)
+        });
+        tasks.spawn_blocking({
+            let state = self.state.clone();
+            move || record_end_offsets(&state)
+        });
         for result in tasks.join_all().await {
             if let Err(e) = result {
                 tracing::warn!(error = %e, "Failed to collect msgs metrics");
