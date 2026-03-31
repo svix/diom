@@ -8,15 +8,15 @@ fn example_rules() -> Vec<AccessRule> {
             "effect": "allow",
             "resource": "cache::foo/*",
             "actions": [
-                "read",
-                "list"
+                "get",
+                "set"
             ],
         },
         {
             "effect": "deny",
             "resource": "cache::foo/bar",
             "actions": [
-                "read"
+                "get"
             ],
         },
         {
@@ -28,15 +28,15 @@ fn example_rules() -> Vec<AccessRule> {
             "effect": "allow",
             "resource": "kv:xyz:some-data/*",
             "actions": [
-                "create"
+                "delete"
             ],
         },
         {
             "effect": "allow",
             "resource": "kv:*:some-data/*",
             "actions": [
-                "read",
-                "list"
+                "get",
+                "set"
             ],
         },
     ]))
@@ -51,7 +51,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo"),
-        action: "read",
+        action: "get",
     };
     // no rule matches (need at least the extra /)
     assert!(verify_operation(&op, &rules).is_err());
@@ -60,7 +60,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo/foo"),
-        action: "read",
+        action: "get",
     };
     // simple match of first rule
     assert!(verify_operation(&op, &rules).is_ok());
@@ -69,7 +69,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo/foo"),
-        action: "create",
+        action: "delete",
     };
     // no matching rule for action
     assert!(verify_operation(&op, &rules).is_err());
@@ -78,7 +78,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo/baz"),
-        action: "create",
+        action: "delete",
     };
     // wildcard action allowed for this key
     assert!(verify_operation(&op, &rules).is_ok());
@@ -87,7 +87,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo/"),
-        action: "read",
+        action: "get",
     };
     // match of first rule with ** matching empty string
     assert!(verify_operation(&op, &rules).is_ok());
@@ -96,7 +96,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo/bar"),
-        action: "read",
+        action: "get",
     };
     // explicit deny rule matches
     assert!(verify_operation(&op, &rules).is_err());
@@ -105,7 +105,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo/bar"),
-        action: "list",
+        action: "set",
     };
     // deny rule only affects Read, not List
     assert!(verify_operation(&op, &rules).is_ok());
@@ -114,7 +114,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: None,
         key: Some("foo/barr"),
-        action: "read",
+        action: "get",
     };
     // deny rule is exact-match, does not match here
     assert!(verify_operation(&op, &rules).is_ok());
@@ -123,7 +123,7 @@ fn test_verify_cache_example() {
         module: Module::Cache,
         namespace: Some("ns"),
         key: Some("foo/foo"),
-        action: "read",
+        action: "get",
     };
     // both cache rules only apply to the default namespace
     assert!(verify_operation(&op, &rules).is_err());
@@ -132,7 +132,7 @@ fn test_verify_cache_example() {
         module: Module::Msgs,
         namespace: None,
         key: Some("foo/foo"),
-        action: "read",
+        action: "get",
     };
     // no matching rule for module
     assert!(verify_operation(&op, &rules).is_err());
@@ -146,7 +146,7 @@ fn test_verify_kv_example() {
         module: Module::Kv,
         namespace: Some("xyz"),
         key: Some("some-data/foo"),
-        action: "create",
+        action: "delete",
     };
     // matches the first rule
     assert!(verify_operation(&op, &rules).is_ok());
@@ -155,7 +155,7 @@ fn test_verify_kv_example() {
         module: Module::Kv,
         namespace: Some("xyz"),
         key: Some("some-data/foo"),
-        action: "read",
+        action: "get",
     };
     // matches the second rule
     assert!(verify_operation(&op, &rules).is_ok());
@@ -164,7 +164,7 @@ fn test_verify_kv_example() {
         module: Module::Kv,
         namespace: None,
         key: Some("some-data/foo"),
-        action: "create",
+        action: "delete",
     };
     // Create action is only available for xyz namespace
     assert!(verify_operation(&op, &rules).is_err());
@@ -173,7 +173,7 @@ fn test_verify_kv_example() {
         module: Module::Kv,
         namespace: Some("abc"),
         key: Some("some-data/foo"),
-        action: "create",
+        action: "delete",
     };
     // same issue
     assert!(verify_operation(&op, &rules).is_err());
@@ -182,7 +182,7 @@ fn test_verify_kv_example() {
         module: Module::Kv,
         namespace: None,
         key: Some("some-data/foo"),
-        action: "read",
+        action: "get",
     };
     // Read action does work for arbitrary namespaces, including the default one
     assert!(verify_operation(&op, &rules).is_ok());
@@ -191,7 +191,7 @@ fn test_verify_kv_example() {
         module: Module::Kv,
         namespace: Some("abc"),
         key: Some("some-data/foo"),
-        action: "list",
+        action: "set",
     };
     // Same for List action, and a different named namespace
     assert!(verify_operation(&op, &rules).is_ok());
