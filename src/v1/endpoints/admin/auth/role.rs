@@ -26,18 +26,6 @@ use crate::{
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
-fn role_out(model: RoleModel) -> AdminRoleOut {
-    AdminRoleOut {
-        id: model.id,
-        description: model.description,
-        rules: model.rules,
-        policies: model.policies,
-        context: model.context,
-        created: model.created,
-        updated: model.updated,
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminRoleOut {
     pub id: RoleId,
@@ -52,6 +40,20 @@ pub struct AdminRoleOut {
 impl ListResponseItem for AdminRoleOut {
     fn id(&self) -> String {
         self.id.as_str().to_owned()
+    }
+}
+
+impl From<RoleModel> for AdminRoleOut {
+    fn from(model: RoleModel) -> Self {
+        Self {
+            id: model.id,
+            description: model.description,
+            rules: model.rules,
+            policies: model.policies,
+            context: model.context,
+            created: model.created,
+            updated: model.updated,
+        }
     }
 }
 
@@ -149,7 +151,7 @@ async fn role_get(
         .get_role(&data.id)
         .await?
         .ok_or_not_found()?;
-    Ok(MsgPackOrJson(role_out(model)))
+    Ok(MsgPackOrJson(model.into()))
 }
 
 // List
@@ -179,7 +181,7 @@ async fn role_list(
         .controller
         .list_roles(limit + 1, iterator.clone())
         .await?;
-    let items = models.into_iter().map(role_out).collect();
+    let items = models.into_iter().map(AdminRoleOut::from).collect();
     Ok(MsgPackOrJson(ListResponse::create(
         items,
         limit,
