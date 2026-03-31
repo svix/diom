@@ -22,7 +22,7 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use diom_authorization::{Permissions, RoleId};
+use diom_authorization::{AccessRule, Permissions, RoleId};
 use diom_core::Monotime;
 use diom_error::Error;
 use diom_msgs::TopicPublishNotifier;
@@ -225,7 +225,7 @@ async fn run_internal(
             req.inner.extensions_mut().insert(Permissions {
                 role: RoleId::operator(),
                 auth_token_id: None,
-                access_rules: [].into(),
+                access_rules: AccessRule::operator_rules(),
             });
 
             // FIXME: Do we want to cancel request handling when the response channel is closed?

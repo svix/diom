@@ -9,7 +9,7 @@ use crate::RequestedOperation;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ResourcePattern {
-    pub module: Module,
+    pub module: ModulePattern,
     pub namespace: NamespacePattern,
     pub key: KeyPattern,
 }
@@ -26,6 +26,15 @@ impl JsonSchema for ResourcePattern {
     fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
         String::json_schema(generator)
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ModulePattern {
+    /// Wildcard (`*`).
+    ///
+    /// Does not match admin modules.
+    Any,
+    Exactly(Module),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -46,7 +55,9 @@ pub enum KeyPattern {
 
 impl ResourcePattern {
     pub fn matches(&self, op: &RequestedOperation<'_>) -> bool {
-        self.module == op.module && self.namespace.matches(op.namespace) && self.key.matches(op.key)
+        self.module.matches(op.module)
+            && self.namespace.matches(op.namespace)
+            && self.key.matches(op.key)
     }
 }
 
@@ -93,6 +104,35 @@ impl<'de> Deserialize<'de> for ResourcePattern {
     {
         let s = String::deserialize(deserializer)?;
         s.parse().map_err(de::Error::custom)
+    }
+}
+
+impl ModulePattern {
+    fn matches(&self, module: Module) -> bool {
+        match self {
+            Self::Any => !module.is_admin_module(),
+            Self::Exactly(m) => module == *m,
+        }
+    }
+}
+
+impl fmt::Display for ModulePattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Any => f.write_str("*"),
+            Self::Exactly(m) => m.fmt(f),
+        }
+    }
+}
+
+impl FromStr for ModulePattern {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "*" => Ok(Self::Any),
+            _ => s.parse().map(Self::Exactly),
+        }
     }
 }
 
