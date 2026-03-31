@@ -12,10 +12,7 @@ mod pattern;
 mod verification;
 
 pub use self::{
-    pattern::{
-        KeyPattern, KeyPatternSegment, ModulePattern, NamespacePattern, ResourcePattern,
-        SegmentedKeyPattern,
-    },
+    pattern::{KeyPattern, KeyPatternSegment, ModulePattern, NamespacePattern, ResourcePattern},
     verification::{Forbidden, verify_operation},
 };
 
@@ -102,7 +99,7 @@ impl AccessRule {
                     resource: ResourcePattern {
                         module: ModulePattern::Any,
                         namespace: NamespacePattern::Named("_internal".to_owned()),
-                        key: KeyPattern::Any,
+                        key: KeyPattern::any(),
                     },
                     actions: vec!["*".to_owned()],
                 }]
