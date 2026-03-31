@@ -6,11 +6,13 @@ This is a multimodal, clustered database being developed by [Svix](https://www.s
 
 Coyote is designed to be run on a cluster of machines with stable network identities (e.g., a Kubernetes StatefulSet). It can also be run in a single-node configuration, although this is not recommended for a production deployment.
 
-Coyote is configured through a TOML file which can be passed with the `--config-path` command line option. Settings can also be overridden by setting environment variables.
+The `coyote-server` binary is configured through a TOML file which can be passed with the `--config-path` command line option. Settings can also be overridden by setting environment variables.
 
 ## Interacting with Coyote
 
-Coyote ships with client libraries for Rust, Python, Go, Java, and JavaScript, as well as a CLI named `coyote-cli`.
+Coyote ships with client libraries for Rust, Python, Go, Java, and JavaScript, as well as a CLI named `coyote`.
+
+The CLI includes a benchmark feature, which can be used as `coyote benchmark`.
 
 ## Developing
 
