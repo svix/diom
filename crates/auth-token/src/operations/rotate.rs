@@ -8,7 +8,7 @@ use crate::{
     operations::{AuthTokenRaftState, AuthTokenRequest, RotateResponse},
 };
 use coyote_error::Result;
-use coyote_id::{AuthTokenId, NamespaceId};
+use coyote_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes, random_v7_bytes};
 use coyote_operations::OpContext;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RotateResponseData {
@@ -20,7 +20,7 @@ pub struct RotateResponseData {
 pub struct RotateAuthTokenOperation {
     namespace_id: NamespaceId,
     old_id: AuthTokenId,
-    new_id: AuthTokenId,
+    new_id_random_bytes: UuidV7RandomBytes,
     new_token_hashed: TokenHashed,
     /// When the old token expires. `None` means expire immediately (now).
     old_expiry: Option<Timestamp>,
@@ -32,13 +32,11 @@ impl RotateAuthTokenOperation {
         old_id: AuthTokenId,
         new_token_hashed: TokenHashed,
         old_expiry: Option<Timestamp>,
-        now: Timestamp,
     ) -> Self {
-        let new_id = AuthTokenId::new(now);
         Self {
             namespace_id: namespace.id,
             old_id,
-            new_id,
+            new_id_random_bytes: random_v7_bytes(),
             new_token_hashed,
             old_expiry,
         }
@@ -46,13 +44,14 @@ impl RotateAuthTokenOperation {
 
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<RotateResponseData> {
         let old_expiry = self.old_expiry.unwrap_or(ctx.timestamp);
+        let new_id = AuthTokenId::new(ctx.timestamp, self.new_id_random_bytes);
         let model = state
             .controller
             .rotate(
                 self.namespace_id,
                 self.old_id,
                 RotateTokenInput {
-                    new_id: self.new_id,
+                    new_id,
                     new_token_hashed: self.new_token_hashed,
                     old_expiry,
                     now: ctx.timestamp,

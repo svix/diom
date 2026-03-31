@@ -1,4 +1,5 @@
 use coyote_error::Result;
+use coyote_id::{UuidV7RandomBytes, random_v7_bytes};
 use coyote_namespace::{
     entities::IdempotencyConfig,
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -11,17 +12,21 @@ use crate::operations::{CreateIdempotencyResponse, IdempotencyRaftState, Idempot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateIdempotencyOperation {
     pub(crate) name: String,
+    id_random_bytes: UuidV7RandomBytes,
 }
 
 impl From<CreateIdempotencyOperation> for CreateNamespace<IdempotencyConfig> {
     fn from(value: CreateIdempotencyOperation) -> Self {
-        CreateNamespace::new(value.name, IdempotencyConfig {})
+        CreateNamespace::new(value.name, IdempotencyConfig {}, value.id_random_bytes)
     }
 }
 
 impl CreateIdempotencyOperation {
     pub fn new(name: String) -> Self {
-        Self { name }
+        Self {
+            name,
+            id_random_bytes: random_v7_bytes(),
+        }
     }
 
     async fn apply_real(

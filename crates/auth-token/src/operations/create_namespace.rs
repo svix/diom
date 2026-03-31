@@ -1,4 +1,5 @@
 use coyote_error::Result;
+use coyote_id::{UuidV7RandomBytes, random_v7_bytes};
 use coyote_namespace::{
     entities::AuthTokenConfig,
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -11,17 +12,21 @@ use crate::operations::{AuthTokenRaftState, AuthTokenRequest, CreateNamespaceRes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAuthTokenNamespaceOperation {
     pub(crate) name: String,
+    id_random_bytes: UuidV7RandomBytes,
 }
 
 impl From<CreateAuthTokenNamespaceOperation> for CreateNamespace<AuthTokenConfig> {
     fn from(value: CreateAuthTokenNamespaceOperation) -> Self {
-        CreateNamespace::new(value.name, AuthTokenConfig {})
+        CreateNamespace::new(value.name, AuthTokenConfig {}, value.id_random_bytes)
     }
 }
 
 impl CreateAuthTokenNamespaceOperation {
     pub fn new(name: String) -> Self {
-        Self { name }
+        Self {
+            name,
+            id_random_bytes: random_v7_bytes(),
+        }
     }
 
     async fn apply_real(

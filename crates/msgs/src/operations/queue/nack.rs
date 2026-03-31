@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, TopicId};
+use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes, random_v7_bytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -21,6 +21,7 @@ pub struct QueueNackOperation {
     pub(crate) topic: TopicName,
     consumer_group: ConsumerGroup,
     msg_ids: Vec<MsgId>,
+    dlq_topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl QueueNackOperation {
@@ -35,6 +36,7 @@ impl QueueNackOperation {
             topic,
             consumer_group,
             msg_ids,
+            dlq_topic_id_random_bytes: random_v7_bytes(),
         }
     }
 
@@ -95,6 +97,7 @@ impl QueueNackOperation {
                         dlq_topic,
                         &self.consumer_group,
                         now,
+                        self.dlq_topic_id_random_bytes,
                     )?;
                     dlq_count += 1;
                 } else {
@@ -134,6 +137,7 @@ fn forward_to_dlq(
     dlq_topic: &TopicName,
     consumer_group: &ConsumerGroup,
     now: Timestamp,
+    dlq_topic_id_random_bytes: UuidV7RandomBytes,
 ) -> Result<()> {
     let original = MsgRow::fetch(
         &state.msg_table,
@@ -141,8 +145,14 @@ fn forward_to_dlq(
     )?
     .ok_or_else(|| Error::internal("nacked message not found"))?;
 
-    let dlq_topic_row =
-        TopicRow::fetch_or_create(&state.metadata_tables, batch, namespace_id, dlq_topic, now)?;
+    let dlq_topic_row = TopicRow::fetch_or_create(
+        &state.metadata_tables,
+        batch,
+        namespace_id,
+        dlq_topic,
+        now,
+        dlq_topic_id_random_bytes,
+    )?;
 
     // Route deterministically: use source partition clamped to DLQ partition count
     let dlq_partition = Partition::new(msg_id.partition.get() % dlq_topic_row.partitions)?;

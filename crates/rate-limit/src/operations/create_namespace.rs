@@ -1,4 +1,5 @@
 use coyote_error::Result;
+use coyote_id::{UuidV7RandomBytes, random_v7_bytes};
 use coyote_namespace::{
     entities::RateLimitConfig,
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -11,17 +12,21 @@ use super::{CreateRateLimitResponse, RateLimitRaftState, RateLimitRequest};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateRateLimitOperation {
     pub(crate) name: String,
+    id_random_bytes: UuidV7RandomBytes,
 }
 
 impl From<CreateRateLimitOperation> for CreateNamespace<RateLimitConfig> {
     fn from(value: CreateRateLimitOperation) -> Self {
-        CreateNamespace::new(value.name, RateLimitConfig {})
+        CreateNamespace::new(value.name, RateLimitConfig {}, value.id_random_bytes)
     }
 }
 
 impl CreateRateLimitOperation {
     pub fn new(name: String) -> Self {
-        Self { name }
+        Self {
+            name,
+            id_random_bytes: random_v7_bytes(),
+        }
     }
 
     async fn apply_real(

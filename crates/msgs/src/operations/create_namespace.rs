@@ -1,4 +1,5 @@
 use coyote_error::Result;
+use coyote_id::{UuidV7RandomBytes, random_v7_bytes};
 use coyote_namespace::{
     entities::{MsgsConfig, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -13,11 +14,16 @@ use crate::entities::Retention;
 pub struct CreateNamespaceOperation {
     pub name: NamespaceName,
     pub retention: Retention,
+    id_random_bytes: UuidV7RandomBytes,
 }
 
 impl CreateNamespaceOperation {
     pub fn new(name: NamespaceName, retention: Retention) -> Self {
-        Self { name, retention }
+        Self {
+            name,
+            retention,
+            id_random_bytes: random_v7_bytes(),
+        }
     }
 
     async fn apply_real(
@@ -31,6 +37,7 @@ impl CreateNamespaceOperation {
                 retention_period: self.retention.period,
                 retention_bytes: self.retention.size_bytes,
             },
+            self.id_random_bytes,
         );
         let out = op.apply_operation(namespace_state, now).await?;
         Ok(out.into())

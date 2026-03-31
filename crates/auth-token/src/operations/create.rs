@@ -9,7 +9,7 @@ use crate::{
 };
 use coyote_core::types::Metadata;
 use coyote_error::Result;
-use coyote_id::{AuthTokenId, NamespaceId};
+use coyote_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes, random_v7_bytes};
 use coyote_operations::OpContext;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateResponseData {
@@ -19,7 +19,7 @@ pub struct CreateResponseData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAuthTokenOperation {
     namespace_id: NamespaceId,
-    pub(crate) id: AuthTokenId,
+    id_random_bytes: UuidV7RandomBytes,
     name: String,
     token_hashed: TokenHashed,
     expiry: Option<Timestamp>,
@@ -42,12 +42,10 @@ impl CreateAuthTokenOperation {
         owner_id: String,
         scopes: Vec<String>,
         enabled: bool,
-        now: Timestamp,
     ) -> Self {
-        let id = AuthTokenId::new(now);
         Self {
             namespace_id: namespace.id,
-            id,
+            id_random_bytes: random_v7_bytes(),
             name,
             token_hashed,
             expiry,
@@ -59,12 +57,13 @@ impl CreateAuthTokenOperation {
     }
 
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<CreateResponseData> {
+        let id = AuthTokenId::new(ctx.timestamp, self.id_random_bytes);
         let model = state
             .controller
             .create(
                 self.namespace_id,
                 CreateTokenInput {
-                    id: self.id,
+                    id,
                     name: self.name,
                     token_hashed: self.token_hashed,
                     expiry: self.expiry,
