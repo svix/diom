@@ -5,12 +5,12 @@ use std::collections::HashMap;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::{Extension, State};
-use coyote_authorization::{Permissions, RoleId};
+use coyote_authorization::{Permissions, RequestedOperation, RoleId};
 use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, ResultExt};
-use coyote_id::{AuthTokenId, Public};
-use coyote_proto::MsgPackOrJson;
+use coyote_id::{AuthTokenId, Module, Public};
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -31,6 +31,25 @@ use crate::{
 };
 
 use crate::core::INTERNAL_NAMESPACE;
+
+fn admin_auth_token_access_metadata(action: &'static str) -> AccessMetadata<'static> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::AdminAuthToken,
+        namespace: None,
+        key: None,
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                admin_auth_token_access_metadata($action)
+            }
+        }
+    };
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenOut {
@@ -57,7 +76,7 @@ pub struct AdminAuthTokenCreateIn {
     pub enabled: bool,
 }
 
-admin_request_input!(AdminAuthTokenCreateIn);
+request_input!(AdminAuthTokenCreateIn, "create");
 
 fn default_true() -> bool {
     true
@@ -115,7 +134,7 @@ pub struct AdminAuthTokenExpireIn {
     pub expiry_ms: Option<DurationMs>,
 }
 
-admin_request_input!(AdminAuthTokenExpireIn);
+request_input!(AdminAuthTokenExpireIn, "expire");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenExpireOut {}
@@ -148,7 +167,7 @@ pub struct AdminAuthTokenRotateIn {
     pub id: Public<AuthTokenId>,
 }
 
-admin_request_input!(AdminAuthTokenRotateIn);
+request_input!(AdminAuthTokenRotateIn, "rotate");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenRotateOut {
@@ -193,7 +212,7 @@ pub struct AdminAuthTokenDeleteIn {
     pub id: Public<AuthTokenId>,
 }
 
-admin_request_input!(AdminAuthTokenDeleteIn);
+request_input!(AdminAuthTokenDeleteIn, "delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenDeleteOut {
@@ -230,7 +249,7 @@ pub struct AdminAuthTokenListIn {
     pub pagination: Pagination<Public<AuthTokenId>>,
 }
 
-admin_request_input!(AdminAuthTokenListIn);
+request_input!(AdminAuthTokenListIn, "list");
 
 pub type AdminAuthTokenListOut = ListResponse<AdminAuthTokenOut>;
 
@@ -291,7 +310,7 @@ pub struct AdminAuthTokenUpdateIn {
     pub enabled: Option<bool>,
 }
 
-admin_request_input!(AdminAuthTokenUpdateIn);
+request_input!(AdminAuthTokenUpdateIn, "update");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenUpdateOut {}
@@ -326,7 +345,7 @@ async fn auth_token_update(
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AdminAuthTokenWhoamiIn {}
 
-admin_request_input!(AdminAuthTokenWhoamiIn);
+request_input!(AdminAuthTokenWhoamiIn, "whoami");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenWhoamiOut {

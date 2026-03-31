@@ -10,10 +10,11 @@ use coyote_admin_auth::{
     controller::RoleModel,
     operations::{DeleteRoleOperation, UpsertRoleOperation},
 };
-use coyote_authorization::{AccessPolicyId, AccessRule, RoleId};
+use coyote_authorization::{AccessPolicyId, AccessRule, RequestedOperation, RoleId};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
-use coyote_proto::MsgPackOrJson;
+use coyote_id::Module;
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,28 @@ use crate::{
     error::Result,
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
+
+fn admin_role_access_metadata<'a>(
+    id: Option<&'a RoleId>,
+    action: &'static str,
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::AdminAccessPolicy,
+        namespace: None,
+        key: id.map(|RoleId(id)| id.as_str()),
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                admin_role_access_metadata(Some(&self.id), $action)
+            }
+        }
+    };
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminRoleOut {
@@ -71,7 +94,7 @@ pub struct AdminRoleUpsertIn {
     pub context: HashMap<String, String>,
 }
 
-admin_request_input!(AdminRoleUpsertIn);
+request_input!(AdminRoleUpsertIn, "upsert");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminRoleUpsertOut {
@@ -108,7 +131,7 @@ pub struct AdminRoleDeleteIn {
     pub id: RoleId,
 }
 
-admin_request_input!(AdminRoleDeleteIn);
+request_input!(AdminRoleDeleteIn, "delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminRoleDeleteOut {
@@ -135,7 +158,7 @@ pub struct AdminRoleGetIn {
     pub id: RoleId,
 }
 
-admin_request_input!(AdminRoleGetIn);
+request_input!(AdminRoleGetIn, "get");
 
 /// Get a role by ID
 #[aide_annotate(op_id = "v1.admin.auth-role.get")]
@@ -162,7 +185,11 @@ pub struct AdminRoleListIn {
     pub pagination: Pagination<RoleId>,
 }
 
-admin_request_input!(AdminRoleListIn);
+impl RequestInput for AdminRoleListIn {
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        admin_role_access_metadata(None, "list")
+    }
+}
 
 pub type AdminRoleListOut = ListResponse<AdminRoleOut>;
 

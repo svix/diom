@@ -1,11 +1,20 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-macro_rules! admin_request_input {
-    ($ty:ty) => {
+macro_rules! namespace_request_input {
+    ($ty:ty, $action:literal) => {
         impl coyote_proto::RequestInput for $ty {
             fn access_metadata(&self) -> coyote_proto::AccessMetadata<'_> {
-                coyote_proto::AccessMetadata::AdminOnly
+                // Subject to change.
+                // https://github.com/svix/coyote-private/issues/758
+                coyote_proto::AccessMetadata::RuleProtected(
+                    coyote_authorization::RequestedOperation {
+                        module: coyote_id::Module::AdminNamespace,
+                        namespace: None,
+                        key: Some(&self.name),
+                        action: $action,
+                    },
+                )
             }
         }
     };

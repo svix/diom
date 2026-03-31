@@ -220,7 +220,7 @@ struct KvGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(KvGetNamespaceIn);
+namespace_request_input!(KvGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceOut {
@@ -234,7 +234,7 @@ pub(crate) struct KvCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(KvCreateNamespaceIn);
+namespace_request_input!(KvCreateNamespaceIn, "create");
 
 impl From<KvCreateNamespaceIn> for CreateKvOperation {
     fn from(v: KvCreateNamespaceIn) -> Self {

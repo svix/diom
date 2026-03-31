@@ -8,9 +8,11 @@ use aide::axum::{
     routing::{get_with, post_with},
 };
 use axum::{Extension, extract::State};
+use coyote_authorization::RequestedOperation;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, ResultExt};
-use coyote_proto::MsgPackOrJson;
+use coyote_id::Module;
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use futures_util::StreamExt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -22,6 +24,25 @@ use crate::{
     error::Result,
     v1::utils::openapi_tag,
 };
+
+fn admin_cluster_access_metadata(action: &'static str) -> AccessMetadata<'static> {
+    AccessMetadata::RuleProtected(RequestedOperation {
+        module: Module::AdminCluster,
+        namespace: None,
+        key: None,
+        action,
+    })
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                admin_cluster_access_metadata($action)
+            }
+        }
+    };
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, JsonSchema)]
 pub enum ServerState {
@@ -179,7 +200,7 @@ async fn cluster_status(
 #[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
 struct ClusterInitializeIn {}
 
-admin_request_input!(ClusterInitializeIn);
+request_input!(ClusterInitializeIn, "initialize");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterInitializeOut {
@@ -217,7 +238,7 @@ struct ClusterRemoveNodeIn {
     node_id: NodeId,
 }
 
-admin_request_input!(ClusterRemoveNodeIn);
+request_input!(ClusterRemoveNodeIn, "remove-node");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterRemoveNodeOut {
@@ -243,7 +264,7 @@ async fn cluster_remove_node(
 #[derive(Clone, Debug, Serialize, Deserialize, Validate, JsonSchema)]
 struct ClusterForceSnapshotIn {}
 
-admin_request_input!(ClusterForceSnapshotIn);
+request_input!(ClusterForceSnapshotIn, "force-snapshot");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterForceSnapshotOut {

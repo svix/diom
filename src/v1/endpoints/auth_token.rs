@@ -412,7 +412,7 @@ struct AuthTokenGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(AuthTokenGetNamespaceIn);
+namespace_request_input!(AuthTokenGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenGetNamespaceOut {
@@ -426,7 +426,7 @@ pub(crate) struct AuthTokenCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(AuthTokenCreateNamespaceIn);
+namespace_request_input!(AuthTokenCreateNamespaceIn, "create");
 
 impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
     fn from(v: AuthTokenCreateNamespaceIn) -> Self {

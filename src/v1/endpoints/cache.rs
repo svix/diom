@@ -129,7 +129,7 @@ pub(crate) struct CacheCreateNamespaceIn {
     pub eviction_policy: EvictionPolicy,
 }
 
-admin_request_input!(CacheCreateNamespaceIn);
+namespace_request_input!(CacheCreateNamespaceIn, "create");
 
 impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
     fn from(v: CacheCreateNamespaceIn) -> Self {
@@ -224,7 +224,7 @@ struct CacheGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(CacheGetNamespaceIn);
+namespace_request_input!(CacheGetNamespaceIn, "get");
 
 /// Create cache namespace
 #[aide_annotate(op_id = "v1.cache.namespace.create")]

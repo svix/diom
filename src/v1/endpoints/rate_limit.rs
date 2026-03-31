@@ -237,7 +237,7 @@ pub(crate) struct RateLimitCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(RateLimitCreateNamespaceIn);
+namespace_request_input!(RateLimitCreateNamespaceIn, "create");
 
 impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
     fn from(v: RateLimitCreateNamespaceIn) -> Self {
@@ -257,7 +257,7 @@ struct RateLimitGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(RateLimitGetNamespaceIn);
+namespace_request_input!(RateLimitGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceOut {
