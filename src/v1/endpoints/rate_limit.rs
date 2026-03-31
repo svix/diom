@@ -93,7 +93,7 @@ pub struct RateLimitCheckIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
-request_input!(RateLimitCheckIn, "Check");
+request_input!(RateLimitCheckIn, "limit");
 
 fn default_tokens() -> u64 {
     1
@@ -125,7 +125,7 @@ pub struct RateLimitGetRemainingIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
-request_input!(RateLimitGetRemainingIn, "Read");
+request_input!(RateLimitGetRemainingIn, "get-remaining");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitGetRemainingOut {
@@ -206,7 +206,7 @@ pub struct RateLimitResetIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
-request_input!(RateLimitResetIn, "Reset");
+request_input!(RateLimitResetIn, "reset");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct RateLimitResetOut {}

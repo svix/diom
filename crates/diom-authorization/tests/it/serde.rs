@@ -18,7 +18,7 @@ fn example_rules() -> Vec<AccessRule> {
                 namespace: NamespacePattern::Default,
                 key: KeyPattern::Prefix("foo/".to_owned()),
             },
-            actions: vec!["Read".to_owned(), "List".to_owned()],
+            actions: vec!["read".to_owned(), "list".to_owned()],
         },
         AccessRule {
             effect: AccessRuleEffect::Deny,
@@ -27,7 +27,7 @@ fn example_rules() -> Vec<AccessRule> {
                 namespace: NamespacePattern::Default,
                 key: KeyPattern::Exactly("foo/bar".to_owned()),
             },
-            actions: vec!["Read".to_owned()],
+            actions: vec!["read".to_owned()],
         },
         AccessRule {
             effect: AccessRuleEffect::Allow,
@@ -36,7 +36,7 @@ fn example_rules() -> Vec<AccessRule> {
                 namespace: NamespacePattern::Default,
                 key: KeyPattern::Prefix("some-data/".to_owned()),
             },
-            actions: vec!["Read".to_owned(), "List".to_owned()],
+            actions: vec!["read".to_owned(), "list".to_owned()],
         },
     ]
 }
@@ -47,23 +47,23 @@ fn example_rules_serialized() -> serde_json::Value {
             "effect": "allow",
             "resource": "cache::foo/*",
             "actions": [
-                "Read",
-                "List"
+                "read",
+                "list"
             ],
         },
         {
             "effect": "deny",
             "resource": "cache::foo/bar",
             "actions": [
-                "Read"
+                "read"
             ],
         },
         {
             "effect": "allow",
             "resource": "kv::some-data/*",
             "actions": [
-                "Read",
-                "List"
+                "read",
+                "list"
             ],
         },
     ])

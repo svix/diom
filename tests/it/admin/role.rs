@@ -107,7 +107,7 @@ async fn test_admin_role_upsert_with_rules_and_policies() -> TestResult {
                 {
                     "effect": "allow",
                     "resource": "kv:*:*",
-                    "actions": ["Get", "List"],
+                    "actions": ["get", "list"],
                 }
             ],
             "policies": ["base-policy"],

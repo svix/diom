@@ -68,7 +68,7 @@ pub struct KvSetIn {
     pub version: Option<u64>,
 }
 
-request_input!(KvSetIn, "Set");
+request_input!(KvSetIn, "set");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetOut {
@@ -89,7 +89,7 @@ pub struct KvGetIn {
     pub consistency: Consistency,
 }
 
-request_input!(KvGetIn, "Get");
+request_input!(KvGetIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvGetOut {
@@ -123,7 +123,7 @@ pub struct KvDeleteIn {
     pub key: EntityKey,
 }
 
-request_input!(KvDeleteIn, "Delete");
+request_input!(KvDeleteIn, "delete");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvDeleteOut {
