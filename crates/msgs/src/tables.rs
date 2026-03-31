@@ -351,7 +351,7 @@ mod tests {
     #[test]
     fn test_consumer_group_from_key() {
         use coyote_id::TopicId;
-        let topic_id = TopicId::new(Timestamp::UNIX_EPOCH);
+        let topic_id = TopicId::new(Timestamp::UNIX_EPOCH, UuidV7RandomBytes::new_random());
         let partition = Partition::new(0).unwrap();
         let cg = ConsumerGroup::try_from("my-group").unwrap();
         let key = StreamLeaseRow::key_for(topic_id, partition, &cg).into_fjall_key();
