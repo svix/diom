@@ -10,7 +10,11 @@ pub struct RateLimitCheckOut {
     pub remaining: u64,
 
     /// Milliseconds until enough tokens are available (only present when allowed is false)
-    #[serde(rename = "retry_after_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "retry_after_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub retry_after: Option<std::time::Duration>,
 }
 

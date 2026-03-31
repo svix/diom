@@ -11,7 +11,11 @@ pub struct AuthTokenUpdateIn {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
-    #[serde(rename = "expiry_ms", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "expiry_ms",
+        skip_serializing_if = "Option::is_none",
+        with = "crate::duration_ms_serde::optional"
+    )]
     pub expiry: Option<std::time::Duration>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
