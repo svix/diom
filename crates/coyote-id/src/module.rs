@@ -9,11 +9,11 @@ pub enum Module {
     Msgs = 5,
     AuthToken = 6,
 
-    AdminCluster = 192,
-    AdminNamespace = 193,
-    AdminAuthToken = 194,
-    AdminRole = 195,
-    AdminAccessPolicy = 196,
+    AdminCluster = 200,
+    AdminNamespace = 201,
+    AdminAuthToken = 202,
+    AdminRole = 203,
+    AdminAccessPolicy = 204,
 }
 
 impl fmt::Display for Module {
