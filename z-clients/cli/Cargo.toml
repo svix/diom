@@ -29,7 +29,7 @@ rustls-tls = ["diom-client/rustls-tls"]
 anyhow.workspace = true
 clap = { workspace = true, features = ["derive", "env"] }
 clap_complete.workspace = true
-comfy-table = "7"
+comfy-table.workspace = true
 concolor-clap.workspace = true
 config.workspace = true
 diom-client.workspace = true

@@ -5,6 +5,7 @@
 #![forbid(unsafe_code)]
 
 use clap::{Parser, Subcommand};
+use comfy_table::{Cell, Table};
 use diom::{
     cfg::{self, Configuration},
     run,
@@ -51,6 +52,8 @@ enum Commands {
         /// Path to write to; if not specified, writes to stdout
         path: Option<PathBuf>,
     },
+    /// Describe environment variables honored by this service
+    DescribeEnvironmentVariables,
 }
 
 fn dump_config(cfg: Configuration, path: Option<PathBuf>) -> anyhow::Result<()> {
@@ -113,6 +116,24 @@ async fn main() -> anyhow::Result<()> {
     match args.command {
         Some(Commands::Healthcheck { .. }) => {
             unreachable!("Healthcheck command should be handled before config loading")
+        }
+        Some(Commands::DescribeEnvironmentVariables) => {
+            let mut table = Table::new();
+            let rows = cfg::describe_environment()
+                .into_iter()
+                .map(|var| {
+                    [
+                        Cell::new(var.env_var),
+                        Cell::new(var.docstring.unwrap_or_default()),
+                    ]
+                })
+                .collect::<Vec<_>>();
+            table
+                .load_preset(comfy_table::presets::UTF8_FULL)
+                .set_header(["Environment Variable", "Description"])
+                .add_rows(rows);
+            println!("{table}");
+            cfg::describe_environment();
         }
         Some(Commands::Server) | None => {
             otel::setup_metrics(&cfg);

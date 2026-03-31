@@ -1456,6 +1456,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "clap",
+ "comfy-table",
  "diom",
  "diom-core",
  "dotenvy",
