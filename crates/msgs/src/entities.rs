@@ -460,6 +460,7 @@ impl JsonSchema for ConsumerGroup {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
 pub struct Retention {
-    pub period_ms: Option<DurationMs>,
+    #[serde(rename = "period_ms")]
+    pub period: Option<DurationMs>,
     pub size_bytes: Option<NonZeroU64>,
 }

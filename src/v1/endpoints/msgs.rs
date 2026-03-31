@@ -127,7 +127,7 @@ async fn get_namespace(
     Ok(MsgPackOrJson(MsgNamespaceGetOut {
         name: namespace.name,
         retention: Retention {
-            period_ms: namespace.config.retention_period,
+            period: namespace.config.retention_period,
             size_bytes: namespace.config.retention_bytes,
         },
         created: namespace.created,
@@ -207,13 +207,13 @@ struct MsgStreamReceiveIn {
     pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
-    #[serde(default = "default_lease_duration_ms")]
-    pub lease_duration_ms: DurationMs,
+    #[serde(rename = "lease_duration_ms", default = "default_lease_duration_ms")]
+    pub lease_duration: DurationMs,
     #[serde(default)]
     pub default_starting_position: SeekPosition,
     /// Maximum time (in milliseconds) to wait for messages before returning.
-    #[serde(default)]
-    pub batch_wait_ms: Option<DurationMs>,
+    #[serde(rename = "batch_wait_ms", default)]
+    pub batch_wait: Option<DurationMs>,
 }
 
 request_input!(MsgStreamReceiveIn, "Receive");
@@ -238,7 +238,7 @@ async fn stream_receive(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    if let Some(max_wait) = data.batch_wait_ms {
+    if let Some(max_wait) = data.batch_wait {
         let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
         let metadata_ks = ro_db
             .keyspace(diom_msgs::METADATA_KEYSPACE)
@@ -285,7 +285,7 @@ async fn stream_receive(
         data.topic,
         data.consumer_group,
         data.batch_size,
-        data.lease_duration_ms,
+        data.lease_duration,
         data.default_starting_position,
     )?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
@@ -404,7 +404,7 @@ async fn stream_seek(
 // queue/receive
 // ---------------------------------------------------------------------------
 
-fn default_queue_lease_duration_ms() -> DurationMs {
+fn default_queue_lease_duration() -> DurationMs {
     DurationMs::from_secs(30)
 }
 
@@ -417,11 +417,11 @@ struct MsgQueueReceiveIn {
     pub consumer_group: ConsumerGroup,
     #[serde(default = "default_batch_size")]
     pub batch_size: NonZeroU16,
-    #[serde(default = "default_queue_lease_duration_ms")]
-    pub lease_duration_ms: DurationMs,
+    #[serde(rename = "lease_duration_ms", default = "default_queue_lease_duration")]
+    pub lease_duration: DurationMs,
     /// Maximum time (in milliseconds) to wait for messages before returning.
-    #[serde(default)]
-    pub batch_wait_ms: Option<DurationMs>,
+    #[serde(rename = "batch_wait_ms", default)]
+    pub batch_wait: Option<DurationMs>,
 }
 
 request_input!(MsgQueueReceiveIn, "Receive");
@@ -447,7 +447,7 @@ async fn queue_receive(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    if let Some(max_wait) = data.batch_wait_ms {
+    if let Some(max_wait) = data.batch_wait {
         let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
         let metadata_ks = ro_db
             .keyspace(diom_msgs::METADATA_KEYSPACE)
@@ -494,7 +494,7 @@ async fn queue_receive(
         data.topic,
         data.consumer_group,
         data.batch_size,
-        data.lease_duration_ms,
+        data.lease_duration,
     )?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
