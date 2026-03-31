@@ -4,6 +4,8 @@
 #![warn(clippy::all)]
 
 use std::{
+    fmt,
+    net::SocketAddr,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -14,8 +16,11 @@ use std::{
 use ::serde::{Serialize, de::DeserializeOwned};
 use aide::axum::ApiRouter;
 use axum::{
-    Extension, extract::DefaultBodyLimit, middleware, response::IntoResponse as _,
-    serve::ListenerExt as _,
+    Extension,
+    extract::DefaultBodyLimit,
+    middleware,
+    response::IntoResponse as _,
+    serve::{Listener, ListenerExt as _},
 };
 use diom_authorization::{Permissions, RoleId};
 use diom_core::Monotime;
@@ -30,11 +35,9 @@ use tokio::{
 };
 use tower::ServiceExt as _;
 use tower_http::{
-    ServiceExt,
     catch_panic::CatchPanicLayer,
+    compression::CompressionLayer,
     cors::{AllowHeaders, Any, CorsLayer},
-    normalize_path::NormalizePath,
-    trace::TraceLayer,
 };
 
 use crate::{
@@ -42,7 +45,7 @@ use crate::{
     core::{
         cluster::RaftState,
         metrics::{ConnectionMetrics, ConnectionType, RequestMetrics},
-        otel_spans::{AxumOtelOnFailure, AxumOtelOnResponse, AxumOtelSpanCreator},
+        otel_spans::trace_layer,
     },
     workers::Workers,
 };
@@ -125,6 +128,27 @@ fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response:
         .into_response()
 }
 
+async fn axum_tcp_listener(
+    listener: Option<TcpListener>,
+    listen_address: SocketAddr,
+    conn_metrics: ConnectionMetrics,
+    connection_type: ConnectionType,
+) -> impl Listener<Addr: fmt::Display + fmt::Debug> {
+    let listener = match listener {
+        Some(l) => l,
+        None => TcpListener::bind(listen_address)
+            .await
+            .expect("Error binding to listen_address"),
+    };
+
+    listener.tap_io(move |tcp_stream| {
+        if let Err(err) = tcp_stream.set_nodelay(true) {
+            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
+        }
+        conn_metrics.accepted(connection_type);
+    })
+}
+
 async fn run_interserver(
     cfg: Configuration,
     state: AppState,
@@ -134,47 +158,33 @@ async fn run_interserver(
     conn_metrics: ConnectionMetrics,
     request_metrics: RequestMetrics,
 ) {
-    let listen_address = cfg.cluster.listen_address(&cfg);
-    let listener = match listener {
-        Some(l) => l,
-        None => TcpListener::bind(listen_address)
-            .await
-            .expect("Error binding to listen_address"),
-    };
+    let listener = axum_tcp_listener(
+        listener,
+        cfg.cluster.listen_address(&cfg),
+        conn_metrics.clone(),
+        ConnectionType::Internal,
+    )
+    .await;
+
     tracing::debug!(
         "Inter-Server: Listening on {}",
         listener.local_addr().unwrap()
     );
     bind_barrier.wait().await;
 
-    let app = core::cluster::router(&cfg)
+    let svc = core::cluster::router(&cfg)
         .with_state(state.clone())
-        .layer(DefaultBodyLimit::disable())
-        .layer(middleware::from_fn(diom_proto::capture_accept_hdr))
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(AxumOtelSpanCreator)
-                .on_response(AxumOtelOnResponse)
-                .on_failure(AxumOtelOnFailure),
-        )
-        .layer(middleware::from_fn_with_state(
-            request_metrics,
-            core::otel_spans::request_metrics_middleware,
-        ))
-        .layer(CatchPanicLayer::custom(handle_panic))
-        .layer(Extension(raft.clone()));
-    let svc = tower::make::Shared::new(
-        // It is important that this service wraps the router instead of being
-        // applied via `Router::layer`, as it would run after routing then.
-        NormalizePath::trim_trailing_slash(app),
-    );
-
-    let listener = listener.tap_io(move |tcp_stream| {
-        if let Err(err) = tcp_stream.set_nodelay(true) {
-            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
-        }
-        conn_metrics.accepted(ConnectionType::Internal);
-    });
+        .layer((
+            trace_layer(),
+            CatchPanicLayer::custom(handle_panic),
+            Extension(raft.clone()),
+            middleware::from_fn_with_state(
+                request_metrics,
+                core::otel_spans::request_metrics_middleware,
+            ),
+            middleware::from_fn(diom_proto::capture_accept_hdr),
+            DefaultBodyLimit::disable(),
+        ));
 
     axum::serve(listener, svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
@@ -189,22 +199,15 @@ async fn run_internal(
     mut internal_req_rx: mpsc::Receiver<InternalRequest>,
     request_metrics: RequestMetrics,
 ) {
-    let svc = api_router
-        .layer((
-            TraceLayer::new_for_http()
-                .make_span_with(AxumOtelSpanCreator)
-                .on_response(AxumOtelOnResponse)
-                .on_failure(AxumOtelOnFailure),
-            middleware::from_fn_with_state(
-                request_metrics,
-                core::otel_spans::request_metrics_middleware,
-            ),
-            middleware::from_fn(diom_proto::capture_accept_hdr),
-            CatchPanicLayer::custom(handle_panic),
-        ))
-        // It is important that this service wraps the router instead of being
-        // applied via `Router::layer`, as it would run after routing then.
-        .trim_trailing_slash();
+    let svc = api_router.layer((
+        trace_layer(),
+        CatchPanicLayer::custom(handle_panic),
+        middleware::from_fn_with_state(
+            request_metrics,
+            core::otel_spans::request_metrics_middleware,
+        ),
+        middleware::from_fn(diom_proto::capture_accept_hdr),
+    ));
 
     // FIXME: Do we want to delay graceful shutdown of the internal API server
     //        a little compared to public / inter-server?
@@ -369,12 +372,14 @@ pub async fn run_with_listeners(
 
     let v1_router = v1::router(Some(app_state.clone()))
         .with_state::<()>(app_state.clone())
-        .layer(middleware::from_fn_with_state(
-            request_metrics.with_connection_type(ConnectionType::External),
-            core::otel_spans::request_metrics_middleware,
-        ))
-        .layer(Extension(raft_state.clone()))
-        .layer(middleware::from_fn(fail_until_bootstrapped));
+        .layer((
+            middleware::from_fn(fail_until_bootstrapped),
+            Extension(raft_state.clone()),
+            middleware::from_fn_with_state(
+                request_metrics.with_connection_type(ConnectionType::External),
+                core::otel_spans::request_metrics_middleware,
+            ),
+        ));
 
     let interserver_started_barrier = Arc::new(Barrier::new(2));
 
@@ -419,30 +424,18 @@ pub async fn run_with_listeners(
     let router = api_router.merge(docs_router);
     let svc = router
         .layer((
-            TraceLayer::new_for_http()
-                .make_span_with(AxumOtelSpanCreator)
-                .on_response(AxumOtelOnResponse)
-                .on_failure(AxumOtelOnFailure),
+            trace_layer(),
+            CatchPanicLayer::custom(handle_panic),
+            middleware::from_fn(diom_proto::capture_accept_hdr),
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)
                 .allow_headers(AllowHeaders::mirror_request())
                 .max_age(Duration::from_secs(600)),
-            middleware::from_fn(diom_proto::capture_accept_hdr),
-            CatchPanicLayer::custom(handle_panic),
+            CompressionLayer::new(),
         ))
-        // It is important that this service wraps the router instead of being
-        // applied via `Router::layer`, as it would run after routing then.
-        .trim_trailing_slash();
-    let make_svc = tower::make::Shared::new(svc);
+        .into_make_service();
 
-    let listen_address = cfg.listen_address;
-    let listener = match listener {
-        Some(l) => l,
-        None => TcpListener::bind(listen_address)
-            .await
-            .expect("Error binding to listen_address"),
-    };
     tokio::task::spawn({
         let cfg = cfg.clone();
         let raft_state = raft_state.clone();
@@ -459,14 +452,15 @@ pub async fn run_with_listeners(
         }
     });
 
-    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
+    let listener = axum_tcp_listener(
+        listener,
+        cfg.listen_address,
+        connection_metrics,
+        ConnectionType::External,
+    )
+    .await;
 
-    let listener = listener.tap_io(move |tcp_stream| {
-        if let Err(err) = tcp_stream.set_nodelay(true) {
-            tracing::warn!("failed to set TCP_NODELAY on incoming connection: {err:#}");
-        }
-        connection_metrics.accepted(ConnectionType::External);
-    });
+    tracing::debug!("API: Listening on {}", listener.local_addr().unwrap());
 
     let worker_handle = tokio::task::spawn({
         let raft_state = raft_state.clone();
@@ -481,7 +475,7 @@ pub async fn run_with_listeners(
         }
     });
 
-    axum::serve(listener, make_svc)
+    axum::serve(listener, svc)
         .with_graceful_shutdown(shutting_down_token().cancelled_owned())
         .await
         .unwrap();
