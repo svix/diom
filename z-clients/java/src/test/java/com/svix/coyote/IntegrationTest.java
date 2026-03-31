@@ -12,8 +12,16 @@ import org.junit.jupiter.api.Test;
 @Tag("integration")
 class IntegrationTest {
 
-    private static final String TOKEN = "admin_abcdefghijlmnopqrstuvwxyz012345";
-    private static final String SERVER_URL = "http://localhost:8050";
+    private static final String TOKEN = requireEnv("COYOTE_TOKEN");
+    private static final String SERVER_URL = requireEnv("COYOTE_SERVER_URL");
+
+    private static String requireEnv(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isEmpty()) {
+            throw new IllegalStateException(name + " must be set");
+        }
+        return value;
+    }
 
     private static Coyote client;
 

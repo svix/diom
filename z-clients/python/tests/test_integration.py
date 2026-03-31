@@ -13,8 +13,8 @@ from coyote.models import (
     KvSetIn,
 )
 
-TOKEN = "admin_abcdefghijlmnopqrstuvwxyz012345"
-SERVER_URL = "http://localhost:8050"
+TOKEN = os.environ["COYOTE_TOKEN"]
+SERVER_URL = os.environ["COYOTE_SERVER_URL"]
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("COYOTE_INTEGRATION") != "1",

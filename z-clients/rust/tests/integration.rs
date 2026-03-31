@@ -1,14 +1,18 @@
 use std::time::Duration;
 
 use coyote_client::{
-    CoyoteClient,
+    CoyoteClient, CoyoteOptions,
     models::{CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn},
 };
 
-const TOKEN: &str = "admin_abcdefghijlmnopqrstuvwxyz012345";
-
 fn client() -> CoyoteClient {
-    CoyoteClient::new(TOKEN.to_owned(), None)
+    let token = std::env::var("COYOTE_TOKEN").expect("COYOTE_TOKEN must be set");
+    let server_url = std::env::var("COYOTE_SERVER_URL").expect("COYOTE_SERVER_URL must be set");
+    let options = CoyoteOptions {
+        server_url: Some(server_url),
+        ..Default::default()
+    };
+    CoyoteClient::new(token, Some(options))
 }
 
 #[tokio::test]

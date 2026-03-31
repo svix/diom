@@ -2,8 +2,12 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { Coyote } from "../dist/index.mjs";
 
-const TOKEN = "admin_abcdefghijlmnopqrstuvwxyz012345";
-const SERVER_URL = "http://localhost:8050";
+const TOKEN = process.env.COYOTE_TOKEN;
+const SERVER_URL = process.env.COYOTE_SERVER_URL;
+
+if (!TOKEN || !SERVER_URL) {
+  throw new Error("COYOTE_TOKEN and COYOTE_SERVER_URL environment variables must be set");
+}
 
 function makeClient() {
   return new Coyote(TOKEN, { serverUrl: SERVER_URL });

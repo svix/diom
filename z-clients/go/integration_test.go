@@ -4,16 +4,28 @@ package coyote_test
 
 import (
 	"context"
+	"net/url"
+	"os"
 	"testing"
 
 	coyote "github.com/svix/coyote/z-clients/go"
 )
 
-const token = "admin_abcdefghijlmnopqrstuvwxyz012345"
-
 func newClient(t *testing.T) *coyote.Coyote {
 	t.Helper()
-	client, err := coyote.New(token, nil)
+	token := os.Getenv("COYOTE_TOKEN")
+	if token == "" {
+		t.Fatal("COYOTE_TOKEN must be set")
+	}
+	serverURL := os.Getenv("COYOTE_SERVER_URL")
+	if serverURL == "" {
+		t.Fatal("COYOTE_SERVER_URL must be set")
+	}
+	u, err := url.Parse(serverURL)
+	if err != nil {
+		t.Fatalf("failed to parse COYOTE_SERVER_URL: %v", err)
+	}
+	client, err := coyote.New(token, &coyote.CoyoteOptions{ServerUrl: u})
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
