@@ -13,18 +13,20 @@ env:
 
 jobs:
   build-server:
-    name: Build Server Image
+    name: Build Server Binary
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
       - uses: actions/checkout@v6
-      - name: Build Docker image
-        run: docker build -t coyote-server .
-      - name: Save Docker image
-        run: docker save coyote-server | gzip > /tmp/coyote-server.tar.gz
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build server binary
+        run: cargo build --release --package coyote-server --bin coyote-server
       - uses: actions/upload-artifact@v7
         with:
-          name: coyote-server-image
-          path: /tmp/coyote-server.tar.gz
+          name: coyote-server-binary
+          path: target/release/coyote-server
           retention-days: 1
 
   test-rust:
@@ -36,19 +38,16 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
-          name: coyote-server-image
+          name: coyote-server-binary
           path: /tmp
-      - name: Load Docker image
-        run: docker load < /tmp/coyote-server.tar.gz
       - name: Start Coyote server
         run: |
-          docker run -d --name coyote-test \
-            -p 8050:8050 \
-            -e COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-            -e COYOTE_ENVIRONMENT=dev \
-            -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-            -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            coyote-server
+          chmod +x /tmp/coyote-server
+          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
+          COYOTE_ENVIRONMENT=dev \
+          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
+          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
+            /tmp/coyote-server &
           for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
@@ -57,7 +56,6 @@ jobs:
             sleep 1
           done
           echo "Server failed to start"
-          docker logs coyote-test
           exit 1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -67,7 +65,7 @@ jobs:
         run: cargo test --package coyote-client -- --ignored
       - name: Stop server
         if: always()
-        run: docker stop coyote-test || true
+        run: kill %1 || true
 
   test-python:
     name: Python SDK
@@ -78,19 +76,16 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
-          name: coyote-server-image
+          name: coyote-server-binary
           path: /tmp
-      - name: Load Docker image
-        run: docker load < /tmp/coyote-server.tar.gz
       - name: Start Coyote server
         run: |
-          docker run -d --name coyote-test \
-            -p 8050:8050 \
-            -e COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-            -e COYOTE_ENVIRONMENT=dev \
-            -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-            -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            coyote-server
+          chmod +x /tmp/coyote-server
+          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
+          COYOTE_ENVIRONMENT=dev \
+          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
+          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
+            /tmp/coyote-server &
           for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
@@ -99,7 +94,6 @@ jobs:
             sleep 1
           done
           echo "Server failed to start"
-          docker logs coyote-test
           exit 1
       - uses: astral-sh/setup-uv@v7
       - name: Run Python SDK integration tests
@@ -107,7 +101,7 @@ jobs:
         run: COYOTE_INTEGRATION=1 uv run --group dev pytest tests/ -v
       - name: Stop server
         if: always()
-        run: docker stop coyote-test || true
+        run: kill %1 || true
 
   test-javascript:
     name: JavaScript SDK
@@ -118,19 +112,16 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
-          name: coyote-server-image
+          name: coyote-server-binary
           path: /tmp
-      - name: Load Docker image
-        run: docker load < /tmp/coyote-server.tar.gz
       - name: Start Coyote server
         run: |
-          docker run -d --name coyote-test \
-            -p 8050:8050 \
-            -e COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-            -e COYOTE_ENVIRONMENT=dev \
-            -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-            -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            coyote-server
+          chmod +x /tmp/coyote-server
+          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
+          COYOTE_ENVIRONMENT=dev \
+          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
+          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
+            /tmp/coyote-server &
           for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
@@ -139,7 +130,6 @@ jobs:
             sleep 1
           done
           echo "Server failed to start"
-          docker logs coyote-test
           exit 1
       - name: Install dependencies and build
         working-directory: z-clients/javascript
@@ -149,7 +139,7 @@ jobs:
         run: node --test tests/integration.test.mjs
       - name: Stop server
         if: always()
-        run: docker stop coyote-test || true
+        run: kill %1 || true
 
   test-go:
     name: Go SDK
@@ -160,19 +150,16 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
-          name: coyote-server-image
+          name: coyote-server-binary
           path: /tmp
-      - name: Load Docker image
-        run: docker load < /tmp/coyote-server.tar.gz
       - name: Start Coyote server
         run: |
-          docker run -d --name coyote-test \
-            -p 8050:8050 \
-            -e COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-            -e COYOTE_ENVIRONMENT=dev \
-            -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-            -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            coyote-server
+          chmod +x /tmp/coyote-server
+          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
+          COYOTE_ENVIRONMENT=dev \
+          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
+          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
+            /tmp/coyote-server &
           for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
@@ -181,7 +168,6 @@ jobs:
             sleep 1
           done
           echo "Server failed to start"
-          docker logs coyote-test
           exit 1
       - uses: actions/setup-go@v5
         with:
@@ -191,7 +177,7 @@ jobs:
         run: go test -tags=integration -v -count=1 ./...
       - name: Stop server
         if: always()
-        run: docker stop coyote-test || true
+        run: kill %1 || true
 
   test-java:
     name: Java SDK
@@ -202,19 +188,16 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
-          name: coyote-server-image
+          name: coyote-server-binary
           path: /tmp
-      - name: Load Docker image
-        run: docker load < /tmp/coyote-server.tar.gz
       - name: Start Coyote server
         run: |
-          docker run -d --name coyote-test \
-            -p 8050:8050 \
-            -e COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
-            -e COYOTE_ENVIRONMENT=dev \
-            -e COYOTE_CLUSTER_AUTO_INITIALIZE=true \
-            -e COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
-            coyote-server
+          chmod +x /tmp/coyote-server
+          COYOTE_LISTEN_ADDRESS=0.0.0.0:8050 \
+          COYOTE_ENVIRONMENT=dev \
+          COYOTE_CLUSTER_AUTO_INITIALIZE=true \
+          COYOTE_ADMIN_TOKEN=${{ env.COYOTE_TOKEN }} \
+            /tmp/coyote-server &
           for _i in $(seq 1 60); do
             if curl -sf http://localhost:8050/api/v1.health.ping > /dev/null 2>&1; then
               echo "Server is ready"
@@ -223,7 +206,6 @@ jobs:
             sleep 1
           done
           echo "Server failed to start"
-          docker logs coyote-test
           exit 1
       - uses: actions/setup-java@v4
         with:
@@ -234,4 +216,4 @@ jobs:
         run: ./gradlew integrationTest
       - name: Stop server
         if: always()
-        run: docker stop coyote-test || true
+        run: kill %1 || true
