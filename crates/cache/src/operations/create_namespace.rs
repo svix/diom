@@ -1,4 +1,5 @@
 use coyote_error::Result;
+use coyote_id::UuidV7RandomBytes;
 use coyote_namespace::{
     entities::{CacheConfig, EvictionPolicy},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
@@ -12,6 +13,7 @@ use crate::operations::{CacheRaftState, CacheRequest, CreateCacheResponse};
 pub struct CreateCacheOperation {
     pub(crate) name: String,
     eviction_policy: EvictionPolicy,
+    id_random_bytes: UuidV7RandomBytes,
 }
 
 impl From<CreateCacheOperation> for CreateNamespace<CacheConfig> {
@@ -21,6 +23,7 @@ impl From<CreateCacheOperation> for CreateNamespace<CacheConfig> {
             CacheConfig {
                 eviction_policy: value.eviction_policy,
             },
+            value.id_random_bytes,
         )
     }
 }
@@ -30,6 +33,7 @@ impl CreateCacheOperation {
         Self {
             name,
             eviction_policy,
+            id_random_bytes: UuidV7RandomBytes::new_random(),
         }
     }
 

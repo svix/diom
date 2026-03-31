@@ -1,6 +1,6 @@
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::NamespaceId;
+use coyote_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,7 @@ pub struct TopicConfigureOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,
     partitions: u16,
+    topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl TopicConfigureOperation {
@@ -31,6 +32,7 @@ impl TopicConfigureOperation {
             namespace_id,
             topic,
             partitions,
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 
@@ -42,7 +44,7 @@ impl TopicConfigureOperation {
                 TopicRow::key_for(self.namespace_id, &self.topic),
             )? {
                 Some(topic_row) => topic_row,
-                None => TopicRow::new(self.topic.clone(), now),
+                None => TopicRow::new(self.topic.clone(), now, self.topic_id_random_bytes),
             };
 
             if self.partitions < topic_row.partitions {

@@ -1,5 +1,5 @@
 use coyote_error::Result;
-use coyote_id::NamespaceId;
+use coyote_id::{NamespaceId, UuidV7RandomBytes};
 
 use fjall_utils::WriteBatchExt;
 use jiff::Timestamp;
@@ -13,6 +13,7 @@ use crate::{State, entities::ModuleConfig, tables::Namespace};
 pub struct CreateNamespace<C: ModuleConfig> {
     name: String,
     config: C,
+    id_random_bytes: UuidV7RandomBytes,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -25,8 +26,12 @@ pub struct CreateNamespaceOutput<C: ModuleConfig> {
 }
 
 impl<C: ModuleConfig + 'static> CreateNamespace<C> {
-    pub fn new(name: String, config: C) -> Self {
-        Self { name, config }
+    pub fn new(name: String, config: C, id_random_bytes: UuidV7RandomBytes) -> Self {
+        Self {
+            name,
+            config,
+            id_random_bytes,
+        }
     }
 
     pub async fn apply_operation(
@@ -48,7 +53,7 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                         namespace
                     }
                     None => {
-                        let id = NamespaceId::new(timestamp);
+                        let id = NamespaceId::new(timestamp, self.id_random_bytes);
                         Namespace {
                             id,
                             name: self.name,

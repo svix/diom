@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, TopicId};
+use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -22,6 +22,7 @@ pub struct PublishOperation {
     pub(crate) topic: TopicName,
     partition: Option<Partition>,
     msgs: Vec<MsgIn>,
+    topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl PublishOperation {
@@ -43,6 +44,7 @@ impl PublishOperation {
             topic,
             partition,
             msgs,
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 
@@ -71,7 +73,7 @@ impl PublishOperation {
                     return Err(Error::invalid_user_input("topic does not exist"));
                 }
                 (None, None) => {
-                    let row = TopicRow::new(self.topic.clone(), now);
+                    let row = TopicRow::new(self.topic.clone(), now, self.topic_id_random_bytes);
                     batch.insert_row(
                         &state.metadata_tables,
                         TopicRow::key_for(self.namespace_id, &self.topic),

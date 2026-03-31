@@ -1,6 +1,6 @@
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::NamespaceId;
+use coyote_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::WriteBatchExt;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,7 @@ pub struct QueueConfigureOperation {
     consumer_group: ConsumerGroup,
     retry_schedule: Vec<u64>,
     dlq_topic: Option<TopicName>,
+    topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl QueueConfigureOperation {
@@ -36,6 +37,7 @@ impl QueueConfigureOperation {
             consumer_group,
             retry_schedule,
             dlq_topic,
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         }
     }
 
@@ -51,6 +53,7 @@ impl QueueConfigureOperation {
                 self.namespace_id,
                 &self.topic,
                 now,
+                self.topic_id_random_bytes,
             )?;
 
             let config = QueueConfigRow {

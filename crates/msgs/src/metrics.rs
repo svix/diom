@@ -314,6 +314,7 @@ pub(crate) fn record_topic_lag_metrics(state: &State) -> Result<()> {
 mod tests {
     use std::collections::HashMap;
 
+    use coyote_id::UuidV7RandomBytes;
     use fjall_utils::WriteBatchExt as _;
     use jiff::Timestamp;
 
@@ -406,7 +407,11 @@ mod tests {
         let msgs = db.keyspace(crate::MSG_KEYSPACE, Default::default).unwrap();
 
         let topic_name = TopicName::new("test-topic".to_string()).unwrap();
-        let topic_row = TopicRow::new(topic_name, Timestamp::UNIX_EPOCH);
+        let topic_row = TopicRow::new(
+            topic_name,
+            Timestamp::UNIX_EPOCH,
+            UuidV7RandomBytes::new_random(),
+        );
         let cg = ConsumerGroup::try_from("my-group").unwrap();
         let partition = Partition::new(0).unwrap();
 
