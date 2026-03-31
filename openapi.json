@@ -6586,12 +6586,12 @@
             }
           },
           "key": {
-            "description": "Optional partition key. Messages with the same key are routed to the same partition.",
+            "description": "Optional partition key.\n\nMessages with the same key are routed to the same partition.",
             "type": "string",
             "nullable": true
           },
           "delay_ms": {
-            "description": "Optional delay in milliseconds. The message will not be delivered to queue consumers\nuntil `delay_ms` has elapsed from the time of publish.",
+            "description": "Optional delay in milliseconds.\n\nThe message will not be delivered to queue consumers\nuntil `delay_ms` has elapsed from the time of publish.",
             "type": "integer",
             "format": "uint64",
             "minimum": 0,

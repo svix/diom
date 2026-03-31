@@ -3,10 +3,16 @@
 export interface MsgIn {
     value: number[];
     headers?: { [key: string]: string };
-    /** Optional partition key. Messages with the same key are routed to the same partition. */
+    /**
+     * Optional partition key.
+     * 
+     * Messages with the same key are routed to the same partition.
+     */
     key?: string | null;
     /**
-     * Optional delay in milliseconds. The message will not be delivered to queue consumers
+     * Optional delay in milliseconds.
+     * 
+     * The message will not be delivered to queue consumers
      * until `delay_ms` has elapsed from the time of publish.
      */
     delayMs?: number | null;
