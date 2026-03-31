@@ -94,11 +94,30 @@ jobs:
         run: |
           kubectl rollout status deployment/diom-operator --timeout=120s -n ${{ inputs.namespace }}
 
+      - name: Verify cluster rollout
+        run: |
+          EXPECTED_IMAGE="ghcr.io/svix/diom-server:${{ inputs.image_tag }}"
+          IMAGE_UPDATED=false
+          for _ in $(seq 1 24); do
+            STS_IMAGE=$(kubectl get statefulset diom -n ${{ inputs.namespace }} \
+              -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)
+            if [ "$STS_IMAGE" = "$EXPECTED_IMAGE" ]; then
+              IMAGE_UPDATED=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$IMAGE_UPDATED" = "false" ]; then
+            echo "Timed out"
+            exit 1
+          fi
+          kubectl rollout status statefulset/diom --timeout=120s -n ${{ inputs.namespace }}
+
       - name: Dump logs on failure
         if: failure()
         run: |
           echo "=== Pods ==="
-          kubectl get pods -A -n ${{ inputs.namespace }}
+          kubectl get pods -n ${{ inputs.namespace }}
           echo "=== Events ==="
           kubectl get events --sort-by='.lastTimestamp' -n ${{ inputs.namespace }}
           echo "=== Operator logs ==="
