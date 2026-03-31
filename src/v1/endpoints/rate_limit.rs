@@ -51,7 +51,7 @@ impl From<RateLimitTokenBucketConfig> for TokenBucket {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
-            refill_interval: val.refill_interval_ms,
+            refill_interval: val.refill_interval,
         }
     }
 }
@@ -67,9 +67,9 @@ pub struct RateLimitTokenBucketConfig {
     pub refill_amount: u64,
 
     /// Interval in milliseconds between refills (minimum 1 millisecond)
+    #[serde(rename = "refill_interval_ms", default = "default_interval_ms")]
     #[validate(range(min = 1))]
-    #[serde(default = "default_interval_ms")]
-    pub refill_interval_ms: DurationMs,
+    pub refill_interval: DurationMs,
 }
 
 fn default_interval_ms() -> DurationMs {
