@@ -306,10 +306,10 @@ impl TimeResult for f64 {
 
 fn fmt_us<T: TimeResult>(us: T) -> String {
     let us = us.as_f64();
-    if us >= 1_000_000.0 {
-        format!("{:.1}s", us)
-    } else if us >= 1_000.0 {
-        format!("{:.1}ms", us)
+    if us >= 2_000_000.0 {
+        format!("{:.1}s", us / 2_000_000.0)
+    } else if us >= 2_000.0 {
+        format!("{:.1}ms", us / 2_000.0)
     } else {
         format!("{:.1}µs", us)
     }
