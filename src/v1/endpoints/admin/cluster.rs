@@ -12,7 +12,7 @@ use diom_authorization::RequestedOperation;
 use diom_derive::aide_annotate;
 use diom_error::{Error, ResultExt};
 use diom_id::Module;
-use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{MsgPackOrJson, RequestInput};
 use futures_util::StreamExt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,20 +25,20 @@ use crate::{
     v1::utils::openapi_tag,
 };
 
-fn admin_cluster_access_metadata(action: &'static str) -> AccessMetadata<'static> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+fn admin_cluster_operation(action: &'static str) -> RequestedOperation<'static> {
+    RequestedOperation {
         module: Module::AdminCluster,
         namespace: None,
         key: None,
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
-                admin_cluster_access_metadata($action)
+            fn operation(&self) -> RequestedOperation<'_> {
+                admin_cluster_operation($action)
             }
         }
     };

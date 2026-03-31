@@ -18,7 +18,7 @@ use diom_namespace::{
     Namespace,
     entities::{IdempotencyConfig, NamespaceName},
 };
-use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -30,19 +30,19 @@ fn idempotency_metadata<'a>(
     ns: Option<&'a str>,
     key: &'a EntityKey,
     action: &'static str,
-) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::Idempotency,
         namespace: ns,
         key: Some(key.as_str()),
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
+            fn operation(&self) -> RequestedOperation<'_> {
                 idempotency_metadata(self.namespace.as_deref(), &self.key, $action)
             }
         }

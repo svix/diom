@@ -14,7 +14,7 @@ use diom_namespace::{
     Namespace,
     entities::{CacheConfig, EvictionPolicy, NamespaceName},
 };
-use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -22,24 +22,24 @@ use validator::Validate;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
-fn cache_access_metadata<'a>(
+fn cache_operation<'a>(
     ns: Option<&'a str>,
     key: &'a EntityKey,
     action: &'static str,
-) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::Cache,
         namespace: ns,
         key: Some(key.as_str()),
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
-                cache_access_metadata(self.namespace.as_deref(), &self.key, $action)
+            fn operation(&self) -> RequestedOperation<'_> {
+                cache_operation(self.namespace.as_deref(), &self.key, $action)
             }
         }
     };

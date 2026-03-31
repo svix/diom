@@ -9,7 +9,7 @@ use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
 use diom_namespace::entities::NamespaceName;
-use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{MsgPackOrJson, RequestInput};
 use diom_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -27,19 +27,19 @@ fn rate_limit_metadata<'a>(
     ns: Option<&'a str>,
     key: &'a EntityKey,
     action: &'static str,
-) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::RateLimit,
         namespace: ns,
         key: Some(key.as_str()),
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
+            fn operation(&self) -> RequestedOperation<'_> {
                 rate_limit_metadata(self.namespace.as_deref(), &self.key, $action)
             }
         }
