@@ -11,7 +11,7 @@ pub struct IdempotencyCompleteIn {
     pub response: Vec<u8>,
 
     /// TTL in milliseconds for the cached response
-    #[serde(rename = "ttl_ms")]
+    #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]
     pub ttl: std::time::Duration,
 }
 
@@ -42,6 +42,6 @@ pub(crate) struct IdempotencyCompleteIn_ {
     pub response: Vec<u8>,
 
     /// TTL in milliseconds for the cached response
-    #[serde(rename = "ttl_ms")]
+    #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]
     pub ttl: std::time::Duration,
 }

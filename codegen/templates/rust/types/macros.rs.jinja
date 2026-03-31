@@ -39,7 +39,7 @@
     {% if not field.required or field.nullable -%}
         skip_serializing_if = "Option::is_none",
     {% endif -%}
-    {% if field_name is endingwith "_ms" -%}
+    {% if (field.name | to_snake_case) is endingwith "_ms" -%}
         {% set serde_with = "crate::duration_ms_serde" -%}
         {% if not field.required or field.nullable -%}
             {% set serde_with = serde_with ~ "::optional" -%}
