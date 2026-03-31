@@ -65,8 +65,9 @@ pub struct IdempotencyStartIn {
     pub key: EntityKey,
 
     /// TTL in milliseconds for the lock/response
+    #[serde(rename = "ttl_ms")]
     #[validate(range(min = 1))]
-    pub ttl_ms: DurationMs,
+    pub ttl: DurationMs,
 }
 
 request_input!(IdempotencyStartIn, "start");
@@ -112,8 +113,9 @@ pub struct IdempotencyCompleteIn {
     pub response: Vec<u8>,
 
     /// TTL in milliseconds for the cached response
+    #[serde(rename = "ttl_ms")]
     #[validate(range(min = 1))]
-    pub ttl_ms: DurationMs,
+    pub ttl: DurationMs,
 }
 
 request_input!(IdempotencyCompleteIn, "complete");
@@ -152,7 +154,7 @@ async fn idempotency_start(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl_ms);
+    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
@@ -171,7 +173,7 @@ async fn idempotency_complete(
         .ok_or_not_found()?;
 
     let operation =
-        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl_ms);
+        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl);
     repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))

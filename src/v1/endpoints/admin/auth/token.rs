@@ -70,7 +70,8 @@ pub struct AdminAuthTokenCreateIn {
     pub name: String,
     pub role: String,
     /// Milliseconds from now until the token expires.
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
     /// Whether the token is enabled. Defaults to `true`.
     #[serde(default = "default_true")]
     pub enabled: bool,
@@ -107,7 +108,7 @@ async fn auth_token_create(
                 name: data.name,
                 prefix: default_prefix(),
                 suffix: None,
-                expiry_ms: data.expiry_ms,
+                expiry: data.expiry,
                 metadata: Metadata(metadata),
                 owner_id: RoleId::operator().0,
                 scopes: vec![],
@@ -131,7 +132,8 @@ async fn auth_token_create(
 pub struct AdminAuthTokenExpireIn {
     pub id: Public<AuthTokenId>,
     /// Milliseconds from now until the token expires. `None` means expire immediately.
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
 }
 
 request_input!(AdminAuthTokenExpireIn, "expire");
@@ -151,7 +153,7 @@ async fn auth_token_expire(
             &AuthTokenExpireIn {
                 id: data.id,
                 namespace: Some(INTERNAL_NAMESPACE.to_owned()),
-                expiry_ms: data.expiry_ms,
+                expiry: data.expiry,
             },
         )
         .await
@@ -191,7 +193,7 @@ async fn auth_token_rotate(
                 id: data.id,
                 prefix: default_prefix(),
                 suffix: None,
-                expiry_ms: None,
+                expiry: None,
             },
         )
         .await
@@ -306,7 +308,8 @@ async fn auth_token_list(
 pub struct AdminAuthTokenUpdateIn {
     pub id: Public<AuthTokenId>,
     pub name: Option<String>,
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
     pub enabled: Option<bool>,
 }
 
@@ -328,7 +331,7 @@ async fn auth_token_update(
                 namespace: Some(INTERNAL_NAMESPACE.to_owned()),
                 id: data.id,
                 name: data.name,
-                expiry_ms: data.expiry_ms,
+                expiry: data.expiry,
                 metadata: None,
                 scopes: None,
                 enabled: data.enabled,

@@ -11,15 +11,16 @@ use serde::{Deserialize, Serialize};
 pub struct TryStartOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
-    pub(crate) ttl_ms: DurationMs,
+    #[serde(rename = "ttl_ms")]
+    pub(crate) ttl: DurationMs,
 }
 
 impl TryStartOperation {
-    pub fn new(namespace: IdempotencyNamespace, key: String, ttl_ms: DurationMs) -> Self {
+    pub fn new(namespace: IdempotencyNamespace, key: String, ttl: DurationMs) -> Self {
         Self {
             namespace_id: namespace.id,
             key,
-            ttl_ms,
+            ttl,
         }
     }
 }
@@ -36,7 +37,7 @@ impl TryStartOperation {
         now: Timestamp,
         log_index: u64,
     ) -> Result<TryStartResponseData> {
-        let expiry = now + self.ttl_ms;
+        let expiry = now + self.ttl;
 
         let controller = state.state.controller();
 
