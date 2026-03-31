@@ -170,8 +170,11 @@ impl Store {
 
         let stores = Stores {
             databases: databases.clone(),
-            msgs_state: diom_msgs::State::init(persistent_db.clone())
-                .context("initializing msgs state")?,
+            msgs_state: diom_msgs::State::init(
+                persistent_db.clone(),
+                app_state.topic_publish_notifier.clone(),
+            )
+            .context("initializing msgs state")?,
             kv_state: diom_kv::State::init(databases.clone()).context("initializing kv state")?,
             cache_state: diom_cache::State::init(databases.clone())
                 .context("initializing cache state")?,

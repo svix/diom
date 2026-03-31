@@ -238,8 +238,6 @@ async fn stream_receive(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    // FIXME(@svix-gabriel) - there's potentially optimizations we can do using fancy tokio
-    // Notifiers to avoid sleeping the max duration. But this is simplest for now.
     if let Some(max_wait) = data.batch_wait_ms {
         let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
         let metadata_ks = ro_db
@@ -255,7 +253,7 @@ async fn stream_receive(
         let now = state.time.now();
         let batch_size = data.batch_size;
 
-        let estimated = diom_core::task::spawn_blocking_in_current_span(move || {
+        let estimate = diom_core::task::spawn_blocking_in_current_span(move || {
             diom_msgs::estimate_available_stream_messages(
                 &metadata_ks,
                 &msg_ks,
@@ -268,8 +266,17 @@ async fn stream_receive(
         .await
         .or_internal_error()??;
 
-        if (estimated as usize) < batch_size.get() as usize {
-            state.time.sleep(max_wait.into()).await;
+        if (estimate.count as usize) < batch_size.get() as usize {
+            let needed = batch_size.get() as u64 - estimate.count;
+            let mut notified = state.topic_publish_notifier.register_notifier(
+                namespace.id,
+                data.topic.name().clone(),
+                estimate.available_partitions,
+            );
+            tokio::select! {
+                _ = notified.wait(needed) => {},
+                _ = state.time.sleep(max_wait.into()) => {},
+            }
         }
     }
 
@@ -440,8 +447,6 @@ async fn queue_receive(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    // FIXME(@svix-gabriel) - there's potentially optimizations we can do using fancy tokio
-    // Notifiers to avoid sleeping the max duration. But this is simplest for now.
     if let Some(max_wait) = data.batch_wait_ms {
         let ro_db = state.ro_dbs.db_for(StorageType::Persistent);
         let metadata_ks = ro_db
@@ -471,7 +476,16 @@ async fn queue_receive(
         .or_internal_error()??;
 
         if (estimated as usize) < batch_size.get() as usize {
-            state.time.sleep(max_wait.into()).await;
+            let needed = batch_size.get() as u64 - estimated;
+            let mut notified = state.topic_publish_notifier.register_notifier(
+                namespace.id,
+                data.topic.name().clone(),
+                vec![],
+            );
+            tokio::select! {
+                _ = notified.wait(needed) => {},
+                _ = state.time.sleep(max_wait.into()) => {},
+            }
         }
     }
 

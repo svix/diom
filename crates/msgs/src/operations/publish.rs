@@ -107,6 +107,16 @@ impl PublishOperation {
                 .metrics
                 .record_published(&self.topic, msg_count, bytes);
 
+            for published in &results {
+                let count = published.offset.saturating_sub(published.start_offset);
+                state.topic_publish_notifier.notify_published(
+                    self.namespace_id,
+                    published.topic.topic.clone(),
+                    published.topic.partition,
+                    count,
+                );
+            }
+
             Ok::<_, Error>(results)
         })
         .await??;

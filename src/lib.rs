@@ -25,6 +25,7 @@ use axum::{
 use diom_authorization::{Permissions, RoleId};
 use diom_core::Monotime;
 use diom_error::Error;
+use diom_msgs::TopicPublishNotifier;
 use diom_proto::{InternalClient, InternalRequest, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
 use http::StatusCode;
@@ -104,6 +105,8 @@ pub struct AppState {
     pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
 
     pub(crate) time: Monotime,
+
+    pub(crate) topic_publish_notifier: TopicPublishNotifier,
 }
 
 #[derive(Debug, Serialize)]
@@ -267,6 +270,7 @@ impl AppState {
             internal_client,
             auth_token_cache,
             time,
+            topic_publish_notifier: TopicPublishNotifier::new(),
         }
     }
 
