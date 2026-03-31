@@ -30,10 +30,14 @@ jobs:
           retention-days: 1
 
   test-rust:
-    name: Rust SDK
+    name: Rust SDK (${{ matrix.rust }})
     needs: build-server
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable, beta]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
@@ -44,7 +48,9 @@ jobs:
         run: .github/scripts/start-coyote-server.sh
         env:
           COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@v2
         with:
           save-if: false
@@ -55,10 +61,14 @@ jobs:
         run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-python:
-    name: Python SDK
+    name: Python SDK (${{ matrix.python-version }})
     needs: build-server
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
@@ -72,16 +82,20 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - name: Run Python SDK integration tests
         working-directory: z-clients/python
-        run: COYOTE_INTEGRATION=1 uv run --group dev pytest tests/ -v
+        run: COYOTE_INTEGRATION=1 uv run --python ${{ matrix.python-version }} --group dev pytest tests/ -v
       - name: Stop server
         if: always()
         run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-javascript:
-    name: JavaScript SDK
+    name: JavaScript SDK (Node ${{ matrix.node-version }})
     needs: build-server
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20', '22']
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
@@ -92,6 +106,9 @@ jobs:
         run: .github/scripts/start-coyote-server.sh
         env:
           COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
       - name: Install dependencies and build
         working-directory: z-clients/javascript
         run: npm ci && npm run build && npm run bundle
@@ -103,10 +120,14 @@ jobs:
         run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-go:
-    name: Go SDK
+    name: Go SDK (${{ matrix.go-version }})
     needs: build-server
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ['1.22', '1.23']
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
@@ -119,7 +140,7 @@ jobs:
           COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
       - uses: actions/setup-go@v5
         with:
-          go-version-file: z-clients/go/go.mod
+          go-version: ${{ matrix.go-version }}
       - name: Run Go SDK integration tests
         working-directory: z-clients/go
         run: go test -tags=integration -v -count=1 ./...
@@ -128,10 +149,14 @@ jobs:
         run: kill "$(cat /tmp/coyote-server.pid)" || true
 
   test-java:
-    name: Java SDK
+    name: Java SDK (${{ matrix.java-version }})
     needs: build-server
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: ['17', '21']
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
@@ -145,7 +170,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: ${{ matrix.java-version }}
       - name: Run Java SDK integration tests
         working-directory: z-clients/java
         run: ./gradlew integrationTest
