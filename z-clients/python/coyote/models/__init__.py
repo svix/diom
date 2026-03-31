@@ -1,4 +1,6 @@
 # this file is @generated
+from .access_rule import AccessRule
+from .access_rule_effect import AccessRuleEffect
 from .admin_auth_token_create_in import AdminAuthTokenCreateIn
 from .admin_auth_token_create_out import AdminAuthTokenCreateOut
 from .admin_auth_token_delete_in import AdminAuthTokenDeleteIn
@@ -13,6 +15,13 @@ from .admin_auth_token_update_in import AdminAuthTokenUpdateIn
 from .admin_auth_token_update_out import AdminAuthTokenUpdateOut
 from .admin_auth_token_whoami_in import AdminAuthTokenWhoamiIn
 from .admin_auth_token_whoami_out import AdminAuthTokenWhoamiOut
+from .admin_role_delete_in import AdminRoleDeleteIn
+from .admin_role_delete_out import AdminRoleDeleteOut
+from .admin_role_get_in import AdminRoleGetIn
+from .admin_role_list_in import AdminRoleListIn
+from .admin_role_out import AdminRoleOut
+from .admin_role_upsert_in import AdminRoleUpsertIn
+from .admin_role_upsert_out import AdminRoleUpsertOut
 from .auth_token_create_in import AuthTokenCreateIn
 from .auth_token_create_namespace_in import AuthTokenCreateNamespaceIn
 from .auth_token_create_namespace_out import AuthTokenCreateNamespaceOut
@@ -72,6 +81,7 @@ from .kv_get_out import KvGetOut
 from .kv_set_in import KvSetIn
 from .kv_set_out import KvSetOut
 from .list_response_admin_auth_token_out import ListResponseAdminAuthTokenOut
+from .list_response_admin_role_out import ListResponseAdminRoleOut
 from .list_response_auth_token_out import ListResponseAuthTokenOut
 from .msg_in import MsgIn
 from .msg_namespace_create_in import MsgNamespaceCreateIn
@@ -121,6 +131,8 @@ from .stream_msg_out import StreamMsgOut
 
 
 __all__ = [
+    "AccessRule",
+    "AccessRuleEffect",
     "AdminAuthTokenCreateIn",
     "AdminAuthTokenCreateOut",
     "AdminAuthTokenDeleteIn",
@@ -135,6 +147,13 @@ __all__ = [
     "AdminAuthTokenUpdateOut",
     "AdminAuthTokenWhoamiIn",
     "AdminAuthTokenWhoamiOut",
+    "AdminRoleDeleteIn",
+    "AdminRoleDeleteOut",
+    "AdminRoleGetIn",
+    "AdminRoleListIn",
+    "AdminRoleOut",
+    "AdminRoleUpsertIn",
+    "AdminRoleUpsertOut",
     "AuthTokenCreateIn",
     "AuthTokenCreateNamespaceIn",
     "AuthTokenCreateNamespaceOut",
@@ -194,6 +213,7 @@ __all__ = [
     "KvSetIn",
     "KvSetOut",
     "ListResponseAdminAuthTokenOut",
+    "ListResponseAdminRoleOut",
     "ListResponseAuthTokenOut",
     "MsgIn",
     "MsgNamespaceCreateIn",
