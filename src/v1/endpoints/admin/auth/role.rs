@@ -157,7 +157,7 @@ async fn role_get(
 #[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AdminRoleListIn {
     #[serde(flatten)]
-    pub pagination: Pagination<String>,
+    pub pagination: Pagination<RoleId>,
 }
 
 admin_request_input!(AdminRoleListIn);
@@ -180,7 +180,11 @@ async fn role_list(
         .list_roles(limit + 1, iterator.clone())
         .await?;
     let items = models.into_iter().map(role_out).collect();
-    Ok(MsgPackOrJson(ListResponse::create(items, limit, iterator)))
+    Ok(MsgPackOrJson(ListResponse::create(
+        items,
+        limit,
+        iterator.map(|RoleId(i)| i),
+    )))
 }
 
 pub fn router() -> ApiRouter<AppState> {
