@@ -1,5 +1,7 @@
 // this file is @generated
 mod admin;
+mod admin_auth_policy;
+mod admin_auth_role;
 mod admin_auth_token;
 mod admin_cluster;
 mod auth_token;
@@ -20,7 +22,8 @@ mod rate_limit;
 mod rate_limit_namespace;
 
 pub(crate) use self::{
-    admin::AdminArgs, admin_auth_token::AdminAuthTokenArgs, admin_cluster::AdminClusterArgs,
+    admin::AdminArgs, admin_auth_policy::AdminAuthPolicyArgs, admin_auth_role::AdminAuthRoleArgs,
+    admin_auth_token::AdminAuthTokenArgs, admin_cluster::AdminClusterArgs,
     auth_token::AuthTokenArgs, auth_token_namespace::AuthTokenNamespaceArgs, cache::CacheArgs,
     cache_namespace::CacheNamespaceArgs, health::HealthArgs, idempotency::IdempotencyArgs,
     idempotency_namespace::IdempotencyNamespaceArgs, kv::KvArgs, kv_namespace::KvNamespaceArgs,

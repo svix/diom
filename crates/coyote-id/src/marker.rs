@@ -18,6 +18,10 @@ macro_rules! id_marker {
 
         impl Eq for $name {}
 
+        impl ::std::hash::Hash for $name {
+            fn hash<H: ::std::hash::Hasher>(&self, _: &mut H) {}
+        }
+
         $(
             impl $crate::marker::PublicIdMarker for $name {
                 const PREFIX: &str = $prefix;

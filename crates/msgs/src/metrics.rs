@@ -36,6 +36,7 @@ pub struct MsgMetrics {
     pub(crate) stream_committed: Counter<u64>,
     pub(crate) stream_no_lease: Counter<u64>,
     pub(crate) stream_seeks: Counter<u64>,
+    pub(crate) topic_end_offset: Gauge<u64>,
 }
 
 impl MsgMetrics {
@@ -104,6 +105,11 @@ impl MsgMetrics {
             topic_lag: meter
                 .u64_gauge("coyote.msgs.topic.lag")
                 .with_description("Estimated topic lag")
+                .with_unit("{message}")
+                .build(),
+            topic_end_offset: meter
+                .u64_gauge("coyote.msgs.topic.end_offset")
+                .with_description("End offset of topic partition")
                 .with_unit("{message}")
                 .build(),
         }
@@ -190,6 +196,19 @@ impl MsgMetrics {
         self.stream_seeks.add(1, attrs);
     }
 
+    pub(crate) fn record_topic_end_offset(
+        &self,
+        topic: &TopicName,
+        partition: Partition,
+        end_offset: u64,
+    ) {
+        let attrs = &[
+            topic.into(),
+            opentelemetry::KeyValue::new("partition", partition.get() as i64),
+        ];
+        self.topic_end_offset.record(end_offset, attrs);
+    }
+
     pub(crate) fn record_topic_lag(
         &self,
         topic: &TopicName,
@@ -259,6 +278,25 @@ fn compute_topic_lag(
         }
     }
     Ok(results)
+}
+
+pub(crate) fn record_end_offsets(state: &State) -> Result<()> {
+    use fjall_utils::TableRow as _;
+
+    for guard in state.metadata_tables.prefix([TopicRow::ROW_TYPE]) {
+        let (_, val) = guard.into_inner()?;
+        let topic_row: TopicRow = rmp_serde::from_slice(&val).or_internal_error()?;
+        for partition_idx in 0..topic_row.partitions {
+            let Ok(partition) = Partition::new(partition_idx) else {
+                continue;
+            };
+            let end_offset = MsgRow::next_offset(&state.msg_table, topic_row.id, partition)?;
+            state
+                .metrics
+                .record_topic_end_offset(&topic_row.name, partition, end_offset);
+        }
+    }
+    Ok(())
 }
 
 pub(crate) fn record_topic_lag_metrics(state: &State) -> Result<()> {

@@ -1,6 +1,4 @@
-#![expect(unused_qualifications)] // triggered by schema_with
-
-use std::{fmt, str::FromStr};
+use std::{borrow::Cow, fmt, str::FromStr};
 
 use coyote_id::Module;
 use itertools::Itertools;
@@ -9,12 +7,25 @@ use serde::{Deserialize, Serialize, de};
 
 use crate::RequestedOperation;
 
-#[derive(Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[schemars(schema_with = "String::json_schema")]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ResourcePattern {
     pub module: Module,
     pub namespace: NamespacePattern,
     pub key: KeyPattern,
+}
+
+impl JsonSchema for ResourcePattern {
+    fn schema_name() -> Cow<'static, str> {
+        String::schema_name()
+    }
+
+    fn inline_schema() -> bool {
+        true
+    }
+
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        String::json_schema(generator)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

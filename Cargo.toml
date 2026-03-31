@@ -214,7 +214,7 @@ tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "fs
 tokio-util = "0.7"
 toml = { version = "1.0.3", default-features = false, features = ["parse", "serde", "display"] }
 tower = "0.5.1"
-tower-http = { version = "0.6.1", features = ["cors", "normalize-path", "request-id", "trace", "util", "catch-panic"] }
+tower-http = { version = "0.6.1", features = ["catch-panic", "compression-full", "cors", "request-id", "trace"] }
 tower-service = "0.3.3"
 tracing = { version = "0.1.35", features = ["release_max_level_debug"] }
 tracing-opentelemetry = "0.32.1"

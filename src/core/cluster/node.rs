@@ -72,12 +72,16 @@ impl Node {
     }
 
     pub fn url_for(&self, path: &str) -> anyhow::Result<Url> {
+        assert!(
+            path.starts_with('/'),
+            "path must being with `/`, but doesn't: path = `{path}`"
+        );
         let base = match self {
             Self::NoAddress => anyhow::bail!("no address provided"),
             Self::SingleHomed(sa) => sa.to_string(),
             Self::HostnameAndPort { hostname, port } => format!("{hostname}:{port}"),
         };
-        format!("http://{base}/{path}")
+        format!("http://{base}{path}")
             .parse()
             .context("generating url for network RPC")
     }

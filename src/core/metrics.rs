@@ -263,6 +263,7 @@ impl ClusterMetrics {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ConnectionType {
     Internal,
     Interserver,

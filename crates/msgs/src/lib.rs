@@ -9,12 +9,15 @@ use entities::{ConsumerGroup, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, TableRow};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
-use crate::metrics::record_topic_lag_metrics;
+use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
 
 pub mod entities;
 pub mod metrics;
 pub mod operations;
 pub(crate) mod tables;
+mod topic_publish_notifier;
+
+pub use topic_publish_notifier::*;
 
 pub const MSG_KEYSPACE: &str = "mod_msgs";
 pub const METADATA_KEYSPACE: &str = "mod_msgs_metadata";
@@ -27,10 +30,14 @@ pub struct State {
     pub(crate) metadata_tables: fjall::Keyspace,
     pub(crate) msg_table: fjall::Keyspace,
     pub(crate) metrics: metrics::MsgMetrics,
+    pub(crate) topic_publish_notifier: TopicPublishNotifier,
 }
 
 impl State {
-    pub fn init(db: fjall::Database) -> Result<Self, Error> {
+    pub fn init(
+        db: fjall::Database,
+        topic_publish_notifier: TopicPublishNotifier,
+    ) -> Result<Self, Error> {
         let metadata_tables = {
             let opts = KeyspaceCreateOptions::default();
             db.keyspace(METADATA_KEYSPACE, || opts)?
@@ -50,6 +57,7 @@ impl State {
             metadata_tables,
             msg_table,
             metrics: metrics::MsgMetrics::new(&meter),
+            topic_publish_notifier,
         })
     }
 }
@@ -101,6 +109,15 @@ pub fn estimate_available_queue_messages(
     Ok(total)
 }
 
+/// Result of estimating available stream messages.
+#[derive(Default)]
+pub struct StreamEstimate {
+    /// Estimated number of available messages across all unlocked partitions.
+    pub count: u64,
+    /// Partitions that are not currently leased.
+    pub available_partitions: Vec<Partition>,
+}
+
 // NOTE - I'm not thrilled about the location of this method, but I didn't want to expose the
 // tables module outside the msgs crate, and I wasn't sure where else to put this. 🤷
 /// Cheap offset-based estimate of available stream messages across all partitions.
@@ -113,13 +130,14 @@ pub fn estimate_available_stream_messages(
     topic: &TopicName,
     consumer_group: &ConsumerGroup,
     now: Timestamp,
-) -> Result<u64> {
+) -> Result<StreamEstimate> {
     let Some(topic_row) = TopicRow::fetch(metadata_tables, TopicRow::key_for(namespace_id, topic))?
     else {
-        return Ok(0);
+        return Ok(StreamEstimate::default());
     };
 
     let mut total = 0u64;
+    let mut available_partitions = Vec::new();
     for partition_idx in 0..topic_row.partitions {
         let partition = Partition::new(partition_idx)?;
 
@@ -133,12 +151,17 @@ pub fn estimate_available_stream_messages(
             continue;
         }
 
+        available_partitions.push(partition);
+
         let cursor_offset = cursor.map(|c| c.offset).unwrap_or(0);
         let next_offset = MsgRow::next_offset(msg_table, topic_row.id, partition)?;
         total += next_offset.saturating_sub(cursor_offset);
     }
 
-    Ok(total)
+    Ok(StreamEstimate {
+        count: total,
+        available_partitions,
+    })
 }
 
 #[derive(Clone)]
@@ -153,14 +176,15 @@ impl AllNodesWorker {
 
     async fn worker_loop(&self) -> BackgroundResult<()> {
         let state = self.state.clone();
-        match coyote_core::task::spawn_blocking_in_current_span(move || {
-            record_topic_lag_metrics(&state)
-        })
-        .await
-        {
-            Ok(Ok(())) => {}
-            Ok(Err(err)) => tracing::warn!(?err, "failed to collect stream lag metrics"),
-            Err(err) => tracing::warn!(?err, "stream lag metrics task panicked"),
+
+        let mut tasks = tokio::task::JoinSet::new();
+        tasks.spawn_blocking(move || record_topic_lag_metrics(&state));
+        let state = self.state.clone();
+        tasks.spawn_blocking(move || record_end_offsets(&state));
+        for result in tasks.join_all().await {
+            if let Err(e) = result {
+                tracing::warn!(error = %e, "Failed to collect msgs metrics");
+            }
         }
         Ok(())
     }
