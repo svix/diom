@@ -140,6 +140,7 @@ impl JsonSchema for DurationMs {
         json_schema!({
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
         })
     }
 
