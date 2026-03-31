@@ -382,7 +382,7 @@ impl AuthTokenController {
 #[allow(clippy::disallowed_methods)]
 #[cfg(test)]
 mod tests {
-    use diom_id::NamespaceId;
+    use diom_id::{NamespaceId, UuidV7RandomBytes};
     use fjall::Database;
     use jiff::{Timestamp, ToSpan};
 
@@ -418,10 +418,11 @@ mod tests {
         name: &str,
         owner_id: &str,
         ts: Timestamp,
+        random_bytes: UuidV7RandomBytes,
     ) -> AuthTokenModel {
         let token = TokenPlaintext::generate("sk", None).unwrap();
         let input = CreateTokenInput {
-            id: AuthTokenId::new(ts),
+            id: AuthTokenId::new(ts, random_bytes),
             name: name.to_string(),
             token_hashed: token.hash(),
             expiry: None,
@@ -445,7 +446,16 @@ mod tests {
         let mut created = Vec::new();
         for i in 0..5i32 {
             let ts = base.checked_add((i + 1).seconds()).unwrap();
-            created.push(create_token(c, &format!("token-{i}"), owner, ts).await);
+            created.push(
+                create_token(
+                    c,
+                    &format!("token-{i}"),
+                    owner,
+                    ts,
+                    UuidV7RandomBytes::new_random(),
+                )
+                .await,
+            );
         }
         created.sort_by_key(|t| *t.id.as_bytes());
 

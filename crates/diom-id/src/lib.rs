@@ -2,7 +2,7 @@ use std::{fmt, marker::PhantomData};
 
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use uuid::{Builder, Uuid};
 
 mod public;
 #[macro_use]
@@ -11,6 +11,18 @@ mod module;
 
 use self::marker::{IdMarker, PublicIdMarker};
 pub use self::{module::Module, public::Public};
+
+const V7_RANDOM_BYTES_LEN: usize = 10;
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[serde(transparent)]
+pub struct UuidV7RandomBytes([u8; V7_RANDOM_BYTES_LEN]);
+
+impl UuidV7RandomBytes {
+    pub fn new_random() -> Self {
+        Self(rand::random())
+    }
+}
 
 pub type AuthTokenId = Id<m::AuthToken>;
 pub type NamespaceId = Id<m::Namespace>;
@@ -41,12 +53,9 @@ impl<M: IdMarker> Id<M> {
         }
     }
 
-    pub fn new(now: Timestamp) -> Self {
-        Self::from_uuid(Uuid::new_v7(uuid::Timestamp::from_unix(
-            uuid::NoContext,
-            now.as_second() as u64,
-            now.subsec_nanosecond() as u32,
-        )))
+    pub fn new(now: Timestamp, random_bytes: UuidV7RandomBytes) -> Self {
+        let millis = now.as_millisecond() as u64;
+        Self::from_uuid(Builder::from_unix_timestamp_millis(millis, &random_bytes.0).into_uuid())
     }
 
     pub fn nil() -> Self {
@@ -112,7 +121,7 @@ impl<'de, M: IdMarker> Deserialize<'de> for Id<M> {
 #[cfg(test)]
 #[allow(unreachable_pub)]
 mod tests {
-    use super::Id;
+    use super::{Id, UuidV7RandomBytes};
 
     id_marker!(Private);
     id_marker!(Public, "pub_");
@@ -122,7 +131,7 @@ mod tests {
 
     #[test]
     fn private_id_serde() {
-        let id = PrivateId::new(jiff::Timestamp::UNIX_EPOCH);
+        let id = PrivateId::new(jiff::Timestamp::UNIX_EPOCH, UuidV7RandomBytes::new_random());
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, i.e. just a UUID
 
@@ -133,7 +142,7 @@ mod tests {
 
     #[test]
     fn public_id_serde() {
-        let id = PublicId::new(jiff::Timestamp::UNIX_EPOCH);
+        let id = PublicId::new(jiff::Timestamp::UNIX_EPOCH, UuidV7RandomBytes::new_random());
 
         assert_eq!(size_of_val(&id), 16); // 16 bytes, also just a UUID
 
@@ -144,5 +153,16 @@ mod tests {
         let serialized = rmp_serde::to_vec_named(&id.public()).unwrap();
         assert_eq!(serialized.len(), 31);
         assert_eq!(&serialized[1..][..4], b"pub_");
+    }
+
+    #[test]
+    fn new_is_deterministic() {
+        let now = jiff::Timestamp::UNIX_EPOCH;
+        let random_bytes = UuidV7RandomBytes::new_random();
+
+        assert_eq!(
+            PrivateId::new(now, random_bytes),
+            PrivateId::new(now, random_bytes)
+        );
     }
 }

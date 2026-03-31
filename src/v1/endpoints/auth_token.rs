@@ -147,7 +147,6 @@ async fn auth_token_create(
         data.owner_id,
         data.scopes,
         data.enabled,
-        repl.time.now(),
     );
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
 
@@ -393,13 +392,8 @@ async fn auth_token_rotate(
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
     let old_expiry = data.expiry.map(|ms| repl.time.now() + ms);
-    let operation = RotateAuthTokenOperation::new(
-        namespace,
-        data.id.into_inner(),
-        token.hash(),
-        old_expiry,
-        repl.time.now(),
-    );
+    let operation =
+        RotateAuthTokenOperation::new(namespace, data.id.into_inner(), token.hash(), old_expiry);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     let model = resp.model.ok_or_not_found()?;
 

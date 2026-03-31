@@ -1,4 +1,4 @@
-use diom_id::{NamespaceId, TopicId};
+use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
 use diom_error::{Result, ResultExt as _};
@@ -36,9 +36,9 @@ impl TopicRow {
         TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[topic])
     }
 
-    pub(crate) fn new(name: TopicName, now: Timestamp) -> Self {
+    pub(crate) fn new(name: TopicName, now: Timestamp, id_random_bytes: UuidV7RandomBytes) -> Self {
         Self {
-            id: TopicId::new(now),
+            id: TopicId::new(now, id_random_bytes),
             name,
             partitions: 1,
         }
@@ -58,11 +58,12 @@ impl TopicRow {
         namespace_id: NamespaceId,
         topic: &TopicName,
         now: Timestamp,
+        id_random_bytes: UuidV7RandomBytes,
     ) -> Result<Self> {
         if let Some(row) = Self::fetch(metadata_tables, Self::key_for(namespace_id, topic))? {
             return Ok(row);
         }
-        let row = Self::new(topic.clone(), now);
+        let row = Self::new(topic.clone(), now, id_random_bytes);
         batch.insert_row(metadata_tables, Self::key_for(namespace_id, topic), &row)?;
         Ok(row)
     }
@@ -350,7 +351,7 @@ mod tests {
     #[test]
     fn test_consumer_group_from_key() {
         use diom_id::TopicId;
-        let topic_id = TopicId::new(Timestamp::UNIX_EPOCH);
+        let topic_id = TopicId::new(Timestamp::UNIX_EPOCH, UuidV7RandomBytes::new_random());
         let partition = Partition::new(0).unwrap();
         let cg = ConsumerGroup::try_from("my-group").unwrap();
         let key = StreamLeaseRow::key_for(topic_id, partition, &cg).into_fjall_key();

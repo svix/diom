@@ -2,7 +2,7 @@ use std::num::NonZeroU16;
 
 use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use diom_error::{Error, Result};
-use diom_id::NamespaceId;
+use diom_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -28,6 +28,7 @@ pub struct StreamReceiveOperation {
     #[serde(rename = "lease_duration_ms")]
     lease_duration: DurationMs,
     default_starting_position: SeekPosition,
+    topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl StreamReceiveOperation {
@@ -51,6 +52,7 @@ impl StreamReceiveOperation {
             batch_size,
             lease_duration,
             default_starting_position,
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 
@@ -71,6 +73,7 @@ impl StreamReceiveOperation {
                 self.namespace_id,
                 &self.topic,
                 now,
+                self.topic_id_random_bytes,
             )?;
 
             Span::current().record("partition_count", topic_row.partitions);
