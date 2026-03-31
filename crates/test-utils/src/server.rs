@@ -284,7 +284,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         opentelemetry_address: None,
         opentelemetry_metrics_address: None,
         opentelemetry_metrics_use_http: false,
-        opentelemetry_metrics_period_seconds: 60,
+        opentelemetry_metrics_period: Duration::from_secs(10),
         opentelemetry_sample_ratio: None,
         opentelemetry_service_name: "coyote-test".to_string(),
         environment: Environment::Dev,
