@@ -8,7 +8,7 @@ mod pattern;
 mod verification;
 
 pub use self::{
-    pattern::{KeyPattern, NamespacePattern, ResourcePattern},
+    pattern::{KeyPattern, ModulePattern, NamespacePattern, ResourcePattern},
     verification::{Forbidden, verify_operation},
 };
 

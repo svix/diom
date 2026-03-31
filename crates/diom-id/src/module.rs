@@ -16,6 +16,24 @@ pub enum Module {
     AdminAccessPolicy = 204,
 }
 
+impl Module {
+    pub fn is_admin_module(&self) -> bool {
+        match self {
+            Self::Cache
+            | Self::Idempotency
+            | Self::Kv
+            | Self::RateLimit
+            | Self::Msgs
+            | Self::AuthToken => false,
+            Self::AdminCluster
+            | Self::AdminNamespace
+            | Self::AdminAuthToken
+            | Self::AdminRole
+            | Self::AdminAccessPolicy => true,
+        }
+    }
+}
+
 impl fmt::Display for Module {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {

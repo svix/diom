@@ -33,6 +33,12 @@ fn test_any_namespace_any_key_match() {
 }
 
 #[test]
+fn test_module_glob_match() {
+    let pat = "*::*".parse::<ResourcePattern>().unwrap();
+    assert!(pat.matches(&EXAMPLE_OP_KV));
+}
+
+#[test]
 fn test_any_namespace_wrong_module() {
     for wrong_module in ["auth_token", "cache", "idempotency", "msgs"] {
         let pat_s = &format!("{wrong_module}::*");
@@ -76,4 +82,17 @@ fn test_wrong_namespace() {
         let pat = pat_s.parse::<ResourcePattern>().unwrap();
         assert!(!pat.matches(&EXAMPLE_OP_AUTH_TOKEN), "{pat_s}");
     }
+}
+
+static EXAMPLE_OP_POLICY: RequestedOperation<'static> = RequestedOperation {
+    module: Module::AdminAccessPolicy,
+    namespace: None,
+    key: Some("my-policy-id"),
+    action: "create",
+};
+
+#[test]
+fn test_module_glob_no_match_on_admin_api() {
+    let pat = "*:*:*".parse::<ResourcePattern>().unwrap();
+    assert!(!pat.matches(&EXAMPLE_OP_POLICY));
 }
