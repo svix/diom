@@ -343,9 +343,9 @@ pub struct MsgIn {
     /// Optional delay in milliseconds.
     ///
     /// The message will not be delivered to queue consumers
-    /// until `delay_ms` has elapsed from the time of publish.
-    #[serde(default)]
-    pub delay_ms: Option<u64>,
+    /// until the delay has elapsed from the time of publish.
+    #[serde(default, rename = "delay_ms")]
+    pub delay: Option<DurationMs>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]

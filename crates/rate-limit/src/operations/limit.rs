@@ -1,7 +1,6 @@
-use std::time::Duration;
-
 use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
 use crate::{RateLimitNamespace, TokenBucket};
+use diom_core::types::DurationMs;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
@@ -36,7 +35,8 @@ impl LimitOperation {
 pub struct LimitResponseData {
     pub allowed: bool,
     pub remaining: u64,
-    pub retry_after: Option<Duration>,
+    #[serde(rename = "retry_after_ms")]
+    pub retry_after: Option<DurationMs>,
 }
 
 impl LimitOperation {

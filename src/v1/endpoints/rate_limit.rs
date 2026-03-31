@@ -108,8 +108,8 @@ pub struct RateLimitCheckOut {
     pub remaining: u64,
 
     /// Milliseconds until enough tokens are available (only present when allowed is false)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after_ms: Option<u64>,
+    #[serde(rename = "retry_after_ms", skip_serializing_if = "Option::is_none")]
+    pub retry_after: Option<DurationMs>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -133,8 +133,8 @@ pub struct RateLimitGetRemainingOut {
     pub remaining: u64,
 
     /// Milliseconds until at least one token is available (only present when remaining is 0)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after_ms: Option<u64>,
+    #[serde(rename = "retry_after_ms", skip_serializing_if = "Option::is_none")]
+    pub retry_after: Option<DurationMs>,
 }
 
 /// Rate Limiter Check and Consume
@@ -159,9 +159,7 @@ async fn rate_limit_limit(
     Ok(MsgPackOrJson(RateLimitCheckOut {
         allowed: response.allowed,
         remaining: response.remaining,
-        retry_after_ms: response
-            .retry_after
-            .map(|t: std::time::Duration| t.as_millis() as u64),
+        retry_after: response.retry_after,
     }))
 }
 
@@ -189,7 +187,7 @@ async fn rate_limit_get_remaining(
 
     Ok(MsgPackOrJson(RateLimitGetRemainingOut {
         remaining,
-        retry_after_ms: retry_after.map(|t| t.as_millis() as u64),
+        retry_after,
     }))
 }
 
