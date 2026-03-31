@@ -5,6 +5,8 @@ package diom
 import diom_models "github.com/svix/diom/z-clients/go/internal/models"
 
 type (
+	AccessRule                    = diom_models.AccessRule
+	AccessRuleEffect              = diom_models.AccessRuleEffect
 	AdminAuthTokenCreateIn        = diom_models.AdminAuthTokenCreateIn
 	AdminAuthTokenCreateOut       = diom_models.AdminAuthTokenCreateOut
 	AdminAuthTokenDeleteIn        = diom_models.AdminAuthTokenDeleteIn
@@ -19,6 +21,13 @@ type (
 	AdminAuthTokenUpdateOut       = diom_models.AdminAuthTokenUpdateOut
 	AdminAuthTokenWhoamiIn        = diom_models.AdminAuthTokenWhoamiIn
 	AdminAuthTokenWhoamiOut       = diom_models.AdminAuthTokenWhoamiOut
+	AdminRoleDeleteIn             = diom_models.AdminRoleDeleteIn
+	AdminRoleDeleteOut            = diom_models.AdminRoleDeleteOut
+	AdminRoleGetIn                = diom_models.AdminRoleGetIn
+	AdminRoleListIn               = diom_models.AdminRoleListIn
+	AdminRoleOut                  = diom_models.AdminRoleOut
+	AdminRoleUpsertIn             = diom_models.AdminRoleUpsertIn
+	AdminRoleUpsertOut            = diom_models.AdminRoleUpsertOut
 	AuthTokenCreateIn             = diom_models.AuthTokenCreateIn
 	AuthTokenCreateNamespaceIn    = diom_models.AuthTokenCreateNamespaceIn
 	AuthTokenCreateNamespaceOut   = diom_models.AuthTokenCreateNamespaceOut
@@ -78,6 +87,7 @@ type (
 	KvSetIn                       = diom_models.KvSetIn
 	KvSetOut                      = diom_models.KvSetOut
 	ListResponseAdminAuthTokenOut = diom_models.ListResponseAdminAuthTokenOut
+	ListResponseAdminRoleOut      = diom_models.ListResponseAdminRoleOut
 	ListResponseAuthTokenOut      = diom_models.ListResponseAuthTokenOut
 	MsgIn                         = diom_models.MsgIn
 	MsgNamespaceCreateIn          = diom_models.MsgNamespaceCreateIn
