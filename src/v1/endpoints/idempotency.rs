@@ -69,7 +69,7 @@ pub struct IdempotencyStartIn {
     pub ttl_ms: DurationMs,
 }
 
-request_input!(IdempotencyStartIn, "Start");
+request_input!(IdempotencyStartIn, "start");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "status", content = "data", rename_all = "snake_case")]
@@ -116,7 +116,7 @@ pub struct IdempotencyCompleteIn {
     pub ttl_ms: DurationMs,
 }
 
-request_input!(IdempotencyCompleteIn, "Complete");
+request_input!(IdempotencyCompleteIn, "complete");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyCompleteOut {}
@@ -131,7 +131,7 @@ pub struct IdempotencyAbortIn {
     pub key: EntityKey,
 }
 
-request_input!(IdempotencyAbortIn, "Abort");
+request_input!(IdempotencyAbortIn, "abort");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyAbortOut {}

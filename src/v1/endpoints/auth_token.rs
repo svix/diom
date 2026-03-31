@@ -106,7 +106,7 @@ pub struct AuthTokenCreateIn {
     pub enabled: bool,
 }
 
-request_input!(AuthTokenCreateIn, "Create");
+request_input!(AuthTokenCreateIn, "create");
 
 fn default_true() -> bool {
     true
@@ -167,7 +167,7 @@ pub struct AuthTokenExpireIn {
     pub expiry_ms: Option<DurationMs>,
 }
 
-request_input!(AuthTokenExpireIn, "Expire");
+request_input!(AuthTokenExpireIn, "expire");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenExpireOut {}
@@ -196,7 +196,7 @@ pub struct AuthTokenDeleteIn {
     pub id: Public<AuthTokenId>,
 }
 
-request_input!(AuthTokenDeleteIn, "Delete");
+request_input!(AuthTokenDeleteIn, "delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenDeleteOut {
@@ -234,7 +234,7 @@ pub struct AuthTokenVerifyIn {
     pub token: String,
 }
 
-request_input!(AuthTokenVerifyIn, "Verify");
+request_input!(AuthTokenVerifyIn, "verify");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenVerifyOut {
@@ -277,7 +277,7 @@ pub struct AuthTokenListIn {
     pub pagination: Pagination<Public<AuthTokenId>>,
 }
 
-request_input!(AuthTokenListIn, "List");
+request_input!(AuthTokenListIn, "list");
 
 pub type AuthTokenListOut = ListResponse<AuthTokenOut>;
 
@@ -324,7 +324,7 @@ pub struct AuthTokenUpdateIn {
     pub enabled: Option<bool>,
 }
 
-request_input!(AuthTokenUpdateIn, "Update");
+request_input!(AuthTokenUpdateIn, "update");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenUpdateOut {}
@@ -365,7 +365,7 @@ pub struct AuthTokenRotateIn {
     pub expiry_ms: Option<DurationMs>,
 }
 
-request_input!(AuthTokenRotateIn, "Rotate");
+request_input!(AuthTokenRotateIn, "rotate");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenRotateOut {

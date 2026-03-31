@@ -144,7 +144,7 @@ struct MsgPublishIn {
     pub msgs: Vec<coyote_msgs::entities::MsgIn>,
 }
 
-request_input!(MsgPublishIn, "Publish");
+request_input!(MsgPublishIn, "publish");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgPublishOutTopic {
@@ -216,7 +216,7 @@ struct MsgStreamReceiveIn {
     pub batch_wait_ms: Option<DurationMs>,
 }
 
-request_input!(MsgStreamReceiveIn, "Receive");
+request_input!(MsgStreamReceiveIn, "stream.receive");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgStreamReceiveOut {
@@ -320,7 +320,7 @@ struct MsgStreamCommitIn {
     pub offset: u64,
 }
 
-request_input!(MsgStreamCommitIn, "Commit");
+request_input!(MsgStreamCommitIn, "stream.commit");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgStreamCommitOut {}
@@ -362,7 +362,7 @@ struct MsgStreamSeekIn {
     pub position: Option<SeekPosition>,
 }
 
-request_input!(MsgStreamSeekIn, "Seek");
+request_input!(MsgStreamSeekIn, "stream.seek");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgStreamSeekOut {}
@@ -424,7 +424,7 @@ struct MsgQueueReceiveIn {
     pub batch_wait_ms: Option<DurationMs>,
 }
 
-request_input!(MsgQueueReceiveIn, "Receive");
+request_input!(MsgQueueReceiveIn, "queue.receive");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueReceiveOut {
@@ -527,7 +527,7 @@ struct MsgQueueAckIn {
     pub msg_ids: Vec<MsgId>,
 }
 
-request_input!(MsgQueueAckIn, "Ack");
+request_input!(MsgQueueAckIn, "queue.ack");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueAckOut {}
@@ -569,7 +569,7 @@ struct MsgQueueConfigureIn {
     pub dlq_topic: Option<TopicName>,
 }
 
-request_input!(MsgQueueConfigureIn, "Configure");
+request_input!(MsgQueueConfigureIn, "queue.configure");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueConfigureOut {
@@ -621,7 +621,7 @@ struct MsgQueueNackIn {
     pub msg_ids: Vec<MsgId>,
 }
 
-request_input!(MsgQueueNackIn, "Nack");
+request_input!(MsgQueueNackIn, "queue.nack");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueNackOut {}
@@ -661,7 +661,7 @@ struct MsgQueueRedriveDlqIn {
     pub consumer_group: ConsumerGroup,
 }
 
-request_input!(MsgQueueRedriveDlqIn, "RedriveDlq");
+request_input!(MsgQueueRedriveDlqIn, "queue.redrive-dlq");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgQueueRedriveDlqOut {}
@@ -697,7 +697,7 @@ struct MsgTopicConfigureIn {
     pub partitions: u16,
 }
 
-request_input!(MsgTopicConfigureIn, "Configure");
+request_input!(MsgTopicConfigureIn, "topic.configure");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct MsgTopicConfigureOut {

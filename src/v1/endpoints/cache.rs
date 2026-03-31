@@ -61,7 +61,7 @@ pub struct CacheSetIn {
     pub ttl_ms: DurationMs,
 }
 
-request_input!(CacheSetIn, "Set");
+request_input!(CacheSetIn, "set");
 
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheSetOut {}
@@ -78,7 +78,7 @@ pub struct CacheGetIn {
     pub consistency: Consistency,
 }
 
-request_input!(CacheGetIn, "Get");
+request_input!(CacheGetIn, "get");
 
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheGetOut {
@@ -107,7 +107,7 @@ pub struct CacheDeleteIn {
     pub key: EntityKey,
 }
 
-request_input!(CacheDeleteIn, "Delete");
+request_input!(CacheDeleteIn, "delete");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheDeleteOut {
