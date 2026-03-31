@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt, sync::Arc};
+use std::{
+    collections::HashMap,
+    fmt,
+    sync::{Arc, OnceLock},
+};
 
 use diom_id::{AuthTokenId, Module};
 use schemars::JsonSchema;
@@ -86,6 +90,24 @@ pub struct AccessRule {
 }
 
 impl AccessRule {
+    pub fn operator_rules() -> Arc<[Self]> {
+        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
+        RULES
+            .get_or_init(|| {
+                [AccessRule {
+                    effect: AccessRuleEffect::Allow,
+                    resource: ResourcePattern {
+                        module: ModulePattern::Any,
+                        namespace: NamespacePattern::Named("_internal".to_owned()),
+                        key: KeyPattern::Any,
+                    },
+                    actions: vec!["*".to_owned()],
+                }]
+                .into()
+            })
+            .clone()
+    }
+
     pub fn matches(&self, operation: &RequestedOperation<'_>) -> bool {
         self.resource.matches(operation)
             && self
