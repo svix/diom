@@ -104,12 +104,12 @@ async fn test_admin_access_policy_upsert_with_rules() -> TestResult {
             "rules": [
                 {
                     "effect": "allow",
-                    "resource": "kv:*:**",
+                    "resource": "kv:*:*",
                     "actions": ["Get", "Set", "Delete"],
                 },
                 {
                     "effect": "deny",
-                    "resource": "kv:restricted:**",
+                    "resource": "kv:restricted:*",
                     "actions": ["Set", "Delete"],
                 },
             ],
