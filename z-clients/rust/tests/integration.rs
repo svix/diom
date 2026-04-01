@@ -66,7 +66,7 @@ async fn test_cache_set_get_delete() {
         .cache()
         .set(
             key.clone(),
-            CacheSetIn::new(value.clone(), Duration::new(60, 0)),
+            CacheSetIn::new(value.clone(), Duration::from_secs(60)),
         )
         .await
         .unwrap();
