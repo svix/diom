@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  COYOTE_TOKEN: admin_abcdefghijlmnopqrstuvwxyz012345
+  COYOTE_ADMIN_TOKEN: admin_abcdefghijlmnopqrstuvwxyz012345
 
 jobs:
   build-server:
@@ -45,9 +45,7 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: .github/scripts/start-coyote-server.sh
-        env:
-          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
+        run: scripts/start-coyote-server.sh /tmp/coyote-server
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -55,10 +53,10 @@ jobs:
         with:
           save-if: false
       - name: Run Rust SDK integration tests
-        run: cargo test --package coyote-client -- --ignored
+        run: scripts/test-sdk.sh rust
       - name: Stop server
         if: always()
-        run: kill "$(cat /tmp/coyote-server.pid)" || true
+        run: scripts/stop-coyote-server.sh
 
   test-python:
     name: Python SDK (${{ matrix.python-version }})
@@ -76,16 +74,14 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: .github/scripts/start-coyote-server.sh
-        env:
-          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
+        run: scripts/start-coyote-server.sh /tmp/coyote-server
       - uses: astral-sh/setup-uv@v7
       - name: Run Python SDK integration tests
         working-directory: z-clients/python
         run: COYOTE_INTEGRATION=1 uv run --python ${{ matrix.python-version }} --group dev pytest tests/ -v
       - name: Stop server
         if: always()
-        run: kill "$(cat /tmp/coyote-server.pid)" || true
+        run: scripts/stop-coyote-server.sh
 
   test-javascript:
     name: JavaScript SDK (Node ${{ matrix.node-version }})
@@ -103,21 +99,15 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: .github/scripts/start-coyote-server.sh
-        env:
-          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
+        run: scripts/start-coyote-server.sh /tmp/coyote-server
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install dependencies and build
-        working-directory: z-clients/javascript
-        run: npm ci && npm run build && npm run bundle
       - name: Run JavaScript SDK integration tests
-        working-directory: z-clients/javascript
-        run: node --test tests/integration.test.mjs
+        run: scripts/test-sdk.sh javascript
       - name: Stop server
         if: always()
-        run: kill "$(cat /tmp/coyote-server.pid)" || true
+        run: scripts/stop-coyote-server.sh
 
   test-go:
     name: Go SDK (${{ matrix.go-version }})
@@ -135,18 +125,15 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: .github/scripts/start-coyote-server.sh
-        env:
-          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
+        run: scripts/start-coyote-server.sh /tmp/coyote-server
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
       - name: Run Go SDK integration tests
-        working-directory: z-clients/go
-        run: go test -tags=integration -v -count=1 ./...
+        run: scripts/test-sdk.sh go
       - name: Stop server
         if: always()
-        run: kill "$(cat /tmp/coyote-server.pid)" || true
+        run: scripts/stop-coyote-server.sh
 
   test-java:
     name: Java SDK (${{ matrix.java-version }})
@@ -164,16 +151,13 @@ jobs:
           name: coyote-server-binary
           path: /tmp
       - name: Start Coyote server
-        run: .github/scripts/start-coyote-server.sh
-        env:
-          COYOTE_ADMIN_TOKEN: ${{ env.COYOTE_TOKEN }}
+        run: scripts/start-coyote-server.sh /tmp/coyote-server
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: ${{ matrix.java-version }}
       - name: Run Java SDK integration tests
-        working-directory: z-clients/java
-        run: ./gradlew integrationTest
+        run: scripts/test-sdk.sh java
       - name: Stop server
         if: always()
-        run: kill "$(cat /tmp/coyote-server.pid)" || true
+        run: scripts/stop-coyote-server.sh
