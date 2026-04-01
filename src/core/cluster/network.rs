@@ -26,6 +26,10 @@ pub(super) fn build_client(
     include_secret: bool,
 ) -> anyhow::Result<reqwest::Client> {
     let mut headers = HeaderMap::new();
+    headers.insert(
+        header::ACCEPT,
+        HeaderValue::from_static("application/msgpack"),
+    );
     if include_secret && let Some(secret) = &cfg.cluster.secret {
         let header_value = format!("Bearer {secret}");
         let header_value =
@@ -118,10 +122,6 @@ impl NetworkClient {
                 );
                 RPCError::Network(NetworkError::new(&err))
             })?
-            .header(
-                header::ACCEPT,
-                "application/msgpack;q=0.9, application/json;q=0.5",
-            )
             .pipe(|this| -> Result<reqwest::RequestBuilder, RPCError<Err>> {
                 if let Some(secret) = &self.cfg.cluster.secret {
                     let auth = format!("Bearer {secret}");
