@@ -107,7 +107,7 @@ impl AccessRule {
                     resource: ResourcePattern {
                         module,
                         namespace: NamespacePattern::Any,
-                        key: KeyPattern::Any,
+                        key: KeyPattern::any(),
                     },
                     actions: vec!["*".to_string()],
                 })
