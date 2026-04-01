@@ -99,7 +99,13 @@ enum RootCommands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
+
+    if cli.auth_token.is_none()
+        && let Ok(token) = std::env::var("COYOTE_ADMIN_TOKEN")
+    {
+        cli.auth_token = Some(token);
+    }
 
     tracing_subscriber::fmt()
         .with_max_level(cli.log_level())
