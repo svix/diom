@@ -6,8 +6,9 @@ use k8s_openapi::{
         core::v1::{
             Affinity, Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction,
             ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
-            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, ResourceRequirements, Toleration,
-            TopologySpreadConstraint, VolumeMount, VolumeResourceRequirements,
+            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, ResourceRequirements,
+            SecretKeySelector, Toleration, TopologySpreadConstraint, VolumeMount,
+            VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -17,7 +18,7 @@ use k8s_openapi::{
 use kube::{Resource, ResourceExt, core::ObjectMeta};
 
 use crate::{
-    crd::{CoyoteCluster, CoyoteClusterSpec},
+    crd::{AdminTokenSource, CoyoteCluster, CoyoteClusterSpec},
     error::Result,
     labels,
     resources::services,
@@ -150,7 +151,7 @@ fn build_env(
         env.push(EnvVar {
             name: "COYOTE_CLUSTER_SECRET".into(),
             value_from: Some(EnvVarSource {
-                secret_key_ref: Some(k8s_openapi::api::core::v1::SecretKeySelector {
+                secret_key_ref: Some(SecretKeySelector {
                     name: secret_ref.name.clone(),
                     key: secret_ref.key.clone(),
                     ..Default::default()
@@ -221,12 +222,27 @@ fn build_env(
     }
 
     // Extra user-provided env vars.
-    for extra in &spec.env_var {
-        env.push(EnvVar {
-            name: extra.name.clone(),
-            value: extra.value.clone(),
-            ..Default::default()
-        });
+    env.extend(spec.env_var.iter().cloned());
+
+    // Admin token is pushed last so spec.admin_token always takes precedence over
+    // any COYOTE_ADMIN_TOKEN set via spec.env_var. If both are set, the spec.env_var
+    // value is silently shadowed.
+    if let Some(admin_token) = &spec.admin_token {
+        match admin_token {
+            AdminTokenSource::Value { value } => env.push(EnvVar {
+                name: "COYOTE_ADMIN_TOKEN".into(),
+                value: Some(value.clone()),
+                ..Default::default()
+            }),
+            AdminTokenSource::ValueFrom { value_from } => env.push(EnvVar {
+                name: "COYOTE_ADMIN_TOKEN".into(),
+                value_from: Some(EnvVarSource {
+                    secret_key_ref: Some(value_from.clone()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+        }
     }
 
     env
