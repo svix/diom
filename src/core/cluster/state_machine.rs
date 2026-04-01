@@ -273,8 +273,16 @@ impl Store {
 
     pub(super) async fn set_cluster_id(&mut self, id: ClusterId) -> anyhow::Result<()> {
         let keyspace = self.meta_keyspace.clone();
+        let handle = self.stores.clone();
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            CLUSTER_UUID.store(&keyspace, &id)?;
+            let mut tx = handle
+                .read()
+                .databases
+                .persistent
+                .batch()
+                .durability(Some(PersistMode::SyncAll));
+            CLUSTER_UUID.store_tx(&mut tx, &keyspace, &id)?;
+            tx.commit()?;
             Ok(())
         })
         .await??;
@@ -331,9 +339,14 @@ impl Store {
         };
         tracing::trace!(last_snapshot=?data, "setting last_snapshot");
         let data = spawn_blocking_in_current_span(move || -> anyhow::Result<LastSnapshot> {
-            let db = &handle.read().databases.persistent;
-            LAST_SNAPSHOT.store(&keyspace, &data)?;
-            db.persist(PersistMode::SyncAll)?;
+            let mut tx = handle
+                .read()
+                .databases
+                .persistent
+                .batch()
+                .durability(Some(PersistMode::SyncAll));
+            LAST_SNAPSHOT.store_tx(&mut tx, &keyspace, &data)?;
+            tx.commit()?;
             Ok(data)
         })
         .await??;
