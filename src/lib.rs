@@ -471,7 +471,7 @@ pub async fn run_with_listeners(
         let shutting_down = shutting_down_token();
         async move {
             initialized.wait().await?;
-            let mut workers = Workers::new();
+            let mut workers = Workers::new(app_state);
             workers.spawn_all(raft_state).await;
             shutting_down.cancelled().await;
             workers.shutdown().await;

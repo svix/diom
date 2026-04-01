@@ -7,6 +7,8 @@
 
 pub mod operations;
 
+use std::time::Duration;
+
 use diom_core::Monotime;
 use diom_error::Result;
 use diom_kv::kvcontroller::KvController;
@@ -50,6 +52,7 @@ pub struct CacheModel {
 pub struct AllNodesWorker {
     state: State,
     time: Monotime,
+    cleanup_interval: Duration,
 }
 
 impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
@@ -60,7 +63,7 @@ impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
     /// It should not mutate the database in any way that could possibly be customer- or
     /// replication-visible; all  mutations should be written through the writer function
     async fn run(self) -> BackgroundResult<()> {
-        let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+        let mut timer = tokio::time::interval(self.cleanup_interval);
 
         let shutting_down = diom_core::shutdown::shutting_down_token();
 
@@ -77,8 +80,12 @@ impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
 }
 
 impl AllNodesWorker {
-    pub fn new(state: State, time: Monotime) -> Self {
-        Self { state, time }
+    pub fn new(state: State, time: Monotime, cleanup_interval: Duration) -> Self {
+        Self {
+            state,
+            time,
+            cleanup_interval,
+        }
     }
 
     #[tracing::instrument(skip_all)]
