@@ -315,6 +315,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             shut_down_on_go_away: true,
             send_snapshot_timeout: Duration::from_secs(3),
         },
+        background_cleanup_interval: Duration::from_secs(10),
         bootstrap_cfg: None,
         bootstrap_cfg_path: None,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
