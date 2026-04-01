@@ -1,0 +1,50 @@
+# Cache (`cache`)
+
+The `cache` module provides developers with high-level cache abstractions.
+
+Data is stored in a hybrid memory and disk, where the disk can be mounted to either persistent or ephemeral storage (e.g. `ramfs`, ephemeral cloud SSDs); allowing for large cache sizes.
+
+## Setting cache values (`cache.set`)
+
+Storing a value in the cache requires setting a key (string), a value (byte array), and the wanted time-to-live (TTL) for the value before it's evicted.
+
+Example setting a cache value:
+
+```rust
+client.cache().set(
+    "my-cache-key".to_string(),
+    CacheSetIn::new(value, Duration::from_secs(10))
+)
+.await?;
+```
+
+## Getting cache values (`cache.get`)
+
+Returns `None` when a value is not found.
+
+
+```rust
+let out = client.cache()
+    .get(
+        "my-key".to_string(),
+        CacheGetIn::new()
+    )
+    .await?;
+
+match out.value {
+    Some(bytes) => println!("Got '{key}': {}", String::from_utf8_lossy(&bytes)),
+    None => println!("Key '{key}' not found"),
+}
+```
+
+## Expiring cache values (`cache.delete`)
+
+To expire a cache value (delete the key), call the `cache.delete` operation with the wanted key:
+
+```rust
+client.cache().delete(
+    "my-key".to_string(),
+    CacheDeleteIn::new()
+)
+.await?;
+```
