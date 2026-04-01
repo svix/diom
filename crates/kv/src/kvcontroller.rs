@@ -82,7 +82,7 @@ impl KvController {
         }
     }
 
-    #[tracing::instrument(skip(keyspace))]
+    #[tracing::instrument(skip_all)]
     fn fetch_inner(
         keyspace: &Keyspace,
         namespace_id: NamespaceId,
@@ -100,7 +100,7 @@ impl KvController {
         Ok(Some(data.into()))
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     pub async fn fetch<K: AsRef<str> + std::fmt::Debug + 'static + Send>(
         &self,
         namespace_id: NamespaceId,
@@ -148,7 +148,7 @@ impl KvController {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, model))]
+    #[tracing::instrument(skip_all, fields(?behavior))]
     pub async fn set<K: AsRef<str> + std::fmt::Debug + 'static + Send>(
         &self,
         namespace_id: NamespaceId,
@@ -240,7 +240,7 @@ impl KvController {
         .await?
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     pub async fn delete<T: AsRef<str> + std::fmt::Debug + 'static + Send>(
         &self,
         namespace_id: NamespaceId,
@@ -277,7 +277,7 @@ impl KvController {
         KvPairRow::values(&self.keyspace)
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     pub async fn has_expired(&self, now: Timestamp) -> bool {
         let keyspace = self.keyspace.clone();
 
@@ -291,7 +291,7 @@ impl KvController {
             .unwrap_or(false)
     }
 
-    #[tracing::instrument(skip(self), fields(
+    #[tracing::instrument(skip_all, fields(
         keyspace_name = self.keyspace_name,
         cleared
     ))]

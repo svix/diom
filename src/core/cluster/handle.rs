@@ -551,7 +551,7 @@ impl RaftState {
             .context("attempting to read last committed id from peer")
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     pub(crate) async fn handle_go_away(
         &self,
         cluster_id: ClusterId,
