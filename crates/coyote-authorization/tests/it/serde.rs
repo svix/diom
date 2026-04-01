@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 
 use coyote_authorization::{
-    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, NamespacePattern,
-    ResourcePattern, Role, RoleId,
+    AccessPolicy, AccessPolicyId, AccessRule, AccessRuleEffect, KeyPattern, KeyPatternSegment,
+    ModulePattern, NamespacePattern, ResourcePattern, Role, RoleId,
 };
 use coyote_id::Module;
 use serde_json::json;
@@ -14,29 +14,44 @@ fn example_rules() -> Vec<AccessRule> {
         AccessRule {
             effect: AccessRuleEffect::Allow,
             resource: ResourcePattern {
-                module: Module::Cache,
+                module: ModulePattern::Exactly(Module::Cache),
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Prefix("foo/".to_owned()),
+                key: KeyPattern {
+                    segments: vec![KeyPatternSegment::Fixed("foo".to_owned())],
+                    trailing_any: true,
+                },
             },
-            actions: vec!["Read".to_owned(), "List".to_owned()],
+            actions: vec!["get".to_owned(), "set".to_owned()],
         },
         AccessRule {
             effect: AccessRuleEffect::Deny,
             resource: ResourcePattern {
-                module: Module::Cache,
+                module: ModulePattern::Exactly(Module::Cache),
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Exactly("foo/bar".to_owned()),
+                key: KeyPattern {
+                    segments: vec![
+                        KeyPatternSegment::Fixed("foo".to_owned()),
+                        KeyPatternSegment::Fixed("bar".to_owned()),
+                    ],
+                    trailing_any: false,
+                },
             },
-            actions: vec!["Read".to_owned()],
+            actions: vec!["get".to_owned()],
         },
         AccessRule {
             effect: AccessRuleEffect::Allow,
             resource: ResourcePattern {
-                module: Module::Kv,
+                module: ModulePattern::Exactly(Module::Kv),
                 namespace: NamespacePattern::Default,
-                key: KeyPattern::Prefix("some-data/".to_owned()),
+                key: KeyPattern {
+                    segments: vec![
+                        KeyPatternSegment::Fixed("x".to_owned()),
+                        KeyPatternSegment::Placeholder("role".to_owned()),
+                    ],
+                    trailing_any: true,
+                },
             },
-            actions: vec!["Read".to_owned(), "List".to_owned()],
+            actions: vec!["get".to_owned(), "set".to_owned()],
         },
     ]
 }
@@ -47,23 +62,23 @@ fn example_rules_serialized() -> serde_json::Value {
             "effect": "allow",
             "resource": "cache::foo/*",
             "actions": [
-                "Read",
-                "List"
+                "get",
+                "set"
             ],
         },
         {
             "effect": "deny",
             "resource": "cache::foo/bar",
             "actions": [
-                "Read"
+                "get"
             ],
         },
         {
             "effect": "allow",
-            "resource": "kv::some-data/*",
+            "resource": "kv::x/${role}/*",
             "actions": [
-                "Read",
-                "List"
+                "get",
+                "set"
             ],
         },
     ])

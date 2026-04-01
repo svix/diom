@@ -2,7 +2,7 @@ use std::num::NonZeroU16;
 
 use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use coyote_error::{Error, Result};
-use coyote_id::NamespaceId;
+use coyote_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -25,8 +25,10 @@ pub struct StreamReceiveOperation {
     partition: Option<Partition>,
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
-    lease_duration_ms: DurationMs,
+    #[serde(rename = "lease_duration_ms")]
+    lease_duration: DurationMs,
     default_starting_position: SeekPosition,
+    topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl StreamReceiveOperation {
@@ -35,7 +37,7 @@ impl StreamReceiveOperation {
         topic: TopicIn,
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
-        lease_duration_ms: DurationMs,
+        lease_duration: DurationMs,
         default_starting_position: SeekPosition,
     ) -> Result<Self> {
         let (topic, partition) = match topic {
@@ -48,8 +50,9 @@ impl StreamReceiveOperation {
             partition,
             consumer_group,
             batch_size,
-            lease_duration_ms,
+            lease_duration,
             default_starting_position,
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 
@@ -60,7 +63,7 @@ impl StreamReceiveOperation {
         spawn_blocking_in_current_span(move || {
             let mut remaining = self.batch_size.get();
             let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
-            let expiry = now + self.lease_duration_ms;
+            let expiry = now + self.lease_duration;
 
             let mut batch = state.db.batch();
 
@@ -70,6 +73,7 @@ impl StreamReceiveOperation {
                 self.namespace_id,
                 &self.topic,
                 now,
+                self.topic_id_random_bytes,
             )?;
 
             Span::current().record("partition_count", topic_row.partitions);

@@ -4,12 +4,7 @@
 use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
-// FIXME: Change to MsgPackOrJson
-#[expect(clippy::disallowed_types)]
-use axum::{
-    Json,
-    response::{IntoResponse, Response},
-};
+use axum::response::{IntoResponse, Response};
 use coyote_core::validation::{ValidationErrorBody, ValidationErrorItem};
 use coyote_proto::{MsgPackOrJson, StandardErrorBody};
 use hyper::StatusCode;
@@ -153,23 +148,23 @@ impl IntoResponse for Error {
         match *self.0 {
             ErrorType::BadRequest(body) => {
                 tracing::debug!(error = %body, "bad request");
-                (StatusCode::BAD_REQUEST, Json(body)).into_response()
+                (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
             ErrorType::NotFound(body) => {
                 tracing::debug!(error = %body, "entity not found");
-                (StatusCode::BAD_REQUEST, Json(body)).into_response()
+                (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
-                (StatusCode::UNPROCESSABLE_ENTITY, Json(body)).into_response()
+                (StatusCode::UNPROCESSABLE_ENTITY, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Authentication(body) => {
                 tracing::debug!(error = %body, "authentication");
-                (StatusCode::UNAUTHORIZED, Json(body)).into_response()
+                (StatusCode::UNAUTHORIZED, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Authorization(body) => {
                 tracing::debug!(error = %body, "authorization");
-                (StatusCode::FORBIDDEN, Json(body)).into_response()
+                (StatusCode::FORBIDDEN, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Operation {
                 status,
@@ -177,7 +172,7 @@ impl IntoResponse for Error {
                 detail: Some(detail),
             } => (
                 status,
-                Json(json!({ "code": error_code, "detail": detail })),
+                MsgPackOrJson(json!({ "code": error_code, "detail": detail })),
             )
                 .into_response(),
             ErrorType::Operation {
@@ -194,13 +189,13 @@ impl IntoResponse for Error {
                 );
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({"error": "internal error"})),
+                    MsgPackOrJson(json!({"error": "internal error"})),
                 )
                     .into_response()
             }
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Json(json!({"error": "server shutting down"})),
+                MsgPackOrJson(json!({"error": "server shutting down"})),
             )
                 .into_response(),
         }

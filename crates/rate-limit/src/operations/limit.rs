@@ -1,7 +1,6 @@
-use std::time::Duration;
-
 use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
 use crate::{RateLimitNamespace, TokenBucket};
+use coyote_core::types::DurationMs;
 use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_operations::OpContext;
@@ -36,7 +35,8 @@ impl LimitOperation {
 pub struct LimitResponseData {
     pub allowed: bool,
     pub remaining: u64,
-    pub retry_after: Option<Duration>,
+    #[serde(rename = "retry_after_ms")]
+    pub retry_after: Option<DurationMs>,
 }
 
 impl LimitOperation {

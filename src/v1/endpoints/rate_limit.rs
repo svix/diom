@@ -9,7 +9,7 @@ use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_id::Module;
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use coyote_proto::{MsgPackOrJson, RequestInput};
 use coyote_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -27,19 +27,19 @@ fn rate_limit_metadata<'a>(
     ns: Option<&'a str>,
     key: &'a EntityKey,
     action: &'static str,
-) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::RateLimit,
         namespace: ns,
         key: Some(key.as_str()),
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
+            fn operation(&self) -> RequestedOperation<'_> {
                 rate_limit_metadata(self.namespace.as_deref(), &self.key, $action)
             }
         }
@@ -51,7 +51,7 @@ impl From<RateLimitTokenBucketConfig> for TokenBucket {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
-            refill_interval: val.refill_interval_ms,
+            refill_interval: val.refill_interval,
         }
     }
 }
@@ -67,9 +67,9 @@ pub struct RateLimitTokenBucketConfig {
     pub refill_amount: u64,
 
     /// Interval in milliseconds between refills (minimum 1 millisecond)
+    #[serde(rename = "refill_interval_ms", default = "default_interval_ms")]
     #[validate(range(min = 1))]
-    #[serde(default = "default_interval_ms")]
-    pub refill_interval_ms: DurationMs,
+    pub refill_interval: DurationMs,
 }
 
 fn default_interval_ms() -> DurationMs {
@@ -93,7 +93,7 @@ pub struct RateLimitCheckIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
-request_input!(RateLimitCheckIn, "Check");
+request_input!(RateLimitCheckIn, "limit");
 
 fn default_tokens() -> u64 {
     1
@@ -108,8 +108,8 @@ pub struct RateLimitCheckOut {
     pub remaining: u64,
 
     /// Milliseconds until enough tokens are available (only present when allowed is false)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after_ms: Option<u64>,
+    #[serde(rename = "retry_after_ms", skip_serializing_if = "Option::is_none")]
+    pub retry_after: Option<DurationMs>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -125,7 +125,7 @@ pub struct RateLimitGetRemainingIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
-request_input!(RateLimitGetRemainingIn, "Read");
+request_input!(RateLimitGetRemainingIn, "get-remaining");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RateLimitGetRemainingOut {
@@ -133,8 +133,8 @@ pub struct RateLimitGetRemainingOut {
     pub remaining: u64,
 
     /// Milliseconds until at least one token is available (only present when remaining is 0)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after_ms: Option<u64>,
+    #[serde(rename = "retry_after_ms", skip_serializing_if = "Option::is_none")]
+    pub retry_after: Option<DurationMs>,
 }
 
 /// Rate Limiter Check and Consume
@@ -159,9 +159,7 @@ async fn rate_limit_limit(
     Ok(MsgPackOrJson(RateLimitCheckOut {
         allowed: response.allowed,
         remaining: response.remaining,
-        retry_after_ms: response
-            .retry_after
-            .map(|t: std::time::Duration| t.as_millis() as u64),
+        retry_after: response.retry_after,
     }))
 }
 
@@ -189,7 +187,7 @@ async fn rate_limit_get_remaining(
 
     Ok(MsgPackOrJson(RateLimitGetRemainingOut {
         remaining,
-        retry_after_ms: retry_after.map(|t| t.as_millis() as u64),
+        retry_after,
     }))
 }
 
@@ -206,7 +204,7 @@ pub struct RateLimitResetIn {
     pub config: RateLimitTokenBucketConfig,
 }
 
-request_input!(RateLimitResetIn, "Reset");
+request_input!(RateLimitResetIn, "reset");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct RateLimitResetOut {}
@@ -237,7 +235,7 @@ pub(crate) struct RateLimitCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(RateLimitCreateNamespaceIn);
+namespace_request_input!(RateLimitCreateNamespaceIn, "create");
 
 impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
     fn from(v: RateLimitCreateNamespaceIn) -> Self {
@@ -257,7 +255,7 @@ struct RateLimitGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(RateLimitGetNamespaceIn);
+namespace_request_input!(RateLimitGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceOut {

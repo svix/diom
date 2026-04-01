@@ -18,7 +18,7 @@ use coyote_namespace::{
     Namespace,
     entities::{IdempotencyConfig, NamespaceName},
 };
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use coyote_proto::{MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -30,19 +30,19 @@ fn idempotency_metadata<'a>(
     ns: Option<&'a str>,
     key: &'a EntityKey,
     action: &'static str,
-) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::Idempotency,
         namespace: ns,
         key: Some(key.as_str()),
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
+            fn operation(&self) -> RequestedOperation<'_> {
                 idempotency_metadata(self.namespace.as_deref(), &self.key, $action)
             }
         }
@@ -65,11 +65,12 @@ pub struct IdempotencyStartIn {
     pub key: EntityKey,
 
     /// TTL in milliseconds for the lock/response
+    #[serde(rename = "ttl_ms")]
     #[validate(range(min = 1))]
-    pub ttl_ms: DurationMs,
+    pub ttl: DurationMs,
 }
 
-request_input!(IdempotencyStartIn, "Start");
+request_input!(IdempotencyStartIn, "start");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "status", content = "data", rename_all = "snake_case")]
@@ -112,11 +113,12 @@ pub struct IdempotencyCompleteIn {
     pub response: Vec<u8>,
 
     /// TTL in milliseconds for the cached response
+    #[serde(rename = "ttl_ms")]
     #[validate(range(min = 1))]
-    pub ttl_ms: DurationMs,
+    pub ttl: DurationMs,
 }
 
-request_input!(IdempotencyCompleteIn, "Complete");
+request_input!(IdempotencyCompleteIn, "complete");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyCompleteOut {}
@@ -131,7 +133,7 @@ pub struct IdempotencyAbortIn {
     pub key: EntityKey,
 }
 
-request_input!(IdempotencyAbortIn, "Abort");
+request_input!(IdempotencyAbortIn, "abort");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyAbortOut {}
@@ -152,7 +154,7 @@ async fn idempotency_start(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl_ms);
+    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))
@@ -171,7 +173,7 @@ async fn idempotency_complete(
         .ok_or_not_found()?;
 
     let operation =
-        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl_ms);
+        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl);
     repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))
@@ -200,7 +202,7 @@ struct IdempotencyGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(IdempotencyGetNamespaceIn);
+namespace_request_input!(IdempotencyGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
@@ -214,7 +216,7 @@ pub(crate) struct IdempotencyCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(IdempotencyCreateNamespaceIn);
+namespace_request_input!(IdempotencyCreateNamespaceIn, "create");
 
 impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
     fn from(v: IdempotencyCreateNamespaceIn) -> Self {

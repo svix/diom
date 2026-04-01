@@ -337,7 +337,7 @@ mod tests {
         let BootstrapCommand::Msgs(v) = cmd else {
             panic!()
         };
-        assert_eq!(v.retention.period_ms.unwrap().as_millis(), 60000);
+        assert_eq!(v.retention.period.unwrap().as_millis(), 60000);
         assert_eq!(v.retention.size_bytes.unwrap().get(), 500);
     }
 

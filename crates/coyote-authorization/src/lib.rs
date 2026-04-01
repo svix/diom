@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt, sync::Arc};
+use std::{
+    collections::HashMap,
+    fmt,
+    sync::{Arc, OnceLock},
+};
 
 use coyote_id::{AuthTokenId, Module};
 use schemars::JsonSchema;
@@ -8,7 +12,7 @@ mod pattern;
 mod verification;
 
 pub use self::{
-    pattern::{KeyPattern, NamespacePattern, ResourcePattern},
+    pattern::{KeyPattern, KeyPatternSegment, ModulePattern, NamespacePattern, ResourcePattern},
     verification::{Forbidden, verify_operation},
 };
 
@@ -86,6 +90,50 @@ pub struct AccessRule {
 }
 
 impl AccessRule {
+    pub fn admin_rules() -> Arc<[Self]> {
+        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
+        RULES
+            .get_or_init(|| {
+                [
+                    ModulePattern::Any,
+                    ModulePattern::Exactly(Module::AdminAccessPolicy),
+                    ModulePattern::Exactly(Module::AdminAuthToken),
+                    ModulePattern::Exactly(Module::AdminCluster),
+                    ModulePattern::Exactly(Module::AdminNamespace),
+                    ModulePattern::Exactly(Module::AdminRole),
+                ]
+                .map(|module| AccessRule {
+                    effect: AccessRuleEffect::Allow,
+                    resource: ResourcePattern {
+                        module,
+                        namespace: NamespacePattern::Any,
+                        key: KeyPattern::any(),
+                    },
+                    actions: vec!["*".to_string()],
+                })
+                .into()
+            })
+            .clone()
+    }
+
+    pub fn operator_rules() -> Arc<[Self]> {
+        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
+        RULES
+            .get_or_init(|| {
+                [AccessRule {
+                    effect: AccessRuleEffect::Allow,
+                    resource: ResourcePattern {
+                        module: ModulePattern::Any,
+                        namespace: NamespacePattern::Named("_internal".to_owned()),
+                        key: KeyPattern::any(),
+                    },
+                    actions: vec!["*".to_owned()],
+                }]
+                .into()
+            })
+            .clone()
+    }
+
     pub fn matches(&self, operation: &RequestedOperation<'_>) -> bool {
         self.resource.matches(operation)
             && self
@@ -128,4 +176,30 @@ pub struct Permissions {
     pub auth_token_id: Option<AuthTokenId>,
     /// The access rules of the requester's role
     pub access_rules: Arc<[AccessRule]>,
+}
+
+impl Permissions {
+    /// Returns the builtin `admin` permissions.
+    ///
+    /// This constructor must only be used for requests that authenticate with
+    /// the global admin token.
+    pub fn admin() -> Self {
+        Self {
+            role: RoleId::admin(),
+            auth_token_id: None,
+            access_rules: AccessRule::admin_rules(),
+        }
+    }
+
+    /// Returns the builtin `operator` permissions.
+    ///
+    /// This constructor must only be used for requests made through the
+    /// internal self-call server.
+    pub fn operator() -> Self {
+        Self {
+            role: RoleId::operator(),
+            auth_token_id: None,
+            access_rules: AccessRule::operator_rules(),
+        }
+    }
 }

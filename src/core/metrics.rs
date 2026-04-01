@@ -1,13 +1,15 @@
+use std::time::Duration;
+
 use http::StatusCode;
 use openraft::ServerState;
 use opentelemetry::{
     KeyValue, Value,
     metrics::{Counter, Gauge, Histogram, Meter},
 };
-use std::time::Duration;
 
 use super::cluster::NodeId;
 
+#[derive(Debug, Clone, Copy)]
 pub enum DbType {
     Persistent,
     Ephemeral,
@@ -31,11 +33,20 @@ impl From<DbType> for KeyValue {
 #[derive(Clone)]
 pub struct DbMetrics {
     bytes_used: Gauge<u64>,
+    cache_capacity: Gauge<u64>,
+    cache_size: Gauge<u64>,
+    compactions: Gauge<u64>,
+    active_compactions: Gauge<u64>,
+    compaction_time: Gauge<u64>,
+    outstanding_flushes: Gauge<u64>,
+
     apply_operations: Counter<u64>,
     apply_batch_size: Histogram<u64>,
     apply_latency: Histogram<u64>,
     snapshot_operations: Counter<u64>,
     snapshot_size: Histogram<u64>,
+    snapshot_latency: Histogram<u64>,
+
     node_id_kv: KeyValue,
 }
 
@@ -46,6 +57,33 @@ impl DbMetrics {
                 .u64_gauge("coyote.db.bytes_used")
                 .with_description("DB size in bytes")
                 .with_unit("By")
+                .build(),
+            cache_capacity: meter
+                .u64_gauge("coyote.db.cache_capacity")
+                .with_description("DB cache capacity in bytes")
+                .with_unit("By")
+                .build(),
+            cache_size: meter
+                .u64_gauge("coyote.db.cache_size")
+                .with_description("DB used cache size in bytes")
+                .with_unit("By")
+                .build(),
+            compactions: meter
+                .u64_gauge("coyote.db.compactions")
+                .with_description("Number of compactions performed since boot")
+                .build(),
+            active_compactions: meter
+                .u64_gauge("coyote.db.active_compactions")
+                .with_description("Number of compactions currently in progress")
+                .build(),
+            compaction_time: meter
+                .u64_gauge("coyote.db.compaction_time")
+                .with_description("Total time spent on compaction since boot")
+                .with_unit("ms")
+                .build(),
+            outstanding_flushes: meter
+                .u64_gauge("coyote.db.outstanding_flushes")
+                .with_description("Number of outstanding flushes to the disk")
                 .build(),
             apply_operations: meter
                 .u64_counter("coyote.raft.apply_count")
@@ -69,8 +107,44 @@ impl DbMetrics {
                 .with_description("Raft snapshot sizes")
                 .with_unit("By")
                 .build(),
+            snapshot_latency: meter
+                .u64_histogram("coyote.raft.snapshot_latency")
+                .with_description("Raft snapshot build latency")
+                .with_unit("ms")
+                .build(),
             node_id_kv: node_id.into(),
         }
+    }
+
+    pub fn record_db(
+        &self,
+        db_type: DbType,
+        database: &fjall::Database,
+        fetch_size: bool,
+    ) -> anyhow::Result<()> {
+        let cache_capacity = database.cache_capacity();
+        let cache_used = database.cache_size();
+        let compactions = database.compactions_completed();
+        let active_compactions = database.active_compactions();
+        let outstanding_flushes = database.outstanding_flushes();
+
+        let context = [self.node_id_kv.clone(), db_type.into()];
+        self.cache_capacity.record(cache_capacity, &context);
+        self.cache_size.record(cache_used, &context);
+        self.compactions.record(compactions as _, &context);
+        self.compaction_time
+            .record(database.time_compacting().as_millis() as _, &context);
+        self.active_compactions
+            .record(active_compactions as _, &context);
+        self.outstanding_flushes
+            .record(outstanding_flushes as _, &context);
+
+        if fetch_size {
+            let bytes_used = database.disk_space()?;
+            self.bytes_used.record(bytes_used, &context);
+        }
+
+        Ok(())
     }
 
     pub fn record_apply(&self, batch_size: usize, duration: Duration) {
@@ -81,16 +155,12 @@ impl DbMetrics {
             .record(duration.as_micros() as _, context);
     }
 
-    pub fn bytes_used(&self, bytes: u64, db_type: DbType) {
-        self.bytes_used
-            .record(bytes, &[self.node_id_kv.clone(), db_type.into()]);
-    }
-
-    pub fn record_snapshot(&self, bytes: u64) {
-        self.snapshot_operations
-            .add(1, std::slice::from_ref(&self.node_id_kv));
-        self.snapshot_size
-            .record(bytes, std::slice::from_ref(&self.node_id_kv));
+    pub fn record_snapshot(&self, bytes: u64, duration: Duration) {
+        let context = std::slice::from_ref(&self.node_id_kv);
+        self.snapshot_operations.add(1, context);
+        self.snapshot_size.record(bytes, context);
+        self.snapshot_latency
+            .record(duration.as_millis() as _, context);
     }
 }
 

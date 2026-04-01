@@ -5,12 +5,12 @@ use std::collections::HashMap;
 
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::{Extension, State};
-use coyote_authorization::{Permissions, RoleId};
+use coyote_authorization::{Permissions, RequestedOperation, RoleId};
 use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, ResultExt};
-use coyote_id::{AuthTokenId, Public};
-use coyote_proto::MsgPackOrJson;
+use coyote_id::{AuthTokenId, Module, Public};
+use coyote_proto::{MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -32,6 +32,25 @@ use crate::{
 
 use crate::core::INTERNAL_NAMESPACE;
 
+fn admin_auth_token_operation(action: &'static str) -> RequestedOperation<'static> {
+    RequestedOperation {
+        module: Module::AdminAuthToken,
+        namespace: None,
+        key: None,
+        action,
+    }
+}
+
+macro_rules! request_input {
+    ($ty:ty, $action:literal) => {
+        impl RequestInput for $ty {
+            fn operation(&self) -> RequestedOperation<'_> {
+                admin_auth_token_operation($action)
+            }
+        }
+    };
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenOut {
     pub id: Public<AuthTokenId>,
@@ -51,13 +70,14 @@ pub struct AdminAuthTokenCreateIn {
     pub name: String,
     pub role: String,
     /// Milliseconds from now until the token expires.
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
     /// Whether the token is enabled. Defaults to `true`.
     #[serde(default = "default_true")]
     pub enabled: bool,
 }
 
-admin_request_input!(AdminAuthTokenCreateIn);
+request_input!(AdminAuthTokenCreateIn, "create");
 
 fn default_true() -> bool {
     true
@@ -88,7 +108,7 @@ async fn auth_token_create(
                 name: data.name,
                 prefix: default_prefix(),
                 suffix: None,
-                expiry_ms: data.expiry_ms,
+                expiry: data.expiry,
                 metadata: Metadata(metadata),
                 owner_id: RoleId::operator().0,
                 scopes: vec![],
@@ -112,10 +132,11 @@ async fn auth_token_create(
 pub struct AdminAuthTokenExpireIn {
     pub id: Public<AuthTokenId>,
     /// Milliseconds from now until the token expires. `None` means expire immediately.
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
 }
 
-admin_request_input!(AdminAuthTokenExpireIn);
+request_input!(AdminAuthTokenExpireIn, "expire");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenExpireOut {}
@@ -132,7 +153,7 @@ async fn auth_token_expire(
             &AuthTokenExpireIn {
                 id: data.id,
                 namespace: Some(INTERNAL_NAMESPACE.to_owned()),
-                expiry_ms: data.expiry_ms,
+                expiry: data.expiry,
             },
         )
         .await
@@ -148,7 +169,7 @@ pub struct AdminAuthTokenRotateIn {
     pub id: Public<AuthTokenId>,
 }
 
-admin_request_input!(AdminAuthTokenRotateIn);
+request_input!(AdminAuthTokenRotateIn, "rotate");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenRotateOut {
@@ -172,7 +193,7 @@ async fn auth_token_rotate(
                 id: data.id,
                 prefix: default_prefix(),
                 suffix: None,
-                expiry_ms: None,
+                expiry: None,
             },
         )
         .await
@@ -193,7 +214,7 @@ pub struct AdminAuthTokenDeleteIn {
     pub id: Public<AuthTokenId>,
 }
 
-admin_request_input!(AdminAuthTokenDeleteIn);
+request_input!(AdminAuthTokenDeleteIn, "delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenDeleteOut {
@@ -230,7 +251,7 @@ pub struct AdminAuthTokenListIn {
     pub pagination: Pagination<Public<AuthTokenId>>,
 }
 
-admin_request_input!(AdminAuthTokenListIn);
+request_input!(AdminAuthTokenListIn, "list");
 
 pub type AdminAuthTokenListOut = ListResponse<AdminAuthTokenOut>;
 
@@ -287,11 +308,12 @@ async fn auth_token_list(
 pub struct AdminAuthTokenUpdateIn {
     pub id: Public<AuthTokenId>,
     pub name: Option<String>,
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
     pub enabled: Option<bool>,
 }
 
-admin_request_input!(AdminAuthTokenUpdateIn);
+request_input!(AdminAuthTokenUpdateIn, "update");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenUpdateOut {}
@@ -309,7 +331,7 @@ async fn auth_token_update(
                 namespace: Some(INTERNAL_NAMESPACE.to_owned()),
                 id: data.id,
                 name: data.name,
-                expiry_ms: data.expiry_ms,
+                expiry: data.expiry,
                 metadata: None,
                 scopes: None,
                 enabled: data.enabled,
@@ -326,7 +348,7 @@ async fn auth_token_update(
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AdminAuthTokenWhoamiIn {}
 
-admin_request_input!(AdminAuthTokenWhoamiIn);
+request_input!(AdminAuthTokenWhoamiIn, "whoami");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenWhoamiOut {

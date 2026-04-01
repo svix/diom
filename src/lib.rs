@@ -22,7 +22,7 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use coyote_authorization::{Permissions, RoleId};
+use coyote_authorization::Permissions;
 use coyote_core::Monotime;
 use coyote_error::Error;
 use coyote_msgs::TopicPublishNotifier;
@@ -222,11 +222,7 @@ async fn run_internal(
         // FIXME: Do we want to limit the maximum number of concurrently-running internal requests?
         let svc = svc.clone();
         tokio::spawn(async move {
-            req.inner.extensions_mut().insert(Permissions {
-                role: RoleId::operator(),
-                auth_token_id: None,
-                access_rules: [].into(),
-            });
+            req.inner.extensions_mut().insert(Permissions::operator());
 
             // FIXME: Do we want to cancel request handling when the response channel is closed?
             //        As-is, we always complete request processing even if the internal caller
@@ -471,7 +467,7 @@ pub async fn run_with_listeners(
         let shutting_down = shutting_down_token();
         async move {
             initialized.wait().await?;
-            let mut workers = Workers::new();
+            let mut workers = Workers::new(app_state);
             workers.spawn_all(raft_state).await;
             shutting_down.cancelled().await;
             workers.shutdown().await;

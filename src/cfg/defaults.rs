@@ -31,8 +31,8 @@ pub(super) fn opentelemetry_service_name() -> String {
     "coyote".into()
 }
 
-pub(super) fn opentelemetry_metrics_period() -> u64 {
-    60
+pub(super) fn opentelemetry_metrics_period() -> Duration {
+    Duration::from_secs(10)
 }
 
 pub(super) fn cluster_name() -> String {
@@ -93,4 +93,8 @@ pub(super) fn cluster_log_sync_interval_duration() -> Duration {
 
 pub(super) fn cluster_send_snapshot_timeout() -> Duration {
     Duration::from_secs(30)
+}
+
+pub(super) fn background_cleanup_interval() -> Duration {
+    Duration::from_secs(10)
 }

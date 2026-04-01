@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     fmt,
-    ops::{Add, AddAssign},
+    ops::{Add, AddAssign, Mul},
     time::Duration,
 };
 
@@ -68,6 +68,12 @@ impl From<u64> for DurationMs {
     }
 }
 
+impl From<DurationMs> for jiff::TimestampArithmetic {
+    fn from(value: DurationMs) -> Self {
+        Duration::from(value).into()
+    }
+}
+
 impl fmt::Debug for DurationMs {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
@@ -87,6 +93,22 @@ impl AddAssign<DurationMs> for jiff::Timestamp {
     #[inline]
     fn add_assign(&mut self, rhs: DurationMs) {
         *self += Duration::from(rhs);
+    }
+}
+
+impl Mul<DurationMs> for u64 {
+    type Output = DurationMs;
+
+    fn mul(self, rhs: DurationMs) -> DurationMs {
+        DurationMs(self.saturating_mul(rhs.0))
+    }
+}
+
+impl Mul<u64> for DurationMs {
+    type Output = DurationMs;
+
+    fn mul(self, rhs: u64) -> DurationMs {
+        DurationMs(self.0.saturating_mul(rhs))
     }
 }
 
@@ -118,6 +140,7 @@ impl JsonSchema for DurationMs {
         json_schema!({
             "type": "integer",
             "format": "uint64",
+            "minimum": 0,
         })
     }
 

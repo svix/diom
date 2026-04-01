@@ -19,7 +19,7 @@ use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_id::{AuthTokenId, Module, Public};
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use coyote_proto::{MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -32,20 +32,20 @@ use crate::{
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
-fn auth_token_access_metadata<'a>(ns: Option<&'a str>, action: &'static str) -> AccessMetadata<'a> {
-    AccessMetadata::RuleProtected(RequestedOperation {
+fn auth_token_operation<'a>(ns: Option<&'a str>, action: &'static str) -> RequestedOperation<'a> {
+    RequestedOperation {
         module: Module::AuthToken,
         namespace: ns,
         key: None,
         action,
-    })
+    }
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn access_metadata(&self) -> AccessMetadata<'_> {
-                auth_token_access_metadata(self.namespace.as_deref(), $action)
+            fn operation(&self) -> RequestedOperation<'_> {
+                auth_token_operation(self.namespace.as_deref(), $action)
             }
         }
     };
@@ -95,7 +95,8 @@ pub struct AuthTokenCreateIn {
     pub prefix: String,
     pub suffix: Option<String>,
     /// Milliseconds from now until the token expires.
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
     #[serde(default)]
     pub metadata: Metadata,
     pub owner_id: String,
@@ -106,7 +107,7 @@ pub struct AuthTokenCreateIn {
     pub enabled: bool,
 }
 
-request_input!(AuthTokenCreateIn, "Create");
+request_input!(AuthTokenCreateIn, "create");
 
 fn default_true() -> bool {
     true
@@ -141,12 +142,11 @@ async fn auth_token_create(
         namespace,
         data.name,
         token.hash(),
-        data.expiry_ms.map(|ms| repl.time.now() + ms),
+        data.expiry.map(|ms| repl.time.now() + ms),
         data.metadata,
         data.owner_id,
         data.scopes,
         data.enabled,
-        repl.time.now(),
     );
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
 
@@ -164,10 +164,11 @@ pub struct AuthTokenExpireIn {
     pub namespace: Option<String>,
     pub id: Public<AuthTokenId>,
     /// Milliseconds from now until the token expires. `None` means expire immediately.
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
 }
 
-request_input!(AuthTokenExpireIn, "Expire");
+request_input!(AuthTokenExpireIn, "expire");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenExpireOut {}
@@ -184,7 +185,7 @@ async fn auth_token_expire(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let expiry = data.expiry_ms.map(|ms| repl.time.now() + ms);
+    let expiry = data.expiry.map(|ms| repl.time.now() + ms);
     let operation = ExpireAuthTokenOperation::new(namespace, data.id.into_inner(), expiry);
     let _ = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AuthTokenExpireOut {}))
@@ -196,7 +197,7 @@ pub struct AuthTokenDeleteIn {
     pub id: Public<AuthTokenId>,
 }
 
-request_input!(AuthTokenDeleteIn, "Delete");
+request_input!(AuthTokenDeleteIn, "delete");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenDeleteOut {
@@ -234,7 +235,7 @@ pub struct AuthTokenVerifyIn {
     pub token: String,
 }
 
-request_input!(AuthTokenVerifyIn, "Verify");
+request_input!(AuthTokenVerifyIn, "verify");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenVerifyOut {
@@ -277,7 +278,7 @@ pub struct AuthTokenListIn {
     pub pagination: Pagination<Public<AuthTokenId>>,
 }
 
-request_input!(AuthTokenListIn, "List");
+request_input!(AuthTokenListIn, "list");
 
 pub type AuthTokenListOut = ListResponse<AuthTokenOut>;
 
@@ -318,13 +319,14 @@ pub struct AuthTokenUpdateIn {
     pub namespace: Option<String>,
     pub id: Public<AuthTokenId>,
     pub name: Option<String>,
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
     pub metadata: Option<Metadata>,
     pub scopes: Option<Vec<String>>,
     pub enabled: Option<bool>,
 }
 
-request_input!(AuthTokenUpdateIn, "Update");
+request_input!(AuthTokenUpdateIn, "update");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenUpdateOut {}
@@ -345,7 +347,7 @@ async fn auth_token_update(
         namespace,
         data.id.into_inner(),
         data.name,
-        data.expiry_ms.map(|ms| repl.time.now() + ms),
+        data.expiry.map(|ms| repl.time.now() + ms),
         data.metadata,
         data.scopes,
         data.enabled,
@@ -362,10 +364,11 @@ pub struct AuthTokenRotateIn {
     pub prefix: String,
     pub suffix: Option<String>,
     /// Milliseconds from now until the old token expires. `None` means expire immediately.
-    pub expiry_ms: Option<DurationMs>,
+    #[serde(rename = "expiry_ms")]
+    pub expiry: Option<DurationMs>,
 }
 
-request_input!(AuthTokenRotateIn, "Rotate");
+request_input!(AuthTokenRotateIn, "rotate");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenRotateOut {
@@ -388,14 +391,9 @@ async fn auth_token_rotate(
         .ok_or_not_found()?;
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
-    let old_expiry = data.expiry_ms.map(|ms| repl.time.now() + ms);
-    let operation = RotateAuthTokenOperation::new(
-        namespace,
-        data.id.into_inner(),
-        token.hash(),
-        old_expiry,
-        repl.time.now(),
-    );
+    let old_expiry = data.expiry.map(|ms| repl.time.now() + ms);
+    let operation =
+        RotateAuthTokenOperation::new(namespace, data.id.into_inner(), token.hash(), old_expiry);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     let model = resp.model.ok_or_not_found()?;
 
@@ -412,7 +410,7 @@ struct AuthTokenGetNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(AuthTokenGetNamespaceIn);
+namespace_request_input!(AuthTokenGetNamespaceIn, "get");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenGetNamespaceOut {
@@ -426,7 +424,7 @@ pub(crate) struct AuthTokenCreateNamespaceIn {
     pub name: NamespaceName,
 }
 
-admin_request_input!(AuthTokenCreateNamespaceIn);
+namespace_request_input!(AuthTokenCreateNamespaceIn, "create");
 
 impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
     fn from(v: AuthTokenCreateNamespaceIn) -> Self {

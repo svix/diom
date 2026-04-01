@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, TopicId};
+use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -16,14 +16,13 @@ use crate::{
     tables::{MsgRow, TopicRow},
 };
 
-use jiff::SignedDuration;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublishOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,
     partition: Option<Partition>,
     msgs: Vec<MsgIn>,
+    topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl PublishOperation {
@@ -45,6 +44,7 @@ impl PublishOperation {
             topic,
             partition,
             msgs,
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 
@@ -73,7 +73,7 @@ impl PublishOperation {
                     return Err(Error::invalid_user_input("topic does not exist"));
                 }
                 (None, None) => {
-                    let row = TopicRow::new(self.topic.clone(), now);
+                    let row = TopicRow::new(self.topic.clone(), now, self.topic_id_random_bytes);
                     batch.insert_row(
                         &state.metadata_tables,
                         TopicRow::key_for(self.namespace_id, &self.topic),
@@ -181,10 +181,9 @@ fn write_msg_batch(
         let start_offset = offset;
 
         for msg in msgs {
-            let scheduled_at = msg.delay_ms.map(|ms| {
-                now.checked_add(SignedDuration::from_millis(ms as i64))
-                    .expect("scheduled_at overflow")
-            });
+            let scheduled_at = msg
+                .delay
+                .map(|ms| now.checked_add(ms).expect("scheduled_at overflow"));
             let msg = MsgRow {
                 value: msg.value,
                 headers: msg.headers,

@@ -12,7 +12,8 @@ pub struct CompleteOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
     pub(crate) response: Vec<u8>,
-    pub(crate) ttl_ms: DurationMs,
+    #[serde(rename = "ttl_ms")]
+    pub(crate) ttl: DurationMs,
 }
 
 impl CompleteOperation {
@@ -20,13 +21,13 @@ impl CompleteOperation {
         namespace: IdempotencyNamespace,
         key: String,
         response: Vec<u8>,
-        ttl_ms: DurationMs,
+        ttl: DurationMs,
     ) -> Self {
         Self {
             namespace_id: namespace.id,
             key,
             response,
-            ttl_ms,
+            ttl,
         }
     }
 }
@@ -38,7 +39,7 @@ impl CompleteOperation {
         now: Timestamp,
         log_index: u64,
     ) -> Result<()> {
-        let expiry = now + self.ttl_ms;
+        let expiry = now + self.ttl;
         state
             .state
             .controller()

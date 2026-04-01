@@ -2,7 +2,7 @@ use std::{collections::HashMap, num::NonZeroU16};
 
 use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use coyote_error::{Error, Result};
-use coyote_id::{NamespaceId, TopicId};
+use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -23,7 +23,9 @@ pub struct QueueReceiveOperation {
     partition: Option<Partition>,
     consumer_group: ConsumerGroup,
     batch_size: NonZeroU16,
-    lease_duration_ms: DurationMs,
+    #[serde(rename = "lease_duration_ms")]
+    lease_duration: DurationMs,
+    topic_id_random_bytes: UuidV7RandomBytes,
 }
 
 impl QueueReceiveOperation {
@@ -32,7 +34,7 @@ impl QueueReceiveOperation {
         topic: TopicIn,
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
-        lease_duration_ms: DurationMs,
+        lease_duration: DurationMs,
     ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.topic, Some(tp.partition)),
@@ -44,7 +46,8 @@ impl QueueReceiveOperation {
             partition,
             consumer_group,
             batch_size,
-            lease_duration_ms,
+            lease_duration,
+            topic_id_random_bytes: UuidV7RandomBytes::new_random(),
         })
     }
 
@@ -56,7 +59,7 @@ impl QueueReceiveOperation {
             let mut remaining = self.batch_size.get();
             let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
 
-            let expiry = now + self.lease_duration_ms;
+            let expiry = now + self.lease_duration;
 
             let mut batch = state.db.batch();
 
@@ -66,6 +69,7 @@ impl QueueReceiveOperation {
                 self.namespace_id,
                 &self.topic,
                 now,
+                self.topic_id_random_bytes,
             )?;
 
             Span::current().record("partition_count", topic_row.partitions);
