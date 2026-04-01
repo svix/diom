@@ -146,9 +146,7 @@ pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
         };
 
         let reader = PeriodicReader::builder(exporter, runtime::Tokio)
-            .with_interval(Duration::from_secs(
-                cfg.opentelemetry_metrics_period_seconds,
-            ))
+            .with_interval(cfg.opentelemetry_metrics_period)
             .build();
 
         let provider = SdkMeterProvider::builder()

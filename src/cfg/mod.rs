@@ -469,8 +469,12 @@ pub struct ConfigurationInner {
     #[serde(default)]
     pub opentelemetry_metrics_use_http: bool,
 
-    #[serde(default = "defaults::opentelemetry_metrics_period")]
-    pub opentelemetry_metrics_period_seconds: u64,
+    #[serde(
+        rename = "opentelemetry_metrics_period_ms",
+        with = "crate::serde::duration::millis",
+        default = "defaults::opentelemetry_metrics_period"
+    )]
+    pub opentelemetry_metrics_period: Duration,
 
     /// The ratio at which to sample spans when sending to OpenTelemetry.
     ///
