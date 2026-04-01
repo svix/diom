@@ -243,7 +243,7 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
             .await
     }
 
-    #[tracing::instrument(skip_all, fields(vote = ?vote))]
+    #[tracing::instrument(skip_all, fields(?vote))]
     async fn full_snapshot(
         &mut self,
         vote: openraft::type_config::alias::VoteOf<TypeConfig>,

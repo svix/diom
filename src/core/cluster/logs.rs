@@ -201,12 +201,12 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, fields(log_id = ?log_id))]
+    #[tracing::instrument(skip_all, fields(?log_id))]
     async fn truncate_after(&mut self, log_id: Option<LogId>) -> std::io::Result<()> {
         self.truncate_entries_(log_id).await.map_err(io_err)
     }
 
-    #[tracing::instrument(skip_all, fields(log_id = ?log_id))]
+    #[tracing::instrument(skip_all, fields(?log_id))]
     async fn purge(&mut self, log_id: LogId) -> std::io::Result<()> {
         self.purge_entries_(log_id).await.map_err(io_err)
     }
@@ -413,7 +413,7 @@ impl CoyoteLogs {
         }
     }
 
-    #[tracing::instrument(skip_all, fields(timestamp = ?timestamp, log_index = ?log_index))]
+    #[tracing::instrument(skip_all, fields(?timestamp, ?log_index))]
     pub(crate) async fn record_log_timestamp(
         &self,
         timestamp: Timestamp,
