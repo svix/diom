@@ -22,7 +22,7 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use diom_authorization::{AccessRule, Permissions, RoleId};
+use diom_authorization::Permissions;
 use diom_core::Monotime;
 use diom_error::Error;
 use diom_msgs::TopicPublishNotifier;
@@ -222,11 +222,7 @@ async fn run_internal(
         // FIXME: Do we want to limit the maximum number of concurrently-running internal requests?
         let svc = svc.clone();
         tokio::spawn(async move {
-            req.inner.extensions_mut().insert(Permissions {
-                role: RoleId::operator(),
-                auth_token_id: None,
-                access_rules: AccessRule::operator_rules(),
-            });
+            req.inner.extensions_mut().insert(Permissions::operator());
 
             // FIXME: Do we want to cancel request handling when the response channel is closed?
             //        As-is, we always complete request processing even if the internal caller
