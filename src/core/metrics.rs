@@ -1,13 +1,15 @@
+use std::time::Duration;
+
 use http::StatusCode;
 use openraft::ServerState;
 use opentelemetry::{
     KeyValue, Value,
     metrics::{Counter, Gauge, Histogram, Meter},
 };
-use std::time::Duration;
 
 use super::cluster::NodeId;
 
+#[derive(Debug, Clone, Copy)]
 pub enum DbType {
     Persistent,
     Ephemeral,
@@ -35,6 +37,7 @@ pub struct DbMetrics {
     cache_size: Gauge<u64>,
     compactions: Gauge<u64>,
     active_compactions: Gauge<u64>,
+    compaction_time: Gauge<u64>,
     outstanding_flushes: Gauge<u64>,
 
     apply_operations: Counter<u64>,
@@ -71,6 +74,11 @@ impl DbMetrics {
             active_compactions: meter
                 .u64_gauge("diom.db.active_compactions")
                 .with_description("Number of compactions currently in progress")
+                .build(),
+            compaction_time: meter
+                .u64_gauge("diom.db.compaction_time")
+                .with_description("Total time spent on compaction since boot")
+                .with_unit("ms")
                 .build(),
             outstanding_flushes: meter
                 .u64_gauge("diom.db.outstanding_flushes")
@@ -118,6 +126,8 @@ impl DbMetrics {
         self.cache_capacity.record(cache_capacity, &context);
         self.cache_size.record(cache_used, &context);
         self.compactions.record(compactions as _, &context);
+        self.compaction_time
+            .record(database.time_compacting().as_millis() as _, &context);
         self.active_compactions
             .record(active_compactions as _, &context);
         self.outstanding_flushes
