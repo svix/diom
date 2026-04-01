@@ -27,7 +27,7 @@ pub(crate) fn build_headless(cluster: &CoyoteCluster, ns: &str) -> Result<Servic
         metadata: ObjectMeta {
             name: Some(headless_name(&cluster_name)),
             namespace: Some(ns.into()),
-            labels: Some(labels::common(&cluster_name)),
+            labels: Some(labels::general_labels(&cluster_name)),
             owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
             ..Default::default()
         },
@@ -69,7 +69,7 @@ pub(crate) fn build_client(cluster: &CoyoteCluster, ns: &str) -> Result<Service>
     let mut metadata = ObjectMeta {
         name: Some(client_name(&cluster_name)),
         namespace: Some(ns.into()),
-        labels: Some(labels::common(&cluster_name)),
+        labels: Some(labels::general_labels(&cluster_name)),
         owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
         ..Default::default()
     };
@@ -83,6 +83,7 @@ pub(crate) fn build_client(cluster: &CoyoteCluster, ns: &str) -> Result<Service>
         spec: Some(ServiceSpec {
             type_: Some(svc_type),
             selector: Some(labels::selector(&cluster_name)),
+            traffic_distribution: Some("PreferSameZone".into()),
             ports: Some(vec![ServicePort {
                 name: Some("api".into()),
                 port: spec.api_port as i32,
