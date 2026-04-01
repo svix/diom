@@ -42,8 +42,6 @@ cluster:
         value: "json"
       - name: DIOM_OPENTELEMETRY_ADDRESS
         value: grpc://datadog-agent.datadog.svc.cluster.local:4317
-      - name: DIOM_ADMIN_TOKEN
-        value: "admin_abcdefghijlmnopqrstuvwxyz012345"
     nodeSelector:
       db-name: diom
     tolerations:
@@ -51,3 +49,5 @@ cluster:
         operator: Equal
         value: diom
         effect: NoSchedule
+    adminToken:
+      value: "admin_abcdefghijlmnopqrstuvwxyz012345"

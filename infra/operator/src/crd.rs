@@ -3,7 +3,9 @@
 
 use std::collections::BTreeMap;
 
-use k8s_openapi::api::core::v1::{Affinity, EnvVar, Toleration, TopologySpreadConstraint};
+use k8s_openapi::api::core::v1::{
+    Affinity, EnvVar, SecretKeySelector, Toleration, TopologySpreadConstraint,
+};
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,10 +18,6 @@ fn default_api_port() -> u16 {
 
 fn default_nodes() -> i32 {
     1
-}
-
-fn default_secret_key() -> String {
-    "secret".into()
 }
 
 /// A Diom cluster deployment.
@@ -68,7 +66,6 @@ pub(crate) struct DiomClusterSpec {
     /// Follows the Kubernetes EnvVar API spec (v1.EnvVar): supports plain `value`
     /// and `valueFrom` (secretKeyRef, configMapKeyRef, fieldRef, resourceFieldRef)
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[schemars(schema_with = "env_var_schema")]
     pub env_var: Vec<EnvVar>,
 
     /// CPU and memory resource requests and limits for the diom container.
@@ -89,7 +86,6 @@ pub(crate) struct DiomClusterSpec {
     /// Use this to spread pods across availability zones or nodes.
     /// See: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
     #[serde(default)]
-    #[schemars(schema_with = "topology_spread_constraints_schema")]
     pub topology_spread_constraints: Vec<TopologySpreadConstraint>,
 
     /// Node selector for scheduling pods onto nodes with matching labels.
@@ -98,13 +94,17 @@ pub(crate) struct DiomClusterSpec {
 
     /// Tolerations to allow pods to be scheduled onto nodes with matching taints.
     #[serde(default)]
-    #[schemars(schema_with = "tolerations_schema")]
     pub tolerations: Option<Vec<Toleration>>,
 
     /// Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).
     #[serde(default)]
-    #[schemars(schema_with = "affinity_schema")]
     pub affinity: Option<Affinity>,
+
+    /// Admin token for privileged API access.
+    /// Set either `value` for a plain string or `valueFrom` to pull from a Kubernetes Secret.
+    /// Using a plain string value is only recommended for testing. Use `valueFrom` in all other cases.
+    #[serde(default)]
+    pub admin_token: Option<AdminTokenSource>,
 }
 
 /// Storage configuration for a Diom cluster.
@@ -144,7 +144,8 @@ pub(crate) struct VolumeSpec {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ClusterSpec {
     /// Reference to a Secret containing the inter-node authentication token.
-    /// The referenced key (default: "secret") must contain a plaintext secret string.
+    /// `name` is the name of the Kubernetes Secret.
+    /// `key` is the key within the Secret whose value is the token.
     #[serde(default)]
     pub secret_ref: Option<SecretKeySelector>,
 
@@ -175,16 +176,6 @@ pub(crate) struct ClusterSpec {
     /// Log level (info, debug, trace). Defaults to info.
     #[serde(default)]
     pub log_level: Option<String>,
-}
-
-/// Reference to a key within a Kubernetes Secret.
-#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
-pub(crate) struct SecretKeySelector {
-    /// Name of the Secret.
-    pub name: String,
-    /// Key within the Secret containing the value.
-    #[serde(default = "default_secret_key")]
-    pub key: String,
 }
 
 /// Configuration for the client-facing Service.
@@ -218,6 +209,20 @@ pub(crate) enum Phase {
     Degraded,
 }
 
+/// Source for the admin token.
+/// Set either `value` for a plain string or `valueFrom` to reference a Kubernetes Secret.
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, PartialEq)]
+#[serde(untagged)]
+pub(crate) enum AdminTokenSource {
+    Value {
+        value: String,
+    },
+    ValueFrom {
+        #[serde(rename = "valueFrom")]
+        value_from: SecretKeySelector,
+    },
+}
+
 /// CPU and memory resource requests/limits for the diom container.
 /// Values are in standard Kubernetes quantity format, e.g. "500m", "1", "512Mi", "2Gi".
 #[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema)]
@@ -246,29 +251,4 @@ fn nodes_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
         "minimum": 1.0,
         "description": "Number of Diom nodes. Should be odd for quorum (1, 3, 5...)."
     })
-}
-
-fn env_var_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({
-        "type": "array",
-        "items": { "type": "object", "x-kubernetes-preserve-unknown-fields": true }
-    })
-}
-
-fn topology_spread_constraints_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({
-        "type": "array",
-        "items": { "type": "object", "x-kubernetes-preserve-unknown-fields": true }
-    })
-}
-
-fn tolerations_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({
-        "type": "array",
-        "items": { "type": "object", "x-kubernetes-preserve-unknown-fields": true }
-    })
-}
-
-fn affinity_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({ "type": "object", "x-kubernetes-preserve-unknown-fields": true })
 }
