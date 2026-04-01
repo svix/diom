@@ -281,7 +281,7 @@ fn build_container(
             }),
             initial_delay_seconds: Some(5),
             period_seconds: Some(10),
-            failure_threshold: Some(6),
+            failure_threshold: Some(2),
             success_threshold: Some(1),
             ..Default::default()
         }),
@@ -291,9 +291,21 @@ fn build_container(
                 port: IntOrString::Int(cluster_port as _),
                 ..Default::default()
             }),
-            initial_delay_seconds: Some(5),
+            initial_delay_seconds: Some(15),
             period_seconds: Some(10),
-            failure_threshold: Some(6),
+            failure_threshold: Some(2),
+            success_threshold: Some(1),
+            ..Default::default()
+        }),
+        startup_probe: Some(Probe {
+            http_get: Some(HTTPGetAction {
+                path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
+                port: IntOrString::Int(cluster_port as _),
+                ..Default::default()
+            }),
+            initial_delay_seconds: Some(15),
+            period_seconds: Some(10),
+            failure_threshold: Some(120), // TODO: this should come from the helm chart
             success_threshold: Some(1),
             ..Default::default()
         }),
