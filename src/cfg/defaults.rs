@@ -32,7 +32,7 @@ pub(super) fn opentelemetry_service_name() -> String {
 }
 
 pub(super) fn opentelemetry_metrics_period() -> Duration {
-    Duration::from_secs(60)
+    Duration::from_secs(10)
 }
 
 pub(super) fn cluster_name() -> String {
