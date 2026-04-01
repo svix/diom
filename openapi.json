@@ -6302,6 +6302,13 @@
             "maxLength": 256,
             "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
+          },
+          "version": {
+            "description": "If set, the delete only succeeds when the stored version matches this value.\nUse the `version` field from a prior `get` response.",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true
           }
         },
         "required": [

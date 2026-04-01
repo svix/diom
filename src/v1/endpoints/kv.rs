@@ -122,6 +122,10 @@ pub struct KvDeleteIn {
 
     #[validate(nested)]
     pub key: EntityKey,
+
+    /// If set, the delete only succeeds when the stored version matches this value.
+    /// Use the `version` field from a prior `get` response.
+    pub version: Option<u64>,
 }
 
 request_input!(KvDeleteIn, "delete");
@@ -207,7 +211,7 @@ async fn kv_del(
         .ok_or_not_found()?;
 
     let key = data.key;
-    let operation = DeleteOperation::new(namespace, key);
+    let operation = DeleteOperation::new(namespace, key, data.version);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
 
     let ret = KvDeleteOut {

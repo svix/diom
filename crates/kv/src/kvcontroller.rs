@@ -245,13 +245,25 @@ impl KvController {
         &self,
         namespace_id: NamespaceId,
         key: T,
+        version: Option<u64>,
+        now: Timestamp,
     ) -> Result<bool> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
 
         spawn_blocking_in_current_span(move || {
-            let db = db.lock("kvcontroller::delete");
             let key = key.as_ref();
+            let current = Self::fetch_inner(&keyspace, namespace_id, key, now)?;
+
+            // OCC check: if the caller supplied an expected version, verify it.
+            if let Some(expected) = version {
+                let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
+                if current_version != expected {
+                    return Err(Error::bad_request("version_mismatch", "version mismatch"));
+                }
+            }
+
+            let db = db.lock("kvcontroller::delete");
 
             if let Some(data) = KvPairRow::fetch(&keyspace, KvPairRow::key_for(namespace_id, key))?
             {
