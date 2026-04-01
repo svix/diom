@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     RequestExt,
@@ -10,7 +10,8 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use coyote_authorization::{Permissions, RoleId};
+use coyote_authorization::{AccessRule, Permissions, RoleId};
+use coyote_error::{OptionExt, Result};
 use tracing::Span;
 
 use crate::{
@@ -18,6 +19,7 @@ use crate::{
     core::INTERNAL_NAMESPACE,
     v1::endpoints::auth_token::{AuthTokenVerifyIn, AuthTokenVerifyOut},
 };
+use coyote_admin_auth::State as AdminAuthState;
 use coyote_error::{Error, ResultExt};
 
 const AUTH_TOKEN_CACHE_TTL: Duration = Duration::from_secs(1);
@@ -86,50 +88,79 @@ async fn authorization_inner(
     if let Some(admin_token) = &state.cfg.admin_token
         && constant_time_eq(admin_token, token)
     {
-        let perms = Permissions {
-            role: RoleId::admin(),
-            auth_token_id: None,
-            access_rules: [].into(),
-        };
-        return Ok(perms);
+        // FIXME: ensure that other auth tokens can't use the builtin admin (or operator) role
+        return Ok(Permissions::admin());
     }
 
-    let cached = state
+    if let Some(cached) = state
         .auth_token_cache
         .read()
         .get(token, AUTH_TOKEN_CACHE_TTL)
-        .cloned();
+        .cloned()
+    {
+        return Ok(cached);
+    }
 
-    let perms = if let Some(cached) = cached {
-        cached
-    } else {
-        let out: AuthTokenVerifyOut = state
-            .internal_call(
-                "v1.auth-token.verify",
-                &AuthTokenVerifyIn {
-                    token: token.to_owned(),
-                    namespace: Some(INTERNAL_NAMESPACE.to_owned()),
-                },
-            )
-            .await
-            .or_internal_error()?;
+    let verify_out: AuthTokenVerifyOut = state
+        .internal_call(
+            "v1.auth-token.verify",
+            &AuthTokenVerifyIn {
+                token: token.to_owned(),
+                namespace: Some(INTERNAL_NAMESPACE.to_owned()),
+            },
+        )
+        .await
+        .or_internal_error()?;
 
-        if let Some(mut out_token) = out.token {
-            let perms = Permissions {
-                role: RoleId::from_string(out_token.metadata.remove("role").unwrap()),
-                auth_token_id: Some(out_token.id.into_inner()),
-                // FIXME: Resolve access rules from auth token
-                access_rules: [].into(),
-            };
-            state
-                .auth_token_cache
-                .write()
-                .put(token.to_string(), perms.clone());
-            perms
-        } else {
-            return Err(Error::authentication("invalid_token", "Invalid token.").into());
-        }
+    let Some(mut auth_token) = verify_out.token else {
+        return Err(Error::authentication("invalid_token", "Invalid token.").into());
     };
 
+    let role = RoleId(
+        auth_token
+            .metadata
+            .remove("role")
+            .ok_or_internal_error("couldn't find role in auth token metadata")?,
+    );
+
+    let access_rules = resolve_access_rules(&state, &role).await?;
+    let perms = Permissions {
+        role,
+        auth_token_id: Some(auth_token.id.into_inner()),
+        access_rules,
+    };
+
+    state
+        .auth_token_cache
+        .write()
+        .put(token.to_string(), perms.clone());
+
     Ok(perms)
+}
+
+async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<[AccessRule]>> {
+    let admin_auth = AdminAuthState::init(state.do_not_use_dbs.clone()).or_internal_error()?;
+
+    let Some(role) = admin_auth
+        .controller
+        .get_role(role_id)
+        .await
+        .or_internal_error()?
+    else {
+        return Ok([].into());
+    };
+
+    let mut rules = role.rules;
+    for policy_id in &role.policies {
+        if let Some(policy) = admin_auth
+            .controller
+            .get_policy(policy_id)
+            .await
+            .or_internal_error()?
+        {
+            rules.extend(policy.rules);
+        }
+    }
+
+    Ok(rules.into())
 }

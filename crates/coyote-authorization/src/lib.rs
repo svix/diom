@@ -90,6 +90,32 @@ pub struct AccessRule {
 }
 
 impl AccessRule {
+    pub fn admin_rules() -> Arc<[Self]> {
+        static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
+        RULES
+            .get_or_init(|| {
+                [
+                    ModulePattern::Any,
+                    ModulePattern::Exactly(Module::AdminAccessPolicy),
+                    ModulePattern::Exactly(Module::AdminAuthToken),
+                    ModulePattern::Exactly(Module::AdminCluster),
+                    ModulePattern::Exactly(Module::AdminNamespace),
+                    ModulePattern::Exactly(Module::AdminRole),
+                ]
+                .map(|module| AccessRule {
+                    effect: AccessRuleEffect::Allow,
+                    resource: ResourcePattern {
+                        module,
+                        namespace: NamespacePattern::Any,
+                        key: KeyPattern::Any,
+                    },
+                    actions: vec!["*".to_string()],
+                })
+                .into()
+            })
+            .clone()
+    }
+
     pub fn operator_rules() -> Arc<[Self]> {
         static RULES: OnceLock<Arc<[AccessRule]>> = OnceLock::new();
         RULES
@@ -150,4 +176,30 @@ pub struct Permissions {
     pub auth_token_id: Option<AuthTokenId>,
     /// The access rules of the requester's role
     pub access_rules: Arc<[AccessRule]>,
+}
+
+impl Permissions {
+    /// Returns the builtin `admin` permissions.
+    ///
+    /// This constructor must only be used for requests that authenticate with
+    /// the global admin token.
+    pub fn admin() -> Self {
+        Self {
+            role: RoleId::admin(),
+            auth_token_id: None,
+            access_rules: AccessRule::admin_rules(),
+        }
+    }
+
+    /// Returns the builtin `operator` permissions.
+    ///
+    /// This constructor must only be used for requests made through the
+    /// internal self-call server.
+    pub fn operator() -> Self {
+        Self {
+            role: RoleId::operator(),
+            auth_token_id: None,
+            access_rules: AccessRule::operator_rules(),
+        }
+    }
 }
