@@ -42,6 +42,7 @@ pub struct DbMetrics {
     apply_latency: Histogram<u64>,
     snapshot_operations: Counter<u64>,
     snapshot_size: Histogram<u64>,
+    snapshot_latency: Histogram<u64>,
 
     node_id_kv: KeyValue,
 }
@@ -98,6 +99,11 @@ impl DbMetrics {
                 .with_description("Raft snapshot sizes")
                 .with_unit("By")
                 .build(),
+            snapshot_latency: meter
+                .u64_histogram("coyote.raft.snapshot_latency")
+                .with_description("Raft snapshot build latency")
+                .with_unit("ms")
+                .build(),
             node_id_kv: node_id.into(),
         }
     }
@@ -139,11 +145,12 @@ impl DbMetrics {
             .record(duration.as_micros() as _, context);
     }
 
-    pub fn record_snapshot(&self, bytes: u64) {
-        self.snapshot_operations
-            .add(1, std::slice::from_ref(&self.node_id_kv));
-        self.snapshot_size
-            .record(bytes, std::slice::from_ref(&self.node_id_kv));
+    pub fn record_snapshot(&self, bytes: u64, duration: Duration) {
+        let context = std::slice::from_ref(&self.node_id_kv);
+        self.snapshot_operations.add(1, context);
+        self.snapshot_size.record(bytes, context);
+        self.snapshot_latency
+            .record(duration.as_millis() as _, context);
     }
 }
 
