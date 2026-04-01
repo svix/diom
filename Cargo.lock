@@ -2019,6 +2019,7 @@ dependencies = [
 name = "fjall-utils"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
  "byteorder",
  "coyote-error",
  "fjall",
