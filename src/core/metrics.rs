@@ -31,11 +31,18 @@ impl From<DbType> for KeyValue {
 #[derive(Clone)]
 pub struct DbMetrics {
     bytes_used: Gauge<u64>,
+    cache_capacity: Gauge<u64>,
+    cache_size: Gauge<u64>,
+    compactions: Gauge<u64>,
+    active_compactions: Gauge<u64>,
+    outstanding_flushes: Gauge<u64>,
+
     apply_operations: Counter<u64>,
     apply_batch_size: Histogram<u64>,
     apply_latency: Histogram<u64>,
     snapshot_operations: Counter<u64>,
     snapshot_size: Histogram<u64>,
+
     node_id_kv: KeyValue,
 }
 
@@ -46,6 +53,28 @@ impl DbMetrics {
                 .u64_gauge("diom.db.bytes_used")
                 .with_description("DB size in bytes")
                 .with_unit("By")
+                .build(),
+            cache_capacity: meter
+                .u64_gauge("diom.db.cache_capacity")
+                .with_description("DB cache capacity in bytes")
+                .with_unit("By")
+                .build(),
+            cache_size: meter
+                .u64_gauge("diom.db.cache_size")
+                .with_description("DB used cache size in bytes")
+                .with_unit("By")
+                .build(),
+            compactions: meter
+                .u64_gauge("diom.db.compactions")
+                .with_description("Number of compactions performed since boot")
+                .build(),
+            active_compactions: meter
+                .u64_gauge("diom.db.active_compactions")
+                .with_description("Number of compactions currently in progress")
+                .build(),
+            outstanding_flushes: meter
+                .u64_gauge("diom.db.outstanding_flushes")
+                .with_description("Number of outstanding flushes to the disk")
                 .build(),
             apply_operations: meter
                 .u64_counter("diom.raft.apply_count")
@@ -73,17 +102,41 @@ impl DbMetrics {
         }
     }
 
+    pub fn record_db(
+        &self,
+        db_type: DbType,
+        database: &fjall::Database,
+        fetch_size: bool,
+    ) -> anyhow::Result<()> {
+        let cache_capacity = database.cache_capacity();
+        let cache_used = database.cache_size();
+        let compactions = database.compactions_completed();
+        let active_compactions = database.active_compactions();
+        let outstanding_flushes = database.outstanding_flushes();
+
+        let context = [self.node_id_kv.clone(), db_type.into()];
+        self.cache_capacity.record(cache_capacity, &context);
+        self.cache_size.record(cache_used, &context);
+        self.compactions.record(compactions as _, &context);
+        self.active_compactions
+            .record(active_compactions as _, &context);
+        self.outstanding_flushes
+            .record(outstanding_flushes as _, &context);
+
+        if fetch_size {
+            let bytes_used = database.disk_space()?;
+            self.bytes_used.record(bytes_used, &context);
+        }
+
+        Ok(())
+    }
+
     pub fn record_apply(&self, batch_size: usize, duration: Duration) {
         let context = std::slice::from_ref(&self.node_id_kv);
         self.apply_operations.add(1, context);
         self.apply_batch_size.record(batch_size as u64, context);
         self.apply_latency
             .record(duration.as_micros() as _, context);
-    }
-
-    pub fn bytes_used(&self, bytes: u64, db_type: DbType) {
-        self.bytes_used
-            .record(bytes, &[self.node_id_kv.clone(), db_type.into()]);
     }
 
     pub fn record_snapshot(&self, bytes: u64) {
