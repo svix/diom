@@ -10,7 +10,7 @@ use axum::{
     routing::{get, post},
 };
 use axum_extra::TypedHeader;
-use coyote_proto::MsgPack;
+use coyote_proto::{MsgPack, MsgPackOrJson};
 use headers::{Authorization, authorization::Bearer};
 use http::StatusCode;
 use openraft::{
@@ -202,7 +202,7 @@ async fn get_node_id(Extension(raft_state): Extension<RaftState>) -> MsgPack<Get
 async fn discover(
     State(app_state): State<AppState>,
     Extension(raft_state): Extension<RaftState>,
-) -> MsgPack<DiscoverResponse> {
+) -> MsgPackOrJson<DiscoverResponse> {
     let cluster_name = app_state.cfg.cluster.name.clone();
     let cluster_id = raft_state.state_machine.cluster_id().await;
     let cluster = raft_state
@@ -233,7 +233,7 @@ async fn discover(
         node_id: raft_state.node_id,
         cluster,
     };
-    MsgPack(response)
+    MsgPackOrJson(response)
 }
 
 async fn add_learner(
