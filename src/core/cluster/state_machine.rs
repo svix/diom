@@ -526,6 +526,8 @@ impl Store {
             snapshot_id,
         };
 
+        let start = std::time::Instant::now();
+
         let handle = self.stores.clone();
 
         fn list_keyspaces(db: &Database) -> Vec<String> {
@@ -573,7 +575,7 @@ impl Store {
                 .await?
                 .context("getting size of snapshot")?;
 
-        self.metrics.record_snapshot(size);
+        self.metrics.record_snapshot(size, start.elapsed());
 
         Ok(Snapshot { meta, snapshot })
     }
