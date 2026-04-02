@@ -1,14 +1,13 @@
 # this file is @generated
-import typing as t
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class IdempotencyAbortIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
 
 class _IdempotencyAbortIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str

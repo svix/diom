@@ -1,27 +1,25 @@
 # this file is @generated
-import typing as t
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class IdempotencyCompleteIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     response: bytes
     """The response to cache"""
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """TTL in milliseconds for the cached response"""
 
 
 class _IdempotencyCompleteIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str
 
     response: bytes
     """The response to cache"""
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """TTL in milliseconds for the cached response"""

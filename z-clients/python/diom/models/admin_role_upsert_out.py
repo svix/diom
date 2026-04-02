@@ -1,7 +1,7 @@
 # this file is @generated
 from datetime import datetime
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class AdminRoleUpsertOut(BaseModel):

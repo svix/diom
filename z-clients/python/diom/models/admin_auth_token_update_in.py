@@ -1,15 +1,13 @@
 # this file is @generated
-import typing as t
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class AdminAuthTokenUpdateIn(BaseModel):
     id: str
 
-    name: t.Optional[str] = None
+    name: str | None = None
 
-    expiry_ms: t.Optional[int] = Field(default=None, alias="expiry_ms")
+    expiry_ms: int | None = None
 
-    enabled: t.Optional[bool] = None
+    enabled: bool | None = None

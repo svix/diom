@@ -1,8 +1,6 @@
 # this file is @generated
-import typing as t
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class RateLimitCheckOut(BaseModel):
@@ -12,5 +10,5 @@ class RateLimitCheckOut(BaseModel):
     remaining: int
     """Number of tokens remaining"""
 
-    retry_after_ms: t.Optional[int] = Field(default=None, alias="retry_after_ms")
+    retry_after_ms: int | None = None
     """Milliseconds until enough tokens are available (only present when allowed is false)"""

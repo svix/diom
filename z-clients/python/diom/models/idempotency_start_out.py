@@ -1,16 +1,15 @@
 # this file is @generated
 import typing as t
 from typing_extensions import Self
-from pydantic import ModelWrapValidatorHandler, model_validator
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel, ModelWrapValidatorHandler, model_validator
 
 
 from .idempotency_completed import IdempotencyCompleted
 
 
 class IdempotencyStartOut(BaseModel):
-    status: t.Union[t.Literal["started"], t.Literal["locked"], t.Literal["completed"]]
-    data: t.Union[t.Dict[str, t.Any], IdempotencyCompleted]
+    status: t.Literal["started", "locked", "completed"]
+    data: dict[str, t.Any] | IdempotencyCompleted
 
     @model_validator(mode="wrap")
     @classmethod
