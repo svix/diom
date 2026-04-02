@@ -145,7 +145,7 @@ fn io_err(error: anyhow::Error) -> std::io::Error {
 }
 
 impl RaftLogReader<TypeConfig> for CoyoteLogs {
-    #[tracing::instrument(skip(self), fields(num_entries_found))]
+    #[tracing::instrument(skip_all, fields(num_entries_found))]
     async fn try_get_log_entries<RB: RangeBounds<u64> + Clone + Debug + OptionalSend>(
         &mut self,
         range: RB,
@@ -158,7 +158,7 @@ impl RaftLogReader<TypeConfig> for CoyoteLogs {
         Ok(output)
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn read_vote(&mut self) -> std::io::Result<Option<Vote>> {
         self.read_vote_().await.map_err(io_err)
     }
@@ -171,12 +171,12 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
         self.clone()
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn get_log_state(&mut self) -> std::io::Result<openraft::LogState<TypeConfig>> {
         self.get_log_state_().await.map_err(io_err)
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn save_vote(&mut self, vote: &Vote) -> std::io::Result<()> {
         self.save_vote_(vote.to_owned()).await.map_err(io_err)?;
         Ok(())
@@ -201,22 +201,22 @@ impl RaftLogStorage<TypeConfig> for CoyoteLogs {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all, fields(?log_id))]
     async fn truncate_after(&mut self, log_id: Option<LogId>) -> std::io::Result<()> {
         self.truncate_entries_(log_id).await.map_err(io_err)
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all, fields(?log_id))]
     async fn purge(&mut self, log_id: LogId) -> std::io::Result<()> {
         self.purge_entries_(log_id).await.map_err(io_err)
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all, fields(log_id = ?committed))]
     async fn save_committed(&mut self, committed: Option<LogId>) -> std::io::Result<()> {
         self.save_committed_(committed).await.map_err(io_err)
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn read_committed(&mut self) -> std::io::Result<Option<LogId>> {
         self.read_committed_().await.map_err(io_err)
     }
@@ -413,7 +413,7 @@ impl CoyoteLogs {
         }
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all, fields(?timestamp, ?log_index))]
     pub(crate) async fn record_log_timestamp(
         &self,
         timestamp: Timestamp,

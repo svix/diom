@@ -290,7 +290,7 @@ impl Store {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn load_information(&mut self) -> anyhow::Result<()> {
         let keyspace = self.readonly_meta_keyspace.clone();
 
@@ -500,7 +500,7 @@ impl Store {
         self.snapshot_idx += 1;
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn get_current_snapshot_(&mut self) -> anyhow::Result<Option<Snapshot>> {
         // clone to avoid holding a lock over an await point
         let last_snapshot = self.last_snapshot.read().clone();
@@ -774,7 +774,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
         self.clone()
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn get_current_snapshot(&mut self) -> StorageResult<Option<Snapshot>> {
         self.inner
             .write()
@@ -784,7 +784,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
             .map_err(io_err)
     }
 
-    #[tracing::instrument(skip(self, meta))]
+    #[tracing::instrument(skip_all, fields(snapshot_id = meta.snapshot_id))]
     async fn install_snapshot(
         &mut self,
         meta: &SnapshotMeta,
