@@ -107,6 +107,7 @@ async fn main() -> anyhow::Result<()> {
 
     let cfg = cfg::load(args.config_path.as_deref())?;
 
+    tracing_log::LogTracer::init()?;
     let (tracing_subscriber, otel_tracer_provider) =
         otel::setup_tracing(&cfg, /* for_test = */ false);
     tracing_subscriber.init();
