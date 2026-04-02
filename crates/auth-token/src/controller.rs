@@ -2,7 +2,7 @@ use crate::entities::TokenHashed;
 use diom_core::{task::spawn_blocking_in_current_span, types::Metadata};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
-use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
+use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -80,8 +80,7 @@ pub struct AuthTokenController {
 impl AuthTokenController {
     pub fn new(db: fjall::Database, keyspace_name: &'static str) -> Self {
         let keyspace = {
-            let opts = KeyspaceCreateOptions::default()
-                .with_kv_separation(Some(KvSeparationOptions::default()));
+            let opts = KeyspaceCreateOptions::default();
             db.keyspace(keyspace_name, || opts).unwrap()
         };
 
