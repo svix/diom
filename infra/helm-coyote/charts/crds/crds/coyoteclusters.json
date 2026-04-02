@@ -1088,8 +1088,8 @@
                         "nullable": true,
                         "properties": {
                           "size": {
-                            "description": "Storage size in Kubernetes Quantity format, e.g. \"10Gi\".",
-                            "type": "string"
+                            "description": "Storage size, e.g. \"10Gi\".",
+                            "x-kubernetes-int-or-string": true
                           },
                           "storageClass": {
                             "description": "Storage class name. Uses the cluster default if not specified.",
@@ -1106,8 +1106,8 @@
                         "description": "Persistent database storage (fjall persistent DB).",
                         "properties": {
                           "size": {
-                            "description": "Storage size in Kubernetes Quantity format, e.g. \"10Gi\".",
-                            "type": "string"
+                            "description": "Storage size, e.g. \"10Gi\".",
+                            "x-kubernetes-int-or-string": true
                           },
                           "storageClass": {
                             "description": "Storage class name. Uses the cluster default if not specified.",
@@ -1125,8 +1125,8 @@
                         "nullable": true,
                         "properties": {
                           "size": {
-                            "description": "Storage size in Kubernetes Quantity format, e.g. \"10Gi\".",
-                            "type": "string"
+                            "description": "Storage size, e.g. \"10Gi\".",
+                            "x-kubernetes-int-or-string": true
                           },
                           "storageClass": {
                             "description": "Storage class name. Uses the cluster default if not specified.",
