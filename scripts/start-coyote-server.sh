@@ -44,9 +44,6 @@ for i in $(seq 1 60); do
         echo "Server is ready (pid $(cat "$PID_FILE"))"
         exit 0
     fi
-    if [[ $i -eq 60 ]]; then
-        echo "Server failed to start"
-        exit 1
-    fi
-    sleep 1
 done
+
+echo "Server failed to start"
