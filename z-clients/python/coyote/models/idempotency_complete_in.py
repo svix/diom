@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -11,7 +10,7 @@ class IdempotencyCompleteIn(BaseModel):
     response: bytes
     """The response to cache"""
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """TTL in milliseconds for the cached response"""
 
 
@@ -23,5 +22,5 @@ class _IdempotencyCompleteIn(BaseModel):
     response: bytes
     """The response to cache"""
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """TTL in milliseconds for the cached response"""

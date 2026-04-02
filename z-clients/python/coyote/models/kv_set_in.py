@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -12,7 +11,7 @@ class KvSetIn(BaseModel):
 
     value: bytes
 
-    ttl_ms: t.Optional[int] = Field(default=None, alias="ttl_ms")
+    ttl_ms: t.Optional[int] = None
     """Time to live in milliseconds"""
 
     behavior: t.Optional[OperationBehavior] = None
@@ -29,7 +28,7 @@ class _KvSetIn(BaseModel):
 
     value: bytes
 
-    ttl_ms: t.Optional[int] = Field(default=None, alias="ttl_ms")
+    ttl_ms: t.Optional[int] = None
     """Time to live in milliseconds"""
 
     behavior: t.Optional[OperationBehavior] = None

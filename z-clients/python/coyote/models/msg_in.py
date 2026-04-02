@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -15,7 +14,7 @@ class MsgIn(BaseModel):
 
     Messages with the same key are routed to the same partition."""
 
-    delay_ms: t.Optional[int] = Field(default=None, alias="delay_ms")
+    delay_ms: t.Optional[int] = None
     """Optional delay in milliseconds.
 
     The message will not be delivered to queue consumers

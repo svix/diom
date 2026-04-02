@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -10,7 +9,7 @@ class AdminAuthTokenCreateIn(BaseModel):
 
     role: str
 
-    expiry_ms: t.Optional[int] = Field(default=None, alias="expiry_ms")
+    expiry_ms: t.Optional[int] = None
     """Milliseconds from now until the token expires."""
 
     enabled: t.Optional[bool] = None

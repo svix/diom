@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -10,7 +9,7 @@ class CacheSetIn(BaseModel):
 
     value: bytes
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """Time to live in milliseconds"""
 
 
@@ -21,5 +20,5 @@ class _CacheSetIn(BaseModel):
 
     value: bytes
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """Time to live in milliseconds"""
