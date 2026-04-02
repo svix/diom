@@ -1178,8 +1178,14 @@
                     "type": "array"
                   },
                   "topologySpreadConstraints": {
-                    "default": [],
-                    "description": "Topology spread constraints for pod scheduling.\nUse this to spread pods across availability zones or nodes.\nSee: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+                    "default": [
+                      {
+                        "maxSkew": 1,
+                        "topologyKey": "topology.kubernetes.io/zone",
+                        "whenUnsatisfiable": "ScheduleAnyway"
+                      }
+                    ],
+                    "description": "Topology spread constraints for pod scheduling.\n\nDefaults to (topology.kubernetes.io/zone, ScheduleAnyway, maxSkew=1).\nThe operator automatically injects the cluster's pod labelSelector on any\nconstraint that omits it, so you don't need to specify it yourself.\nSet to `[]` to opt out of all spreading.\n\nSee: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
                     "items": {
                       "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
                       "properties": {

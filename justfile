@@ -75,3 +75,8 @@ test-all: test test-sdks
 [working-directory('benchmarks')]
 bench:
     cargo bench
+
+# Regenerate the CRD JSON and write it into the Helm chart
+[working-directory('infra/operator')]
+generate-crd:
+    cargo run -- --print-crd-json > {{ HERE / "infra/helm-diom/charts/crds/crds/diomclusters.json" }}

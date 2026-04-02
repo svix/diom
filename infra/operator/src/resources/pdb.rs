@@ -17,7 +17,7 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<PodDisruptionBudg
         metadata: ObjectMeta {
             name: Some(cluster_name.clone()),
             namespace: Some(ns.into()),
-            labels: Some(labels::common(&cluster_name)),
+            labels: Some(labels::general_labels(&cluster_name)),
             owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
             ..Default::default()
         },
