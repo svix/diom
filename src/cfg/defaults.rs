@@ -95,6 +95,10 @@ pub(super) fn cluster_send_snapshot_timeout() -> Duration {
     Duration::from_secs(30)
 }
 
+pub(super) fn cluster_replication_lag_threshold() -> u64 {
+    50_000
+}
+
 pub(super) fn background_cleanup_interval() -> Duration {
     Duration::from_secs(10)
 }

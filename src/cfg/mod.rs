@@ -394,6 +394,16 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::default_true")]
     #[env_overridable(skip)]
     pub shut_down_on_go_away: bool,
+
+    /// How far behind must the current node be to be considered "lagging" and eligible for
+    /// re-snapshotting?
+    ///
+    /// The ideal value here depends both on your data-set size and on your average write-rate. If
+    /// your data is large, then setting this value too small can mean that a snapshot can never
+    /// catch up because it'll take too long to replicate. Typically this should be around twice the
+    /// number of commits that you generate in the time it takes to replicate a full snapshot.
+    #[serde(default = "defaults::cluster_replication_lag_threshold")]
+    pub replication_lag_threshold: u64,
 }
 
 impl ClusterConfiguration {
