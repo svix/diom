@@ -1342,6 +1342,8 @@ dependencies = [
  "diom-core",
  "diom-error",
  "diom-id",
+ "diom-idempotency",
+ "diom-kv",
  "diom-namespace",
  "diom-operations",
  "fjall",

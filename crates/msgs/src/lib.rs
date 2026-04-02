@@ -5,6 +5,8 @@ use diom_operations::BackgroundResult;
 use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
 use jiff::Timestamp;
 
+use diom_idempotency::IdempotencyController;
+use diom_kv::kvcontroller::KvController;
 use entities::{ConsumerGroup, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, TableRow};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
@@ -27,6 +29,7 @@ pub type MsgsNamespace = Namespace<MsgsConfig>;
 #[derive(Clone)]
 pub struct State {
     pub(crate) db: fjall::Database,
+    pub(crate) idempotency: IdempotencyController,
     pub(crate) metadata_tables: fjall::Keyspace,
     pub(crate) msg_table: fjall::Keyspace,
     pub(crate) metrics: metrics::MsgMetrics,
@@ -53,7 +56,8 @@ impl State {
         let meter = opentelemetry::global::meter("diom.svix.com");
 
         Ok(Self {
-            db,
+            db: db.clone(),
+            idempotency: IdempotencyController::new(KvController::new(db, METADATA_KEYSPACE)), // XXXXX: Wrong!!! - this is never cleaned up!
             metadata_tables,
             msg_table,
             metrics: metrics::MsgMetrics::new(&meter),

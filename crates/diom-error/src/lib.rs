@@ -50,6 +50,13 @@ impl Error {
         Self::new(ErrorType::BadRequest(StandardErrorBody::new(code, detail)))
     }
 
+    pub fn conflict(detail: impl fmt::Display) -> Self {
+        Self::new(ErrorType::Conflict(StandardErrorBody::new(
+            "conflict",
+            detail,
+        )))
+    }
+
     pub fn invalid_user_input(detail: impl fmt::Display) -> Self {
         // We'll probably change _how_ invalid user input is displayed later on,
         // but having a universal error function to capture user errors is ideal
@@ -105,6 +112,11 @@ impl Error {
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
+            ErrorType::Conflict(body) => (
+                StatusCode::CONFLICT,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
             ErrorType::Authentication(body) => (
                 StatusCode::UNAUTHORIZED,
                 Some(body.code().to_owned()),
@@ -153,6 +165,10 @@ impl IntoResponse for Error {
             ErrorType::NotFound(body) => {
                 tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
+            }
+            ErrorType::Conflict(body) => {
+                tracing::debug!(error = %body, "conflict");
+                (StatusCode::CONFLICT, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
@@ -218,6 +234,7 @@ impl OperationOutput for Error {
 
         vec![
             (Some(Code(400)), standard_error_body_response.clone()),
+            (Some(Code(409)), standard_error_body_response.clone()),
             (Some(Code(401)), standard_error_body_response.clone()),
             (Some(Code(403)), standard_error_body_response),
             (Some(Code(422)), validation_error_body_response),
@@ -255,6 +272,9 @@ pub enum ErrorType {
     /// Entity not found
     NotFound(StandardErrorBody),
 
+    /// Conflict with the current state of the resource
+    Conflict(StandardErrorBody),
+
     /// Authentication error
     Authentication(StandardErrorBody),
 
@@ -281,6 +301,7 @@ impl fmt::Display for ErrorType {
             Self::Internal { message, .. } => message.fmt(f),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::NotFound(s) => write!(f, "not_found {s}"),
+            Self::Conflict(s) => write!(f, "conflict {s}"),
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
             Self::Validation(s) => s.fmt(f),

@@ -24,7 +24,7 @@ impl AbortOperation {
         state
             .state
             .controller()
-            .delete(self.namespace_id, self.key)
+            .abort(self.namespace_id, self.key)
             .await?;
 
         Ok(())

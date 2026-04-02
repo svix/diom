@@ -1,9 +1,8 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
-use crate::{IdempotencyNamespace, IdempotencyState};
+use crate::IdempotencyNamespace;
 use diom_core::types::DurationMs;
 use diom_error::Result;
 use diom_id::NamespaceId;
-use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -39,22 +38,14 @@ impl CompleteOperation {
         now: Timestamp,
         log_index: u64,
     ) -> Result<()> {
-        let expiry = now + self.ttl;
         state
             .state
             .controller()
-            .set(
+            .complete(
                 self.namespace_id,
                 self.key,
-                KvModelIn {
-                    value: IdempotencyState::Completed {
-                        response: self.response,
-                    }
-                    .into(),
-                    expiry: Some(expiry),
-                    version: None,
-                },
-                OperationBehavior::Upsert,
+                self.response,
+                self.ttl,
                 now,
                 log_index,
             )
