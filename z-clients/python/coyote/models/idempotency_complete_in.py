@@ -1,11 +1,10 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
 
 class IdempotencyCompleteIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     response: bytes
     """The response to cache"""
@@ -15,7 +14,7 @@ class IdempotencyCompleteIn(BaseModel):
 
 
 class _IdempotencyCompleteIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str
 

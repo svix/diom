@@ -1,11 +1,10 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
 
 class CacheSetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     value: bytes
 
@@ -14,7 +13,7 @@ class CacheSetIn(BaseModel):
 
 
 class _CacheSetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str
 

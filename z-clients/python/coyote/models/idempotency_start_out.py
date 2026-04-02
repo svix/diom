@@ -8,8 +8,8 @@ from .idempotency_completed import IdempotencyCompleted
 
 
 class IdempotencyStartOut(BaseModel):
-    status: t.Union[t.Literal["started"], t.Literal["locked"], t.Literal["completed"]]
-    data: t.Union[t.Dict[str, t.Any], IdempotencyCompleted]
+    status: t.Literal["started"] | t.Literal["locked"] | t.Literal["completed"]
+    data: t.Dict[str, t.Any] | IdempotencyCompleted
 
     @model_validator(mode="wrap")
     @classmethod

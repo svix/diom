@@ -1,5 +1,4 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
@@ -7,8 +6,8 @@ from pydantic import BaseModel
 class AdminAuthTokenUpdateIn(BaseModel):
     id: str
 
-    name: t.Optional[str] = None
+    name: str | None = None
 
-    expiry_ms: t.Optional[int] = None
+    expiry_ms: int | None = None
 
-    enabled: t.Optional[bool] = None
+    enabled: bool | None = None

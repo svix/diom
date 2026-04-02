@@ -10,8 +10,8 @@ class QueueMsgOut(BaseModel):
 
     value: bytes
 
-    headers: t.Optional[t.Dict[str, str]] = None
+    headers: t.Dict[str, str] | None = None
 
     timestamp: datetime
 
-    scheduled_at: t.Optional[datetime] = None
+    scheduled_at: datetime | None = None

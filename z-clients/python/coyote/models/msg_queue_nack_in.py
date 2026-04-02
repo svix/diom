@@ -5,13 +5,13 @@ from pydantic import BaseModel
 
 
 class MsgQueueNackIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     msg_ids: t.List[str]
 
 
 class _MsgQueueNackIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     topic: str
 

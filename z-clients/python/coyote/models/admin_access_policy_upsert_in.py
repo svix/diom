@@ -11,4 +11,4 @@ class AdminAccessPolicyUpsertIn(BaseModel):
 
     description: str
 
-    rules: t.Optional[t.List[AccessRule]] = None
+    rules: t.List[AccessRule] | None = None

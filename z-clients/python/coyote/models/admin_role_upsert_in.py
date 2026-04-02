@@ -11,8 +11,8 @@ class AdminRoleUpsertIn(BaseModel):
 
     description: str
 
-    rules: t.Optional[t.List[AccessRule]] = None
+    rules: t.List[AccessRule] | None = None
 
-    policies: t.Optional[t.List[str]] = None
+    policies: t.List[str] | None = None
 
-    context: t.Optional[t.Dict[str, str]] = None
+    context: t.Dict[str, str] | None = None

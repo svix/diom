@@ -1,5 +1,4 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
@@ -7,20 +6,20 @@ from .seek_position import SeekPosition
 
 
 class MsgStreamSeekIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
-    offset: t.Optional[int] = None
+    offset: int | None = None
 
-    position: t.Optional[SeekPosition] = None
+    position: SeekPosition | None = None
 
 
 class _MsgStreamSeekIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     topic: str
 
     consumer_group: str
 
-    offset: t.Optional[int] = None
+    offset: int | None = None
 
-    position: t.Optional[SeekPosition] = None
+    position: SeekPosition | None = None

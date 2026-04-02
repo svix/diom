@@ -1,5 +1,4 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
@@ -11,5 +10,5 @@ class RateLimitTokenBucketConfig(BaseModel):
     refill_amount: int
     """Number of tokens to add per refill interval"""
 
-    refill_interval_ms: t.Optional[int] = None
+    refill_interval_ms: int | None = None
     """Interval in milliseconds between refills (minimum 1 millisecond)"""
