@@ -1,0 +1,172 @@
+# Idempotency (`idempotency`)
+
+The `idempotency` module lets developers add idempotency support to their services, letting their API users safely retry requests while avoiding accidentally performing the same operation twice.
+
+## How idempotency works
+
+Idempotency implements a kind of locking mechanism to prevent the same requests from being performed twice when retried.
+To implement that, we need to define what constitutes two requests being the same. The recommended pattern is to use the identity of the caller (to prevent different callers from conflicting) and a unique user-provided per-request key that's retained on retries (to identify a specific set of requests). It's also recommended to include the URI of the request in order to prevent common user-errors of reusing the same idempotency key across multiple requests.
+
+For example, you could have your users (or SDKs) pass an `Idempotency-key` header with each request (like [done by Svix](https://docs.svix.com/idempotency)), which will be used as the user-provided key, and you can use the auth token ID, or user ID as the identity of the caller.
+
+For example:
+```python
+hasher = Sha256()
+hasher.update(auth_token_id)
+hasher.update(":")
+hasher.update(user_provided_idempotency_key)
+hasher.update(":")
+hasher.update(request_uri)
+
+// Get the base64 string of generated key
+let idem_key = hasher.finalize().to_base64()
+```
+
+### Idempotency request flow
+
+Each idempotency flow starts with `idempotency.start`, which indicates to Diom that a request has been initiated.
+
+This request returns one of three values:
+* `Started`: indicating that the idempotency lock has been acquired and we should continue with processing the request.
+* `Completed`: indicating that a request with the same key has previously completed and we shouldn't process it again.
+* `Locked`: a request with the same idempotency key is currently in progress and we should hold the request and try again in a moment.
+
+Under normal operations your requests would call `idempotency.start`, get back `Started` to indicate the request can start, and once done call `idempotency.complete` to indicate the request has processed. Any subsequent requests with the same key would immediately get `Completed` which would let you immediately return from the API indicating that the request has already been processed.
+
+There is one scenario that requires more care, which is the `Locked` state. This indicates that there's a concurrent request with the same idempotency key that's still being processed. Because we don't yet know whether the concurrent request would finish successfully or not, we can't respond with an indication that the request is already being processed. Because if the concurrent request will fail, we want to make sure it's retried. Implementations usually go with one of two options here: (1) calling `idempotency.start` in a loop inside the API to see whether the other request would end, or (2) immediately return with an error code indicating that the request should be retried after a timeout.
+
+Please note that in HTTP APIs idempotency keys are generally only used with POST requests, as GET and DELETE are considered idempotent. Whether to use idempotency with PUT and PATCH is usually implementation specific.
+
+
+## Starting a request (`idempotency.start`)
+
+The `idempotency.start` request is used to start a request, and depending on its return value, we process the request in one of three ways:
+
+```rust
+// Like shown above
+let idem_key = hash_of_components();
+// How long to hold the idempotency lock until it's considered stale
+let lock_period = Duration::from_secs(15);
+
+match client.idempotency()
+    .start(idem_key.clone(), IdempotencyStartIn::new(lock_period))
+    .await?
+{
+    IdempotencyStartOut::Started => {
+        // We hold the lock — do the actual work now.
+        println!("Idempotency key acquired, processing request...");
+
+        let response = do_some_real_work();
+
+        // Store the result and release the lock.
+        let success_retention_period = Duration::from_hours(12);
+        client.idempotency().complete(
+            idem_key.clone(),
+            IdempotencyCompleteIn::new(result, success_retention_period),
+        )
+        .await?;
+        println!("Request completed and cached");
+
+        return response;
+    }
+    IdempotencyStartOut::Locked => {
+        // Another instance is processing the same key right now.
+        println!("Request is already in-flight, try again shortly");
+
+        // Return an error that the request is currently locked
+        return 423_LOCKED;
+    }
+    IdempotencyStartOut::Completed(cached) => {
+        // A previous call already finished. Return the cached response.
+        return cached;
+    }
+}
+```
+
+## Marking a request successful (`idempotency.complete`)
+
+As demonstrated in the previous example, once a request has been successfully processed we should mark it as successful by calling the `idempotency.complete` call.
+
+Copying the example here for completeness:
+```rust
+// How long to store a successful request for
+let success_retention_period = Duration::from_hours(12);
+
+client.idempotency().complete(
+    idem_key.clone(),
+    IdempotencyCompleteIn::new(result, success_retention_period),
+)
+.await?;
+```
+
+## Aborting an idempotency request (`idempotency.abort`)
+
+If you've experienced a failure while processing a request, you can let Diom know that the request failed, which will immediately release the idempotency lock and let other concurrent requests or retries try as well.
+
+Here is how to abort a request:
+```
+client.idempotency().abort(idem_key.clone(), IdempotencyAbortIn::new())
+    .await?;
+```
+
+
+## Examples
+
+Here are a few examples of common use-cases when implementing idempotency in an HTTP API.
+
+### Implementing idempotency in a middleware
+
+A common pattern is to implement idempotency as a middleware instead of manually implementing it in each route.
+
+Here is how such a middleware implementation may look like. The function `next()` is responsible to call the next middleware in the chain:
+
+```rust
+fn middleware() {
+    match client.idempotency()
+        .start(idem_key.clone(), IdempotencyStartIn::new(lock_period))
+        .await?
+        {
+            IdempotencyStartOut::Started => {
+                // Call the next middleware / request handler
+                let response = next();
+                if response.error {
+                    // Abort the idempotency request
+                    client.idempotency().abort(idem_key.clone(), IdempotencyAbortIn::new())
+                        .await?;
+                    return Response(status=500);
+                }
+
+                // Store the result and release the lock.
+                let success_retention_period = Duration::from_hours(12);
+                client.idempotency().complete(
+                        idem_key.clone(),
+                        IdempotencyCompleteIn::new(result, success_retention_period),
+                        )
+                    .await?;
+
+                return Response(status=response.status, body=response.body);
+            }
+            IdempotencyStartOut::Locked => {
+                // Return an error that the request is currently locked
+                return Response(status=423_LOCKED);
+            }
+            IdempotencyStartOut::Completed(cached) => {
+                // A previous call already finished. Return the cached response.
+                return Response(body=cached);
+            }
+        }
+}
+```
+
+### Emulating success vs. returning a 409 conflict
+
+There are two main ways to handle idempotency: emulating a successful request on retries vs. returning a 409 conflict.
+
+When emulating a successful request, every retry with the same idempotency returns exactly the same response (body, status code, and potentially headers) as the original request. So each caller thinks that they are the only one that made a call, and it was successful. The advantage of this approach is that it makes client code (users of your API) very simple, as they don't need to think about idempotency, they just handle the retries as successful requests. This is what companies like Stripe and Svix do.
+
+The alternative is to return a `409 (Conflict)` HTTP status code, indicating a conflict has occurred when a second idempotency request follows a successful one. The advantages of this approach are lower resource consumption (you don't need to store responses), and also giving your API users an indication that a request was previously successful which may be useful in some scenarios.
+
+
+### Storing headers, response status codes, etc.
+
+For simplicity, the examples above only showed how to store the response body for successful idempotency requests. But you can also use the response field in `idempotency.complete` to store the response headers and status code of the original request, making sure you return exactly the same response in case your API utilizes those.

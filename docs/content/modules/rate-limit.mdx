@@ -1,0 +1,168 @@
+# Rate-limiting (`rate-limit`)
+
+The `rate-limit` module enables developers to limit access to resources such as API endpoints and background workers.
+
+The module implements the [token bucket algorithm](https://en.wikipedia.org/wiki/Token_bucket), which provides high performance and high flexibility.
+
+## Configuring the rate limiter
+
+When using the `rate-limit` module you pass the wanted configuration on every call, giving you full flexibility to dynamically configure how you enforce limits.
+
+The configuration lets you configure:
+* Capacity: what is the maximum amount of rate-limit tokens this rate-limiter can have.
+* Refill rate: how many tokens to refill on every internal.
+* Refill interval: how often to refill the amount configured in refill rate (default is one second).
+
+Here is an example configuration:
+
+```rust
+// Capacity: 10, refill rate: 1, refill interval: 1 second.
+let config = RateLimitTokenBucketConfig::new(10, 1)
+    .with_refill_interval(Duration::from_secs(1));
+```
+
+## Using the rate limiter (`rate-limit.limit`)
+
+To use the rate limiter you call the `rate-limit.limit` operation with a configuration like so:
+
+```rust
+let key = "user:42:api".to_string();
+let config = RateLimitTokenBucketConfig::new(10, 1)
+    .with_refill_interval(Duration::from_secs(1));
+
+let out = client.rate_limit()
+    .limit(RateLimitCheckIn::new(key.clone(), config.clone()))
+    .await?;
+
+if out.allowed {
+    println!("Request {i} allowed, {} tokens remaining", out.remaining);
+} else {
+    let retry_ms = out.retry_after.unwrap_or_default().as_millis();
+    println!("Request {i} denied, retry after {retry_ms}ms");
+}
+```
+
+You can optionally consume more than 1 token per request like this:
+
+```rust
+let out = client.rate_limit()
+    .limit(RateLimitCheckIn::new(key.clone(), config.clone()).with_tokens(10))
+    .await?;
+```
+
+This is useful for when you have different "weights" to different requests (some are more expensive than others).
+
+## Get remaining tokens (`rate-limit.get-remaining`)
+
+You can use the `rate-limit.get-remaining` function to get the amount of tokens remaining without consuming any.
+
+```rust
+// Peek at the remaining tokens without consuming any.
+let remaining = client.rate_limit()
+    .get_remaining(RateLimitGetRemainingIn::new(key.clone(), config.clone()))
+    .await?;
+// Retry after tells you when you'll have sufficient tokens available.
+let retry_ms = remaining.retry_after.unwrap_or_default().as_millis();
+println!("Tokens remaining {}, retry after {retry_ms}ms", remaining.remaining);
+```
+
+## Reset the bucket to capacity (`rate-limit.reset`)
+
+To expire a cache value (delete the key), call the `cache.delete` operation with the wanted key:
+
+```rust
+// Reset the bucket back to full capacity.
+client.rate_limit().reset(RateLimitResetIn::new(key.clone(), config.clone()))
+    .await?;
+```
+
+## Examples
+
+Here are a few examples of common use-cases when implementing rate-limiting.
+
+### Allow temporary bursts over the limit
+
+A common use-case with rate-limiting is to allow temporary bursts (that go over the allowed rate-limit), but still enforcing the rate-limit on an ongoing basis.
+
+To achieve it you would want to configure the capacity to the maximum spike capacity, and the refill rate to your desired limit. For example, if you want to allow for 100 tokens per second with spikes of 200 tokens, you can configure capacity to be 200 and refill rate to 100.
+
+This works because it lets users consume 200 tokens, but the refill happens much more slowly, which means that under load they would be limited to 100 tokens per interval, but if the tokens had enough time to replenish to capacity, they would be able to go over the limit.
+
+Example configuration:
+```rust
+RateLimitTokenBucketConfig::new(200, 100)
+    .with_refill_interval(Duration::from_secs(1));
+```
+
+### Tiered rate-limits
+
+A common pattern is to have different rate-limits depending on the pricing tier. Because the rate-limit configuration is passed on each request, to achieve it with Diom you can just pass a different configuration based on the tier.
+
+For example:
+
+```rust
+let config = match tier {
+    Tier::Free =>
+        RateLimitTokenBucketConfig::new(50, 50)
+            .with_refill_interval(Duration::from_secs(1)),
+    Tier::Professional =>
+        RateLimitTokenBucketConfig::new(200, 100)
+            .with_refill_interval(Duration::from_secs(1)),
+};
+
+// Now use it with `rate-limit.limit`...
+```
+
+### Multiple rate-limits
+
+Sometimes you may want to have multiple rate-limits checked for a specific request. For example, you may have user-wide and organization-wide rate-limits in your service. Diom will soon add a built-in operation to support that, but until then you can use multiple rate-limit calls to emulate this behavior.
+
+```rust
+// Check user rate limit first
+let out = client.rate_limit()
+    .limit(RateLimitCheckIn::new(user_key.clone(), user_config.clone()))
+    .await?;
+
+if !out.allowed {
+    return;
+}
+
+let out = client.rate_limit()
+    .limit(RateLimitCheckIn::new(org_key.clone(), org_config.clone()))
+    .await?;
+
+if !out.allowed {
+    return;
+}
+
+// Request allowed!
+```
+
+### Smoothening rate-limiting (avoiding spikes)
+
+A common issue with rate-limiting implementations is that traffic tends to be very spiky. The tokens are refilled every time an interval passes, which means that under load, most of the requests will happen at the window edges.
+
+This can be solved using the token bucket algorithm by setting the configuration a bit differently. For example, if you want a rate-limit with 100 tokens that refills 100 tokens every 1 second, you can instead configure it to refill 1 token every 10 milliseconds. This still gives you a rate of 100 a second, but the refill happens more smoothly throughout the desired one second internal.
+
+
+```rust
+// Do this:
+RateLimitTokenBucketConfig::new(100, 1)
+    .with_refill_interval(Duration::from_millis(10));
+
+// Instead of this:
+RateLimitTokenBucketConfig::new(100, 100)
+    .with_refill_interval(Duration::from_secs(1));
+```
+
+### Approximating the fixed window algorithm
+
+The token bucket algorithm allows you to implement an equivalent to the fixed window algorithm. All you need to do is to set the capacity to the same same value as the refill amount, and set the refill interval to the window size.
+
+For example:
+
+```rust
+// Capacity of 10 and 10 tokens are refilled every 1 second.
+RateLimitTokenBucketConfig::new(10, 10)
+    .with_refill_interval(Duration::from_secs(1));
+```
