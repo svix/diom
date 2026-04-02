@@ -1,7 +1,7 @@
 # this file is @generated
 import typing as t
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 from .operation_behavior import OperationBehavior
 

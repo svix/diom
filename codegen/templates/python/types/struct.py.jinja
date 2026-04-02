@@ -2,10 +2,9 @@
 {% set type_name = type.name | to_upper_camel_case -%}
 {% set positional_fields = type.fields | selectattr("positional") -%}
 import typing as t
-from pydantic import Field
 from datetime import datetime
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 {% for c in referenced_components -%}
 from . {{ c | to_snake_case }} import {{ c | to_upper_camel_case }}
