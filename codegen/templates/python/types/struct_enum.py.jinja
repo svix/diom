@@ -13,12 +13,14 @@ class {{ type_name }}(BaseModel):
     {%- for field in type.fields %}
         {{ field_decl(field) }}
     {%- endfor %}
-    {{ type.discriminator_field }}: {% for variant in type.variants -%}
-        t.Literal["{{ variant.name }}"]{% if not loop.last %} | {% endif %}
-    {%- endfor %}
+    {{ type.discriminator_field }}: t.Literal[
+    {%- for variant in type.variants -%}
+        "{{ variant.name }}"{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+    ]
     {{ type.content_field }}: {{
         type.variants
-            | map(attribute="schema_ref", default="t.Dict[str, t.Any]")
+            | map(attribute="schema_ref", default="dict[str, t.Any]")
             | unique
             | join(" | ")
     }}
