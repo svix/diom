@@ -683,11 +683,15 @@ impl RaftState {
     pub(crate) async fn remove_node(&self, node_id: NodeId) -> diom_error::Result<()> {
         match self.remove_node_inner(node_id).await {
             Ok(_) => Ok(()),
-            Err(DiomErrorOrForwardToLeader::Error(e)) => Err(e.into()),
+            Err(DiomErrorOrForwardToLeader::Error(err)) => {
+                tracing::error!(?err, "error removing node");
+                Err(err.into())
+            }
             Err(DiomErrorOrForwardToLeader::ForwardToLeader {
                 leader_id,
                 leader_node,
             }) => {
+                tracing::debug!(?leader_id, "forwarding remove-node request to leader");
                 let mut network_handle = self.network.clone();
                 let client = network_handle.new_client(leader_id, &leader_node).await;
                 client
