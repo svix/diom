@@ -12,12 +12,15 @@ pub struct MsgsNamespaceArgs {
 #[derive(Subcommand)]
 pub enum MsgsNamespaceCommands {
     /// Creates or updates a msgs namespace with the given name.
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  retention (optional)")]
     Create {
         name: String,
         msg_namespace_create_in:
             Option<crate::json::JsonOf<coyote_client::models::MsgNamespaceCreateIn>>,
     },
     /// Gets a msgs namespace by name.
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m")]
     Get {
         name: String,
         msg_namespace_get_in: Option<crate::json::JsonOf<coyote_client::models::MsgNamespaceGetIn>>,

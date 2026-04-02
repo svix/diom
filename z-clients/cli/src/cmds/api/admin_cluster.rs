@@ -17,6 +17,7 @@ pub enum AdminClusterCommands {
     ///
     /// This operation may only be performed against a node which has not been
     /// initialized and is not currently a member of a cluster.
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m")]
     Initialize {
         cluster_initialize_in:
             Option<crate::json::JsonOf<coyote_client::models::ClusterInitializeIn>>,
@@ -25,10 +26,13 @@ pub enum AdminClusterCommands {
     ///
     /// This operation executes immediately and the node must be wiped and reset
     /// before it can safely be added to the cluster.
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  node_id")]
     RemoveNode {
         cluster_remove_node_in: crate::json::JsonOf<coyote_client::models::ClusterRemoveNodeIn>,
     },
     /// Force the cluster to take a snapshot immediately
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m")]
     ForceSnapshot {
         cluster_force_snapshot_in:
             Option<crate::json::JsonOf<coyote_client::models::ClusterForceSnapshotIn>>,

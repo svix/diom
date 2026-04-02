@@ -15,16 +15,25 @@ pub struct CacheArgs {
 pub enum CacheCommands {
     Namespace(CacheNamespaceArgs),
     /// Cache Set
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  value
+  ttl_ms — Time to live in milliseconds
+  namespace (optional)")]
     Set {
         key: String,
         cache_set_in: crate::json::JsonOf<coyote_client::models::CacheSetIn>,
     },
     /// Cache Get
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  namespace (optional)
+  consistency (optional)")]
     Get {
         key: String,
         cache_get_in: Option<crate::json::JsonOf<coyote_client::models::CacheGetIn>>,
     },
     /// Cache Delete
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  namespace (optional)")]
     Delete {
         key: String,
         cache_delete_in: Option<crate::json::JsonOf<coyote_client::models::CacheDeleteIn>>,

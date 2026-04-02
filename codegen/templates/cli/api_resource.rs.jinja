@@ -31,6 +31,16 @@ pub enum {{ resource_type_name }}Commands {
         {% if op.description is defined -%}
             {{ op.description | to_doc_comment(style="rust") }}
         {% endif -%}
+        {% if op.request_body_schema_name is defined -%}
+            {% set body_schema_help = api.types[op.request_body_schema_name] -%}
+            #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+            {%- for field in body_schema_help.fields | selectattr("positional", "false") | selectattr("required") %}
+  {{ field.name }}{% if field.description is defined %} — {{ field.description | replace("\n", " ") }}{% endif %}
+            {%- endfor %}
+            {%- for field in body_schema_help.fields | selectattr("positional", "false") | selectattr("required", "false") %}
+  {{ field.name }} (optional){% if field.description is defined %} — {{ field.description | replace("\n", " ") }}{% endif %}
+            {%- endfor %}")]
+        {% endif -%}
         {{ op.name | to_upper_camel_case }} {
             {% if op.request_body_schema_name is defined -%}
                 {# positional body parameters -#}

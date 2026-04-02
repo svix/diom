@@ -12,21 +12,32 @@ pub struct AdminAuthPolicyArgs {
 #[derive(Subcommand)]
 pub enum AdminAuthPolicyCommands {
     /// Create or update an access policy
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id
+  description
+  rules (optional)")]
     Upsert {
         admin_access_policy_upsert_in:
             crate::json::JsonOf<coyote_client::models::AdminAccessPolicyUpsertIn>,
     },
     /// Delete an access policy
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id")]
     Delete {
         admin_access_policy_delete_in:
             crate::json::JsonOf<coyote_client::models::AdminAccessPolicyDeleteIn>,
     },
     /// Get an access policy by ID
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id")]
     Get {
         admin_access_policy_get_in:
             crate::json::JsonOf<coyote_client::models::AdminAccessPolicyGetIn>,
     },
     /// List all access policies
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  limit (optional) — Limit the number of returned items
+  iterator (optional) — The iterator returned from a prior invocation")]
     List {
         admin_access_policy_list_in:
             Option<crate::json::JsonOf<coyote_client::models::AdminAccessPolicyListIn>>,

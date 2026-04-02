@@ -12,11 +12,15 @@ pub struct RateLimitNamespaceArgs {
 #[derive(Subcommand)]
 pub enum RateLimitNamespaceCommands {
     /// Create rate limiter namespace
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  name")]
     Create {
         rate_limit_create_namespace_in:
             crate::json::JsonOf<coyote_client::models::RateLimitCreateNamespaceIn>,
     },
     /// Get rate limiter namespace
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  name")]
     Get {
         rate_limit_get_namespace_in:
             crate::json::JsonOf<coyote_client::models::RateLimitGetNamespaceIn>,

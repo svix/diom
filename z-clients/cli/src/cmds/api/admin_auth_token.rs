@@ -12,36 +12,57 @@ pub struct AdminAuthTokenArgs {
 #[derive(Subcommand)]
 pub enum AdminAuthTokenCommands {
     /// Create an auth token
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  name
+  role
+  expiry_ms (optional) — Milliseconds from now until the token expires.
+  enabled (optional) — Whether the token is enabled. Defaults to `true`.")]
     Create {
         admin_auth_token_create_in:
             crate::json::JsonOf<coyote_client::models::AdminAuthTokenCreateIn>,
     },
     /// Expire an auth token
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id
+  expiry_ms (optional) — Milliseconds from now until the token expires. `None` means expire immediately.")]
     Expire {
         admin_auth_token_expire_in:
             crate::json::JsonOf<coyote_client::models::AdminAuthTokenExpireIn>,
     },
     /// Rotate an auth token, invalidating the old one and issuing a new secret
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id")]
     Rotate {
         admin_auth_token_rotate_in:
             crate::json::JsonOf<coyote_client::models::AdminAuthTokenRotateIn>,
     },
     /// Delete an auth token
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id")]
     Delete {
         admin_auth_token_delete_in:
             crate::json::JsonOf<coyote_client::models::AdminAuthTokenDeleteIn>,
     },
     /// List auth tokens for a given owner
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  limit (optional) — Limit the number of returned items
+  iterator (optional) — The iterator returned from a prior invocation")]
     List {
         admin_auth_token_list_in:
             Option<crate::json::JsonOf<coyote_client::models::AdminAuthTokenListIn>>,
     },
     /// Update an auth token's properties
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id
+  name (optional)
+  expiry_ms (optional)
+  enabled (optional)")]
     Update {
         admin_auth_token_update_in:
             crate::json::JsonOf<coyote_client::models::AdminAuthTokenUpdateIn>,
     },
     /// Return the role of the currently authenticated token
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m")]
     Whoami {
         admin_auth_token_whoami_in:
             Option<crate::json::JsonOf<coyote_client::models::AdminAuthTokenWhoamiIn>>,

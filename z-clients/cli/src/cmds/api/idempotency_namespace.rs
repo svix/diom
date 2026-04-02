@@ -12,11 +12,15 @@ pub struct IdempotencyNamespaceArgs {
 #[derive(Subcommand)]
 pub enum IdempotencyNamespaceCommands {
     /// Create idempotency namespace
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  name")]
     Create {
         idempotency_create_namespace_in:
             crate::json::JsonOf<coyote_client::models::IdempotencyCreateNamespaceIn>,
     },
     /// Get idempotency namespace
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  name")]
     Get {
         idempotency_get_namespace_in:
             crate::json::JsonOf<coyote_client::models::IdempotencyGetNamespaceIn>,

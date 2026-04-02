@@ -12,10 +12,14 @@ pub struct KvNamespaceArgs {
 #[derive(Subcommand)]
 pub enum KvNamespaceCommands {
     /// Create KV namespace
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  name")]
     Create {
         kv_create_namespace_in: crate::json::JsonOf<coyote_client::models::KvCreateNamespaceIn>,
     },
     /// Get KV namespace
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  name")]
     Get {
         kv_get_namespace_in: crate::json::JsonOf<coyote_client::models::KvGetNamespaceIn>,
     },

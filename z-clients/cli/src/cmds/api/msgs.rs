@@ -18,6 +18,9 @@ pub enum MsgsCommands {
     Stream(MsgsStreamArgs),
     Topic(MsgsTopicArgs),
     /// Publishes messages to a topic within a namespace.
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  msgs
+  namespace (optional)")]
     Publish {
         topic: String,
         msg_publish_in: crate::json::JsonOf<coyote_client::models::MsgPublishIn>,

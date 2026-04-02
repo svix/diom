@@ -15,15 +15,28 @@ pub struct RateLimitArgs {
 pub enum RateLimitCommands {
     Namespace(RateLimitNamespaceArgs),
     /// Rate Limiter Check and Consume
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  key
+  config — Rate limiter configuration
+  namespace (optional)
+  tokens (optional) — Number of tokens to consume (default: 1)")]
     Limit {
         rate_limit_check_in: crate::json::JsonOf<coyote_client::models::RateLimitCheckIn>,
     },
     /// Rate Limiter Get Remaining
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  key
+  config — Rate limiter configuration
+  namespace (optional)")]
     GetRemaining {
         rate_limit_get_remaining_in:
             crate::json::JsonOf<coyote_client::models::RateLimitGetRemainingIn>,
     },
     /// Rate Limiter Reset
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  key
+  config — Rate limiter configuration
+  namespace (optional)")]
     Reset {
         rate_limit_reset_in: crate::json::JsonOf<coyote_client::models::RateLimitResetIn>,
     },

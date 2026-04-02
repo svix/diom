@@ -12,18 +12,31 @@ pub struct AdminAuthRoleArgs {
 #[derive(Subcommand)]
 pub enum AdminAuthRoleCommands {
     /// Create or update a role
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id
+  description
+  rules (optional)
+  policies (optional)
+  context (optional)")]
     Upsert {
         admin_role_upsert_in: crate::json::JsonOf<coyote_client::models::AdminRoleUpsertIn>,
     },
     /// Delete a role
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id")]
     Delete {
         admin_role_delete_in: crate::json::JsonOf<coyote_client::models::AdminRoleDeleteIn>,
     },
     /// Get a role by ID
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  id")]
     Get {
         admin_role_get_in: crate::json::JsonOf<coyote_client::models::AdminRoleGetIn>,
     },
     /// List all roles
+    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
+  limit (optional) — Limit the number of returned items
+  iterator (optional) — The iterator returned from a prior invocation")]
     List {
         admin_role_list_in: Option<crate::json::JsonOf<coyote_client::models::AdminRoleListIn>>,
     },
