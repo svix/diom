@@ -1,0 +1,160 @@
+name: SDK Integration Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  DIOM_ADMIN_TOKEN: admin_abcdefghijlmnopqrstuvwxyz012345
+
+jobs:
+  build-server:
+    name: Build Server Binary
+    runs-on: ubicloud-standard-4-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ubicloud/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build server binary
+        run: cargo build --release --package diom-server --bin diom-server
+      - uses: actions/upload-artifact@v7
+        with:
+          name: diom-server-binary
+          path: target/release/diom-server
+          retention-days: 1
+
+  test-rust:
+    name: Rust SDK (${{ matrix.rust }})
+    needs: build-server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable, beta]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: diom-server-binary
+          path: /tmp
+      - name: Start Diom server
+        run: scripts/start-diom-server.sh /tmp/diom-server
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Run Rust SDK integration tests
+        run: scripts/test-sdk.sh rust
+      - name: Stop server
+        if: always()
+        run: scripts/stop-diom-server.sh
+
+  test-python:
+    name: Python SDK (${{ matrix.python-version }})
+    needs: build-server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: diom-server-binary
+          path: /tmp
+      - name: Start Diom server
+        run: scripts/start-diom-server.sh /tmp/diom-server
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run Python SDK integration tests
+        run: scripts/test-sdk.sh python
+      - name: Stop server
+        if: always()
+        run: scripts/stop-diom-server.sh
+
+  test-javascript:
+    name: JavaScript SDK (Node ${{ matrix.node-version }})
+    needs: build-server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20', '22']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: diom-server-binary
+          path: /tmp
+      - name: Start Diom server
+        run: scripts/start-diom-server.sh /tmp/diom-server
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Run JavaScript SDK integration tests
+        run: scripts/test-sdk.sh javascript
+      - name: Stop server
+        if: always()
+        run: scripts/stop-diom-server.sh
+
+  # test-go:
+  #   name: Go SDK (${{ matrix.go-version }})
+  #   needs: build-server
+  #   runs-on: ubuntu-24.04
+  #   timeout-minutes: 10
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       go-version: ['1.22', '1.23']
+  #   steps:
+  #     - uses: actions/checkout@v6
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: diom-server-binary
+  #         path: /tmp
+  #     - name: Start Diom server
+  #       run: scripts/start-diom-server.sh /tmp/diom-server
+  #     - uses: actions/setup-go@v5
+  #       with:
+  #         go-version: ${{ matrix.go-version }}
+  #     - name: Run Go SDK integration tests
+  #       run: scripts/test-sdk.sh go
+  #     - name: Stop server
+  #       if: always()
+  #       run: scripts/stop-diom-server.sh
+
+  test-java:
+    name: Java SDK (${{ matrix.java-version }})
+    needs: build-server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: ['8', '11', '17', '21']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: diom-server-binary
+          path: /tmp
+      - name: Start Diom server
+        run: scripts/start-diom-server.sh /tmp/diom-server
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java-version }}
+      - name: Run Java SDK integration tests
+        run: scripts/test-sdk.sh java
+      - name: Stop server
+        if: always()
+        run: scripts/stop-diom-server.sh
