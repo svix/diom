@@ -256,7 +256,7 @@ impl From<WriteType> for Value {
 
 impl From<WriteType> for KeyValue {
     fn from(value: WriteType) -> Self {
-        KeyValue::new("write_ype", value)
+        KeyValue::new("write_type", value)
     }
 }
 
