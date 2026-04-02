@@ -1,10 +1,20 @@
 use std::num::NonZeroU16;
 
-use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
+use crate::{
+    AppState,
+    core::{INTERNAL_NAMESPACE, cluster::RaftState},
+    v1::{
+        endpoints::idempotency::{
+            IdempotencyAbortIn, IdempotencyAbortOut, IdempotencyCompleteIn, IdempotencyCompleteOut,
+            IdempotencyStartIn, IdempotencyStartOut,
+        },
+        utils::openapi_tag,
+    },
+};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_authorization::RequestedOperation;
-use coyote_core::types::DurationMs;
+use coyote_core::types::{DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, OptionExt, Result, ResultExt};
 use coyote_id::Module;
@@ -15,10 +25,10 @@ use coyote_msgs::{
         TopicName, TopicPartition,
     },
     operations::{
-        CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
-        QueueNackOperation, QueueReceiveOperation, QueueRedriveDlqOperation, SeekTarget,
-        StreamCommitOperation, StreamReceiveOperation, StreamSeekOperation,
-        TopicConfigureOperation,
+        CreateNamespaceOperation, PublishOperation, PublishResponseData, QueueAckOperation,
+        QueueConfigureOperation, QueueNackOperation, QueueReceiveOperation,
+        QueueRedriveDlqOperation, SeekTarget, StreamCommitOperation, StreamReceiveOperation,
+        StreamSeekOperation, TopicConfigureOperation,
     },
 };
 use coyote_namespace::entities::NamespaceName;
@@ -140,6 +150,8 @@ async fn get_namespace(
 struct MsgPublishIn {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,
+    #[serde(default)]
+    pub idempotency_key: Option<EntityKey>,
     pub topic: TopicIn,
     pub msgs: Vec<coyote_msgs::entities::MsgIn>,
 }
@@ -158,6 +170,109 @@ struct MsgPublishOut {
     pub topics: Vec<MsgPublishOutTopic>,
 }
 
+impl TryInto<Vec<u8>> for MsgPublishOut {
+    type Error = Error;
+
+    fn try_into(self) -> Result<Vec<u8>> {
+        rmp_serde::to_vec_named(&self)
+            .or_internal_error()
+            .map_err(|e| Error::internal(e.to_string()))
+    }
+}
+
+impl TryFrom<Vec<u8>> for MsgPublishOut {
+    type Error = Error;
+
+    fn try_from(value: Vec<u8>) -> Result<Self> {
+        rmp_serde::from_slice(&value)
+            .or_internal_error()
+            .map_err(|e| Error::internal(e.to_string()))
+    }
+}
+
+fn default_msg_publish_idempotency_ttl() -> DurationMs {
+    DurationMs::from_hours(1)
+}
+
+fn msg_publish_out(response: PublishResponseData) -> MsgPublishOut {
+    MsgPublishOut {
+        topics: response
+            .topics
+            .into_iter()
+            .map(|m| MsgPublishOutTopic {
+                topic: m.topic,
+                start_offset: m.start_offset,
+                offset: m.offset,
+            })
+            .collect(),
+    }
+}
+
+async fn start_msg_publish_idempotency(
+    state: &AppState,
+    key: &EntityKey,
+) -> Result<IdempotencyStartOut> {
+    state
+        .internal_call(
+            "v1.idempotency.start",
+            &IdempotencyStartIn {
+                namespace: Some(INTERNAL_NAMESPACE.to_owned()),
+                key: key.clone(),
+                ttl: default_msg_publish_idempotency_ttl(),
+            },
+        )
+        .await
+        .or_internal_error()
+}
+
+async fn complete_msg_publish_idempotency(
+    state: &AppState,
+    key: &EntityKey,
+    response: &MsgPublishOut,
+) -> Result<()> {
+    let _: IdempotencyCompleteOut = state
+        .internal_call(
+            "v1.idempotency.complete",
+            &IdempotencyCompleteIn {
+                namespace: Some(INTERNAL_NAMESPACE.to_owned()),
+                key: key.clone(),
+                response: response.clone().try_into()?,
+                ttl: default_msg_publish_idempotency_ttl(),
+            },
+        )
+        .await
+        .or_internal_error()?;
+
+    Ok(())
+}
+
+async fn abort_msg_publish_idempotency(state: &AppState, key: &EntityKey) -> Result<()> {
+    let _: IdempotencyAbortOut = state
+        .internal_call(
+            "v1.idempotency.abort",
+            &IdempotencyAbortIn {
+                namespace: Some(INTERNAL_NAMESPACE.to_owned()),
+                key: key.clone(),
+            },
+        )
+        .await
+        .or_internal_error()?;
+
+    Ok(())
+}
+
+async fn do_publish_operation(
+    repl: &RaftState,
+    namespace: &MsgsNamespace,
+    topic: TopicIn,
+    msgs: Vec<coyote_msgs::entities::MsgIn>,
+) -> Result<MsgPublishOut> {
+    let operation = PublishOperation::new(namespace.id, topic, msgs)?;
+    let response = repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(msg_publish_out(response))
+}
+
 /// Publishes messages to a topic within a namespace.
 #[aide_annotate(op_id = "v1.msgs.publish")]
 async fn publish(
@@ -170,20 +285,37 @@ async fn publish(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
-    let response = repl.client_write(operation).await.or_internal_error()?.0?;
+    let Some(idempotency_key) = data.idempotency_key else {
+        let response = do_publish_operation(&repl, &namespace, data.topic, data.msgs).await?;
+        return Ok(MsgPackOrJson(response));
+    };
 
-    Ok(MsgPackOrJson(MsgPublishOut {
-        topics: response
-            .topics
-            .into_iter()
-            .map(|m| MsgPublishOutTopic {
-                topic: m.topic,
-                start_offset: m.start_offset,
-                offset: m.offset,
-            })
-            .collect(),
-    }))
+    match start_msg_publish_idempotency(&state, &idempotency_key).await? {
+        IdempotencyStartOut::Started => {}
+        IdempotencyStartOut::Locked => {
+            return Err(Error::conflict(
+                "A publish request with this idempotency key is already in progress.".to_owned(),
+            ));
+        }
+        IdempotencyStartOut::Completed(completed) => {
+            return Ok(MsgPackOrJson(completed.response.try_into()?));
+        }
+    }
+
+    let response = match do_publish_operation(&repl, &namespace, data.topic, data.msgs).await {
+        Ok(response) => response,
+        Err(err) => {
+            abort_msg_publish_idempotency(&state, &idempotency_key)
+                .await
+                .or_internal_error()?;
+
+            return Err(err);
+        }
+    };
+
+    complete_msg_publish_idempotency(&state, &idempotency_key, &response).await?;
+
+    Ok(MsgPackOrJson(response))
 }
 
 // ---------------------------------------------------------------------------

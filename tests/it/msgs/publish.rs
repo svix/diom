@@ -402,3 +402,136 @@ async fn default_namespace_isolated_from_named() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn publish_returns_cached_response_for_completed_idempotency_key() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-idem" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "my-topic",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let first = client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "idempotency_key": "publish-once",
+            "topic": "my-topic",
+            "msgs": [{ "value": "hello".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let second = client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "idempotency_key": "publish-once",
+            "topic": "my-topic",
+            "msgs": [{ "value": "hello".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(second, first);
+
+    let response = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "my-topic",
+            "consumer_group": "cg1",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(msgs.len(), 1);
+    assert_eq!(msgs[0]["value"], json!("hello".as_bytes()));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn publish_fails_when_idempotency_key_is_locked() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.idempotency.start")
+        .json(json!({
+            "namespace": "_internal",
+            "key": "publish-locked",
+            "ttl_ms": 60_000,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "idempotency_key": "publish-locked",
+            "topic": "my-topic",
+            "msgs": [{ "value": "hello".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::CONFLICT)
+        .json();
+
+    assert_eq!(response["code"], "idempotency_locked");
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn publish_abandons_idempotency_key_when_publish_fails() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "idempotency_key": "publish-retry",
+            "topic": "my-topic~1",
+            "msgs": [{ "value": "hello".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "idempotency_key": "publish-retry",
+            "topic": "my-topic",
+            "msgs": [{ "value": "hello".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    Ok(())
+}

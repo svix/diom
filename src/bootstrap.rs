@@ -192,6 +192,12 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
             name: DEFAULT_NAMESPACE_NAME.to_string(),
         })
     );
+    commands.insert(
+        0,
+        BootstrapCommand::Idempotency(IdempotencyCreateNamespaceIn {
+            name: INTERNAL_NAMESPACE.to_string(),
+        }),
+    );
     ensure_default!(
         Cache,
         BootstrapCommand::Cache(CacheCreateNamespaceIn {
