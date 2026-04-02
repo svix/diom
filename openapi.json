@@ -1537,7 +1537,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.expire": {
@@ -1614,7 +1615,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.delete": {
@@ -1691,7 +1693,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.verify": {
@@ -1768,7 +1771,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.list": {
@@ -1845,7 +1849,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.update": {
@@ -1922,7 +1927,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.rotate": {
@@ -1999,7 +2005,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.namespace.create": {
@@ -2076,7 +2083,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.auth-token.namespace.get": {
@@ -2153,7 +2161,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "x-internal": true
       }
     },
     "/api/v1.cache.set": {

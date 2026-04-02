@@ -6,8 +6,6 @@ mod admin_auth_policy;
 mod admin_auth_role;
 mod admin_auth_token;
 mod admin_cluster;
-mod auth_token;
-mod auth_token_namespace;
 mod cache;
 mod cache_namespace;
 mod health;
@@ -25,21 +23,16 @@ mod rate_limit_namespace;
 
 pub use self::{
     admin::Admin, admin_auth_policy::AdminAuthPolicy, admin_auth_role::AdminAuthRole,
-    admin_auth_token::AdminAuthToken, admin_cluster::AdminCluster, auth_token::AuthToken,
-    auth_token_namespace::AuthTokenNamespace, cache::Cache, cache_namespace::CacheNamespace,
-    health::Health, idempotency::Idempotency, idempotency_namespace::IdempotencyNamespace, kv::Kv,
-    kv_namespace::KvNamespace, msgs::Msgs, msgs_namespace::MsgsNamespace, msgs_queue::MsgsQueue,
-    msgs_stream::MsgsStream, msgs_topic::MsgsTopic, rate_limit::RateLimit,
-    rate_limit_namespace::RateLimitNamespace,
+    admin_auth_token::AdminAuthToken, admin_cluster::AdminCluster, cache::Cache,
+    cache_namespace::CacheNamespace, health::Health, idempotency::Idempotency,
+    idempotency_namespace::IdempotencyNamespace, kv::Kv, kv_namespace::KvNamespace, msgs::Msgs,
+    msgs_namespace::MsgsNamespace, msgs_queue::MsgsQueue, msgs_stream::MsgsStream,
+    msgs_topic::MsgsTopic, rate_limit::RateLimit, rate_limit_namespace::RateLimitNamespace,
 };
 
 impl CoyoteClient {
     pub fn admin(&self) -> Admin<'_> {
         Admin::new(&self.cfg)
-    }
-
-    pub fn auth_token(&self) -> AuthToken<'_> {
-        AuthToken::new(&self.cfg)
     }
 
     pub fn cache(&self) -> Cache<'_> {
