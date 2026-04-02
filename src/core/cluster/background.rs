@@ -66,15 +66,15 @@ struct Tick {
 }
 
 impl Tick {
-    const INTERVAL: Duration = Duration::from_millis(500);
-    const THRESHOLD: jiff::SignedDuration = jiff::SignedDuration::from_millis(200);
+    const CHECK_INTERVAL: Duration = Duration::from_millis(50);
+    const THRESHOLD: jiff::SignedDuration = jiff::SignedDuration::from_millis(250);
 }
 
 impl BackgroundWorker for Tick {
     const NAME: &str = "tick";
 
     async fn run(self) -> BackgroundResult<()> {
-        let mut ticker = tokio::time::interval(Self::INTERVAL);
+        let mut ticker = tokio::time::interval(Self::CHECK_INTERVAL);
         loop {
             let delta = self.handle.time.offset();
             if delta > Self::THRESHOLD {
