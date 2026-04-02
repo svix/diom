@@ -2,7 +2,10 @@
 #![allow(unused_qualifications)]
 
 use k8s_openapi::{
-    api::core::v1::{Affinity, EnvVar, SecretKeySelector, Toleration, TopologySpreadConstraint},
+    api::core::v1::{
+        Affinity, EnvVar, ResourceRequirements, SecretKeySelector, Toleration,
+        TopologySpreadConstraint,
+    },
     apimachinery::pkg::api::resource::Quantity,
 };
 use kube::CustomResource;
@@ -79,7 +82,7 @@ pub(crate) struct DiomClusterSpec {
 
     /// CPU and memory resource requests and limits for the diom container.
     #[serde(default)]
-    pub resources: ResourcesSpec,
+    pub resources: ResourceRequirements,
 
     /// Additional annotations to add to pods.
     #[serde(default)]
@@ -235,20 +238,6 @@ pub(crate) enum AdminTokenSource {
         #[serde(rename = "valueFrom")]
         value_from: SecretKeySelector,
     },
-}
-
-/// CPU and memory resource requests/limits for the diom container.
-/// Values are in standard Kubernetes quantity format, e.g. "500m", "1", "512Mi", "2Gi".
-#[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct ResourcesSpec {
-    /// Resource requests — the minimum guaranteed resources for the container.
-    #[serde(default)]
-    pub requests: Option<BTreeMap<String, String>>,
-
-    /// Resource limits — the maximum resources the container may use.
-    #[serde(default)]
-    pub limits: Option<BTreeMap<String, String>>,
 }
 
 impl DiomClusterSpec {
