@@ -138,21 +138,6 @@ if !out.allowed {
 // Request allowed!
 ```
 
-
-### Allow temporary bursts over the limit
-
-A common use-case with rate-limiting is to allow temporary bursts (that go over the allowed rate-limit), but still enforcing the rate-limit on an ongoing basis.
-
-To achieve it you would want to configure the capacity to the maximum spike capacity, and the refill rate to you wanted limit. For example, if you want to allow for 100 tokens per second with spikes of 200 tokens, you can configure capacity to be 200 and refill rate to 100.
-
-This works because it lets users consume 200 tokens, but the refill happens much more slowly, which means that under load they would be limited to 100 tokens per internal, but if the tokens had enough time to replenish to capacity, they would be able to go over the limit.
-
-Example configuration:
-```rust
-RateLimitTokenBucketConfig::new(200, 100)
-    .with_refill_interval(Duration::from_secs(1));
-```
-
 ### Smoothening rate-limiting (avoiding spikes)
 
 A common issue with rate-limiting implementations is that traffic tends to be very spiky. The tokens are refilled every time an interval passes, which means that under load, most of the requests will happen at the window edges.
