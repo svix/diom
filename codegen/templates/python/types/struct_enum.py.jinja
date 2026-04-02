@@ -1,3 +1,4 @@
+{% from "types/macros.py.jinja" import field_decl -%}
 {% set type_name = type.name | to_upper_camel_case -%}
 import typing as t
 from typing_extensions import Self
@@ -10,7 +11,9 @@ from . {{ c | to_snake_case }} import {{ c | to_upper_camel_case }}
 {%- endfor %}
 
 class {{ type_name }}(BaseModel):
-    {%- include "types/struct_fields.py.jinja" %}
+    {%- for field in type.fields %}
+        {{ field_decl(field) }}
+    {%- endfor %}
     {{ type.discriminator_field }}: t.Union[
     {%- for variant in type.variants %}
         t.Literal["{{ variant.name }}"] {% if not loop.last %},{% endif %}
