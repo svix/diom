@@ -1,7 +1,0 @@
-package coyote_models
-
-// This file is @generated DO NOT EDIT
-
-type AuthTokenVerifyOut struct {
-	Token *AuthTokenOut `msgpack:"token,omitempty"`
-}

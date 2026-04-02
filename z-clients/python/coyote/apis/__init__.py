@@ -4,8 +4,6 @@ from .admin_auth_policy import AdminAuthPolicy, AdminAuthPolicyAsync
 from .admin_auth_role import AdminAuthRole, AdminAuthRoleAsync
 from .admin_auth_token import AdminAuthToken, AdminAuthTokenAsync
 from .admin_cluster import AdminCluster, AdminClusterAsync
-from .auth_token import AuthToken, AuthTokenAsync
-from .auth_token_namespace import AuthTokenNamespace, AuthTokenNamespaceAsync
 from .cache import Cache, CacheAsync
 from .cache_namespace import CacheNamespace, CacheNamespaceAsync
 from .health import Health, HealthAsync
@@ -33,10 +31,6 @@ __all__ = [
     "AdminAuthTokenAsync",
     "AdminCluster",
     "AdminClusterAsync",
-    "AuthToken",
-    "AuthTokenAsync",
-    "AuthTokenNamespace",
-    "AuthTokenNamespaceAsync",
     "Cache",
     "CacheAsync",
     "CacheNamespace",

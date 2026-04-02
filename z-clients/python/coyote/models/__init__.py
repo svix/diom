@@ -29,24 +29,6 @@ from .admin_role_list_in import AdminRoleListIn
 from .admin_role_out import AdminRoleOut
 from .admin_role_upsert_in import AdminRoleUpsertIn
 from .admin_role_upsert_out import AdminRoleUpsertOut
-from .auth_token_create_in import AuthTokenCreateIn
-from .auth_token_create_namespace_in import AuthTokenCreateNamespaceIn
-from .auth_token_create_namespace_out import AuthTokenCreateNamespaceOut
-from .auth_token_create_out import AuthTokenCreateOut
-from .auth_token_delete_in import AuthTokenDeleteIn
-from .auth_token_delete_out import AuthTokenDeleteOut
-from .auth_token_expire_in import AuthTokenExpireIn
-from .auth_token_expire_out import AuthTokenExpireOut
-from .auth_token_get_namespace_in import AuthTokenGetNamespaceIn
-from .auth_token_get_namespace_out import AuthTokenGetNamespaceOut
-from .auth_token_list_in import AuthTokenListIn
-from .auth_token_out import AuthTokenOut
-from .auth_token_rotate_in import AuthTokenRotateIn
-from .auth_token_rotate_out import AuthTokenRotateOut
-from .auth_token_update_in import AuthTokenUpdateIn
-from .auth_token_update_out import AuthTokenUpdateOut
-from .auth_token_verify_in import AuthTokenVerifyIn
-from .auth_token_verify_out import AuthTokenVerifyOut
 from .cache_create_namespace_in import CacheCreateNamespaceIn
 from .cache_create_namespace_out import CacheCreateNamespaceOut
 from .cache_delete_in import CacheDeleteIn
@@ -90,7 +72,6 @@ from .kv_set_out import KvSetOut
 from .list_response_admin_access_policy_out import ListResponseAdminAccessPolicyOut
 from .list_response_admin_auth_token_out import ListResponseAdminAuthTokenOut
 from .list_response_admin_role_out import ListResponseAdminRoleOut
-from .list_response_auth_token_out import ListResponseAuthTokenOut
 from .msg_in import MsgIn
 from .msg_namespace_create_in import MsgNamespaceCreateIn
 from .msg_namespace_create_out import MsgNamespaceCreateOut
@@ -169,24 +150,6 @@ __all__ = [
     "AdminRoleOut",
     "AdminRoleUpsertIn",
     "AdminRoleUpsertOut",
-    "AuthTokenCreateIn",
-    "AuthTokenCreateNamespaceIn",
-    "AuthTokenCreateNamespaceOut",
-    "AuthTokenCreateOut",
-    "AuthTokenDeleteIn",
-    "AuthTokenDeleteOut",
-    "AuthTokenExpireIn",
-    "AuthTokenExpireOut",
-    "AuthTokenGetNamespaceIn",
-    "AuthTokenGetNamespaceOut",
-    "AuthTokenListIn",
-    "AuthTokenOut",
-    "AuthTokenRotateIn",
-    "AuthTokenRotateOut",
-    "AuthTokenUpdateIn",
-    "AuthTokenUpdateOut",
-    "AuthTokenVerifyIn",
-    "AuthTokenVerifyOut",
     "CacheCreateNamespaceIn",
     "CacheCreateNamespaceOut",
     "CacheDeleteIn",
@@ -230,7 +193,6 @@ __all__ = [
     "ListResponseAdminAccessPolicyOut",
     "ListResponseAdminAuthTokenOut",
     "ListResponseAdminRoleOut",
-    "ListResponseAuthTokenOut",
     "MsgIn",
     "MsgNamespaceCreateIn",
     "MsgNamespaceCreateOut",

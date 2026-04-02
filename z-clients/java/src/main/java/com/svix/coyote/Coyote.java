@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.svix.coyote.apis.Admin;
-import com.svix.coyote.apis.AuthToken;
 import com.svix.coyote.apis.Cache;
 import com.svix.coyote.apis.Health;
 import com.svix.coyote.apis.Idempotency;
@@ -42,10 +41,6 @@ public class Coyote {
 
     public Admin getAdmin() {
         return new Admin(this.httpClient);
-    }
-
-    public AuthToken getAuthToken() {
-        return new AuthToken(this.httpClient);
     }
 
     public Cache getCache() {
