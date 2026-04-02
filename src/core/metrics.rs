@@ -201,7 +201,7 @@ impl LogMetrics {
                 .with_description("Raft log append operation batch sizes")
                 .build(),
             append_latency: meter
-                .u64_histogram("diom.raft.log.append_lateancy")
+                .u64_histogram("diom.raft.log.append_latency")
                 .with_description("Raft log append operation latency")
                 .build(),
             read_operations: meter
