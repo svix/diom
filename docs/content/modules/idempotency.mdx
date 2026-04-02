@@ -24,18 +24,18 @@ let idem_key = hasher.finalize().to_base64()
 
 ### Idempotency request flow
 
-Each idempotency flow starts with `idempotency.start` which indicates to Coyote that a request has been initiated.
+Each idempotency flow starts with `idempotency.start`, which indicates to Coyote that a request has been initiated.
 
 This request returns one of three values:
 * `Started`: indicating that the idempotency lock has been acquired and we should continue with processing the request.
 * `Completed`: indicating that a request with the same key has previously completed and we shouldn't process it again.
 * `Locked`: a request with the same idempotency key is currently in progress and we should hold the request and try again in a moment.
 
-Under normal operations your requests would call `idempotency.start` get back `Started` to indicate the request can start, and once done call `idempotency.complete` to indicate the request has processed. Any subsequent requests with the same key would immediately get `Completed` which would let you immediately return from the API indicating that the request has already been processed.
+Under normal operations your requests would call `idempotency.start`, get back `Started` to indicate the request can start, and once done call `idempotency.complete` to indicate the request has processed. Any subsequent requests with the same key would immediately get `Completed` which would let you immediately return from the API indicating that the request has already been processed.
 
 There is one scenario that requires more care, which is the `Locked` state. This indicates that there's a concurrent request with the same idempotency key that's still being processed. Because we don't yet know whether the concurrent request would finish successfully or not, we can't respond with an indication that the request is already being processed. Because if the concurrent request will fail, we want to make sure it's retried. Implementations usually go with one of two options here: (1) calling `idempotency.start` in a loop inside the API to see whether the other request would end, or (2) immediately return with an error code indicating that the request should be retried after a timeout.
 
-Please note, that in HTTP APIs idempotency keys are generally only used with POST requests, as GET and DELETE are considered idempotent. Whether to use idempotency with PUT and PATCH is usually implementation specific.
+Please note that in HTTP APIs idempotency keys are generally only used with POST requests, as GET and DELETE are considered idempotent. Whether to use idempotency with PUT and PATCH is usually implementation specific.
 
 
 ## Starting a request (`idempotency.start`)
@@ -85,7 +85,7 @@ match client.idempotency()
 
 ## Marking a request successful (`idempotency.complete`)
 
-As demonstrated in the previous example once a request has been successfully processed we should mark it as successful by calling the `idempotency.complete` call.
+As demonstrated in the previous example, once a request has been successfully processed we should mark it as successful by calling the `idempotency.complete` call.
 
 Copying the example here for completeness:
 ```rust
@@ -118,7 +118,7 @@ Here are a few examples of common use-cases when implementing idempotency in an 
 
 A common pattern is to implement idempotency as a middleware instead of manually implementing it in each route.
 
-Here is how such a middleware implementation my look like. The function `next()` is responsible to call the next middleware in the chain:
+Here is how such a middleware implementation may look like. The function `next()` is responsible to call the next middleware in the chain:
 
 ```rust
 fn middleware() {
@@ -169,4 +169,4 @@ The alternative is to return a `409 (Conflict)` HTTP status code, indicating a c
 
 ### Storing headers, response status codes, etc.
 
-For simplicity, the examples above only showed how to store the response body for successful idempotency requests. Though you can use the response field in `idempotency.complete` to also store the response headers and status code of the original request. Making sure you return exactly the same response in case your API utilizes those.
+For simplicity, the examples above only showed how to store the response body for successful idempotency requests. But you can also use the response field in `idempotency.complete` to store the response headers and status code of the original request, making sure you return exactly the same response in case your API utilizes those.
