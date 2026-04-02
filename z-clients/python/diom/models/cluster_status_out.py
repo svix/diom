@@ -2,7 +2,7 @@
 import typing as t
 from datetime import datetime
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 from .node_status_out import NodeStatusOut
 from .server_state import ServerState

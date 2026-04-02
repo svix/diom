@@ -5,8 +5,8 @@ import typing as t
 import msgpack
 import uuid
 import httpx
+from pydantic import BaseModel
 
-from .base_model import BaseModel
 from .http_client import AuthenticatedHttpClient
 from .errors.http_error import HttpError
 from .errors.http_validation_error import HttpValidationError

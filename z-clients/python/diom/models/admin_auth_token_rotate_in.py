@@ -1,6 +1,6 @@
 # this file is @generated
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class AdminAuthTokenRotateIn(BaseModel):
