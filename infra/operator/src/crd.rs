@@ -1,14 +1,14 @@
 // schemars schema_with proc macro expansion triggers a false positive for this lint
 #![allow(unused_qualifications)]
 
-use std::collections::BTreeMap;
-
-use k8s_openapi::api::core::v1::{
-    Affinity, EnvVar, SecretKeySelector, Toleration, TopologySpreadConstraint,
+use k8s_openapi::{
+    api::core::v1::{Affinity, EnvVar, SecretKeySelector, Toleration, TopologySpreadConstraint},
+    apimachinery::pkg::api::resource::Quantity,
 };
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 pub(crate) const DEFAULT_API_PORT: u16 = 8080;
 
@@ -131,8 +131,8 @@ pub(crate) struct StorageSpec {
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct VolumeSpec {
-    /// Storage size in Kubernetes Quantity format, e.g. "10Gi".
-    pub size: String,
+    /// Storage size, e.g. "10Gi".
+    pub size: Quantity,
 
     /// Storage class name. Uses the cluster default if not specified.
     #[serde(default)]
