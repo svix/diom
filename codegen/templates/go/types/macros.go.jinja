@@ -1,4 +1,4 @@
-{% for field in type.fields -%}
+{% macro field_decl(field) -%}
 	{% set f_name = field.name | to_upper_camel_case -%}
 	{% set f_type = field.type.to_go() -%}
 	{% set extra_annotation = "" -%}
@@ -15,4 +15,4 @@
 	{%- if field.description is defined and "\n" not in field.description -%}
 	{{ field.description | to_doc_comment(style="go") }}
 	{%- endif %}
-{% endfor -%}
+{%- endmacro -%}
