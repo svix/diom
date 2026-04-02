@@ -20,6 +20,15 @@ fn default_nodes() -> i32 {
     1
 }
 
+fn default_topology_spread_constraints() -> Vec<TopologySpreadConstraint> {
+    vec![TopologySpreadConstraint {
+        max_skew: 1,
+        topology_key: "topology.kubernetes.io/zone".into(),
+        when_unsatisfiable: "ScheduleAnyway".into(),
+        ..Default::default()
+    }]
+}
+
 /// A Coyote cluster deployment.
 #[derive(CustomResource, Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -83,9 +92,14 @@ pub(crate) struct CoyoteClusterSpec {
     pub bootstrap: Option<String>,
 
     /// Topology spread constraints for pod scheduling.
-    /// Use this to spread pods across availability zones or nodes.
+    ///
+    /// Defaults to (topology.kubernetes.io/zone, ScheduleAnyway, maxSkew=1).
+    /// The operator automatically injects the cluster's pod labelSelector on any
+    /// constraint that omits it, so you don't need to specify it yourself.
+    /// Set to `[]` to opt out of all spreading.
+    ///
     /// See: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
-    #[serde(default)]
+    #[serde(default = "default_topology_spread_constraints")]
     pub topology_spread_constraints: Vec<TopologySpreadConstraint>,
 
     /// Node selector for scheduling pods onto nodes with matching labels.
