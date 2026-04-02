@@ -65,17 +65,23 @@ struct Tick {
     handle: RaftState,
 }
 
+impl Tick {
+    const INTERVAL: Duration = Duration::from_millis(500);
+    const THRESHOLD: jiff::SignedDuration = jiff::SignedDuration::from_millis(200);
+}
+
 impl BackgroundWorker for Tick {
     const NAME: &str = "tick";
 
     async fn run(self) -> BackgroundResult<()> {
-        let mut ticker = tokio::time::interval(Duration::from_secs(10));
+        let mut ticker = tokio::time::interval(Self::INTERVAL);
         loop {
-            // TODO: only do this if there haven't been any other
-            // writes recently
-            tracing::trace!("recording a no-op event");
-            let op = TickOperation {};
-            self.handle.write_request(op).await?;
+            let delta = self.handle.time.offset();
+            if delta > Self::THRESHOLD {
+                tracing::warn!("recording a no-op event");
+                let op = TickOperation {};
+                self.handle.write_request(op).await?;
+            }
             ticker.tick().await;
         }
     }
