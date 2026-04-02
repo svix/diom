@@ -388,6 +388,13 @@ impl Store {
     async fn delete_unused_snapshots(&self, keep_path: &Path) -> anyhow::Result<()> {
         tracing::debug!("cleaning up unused snapshots");
         let mut dents = tokio::fs::read_dir(&self.snapshot_directory).await?;
+        let last_file_name = {
+            let handle = self.last_snapshot.read();
+            handle
+                .as_ref()
+                .and_then(|s| s.path.file_name())
+                .map(|s| s.to_owned())
+        };
         while let Some(dent) = dents.next_entry().await? {
             if let Some(preserve_path) = keep_path.file_name() {
                 if dent.file_name() == preserve_path {
@@ -396,6 +403,12 @@ impl Store {
                 }
             } else {
                 tracing::warn!(path=?keep_path, "very weird snapshot path");
+            }
+            if let Some(preserve_name) = &last_file_name
+                && dent.file_name() == *preserve_name
+            {
+                tracing::trace!(filename=?dent.file_name(), "preserving last_snapshot");
+                continue;
             }
             tracing::debug!(filename=?dent.file_name(), "deleting unused snapshot");
             tokio::fs::remove_file(dent.path()).await?;
@@ -420,12 +433,16 @@ impl Store {
             serialized_state_machine::load_from_file(&stores.databases, &mut f)
         })
         .await??;
+        // load the embedded information from the metadata table in the snapshot
+        self.load_information().await?;
+        // overwrite any last_log_id and membership in the snapshot with the ones the leader told us
         self.last_applied_log_id = meta.last_log_id;
         self.last_membership = meta.last_membership.clone();
         self.record_ids_().await?;
-        self.delete_unused_snapshots(snapshot.path.as_path())
-            .await?;
+        // clean up the snapshot directory
         self.set_last_snapshot_(meta.clone(), snapshot.path.clone())
+            .await?;
+        self.delete_unused_snapshots(snapshot.path.as_path())
             .await?;
         Ok(())
     }

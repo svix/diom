@@ -178,7 +178,10 @@ impl DatabaseConfig {
         fjall::Database::builder(path)
             .cache_size(Self::default_cache_size())
             .open()
-            .map_err(|e| e.into())
+            .map_err(|err| {
+                tracing::error!(?err, "error building database");
+                err.into()
+            })
     }
 
     pub fn persistent(db_config: &DatabaseConfig) -> Result<fjall::Database> {
