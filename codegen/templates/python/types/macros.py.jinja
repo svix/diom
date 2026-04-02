@@ -1,4 +1,4 @@
-{% for field in type.fields %}
+{% macro field_decl(field) %}
     {%- if field.required and not field.nullable %}
         {%- if field.name | to_lower_camel_case != field.name %}
     {{ field.name | to_snake_case }}: {{ field.type.to_python() }} = Field(alias="{{ field.name }}")
@@ -21,4 +21,4 @@
     {%- if field.description is defined %}
     {{ field.description | to_doc_comment(style="python") | indent(4) }}
     {%- endif %}
-{% endfor %}
+{% endmacro %}
