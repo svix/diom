@@ -263,24 +263,20 @@ impl KvController {
                 }
             }
 
+            let Some(current) = current else {
+                return Ok(false);
+            };
+
             let db = db.lock("kvcontroller::delete");
+            let mut batch = db.batch();
 
-            if let Some(data) = KvPairRow::fetch(&keyspace, KvPairRow::key_for(namespace_id, key))?
-            {
-                let mut batch = db.batch();
-
-                // Delete from the expiration keyspace
-                if let Some(expiry) = data.expiry {
-                    batch
-                        .remove_row(&keyspace, ExpirationRow::key_for(namespace_id, expiry, key))?;
-                }
-                batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, key))?;
-
-                batch.commit()?;
-                Ok(true)
-            } else {
-                Ok(false)
+            if let Some(expiry) = current.expiry {
+                batch.remove_row(&keyspace, ExpirationRow::key_for(namespace_id, expiry, key))?;
             }
+            batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, key))?;
+
+            batch.commit()?;
+            Ok(true)
         })
         .await?
     }
