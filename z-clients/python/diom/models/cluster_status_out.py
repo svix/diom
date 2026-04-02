@@ -9,12 +9,12 @@ from .server_state import ServerState
 
 
 class ClusterStatusOut(BaseModel):
-    cluster_id: t.Optional[str] = None
+    cluster_id: str | None = None
     """The unique ID of this cluster.
 
     This value is populated on cluster initialization and will never change."""
 
-    cluster_name: t.Optional[str] = None
+    cluster_name: str | None = None
     """The name of this cluster (as defined in the config)
 
     This value is not replicated and should only be used for debugging."""
@@ -28,7 +28,7 @@ class ClusterStatusOut(BaseModel):
     this_node_last_committed_timestamp: datetime
     """The timestamp of the last transaction committed on this node"""
 
-    this_node_last_snapshot_id: t.Optional[str] = None
+    this_node_last_snapshot_id: str | None = None
     """The last snapshot taken on this node"""
 
     nodes: t.List[NodeStatusOut]

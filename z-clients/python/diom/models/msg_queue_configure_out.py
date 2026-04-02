@@ -7,4 +7,4 @@ from pydantic import BaseModel
 class MsgQueueConfigureOut(BaseModel):
     retry_schedule: t.List[int]
 
-    dlq_topic: t.Optional[str] = None
+    dlq_topic: str | None = None

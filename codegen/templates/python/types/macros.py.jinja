@@ -5,9 +5,9 @@
     {%- if field.required and not field.nullable %}
     {{ field.name | to_snake_case }}: {{ field.type.to_python() }}
     {%- elif field.required and field.nullable %}
-    {{ field.name | to_snake_case }}: t.Optional[{{ field.type.to_python() }}]
+    {{ field.name | to_snake_case }}: {{ field.type.to_python() }} | None
     {%- else %}
-    {{ field.name | to_snake_case }}: t.Optional[{{ field.type.to_python() }}] = None
+    {{ field.name | to_snake_case }}: {{ field.type.to_python() }} | None = None
     {%- endif %}
     {%- if field.description is defined %}
     {{ field.description | to_doc_comment(style="python") | indent(4) }}

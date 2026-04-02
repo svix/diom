@@ -1,12 +1,11 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
 
 class AdminAccessPolicyListIn(BaseModel):
-    limit: t.Optional[int] = None
+    limit: int | None = None
     """Limit the number of returned items"""
 
-    iterator: t.Optional[str] = None
+    iterator: str | None = None
     """The iterator returned from a prior invocation"""

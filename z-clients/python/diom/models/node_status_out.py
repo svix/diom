@@ -1,5 +1,4 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
@@ -18,8 +17,8 @@ class NodeStatusOut(BaseModel):
     state: ServerState
     """The last known state of this node"""
 
-    last_committed_log_index: t.Optional[int] = None
+    last_committed_log_index: int | None = None
     """The index of the last log applied on this node"""
 
-    last_committed_term: t.Optional[int] = None
+    last_committed_term: int | None = None
     """The raft term of the last committed leadership"""

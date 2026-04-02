@@ -9,8 +9,8 @@ from .admin_role_out import AdminRoleOut
 class ListResponseAdminRoleOut(BaseModel):
     data: t.List[AdminRoleOut]
 
-    iterator: t.Optional[str] = None
+    iterator: str | None = None
 
-    prev_iterator: t.Optional[str] = None
+    prev_iterator: str | None = None
 
     done: bool

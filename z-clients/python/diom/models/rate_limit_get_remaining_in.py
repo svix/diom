@@ -1,5 +1,4 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
@@ -7,7 +6,7 @@ from .rate_limit_token_bucket_config import RateLimitTokenBucketConfig
 
 
 class RateLimitGetRemainingIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str
 

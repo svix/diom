@@ -1,5 +1,4 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
@@ -7,5 +6,5 @@ from pydantic import BaseModel
 class AdminAuthTokenExpireIn(BaseModel):
     id: str
 
-    expiry_ms: t.Optional[int] = None
+    expiry_ms: int | None = None
     """Milliseconds from now until the token expires. `None` means expire immediately."""

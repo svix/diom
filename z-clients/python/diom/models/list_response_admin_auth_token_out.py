@@ -9,8 +9,8 @@ from .admin_auth_token_out import AdminAuthTokenOut
 class ListResponseAdminAuthTokenOut(BaseModel):
     data: t.List[AdminAuthTokenOut]
 
-    iterator: t.Optional[str] = None
+    iterator: str | None = None
 
-    prev_iterator: t.Optional[str] = None
+    prev_iterator: str | None = None
 
     done: bool

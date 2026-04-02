@@ -9,8 +9,8 @@ from .admin_access_policy_out import AdminAccessPolicyOut
 class ListResponseAdminAccessPolicyOut(BaseModel):
     data: t.List[AdminAccessPolicyOut]
 
-    iterator: t.Optional[str] = None
+    iterator: str | None = None
 
-    prev_iterator: t.Optional[str] = None
+    prev_iterator: str | None = None
 
     done: bool

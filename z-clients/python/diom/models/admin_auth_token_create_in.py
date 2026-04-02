@@ -1,5 +1,4 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
@@ -9,8 +8,8 @@ class AdminAuthTokenCreateIn(BaseModel):
 
     role: str
 
-    expiry_ms: t.Optional[int] = None
+    expiry_ms: int | None = None
     """Milliseconds from now until the token expires."""
 
-    enabled: t.Optional[bool] = None
+    enabled: bool | None = None
     """Whether the token is enabled. Defaults to `true`."""

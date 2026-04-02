@@ -1,15 +1,14 @@
 # this file is @generated
-import typing as t
 
 from pydantic import BaseModel
 
 
 class MsgQueueRedriveDlqIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
 
 class _MsgQueueRedriveDlqIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     topic: str
 
