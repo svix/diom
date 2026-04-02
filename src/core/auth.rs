@@ -23,6 +23,7 @@ use coyote_admin_auth::State as AdminAuthState;
 use coyote_error::{Error, ResultExt};
 
 const AUTH_TOKEN_CACHE_TTL: Duration = Duration::from_secs(1);
+const RULES_CACHE_TTL: Duration = Duration::from_secs(5);
 
 pub(crate) use coyote_core::fifo_cache::FifoCache;
 
@@ -139,6 +140,15 @@ async fn authorization_inner(
 }
 
 async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<[AccessRule]>> {
+    if let Some(cached) = state
+        .rules_cache
+        .read()
+        .get(role_id.as_str(), RULES_CACHE_TTL)
+        .cloned()
+    {
+        return Ok(cached);
+    }
+
     let admin_auth = AdminAuthState::init(state.do_not_use_dbs.clone()).or_internal_error()?;
 
     let Some(role) = admin_auth
@@ -162,5 +172,10 @@ async fn resolve_access_rules(state: &AppState, role_id: &RoleId) -> Result<Arc<
         }
     }
 
-    Ok(rules.into())
+    let rules: Arc<[AccessRule]> = rules.into();
+    state
+        .rules_cache
+        .write()
+        .put(role_id.to_string(), rules.clone());
+    Ok(rules)
 }

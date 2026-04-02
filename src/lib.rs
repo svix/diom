@@ -22,7 +22,7 @@ use axum::{
     response::IntoResponse as _,
     serve::{Listener, ListenerExt as _},
 };
-use coyote_authorization::Permissions;
+use coyote_authorization::{AccessRule, Permissions};
 use coyote_core::Monotime;
 use coyote_error::Error;
 use coyote_msgs::TopicPublishNotifier;
@@ -103,6 +103,7 @@ pub struct AppState {
     internal_client: InternalClient,
 
     pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
+    pub(crate) rules_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Arc<[AccessRule]>>>>,
 
     pub(crate) time: Monotime,
 
@@ -256,6 +257,7 @@ impl AppState {
 
         let auth_token_cache =
             Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(10_000)));
+        let rules_cache = Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(1_000)));
 
         AppState {
             cfg,
@@ -265,6 +267,7 @@ impl AppState {
             meter,
             internal_client,
             auth_token_cache,
+            rules_cache,
             time,
             topic_publish_notifier: TopicPublishNotifier::new(),
         }
