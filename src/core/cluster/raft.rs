@@ -89,7 +89,11 @@ pub async fn initialize_raft(
         election_timeout_min: cfg.cluster.election_timeout_min.as_millis() as u64,
         election_timeout_max: cfg.cluster.election_timeout_max.as_millis() as u64,
         cluster_name: cfg.cluster.name.clone(),
+
+        replication_lag_threshold: cfg.cluster.replication_lag_threshold,
+
         snapshot_policy: openraft::SnapshotPolicy::Never,
+
         // we're using the v1 version of snapshot sending for now
         #[allow(deprecated)]
         send_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis() as u64,
