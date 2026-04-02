@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   workflow_call:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 env:
   COYOTE_ADMIN_TOKEN: admin_abcdefghijlmnopqrstuvwxyz012345
 
