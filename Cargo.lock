@@ -1342,6 +1342,8 @@ dependencies = [
  "coyote-core",
  "coyote-error",
  "coyote-id",
+ "coyote-idempotency",
+ "coyote-kv",
  "coyote-namespace",
  "coyote-operations",
  "fjall",

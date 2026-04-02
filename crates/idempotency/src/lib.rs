@@ -9,6 +9,7 @@
 //! ## TODO FIXME
 //! - The API probably needs changing.
 
+mod controller;
 pub mod operations;
 
 use std::time::Duration;
@@ -22,6 +23,7 @@ use fjall_utils::Databases;
 use serde::{Deserialize, Serialize};
 
 pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
+pub use crate::controller::IdempotencyController;
 
 const IDEMPOTENCY_KEYSPACE: &str = "mod_idempotency";
 
@@ -56,17 +58,20 @@ impl From<Vec<u8>> for IdempotencyState {
 
 #[derive(Clone)]
 pub struct State {
-    controller: KvController,
+    controller: IdempotencyController,
 }
 
 impl State {
     pub fn init(dbs: Databases) -> Result<Self> {
         Ok(Self {
-            controller: KvController::new(dbs.persistent, IDEMPOTENCY_KEYSPACE),
+            controller: IdempotencyController::new(KvController::new(
+                dbs.persistent,
+                IDEMPOTENCY_KEYSPACE,
+            )),
         })
     }
 
-    pub fn controller(&self) -> &KvController {
+    pub(crate) fn controller(&self) -> &IdempotencyController {
         &self.controller
     }
 }

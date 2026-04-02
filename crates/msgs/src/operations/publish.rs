@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 
-use coyote_core::task::spawn_blocking_in_current_span;
+use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use coyote_error::{Error, Result};
 use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
+use coyote_idempotency::IdempotencyStartResult;
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -23,10 +24,20 @@ pub struct PublishOperation {
     partition: Option<Partition>,
     msgs: Vec<MsgIn>,
     topic_id_random_bytes: UuidV7RandomBytes,
+    idempotency_key: Option<String>,
+}
+
+fn idempotency_ttl() -> DurationMs {
+    DurationMs::from_hours(24)
 }
 
 impl PublishOperation {
-    pub fn new(namespace_id: NamespaceId, topic: TopicIn, msgs: Vec<MsgIn>) -> Result<Self> {
+    pub fn new(
+        namespace_id: NamespaceId,
+        topic: TopicIn,
+        msgs: Vec<MsgIn>,
+        idempotency_key: Option<String>,
+    ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => {
                 if msgs.iter().any(|m| m.key.is_some()) {
@@ -45,23 +56,96 @@ impl PublishOperation {
             partition,
             msgs,
             topic_id_random_bytes: UuidV7RandomBytes::new_random(),
+            idempotency_key,
         })
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<PublishResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: Timestamp,
+        log_index: u64,
+    ) -> Result<PublishResponseData> {
         let state = state.clone();
+        let namespace_id = self.namespace_id;
+        let idempotency_key = self.idempotency_key.clone();
+
+        if let Some(response) = self
+            .try_start_idempotency(&state, now, log_index)
+            .await?
+        {
+            return Ok(response);
+        }
+
+        let response = match self.publish(state.clone(), now).await {
+            Ok(response) => response,
+            Err(error) => {
+                abort_idempotency(&state, namespace_id, idempotency_key.as_deref(), &error).await;
+                return Err(error);
+            }
+        };
+
+        complete_idempotency(&state, namespace_id, idempotency_key, &response, now, log_index)
+            .await?;
+
+        Ok(response)
+    }
+
+    async fn try_start_idempotency(
+        &self,
+        state: &State,
+        now: Timestamp,
+        log_index: u64,
+    ) -> Result<Option<PublishResponseData>> {
+        let Some(key) = self.idempotency_key.as_ref() else {
+            return Ok(None);
+        };
+
+        match state
+            .idempotency
+            .try_start(
+                self.namespace_id,
+                key.clone(),
+                idempotency_ttl(),
+                now,
+                log_index,
+            )
+            .await?
+        {
+            IdempotencyStartResult::Started => Ok(None),
+            IdempotencyStartResult::Locked => Err(Error::conflict(
+                "idempotency key is already in progress",
+            )),
+            IdempotencyStartResult::Completed { response } => {
+                let response = rmp_serde::from_slice(&response).map_err(|e| {
+                    Error::internal(format!("invalid cached publish response: {e}"))
+                })?;
+                Ok(Some(response))
+            }
+        }
+    }
+
+    async fn publish(self, state: State, now: Timestamp) -> Result<PublishResponseData> {
+        let PublishOperation {
+            namespace_id,
+            topic,
+            partition,
+            msgs,
+            topic_id_random_bytes,
+            ..
+        } = self;
 
         let results = spawn_blocking_in_current_span(move || {
-            let bytes: u64 = self.msgs.iter().map(|m| m.value.len() as u64).sum();
+            let bytes: u64 = msgs.iter().map(|m| m.value.len() as u64).sum();
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicRow::key_for(namespace_id, &topic),
             )?;
             let mut batch = state.db.batch();
 
-            let topic_row = match (topic_row, self.partition) {
+            let topic_row = match (topic_row, partition) {
                 (Some(row), Some(partition)) if (0..row.partitions).contains(&partition.get()) => {
                     row
                 }
@@ -73,10 +157,10 @@ impl PublishOperation {
                     return Err(Error::invalid_user_input("topic does not exist"));
                 }
                 (None, None) => {
-                    let row = TopicRow::new(self.topic.clone(), now, self.topic_id_random_bytes);
+                    let row = TopicRow::new(topic.clone(), now, topic_id_random_bytes);
                     batch.insert_row(
                         &state.metadata_tables,
-                        TopicRow::key_for(self.namespace_id, &self.topic),
+                        TopicRow::key_for(namespace_id, &topic),
                         &row,
                     )?;
                     row
@@ -85,13 +169,12 @@ impl PublishOperation {
 
             Span::current().record("partition_count", topic_row.partitions);
 
-            let msgs_by_partition =
-                group_msgs_by_partition(self.msgs, self.partition, topic_row.partitions);
+            let msgs_by_partition = group_msgs_by_partition(msgs, partition, topic_row.partitions);
 
             let results = write_msg_batch(
                 &mut batch,
                 &state.msg_table,
-                &self.topic,
+                &topic,
                 topic_row.id,
                 msgs_by_partition,
                 now,
@@ -103,25 +186,72 @@ impl PublishOperation {
                 .iter()
                 .map(|r| r.offset.saturating_sub(r.start_offset))
                 .sum();
-            state
-                .metrics
-                .record_published(&self.topic, msg_count, bytes);
+            state.metrics.record_published(&topic, msg_count, bytes);
 
             for published in &results {
                 let count = published.offset.saturating_sub(published.start_offset);
                 state.topic_publish_notifier.notify_published(
-                    self.namespace_id,
+                    namespace_id,
                     published.topic.topic.clone(),
                     published.topic.partition,
                     count,
                 );
             }
 
-            Ok::<_, Error>(results)
+            Ok::<_, Error>(PublishResponseData { topics: results })
         })
-        .await??;
+        .await
+        .map_err(Error::from)??;
 
-        Ok(PublishResponseData { topics: results })
+        Ok(results)
+    }
+}
+
+async fn complete_idempotency(
+    state: &State,
+    namespace_id: NamespaceId,
+    idempotency_key: Option<String>,
+    response: &PublishResponseData,
+    now: Timestamp,
+    log_index: u64,
+) -> Result<()> {
+    let Some(key) = idempotency_key else {
+        return Ok(());
+    };
+
+    let serialized_response = rmp_serde::to_vec_named(response)
+        .map_err(|e| Error::internal(format!("failed to serialize publish response: {e}")))?;
+
+    state
+        .idempotency
+        .complete(
+            namespace_id,
+            key,
+            serialized_response,
+            idempotency_ttl(),
+            now,
+            log_index,
+        )
+        .await
+}
+
+async fn abort_idempotency(
+    state: &State,
+    namespace_id: NamespaceId,
+    idempotency_key: Option<&str>,
+    original_error: &Error,
+) {
+    let Some(key) = idempotency_key else {
+        return;
+    };
+
+    if let Err(abort_error) = state.idempotency.abort(namespace_id, key.to_owned()).await {
+        tracing::warn!(
+            error = %abort_error,
+            idempotency_key = key,
+            original_error = %original_error,
+            "failed to abort publish idempotency after publish error"
+        );
     }
 }
 
@@ -145,7 +275,7 @@ impl MsgsRequest for PublishOperation {
         state: MsgsRaftState<'_>,
         ctx: &coyote_operations::OpContext,
     ) -> PublishResponse {
-        PublishResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
+        PublishResponse::new(self.apply_real(state.msgs, ctx.timestamp, ctx.log_index).await)
     }
 }
 

@@ -402,3 +402,61 @@ async fn default_namespace_isolated_from_named() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn publish_with_idempotency_key_replays_cached_response() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-idem" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let first = client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "idem-topic",
+            "idempotency_key": "req-123",
+            "msgs": [{ "value": "hello".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let second = client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "idem-topic",
+            "idempotency_key": "req-123",
+            "msgs": [{ "value": "hello".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(second, first);
+
+    let received = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "idem-topic",
+            "consumer_group": "cg1",
+            "batch_size": 10,
+            "default_starting_position": "earliest",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(received["msgs"].assert_array().len(), 1);
+
+    Ok(())
+}

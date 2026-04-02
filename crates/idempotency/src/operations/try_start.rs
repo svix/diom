@@ -1,9 +1,8 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
-use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
+use crate::{IdempotencyNamespace, IdempotencyStartResult};
 use coyote_core::types::DurationMs;
 use coyote_error::Result;
 use coyote_id::NamespaceId;
-use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -37,44 +36,13 @@ impl TryStartOperation {
         now: Timestamp,
         log_index: u64,
     ) -> Result<TryStartResponseData> {
-        let expiry = now + self.ttl;
+        let result = state
+            .state
+            .controller()
+            .try_start(self.namespace_id, self.key, self.ttl, now, log_index)
+            .await?;
 
-        let controller = state.state.controller();
-
-        match controller
-            .fetch(self.namespace_id, self.key.clone(), now)
-            .await?
-        {
-            None => {
-                controller
-                    .set(
-                        self.namespace_id,
-                        self.key,
-                        KvModelIn {
-                            value: IdempotencyState::InProgress.into(),
-                            expiry: Some(expiry),
-                            version: None,
-                        },
-                        OperationBehavior::Insert,
-                        now,
-                        log_index,
-                    )
-                    .await?;
-                Ok(TryStartResponseData {
-                    result: IdempotencyStartResult::Started,
-                })
-            }
-            Some(kv_model) => {
-                let idem_state: IdempotencyState = kv_model.value.into();
-                let result = match idem_state {
-                    IdempotencyState::InProgress => IdempotencyStartResult::Locked,
-                    IdempotencyState::Completed { response } => {
-                        IdempotencyStartResult::Completed { response }
-                    }
-                };
-                Ok(TryStartResponseData { result })
-            }
-        }
+        Ok(TryStartResponseData { result })
     }
 }
 

@@ -142,6 +142,8 @@ struct MsgPublishIn {
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub msgs: Vec<coyote_msgs::entities::MsgIn>,
+    #[serde(default)]
+    pub idempotency_key: Option<String>,
 }
 
 request_input!(MsgPublishIn, "publish");
@@ -170,7 +172,8 @@ async fn publish(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
+    let operation =
+        PublishOperation::new(namespace.id, data.topic, data.msgs, data.idempotency_key)?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgPublishOut {

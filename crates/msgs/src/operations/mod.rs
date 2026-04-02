@@ -70,6 +70,7 @@ mod tests {
             NamespaceId::nil(),
             TopicIn::TopicName(TopicName::new("my-topic".to_string()).unwrap()),
             vec![],
+            None,
         )
         .unwrap();
         assert_eq!(MsgsOperation::Publish(op).key_name(), "my-topic");
