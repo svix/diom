@@ -254,7 +254,7 @@ pub(crate) fn load_from_file<F: Read + Seek>(dbs: &Databases, f: &mut F) -> anyh
                 "deserializing a keyspace"
             );
             let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
-            deserialize_keyspace(&mut z, &db, &keyspace, chunks)?;
+            deserialize_keyspace(&mut z, db, &keyspace, chunks)?;
             db.persist(fjall::PersistMode::SyncAll)?;
         }
     }
