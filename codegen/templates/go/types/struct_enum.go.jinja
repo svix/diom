@@ -1,3 +1,4 @@
+{% from "types/macros.go.jinja" import field_decl -%}
 {% set ty_name = type.name | to_upper_camel_case -%}
 {% set discriminator_field = type.discriminator_field | to_upper_camel_case -%}
 {% set content_field = type.content_field | to_upper_camel_case -%}
@@ -25,7 +26,9 @@ import (
 // - {% for v in vars %}"{{ v.name }}"{% if not loop.last %},{% endif %}{% endfor %}: {{ use_type }}
 {%- endfor -%}
 type {{ ty_name }} struct {
-	{% include "types/struct_fields.go.jinja" -%}
+	{% for field in type.fields -%}
+		{{ field_decl(field) }}
+	{% endfor -%}
 	{{ discriminator_field }} {{ ty_name }}{{ discriminator_field }} `msgpack:"{{ type.discriminator_field }}"`
 	{{ content_field }} {{ ty_name }}{{ content_field }} `msgpack:"{{ type.content_field }}"`
 }
