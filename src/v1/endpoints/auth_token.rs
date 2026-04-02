@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: © 2022 Svix Authors
 // SPDX-License-Identifier: MIT
 
-use aide::axum::{ApiRouter, routing::post_with};
+use aide::{
+    axum::{ApiRouter, routing::post_with},
+    transform::TransformOperation,
+};
 use axum::{Extension, extract::State};
 use diom_auth_token::{
     AuthTokenNamespace,
@@ -476,55 +479,70 @@ async fn auth_token_get_namespace(
 }
 
 pub fn router() -> ApiRouter<AppState> {
+    fn internal(
+        transform: impl FnOnce(TransformOperation<'_>) -> TransformOperation<'_>,
+    ) -> impl FnOnce(TransformOperation<'_>) -> TransformOperation<'_> {
+        move |op| {
+            let mut op = transform(op);
+            op.inner_mut()
+                .extensions
+                .insert("x-internal".to_owned(), true.into());
+            op
+        }
+    }
+
     let tag = openapi_tag("Auth Tokens");
 
     ApiRouter::new()
         .api_route_with(
             auth_token_create_path,
-            post_with(auth_token_create, auth_token_create_operation),
+            post_with(auth_token_create, internal(auth_token_create_operation)),
             &tag,
         )
         .api_route_with(
             auth_token_expire_path,
-            post_with(auth_token_expire, auth_token_expire_operation),
+            post_with(auth_token_expire, internal(auth_token_expire_operation)),
             &tag,
         )
         .api_route_with(
             auth_token_delete_path,
-            post_with(auth_token_delete, auth_token_delete_operation),
+            post_with(auth_token_delete, internal(auth_token_delete_operation)),
             &tag,
         )
         .api_route_with(
             auth_token_verify_path,
-            post_with(auth_token_verify, auth_token_verify_operation),
+            post_with(auth_token_verify, internal(auth_token_verify_operation)),
             &tag,
         )
         .api_route_with(
             auth_token_list_path,
-            post_with(auth_token_list, auth_token_list_operation),
+            post_with(auth_token_list, internal(auth_token_list_operation)),
             &tag,
         )
         .api_route_with(
             auth_token_update_path,
-            post_with(auth_token_update, auth_token_update_operation),
+            post_with(auth_token_update, internal(auth_token_update_operation)),
             &tag,
         )
         .api_route_with(
             auth_token_rotate_path,
-            post_with(auth_token_rotate, auth_token_rotate_operation),
+            post_with(auth_token_rotate, internal(auth_token_rotate_operation)),
             &tag,
         )
         .api_route_with(
             auth_token_create_namespace_path,
             post_with(
                 auth_token_create_namespace,
-                auth_token_create_namespace_operation,
+                internal(auth_token_create_namespace_operation),
             ),
             &tag,
         )
         .api_route_with(
             auth_token_get_namespace_path,
-            post_with(auth_token_get_namespace, auth_token_get_namespace_operation),
+            post_with(
+                auth_token_get_namespace,
+                internal(auth_token_get_namespace_operation),
+            ),
             &tag,
         )
 }

@@ -31,24 +31,6 @@ mod admin_role_list_in;
 mod admin_role_out;
 mod admin_role_upsert_in;
 mod admin_role_upsert_out;
-mod auth_token_create_in;
-mod auth_token_create_namespace_in;
-mod auth_token_create_namespace_out;
-mod auth_token_create_out;
-mod auth_token_delete_in;
-mod auth_token_delete_out;
-mod auth_token_expire_in;
-mod auth_token_expire_out;
-mod auth_token_get_namespace_in;
-mod auth_token_get_namespace_out;
-mod auth_token_list_in;
-mod auth_token_out;
-mod auth_token_rotate_in;
-mod auth_token_rotate_out;
-mod auth_token_update_in;
-mod auth_token_update_out;
-mod auth_token_verify_in;
-mod auth_token_verify_out;
 mod cache_create_namespace_in;
 mod cache_create_namespace_out;
 mod cache_delete_in;
@@ -92,7 +74,6 @@ mod kv_set_out;
 mod list_response_admin_access_policy_out;
 mod list_response_admin_auth_token_out;
 mod list_response_admin_role_out;
-mod list_response_auth_token_out;
 mod msg_in;
 mod msg_namespace_create_in;
 mod msg_namespace_create_out;
@@ -164,18 +145,7 @@ pub use self::{
     admin_role_delete_out::AdminRoleDeleteOut, admin_role_get_in::AdminRoleGetIn,
     admin_role_list_in::AdminRoleListIn, admin_role_out::AdminRoleOut,
     admin_role_upsert_in::AdminRoleUpsertIn, admin_role_upsert_out::AdminRoleUpsertOut,
-    auth_token_create_in::AuthTokenCreateIn,
-    auth_token_create_namespace_in::AuthTokenCreateNamespaceIn,
-    auth_token_create_namespace_out::AuthTokenCreateNamespaceOut,
-    auth_token_create_out::AuthTokenCreateOut, auth_token_delete_in::AuthTokenDeleteIn,
-    auth_token_delete_out::AuthTokenDeleteOut, auth_token_expire_in::AuthTokenExpireIn,
-    auth_token_expire_out::AuthTokenExpireOut,
-    auth_token_get_namespace_in::AuthTokenGetNamespaceIn,
-    auth_token_get_namespace_out::AuthTokenGetNamespaceOut, auth_token_list_in::AuthTokenListIn,
-    auth_token_out::AuthTokenOut, auth_token_rotate_in::AuthTokenRotateIn,
-    auth_token_rotate_out::AuthTokenRotateOut, auth_token_update_in::AuthTokenUpdateIn,
-    auth_token_update_out::AuthTokenUpdateOut, auth_token_verify_in::AuthTokenVerifyIn,
-    auth_token_verify_out::AuthTokenVerifyOut, cache_create_namespace_in::CacheCreateNamespaceIn,
+    cache_create_namespace_in::CacheCreateNamespaceIn,
     cache_create_namespace_out::CacheCreateNamespaceOut, cache_delete_in::CacheDeleteIn,
     cache_delete_out::CacheDeleteOut, cache_get_in::CacheGetIn,
     cache_get_namespace_in::CacheGetNamespaceIn, cache_get_namespace_out::CacheGetNamespaceOut,
@@ -199,8 +169,7 @@ pub use self::{
     kv_get_out::KvGetOut, kv_set_in::KvSetIn, kv_set_out::KvSetOut,
     list_response_admin_access_policy_out::ListResponseAdminAccessPolicyOut,
     list_response_admin_auth_token_out::ListResponseAdminAuthTokenOut,
-    list_response_admin_role_out::ListResponseAdminRoleOut,
-    list_response_auth_token_out::ListResponseAuthTokenOut, msg_in::MsgIn,
+    list_response_admin_role_out::ListResponseAdminRoleOut, msg_in::MsgIn,
     msg_namespace_create_in::MsgNamespaceCreateIn, msg_namespace_create_out::MsgNamespaceCreateOut,
     msg_namespace_get_in::MsgNamespaceGetIn, msg_namespace_get_out::MsgNamespaceGetOut,
     msg_publish_in::MsgPublishIn, msg_publish_out::MsgPublishOut,

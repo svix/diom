@@ -3,8 +3,6 @@
 from .apis import (
     Admin,
     AdminAsync,
-    AuthToken,
-    AuthTokenAsync,
     Cache,
     CacheAsync,
     Health,
@@ -26,10 +24,6 @@ class Diom(ClientBase):
     @property
     def admin(self) -> Admin:
         return Admin(self._client)
-
-    @property
-    def auth_token(self) -> AuthToken:
-        return AuthToken(self._client)
 
     @property
     def cache(self) -> Cache:
@@ -60,10 +54,6 @@ class DiomAsync(ClientBase):
     @property
     def admin(self) -> AdminAsync:
         return AdminAsync(self._client)
-
-    @property
-    def auth_token(self) -> AuthTokenAsync:
-        return AuthTokenAsync(self._client)
 
     @property
     def cache(self) -> CacheAsync:

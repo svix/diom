@@ -12,12 +12,6 @@ func (diom Diom) Admin() Admin {
 	return diom_apis.NewAdmin(&diom.inner)
 }
 
-type AuthToken = diom_apis.AuthToken
-
-func (diom Diom) AuthToken() AuthToken {
-	return diom_apis.NewAuthToken(&diom.inner)
-}
-
 type Cache = diom_apis.Cache
 
 func (diom Diom) Cache() Cache {
