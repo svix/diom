@@ -1,15 +1,35 @@
+use std::sync::Arc;
+
 use super::{
     LogId,
     handle::{Request, RequestWithContext, Response},
-    state_machine::Store,
+    state_machine::{Store, Stores},
 };
+use crate::AppState;
 use opentelemetry::{Value, propagation::TextMapPropagator};
 use opentelemetry_sdk::propagation::TraceContextPropagator;
 use tracing::{Instrument, info_span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
+/// The context for a single batch of apply operations.
+///
+/// Holds a (read) lock against the databases as long as it's live
+pub(super) struct ApplyContext {
+    pub stores: parking_lot::ArcRwLockReadGuard<parking_lot::RawRwLock, Stores>,
+    pub state: AppState,
+}
+
+impl ApplyContext {
+    pub(super) fn new(state: &Store) -> Self {
+        let stores = state.db_handle();
+        let state = state.state.clone();
+        Self { stores, state }
+    }
+}
+
 pub(super) async fn apply_request(
-    request: RequestWithContext,
+    state_context: &ApplyContext,
+    request: Arc<RequestWithContext>,
     state_machine: &mut Store,
     log_id: LogId,
 ) -> anyhow::Result<Response> {
@@ -41,54 +61,52 @@ pub(super) async fn apply_request(
         term: log_id.leader_id.term,
     };
 
-    apply_request_with_context(state_machine, context, request.inner)
+    let request = Arc::unwrap_or_clone(request);
+
+    apply_request_with_context(state_context, context, state_machine, request.inner)
         .instrument(child_span)
         .await
 }
 
 async fn apply_request_with_context(
-    state_machine: &mut Store,
+    state_context: &ApplyContext,
     context: diom_operations::OpContext,
+    state_machine: &mut Store,
     request: Request,
 ) -> anyhow::Result<Response> {
     Ok(match request {
         Request::Kv(req) => {
-            let stores = state_machine.db_handle();
             let state = diom_kv::operations::KvRaftState {
-                state: &stores.kv_state,
-                namespace: &state_machine.state.namespace_state,
+                state: &state_context.stores.kv_state,
+                namespace: &state_context.state.namespace_state,
             };
             Response::Kv(req.apply(state, &context).await)
         }
         Request::RateLimit(req) => {
-            let stores = state_machine.db_handle();
             let state = diom_rate_limit::operations::RateLimitRaftState {
-                state: &stores.rate_limit_state,
-                namespace: &state_machine.state.namespace_state,
+                state: &state_context.stores.rate_limit_state,
+                namespace: &state_context.state.namespace_state,
             };
             Response::RateLimit(req.apply(state, &context).await)
         }
         Request::Idempotency(req) => {
-            let stores = state_machine.db_handle();
             let state = diom_idempotency::operations::IdempotencyRaftState {
-                state: &stores.idempotency_state,
-                namespace: &state_machine.state.namespace_state,
+                state: &state_context.stores.idempotency_state,
+                namespace: &state_context.state.namespace_state,
             };
             Response::Idempotency(req.apply(state, &context).await)
         }
         Request::Cache(req) => {
-            let stores = state_machine.db_handle();
             let state = diom_cache::operations::CacheRaftState {
-                state: &stores.cache_state,
-                namespace: &state_machine.state.namespace_state,
+                state: &state_context.stores.cache_state,
+                namespace: &state_context.state.namespace_state,
             };
             Response::Cache(req.apply(state, &context).await)
         }
         Request::Msgs(req) => {
-            let stores = state_machine.db_handle();
             let state = diom_msgs::operations::MsgsRaftState {
-                msgs: &stores.msgs_state,
-                namespace: &state_machine.state.namespace_state,
+                msgs: &state_context.stores.msgs_state,
+                namespace: &state_context.state.namespace_state,
             };
             Response::Msgs(req.apply(state, &context).await)
         }
@@ -96,17 +114,15 @@ async fn apply_request_with_context(
             Response::ClusterInternal(req.apply(state_machine, &context).await)
         }
         Request::AuthToken(req) => {
-            let stores = state_machine.db_handle();
             let state = diom_auth_token::operations::AuthTokenRaftState {
-                state: &stores.auth_token_state,
-                namespace: &state_machine.state.namespace_state,
+                state: &state_context.stores.auth_token_state,
+                namespace: &state_context.state.namespace_state,
             };
             Response::AuthToken(req.apply(state, &context).await)
         }
         Request::AdminAuth(req) => {
-            let stores = state_machine.db_handle();
             let state = diom_admin_auth::operations::AdminAuthRaftState {
-                state: &stores.admin_auth_state,
+                state: &state_context.stores.admin_auth_state,
             };
             Response::AdminAuth(req.apply(state, &context).await)
         }

@@ -24,7 +24,7 @@ use crate::{
 
 openraft::declare_raft_types!(
     pub TypeConfig:
-        D = RequestWithContext,
+        D = Arc<RequestWithContext>,
         R = Response,
         Node = Node,
         NodeId = NodeId,
@@ -55,11 +55,11 @@ pub(crate) async fn initialize_cluster(
     let new_id = ClusterId::generate();
     tracing::info!(cluster_id=%new_id, "cluster initialized, setting cluster_id");
     #[allow(clippy::disallowed_methods)]
-    raft.client_write(RequestWithContext::new(
+    raft.client_write(Arc::new(RequestWithContext::new(
         Request::ClusterInternal(SetClusterUuidOperation(new_id).into()),
         jiff::Timestamp::now(),
         None,
-    ))
+    )))
     .await
     .tap_err(|err| tracing::error!(?err, "failed to set initial cluster id"))?;
     tracing::debug!(elapsed=?start.elapsed(), "initialization finished");

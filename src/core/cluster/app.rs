@@ -180,8 +180,9 @@ async fn handle_forwarded_write(
 
     // intentionally do not use state.client_write because we don't want an infinite recursion
     // of forwardings
+    let wrapped = Arc::new(req.request);
     let response =
-        state.raft.client_write(req.request).await.map_err(|e| {
+        state.raft.client_write(wrapped).await.map_err(|e| {
             crate::Error::internal(format!("Unable to execute forwarded write: {e:?}"))
         })?;
     let response = ForwardedWriteResponse {
