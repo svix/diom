@@ -2,12 +2,9 @@
     {%- if field.name | to_snake_case != field.name %}
         {%- do panic("diom API does not use non-snake_case field names") %}
     {%- endif %}
-    {%- if field.required and not field.nullable %}
     {{ field.name | to_snake_case }}: {{ field.type.to_python() }}
-    {%- elif field.required and field.nullable %}
-    {{ field.name | to_snake_case }}: {{ field.type.to_python() }} | None
-    {%- else %}
-    {{ field.name | to_snake_case }}: {{ field.type.to_python() }} | None = None
+    {%- if not field.required %} | None = None
+    {%- elif field.nullable %} | None
     {%- endif %}
     {%- if field.description is defined %}
     {{ field.description | to_doc_comment(style="python") | indent(4) }}
