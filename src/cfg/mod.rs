@@ -395,7 +395,7 @@ pub struct ClusterConfiguration {
     #[env_overridable(skip)]
     pub shut_down_on_go_away: bool,
 
-    /// How far behind must the current node be to be considered "lagging" and eligible for
+    /// How many commits behind must the current node be to be considered "lagging" and eligible for
     /// re-snapshotting?
     ///
     /// The ideal value here depends both on your data-set size and on your average write-rate. If
