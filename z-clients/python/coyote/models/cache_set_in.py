@@ -1,25 +1,23 @@
 # this file is @generated
-import typing as t
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class CacheSetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     value: bytes
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """Time to live in milliseconds"""
 
 
 class _CacheSetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str
 
     value: bytes
 
-    ttl_ms: int = Field(alias="ttl_ms")
+    ttl_ms: int
     """Time to live in milliseconds"""

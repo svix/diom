@@ -1,20 +1,19 @@
 # this file is @generated
-import typing as t
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 from .consistency import Consistency
 
 
 class CacheGetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
-    consistency: t.Optional[Consistency] = None
+    consistency: Consistency | None = None
 
 
 class _CacheGetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str
 
-    consistency: t.Optional[Consistency] = None
+    consistency: Consistency | None = None

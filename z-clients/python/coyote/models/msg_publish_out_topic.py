@@ -1,12 +1,11 @@
 # this file is @generated
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class MsgPublishOutTopic(BaseModel):
     topic: str
 
-    start_offset: int = Field(alias="start_offset")
+    start_offset: int
 
     offset: int

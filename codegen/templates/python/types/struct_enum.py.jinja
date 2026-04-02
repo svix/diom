@@ -2,9 +2,8 @@
 {% set type_name = type.name | to_upper_camel_case -%}
 import typing as t
 from typing_extensions import Self
-from pydantic import ModelWrapValidatorHandler, model_validator
+from pydantic import BaseModel, ModelWrapValidatorHandler, model_validator
 from datetime import datetime
-from ..internal.base_model import BaseModel
 
 {% for c in referenced_components %}
 from . {{ c | to_snake_case }} import {{ c | to_upper_camel_case }}
@@ -14,15 +13,17 @@ class {{ type_name }}(BaseModel):
     {%- for field in type.fields %}
         {{ field_decl(field) }}
     {%- endfor %}
-    {{ type.discriminator_field }}: t.Union[
-    {%- for variant in type.variants %}
-        t.Literal["{{ variant.name }}"] {% if not loop.last %},{% endif %}
-    {%- endfor %}
+    {{ type.discriminator_field }}: t.Literal[
+    {%- for variant in type.variants -%}
+        "{{ variant.name }}"{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
     ]
-    {{ type.content_field }}: t.Union[
-        {%- set content_field_types = [] %}
-        {{ type.variants| map(attribute="schema_ref", default="t.Dict[str, t.Any]") | unique | join(",") }}
-    ]
+    {{ type.content_field }}: {{
+        type.variants
+            | map(attribute="schema_ref", default="dict[str, t.Any]")
+            | unique
+            | join(" | ")
+    }}
 
     @model_validator(mode="wrap")
     @classmethod

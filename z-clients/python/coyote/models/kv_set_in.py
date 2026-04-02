@@ -1,39 +1,37 @@
 # this file is @generated
-import typing as t
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 from .operation_behavior import OperationBehavior
 
 
 class KvSetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     value: bytes
 
-    ttl_ms: t.Optional[int] = Field(default=None, alias="ttl_ms")
+    ttl_ms: int | None = None
     """Time to live in milliseconds"""
 
-    behavior: t.Optional[OperationBehavior] = None
+    behavior: OperationBehavior | None = None
 
-    version: t.Optional[int] = None
+    version: int | None = None
     """If set, the write only succeeds when the stored version matches this value.
     Use the `version` field from a prior `get` response."""
 
 
 class _KvSetIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     key: str
 
     value: bytes
 
-    ttl_ms: t.Optional[int] = Field(default=None, alias="ttl_ms")
+    ttl_ms: int | None = None
     """Time to live in milliseconds"""
 
-    behavior: t.Optional[OperationBehavior] = None
+    behavior: OperationBehavior | None = None
 
-    version: t.Optional[int] = None
+    version: int | None = None
     """If set, the write only succeeds when the stored version matches this value.
     Use the `version` field from a prior `get` response."""

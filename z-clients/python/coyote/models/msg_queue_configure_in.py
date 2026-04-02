@@ -1,29 +1,24 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class MsgQueueConfigureIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
-    retry_schedule: t.Optional[t.List[int]] = Field(
-        default=None, alias="retry_schedule"
-    )
+    retry_schedule: t.List[int] | None = None
 
-    dlq_topic: t.Optional[str] = Field(default=None, alias="dlq_topic")
+    dlq_topic: str | None = None
 
 
 class _MsgQueueConfigureIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     topic: str
 
-    consumer_group: str = Field(alias="consumer_group")
+    consumer_group: str
 
-    retry_schedule: t.Optional[t.List[int]] = Field(
-        default=None, alias="retry_schedule"
-    )
+    retry_schedule: t.List[int] | None = None
 
-    dlq_topic: t.Optional[str] = Field(default=None, alias="dlq_topic")
+    dlq_topic: str | None = None

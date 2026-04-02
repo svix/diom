@@ -1,21 +1,19 @@
 # this file is @generated
-import typing as t
-from pydantic import Field
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class MsgStreamCommitIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     offset: int
 
 
 class _MsgStreamCommitIn(BaseModel):
-    namespace: t.Optional[str] = None
+    namespace: str | None = None
 
     topic: str
 
-    consumer_group: str = Field(alias="consumer_group")
+    consumer_group: str
 
     offset: int

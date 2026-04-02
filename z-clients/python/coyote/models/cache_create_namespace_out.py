@@ -1,8 +1,7 @@
 # this file is @generated
-from pydantic import Field
 from datetime import datetime
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 from .eviction_policy import EvictionPolicy
 
@@ -10,7 +9,7 @@ from .eviction_policy import EvictionPolicy
 class CacheCreateNamespaceOut(BaseModel):
     name: str
 
-    eviction_policy: EvictionPolicy = Field(alias="eviction_policy")
+    eviction_policy: EvictionPolicy
 
     created: datetime
 

@@ -1,8 +1,7 @@
 # this file is @generated
-import typing as t
 from datetime import datetime
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 
 class AdminAuthTokenOut(BaseModel):
@@ -14,7 +13,7 @@ class AdminAuthTokenOut(BaseModel):
 
     updated: datetime
 
-    expiry: t.Optional[datetime] = None
+    expiry: datetime | None = None
 
     role: str
 

@@ -1,7 +1,7 @@
 # this file is @generated
 import typing as t
 
-from ..internal.base_model import BaseModel
+from pydantic import BaseModel
 
 from .access_rule import AccessRule
 
@@ -11,4 +11,4 @@ class AdminAccessPolicyUpsertIn(BaseModel):
 
     description: str
 
-    rules: t.Optional[t.List[AccessRule]] = None
+    rules: t.List[AccessRule] | None = None
