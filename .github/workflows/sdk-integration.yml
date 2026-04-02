@@ -47,7 +47,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: false
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run Rust SDK integration tests
         run: scripts/test-sdk.sh rust
       - name: Stop server
