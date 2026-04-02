@@ -100,7 +100,7 @@ impl Discovery {
         cluster_id: ClusterId,
         peers: Vec<(PeerAddr, NodeId, DiscoverClusterResponse)>,
     ) -> anyhow::Result<()> {
-        tracing::info!(?cluster_id, "joining running cluster");
+        tracing::info!(?cluster_id, peers = ?peers.iter().map(|n| &n.0).collect::<Vec<_>>(), "joining running cluster");
         let Some((leader_addr, leader_node_id, leader_cluster)) = peers
             .into_iter()
             .find_or_first(|p| p.2.state == ServerState::Leader)
@@ -113,12 +113,14 @@ impl Discovery {
         let client = self.network.client_for(leader_node_id, &leader_addr.into());
         // add_learner and upgrade_learner are both safe to retry if a node shuts down
         // so on failure, just try try again
+        tracing::debug!("adding self as a learner");
         client
             .add_learner(AddLearnerRequest {
                 node_id: self.my_node_id,
                 address: self.my_addr.clone(),
             })
-            .await?;
+            .await
+            .inspect_err(|err| tracing::warn!(?err, "add-learner request failed"))?;
         tracing::debug!("waiting to catch up in replication");
         self.raft
             .wait(None)
@@ -210,11 +212,12 @@ impl Discovery {
                     .filter_map(|(k, v)| {
                         if let Some(cluster) = v.cluster {
                             if cluster.last_committed_log_id.is_none() {
+                                tracing::warn!(?k, "peer's cluster has no last_committed_log_id");
                                 None
                             } else if let Some(cluster_id) = cluster.cluster_id {
                                 Some((cluster_id, (k, v.node_id, cluster)))
                             } else {
-                                tracing::warn!("found a last_committed_log_id, but no cluster_id! refusing to join");
+                                tracing::warn!(?k, "found a last_committed_log_id on peer, but no cluster_id! refusing to join");
                                 None
                             }
                         } else {
@@ -239,6 +242,10 @@ impl Discovery {
                 }
             }
             let sleep_time = Duration::from_millis(rand::random_range(100..=1000));
+            tracing::warn!(
+                ?sleep_time,
+                "discovery did not succeed; backing off and retrying"
+            );
             if token
                 .run_until_cancelled(tokio::time::sleep(sleep_time))
                 .await

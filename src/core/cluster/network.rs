@@ -26,6 +26,10 @@ pub(super) fn build_client(
     include_secret: bool,
 ) -> anyhow::Result<reqwest::Client> {
     let mut headers = HeaderMap::new();
+    headers.insert(
+        header::ACCEPT,
+        HeaderValue::from_static("application/msgpack"),
+    );
     if include_secret && let Some(secret) = &cfg.cluster.secret {
         let header_value = format!("Bearer {secret}");
         let header_value =
@@ -118,10 +122,6 @@ impl NetworkClient {
                 );
                 RPCError::Network(NetworkError::new(&err))
             })?
-            .header(
-                header::ACCEPT,
-                "application/msgpack;q=0.9, application/json;q=0.5",
-            )
             .pipe(|this| -> Result<reqwest::RequestBuilder, RPCError<Err>> {
                 if let Some(secret) = &self.cfg.cluster.secret {
                     let auth = format!("Bearer {secret}");
@@ -208,7 +208,7 @@ impl NetworkClient {
         Ok(last_committed_log_id)
     }
 
-    #[tracing::instrument(skip(self, rpc))]
+    #[tracing::instrument(skip_all)]
     pub(super) async fn install_snapshot(
         &mut self,
         rpc: openraft::raft::InstallSnapshotRequest<TypeConfig>,
@@ -223,7 +223,7 @@ impl NetworkClient {
 }
 
 impl RaftNetworkV2<TypeConfig> for NetworkClient {
-    #[tracing::instrument(skip(self, rpc))]
+    #[tracing::instrument(skip_all)]
     async fn append_entries(
         &mut self,
         rpc: openraft::raft::AppendEntriesRequest<TypeConfig>,
@@ -233,7 +233,7 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
             .await
     }
 
-    #[tracing::instrument(skip(self, rpc))]
+    #[tracing::instrument(skip_all)]
     async fn vote(
         &mut self,
         rpc: openraft::raft::VoteRequest<TypeConfig>,
@@ -243,7 +243,7 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
             .await
     }
 
-    #[tracing::instrument(skip(self, vote, snapshot, cancel))]
+    #[tracing::instrument(skip_all, fields(?vote))]
     async fn full_snapshot(
         &mut self,
         vote: openraft::type_config::alias::VoteOf<TypeConfig>,

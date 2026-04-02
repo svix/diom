@@ -26,6 +26,7 @@ pub(crate) fn setup_tracing(
         let level = cfg.log_level.to_string();
         let var = [
             format!("coyote={level}"),
+            format!("fjall={level}"),
             format!("fjall_utils={level}"),
             format!("tower_http={level}"),
             "opentelemetry_sdk=ERROR".to_string(),

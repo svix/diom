@@ -145,7 +145,7 @@ pub(super) trait ChunkedSnapshotReceiver {
 }
 
 impl<SM> ChunkedSnapshotReceiver for Raft<TypeConfig, SM> {
-    #[tracing::instrument(skip(self, req), fields(
+    #[tracing::instrument(skip_all, fields(
         snapshot_id = %req.meta.snapshot_id,
         offset = req.offset,
         done = req.done

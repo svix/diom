@@ -273,8 +273,16 @@ impl Store {
 
     pub(super) async fn set_cluster_id(&mut self, id: ClusterId) -> anyhow::Result<()> {
         let keyspace = self.meta_keyspace.clone();
+        let handle = self.stores.clone();
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            CLUSTER_UUID.store(&keyspace, &id)?;
+            let mut tx = handle
+                .read()
+                .databases
+                .persistent
+                .batch()
+                .durability(Some(PersistMode::SyncAll));
+            CLUSTER_UUID.store_tx(&mut tx, &keyspace, &id)?;
+            tx.commit()?;
             Ok(())
         })
         .await??;
@@ -282,7 +290,7 @@ impl Store {
         Ok(())
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn load_information(&mut self) -> anyhow::Result<()> {
         let keyspace = self.readonly_meta_keyspace.clone();
 
@@ -331,9 +339,14 @@ impl Store {
         };
         tracing::trace!(last_snapshot=?data, "setting last_snapshot");
         let data = spawn_blocking_in_current_span(move || -> anyhow::Result<LastSnapshot> {
-            let db = &handle.read().databases.persistent;
-            LAST_SNAPSHOT.store(&keyspace, &data)?;
-            db.persist(PersistMode::SyncAll)?;
+            let mut tx = handle
+                .read()
+                .databases
+                .persistent
+                .batch()
+                .durability(Some(PersistMode::SyncAll));
+            LAST_SNAPSHOT.store_tx(&mut tx, &keyspace, &data)?;
+            tx.commit()?;
             Ok(data)
         })
         .await??;
@@ -487,7 +500,7 @@ impl Store {
         self.snapshot_idx += 1;
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn get_current_snapshot_(&mut self) -> anyhow::Result<Option<Snapshot>> {
         // clone to avoid holding a lock over an await point
         let last_snapshot = self.last_snapshot.read().clone();
@@ -761,7 +774,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
         self.clone()
     }
 
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument(skip_all)]
     async fn get_current_snapshot(&mut self) -> StorageResult<Option<Snapshot>> {
         self.inner
             .write()
@@ -771,7 +784,7 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
             .map_err(io_err)
     }
 
-    #[tracing::instrument(skip(self, meta))]
+    #[tracing::instrument(skip_all, fields(snapshot_id = meta.snapshot_id))]
     async fn install_snapshot(
         &mut self,
         meta: &SnapshotMeta,
