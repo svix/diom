@@ -56,6 +56,15 @@ impl Monotime {
         self.bump_raw(other.as_millisecond());
     }
 
+    /// Report the delta between our clock and the system clock
+    ///
+    /// This will be positive if the monotonic clock is behind the
+    /// system clock
+    pub fn offset(&self) -> jiff::SignedDuration {
+        let system = Timestamp::now();
+        system.duration_since(self.now())
+    }
+
     fn as_i64(&self) -> i64 {
         self.time.load(Ordering::Acquire)
     }
