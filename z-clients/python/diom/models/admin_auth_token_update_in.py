@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -10,6 +9,6 @@ class AdminAuthTokenUpdateIn(BaseModel):
 
     name: t.Optional[str] = None
 
-    expiry_ms: t.Optional[int] = Field(default=None, alias="expiry_ms")
+    expiry_ms: t.Optional[int] = None
 
     enabled: t.Optional[bool] = None

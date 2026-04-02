@@ -1,13 +1,12 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 from datetime import datetime
 
 from ..internal.base_model import BaseModel
 
 
 class QueueMsgOut(BaseModel):
-    msg_id: str = Field(alias="msg_id")
+    msg_id: str
 
     value: bytes
 
@@ -15,4 +14,4 @@ class QueueMsgOut(BaseModel):
 
     timestamp: datetime
 
-    scheduled_at: t.Optional[datetime] = Field(default=None, alias="scheduled_at")
+    scheduled_at: t.Optional[datetime] = None

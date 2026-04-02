@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -8,11 +7,11 @@ from ..internal.base_model import BaseModel
 class MsgQueueReceiveIn(BaseModel):
     namespace: t.Optional[str] = None
 
-    batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
+    batch_size: t.Optional[int] = None
 
-    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
+    lease_duration_ms: t.Optional[int] = None
 
-    batch_wait_ms: t.Optional[int] = Field(default=None, alias="batch_wait_ms")
+    batch_wait_ms: t.Optional[int] = None
     """Maximum time (in milliseconds) to wait for messages before returning."""
 
 
@@ -21,11 +20,11 @@ class _MsgQueueReceiveIn(BaseModel):
 
     topic: str
 
-    consumer_group: str = Field(alias="consumer_group")
+    consumer_group: str
 
-    batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
+    batch_size: t.Optional[int] = None
 
-    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
+    lease_duration_ms: t.Optional[int] = None
 
-    batch_wait_ms: t.Optional[int] = Field(default=None, alias="batch_wait_ms")
+    batch_wait_ms: t.Optional[int] = None
     """Maximum time (in milliseconds) to wait for messages before returning."""

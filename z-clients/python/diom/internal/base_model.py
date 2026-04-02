@@ -1,9 +1,5 @@
 import pydantic
-from pydantic.alias_generators import to_camel
 
 
 class BaseModel(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(
-        alias_generator=to_camel,
-        serialize_by_alias=True,
-    )
+    model_config = pydantic.ConfigDict(serialize_by_alias=True)

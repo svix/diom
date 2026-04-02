@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -10,15 +9,13 @@ from .seek_position import SeekPosition
 class MsgStreamReceiveIn(BaseModel):
     namespace: t.Optional[str] = None
 
-    batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
+    batch_size: t.Optional[int] = None
 
-    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
+    lease_duration_ms: t.Optional[int] = None
 
-    default_starting_position: t.Optional[SeekPosition] = Field(
-        default=None, alias="default_starting_position"
-    )
+    default_starting_position: t.Optional[SeekPosition] = None
 
-    batch_wait_ms: t.Optional[int] = Field(default=None, alias="batch_wait_ms")
+    batch_wait_ms: t.Optional[int] = None
     """Maximum time (in milliseconds) to wait for messages before returning."""
 
 
@@ -27,15 +24,13 @@ class _MsgStreamReceiveIn(BaseModel):
 
     topic: str
 
-    consumer_group: str = Field(alias="consumer_group")
+    consumer_group: str
 
-    batch_size: t.Optional[int] = Field(default=None, alias="batch_size")
+    batch_size: t.Optional[int] = None
 
-    lease_duration_ms: t.Optional[int] = Field(default=None, alias="lease_duration_ms")
+    lease_duration_ms: t.Optional[int] = None
 
-    default_starting_position: t.Optional[SeekPosition] = Field(
-        default=None, alias="default_starting_position"
-    )
+    default_starting_position: t.Optional[SeekPosition] = None
 
-    batch_wait_ms: t.Optional[int] = Field(default=None, alias="batch_wait_ms")
+    batch_wait_ms: t.Optional[int] = None
     """Maximum time (in milliseconds) to wait for messages before returning."""

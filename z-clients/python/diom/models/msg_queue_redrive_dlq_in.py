@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from pydantic import Field
 
 from ..internal.base_model import BaseModel
 
@@ -14,4 +13,4 @@ class _MsgQueueRedriveDlqIn(BaseModel):
 
     topic: str
 
-    consumer_group: str = Field(alias="consumer_group")
+    consumer_group: str
