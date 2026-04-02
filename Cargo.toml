@@ -218,6 +218,7 @@ tower = "0.5.1"
 tower-http = { version = "0.6.1", features = ["catch-panic", "compression-full", "cors", "request-id", "trace"] }
 tower-service = "0.3.3"
 tracing = { version = "0.1.35", features = ["release_max_level_debug"] }
+tracing-log = "0.2.0"
 tracing-opentelemetry = "0.32.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "local-time", "fmt", "registry", "std"] }
 tracing-test = "0.2"

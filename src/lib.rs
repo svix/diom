@@ -505,7 +505,7 @@ pub fn setup_tracing_for_tests() {
                 // Output is only printed for failing tests, but still we shouldn't overload
                 // the output with unnecessary info. When debugging a specific test, it's easy
                 // to override this default by setting the `RUST_LOG` environment variable.
-                "coyote=debug,it=debug,test_utils=debug".into()
+                "coyote=debug,fjall=info,it=debug,test_utils=debug".into()
             }),
         )
         .with(tracing_subscriber::fmt::layer().with_test_writer())
