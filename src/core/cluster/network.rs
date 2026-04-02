@@ -208,7 +208,7 @@ impl NetworkClient {
         Ok(last_committed_log_id)
     }
 
-    #[tracing::instrument(skip(self, rpc))]
+    #[tracing::instrument(skip_all)]
     pub(super) async fn install_snapshot(
         &mut self,
         rpc: openraft::raft::InstallSnapshotRequest<TypeConfig>,
@@ -223,7 +223,7 @@ impl NetworkClient {
 }
 
 impl RaftNetworkV2<TypeConfig> for NetworkClient {
-    #[tracing::instrument(skip(self, rpc))]
+    #[tracing::instrument(skip_all)]
     async fn append_entries(
         &mut self,
         rpc: openraft::raft::AppendEntriesRequest<TypeConfig>,
@@ -233,7 +233,7 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
             .await
     }
 
-    #[tracing::instrument(skip(self, rpc))]
+    #[tracing::instrument(skip_all)]
     async fn vote(
         &mut self,
         rpc: openraft::raft::VoteRequest<TypeConfig>,
@@ -243,7 +243,7 @@ impl RaftNetworkV2<TypeConfig> for NetworkClient {
             .await
     }
 
-    #[tracing::instrument(skip(self, vote, snapshot, cancel))]
+    #[tracing::instrument(skip_all, fields(?vote))]
     async fn full_snapshot(
         &mut self,
         vote: openraft::type_config::alias::VoteOf<TypeConfig>,
