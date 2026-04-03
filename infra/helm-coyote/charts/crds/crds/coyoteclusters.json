@@ -56,7 +56,7 @@
                         ]
                       }
                     ],
-                    "description": "Admin token for privileged API access.\nSet either `value` for a plain string or `valueFrom` to pull from a Kubernetes Secret.\nUsing a plain string value is only recommended for testing. Use `valueFrom` in all other cases.",
+                    "description": "Admin token for privileged API access.\n\nSet either `value` for a plain string or `valueFrom` to pull from a Kubernetes Secret.\nUsing a plain string value is only recommended for testing. Use `valueFrom` in all other cases.",
                     "nullable": true,
                     "properties": {
                       "value": {
@@ -792,102 +792,16 @@
                   },
                   "apiPort": {
                     "default": 8080,
-                    "description": "Port for the external API. The inter-node port is this value + 10000.",
+                    "description": "Port for the external API and service.",
                     "format": "uint16",
                     "maximum": 65535.0,
                     "minimum": 0.0,
                     "type": "integer"
                   },
                   "bootstrap": {
-                    "description": "Bootstrap script to run on cluster startup.\nCurrently a YAML file defining namespaces to pre-create; may become a shell script in future.\nMounted into pods and passed to the server via COYOTE_BOOTSTRAP_CFG_PATH.",
+                    "description": "Newline-delimited bootstrap script to run on cluster startup.",
                     "nullable": true,
                     "type": "string"
-                  },
-                  "cluster": {
-                    "default": {
-                      "electionTimeoutMaxMs": null,
-                      "electionTimeoutMinMs": null,
-                      "heartbeatIntervalMs": null,
-                      "logLevel": null,
-                      "replicationRequestTimeoutMs": null,
-                      "secretRef": null,
-                      "snapshotAfterMs": null,
-                      "snapshotAfterWrites": null
-                    },
-                    "description": "Cluster/replication configuration.",
-                    "properties": {
-                      "electionTimeoutMaxMs": {
-                        "description": "Maximum election timeout in milliseconds.",
-                        "format": "uint64",
-                        "minimum": 0.0,
-                        "nullable": true,
-                        "type": "integer"
-                      },
-                      "electionTimeoutMinMs": {
-                        "description": "Minimum election timeout in milliseconds.",
-                        "format": "uint64",
-                        "minimum": 0.0,
-                        "nullable": true,
-                        "type": "integer"
-                      },
-                      "heartbeatIntervalMs": {
-                        "description": "Heartbeat interval in milliseconds.",
-                        "format": "uint64",
-                        "minimum": 0.0,
-                        "nullable": true,
-                        "type": "integer"
-                      },
-                      "logLevel": {
-                        "description": "Log level (info, debug, trace). Defaults to info.",
-                        "nullable": true,
-                        "type": "string"
-                      },
-                      "replicationRequestTimeoutMs": {
-                        "description": "Replication request timeout in milliseconds.",
-                        "format": "uint64",
-                        "minimum": 0.0,
-                        "nullable": true,
-                        "type": "integer"
-                      },
-                      "secretRef": {
-                        "description": "Reference to a Secret containing the inter-node authentication token.\n`name` is the name of the Kubernetes Secret.\n`key` is the key within the Secret whose value is the token.",
-                        "nullable": true,
-                        "properties": {
-                          "key": {
-                            "description": "The key of the secret to select from.  Must be a valid secret key.",
-                            "type": "string"
-                          },
-                          "name": {
-                            "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                            "type": "string"
-                          },
-                          "optional": {
-                            "description": "Specify whether the Secret or its key must be defined",
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "name"
-                        ],
-                        "type": "object"
-                      },
-                      "snapshotAfterMs": {
-                        "description": "Trigger a background snapshot after this many milliseconds.",
-                        "format": "uint64",
-                        "minimum": 0.0,
-                        "nullable": true,
-                        "type": "integer"
-                      },
-                      "snapshotAfterWrites": {
-                        "description": "Trigger a background snapshot after this many writes.",
-                        "format": "uint32",
-                        "minimum": 0.0,
-                        "nullable": true,
-                        "type": "integer"
-                      }
-                    },
-                    "type": "object"
                   },
                   "envVar": {
                     "description": "Additional environment variables to inject into pods.\nFollows the Kubernetes EnvVar API spec (v1.EnvVar): supports plain `value`\nand `valueFrom` (secretKeyRef, configMapKeyRef, fieldRef, resourceFieldRef)",
@@ -1008,6 +922,60 @@
                     "nullable": true,
                     "type": "string"
                   },
+                  "internodeSecret": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "value"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "valueFrom"
+                        ]
+                      }
+                    ],
+                    "description": "Inter-node authentication token.\n\nSet either `value` for a plain string or `valueFrom` to pull from a Kubernetes Secret.\nUsing a plain string value is only recommended for testing. Use `valueFrom` in all other cases.",
+                    "nullable": true,
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "valueFrom": {
+                        "description": "SecretKeySelector selects a key of a Secret.",
+                        "properties": {
+                          "key": {
+                            "description": "The key of the secret to select from.  Must be a valid secret key.",
+                            "type": "string"
+                          },
+                          "name": {
+                            "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                            "type": "string"
+                          },
+                          "optional": {
+                            "description": "Specify whether the Secret or its key must be defined",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "logFormat": {
+                    "description": "The log format that all output will follow. Supported: default, json",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "logLevel": {
+                    "description": "The log level to run the service with. Supported: info, debug, trace",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "nodeSelector": {
                     "additionalProperties": {
                       "type": "string"
@@ -1018,10 +986,25 @@
                   },
                   "nodes": {
                     "default": 1,
-                    "description": "Number of Coyote nodes. Should be odd for quorum (1, 3, 5...).",
+                    "description": "Number of Coyote nodes.\n\nShould be an odd number. Recommended value is 3, or 1 if you want only a single node.",
                     "format": "int32",
                     "minimum": 1.0,
                     "type": "integer"
+                  },
+                  "opentelemetryAddress": {
+                    "description": "The OpenTelemetry address to send events to if given.\n\nCurrently only GRPC exports are supported.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "opentelemetryMetricsAddress": {
+                    "description": "The OpenTelemetry address to send metrics to if given.\n\nIf not specified, the server will attempt to fall back\nto `opentelemetry_address`.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "opentelemetryMetricsUseHttp": {
+                    "description": "Send OpenTelemetry metrics via HTTP.\n\nBy default, `opentelemetry_address` and `opentelemetry_metrics_address`\nare expected to be a GRPC servers. When this is set to true,\nHTTP is used instead for metrics exports.",
+                    "nullable": true,
+                    "type": "boolean"
                   },
                   "podAnnotations": {
                     "additionalProperties": {
@@ -1121,7 +1104,7 @@
                         "type": "object"
                       },
                       "persistent": {
-                        "description": "Persistent database storage (fjall persistent DB).",
+                        "description": "Persistent database storage",
                         "properties": {
                           "size": {
                             "description": "Storage size, e.g. \"10Gi\".",

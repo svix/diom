@@ -29,19 +29,14 @@ cluster:
       persistent:
         size: 64Gi
         storageClass: gp3-encrypted
+    logLevel: debug
+    logFormat: json
+    opentelemetryAddress: grpc://datadog-agent.datadog.svc.cluster.local:4317
+    opentelemetryMetricsAddress: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
+    opentelemetryMetricsUseHttp: true
     envVar:
-      - name: COYOTE_OPENTELEMETRY_METRICS_ADDRESS
-        value: "http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp/v1/metrics"
-      - name: COYOTE_OPENTELEMETRY_METRICS_USE_HTTP
-        value: "true"
-      - name: COYOTE_LOG_LEVEL
-        value: debug
       - name: RUST_BACKTRACE
         value: "1"
-      - name: COYOTE_LOG_FORMAT
-        value: "json"
-      - name: COYOTE_OPENTELEMETRY_ADDRESS
-        value: grpc://datadog-agent.datadog.svc.cluster.local:4317
     nodeSelector:
       db-name: coyote
     tolerations:
