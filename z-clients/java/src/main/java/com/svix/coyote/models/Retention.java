@@ -29,7 +29,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class Retention {
     @JsonProperty("period_ms") private Long periodMs;
-    @JsonProperty("size_bytes") private Long sizeBytes;
     public Retention() {}
 
     public Retention periodMs(Long periodMs) {
@@ -49,25 +48,6 @@ public class Retention {
 
     public void setPeriodMs(Long periodMs) {
         this.periodMs = periodMs;
-    }
-
-    public Retention sizeBytes(Long sizeBytes) {
-        this.sizeBytes = sizeBytes;
-        return this;
-    }
-
-    /**
-    * Get sizeBytes
-    *
-     * @return sizeBytes
-     */
-    @javax.annotation.Nullable
-    public Long getSizeBytes() {
-        return sizeBytes;
-    }
-
-    public void setSizeBytes(Long sizeBytes) {
-        this.sizeBytes = sizeBytes;
     }
 
     /**
