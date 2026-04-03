@@ -357,6 +357,101 @@ async fn test_kv_delete() -> TestResult {
 }
 
 #[tokio::test]
+async fn test_kv_delete_with_version() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // Set a key and capture the version from the set response
+    let set_resp = client
+        .post("v1.kv.set")
+        .json(json!({
+            "key": "occ-del-key",
+            "value": "v1".as_bytes(),
+            "behavior": "upsert"
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    let version = set_resp["version"].as_u64().unwrap();
+
+    // Delete with a wrong version → version_mismatch error
+    let err = client
+        .post("v1.kv.delete")
+        .json(json!({ "key": "occ-del-key", "version": version + 1 }))
+        .await?
+        .ensure(StatusCode::BAD_REQUEST)?
+        .json();
+    assert_eq!(err["code"], "version_mismatch");
+
+    // Key should still be intact
+    let get_resp = kv_get(&client, "occ-del-key").await?;
+    assert_eq!(get_resp["value"], json!("v1".as_bytes()));
+
+    // Delete with the correct version → success
+    let del_resp = client
+        .post("v1.kv.delete")
+        .json(json!({ "key": "occ-del-key", "version": version }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    assert_eq!(del_resp["success"], true);
+
+    kv_not_found(&client, "occ-del-key").await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_kv_delete_with_stale_version() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // Set a key then update it — version advances
+    let first = client
+        .post("v1.kv.set")
+        .json(json!({
+            "key": "occ-del-stale",
+            "value": "v1".as_bytes(),
+            "behavior": "upsert"
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+    let v1 = first["version"].as_u64().unwrap();
+
+    client
+        .post("v1.kv.set")
+        .json(json!({
+            "key": "occ-del-stale",
+            "value": "v2".as_bytes(),
+            "behavior": "upsert"
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Attempting to delete using the old version should fail
+    let err = client
+        .post("v1.kv.delete")
+        .json(json!({ "key": "occ-del-stale", "version": v1 }))
+        .await?
+        .ensure(StatusCode::BAD_REQUEST)?
+        .json();
+    assert_eq!(err["code"], "version_mismatch");
+
+    // Key should still hold the updated value
+    let get_resp = kv_get(&client, "occ-del-stale").await?;
+    assert_eq!(get_resp["value"], json!("v2".as_bytes()));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn create_namespace_with_defaults() -> TestResult {
     let TestContext {
         client,

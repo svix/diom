@@ -2,11 +2,21 @@
 
 export interface KvDeleteIn {
     namespace?: string | null;
+    /**
+     * If set, the delete only succeeds when the stored version matches this value.
+     * Use the `version` field from a prior `get` response.
+     */
+    version?: number | null;
 }
 
 export interface KvDeleteIn_ {
     namespace?: string | null;
     key: string;
+    /**
+     * If set, the delete only succeeds when the stored version matches this value.
+     * Use the `version` field from a prior `get` response.
+     */
+    version?: number | null;
 }
 
 export const KvDeleteInSerializer = {
@@ -15,6 +25,7 @@ export const KvDeleteInSerializer = {
         return {
             namespace: object['namespace'],
             key: object['key'],
+            version: object['version'],
         };
     },
 
@@ -23,6 +34,7 @@ export const KvDeleteInSerializer = {
         return {
             'namespace': self.namespace,
             'key': self.key,
+            'version': self.version,
         };
     }
 }

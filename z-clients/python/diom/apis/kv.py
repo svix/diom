@@ -74,6 +74,7 @@ class KvAsync(ApiBase):
         body = _KvDeleteIn(
             namespace=kv_delete_in.namespace,
             key=key,
+            version=kv_delete_in.version,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -139,6 +140,7 @@ class Kv(ApiBase):
         body = _KvDeleteIn(
             namespace=kv_delete_in.namespace,
             key=key,
+            version=kv_delete_in.version,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

@@ -245,30 +245,38 @@ impl KvController {
         &self,
         namespace_id: NamespaceId,
         key: T,
+        version: Option<u64>,
+        now: Timestamp,
     ) -> Result<bool> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
 
         spawn_blocking_in_current_span(move || {
-            let db = db.lock("kvcontroller::delete");
             let key = key.as_ref();
+            let current = Self::fetch_inner(&keyspace, namespace_id, key, now)?;
 
-            if let Some(data) = KvPairRow::fetch(&keyspace, KvPairRow::key_for(namespace_id, key))?
-            {
-                let mut batch = db.batch();
-
-                // Delete from the expiration keyspace
-                if let Some(expiry) = data.expiry {
-                    batch
-                        .remove_row(&keyspace, ExpirationRow::key_for(namespace_id, expiry, key))?;
+            // OCC check: if the caller supplied an expected version, verify it.
+            if let Some(expected) = version {
+                let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
+                if current_version != expected {
+                    return Err(Error::bad_request("version_mismatch", "version mismatch"));
                 }
-                batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, key))?;
-
-                batch.commit()?;
-                Ok(true)
-            } else {
-                Ok(false)
             }
+
+            let Some(current) = current else {
+                return Ok(false);
+            };
+
+            let db = db.lock("kvcontroller::delete");
+            let mut batch = db.batch();
+
+            if let Some(expiry) = current.expiry {
+                batch.remove_row(&keyspace, ExpirationRow::key_for(namespace_id, expiry, key))?;
+            }
+            batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, key))?;
+
+            batch.commit()?;
+            Ok(true)
         })
         .await?
     }

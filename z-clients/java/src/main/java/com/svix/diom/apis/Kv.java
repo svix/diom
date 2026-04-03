@@ -94,7 +94,8 @@ public class Kv {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.delete");
         KvDeleteIn_ body = new KvDeleteIn_(
             kvDeleteIn.getNamespace(),
-            key
+            key,
+            kvDeleteIn.getVersion()
         );
 
         return this.client.executeRequest(

@@ -75,6 +75,7 @@ func (kv Kv) Delete(
 	body := diom_models.KvDeleteIn_{
 		Namespace: kvDeleteIn.Namespace,
 		Key:       key,
+		Version:   kvDeleteIn.Version,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.KvDeleteIn_, diom_models.KvDeleteOut](
