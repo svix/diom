@@ -71,6 +71,33 @@ func (msgsQueue MsgsQueue) Ack(
 	)
 }
 
+// Extends the lease on in-flight messages.
+//
+// Consumers that need more processing time can call this before the lease expires to prevent the
+// message from being re-delivered to another consumer.
+func (msgsQueue MsgsQueue) ExtendLease(
+	ctx context.Context,
+	topic string,
+	consumerGroup string,
+	msgQueueExtendLeaseIn diom_models.MsgQueueExtendLeaseIn,
+) (*diom_models.MsgQueueExtendLeaseOut, error) {
+	body := diom_models.MsgQueueExtendLeaseIn_{
+		Namespace:       msgQueueExtendLeaseIn.Namespace,
+		Topic:           topic,
+		ConsumerGroup:   consumerGroup,
+		MsgIds:          msgQueueExtendLeaseIn.MsgIds,
+		LeaseDurationMs: msgQueueExtendLeaseIn.LeaseDurationMs,
+	}
+
+	return diom_proto.ExecuteRequest[diom_models.MsgQueueExtendLeaseIn_, diom_models.MsgQueueExtendLeaseOut](
+		ctx,
+		msgsQueue.client,
+		"POST",
+		"/api/v1.msgs.queue.extend-lease",
+		&body,
+	)
+}
+
 // Configures retry and DLQ behavior for a consumer group on a topic.
 //
 // `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,

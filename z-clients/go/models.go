@@ -90,6 +90,8 @@ type (
 	MsgQueueAckOut                   = diom_models.MsgQueueAckOut
 	MsgQueueConfigureIn              = diom_models.MsgQueueConfigureIn
 	MsgQueueConfigureOut             = diom_models.MsgQueueConfigureOut
+	MsgQueueExtendLeaseIn            = diom_models.MsgQueueExtendLeaseIn
+	MsgQueueExtendLeaseOut           = diom_models.MsgQueueExtendLeaseOut
 	MsgQueueNackIn                   = diom_models.MsgQueueNackIn
 	MsgQueueNackOut                  = diom_models.MsgQueueNackOut
 	MsgQueueReceiveIn                = diom_models.MsgQueueReceiveIn

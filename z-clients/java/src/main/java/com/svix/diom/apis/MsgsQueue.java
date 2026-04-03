@@ -17,6 +17,8 @@ import com.svix.diom.models.MsgQueueAckIn;
 import com.svix.diom.models.MsgQueueAckOut;
 import com.svix.diom.models.MsgQueueConfigureIn;
 import com.svix.diom.models.MsgQueueConfigureOut;
+import com.svix.diom.models.MsgQueueExtendLeaseIn;
+import com.svix.diom.models.MsgQueueExtendLeaseOut;
 import com.svix.diom.models.MsgQueueNackIn;
 import com.svix.diom.models.MsgQueueNackOut;
 import com.svix.diom.models.MsgQueueReceiveIn;
@@ -25,6 +27,7 @@ import com.svix.diom.models.MsgQueueRedriveDlqIn;
 import com.svix.diom.models.MsgQueueRedriveDlqOut;
 import com.svix.diom.models.MsgQueueReceiveIn_;
 import com.svix.diom.models.MsgQueueAckIn_;
+import com.svix.diom.models.MsgQueueExtendLeaseIn_;
 import com.svix.diom.models.MsgQueueConfigureIn_;
 import com.svix.diom.models.MsgQueueNackIn_;
 import com.svix.diom.models.MsgQueueRedriveDlqIn_;
@@ -109,6 +112,35 @@ public class MsgsQueue {
             null,
             body,
             MsgQueueAckOut.class
+        );
+    }
+
+    /**
+* Extends the lease on in-flight messages.
+* 
+* Consumers that need more processing time can call this before the lease expires to prevent the
+* message from being re-delivered to another consumer.
+*/
+    public MsgQueueExtendLeaseOut extendLease(
+        String topic,
+        String consumerGroup,
+        final MsgQueueExtendLeaseIn msgQueueExtendLeaseIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.extend-lease");
+        MsgQueueExtendLeaseIn_ body = new MsgQueueExtendLeaseIn_(
+            msgQueueExtendLeaseIn.getNamespace(),
+            topic,
+            consumerGroup,
+            msgQueueExtendLeaseIn.getMsgIds(),
+            msgQueueExtendLeaseIn.getLeaseDurationMs()
+        );
+
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            body,
+            MsgQueueExtendLeaseOut.class
         );
     }
 

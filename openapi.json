@@ -4321,6 +4321,83 @@
         ]
       }
     },
+    "/api/v1.msgs.queue.extend-lease": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Queue Extend Lease",
+        "description": "Extends the lease on in-flight messages.\n\nConsumers that need more processing time can call this before the lease expires to prevent the\nmessage from being re-delivered to another consumer.",
+        "operationId": "v1.msgs.queue.extend-lease",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgQueueExtendLeaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgQueueExtendLeaseOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1.msgs.queue.configure": {
       "post": {
         "tags": [
@@ -6865,6 +6942,46 @@
         "required": [
           "retry_schedule"
         ]
+      },
+      "MsgQueueExtendLeaseIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "msg_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lease_duration_ms": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "default": 30000
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "msg_ids"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgQueueExtendLeaseOut": {
+        "type": "object"
       },
       "MsgQueueNackIn": {
         "type": "object",
