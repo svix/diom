@@ -104,6 +104,7 @@ pub struct AppState {
 
     pub(crate) auth_token_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Permissions>>>,
     pub(crate) rules_cache: Arc<parking_lot::RwLock<core::auth::FifoCache<Arc<[AccessRule]>>>>,
+    pub(crate) jwt_verifier: Option<core::jwt::JwtVerifier>,
 
     pub(crate) time: Monotime,
 
@@ -259,6 +260,10 @@ impl AppState {
             Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(10_000)));
         let rules_cache = Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(1_000)));
 
+        let jwt_verifier = cfg.jwt.as_ref().map(|jwt_cfg| {
+            core::jwt::JwtVerifier::try_new(jwt_cfg).expect("invalid JWT configuration")
+        });
+
         AppState {
             cfg,
             namespace_state,
@@ -268,6 +273,7 @@ impl AppState {
             internal_client,
             auth_token_cache,
             rules_cache,
+            jwt_verifier,
             time,
             topic_publish_notifier: TopicPublishNotifier::new(),
         }

@@ -57,6 +57,7 @@ idna_adapter.workspace = true
 indexmap.workspace = true
 itertools.workspace = true
 jiff.workspace = true
+jsonwebtoken.workspace = true
 maplit.workspace = true
 openraft.workspace = true
 opentelemetry.workspace = true
@@ -176,6 +177,7 @@ idna_adapter = "=1.1.0"
 indexmap = "2.6.0"
 itertools = "0.14"
 jiff = { version = "0.2.18", features = ["serde"] }
+jsonwebtoken = "9"
 k8s-openapi = { version = "0.27.1", features = ["v1_31"] }
 kube = { version = "3.0.1", features = ["runtime", "derive", "client"] }
 maplit = "1"

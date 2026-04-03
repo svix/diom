@@ -320,6 +320,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         bootstrap_cfg: None,
         bootstrap_cfg_path: None,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
+        jwt: None,
     }
 }
 
