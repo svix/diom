@@ -553,6 +553,7 @@ pub struct ConfigurationInner {
     /// (object with string values) that is forwarded to internal coyote handlers.
     #[serde(default)]
     #[env_overridable(skip)]
+    #[validate(nested)]
     pub jwt: Option<JwtConfig>,
 }
 
@@ -566,17 +567,19 @@ pub struct ConfigurationInner {
 /// The optional `audience` and `issuer` fields enable claim validation.  When
 /// omitted, the respective claims are not checked (and may be absent from the
 /// token).
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
 pub struct JwtConfig {
     #[serde(flatten)]
     pub key: JwtKey,
     /// Expected `aud` values. When set, the token must contain one of these
     /// values in its `aud` claim. When absent, `aud` is not validated.
     #[serde(default)]
+    #[validate(length(min = 1, message = "audience must not be empty when set"))]
     pub audience: Option<Vec<String>>,
     /// Expected `iss` values. When set, the token's `iss` claim must match one
     /// of these values. When absent, `iss` is not validated.
     #[serde(default)]
+    #[validate(length(min = 1, message = "issuer must not be empty when set"))]
     pub issuer: Option<Vec<String>>,
 }
 
