@@ -25,16 +25,16 @@ import java.util.Objects;
 public class IdempotencyStartIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty("ttl_ms") private Long ttlMs;
+    @JsonProperty("lock_period_ms") private Long lockPeriodMs;
 
     public IdempotencyStartIn_(
         String namespace,
         String key,
-        Long ttlMs
+        Long lockPeriodMs
     ) {
         this.namespace = namespace;
         this.key = key;
-        this.ttlMs = ttlMs;
+        this.lockPeriodMs = lockPeriodMs;
     }
 
     /**

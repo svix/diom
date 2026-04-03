@@ -28,9 +28,9 @@ func (idempotency Idempotency) Start(
 	idempotencyStartIn diom_models.IdempotencyStartIn,
 ) (*diom_models.IdempotencyStartOut, error) {
 	body := diom_models.IdempotencyStartIn_{
-		Namespace: idempotencyStartIn.Namespace,
-		Key:       key,
-		TtlMs:     idempotencyStartIn.TtlMs,
+		Namespace:    idempotencyStartIn.Namespace,
+		Key:          key,
+		LockPeriodMs: idempotencyStartIn.LockPeriodMs,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.IdempotencyStartIn_, diom_models.IdempotencyStartOut](

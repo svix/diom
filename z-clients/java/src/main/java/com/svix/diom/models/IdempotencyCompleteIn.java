@@ -84,7 +84,7 @@ public class IdempotencyCompleteIn {
     }
 
     /**
-    * TTL in milliseconds for the cached response
+    * How long to keep the idempotency response for.
     *
      * @return ttlMs
      */

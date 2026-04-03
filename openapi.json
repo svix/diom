@@ -6153,7 +6153,7 @@
             }
           },
           "ttl_ms": {
-            "description": "TTL in milliseconds for the cached response",
+            "description": "How long to keep the idempotency response for.",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
@@ -6266,8 +6266,8 @@
             "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
-          "ttl_ms": {
-            "description": "TTL in milliseconds for the lock/response",
+          "lock_period_ms": {
+            "description": "How long to hold the lock on start before releasing it.",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
@@ -6275,7 +6275,7 @@
         },
         "required": [
           "key",
-          "ttl_ms"
+          "lock_period_ms"
         ],
         "x-positional": [
           "key"

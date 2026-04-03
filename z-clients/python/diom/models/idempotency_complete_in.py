@@ -10,7 +10,7 @@ class IdempotencyCompleteIn(BaseModel):
     """The response to cache"""
 
     ttl_ms: int
-    """TTL in milliseconds for the cached response"""
+    """How long to keep the idempotency response for."""
 
 
 class _IdempotencyCompleteIn(BaseModel):
@@ -22,4 +22,4 @@ class _IdempotencyCompleteIn(BaseModel):
     """The response to cache"""
 
     ttl_ms: int
-    """TTL in milliseconds for the cached response"""
+    """How long to keep the idempotency response for."""

@@ -29,7 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyStartIn {
     @JsonProperty private String namespace;
-    @JsonProperty("ttl_ms") private Long ttlMs;
+    @JsonProperty("lock_period_ms") private Long lockPeriodMs;
     public IdempotencyStartIn() {}
 
     public IdempotencyStartIn namespace(String namespace) {
@@ -51,22 +51,22 @@ public class IdempotencyStartIn {
         this.namespace = namespace;
     }
 
-    public IdempotencyStartIn ttlMs(Long ttlMs) {
-        this.ttlMs = ttlMs;
+    public IdempotencyStartIn lockPeriodMs(Long lockPeriodMs) {
+        this.lockPeriodMs = lockPeriodMs;
         return this;
     }
 
     /**
-    * TTL in milliseconds for the lock/response
+    * How long to hold the lock on start before releasing it.
     *
-     * @return ttlMs
+     * @return lockPeriodMs
      */
     @javax.annotation.Nonnull
-    public Long getTtlMs() {
-        return ttlMs;
+    public Long getLockPeriodMs() {
+        return lockPeriodMs;
     }
 
-    public void setTtlMs(Long ttlMs) {
-        this.ttlMs = ttlMs;
+    public void setLockPeriodMs(Long lockPeriodMs) {
+        this.lockPeriodMs = lockPeriodMs;
     }
 }
