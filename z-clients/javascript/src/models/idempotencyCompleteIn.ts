@@ -4,7 +4,7 @@ export interface IdempotencyCompleteIn {
     namespace?: string | null;
     /** The response to cache */
     response: number[];
-    /** TTL in milliseconds for the cached response */
+    /** How long to keep the idempotency response for. */
     ttlMs: number;
 }
 
@@ -13,7 +13,7 @@ export interface IdempotencyCompleteIn_ {
     key: string;
     /** The response to cache */
     response: number[];
-    /** TTL in milliseconds for the cached response */
+    /** How long to keep the idempotency response for. */
     ttlMs: number;
 }
 

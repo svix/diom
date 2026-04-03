@@ -64,10 +64,10 @@ pub struct IdempotencyStartIn {
     #[validate(nested)]
     pub key: EntityKey,
 
-    /// TTL in milliseconds for the lock/response
-    #[serde(rename = "ttl_ms")]
+    /// How long to hold the lock on start before releasing it.
+    #[serde(rename = "lock_period_ms")]
     #[validate(range(min = 1))]
-    pub ttl: DurationMs,
+    pub lock_period: DurationMs,
 }
 
 request_input!(IdempotencyStartIn, "start");
@@ -112,7 +112,7 @@ pub struct IdempotencyCompleteIn {
     /// The response to cache
     pub response: Vec<u8>,
 
-    /// TTL in milliseconds for the cached response
+    /// How long to keep the idempotency response for.
     #[serde(rename = "ttl_ms")]
     #[validate(range(min = 1))]
     pub ttl: DurationMs,
@@ -154,7 +154,7 @@ async fn idempotency_start(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.ttl);
+    let operation = TryStartOperation::new(namespace, data.key.to_string(), data.lock_period);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(response.result.into()))

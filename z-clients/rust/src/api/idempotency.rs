@@ -24,7 +24,7 @@ impl<'a> Idempotency<'a> {
         let idempotency_start_in = IdempotencyStartIn_ {
             namespace: idempotency_start_in.namespace,
             key,
-            ttl: idempotency_start_in.ttl,
+            lock_period: idempotency_start_in.lock_period,
         };
 
         crate::request::Request::new(http::Method::POST, "/api/v1.idempotency.start")
