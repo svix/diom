@@ -4,7 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_core::types::{DurationMs, EntityKey};
+use diom_core::types::{DurationMs, EntityKey, Metadata};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt as _, ResultExt};
 use diom_id::Module;
@@ -86,6 +86,8 @@ pub enum IdempotencyStartOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyCompleted {
     pub response: Vec<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<Metadata>,
 }
 
 impl From<IdempotencyStartResult> for IdempotencyStartOut {
@@ -93,8 +95,8 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
         match result {
             IdempotencyStartResult::Started => IdempotencyStartOut::Started,
             IdempotencyStartResult::Locked => IdempotencyStartOut::Locked,
-            IdempotencyStartResult::Completed { response } => {
-                IdempotencyStartOut::Completed(IdempotencyCompleted { response })
+            IdempotencyStartResult::Completed { response, context } => {
+                IdempotencyStartOut::Completed(IdempotencyCompleted { response, context })
             }
         }
     }
@@ -111,6 +113,10 @@ pub struct IdempotencyCompleteIn {
 
     /// The response to cache
     pub response: Vec<u8>,
+
+    /// Optional metadata to store alongside the response
+    #[serde(default)]
+    pub context: Option<Metadata>,
 
     /// How long to keep the idempotency response for.
     #[serde(rename = "ttl_ms")]
@@ -172,8 +178,13 @@ async fn idempotency_complete(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation =
-        CompleteOperation::new(namespace, data.key.to_string(), data.response, data.ttl);
+    let operation = CompleteOperation::new(
+        namespace,
+        data.key.to_string(),
+        data.response,
+        data.context,
+        data.ttl,
+    );
     repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(IdempotencyCompleteOut {}))

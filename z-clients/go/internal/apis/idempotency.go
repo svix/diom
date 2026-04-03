@@ -52,6 +52,7 @@ func (idempotency Idempotency) Complete(
 		Namespace: idempotencyCompleteIn.Namespace,
 		Key:       key,
 		Response:  idempotencyCompleteIn.Response,
+		Context:   idempotencyCompleteIn.Context,
 		TtlMs:     idempotencyCompleteIn.TtlMs,
 	}
 

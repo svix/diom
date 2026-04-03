@@ -1,6 +1,6 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, IdempotencyState};
-use diom_core::types::DurationMs;
+use diom_core::types::{DurationMs, Metadata};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
@@ -12,6 +12,8 @@ pub struct CompleteOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
     pub(crate) response: Vec<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) context: Option<Metadata>,
     #[serde(rename = "ttl_ms")]
     pub(crate) ttl: DurationMs,
 }
@@ -21,12 +23,14 @@ impl CompleteOperation {
         namespace: IdempotencyNamespace,
         key: String,
         response: Vec<u8>,
+        context: Option<Metadata>,
         ttl: DurationMs,
     ) -> Self {
         Self {
             namespace_id: namespace.id,
             key,
             response,
+            context,
             ttl,
         }
     }
@@ -49,6 +53,7 @@ impl CompleteOperation {
                 KvModelIn {
                     value: IdempotencyState::Completed {
                         response: self.response,
+                        context: self.context,
                     }
                     .into(),
                     expiry: Some(expiry),

@@ -30,6 +30,7 @@ import lombok.ToString;
 public class IdempotencyCompleteIn {
     @JsonProperty private String namespace;
     @JsonProperty private List<Byte> response;
+    @JsonProperty private Map<String,String> context;
     @JsonProperty("ttl_ms") private Long ttlMs;
     public IdempotencyCompleteIn() {}
 
@@ -76,6 +77,32 @@ public class IdempotencyCompleteIn {
 
     public void setResponse(List<Byte> response) {
         this.response = response;
+    }
+
+    public IdempotencyCompleteIn context(Map<String,String> context) {
+        this.context = context;
+        return this;
+    }
+
+    public IdempotencyCompleteIn putContextItem(String key, String contextItem) {
+        if (this.context == null) {
+            this.context = new HashMap<>();
+        }
+        this.context.put(key, contextItem);
+        return this;
+    }
+    /**
+    * Optional metadata to store alongside the response
+    *
+     * @return context
+     */
+    @javax.annotation.Nullable
+    public Map<String,String> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String,String> context) {
+        this.context = context;
     }
 
     public IdempotencyCompleteIn ttlMs(Long ttlMs) {

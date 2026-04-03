@@ -43,6 +43,7 @@ impl<'a> Idempotency<'a> {
             namespace: idempotency_complete_in.namespace,
             key,
             response: idempotency_complete_in.response,
+            context: idempotency_complete_in.context,
             ttl: idempotency_complete_in.ttl,
         };
 

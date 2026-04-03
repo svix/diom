@@ -10,6 +10,10 @@ pub struct IdempotencyCompleteIn {
     #[serde(with = "serde_bytes")]
     pub response: Vec<u8>,
 
+    /// Optional metadata to store alongside the response
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<std::collections::HashMap<String, String>>,
+
     /// How long to keep the idempotency response for.
     #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]
     pub ttl: std::time::Duration,
@@ -20,12 +24,21 @@ impl IdempotencyCompleteIn {
         Self {
             namespace: None,
             response,
+            context: None,
             ttl,
         }
     }
 
     pub fn with_namespace(mut self, value: impl Into<Option<String>>) -> Self {
         self.namespace = value.into();
+        self
+    }
+
+    pub fn with_context(
+        mut self,
+        value: impl Into<Option<std::collections::HashMap<String, String>>>,
+    ) -> Self {
+        self.context = value.into();
         self
     }
 }
@@ -40,6 +53,10 @@ pub(crate) struct IdempotencyCompleteIn_ {
     /// The response to cache
     #[serde(with = "serde_bytes")]
     pub response: Vec<u8>,
+
+    /// Optional metadata to store alongside the response
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<std::collections::HashMap<String, String>>,
 
     /// How long to keep the idempotency response for.
     #[serde(rename = "ttl_ms", with = "crate::duration_ms_serde")]

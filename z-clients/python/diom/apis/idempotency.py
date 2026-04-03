@@ -53,6 +53,7 @@ class IdempotencyAsync(ApiBase):
             namespace=idempotency_complete_in.namespace,
             key=key,
             response=idempotency_complete_in.response,
+            context=idempotency_complete_in.context,
             ttl_ms=idempotency_complete_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
@@ -116,6 +117,7 @@ class Idempotency(ApiBase):
             namespace=idempotency_complete_in.namespace,
             key=key,
             response=idempotency_complete_in.response,
+            context=idempotency_complete_in.context,
             ttl_ms=idempotency_complete_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
