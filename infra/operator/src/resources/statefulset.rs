@@ -17,7 +17,7 @@ use k8s_openapi::{
 use kube::{Resource, ResourceExt, core::ObjectMeta};
 
 use crate::{
-    crd::{AdminTokenSource, DiomCluster, DiomClusterSpec},
+    crd::{DiomCluster, DiomClusterSpec, INTRACLUSTER_PORT},
     error::Result,
     labels,
     resources::services,
@@ -82,7 +82,7 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
             ..Default::default()
         },
         spec: Some(StatefulSetSpec {
-            replicas: Some(spec.nodes),
+            replicas: Some(spec.diom.nodes),
             service_name: Some(headless_svc),
             selector: LabelSelector {
                 match_labels: Some(labels::selector(&cluster_name)),
@@ -113,7 +113,7 @@ fn build_env(
     headless_svc: &str,
     ns: &str,
 ) -> Vec<EnvVar> {
-    let cluster_port = spec.cluster_port();
+    let intracluster_port = INTRACLUSTER_PORT;
 
     // These must come before any vars that reference them via $(VAR) substitution.
     let mut env: Vec<EnvVar> = vec![
@@ -124,12 +124,20 @@ fn build_env(
         // Uses k8s env var substitution: $(VAR) references earlier vars in this list.
         env_var(
             "DIOM_CLUSTER_ADVERTISED_ADDRESS",
-            format!("$(POD_NAME).{headless_svc}.$(POD_NAMESPACE).svc.cluster.local:{cluster_port}"),
+            format!(
+                "$(POD_NAME).{headless_svc}.$(POD_NAMESPACE).svc.cluster.local:{intracluster_port}"
+            ),
         ),
         // Seed nodes: all pods in the StatefulSet by their stable DNS names.
         env_var(
             "DIOM_CLUSTER_SEED_NODES",
-            seed_nodes_value(cluster_name, headless_svc, ns, spec.nodes, cluster_port),
+            seed_nodes_value(
+                cluster_name,
+                headless_svc,
+                ns,
+                spec.diom.nodes,
+                intracluster_port,
+            ),
         ),
         // Allow any pod to initialize a new cluster if it can't find peers and has no state.
         // StatefulSets start pods sequentially (pod-0 first), so in practice pod-0 initializes
@@ -137,28 +145,16 @@ fn build_env(
         env_var("DIOM_CLUSTER_AUTO_INITIALIZE", "true"),
         env_var(
             "DIOM_LISTEN_ADDRESS",
-            format!("0.0.0.0:{}", spec.api_port),
+            format!("0.0.0.0:{}", spec.diom.api_port),
         ),
         env_var("DIOM_PERSISTENT_DB_PATH", PERSISTENT_DATA_PATH),
     ];
-
-    // Inter-node secret, if configured.
-    if let Some(secret_ref) = &spec.cluster.secret_ref {
-        env.push(EnvVar {
-            name: "DIOM_CLUSTER_SECRET".into(),
-            value_from: Some(EnvVarSource {
-                secret_key_ref: Some(secret_ref.clone()),
-                ..Default::default()
-            }),
-            ..Default::default()
-        });
-    }
 
     // Always set log and snapshot paths explicitly to avoid the Dockerfile defaults, which point
     // to ephemeral storage and cause crashes on pod restart if Raft references a missing snapshot.
     env.push(env_var(
         "DIOM_CLUSTER_LOG_PATH",
-        if spec.storage.logs.is_some() {
+        if spec.diom.storage.logs.is_some() {
             LOGS_DATA_PATH.into()
         } else {
             format!("{PERSISTENT_DATA_PATH}/logs")
@@ -166,75 +162,52 @@ fn build_env(
     ));
     env.push(env_var(
         "DIOM_CLUSTER_SNAPSHOT_PATH",
-        if spec.storage.snapshots.is_some() {
+        if spec.diom.storage.snapshots.is_some() {
             SNAPSHOTS_DATA_PATH.into()
         } else {
             format!("{PERSISTENT_DATA_PATH}/snapshots")
         },
     ));
 
-    // Optional cluster tuning parameters.
-    push_opt_env(
-        &mut env,
-        "DIOM_CLUSTER_HEARTBEAT_INTERVAL_MS",
-        spec.cluster.heartbeat_interval_ms,
-    );
-    push_opt_env(
-        &mut env,
-        "DIOM_CLUSTER_ELECTION_TIMEOUT_MIN_MS",
-        spec.cluster.election_timeout_min_ms,
-    );
-    push_opt_env(
-        &mut env,
-        "DIOM_CLUSTER_ELECTION_TIMEOUT_MAX_MS",
-        spec.cluster.election_timeout_max_ms,
-    );
-    push_opt_env(
-        &mut env,
-        "DIOM_CLUSTER_REPLICATION_REQUEST_TIMEOUT_MS",
-        spec.cluster.replication_request_timeout_ms,
-    );
-    push_opt_env(
-        &mut env,
-        "DIOM_SNAPSHOT_AFTER_WRITES",
-        spec.cluster.snapshot_after_writes,
-    );
-    push_opt_env(
-        &mut env,
-        "DIOM_CLUSTER_SNAPSHOT_AFTER_MS",
-        spec.cluster.snapshot_after_ms,
-    );
-
-    if let Some(level) = &spec.cluster.log_level {
+    if let Some(level) = &spec.diom.log_level {
         env.push(env_var("DIOM_LOG_LEVEL", level));
     }
 
-    if let Some(bootstrap) = &spec.bootstrap {
+    if let Some(format) = &spec.diom.log_format {
+        env.push(env_var("DIOM_LOG_FORMAT", format));
+    }
+
+    if let Some(addr) = &spec.diom.opentelemetry_address {
+        env.push(env_var("DIOM_OPENTELEMETRY_ADDRESS", addr));
+    }
+
+    if let Some(addr) = &spec.diom.opentelemetry_metrics_address {
+        env.push(env_var("DIOM_OPENTELEMETRY_METRICS_ADDRESS", addr));
+    }
+
+    if let Some(use_http) = spec.diom.opentelemetry_metrics_use_http {
+        env.push(env_var(
+            "DIOM_OPENTELEMETRY_METRICS_USE_HTTP",
+            use_http.to_string(),
+        ));
+    }
+
+    if let Some(bootstrap) = &spec.diom.bootstrap {
         env.push(env_var("DIOM_BOOTSTRAP_CFG", bootstrap));
     }
 
     // Extra user-provided env vars.
-    env.extend(spec.env_var.iter().cloned());
+    env.extend(spec.diom.env_var.iter().cloned());
 
-    // Admin token is pushed last so spec.admin_token always takes precedence over
-    // any DIOM_ADMIN_TOKEN set via spec.env_var. If both are set, the spec.env_var
-    // value is silently shadowed.
-    if let Some(admin_token) = &spec.admin_token {
-        match admin_token {
-            AdminTokenSource::Value { value } => env.push(EnvVar {
-                name: "DIOM_ADMIN_TOKEN".into(),
-                value: Some(value.clone()),
-                ..Default::default()
-            }),
-            AdminTokenSource::ValueFrom { value_from } => env.push(EnvVar {
-                name: "DIOM_ADMIN_TOKEN".into(),
-                value_from: Some(EnvVarSource {
-                    secret_key_ref: Some(value_from.clone()),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            }),
-        }
+    // The rest will shadow any manually applied env vars with
+    // the same name.
+
+    if let Some(admin_token) = &spec.diom.admin_token {
+        env.push(admin_token.to_env_var("DIOM_ADMIN_TOKEN"));
+    }
+
+    if let Some(internode_secret) = &spec.diom.internode_secret {
+        env.push(internode_secret.to_env_var("DIOM_CLUSTER_SECRET"));
     }
 
     env
@@ -245,7 +218,7 @@ fn build_container(
     env: Vec<EnvVar>,
     volume_mounts: Vec<VolumeMount>,
 ) -> Container {
-    let cluster_port = spec.cluster_port();
+    let intracluster_port = INTRACLUSTER_PORT;
     const API_HEALTH_ENDPOINT: &str = "/api/v1.health.ping";
     const CLUSTER_HEALTH_ENDPOINT: &str = "/repl/health";
 
@@ -258,12 +231,12 @@ fn build_container(
         ports: Some(vec![
             ContainerPort {
                 name: Some("api".into()),
-                container_port: spec.api_port as i32,
+                container_port: spec.diom.api_port as i32,
                 ..Default::default()
             },
             ContainerPort {
                 name: Some("cluster".into()),
-                container_port: cluster_port as i32,
+                container_port: intracluster_port as i32,
                 ..Default::default()
             },
         ]),
@@ -272,7 +245,7 @@ fn build_container(
         liveness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
                 path: Some(API_HEALTH_ENDPOINT.into()),
-                port: IntOrString::Int(spec.api_port as _),
+                port: IntOrString::Int(spec.diom.api_port as _),
                 ..Default::default()
             }),
             initial_delay_seconds: Some(5),
@@ -284,7 +257,7 @@ fn build_container(
         readiness_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
                 path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
-                port: IntOrString::Int(cluster_port as _),
+                port: IntOrString::Int(intracluster_port as _),
                 ..Default::default()
             }),
             initial_delay_seconds: Some(15),
@@ -296,7 +269,7 @@ fn build_container(
         startup_probe: Some(Probe {
             http_get: Some(HTTPGetAction {
                 path: Some(CLUSTER_HEALTH_ENDPOINT.into()),
-                port: IntOrString::Int(cluster_port as _),
+                port: IntOrString::Int(intracluster_port as _),
                 ..Default::default()
             }),
             initial_delay_seconds: Some(15),
@@ -312,11 +285,11 @@ fn build_container(
 fn build_volume_claim_templates(spec: &DiomClusterSpec) -> Vec<PersistentVolumeClaim> {
     let mut templates = vec![pvc_template(
         "persistent",
-        &spec.storage.persistent.size,
-        spec.storage.persistent.storage_class.as_deref(),
+        &spec.diom.storage.persistent.size,
+        spec.diom.storage.persistent.storage_class.as_deref(),
     )];
 
-    if let Some(logs) = &spec.storage.logs {
+    if let Some(logs) = &spec.diom.storage.logs {
         templates.push(pvc_template(
             "logs",
             &logs.size,
@@ -324,7 +297,7 @@ fn build_volume_claim_templates(spec: &DiomClusterSpec) -> Vec<PersistentVolumeC
         ));
     }
 
-    if let Some(snapshots) = &spec.storage.snapshots {
+    if let Some(snapshots) = &spec.diom.storage.snapshots {
         templates.push(pvc_template(
             "snapshots",
             &snapshots.size,
@@ -342,7 +315,7 @@ fn build_volume_mounts(spec: &DiomClusterSpec) -> Vec<VolumeMount> {
         ..Default::default()
     }];
 
-    if spec.storage.logs.is_some() {
+    if spec.diom.storage.logs.is_some() {
         mounts.push(VolumeMount {
             name: "logs".into(),
             mount_path: LOGS_DATA_PATH.into(),
@@ -350,7 +323,7 @@ fn build_volume_mounts(spec: &DiomClusterSpec) -> Vec<VolumeMount> {
         });
     }
 
-    if spec.storage.snapshots.is_some() {
+    if spec.diom.storage.snapshots.is_some() {
         mounts.push(VolumeMount {
             name: "snapshots".into(),
             mount_path: SNAPSHOTS_DATA_PATH.into(),
@@ -382,12 +355,6 @@ fn env_from_field(name: &str, field_path: &str) -> EnvVar {
             ..Default::default()
         }),
         ..Default::default()
-    }
-}
-
-fn push_opt_env(env: &mut Vec<EnvVar>, name: &str, value: Option<impl ToString>) {
-    if let Some(v) = value {
-        env.push(env_var(name, v.to_string()));
     }
 }
 

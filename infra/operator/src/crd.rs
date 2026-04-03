@@ -3,7 +3,7 @@
 
 use k8s_openapi::{
     api::core::v1::{
-        Affinity, EnvVar, ResourceRequirements, SecretKeySelector, Toleration,
+        Affinity, EnvVar, EnvVarSource, ResourceRequirements, SecretKeySelector, Toleration,
         TopologySpreadConstraint,
     },
     apimachinery::pkg::api::resource::Quantity,
@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 pub(crate) const DEFAULT_API_PORT: u16 = 8080;
+pub(crate) const INTRACLUSTER_PORT: u16 = 18080;
 
 fn default_api_port() -> u16 {
     DEFAULT_API_PORT
@@ -47,10 +48,9 @@ fn default_topology_spread_constraints() -> Vec<TopologySpreadConstraint> {
     printcolumn = r#"{"name":"Ready","type":"integer","jsonPath":".status.readyReplicas"}"#
 )]
 pub(crate) struct DiomClusterSpec {
-    /// Number of Diom nodes. Should be odd for quorum (1, 3, 5...).
-    #[serde(default = "default_nodes")]
-    #[schemars(schema_with = "nodes_schema")]
-    pub nodes: i32,
+    /// Cluster/replication configuration.
+    #[serde(flatten)]
+    pub diom: DiomSpec,
 
     /// Container image to deploy.
     pub image: String,
@@ -59,26 +59,9 @@ pub(crate) struct DiomClusterSpec {
     #[serde(default)]
     pub image_pull_policy: Option<String>,
 
-    /// Storage configuration.
-    pub storage: StorageSpec,
-
-    /// Cluster/replication configuration.
-    #[serde(default)]
-    pub cluster: ClusterSpec,
-
     /// Configuration for the externally-facing Service.
     #[serde(default)]
     pub service: ServiceSpec,
-
-    /// Port for the external API. The inter-node port is this value + 10000.
-    #[serde(default = "default_api_port")]
-    pub api_port: u16,
-
-    /// Additional environment variables to inject into pods.
-    /// Follows the Kubernetes EnvVar API spec (v1.EnvVar): supports plain `value`
-    /// and `valueFrom` (secretKeyRef, configMapKeyRef, fieldRef, resourceFieldRef)
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub env_var: Vec<EnvVar>,
 
     /// CPU and memory resource requests and limits for the diom container.
     #[serde(default)]
@@ -87,12 +70,6 @@ pub(crate) struct DiomClusterSpec {
     /// Additional annotations to add to pods.
     #[serde(default)]
     pub pod_annotations: BTreeMap<String, String>,
-
-    /// Bootstrap script to run on cluster startup.
-    /// Currently a YAML file defining namespaces to pre-create; may become a shell script in future.
-    /// Mounted into pods and passed to the server via DIOM_BOOTSTRAP_CFG_PATH.
-    #[serde(default)]
-    pub bootstrap: Option<String>,
 
     /// Topology spread constraints for pod scheduling.
     ///
@@ -116,18 +93,12 @@ pub(crate) struct DiomClusterSpec {
     /// Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).
     #[serde(default)]
     pub affinity: Option<Affinity>,
-
-    /// Admin token for privileged API access.
-    /// Set either `value` for a plain string or `valueFrom` to pull from a Kubernetes Secret.
-    /// Using a plain string value is only recommended for testing. Use `valueFrom` in all other cases.
-    #[serde(default)]
-    pub admin_token: Option<AdminTokenSource>,
 }
 
 /// Storage configuration for a Diom cluster.
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
-pub(crate) struct StorageSpec {
-    /// Persistent database storage (fjall persistent DB).
+pub(crate) struct DiomStorageSpec {
+    /// Persistent database storage
     pub persistent: VolumeSpec,
 
     // TODO: ephemeral DB storage — fjall ephemeral DB
@@ -156,43 +127,76 @@ pub(crate) struct VolumeSpec {
     pub storage_class: Option<String>,
 }
 
-/// Cluster/replication configuration.
-#[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema)]
+/// Diom configuration.
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct ClusterSpec {
-    /// Reference to a Secret containing the inter-node authentication token.
-    /// `name` is the name of the Kubernetes Secret.
-    /// `key` is the key within the Secret whose value is the token.
-    #[serde(default)]
-    pub secret_ref: Option<SecretKeySelector>,
+pub(crate) struct DiomSpec {
+    /// Number of Diom nodes.
+    ///
+    /// Should be an odd number. Recommended value is 3, or 1 if you want only a single node.
+    #[serde(default = "default_nodes")]
+    #[schemars(schema_with = "nodes_schema")]
+    pub nodes: i32,
 
-    /// Heartbeat interval in milliseconds.
-    #[serde(default)]
-    pub heartbeat_interval_ms: Option<u64>,
+    /// Port for the external API and service.
+    #[serde(default = "default_api_port")]
+    pub api_port: u16,
 
-    /// Minimum election timeout in milliseconds.
+    /// Inter-node authentication token.
+    ///
+    /// Set either `value` for a plain string or `valueFrom` to pull from a Kubernetes Secret.
+    /// Using a plain string value is only recommended for testing. Use `valueFrom` in all other cases.
     #[serde(default)]
-    pub election_timeout_min_ms: Option<u64>,
+    pub internode_secret: Option<ValueOrSecretRef>,
 
-    /// Maximum election timeout in milliseconds.
-    #[serde(default)]
-    pub election_timeout_max_ms: Option<u64>,
-
-    /// Replication request timeout in milliseconds.
-    #[serde(default)]
-    pub replication_request_timeout_ms: Option<u64>,
-
-    /// Trigger a background snapshot after this many writes.
-    #[serde(default)]
-    pub snapshot_after_writes: Option<u32>,
-
-    /// Trigger a background snapshot after this many milliseconds.
-    #[serde(default)]
-    pub snapshot_after_ms: Option<u64>,
-
-    /// Log level (info, debug, trace). Defaults to info.
+    /// The log level to run the service with. Supported: info, debug, trace
     #[serde(default)]
     pub log_level: Option<String>,
+
+    /// The log format that all output will follow. Supported: default, json
+    #[serde(default)]
+    pub log_format: Option<String>,
+
+    /// The OpenTelemetry address to send events to if given.
+    ///
+    /// Currently only GRPC exports are supported.
+    #[serde(default)]
+    pub opentelemetry_address: Option<String>,
+
+    /// The OpenTelemetry address to send metrics to if given.
+    ///
+    /// If not specified, the server will attempt to fall back
+    /// to `opentelemetry_address`.
+    #[serde(default)]
+    pub opentelemetry_metrics_address: Option<String>,
+
+    /// Send OpenTelemetry metrics via HTTP.
+    ///
+    /// By default, `opentelemetry_address` and `opentelemetry_metrics_address`
+    /// are expected to be a GRPC servers. When this is set to true,
+    /// HTTP is used instead for metrics exports.
+    #[serde(default)]
+    pub opentelemetry_metrics_use_http: Option<bool>,
+
+    /// Newline-delimited bootstrap script to run on cluster startup.
+    #[serde(default)]
+    pub bootstrap: Option<String>,
+
+    /// Admin token for privileged API access.
+    ///
+    /// Set either `value` for a plain string or `valueFrom` to pull from a Kubernetes Secret.
+    /// Using a plain string value is only recommended for testing. Use `valueFrom` in all other cases.
+    #[serde(default)]
+    pub admin_token: Option<ValueOrSecretRef>,
+
+    /// Additional environment variables to inject into pods.
+    /// Follows the Kubernetes EnvVar API spec (v1.EnvVar): supports plain `value`
+    /// and `valueFrom` (secretKeyRef, configMapKeyRef, fieldRef, resourceFieldRef)
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub env_var: Vec<EnvVar>,
+
+    /// Storage configuration.
+    pub storage: DiomStorageSpec,
 }
 
 /// Configuration for the client-facing Service.
@@ -230,7 +234,7 @@ pub(crate) enum Phase {
 /// Set either `value` for a plain string or `valueFrom` to reference a Kubernetes Secret.
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema, PartialEq)]
 #[serde(untagged)]
-pub(crate) enum AdminTokenSource {
+pub(crate) enum ValueOrSecretRef {
     Value {
         value: String,
     },
@@ -240,9 +244,23 @@ pub(crate) enum AdminTokenSource {
     },
 }
 
-impl DiomClusterSpec {
-    pub(crate) fn cluster_port(&self) -> u16 {
-        self.api_port + 10000
+impl ValueOrSecretRef {
+    pub(crate) fn to_env_var(&self, name: &str) -> EnvVar {
+        match self {
+            ValueOrSecretRef::Value { value } => EnvVar {
+                name: name.into(),
+                value: Some(value.clone()),
+                ..Default::default()
+            },
+            ValueOrSecretRef::ValueFrom { value_from } => EnvVar {
+                name: name.into(),
+                value_from: Some(EnvVarSource {
+                    secret_key_ref: Some(value_from.clone()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+        }
     }
 }
 
