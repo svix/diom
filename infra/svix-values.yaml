@@ -44,5 +44,17 @@ cluster:
         operator: Equal
         value: coyote
         effect: NoSchedule
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: coyote
+            topologyKey: kubernetes.io/hostname
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: coyote
+            topologyKey: topology.kubernetes.io/zone
+    topologySpreadConstraints: []
     adminToken:
       value: "admin_abcdefghijlmnopqrstuvwxyz012345"
