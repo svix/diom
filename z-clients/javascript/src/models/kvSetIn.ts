@@ -6,7 +6,6 @@ import {
 
 export interface KvSetIn {
     namespace?: string | null;
-    value: number[];
     /** Time to live in milliseconds */
     ttlMs?: number | null;
     behavior?: OperationBehavior;

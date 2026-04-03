@@ -27,13 +27,14 @@ class CacheAsync(ApiBase):
     async def set(
         self,
         key: str,
+        value: bytes,
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
         body = _CacheSetIn(
             namespace=cache_set_in.namespace,
             key=key,
-            value=cache_set_in.value,
+            value=value,
             ttl_ms=cache_set_in.ttl_ms,
         ).model_dump(exclude_none=True)
 
@@ -90,13 +91,14 @@ class Cache(ApiBase):
     def set(
         self,
         key: str,
+        value: bytes,
         cache_set_in: CacheSetIn,
     ) -> CacheSetOut:
         """Cache Set"""
         body = _CacheSetIn(
             namespace=cache_set_in.namespace,
             key=key,
-            value=cache_set_in.value,
+            value=value,
             ttl_ms=cache_set_in.ttl_ms,
         ).model_dump(exclude_none=True)
 

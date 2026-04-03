@@ -34,13 +34,14 @@ public class Cache {
     /** Cache Set */
     public CacheSetOut set(
         String key,
+        List<Byte> value,
         final CacheSetIn cacheSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.set");
         CacheSetIn_ body = new CacheSetIn_(
             cacheSetIn.getNamespace(),
             key,
-            cacheSetIn.getValue(),
+            value,
             cacheSetIn.getTtlMs()
         );
 

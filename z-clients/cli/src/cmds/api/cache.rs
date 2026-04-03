@@ -17,6 +17,7 @@ pub enum CacheCommands {
     /// Cache Set
     Set {
         key: String,
+        value: Vec<u8>,
         cache_set_in: crate::json::JsonOf<coyote_client::models::CacheSetIn>,
     },
     /// Cache Get
@@ -37,8 +38,15 @@ impl CacheCommands {
             Self::Namespace(args) => {
                 args.command.exec(client).await?;
             }
-            Self::Set { key, cache_set_in } => {
-                let resp = client.cache().set(key, cache_set_in.into_inner()).await?;
+            Self::Set {
+                key,
+                value,
+                cache_set_in,
+            } => {
+                let resp = client
+                    .cache()
+                    .set(key, value, cache_set_in.into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp)?;
             }
             Self::Get { key, cache_get_in } => {

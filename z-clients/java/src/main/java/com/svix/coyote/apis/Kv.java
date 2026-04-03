@@ -34,13 +34,14 @@ public class Kv {
     /** KV Set */
     public KvSetOut set(
         String key,
+        List<Byte> value,
         final KvSetIn kvSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.set");
         KvSetIn_ body = new KvSetIn_(
             kvSetIn.getNamespace(),
             key,
-            kvSetIn.getValue(),
+            value,
             kvSetIn.getTtlMs(),
             kvSetIn.getBehavior(),
             kvSetIn.getVersion()
@@ -52,6 +53,18 @@ public class Kv {
             null,
             body,
             KvSetOut.class
+        );
+    }
+
+    /** KV Set */
+    public KvSetOut set(
+        String key,
+        List<Byte> value
+    ) throws IOException, ApiException {
+        return this.set(
+            key,
+            value,
+            new KvSetIn()
         );
     }
 

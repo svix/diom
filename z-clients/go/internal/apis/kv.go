@@ -25,12 +25,13 @@ func (kv Kv) Namespace() KvNamespace {
 func (kv Kv) Set(
 	ctx context.Context,
 	key string,
+	value []uint8,
 	kvSetIn coyote_models.KvSetIn,
 ) (*coyote_models.KvSetOut, error) {
 	body := coyote_models.KvSetIn_{
 		Namespace: kvSetIn.Namespace,
 		Key:       key,
-		Value:     kvSetIn.Value,
+		Value:     value,
 		TtlMs:     kvSetIn.TtlMs,
 		Behavior:  kvSetIn.Behavior,
 		Version:   kvSetIn.Version,

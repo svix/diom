@@ -13,7 +13,8 @@ Example setting a cache value:
 ```rust
 client.cache().set(
     "my-cache-key".to_string(),
-    CacheSetIn::new(value, Duration::from_secs(10))
+    value,
+    CacheSetIn::new(Duration::from_secs(10))
 )
 .await?;
 ```

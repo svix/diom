@@ -27,13 +27,14 @@ class KvAsync(ApiBase):
     async def set(
         self,
         key: str,
-        kv_set_in: KvSetIn,
+        value: bytes,
+        kv_set_in: KvSetIn = KvSetIn(),
     ) -> KvSetOut:
         """KV Set"""
         body = _KvSetIn(
             namespace=kv_set_in.namespace,
             key=key,
-            value=kv_set_in.value,
+            value=value,
             ttl_ms=kv_set_in.ttl_ms,
             behavior=kv_set_in.behavior,
             version=kv_set_in.version,
@@ -93,13 +94,14 @@ class Kv(ApiBase):
     def set(
         self,
         key: str,
-        kv_set_in: KvSetIn,
+        value: bytes,
+        kv_set_in: KvSetIn = KvSetIn(),
     ) -> KvSetOut:
         """KV Set"""
         body = _KvSetIn(
             namespace=kv_set_in.namespace,
             key=key,
-            value=kv_set_in.value,
+            value=value,
             ttl_ms=kv_set_in.ttl_ms,
             behavior=kv_set_in.behavior,
             version=kv_set_in.version,
