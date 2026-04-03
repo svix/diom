@@ -17,6 +17,14 @@ import {
     MsgQueueConfigureOutSerializer,
 } from '../models/msgQueueConfigureOut';
 import {
+    type MsgQueueExtendLeaseIn,
+    MsgQueueExtendLeaseInSerializer,
+} from '../models/msgQueueExtendLeaseIn';
+import {
+    type MsgQueueExtendLeaseOut,
+    MsgQueueExtendLeaseOutSerializer,
+} from '../models/msgQueueExtendLeaseOut';
+import {
     type MsgQueueNackIn,
     MsgQueueNackInSerializer,
 } from '../models/msgQueueNackIn';
@@ -94,6 +102,31 @@ export class MsgsQueue {
         return request.send(
             this.requestCtx,
             MsgQueueAckOutSerializer._fromJsonObject,
+        );
+    }/**
+* Extends the lease on in-flight messages.
+* 
+* Consumers that need more processing time can call this before the lease expires to prevent the
+* message from being re-delivered to another consumer.
+*/
+    public extendLease(
+        topic: string,
+        consumer_group: string,
+        msgQueueExtendLeaseIn: MsgQueueExtendLeaseIn,
+    ): Promise<MsgQueueExtendLeaseOut> {
+        const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.msgs.queue.extend-lease");
+
+        request.setBody(
+            MsgQueueExtendLeaseInSerializer._toJsonObject({
+                ...msgQueueExtendLeaseIn,
+                topic: topic,
+                consumerGroup: consumer_group,
+            })
+        );
+        
+        return request.send(
+            this.requestCtx,
+            MsgQueueExtendLeaseOutSerializer._fromJsonObject,
         );
     }/**
 * Configures retry and DLQ behavior for a consumer group on a topic.

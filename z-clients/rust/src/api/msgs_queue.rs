@@ -58,6 +58,30 @@ impl<'a> MsgsQueue<'a> {
             .await
     }
 
+    /// Extends the lease on in-flight messages.
+    ///
+    /// Consumers that need more processing time can call this before the lease expires to prevent the
+    /// message from being re-delivered to another consumer.
+    pub async fn extend_lease(
+        &self,
+        topic: String,
+        consumer_group: String,
+        msg_queue_extend_lease_in: MsgQueueExtendLeaseIn,
+    ) -> Result<MsgQueueExtendLeaseOut> {
+        let msg_queue_extend_lease_in = MsgQueueExtendLeaseIn_ {
+            namespace: msg_queue_extend_lease_in.namespace,
+            topic,
+            consumer_group,
+            msg_ids: msg_queue_extend_lease_in.msg_ids,
+            lease_duration: msg_queue_extend_lease_in.lease_duration,
+        };
+
+        crate::request::Request::new(http::Method::POST, "/api/v1.msgs.queue.extend-lease")
+            .with_body(msg_queue_extend_lease_in)
+            .execute(self.cfg)
+            .await
+    }
+
     /// Configures retry and DLQ behavior for a consumer group on a topic.
     ///
     /// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,

@@ -6,6 +6,8 @@ from ..models import (
     MsgQueueAckOut,
     MsgQueueConfigureIn,
     MsgQueueConfigureOut,
+    MsgQueueExtendLeaseIn,
+    MsgQueueExtendLeaseOut,
     MsgQueueNackIn,
     MsgQueueNackOut,
     MsgQueueReceiveIn,
@@ -16,6 +18,7 @@ from ..models import (
 
 from ..models.msg_queue_receive_in import _MsgQueueReceiveIn
 from ..models.msg_queue_ack_in import _MsgQueueAckIn
+from ..models.msg_queue_extend_lease_in import _MsgQueueExtendLeaseIn
 from ..models.msg_queue_configure_in import _MsgQueueConfigureIn
 from ..models.msg_queue_nack_in import _MsgQueueNackIn
 from ..models.msg_queue_redrive_dlq_in import _MsgQueueRedriveDlqIn
@@ -70,6 +73,31 @@ class MsgsQueueAsync(ApiBase):
             path="/api/v1.msgs.queue.ack",
             body=body,
             response_type=MsgQueueAckOut,
+        )
+
+    async def extend_lease(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_extend_lease_in: MsgQueueExtendLeaseIn,
+    ) -> MsgQueueExtendLeaseOut:
+        """Extends the lease on in-flight messages.
+
+        Consumers that need more processing time can call this before the lease expires to prevent the
+        message from being re-delivered to another consumer."""
+        body = _MsgQueueExtendLeaseIn(
+            namespace=msg_queue_extend_lease_in.namespace,
+            topic=topic,
+            consumer_group=consumer_group,
+            msg_ids=msg_queue_extend_lease_in.msg_ids,
+            lease_duration_ms=msg_queue_extend_lease_in.lease_duration_ms,
+        ).model_dump(exclude_none=True)
+
+        return await self._request_asyncio(
+            method="post",
+            path="/api/v1.msgs.queue.extend-lease",
+            body=body,
+            response_type=MsgQueueExtendLeaseOut,
         )
 
     async def configure(
@@ -191,6 +219,31 @@ class MsgsQueue(ApiBase):
             path="/api/v1.msgs.queue.ack",
             body=body,
             response_type=MsgQueueAckOut,
+        )
+
+    def extend_lease(
+        self,
+        topic: str,
+        consumer_group: str,
+        msg_queue_extend_lease_in: MsgQueueExtendLeaseIn,
+    ) -> MsgQueueExtendLeaseOut:
+        """Extends the lease on in-flight messages.
+
+        Consumers that need more processing time can call this before the lease expires to prevent the
+        message from being re-delivered to another consumer."""
+        body = _MsgQueueExtendLeaseIn(
+            namespace=msg_queue_extend_lease_in.namespace,
+            topic=topic,
+            consumer_group=consumer_group,
+            msg_ids=msg_queue_extend_lease_in.msg_ids,
+            lease_duration_ms=msg_queue_extend_lease_in.lease_duration_ms,
+        ).model_dump(exclude_none=True)
+
+        return self._request_sync(
+            method="post",
+            path="/api/v1.msgs.queue.extend-lease",
+            body=body,
+            response_type=MsgQueueExtendLeaseOut,
         )
 
     def configure(
