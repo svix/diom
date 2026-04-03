@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -30,7 +35,7 @@ import lombok.ToString;
 public class KvSetIn {
     @JsonProperty private String namespace;
     @JsonProperty private List<Byte> value;
-    @JsonProperty("ttl_ms") private Long ttlMs;
+    @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
     public KvSetIn() {}
@@ -80,23 +85,23 @@ public class KvSetIn {
         this.value = value;
     }
 
-    public KvSetIn ttlMs(Long ttlMs) {
-        this.ttlMs = ttlMs;
+    public KvSetIn ttl(Duration ttl) {
+        this.ttl = ttl;
         return this;
     }
 
     /**
     * Time to live in milliseconds
     *
-     * @return ttlMs
+     * @return ttl
      */
     @javax.annotation.Nullable
-    public Long getTtlMs() {
-        return ttlMs;
+    public Duration getTtl() {
+        return ttl;
     }
 
-    public void setTtlMs(Long ttlMs) {
-        this.ttlMs = ttlMs;
+    public void setTtl(Duration ttl) {
+        this.ttl = ttl;
     }
 
     public KvSetIn behavior(OperationBehavior behavior) {

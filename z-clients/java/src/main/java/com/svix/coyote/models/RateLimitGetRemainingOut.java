@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -29,7 +34,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitGetRemainingOut {
     @JsonProperty private Long remaining;
-    @JsonProperty("retry_after_ms") private Long retryAfterMs;
+    @JsonProperty("retry_after_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration retryAfter;
     public RateLimitGetRemainingOut() {}
 
     public RateLimitGetRemainingOut remaining(Long remaining) {
@@ -51,23 +56,23 @@ public class RateLimitGetRemainingOut {
         this.remaining = remaining;
     }
 
-    public RateLimitGetRemainingOut retryAfterMs(Long retryAfterMs) {
-        this.retryAfterMs = retryAfterMs;
+    public RateLimitGetRemainingOut retryAfter(Duration retryAfter) {
+        this.retryAfter = retryAfter;
         return this;
     }
 
     /**
     * Milliseconds until at least one token is available (only present when remaining is 0)
     *
-     * @return retryAfterMs
+     * @return retryAfter
      */
     @javax.annotation.Nullable
-    public Long getRetryAfterMs() {
-        return retryAfterMs;
+    public Duration getRetryAfter() {
+        return retryAfter;
     }
 
-    public void setRetryAfterMs(Long retryAfterMs) {
-        this.retryAfterMs = retryAfterMs;
+    public void setRetryAfter(Duration retryAfter) {
+        this.retryAfter = retryAfter;
     }
 
     /**

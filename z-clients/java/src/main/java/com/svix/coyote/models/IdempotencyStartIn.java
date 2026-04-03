@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -29,7 +34,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyStartIn {
     @JsonProperty private String namespace;
-    @JsonProperty("ttl_ms") private Long ttlMs;
+    @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     public IdempotencyStartIn() {}
 
     public IdempotencyStartIn namespace(String namespace) {
@@ -51,22 +56,22 @@ public class IdempotencyStartIn {
         this.namespace = namespace;
     }
 
-    public IdempotencyStartIn ttlMs(Long ttlMs) {
-        this.ttlMs = ttlMs;
+    public IdempotencyStartIn ttl(Duration ttl) {
+        this.ttl = ttl;
         return this;
     }
 
     /**
     * TTL in milliseconds for the lock/response
     *
-     * @return ttlMs
+     * @return ttl
      */
     @javax.annotation.Nonnull
-    public Long getTtlMs() {
-        return ttlMs;
+    public Duration getTtl() {
+        return ttl;
     }
 
-    public void setTtlMs(Long ttlMs) {
-        this.ttlMs = ttlMs;
+    public void setTtl(Duration ttl) {
+        this.ttl = ttl;
     }
 }

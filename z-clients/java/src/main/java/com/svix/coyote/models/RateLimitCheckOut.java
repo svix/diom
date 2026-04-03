@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -30,7 +35,7 @@ import lombok.ToString;
 public class RateLimitCheckOut {
     @JsonProperty private Boolean allowed;
     @JsonProperty private Long remaining;
-    @JsonProperty("retry_after_ms") private Long retryAfterMs;
+    @JsonProperty("retry_after_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration retryAfter;
     public RateLimitCheckOut() {}
 
     public RateLimitCheckOut allowed(Boolean allowed) {
@@ -71,23 +76,23 @@ public class RateLimitCheckOut {
         this.remaining = remaining;
     }
 
-    public RateLimitCheckOut retryAfterMs(Long retryAfterMs) {
-        this.retryAfterMs = retryAfterMs;
+    public RateLimitCheckOut retryAfter(Duration retryAfter) {
+        this.retryAfter = retryAfter;
         return this;
     }
 
     /**
     * Milliseconds until enough tokens are available (only present when allowed is false)
     *
-     * @return retryAfterMs
+     * @return retryAfter
      */
     @javax.annotation.Nullable
-    public Long getRetryAfterMs() {
-        return retryAfterMs;
+    public Duration getRetryAfter() {
+        return retryAfter;
     }
 
-    public void setRetryAfterMs(Long retryAfterMs) {
-        this.retryAfterMs = retryAfterMs;
+    public void setRetryAfter(Duration retryAfter) {
+        this.retryAfter = retryAfter;
     }
 
     /**

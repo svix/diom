@@ -40,7 +40,7 @@ public class Idempotency {
         IdempotencyStartIn_ body = new IdempotencyStartIn_(
             idempotencyStartIn.getNamespace(),
             key,
-            idempotencyStartIn.getTtlMs()
+            idempotencyStartIn.getTtl()
         );
 
         return this.client.executeRequest(
@@ -62,7 +62,7 @@ public class Idempotency {
             idempotencyCompleteIn.getNamespace(),
             key,
             idempotencyCompleteIn.getResponse(),
-            idempotencyCompleteIn.getTtlMs()
+            idempotencyCompleteIn.getTtl()
         );
 
         return this.client.executeRequest(

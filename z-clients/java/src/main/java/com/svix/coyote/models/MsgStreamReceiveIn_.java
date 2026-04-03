@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -27,26 +32,26 @@ public class MsgStreamReceiveIn_ {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
-    @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
+    @JsonProperty("lease_duration_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration leaseDuration;
     @JsonProperty("default_starting_position") private SeekPosition defaultStartingPosition;
-    @JsonProperty("batch_wait_ms") private Long batchWaitMs;
+    @JsonProperty("batch_wait_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration batchWait;
 
     public MsgStreamReceiveIn_(
         String namespace,
         String topic,
         String consumerGroup,
         Short batchSize,
-        Long leaseDurationMs,
+        Duration leaseDuration,
         SeekPosition defaultStartingPosition,
-        Long batchWaitMs
+        Duration batchWait
     ) {
         this.namespace = namespace;
         this.topic = topic;
         this.consumerGroup = consumerGroup;
         this.batchSize = batchSize;
-        this.leaseDurationMs = leaseDurationMs;
+        this.leaseDuration = leaseDuration;
         this.defaultStartingPosition = defaultStartingPosition;
-        this.batchWaitMs = batchWaitMs;
+        this.batchWait = batchWait;
     }
 
     /**

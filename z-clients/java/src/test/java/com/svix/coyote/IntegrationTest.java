@@ -3,6 +3,7 @@ package com.svix.coyote;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.svix.coyote.models.*;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -75,7 +76,7 @@ class IntegrationTest {
         List<Byte> value = toBytes("java-integration-cache-value");
 
         // Set
-        client.getCache().set(key, new CacheSetIn().value(value).ttlMs(60000L));
+        client.getCache().set(key, new CacheSetIn().value(value).ttl(Duration.ofMillis(60000)));
 
         // Get
         CacheGetOut getResp = client.getCache().get(key);

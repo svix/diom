@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -28,26 +33,26 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class Retention {
-    @JsonProperty("period_ms") private Long periodMs;
+    @JsonProperty("period_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration period;
     public Retention() {}
 
-    public Retention periodMs(Long periodMs) {
-        this.periodMs = periodMs;
+    public Retention period(Duration period) {
+        this.period = period;
         return this;
     }
 
     /**
-    * Get periodMs
+    * Get period
     *
-     * @return periodMs
+     * @return period
      */
     @javax.annotation.Nullable
-    public Long getPeriodMs() {
-        return periodMs;
+    public Duration getPeriod() {
+        return period;
     }
 
-    public void setPeriodMs(Long periodMs) {
-        this.periodMs = periodMs;
+    public void setPeriod(Duration period) {
+        this.period = period;
     }
 
     /**
