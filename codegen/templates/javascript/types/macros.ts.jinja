@@ -1,3 +1,14 @@
+{% macro field_decl(field) -%}
+    {% if field.description is defined -%}
+        {{ field.description | with_javadoc_deprecation(field.deprecated) | to_doc_comment(style="js") | indent(5) }}
+    {% endif -%}
+    {% set field_lhs = field.name | to_lower_camel_case -%}
+    {% if not field.required %}{% set field_lhs %}{{ field_lhs }}?{% endset %}{% endif -%}
+    {% set ty = field.type.to_js() -%}
+    {% if field.nullable %}{% set ty %}{{ ty }} | null{% endset %}{% endif -%}
+    {{ field_lhs }}: {{ ty }};
+{%- endmacro -%}
+
 {% macro field_from_json(field_expr, type, field_required) %}
     {%- if type.is_datetime() -%}
         {% if not field_required -%}

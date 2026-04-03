@@ -1,4 +1,4 @@
-{% from "types/macros.ts.jinja" import field_from_json, field_to_json -%}
+{% from "types/macros.ts.jinja" import field_decl, field_from_json, field_to_json -%}
 {% for c in referenced_components -%}
 import {
     type {{ c | to_upper_camel_case }},
@@ -14,7 +14,9 @@ import {
 // biome-ignore lint/suspicious/noEmptyInterface: backwards compat
 {% endif -%}
 interface _{{ type_name }}Fields {
-    {%- include "types/struct_fields.ts.jinja" -%}
+    {%- for field in type.fields %}
+    {{ field_decl(field) }}
+    {%- endfor -%}
 }
 
 {# export the types for enum variants without a config -#}
