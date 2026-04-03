@@ -986,7 +986,7 @@
                   },
                   "nodes": {
                     "default": 1,
-                    "description": "Number of Coyote nodes. Should be an odd number.",
+                    "description": "Number of Coyote nodes.\n\nShould be an odd number. Recommended value is 3, or 1 if you want only a single node.",
                     "format": "int32",
                     "minimum": 1.0,
                     "type": "integer"

@@ -131,7 +131,9 @@ pub(crate) struct VolumeSpec {
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct CoyoteSpec {
-    /// Number of Coyote nodes. Should be an odd number.
+    /// Number of Coyote nodes.
+    ///
+    /// Should be an odd number. Recommended value is 3, or 1 if you want only a single node.
     #[serde(default = "default_nodes")]
     #[schemars(schema_with = "nodes_schema")]
     pub nodes: i32,

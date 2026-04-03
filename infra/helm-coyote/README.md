@@ -71,7 +71,7 @@ cluster:
 | `cluster.name` | Name of the `CoyoteCluster` resource. Defaults to the release name. | `coyote` |
 | `cluster.image.repository` | Coyote server image repository. | `ghcr.io/svix/coyote-server` |
 | `cluster.image.tag` | Coyote server image tag. | Chart pre-populates current tag. |
-| `cluster.spec.nodes` | Number of Coyote nodes. Should be an odd number. | `1` |
+| `cluster.spec.nodes` | Number of Coyote nodes. Should be an odd number. Recommended value is 3 for a cluster, or 1 for a single node. | `1` |
 | `cluster.spec.apiPort` | Port for the external API and service. | `8080` |
 | `cluster.spec.envVar` | Additional environment variables to inject into pods (list of `{name, value}`). | `[]` |
 | `cluster.spec.bootstrap` | Newline-delimited bootstrap script to run on cluster startup. | `""` |
