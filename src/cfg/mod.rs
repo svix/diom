@@ -540,12 +540,14 @@ pub struct ConfigurationInner {
     )]
     pub background_cleanup_interval: Duration,
 
-    /// A pre-set admin token to use instead of having diom generate one automatically.
+    /// An auth token for admin access to Diom
     ///
-    /// Under normal circumstances you should not set this, and instead let diom generate the
-    /// admin token on first boot and use that to create any additional tokens you need. Setting
-    /// this directly is useful in CI pipelines and other automated environments where you need a
-    /// stable, well-known token for testing or scripted setup.
+    /// It's useful for bootstrapping a new Diom cluster, or using it in CI pipelines or other
+    /// automated testing environments where you need a stable, well-known token for testing or
+    /// scripted setup.
+    ///
+    /// If you're using it to bootstrap a new Diom cluster, it’s recommended that you only use
+    /// it during bootstrapping, and remove this configuration once done.
     #[validate(custom(function = "validators::validate_admin_token"))]
     #[serde(default)]
     pub admin_token: Option<String>,
