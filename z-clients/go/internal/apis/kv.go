@@ -75,6 +75,7 @@ func (kv Kv) Delete(
 	body := coyote_models.KvDeleteIn_{
 		Namespace: kvDeleteIn.Namespace,
 		Key:       key,
+		Version:   kvDeleteIn.Version,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.KvDeleteIn_, coyote_models.KvDeleteOut](
