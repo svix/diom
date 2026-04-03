@@ -3,7 +3,6 @@ use clap::{Args, Subcommand};
 use coyote_client::CoyoteClient;
 
 use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs, AdminClusterArgs};
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct AdminArgs {

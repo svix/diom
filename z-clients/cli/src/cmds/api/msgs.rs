@@ -3,7 +3,6 @@ use clap::{Args, Subcommand};
 use coyote_client::CoyoteClient;
 
 use super::{MsgsNamespaceArgs, MsgsQueueArgs, MsgsStreamArgs, MsgsTopicArgs};
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct MsgsArgs {
@@ -18,9 +17,14 @@ pub enum MsgsCommands {
     Stream(MsgsStreamArgs),
     Topic(MsgsTopicArgs),
     /// Publishes messages to a topic within a namespace.
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  msgs
-  namespace (optional)")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"msgs\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"topics\": \"...\"
+}")]
     Publish {
         topic: String,
         msg_publish_in: crate::json::JsonOf<coyote_client::models::MsgPublishIn>,

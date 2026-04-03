@@ -3,7 +3,6 @@ use clap::{Args, Subcommand};
 use coyote_client::CoyoteClient;
 
 use super::KvNamespaceArgs;
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct KvArgs {
@@ -15,27 +14,45 @@ pub struct KvArgs {
 pub enum KvCommands {
     Namespace(KvNamespaceArgs),
     /// KV Set
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  value
-  namespace (optional)
-  ttl_ms (optional) — Time to live in milliseconds
-  behavior (optional)
-  version (optional) — If set, the write only succeeds when the stored version matches this value. Use the `version` field from a prior `get` response.")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"value\": \"...\",
+  \"ttl_ms\": \"...\",
+  \"behavior\": \"...\",
+  \"version\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"success\": \"...\",
+  \"version\": \"...\"
+}")]
     Set {
         key: String,
         kv_set_in: crate::json::JsonOf<coyote_client::models::KvSetIn>,
     },
     /// KV Get
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  namespace (optional)
-  consistency (optional)")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"consistency\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"expiry\": \"...\",
+  \"value\": \"...\",
+  \"version\": \"...\"
+}")]
     Get {
         key: String,
         kv_get_in: Option<crate::json::JsonOf<coyote_client::models::KvGetIn>>,
     },
     /// KV Delete
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  namespace (optional)")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"success\": \"...\"
+}")]
     Delete {
         key: String,
         kv_delete_in: Option<crate::json::JsonOf<coyote_client::models::KvDeleteIn>>,

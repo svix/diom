@@ -12,32 +12,61 @@ pub struct AdminAuthPolicyArgs {
 #[derive(Subcommand)]
 pub enum AdminAuthPolicyCommands {
     /// Create or update an access policy
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  id
-  description
-  rules (optional)")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"id\": \"...\",
+  \"description\": \"...\",
+  \"rules\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"id\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Upsert {
         admin_access_policy_upsert_in:
             crate::json::JsonOf<coyote_client::models::AdminAccessPolicyUpsertIn>,
     },
     /// Delete an access policy
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  id")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"id\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"success\": \"...\"
+}")]
     Delete {
         admin_access_policy_delete_in:
             crate::json::JsonOf<coyote_client::models::AdminAccessPolicyDeleteIn>,
     },
     /// Get an access policy by ID
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  id")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"id\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"id\": \"...\",
+  \"description\": \"...\",
+  \"rules\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Get {
         admin_access_policy_get_in:
             crate::json::JsonOf<coyote_client::models::AdminAccessPolicyGetIn>,
     },
     /// List all access policies
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  limit (optional) — Limit the number of returned items
-  iterator (optional) — The iterator returned from a prior invocation")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"limit\": \"...\",
+  \"iterator\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"data\": \"...\",
+  \"iterator\": \"...\",
+  \"prev_iterator\": \"...\",
+  \"done\": \"...\"
+}")]
     List {
         admin_access_policy_list_in:
             Option<crate::json::JsonOf<coyote_client::models::AdminAccessPolicyListIn>>,

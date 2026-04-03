@@ -12,31 +12,62 @@ pub struct AdminAuthRoleArgs {
 #[derive(Subcommand)]
 pub enum AdminAuthRoleCommands {
     /// Create or update a role
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  id
-  description
-  rules (optional)
-  policies (optional)
-  context (optional)")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"id\": \"...\",
+  \"description\": \"...\",
+  \"rules\": \"...\",
+  \"policies\": \"...\",
+  \"context\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"id\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Upsert {
         admin_role_upsert_in: crate::json::JsonOf<coyote_client::models::AdminRoleUpsertIn>,
     },
     /// Delete a role
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  id")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"id\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"success\": \"...\"
+}")]
     Delete {
         admin_role_delete_in: crate::json::JsonOf<coyote_client::models::AdminRoleDeleteIn>,
     },
     /// Get a role by ID
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  id")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"id\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"id\": \"...\",
+  \"description\": \"...\",
+  \"rules\": \"...\",
+  \"policies\": \"...\",
+  \"context\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Get {
         admin_role_get_in: crate::json::JsonOf<coyote_client::models::AdminRoleGetIn>,
     },
     /// List all roles
-    #[command(after_long_help = "\x1b[1;4mJSON body fields:\x1b[0m
-  limit (optional) — Limit the number of returned items
-  iterator (optional) — The iterator returned from a prior invocation")]
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"limit\": \"...\",
+  \"iterator\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"data\": \"...\",
+  \"iterator\": \"...\",
+  \"prev_iterator\": \"...\",
+  \"done\": \"...\"
+}")]
     List {
         admin_role_list_in: Option<crate::json::JsonOf<coyote_client::models::AdminRoleListIn>>,
     },
