@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from .rate_limit_token_bucket_config import RateLimitTokenBucketConfig
+from .rate_limit_config import RateLimitConfig
 
 
 class RateLimitCheckIn(BaseModel):
@@ -13,5 +13,5 @@ class RateLimitCheckIn(BaseModel):
     tokens: int | None = None
     """Number of tokens to consume (default: 1)"""
 
-    config: RateLimitTokenBucketConfig
+    config: RateLimitConfig
     """Rate limiter configuration"""

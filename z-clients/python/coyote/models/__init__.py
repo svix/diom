@@ -104,6 +104,7 @@ from .ping_out import PingOut
 from .queue_msg_out import QueueMsgOut
 from .rate_limit_check_in import RateLimitCheckIn
 from .rate_limit_check_out import RateLimitCheckOut
+from .rate_limit_config import RateLimitConfig
 from .rate_limit_create_namespace_in import RateLimitCreateNamespaceIn
 from .rate_limit_create_namespace_out import RateLimitCreateNamespaceOut
 from .rate_limit_get_namespace_in import RateLimitGetNamespaceIn
@@ -112,7 +113,6 @@ from .rate_limit_get_remaining_in import RateLimitGetRemainingIn
 from .rate_limit_get_remaining_out import RateLimitGetRemainingOut
 from .rate_limit_reset_in import RateLimitResetIn
 from .rate_limit_reset_out import RateLimitResetOut
-from .rate_limit_token_bucket_config import RateLimitTokenBucketConfig
 from .retention import Retention
 from .seek_position import SeekPosition
 from .server_state import ServerState
@@ -225,6 +225,7 @@ __all__ = [
     "QueueMsgOut",
     "RateLimitCheckIn",
     "RateLimitCheckOut",
+    "RateLimitConfig",
     "RateLimitCreateNamespaceIn",
     "RateLimitCreateNamespaceOut",
     "RateLimitGetNamespaceIn",
@@ -233,7 +234,6 @@ __all__ = [
     "RateLimitGetRemainingOut",
     "RateLimitResetIn",
     "RateLimitResetOut",
-    "RateLimitTokenBucketConfig",
     "Retention",
     "SeekPosition",
     "ServerState",
