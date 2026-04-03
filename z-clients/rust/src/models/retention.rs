@@ -9,26 +9,15 @@ pub struct Retention {
         with = "crate::duration_ms_serde::optional"
     )]
     pub period: Option<std::time::Duration>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub size_bytes: Option<u64>,
 }
 
 impl Retention {
     pub fn new() -> Self {
-        Self {
-            period: None,
-            size_bytes: None,
-        }
+        Self { period: None }
     }
 
     pub fn with_period(mut self, value: impl Into<Option<std::time::Duration>>) -> Self {
         self.period = value.into();
-        self
-    }
-
-    pub fn with_size_bytes(mut self, value: impl Into<Option<u64>>) -> Self {
-        self.size_bytes = value.into();
         self
     }
 }

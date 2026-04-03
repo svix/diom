@@ -7481,12 +7481,6 @@
             "format": "uint64",
             "minimum": 0,
             "nullable": true
-          },
-          "size_bytes": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "nullable": true
           }
         }
       },
