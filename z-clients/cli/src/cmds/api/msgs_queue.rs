@@ -29,6 +29,16 @@ pub enum MsgsQueueCommands {
         consumer_group: String,
         msg_queue_ack_in: crate::json::JsonOf<coyote_client::models::MsgQueueAckIn>,
     },
+    /// Extends the lease on in-flight messages.
+    ///
+    /// Consumers that need more processing time can call this before the lease expires to prevent the
+    /// message from being re-delivered to another consumer.
+    ExtendLease {
+        topic: String,
+        consumer_group: String,
+        msg_queue_extend_lease_in:
+            crate::json::JsonOf<coyote_client::models::MsgQueueExtendLeaseIn>,
+    },
     /// Configures retry and DLQ behavior for a consumer group on a topic.
     ///
     /// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
@@ -85,6 +95,22 @@ impl MsgsQueueCommands {
                     .msgs()
                     .queue()
                     .ack(topic, consumer_group, msg_queue_ack_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::ExtendLease {
+                topic,
+                consumer_group,
+                msg_queue_extend_lease_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .queue()
+                    .extend_lease(
+                        topic,
+                        consumer_group,
+                        msg_queue_extend_lease_in.into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

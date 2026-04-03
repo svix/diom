@@ -90,6 +90,8 @@ type (
 	MsgQueueAckOut                   = coyote_models.MsgQueueAckOut
 	MsgQueueConfigureIn              = coyote_models.MsgQueueConfigureIn
 	MsgQueueConfigureOut             = coyote_models.MsgQueueConfigureOut
+	MsgQueueExtendLeaseIn            = coyote_models.MsgQueueExtendLeaseIn
+	MsgQueueExtendLeaseOut           = coyote_models.MsgQueueExtendLeaseOut
 	MsgQueueNackIn                   = coyote_models.MsgQueueNackIn
 	MsgQueueNackOut                  = coyote_models.MsgQueueNackOut
 	MsgQueueReceiveIn                = coyote_models.MsgQueueReceiveIn
