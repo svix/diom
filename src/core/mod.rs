@@ -3,6 +3,7 @@
 
 pub mod auth;
 pub mod cluster;
+pub mod jwt;
 pub mod metrics;
 pub mod otel_spans;
 pub mod retry;

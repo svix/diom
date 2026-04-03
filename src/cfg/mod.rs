@@ -551,6 +551,70 @@ pub struct ConfigurationInner {
     #[validate(custom(function = "validators::validate_admin_token"))]
     #[serde(default)]
     pub admin_token: Option<String>,
+
+    /// Configuration for verifying JWT bearer tokens.
+    ///
+    /// When set, bearer tokens in JWT format are verified using this configuration.
+    /// The JWT must contain a `role` claim (string) and may contain a `context` claim
+    /// (object with string values) that is forwarded to internal coyote handlers.
+    #[serde(default)]
+    #[env_overridable(skip)]
+    #[validate(nested)]
+    pub jwt: Option<JwtConfig>,
+}
+
+/// JWT configuration for verifying JWT bearer tokens.
+///
+/// The `algorithm` field selects the signature scheme:
+/// - Symmetric (`HS256`, `HS384`, `HS512`) — requires `secret`.
+/// - Asymmetric (`RS256`/`RS384`/`RS512`, `ES256`/`ES384`, `PS256`/`PS384`/`PS512`) —
+///   requires `public_key_pem`.
+///
+/// The optional `audience` and `issuer` fields enable claim validation.  When
+/// omitted, the respective claims are not checked (and may be absent from the
+/// token).
+#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
+pub struct JwtConfig {
+    #[serde(flatten)]
+    pub key: JwtKey,
+    /// Expected `aud` values. When set, the token must contain one of these
+    /// values in its `aud` claim. When absent, `aud` is not validated.
+    #[serde(default)]
+    #[validate(length(min = 1, message = "audience must not be empty when set"))]
+    pub audience: Option<Vec<String>>,
+    /// Expected `iss` values. When set, the token's `iss` claim must match one
+    /// of these values. When absent, `iss` is not validated.
+    #[serde(default)]
+    #[validate(length(min = 1, message = "issuer must not be empty when set"))]
+    pub issuer: Option<Vec<String>>,
+}
+
+/// Signature algorithm and corresponding key material.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "algorithm")]
+pub enum JwtKey {
+    #[serde(rename = "HS256")]
+    Hs256 { secret: String },
+    #[serde(rename = "HS384")]
+    Hs384 { secret: String },
+    #[serde(rename = "HS512")]
+    Hs512 { secret: String },
+    #[serde(rename = "RS256")]
+    Rs256 { public_key_pem: String },
+    #[serde(rename = "RS384")]
+    Rs384 { public_key_pem: String },
+    #[serde(rename = "RS512")]
+    Rs512 { public_key_pem: String },
+    #[serde(rename = "ES256")]
+    Es256 { public_key_pem: String },
+    #[serde(rename = "ES384")]
+    Es384 { public_key_pem: String },
+    #[serde(rename = "PS256")]
+    Ps256 { public_key_pem: String },
+    #[serde(rename = "PS384")]
+    Ps384 { public_key_pem: String },
+    #[serde(rename = "PS512")]
+    Ps512 { public_key_pem: String },
 }
 
 impl Default for ConfigurationInner {
