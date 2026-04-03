@@ -1,0 +1,443 @@
+# Access Control
+
+Diom offers granular access control to let you configure access exactly as you need it.
+
+The access control functionality was designed to be easy to start with, but powerful for advanced users. See the [Examples](#examples) section below for advanced use-cases including frontend-friendly tokens and sharing tokens with untrusted 3rd parties.
+
+## Entities and hierarchy
+
+- [Role](#role): each action on Diom is associated with a specific role.
+  - A role has a list of access control rules or policies attached to it.
+  - Roles can have additional context that can be used in path replacements and in conditionals (in the future when we support it).
+- [Policy](#policy): a policy is a reusable set of access rules. The same policy can be attached to multiple roles.
+- [Access rules](#access-rules): rules describe what operations are allowed or disallowed for a group of resources.
+- [Auth tokens](#auth-tokens): tokens are how users authenticate with Diom. Each token has a role associated with it, which is what the token authenticates to.
+  - Tokens may have additional context that can then be used in path replacements and in conditionals.
+
+
+### Role
+
+When you authenticate to Diom, you authenticate to a particular role. That role is associated with the level of access you have and is required for authorization.
+Roles are the basic authentication entities in the sense that every authentication mechanism authenticates against a role.
+
+A role has an id, an optional description, an optional set of rules, and an optional set of policies.
+```json
+{
+    "id": "my-role",
+    "description": "The role-owned data.",
+    "rules": [
+        {
+            "effect": "allow",
+            "resource": "cache::foo/*",
+            "actions": [
+                "cache.get"
+            ],
+        },
+        {
+            "effect": "deny",
+            "resource": "cache::foo/bar",
+            "actions": [
+                "cache.get"
+            ],
+        },
+        {
+            "effect": "allow",
+            "resource": "kv::some-data/*",
+            "actions": [
+                "kv.get"
+            ],
+        },
+    ],
+    "policies": [
+      "some-policy",
+      "another-policy",
+    ],
+    "context": {
+        "tier": "enterprise",
+        "category": "my-category",
+    },
+}
+```
+
+Rules and resource identifiers are covered in the [Access Rules](#access-rules) section below.
+
+`policies` is a list of policies, which are explained in the next section.
+
+Context is a map of additional properties that can be used for variable substitution in the access control rules (more on that below).
+
+
+### Policy
+
+Policies are essentially templates that roles can use. In the previous section we've shown how to put the rules directly on the role, but we could instead have no rules on the role itself, and just have policies with rules attached to it.
+
+For example we could have created this policy:
+```json
+{
+    "id": "my-policy",
+    "description": "My first policy.",
+    "rules": [
+        {
+            "effect": "allow",
+            "resource": "cache::foo/*",
+            "actions": [
+                "cache.get"
+            ],
+        },
+        {
+            "effect": "deny",
+            "resource": "cache::foo/bar",
+            "actions": [
+                "cache.get"
+            ],
+        },
+        {
+            "effect": "allow",
+            "resource": "kv::some-data/*",
+            "actions": [
+                "kv.get"
+            ],
+        },
+    ],
+}
+```
+
+And have the role look like this:
+```json
+{
+    "id": "my-role",
+    "description": "The role-owned data.",
+    "policies": [
+      "my-first-policy",
+    ],
+}
+```
+
+And potentially have another role that uses a mix of different policies without having to copy the rules:
+```json
+{
+    "id": "my-other-role",
+    "description": "The role-owned data.",
+    "policies": [
+      "my-first-policy",
+      "some-policy",
+      "another-policy",
+    ],
+}
+```
+
+
+### Access rules
+
+Access control rules are the specific rules that allow/deny access to resources or groups of resources.
+
+The way access control rules work is as follows: everything is denied by default. You can allow actions by adding an allow rule and deny actions by adding a deny rule. The order of precedent is: `deny rule -> allow rule -> implicit deny all`, or in other words, if a deny rule matches, the request will be denied no matter if there's an allow before or after it.
+
+Rules follow the following format:
+```json
+{
+    "effect": "allow",
+    "resource": "cache::foo/bar",
+    "actions": [
+        "cache.get"
+    ],
+}
+```
+
+Effect is either `allow` or `deny`.
+
+The resource field is the set of resources (may be more than one due to globbing) this rule should apply to. Main properties of a resource:
+- Resource names are structured like this: `module:namespace:key/subkey/subkey`. For example: `cache:store123:foo/bar`
+- The [namespace](./namespaces.mdx) part is optional, and when missing it matches to the default namespace. For example, `cache::foo/bar` means `foo/bar` in the default namespace. It does *NOT* mean wildcard matching.
+- Variable substitution is supported for both built-in variables (such as `${role}`) and context passed generic properties like `${context.my_variable}`.
+- The key part can have nesting using `/` which splits it to different sections.
+- Globbing is supported
+  - For the entire namespace section: `cache:*:foo/bar`
+  - For the entire module section: `*::foo/bar`
+    - Note: `*` doesn't match `admin/`-prefixed modules for security reasons. Those need to be listed explicitly.
+  - For a suffix of the key section: `cache::*` or `cache::foo/*`
+  - For combinations of the above
+  - Globbing is not currently supported for any other combination. For example, there are not supported: `cache::f*o/bar`, `cache::*o/bar`, and `cache::*/bar`.
+
+Actions is the list of actions this rule applies to. Actions are the operation id of each operation, for example, for the `kv.set` operation, the action would be `kv.set`.
+
+### Auth tokens
+
+Auth tokens are what Diom clients use in order to authenticate against a Diom server and assume a specific role. Therefore each auth token has exactly one role associated with it, but each role can have many auth tokens associated with it.
+There's no concept of users and passwords, just roles and tokens.
+
+Each token can have additional context associated with it which can be used for the policy variable substitution, observability and other use-cases.
+
+There are two ways to create tokens:
+- Creating them in Diom using an API.
+- Using JWTs (coming soon).
+
+Creating a new token using the API looks something like this:
+```
+diom admin auth-token create '{"name": "token-name", "role": "frontend-role", "context": {"user": "their-user-id"}}'
+# Returns:
+{
+    "id": "tok_123",
+    "token": "sk_1234",
+}
+```
+
+Alternatively, if JWT auth is also configured, people can just generate their own config and pass the role as `role` (or maybe the correct JWT one for this) and context as a sub object called `context`.
+
+
+## Admin auth token
+
+You can create roles, policies, and auth tokens using the Diom API. However, you need an auth token in order to interact with the API.
+
+To solve that, Diom lets you configure an admin auth token in the configuration file, which you can use to create policies, roles, and tokens. The admin auth token assumes the role `admin` which has access to everything on the cluster.
+
+To configure an admin auth token set the `DIOM_ADMIN_TOKEN` environment variable to the desired token, for example: `zpsNuhPMeMbg9q4cG2ZsJn`, and then you'll be able to use it for authenticating to that specific node. It's recommended that you only use the admin auth token for bootstrapping and remove the configuration once done.
+
+
+## Defining access control using the API
+
+Here is how you can configure the different entities using the API:
+
+### Configuring a role (`admin.auth_role.upsert`)
+
+```bash
+diom admin auth-role upsert '
+    {
+        "id": "my-role",
+        "description": "The role-owned data.",
+        "rules": [
+            {
+                "effect": "allow",
+                "resource": "cache::foo/*",
+                "actions": [
+                    "cache.get"
+                ],
+            },
+            {
+                "effect": "deny",
+                "resource": "cache::foo/bar",
+                "actions": [
+                    "cache.get"
+                ],
+            },
+            {
+                "effect": "allow",
+                "resource": "kv::some-data/*",
+                "actions": [
+                    "kv.get"
+                ],
+            },
+        ],
+        "policies": [
+          "some-policy",
+          "another-policy",
+        ],
+        "context": {
+            "tier": "enterprise",
+            "category": "my-category",
+        },
+    }'
+```
+
+### Configuring a policy (`admin.auth_policy.upsert`)
+
+```bash
+diom admin auth-policy upsert '
+    {
+        "id": "my-policy",
+        "description": "My first policy.",
+        "rules": [
+            {
+                "effect": "allow",
+                "resource": "cache::foo/*",
+                "actions": [
+                    "cache.get"
+                ],
+            },
+            {
+                "effect": "deny",
+                "resource": "cache::foo/bar",
+                "actions": [
+                    "cache.get"
+                ],
+            },
+            {
+                "effect": "allow",
+                "resource": "kv::some-data/*",
+                "actions": [
+                    "kv.get"
+                ],
+            },
+        ],
+    }'
+```
+
+### Configuring authentication tokens
+
+To create a new token attached to a specific role, you can use the following API. You can also set an optional expiry if the token is meant to be temporary.
+
+```bash
+diom admin auth_token create '
+    {
+        "name": "some-token",
+        "role": "my-role",
+        "expiry": "..." // Optional expiry
+    }'
+```
+
+Tokens also support a variety of other APIs including list, rotate, and expire. Please refer to the API reference docs for more information.
+
+## Examples
+
+Here are some example use-cases and how to achieve them.
+
+### Multi-tenant access to the same cluster
+
+First you would create a policy and a role (or you can have a default one, at least a policy) that looks something like this:
+
+Policies:
+```json
+{
+    "id": "cache-owned-data",
+    "description": "The cache owned data.",
+    "rules": [
+        {
+            "effect": "allow",
+            "resource": "cache::owned/${role}/*", // Note that there's no `context.` here, as role is built-in.
+            "actions": [
+                "cache.get"
+                "cache.set"
+            ],
+        }
+    ],
+}
+```
+
+```json
+{
+    "id": "kv-owned-reader",
+    "description": "The kv owned reader.",
+    "rules": [
+        {
+            "effect": "allow",
+            "resource": "kv::owned/${role}/*", // Note that there's no `context.` here, as role is built-in.
+            "actions": [
+                "kv.get",
+            ],
+        }
+    ],
+}
+```
+
+Role:
+```json
+{
+    "id": "my-role",
+    "description": "The role-owned data.",
+    "policies": [
+      "cache-owned-data",
+      "kv-owned-reader",
+    ],
+}
+```
+
+Then any key with that role would be limited to their own data, e.g. `cache::owned/my-role/*`
+
+
+### Frontend friendly tokens
+
+You can create tokens that can be safely shared with the frontend (and thus with your users) by using the context and scoping the token to resources under their username.
+
+First you would create a role (or we can have a default one) that looks something like this:
+
+```json
+{
+    "id": "frontend-role",
+    "description": "The frontend friendly role.",
+    "rules": [
+        {
+            "effect": "allow",
+            "resource": "kv::frontend/${context.user}/*",
+            "actions": [
+                "kv.set",
+                "kv.get",
+                "kv.delete",
+            ],
+        }
+    ],
+}
+```
+
+Then they would create a token for the role (or use a JWT with `role="frontend-role"` and the context) like this:
+
+```
+diom admin auth_token create '{"name": "token-name", "role": "frontend-role", "context": {"user": "their-user-id"}}'
+# Returns:
+{
+    "id": "tok_123",
+    "token": "sk_1234",
+}
+```
+
+Then they will only have access to `cache::frontend/their-user-id/*`
+
+
+### 3rd party access to cluster
+
+Similarly to the frontend friendly tokens above, you can also create tokens that are suitable for sharing with untrusted 3rd parties.
+
+For example, you can create the following role to allow a trusted 3rd party to publish to a stream that's specific to them:
+
+```json
+{
+    "id": "third-parties-role",
+    "description": "The untrusted 3rd party role.",
+    "rules": [
+        {
+            "effect": "allow",
+            "resource": "msgs::third-parties/${context.user}/*",
+            "actions": [
+                "msgs.publish"
+            ],
+        }
+    ],
+}
+```
+
+Then tokens with this role will only be able to publish msgs to a stream that they control and nothing else.
+
+### Role context
+
+Like tokens, roles can also have context which can then be used by policies.
+
+Consider this policy:
+```json
+{
+    "id": "tier-friendly-policy",
+    "description": "The policy that is tier friendly.",
+    "rules": [
+        {
+            "effect": "allow",
+            "resource": "cache::tier-data/${context.tier}/*",
+            "actions": [
+                "cache.set",
+                "cache.get",
+                "cache.delete"
+            ],
+        }
+    ],
+}
+```
+
+Role:
+```json
+{
+    "id": "my-role",
+    "description": "My context role",
+    "context": {
+        "tier": "enterprise",
+    },
+    "policies": [
+        "tier-friendly-policy",
+    ],
+}
+```
