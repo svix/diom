@@ -16,9 +16,9 @@ use coyote_msgs::{
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
-        QueueNackOperation, QueueReceiveOperation, QueueRedriveDlqOperation, SeekTarget,
-        StreamCommitOperation, StreamReceiveOperation, StreamSeekOperation,
-        TopicConfigureOperation,
+        QueueExtendLeaseOperation, QueueNackOperation, QueueReceiveOperation,
+        QueueRedriveDlqOperation, SeekTarget, StreamCommitOperation, StreamReceiveOperation,
+        StreamSeekOperation, TopicConfigureOperation,
     },
 };
 use coyote_namespace::entities::NamespaceName;
@@ -554,6 +554,54 @@ async fn queue_ack(
 }
 
 // ---------------------------------------------------------------------------
+// queue/extend-lease
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Validate, JsonSchema)]
+#[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
+struct MsgQueueExtendLeaseIn {
+    #[serde(default)]
+    pub namespace: Option<NamespaceName>,
+    pub topic: TopicName,
+    pub consumer_group: ConsumerGroup,
+    pub msg_ids: Vec<MsgId>,
+    #[serde(rename = "lease_duration_ms", default = "default_queue_lease_duration")]
+    pub lease_duration: DurationMs,
+}
+
+request_input!(MsgQueueExtendLeaseIn, "extend-lease");
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+struct MsgQueueExtendLeaseOut {}
+
+/// Extends the lease on in-flight messages.
+///
+/// Consumers that need more processing time can call this before the lease expires to prevent the
+/// message from being re-delivered to another consumer.
+#[aide_annotate(op_id = "v1.msgs.queue.extend-lease")]
+async fn queue_extend_lease(
+    State(state): State<AppState>,
+    Extension(repl): Extension<RaftState>,
+    MsgPackOrJson(data): MsgPackOrJson<MsgQueueExtendLeaseIn>,
+) -> Result<MsgPackOrJson<MsgQueueExtendLeaseOut>> {
+    let namespace: MsgsNamespace = state
+        .namespace_state
+        .fetch_namespace(data.namespace.as_deref())?
+        .ok_or_not_found()?;
+
+    let operation = QueueExtendLeaseOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group,
+        data.msg_ids,
+        data.lease_duration,
+    );
+    repl.client_write(operation).await.or_internal_error()?.0?;
+
+    Ok(MsgPackOrJson(MsgQueueExtendLeaseOut {}))
+}
+
+// ---------------------------------------------------------------------------
 // queue/configure
 // ---------------------------------------------------------------------------
 
@@ -764,6 +812,11 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(
             queue_ack_path,
             post_with(queue_ack, queue_ack_operation),
+            &tag,
+        )
+        .api_route_with(
+            queue_extend_lease_path,
+            post_with(queue_extend_lease, queue_extend_lease_operation),
             &tag,
         )
         .api_route_with(
