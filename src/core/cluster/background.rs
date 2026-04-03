@@ -78,7 +78,7 @@ impl BackgroundWorker for Tick {
         loop {
             let delta = self.handle.time.offset();
             if delta > Self::THRESHOLD {
-                tracing::warn!("recording a no-op event");
+                tracing::trace!("recording a no-op event");
                 let op = TickOperation {};
                 self.handle.write_request(op).await?;
             }
