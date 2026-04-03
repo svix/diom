@@ -28,9 +28,9 @@ func (idempotency Idempotency) Start(
 	idempotencyStartIn coyote_models.IdempotencyStartIn,
 ) (*coyote_models.IdempotencyStartOut, error) {
 	body := coyote_models.IdempotencyStartIn_{
-		Namespace: idempotencyStartIn.Namespace,
-		Key:       key,
-		TtlMs:     idempotencyStartIn.TtlMs,
+		Namespace:    idempotencyStartIn.Namespace,
+		Key:          key,
+		LockPeriodMs: idempotencyStartIn.LockPeriodMs,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.IdempotencyStartIn_, coyote_models.IdempotencyStartOut](

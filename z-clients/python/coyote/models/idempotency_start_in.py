@@ -6,8 +6,8 @@ from pydantic import BaseModel
 class IdempotencyStartIn(BaseModel):
     namespace: str | None = None
 
-    ttl_ms: int
-    """TTL in milliseconds for the lock/response"""
+    lock_period_ms: int
+    """How long to hold the lock on start before releasing it."""
 
 
 class _IdempotencyStartIn(BaseModel):
@@ -15,5 +15,5 @@ class _IdempotencyStartIn(BaseModel):
 
     key: str
 
-    ttl_ms: int
-    """TTL in milliseconds for the lock/response"""
+    lock_period_ms: int
+    """How long to hold the lock on start before releasing it."""

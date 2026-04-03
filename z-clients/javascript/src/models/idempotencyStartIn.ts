@@ -2,15 +2,15 @@
 
 export interface IdempotencyStartIn {
     namespace?: string | null;
-    /** TTL in milliseconds for the lock/response */
-    ttlMs: number;
+    /** How long to hold the lock on start before releasing it. */
+    lockPeriodMs: number;
 }
 
 export interface IdempotencyStartIn_ {
     namespace?: string | null;
     key: string;
-    /** TTL in milliseconds for the lock/response */
-    ttlMs: number;
+    /** How long to hold the lock on start before releasing it. */
+    lockPeriodMs: number;
 }
 
 export const IdempotencyStartInSerializer = {
@@ -19,7 +19,7 @@ export const IdempotencyStartInSerializer = {
         return {
             namespace: object['namespace'],
             key: object['key'],
-            ttlMs: object['ttl_ms'],
+            lockPeriodMs: object['lock_period_ms'],
         };
     },
 
@@ -28,7 +28,7 @@ export const IdempotencyStartInSerializer = {
         return {
             'namespace': self.namespace,
             'key': self.key,
-            'ttl_ms': self.ttlMs,
+            'lock_period_ms': self.lockPeriodMs,
         };
     }
 }

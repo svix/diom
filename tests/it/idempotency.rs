@@ -12,7 +12,7 @@ async fn start(client: &TestClient, key: &str, ttl_ms: u64) -> TestResult<serde_
         .post("v1.idempotency.start")
         .json(json!({
             "key": key,
-            "ttl_ms": ttl_ms
+            "lock_period_ms": ttl_ms
         }))
         .await?
         .expect(StatusCode::OK)
@@ -62,7 +62,7 @@ async fn test_idempotency_start_and_complete() -> TestResult {
         .post("v1.idempotency.start")
         .json(json!({
             "key": "k2",
-            "ttl_ms": 60_000
+            "lock_period_ms": 60_000
         }))
         .await?
         .expect(StatusCode::OK)
@@ -191,7 +191,7 @@ async fn test_idempotency_validation() -> TestResult {
         .post("v1.idempotency.start")
         .json(json!({
             "key": "k",
-            "ttl_ms": 0
+            "lock_period_ms": 0
         }))
         .await?
         .expect(StatusCode::UNPROCESSABLE_ENTITY);
