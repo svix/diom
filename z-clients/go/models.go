@@ -112,6 +112,7 @@ type (
 	QueueMsgOut                      = diom_models.QueueMsgOut
 	RateLimitCheckIn                 = diom_models.RateLimitCheckIn
 	RateLimitCheckOut                = diom_models.RateLimitCheckOut
+	RateLimitConfig                  = diom_models.RateLimitConfig
 	RateLimitCreateNamespaceIn       = diom_models.RateLimitCreateNamespaceIn
 	RateLimitCreateNamespaceOut      = diom_models.RateLimitCreateNamespaceOut
 	RateLimitGetNamespaceIn          = diom_models.RateLimitGetNamespaceIn
@@ -120,7 +121,6 @@ type (
 	RateLimitGetRemainingOut         = diom_models.RateLimitGetRemainingOut
 	RateLimitResetIn                 = diom_models.RateLimitResetIn
 	RateLimitResetOut                = diom_models.RateLimitResetOut
-	RateLimitTokenBucketConfig       = diom_models.RateLimitTokenBucketConfig
 	Retention                        = diom_models.Retention
 	SeekPosition                     = diom_models.SeekPosition
 	ServerState                      = diom_models.ServerState

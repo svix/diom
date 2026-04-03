@@ -1,8 +1,8 @@
 // this file is @generated
 import {
-    type RateLimitTokenBucketConfig,
-    RateLimitTokenBucketConfigSerializer,
-} from './rateLimitTokenBucketConfig';
+    type RateLimitConfig,
+    RateLimitConfigSerializer,
+} from './rateLimitConfig';
 
 export interface RateLimitCheckIn {
     namespace?: string | null;
@@ -10,7 +10,7 @@ export interface RateLimitCheckIn {
     /** Number of tokens to consume (default: 1) */
     tokens?: number;
     /** Rate limiter configuration */
-    config: RateLimitTokenBucketConfig;
+    config: RateLimitConfig;
 }
 
 export const RateLimitCheckInSerializer = {
@@ -20,7 +20,7 @@ export const RateLimitCheckInSerializer = {
             namespace: object['namespace'],
             key: object['key'],
             tokens: object['tokens'],
-            config: RateLimitTokenBucketConfigSerializer._fromJsonObject(object['config']),
+            config: RateLimitConfigSerializer._fromJsonObject(object['config']),
         };
     },
 
@@ -30,7 +30,7 @@ export const RateLimitCheckInSerializer = {
             'namespace': self.namespace,
             'key': self.key,
             'tokens': self.tokens,
-            'config': RateLimitTokenBucketConfigSerializer._toJsonObject(self.config),
+            'config': RateLimitConfigSerializer._toJsonObject(self.config),
         };
     }
 }
