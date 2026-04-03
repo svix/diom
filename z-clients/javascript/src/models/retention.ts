@@ -2,7 +2,6 @@
 
 export interface Retention {
     periodMs?: number | null;
-    sizeBytes?: number | null;
 }
 
 export const RetentionSerializer = {
@@ -10,7 +9,6 @@ export const RetentionSerializer = {
     _fromJsonObject(object: any): Retention {
         return {
             periodMs: object['period_ms'],
-            sizeBytes: object['size_bytes'],
         };
     },
 
@@ -18,7 +16,6 @@ export const RetentionSerializer = {
     _toJsonObject(self: Retention): any {
         return {
             'period_ms': self.periodMs,
-            'size_bytes': self.sizeBytes,
         };
     }
 }

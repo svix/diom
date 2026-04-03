@@ -25,13 +25,16 @@ import java.util.Objects;
 public class KvDeleteIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
+    @JsonProperty private Long version;
 
     public KvDeleteIn_(
         String namespace,
-        String key
+        String key,
+        Long version
     ) {
         this.namespace = namespace;
         this.key = key;
+        this.version = version;
     }
 
     /**

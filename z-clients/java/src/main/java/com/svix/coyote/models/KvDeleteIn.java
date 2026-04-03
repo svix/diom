@@ -29,6 +29,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvDeleteIn {
     @JsonProperty private String namespace;
+    @JsonProperty private Long version;
     public KvDeleteIn() {}
 
     public KvDeleteIn namespace(String namespace) {
@@ -48,5 +49,25 @@ public class KvDeleteIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    public KvDeleteIn version(Long version) {
+        this.version = version;
+        return this;
+    }
+
+    /**
+    * If set, the delete only succeeds when the stored version matches this value.
+Use the `version` field from a prior `get` response.
+    *
+     * @return version
+     */
+    @javax.annotation.Nullable
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

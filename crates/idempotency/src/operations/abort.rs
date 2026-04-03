@@ -20,11 +20,15 @@ impl AbortOperation {
 }
 
 impl AbortOperation {
-    async fn apply_real(self, state: &IdempotencyRaftState<'_>) -> Result<()> {
+    async fn apply_real(
+        self,
+        state: &IdempotencyRaftState<'_>,
+        ctx: &coyote_operations::OpContext,
+    ) -> Result<()> {
         state
             .state
             .controller()
-            .delete(self.namespace_id, self.key)
+            .delete(self.namespace_id, self.key, None, ctx.timestamp)
             .await?;
 
         Ok(())
@@ -35,8 +39,8 @@ impl IdempotencyRequest for AbortOperation {
     async fn apply(
         self,
         state: IdempotencyRaftState<'_>,
-        _ctx: &coyote_operations::OpContext,
+        ctx: &coyote_operations::OpContext,
     ) -> AbortResponse {
-        AbortResponse::new(self.apply_real(&state).await)
+        AbortResponse::new(self.apply_real(&state, ctx).await)
     }
 }
