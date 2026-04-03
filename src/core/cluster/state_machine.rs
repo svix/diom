@@ -541,7 +541,7 @@ impl Store {
         }
     }
 
-    async fn build_snapshot_(&mut self) -> anyhow::Result<Snapshot> {
+    async fn build_snapshot_(&self) -> anyhow::Result<Snapshot> {
         let last_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
 
@@ -594,10 +594,6 @@ impl Store {
         let snapshot = StoredSnapshot::new(&meta, &self.snapshot_directory, targets)
             .await
             .context("failed to build snapshot")?;
-
-        self.set_last_snapshot_(meta.clone(), snapshot.path.clone())
-            .await
-            .context("failed to set last snapshot")?;
 
         let path = snapshot.path.clone();
 
@@ -747,19 +743,34 @@ impl StoredSnapshot {
     }
 }
 
-impl RaftSnapshotBuilder<TypeConfig> for StoreHandle {
+pub struct StoreSnapshotHandle {
+    inner: Arc<TokioRwLock<Store>>,
+}
+
+impl RaftSnapshotBuilder<TypeConfig> for StoreSnapshotHandle {
     async fn build_snapshot(&mut self) -> StorageResult<Snapshot> {
-        self.inner
-            .write()
+        // build the snapshot with a read lock so we don't block writes
+        let snapshot = self
+            .inner
+            .read()
             .await
             .build_snapshot_()
             .await
-            .map_err(io_err)
+            .map_err(io_err)?;
+        // but set the last_snapshot_ field with a write lock to serialize
+        self.inner
+            .write()
+            .await
+            .set_last_snapshot_(snapshot.meta.clone(), snapshot.snapshot.path.clone())
+            .await
+            .context("failed to set last snapshot")
+            .map_err(io_err)?;
+        Ok(snapshot)
     }
 }
 
 impl RaftStateMachine<TypeConfig> for StoreHandle {
-    type SnapshotBuilder = Self;
+    type SnapshotBuilder = StoreSnapshotHandle;
 
     async fn applied_state(&mut self) -> StorageResult<(Option<LogId>, StoredMembership)> {
         let this = self.inner.read().await;
@@ -789,7 +800,9 @@ impl RaftStateMachine<TypeConfig> for StoreHandle {
 
     async fn get_snapshot_builder(&mut self) -> Self::SnapshotBuilder {
         self.inner.write().await.prep_snapshot_builder_();
-        self.clone()
+        StoreSnapshotHandle {
+            inner: self.inner.clone(),
+        }
     }
 
     #[tracing::instrument(skip_all)]
