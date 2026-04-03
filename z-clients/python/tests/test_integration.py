@@ -10,7 +10,6 @@ from diom.models import (
     CacheSetIn,
     KvDeleteIn,
     KvGetIn,
-    KvSetIn,
 )
 
 TOKEN = os.environ["DIOM_TOKEN"]
@@ -42,7 +41,7 @@ def test_kv_set_get_delete(client):
     value = b"python-sync-kv-value"
 
     # Set
-    set_resp = client.kv.set(key, KvSetIn(value=value))
+    set_resp = client.kv.set(key, value)
     assert set_resp.success is True
 
     # Get
@@ -63,7 +62,7 @@ def test_cache_set_get_delete(client):
     value = b"python-sync-cache-value"
 
     # Set
-    client.cache.set(key, CacheSetIn(value=value, ttl_ms=60000))
+    client.cache.set(key, value, CacheSetIn(ttl_ms=60000))
 
     # Get
     get_resp = client.cache.get(key, CacheGetIn())
@@ -92,7 +91,7 @@ async def test_kv_set_get_delete_async(async_client):
     value = b"python-async-kv-value"
 
     # Set
-    set_resp = await async_client.kv.set(key, KvSetIn(value=value))
+    set_resp = await async_client.kv.set(key, value)
     assert set_resp.success is True
 
     # Get
@@ -114,7 +113,7 @@ async def test_cache_set_get_delete_async(async_client):
     value = b"python-async-cache-value"
 
     # Set
-    await async_client.cache.set(key, CacheSetIn(value=value, ttl_ms=60000))
+    await async_client.cache.set(key, value, CacheSetIn(ttl_ms=60000))
 
     # Get
     get_resp = await async_client.cache.get(key, CacheGetIn())

@@ -4,7 +4,6 @@ package diom_models
 
 type CacheSetIn struct {
 	Namespace *string `msgpack:"namespace,omitempty"`
-	Value     []uint8 `msgpack:"value"`
 	TtlMs     uint64  `msgpack:"ttl_ms"` // Time to live in milliseconds
 }
 

@@ -17,7 +17,8 @@ pub enum KvCommands {
     /// KV Set
     Set {
         key: String,
-        kv_set_in: crate::json::JsonOf<diom_client::models::KvSetIn>,
+        value: Vec<u8>,
+        kv_set_in: Option<crate::json::JsonOf<diom_client::models::KvSetIn>>,
     },
     /// KV Get
     Get {
@@ -37,8 +38,15 @@ impl KvCommands {
             Self::Namespace(args) => {
                 args.command.exec(client).await?;
             }
-            Self::Set { key, kv_set_in } => {
-                let resp = client.kv().set(key, kv_set_in.into_inner()).await?;
+            Self::Set {
+                key,
+                value,
+                kv_set_in,
+            } => {
+                let resp = client
+                    .kv()
+                    .set(key, value, kv_set_in.unwrap_or_default().into_inner())
+                    .await?;
                 crate::json::print_json_output(&resp)?;
             }
             Self::Get { key, kv_get_in } => {

@@ -37,6 +37,7 @@ export class Cache {
     /** Cache Set */
     public set(
         key: string,
+        value: number[],
         cacheSetIn: CacheSetIn,
     ): Promise<CacheSetOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1.cache.set");
@@ -45,6 +46,7 @@ export class Cache {
             CacheSetInSerializer._toJsonObject({
                 ...cacheSetIn,
                 key: key,
+                value: value,
             })
         );
         

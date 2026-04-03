@@ -30,7 +30,7 @@ describe("SDK Integration Tests", () => {
     const value = toBytes("js-integration-kv-value");
 
     // Set
-    const setResp = await client.kv.set(key, { value });
+    const setResp = await client.kv.set(key, value, {});
     assert.strictEqual(setResp.success, true);
 
     // Get
@@ -52,7 +52,7 @@ describe("SDK Integration Tests", () => {
     const value = toBytes("js-integration-cache-value");
 
     // Set
-    await client.cache.set(key, { value, ttlMs: 60000 });
+    await client.cache.set(key, value, { ttlMs: 60000 });
 
     // Get
     const getResp = await client.cache.get(key, {});

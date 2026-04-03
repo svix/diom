@@ -2,7 +2,6 @@
 
 export interface CacheSetIn {
     namespace?: string | null;
-    value: number[];
     /** Time to live in milliseconds */
     ttlMs: number;
 }

@@ -53,7 +53,7 @@ class IntegrationTest {
         List<Byte> value = toBytes("java-integration-kv-value");
 
         // Set
-        KvSetOut setResp = client.getKv().set(key, new KvSetIn().value(value));
+        KvSetOut setResp = client.getKv().set(key, value);
         assertTrue(setResp.getSuccess());
 
         // Get
@@ -75,7 +75,7 @@ class IntegrationTest {
         List<Byte> value = toBytes("java-integration-cache-value");
 
         // Set
-        client.getCache().set(key, new CacheSetIn().value(value).ttlMs(60000L));
+        client.getCache().set(key, value, new CacheSetIn().ttlMs(60000L));
 
         // Get
         CacheGetOut getResp = client.getCache().get(key);

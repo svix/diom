@@ -46,7 +46,7 @@ macro_rules! request_input {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Validate, JsonSchema)]
-#[schemars(extend("x-positional" = ["key"]))]
+#[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct KvSetIn {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,
