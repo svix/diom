@@ -112,6 +112,7 @@ type (
 	QueueMsgOut                      = coyote_models.QueueMsgOut
 	RateLimitCheckIn                 = coyote_models.RateLimitCheckIn
 	RateLimitCheckOut                = coyote_models.RateLimitCheckOut
+	RateLimitConfig                  = coyote_models.RateLimitConfig
 	RateLimitCreateNamespaceIn       = coyote_models.RateLimitCreateNamespaceIn
 	RateLimitCreateNamespaceOut      = coyote_models.RateLimitCreateNamespaceOut
 	RateLimitGetNamespaceIn          = coyote_models.RateLimitGetNamespaceIn
@@ -120,7 +121,6 @@ type (
 	RateLimitGetRemainingOut         = coyote_models.RateLimitGetRemainingOut
 	RateLimitResetIn                 = coyote_models.RateLimitResetIn
 	RateLimitResetOut                = coyote_models.RateLimitResetOut
-	RateLimitTokenBucketConfig       = coyote_models.RateLimitTokenBucketConfig
 	Retention                        = coyote_models.Retention
 	SeekPosition                     = coyote_models.SeekPosition
 	ServerState                      = coyote_models.ServerState

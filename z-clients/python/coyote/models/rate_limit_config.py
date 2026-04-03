@@ -3,7 +3,7 @@
 from pydantic import BaseModel
 
 
-class RateLimitTokenBucketConfig(BaseModel):
+class RateLimitConfig(BaseModel):
     capacity: int
     """Maximum capacity of the bucket"""
 

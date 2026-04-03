@@ -17,7 +17,7 @@ Here is an example configuration:
 
 ```rust
 // Capacity: 10, refill rate: 1, refill interval: 1 second.
-let config = RateLimitTokenBucketConfig::new(10, 1)
+let config = RateLimitConfig::new(10, 1)
     .with_refill_interval(Duration::from_secs(1));
 ```
 
@@ -27,7 +27,7 @@ To use the rate limiter you call the `rate-limit.limit` operation with a configu
 
 ```rust
 let key = "user:42:api".to_string();
-let config = RateLimitTokenBucketConfig::new(10, 1)
+let config = RateLimitConfig::new(10, 1)
     .with_refill_interval(Duration::from_secs(1));
 
 let out = client.rate_limit()
@@ -90,7 +90,7 @@ This works because it lets users consume 200 tokens, but the refill happens much
 
 Example configuration:
 ```rust
-RateLimitTokenBucketConfig::new(200, 100)
+RateLimitConfig::new(200, 100)
     .with_refill_interval(Duration::from_secs(1));
 ```
 
@@ -103,10 +103,10 @@ For example:
 ```rust
 let config = match tier {
     Tier::Free =>
-        RateLimitTokenBucketConfig::new(50, 50)
+        RateLimitConfig::new(50, 50)
             .with_refill_interval(Duration::from_secs(1)),
     Tier::Professional =>
-        RateLimitTokenBucketConfig::new(200, 100)
+        RateLimitConfig::new(200, 100)
             .with_refill_interval(Duration::from_secs(1)),
 };
 
@@ -147,11 +147,11 @@ This can be solved using the token bucket algorithm by setting the configuration
 
 ```rust
 // Do this:
-RateLimitTokenBucketConfig::new(100, 1)
+RateLimitConfig::new(100, 1)
     .with_refill_interval(Duration::from_millis(10));
 
 // Instead of this:
-RateLimitTokenBucketConfig::new(100, 100)
+RateLimitConfig::new(100, 100)
     .with_refill_interval(Duration::from_secs(1));
 ```
 
@@ -163,6 +163,6 @@ For example:
 
 ```rust
 // Capacity of 10 and 10 tokens are refilled every 1 second.
-RateLimitTokenBucketConfig::new(10, 10)
+RateLimitConfig::new(10, 10)
     .with_refill_interval(Duration::from_secs(1));
 ```

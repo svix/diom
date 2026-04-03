@@ -7392,7 +7392,7 @@
           },
           "config": {
             "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
+            "$ref": "#/components/schemas/RateLimitConfig"
           }
         },
         "required": [
@@ -7424,6 +7424,34 @@
         "required": [
           "allowed",
           "remaining"
+        ]
+      },
+      "RateLimitConfig": {
+        "type": "object",
+        "properties": {
+          "capacity": {
+            "description": "Maximum capacity of the bucket",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_amount": {
+            "description": "Number of tokens to add per refill interval",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_interval_ms": {
+            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "default": 1000
+          }
+        },
+        "required": [
+          "capacity",
+          "refill_amount"
         ]
       },
       "RateLimitCreateNamespaceIn": {
@@ -7506,7 +7534,7 @@
           },
           "config": {
             "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
+            "$ref": "#/components/schemas/RateLimitConfig"
           }
         },
         "required": [
@@ -7551,7 +7579,7 @@
           },
           "config": {
             "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
+            "$ref": "#/components/schemas/RateLimitConfig"
           }
         },
         "required": [
@@ -7561,34 +7589,6 @@
       },
       "RateLimitResetOut": {
         "type": "object"
-      },
-      "RateLimitTokenBucketConfig": {
-        "type": "object",
-        "properties": {
-          "capacity": {
-            "description": "Maximum capacity of the bucket",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_amount": {
-            "description": "Number of tokens to add per refill interval",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_interval_ms": {
-            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "default": 1000
-          }
-        },
-        "required": [
-          "capacity",
-          "refill_amount"
-        ]
       },
       "Retention": {
         "type": "object",
