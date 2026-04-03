@@ -466,5 +466,8 @@ impl JsonSchema for ConsumerGroup {
 pub struct Retention {
     #[serde(rename = "period_ms")]
     pub period: Option<DurationMs>,
+    /// FIXME(817) - We're not sure yet how we want to implement this,
+    /// and its not part of MVP, so obscuring it for now.
+    #[schemars(skip)]
     pub size_bytes: Option<NonZeroU64>,
 }
