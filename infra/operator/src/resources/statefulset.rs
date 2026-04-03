@@ -4,10 +4,9 @@ use k8s_openapi::{
     api::{
         apps::v1::{StatefulSet, StatefulSetSpec},
         core::v1::{
-            Affinity, Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction,
-            ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
-            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, Toleration,
-            TopologySpreadConstraint, VolumeMount, VolumeResourceRequirements,
+            Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, ObjectFieldSelector,
+            PersistentVolumeClaim, PersistentVolumeClaimSpec, PodSecurityContext, PodSpec,
+            PodTemplateSpec, Probe, VolumeMount, VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -48,15 +47,6 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
     let pod_labels = labels::general_labels(&cluster_name);
     let pod_annotations = spec.pod_annotations.clone();
 
-    let topology_spread_constraints = add_selector_labels(
-        &spec.topology_spread_constraints,
-        &labels::selector(&cluster_name),
-    );
-
-    let node_selector: Option<BTreeMap<String, String>> = spec.node_selector.clone();
-    let tolerations: Option<Vec<Toleration>> = spec.tolerations.clone();
-    let affinity: Option<Affinity> = spec.affinity.clone();
-
     let pod_spec = PodSpec {
         containers: vec![container],
         volumes: None,
@@ -66,10 +56,10 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
             fs_group: Some(1000),
             ..Default::default()
         }),
-        topology_spread_constraints: Some(topology_spread_constraints),
-        node_selector,
-        tolerations,
-        affinity,
+        topology_spread_constraints: Some(spec.topology_spread_constraints.clone()),
+        node_selector: spec.node_selector.clone(),
+        tolerations: spec.tolerations.clone(),
+        affinity: spec.affinity.clone(),
         ..Default::default()
     };
 
@@ -378,28 +368,6 @@ fn pvc_template(name: &str, size: &Quantity, storage_class: Option<&str>) -> Per
         }),
         ..Default::default()
     }
-}
-
-// Add the label selectors to topology constraints,
-// including those supplied by user, which are managed
-// by the operator.
-fn add_selector_labels(
-    constraints: &[TopologySpreadConstraint],
-    pod_selector: &BTreeMap<String, String>,
-) -> Vec<TopologySpreadConstraint> {
-    let selector = LabelSelector {
-        match_labels: Some(pod_selector.clone()),
-        ..Default::default()
-    };
-
-    let mut constraints = constraints.to_vec();
-    for c in &mut constraints {
-        if c.label_selector.is_none() {
-            c.label_selector = Some(selector.clone());
-        }
-    }
-
-    constraints
 }
 
 fn seed_nodes_value(

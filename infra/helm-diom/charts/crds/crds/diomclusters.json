@@ -88,7 +88,7 @@
                     "type": "object"
                   },
                   "affinity": {
-                    "description": "Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).",
+                    "description": "Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).\n\nPod affinity/anti-affinity rules that target diom pods should use the\n`diom.svix.com/cluster` label (replacing `my-cluster` with the name of your\nDiomCluster resource).\n\n```yaml\nlabelSelector:\n  matchLabels:\n    diom.svix.com/cluster: my-cluster\n```",
                     "nullable": true,
                     "properties": {
                       "nodeAffinity": {
@@ -1179,14 +1179,8 @@
                     "type": "array"
                   },
                   "topologySpreadConstraints": {
-                    "default": [
-                      {
-                        "maxSkew": 1,
-                        "topologyKey": "topology.kubernetes.io/zone",
-                        "whenUnsatisfiable": "ScheduleAnyway"
-                      }
-                    ],
-                    "description": "Topology spread constraints for pod scheduling.\n\nDefaults to (topology.kubernetes.io/zone, ScheduleAnyway, maxSkew=1).\nThe operator automatically injects the cluster's pod labelSelector on any\nconstraint that omits it, so you don't need to specify it yourself.\nSet to `[]` to opt out of all spreading.\n\nSee: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+                    "default": [],
+                    "description": "Topology spread constraints for pod scheduling.\n\nConstraints that target diom pods should use the `diom.svix.com/cluster` label\n(replacing `my-cluster` with the name of your DiomCluster resource).\n\n```yaml\nlabelSelector:\n  matchLabels:\n    diom.svix.com/cluster: my-cluster\n```",
                     "items": {
                       "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
                       "properties": {

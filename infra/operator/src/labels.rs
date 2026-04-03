@@ -6,6 +6,7 @@ pub(crate) fn selector(cluster_name: &str) -> BTreeMap<String, String> {
     BTreeMap::from([
         ("app.kubernetes.io/name".into(), "diom".into()),
         ("app.kubernetes.io/instance".into(), cluster_name.into()),
+        ("diom.svix.com/cluster".into(), cluster_name.into()),
     ])
 }
 

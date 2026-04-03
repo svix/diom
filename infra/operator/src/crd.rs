@@ -24,15 +24,6 @@ fn default_nodes() -> i32 {
     1
 }
 
-fn default_topology_spread_constraints() -> Vec<TopologySpreadConstraint> {
-    vec![TopologySpreadConstraint {
-        max_skew: 1,
-        topology_key: "topology.kubernetes.io/zone".into(),
-        when_unsatisfiable: "ScheduleAnyway".into(),
-        ..Default::default()
-    }]
-}
-
 /// A Diom cluster deployment.
 #[derive(CustomResource, Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -73,13 +64,15 @@ pub(crate) struct DiomClusterSpec {
 
     /// Topology spread constraints for pod scheduling.
     ///
-    /// Defaults to (topology.kubernetes.io/zone, ScheduleAnyway, maxSkew=1).
-    /// The operator automatically injects the cluster's pod labelSelector on any
-    /// constraint that omits it, so you don't need to specify it yourself.
-    /// Set to `[]` to opt out of all spreading.
+    /// Constraints that target diom pods should use the `diom.svix.com/cluster` label
+    /// (replacing `my-cluster` with the name of your DiomCluster resource).
     ///
-    /// See: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
-    #[serde(default = "default_topology_spread_constraints")]
+    /// ```yaml
+    /// labelSelector:
+    ///   matchLabels:
+    ///     diom.svix.com/cluster: my-cluster
+    /// ```
+    #[serde(default)]
     pub topology_spread_constraints: Vec<TopologySpreadConstraint>,
 
     /// Node selector for scheduling pods onto nodes with matching labels.
@@ -91,6 +84,16 @@ pub(crate) struct DiomClusterSpec {
     pub tolerations: Option<Vec<Toleration>>,
 
     /// Affinity rules for advanced pod scheduling (node affinity, pod affinity/anti-affinity).
+    ///
+    /// Pod affinity/anti-affinity rules that target diom pods should use the
+    /// `diom.svix.com/cluster` label (replacing `my-cluster` with the name of your
+    /// DiomCluster resource).
+    ///
+    /// ```yaml
+    /// labelSelector:
+    ///   matchLabels:
+    ///     diom.svix.com/cluster: my-cluster
+    /// ```
     #[serde(default)]
     pub affinity: Option<Affinity>,
 }
