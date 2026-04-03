@@ -130,7 +130,7 @@ And potentially have another role that uses a mix of different policies without 
 
 Access control rules are the specific rules that allow/deny access to resources or groups of resources.
 
-The way access control rules work is as follows: everything is denied by default, you can allow actions by adding an allow rule, and deny actions by adding a deny rule. The order of precedent is: `deny rule -> allow rule -> implicit deny all`, or in other words, if a deny rule matches, the request will be denied no matter if there's an allow before or after it.
+The way access control rules work is as follows: everything is denied by default. You can allow actions by adding an allow rule and deny actions by adding a deny rule. The order of precedent is: `deny rule -> allow rule -> implicit deny all`, or in other words, if a deny rule matches, the request will be denied no matter if there's an allow before or after it.
 
 Rules follow the following format:
 ```json
@@ -173,7 +173,7 @@ There are two ways to create tokens:
 
 Creating a new token using the API looks something like this:
 ```
-coyote admin auth_token create '{"name": "token-name", "role": "frontend-role", "context": {"user": "their-user-id"}}'
+coyote admin auth-token create '{"name": "token-name", "role": "frontend-role", "context": {"user": "their-user-id"}}'
 # Returns:
 {
     "id": "tok_123",
@@ -181,7 +181,7 @@ coyote admin auth_token create '{"name": "token-name", "role": "frontend-role", 
 }
 ```
 
-Alternatively, if JWT auth is also configured, people can just generate their own config, and pass the role as `role` (or maybe the correct JWT one for this), and context as a sub object called `context`.
+Alternatively, if JWT auth is also configured, people can just generate their own config and pass the role as `role` (or maybe the correct JWT one for this) and context as a sub object called `context`.
 
 
 ## Admin auth token
@@ -190,7 +190,7 @@ You can create roles, policies, and auth tokens using the Coyote API. However, y
 
 To solve that, Coyote lets you configure an admin auth token in the configuration file, which you can use to create policies, roles, and tokens. The admin auth token assumes the role `admin` which has access to everything on the cluster.
 
-To configure an admin auth token set the `COYOTE_ADMIN_TOKEN` environment variable to you wanted token, for example: `zpsNuhPMeMbg9q4cG2ZsJn`, and then you'll be able to use it for authenticating to that specific node. It's recommended that you only use the admin auth token for bootstrapping, and remove the configuration once done.
+To configure an admin auth token set the `COYOTE_ADMIN_TOKEN` environment variable to the desired token, for example: `zpsNuhPMeMbg9q4cG2ZsJn`, and then you'll be able to use it for authenticating to that specific node. It's recommended that you only use the admin auth token for bootstrapping and remove the configuration once done.
 
 
 ## Defining access control using the API
@@ -216,7 +216,7 @@ coyote admin auth-role upsert '
                 "effect": "deny",
                 "resource": "cache::foo/bar",
                 "actions": [
-                    "cacheg.te"
+                    "cache.get"
                 ],
             },
             {
@@ -257,7 +257,7 @@ coyote admin auth-policy upsert '
                 "effect": "deny",
                 "resource": "cache::foo/bar",
                 "actions": [
-                    "cacheg.get"
+                    "cache.get"
                 ],
             },
             {
@@ -273,7 +273,7 @@ coyote admin auth-policy upsert '
 
 ### Configuring authentication tokens
 
-To create a new token attached to a specific role you can use the following API. You can also set an optional expiry if the token is meant to be temporary.
+To create a new token attached to a specific role, you can use the following API. You can also set an optional expiry if the token is meant to be temporary.
 
 ```bash
 coyote admin auth_token create '
@@ -292,7 +292,7 @@ Here are some example use-cases and how to achieve them.
 
 ### Multi-tenant access to the same cluster
 
-First they would create a policy and a role (or we can have a default one, at least a policy) that looks something like this:
+First you would create a policy and a role (or you can have a default one, at least a policy) that looks something like this:
 
 Policies:
 ```json
@@ -340,14 +340,14 @@ Role:
 }
 ```
 
-Then any key with that role, would be limited to their own data, e.g. `cache::owned/my-role/*`
+Then any key with that role would be limited to their own data, e.g. `cache::owned/my-role/*`
 
 
 ### Frontend friendly tokens
 
 You can create tokens that can be safely shared with the frontend (and thus with your users) by using the context and scoping the token to resources under their username.
 
-First they would create a role (or we can have a default one) that looks something like this:
+First you would create a role (or we can have a default one) that looks something like this:
 
 ```json
 {
@@ -385,7 +385,7 @@ Then they will only have access to `cache::frontend/their-user-id/*`
 
 Similarly to the frontend friendly tokens above, you can also create tokens that are suitable for sharing with untrusted 3rd parties.
 
-For example, you can create the following role, to allow a trusted 3rd party to publish to a stream that's specific to them:
+For example, you can create the following role to allow a trusted 3rd party to publish to a stream that's specific to them:
 
 ```json
 {
