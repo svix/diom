@@ -2,7 +2,7 @@
 
 Coyote offers granular access control to let you configure access exactly as you need it.
 
-The access control functionality was designed to be easy to start with, but powerful for advanced users. See the [examples](#examples) section below, for advanced use-cases including frontend-friendly tokens and sharing tokens with untrusted 3rd parties.
+The access control functionality was designed to be easy to start with, but powerful for advanced users. See the [Examples](#examples) section below for advanced use-cases including frontend-friendly tokens and sharing tokens with untrusted 3rd parties.
 
 ## Entities and hierarchy
 
@@ -10,8 +10,8 @@ The access control functionality was designed to be easy to start with, but powe
   - A role has a list of access control rules or policies attached to it.
   - Roles can have additional context that can be used in path replacements and in conditionals (in the future when we support it).
 - [Policy](#policy): a policy is a reusable set of access rules. The same policy can be attached to multiple roles.
-- [Access rules](#access-rules): rules describe what operations are allowed or disallowed for a groups of resources.
-- [Auth tokens](#auth-tokens): tokens are how users authenticate with Coyote. Each token has a role associated with it, which is what the token authenticate to.
+- [Access rules](#access-rules): rules describe what operations are allowed or disallowed for a group of resources.
+- [Auth tokens](#auth-tokens): tokens are how users authenticate with Coyote. Each token has a role associated with it, which is what the token authenticates to.
   - Tokens may have additional context that can then be used in path replacements and in conditionals.
 
 
@@ -59,9 +59,9 @@ A role has an id, an optional description, an optional set of rules, and an opti
 }
 ```
 
-Rules and resource identifiers are covered in the [access rules](#access-rules) section below.
+Rules and resource identifiers are covered in the [Access Rules](#access-rules) section below.
 
-The policies is a list of policies, which are explained in the next section.
+`policies` is a list of policies, which are explained in the next section.
 
 Context is a map of additional properties that can be used for variable substitution in the access control rules (more on that below).
 
