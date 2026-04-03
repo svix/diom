@@ -26,17 +26,20 @@ public class IdempotencyCompleteIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> response;
+    @JsonProperty private Map<String,String> context;
     @JsonProperty("ttl_ms") private Long ttlMs;
 
     public IdempotencyCompleteIn_(
         String namespace,
         String key,
         List<Byte> response,
+        Map<String,String> context,
         Long ttlMs
     ) {
         this.namespace = namespace;
         this.key = key;
         this.response = response;
+        this.context = context;
         this.ttlMs = ttlMs;
     }
 

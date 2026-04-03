@@ -6152,6 +6152,15 @@
               "maximum": 255
             }
           },
+          "context": {
+            "description": "Optional metadata to store alongside the response",
+            "type": "object",
+            "default": null,
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "ttl_ms": {
             "description": "How long to keep the idempotency response for.",
             "type": "integer",
@@ -6182,6 +6191,13 @@
               "minimum": 0,
               "maximum": 255
             }
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "required": [

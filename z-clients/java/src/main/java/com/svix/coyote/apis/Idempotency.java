@@ -62,6 +62,7 @@ public class Idempotency {
             idempotencyCompleteIn.getNamespace(),
             key,
             idempotencyCompleteIn.getResponse(),
+            idempotencyCompleteIn.getContext(),
             idempotencyCompleteIn.getTtlMs()
         );
 

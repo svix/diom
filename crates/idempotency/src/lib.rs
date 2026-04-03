@@ -13,7 +13,7 @@ pub mod operations;
 
 use std::time::Duration;
 
-use coyote_core::Monotime;
+use coyote_core::{Monotime, types::Metadata};
 use coyote_error::Result;
 use coyote_kv::kvcontroller::KvController;
 use coyote_namespace::{Namespace, entities::IdempotencyConfig};
@@ -31,7 +31,11 @@ pub(crate) enum IdempotencyState {
     /// Request is in progress (locked)
     InProgress,
     /// Request completed successfully with a response
-    Completed { response: Vec<u8> },
+    Completed {
+        response: Vec<u8>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        context: Option<Metadata>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -39,7 +43,11 @@ pub(crate) enum IdempotencyState {
 pub enum IdempotencyStartResult {
     Started,
     Locked,
-    Completed { response: Vec<u8> },
+    Completed {
+        response: Vec<u8>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        context: Option<Metadata>,
+    },
 }
 
 impl From<IdempotencyState> for Vec<u8> {

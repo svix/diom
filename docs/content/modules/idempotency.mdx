@@ -78,7 +78,7 @@ match client.idempotency()
     }
     IdempotencyStartOut::Completed(cached) => {
         // A previous call already finished. Return the cached response.
-        return cached;
+        return cached.response;
     }
 }
 ```
@@ -94,10 +94,14 @@ let success_retention_period = Duration::from_hours(12);
 
 client.idempotency().complete(
     idem_key.clone(),
-    IdempotencyCompleteIn::new(result, success_retention_period),
+    IdempotencyCompleteIn::new(result, success_retention_period)
+        .with_context(Some(extra_data)),
 )
 .await?;
 ```
+
+Context allows you to store additional key-value pairs of information attached to the request. A common pattern is to store the `status_code` and optionally `headers` of a request.
+You can use multiple context keys, or just serialize a full JSON object into one key.
 
 ## Aborting an idempotency request (`idempotency.abort`)
 
@@ -158,6 +162,8 @@ fn middleware() {
 }
 ```
 
+See the [Middleware examples](#middleware-examples) section below for examples for various frameworks.
+
 ### Emulating success vs. returning a 409 conflict
 
 There are two main ways to handle idempotency: emulating a successful request on retries vs. returning a 409 conflict.
@@ -170,3 +176,264 @@ The alternative is to return a `409 (Conflict)` HTTP status code, indicating a c
 ### Storing headers, response status codes, etc.
 
 For simplicity, the examples above only showed how to store the response body for successful idempotency requests. But you can also use the response field in `idempotency.complete` to store the response headers and status code of the original request, making sure you return exactly the same response in case your API utilizes those.
+
+
+## Middleware examples
+
+Below are example middleware implementations for common web frameworks. Each example reads the `Idempotency-Key` header, drives the idempotency state machine, and stores the response body so retries get an identical reply.
+
+### Rust (Axum)
+
+```rust
+use std::time::Duration;
+
+use axum::{
+    body::Body,
+    extract::State,
+    http::{Request, StatusCode},
+    middleware::Next,
+    response::Response,
+};
+use coyote_client::{
+    CoyoteClient,
+    models::{IdempotencyAbortIn, IdempotencyCompleteIn, IdempotencyStartIn, IdempotencyStartOut},
+};
+
+pub async fn idempotency_middleware(
+    State(coyote): State<CoyoteClient>,
+    req: Request<Body>,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    // Skip requests without an idempotency key
+    let Some(idem_key) = req
+        .headers()
+        .get("idempotency-key")
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_owned)
+    else {
+        return Ok(next.run(req).await);
+    };
+
+    let lock_period = Duration::from_secs(15);
+
+    match coyote
+        .idempotency()
+        .start(idem_key.clone(), IdempotencyStartIn::new(lock_period))
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    {
+        IdempotencyStartOut::Started => {
+            let response = next.run(req).await;
+
+            if !response.status().is_success() {
+                // Release the lock so the caller can retry
+                let _ = coyote
+                    .idempotency()
+                    .abort(idem_key, IdempotencyAbortIn::new())
+                    .await;
+                return Ok(response);
+            }
+
+            // Buffer the body so we can cache it and still return it
+            let (parts, body) = response.into_parts();
+            let body_bytes = axum::body::to_bytes(body, usize::MAX)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            let mut context = std::collections::HashMap::new();
+            context.insert("status_code".to_owned(), parts.status.as_u16().to_string());
+            // You can also store response headers here as additional entries, e.g.:
+            // context.insert("x-request-id".to_owned(), header_value);
+
+            let retention = Duration::from_secs(12 * 3600);
+            let _ = coyote
+                .idempotency()
+                .complete(
+                    idem_key,
+                    IdempotencyCompleteIn::new(body_bytes.to_vec(), retention)
+                        .with_context(Some(context)),
+                )
+                .await;
+
+            Ok(Response::from_parts(parts, Body::from(body_bytes)))
+        }
+        IdempotencyStartOut::Locked => {
+            // A concurrent request with the same key is in flight
+            Err(StatusCode::LOCKED)
+        }
+        IdempotencyStartOut::Completed(cached) => {
+            let status = cached.context
+                .as_ref()
+                .and_then(|m| m.get("status_code"))
+                .and_then(|s| s.parse::<u16>().ok())
+                .and_then(|c| StatusCode::from_u16(c).ok())
+                .unwrap_or(StatusCode::OK);
+            Ok(Response::builder()
+                .status(status)
+                .body(Body::from(cached.response))
+                .unwrap())
+        }
+    }
+}
+```
+
+Register the middleware when building your Axum router:
+
+```rust
+use axum::middleware;
+
+let app = Router::new()
+    .route("/charge", post(charge_handler))
+    .layer(middleware::from_fn_with_state(coyote_client, idempotency_middleware));
+```
+
+### Python (FastAPI)
+
+```python
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from coyote import CoyoteAsync
+from coyote.models import IdempotencyAbortIn, IdempotencyCompleteIn, IdempotencyStartIn
+
+
+class IdempotencyMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, coyote: CoyoteAsync) -> None:
+        super().__init__(app)
+        self.coyote = coyote
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        idem_key = request.headers.get("idempotency-key")
+        if idem_key is None:
+            return await call_next(request)
+
+        result = await self.coyote.idempotency.start(
+            idem_key,
+            IdempotencyStartIn(lock_period_ms=15_000),
+        )
+
+        if result.status == "started":
+            response = await call_next(request)
+            # Buffer the body — body_iterator is consumed once
+            body = b"".join([chunk async for chunk in response.body_iterator])
+
+            if response.status_code >= 400:
+                # Release the lock so the caller can retry
+                await self.coyote.idempotency.abort(idem_key, IdempotencyAbortIn())
+                return Response(
+                    content=body,
+                    status_code=response.status_code,
+                    headers=dict(response.headers),
+                )
+
+            context = {"status_code": str(response.status_code)}
+            # You can also store response headers here as additional entries, e.g.:
+            # context["x-request-id"] = response.headers.get("x-request-id", "")
+
+            retention_ms = 12 * 60 * 60 * 1000  # 12 hours
+            await self.coyote.idempotency.complete(
+                idem_key,
+                IdempotencyCompleteIn(response=body, ttl_ms=retention_ms, context=context),
+            )
+
+            return Response(
+                content=body,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+            )
+
+        elif result.status == "locked":
+            # A concurrent request with the same key is in flight
+            return Response(status_code=423)
+
+        else:  # completed
+            ctx = result.data.context or {}
+            return Response(
+                content=result.data.response,
+                status_code=int(ctx.get("status_code", "200")),
+            )
+```
+
+Register the middleware when creating your FastAPI app:
+
+```python
+from coyote import CoyoteAsync
+from fastapi import FastAPI
+
+coyote = CoyoteAsync(token="...")
+app = FastAPI()
+app.add_middleware(IdempotencyMiddleware, coyote=coyote)
+```
+
+### JavaScript (Next.js)
+
+Next.js does have a `middleware.ts` file, but it runs on the Edge Runtime which doesn't support arbitrary Node.js packages. App Router API routes also don't have a built-in middleware chain, so the idiomatic pattern is a higher-order function that wraps each handler:
+
+```typescript
+import { NextRequest, NextResponse } from "next/server";
+import { Coyote } from "coyote";
+
+const coyote = new Coyote(process.env.COYOTE_TOKEN!);
+
+type RouteHandler = (req: NextRequest) => Promise<NextResponse>;
+
+export function withIdempotency(handler: RouteHandler): RouteHandler {
+  return async (req: NextRequest): Promise<NextResponse> => {
+    const idemKey = req.headers.get("idempotency-key");
+    if (!idemKey) {
+      return handler(req);
+    }
+
+    const result = await coyote.idempotency.start(idemKey, { lock_start_ms: 15_000 });
+
+    if (result.status === "started") {
+      const response = await handler(req);
+      const body = await response.arrayBuffer();
+
+      if (!response.ok) {
+        // Release the lock so the caller can retry
+        await coyote.idempotency.abort(idemKey, {});
+        return new NextResponse(body, {
+          status: response.status,
+          headers: response.headers,
+        });
+      }
+
+      const context: Record<string, string> = { status_code: String(response.status) };
+      // You can also store response headers here as additional entries, e.g.:
+      // context["x-request-id"] = response.headers.get("x-request-id") ?? "";
+
+      const retentionMs = 12 * 60 * 60 * 1000; // 12 hours
+      await coyote.idempotency.complete(idemKey, {
+        response: Array.from(new Uint8Array(body)),
+        context,
+        ttlMs: retentionMs,
+      });
+
+      return new NextResponse(body, {
+        status: response.status,
+        headers: response.headers,
+      });
+    } else if (result.status === "locked") {
+      // A concurrent request with the same key is in flight
+      return new NextResponse(null, { status: 423 });
+    } else {
+      // completed — return the cached response
+      const statusCode = parseInt(result.data.context?.status_code ?? "200", 10);
+      return new NextResponse(Buffer.from(result.data.response), {
+        status: statusCode,
+      });
+    }
+  };
+}
+```
+
+Apply the wrapper to any route handler that needs idempotency:
+
+```typescript
+// app/api/charge/route.ts
+import { withIdempotency } from "@/lib/idempotency";
+
+export const POST = withIdempotency(async (req) => {
+  // ... your handler logic
+});
