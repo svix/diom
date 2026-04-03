@@ -3,6 +3,7 @@ mod auth_token;
 mod bootstrap;
 mod cache;
 mod idempotency;
+mod jwt_auth;
 mod kv;
 mod msgpack;
 mod msgs;
