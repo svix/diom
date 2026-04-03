@@ -47,14 +47,13 @@ cluster:
     affinity:
       podAntiAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
               matchLabels:
-                app.kubernetes.io/name: coyote
-            topologyKey: kubernetes.io/hostname
-          - labelSelector:
+                coyote.svix.com/cluster: coyote
+          - topologyKey: topology.kubernetes.io/zone
+            labelSelector:
               matchLabels:
-                app.kubernetes.io/name: coyote
-            topologyKey: topology.kubernetes.io/zone
-    topologySpreadConstraints: []
+                coyote.svix.com/cluster: coyote
     adminToken:
       value: "admin_abcdefghijlmnopqrstuvwxyz012345"
