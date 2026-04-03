@@ -1,4 +1,4 @@
-{% from "types/macros.ts.jinja" import field_from_json, field_to_json -%}
+{% from "types/macros.ts.jinja" import field_decl, field_from_json, field_to_json -%}
 {% for c in referenced_components -%}
 import {
     type {{ c | to_upper_camel_case }},
@@ -15,20 +15,15 @@ import {
 {{ doc_comment }}
 export interface {{ type_name }} {
 {%- for field in type.fields | selectattr("positional", "false") %}
-    {% if field.description is defined -%}
-        {{ field.description | with_javadoc_deprecation(field.deprecated) | to_doc_comment(style="js") | indent(5) }}
-    {% endif -%}
-    {% set field_lhs = field.name | to_lower_camel_case -%}
-    {% if not field.required %}{% set field_lhs %}{{ field_lhs }}?{% endset %}{% endif -%}
-    {% set ty = field.type.to_js() -%}
-    {% if field.nullable %}{% set ty %}{{ ty }} | null{% endset %}{% endif -%}
-    {{ field_lhs }}: {{ ty }};
+    {{ field_decl(field) }}
 {%- endfor %}
 }
 
 {% if positional_fields | length > 0 -%}
 export interface {{ type_name }}_ {
-    {%- include "types/struct_fields.ts.jinja" %}
+    {%- for field in type.fields %}
+    {{ field_decl(field) }}
+    {%- endfor %}
 }
 
 {% endif -%}
