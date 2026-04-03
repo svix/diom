@@ -32,7 +32,7 @@ async fn test_kv_set_get_delete() {
     // Set
     let set_resp = client
         .kv()
-        .set(key.clone(), KvSetIn::new(value.clone()))
+        .set(key.clone(), value.clone(), KvSetIn::new())
         .await
         .unwrap();
     assert!(set_resp.success);
@@ -66,7 +66,8 @@ async fn test_cache_set_get_delete() {
         .cache()
         .set(
             key.clone(),
-            CacheSetIn::new(value.clone(), Duration::from_secs(60)),
+            value.clone(),
+            CacheSetIn::new(Duration::from_secs(60)),
         )
         .await
         .unwrap();

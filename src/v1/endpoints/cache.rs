@@ -48,7 +48,7 @@ macro_rules! request_input {
 pub type CacheNamespace = Namespace<CacheConfig>;
 
 #[derive(Clone, Debug, Deserialize, Validate, JsonSchema)]
-#[schemars(extend("x-positional" = ["key"]))]
+#[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct CacheSetIn {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,

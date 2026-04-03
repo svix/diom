@@ -595,7 +595,7 @@ impl BenchShard for BenchKvSet {
         // Start of real code
         let bytes = value.len() as u64;
         let t = Instant::now();
-        client.kv().set(key.clone(), KvSetIn::new(value)).await?;
+        client.kv().set(key.clone(), value, KvSetIn::new()).await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
     }
@@ -716,7 +716,7 @@ impl BenchShard for BenchCacheSet {
         let t = Instant::now();
         client
             .cache()
-            .set(key, CacheSetIn::new(value, ttl_bench))
+            .set(key, value, CacheSetIn::new(ttl_bench))
             .await?;
         self.bench_result.process(t.elapsed(), bytes)?;
         Ok(())
