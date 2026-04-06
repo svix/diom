@@ -12,11 +12,32 @@ pub struct CacheNamespaceArgs {
 #[derive(Subcommand)]
 pub enum CacheNamespaceCommands {
     /// Create cache namespace
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"name\": \"...\",
+  \"eviction_policy\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"eviction_policy\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Create {
         cache_create_namespace_in:
             crate::json::JsonOf<coyote_client::models::CacheCreateNamespaceIn>,
     },
     /// Get cache namespace
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"name\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"eviction_policy\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Get {
         cache_get_namespace_in: crate::json::JsonOf<coyote_client::models::CacheGetNamespaceIn>,
     },

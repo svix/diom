@@ -12,10 +12,28 @@ pub struct KvNamespaceArgs {
 #[derive(Subcommand)]
 pub enum KvNamespaceCommands {
     /// Create KV namespace
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"name\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Create {
         kv_create_namespace_in: crate::json::JsonOf<coyote_client::models::KvCreateNamespaceIn>,
     },
     /// Get KV namespace
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"name\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Get {
         kv_get_namespace_in: crate::json::JsonOf<coyote_client::models::KvGetNamespaceIn>,
     },
