@@ -17,4 +17,4 @@ sync_mode = "buffer"
 log_sync_interval_commits = 0
 log_sync_interval_ms = 10000
 # acknowledge commits before we fsync
-log_ack_immediately = false
+log_ack_immediately = true
