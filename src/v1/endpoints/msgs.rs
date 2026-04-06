@@ -172,10 +172,7 @@ async fn publish(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let idempotency_key = data
-        .idempotency_key
-        .as_deref()
-        .map(MsgsIdempotencyKey::new);
+    let idempotency_key = data.idempotency_key.as_deref().map(MsgsIdempotencyKey::new);
     let operation = PublishOperation::new(namespace.id, data.topic, data.msgs, idempotency_key)?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
