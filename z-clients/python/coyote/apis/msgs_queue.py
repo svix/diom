@@ -41,8 +41,8 @@ class MsgsQueueAsync(ApiBase):
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
-            lease_duration_ms=msg_queue_receive_in.lease_duration_ms,
-            batch_wait_ms=msg_queue_receive_in.batch_wait_ms,
+            lease_duration=msg_queue_receive_in.lease_duration,
+            batch_wait=msg_queue_receive_in.batch_wait,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -90,7 +90,7 @@ class MsgsQueueAsync(ApiBase):
             topic=topic,
             consumer_group=consumer_group,
             msg_ids=msg_queue_extend_lease_in.msg_ids,
-            lease_duration_ms=msg_queue_extend_lease_in.lease_duration_ms,
+            lease_duration=msg_queue_extend_lease_in.lease_duration,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -187,8 +187,8 @@ class MsgsQueue(ApiBase):
             topic=topic,
             consumer_group=consumer_group,
             batch_size=msg_queue_receive_in.batch_size,
-            lease_duration_ms=msg_queue_receive_in.lease_duration_ms,
-            batch_wait_ms=msg_queue_receive_in.batch_wait_ms,
+            lease_duration=msg_queue_receive_in.lease_duration,
+            batch_wait=msg_queue_receive_in.batch_wait,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(
@@ -236,7 +236,7 @@ class MsgsQueue(ApiBase):
             topic=topic,
             consumer_group=consumer_group,
             msg_ids=msg_queue_extend_lease_in.msg_ids,
-            lease_duration_ms=msg_queue_extend_lease_in.lease_duration_ms,
+            lease_duration=msg_queue_extend_lease_in.lease_duration,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

@@ -1,7 +1,9 @@
 # this file is @generated
 import typing as t
 from typing_extensions import Self
-from pydantic import BaseModel, ModelWrapValidatorHandler, model_validator
+from pydantic import ModelWrapValidatorHandler, model_validator
+
+from ..internal.base_model import BaseModel
 
 
 from .idempotency_completed import IdempotencyCompleted

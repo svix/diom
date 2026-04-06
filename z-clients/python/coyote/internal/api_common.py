@@ -146,7 +146,11 @@ def _parse_response[T: BaseModel](
     if 200 <= response.status_code <= 299:
         if response_type is not None:
             response_decoded = msgpack.unpackb(response.content)
-            return response_type.model_validate(response_decoded)
+            return response_type.model_validate(
+                response_decoded,
+                by_alias=True,
+                by_name=False,
+            )
     else:
         if response.status_code == 422:
             raise HttpValidationError.init_exception(

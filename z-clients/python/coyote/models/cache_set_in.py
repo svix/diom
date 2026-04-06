@@ -1,12 +1,14 @@
 # this file is @generated
+from pydantic import Field
 
-from pydantic import BaseModel
+from ..internal.base_model import BaseModel
+from ..internal.types import TimeDeltaMs
 
 
 class CacheSetIn(BaseModel):
     namespace: str | None = None
 
-    ttl_ms: int
+    ttl: TimeDeltaMs = Field(alias="ttl_ms")
     """Time to live in milliseconds"""
 
 
@@ -17,5 +19,5 @@ class _CacheSetIn(BaseModel):
 
     value: bytes
 
-    ttl_ms: int
+    ttl: TimeDeltaMs = Field(alias="ttl_ms")
     """Time to live in milliseconds"""
