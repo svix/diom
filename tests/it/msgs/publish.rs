@@ -267,6 +267,70 @@ async fn publish_keyless_same_partition() -> TestResult {
 }
 
 #[tokio::test]
+async fn publish_rejects_reused_idempotency_key() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-idem" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "idem-topic",
+            "consumer_group": "cg-idem",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "idem-topic",
+            "idempotency_key": "same-request",
+            "msgs": [{ "value": "first".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "idem-topic",
+            "idempotency_key": "same-request",
+            "msgs": [{ "value": "second".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::CONFLICT);
+
+    let response = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "idem-topic",
+            "consumer_group": "cg-idem",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(msgs.len(), 1);
+    assert_eq!(msgs[0]["value"], json!("first".as_bytes()));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn publish_to_default_namespace() -> TestResult {
     let TestContext {
         client,

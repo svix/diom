@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
-use diom_core::task::spawn_blocking_in_current_span;
+use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
+use hyper::StatusCode;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
@@ -12,8 +13,11 @@ use tracing::Span;
 use super::{MsgsRaftState, MsgsRequest, PublishResponse};
 use crate::{
     State,
-    entities::{MsgIn, Offset, Partition, TopicIn, TopicName, TopicPartition, partition_for_key},
-    tables::{MsgRow, TopicRow},
+    entities::{
+        MsgIn, MsgsIdempotencyKey, Offset, Partition, TopicIn, TopicName, TopicPartition,
+        partition_for_key,
+    },
+    tables::{IdempotencyRow, MsgRow, TopicRow},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,10 +27,16 @@ pub struct PublishOperation {
     partition: Option<Partition>,
     msgs: Vec<MsgIn>,
     topic_id_random_bytes: UuidV7RandomBytes,
+    idempotency_key: Option<MsgsIdempotencyKey>,
 }
 
 impl PublishOperation {
-    pub fn new(namespace_id: NamespaceId, topic: TopicIn, msgs: Vec<MsgIn>) -> Result<Self> {
+    pub fn new(
+        namespace_id: NamespaceId,
+        topic: TopicIn,
+        msgs: Vec<MsgIn>,
+        idempotency_key: Option<MsgsIdempotencyKey>,
+    ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => {
                 if msgs.iter().any(|m| m.key.is_some()) {
@@ -45,6 +55,7 @@ impl PublishOperation {
             partition,
             msgs,
             topic_id_random_bytes: UuidV7RandomBytes::new_random(),
+            idempotency_key,
         })
     }
 
@@ -54,13 +65,34 @@ impl PublishOperation {
 
         let results = spawn_blocking_in_current_span(move || {
             let bytes: u64 = self.msgs.iter().map(|m| m.value.len() as u64).sum();
+            let mut batch = state.db.batch();
+
+            if let Some(idempotency_key) = self.idempotency_key {
+                let existing = IdempotencyRow::fetch(
+                    &state.metadata_tables,
+                    IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
+                )?;
+
+                if existing.is_some() {
+                    return Err(Error::operation(
+                        StatusCode::CONFLICT,
+                        Some("idempotency key already used".to_owned()),
+                    ));
+                }
+
+                batch.insert_row(
+                    &state.metadata_tables,
+                    IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
+                    &IdempotencyRow {
+                        expiry: now + DurationMs::from_secs(10),
+                    },
+                )?;
+            }
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
                 TopicRow::key_for(self.namespace_id, &self.topic),
             )?;
-            let mut batch = state.db.batch();
-
             let topic_row = match (topic_row, self.partition) {
                 (Some(row), Some(partition)) if (0..row.partitions).contains(&partition.get()) => {
                     row

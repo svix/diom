@@ -160,6 +160,11 @@ pub fn estimate_available_stream_messages(
     })
 }
 
+fn cleanup_idempotency(_state: &State) -> Result<()> {
+    // TODO: Clean up the IdempotencyRow table. Since we don't have a secondary expiration index, sample random rows and delete them if expired.
+    Ok(())
+}
+
 #[derive(Clone)]
 pub struct AllNodesWorker {
     state: State,
@@ -179,6 +184,10 @@ impl AllNodesWorker {
         tasks.spawn_blocking({
             let state = self.state.clone();
             move || record_end_offsets(&state)
+        });
+        tasks.spawn_blocking({
+            let state = self.state.clone();
+            move || cleanup_idempotency(&state)
         });
         for result in tasks.join_all().await {
             if let Err(e) = result {

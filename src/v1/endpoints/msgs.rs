@@ -11,8 +11,8 @@ use diom_id::Module;
 use diom_msgs::{
     MsgsNamespace,
     entities::{
-        ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, SeekPosition, StreamMsgOut, TopicIn,
-        TopicName, TopicPartition,
+        ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, QueueMsgOut, Retention, SeekPosition,
+        StreamMsgOut, TopicIn, TopicName, TopicPartition,
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
@@ -142,6 +142,8 @@ struct MsgPublishIn {
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub msgs: Vec<diom_msgs::entities::MsgIn>,
+    #[serde(default)]
+    pub idempotency_key: Option<String>,
 }
 
 request_input!(MsgPublishIn, "publish");
@@ -170,7 +172,11 @@ async fn publish(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
+    let idempotency_key = data
+        .idempotency_key
+        .as_deref()
+        .map(|key| MsgsIdempotencyKey::new(key));
+    let operation = PublishOperation::new(namespace.id, data.topic, data.msgs, idempotency_key)?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgPublishOut {

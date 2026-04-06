@@ -7,7 +7,7 @@ use fjall_utils::{TableKey, TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-use crate::entities::{ConsumerGroup, MsgId, Offset, Partition, TopicName};
+use crate::entities::{ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, TopicName};
 
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]
@@ -17,6 +17,7 @@ enum RowType {
     Msg = 2,
     QueueLease = 3,
     QueueConfig = 4,
+    Idempotency = 5,
 }
 
 const SIZE_U64: usize = size_of::<u64>();
@@ -340,6 +341,21 @@ impl MsgRow {
 
 impl TableRow for MsgRow {
     const ROW_TYPE: u8 = RowType::Msg as u8;
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub(crate) struct IdempotencyRow {
+    pub expiry: Timestamp,
+}
+
+impl TableRow for IdempotencyRow {
+    const ROW_TYPE: u8 = RowType::Idempotency as u8;
+}
+
+impl IdempotencyRow {
+    pub(crate) fn key_for(namespace_id: NamespaceId, key: &MsgsIdempotencyKey) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[key.as_str()])
+    }
 }
 
 #[cfg(test)]

@@ -2,12 +2,14 @@ use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
 use diom_core::types::{ByteString, DurationMs};
 use diom_error::Error;
+use diom_id::NamespaceId;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self},
 };
+use sha2::{Digest, Sha256};
 use validator::Validate;
 
 pub type Offset = u64;
@@ -245,6 +247,22 @@ impl JsonSchema for TopicIn {
 
     fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
         String::json_schema(generator)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct MsgsIdempotencyKey(String);
+
+impl MsgsIdempotencyKey {
+    pub fn new(key: &str) -> Self {
+        let mut hasher = Sha256::new();
+        hasher.update(key.as_bytes());
+        Self(hex::encode(hasher.finalize()))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
