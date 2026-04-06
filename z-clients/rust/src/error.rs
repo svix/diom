@@ -24,14 +24,14 @@ where
     'b: 'a,
 {
     let payload = if mime.subtype() == "json" {
-        serde_json::from_slice(&bytes).ok()
+        serde_json::from_slice(bytes).ok()
     } else if mime.essence_str() == "application/msgpack" {
-        rmp_serde::from_slice(&bytes).ok()
+        rmp_serde::from_slice(bytes).ok()
     } else {
         None
     };
     if payload.is_none() {
-        let as_str = String::from_utf8_lossy(&bytes);
+        let as_str = String::from_utf8_lossy(bytes);
         tracing::warn!(mime_type=?mime, response = %as_str, "unparsable error");
     }
     payload
