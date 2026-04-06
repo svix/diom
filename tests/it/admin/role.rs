@@ -289,3 +289,44 @@ async fn test_admin_role_get_nonexistent() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_admin_role_upsert_internal_ns() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let resp = client
+        .post("v1.admin.auth-role.upsert")
+        .json(json!({
+            "id": "canihazinternal",
+            "description": "Trying to access _internal stuff",
+            "rules": [
+                {
+                    "effect": "allow",
+                    "resource": "kv:_internal:*",
+                    "actions": ["get", "set", "delete"],
+                },
+            ],
+            "policies": [],
+            "context": {},
+        }))
+        .await?
+        .ensure(StatusCode::UNPROCESSABLE_ENTITY)?
+        .json();
+
+    assert_eq!(
+        resp,
+        json!({
+            "detail": [{
+                "type": "value_error",
+                "loc": ["body", "rules"],
+                "msg": "access rule 1 refers to a reserved namespace",
+            }],
+        })
+    );
+
+    Ok(())
+}

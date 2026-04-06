@@ -148,11 +148,15 @@ impl FromStr for ModulePattern {
 }
 
 impl NamespacePattern {
+    pub(crate) fn is_reserved(&self) -> bool {
+        matches!(self, Self::Named(ns) if ns.starts_with('_'))
+    }
+
     fn matches(&self, namespace: Option<&str>) -> bool {
         match self {
             Self::Default => namespace.is_none(),
             Self::Named(ns) => namespace == Some(ns),
-            Self::Any => true,
+            Self::Any => namespace.is_none_or(|ns| !ns.starts_with("_")),
         }
     }
 }

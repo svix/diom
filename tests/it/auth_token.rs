@@ -484,3 +484,29 @@ async fn test_auth_token_list_pagination() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_global_admin_token_cannot_access_reserved_ns() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let resp = client
+        .post("v1.auth-token.list")
+        .json(json!({ "namespace": "_internal", "owner_id": "foo" }))
+        .await?
+        .ensure(StatusCode::FORBIDDEN)?
+        .json();
+
+    assert_eq!(
+        resp,
+        json!({
+            "code": "forbidden",
+            "detail": "You do not have permission to perform `list` on `auth_token:_internal:*`",
+        })
+    );
+
+    Ok(())
+}
