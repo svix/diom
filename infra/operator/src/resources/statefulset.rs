@@ -4,9 +4,10 @@ use k8s_openapi::{
     api::{
         apps::v1::{StatefulSet, StatefulSetSpec},
         core::v1::{
-            Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, ObjectFieldSelector,
-            PersistentVolumeClaim, PersistentVolumeClaimSpec, PodSecurityContext, PodSpec,
-            PodTemplateSpec, Probe, VolumeMount, VolumeResourceRequirements,
+            Affinity, Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction,
+            ObjectFieldSelector, PersistentVolumeClaim, PersistentVolumeClaimSpec,
+            PodSecurityContext, PodSpec, PodTemplateSpec, Probe, Toleration,
+            TopologySpreadConstraint, VolumeMount, VolumeResourceRequirements,
         },
     },
     apimachinery::pkg::{
@@ -47,6 +48,16 @@ pub(crate) fn build(cluster: &CoyoteCluster, ns: &str) -> Result<StatefulSet> {
     let pod_labels = labels::general_labels(&cluster_name);
     let pod_annotations = spec.pod_annotations.clone();
 
+    let topology_spread_constraints = add_selector_labels(
+        &spec.topology_spread_constraints,
+        &labels::selector(&cluster_name),
+    );
+
+    let node_selector: Option<BTreeMap<String, String>> = spec.node_selector.clone();
+    let tolerations: Option<Vec<Toleration>> = spec.tolerations.clone();
+    let affinity =
+        add_affinity_selector_labels(spec.affinity.clone(), &labels::selector(&cluster_name));
+
     let pod_spec = PodSpec {
         containers: vec![container],
         volumes: None,
@@ -56,10 +67,10 @@ pub(crate) fn build(cluster: &CoyoteCluster, ns: &str) -> Result<StatefulSet> {
             fs_group: Some(1000),
             ..Default::default()
         }),
-        topology_spread_constraints: Some(spec.topology_spread_constraints.clone()),
-        node_selector: spec.node_selector.clone(),
-        tolerations: spec.tolerations.clone(),
-        affinity: spec.affinity.clone(),
+        topology_spread_constraints: Some(topology_spread_constraints),
+        node_selector,
+        tolerations,
+        affinity,
         ..Default::default()
     };
 
@@ -374,6 +385,65 @@ fn pvc_template(name: &str, size: &Quantity, storage_class: Option<&str>) -> Per
         }),
         ..Default::default()
     }
+}
+
+// Inject label selectors into affinity pod affinity terms that omit them,
+// matching the same pattern as add_selector_labels for topology constraints.
+fn add_affinity_selector_labels(
+    affinity: Option<Affinity>,
+    pod_selector: &BTreeMap<String, String>,
+) -> Option<Affinity> {
+    let mut affinity = affinity?;
+
+    let selector = LabelSelector {
+        match_labels: Some(pod_selector.clone()),
+        ..Default::default()
+    };
+
+    if let Some(anti) = affinity.pod_anti_affinity.as_mut() {
+        for term in anti
+            .required_during_scheduling_ignored_during_execution
+            .iter_mut()
+            .flatten()
+        {
+            if term.label_selector.is_none() {
+                term.label_selector = Some(selector.clone());
+            }
+        }
+        for weighted in anti
+            .preferred_during_scheduling_ignored_during_execution
+            .iter_mut()
+            .flatten()
+        {
+            if weighted.pod_affinity_term.label_selector.is_none() {
+                weighted.pod_affinity_term.label_selector = Some(selector.clone());
+            }
+        }
+    }
+
+    Some(affinity)
+}
+
+// Add the label selectors to topology constraints,
+// including those supplied by user, which are managed
+// by the operator.
+fn add_selector_labels(
+    constraints: &[TopologySpreadConstraint],
+    pod_selector: &BTreeMap<String, String>,
+) -> Vec<TopologySpreadConstraint> {
+    let selector = LabelSelector {
+        match_labels: Some(pod_selector.clone()),
+        ..Default::default()
+    };
+
+    let mut constraints = constraints.to_vec();
+    for c in &mut constraints {
+        if c.label_selector.is_none() {
+            c.label_selector = Some(selector.clone());
+        }
+    }
+
+    constraints
 }
 
 fn seed_nodes_value(
