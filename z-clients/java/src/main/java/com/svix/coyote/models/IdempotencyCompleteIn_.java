@@ -31,17 +31,20 @@ public class IdempotencyCompleteIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> response;
+    @JsonProperty private Map<String,String> context;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
 
     public IdempotencyCompleteIn_(
         String namespace,
         String key,
         List<Byte> response,
+        Map<String,String> context,
         Duration ttl
     ) {
         this.namespace = namespace;
         this.key = key;
         this.response = response;
+        this.context = context;
         this.ttl = ttl;
     }
 

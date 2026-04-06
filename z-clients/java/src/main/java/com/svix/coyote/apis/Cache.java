@@ -9,6 +9,7 @@ import com.svix.coyote.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
@@ -34,13 +35,14 @@ public class Cache {
     /** Cache Set */
     public CacheSetOut set(
         String key,
+        List<Byte> value,
         final CacheSetIn cacheSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.set");
         CacheSetIn_ body = new CacheSetIn_(
             cacheSetIn.getNamespace(),
             key,
-            cacheSetIn.getValue(),
+            value,
             cacheSetIn.getTtl()
         );
 

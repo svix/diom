@@ -32,13 +32,13 @@ import lombok.ToString;
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-public class RateLimitTokenBucketConfig {
+public class RateLimitConfig {
     @JsonProperty private Long capacity;
     @JsonProperty("refill_amount") private Long refillAmount;
     @JsonProperty("refill_interval_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration refillInterval;
-    public RateLimitTokenBucketConfig() {}
+    public RateLimitConfig() {}
 
-    public RateLimitTokenBucketConfig capacity(Long capacity) {
+    public RateLimitConfig capacity(Long capacity) {
         this.capacity = capacity;
         return this;
     }
@@ -57,7 +57,7 @@ public class RateLimitTokenBucketConfig {
         this.capacity = capacity;
     }
 
-    public RateLimitTokenBucketConfig refillAmount(Long refillAmount) {
+    public RateLimitConfig refillAmount(Long refillAmount) {
         this.refillAmount = refillAmount;
         return this;
     }
@@ -76,7 +76,7 @@ public class RateLimitTokenBucketConfig {
         this.refillAmount = refillAmount;
     }
 
-    public RateLimitTokenBucketConfig refillInterval(Duration refillInterval) {
+    public RateLimitConfig refillInterval(Duration refillInterval) {
         this.refillInterval = refillInterval;
         return this;
     }
@@ -96,18 +96,18 @@ public class RateLimitTokenBucketConfig {
     }
 
     /**
-     * Create an instance of RateLimitTokenBucketConfig given a JSON string
+     * Create an instance of RateLimitConfig given a JSON string
      *
      * @param jsonString JSON string
-     * @return An instance of RateLimitTokenBucketConfig
-     * @throws JsonProcessingException if the JSON string is invalid with respect to RateLimitTokenBucketConfig
+     * @return An instance of RateLimitConfig
+     * @throws JsonProcessingException if the JSON string is invalid with respect to RateLimitConfig
      */
-    public static RateLimitTokenBucketConfig fromJson(String jsonString) throws JsonProcessingException {
-        return Utils.getObjectMapper().readValue(jsonString, RateLimitTokenBucketConfig.class);
+    public static RateLimitConfig fromJson(String jsonString) throws JsonProcessingException {
+        return Utils.getObjectMapper().readValue(jsonString, RateLimitConfig.class);
     }
 
     /**
-     * Convert an instance of RateLimitTokenBucketConfig to a JSON string
+     * Convert an instance of RateLimitConfig to a JSON string
      *
      * @return JSON string
      */

@@ -8,8 +8,6 @@ from .operation_behavior import OperationBehavior
 class KvSetIn(BaseModel):
     namespace: str | None = None
 
-    value: bytes
-
     ttl_ms: int | None = None
     """Time to live in milliseconds"""
 

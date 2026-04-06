@@ -30,16 +30,16 @@ import java.util.Objects;
 public class IdempotencyStartIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
+    @JsonProperty("lock_period_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration lockPeriod;
 
     public IdempotencyStartIn_(
         String namespace,
         String key,
-        Duration ttl
+        Duration lockPeriod
     ) {
         this.namespace = namespace;
         this.key = key;
-        this.ttl = ttl;
+        this.lockPeriod = lockPeriod;
     }
 
     /**

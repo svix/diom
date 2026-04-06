@@ -9,6 +9,7 @@ import com.svix.coyote.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
@@ -17,6 +18,8 @@ import com.svix.coyote.models.MsgQueueAckIn;
 import com.svix.coyote.models.MsgQueueAckOut;
 import com.svix.coyote.models.MsgQueueConfigureIn;
 import com.svix.coyote.models.MsgQueueConfigureOut;
+import com.svix.coyote.models.MsgQueueExtendLeaseIn;
+import com.svix.coyote.models.MsgQueueExtendLeaseOut;
 import com.svix.coyote.models.MsgQueueNackIn;
 import com.svix.coyote.models.MsgQueueNackOut;
 import com.svix.coyote.models.MsgQueueReceiveIn;
@@ -25,6 +28,7 @@ import com.svix.coyote.models.MsgQueueRedriveDlqIn;
 import com.svix.coyote.models.MsgQueueRedriveDlqOut;
 import com.svix.coyote.models.MsgQueueReceiveIn_;
 import com.svix.coyote.models.MsgQueueAckIn_;
+import com.svix.coyote.models.MsgQueueExtendLeaseIn_;
 import com.svix.coyote.models.MsgQueueConfigureIn_;
 import com.svix.coyote.models.MsgQueueNackIn_;
 import com.svix.coyote.models.MsgQueueRedriveDlqIn_;
@@ -109,6 +113,35 @@ public class MsgsQueue {
             null,
             body,
             MsgQueueAckOut.class
+        );
+    }
+
+    /**
+* Extends the lease on in-flight messages.
+* 
+* Consumers that need more processing time can call this before the lease expires to prevent the
+* message from being re-delivered to another consumer.
+*/
+    public MsgQueueExtendLeaseOut extendLease(
+        String topic,
+        String consumerGroup,
+        final MsgQueueExtendLeaseIn msgQueueExtendLeaseIn
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.queue.extend-lease");
+        MsgQueueExtendLeaseIn_ body = new MsgQueueExtendLeaseIn_(
+            msgQueueExtendLeaseIn.getNamespace(),
+            topic,
+            consumerGroup,
+            msgQueueExtendLeaseIn.getMsgIds(),
+            msgQueueExtendLeaseIn.getLeaseDurationMs()
+        );
+
+        return this.client.executeRequest(
+            "POST",
+            url.build(),
+            null,
+            body,
+            MsgQueueExtendLeaseOut.class
         );
     }
 

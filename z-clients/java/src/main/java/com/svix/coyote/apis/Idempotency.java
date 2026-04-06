@@ -9,6 +9,7 @@ import com.svix.coyote.Utils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
@@ -40,7 +41,7 @@ public class Idempotency {
         IdempotencyStartIn_ body = new IdempotencyStartIn_(
             idempotencyStartIn.getNamespace(),
             key,
-            idempotencyStartIn.getTtl()
+            idempotencyStartIn.getLockPeriod()
         );
 
         return this.client.executeRequest(
@@ -62,6 +63,7 @@ public class Idempotency {
             idempotencyCompleteIn.getNamespace(),
             key,
             idempotencyCompleteIn.getResponse(),
+            idempotencyCompleteIn.getContext(),
             idempotencyCompleteIn.getTtl()
         );
 

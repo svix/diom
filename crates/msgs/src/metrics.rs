@@ -36,6 +36,7 @@ pub struct MsgMetrics {
     pub(crate) queue_nacked: Counter<u64>,
     pub(crate) queue_nack_retried: Counter<u64>,
     pub(crate) queue_nack_dlq: Counter<u64>,
+    pub(crate) queue_lease_extended: Counter<u64>,
     pub(crate) queue_redrive: Counter<u64>,
 
     pub(crate) stream_received: Counter<u64>,
@@ -82,6 +83,11 @@ impl MsgMetrics {
                 .u64_counter("coyote.msgs.queue.nack.dlq")
                 .with_description("Messages sent to dead-letter queue")
                 .with_unit("{message}")
+                .build(),
+            queue_lease_extended: meter
+                .u64_counter("coyote.msgs.queue.lease_extended")
+                .with_description("Queue lease extensions")
+                .with_unit("{event}")
                 .build(),
             queue_redrive: meter
                 .u64_counter("coyote.msgs.queue.redrive")
@@ -147,6 +153,16 @@ impl MsgMetrics {
     ) {
         let attrs = &[topic.into(), consumer_group.into()];
         self.queue_acked.add(count, attrs);
+    }
+
+    pub(crate) fn record_queue_lease_extended(
+        &self,
+        topic: &TopicName,
+        consumer_group: &ConsumerGroup,
+        count: u64,
+    ) {
+        let attrs = &[topic.into(), consumer_group.into()];
+        self.queue_lease_extended.add(count, attrs);
     }
 
     pub(crate) fn record_queue_nacked(

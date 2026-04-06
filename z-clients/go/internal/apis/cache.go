@@ -25,12 +25,13 @@ func (cache Cache) Namespace() CacheNamespace {
 func (cache Cache) Set(
 	ctx context.Context,
 	key string,
+	value []uint8,
 	cacheSetIn coyote_models.CacheSetIn,
 ) (*coyote_models.CacheSetOut, error) {
 	body := coyote_models.CacheSetIn_{
 		Namespace: cacheSetIn.Namespace,
 		Key:       key,
-		Value:     cacheSetIn.Value,
+		Value:     value,
 		TtlMs:     cacheSetIn.TtlMs,
 	}
 

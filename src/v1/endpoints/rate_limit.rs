@@ -46,8 +46,8 @@ macro_rules! request_input {
     };
 }
 
-impl From<RateLimitTokenBucketConfig> for TokenBucket {
-    fn from(val: RateLimitTokenBucketConfig) -> Self {
+impl From<RateLimitConfig> for TokenBucket {
+    fn from(val: RateLimitConfig) -> Self {
         TokenBucket {
             bucket_size: val.capacity,
             refill_rate: val.refill_amount,
@@ -57,7 +57,7 @@ impl From<RateLimitTokenBucketConfig> for TokenBucket {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct RateLimitTokenBucketConfig {
+pub struct RateLimitConfig {
     /// Maximum capacity of the bucket
     #[validate(range(min = 1))]
     pub capacity: u64,
@@ -90,7 +90,7 @@ pub struct RateLimitCheckIn {
 
     /// Rate limiter configuration
     #[validate(nested)]
-    pub config: RateLimitTokenBucketConfig,
+    pub config: RateLimitConfig,
 }
 
 request_input!(RateLimitCheckIn, "limit");
@@ -122,7 +122,7 @@ pub struct RateLimitGetRemainingIn {
 
     /// Rate limiter configuration
     #[validate(nested)]
-    pub config: RateLimitTokenBucketConfig,
+    pub config: RateLimitConfig,
 }
 
 request_input!(RateLimitGetRemainingIn, "get-remaining");
@@ -201,7 +201,7 @@ pub struct RateLimitResetIn {
 
     /// Rate limiter configuration
     #[validate(nested)]
-    pub config: RateLimitTokenBucketConfig,
+    pub config: RateLimitConfig,
 }
 
 request_input!(RateLimitResetIn, "reset");

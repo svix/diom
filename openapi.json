@@ -4321,6 +4321,83 @@
         ]
       }
     },
+    "/api/v1.msgs.queue.extend-lease": {
+      "post": {
+        "tags": [
+          "Msgs"
+        ],
+        "summary": "Queue Extend Lease",
+        "description": "Extends the lease on in-flight messages.\n\nConsumers that need more processing time can call this before the lease expires to prevent the\nmessage from being re-delivered to another consumer.",
+        "operationId": "v1.msgs.queue.extend-lease",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MsgQueueExtendLeaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MsgQueueExtendLeaseOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1.msgs.queue.configure": {
       "post": {
         "tags": [
@@ -5896,7 +5973,8 @@
           "ttl_ms"
         ],
         "x-positional": [
-          "key"
+          "key",
+          "value"
         ]
       },
       "CacheSetOut": {
@@ -6075,8 +6153,17 @@
               "maximum": 255
             }
           },
+          "context": {
+            "description": "Optional metadata to store alongside the response",
+            "type": "object",
+            "default": null,
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          },
           "ttl_ms": {
-            "description": "TTL in milliseconds for the cached response",
+            "description": "How long to keep the idempotency response for.",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
@@ -6105,6 +6192,13 @@
               "minimum": 0,
               "maximum": 255
             }
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "required": [
@@ -6189,8 +6283,8 @@
             "pattern": "^[a-zA-Z0-9\\-/_.=+:]+$",
             "example": "some_key"
           },
-          "ttl_ms": {
-            "description": "TTL in milliseconds for the lock/response",
+          "lock_period_ms": {
+            "description": "How long to hold the lock on start before releasing it.",
             "type": "integer",
             "format": "uint64",
             "minimum": 1
@@ -6198,7 +6292,7 @@
         },
         "required": [
           "key",
-          "ttl_ms"
+          "lock_period_ms"
         ],
         "x-positional": [
           "key"
@@ -6465,7 +6559,8 @@
           "value"
         ],
         "x-positional": [
-          "key"
+          "key",
+          "value"
         ]
       },
       "KvSetOut": {
@@ -6865,6 +6960,46 @@
         "required": [
           "retry_schedule"
         ]
+      },
+      "MsgQueueExtendLeaseIn": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "default": null,
+            "nullable": true
+          },
+          "topic": {
+            "type": "string"
+          },
+          "consumer_group": {
+            "type": "string"
+          },
+          "msg_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lease_duration_ms": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "default": 30000
+          }
+        },
+        "required": [
+          "topic",
+          "consumer_group",
+          "msg_ids"
+        ],
+        "x-positional": [
+          "topic",
+          "consumer_group"
+        ]
+      },
+      "MsgQueueExtendLeaseOut": {
+        "type": "object"
       },
       "MsgQueueNackIn": {
         "type": "object",
@@ -7275,7 +7410,7 @@
           },
           "config": {
             "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
+            "$ref": "#/components/schemas/RateLimitConfig"
           }
         },
         "required": [
@@ -7307,6 +7442,34 @@
         "required": [
           "allowed",
           "remaining"
+        ]
+      },
+      "RateLimitConfig": {
+        "type": "object",
+        "properties": {
+          "capacity": {
+            "description": "Maximum capacity of the bucket",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_amount": {
+            "description": "Number of tokens to add per refill interval",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1
+          },
+          "refill_interval_ms": {
+            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 1,
+            "default": 1000
+          }
+        },
+        "required": [
+          "capacity",
+          "refill_amount"
         ]
       },
       "RateLimitCreateNamespaceIn": {
@@ -7389,7 +7552,7 @@
           },
           "config": {
             "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
+            "$ref": "#/components/schemas/RateLimitConfig"
           }
         },
         "required": [
@@ -7434,7 +7597,7 @@
           },
           "config": {
             "description": "Rate limiter configuration",
-            "$ref": "#/components/schemas/RateLimitTokenBucketConfig"
+            "$ref": "#/components/schemas/RateLimitConfig"
           }
         },
         "required": [
@@ -7444,34 +7607,6 @@
       },
       "RateLimitResetOut": {
         "type": "object"
-      },
-      "RateLimitTokenBucketConfig": {
-        "type": "object",
-        "properties": {
-          "capacity": {
-            "description": "Maximum capacity of the bucket",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_amount": {
-            "description": "Number of tokens to add per refill interval",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1
-          },
-          "refill_interval_ms": {
-            "description": "Interval in milliseconds between refills (minimum 1 millisecond)",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 1,
-            "default": 1000
-          }
-        },
-        "required": [
-          "capacity",
-          "refill_amount"
-        ]
       },
       "Retention": {
         "type": "object",

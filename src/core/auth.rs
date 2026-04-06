@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use axum::{
     RequestExt,
@@ -16,16 +16,16 @@ use tracing::Span;
 
 use crate::{
     AppState,
-    core::INTERNAL_NAMESPACE,
+    core::{INTERNAL_NAMESPACE, jwt::JwtVerifier},
     v1::endpoints::auth_token::{AuthTokenVerifyIn, AuthTokenVerifyOut},
 };
 use coyote_admin_auth::State as AdminAuthState;
 use coyote_error::{Error, ResultExt};
 
+pub(crate) use coyote_core::fifo_cache::FifoCache;
+
 const AUTH_TOKEN_CACHE_TTL: Duration = Duration::from_secs(1);
 const RULES_CACHE_TTL: Duration = Duration::from_secs(5);
-
-pub(crate) use coyote_core::fifo_cache::FifoCache;
 
 fn constant_time_eq(a: &str, b: &str) -> bool {
     let a = a.as_bytes();
@@ -102,6 +102,28 @@ async fn authorization_inner(
         return Ok(cached);
     }
 
+    // Attempt JWT verification when a JWT verifier is present and the token looks like a JWT.
+    if let Some(jwt_verifier) = &state.jwt_verifier
+        && JwtVerifier::looks_like_jwt(token)
+    {
+        let claims = jwt_verifier
+            .verify(token)
+            .map_err(axum::response::IntoResponse::into_response)?;
+        let role = RoleId(claims.role);
+        let access_rules = resolve_access_rules(&state, &role).await?;
+        let perms = Permissions {
+            role,
+            auth_token_id: None,
+            access_rules,
+            context: claims.context,
+        };
+        state
+            .auth_token_cache
+            .write()
+            .put(token.to_string(), perms.clone());
+        return Ok(perms);
+    }
+
     let verify_out: AuthTokenVerifyOut = state
         .internal_call(
             "v1.auth-token.verify",
@@ -129,6 +151,7 @@ async fn authorization_inner(
         role,
         auth_token_id: Some(auth_token.id.into_inner()),
         access_rules,
+        context: HashMap::new(),
     };
 
     state

@@ -31,11 +31,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             || (test_key.clone(), test_val.clone()),
             |(key, val)| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .cache()
-                            .set(key, CacheSetIn::new(val, Duration::from_secs(60))),
-                    )
+                    std::hint::black_box(client.cache().set(
+                        key,
+                        val,
+                        CacheSetIn::new(Duration::from_secs(60)),
+                    ))
                     .await
                     .unwrap();
                 })
@@ -49,11 +49,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             || (test_key.clone(), test_val.clone()),
             |(key, val)| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .cache()
-                            .set(key, CacheSetIn::new(val, Duration::from_millis(1))),
-                    )
+                    std::hint::black_box(client.cache().set(
+                        key,
+                        val,
+                        CacheSetIn::new(Duration::from_millis(1)),
+                    ))
                     .await
                     .unwrap();
                 })
@@ -72,11 +72,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .cache()
-                            .set(k, CacheSetIn::new(v, Duration::from_secs(60))),
-                    )
+                    std::hint::black_box(client.cache().set(
+                        k,
+                        v,
+                        CacheSetIn::new(Duration::from_secs(60)),
+                    ))
                     .await
                     .unwrap();
                 })
@@ -95,11 +95,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .cache()
-                            .set(k, CacheSetIn::new(v, Duration::from_secs(60))),
-                    )
+                    std::hint::black_box(client.cache().set(
+                        k,
+                        v,
+                        CacheSetIn::new(Duration::from_secs(60)),
+                    ))
                     .await
                     .unwrap();
                 })
@@ -118,11 +118,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .cache()
-                            .set(k, CacheSetIn::new(v, Duration::from_secs(60))),
-                    )
+                    std::hint::black_box(client.cache().set(
+                        k,
+                        v,
+                        CacheSetIn::new(Duration::from_secs(60)),
+                    ))
                     .await
                     .unwrap();
                 })
@@ -135,7 +135,8 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
     rt.block_on(async {
         std::hint::black_box(client.cache().set(
             test_key.clone(),
-            CacheSetIn::new(test_val.clone(), Duration::from_secs(60)),
+            test_val.clone(),
+            CacheSetIn::new(Duration::from_secs(60)),
         ))
         .await
         .unwrap();
@@ -160,11 +161,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             || (test_key.clone(), test_key.clone(), test_val.clone()),
             |(key1, key2, val)| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .cache()
-                            .set(key1, CacheSetIn::new(val, Duration::from_secs(60))),
-                    )
+                    std::hint::black_box(client.cache().set(
+                        key1,
+                        val,
+                        CacheSetIn::new(Duration::from_secs(60)),
+                    ))
                     .await
                     .unwrap();
                     std::hint::black_box(client.cache().delete(key2, CacheDeleteIn::new()))

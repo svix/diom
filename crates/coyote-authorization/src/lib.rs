@@ -176,6 +176,8 @@ pub struct Permissions {
     pub auth_token_id: Option<AuthTokenId>,
     /// The access rules of the requester's role
     pub access_rules: Arc<[AccessRule]>,
+    /// Arbitrary key-value context forwarded from JWT claims (empty for non-JWT auth)
+    pub context: HashMap<String, String>,
 }
 
 impl Permissions {
@@ -188,6 +190,7 @@ impl Permissions {
             role: RoleId::admin(),
             auth_token_id: None,
             access_rules: AccessRule::admin_rules(),
+            context: HashMap::new(),
         }
     }
 
@@ -200,6 +203,7 @@ impl Permissions {
             role: RoleId::operator(),
             auth_token_id: None,
             access_rules: AccessRule::operator_rules(),
+            context: HashMap::new(),
         }
     }
 }

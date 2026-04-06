@@ -35,6 +35,7 @@ import lombok.ToString;
 public class IdempotencyCompleteIn {
     @JsonProperty private String namespace;
     @JsonProperty private List<Byte> response;
+    @JsonProperty private Map<String,String> context;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     public IdempotencyCompleteIn() {}
 
@@ -83,13 +84,39 @@ public class IdempotencyCompleteIn {
         this.response = response;
     }
 
+    public IdempotencyCompleteIn context(Map<String,String> context) {
+        this.context = context;
+        return this;
+    }
+
+    public IdempotencyCompleteIn putContextItem(String key, String contextItem) {
+        if (this.context == null) {
+            this.context = new HashMap<>();
+        }
+        this.context.put(key, contextItem);
+        return this;
+    }
+    /**
+    * Optional metadata to store alongside the response
+    *
+     * @return context
+     */
+    @javax.annotation.Nullable
+    public Map<String,String> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String,String> context) {
+        this.context = context;
+    }
+
     public IdempotencyCompleteIn ttl(Duration ttl) {
         this.ttl = ttl;
         return this;
     }
 
     /**
-    * TTL in milliseconds for the cached response
+    * How long to keep the idempotency response for.
     *
      * @return ttl
      */

@@ -12,7 +12,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 futures-util.workspace = true
-k8s-openapi = { workspace = true, features = ["schemars"]}
+k8s-openapi = { workspace = true, features = ["schemars"] }
 kube.workspace = true
 schemars.workspace = true
 serde.workspace = true

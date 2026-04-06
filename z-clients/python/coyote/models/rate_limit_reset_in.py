@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from .rate_limit_token_bucket_config import RateLimitTokenBucketConfig
+from .rate_limit_config import RateLimitConfig
 
 
 class RateLimitResetIn(BaseModel):
@@ -10,5 +10,5 @@ class RateLimitResetIn(BaseModel):
 
     key: str
 
-    config: RateLimitTokenBucketConfig
+    config: RateLimitConfig
     """Rate limiter configuration"""

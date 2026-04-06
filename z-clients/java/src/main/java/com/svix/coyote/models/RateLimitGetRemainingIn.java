@@ -35,7 +35,7 @@ import lombok.ToString;
 public class RateLimitGetRemainingIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty private RateLimitTokenBucketConfig config;
+    @JsonProperty private RateLimitConfig config;
     public RateLimitGetRemainingIn() {}
 
     public RateLimitGetRemainingIn namespace(String namespace) {
@@ -76,7 +76,7 @@ public class RateLimitGetRemainingIn {
         this.key = key;
     }
 
-    public RateLimitGetRemainingIn config(RateLimitTokenBucketConfig config) {
+    public RateLimitGetRemainingIn config(RateLimitConfig config) {
         this.config = config;
         return this;
     }
@@ -87,11 +87,11 @@ public class RateLimitGetRemainingIn {
      * @return config
      */
     @javax.annotation.Nonnull
-    public RateLimitTokenBucketConfig getConfig() {
+    public RateLimitConfig getConfig() {
         return config;
     }
 
-    public void setConfig(RateLimitTokenBucketConfig config) {
+    public void setConfig(RateLimitConfig config) {
         this.config = config;
     }
 

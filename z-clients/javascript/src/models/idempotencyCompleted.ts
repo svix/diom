@@ -2,6 +2,7 @@
 
 export interface IdempotencyCompleted {
     response: number[];
+    context?: { [key: string]: string } | null;
 }
 
 export const IdempotencyCompletedSerializer = {
@@ -9,6 +10,7 @@ export const IdempotencyCompletedSerializer = {
     _fromJsonObject(object: any): IdempotencyCompleted {
         return {
             response: object['response'],
+            context: object['context'],
         };
     },
 
@@ -16,6 +18,7 @@ export const IdempotencyCompletedSerializer = {
     _toJsonObject(self: IdempotencyCompleted): any {
         return {
             'response': self.response,
+            'context': self.context,
         };
     }
 }

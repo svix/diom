@@ -36,7 +36,7 @@ public class RateLimitCheckIn {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private Long tokens;
-    @JsonProperty private RateLimitTokenBucketConfig config;
+    @JsonProperty private RateLimitConfig config;
     public RateLimitCheckIn() {}
 
     public RateLimitCheckIn namespace(String namespace) {
@@ -96,7 +96,7 @@ public class RateLimitCheckIn {
         this.tokens = tokens;
     }
 
-    public RateLimitCheckIn config(RateLimitTokenBucketConfig config) {
+    public RateLimitCheckIn config(RateLimitConfig config) {
         this.config = config;
         return this;
     }
@@ -107,11 +107,11 @@ public class RateLimitCheckIn {
      * @return config
      */
     @javax.annotation.Nonnull
-    public RateLimitTokenBucketConfig getConfig() {
+    public RateLimitConfig getConfig() {
         return config;
     }
 
-    public void setConfig(RateLimitTokenBucketConfig config) {
+    public void setConfig(RateLimitConfig config) {
         this.config = config;
     }
 

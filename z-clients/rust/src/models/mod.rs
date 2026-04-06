@@ -86,6 +86,8 @@ mod msg_queue_ack_in;
 mod msg_queue_ack_out;
 mod msg_queue_configure_in;
 mod msg_queue_configure_out;
+mod msg_queue_extend_lease_in;
+mod msg_queue_extend_lease_out;
 mod msg_queue_nack_in;
 mod msg_queue_nack_out;
 mod msg_queue_receive_in;
@@ -106,6 +108,7 @@ mod ping_out;
 mod queue_msg_out;
 mod rate_limit_check_in;
 mod rate_limit_check_out;
+mod rate_limit_config;
 mod rate_limit_create_namespace_in;
 mod rate_limit_create_namespace_out;
 mod rate_limit_get_namespace_in;
@@ -114,7 +117,6 @@ mod rate_limit_get_remaining_in;
 mod rate_limit_get_remaining_out;
 mod rate_limit_reset_in;
 mod rate_limit_reset_out;
-mod rate_limit_token_bucket_config;
 mod retention;
 mod seek_position;
 mod server_state;
@@ -175,7 +177,9 @@ pub use self::{
     msg_publish_in::MsgPublishIn, msg_publish_out::MsgPublishOut,
     msg_publish_out_topic::MsgPublishOutTopic, msg_queue_ack_in::MsgQueueAckIn,
     msg_queue_ack_out::MsgQueueAckOut, msg_queue_configure_in::MsgQueueConfigureIn,
-    msg_queue_configure_out::MsgQueueConfigureOut, msg_queue_nack_in::MsgQueueNackIn,
+    msg_queue_configure_out::MsgQueueConfigureOut,
+    msg_queue_extend_lease_in::MsgQueueExtendLeaseIn,
+    msg_queue_extend_lease_out::MsgQueueExtendLeaseOut, msg_queue_nack_in::MsgQueueNackIn,
     msg_queue_nack_out::MsgQueueNackOut, msg_queue_receive_in::MsgQueueReceiveIn,
     msg_queue_receive_out::MsgQueueReceiveOut, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn,
     msg_queue_redrive_dlq_out::MsgQueueRedriveDlqOut, msg_stream_commit_in::MsgStreamCommitIn,
@@ -185,15 +189,14 @@ pub use self::{
     msg_topic_configure_out::MsgTopicConfigureOut, node_status_out::NodeStatusOut,
     operation_behavior::OperationBehavior, ping_out::PingOut, queue_msg_out::QueueMsgOut,
     rate_limit_check_in::RateLimitCheckIn, rate_limit_check_out::RateLimitCheckOut,
-    rate_limit_create_namespace_in::RateLimitCreateNamespaceIn,
+    rate_limit_config::RateLimitConfig, rate_limit_create_namespace_in::RateLimitCreateNamespaceIn,
     rate_limit_create_namespace_out::RateLimitCreateNamespaceOut,
     rate_limit_get_namespace_in::RateLimitGetNamespaceIn,
     rate_limit_get_namespace_out::RateLimitGetNamespaceOut,
     rate_limit_get_remaining_in::RateLimitGetRemainingIn,
     rate_limit_get_remaining_out::RateLimitGetRemainingOut, rate_limit_reset_in::RateLimitResetIn,
-    rate_limit_reset_out::RateLimitResetOut,
-    rate_limit_token_bucket_config::RateLimitTokenBucketConfig, retention::Retention,
-    seek_position::SeekPosition, server_state::ServerState, stream_msg_out::StreamMsgOut,
+    rate_limit_reset_out::RateLimitResetOut, retention::Retention, seek_position::SeekPosition,
+    server_state::ServerState, stream_msg_out::StreamMsgOut,
 };
 
 pub(crate) use self::{
@@ -203,8 +206,8 @@ pub(crate) use self::{
     kv_set_in::KvSetIn_, msg_namespace_create_in::MsgNamespaceCreateIn_,
     msg_namespace_get_in::MsgNamespaceGetIn_, msg_publish_in::MsgPublishIn_,
     msg_queue_ack_in::MsgQueueAckIn_, msg_queue_configure_in::MsgQueueConfigureIn_,
-    msg_queue_nack_in::MsgQueueNackIn_, msg_queue_receive_in::MsgQueueReceiveIn_,
-    msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_, msg_stream_commit_in::MsgStreamCommitIn_,
-    msg_stream_receive_in::MsgStreamReceiveIn_, msg_stream_seek_in::MsgStreamSeekIn_,
-    msg_topic_configure_in::MsgTopicConfigureIn_,
+    msg_queue_extend_lease_in::MsgQueueExtendLeaseIn_, msg_queue_nack_in::MsgQueueNackIn_,
+    msg_queue_receive_in::MsgQueueReceiveIn_, msg_queue_redrive_dlq_in::MsgQueueRedriveDlqIn_,
+    msg_stream_commit_in::MsgStreamCommitIn_, msg_stream_receive_in::MsgStreamReceiveIn_,
+    msg_stream_seek_in::MsgStreamSeekIn_, msg_topic_configure_in::MsgTopicConfigureIn_,
 };

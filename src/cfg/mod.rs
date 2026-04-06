@@ -540,15 +540,81 @@ pub struct ConfigurationInner {
     )]
     pub background_cleanup_interval: Duration,
 
-    /// A pre-set admin token to use instead of having coyote generate one automatically.
+    /// An auth token for admin access to Coyote
     ///
-    /// Under normal circumstances you should not set this, and instead let coyote generate the
-    /// admin token on first boot and use that to create any additional tokens you need. Setting
-    /// this directly is useful in CI pipelines and other automated environments where you need a
-    /// stable, well-known token for testing or scripted setup.
+    /// It's useful for bootstrapping a new Coyote cluster, or using it in CI pipelines or other
+    /// automated testing environments where you need a stable, well-known token for testing or
+    /// scripted setup.
+    ///
+    /// If you're using it to bootstrap a new Coyote cluster, it’s recommended that you only use
+    /// it during bootstrapping, and remove this configuration once done.
     #[validate(custom(function = "validators::validate_admin_token"))]
     #[serde(default)]
     pub admin_token: Option<String>,
+
+    /// Configuration for verifying JWT bearer tokens.
+    ///
+    /// When set, bearer tokens in JWT format are verified using this configuration.
+    /// The JWT must contain a `role` claim (string) and may contain a `context` claim
+    /// (object with string values) that is forwarded to internal coyote handlers.
+    #[serde(default)]
+    #[env_overridable(skip)]
+    #[validate(nested)]
+    pub jwt: Option<JwtConfig>,
+}
+
+/// JWT configuration for verifying JWT bearer tokens.
+///
+/// The `algorithm` field selects the signature scheme:
+/// - Symmetric (`HS256`, `HS384`, `HS512`) — requires `secret`.
+/// - Asymmetric (`RS256`/`RS384`/`RS512`, `ES256`/`ES384`, `PS256`/`PS384`/`PS512`) —
+///   requires `public_key_pem`.
+///
+/// The optional `audience` and `issuer` fields enable claim validation.  When
+/// omitted, the respective claims are not checked (and may be absent from the
+/// token).
+#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
+pub struct JwtConfig {
+    #[serde(flatten)]
+    pub key: JwtKey,
+    /// Expected `aud` values. When set, the token must contain one of these
+    /// values in its `aud` claim. When absent, `aud` is not validated.
+    #[serde(default)]
+    #[validate(length(min = 1, message = "audience must not be empty when set"))]
+    pub audience: Option<Vec<String>>,
+    /// Expected `iss` values. When set, the token's `iss` claim must match one
+    /// of these values. When absent, `iss` is not validated.
+    #[serde(default)]
+    #[validate(length(min = 1, message = "issuer must not be empty when set"))]
+    pub issuer: Option<Vec<String>>,
+}
+
+/// Signature algorithm and corresponding key material.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "algorithm")]
+pub enum JwtKey {
+    #[serde(rename = "HS256")]
+    Hs256 { secret: String },
+    #[serde(rename = "HS384")]
+    Hs384 { secret: String },
+    #[serde(rename = "HS512")]
+    Hs512 { secret: String },
+    #[serde(rename = "RS256")]
+    Rs256 { public_key_pem: String },
+    #[serde(rename = "RS384")]
+    Rs384 { public_key_pem: String },
+    #[serde(rename = "RS512")]
+    Rs512 { public_key_pem: String },
+    #[serde(rename = "ES256")]
+    Es256 { public_key_pem: String },
+    #[serde(rename = "ES384")]
+    Es384 { public_key_pem: String },
+    #[serde(rename = "PS256")]
+    Ps256 { public_key_pem: String },
+    #[serde(rename = "PS384")]
+    Ps384 { public_key_pem: String },
+    #[serde(rename = "PS512")]
+    Ps512 { public_key_pem: String },
 }
 
 impl Default for ConfigurationInner {

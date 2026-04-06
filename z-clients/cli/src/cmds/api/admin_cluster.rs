@@ -12,11 +12,27 @@ pub struct AdminClusterArgs {
 #[derive(Subcommand)]
 pub enum AdminClusterCommands {
     /// Get information about the current cluster
+    #[command(after_long_help = "\x1b[1;4mExample response:\x1b[0m
+{
+  \"cluster_id\": \"...\",
+  \"cluster_name\": \"...\",
+  \"this_node_id\": \"...\",
+  \"this_node_state\": \"...\",
+  \"this_node_last_committed_timestamp\": \"...\",
+  \"this_node_last_snapshot_id\": \"...\",
+  \"nodes\": \"...\"
+}")]
     Status {},
     /// Initialize this node as the leader of a new cluster
     ///
     /// This operation may only be performed against a node which has not been
     /// initialized and is not currently a member of a cluster.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"cluster_id\": \"...\"
+}")]
     Initialize {
         cluster_initialize_in:
             Option<crate::json::JsonOf<coyote_client::models::ClusterInitializeIn>>,
@@ -25,10 +41,25 @@ pub enum AdminClusterCommands {
     ///
     /// This operation executes immediately and the node must be wiped and reset
     /// before it can safely be added to the cluster.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"node_id\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"node_id\": \"...\"
+}")]
     RemoveNode {
         cluster_remove_node_in: crate::json::JsonOf<coyote_client::models::ClusterRemoveNodeIn>,
     },
     /// Force the cluster to take a snapshot immediately
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"snapshot_time\": \"...\",
+  \"snapshot_log_index\": \"...\",
+  \"snapshot_id\": \"...\"
+}")]
     ForceSnapshot {
         cluster_force_snapshot_in:
             Option<crate::json::JsonOf<coyote_client::models::ClusterForceSnapshotIn>>,

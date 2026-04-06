@@ -1,4 +1,5 @@
 # this file is @generated
+import typing as t
 
 from pydantic import BaseModel
 
@@ -9,8 +10,11 @@ class IdempotencyCompleteIn(BaseModel):
     response: bytes
     """The response to cache"""
 
+    context: t.Dict[str, str] | None = None
+    """Optional metadata to store alongside the response"""
+
     ttl_ms: int
-    """TTL in milliseconds for the cached response"""
+    """How long to keep the idempotency response for."""
 
 
 class _IdempotencyCompleteIn(BaseModel):
@@ -21,5 +25,8 @@ class _IdempotencyCompleteIn(BaseModel):
     response: bytes
     """The response to cache"""
 
+    context: t.Dict[str, str] | None = None
+    """Optional metadata to store alongside the response"""
+
     ttl_ms: int
-    """TTL in milliseconds for the cached response"""
+    """How long to keep the idempotency response for."""

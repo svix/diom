@@ -34,7 +34,6 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvSetIn {
     @JsonProperty private String namespace;
-    @JsonProperty private List<Byte> value;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
@@ -57,32 +56,6 @@ public class KvSetIn {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
-    }
-
-    public KvSetIn value(List<Byte> value) {
-        this.value = value;
-        return this;
-    }
-
-    public KvSetIn addValueItem(Byte valueItem) {
-        if (this.value == null) {
-            this.value = new ArrayList<>();
-        }
-        this.value.add(valueItem);
-        return this;
-    }
-    /**
-    * Get value
-    *
-     * @return value
-     */
-    @javax.annotation.Nonnull
-    public List<Byte> getValue() {
-        return value;
-    }
-
-    public void setValue(List<Byte> value) {
-        this.value = value;
     }
 
     public KvSetIn ttl(Duration ttl) {

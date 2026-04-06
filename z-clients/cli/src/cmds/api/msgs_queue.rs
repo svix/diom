@@ -16,6 +16,16 @@ pub enum MsgsQueueCommands {
     /// Messages are individually leased for the specified duration. Multiple consumers can receive
     /// different messages from the same topic concurrently. Leased messages are skipped until they
     /// are acked or their lease expires.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"batch_size\": \"...\",
+  \"lease_duration_ms\": \"...\",
+  \"batch_wait_ms\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"msgs\": \"...\"
+}")]
     Receive {
         topic: String,
         consumer_group: String,
@@ -24,15 +34,42 @@ pub enum MsgsQueueCommands {
     /// Acknowledges messages by their opaque msg_ids.
     ///
     /// Acked messages are permanently removed from the queue and will never be re-delivered.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"msg_ids\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     Ack {
         topic: String,
         consumer_group: String,
         msg_queue_ack_in: crate::json::JsonOf<coyote_client::models::MsgQueueAckIn>,
     },
+    /// Extends the lease on in-flight messages.
+    ///
+    /// Consumers that need more processing time can call this before the lease expires to prevent the
+    /// message from being re-delivered to another consumer.
+    ExtendLease {
+        topic: String,
+        consumer_group: String,
+        msg_queue_extend_lease_in:
+            crate::json::JsonOf<coyote_client::models::MsgQueueExtendLeaseIn>,
+    },
     /// Configures retry and DLQ behavior for a consumer group on a topic.
     ///
     /// `retry_schedule` is a list of delays (in millis) between retries after a nack. Once exhausted,
     /// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"retry_schedule\": \"...\",
+  \"dlq_topic\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"retry_schedule\": \"...\",
+  \"dlq_topic\": \"...\"
+}")]
     Configure {
         topic: String,
         consumer_group: String,
@@ -43,12 +80,25 @@ pub enum MsgsQueueCommands {
     ///
     /// Nacked messages will not be re-delivered by `queue/receive`. Use `queue/redrive-dlq` to
     /// move them back to the queue for reprocessing.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"msg_ids\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     Nack {
         topic: String,
         consumer_group: String,
         msg_queue_nack_in: crate::json::JsonOf<coyote_client::models::MsgQueueNackIn>,
     },
     /// Moves all dead-letter queue messages back to the main queue for reprocessing.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     RedriveDlq {
         topic: String,
         consumer_group: String,
@@ -85,6 +135,22 @@ impl MsgsQueueCommands {
                     .msgs()
                     .queue()
                     .ack(topic, consumer_group, msg_queue_ack_in.into_inner())
+                    .await?;
+                crate::json::print_json_output(&resp)?;
+            }
+            Self::ExtendLease {
+                topic,
+                consumer_group,
+                msg_queue_extend_lease_in,
+            } => {
+                let resp = client
+                    .msgs()
+                    .queue()
+                    .extend_lease(
+                        topic,
+                        consumer_group,
+                        msg_queue_extend_lease_in.into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

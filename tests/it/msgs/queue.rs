@@ -1481,3 +1481,373 @@ async fn queue_receive_wakes_on_publish_notification() -> TestResult {
 
     Ok(())
 }
+
+// ---------------------------------------------------------------------------
+// queue/extend-lease
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn queue_extend_lease_prevents_redelivery() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        time,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-q-extend" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-q-extend",
+            "topic": "t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive with a 1s lease
+    let r1 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "lease_duration_ms": 1000,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msg_id = r1["msgs"].assert_array()[0]["msg_id"].assert_str();
+
+    // Extend lease to 3s from now
+    client
+        .post("v1.msgs.queue.extend-lease")
+        .json(json!({
+            "namespace": "ns-q-extend",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+            "lease_duration_ms": 3000,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Advance past the original 1s lease but within the extended 3s
+    time.fast_forward(Duration::from_millis(1500));
+
+    // Message should still be leased — not re-delivered
+    let r2 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(
+        r2["msgs"].assert_array().len(),
+        0,
+        "extended lease should prevent redelivery"
+    );
+
+    // Advance past the extended lease
+    time.fast_forward(Duration::from_millis(2000));
+
+    // Now the message should be available again
+    let r3 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(
+        r3["msgs"].assert_array().len(),
+        1,
+        "message should be available after extended lease expires"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_extend_lease_fails_after_expiry() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        time,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-q-extend-expired" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-q-extend-expired",
+            "topic": "t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let r1 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend-expired",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "lease_duration_ms": 1000,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msg_id = r1["msgs"].assert_array()[0]["msg_id"].assert_str();
+
+    // Let the lease expire
+    time.fast_forward(Duration::from_millis(1500));
+
+    // Extending an expired lease should fail
+    client
+        .post("v1.msgs.queue.extend-lease")
+        .json(json!({
+            "namespace": "ns-q-extend-expired",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+            "lease_duration_ms": 3000,
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_extend_lease_fails_after_ack() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-q-extend-acked" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-q-extend-acked",
+            "topic": "t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let r1 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend-acked",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msg_id = r1["msgs"].assert_array()[0]["msg_id"].assert_str();
+
+    // Ack the message
+    client
+        .post("v1.msgs.queue.ack")
+        .json(json!({
+            "namespace": "ns-q-extend-acked",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Extending an acked lease should fail
+    client
+        .post("v1.msgs.queue.extend-lease")
+        .json(json!({
+            "namespace": "ns-q-extend-acked",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+            "lease_duration_ms": 3000,
+        }))
+        .await?
+        .expect(StatusCode::BAD_REQUEST);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn queue_extend_lease_preserves_attempt_count() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        time,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-q-extend-attempts" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Configure retry schedule: 1 retry, then DLQ
+    client
+        .post("v1.msgs.queue.configure")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "retry_schedule": [500],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "msgs": [{ "value": "a".as_bytes(), "key": "k1" }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Receive, nack → triggers first retry (attempt_count 0 → 1)
+    let r1 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "lease_duration_ms": 1000,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msg_id = r1["msgs"].assert_array()[0]["msg_id"].assert_str();
+
+    client
+        .post("v1.msgs.queue.nack")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for retry delay to expire
+    time.fast_forward(Duration::from_millis(600));
+
+    // Re-receive — attempt_count is now 1
+    let r2 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "lease_duration_ms": 2000,
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(r2["msgs"].assert_array().len(), 1);
+
+    // Extend lease — must preserve attempt_count=1
+    client
+        .post("v1.msgs.queue.extend-lease")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+            "lease_duration_ms": 2000,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Wait for extended lease to expire
+    time.fast_forward(Duration::from_millis(2500));
+
+    // Re-receive and nack — attempt_count=1, no more retries → DLQ
+    let r3 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(r3["msgs"].assert_array().len(), 1);
+
+    client
+        .post("v1.msgs.queue.nack")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+            "msg_ids": [msg_id],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Message should now be DLQ'd — not re-delivered
+    time.fast_forward(Duration::from_millis(600));
+
+    let r4 = client
+        .post("v1.msgs.queue.receive")
+        .json(json!({
+            "namespace": "ns-q-extend-attempts",
+            "topic": "t1",
+            "consumer_group": "test-cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    assert_eq!(
+        r4["msgs"].assert_array().len(),
+        0,
+        "message should be DLQ'd after retries exhausted, proving extend-lease preserved attempt_count"
+    );
+
+    Ok(())
+}
