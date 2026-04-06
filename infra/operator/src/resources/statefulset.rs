@@ -137,6 +137,12 @@ fn build_env(
             "COYOTE_LISTEN_ADDRESS",
             format!("0.0.0.0:{}", spec.coyote.api_port),
         ),
+        // This variable is only used by the CLI, but allows the CLI to talk to the local server
+        // without any special configuration
+        env_var(
+            "COYOTE_SERVER_URL",
+            format!("http://localhost:{}", spec.api_port),
+        ),
         env_var("COYOTE_PERSISTENT_DB_PATH", PERSISTENT_DATA_PATH),
     ];
 
