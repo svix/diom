@@ -717,7 +717,7 @@ impl diom_operations::OperationWriterBase for RaftState {
         let request =
             RequestWithContext::new(request, now, Some(opentelemetry::Context::current().into()));
         let request = Arc::new(request);
-        match self.raft.client_write(request.clone()).await {
+        match self.raft.client_write(request).await {
             Ok(resp) => {
                 tracing::trace!(log_id=?resp.log_id(), "request applied to log");
                 Ok(resp.data)
