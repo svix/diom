@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
@@ -271,6 +273,7 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
+        time,
         ..
     } = start_server().await;
 
@@ -284,8 +287,8 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
         .post("v1.msgs.stream.receive")
         .json(json!({
             "namespace": "ns-idem",
-            "topic": "idem-topic",
-            "consumer_group": "cg-idem",
+            "topic": "topic",
+            "consumer_group": "cg",
         }))
         .await?
         .expect(StatusCode::OK);
@@ -294,7 +297,7 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
         .post("v1.msgs.publish")
         .json(json!({
             "namespace": "ns-idem",
-            "topic": "idem-topic",
+            "topic": "topic",
             "idempotency_key": "same-request",
             "msgs": [{ "value": "first".as_bytes() }],
         }))
@@ -305,7 +308,7 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
         .post("v1.msgs.publish")
         .json(json!({
             "namespace": "ns-idem",
-            "topic": "idem-topic",
+            "topic": "topic",
             "idempotency_key": "same-request",
             "msgs": [{ "value": "second".as_bytes() }],
         }))
@@ -316,8 +319,8 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
         .post("v1.msgs.stream.receive")
         .json(json!({
             "namespace": "ns-idem",
-            "topic": "idem-topic",
-            "consumer_group": "cg-idem",
+            "topic": "topic",
+            "consumer_group": "cg",
         }))
         .await?
         .expect(StatusCode::OK)
@@ -326,6 +329,20 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
     let msgs = response["msgs"].assert_array();
     assert_eq!(msgs.len(), 1);
     assert_eq!(msgs[0]["value"], json!("first".as_bytes()));
+
+    time.fast_forward(Duration::from_secs(121));
+
+    // key resets after TTL
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "topic",
+            "idempotency_key": "same-request",
+            "msgs": [{ "value": "third".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
 
     Ok(())
 }

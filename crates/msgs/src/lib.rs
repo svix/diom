@@ -161,7 +161,7 @@ pub fn estimate_available_stream_messages(
 }
 
 fn cleanup_idempotency(_state: &State) -> Result<()> {
-    // TODO: Clean up the IdempotencyRow table. Since we don't have a secondary expiration index, sample random rows and delete them if expired.
+    // TODO: Clean up the IdempotencyRow table.
     Ok(())
 }
 

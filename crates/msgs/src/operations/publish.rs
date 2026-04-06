@@ -75,13 +75,13 @@ impl PublishOperation {
                     IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
                 )?;
 
-                if let Some(existing) = existing {
-                    if existing.expiry < now {
-                        return Err(Error::operation(
-                            StatusCode::CONFLICT,
-                            Some("idempotency key already used".to_owned()),
-                        ));
-                    }
+                if let Some(existing) = existing
+                    && existing.expiry > now
+                {
+                    return Err(Error::operation(
+                        StatusCode::CONFLICT,
+                        Some("idempotency key already used".to_owned()),
+                    ));
                 }
 
                 batch.insert_row(
