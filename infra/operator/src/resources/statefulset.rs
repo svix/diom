@@ -141,7 +141,7 @@ fn build_env(
         // without any special configuration
         env_var(
             "DIOM_SERVER_URL",
-            format!("http://localhost:{}", spec.api_port),
+            format!("http://localhost:{}", spec.diom.api_port),
         ),
         env_var("DIOM_PERSISTENT_DB_PATH", PERSISTENT_DATA_PATH),
     ];
