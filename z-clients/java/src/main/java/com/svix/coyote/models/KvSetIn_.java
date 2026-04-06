@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -26,7 +31,7 @@ public class KvSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
-    @JsonProperty("ttl_ms") private Long ttlMs;
+    @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
 
@@ -34,14 +39,14 @@ public class KvSetIn_ {
         String namespace,
         String key,
         List<Byte> value,
-        Long ttlMs,
+        Duration ttl,
         OperationBehavior behavior,
         Long version
     ) {
         this.namespace = namespace;
         this.key = key;
         this.value = value;
-        this.ttlMs = ttlMs;
+        this.ttl = ttl;
         this.behavior = behavior;
         this.version = version;
     }

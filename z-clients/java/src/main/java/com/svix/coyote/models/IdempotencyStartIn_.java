@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -25,16 +30,16 @@ import java.util.Objects;
 public class IdempotencyStartIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty("lock_period_ms") private Long lockPeriodMs;
+    @JsonProperty("lock_period_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration lockPeriod;
 
     public IdempotencyStartIn_(
         String namespace,
         String key,
-        Long lockPeriodMs
+        Duration lockPeriod
     ) {
         this.namespace = namespace;
         this.key = key;
-        this.lockPeriodMs = lockPeriodMs;
+        this.lockPeriod = lockPeriod;
     }
 
     /**

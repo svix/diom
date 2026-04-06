@@ -17,7 +17,6 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"...\",
-  \"value\": \"...\",
   \"ttl_ms\": \"...\",
   \"behavior\": \"...\",
   \"version\": \"...\"

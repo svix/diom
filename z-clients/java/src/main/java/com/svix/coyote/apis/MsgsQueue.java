@@ -58,8 +58,8 @@ public class MsgsQueue {
             topic,
             consumerGroup,
             msgQueueReceiveIn.getBatchSize(),
-            msgQueueReceiveIn.getLeaseDurationMs(),
-            msgQueueReceiveIn.getBatchWaitMs()
+            msgQueueReceiveIn.getLeaseDuration(),
+            msgQueueReceiveIn.getBatchWait()
         );
 
         return this.client.executeRequest(
@@ -133,7 +133,7 @@ public class MsgsQueue {
             topic,
             consumerGroup,
             msgQueueExtendLeaseIn.getMsgIds(),
-            msgQueueExtendLeaseIn.getLeaseDurationMs()
+            msgQueueExtendLeaseIn.getLeaseDuration()
         );
 
         return this.client.executeRequest(

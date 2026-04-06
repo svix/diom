@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -29,7 +34,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class AdminAuthTokenExpireIn {
     @JsonProperty private String id;
-    @JsonProperty("expiry_ms") private Long expiryMs;
+    @JsonProperty("expiry_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration expiry;
     public AdminAuthTokenExpireIn() {}
 
     public AdminAuthTokenExpireIn id(String id) {
@@ -51,23 +56,23 @@ public class AdminAuthTokenExpireIn {
         this.id = id;
     }
 
-    public AdminAuthTokenExpireIn expiryMs(Long expiryMs) {
-        this.expiryMs = expiryMs;
+    public AdminAuthTokenExpireIn expiry(Duration expiry) {
+        this.expiry = expiry;
         return this;
     }
 
     /**
     * Milliseconds from now until the token expires. `None` means expire immediately.
     *
-     * @return expiryMs
+     * @return expiry
      */
     @javax.annotation.Nullable
-    public Long getExpiryMs() {
-        return expiryMs;
+    public Duration getExpiry() {
+        return expiry;
     }
 
-    public void setExpiryMs(Long expiryMs) {
-        this.expiryMs = expiryMs;
+    public void setExpiry(Duration expiry) {
+        this.expiry = expiry;
     }
 
     /**

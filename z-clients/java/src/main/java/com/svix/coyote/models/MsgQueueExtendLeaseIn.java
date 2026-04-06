@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -30,7 +35,7 @@ import lombok.ToString;
 public class MsgQueueExtendLeaseIn {
     @JsonProperty private String namespace;
     @JsonProperty("msg_ids") private List<String> msgIds;
-    @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
+    @JsonProperty("lease_duration_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration leaseDuration;
     public MsgQueueExtendLeaseIn() {}
 
     public MsgQueueExtendLeaseIn namespace(String namespace) {
@@ -78,22 +83,22 @@ public class MsgQueueExtendLeaseIn {
         this.msgIds = msgIds;
     }
 
-    public MsgQueueExtendLeaseIn leaseDurationMs(Long leaseDurationMs) {
-        this.leaseDurationMs = leaseDurationMs;
+    public MsgQueueExtendLeaseIn leaseDuration(Duration leaseDuration) {
+        this.leaseDuration = leaseDuration;
         return this;
     }
 
     /**
-    * Get leaseDurationMs
+    * Get leaseDuration
     *
-     * @return leaseDurationMs
+     * @return leaseDuration
      */
     @javax.annotation.Nullable
-    public Long getLeaseDurationMs() {
-        return leaseDurationMs;
+    public Duration getLeaseDuration() {
+        return leaseDuration;
     }
 
-    public void setLeaseDurationMs(Long leaseDurationMs) {
-        this.leaseDurationMs = leaseDurationMs;
+    public void setLeaseDuration(Duration leaseDuration) {
+        this.leaseDuration = leaseDuration;
     }
 }

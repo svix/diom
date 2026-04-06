@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -27,20 +32,20 @@ public class IdempotencyCompleteIn_ {
     @JsonProperty private String key;
     @JsonProperty private List<Byte> response;
     @JsonProperty private Map<String,String> context;
-    @JsonProperty("ttl_ms") private Long ttlMs;
+    @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
 
     public IdempotencyCompleteIn_(
         String namespace,
         String key,
         List<Byte> response,
         Map<String,String> context,
-        Long ttlMs
+        Duration ttl
     ) {
         this.namespace = namespace;
         this.key = key;
         this.response = response;
         this.context = context;
-        this.ttlMs = ttlMs;
+        this.ttl = ttl;
     }
 
     /**

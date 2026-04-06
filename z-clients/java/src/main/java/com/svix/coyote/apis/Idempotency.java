@@ -41,7 +41,7 @@ public class Idempotency {
         IdempotencyStartIn_ body = new IdempotencyStartIn_(
             idempotencyStartIn.getNamespace(),
             key,
-            idempotencyStartIn.getLockPeriodMs()
+            idempotencyStartIn.getLockPeriod()
         );
 
         return this.client.executeRequest(
@@ -64,7 +64,7 @@ public class Idempotency {
             key,
             idempotencyCompleteIn.getResponse(),
             idempotencyCompleteIn.getContext(),
-            idempotencyCompleteIn.getTtlMs()
+            idempotencyCompleteIn.getTtl()
         );
 
         return this.client.executeRequest(

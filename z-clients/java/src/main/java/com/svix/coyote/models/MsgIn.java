@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -31,7 +36,7 @@ public class MsgIn {
     @JsonProperty private List<Byte> value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private String key;
-    @JsonProperty("delay_ms") private Long delayMs;
+    @JsonProperty("delay_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration delay;
     public MsgIn() {}
 
     public MsgIn value(List<Byte> value) {
@@ -107,8 +112,8 @@ Messages with the same key are routed to the same partition.
         this.key = key;
     }
 
-    public MsgIn delayMs(Long delayMs) {
-        this.delayMs = delayMs;
+    public MsgIn delay(Duration delay) {
+        this.delay = delay;
         return this;
     }
 
@@ -118,15 +123,15 @@ Messages with the same key are routed to the same partition.
 The message will not be delivered to queue consumers
 until the delay has elapsed from the time of publish.
     *
-     * @return delayMs
+     * @return delay
      */
     @javax.annotation.Nullable
-    public Long getDelayMs() {
-        return delayMs;
+    public Duration getDelay() {
+        return delay;
     }
 
-    public void setDelayMs(Long delayMs) {
-        this.delayMs = delayMs;
+    public void setDelay(Duration delay) {
+        this.delay = delay;
     }
 
     /**

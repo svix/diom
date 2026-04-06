@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -30,8 +35,8 @@ import lombok.ToString;
 public class MsgQueueReceiveIn {
     @JsonProperty private String namespace;
     @JsonProperty("batch_size") private Short batchSize;
-    @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
-    @JsonProperty("batch_wait_ms") private Long batchWaitMs;
+    @JsonProperty("lease_duration_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration leaseDuration;
+    @JsonProperty("batch_wait_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration batchWait;
     public MsgQueueReceiveIn() {}
 
     public MsgQueueReceiveIn namespace(String namespace) {
@@ -72,41 +77,41 @@ public class MsgQueueReceiveIn {
         this.batchSize = batchSize;
     }
 
-    public MsgQueueReceiveIn leaseDurationMs(Long leaseDurationMs) {
-        this.leaseDurationMs = leaseDurationMs;
+    public MsgQueueReceiveIn leaseDuration(Duration leaseDuration) {
+        this.leaseDuration = leaseDuration;
         return this;
     }
 
     /**
-    * Get leaseDurationMs
+    * Get leaseDuration
     *
-     * @return leaseDurationMs
+     * @return leaseDuration
      */
     @javax.annotation.Nullable
-    public Long getLeaseDurationMs() {
-        return leaseDurationMs;
+    public Duration getLeaseDuration() {
+        return leaseDuration;
     }
 
-    public void setLeaseDurationMs(Long leaseDurationMs) {
-        this.leaseDurationMs = leaseDurationMs;
+    public void setLeaseDuration(Duration leaseDuration) {
+        this.leaseDuration = leaseDuration;
     }
 
-    public MsgQueueReceiveIn batchWaitMs(Long batchWaitMs) {
-        this.batchWaitMs = batchWaitMs;
+    public MsgQueueReceiveIn batchWait(Duration batchWait) {
+        this.batchWait = batchWait;
         return this;
     }
 
     /**
     * Maximum time (in milliseconds) to wait for messages before returning.
     *
-     * @return batchWaitMs
+     * @return batchWait
      */
     @javax.annotation.Nullable
-    public Long getBatchWaitMs() {
-        return batchWaitMs;
+    public Duration getBatchWait() {
+        return batchWait;
     }
 
-    public void setBatchWaitMs(Long batchWaitMs) {
-        this.batchWaitMs = batchWaitMs;
+    public void setBatchWait(Duration batchWait) {
+        this.batchWait = batchWait;
     }
 }

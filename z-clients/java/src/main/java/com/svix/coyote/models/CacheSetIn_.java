@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -26,18 +31,18 @@ public class CacheSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private List<Byte> value;
-    @JsonProperty("ttl_ms") private Long ttlMs;
+    @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
 
     public CacheSetIn_(
         String namespace,
         String key,
         List<Byte> value,
-        Long ttlMs
+        Duration ttl
     ) {
         this.namespace = namespace;
         this.key = key;
         this.value = value;
-        this.ttlMs = ttlMs;
+        this.ttl = ttl;
     }
 
     /**

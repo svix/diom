@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -30,7 +35,7 @@ import lombok.ToString;
 public class RateLimitConfig {
     @JsonProperty private Long capacity;
     @JsonProperty("refill_amount") private Long refillAmount;
-    @JsonProperty("refill_interval_ms") private Long refillIntervalMs;
+    @JsonProperty("refill_interval_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration refillInterval;
     public RateLimitConfig() {}
 
     public RateLimitConfig capacity(Long capacity) {
@@ -71,23 +76,23 @@ public class RateLimitConfig {
         this.refillAmount = refillAmount;
     }
 
-    public RateLimitConfig refillIntervalMs(Long refillIntervalMs) {
-        this.refillIntervalMs = refillIntervalMs;
+    public RateLimitConfig refillInterval(Duration refillInterval) {
+        this.refillInterval = refillInterval;
         return this;
     }
 
     /**
     * Interval in milliseconds between refills (minimum 1 millisecond)
     *
-     * @return refillIntervalMs
+     * @return refillInterval
      */
     @javax.annotation.Nullable
-    public Long getRefillIntervalMs() {
-        return refillIntervalMs;
+    public Duration getRefillInterval() {
+        return refillInterval;
     }
 
-    public void setRefillIntervalMs(Long refillIntervalMs) {
-        this.refillIntervalMs = refillIntervalMs;
+    public void setRefillInterval(Duration refillInterval) {
+        this.refillInterval = refillInterval;
     }
 
     /**
