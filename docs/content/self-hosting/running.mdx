@@ -8,9 +8,9 @@ Diom works out of the box using the default configuration and supports a variety
 Make sure you have Docker installed, and run:
 
 ```sh
-docker run --ulimit memlock=-1 --mount type=volume,src=diom-storage,dst=/storage svix/diom
+export DIOM_ADMIN_TOKEN={minimum 20-character token}
+docker run -p 8050:8050 --ulimit memlock=-1 --mount type=volume,src=diom-storage,dst=/storage -e DIOM_ADMIN_TOKEN=${DIOM_ADMIN_TOKEN} svix/diom
 ```
-
 
 ## Docker Compose
 
@@ -25,14 +25,12 @@ docker compose up
 ```
 
 
-## Kubernetes Operator
+## Kubernetes Deployment
 
-The k8s operator is not yet released, please contact us to test early versions.
+We recommend using the Diom helm chart to manage Kubernetes deployments. The Helm chart manages CRD, operator, and cluster installation/updates.
 
-
-## Kubernetes Helm Chart
-
-The k8s helm chart is not yet released, please contact us to test early versions.
+<!-- FIXME -- This should be a link to artifacthub.io and/or our public repository link, which will actually show the chart's README -->
+The helm chart is available for download as an OCI artifact at https://github.com/svix/diom-private/pkgs/container/charts%2Fdiom.
 
 
 ## Binary and packages
