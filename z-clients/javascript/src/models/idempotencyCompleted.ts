@@ -1,7 +1,7 @@
 // this file is @generated
 
 export interface IdempotencyCompleted {
-    response: number[];
+    response: Uint8Array;
     context?: { [key: string]: string } | null;
 }
 
@@ -9,7 +9,7 @@ export const IdempotencyCompletedSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): IdempotencyCompleted {
         return {
-            response: object['response'],
+            response: new Uint8Array(object['response']),
             context: object['context'],
         };
     },
@@ -17,7 +17,7 @@ export const IdempotencyCompletedSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: IdempotencyCompleted): any {
         return {
-            'response': self.response,
+            'response': Array.from(self.response),
             'context': self.context,
         };
     }

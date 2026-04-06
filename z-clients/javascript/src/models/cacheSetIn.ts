@@ -9,7 +9,7 @@ export interface CacheSetIn {
 export interface CacheSetIn_ {
     namespace?: string | null;
     key: string;
-    value: number[];
+    value: Uint8Array;
     /** Time to live in milliseconds */
     ttlMs: number;
 }
@@ -20,7 +20,7 @@ export const CacheSetInSerializer = {
         return {
             namespace: object['namespace'],
             key: object['key'],
-            value: object['value'],
+            value: new Uint8Array(object['value']),
             ttlMs: object['ttl_ms'],
         };
     },
@@ -30,7 +30,7 @@ export const CacheSetInSerializer = {
         return {
             'namespace': self.namespace,
             'key': self.key,
-            'value': self.value,
+            'value': Array.from(self.value),
             'ttl_ms': self.ttlMs,
         };
     }

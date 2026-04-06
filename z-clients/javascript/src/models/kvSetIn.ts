@@ -19,7 +19,7 @@ export interface KvSetIn {
 export interface KvSetIn_ {
     namespace?: string | null;
     key: string;
-    value: number[];
+    value: Uint8Array;
     /** Time to live in milliseconds */
     ttlMs?: number | null;
     behavior?: OperationBehavior;
@@ -36,7 +36,7 @@ export const KvSetInSerializer = {
         return {
             namespace: object['namespace'],
             key: object['key'],
-            value: object['value'],
+            value: new Uint8Array(object['value']),
             ttlMs: object['ttl_ms'],
             behavior: object['behavior'] != null ? OperationBehaviorSerializer._fromJsonObject(object['behavior']): undefined,
             version: object['version'],
@@ -48,7 +48,7 @@ export const KvSetInSerializer = {
         return {
             'namespace': self.namespace,
             'key': self.key,
-            'value': self.value,
+            'value': Array.from(self.value),
             'ttl_ms': self.ttlMs,
             'behavior': self.behavior != null ? OperationBehaviorSerializer._toJsonObject(self.behavior) : undefined,
             'version': self.version,
