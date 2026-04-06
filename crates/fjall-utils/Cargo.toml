@@ -15,7 +15,6 @@ rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
 tracing.workspace = true
-uuid.workspace = true
 
 [lints]
 workspace = true

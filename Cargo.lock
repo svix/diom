@@ -2028,7 +2028,6 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "tracing",
- "uuid",
 ]
 
 [[package]]
