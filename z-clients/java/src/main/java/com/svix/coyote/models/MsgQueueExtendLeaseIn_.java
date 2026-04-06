@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.coyote.DurationMsSerializer;
+import com.svix.coyote.DurationMsDeserializer;
 import com.svix.coyote.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -27,20 +32,20 @@ public class MsgQueueExtendLeaseIn_ {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("msg_ids") private List<String> msgIds;
-    @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
+    @JsonProperty("lease_duration_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration leaseDuration;
 
     public MsgQueueExtendLeaseIn_(
         String namespace,
         String topic,
         String consumerGroup,
         List<String> msgIds,
-        Long leaseDurationMs
+        Duration leaseDuration
     ) {
         this.namespace = namespace;
         this.topic = topic;
         this.consumerGroup = consumerGroup;
         this.msgIds = msgIds;
-        this.leaseDurationMs = leaseDurationMs;
+        this.leaseDuration = leaseDuration;
     }
 
     /**

@@ -133,7 +133,7 @@ public class MsgsQueue {
             topic,
             consumerGroup,
             msgQueueExtendLeaseIn.getMsgIds(),
-            msgQueueExtendLeaseIn.getLeaseDurationMs()
+            msgQueueExtendLeaseIn.getLeaseDuration()
         );
 
         return this.client.executeRequest(
