@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import timedelta
 
 import pytest
 
@@ -20,9 +21,11 @@ pytestmark = pytest.mark.skipif(
     reason="Set DIOM_INTEGRATION=1 to run integration tests",
 )
 
+
 @pytest.fixture
 def client() -> Diom:
     return Diom(TOKEN, DiomOptions(server_url=SERVER_URL))
+
 
 @pytest.fixture
 def async_client() -> DiomAsync:
@@ -62,7 +65,7 @@ def test_cache_set_get_delete(client):
     value = b"python-sync-cache-value"
 
     # Set
-    client.cache.set(key, value, CacheSetIn(ttl_ms=60000))
+    client.cache.set(key, value, CacheSetIn(ttl=timedelta(seconds=60)))
 
     # Get
     get_resp = client.cache.get(key, CacheGetIn())
@@ -113,7 +116,7 @@ async def test_cache_set_get_delete_async(async_client):
     value = b"python-async-cache-value"
 
     # Set
-    await async_client.cache.set(key, value, CacheSetIn(ttl_ms=60000))
+    await async_client.cache.set(key, value, CacheSetIn(ttl=timedelta(seconds=60)))
 
     # Get
     get_resp = await async_client.cache.get(key, CacheGetIn())

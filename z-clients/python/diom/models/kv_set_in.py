@@ -1,6 +1,8 @@
 # this file is @generated
+from pydantic import Field
 
-from pydantic import BaseModel
+from ..internal.base_model import BaseModel
+from ..internal.types import TimeDeltaMs
 
 from .operation_behavior import OperationBehavior
 
@@ -8,7 +10,7 @@ from .operation_behavior import OperationBehavior
 class KvSetIn(BaseModel):
     namespace: str | None = None
 
-    ttl_ms: int | None = None
+    ttl: TimeDeltaMs | None = Field(alias="ttl_ms", default=None)
     """Time to live in milliseconds"""
 
     behavior: OperationBehavior | None = None
@@ -25,7 +27,7 @@ class _KvSetIn(BaseModel):
 
     value: bytes
 
-    ttl_ms: int | None = None
+    ttl: TimeDeltaMs | None = Field(alias="ttl_ms", default=None)
     """Time to live in milliseconds"""
 
     behavior: OperationBehavior | None = None

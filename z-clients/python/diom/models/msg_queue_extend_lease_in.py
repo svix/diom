@@ -1,7 +1,9 @@
 # this file is @generated
 import typing as t
+from pydantic import Field
 
-from pydantic import BaseModel
+from ..internal.base_model import BaseModel
+from ..internal.types import TimeDeltaMs
 
 
 class MsgQueueExtendLeaseIn(BaseModel):
@@ -9,7 +11,7 @@ class MsgQueueExtendLeaseIn(BaseModel):
 
     msg_ids: t.List[str]
 
-    lease_duration_ms: int | None = None
+    lease_duration: TimeDeltaMs | None = Field(alias="lease_duration_ms", default=None)
 
 
 class _MsgQueueExtendLeaseIn(BaseModel):
@@ -21,4 +23,4 @@ class _MsgQueueExtendLeaseIn(BaseModel):
 
     msg_ids: t.List[str]
 
-    lease_duration_ms: int | None = None
+    lease_duration: TimeDeltaMs | None = Field(alias="lease_duration_ms", default=None)
