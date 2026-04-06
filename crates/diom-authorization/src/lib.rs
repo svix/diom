@@ -134,6 +134,10 @@ impl AccessRule {
             .clone()
     }
 
+    pub fn uses_reserved_namespace(&self) -> bool {
+        self.resource.namespace.is_reserved()
+    }
+
     pub fn matches(&self, operation: &RequestedOperation<'_>) -> bool {
         self.resource.matches(operation)
             && self
