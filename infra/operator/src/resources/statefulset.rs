@@ -141,7 +141,7 @@ fn build_env(
         // without any special configuration
         env_var(
             "COYOTE_SERVER_URL",
-            format!("http://localhost:{}", spec.api_port),
+            format!("http://localhost:{}", spec.coyote.api_port),
         ),
         env_var("COYOTE_PERSISTENT_DB_PATH", PERSISTENT_DATA_PATH),
     ];
