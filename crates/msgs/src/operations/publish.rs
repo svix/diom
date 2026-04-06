@@ -30,6 +30,8 @@ pub struct PublishOperation {
     idempotency_key: Option<MsgsIdempotencyKey>,
 }
 
+const IDEMPOTENCY_TTL_SECS: u64 = 120;
+
 impl PublishOperation {
     pub fn new(
         namespace_id: NamespaceId,
@@ -73,18 +75,20 @@ impl PublishOperation {
                     IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
                 )?;
 
-                if existing.is_some() {
-                    return Err(Error::operation(
-                        StatusCode::CONFLICT,
-                        Some("idempotency key already used".to_owned()),
-                    ));
+                if let Some(existing) = existing {
+                    if existing.expiry < now {
+                        return Err(Error::operation(
+                            StatusCode::CONFLICT,
+                            Some("idempotency key already used".to_owned()),
+                        ));
+                    }
                 }
 
                 batch.insert_row(
                     &state.metadata_tables,
                     IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
                     &IdempotencyRow {
-                        expiry: now + DurationMs::from_secs(10),
+                        expiry: now + DurationMs::from_secs(IDEMPOTENCY_TTL_SECS),
                     },
                 )?;
             }
