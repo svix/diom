@@ -22,6 +22,8 @@ All configuration values are optional and fall back to the `default` namespace's
 
 Namespaces are scoped per module type. A `cache` namespace named `payments` is independent from a `kv` namespace named `payments`. Using a namespace that doesn't exist returns an error.
 
+Namespace identifiers starting with `_` are reserved for internal use.
+
 
 ## Using namespaces
 

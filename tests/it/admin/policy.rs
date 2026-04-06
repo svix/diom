@@ -295,3 +295,42 @@ async fn test_admin_access_policy_get_nonexistent() -> TestResult {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_admin_access_policy_upsert_internal_ns() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    let resp = client
+        .post("v1.admin.auth-policy.upsert")
+        .json(json!({
+            "id": "canihazinternal",
+            "description": "Trying to access _internal stuff",
+            "rules": [
+                {
+                    "effect": "allow",
+                    "resource": "kv:_internal:*",
+                    "actions": ["get", "set", "delete"],
+                },
+            ],
+        }))
+        .await?
+        .ensure(StatusCode::UNPROCESSABLE_ENTITY)?
+        .json();
+
+    assert_eq!(
+        resp,
+        json!({
+            "detail": [{
+                "type": "value_error",
+                "loc": ["body", "rules"],
+                "msg": "access rule 1 refers to a reserved namespace",
+            }],
+        })
+    );
+
+    Ok(())
+}
