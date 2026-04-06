@@ -2,7 +2,6 @@ use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
 use diom_core::types::{ByteString, DurationMs};
 use diom_error::Error;
-use diom_id::NamespaceId;
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{

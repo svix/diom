@@ -175,7 +175,7 @@ async fn publish(
     let idempotency_key = data
         .idempotency_key
         .as_deref()
-        .map(|key| MsgsIdempotencyKey::new(key));
+        .map(MsgsIdempotencyKey::new);
     let operation = PublishOperation::new(namespace.id, data.topic, data.msgs, idempotency_key)?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
