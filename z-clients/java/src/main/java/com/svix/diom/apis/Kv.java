@@ -43,7 +43,7 @@ public class Kv {
             kvSetIn.getNamespace(),
             key,
             value,
-            kvSetIn.getTtlMs(),
+            kvSetIn.getTtl(),
             kvSetIn.getBehavior(),
             kvSetIn.getVersion()
         );

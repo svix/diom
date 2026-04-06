@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.diom.DurationMsSerializer;
+import com.svix.diom.DurationMsDeserializer;
 import com.svix.diom.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -27,23 +32,23 @@ public class MsgQueueReceiveIn_ {
     @JsonProperty private String topic;
     @JsonProperty("consumer_group") private String consumerGroup;
     @JsonProperty("batch_size") private Short batchSize;
-    @JsonProperty("lease_duration_ms") private Long leaseDurationMs;
-    @JsonProperty("batch_wait_ms") private Long batchWaitMs;
+    @JsonProperty("lease_duration_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration leaseDuration;
+    @JsonProperty("batch_wait_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration batchWait;
 
     public MsgQueueReceiveIn_(
         String namespace,
         String topic,
         String consumerGroup,
         Short batchSize,
-        Long leaseDurationMs,
-        Long batchWaitMs
+        Duration leaseDuration,
+        Duration batchWait
     ) {
         this.namespace = namespace;
         this.topic = topic;
         this.consumerGroup = consumerGroup;
         this.batchSize = batchSize;
-        this.leaseDurationMs = leaseDurationMs;
-        this.batchWaitMs = batchWaitMs;
+        this.leaseDuration = leaseDuration;
+        this.batchWait = batchWait;
     }
 
     /**

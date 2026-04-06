@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.diom.DurationMsSerializer;
+import com.svix.diom.DurationMsDeserializer;
 import com.svix.diom.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -29,7 +34,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyStartIn {
     @JsonProperty private String namespace;
-    @JsonProperty("lock_period_ms") private Long lockPeriodMs;
+    @JsonProperty("lock_period_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration lockPeriod;
     public IdempotencyStartIn() {}
 
     public IdempotencyStartIn namespace(String namespace) {
@@ -51,22 +56,22 @@ public class IdempotencyStartIn {
         this.namespace = namespace;
     }
 
-    public IdempotencyStartIn lockPeriodMs(Long lockPeriodMs) {
-        this.lockPeriodMs = lockPeriodMs;
+    public IdempotencyStartIn lockPeriod(Duration lockPeriod) {
+        this.lockPeriod = lockPeriod;
         return this;
     }
 
     /**
     * How long to hold the lock on start before releasing it.
     *
-     * @return lockPeriodMs
+     * @return lockPeriod
      */
     @javax.annotation.Nonnull
-    public Long getLockPeriodMs() {
-        return lockPeriodMs;
+    public Duration getLockPeriod() {
+        return lockPeriod;
     }
 
-    public void setLockPeriodMs(Long lockPeriodMs) {
-        this.lockPeriodMs = lockPeriodMs;
+    public void setLockPeriod(Duration lockPeriod) {
+        this.lockPeriod = lockPeriod;
     }
 }

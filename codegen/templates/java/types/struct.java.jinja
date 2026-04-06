@@ -1,4 +1,4 @@
-{% from "types/macros.java.jinja" import field_decl -%}
+{% from "types/macros.java.jinja" import field_decl, field_name, field_type -%}
 {% set class_name = type.name | to_upper_camel_case -%}
 {% set positional_fields = type.fields | selectattr("positional") -%}
 {% macro fromJson_toJson(ty) -%}
@@ -31,7 +31,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.diom.DurationMsSerializer;
+import com.svix.diom.DurationMsDeserializer;
 import com.svix.diom.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -56,8 +61,8 @@ public class {{ class_name }} {
     public {{ class_name }}() {}
 
 {%- for field in type.fields | selectattr("positional", "false") %}
-    {%- set f_ty = field.type.to_java() %}
-    {%- set f_varname = field.name | to_lower_camel_case %}
+    {%- set f_ty = field_type(field) %}
+    {%- set f_varname = field_name(field) %}
     {%- set f_deprecated = "" %}
     {%- if field.deprecated %}
         {%- set f_deprecated = "@Deprecated " %}
@@ -160,7 +165,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.diom.DurationMsSerializer;
+import com.svix.diom.DurationMsDeserializer;
 import com.svix.diom.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -180,12 +190,12 @@ public class {{ class_name }}_ {
 
     public {{ class_name }}_(
         {%- for field in type.fields %}
-        {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }}
+        {{ field_type(field) }} {{ field_name(field) }}
         {%- if not loop.last %},{% endif %}
         {%- endfor %}
     ) {
         {%- for field in type.fields %}
-        {%- set ident = field.name | to_lower_camel_case %}
+        {%- set ident = field_name(field) %}
         this.{{ ident }} = {{ ident }};
         {%- endfor %}
     }

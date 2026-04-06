@@ -50,6 +50,14 @@ pub enum MsgsQueueCommands {
     ///
     /// Consumers that need more processing time can call this before the lease expires to prevent the
     /// message from being re-delivered to another consumer.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"msg_ids\": \"...\",
+  \"lease_duration_ms\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     ExtendLease {
         topic: String,
         consumer_group: String,

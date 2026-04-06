@@ -1,10 +1,26 @@
+{% macro field_name(field) -%}
+    {%- set name = field.name -%}
+    {%- if name is endingwith "_ms" -%}
+        {%- if not field.type.is_u64() %}{% do panic("_ms type should be uint64") %}{% endif -%}
+        {%- set name = name | strip_trailing_str("_ms") -%}
+    {%- endif -%}
+    {{ name | to_lower_camel_case }}
+{%- endmacro -%}
+{% macro field_type(field) -%}
+    {%- if field.name is endingwith "_ms" -%}
+        Duration
+    {%- else -%}
+        {{ field.type.to_java() }}
+    {%- endif -%}
+{%- endmacro -%}
 {% macro field_annotation(field) -%}
-    {%- if field.name != field.name | to_lower_camel_case -%}
+    {%- if field.name != field_name(field) -%}
         @JsonProperty("{{ field.name }}")
     {%- else -%}
         @JsonProperty
     {%- endif -%}
+    {%- if field.name is endingwith "_ms" %} @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class){% endif -%}
 {%- endmacro -%}
 {% macro field_decl(field, annotate=true) -%}
-    {% if annotate %}{{ field_annotation(field) }} {% endif %}private {{ field.type.to_java() }} {{ field.name | to_lower_camel_case }};
+    {% if annotate %}{{ field_annotation(field) }} {% endif %}private {{ field_type(field) }} {{ field_name(field) }};
 {%- endmacro -%}

@@ -9,7 +9,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.svix.diom.DurationMsSerializer;
+import com.svix.diom.DurationMsDeserializer;
 import com.svix.diom.Utils;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -30,7 +35,7 @@ import lombok.ToString;
 public class AdminAuthTokenUpdateIn {
     @JsonProperty private String id;
     @JsonProperty private String name;
-    @JsonProperty("expiry_ms") private Long expiryMs;
+    @JsonProperty("expiry_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration expiry;
     @JsonProperty private Boolean enabled;
     public AdminAuthTokenUpdateIn() {}
 
@@ -72,23 +77,23 @@ public class AdminAuthTokenUpdateIn {
         this.name = name;
     }
 
-    public AdminAuthTokenUpdateIn expiryMs(Long expiryMs) {
-        this.expiryMs = expiryMs;
+    public AdminAuthTokenUpdateIn expiry(Duration expiry) {
+        this.expiry = expiry;
         return this;
     }
 
     /**
-    * Get expiryMs
+    * Get expiry
     *
-     * @return expiryMs
+     * @return expiry
      */
     @javax.annotation.Nullable
-    public Long getExpiryMs() {
-        return expiryMs;
+    public Duration getExpiry() {
+        return expiry;
     }
 
-    public void setExpiryMs(Long expiryMs) {
-        this.expiryMs = expiryMs;
+    public void setExpiry(Duration expiry) {
+        this.expiry = expiry;
     }
 
     public AdminAuthTokenUpdateIn enabled(Boolean enabled) {

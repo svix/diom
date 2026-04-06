@@ -1,3 +1,4 @@
+{% from "types/macros.java.jinja" import field_name, field_type -%}
 {% set resource_type_name = resource.name | to_upper_camel_case -%}
 // this file is @generated
 package com.svix.diom.apis;
@@ -75,9 +76,9 @@ public class {{ resource_type_name }} {
         {%- set args %}
         {%- for field in body_schema.fields %}
             {% if not field.positional -%}
-                {{ req_body_field_name }}.get{{ field.name | to_upper_camel_case }}(),
+                {{ req_body_field_name }}.get{{ field_name(field) | to_upper_camel_case }}(),
             {%- else -%}
-                {{ field.name | to_lower_camel_case }},
+                {{ field_name(field) }},
             {%- endif -%}
         {%- endfor %}
         {%- endset %}
