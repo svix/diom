@@ -2,6 +2,9 @@
 use clap::{Args, Subcommand};
 use coyote::CoyoteClient;
 
+#[allow(unused)]
+use crate::prelude::*;
+
 use super::IdempotencyNamespaceArgs;
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]

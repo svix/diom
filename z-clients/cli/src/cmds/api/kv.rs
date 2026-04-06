@@ -2,6 +2,9 @@
 use clap::{Args, Subcommand};
 use coyote::CoyoteClient;
 
+#[allow(unused)]
+use crate::prelude::*;
+
 use super::KvNamespaceArgs;
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -27,7 +30,7 @@ pub enum KvCommands {
 }")]
     Set {
         key: String,
-        value: Vec<u8>,
+        value: ByteString,
         kv_set_in: Option<crate::json::JsonOf<coyote::models::KvSetIn>>,
     },
     /// KV Get
@@ -73,7 +76,11 @@ impl KvCommands {
             } => {
                 let resp = client
                     .kv()
-                    .set(key, value, kv_set_in.unwrap_or_default().into_inner())
+                    .set(
+                        key,
+                        value.into(),
+                        kv_set_in.unwrap_or_default().into_inner(),
+                    )
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

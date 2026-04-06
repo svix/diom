@@ -2,6 +2,9 @@
 use clap::{Args, Subcommand};
 use coyote::CoyoteClient;
 
+#[allow(unused)]
+use crate::prelude::*;
+
 use super::CacheNamespaceArgs;
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -23,7 +26,7 @@ pub enum CacheCommands {
 }")]
     Set {
         key: String,
-        value: Vec<u8>,
+        value: ByteString,
         cache_set_in: crate::json::JsonOf<coyote::models::CacheSetIn>,
     },
     /// Cache Get
@@ -67,7 +70,7 @@ impl CacheCommands {
             } => {
                 let resp = client
                     .cache()
-                    .set(key, value, cache_set_in.into_inner())
+                    .set(key, value.into(), cache_set_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }
