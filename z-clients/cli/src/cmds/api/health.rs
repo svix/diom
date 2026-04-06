@@ -12,6 +12,10 @@ pub struct HealthArgs {
 #[derive(Subcommand)]
 pub enum HealthCommands {
     /// Verify the server is up and running.
+    #[command(after_long_help = "\x1b[1;4mExample response:\x1b[0m
+{
+  \"ok\": \"...\"
+}")]
     Ping {},
     /// Intentionally return an error
     Error {},

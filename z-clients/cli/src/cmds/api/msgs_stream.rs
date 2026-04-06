@@ -15,6 +15,17 @@ pub enum MsgsStreamCommands {
     ///
     /// Each consumer in the group reads from all partitions. Messages are locked by leases for the
     /// specified duration to prevent duplicate delivery within the same consumer group.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"batch_size\": \"...\",
+  \"lease_duration_ms\": \"...\",
+  \"default_starting_position\": \"...\",
+  \"batch_wait_ms\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"msgs\": \"...\"
+}")]
     Receive {
         topic: String,
         consumer_group: String,
@@ -25,6 +36,13 @@ pub enum MsgsStreamCommands {
     ///
     /// The topic must be a partition-level topic (e.g. `ns:my-topic~3`). The offset is the last
     /// successfully processed offset; future receives will start after it.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"offset\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     Commit {
         topic: String,
         consumer_group: String,
@@ -35,6 +53,14 @@ pub enum MsgsStreamCommands {
     /// Provide exactly one of `offset` or `position`. When using `offset`, the topic must include a
     /// partition suffix (e.g. `ns:my-topic~0`). The `position` field accepts `"earliest"` or
     /// `"latest"` and may be used with or without a partition suffix.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"offset\": \"...\",
+  \"position\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     Seek {
         topic: String,
         consumer_group: String,

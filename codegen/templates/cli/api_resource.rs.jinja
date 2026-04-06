@@ -12,6 +12,15 @@ use clap::{Args, Subcommand};
 use super::{{ sub.name | to_upper_camel_case }}Args;
 {% endfor %}
 
+{%- macro render_schema_example(title, schema) -%}
+\x1b[1;4m{{ title }}:\x1b[0m
+{
+{%- for field in schema.fields | selectattr("positional", "false") %}
+  \"{{ field.name }}\": \"{{ field.example if field.example is defined else '...' }}\"{{ "," if not loop.last else "" }}
+{%- endfor %}
+}
+{%- endmacro -%}
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct {{ resource_type_name }}Args {
@@ -30,6 +39,19 @@ pub enum {{ resource_type_name }}Commands {
 
         {% if op.description is defined -%}
             {{ op.description | to_doc_comment(style="rust") }}
+        {% endif -%}
+        {% if op.request_body_schema_name is defined or op.response_body_schema_name is defined -%}
+            #[command(after_long_help = "
+            {%- if op.request_body_schema_name is defined -%}
+                {{- render_schema_example("Example body", api.types[op.request_body_schema_name]) -}}
+            {%- endif -%}
+            {%- if op.request_body_schema_name is defined and op.response_body_schema_name is defined -%}
+\n\n
+            {%- endif -%}
+            {%- if op.response_body_schema_name is defined -%}
+                {{- render_schema_example("Example response", api.types[op.response_body_schema_name]) -}}
+            {%- endif -%}
+")]
         {% endif -%}
         {{ op.name | to_upper_camel_case }} {
             {% if op.request_body_schema_name is defined -%}

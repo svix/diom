@@ -14,6 +14,14 @@ pub enum MsgsTopicCommands {
     /// Configures the number of partitions for a topic.
     ///
     /// Partition count can only be increased, never decreased. The default for a new topic is 1.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"partitions\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"partitions\": \"...\"
+}")]
     Configure {
         topic: String,
         msg_topic_configure_in: crate::json::JsonOf<diom_client::models::MsgTopicConfigureIn>,

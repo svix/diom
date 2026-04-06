@@ -12,11 +12,29 @@ pub struct IdempotencyNamespaceArgs {
 #[derive(Subcommand)]
 pub enum IdempotencyNamespaceCommands {
     /// Create idempotency namespace
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"name\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Create {
         idempotency_create_namespace_in:
             crate::json::JsonOf<diom_client::models::IdempotencyCreateNamespaceIn>,
     },
     /// Get idempotency namespace
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"name\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Get {
         idempotency_get_namespace_in:
             crate::json::JsonOf<diom_client::models::IdempotencyGetNamespaceIn>,

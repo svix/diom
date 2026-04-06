@@ -12,12 +12,31 @@ pub struct MsgsNamespaceArgs {
 #[derive(Subcommand)]
 pub enum MsgsNamespaceCommands {
     /// Creates or updates a msgs namespace with the given name.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"retention\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"retention\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Create {
         name: String,
         msg_namespace_create_in:
             Option<crate::json::JsonOf<diom_client::models::MsgNamespaceCreateIn>>,
     },
     /// Gets a msgs namespace by name.
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"name\": \"...\",
+  \"retention\": \"...\",
+  \"created\": \"...\",
+  \"updated\": \"...\"
+}")]
     Get {
         name: String,
         msg_namespace_get_in: Option<crate::json::JsonOf<diom_client::models::MsgNamespaceGetIn>>,

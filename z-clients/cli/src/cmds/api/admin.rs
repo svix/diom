@@ -3,7 +3,6 @@ use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
 use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs, AdminClusterArgs};
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct AdminArgs {

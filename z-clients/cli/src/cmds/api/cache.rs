@@ -3,7 +3,6 @@ use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
 use super::CacheNamespaceArgs;
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct CacheArgs {
@@ -15,17 +14,41 @@ pub struct CacheArgs {
 pub enum CacheCommands {
     Namespace(CacheNamespaceArgs),
     /// Cache Set
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"value\": \"...\",
+  \"ttl_ms\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     Set {
         key: String,
         value: Vec<u8>,
         cache_set_in: crate::json::JsonOf<diom_client::models::CacheSetIn>,
     },
     /// Cache Get
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"consistency\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"expiry\": \"...\",
+  \"value\": \"...\"
+}")]
     Get {
         key: String,
         cache_get_in: Option<crate::json::JsonOf<diom_client::models::CacheGetIn>>,
     },
     /// Cache Delete
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"success\": \"...\"
+}")]
     Delete {
         key: String,
         cache_delete_in: Option<crate::json::JsonOf<diom_client::models::CacheDeleteIn>>,

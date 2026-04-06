@@ -3,7 +3,6 @@ use clap::{Args, Subcommand};
 use diom_client::DiomClient;
 
 use super::RateLimitNamespaceArgs;
-
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct RateLimitArgs {
@@ -15,15 +14,45 @@ pub struct RateLimitArgs {
 pub enum RateLimitCommands {
     Namespace(RateLimitNamespaceArgs),
     /// Rate Limiter Check and Consume
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"key\": \"some_key\",
+  \"tokens\": \"...\",
+  \"config\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"allowed\": \"...\",
+  \"remaining\": \"...\",
+  \"retry_after_ms\": \"...\"
+}")]
     Limit {
         rate_limit_check_in: crate::json::JsonOf<diom_client::models::RateLimitCheckIn>,
     },
     /// Rate Limiter Get Remaining
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"key\": \"some_key\",
+  \"config\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+  \"remaining\": \"...\",
+  \"retry_after_ms\": \"...\"
+}")]
     GetRemaining {
         rate_limit_get_remaining_in:
             crate::json::JsonOf<diom_client::models::RateLimitGetRemainingIn>,
     },
     /// Rate Limiter Reset
+    #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
+{
+  \"namespace\": \"...\",
+  \"key\": \"some_key\",
+  \"config\": \"...\"
+}\n\n\x1b[1;4mExample response:\x1b[0m
+{
+}")]
     Reset {
         rate_limit_reset_in: crate::json::JsonOf<diom_client::models::RateLimitResetIn>,
     },
