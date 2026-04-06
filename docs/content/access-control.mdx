@@ -156,7 +156,7 @@ The resource field is the set of resources (may be more than one due to globbing
     - Note: `*` doesn't match `admin/`-prefixed modules for security reasons. Those need to be listed explicitly.
   - For a suffix of the key section: `cache::*` or `cache::foo/*`
   - For combinations of the above
-  - Globbing is not currently supported for any other combination. For example, there are not supported: `cache::f*o/bar`, `cache::*o/bar`, and `cache::*/bar`.
+  - Globbing is not currently supported for any other combination. For example, these are not supported: `cache::f*o/bar`, `cache::*o/bar`, and `cache::*/bar`.
 
 Actions is the list of actions this rule applies to. Actions are the operation id of each operation, for example, for the `kv.set` operation, the action would be `kv.set`.
 
