@@ -1,3 +1,4 @@
+{% from "types/macros.py.jinja" import field_name %}
 # This file is @generated
 import typing as t
 from datetime import datetime
@@ -63,7 +64,7 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
         {% set body_schema = api.types[op.request_body_schema_name] -%}
         {% set positional_fields = body_schema.fields | selectattr("positional") -%}
         {% for field in positional_fields -%}
-        {{ field.name | to_snake_case }}: {{ field.type.to_python() }},
+        {{ field_name(field) }}: {{ field.type.to_python() }},
         {% endfor -%}
         {#- body parameter struct #}
         {{ req_body_schema_snake }}: {{ op.request_body_schema_name }}
@@ -88,12 +89,12 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
         body = {% if positional_fields | length > 0 -%}
         _{{ op.request_body_schema_name }}(
         {%- for field in body_schema.fields %}
-            {% set field_name = field.name | to_snake_case -%}
-            {{ field_name }}=
+            {% set name = field_name(field) -%}
+            {{ name }}=
             {%- if not field.positional -%}
                 {{ req_body_schema_snake }}.
             {%- endif -%}
-            {{ field_name }},
+            {{ name }},
         {% endfor -%}
         )
         {%- else -%}

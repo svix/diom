@@ -1,7 +1,7 @@
 # this file is @generated
 import typing as t
 
-from pydantic import BaseModel
+from ..internal.base_model import BaseModel
 
 
 class MsgQueueConfigureOut(BaseModel):

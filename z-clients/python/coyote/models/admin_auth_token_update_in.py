@@ -1,6 +1,8 @@
 # this file is @generated
+from pydantic import Field
 
-from pydantic import BaseModel
+from ..internal.base_model import BaseModel
+from ..internal.types import TimeDeltaMs
 
 
 class AdminAuthTokenUpdateIn(BaseModel):
@@ -8,6 +10,6 @@ class AdminAuthTokenUpdateIn(BaseModel):
 
     name: str | None = None
 
-    expiry_ms: int | None = None
+    expiry: TimeDeltaMs | None = Field(alias="expiry_ms", default=None)
 
     enabled: bool | None = None

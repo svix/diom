@@ -3,8 +3,10 @@
 {% set positional_fields = type.fields | selectattr("positional") -%}
 import typing as t
 from datetime import datetime
+from pydantic import  Field
 
-from pydantic import BaseModel
+from ..internal.base_model import BaseModel
+from ..internal.types import TimeDeltaMs
 
 {% for c in referenced_components -%}
 from . {{ c | to_snake_case }} import {{ c | to_upper_camel_case }}

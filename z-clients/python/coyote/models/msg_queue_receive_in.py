@@ -1,6 +1,8 @@
 # this file is @generated
+from pydantic import Field
 
-from pydantic import BaseModel
+from ..internal.base_model import BaseModel
+from ..internal.types import TimeDeltaMs
 
 
 class MsgQueueReceiveIn(BaseModel):
@@ -8,9 +10,9 @@ class MsgQueueReceiveIn(BaseModel):
 
     batch_size: int | None = None
 
-    lease_duration_ms: int | None = None
+    lease_duration: TimeDeltaMs | None = Field(alias="lease_duration_ms", default=None)
 
-    batch_wait_ms: int | None = None
+    batch_wait: TimeDeltaMs | None = Field(alias="batch_wait_ms", default=None)
     """Maximum time (in milliseconds) to wait for messages before returning."""
 
 
@@ -23,7 +25,7 @@ class _MsgQueueReceiveIn(BaseModel):
 
     batch_size: int | None = None
 
-    lease_duration_ms: int | None = None
+    lease_duration: TimeDeltaMs | None = Field(alias="lease_duration_ms", default=None)
 
-    batch_wait_ms: int | None = None
+    batch_wait: TimeDeltaMs | None = Field(alias="batch_wait_ms", default=None)
     """Maximum time (in milliseconds) to wait for messages before returning."""

@@ -1,11 +1,33 @@
-{% macro field_decl(field) %}
-    {%- if field.name | to_snake_case != field.name %}
+{% macro field_name(field) -%}
+    {%- set field_name = field.name | to_snake_case -%}
+    {%- if field_name != field.name %}
         {%- do panic("coyote API does not use non-snake_case field names") %}
     {%- endif %}
-    {{ field.name | to_snake_case }}: {{ field.type.to_python() }}
-    {%- if not field.required %} | None = None
-    {%- elif field.nullable %} | None
+    {%- if field_name is endingwith "_ms" -%}
+        {%- if not field.type.is_u64() %}{% do panic("_ms type should be uint64") %}{% endif -%}
+        {%- set field_name = field_name | strip_trailing_str("_ms") -%}
+    {%- endif -%}
+    {{ field_name }}
+{%- endmacro -%}
+{% macro field_type(field) -%}
+    {% set field_ty = field.type.to_python() -%}
+    {% if field.name is endingwith "_ms" -%}
+        {% set field_ty = "TimeDeltaMs" -%}
+    {% endif -%}
+    {{ field_ty }}
+    {%- if not field.required or field.nullable %} | None{% endif %}
+{%- endmacro -%}
+{% macro field_decl(field) %}
+    {%- if not field.required %}{% set field_default = "None" %}{% endif %}
+    {%- set field_name = field_name(field) %}
+    {%- if field_name != field.name %}
+        {% set field_default -%}
+            Field(alias = "{{ field.name }}"
+            {%- if not field.required %}, default = None{% endif -%})
+        {%- endset %}
     {%- endif %}
+    {{ field_name }}: {{ field_type(field) }}
+    {%- if field_default is defined %} = {{ field_default }}{% endif %}
     {%- if field.description is defined %}
     {{ field.description | to_doc_comment(style="python") | indent(4) }}
     {%- endif %}
