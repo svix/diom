@@ -1221,6 +1221,7 @@ name = "diom-client"
 version = "0.0.1"
 dependencies = [
  "form_urlencoded",
+ "headers",
  "http",
  "http-body-util",
  "hyper",
