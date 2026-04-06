@@ -11,11 +11,11 @@ def validate(v: object) -> timedelta:
         # used by model_validate
         return timedelta(milliseconds=v)
     else:
-        raise ValueError(f"Expected integer, got {type(v)}")
+        raise ValueError(f"Expected integer or timedelta, got {type(v)}")
 
 
 def serialize(td: timedelta) -> int:
-    return td.seconds * 1000 + int(td.microseconds / 1000)
+    return td.seconds * 1000 + int(round(td.microseconds / 1000))
 
 
 TimeDeltaMs = Annotated[
