@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.coyote.DurationMsSerializer;
 import com.svix.coyote.DurationMsDeserializer;
+import com.svix.coyote.ByteArrayAsIntArraySerializer;
+import com.svix.coyote.ByteArrayAsIntArrayDeserializer;
 import com.svix.coyote.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -33,33 +35,26 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleted {
-    @JsonProperty private List<Byte> response;
+    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] response;
     @JsonProperty private Map<String,String> context;
     public IdempotencyCompleted() {}
 
-    public IdempotencyCompleted response(List<Byte> response) {
+    public IdempotencyCompleted response(byte[] response) {
         this.response = response;
         return this;
     }
 
-    public IdempotencyCompleted addResponseItem(Byte responseItem) {
-        if (this.response == null) {
-            this.response = new ArrayList<>();
-        }
-        this.response.add(responseItem);
-        return this;
-    }
     /**
     * Get response
     *
      * @return response
      */
     @javax.annotation.Nonnull
-    public List<Byte> getResponse() {
+    public byte[] getResponse() {
         return response;
     }
 
-    public void setResponse(List<Byte> response) {
+    public void setResponse(byte[] response) {
         this.response = response;
     }
 

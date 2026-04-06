@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.coyote.DurationMsSerializer;
 import com.svix.coyote.DurationMsDeserializer;
+import com.svix.coyote.ByteArrayAsIntArraySerializer;
+import com.svix.coyote.ByteArrayAsIntArrayDeserializer;
 import com.svix.coyote.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -33,35 +35,28 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class MsgIn {
-    @JsonProperty private List<Byte> value;
+    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private String key;
     @JsonProperty("delay_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration delay;
     public MsgIn() {}
 
-    public MsgIn value(List<Byte> value) {
+    public MsgIn value(byte[] value) {
         this.value = value;
         return this;
     }
 
-    public MsgIn addValueItem(Byte valueItem) {
-        if (this.value == null) {
-            this.value = new ArrayList<>();
-        }
-        this.value.add(valueItem);
-        return this;
-    }
     /**
     * Get value
     *
      * @return value
      */
     @javax.annotation.Nonnull
-    public List<Byte> getValue() {
+    public byte[] getValue() {
         return value;
     }
 
-    public void setValue(List<Byte> value) {
+    public void setValue(byte[] value) {
         this.value = value;
     }
 

@@ -35,7 +35,7 @@ public class Kv {
     /** KV Set */
     public KvSetOut set(
         String key,
-        List<Byte> value,
+        byte[] value,
         final KvSetIn kvSetIn
     ) throws IOException, ApiException {
         HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.kv.set");
@@ -60,7 +60,7 @@ public class Kv {
     /** KV Set */
     public KvSetOut set(
         String key,
-        List<Byte> value
+        byte[] value
     ) throws IOException, ApiException {
         return this.set(
             key,
