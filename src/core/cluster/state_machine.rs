@@ -847,6 +847,10 @@ impl StoreHandle {
         self.time.update_now()
     }
 
+    pub fn as_inner(&self) -> Arc<TokioRwLock<Store>> {
+        self.inner.clone()
+    }
+
     pub(crate) async fn msgs_store(&self) -> diom_msgs::State {
         self.inner.read().await.stores.read().msgs_state.clone()
     }

@@ -355,41 +355,22 @@ impl RaftState {
         let request =
             RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
         let request = Arc::new(request);
-        let mut write_type = WriteType::Local;
-        let response = match self.raft.client_write(Arc::clone(&request)).await {
-            Ok(resp) => {
-                tracing::trace!(log_id=?resp.log_id(), "request applied to log");
-                resp.data
-            }
-            Err(err) => {
-                if let Some(forward_to_leader) = err.forward_to_leader() {
-                    if let Some(leader_id) = forward_to_leader.leader_id
-                        && let Some(leader_node) = &forward_to_leader.leader_node
-                    {
-                        tracing::Span::current().record("forwarded", true);
-                        tracing::trace!("received write to non-leader, forwarding");
-                        let mut network_handle = self.network.clone();
-                        let client = network_handle.new_client(leader_id, leader_node).await;
-                        write_type = WriteType::Forwarded;
-                        client
-                            .forward_request(super::proto::ForwardedWriteRequest {
-                                source_node_id: self.node_id,
-                                request: Arc::unwrap_or_clone(request),
-                            })
-                            .await
-                            .map(|r| r.response)
-                            .map_err(|e| anyhow::anyhow!(e))?
-                    } else {
-                        tracing::error!(
-                            "received write to non-leader, and I don't know who the leader is!"
-                        );
-                        anyhow::bail!("no leader");
-                    }
-                } else {
-                    return Err(err.into());
-                }
-            }
+        let write_type = WriteType::Local;
+
+        let handle = self.state_machine.as_inner();
+        let mut store = handle.write().await;
+
+        let state_context = super::applier::ApplyContext {
+            stores: store.db_handle(),
+            state: store.state.clone(),
         };
+        let leader_id = super::CommittedLeaderId {
+            term: 1,
+            node_id: self.node_id,
+        };
+        let log_id = LogId::new(leader_id, 1);
+        let response =
+            super::applier::apply_request(&state_context, request, &mut *store, log_id).await?;
         self.metrics.record_write(write_type, start.elapsed());
         let module_response = <O::Response as OperationResponse>::ResponseParent::try_from(
             response,

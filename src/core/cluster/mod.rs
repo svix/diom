@@ -1,4 +1,4 @@
-use openraft::type_config::alias::{LogIdOf, NodeIdOf, NodeOf};
+use openraft::type_config::alias::{CommittedLeaderIdOf, LogIdOf, NodeIdOf, NodeOf};
 
 pub(crate) mod app;
 mod applier;
@@ -28,5 +28,6 @@ pub type NodeId = NodeIdOf<TypeConfig>;
 pub(crate) type Node = NodeOf<TypeConfig>;
 pub(crate) type RaftError<C> = openraft::error::RaftError<TypeConfig, C>;
 pub(crate) type ClientWriteError = openraft::error::ClientWriteError<TypeConfig>;
+pub(crate) type CommittedLeaderId = CommittedLeaderIdOf<TypeConfig>;
 
 pub use state_machine::ClusterId;
