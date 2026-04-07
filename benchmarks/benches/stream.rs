@@ -1,7 +1,7 @@
-use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use coyote_client::models::{
+use coyote::models::{
     MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
 };
+use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

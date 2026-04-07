@@ -1,5 +1,5 @@
 [package]
-name = "coyote-client"
+name = "coyote"
 license.workspace = true
 version.workspace = true
 rust-version.workspace = true

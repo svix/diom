@@ -1,9 +1,7 @@
 use std::time::Duration;
 
+use coyote::models::{MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn};
 use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use coyote_client::models::{
-    MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn,
-};
 use criterion::{
     BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

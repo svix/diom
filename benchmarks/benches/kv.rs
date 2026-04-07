@@ -1,5 +1,5 @@
+use coyote::models::{KvDeleteIn, KvGetIn, KvSetIn};
 use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use coyote_client::models::{KvDeleteIn, KvGetIn, KvSetIn};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

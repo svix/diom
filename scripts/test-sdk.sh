@@ -22,7 +22,7 @@ ALL_SDKS=(rust python javascript go java)
 
 run_rust() {
     echo "==> Running Rust SDK integration tests"
-    (cd "$ROOT_DIR" && cargo test --package coyote-client -- --ignored)
+    (cd "$ROOT_DIR" && cargo test --package coyote -- --ignored)
 }
 
 run_python() {

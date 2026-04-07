@@ -31,7 +31,7 @@ pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {
         [
             "+nightly",
             "fmt",
-            "--package=coyote-client",
+            "--package=coyote",
             "--package=coyote-cli",
         ],
     )

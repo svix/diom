@@ -6,7 +6,7 @@
 
 use clap::{Parser, Subcommand};
 use comfy_table::{Cell, Table};
-use coyote::{
+use coyote_backend::{
     cfg::{self, Configuration},
     run,
 };

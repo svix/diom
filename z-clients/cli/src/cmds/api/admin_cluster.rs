@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -34,8 +34,7 @@ pub enum AdminClusterCommands {
   \"cluster_id\": \"...\"
 }")]
     Initialize {
-        cluster_initialize_in:
-            Option<crate::json::JsonOf<coyote_client::models::ClusterInitializeIn>>,
+        cluster_initialize_in: Option<crate::json::JsonOf<coyote::models::ClusterInitializeIn>>,
     },
     /// Remove a node from the cluster.
     ///
@@ -49,7 +48,7 @@ pub enum AdminClusterCommands {
   \"node_id\": \"...\"
 }")]
     RemoveNode {
-        cluster_remove_node_in: crate::json::JsonOf<coyote_client::models::ClusterRemoveNodeIn>,
+        cluster_remove_node_in: crate::json::JsonOf<coyote::models::ClusterRemoveNodeIn>,
     },
     /// Force the cluster to take a snapshot immediately
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -62,7 +61,7 @@ pub enum AdminClusterCommands {
 }")]
     ForceSnapshot {
         cluster_force_snapshot_in:
-            Option<crate::json::JsonOf<coyote_client::models::ClusterForceSnapshotIn>>,
+            Option<crate::json::JsonOf<coyote::models::ClusterForceSnapshotIn>>,
     },
 }
 

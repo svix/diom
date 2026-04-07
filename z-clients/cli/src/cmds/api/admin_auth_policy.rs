@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -25,7 +25,7 @@ pub enum AdminAuthPolicyCommands {
 }")]
     Upsert {
         admin_access_policy_upsert_in:
-            crate::json::JsonOf<coyote_client::models::AdminAccessPolicyUpsertIn>,
+            crate::json::JsonOf<coyote::models::AdminAccessPolicyUpsertIn>,
     },
     /// Delete an access policy
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -37,7 +37,7 @@ pub enum AdminAuthPolicyCommands {
 }")]
     Delete {
         admin_access_policy_delete_in:
-            crate::json::JsonOf<coyote_client::models::AdminAccessPolicyDeleteIn>,
+            crate::json::JsonOf<coyote::models::AdminAccessPolicyDeleteIn>,
     },
     /// Get an access policy by ID
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -52,8 +52,7 @@ pub enum AdminAuthPolicyCommands {
   \"updated\": \"...\"
 }")]
     Get {
-        admin_access_policy_get_in:
-            crate::json::JsonOf<coyote_client::models::AdminAccessPolicyGetIn>,
+        admin_access_policy_get_in: crate::json::JsonOf<coyote::models::AdminAccessPolicyGetIn>,
     },
     /// List all access policies
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -69,7 +68,7 @@ pub enum AdminAuthPolicyCommands {
 }")]
     List {
         admin_access_policy_list_in:
-            Option<crate::json::JsonOf<coyote_client::models::AdminAccessPolicyListIn>>,
+            Option<crate::json::JsonOf<coyote::models::AdminAccessPolicyListIn>>,
     },
 }
 

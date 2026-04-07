@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 
 use super::RateLimitNamespaceArgs;
 #[derive(Args)]
@@ -27,7 +27,7 @@ pub enum RateLimitCommands {
   \"retry_after_ms\": \"...\"
 }")]
     Limit {
-        rate_limit_check_in: crate::json::JsonOf<coyote_client::models::RateLimitCheckIn>,
+        rate_limit_check_in: crate::json::JsonOf<coyote::models::RateLimitCheckIn>,
     },
     /// Rate Limiter Get Remaining
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -41,8 +41,7 @@ pub enum RateLimitCommands {
   \"retry_after_ms\": \"...\"
 }")]
     GetRemaining {
-        rate_limit_get_remaining_in:
-            crate::json::JsonOf<coyote_client::models::RateLimitGetRemainingIn>,
+        rate_limit_get_remaining_in: crate::json::JsonOf<coyote::models::RateLimitGetRemainingIn>,
     },
     /// Rate Limiter Reset
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -54,7 +53,7 @@ pub enum RateLimitCommands {
 {
 }")]
     Reset {
-        rate_limit_reset_in: crate::json::JsonOf<coyote_client::models::RateLimitResetIn>,
+        rate_limit_reset_in: crate::json::JsonOf<coyote::models::RateLimitResetIn>,
     },
 }
 
