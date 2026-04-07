@@ -28,7 +28,6 @@ use diom_error::Error;
 use diom_msgs::TopicPublishNotifier;
 use diom_proto::{InternalClient, InternalRequest, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
-use http::StatusCode;
 use opentelemetry::metrics::Meter;
 use tokio::{
     net::TcpListener,
@@ -111,11 +110,6 @@ pub struct AppState {
     pub(crate) topic_publish_notifier: TopicPublishNotifier,
 }
 
-#[derive(Debug, Serialize)]
-struct MinimalError {
-    message: &'static str,
-}
-
 fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response::Response {
     if let Some(err) = err.downcast_ref::<String>() {
         tracing::error!(?err, "Unhandled panic");
@@ -124,13 +118,7 @@ fn handle_panic(err: Box<dyn std::any::Any + Send + 'static>) -> axum::response:
     } else {
         tracing::error!("Unhandled non-string panic");
     }
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        diom_proto::MsgPackOrJson(MinimalError {
-            message: "unhandled internal panic",
-        }),
-    )
-        .into_response()
+    Error::internal("unhandled internal panic").into_response()
 }
 
 async fn axum_tcp_listener(
@@ -309,10 +297,7 @@ async fn fail_until_bootstrapped(
         true
     };
     if !(ignore_bootstrap || BOOTSTRAPPED.load(Ordering::Relaxed)) {
-        let response = diom_proto::MsgPackOrJson(MinimalError {
-            message: "this node has not yet finished bootstarpping",
-        });
-        return (StatusCode::INTERNAL_SERVER_ERROR, response).into_response();
+        return Error::not_ready("this node has not yet finished bootstrapping").into_response();
     }
 
     next.run(request).await
