@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -22,7 +22,7 @@ pub enum KvNamespaceCommands {
   \"updated\": \"...\"
 }")]
     Create {
-        kv_create_namespace_in: crate::json::JsonOf<coyote_client::models::KvCreateNamespaceIn>,
+        kv_create_namespace_in: crate::json::JsonOf<coyote::models::KvCreateNamespaceIn>,
     },
     /// Get KV namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -35,7 +35,7 @@ pub enum KvNamespaceCommands {
   \"updated\": \"...\"
 }")]
     Get {
-        kv_get_namespace_in: crate::json::JsonOf<coyote_client::models::KvGetNamespaceIn>,
+        kv_get_namespace_in: crate::json::JsonOf<coyote::models::KvGetNamespaceIn>,
     },
 }
 

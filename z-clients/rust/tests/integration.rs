@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use coyote_client::{
+use coyote::{
     CoyoteClient, CoyoteOptions,
     models::{CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn},
 };

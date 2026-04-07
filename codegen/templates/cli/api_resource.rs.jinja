@@ -5,7 +5,7 @@
 {% if resource.name == "message" %}{% set resource_id_name = "msg_id" %}{% endif -%}
 {% if resource.name == "integration" %}{% set resource_id_name = "integ_id" %}{% endif -%}
 
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 use clap::{Args, Subcommand};
 
 {% for _, sub in resource.subresources | items -%}
@@ -69,7 +69,7 @@ pub enum {{ resource_type_name }}Commands {
                 {% endfor -%}
 
                 {# body parameter struct -#}
-                {% set ty = "crate::json::JsonOf<coyote_client::models::" ~ op.request_body_schema_name ~ ">" -%}
+                {% set ty = "crate::json::JsonOf<coyote::models::" ~ op.request_body_schema_name ~ ">" -%}
                 {{ op.request_body_schema_name | to_snake_case }}:
                 {% if body_schema_all_optional %}Option<{{ ty }}>{% else %}{{ ty }}{% endif %},
             {% endif -%}

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
+use coyote::models::{CacheDeleteIn, CacheGetIn, CacheSetIn};
 use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use coyote_client::models::{CacheDeleteIn, CacheGetIn, CacheSetIn};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

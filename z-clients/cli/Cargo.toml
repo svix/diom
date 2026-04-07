@@ -20,10 +20,10 @@ doctest = false
 [features]
 default = ["http1", "http2", "rustls-tls"]
 
-http1 = ["coyote-client/http1"]
-http2 = ["coyote-client/http2"]
-native-tls = ["coyote-client/native-tls"]
-rustls-tls = ["coyote-client/rustls-tls"]
+http1 = ["coyote/http1"]
+http2 = ["coyote/http2"]
+native-tls = ["coyote/native-tls"]
+rustls-tls = ["coyote/rustls-tls"]
 
 [dependencies]
 anyhow.workspace = true
@@ -32,7 +32,7 @@ clap_complete.workspace = true
 comfy-table.workspace = true
 concolor-clap.workspace = true
 config.workspace = true
-coyote-client.workspace = true
+coyote.workspace = true
 dirs.workspace = true
 futures-util.workspace = true
 glob = "0.3.3"

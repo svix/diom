@@ -1030,6 +1030,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
+name = "coyote"
+version = "0.0.1"
+dependencies = [
+ "form_urlencoded",
+ "headers",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-rustls",
+ "hyper-tls",
+ "hyper-util",
+ "jiff",
+ "rand 0.9.2",
+ "rmp-serde",
+ "rustls",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "tokio",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
 name = "coyote-admin-auth"
 version = "0.0.1"
 dependencies = [
@@ -1154,8 +1178,8 @@ name = "coyote-benchmarks"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "coyote",
  "coyote-backend",
- "coyote-client",
  "criterion",
  "openraft",
  "rand 0.9.2",
@@ -1195,7 +1219,7 @@ dependencies = [
  "comfy-table",
  "concolor-clap",
  "config",
- "coyote-client",
+ "coyote",
  "dirs",
  "futures-util",
  "glob",
@@ -1214,30 +1238,6 @@ dependencies = [
  "tracing-subscriber",
  "v_jsonescape",
  "yansi",
-]
-
-[[package]]
-name = "coyote-client"
-version = "0.0.1"
-dependencies = [
- "form_urlencoded",
- "headers",
- "http",
- "http-body-util",
- "hyper",
- "hyper-rustls",
- "hyper-tls",
- "hyper-util",
- "jiff",
- "rand 0.9.2",
- "rmp-serde",
- "rustls",
- "serde",
- "serde_bytes",
- "serde_json",
- "tokio",
- "tower-service",
- "tracing",
 ]
 
 [[package]]

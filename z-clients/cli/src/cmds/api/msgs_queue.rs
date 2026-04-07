@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -29,7 +29,7 @@ pub enum MsgsQueueCommands {
     Receive {
         topic: String,
         consumer_group: String,
-        msg_queue_receive_in: Option<crate::json::JsonOf<coyote_client::models::MsgQueueReceiveIn>>,
+        msg_queue_receive_in: Option<crate::json::JsonOf<coyote::models::MsgQueueReceiveIn>>,
     },
     /// Acknowledges messages by their opaque msg_ids.
     ///
@@ -44,7 +44,7 @@ pub enum MsgsQueueCommands {
     Ack {
         topic: String,
         consumer_group: String,
-        msg_queue_ack_in: crate::json::JsonOf<coyote_client::models::MsgQueueAckIn>,
+        msg_queue_ack_in: crate::json::JsonOf<coyote::models::MsgQueueAckIn>,
     },
     /// Extends the lease on in-flight messages.
     ///
@@ -61,8 +61,7 @@ pub enum MsgsQueueCommands {
     ExtendLease {
         topic: String,
         consumer_group: String,
-        msg_queue_extend_lease_in:
-            crate::json::JsonOf<coyote_client::models::MsgQueueExtendLeaseIn>,
+        msg_queue_extend_lease_in: crate::json::JsonOf<coyote::models::MsgQueueExtendLeaseIn>,
     },
     /// Configures retry and DLQ behavior for a consumer group on a topic.
     ///
@@ -81,8 +80,7 @@ pub enum MsgsQueueCommands {
     Configure {
         topic: String,
         consumer_group: String,
-        msg_queue_configure_in:
-            Option<crate::json::JsonOf<coyote_client::models::MsgQueueConfigureIn>>,
+        msg_queue_configure_in: Option<crate::json::JsonOf<coyote::models::MsgQueueConfigureIn>>,
     },
     /// Rejects messages, sending them to the dead-letter queue.
     ///
@@ -98,7 +96,7 @@ pub enum MsgsQueueCommands {
     Nack {
         topic: String,
         consumer_group: String,
-        msg_queue_nack_in: crate::json::JsonOf<coyote_client::models::MsgQueueNackIn>,
+        msg_queue_nack_in: crate::json::JsonOf<coyote::models::MsgQueueNackIn>,
     },
     /// Moves all dead-letter queue messages back to the main queue for reprocessing.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -110,8 +108,7 @@ pub enum MsgsQueueCommands {
     RedriveDlq {
         topic: String,
         consumer_group: String,
-        msg_queue_redrive_dlq_in:
-            Option<crate::json::JsonOf<coyote_client::models::MsgQueueRedriveDlqIn>>,
+        msg_queue_redrive_dlq_in: Option<crate::json::JsonOf<coyote::models::MsgQueueRedriveDlqIn>>,
     },
 }
 

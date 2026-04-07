@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -26,7 +26,7 @@ pub enum AdminAuthRoleCommands {
   \"updated\": \"...\"
 }")]
     Upsert {
-        admin_role_upsert_in: crate::json::JsonOf<coyote_client::models::AdminRoleUpsertIn>,
+        admin_role_upsert_in: crate::json::JsonOf<coyote::models::AdminRoleUpsertIn>,
     },
     /// Delete a role
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -37,7 +37,7 @@ pub enum AdminAuthRoleCommands {
   \"success\": \"...\"
 }")]
     Delete {
-        admin_role_delete_in: crate::json::JsonOf<coyote_client::models::AdminRoleDeleteIn>,
+        admin_role_delete_in: crate::json::JsonOf<coyote::models::AdminRoleDeleteIn>,
     },
     /// Get a role by ID
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -54,7 +54,7 @@ pub enum AdminAuthRoleCommands {
   \"updated\": \"...\"
 }")]
     Get {
-        admin_role_get_in: crate::json::JsonOf<coyote_client::models::AdminRoleGetIn>,
+        admin_role_get_in: crate::json::JsonOf<coyote::models::AdminRoleGetIn>,
     },
     /// List all roles
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -69,7 +69,7 @@ pub enum AdminAuthRoleCommands {
   \"done\": \"...\"
 }")]
     List {
-        admin_role_list_in: Option<crate::json::JsonOf<coyote_client::models::AdminRoleListIn>>,
+        admin_role_list_in: Option<crate::json::JsonOf<coyote::models::AdminRoleListIn>>,
     },
 }
 
