@@ -3,10 +3,10 @@ package diom_models
 // This file is @generated DO NOT EDIT
 
 import (
-	"time"
+	diom_types "github.com/svix/diom/z-clients/go/internal/types"
 )
 
 type CacheGetOut struct {
-	Expiry *time.Time `msgpack:"expiry,omitempty"` // Time of expiry
-	Value  []uint8    `msgpack:"value,omitempty"`
+	Expiry *diom_types.Timestamp `msgpack:"expiry,omitempty"` // Time of expiry
+	Value  []uint8                 `msgpack:"value,omitempty"`
 }
