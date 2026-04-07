@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use coyote::{cfg::LogLevel, core::cluster::proto::HealthResponse};
+use coyote_backend::{cfg::LogLevel, core::cluster::proto::HealthResponse};
 use coyote_client::{CoyoteClient, CoyoteOptions};
 use openraft::ServerState;
 use std::sync::{Arc, Once};

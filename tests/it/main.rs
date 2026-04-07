@@ -11,5 +11,5 @@ mod rate_limit;
 
 #[ctor::ctor]
 fn test_setup() {
-    coyote::setup_tracing_for_tests();
+    coyote_backend::setup_tracing_for_tests();
 }

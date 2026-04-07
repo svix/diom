@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::json;
 use test_utils::{StatusCode, TestClient, TestResult, server::TestServerBuilder};
 
-use coyote::cfg::{JwtConfig, JwtKey};
+use coyote_backend::cfg::{JwtConfig, JwtKey};
 
 const JWT_SECRET: &str = "test-jwt-secret-do-not-use-in-production";
 
