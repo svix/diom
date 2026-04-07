@@ -223,8 +223,8 @@ async fn test_auth_token_namespace_create_and_get() -> TestResult {
         .json();
 
     assert_eq!(resp["name"], "at-ns-1");
-    assert!(resp["created"].is_string());
-    assert!(resp["updated"].is_string());
+    assert!(resp["created"].is_i64());
+    assert!(resp["updated"].is_i64());
 
     let get_resp = client
         .post("v1.auth-token.namespace.get")
@@ -261,7 +261,7 @@ async fn test_auth_token_rotate() -> TestResult {
     let new_token = resp["token"].assert_str();
     assert_ne!(new_id, id);
     assert_ne!(new_token, old_token);
-    assert!(resp["created"].is_string());
+    assert!(resp["created"].is_i64());
 
     // Old token is immediately expired.
     let resp = verify_token(&client, &old_token).await?;

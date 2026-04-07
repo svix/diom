@@ -46,7 +46,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         .json();
 
     assert_eq!(response["value"], json!(b"test-value-123"));
-    assert!(response["expiry"].is_string());
+    assert!(response["expiry"].is_u64());
 
     Ok(())
 }

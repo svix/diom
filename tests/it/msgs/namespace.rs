@@ -25,8 +25,8 @@ async fn create_namespace_with_defaults() -> TestResult {
     // Retention fields are optional; omitting them means no enforcement
     assert!(response["retention"]["period_ms"].is_null());
     assert!(response["retention"]["size_bytes"].is_null());
-    assert!(response["created"].is_string());
-    assert!(response["updated"].is_string());
+    assert!(response["created"].is_u64());
+    assert!(response["updated"].is_u64());
 
     Ok(())
 }
@@ -85,7 +85,7 @@ async fn create_namespace_upserts() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let created_ts = first["created"].assert_str().to_owned();
+    let created_ts = first["created"].assert_u64();
     assert_eq!(first["name"], "upsert-ns");
     assert_eq!(first["retention"]["size_bytes"], 1024);
     assert_eq!(first["retention"]["period_ms"], 9999);

@@ -165,7 +165,7 @@ async fn test_cluster_force_snapshot() -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert!(response["snapshot_log_index"].is_number());
-    assert!(response["snapshot_time"].is_string());
+    assert!(response["snapshot_time"].is_i64());
 
     let later_cluster_status = client
         .get("v1.admin.cluster.status")
