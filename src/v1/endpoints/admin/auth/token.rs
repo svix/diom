@@ -10,7 +10,7 @@ use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, ResultExt};
 use coyote_id::{AuthTokenId, Module, Public};
-use coyote_proto::{MsgPackOrJson, RequestInput};
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -32,20 +32,20 @@ use crate::{
 
 use crate::core::INTERNAL_NAMESPACE;
 
-fn admin_auth_token_operation(action: &'static str) -> RequestedOperation<'static> {
-    RequestedOperation {
+fn admin_auth_token_access_metadata(action: &'static str) -> AccessMetadata<'static> {
+    AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::AdminAuthToken,
         namespace: None,
         key: None,
         action,
-    }
+    })
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn operation(&self) -> RequestedOperation<'_> {
-                admin_auth_token_operation($action)
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                admin_auth_token_access_metadata($action)
             }
         }
     };
@@ -348,7 +348,11 @@ async fn auth_token_update(
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AdminAuthTokenWhoamiIn {}
 
-request_input!(AdminAuthTokenWhoamiIn, "whoami");
+impl RequestInput for AdminAuthTokenWhoamiIn {
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        AccessMetadata::NoAuthorizationRequired
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAuthTokenWhoamiOut {

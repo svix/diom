@@ -47,7 +47,6 @@ async fn test_admin_auth_token_whoami() -> TestResult {
 }
 
 #[tokio::test]
-#[ignore] // FIXME: decide whether how to allow whoami for arbitrary auth tokens
 async fn test_admin_auth_token_whoami_role() -> TestResult {
     let TestContext {
         mut client,
