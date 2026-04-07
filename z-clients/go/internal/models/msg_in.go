@@ -2,6 +2,10 @@ package coyote_models
 
 // This file is @generated DO NOT EDIT
 
+import (
+	coyote_types "github.com/svix/coyote/z-clients/go/internal/types"
+)
+
 type MsgIn struct {
 	Value   []uint8            `msgpack:"value"`
 	Headers *map[string]string `msgpack:"headers,omitempty"`
@@ -13,5 +17,5 @@ type MsgIn struct {
 	//
 	// The message will not be delivered to queue consumers
 	// until the delay has elapsed from the time of publish.
-	DelayMs *uint64 `msgpack:"delay_ms,omitempty"`
+	Delay *coyote_types.DurationMs `msgpack:"delay_ms,omitempty"`
 }
