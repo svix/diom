@@ -1,7 +1,7 @@
 // this file is @generated
 
 export interface MsgIn {
-    value: number[];
+    value: Uint8Array;
     headers?: { [key: string]: string };
     /**
      * Optional partition key.
@@ -22,7 +22,7 @@ export const MsgInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): MsgIn {
         return {
-            value: object['value'],
+            value: new Uint8Array(object['value']),
             headers: object['headers'],
             key: object['key'],
             delayMs: object['delay_ms'],
@@ -32,7 +32,7 @@ export const MsgInSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: MsgIn): any {
         return {
-            'value': self.value,
+            'value': Array.from(self.value),
             'headers': self.headers,
             'key': self.key,
             'delay_ms': self.delayMs,

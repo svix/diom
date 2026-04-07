@@ -37,7 +37,7 @@ export class Cache {
     /** Cache Set */
     public set(
         key: string,
-        value: number[],
+        value: Uint8Array,
         cacheSetIn: CacheSetIn,
     ): Promise<CacheSetOut> {
         const request = new CoyoteRequest(HttpMethod.POST, "/api/v1.cache.set");

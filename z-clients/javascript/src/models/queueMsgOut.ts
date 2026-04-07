@@ -2,7 +2,7 @@
 
 export interface QueueMsgOut {
     msgId: string;
-    value: number[];
+    value: Uint8Array;
     headers?: { [key: string]: string };
     timestamp: Date;
     scheduledAt?: Date | null;
@@ -13,7 +13,7 @@ export const QueueMsgOutSerializer = {
     _fromJsonObject(object: any): QueueMsgOut {
         return {
             msgId: object['msg_id'],
-            value: object['value'],
+            value: new Uint8Array(object['value']),
             headers: object['headers'],
             timestamp: new Date(object['timestamp']),
             scheduledAt: object['scheduled_at'] ? new Date(object['scheduled_at']) : null,
@@ -24,7 +24,7 @@ export const QueueMsgOutSerializer = {
     _toJsonObject(self: QueueMsgOut): any {
         return {
             'msg_id': self.msgId,
-            'value': self.value,
+            'value': Array.from(self.value),
             'headers': self.headers,
             'timestamp': self.timestamp,
             'scheduled_at': self.scheduledAt,
