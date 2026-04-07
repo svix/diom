@@ -4,7 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_authorization::RequestedOperation;
-use coyote_core::types::{DurationMs, EntityKey, Metadata};
+use coyote_core::types::{DurationMs, EntityKey, Metadata, UnixTimestampMs};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt as _, ResultExt};
 use coyote_id::Module;
@@ -19,7 +19,6 @@ use coyote_namespace::{
     entities::{IdempotencyConfig, NamespaceName},
 };
 use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -218,8 +217,8 @@ namespace_request_input!(IdempotencyGetNamespaceIn, "get");
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -238,8 +237,8 @@ impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyCreateNamespaceOut {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Create idempotency namespace
@@ -252,8 +251,8 @@ async fn idempotency_create_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(IdempotencyCreateNamespaceOut {
         name: resp.name,
-        created: resp.created,
-        updated: resp.updated,
+        created: resp.created.into(),
+        updated: resp.updated.into(),
     }))
 }
 
@@ -274,8 +273,8 @@ async fn idempotency_get_namespace(
 
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {
         name: namespace.name,
-        created: namespace.created,
-        updated: namespace.updated,
+        created: namespace.created.into(),
+        updated: namespace.updated.into(),
     }))
 }
 

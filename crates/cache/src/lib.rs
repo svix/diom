@@ -9,7 +9,7 @@ pub mod operations;
 
 use std::time::Duration;
 
-use coyote_core::Monotime;
+use coyote_core::{Monotime, types::UnixTimestampMs};
 use coyote_error::Result;
 use coyote_kv::kvcontroller::KvController;
 use coyote_namespace::{Namespace, entities::CacheConfig};
@@ -43,7 +43,7 @@ impl State {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
 
     pub value: Vec<u8>,
 }

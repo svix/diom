@@ -5,7 +5,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_authorization::RequestedOperation;
 use coyote_cache::operations::{CreateCacheOperation, DeleteOperation, SetOperation};
-use coyote_core::types::{Consistency, DurationMs, EntityKey};
+use coyote_core::types::{Consistency, DurationMs, EntityKey, UnixTimestampMs};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_id::Module;
@@ -15,7 +15,6 @@ use coyote_namespace::{
     entities::{CacheConfig, EvictionPolicy, NamespaceName},
 };
 use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -84,7 +83,7 @@ request_input!(CacheGetIn, "get");
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheGetOut {
     /// Time of expiry
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
 
     pub value: Option<Vec<u8>>,
 }
@@ -92,7 +91,7 @@ pub struct CacheGetOut {
 impl CacheGetOut {
     fn from_model(model: KvModel) -> Self {
         Self {
-            expiry: model.expiry,
+            expiry: model.expiry.map(Into::into),
             value: Some(model.value),
         }
     }
@@ -119,8 +118,8 @@ pub struct CacheDeleteOut {
 struct CacheGetNamespaceOut {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -142,8 +141,8 @@ impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
 struct CacheCreateNamespaceOut {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Cache Set
@@ -233,8 +232,8 @@ async fn cache_create_namespace(
     Ok(MsgPackOrJson(CacheCreateNamespaceOut {
         name: resp.name,
         eviction_policy: resp.eviction_policy,
-        created: resp.created,
-        updated: resp.updated,
+        created: resp.created.into(),
+        updated: resp.updated.into(),
     }))
 }
 
@@ -256,8 +255,8 @@ async fn cache_get_namespace(
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
         name: namespace.name,
         eviction_policy: namespace.config.eviction_policy,
-        created: namespace.created,
-        updated: namespace.updated,
+        created: namespace.created.into(),
+        updated: namespace.updated.into(),
     }))
 }
 

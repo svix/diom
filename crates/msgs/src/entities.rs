@@ -1,8 +1,7 @@
 use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
-use coyote_core::types::DurationMs;
+use coyote_core::types::{DurationMs, UnixTimestampMs};
 use coyote_error::Error;
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
@@ -355,9 +354,9 @@ pub struct StreamMsgOut {
     pub value: Vec<u8>,
     #[serde(default)]
     pub headers: HashMap<String, String>,
-    pub timestamp: Timestamp,
+    pub timestamp: UnixTimestampMs,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub scheduled_at: Option<Timestamp>,
+    pub scheduled_at: Option<UnixTimestampMs>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -366,9 +365,9 @@ pub struct QueueMsgOut {
     pub value: Vec<u8>,
     #[serde(default)]
     pub headers: HashMap<String, String>,
-    pub timestamp: Timestamp,
+    pub timestamp: UnixTimestampMs,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub scheduled_at: Option<Timestamp>,
+    pub scheduled_at: Option<UnixTimestampMs>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

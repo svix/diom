@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use schemars::{JsonSchema, Schema, json_schema};
+use schemars::{JsonSchema, Schema};
 use serde::{Deserialize, Serialize};
 use validator::ValidateRange;
 
@@ -136,12 +136,8 @@ impl JsonSchema for DurationMs {
         "DurationMs".into()
     }
 
-    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> Schema {
-        json_schema!({
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-        })
+    fn json_schema(g: &mut schemars::SchemaGenerator) -> Schema {
+        u64::json_schema(g)
     }
 
     fn inline_schema() -> bool {

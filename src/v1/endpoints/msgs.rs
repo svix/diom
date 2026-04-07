@@ -4,7 +4,7 @@ use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_authorization::RequestedOperation;
-use coyote_core::types::DurationMs;
+use coyote_core::types::{DurationMs, UnixTimestampMs};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, OptionExt, Result, ResultExt};
 use coyote_id::Module;
@@ -24,7 +24,6 @@ use coyote_msgs::{
 use coyote_namespace::entities::NamespaceName;
 use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use fjall_utils::{ReadableDatabase, ReadonlyConnection, StorageType};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -72,8 +71,8 @@ impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
 struct MsgNamespaceCreateOut {
     pub name: NamespaceName,
     pub retention: Retention,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Creates or updates a msgs namespace with the given name.
@@ -88,8 +87,8 @@ async fn create_namespace(
     Ok(MsgPackOrJson(MsgNamespaceCreateOut {
         name: response.name,
         retention: response.retention,
-        created: response.created,
-        updated: response.updated,
+        created: response.created.into(),
+        updated: response.updated.into(),
     }))
 }
 
@@ -105,8 +104,8 @@ namespace_request_input!(MsgNamespaceGetIn, "get");
 struct MsgNamespaceGetOut {
     pub name: NamespaceName,
     pub retention: Retention,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Gets a msgs namespace by name.
@@ -130,8 +129,8 @@ async fn get_namespace(
             period: namespace.config.retention_period,
             size_bytes: namespace.config.retention_bytes,
         },
-        created: namespace.created,
-        updated: namespace.updated,
+        created: namespace.created.into(),
+        updated: namespace.updated.into(),
     }))
 }
 
@@ -299,8 +298,8 @@ async fn stream_receive(
                 topic: m.topic,
                 value: m.value,
                 headers: m.headers,
-                timestamp: m.timestamp,
-                scheduled_at: m.scheduled_at,
+                timestamp: m.timestamp.into(),
+                scheduled_at: m.scheduled_at.map(Into::into),
             })
             .collect(),
     }))
@@ -506,8 +505,8 @@ async fn queue_receive(
                 msg_id: m.msg_id,
                 value: m.value,
                 headers: m.headers,
-                timestamp: m.timestamp,
-                scheduled_at: m.scheduled_at,
+                timestamp: m.timestamp.into(),
+                scheduled_at: m.scheduled_at.map(Into::into),
             })
             .collect(),
     }))

@@ -11,11 +11,11 @@ use coyote_admin_auth::{
     operations::{DeleteRoleOperation, UpsertRoleOperation},
 };
 use coyote_authorization::{AccessPolicyId, AccessRule, RequestedOperation, RoleId};
+use coyote_core::types::UnixTimestampMs;
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_id::Module;
 use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -57,8 +57,8 @@ pub struct AdminRoleOut {
     pub rules: Vec<AccessRule>,
     pub policies: Vec<AccessPolicyId>,
     pub context: HashMap<String, String>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl ListResponseItem for AdminRoleOut {
@@ -75,8 +75,8 @@ impl From<RoleModel> for AdminRoleOut {
             rules: model.rules,
             policies: model.policies,
             context: model.context,
-            created: model.created,
-            updated: model.updated,
+            created: model.created.into(),
+            updated: model.updated.into(),
         }
     }
 }
@@ -101,8 +101,8 @@ request_input!(AdminRoleUpsertIn, "upsert");
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminRoleUpsertOut {
     pub id: RoleId,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Create or update a role
@@ -121,8 +121,8 @@ async fn role_upsert(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AdminRoleUpsertOut {
         id: resp.model.id,
-        created: resp.model.created,
-        updated: resp.model.updated,
+        created: resp.model.created.into(),
+        updated: resp.model.updated.into(),
     }))
 }
 
