@@ -9,7 +9,7 @@ pub mod operations;
 
 use std::time::Duration;
 
-use diom_core::Monotime;
+use diom_core::{Monotime, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_kv::kvcontroller::KvController;
 use diom_namespace::{Namespace, entities::CacheConfig};
@@ -43,7 +43,7 @@ impl State {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct CacheModel {
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
 
     pub value: Vec<u8>,
 }

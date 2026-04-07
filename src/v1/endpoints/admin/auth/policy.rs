@@ -9,11 +9,11 @@ use diom_admin_auth::{
     operations::{DeleteAccessPolicyOperation, UpsertAccessPolicyOperation},
 };
 use diom_authorization::{AccessPolicyId, AccessRule, RequestedOperation};
+use diom_core::types::UnixTimestampMs;
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -53,8 +53,8 @@ pub struct AdminAccessPolicyOut {
     pub id: AccessPolicyId,
     pub description: String,
     pub rules: Vec<AccessRule>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl ListResponseItem for AdminAccessPolicyOut {
@@ -69,8 +69,8 @@ impl From<AccessPolicyModel> for AdminAccessPolicyOut {
             id: model.id,
             description: model.description,
             rules: model.rules,
-            created: model.created,
-            updated: model.updated,
+            created: model.created.into(),
+            updated: model.updated.into(),
         }
     }
 }
@@ -91,8 +91,8 @@ request_input!(AdminAccessPolicyUpsertIn, "upsert");
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdminAccessPolicyUpsertOut {
     pub id: AccessPolicyId,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Create or update an access policy
@@ -105,8 +105,8 @@ async fn access_policy_upsert(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AdminAccessPolicyUpsertOut {
         id: resp.model.id,
-        created: resp.model.created,
-        updated: resp.model.updated,
+        created: resp.model.created.into(),
+        updated: resp.model.updated.into(),
     }))
 }
 

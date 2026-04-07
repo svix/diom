@@ -6,12 +6,11 @@ use std::collections::HashMap;
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::{Extension, State};
 use diom_authorization::{Permissions, RequestedOperation, RoleId};
-use diom_core::types::{DurationMs, Metadata};
+use diom_core::types::{DurationMs, Metadata, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{Error, ResultExt};
 use diom_id::{AuthTokenId, Module, Public};
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -55,9 +54,9 @@ macro_rules! request_input {
 pub struct AdminAuthTokenOut {
     pub id: Public<AuthTokenId>,
     pub name: String,
-    pub created: Timestamp,
-    pub updated: Timestamp,
-    pub expiry: Option<Timestamp>,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
+    pub expiry: Option<UnixTimestampMs>,
     pub role: String,
     /// Whether this token is currently enabled.
     pub enabled: bool,
@@ -87,8 +86,8 @@ fn default_true() -> bool {
 pub struct AdminAuthTokenCreateOut {
     pub id: Public<AuthTokenId>,
     pub token: String,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Create an auth token
@@ -175,8 +174,8 @@ request_input!(AdminAuthTokenRotateIn, "rotate");
 pub struct AdminAuthTokenRotateOut {
     pub id: Public<AuthTokenId>,
     pub token: String,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Rotate an auth token, invalidating the old one and issuing a new secret

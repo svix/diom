@@ -14,8 +14,9 @@ use crate::validation::validation_error;
 
 mod duration_ms;
 mod metadata;
+mod unix_timestamp_ms;
 
-pub use self::{duration_ms::DurationMs, metadata::Metadata};
+pub use self::{duration_ms::DurationMs, metadata::Metadata, unix_timestamp_ms::UnixTimestampMs};
 
 const ALL_ERROR: &str = "__all__";
 

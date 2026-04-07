@@ -17,13 +17,12 @@ use diom_auth_token::{
     },
 };
 use diom_authorization::RequestedOperation;
-use diom_core::types::{DurationMs, Metadata};
+use diom_core::types::{DurationMs, Metadata, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::{AuthTokenId, Module, Public};
 use diom_namespace::entities::NamespaceName;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -58,9 +57,9 @@ macro_rules! request_input {
 pub struct AuthTokenOut {
     pub id: Public<AuthTokenId>,
     pub name: String,
-    pub created: Timestamp,
-    pub updated: Timestamp,
-    pub expiry: Option<Timestamp>,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
+    pub expiry: Option<UnixTimestampMs>,
     pub metadata: Metadata,
     pub owner_id: String,
     pub scopes: Vec<String>,
@@ -79,13 +78,13 @@ impl From<AuthTokenModel> for AuthTokenOut {
         Self {
             id: m.id.public(),
             name: m.name,
-            expiry: m.expiry,
+            expiry: m.expiry.map(Into::into),
             metadata: m.metadata,
             owner_id: m.owner_id,
             scopes: m.scopes,
             enabled: m.enabled,
-            created: m.created,
-            updated: m.updated,
+            created: m.created.into(),
+            updated: m.updated.into(),
         }
     }
 }
@@ -123,8 +122,8 @@ pub fn default_prefix() -> String {
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenCreateOut {
     pub id: Public<AuthTokenId>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
     pub token: String,
 }
 
@@ -156,8 +155,8 @@ async fn auth_token_create(
     let ret = AuthTokenCreateOut {
         id: resp.model.id.public(),
         token: token.expose_plaintext_dangerously(),
-        created: resp.model.created,
-        updated: resp.model.updated,
+        created: resp.model.created.into(),
+        updated: resp.model.updated.into(),
     };
     Ok(MsgPackOrJson(ret))
 }
@@ -376,8 +375,8 @@ request_input!(AuthTokenRotateIn, "rotate");
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AuthTokenRotateOut {
     pub id: Public<AuthTokenId>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
     pub token: String,
 }
 
@@ -403,8 +402,8 @@ async fn auth_token_rotate(
     Ok(MsgPackOrJson(AuthTokenRotateOut {
         id: model.id.public(),
         token: token.expose_plaintext_dangerously(),
-        created: model.created,
-        updated: model.updated,
+        created: model.created.into(),
+        updated: model.updated.into(),
     }))
 }
 
@@ -418,8 +417,8 @@ namespace_request_input!(AuthTokenGetNamespaceIn, "get");
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenGetNamespaceOut {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -438,8 +437,8 @@ impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct AuthTokenCreateNamespaceOut {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Create Auth Token namespace
@@ -452,8 +451,8 @@ async fn auth_token_create_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AuthTokenCreateNamespaceOut {
         name: resp.name,
-        created: resp.created,
-        updated: resp.updated,
+        created: resp.created.into(),
+        updated: resp.updated.into(),
     }))
 }
 
@@ -473,8 +472,8 @@ async fn auth_token_get_namespace(
 
     Ok(MsgPackOrJson(AuthTokenGetNamespaceOut {
         name: namespace.name,
-        created: namespace.created,
-        updated: namespace.updated,
+        created: namespace.created.into(),
+        updated: namespace.updated.into(),
     }))
 }
 
