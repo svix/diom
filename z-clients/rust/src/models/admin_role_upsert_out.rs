@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 pub struct AdminRoleUpsertOut {
     pub id: String,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 }
 
 impl AdminRoleUpsertOut {
-    pub fn new(id: String, created: jiff::Timestamp, updated: jiff::Timestamp) -> Self {
+    pub fn new(id: String, created: u64, updated: u64) -> Self {
         Self {
             id,
             created,

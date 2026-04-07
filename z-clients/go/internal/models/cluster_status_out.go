@@ -2,10 +2,6 @@ package coyote_models
 
 // This file is @generated DO NOT EDIT
 
-import (
-	"time"
-)
-
 type ClusterStatusOut struct {
 	// The unique ID of this cluster.
 	//
@@ -17,7 +13,7 @@ type ClusterStatusOut struct {
 	ClusterName                    *string         `msgpack:"cluster_name,omitempty"`
 	ThisNodeId                     string          `msgpack:"this_node_id"`                         // The unique ID of the node servicing this request
 	ThisNodeState                  ServerState     `msgpack:"this_node_state"`                      // The cluster state of the node servicing this request
-	ThisNodeLastCommittedTimestamp time.Time       `msgpack:"this_node_last_committed_timestamp"`   // The timestamp of the last transaction committed on this node
+	ThisNodeLastCommittedTimestamp uint64          `msgpack:"this_node_last_committed_timestamp"`   // The timestamp of the last transaction committed on this node
 	ThisNodeLastSnapshotId         *string         `msgpack:"this_node_last_snapshot_id,omitempty"` // The last snapshot taken on this node
 	Nodes                          []NodeStatusOut `msgpack:"nodes"`                                // A list of all nodes known to be in the cluster
 }

@@ -35,12 +35,12 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvGetOut {
-    @JsonProperty private OffsetDateTime expiry;
+    @JsonProperty private Long expiry;
     @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
     @JsonProperty private Long version;
     public KvGetOut() {}
 
-    public KvGetOut expiry(OffsetDateTime expiry) {
+    public KvGetOut expiry(Long expiry) {
         this.expiry = expiry;
         return this;
     }
@@ -51,11 +51,11 @@ public class KvGetOut {
      * @return expiry
      */
     @javax.annotation.Nullable
-    public OffsetDateTime getExpiry() {
+    public Long getExpiry() {
         return expiry;
     }
 
-    public void setExpiry(OffsetDateTime expiry) {
+    public void setExpiry(Long expiry) {
         this.expiry = expiry;
     }
 

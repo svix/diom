@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
 
@@ -18,6 +17,6 @@ class AdminRoleOut(BaseModel):
 
     context: t.Dict[str, str]
 
-    created: datetime
+    created: int
 
-    updated: datetime
+    updated: int

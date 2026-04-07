@@ -2,7 +2,7 @@
 
 export interface KvGetOut {
     /** Time of expiry */
-    expiry?: Date | null;
+    expiry?: number | null;
     value?: Uint8Array | null;
     /**
      * Opaque version token for optimistic concurrency control.
@@ -15,7 +15,7 @@ export const KvGetOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): KvGetOut {
         return {
-            expiry: object['expiry'] ? new Date(object['expiry']) : null,
+            expiry: object['expiry'],
             value: object['value'] != null ? new Uint8Array(object['value']) : null,
             version: object['version'],
         };

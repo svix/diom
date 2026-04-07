@@ -37,8 +37,8 @@ import lombok.ToString;
 public class AdminAuthTokenCreateOut {
     @JsonProperty private String id;
     @JsonProperty private String token;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public AdminAuthTokenCreateOut() {}
 
     public AdminAuthTokenCreateOut id(String id) {
@@ -79,7 +79,7 @@ public class AdminAuthTokenCreateOut {
         this.token = token;
     }
 
-    public AdminAuthTokenCreateOut created(OffsetDateTime created) {
+    public AdminAuthTokenCreateOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -90,15 +90,15 @@ public class AdminAuthTokenCreateOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public AdminAuthTokenCreateOut updated(OffsetDateTime updated) {
+    public AdminAuthTokenCreateOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -109,11 +109,11 @@ public class AdminAuthTokenCreateOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

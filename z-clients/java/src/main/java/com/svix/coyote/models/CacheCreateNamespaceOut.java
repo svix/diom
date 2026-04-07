@@ -37,8 +37,8 @@ import lombok.ToString;
 public class CacheCreateNamespaceOut {
     @JsonProperty private String name;
     @JsonProperty("eviction_policy") private EvictionPolicy evictionPolicy;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public CacheCreateNamespaceOut() {}
 
     public CacheCreateNamespaceOut name(String name) {
@@ -79,7 +79,7 @@ public class CacheCreateNamespaceOut {
         this.evictionPolicy = evictionPolicy;
     }
 
-    public CacheCreateNamespaceOut created(OffsetDateTime created) {
+    public CacheCreateNamespaceOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -90,15 +90,15 @@ public class CacheCreateNamespaceOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public CacheCreateNamespaceOut updated(OffsetDateTime updated) {
+    public CacheCreateNamespaceOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -109,11 +109,11 @@ public class CacheCreateNamespaceOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

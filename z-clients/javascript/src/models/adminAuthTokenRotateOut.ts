@@ -3,8 +3,8 @@
 export interface AdminAuthTokenRotateOut {
     id: string;
     token: string;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const AdminAuthTokenRotateOutSerializer = {
@@ -13,8 +13,8 @@ export const AdminAuthTokenRotateOutSerializer = {
         return {
             id: object['id'],
             token: object['token'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

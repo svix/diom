@@ -2,8 +2,8 @@
 
 export interface IdempotencyCreateNamespaceOut {
     name: string;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const IdempotencyCreateNamespaceOutSerializer = {
@@ -11,8 +11,8 @@ export const IdempotencyCreateNamespaceOutSerializer = {
     _fromJsonObject(object: any): IdempotencyCreateNamespaceOut {
         return {
             name: object['name'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

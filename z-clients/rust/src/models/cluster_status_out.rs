@@ -24,7 +24,7 @@ pub struct ClusterStatusOut {
     pub this_node_state: ServerState,
 
     /// The timestamp of the last transaction committed on this node
-    pub this_node_last_committed_timestamp: jiff::Timestamp,
+    pub this_node_last_committed_timestamp: u64,
 
     /// The last snapshot taken on this node
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -38,7 +38,7 @@ impl ClusterStatusOut {
     pub fn new(
         this_node_id: String,
         this_node_state: ServerState,
-        this_node_last_committed_timestamp: jiff::Timestamp,
+        this_node_last_committed_timestamp: u64,
         nodes: Vec<NodeStatusOut>,
     ) -> Self {
         Self {

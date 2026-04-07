@@ -37,8 +37,8 @@ import lombok.ToString;
 public class MsgNamespaceCreateOut {
     @JsonProperty private String name;
     @JsonProperty private Retention retention;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public MsgNamespaceCreateOut() {}
 
     public MsgNamespaceCreateOut name(String name) {
@@ -79,7 +79,7 @@ public class MsgNamespaceCreateOut {
         this.retention = retention;
     }
 
-    public MsgNamespaceCreateOut created(OffsetDateTime created) {
+    public MsgNamespaceCreateOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -90,15 +90,15 @@ public class MsgNamespaceCreateOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public MsgNamespaceCreateOut updated(OffsetDateTime updated) {
+    public MsgNamespaceCreateOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -109,11 +109,11 @@ public class MsgNamespaceCreateOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

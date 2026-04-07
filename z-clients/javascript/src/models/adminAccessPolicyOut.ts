@@ -8,8 +8,8 @@ export interface AdminAccessPolicyOut {
     id: string;
     description: string;
     rules: AccessRule[];
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const AdminAccessPolicyOutSerializer = {
@@ -19,8 +19,8 @@ export const AdminAccessPolicyOutSerializer = {
             id: object['id'],
             description: object['description'],
             rules: object['rules'].map((item: AccessRule) => AccessRuleSerializer._fromJsonObject(item)),
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

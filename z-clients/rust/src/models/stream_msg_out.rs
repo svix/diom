@@ -13,14 +13,14 @@ pub struct StreamMsgOut {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub headers: Option<std::collections::HashMap<String, String>>,
 
-    pub timestamp: jiff::Timestamp,
+    pub timestamp: u64,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scheduled_at: Option<jiff::Timestamp>,
+    pub scheduled_at: Option<u64>,
 }
 
 impl StreamMsgOut {
-    pub fn new(offset: u64, topic: String, value: Vec<u8>, timestamp: jiff::Timestamp) -> Self {
+    pub fn new(offset: u64, topic: String, value: Vec<u8>, timestamp: u64) -> Self {
         Self {
             offset,
             topic,
@@ -39,7 +39,7 @@ impl StreamMsgOut {
         self
     }
 
-    pub fn with_scheduled_at(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {
+    pub fn with_scheduled_at(mut self, value: impl Into<Option<u64>>) -> Self {
         self.scheduled_at = value.into();
         self
     }

@@ -2,8 +2,8 @@
 
 export interface AdminRoleUpsertOut {
     id: string;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const AdminRoleUpsertOutSerializer = {
@@ -11,8 +11,8 @@ export const AdminRoleUpsertOutSerializer = {
     _fromJsonObject(object: any): AdminRoleUpsertOut {
         return {
             id: object['id'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

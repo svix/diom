@@ -3,9 +3,9 @@
 export interface AdminAuthTokenOut {
     id: string;
     name: string;
-    created: Date;
-    updated: Date;
-    expiry?: Date | null;
+    created: number;
+    updated: number;
+    expiry?: number | null;
     role: string;
     /** Whether this token is currently enabled. */
     enabled: boolean;
@@ -17,9 +17,9 @@ export const AdminAuthTokenOutSerializer = {
         return {
             id: object['id'],
             name: object['name'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
-            expiry: object['expiry'] ? new Date(object['expiry']) : null,
+            created: object['created'],
+            updated: object['updated'],
+            expiry: object['expiry'],
             role: object['role'],
             enabled: object['enabled'],
         };

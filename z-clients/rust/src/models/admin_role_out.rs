@@ -15,9 +15,9 @@ pub struct AdminRoleOut {
 
     pub context: std::collections::HashMap<String, String>,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 }
 
 impl AdminRoleOut {
@@ -27,8 +27,8 @@ impl AdminRoleOut {
         rules: Vec<AccessRule>,
         policies: Vec<String>,
         context: std::collections::HashMap<String, String>,
-        created: jiff::Timestamp,
-        updated: jiff::Timestamp,
+        created: u64,
+        updated: u64,
     ) -> Self {
         Self {
             id,

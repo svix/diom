@@ -7,8 +7,8 @@ import {
 export interface CacheGetNamespaceOut {
     name: string;
     evictionPolicy: EvictionPolicy;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const CacheGetNamespaceOutSerializer = {
@@ -17,8 +17,8 @@ export const CacheGetNamespaceOutSerializer = {
         return {
             name: object['name'],
             evictionPolicy: EvictionPolicySerializer._fromJsonObject(object['eviction_policy']),
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

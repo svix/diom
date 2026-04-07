@@ -1,6 +1,5 @@
 # this file is @generated
 import typing as t
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
 
@@ -14,6 +13,6 @@ class AdminAccessPolicyOut(BaseModel):
 
     rules: t.List[AccessRule]
 
-    created: datetime
+    created: int
 
-    updated: datetime
+    updated: int
