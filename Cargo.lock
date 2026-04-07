@@ -5317,6 +5317,7 @@ dependencies = [
  "futures-util",
  "http",
  "http-body-util",
+ "jiff",
  "reqwest 0.13.2",
  "rmp-serde",
  "serde",
