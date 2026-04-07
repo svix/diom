@@ -14,7 +14,7 @@ use coyote_kv::{
     operations::{CreateKvOperation, DeleteOperation, SetOperation, SetResponseData},
 };
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::{MsgPackOrJson, RequestInput};
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -26,19 +26,19 @@ fn kv_metadata<'a>(
     ns: Option<&'a str>,
     key: &'a EntityKey,
     action: &'static str,
-) -> RequestedOperation<'a> {
-    RequestedOperation {
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Kv,
         namespace: ns,
         key: Some(key.as_str()),
         action,
-    }
+    })
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn operation(&self) -> RequestedOperation<'_> {
+            fn access_metadata(&self) -> AccessMetadata<'_> {
                 kv_metadata(self.namespace.as_deref(), &self.key, $action)
             }
         }
