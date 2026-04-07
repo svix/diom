@@ -13,6 +13,7 @@ coyote-core.workspace = true
 futures-util.workspace = true
 http.workspace = true
 http-body-util.workspace = true
+jiff.workspace = true
 reqwest.workspace = true
 rmp-serde.workspace = true
 serde.workspace = true
