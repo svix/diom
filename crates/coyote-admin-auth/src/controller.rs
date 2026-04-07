@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use coyote_authorization::{AccessPolicyId, AccessRule, RoleId};
 use coyote_core::task::spawn_blocking_in_current_span;
 use coyote_error::Result;
-use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
-use fjall_utils::TableRow;
+use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -85,11 +84,10 @@ pub struct AdminAuthController {
 
 impl AdminAuthController {
     pub fn new(db: fjall::Database, keyspace_name: &'static str) -> Self {
-        let keyspace = {
-            let opts = KeyspaceCreateOptions::default()
-                .with_kv_separation(Some(KvSeparationOptions::default()));
-            db.keyspace(keyspace_name, || opts).unwrap()
-        };
+        let keyspace = SerializableKeyspaceCreateOptions::default()
+            .with_default_kv_separation()
+            .create_and_record(&db, keyspace_name)
+            .expect("should be able to open keyspace");
         Self { db, keyspace }
     }
 

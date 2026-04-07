@@ -88,6 +88,12 @@ impl Error {
         })
     }
 
+    pub fn not_ready(s: impl fmt::Display) -> Self {
+        Self::new(ErrorType::NotReady {
+            message: s.to_string(),
+        })
+    }
+
     pub fn shutting_down() -> Self {
         Self::new(ErrorType::ShuttingDown)
     }
@@ -122,7 +128,16 @@ impl Error {
                 detail,
             } => (status, error_code, detail),
             ErrorType::Internal { .. } => (StatusCode::INTERNAL_SERVER_ERROR, None, None),
-            ErrorType::ShuttingDown => (StatusCode::SERVICE_UNAVAILABLE, None, None),
+            ErrorType::NotReady { .. } => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Some("NOT_READY".to_owned()),
+                None,
+            ),
+            ErrorType::ShuttingDown => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Some("SHUTTING_DOWN".to_owned()),
+                None,
+            ),
         }
     }
 
@@ -189,13 +204,18 @@ impl IntoResponse for Error {
                 );
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    MsgPackOrJson(json!({"error": "internal error"})),
+                    MsgPackOrJson(json!({"code": "INTERNAL_ERROR", "detail": ""})),
                 )
                     .into_response()
             }
+            ErrorType::NotReady { message } => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                MsgPackOrJson(json!({"code": "NOT_READY", "detail": message})),
+            )
+                .into_response(),
             ErrorType::ShuttingDown => (
                 StatusCode::SERVICE_UNAVAILABLE,
-                MsgPackOrJson(json!({"error": "server shutting down"})),
+                MsgPackOrJson(json!({"code": "SHUTTING_DOWN", "detail": "server shutting down"})),
             )
                 .into_response(),
         }
@@ -271,6 +291,9 @@ pub enum ErrorType {
         detail: Option<String>,
     },
 
+    /// The operation cannot proceed because the server is not yet ready
+    NotReady { message: String },
+
     /// The operation cannot proceed because the server is shutting down
     ShuttingDown,
 }
@@ -279,6 +302,7 @@ impl fmt::Display for ErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Internal { message, .. } => message.fmt(f),
+            Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::NotFound(s) => write!(f, "not_found {s}"),
             Self::Authentication(s) => write!(f, "authn {s}"),
