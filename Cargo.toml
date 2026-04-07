@@ -181,7 +181,7 @@ jsonwebtoken = { version = "10.3.0", features = ["aws_lc_rs"] }
 k8s-openapi = { version = "0.27.1", features = ["v1_31"] }
 kube = { version = "3.0.1", features = ["runtime", "derive", "client"] }
 maplit = "1"
-mimalloc = "0.1.48"
+mimalloc = { version = "0.1.48", features = ["v3"] }
 mime = "0.3"
 openapi-codegen = { git = "https://github.com/svix/openapi-codegen", rev = "0c7a69adaa8faddf38b872f7661435da116d8386" }
 openraft = { version = "0.10.0-alpha.17", features = ["tracing-log", "anyhow", "serde", "tokio-rt"] }
@@ -287,3 +287,9 @@ strip = true
 coyote-client.opt-level = 2
 hyper.opt-level = 2
 tokio.opt-level = 2
+
+[profile.benchmark]
+inherits = "release"
+debug = true
+opt-level = 3
+strip = false
