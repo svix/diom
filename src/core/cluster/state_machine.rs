@@ -455,9 +455,12 @@ impl Store {
         let mut changed_log_id = false;
         let mut changed_membership = false;
         let mut num_entries = 0;
-        let mut num_normal_entries = 0;
         let start = std::time::Instant::now();
         let context = super::applier::ApplyContext::new(self);
+
+        let mut touched_ephemeral = false;
+        let mut touched_persistent = false;
+
         while let Some(entry) = entries.next().await {
             let (item, responder) = entry?;
 
@@ -472,7 +475,12 @@ impl Store {
                 EntryPayload::Normal(req) => {
                     tracing::trace!(log_id=?item.log_id, request=?req, "applying user request");
 
-                    num_normal_entries += 1;
+                    if req.inner.affects_persistent() {
+                        touched_persistent = true;
+                    }
+                    if req.inner.affects_ephemeral() {
+                        touched_ephemeral = true;
+                    }
 
                     super::applier::apply_request(&context, req, self, item.log_id)
                         .await
@@ -499,14 +507,18 @@ impl Store {
         if changed_log_id || changed_membership {
             self.record_ids_().await.context("recording updated IDs")?;
         }
-        if num_normal_entries > 0 {
-            // TODO: this should handle ephemeral if we ever bring ephemeral back.
-            // Would probably be nice to make each module report back which store(s) it wrote
-            // to so we can only flush those that have changed.
+        if touched_persistent {
             context
                 .stores
                 .databases
                 .persistent
+                .persist(self.state.cfg.sync_mode.into())?;
+        }
+        if touched_ephemeral {
+            context
+                .stores
+                .databases
+                .ephemeral
                 .persist(self.state.cfg.sync_mode.into())?;
         }
         self.metrics.record_apply(num_entries, start.elapsed());

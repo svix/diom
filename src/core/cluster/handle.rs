@@ -57,6 +57,24 @@ pub enum Request {
     AdminAuth(coyote_admin_auth::operations::AdminAuthOperation),
 }
 
+impl Request {
+    pub fn affects_persistent(&self) -> bool {
+        matches!(
+            self,
+            Self::ClusterInternal(_)
+                | Self::Kv(_)
+                | Self::Idempotency(_)
+                | Self::Msgs(_)
+                | Self::AuthToken(_)
+                | Self::AdminAuth(_)
+        )
+    }
+
+    pub fn affects_ephemeral(&self) -> bool {
+        matches!(self, Self::Cache(_) | Self::RateLimit(_))
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RequestWithContext {
     pub inner: Request,
