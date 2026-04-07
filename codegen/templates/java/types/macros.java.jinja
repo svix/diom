@@ -22,7 +22,6 @@
         @JsonProperty
     {%- endif -%}
     {%- if field.name is endingwith "_ms" %} @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class){% endif -%}
-    {%- if field.type.is_bytes() %} @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class){% endif -%}
 {%- endmacro -%}
 {% macro field_decl(field, annotate=true) -%}
     {% if annotate %}{{ field_annotation(field) }} {% endif %}private {{ field_type(field) }} {{ field_name(field) }};

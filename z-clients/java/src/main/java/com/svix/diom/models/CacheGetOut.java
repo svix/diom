@@ -13,8 +13,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
-import com.svix.diom.ByteArrayAsIntArraySerializer;
-import com.svix.diom.ByteArrayAsIntArrayDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -36,7 +34,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class CacheGetOut {
     @JsonProperty private OffsetDateTime expiry;
-    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
+    @JsonProperty private byte[] value;
     public CacheGetOut() {}
 
     public CacheGetOut expiry(OffsetDateTime expiry) {

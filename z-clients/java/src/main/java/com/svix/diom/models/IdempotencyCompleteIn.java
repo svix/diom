@@ -13,8 +13,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
-import com.svix.diom.ByteArrayAsIntArraySerializer;
-import com.svix.diom.ByteArrayAsIntArrayDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -36,7 +34,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyCompleteIn {
     @JsonProperty private String namespace;
-    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] response;
+    @JsonProperty private byte[] response;
     @JsonProperty private Map<String,String> context;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     public IdempotencyCompleteIn() {}
