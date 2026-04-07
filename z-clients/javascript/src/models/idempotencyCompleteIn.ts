@@ -3,7 +3,7 @@
 export interface IdempotencyCompleteIn {
     namespace?: string | null;
     /** The response to cache */
-    response: number[];
+    response: Uint8Array;
     /** Optional metadata to store alongside the response */
     context?: { [key: string]: string } | null;
     /** How long to keep the idempotency response for. */
@@ -14,7 +14,7 @@ export interface IdempotencyCompleteIn_ {
     namespace?: string | null;
     key: string;
     /** The response to cache */
-    response: number[];
+    response: Uint8Array;
     /** Optional metadata to store alongside the response */
     context?: { [key: string]: string } | null;
     /** How long to keep the idempotency response for. */
@@ -27,7 +27,7 @@ export const IdempotencyCompleteInSerializer = {
         return {
             namespace: object['namespace'],
             key: object['key'],
-            response: object['response'],
+            response: new Uint8Array(object['response']),
             context: object['context'],
             ttlMs: object['ttl_ms'],
         };
@@ -38,7 +38,7 @@ export const IdempotencyCompleteInSerializer = {
         return {
             'namespace': self.namespace,
             'key': self.key,
-            'response': self.response,
+            'response': Array.from(self.response),
             'context': self.context,
             'ttl_ms': self.ttlMs,
         };
