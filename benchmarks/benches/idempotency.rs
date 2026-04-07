@@ -29,7 +29,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
                 rt.block_on(async {
                     std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                         "key": &key,
-                        "ttl": 60
+                        "lock_period_ms": 60
                     })))
                     .await
                     .unwrap()
@@ -56,7 +56,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
                 rt.block_on(async {
                     std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                         "key": &key,
-                        "ttl": 60
+                        "lock_period_ms": 60
                     })))
                     .await
                     .unwrap()
@@ -65,7 +65,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
                     std::hint::black_box(client.post("v1.idempotency.complete").json(json!({
                         "key": &key,
                         "response": "ok".as_bytes(),
-                        "ttl": 60
+                        "ttl_ms": 60
                     })))
                     .await
                     .unwrap()
@@ -82,7 +82,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
                 .post("v1.idempotency.start")
                 .json(json!({
                     "key": key,
-                    "ttl": 60
+                    "lock_period_ms": 60
                 }))
                 .await
                 .unwrap();
@@ -92,9 +92,9 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             client
                 .post("v1.idempotency.complete")
                 .json(json!({
-                "key": key,
-                "response": payload,
-                "ttl": 60
+                    "key": key,
+                    "response": payload,
+                    "ttk_ms": 60
                 }))
                 .await
                 .unwrap();
@@ -112,7 +112,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             rt.block_on(async {
                 std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                     "key": &test_key,
-                    "ttl": 60
+                    "lock_period_ms": 60
                 })))
                 .await
                 .unwrap()
@@ -131,7 +131,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             rt.block_on(async {
                 std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                     "key": &test_key,
-                    "ttl": 60
+                    "lock_period_ms": 60
                 })))
                 .await
                 .unwrap()
@@ -150,7 +150,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             rt.block_on(async {
                 std::hint::black_box(client.post("v1.idempotency.start").json(json!({
                     "key": &test_key,
-                    "ttl": 60
+                    "lock_period_ms": 60
                 })))
                 .await
                 .unwrap()

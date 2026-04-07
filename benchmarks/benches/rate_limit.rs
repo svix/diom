@@ -32,7 +32,6 @@ fn bench_rate_limiter<'a, M: Measurement>(
                     std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
                         "key": key,
                         "units": 1,
-                        "method": "token_bucket",
                         "config": {
                             "capacity": 1_000_000,
                             "refill_amount": 50_000,
@@ -56,7 +55,6 @@ fn bench_rate_limiter<'a, M: Measurement>(
                     std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
                         "key": key,
                         "units": 1,
-                        "method": "token_bucket",
                         "config": {
                             "capacity": 1_000_000,
                             "refill_amount": 1,
@@ -80,57 +78,10 @@ fn bench_rate_limiter<'a, M: Measurement>(
                     std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
                         "key": key,
                         "units": 1,
-                        "method": "token_bucket",
                         "config": {
                             "capacity": 5,
                             "refill_amount": 1,
                             "refill_interval_seconds": 1
-                        }
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
-                })
-            },
-            BatchSize::SmallInput,
-        )
-    });
-
-    group.bench_function("fixed_window_large_capacity", |b| {
-        b.iter_batched(
-            || Alphanumeric.sample_string(&mut rng, 16),
-            |key| {
-                rt.block_on(async {
-                    std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
-                        "key": key,
-                        "units": 1,
-                        "method": "fixed_window",
-                        "config": {
-                            "max_requests": 1_000_000,
-                            "window_size": 1
-                        }
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
-                })
-            },
-            BatchSize::SmallInput,
-        )
-    });
-
-    group.bench_function("fixed_window_small_capacity", |b| {
-        b.iter_batched(
-            || Alphanumeric.sample_string(&mut rng, 16),
-            |key| {
-                rt.block_on(async {
-                    std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
-                        "key": key,
-                        "units": 1,
-                        "method": "fixed_window",
-                        "config": {
-                            "max_requests": 10,
-                            "window_size": 1
                         }
                     })))
                     .await
