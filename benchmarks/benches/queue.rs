@@ -53,34 +53,31 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
         group.bench_function("receive_ack_batch_100", |b| {
             b.iter(|| {
                 rt.block_on(async {
-                    let out = std::hint::black_box(
-                        client
-                            .msgs()
-                            .queue()
-                            .receive(
-                                topic.clone(),
-                                "bench-cg".to_owned(),
-                                MsgQueueReceiveIn::new().with_batch_size(100u16),
-                            )
-                            .await
-                            .unwrap(),
-                    );
+                    let out = client
+                        .msgs()
+                        .queue()
+                        .receive(
+                            topic.clone(),
+                            "bench-cg".to_owned(),
+                            MsgQueueReceiveIn::new().with_batch_size(100u16),
+                        )
+                        .await
+                        .unwrap();
                     if out.msgs.is_empty() {
                         return;
                     }
                     let msg_ids: Vec<String> = out.msgs.into_iter().map(|m| m.msg_id).collect();
-                    std::hint::black_box(
-                        client
-                            .msgs()
-                            .queue()
-                            .ack(
-                                topic.clone(),
-                                "bench-cg".to_owned(),
-                                MsgQueueAckIn::new(msg_ids),
-                            )
-                            .await
-                            .unwrap(),
-                    );
+
+                    client
+                        .msgs()
+                        .queue()
+                        .ack(
+                            topic.clone(),
+                            "bench-cg".to_owned(),
+                            MsgQueueAckIn::new(msg_ids),
+                        )
+                        .await
+                        .unwrap();
                 })
             })
         });
@@ -111,20 +108,18 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
         group.bench_function("receive_only_batch_100", |b| {
             b.iter(|| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .msgs()
-                            .queue()
-                            .receive(
-                                topic.clone(),
-                                "bench-cg".to_owned(),
-                                MsgQueueReceiveIn::new()
-                                    .with_batch_size(100u16)
-                                    .with_lease_duration(Duration::from_millis(100)),
-                            )
-                            .await
-                            .unwrap(),
-                    );
+                    client
+                        .msgs()
+                        .queue()
+                        .receive(
+                            topic.clone(),
+                            "bench-cg".to_owned(),
+                            MsgQueueReceiveIn::new()
+                                .with_batch_size(100u16)
+                                .with_lease_duration(Duration::from_millis(100)),
+                        )
+                        .await
+                        .unwrap();
                 })
             })
         });
