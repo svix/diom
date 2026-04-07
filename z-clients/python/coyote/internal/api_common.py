@@ -139,22 +139,31 @@ class ApiBase:
         return _parse_response(response, response_type)
 
 
+def decode_response_body(response: httpx.Response):
+    content_type = response.headers.get("content-type", "application/json")
+    if content_type == "application/msgpack":
+        return msgpack.unpackb(response.content)
+    else:
+        return response.json()
+
+
 def _parse_response[T: BaseModel](
     response: httpx.Response,
     response_type: t.Optional[type[T]],
 ) -> t.Optional[T]:
     if 200 <= response.status_code <= 299:
         if response_type is not None:
-            response_decoded = msgpack.unpackb(response.content)
+            response_decoded = decode_response_body(response)
             return response_type.model_validate(
                 response_decoded,
                 by_alias=True,
                 by_name=False,
             )
     else:
+        response_decoded = decode_response_body(response)
         if response.status_code == 422:
             raise HttpValidationError.init_exception(
-                response.json(), response.status_code
+                response_decoded, response.status_code
             )
         else:
-            raise HttpError.init_exception(response.json(), response.status_code)
+            raise HttpError.init_exception(response_decoded, response.status_code)
