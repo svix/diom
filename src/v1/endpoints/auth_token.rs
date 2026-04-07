@@ -22,7 +22,7 @@ use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_id::{AuthTokenId, Module, Public};
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::{MsgPackOrJson, RequestInput};
+use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -35,20 +35,20 @@ use crate::{
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
-fn auth_token_operation<'a>(ns: Option<&'a str>, action: &'static str) -> RequestedOperation<'a> {
-    RequestedOperation {
+fn auth_token_access_metadata<'a>(ns: Option<&'a str>, action: &'static str) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::AuthToken,
         namespace: ns,
         key: None,
         action,
-    }
+    })
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn operation(&self) -> RequestedOperation<'_> {
-                auth_token_operation(self.namespace.as_deref(), $action)
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                auth_token_access_metadata(self.namespace.as_deref(), $action)
             }
         }
     };

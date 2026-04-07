@@ -140,12 +140,13 @@ where
         };
         value.validate().map_err(make_validation_error)?;
 
-        if let Some(perms) = permissions
-            && verify_operation(&value.operation(), &perms.access_rules).is_err()
+        if let Some(op) = value.operation()
+            && let Some(perms) = permissions
+            && verify_operation(&op, &perms.access_rules).is_err()
         {
             return Err(MsgPackOrJsonRejection::Forbidden {
-                resource: value.operation().resource_str(),
-                action: value.operation().action,
+                resource: op.resource_str(),
+                action: op.action,
             });
         }
 
