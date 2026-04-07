@@ -653,7 +653,7 @@ macro_rules! from_str_via_serde {
 }
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum LogLevel {
     #[default]
     Info,
@@ -674,7 +674,7 @@ impl From<LogLevel> for Level {
 }
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum LogFormat {
     #[default]
     Default,
@@ -684,7 +684,7 @@ pub enum LogFormat {
 from_str_via_serde!(LogFormat);
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum Environment {
     #[default]
     Dev,
@@ -716,7 +716,7 @@ impl fmt::Display for LogLevel {
 
 /// How data is synchronized to the underlying database
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Default)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum SyncMode {
     /// Write data to the OS, but do not fsync
     #[default]
