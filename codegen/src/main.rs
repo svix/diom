@@ -25,14 +25,14 @@ fn main() -> anyhow::Result<ExitCode> {
 
     std::env::set_current_dir(repo_root())?;
 
-    let mut openapi = diom::openapi::initialize_openapi();
+    let mut openapi = diom_backend::openapi::initialize_openapi();
 
-    let router = diom::v1::router(None);
+    let router = diom_backend::v1::router(None);
     _ = aide::axum::ApiRouter::new()
         .nest("/api", router)
-        .finish_api_with(&mut openapi, diom::openapi::add_security_scheme);
+        .finish_api_with(&mut openapi, diom_backend::openapi::add_security_scheme);
 
-    diom::openapi::postprocess_spec(&mut openapi);
+    diom_backend::openapi::postprocess_spec(&mut openapi);
 
     let openapi_json = serde_json::to_string_pretty(&openapi)? + "\n";
 

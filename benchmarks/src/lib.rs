@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use diom::{cfg::LogLevel, core::cluster::proto::HealthResponse};
+use diom_backend::{cfg::LogLevel, core::cluster::proto::HealthResponse};
 use diom_client::{DiomClient, DiomOptions};
 use openraft::ServerState;
 use std::sync::{Arc, Once};

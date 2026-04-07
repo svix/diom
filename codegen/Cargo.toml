@@ -9,14 +9,14 @@ edition = "2024"
 # This Cargo feature flag exists so rust-analyzer doesn't enable diom's
 # openapi feature, which is expensive for compile times.
 # This is important for Cargo commands spawned by RA in particular.
-generate = ["diom/openapi"]
+generate = ["diom-backend/openapi"]
 
 [dependencies]
 aide.workspace = true
 anyhow.workspace = true
 async-io = { version = "2.6.0", features = ["tracing"] }
 async-process = { version = "2.5.0", features = ["tracing"] }
-diom.workspace = true
+diom-backend.workspace = true
 fs-err.workspace = true
 futures-lite = { version = "2.6.1", default-features = false }
 openapi-codegen.workspace = true

@@ -11,5 +11,5 @@ mod rate_limit;
 
 #[ctor::ctor]
 fn test_setup() {
-    diom::setup_tracing_for_tests();
+    diom_backend::setup_tracing_for_tests();
 }
