@@ -6,8 +6,8 @@ use diom_core::{
 };
 use diom_error::{Error, Result};
 use diom_id::NamespaceId;
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, KvSeparationOptions};
-use fjall_utils::{TableRow, WriteBatchExt};
+use fjall::{Database, Keyspace};
+use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -69,11 +69,10 @@ pub struct KvController {
 
 impl KvController {
     pub fn new(db: Database, keyspace_name: &'static str) -> Self {
-        let tables = {
-            let opts = KeyspaceCreateOptions::default()
-                .with_kv_separation(Some(KvSeparationOptions::default()));
-            db.keyspace(keyspace_name, || opts).unwrap()
-        };
+        let tables = SerializableKeyspaceCreateOptions::default()
+            .with_default_kv_separation()
+            .create_and_record(&db, keyspace_name)
+            .expect("should be able to open keyspace");
 
         Self {
             db: InstrumentedMutex::new(db),

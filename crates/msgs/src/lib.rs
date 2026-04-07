@@ -1,12 +1,12 @@
-use diom_error::{Error, Result};
+use diom_error::{Error, Result, ResultExt};
 use diom_id::NamespaceId;
 use diom_namespace::{Namespace, entities::MsgsConfig};
 use diom_operations::BackgroundResult;
-use fjall::{KeyspaceCreateOptions, KvSeparationOptions};
+use fjall::KeyspaceCreateOptions;
 use jiff::Timestamp;
 
 use entities::{ConsumerGroup, Partition, TopicName};
-use fjall_utils::{ReadableKeyspace, TableRow};
+use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
 use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
@@ -38,17 +38,13 @@ impl State {
         db: fjall::Database,
         topic_publish_notifier: TopicPublishNotifier,
     ) -> Result<Self, Error> {
-        let metadata_tables = {
-            let opts = KeyspaceCreateOptions::default();
-            db.keyspace(METADATA_KEYSPACE, || opts)?
-        };
+        let metadata_tables = db.keyspace(METADATA_KEYSPACE, KeyspaceCreateOptions::default)?;
 
-        let msg_table = {
-            let opts = KeyspaceCreateOptions::default()
-                .expect_point_read_hits(true)
-                .with_kv_separation(Some(KvSeparationOptions::default()));
-            db.keyspace(MSG_KEYSPACE, || opts)?
-        };
+        let msg_table = SerializableKeyspaceCreateOptions::default()
+            .expect_point_read_hits(true)
+            .with_default_kv_separation()
+            .create_and_record(&db, MSG_KEYSPACE)
+            .or_internal_error()?;
 
         let meter = opentelemetry::global::meter("diom.svix.com");
 
