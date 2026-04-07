@@ -1,32 +1,30 @@
 use std::{
     collections::BTreeMap,
     fmt::Debug,
+    marker::PhantomData,
     ops::{Bound, RangeBounds},
     sync::Arc,
     time::Duration,
 };
 
 use anyhow::Context;
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
-use fjall_utils::{FjallFixedKey, KeyspaceExt, MonotonicTableRow, TableRow, WriteBatchExt};
+use diom_core::{instrumented_mutex::InstrumentedMutex, task::spawn_blocking_in_current_span};
 use jiff::Timestamp;
 use openraft::{
-    EntryPayload, OptionalSend, RaftLogReader, RaftTypeConfig,
+    OptionalSend, RaftLogReader, RaftTypeConfig,
     storage::{IOFlushed, RaftLogStorage},
     type_config::alias::{LogIdOf, VoteOf},
 };
 use parking_lot::Mutex;
-use serde::{Deserialize, Serialize};
-use tap::{Pipe, Tap, TapFallible, TapOptional};
-use tracing::{Instrument, Span};
+use serde::{Serialize, de::DeserializeOwned};
+use tap::{Pipe, Tap, TapOptional};
+use tracing::Span;
 
 use super::{NodeId, raft::TypeConfig};
 use crate::{
     cfg::Dir,
     core::{cluster::ClusterId, metrics::LogMetrics},
 };
-use diom_core::task::spawn_blocking_in_current_span;
-use diom_error::Result;
 
 // This is an implementation of an openraft Logs store backed by fjall
 
@@ -106,47 +104,6 @@ impl LogCache {
 
     fn get(&self, log_index: &u64) -> Option<LogEntry> {
         self.0.lock().get(log_index).cloned()
-    }
-}
-
-/// These values can never change. Only additions are allowed.
-#[repr(u8)]
-enum RowType {
-    Log = 0,
-    LogIndex = 1,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(transparent)]
-struct Log(LogEntry);
-
-impl TableRow for Log {
-    const ROW_TYPE: u8 = RowType::Log as u8;
-}
-
-impl MonotonicTableRow for Log {
-    type KeyType = u64;
-
-    fn get_key(&self) -> u64 {
-        self.0.log_id.index
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct LogIndex {
-    unix_timestamp_ms: u64,
-    log_id: u64,
-}
-
-impl TableRow for LogIndex {
-    const ROW_TYPE: u8 = RowType::LogIndex as u8;
-}
-
-impl MonotonicTableRow for LogIndex {
-    type KeyType = u64;
-
-    fn get_key(&self) -> u64 {
-        self.unix_timestamp_ms
     }
 }
 
@@ -232,179 +189,117 @@ impl RaftLogStorage<TypeConfig> for DiomLogs {
     }
 }
 
-static NODE_ID: FjallFixedKey<NodeId> = FjallFixedKey::new("node_id");
-static LAST_PURGED_LOG_ID: FjallFixedKey<LogId> = FjallFixedKey::new("last_purged_log_id");
-static VOTE: FjallFixedKey<Vote> = FjallFixedKey::new("vote");
-static COMMITTED: FjallFixedKey<Option<LogId>> = FjallFixedKey::new("committed");
-static POISONED: FjallFixedKey<ClusterId> = FjallFixedKey::new("poisoned");
-
-#[derive(Debug, Clone)]
-pub(super) struct BackgroundFsyncFailedError(String);
-
-impl std::fmt::Display for BackgroundFsyncFailedError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "background fsync failed: {}", self.0)
-    }
+struct SqliteFixedKey<T: Serialize + DeserializeOwned> {
+    key: &'static str,
+    data: PhantomData<T>,
 }
 
-impl std::error::Error for BackgroundFsyncFailedError {
-    fn description(&self) -> &str {
-        "background fsync failed"
-    }
-}
-
-// Specialization for `flush_worker` when commits_before_fsync is 1 (which implies
-// that ack_immediately is false) which just fsyncs as fast as it can.
-async fn flush_every_worker(
-    db: Database,
-    mut channel: tokio::sync::mpsc::Receiver<IOFlushed<TypeConfig>>,
-) {
-    while let Some(callback) = channel.recv().await {
-        let db = db.clone();
-        // this shouldn't inherit our span
-        #[allow(clippy::disallowed_methods)]
-        let result = tokio::task::spawn_blocking(move || {
-            let _guard = tracing::info_span!("logs:flush_worker:every").entered();
-            tracing::trace!("fsyncing logs to disk");
-            db.persist(PersistMode::SyncAll)
-                // fjall::Error isn't Clone
-                .map_err(|err| {
-                    tracing::error!(?err, "error flushing fjall in background");
-                    BackgroundFsyncFailedError(err.to_string())
-                })
-        })
-        .await
-        .expect("failed joining blocking task");
-        callback.io_completed(result.map_err(std::io::Error::other));
-    }
-}
-
-/// General background worker for flushing the fjall database
-async fn flush_worker(
-    db: Database,
-    mut channel: tokio::sync::mpsc::Receiver<IOFlushed<TypeConfig>>,
-    commits_before_fsync: usize,
-    duration_before_fsync: Duration,
-    ack_immediately: bool,
-) {
-    let mut pending = Vec::new();
-    let mut done = false;
-    let shutting_down = crate::shutting_down_token();
-    let mut ticker = tokio::time::interval(duration_before_fsync);
-    while !done {
-        async {
-            let mut sync_now = false;
-
-            tokio::select! {
-                message = channel.recv() => {
-                    if let Some(callback) = message {
-                        if ack_immediately {
-                            let db = db.clone();
-                            let result = spawn_blocking_in_current_span(move || {
-                                let _guard = tracing::info_span!("logs:flush_worker:buffer").entered();
-                                db.persist(PersistMode::Buffer)
-                                    // fjall::Error isn't Clone
-                                    .map_err(|err| {
-                                        tracing::error!(?err, "error flushing fjall in background");
-                                        BackgroundFsyncFailedError(err.to_string())
-                                    })
-                            })
-                            .await
-                            .expect("failed joining blocking task");
-                            callback.io_completed(result.map_err(std::io::Error::other));
-                            pending.push(None);
-                        } else {
-                            pending.push(Some(callback))
-                        }
-                    } else {
-                        done = true;
-                    }
-                },
-                _ = shutting_down.cancelled() => {
-                    done = true
-                },
-                _ = ticker.tick() => {
-                    sync_now = !pending.is_empty()
-                }
-            }
-
-            if sync_now || (commits_before_fsync > 0 && pending.len() >= commits_before_fsync) {
-                let db = db.clone();
-                let num_commits = pending.len();
-                let result = spawn_blocking_in_current_span(
-                    move || -> Result<(), BackgroundFsyncFailedError> {
-                        let _guard =
-                            tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
-                        tracing::trace!("flushing logs to disk");
-                        db.persist(PersistMode::SyncAll).map_err(|err| {
-                            tracing::error!(?err, "error flushing fjall");
-                            BackgroundFsyncFailedError(err.to_string())
-                        })
-                    },
-                )
-                .await
-                .expect("failed joining blocking task");
-                tracing::trace!(num_pending = pending.len(), "committed for some items");
-                tracing::info_span!("logs:flush_worker:drain").in_scope(|| {
-                    for callback in pending.drain(..).flatten() {
-                        callback.io_completed(result.clone().map_err(std::io::Error::other))
-                    }
-                });
-            }
+impl<T: Serialize + DeserializeOwned> SqliteFixedKey<T> {
+    const fn new(key: &'static str) -> Self {
+        Self {
+            key,
+            data: PhantomData,
         }
-        .instrument(tracing::info_span!("logs:flush_worker"))
-        .await
     }
-    if let Err(err) = db.persist(PersistMode::SyncAll) {
-        tracing::error!(?err, "error flushing fjall at shutdown");
+
+    fn get<TX>(&self, tx: &TX) -> anyhow::Result<Option<T>>
+    where
+        TX: std::ops::Deref<Target = rusqlite::Connection>,
+    {
+        let row = match tx.query_row(
+            "SELECT value FROM metadata WHERE key = ?1",
+            [self.key],
+            |row| -> rusqlite::Result<Box<[u8]>, _> { row.get(0) },
+        ) {
+            Ok(row) => row,
+            Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(None),
+            Err(e) => return Err(e.into()),
+        };
+        let row = rmp_serde::from_slice(&row)?;
+        Ok(Some(row))
+    }
+
+    fn store_tx<TX>(&self, tx: &TX, value: &T) -> anyhow::Result<()>
+    where
+        TX: std::ops::Deref<Target = rusqlite::Connection>,
+    {
+        let serialized = rmp_serde::to_vec_named(value)?;
+        tx.execute("INSERT INTO metadata(key, value) VALUES(?1, ?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (self.key, serialized))?;
+        Ok(())
     }
 }
+
+static NODE_ID: SqliteFixedKey<NodeId> = SqliteFixedKey::new("node_id");
+static LAST_PURGED_LOG_ID: SqliteFixedKey<LogId> = SqliteFixedKey::new("last_purged_log_id");
+static VOTE: SqliteFixedKey<Vote> = SqliteFixedKey::new("vote");
+static COMMITTED: SqliteFixedKey<Option<LogId>> = SqliteFixedKey::new("committed");
+static POISONED: SqliteFixedKey<ClusterId> = SqliteFixedKey::new("poisoned");
 
 #[derive(Clone)]
 pub struct DiomLogs {
-    db: Database,
-    meta_keyspace: Keyspace,
-    log_keyspace: Keyspace,
-    flush_tx: tokio::sync::mpsc::Sender<IOFlushed<TypeConfig>>,
+    db: InstrumentedMutex<rusqlite::Connection>,
     log_cache: LogCache,
     metrics: Option<LogMetrics>,
     last_vote: Arc<Mutex<Option<Vote>>>,
 }
 
-impl DiomLogs {
-    const DELETE_BATCH_SIZE: usize = 10_000;
+async fn spawn_blocking_with_db<T, F, O>(
+    label: &'static str,
+    db: &InstrumentedMutex<T>,
+    f: F,
+) -> anyhow::Result<O>
+where
+    T: Send + 'static,
+    F: FnOnce(&mut T) -> anyhow::Result<O> + Send + 'static,
+    O: Send + 'static,
+{
+    let db = db.clone();
+    spawn_blocking_in_current_span(move || {
+        let mut db = db.lock(label);
+        f(&mut db)
+    })
+    .await
+    .expect("failed to join thread")
+}
 
-    pub fn new(
-        path: Dir,
-        commits_before_fsync: usize,
-        duration_before_fsync: Duration,
-        ack_immediately: bool,
-    ) -> anyhow::Result<Self> {
-        let pb: std::path::PathBuf = path.into();
-        let db = Database::builder(&pb).worker_threads(1).open()?;
-        let log_keyspace = db.keyspace("cluster:logs", || {
-            KeyspaceCreateOptions::default()
-                .manual_journal_persist(true)
-                .expect_point_read_hits(true)
-        })?;
-        let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
-        let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(65536);
-        if commits_before_fsync == 1 {
-            tokio::spawn(flush_every_worker(db.clone(), flush_rx));
+impl DiomLogs {
+    pub fn new(path: Dir, synchronous: bool) -> anyhow::Result<Self> {
+        let path = path.as_path().join("logs.sqlite");
+        let db = rusqlite::Connection::open(path)?;
+
+        db.execute_batch(
+            r#"
+            CREATE TABLE IF NOT EXISTS logs(
+                log_index UNSIGNED BIGINT NOT NULL PRIMARY KEY,
+                entry BLOB NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS log_timestamps(
+                timestamp UNSIGNED BIGINT NOT NULL PRIMARY KEY,
+                log_index UNSIGNED BIGINT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_log_timestamps_on_log_index
+                ON log_timestamps(log_index);
+            CREATE TABLE IF NOT EXISTS metadata(
+                key TEXT NOT NULL PRIMARY KEY,
+                value BLOB NOT NULL
+            );
+            "#,
+        )
+        .context("initializing schema")?;
+        db.pragma_update(None, "journal_mode", "WAL")
+            .context("enabling WAL mode")?;
+        if synchronous {
+            db.pragma_update(None, "synchronous", "full")
+                .context("enabling 'full' synchronous mode")?;
         } else {
-            tokio::spawn(flush_worker(
-                db.clone(),
-                flush_rx,
-                commits_before_fsync,
-                duration_before_fsync,
-                ack_immediately,
-            ));
+            db.pragma_update(None, "synchronous", "normal")
+                .context("enabling 'normal' synchronous mode")?;
         }
+        db.pragma_update(None, "journal_size_limit", (100 * 1000 * 1000).to_string())
+            .context("increasing max journal size")?;
+
         Ok(Self {
-            db,
-            log_keyspace,
-            meta_keyspace,
-            flush_tx,
+            db: InstrumentedMutex::new(db),
             log_cache: LogCache::new(100),
             metrics: None,
             last_vote: Arc::new(Mutex::new(None)),
@@ -431,36 +326,38 @@ impl DiomLogs {
         timestamp: Timestamp,
         log_index: u64,
     ) -> anyhow::Result<()> {
-        let rec = LogIndex {
-            unix_timestamp_ms: timestamp.as_millisecond() as u64,
-            log_id: log_index,
-        };
-        tracing::trace!(?rec, "recording log/timestamp checkpoint");
-        let keyspace = self.log_keyspace.clone();
-        spawn_blocking_in_current_span(move || keyspace.insert_row(rec.key(), &rec)).await??;
-        Ok(())
+        spawn_blocking_with_db("record_log_timestamp", &self.db, move |db| {
+            tracing::debug!(?timestamp, log_index, "storing log timestamp");
+            let tx = db.transaction().context("creating transaction to append")?;
+            tx.execute(
+                "INSERT INTO log_timestamps(timestamp, log_index) VALUES (?1, ?2)",
+                (timestamp.as_millisecond(), log_index as i64),
+            )?;
+            tx.commit()?;
+            Ok(())
+        })
+        .await
     }
 
     /// Get the NodeId (or, if we don't have one, make a new one)
     pub async fn get_node_id(&mut self) -> anyhow::Result<NodeId> {
-        let db = self.db.clone();
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
-            if let Some(node_id) = NODE_ID.get(&meta_keyspace)? {
+        spawn_blocking_with_db("get_node_id", &self.db, move |db| {
+            if let Some(node_id) = NODE_ID.get(&db)? {
                 tracing::info!(%node_id, "starting up with existing node ID");
                 node_id
             } else {
                 let node_id = NodeId::generate();
                 tracing::info!(%node_id, "generated a new node ID");
+                let tx = db.transaction()?;
                 NODE_ID
-                    .store(&meta_keyspace, &node_id)
+                    .store_tx(&tx, &node_id)
                     .context("saving node ID to logs database")?;
-                db.persist(PersistMode::SyncAll)?;
+                tx.commit()?;
                 node_id
             }
             .pipe(Ok)
         })
-        .await?
+        .await
     }
 
     #[tracing::instrument(skip_all, fields(num_entries))]
@@ -473,26 +370,25 @@ impl DiomLogs {
         let start = std::time::Instant::now();
         let num_entries = entries.len();
 
-        let keyspace = self.log_keyspace.clone();
         let persisted_entries = entries.clone();
-        // set durability to None because we're going to sync it in the flush worker
-        let mut batch =
-            fjall::OwnedWriteBatch::with_capacity(self.db.clone(), entries.len()).durability(None);
-        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
+        spawn_blocking_with_db("append_entries", &self.db, move |db| {
             let _guard = tracing::info_span!("append:write_entries").entered();
+            let tx = db.transaction().context("creating transaction to append")?;
             for entry in persisted_entries {
-                let log = Log(entry);
-                batch.insert_row(&keyspace, log.key(), &log)?;
+                tracing::trace!(log_index = entry.log_id.index, "appending an entry");
+                let serialized = rmp_serde::to_vec_named(&entry).context("serializing log")?;
+                tx.execute(
+                    "INSERT INTO logs(log_index, entry) VALUES(?1, ?2)",
+                    (entry.log_id.index as i64, serialized),
+                )
+                .context("appending log")?;
             }
-            batch.commit()?;
+            tx.commit()?;
             Ok(())
         })
-        .await??;
+        .await?;
 
-        self.flush_tx
-            .send(callback)
-            .await
-            .context("requesting background fsync")?;
+        callback.io_completed(Ok(()));
 
         tracing::trace!(num_entries, "appended some entries");
 
@@ -509,60 +405,69 @@ impl DiomLogs {
     async fn truncate_entries_(&self, log_id: Option<LogId>) -> anyhow::Result<()> {
         let start = log_id.map(|l| l.index + 1).unwrap_or(0);
         self.log_cache.truncate(start);
-        let log_keyspace = self.log_keyspace.clone();
-        let db = self.db.clone();
-        spawn_blocking_in_current_span(move || {
-            let deleted = Log::remove_keys_in_range(
-                &db,
-                &log_keyspace,
-                start..,
-                Self::DELETE_BATCH_SIZE,
-                PersistMode::Buffer,
-            )?;
-            tracing::debug!(deleted, "deleted entries for truncation");
+
+        spawn_blocking_with_db("truncate_entries", &self.db, move |db| {
+            tracing::trace!(?log_id, "truncating entries after (exclusive)");
+            let txn = db.transaction().context("creating truncate transaction")?;
+            txn.execute("DELETE FROM logs WHERE log_index >= ?1", [start as i64])
+                .context("truncating logs")?;
+            txn.execute(
+                "DELETE FROM log_timestamps WHERE log_index >= ?1",
+                [start as i64],
+            )
+            .context("truncating log indexes")?;
+            txn.commit().context("committing truncate transaction")?;
             Ok(())
         })
-        .await?
+        .await
     }
 
     /// Purge logs upto log_id, inclusive
     async fn purge_entries_(&self, log_id: LogId) -> anyhow::Result<()> {
         self.log_cache.purge(log_id.index);
-        let meta_keyspace = self.meta_keyspace.clone();
-        let log_keyspace = self.log_keyspace.clone();
-        let db = self.db.clone();
-        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            LAST_PURGED_LOG_ID.store(&meta_keyspace, &log_id)?;
-            let deleted = Log::remove_keys_in_range(
-                &db,
-                &log_keyspace,
-                ..=log_id.index,
-                Self::DELETE_BATCH_SIZE,
-                PersistMode::Buffer,
-            )?;
-            tracing::debug!(deleted, "deleted entries for purge");
+        spawn_blocking_with_db("purge_entries", &self.db, move |db| {
+            tracing::trace!(?log_id, "truncating entries before (inclusive)");
+            let txn = db.transaction().context("creating purge transaction")?;
+            txn.execute(
+                "DELETE FROM logs WHERE log_index <= ?1",
+                [log_id.index as i64],
+            )
+            .context("purging logs")?;
+            txn.execute(
+                "DELETE FROM log_timestamps WHERE log_index <= ?1",
+                [log_id.index as i64],
+            )
+            .context("purging log indexes")?;
+            LAST_PURGED_LOG_ID.store_tx(&txn, &log_id)?;
+            txn.commit().context("committing purge transaction")?;
             Ok(())
         })
-        .await?
+        .await
     }
 
     async fn get_log_state_(&mut self) -> anyhow::Result<openraft::LogState<TypeConfig>> {
-        let log_keyspace = self.log_keyspace.clone();
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
-            let last_purged_log_id = LAST_PURGED_LOG_ID.get(&meta_keyspace)?;
-            let last_log_id =
-                if let Some(Ok(last_guard)) = Log::range(&log_keyspace, ..).next_back() {
-                    Some(last_guard.1.0.log_id)
-                } else {
-                    last_purged_log_id
-                };
+        spawn_blocking_with_db("get_log_state", &self.db, move |db| {
+            let last_purged_log_id = LAST_PURGED_LOG_ID.get(&db)?;
+            let entry = match db.query_row(
+                "SELECT entry FROM logs ORDER BY log_index DESC LIMIT 1",
+                [],
+                |r| -> rusqlite::Result<Box<[u8]>, _> { r.get(0) },
+            ) {
+                Ok(r) => Some(rmp_serde::from_slice::<LogEntry>(&r)?),
+                Err(rusqlite::Error::QueryReturnedNoRows) => None,
+                Err(e) => return Err(e.into()),
+            };
+            let last_log_id = if let Some(entry) = entry {
+                Some(entry.log_id)
+            } else {
+                last_purged_log_id
+            };
             Ok(openraft::LogState {
                 last_purged_log_id,
                 last_log_id,
             })
         })
-        .await?
+        .await
         .tap(|state| tracing::trace!(?state, "read initial log state"))
     }
 
@@ -570,13 +475,12 @@ impl DiomLogs {
     where
         RB: RangeBounds<u64> + Clone + Debug + OptionalSend,
     {
-        let log_keyspace = self.log_keyspace.clone();
         // the most common case is that we just wrote a log entry in append_entries_ and now we're
         // reading it out to apply it. we don't need to go to disk for that!
         match (range.start_bound(), range.end_bound()) {
             (Bound::Included(i), Bound::Excluded(j)) if i + 1 == *j => {
-                tracing::trace!("short-circuiting for single-log read");
                 if let Some(entry) = self.log_cache.get(i) {
+                    tracing::trace!("short-circuiting for single-log read");
                     return Ok(vec![entry]);
                 }
             }
@@ -585,48 +489,39 @@ impl DiomLogs {
 
         // For some reason, RB isn't specified as Send in the trait, so we can't
         // use it directly across the boundary. ARGH!
-        let send_range = match range.start_bound() {
-            Bound::Unbounded => 0..,
-            Bound::Included(i) => *i..,
-            Bound::Excluded(i) => (*i + 1)..,
+        let lower_bound = match range.start_bound() {
+            Bound::Unbounded => 0,
+            Bound::Included(i) => *i,
+            Bound::Excluded(i) => i.saturating_add(1),
         };
-        // why isn't RB always Send? it's a goddamn range...
-        let end = match range.end_bound() {
-            Bound::Unbounded => None,
-            Bound::Included(i) => Some(*i + 1),
-            Bound::Excluded(i) => Some(*i),
+        let upper_bound = match range.end_bound() {
+            Bound::Unbounded => i64::MAX as u64,
+            Bound::Included(i) => i.saturating_add(1),
+            Bound::Excluded(i) => *i,
         };
-        let value = spawn_blocking_in_current_span(move || -> anyhow::Result<_> {
-            let mut output = vec![];
-            for row in Log::range(&log_keyspace, send_range) {
-                let (key, value) =
-                    row.tap_err(|err| tracing::warn!(?err, "Error reading values from log"))?;
-                if let Some(end) = end
-                    && key >= end
-                {
-                    break;
-                }
-
-                output.push(value.0);
-            }
-            Ok(output)
+        let value: Vec<LogEntry> = spawn_blocking_with_db("read_log_entries", &self.db, move |db| {
+            tracing::trace!(lower_bound, upper_bound, "reading log entries from underlying db");
+            let mut stmt =
+                db.prepare("SELECT entry FROM logs WHERE log_index >= ?1 AND log_index < ?2 ORDER BY log_index ASC")?;
+            stmt.query_map(
+                    [lower_bound as i64, upper_bound as i64],
+                    |row| -> rusqlite::Result<Box<[u8]>, _> { row.get(0) },
+                )
+                .context("reading log IDs")?
+                .map(|data| rmp_serde::from_slice(&data?).context("unable to parse data as msgpack"))
+                .collect()
         })
-        .await??;
+        .await?;
         self.metric_record(|m| m.record_log_read(value.len()));
         Ok(value)
     }
 
     async fn save_vote_(&self, vote: Vote) -> anyhow::Result<()> {
-        tracing::trace!(?vote, "saving a vote");
-        let db = self.db.clone();
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            VOTE.store(&meta_keyspace, &vote)?;
-            tracing::info_span!("save_vote:persist")
-                .in_scope(|| db.persist(PersistMode::SyncAll))?;
-            Ok(())
+        spawn_blocking_with_db("save_vote", &self.db, move |db| {
+            tracing::trace!(?vote, "saving a vote");
+            VOTE.store_tx(&db, &vote)
         })
-        .await?
+        .await
         .context("saving vote")?;
         let mut guard = self.last_vote.lock();
         *guard = Some(vote);
@@ -640,8 +535,9 @@ impl DiomLogs {
                 return Ok(Some(*vote));
             }
         }
-        let keyspace = self.meta_keyspace.clone();
-        let Some(vote) = spawn_blocking_in_current_span(move || VOTE.get(&keyspace)).await?? else {
+        let Some(vote) =
+            spawn_blocking_with_db("read_vote", &self.db, move |db| VOTE.get(&db)).await?
+        else {
             tracing::trace!("couldn't find a vote");
             return Ok(None);
         };
@@ -654,23 +550,23 @@ impl DiomLogs {
     }
 
     async fn save_committed_(&self, committed: Option<LogId>) -> anyhow::Result<()> {
-        let meta_keyspace = self.meta_keyspace.clone();
-        tracing::trace!(?committed, "saving committed state");
-        spawn_blocking_in_current_span(move || COMMITTED.store(&meta_keyspace, &committed))
-            .await?
-            .context("saving committed state")
+        spawn_blocking_with_db("save_committed", &self.db, move |db| {
+            tracing::trace!(?committed, "saving committed state");
+            COMMITTED.store_tx(&db, &committed)
+        })
+        .await
+        .context("saving committed state")
     }
 
     async fn read_committed_(&self) -> anyhow::Result<Option<LogId>> {
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
+        spawn_blocking_with_db("read_committed", &self.db, move |db| {
             COMMITTED
-                .get(&meta_keyspace)?
+                .get(&db)?
                 .tap_some(|committed| tracing::trace!(?committed, "read committed state"))
                 .flatten()
                 .pipe(Ok)
         })
-        .await?
+        .await
     }
 
     fn start_metrics(&self, metrics: LogMetrics) {
@@ -682,12 +578,17 @@ impl DiomLogs {
             while shutdown.run_until_cancelled(ticker.tick()).await.is_some() {
                 match spawn_blocking_in_current_span({
                     let db = db.clone();
-                    move || db.disk_space()
+                    move || {
+                        let db = db.lock("get_metrics");
+                        db.query_row("SELECT SUM(\"pgsize\")", [], |r| -> rusqlite::Result<i64> {
+                            r.get(0)
+                        })
+                    }
                 })
                 .await
                 .expect("Failed joining blocking task")
                 {
-                    Ok(bytes) => metrics.bytes_used(bytes),
+                    Ok(bytes) => metrics.bytes_used(bytes as _),
                     Err(err) => tracing::info!(?err, "failed to read log disk space"),
                 }
 
@@ -705,74 +606,78 @@ impl DiomLogs {
 
     /// Return the highest log index that we know occurred before the given timestamp,
     pub async fn log_index_before(&self, ts: Timestamp) -> anyhow::Result<Option<u64>> {
-        let log_keyspace = self.log_keyspace.clone();
-        let range = ..(ts.as_millisecond() as u64);
-        spawn_blocking_in_current_span(move || {
-            if let Some(row) = LogIndex::range(&log_keyspace, range).next_back() {
-                Ok(Some(row?.1.log_id))
-            } else {
-                Ok(None)
+        spawn_blocking_with_db("log_index_before", &self.db, move |db| {
+            tracing::debug!(timestamp=%ts, "looking for highest index before");
+            match db.query_row(
+                "SELECT log_index FROM log_timestamps WHERE timestamp < ?1 ORDER BY timestamp DESC LIMIT 1",
+                [ts.as_millisecond()],
+                |r| -> rusqlite::Result<i64, _> { r.get(0) },
+            ) {
+                Ok(r) => Ok(Some(r as u64)),
+                Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+                Err(e) => Err(e.into()),
             }
         })
-        .await?
+        .await
     }
 
     /// Return the highest log index that we know occurred at or after the given timestamp,
     pub async fn log_index_after(&self, ts: Timestamp) -> anyhow::Result<Option<u64>> {
-        let log_keyspace = self.log_keyspace.clone();
-        let range = (ts.as_millisecond() as u64)..;
-        spawn_blocking_in_current_span(move || {
-            if let Some(row) = LogIndex::range(&log_keyspace, range).next() {
-                Ok(Some(row?.1.log_id))
-            } else {
-                Ok(None)
+        spawn_blocking_with_db("log_index_after", &self.db, move |db| {
+            tracing::debug!(timestamp=%ts, "looking for highest index after");
+            match db.query_row(
+                "SELECT log_index FROM log_timestamps WHERE timestamp >= ?1 ORDER BY timestamp ASC LIMIT 1",
+                [ts.as_millisecond()],
+                |r| -> rusqlite::Result<i64, _> { r.get(0) },
+            ) {
+                Ok(r) => Ok(Some(r as u64)),
+                Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+                Err(e) => Err(e.into()),
             }
         })
-        .await?
+        .await
     }
 
     pub(super) async fn get_last_timestamp(&self) -> anyhow::Result<Option<Timestamp>> {
-        let log_keyspace = self.log_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
-            for guard in Log::range(&log_keyspace, ..).rev() {
-                if let Ok(guard) = guard
-                    && let EntryPayload::Normal(req) = guard.1.0.payload
-                {
-                    return Some(req.timestamp);
-                }
+        spawn_blocking_with_db("get_last_timestamp", &self.db, move |db| {
+            tracing::debug!("looking for last timestamp");
+            match db.query_row(
+                "SELECT timestamp FROM log_timestamps ORDER BY timestamp DESC LIMIT 1",
+                [],
+                |r| -> rusqlite::Result<i64, _> { r.get(0) },
+            ) {
+                Ok(r) => Timestamp::from_millisecond(r)?.pipe(|ts| Ok(Some(ts))),
+                Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+                Err(e) => Err(e.into()),
             }
-            None
         })
         .await
-        .context("failed to join")
     }
 
     pub(crate) async fn poison(&self, cluster_id: ClusterId) -> anyhow::Result<()> {
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || POISONED.store(&meta_keyspace, &cluster_id))
-            .await?
-            .context("saving poisoned state")
+        spawn_blocking_with_db("poison", &self.db, move |db| {
+            POISONED.store_tx(&db, &cluster_id)
+        })
+        .await
+        .context("saving poisoned state")
     }
 
     pub(crate) async fn is_poisoned(&self) -> anyhow::Result<bool> {
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
+        spawn_blocking_with_db("is_poisoned", &self.db, move |db| {
             POISONED
-                .get(&meta_keyspace)?
+                .get(&db)?
                 .tap_some(|cluster_id| {
                     tracing::error!(?cluster_id, "this node was previously poisoned")
                 })
                 .is_some()
                 .pipe(Ok)
         })
-        .await?
+        .await
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use super::DiomLogs;
     use crate::cfg::Dir;
     use jiff::{Span, Timestamp};
@@ -788,7 +693,7 @@ mod tests {
         fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
             let logdir = Dir::new(&workdir).unwrap();
-            let logs = DiomLogs::new(logdir, 0, Duration::from_hours(1), true).unwrap();
+            let logs = DiomLogs::new(logdir, false).unwrap();
             Self {
                 _workdir: workdir,
                 logs,

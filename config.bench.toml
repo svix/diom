@@ -13,8 +13,5 @@ opentelemetry_sample_ratio=0.001
 sync_mode = "buffer"
 
 [cluster]
-# fsync very infrequently
-log_sync_interval_commits = 0
-log_sync_interval_ms = 10000
-# acknowledge commits before we fsync
-log_ack_immediately = true
+# do not fsync the log
+log_synchronous = false
