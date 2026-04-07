@@ -18,7 +18,7 @@ pub enum Error {
     Validation(HttpErrorContent<HttpValidationError>),
 }
 
-fn deserialize_body<'b, 'a, T>(mime: &headers::Mime, bytes: &'b [u8]) -> Option<T>
+fn deserialize_body<'b, 'a, T>(status_code: http::StatusCode, mime: &headers::Mime, bytes: &'b [u8]) -> Option<T>
 where
     T: Deserialize<'a>,
     'b: 'a,
@@ -32,7 +32,7 @@ where
     };
     if payload.is_none() {
         let as_str = String::from_utf8_lossy(bytes);
-        tracing::warn!(mime_type=?mime, response = %as_str, "unparsable error");
+        tracing::warn!(?status_code, mime_type=?mime, response = %as_str, "unparsable error");
     }
     payload
 }
@@ -54,12 +54,12 @@ impl Error {
                 if status_code == http::StatusCode::UNPROCESSABLE_ENTITY {
                     Self::Validation(HttpErrorContent {
                         status: http::StatusCode::UNPROCESSABLE_ENTITY,
-                        payload: deserialize_body(&mime, &bytes),
+                        payload: deserialize_body(status_code, &mime, &bytes),
                     })
                 } else {
                     Error::Http(HttpErrorContent {
                         status: status_code,
-                        payload: deserialize_body(&mime, &bytes),
+                        payload: deserialize_body(status_code, &mime, &bytes),
                     })
                 }
             }
