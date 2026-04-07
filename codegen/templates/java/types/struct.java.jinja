@@ -35,6 +35,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
+import com.svix.diom.ByteArrayAsIntArraySerializer;
+import com.svix.diom.ByteArrayAsIntArrayDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -73,7 +75,7 @@ public class {{ class_name }} {
         return this;
     }
 
-    {% if field.type.is_set() or field.type.is_list() -%}
+    {% if (field.type.is_set() or field.type.is_list()) and not field.type.is_bytes() -%}
     {{ f_deprecated -}} public {{ class_name }} add{{ f_varname | to_upper_camel_case }}Item({{ field.type.inner_type().to_java() }} {{ f_varname }}Item) {
         if (this.{{ f_varname }} == null) {
             {%- if field.type.is_set() %}
@@ -169,6 +171,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
+import com.svix.diom.ByteArrayAsIntArraySerializer;
+import com.svix.diom.ByteArrayAsIntArrayDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
 import java.util.Map;

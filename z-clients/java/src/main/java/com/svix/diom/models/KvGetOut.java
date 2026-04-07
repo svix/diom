@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
+import com.svix.diom.ByteArrayAsIntArraySerializer;
+import com.svix.diom.ByteArrayAsIntArrayDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -34,7 +36,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvGetOut {
     @JsonProperty private OffsetDateTime expiry;
-    @JsonProperty private List<Byte> value;
+    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
     @JsonProperty private Long version;
     public KvGetOut() {}
 
@@ -57,29 +59,22 @@ public class KvGetOut {
         this.expiry = expiry;
     }
 
-    public KvGetOut value(List<Byte> value) {
+    public KvGetOut value(byte[] value) {
         this.value = value;
         return this;
     }
 
-    public KvGetOut addValueItem(Byte valueItem) {
-        if (this.value == null) {
-            this.value = new ArrayList<>();
-        }
-        this.value.add(valueItem);
-        return this;
-    }
     /**
     * Get value
     *
      * @return value
      */
     @javax.annotation.Nullable
-    public List<Byte> getValue() {
+    public byte[] getValue() {
         return value;
     }
 
-    public void setValue(List<Byte> value) {
+    public void setValue(byte[] value) {
         this.value = value;
     }
 

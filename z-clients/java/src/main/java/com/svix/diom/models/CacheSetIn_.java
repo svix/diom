@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
+import com.svix.diom.ByteArrayAsIntArraySerializer;
+import com.svix.diom.ByteArrayAsIntArrayDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -30,13 +32,13 @@ import java.util.Objects;
 public class CacheSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty private List<Byte> value;
+    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
 
     public CacheSetIn_(
         String namespace,
         String key,
-        List<Byte> value,
+        byte[] value,
         Duration ttl
     ) {
         this.namespace = namespace;
