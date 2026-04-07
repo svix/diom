@@ -1,4 +1,3 @@
-use diom_core::Monotime;
 use diom_error::{Error, Result, ResultExt};
 use diom_id::NamespaceId;
 use diom_namespace::{Namespace, entities::MsgsConfig};
@@ -166,6 +165,7 @@ pub fn estimate_available_stream_messages(
 
 const EXPIRATION_BATCH_SIZE: usize = 1000;
 
+// FIXME: Not currently used since it's not efficient. To be called from the worker loop.
 #[tracing::instrument(skip_all, fields(cleared))]
 pub fn clear_expired_in_background(state: &State, now: Timestamp) -> Result<()> {
     let mut cleared = 0;
@@ -198,15 +198,14 @@ pub fn clear_expired_in_background(state: &State, now: Timestamp) -> Result<()> 
 #[derive(Clone)]
 pub struct AllNodesWorker {
     state: State,
-    time: Monotime,
 }
 
 impl AllNodesWorker {
-    pub fn new(state: State, time: Monotime) -> Self {
-        Self { state, time }
+    pub fn new(state: State) -> Self {
+        Self { state }
     }
 
-    async fn worker_loop(&self, now: Timestamp) -> BackgroundResult<()> {
+    async fn worker_loop(&self) -> BackgroundResult<()> {
         let mut tasks = tokio::task::JoinSet::new();
         tasks.spawn_blocking({
             let state = self.state.clone();
@@ -215,10 +214,6 @@ impl AllNodesWorker {
         tasks.spawn_blocking({
             let state = self.state.clone();
             move || record_end_offsets(&state)
-        });
-        tasks.spawn_blocking({
-            let state = self.state.clone();
-            move || clear_expired_in_background(&state, now)
         });
         for result in tasks.join_all().await {
             if let Err(e) = result {
@@ -240,7 +235,7 @@ impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
             .await
             .is_some()
         {
-            self.worker_loop(self.time.now()).await?;
+            self.worker_loop().await?;
         }
         Ok(())
     }

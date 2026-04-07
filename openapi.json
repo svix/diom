@@ -6835,6 +6835,11 @@
             "items": {
               "$ref": "#/components/schemas/MsgIn"
             }
+          },
+          "idempotency_key": {
+            "type": "string",
+            "default": null,
+            "nullable": true
           }
         },
         "required": [
