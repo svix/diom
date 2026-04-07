@@ -287,3 +287,9 @@ strip = true
 diom-client.opt-level = 2
 hyper.opt-level = 2
 tokio.opt-level = 2
+
+[profile.benchmark]
+inherits = "release"
+debug = true
+opt-level = 3
+strip = false
