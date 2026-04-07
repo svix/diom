@@ -29,18 +29,20 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
-                        "key": key,
-                        "units": 1,
-                        "config": {
-                            "capacity": 1_000_000,
-                            "refill_amount": 50_000,
-                            "refill_interval_seconds": 1
-                        }
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
+                    client
+                        .post("v1.rate-limit.limit")
+                        .json(json!({
+                            "key": key,
+                            "units": 1,
+                            "config": {
+                                "capacity": 1_000_000,
+                                "refill_amount": 50_000,
+                                "refill_interval_seconds": 1
+                            }
+                        }))
+                        .await
+                        .unwrap()
+                        .expect(StatusCode::OK);
                 })
             },
             BatchSize::SmallInput,
@@ -52,18 +54,20 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
-                        "key": key,
-                        "units": 1,
-                        "config": {
-                            "capacity": 1_000_000,
-                            "refill_amount": 1,
-                            "refill_interval_seconds": 1
-                        }
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
+                    client
+                        .post("v1.rate-limit.limit")
+                        .json(json!({
+                            "key": key,
+                            "units": 1,
+                            "config": {
+                                "capacity": 1_000_000,
+                                "refill_amount": 1,
+                                "refill_interval_seconds": 1
+                            }
+                        }))
+                        .await
+                        .unwrap()
+                        .expect(StatusCode::OK);
                 })
             },
             BatchSize::SmallInput,
@@ -75,18 +79,20 @@ fn bench_rate_limiter<'a, M: Measurement>(
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("v1.rate-limit.limit").json(json!({
-                        "key": key,
-                        "units": 1,
-                        "config": {
-                            "capacity": 5,
-                            "refill_amount": 1,
-                            "refill_interval_seconds": 1
-                        }
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
+                    client
+                        .post("v1.rate-limit.limit")
+                        .json(json!({
+                            "key": key,
+                            "units": 1,
+                            "config": {
+                                "capacity": 5,
+                                "refill_amount": 1,
+                                "refill_interval_seconds": 1
+                            }
+                        }))
+                        .await
+                        .unwrap()
+                        .expect(StatusCode::OK);
                 })
             },
             BatchSize::SmallInput,
