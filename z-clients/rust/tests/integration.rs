@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use diom_client::{
+use diom::{
     DiomClient, DiomOptions,
     models::{CacheDeleteIn, CacheGetIn, CacheSetIn, KvDeleteIn, KvGetIn, KvSetIn},
 };

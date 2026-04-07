@@ -1,7 +1,7 @@
 #![allow(unused)]
 
+use diom::{DiomClient, DiomOptions};
 use diom_backend::{cfg::LogLevel, core::cluster::proto::HealthResponse};
-use diom_client::{DiomClient, DiomOptions};
 use openraft::ServerState;
 use std::sync::{Arc, Once};
 use tempfile::TempDir;

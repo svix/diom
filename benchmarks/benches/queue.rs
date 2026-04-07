@@ -1,9 +1,7 @@
 use std::time::Duration;
 
+use diom::models::{MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn};
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use diom_client::models::{
-    MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn,
-};
 use criterion::{
     BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

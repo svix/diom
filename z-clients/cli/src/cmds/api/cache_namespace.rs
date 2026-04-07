@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -24,8 +24,7 @@ pub enum CacheNamespaceCommands {
   \"updated\": \"...\"
 }")]
     Create {
-        cache_create_namespace_in:
-            crate::json::JsonOf<diom_client::models::CacheCreateNamespaceIn>,
+        cache_create_namespace_in: crate::json::JsonOf<diom::models::CacheCreateNamespaceIn>,
     },
     /// Get cache namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -39,7 +38,7 @@ pub enum CacheNamespaceCommands {
   \"updated\": \"...\"
 }")]
     Get {
-        cache_get_namespace_in: crate::json::JsonOf<diom_client::models::CacheGetNamespaceIn>,
+        cache_get_namespace_in: crate::json::JsonOf<diom::models::CacheGetNamespaceIn>,
     },
 }
 

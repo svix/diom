@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 use super::IdempotencyNamespaceArgs;
 #[derive(Args)]
@@ -23,7 +23,7 @@ pub enum IdempotencyCommands {
 }")]
     Start {
         key: String,
-        idempotency_start_in: crate::json::JsonOf<diom_client::models::IdempotencyStartIn>,
+        idempotency_start_in: crate::json::JsonOf<diom::models::IdempotencyStartIn>,
     },
     /// Complete an idempotent request with a response
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -37,7 +37,7 @@ pub enum IdempotencyCommands {
 }")]
     Complete {
         key: String,
-        idempotency_complete_in: crate::json::JsonOf<diom_client::models::IdempotencyCompleteIn>,
+        idempotency_complete_in: crate::json::JsonOf<diom::models::IdempotencyCompleteIn>,
     },
     /// Abandon an idempotent request (remove lock without saving response)
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -48,8 +48,7 @@ pub enum IdempotencyCommands {
 }")]
     Abort {
         key: String,
-        idempotency_abort_in:
-            Option<crate::json::JsonOf<diom_client::models::IdempotencyAbortIn>>,
+        idempotency_abort_in: Option<crate::json::JsonOf<diom::models::IdempotencyAbortIn>>,
     },
 }
 

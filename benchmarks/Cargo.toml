@@ -8,8 +8,8 @@ rust-version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+diom.workspace = true
 diom-backend.workspace = true
-diom-client.workspace = true
 criterion.workspace = true
 openraft.workspace = true
 rand.workspace = true

@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -29,8 +29,7 @@ pub enum MsgsStreamCommands {
     Receive {
         topic: String,
         consumer_group: String,
-        msg_stream_receive_in:
-            Option<crate::json::JsonOf<diom_client::models::MsgStreamReceiveIn>>,
+        msg_stream_receive_in: Option<crate::json::JsonOf<diom::models::MsgStreamReceiveIn>>,
     },
     /// Commits an offset for a consumer group on a specific partition.
     ///
@@ -46,7 +45,7 @@ pub enum MsgsStreamCommands {
     Commit {
         topic: String,
         consumer_group: String,
-        msg_stream_commit_in: crate::json::JsonOf<diom_client::models::MsgStreamCommitIn>,
+        msg_stream_commit_in: crate::json::JsonOf<diom::models::MsgStreamCommitIn>,
     },
     /// Repositions a consumer group's read cursor on a topic.
     ///
@@ -64,7 +63,7 @@ pub enum MsgsStreamCommands {
     Seek {
         topic: String,
         consumer_group: String,
-        msg_stream_seek_in: Option<crate::json::JsonOf<diom_client::models::MsgStreamSeekIn>>,
+        msg_stream_seek_in: Option<crate::json::JsonOf<diom::models::MsgStreamSeekIn>>,
     },
 }
 
