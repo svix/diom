@@ -22,7 +22,8 @@ impl Workers {
         {
             tracing::debug!("spawning msgs module worker");
             let state = state.state_machine.msgs_store().await;
-            self.spawn(diom_msgs::AllNodesWorker::new(state));
+            let time = time.clone();
+            self.spawn(diom_msgs::AllNodesWorker::new(state, time));
         }
         {
             tracing::debug!("spawning KV module worker");

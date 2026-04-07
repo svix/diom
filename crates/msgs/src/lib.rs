@@ -1,3 +1,4 @@
+use diom_core::Monotime;
 use diom_error::{Error, Result, ResultExt};
 use diom_id::NamespaceId;
 use diom_namespace::{Namespace, entities::MsgsConfig};
@@ -6,10 +7,13 @@ use fjall::KeyspaceCreateOptions;
 use jiff::Timestamp;
 
 use entities::{ConsumerGroup, Partition, TopicName};
-use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
+use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow, WriteBatchExt};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
-use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
+use crate::{
+    metrics::{record_end_offsets, record_topic_lag_metrics},
+    tables::IdempotencyRow,
+};
 
 pub mod entities;
 pub mod metrics;
@@ -160,22 +164,49 @@ pub fn estimate_available_stream_messages(
     })
 }
 
-fn cleanup_idempotency(_state: &State) -> Result<()> {
-    // TODO: Clean up the IdempotencyRow table.
+const EXPIRATION_BATCH_SIZE: usize = 1000;
+
+#[tracing::instrument(skip_all, fields(cleared))]
+pub fn clear_expired_in_background(state: &State, now: Timestamp) -> Result<()> {
+    let mut cleared = 0;
+    let mut iterated_keys = 0;
+
+    tracing::trace!("msgs: clearing expired idempotency keys");
+
+    let mut batch = state.db.batch();
+
+    // FIXME: this is inefficient and doesn't expire keys across different namespaces fairly.
+    // We need to implement proper random sampling of keys to expire, since we don't have a secondary index for expirations.
+    for (key, row) in IdempotencyRow::iter(&state.metadata_tables) {
+        iterated_keys += 1;
+        if iterated_keys >= EXPIRATION_BATCH_SIZE {
+            tracing::trace!("reached batch size limit, stopping iteration");
+            break;
+        }
+
+        if row.expiry < now {
+            batch.remove_row(&state.metadata_tables, key)?;
+            cleared += 1;
+        }
+    }
+
+    tracing::trace!("cleared {} expired idempotency keys", cleared);
+
     Ok(())
 }
 
 #[derive(Clone)]
 pub struct AllNodesWorker {
     state: State,
+    time: Monotime,
 }
 
 impl AllNodesWorker {
-    pub fn new(state: State) -> Self {
-        Self { state }
+    pub fn new(state: State, time: Monotime) -> Self {
+        Self { state, time }
     }
 
-    async fn worker_loop(&self) -> BackgroundResult<()> {
+    async fn worker_loop(&self, now: Timestamp) -> BackgroundResult<()> {
         let mut tasks = tokio::task::JoinSet::new();
         tasks.spawn_blocking({
             let state = self.state.clone();
@@ -187,7 +218,7 @@ impl AllNodesWorker {
         });
         tasks.spawn_blocking({
             let state = self.state.clone();
-            move || cleanup_idempotency(&state)
+            move || clear_expired_in_background(&state, now)
         });
         for result in tasks.join_all().await {
             if let Err(e) = result {
@@ -209,7 +240,7 @@ impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
             .await
             .is_some()
         {
-            self.worker_loop().await?;
+            self.worker_loop(self.time.now()).await?;
         }
         Ok(())
     }
