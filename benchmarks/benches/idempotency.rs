@@ -27,22 +27,22 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("v1.idempotency.start").json(json!({
-                        "key": &key,
-                        "ttl": 60
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
+                    client
+                        .post("v1.idempotency.start")
+                        .json(json!({
+                            "key": &key,
+                            "lock_period_ms": 60
+                        }))
+                        .await
+                        .unwrap()
+                        .expect(StatusCode::OK);
 
-                    std::hint::black_box(
-                        client
-                            .post("v1.idempotency.abort")
-                            .json(json!({ "key": &key })),
-                    )
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
+                    client
+                        .post("v1.idempotency.abort")
+                        .json(json!({ "key": &key }))
+                        .await
+                        .unwrap()
+                        .expect(StatusCode::OK);
                 })
             },
             BatchSize::SmallInput,
@@ -54,22 +54,26 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             || Alphanumeric.sample_string(&mut rng, 16),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.post("v1.idempotency.start").json(json!({
-                        "key": &key,
-                        "ttl": 60
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
+                    client
+                        .post("v1.idempotency.start")
+                        .json(json!({
+                            "key": &key,
+                            "lock_period_ms": 60
+                        }))
+                        .await
+                        .unwrap()
+                        .expect(StatusCode::OK);
 
-                    std::hint::black_box(client.post("v1.idempotency.complete").json(json!({
-                        "key": &key,
-                        "response": "ok".as_bytes(),
-                        "ttl": 60
-                    })))
-                    .await
-                    .unwrap()
-                    .expect(StatusCode::OK);
+                    client
+                        .post("v1.idempotency.complete")
+                        .json(json!({
+                            "key": &key,
+                            "response": "ok".as_bytes(),
+                            "ttl_ms": 60
+                        }))
+                        .await
+                        .unwrap()
+                        .expect(StatusCode::OK);
                 })
             },
             BatchSize::SmallInput,
@@ -82,7 +86,7 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
                 .post("v1.idempotency.start")
                 .json(json!({
                     "key": key,
-                    "ttl": 60
+                    "lock_period_ms": 60
                 }))
                 .await
                 .unwrap();
@@ -92,9 +96,9 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
             client
                 .post("v1.idempotency.complete")
                 .json(json!({
-                "key": key,
-                "response": payload,
-                "ttl": 60
+                    "key": key,
+                    "response": payload,
+                    "ttk_ms": 60
                 }))
                 .await
                 .unwrap();
@@ -110,13 +114,15 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
     group.bench_function("idempotency_small_payload", |b| {
         b.iter(|| {
             rt.block_on(async {
-                std::hint::black_box(client.post("v1.idempotency.start").json(json!({
-                    "key": &test_key,
-                    "ttl": 60
-                })))
-                .await
-                .unwrap()
-                .expect(StatusCode::OK);
+                client
+                    .post("v1.idempotency.start")
+                    .json(json!({
+                        "key": &test_key,
+                        "lock_period_ms": 60
+                    }))
+                    .await
+                    .unwrap()
+                    .expect(StatusCode::OK);
             })
         })
     });
@@ -129,13 +135,15 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
     group.bench_function("idempotency_medium_payload", |b| {
         b.iter(|| {
             rt.block_on(async {
-                std::hint::black_box(client.post("v1.idempotency.start").json(json!({
-                    "key": &test_key,
-                    "ttl": 60
-                })))
-                .await
-                .unwrap()
-                .expect(StatusCode::OK);
+                client
+                    .post("v1.idempotency.start")
+                    .json(json!({
+                        "key": &test_key,
+                        "lock_period_ms": 60
+                    }))
+                    .await
+                    .unwrap()
+                    .expect(StatusCode::OK);
             })
         })
     });
@@ -148,13 +156,15 @@ fn bench_idempotency<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benc
     group.bench_function("idempotency_large_payload", |b| {
         b.iter(|| {
             rt.block_on(async {
-                std::hint::black_box(client.post("v1.idempotency.start").json(json!({
-                    "key": &test_key,
-                    "ttl": 60
-                })))
-                .await
-                .unwrap()
-                .expect(StatusCode::OK);
+                client
+                    .post("v1.idempotency.start")
+                    .json(json!({
+                        "key": &test_key,
+                        "lock_period_ms": 60
+                    }))
+                    .await
+                    .unwrap()
+                    .expect(StatusCode::OK);
             })
         })
     });
