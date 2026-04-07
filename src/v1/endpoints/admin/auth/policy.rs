@@ -12,7 +12,7 @@ use diom_authorization::{AccessPolicyId, AccessRule, RequestedOperation};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
-use diom_proto::{MsgPackOrJson, RequestInput};
+use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -26,23 +26,23 @@ use crate::{
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
-fn admin_access_policy_operation<'a>(
+fn admin_access_policy_access_metadata<'a>(
     id: Option<&'a AccessPolicyId>,
     action: &'static str,
-) -> RequestedOperation<'a> {
-    RequestedOperation {
+) -> AccessMetadata<'a> {
+    AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::AdminAccessPolicy,
         namespace: None,
         key: id.map(|AccessPolicyId(id)| id.as_str()),
         action,
-    }
+    })
 }
 
 macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
-            fn operation(&self) -> RequestedOperation<'_> {
-                admin_access_policy_operation(Some(&self.id), $action)
+            fn access_metadata(&self) -> AccessMetadata<'_> {
+                admin_access_policy_access_metadata(Some(&self.id), $action)
             }
         }
     };
@@ -172,8 +172,8 @@ pub struct AdminAccessPolicyListIn {
 }
 
 impl RequestInput for AdminAccessPolicyListIn {
-    fn operation(&self) -> RequestedOperation<'_> {
-        admin_access_policy_operation(None, "list")
+    fn access_metadata(&self) -> AccessMetadata<'_> {
+        admin_access_policy_access_metadata(None, "list")
     }
 }
 
