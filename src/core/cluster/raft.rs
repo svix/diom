@@ -72,13 +72,8 @@ pub async fn initialize_raft(
     time: Monotime,
     initialized: crate::Initialized,
 ) -> anyhow::Result<RaftState> {
-    let mut logs = super::CoyoteLogs::new(
-        cfg.cluster.log_path(cfg)?,
-        cfg.cluster.log_sync_interval_commits,
-        cfg.cluster.log_sync_interval_duration,
-        cfg.cluster.log_ack_immediately,
-    )
-    .context("setting up log store")?;
+    let mut logs = super::CoyoteLogs::new(cfg.cluster.log_path(cfg)?, cfg.cluster.log_synchronous)
+        .context("setting up log store")?;
     let id: NodeId = logs
         .get_node_id()
         .await
@@ -209,8 +204,6 @@ pub async fn initialize_raft(
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use coyote_proto::InternalClient;
     use fjall::Database;
     use openraft::testing::log::StoreBuilder;
@@ -234,7 +227,7 @@ mod tests {
             let workdir = tempfile::tempdir()?;
             let log_path = workdir.path().to_path_buf().join("logs");
             let log_path = Dir::new(log_path)?;
-            let logs = CoyoteLogs::new(log_path, 1, Duration::from_secs(10), false)?;
+            let logs = CoyoteLogs::new(log_path, false)?;
 
             let data_path = workdir.path().join("data");
             let e_data_path = workdir.path().join("edata");
