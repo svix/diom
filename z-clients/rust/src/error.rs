@@ -18,7 +18,11 @@ pub enum Error {
     Validation(HttpErrorContent<HttpValidationError>),
 }
 
-fn deserialize_body<'b, 'a, T>(status_code: http::StatusCode, mime: &headers::Mime, bytes: &'b [u8]) -> Option<T>
+fn deserialize_body<'b, 'a, T>(
+    status_code: http::StatusCode,
+    mime: &headers::Mime,
+    bytes: &'b [u8],
+) -> Option<T>
 where
     T: Deserialize<'a>,
     'b: 'a,
