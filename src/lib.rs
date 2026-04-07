@@ -286,17 +286,12 @@ pub async fn run(cfg: Configuration) {
 static BOOTSTRAPPED: AtomicBool = AtomicBool::new(false);
 
 async fn fail_until_bootstrapped(
-    path: Option<axum::extract::MatchedPath>,
+    path: axum::extract::MatchedPath,
     request: axum::extract::Request,
     next: middleware::Next,
 ) -> axum::response::Response {
-    let ignore_bootstrap = if let Some(path) = path {
-        path.as_str().starts_with("/api/v1.admin.cluster.")
-    } else {
-        // don't wait for bootstrap for things axum will return a 404 on
-        true
-    };
-    if !(ignore_bootstrap || BOOTSTRAPPED.load(Ordering::Relaxed)) {
+    let is_admin_route = path.as_str().starts_with("/api/v1.admin.cluster.");
+    if !(is_admin_route || BOOTSTRAPPED.load(Ordering::Relaxed)) {
         return Error::not_ready("this node has not yet finished bootstrapping").into_response();
     }
 
@@ -366,13 +361,13 @@ pub async fn run_with_listeners(
 
     let v1_router = v1::router(Some(app_state.clone()))
         .with_state::<()>(app_state.clone())
-        .layer((
+        .layer(middleware::from_fn_with_state(
+            request_metrics.with_connection_type(ConnectionType::External),
+            core::otel_spans::request_metrics_middleware,
+        ))
+        .route_layer((
             middleware::from_fn(fail_until_bootstrapped),
             Extension(raft_state.clone()),
-            middleware::from_fn_with_state(
-                request_metrics.with_connection_type(ConnectionType::External),
-                core::otel_spans::request_metrics_middleware,
-            ),
         ));
 
     let interserver_started_barrier = Arc::new(Barrier::new(2));
