@@ -1,51 +1,18 @@
+use super::readonly_db::ReadableKeyspace;
 use byteorder::{BigEndian, ByteOrder};
+use diom_error::{Error, Result, ResultExt};
 use fjall::Guard;
+use serde::{Serialize, de::DeserializeOwned};
 use std::{
     borrow::Cow,
     ops::{Bound, RangeBounds},
 };
-use uuid::Uuid;
-
-use super::readonly_db::ReadableKeyspace;
-use diom_error::{Error, Result, ResultExt};
-use serde::{Serialize, de::DeserializeOwned};
 
 /// A trait for primary keys in fjall.
 pub trait TableKey: Clone {
     fn as_bytes(&self) -> Cow<'_, [u8]>;
 
     fn try_from_bytes(bytes: &[u8]) -> Result<Self>;
-}
-
-impl TableKey for String {
-    fn as_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Borrowed(self.as_bytes())
-    }
-
-    fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        let owned: Vec<u8> = bytes.to_owned();
-        Self::from_utf8(owned).or_internal_error()
-    }
-}
-
-impl TableKey for Vec<u8> {
-    fn as_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Borrowed(self)
-    }
-
-    fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        Ok(bytes.to_owned())
-    }
-}
-
-impl TableKey for Uuid {
-    fn as_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Borrowed(self.as_bytes())
-    }
-
-    fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        Self::from_slice(bytes).or_internal_error()
-    }
 }
 
 impl TableKey for u64 {
@@ -254,23 +221,6 @@ where
         range_helper::<Self, B>(keyspace, bounds)
             .map(|g| g.key().map_err(Into::into))
             .collect()
-    }
-}
-
-/// Adds convenient methods to fjall's Keyspace to work with TableRow
-pub trait KeyspaceExt {
-    fn ingest_rows<T: TableRow, I: Iterator<Item = T>>(&self, rows: I) -> Result<()>;
-}
-
-impl KeyspaceExt for fjall::Keyspace {
-    fn ingest_rows<T: TableRow, I: Iterator<Item = T>>(&self, rows: I) -> Result<()> {
-        let mut i = self.start_ingestion()?;
-        for row in rows {
-            let (k, v) = row.to_fjall_entry()?;
-            i.write(k, v)?;
-        }
-        i.finish()?;
-        Ok(())
     }
 }
 
