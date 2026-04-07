@@ -2,8 +2,7 @@ use crate::entities::TokenHashed;
 use coyote_core::{task::spawn_blocking_in_current_span, types::Metadata};
 use coyote_error::Result;
 use coyote_id::{AuthTokenId, NamespaceId};
-use fjall::KeyspaceCreateOptions;
-use fjall_utils::TableRow;
+use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -79,10 +78,9 @@ pub struct AuthTokenController {
 
 impl AuthTokenController {
     pub fn new(db: fjall::Database, keyspace_name: &'static str) -> Self {
-        let keyspace = {
-            let opts = KeyspaceCreateOptions::default();
-            db.keyspace(keyspace_name, || opts).unwrap()
-        };
+        let keyspace = SerializableKeyspaceCreateOptions::default()
+            .create_and_record(&db, keyspace_name)
+            .expect("should be able to open keyspace");
 
         Self { db, keyspace }
     }

@@ -5,8 +5,8 @@ use std::{
 
 use anyhow::Context;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use fjall::{Database, Keyspace, KeyspaceCreateOptions, Readable};
-use fjall_utils::{Databases, StorageType};
+use fjall::{Database, Keyspace, Readable};
+use fjall_utils::{Databases, SchemaManifest, StorageType};
 use serde::{Deserialize, Serialize};
 use zip::{ZipArchive, write::SimpleFileOptions};
 
@@ -41,6 +41,8 @@ struct Chunk {
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct KeyspaceManifest {
     keyspaces: BTreeMap<String, Vec<Chunk>>,
+    #[serde(default)]
+    keyspace_schemas: SchemaManifest,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -113,7 +115,13 @@ impl<'a, B: Write + Seek> KeyspaceSerializer<'a, B> {
         snapshot: &R,
         keyspace: &Keyspace,
     ) -> anyhow::Result<Vec<Chunk>> {
-        tracing::trace!(storage_type = ?self.storage_type, keyspace_name = self.keyspace_name, "serializing keyspace");
+        tracing::debug!(
+            storage_type = ?self.storage_type,
+            keyspace_name = self.keyspace_name,
+            path = %keyspace.path().display(),
+            len = keyspace.len()?,
+            "serializing keyspace"
+        );
         for guard in snapshot.iter(keyspace) {
             let (k, v) = guard.into_inner()?;
             if self.current_buffer.len() > Self::MAX_BYTES_PER_CHUNK {
@@ -144,7 +152,11 @@ fn deserialize_keyspace<R: Read + Seek>(
     keyspace: &Keyspace,
     chunks: Vec<Chunk>,
 ) -> anyhow::Result<()> {
-    tracing::warn!(name=%keyspace.name(), "clearing keyspace");
+    tracing::info!(
+        name = %keyspace.name(),
+        path = %keyspace.path().display(),
+        len = keyspace.len()?,
+        "clearing and then deserializing keyspace");
     // TODO: remove this slow path after
     // https://github.com/fjall-rs/fjall/issues/277 is fixed
     if keyspace.is_kv_separated() {
@@ -203,12 +215,16 @@ pub(crate) fn serialize_to_file<F: Write + Seek>(
     let mut manifest = Manifest::default();
 
     for (db_name, db, snapshot, keyspaces) in targets {
-        let mut keyspace_manifests = KeyspaceManifest::default();
+        let mut keyspace_manifests = KeyspaceManifest {
+            keyspace_schemas: SchemaManifest::load_from_db(&db)?,
+            ..Default::default()
+        };
         for keyspace_name in keyspaces {
             tracing::debug!(keyspace=%keyspace_name, "serializing a keyspace");
-            // TODO: we should be copying keyspace create options from the source;
-            // see https://github.com/fjall-rs/fjall/issues/262
-            let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
+            let options = keyspace_manifests
+                .keyspace_schemas
+                .options_for_keyspace(&keyspace_name);
+            let keyspace = db.keyspace(&keyspace_name, || options)?;
             let serializer = KeyspaceSerializer::new(&mut zip, db_name, &keyspace_name)?;
             let chunks = serializer.serialize_keyspace(&snapshot, &keyspace)?;
             keyspace_manifests.keyspaces.insert(keyspace_name, chunks);
@@ -253,7 +269,10 @@ pub(crate) fn load_from_file<F: Read + Seek>(dbs: &Databases, f: &mut F) -> anyh
                 num_parts = chunks.len(),
                 "deserializing a keyspace"
             );
-            let keyspace = db.keyspace(&keyspace_name, KeyspaceCreateOptions::default)?;
+            let options = keyspaces
+                .keyspace_schemas
+                .options_for_keyspace(&keyspace_name);
+            let keyspace = db.keyspace(&keyspace_name, || options)?;
             deserialize_keyspace(&mut z, db, &keyspace, chunks)?;
             db.persist(fjall::PersistMode::SyncAll)?;
         }
@@ -267,7 +286,7 @@ mod tests {
     use std::io::Cursor;
 
     use fjall::{Database, KeyspaceCreateOptions, Slice};
-    use fjall_utils::Databases;
+    use fjall_utils::{Databases, SchemaManifest, SerializableKeyspaceCreateOptions};
 
     use super::{load_from_file, serialize_to_file};
     use fjall_utils::StorageType;
@@ -342,6 +361,70 @@ mod tests {
             keyspace2.get("key4")?.as_ref(),
             Some(&Slice::new(b"value4"))
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_custom_options() -> anyhow::Result<()> {
+        let workdir = tempfile::tempdir()?;
+        let mut db_path = workdir.path().to_path_buf();
+        db_path.push("db/");
+
+        let db = Database::builder(db_path).open()?;
+        let ks1 = SerializableKeyspaceCreateOptions::default()
+            .with_default_kv_separation()
+            .create_and_record(&db, "keyspace1")?;
+        assert!(ks1.is_kv_separated());
+        ks1.insert("foo", b"bar")?;
+        db.persist(fjall::PersistMode::Buffer)?;
+
+        let snapshot = db.snapshot();
+
+        let mut cursor = Cursor::new(vec![]);
+
+        let keyspaces = db
+            .list_keyspace_names()
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect();
+
+        let targets = vec![(StorageType::Persistent, db, snapshot, keyspaces)];
+
+        serialize_to_file(targets, &mut cursor)?;
+
+        let out = cursor.into_inner();
+
+        let mut db2_path = workdir.path().to_path_buf();
+        db2_path.push("db_loaded/");
+        let db2 = Database::builder(db2_path).open()?;
+
+        let mut db2e_path = workdir.path().to_path_buf();
+        db2e_path.push("db_loaded_ephem/");
+        let db2e = Database::builder(db2e_path).open()?;
+
+        let databases = Databases::new(db2.clone(), db2e);
+
+        let mut cursor = Cursor::new(out);
+
+        load_from_file(&databases, &mut cursor)?;
+
+        let schemas = SchemaManifest::load_from_db(&db2)?;
+        assert!(schemas.contains("keyspace1"));
+        assert!(!schemas.contains("_schema"));
+
+        let found_keyspaces = db2
+            .list_keyspace_names()
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(&found_keyspaces, &["keyspace1", "_schema"]);
+
+        // even though we initialize it here with ::default, it should already have been
+        // initialized as kv-separated in the `load_from_file` call.
+        let keyspace1 = db2.keyspace("keyspace1", KeyspaceCreateOptions::default)?;
+        assert!(keyspace1.is_kv_separated());
+        assert_eq!(keyspace1.get("foo")?.as_ref(), Some(&Slice::new(b"bar")));
 
         Ok(())
     }
