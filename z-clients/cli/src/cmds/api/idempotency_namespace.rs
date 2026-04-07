@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -23,7 +23,7 @@ pub enum IdempotencyNamespaceCommands {
 }")]
     Create {
         idempotency_create_namespace_in:
-            crate::json::JsonOf<diom_client::models::IdempotencyCreateNamespaceIn>,
+            crate::json::JsonOf<diom::models::IdempotencyCreateNamespaceIn>,
     },
     /// Get idempotency namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -37,7 +37,7 @@ pub enum IdempotencyNamespaceCommands {
 }")]
     Get {
         idempotency_get_namespace_in:
-            crate::json::JsonOf<diom_client::models::IdempotencyGetNamespaceIn>,
+            crate::json::JsonOf<diom::models::IdempotencyGetNamespaceIn>,
     },
 }
 

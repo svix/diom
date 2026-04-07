@@ -863,7 +863,7 @@ dependencies = [
  "anyhow",
  "async-io",
  "async-process",
- "diom",
+ "diom-backend",
  "fs-err",
  "futures-lite",
  "openapi-codegen",
@@ -1033,6 +1033,76 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 name = "diom"
 version = "0.0.1"
 dependencies = [
+ "form_urlencoded",
+ "headers",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-rustls",
+ "hyper-tls",
+ "hyper-util",
+ "jiff",
+ "rand 0.9.2",
+ "rmp-serde",
+ "rustls",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "tokio",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "diom-admin-auth"
+version = "0.0.1"
+dependencies = [
+ "diom-authorization",
+ "diom-core",
+ "diom-error",
+ "diom-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "serde",
+]
+
+[[package]]
+name = "diom-auth-token"
+version = "0.0.1"
+dependencies = [
+ "base64 0.22.1",
+ "diom-core",
+ "diom-error",
+ "diom-id",
+ "diom-namespace",
+ "diom-operations",
+ "fjall",
+ "fjall-utils",
+ "jiff",
+ "rand 0.9.2",
+ "serde",
+ "sha2",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "diom-authorization"
+version = "0.0.1"
+dependencies = [
+ "diom-id",
+ "itertools 0.14.0",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "diom-backend"
+version = "0.0.1"
+dependencies = [
  "addr",
  "aide 0.16.0-alpha.2",
  "anyerror",
@@ -1104,58 +1174,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "diom-admin-auth"
-version = "0.0.1"
-dependencies = [
- "diom-authorization",
- "diom-core",
- "diom-error",
- "diom-operations",
- "fjall",
- "fjall-utils",
- "jiff",
- "serde",
-]
-
-[[package]]
-name = "diom-auth-token"
-version = "0.0.1"
-dependencies = [
- "base64 0.22.1",
- "diom-core",
- "diom-error",
- "diom-id",
- "diom-namespace",
- "diom-operations",
- "fjall",
- "fjall-utils",
- "jiff",
- "rand 0.9.2",
- "serde",
- "sha2",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "diom-authorization"
-version = "0.0.1"
-dependencies = [
- "diom-id",
- "itertools 0.14.0",
- "schemars 1.2.1",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "diom-benchmarks"
 version = "0.0.1"
 dependencies = [
  "anyhow",
  "diom",
- "diom-client",
+ "diom-backend",
  "criterion",
  "openraft",
  "rand 0.9.2",
@@ -1195,7 +1219,7 @@ dependencies = [
  "comfy-table",
  "concolor-clap",
  "config",
- "diom-client",
+ "diom",
  "dirs",
  "futures-util",
  "glob",
@@ -1214,30 +1238,6 @@ dependencies = [
  "tracing-subscriber",
  "v_jsonescape",
  "yansi",
-]
-
-[[package]]
-name = "diom-client"
-version = "0.0.1"
-dependencies = [
- "form_urlencoded",
- "headers",
- "http",
- "http-body-util",
- "hyper",
- "hyper-rustls",
- "hyper-tls",
- "hyper-util",
- "jiff",
- "rand 0.9.2",
- "rmp-serde",
- "rustls",
- "serde",
- "serde_bytes",
- "serde_json",
- "tokio",
- "tower-service",
- "tracing",
 ]
 
 [[package]]
@@ -1461,7 +1461,7 @@ dependencies = [
  "anyhow",
  "clap",
  "comfy-table",
- "diom",
+ "diom-backend",
  "diom-core",
  "dotenvy",
  "fs-err",
@@ -5194,7 +5194,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "bytes",
- "diom",
+ "diom-backend",
  "diom-core",
  "futures-util",
  "http",

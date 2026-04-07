@@ -1,7 +1,7 @@
 use std::{net::SocketAddr, path::Path, sync::Arc};
 
 use crate::TestClient;
-use diom::{
+use diom_backend::{
     Initialized,
     cfg::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, LogFormat, LogLevel,

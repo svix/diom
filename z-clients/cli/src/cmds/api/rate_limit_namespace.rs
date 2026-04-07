@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -23,7 +23,7 @@ pub enum RateLimitNamespaceCommands {
 }")]
     Create {
         rate_limit_create_namespace_in:
-            crate::json::JsonOf<diom_client::models::RateLimitCreateNamespaceIn>,
+            crate::json::JsonOf<diom::models::RateLimitCreateNamespaceIn>,
     },
     /// Get rate limiter namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -36,8 +36,7 @@ pub enum RateLimitNamespaceCommands {
   \"updated\": \"...\"
 }")]
     Get {
-        rate_limit_get_namespace_in:
-            crate::json::JsonOf<diom_client::models::RateLimitGetNamespaceIn>,
+        rate_limit_get_namespace_in: crate::json::JsonOf<diom::models::RateLimitGetNamespaceIn>,
     },
 }
 

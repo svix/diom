@@ -1,6 +1,6 @@
 use clap::{Args, Subcommand};
 use comfy_table::{Attribute, Cell, Table};
-use diom_client::{
+use diom::{
     DiomClient,
     models::{ClusterInitializeIn, ClusterInitializeOut, ClusterRemoveNodeIn},
 };

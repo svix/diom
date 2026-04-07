@@ -1,5 +1,5 @@
+use diom::models::{KvDeleteIn, KvGetIn, KvSetIn};
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use diom_client::models::{KvDeleteIn, KvGetIn, KvSetIn};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

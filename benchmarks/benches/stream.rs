@@ -1,7 +1,7 @@
-use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use diom_client::models::{
+use diom::models::{
     MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
 };
+use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

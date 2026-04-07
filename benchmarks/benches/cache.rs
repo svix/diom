@@ -1,7 +1,7 @@
 use std::time::Duration;
 
+use diom::models::{CacheDeleteIn, CacheGetIn, CacheSetIn};
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use diom_client::models::{CacheDeleteIn, CacheGetIn, CacheSetIn};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };

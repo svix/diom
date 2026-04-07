@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -26,7 +26,7 @@ pub enum AdminAuthRoleCommands {
   \"updated\": \"...\"
 }")]
     Upsert {
-        admin_role_upsert_in: crate::json::JsonOf<diom_client::models::AdminRoleUpsertIn>,
+        admin_role_upsert_in: crate::json::JsonOf<diom::models::AdminRoleUpsertIn>,
     },
     /// Delete a role
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -37,7 +37,7 @@ pub enum AdminAuthRoleCommands {
   \"success\": \"...\"
 }")]
     Delete {
-        admin_role_delete_in: crate::json::JsonOf<diom_client::models::AdminRoleDeleteIn>,
+        admin_role_delete_in: crate::json::JsonOf<diom::models::AdminRoleDeleteIn>,
     },
     /// Get a role by ID
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -54,7 +54,7 @@ pub enum AdminAuthRoleCommands {
   \"updated\": \"...\"
 }")]
     Get {
-        admin_role_get_in: crate::json::JsonOf<diom_client::models::AdminRoleGetIn>,
+        admin_role_get_in: crate::json::JsonOf<diom::models::AdminRoleGetIn>,
     },
     /// List all roles
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -69,7 +69,7 @@ pub enum AdminAuthRoleCommands {
   \"done\": \"...\"
 }")]
     List {
-        admin_role_list_in: Option<crate::json::JsonOf<diom_client::models::AdminRoleListIn>>,
+        admin_role_list_in: Option<crate::json::JsonOf<diom::models::AdminRoleListIn>>,
     },
 }
 

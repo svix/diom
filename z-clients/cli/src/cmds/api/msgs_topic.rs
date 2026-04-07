@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -24,7 +24,7 @@ pub enum MsgsTopicCommands {
 }")]
     Configure {
         topic: String,
-        msg_topic_configure_in: crate::json::JsonOf<diom_client::models::MsgTopicConfigureIn>,
+        msg_topic_configure_in: crate::json::JsonOf<diom::models::MsgTopicConfigureIn>,
     },
 }
 

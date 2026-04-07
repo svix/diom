@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
@@ -24,8 +24,7 @@ pub enum MsgsNamespaceCommands {
 }")]
     Create {
         name: String,
-        msg_namespace_create_in:
-            Option<crate::json::JsonOf<diom_client::models::MsgNamespaceCreateIn>>,
+        msg_namespace_create_in: Option<crate::json::JsonOf<diom::models::MsgNamespaceCreateIn>>,
     },
     /// Gets a msgs namespace by name.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -39,7 +38,7 @@ pub enum MsgsNamespaceCommands {
 }")]
     Get {
         name: String,
-        msg_namespace_get_in: Option<crate::json::JsonOf<diom_client::models::MsgNamespaceGetIn>>,
+        msg_namespace_get_in: Option<crate::json::JsonOf<diom::models::MsgNamespaceGetIn>>,
     },
 }
 

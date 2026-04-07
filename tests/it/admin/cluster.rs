@@ -1,4 +1,4 @@
-use diom::cfg::PeerAddr;
+use diom_backend::cfg::PeerAddr;
 use maplit::btreeset;
 use serde_json::json;
 use std::collections::BTreeSet;

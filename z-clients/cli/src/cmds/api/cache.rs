@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 use super::CacheNamespaceArgs;
 #[derive(Args)]
@@ -24,7 +24,7 @@ pub enum CacheCommands {
     Set {
         key: String,
         value: Vec<u8>,
-        cache_set_in: crate::json::JsonOf<diom_client::models::CacheSetIn>,
+        cache_set_in: crate::json::JsonOf<diom::models::CacheSetIn>,
     },
     /// Cache Get
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -38,7 +38,7 @@ pub enum CacheCommands {
 }")]
     Get {
         key: String,
-        cache_get_in: Option<crate::json::JsonOf<diom_client::models::CacheGetIn>>,
+        cache_get_in: Option<crate::json::JsonOf<diom::models::CacheGetIn>>,
     },
     /// Cache Delete
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -50,7 +50,7 @@ pub enum CacheCommands {
 }")]
     Delete {
         key: String,
-        cache_delete_in: Option<crate::json::JsonOf<diom_client::models::CacheDeleteIn>>,
+        cache_delete_in: Option<crate::json::JsonOf<diom::models::CacheDeleteIn>>,
     },
 }
 

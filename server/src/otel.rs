@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use diom::cfg::{self, ConfigurationInner};
+use diom_backend::cfg::{self, ConfigurationInner};
 use diom_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;

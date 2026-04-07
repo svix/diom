@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use diom_client::DiomClient;
+use diom::DiomClient;
 
 use super::KvNamespaceArgs;
 #[derive(Args)]
@@ -28,7 +28,7 @@ pub enum KvCommands {
     Set {
         key: String,
         value: Vec<u8>,
-        kv_set_in: Option<crate::json::JsonOf<diom_client::models::KvSetIn>>,
+        kv_set_in: Option<crate::json::JsonOf<diom::models::KvSetIn>>,
     },
     /// KV Get
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -43,7 +43,7 @@ pub enum KvCommands {
 }")]
     Get {
         key: String,
-        kv_get_in: Option<crate::json::JsonOf<diom_client::models::KvGetIn>>,
+        kv_get_in: Option<crate::json::JsonOf<diom::models::KvGetIn>>,
     },
     /// KV Delete
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -56,7 +56,7 @@ pub enum KvCommands {
 }")]
     Delete {
         key: String,
-        kv_delete_in: Option<crate::json::JsonOf<diom_client::models::KvDeleteIn>>,
+        kv_delete_in: Option<crate::json::JsonOf<diom::models::KvDeleteIn>>,
     },
 }
 

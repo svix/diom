@@ -6,7 +6,7 @@
 
 use clap::{Parser, Subcommand};
 use comfy_table::{Cell, Table};
-use diom::{
+use diom_backend::{
     cfg::{self, Configuration},
     run,
 };
