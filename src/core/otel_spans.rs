@@ -77,10 +77,7 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
             .get(header::HOST)
             .and_then(|header| header.to_str().ok());
 
-        let http_route = request
-            .extensions()
-            .get::<MatchedPath>()
-            .map(|p| p.as_str());
+        let uri = request.uri();
 
         let client_ip = request
             .extensions()
@@ -123,10 +120,9 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
             http.versions = ?request.version(),
             http.host = host,
             http.method = ?request.method(),
-            http.route = http_route,
-            http.scheme = request.uri().scheme().map(debug),
+            http.route = uri.path(),
+            http.scheme = uri.scheme().map(debug),
             http.status_code = tracing::field::Empty,
-            http.target = request.uri().path_and_query().map(|p| p.as_str()),
             http.user_agent = user_agent,
             http.content_length = content_length,
             otel.kind = "server",
