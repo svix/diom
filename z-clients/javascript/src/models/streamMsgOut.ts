@@ -3,7 +3,7 @@
 export interface StreamMsgOut {
     offset: number;
     topic: string;
-    value: number[];
+    value: Uint8Array;
     headers?: { [key: string]: string };
     timestamp: Date;
     scheduledAt?: Date | null;
@@ -15,7 +15,7 @@ export const StreamMsgOutSerializer = {
         return {
             offset: object['offset'],
             topic: object['topic'],
-            value: object['value'],
+            value: new Uint8Array(object['value']),
             headers: object['headers'],
             timestamp: new Date(object['timestamp']),
             scheduledAt: object['scheduled_at'] ? new Date(object['scheduled_at']) : null,
@@ -27,7 +27,7 @@ export const StreamMsgOutSerializer = {
         return {
             'offset': self.offset,
             'topic': self.topic,
-            'value': self.value,
+            'value': Array.from(self.value),
             'headers': self.headers,
             'timestamp': self.timestamp,
             'scheduled_at': self.scheduledAt,

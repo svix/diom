@@ -37,7 +37,7 @@ export class Kv {
     /** KV Set */
     public set(
         key: string,
-        value: number[],
+        value: Uint8Array,
         kvSetIn: KvSetIn,
     ): Promise<KvSetOut> {
         const request = new DiomRequest(HttpMethod.POST, "/api/v1.kv.set");

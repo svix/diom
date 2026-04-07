@@ -3,7 +3,7 @@
 export interface CacheGetOut {
     /** Time of expiry */
     expiry?: Date | null;
-    value?: number[] | null;
+    value?: Uint8Array | null;
 }
 
 export const CacheGetOutSerializer = {
@@ -11,7 +11,7 @@ export const CacheGetOutSerializer = {
     _fromJsonObject(object: any): CacheGetOut {
         return {
             expiry: object['expiry'] ? new Date(object['expiry']) : null,
-            value: object['value'],
+            value: object['value'] != null ? new Uint8Array(object['value']) : null,
         };
     },
 
@@ -19,7 +19,7 @@ export const CacheGetOutSerializer = {
     _toJsonObject(self: CacheGetOut): any {
         return {
             'expiry': self.expiry,
-            'value': self.value,
+            'value': self.value != null ? Array.from(self.value) : undefined,
         };
     }
 }
