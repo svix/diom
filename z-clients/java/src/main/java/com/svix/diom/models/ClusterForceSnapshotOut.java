@@ -33,12 +33,12 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class ClusterForceSnapshotOut {
-    @JsonProperty("snapshot_time") private OffsetDateTime snapshotTime;
+    @JsonProperty("snapshot_time") private Long snapshotTime;
     @JsonProperty("snapshot_log_index") private Long snapshotLogIndex;
     @JsonProperty("snapshot_id") private String snapshotId;
     public ClusterForceSnapshotOut() {}
 
-    public ClusterForceSnapshotOut snapshotTime(OffsetDateTime snapshotTime) {
+    public ClusterForceSnapshotOut snapshotTime(Long snapshotTime) {
         this.snapshotTime = snapshotTime;
         return this;
     }
@@ -49,11 +49,11 @@ public class ClusterForceSnapshotOut {
      * @return snapshotTime
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getSnapshotTime() {
+    public Long getSnapshotTime() {
         return snapshotTime;
     }
 
-    public void setSnapshotTime(OffsetDateTime snapshotTime) {
+    public void setSnapshotTime(Long snapshotTime) {
         this.snapshotTime = snapshotTime;
     }
 

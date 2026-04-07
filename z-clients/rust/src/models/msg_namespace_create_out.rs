@@ -9,18 +9,13 @@ pub struct MsgNamespaceCreateOut {
 
     pub retention: Retention,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 }
 
 impl MsgNamespaceCreateOut {
-    pub fn new(
-        name: String,
-        retention: Retention,
-        created: jiff::Timestamp,
-        updated: jiff::Timestamp,
-    ) -> Self {
+    pub fn new(name: String, retention: Retention, created: u64, updated: u64) -> Self {
         Self {
             name,
             retention,

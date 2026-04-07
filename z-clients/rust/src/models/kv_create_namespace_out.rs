@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 pub struct KvCreateNamespaceOut {
     pub name: String,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 }
 
 impl KvCreateNamespaceOut {
-    pub fn new(name: String, created: jiff::Timestamp, updated: jiff::Timestamp) -> Self {
+    pub fn new(name: String, created: u64, updated: u64) -> Self {
         Self {
             name,
             created,

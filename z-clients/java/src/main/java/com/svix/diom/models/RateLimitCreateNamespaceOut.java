@@ -34,8 +34,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class RateLimitCreateNamespaceOut {
     @JsonProperty private String name;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public RateLimitCreateNamespaceOut() {}
 
     public RateLimitCreateNamespaceOut name(String name) {
@@ -57,7 +57,7 @@ public class RateLimitCreateNamespaceOut {
         this.name = name;
     }
 
-    public RateLimitCreateNamespaceOut created(OffsetDateTime created) {
+    public RateLimitCreateNamespaceOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -68,15 +68,15 @@ public class RateLimitCreateNamespaceOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public RateLimitCreateNamespaceOut updated(OffsetDateTime updated) {
+    public RateLimitCreateNamespaceOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -87,11 +87,11 @@ public class RateLimitCreateNamespaceOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

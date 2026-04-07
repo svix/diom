@@ -2,8 +2,8 @@
 
 export interface RateLimitGetNamespaceOut {
     name: string;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const RateLimitGetNamespaceOutSerializer = {
@@ -11,8 +11,8 @@ export const RateLimitGetNamespaceOutSerializer = {
     _fromJsonObject(object: any): RateLimitGetNamespaceOut {
         return {
             name: object['name'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

@@ -2,7 +2,7 @@
 
 export interface ClusterForceSnapshotOut {
     /** The wall-clock time at which the snapshot was initiated */
-    snapshotTime: Date;
+    snapshotTime: number;
     /** The log index at which the snapshot was initiated */
     snapshotLogIndex: number;
     /** If this is `null`, the snapshot is still building in the background */
@@ -13,7 +13,7 @@ export const ClusterForceSnapshotOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): ClusterForceSnapshotOut {
         return {
-            snapshotTime: new Date(object['snapshot_time']),
+            snapshotTime: object['snapshot_time'],
             snapshotLogIndex: object['snapshot_log_index'],
             snapshotId: object['snapshot_id'],
         };

@@ -35,9 +35,9 @@ import lombok.ToString;
 public class AdminAuthTokenOut {
     @JsonProperty private String id;
     @JsonProperty private String name;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
-    @JsonProperty private OffsetDateTime expiry;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
+    @JsonProperty private Long expiry;
     @JsonProperty private String role;
     @JsonProperty private Boolean enabled;
     public AdminAuthTokenOut() {}
@@ -80,7 +80,7 @@ public class AdminAuthTokenOut {
         this.name = name;
     }
 
-    public AdminAuthTokenOut created(OffsetDateTime created) {
+    public AdminAuthTokenOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -91,15 +91,15 @@ public class AdminAuthTokenOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public AdminAuthTokenOut updated(OffsetDateTime updated) {
+    public AdminAuthTokenOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -110,15 +110,15 @@ public class AdminAuthTokenOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 
-    public AdminAuthTokenOut expiry(OffsetDateTime expiry) {
+    public AdminAuthTokenOut expiry(Long expiry) {
         this.expiry = expiry;
         return this;
     }
@@ -129,11 +129,11 @@ public class AdminAuthTokenOut {
      * @return expiry
      */
     @javax.annotation.Nullable
-    public OffsetDateTime getExpiry() {
+    public Long getExpiry() {
         return expiry;
     }
 
-    public void setExpiry(OffsetDateTime expiry) {
+    public void setExpiry(Long expiry) {
         this.expiry = expiry;
     }
 

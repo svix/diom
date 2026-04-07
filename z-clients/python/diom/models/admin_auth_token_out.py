@@ -1,5 +1,4 @@
 # this file is @generated
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
 
@@ -9,11 +8,11 @@ class AdminAuthTokenOut(BaseModel):
 
     name: str
 
-    created: datetime
+    created: int
 
-    updated: datetime
+    updated: int
 
-    expiry: datetime | None = None
+    expiry: int | None = None
 
     role: str
 

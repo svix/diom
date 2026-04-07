@@ -7,8 +7,8 @@ import {
 export interface MsgNamespaceGetOut {
     name: string;
     retention: Retention;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const MsgNamespaceGetOutSerializer = {
@@ -17,8 +17,8 @@ export const MsgNamespaceGetOutSerializer = {
         return {
             name: object['name'],
             retention: RetentionSerializer._fromJsonObject(object['retention']),
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

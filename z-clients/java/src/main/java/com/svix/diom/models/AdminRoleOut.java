@@ -38,8 +38,8 @@ public class AdminRoleOut {
     @JsonProperty private List<AccessRule> rules;
     @JsonProperty private List<String> policies;
     @JsonProperty private Map<String,String> context;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public AdminRoleOut() {}
 
     public AdminRoleOut id(String id) {
@@ -158,7 +158,7 @@ public class AdminRoleOut {
         this.context = context;
     }
 
-    public AdminRoleOut created(OffsetDateTime created) {
+    public AdminRoleOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -169,15 +169,15 @@ public class AdminRoleOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public AdminRoleOut updated(OffsetDateTime updated) {
+    public AdminRoleOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -188,11 +188,11 @@ public class AdminRoleOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

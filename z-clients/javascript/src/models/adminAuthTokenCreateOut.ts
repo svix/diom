@@ -3,8 +3,8 @@
 export interface AdminAuthTokenCreateOut {
     id: string;
     token: string;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const AdminAuthTokenCreateOutSerializer = {
@@ -13,8 +13,8 @@ export const AdminAuthTokenCreateOutSerializer = {
         return {
             id: object['id'],
             token: object['token'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

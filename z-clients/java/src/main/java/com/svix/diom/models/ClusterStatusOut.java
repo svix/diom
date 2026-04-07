@@ -37,7 +37,7 @@ public class ClusterStatusOut {
     @JsonProperty("cluster_name") private String clusterName;
     @JsonProperty("this_node_id") private String thisNodeId;
     @JsonProperty("this_node_state") private ServerState thisNodeState;
-    @JsonProperty("this_node_last_committed_timestamp") private OffsetDateTime thisNodeLastCommittedTimestamp;
+    @JsonProperty("this_node_last_committed_timestamp") private Long thisNodeLastCommittedTimestamp;
     @JsonProperty("this_node_last_snapshot_id") private String thisNodeLastSnapshotId;
     @JsonProperty private List<NodeStatusOut> nodes;
     public ClusterStatusOut() {}
@@ -122,7 +122,7 @@ This value is not replicated and should only be used for debugging.
         this.thisNodeState = thisNodeState;
     }
 
-    public ClusterStatusOut thisNodeLastCommittedTimestamp(OffsetDateTime thisNodeLastCommittedTimestamp) {
+    public ClusterStatusOut thisNodeLastCommittedTimestamp(Long thisNodeLastCommittedTimestamp) {
         this.thisNodeLastCommittedTimestamp = thisNodeLastCommittedTimestamp;
         return this;
     }
@@ -133,11 +133,11 @@ This value is not replicated and should only be used for debugging.
      * @return thisNodeLastCommittedTimestamp
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getThisNodeLastCommittedTimestamp() {
+    public Long getThisNodeLastCommittedTimestamp() {
         return thisNodeLastCommittedTimestamp;
     }
 
-    public void setThisNodeLastCommittedTimestamp(OffsetDateTime thisNodeLastCommittedTimestamp) {
+    public void setThisNodeLastCommittedTimestamp(Long thisNodeLastCommittedTimestamp) {
         this.thisNodeLastCommittedTimestamp = thisNodeLastCommittedTimestamp;
     }
 

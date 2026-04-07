@@ -34,8 +34,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyGetNamespaceOut {
     @JsonProperty private String name;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public IdempotencyGetNamespaceOut() {}
 
     public IdempotencyGetNamespaceOut name(String name) {
@@ -57,7 +57,7 @@ public class IdempotencyGetNamespaceOut {
         this.name = name;
     }
 
-    public IdempotencyGetNamespaceOut created(OffsetDateTime created) {
+    public IdempotencyGetNamespaceOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -68,15 +68,15 @@ public class IdempotencyGetNamespaceOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public IdempotencyGetNamespaceOut updated(OffsetDateTime updated) {
+    public IdempotencyGetNamespaceOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -87,11 +87,11 @@ public class IdempotencyGetNamespaceOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

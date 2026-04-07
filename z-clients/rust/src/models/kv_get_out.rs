@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct KvGetOut {
     /// Time of expiry
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiry: Option<jiff::Timestamp>,
+    pub expiry: Option<u64>,
 
     #[serde(
         with = "crate::serde_bytes_opt",
@@ -27,7 +27,7 @@ impl KvGetOut {
         }
     }
 
-    pub fn with_expiry(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {
+    pub fn with_expiry(mut self, value: impl Into<Option<u64>>) -> Self {
         self.expiry = value.into();
         self
     }

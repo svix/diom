@@ -34,8 +34,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class AdminRoleUpsertOut {
     @JsonProperty private String id;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public AdminRoleUpsertOut() {}
 
     public AdminRoleUpsertOut id(String id) {
@@ -57,7 +57,7 @@ public class AdminRoleUpsertOut {
         this.id = id;
     }
 
-    public AdminRoleUpsertOut created(OffsetDateTime created) {
+    public AdminRoleUpsertOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -68,15 +68,15 @@ public class AdminRoleUpsertOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public AdminRoleUpsertOut updated(OffsetDateTime updated) {
+    public AdminRoleUpsertOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -87,11 +87,11 @@ public class AdminRoleUpsertOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

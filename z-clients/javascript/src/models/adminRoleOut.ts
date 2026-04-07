@@ -10,8 +10,8 @@ export interface AdminRoleOut {
     rules: AccessRule[];
     policies: string[];
     context: { [key: string]: string };
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const AdminRoleOutSerializer = {
@@ -23,8 +23,8 @@ export const AdminRoleOutSerializer = {
             rules: object['rules'].map((item: AccessRule) => AccessRuleSerializer._fromJsonObject(item)),
             policies: object['policies'],
             context: object['context'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

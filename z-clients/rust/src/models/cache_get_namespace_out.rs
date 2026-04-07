@@ -9,18 +9,13 @@ pub struct CacheGetNamespaceOut {
 
     pub eviction_policy: EvictionPolicy,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 }
 
 impl CacheGetNamespaceOut {
-    pub fn new(
-        name: String,
-        eviction_policy: EvictionPolicy,
-        created: jiff::Timestamp,
-        updated: jiff::Timestamp,
-    ) -> Self {
+    pub fn new(name: String, eviction_policy: EvictionPolicy, created: u64, updated: u64) -> Self {
         Self {
             name,
             eviction_policy,

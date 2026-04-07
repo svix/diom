@@ -35,8 +35,8 @@ import lombok.ToString;
 public class AdminAuthTokenRotateOut {
     @JsonProperty private String id;
     @JsonProperty private String token;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty private Long created;
+    @JsonProperty private Long updated;
     public AdminAuthTokenRotateOut() {}
 
     public AdminAuthTokenRotateOut id(String id) {
@@ -77,7 +77,7 @@ public class AdminAuthTokenRotateOut {
         this.token = token;
     }
 
-    public AdminAuthTokenRotateOut created(OffsetDateTime created) {
+    public AdminAuthTokenRotateOut created(Long created) {
         this.created = created;
         return this;
     }
@@ -88,15 +88,15 @@ public class AdminAuthTokenRotateOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Long getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Long created) {
         this.created = created;
     }
 
-    public AdminAuthTokenRotateOut updated(OffsetDateTime updated) {
+    public AdminAuthTokenRotateOut updated(Long updated) {
         this.updated = updated;
         return this;
     }
@@ -107,11 +107,11 @@ public class AdminAuthTokenRotateOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Long getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Long updated) {
         this.updated = updated;
     }
 

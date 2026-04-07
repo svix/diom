@@ -2,8 +2,8 @@
 
 export interface AdminAccessPolicyUpsertOut {
     id: string;
-    created: Date;
-    updated: Date;
+    created: number;
+    updated: number;
 }
 
 export const AdminAccessPolicyUpsertOutSerializer = {
@@ -11,8 +11,8 @@ export const AdminAccessPolicyUpsertOutSerializer = {
     _fromJsonObject(object: any): AdminAccessPolicyUpsertOut {
         return {
             id: object['id'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: object['created'],
+            updated: object['updated'],
         };
     },
 

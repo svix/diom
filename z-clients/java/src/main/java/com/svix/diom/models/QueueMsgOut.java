@@ -36,8 +36,8 @@ public class QueueMsgOut {
     @JsonProperty("msg_id") private String msgId;
     @JsonProperty private byte[] value;
     @JsonProperty private Map<String,String> headers;
-    @JsonProperty private OffsetDateTime timestamp;
-    @JsonProperty("scheduled_at") private OffsetDateTime scheduledAt;
+    @JsonProperty private Long timestamp;
+    @JsonProperty("scheduled_at") private Long scheduledAt;
     public QueueMsgOut() {}
 
     public QueueMsgOut msgId(String msgId) {
@@ -104,7 +104,7 @@ public class QueueMsgOut {
         this.headers = headers;
     }
 
-    public QueueMsgOut timestamp(OffsetDateTime timestamp) {
+    public QueueMsgOut timestamp(Long timestamp) {
         this.timestamp = timestamp;
         return this;
     }
@@ -115,15 +115,15 @@ public class QueueMsgOut {
      * @return timestamp
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(OffsetDateTime timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 
-    public QueueMsgOut scheduledAt(OffsetDateTime scheduledAt) {
+    public QueueMsgOut scheduledAt(Long scheduledAt) {
         this.scheduledAt = scheduledAt;
         return this;
     }
@@ -134,11 +134,11 @@ public class QueueMsgOut {
      * @return scheduledAt
      */
     @javax.annotation.Nullable
-    public OffsetDateTime getScheduledAt() {
+    public Long getScheduledAt() {
         return scheduledAt;
     }
 
-    public void setScheduledAt(OffsetDateTime scheduledAt) {
+    public void setScheduledAt(Long scheduledAt) {
         this.scheduledAt = scheduledAt;
     }
 
