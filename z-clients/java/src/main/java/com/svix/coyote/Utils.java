@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 import java.util.List;
 import java.util.Set;
 
@@ -26,6 +27,15 @@ public class Utils {
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.registerModule(new JavaTimeModule());
+        mapper.registerModule(new Jdk8Module());
+        return mapper;
+    }
+
+    public static ObjectMapper getMsgpackObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper(new MessagePackFactory());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(new Jdk8Module());

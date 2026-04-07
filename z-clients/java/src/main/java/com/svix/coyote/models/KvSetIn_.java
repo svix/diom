@@ -13,8 +13,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.coyote.DurationMsSerializer;
 import com.svix.coyote.DurationMsDeserializer;
-import com.svix.coyote.ByteArrayAsIntArraySerializer;
-import com.svix.coyote.ByteArrayAsIntArrayDeserializer;
 import com.svix.coyote.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -32,7 +30,7 @@ import java.util.Objects;
 public class KvSetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
-    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
+    @JsonProperty private byte[] value;
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;

@@ -13,8 +13,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.coyote.DurationMsSerializer;
 import com.svix.coyote.DurationMsDeserializer;
-import com.svix.coyote.ByteArrayAsIntArraySerializer;
-import com.svix.coyote.ByteArrayAsIntArrayDeserializer;
 import com.svix.coyote.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -37,7 +35,7 @@ import lombok.ToString;
 public class StreamMsgOut {
     @JsonProperty private Long offset;
     @JsonProperty private String topic;
-    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
+    @JsonProperty private byte[] value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private OffsetDateTime timestamp;
     @JsonProperty("scheduled_at") private OffsetDateTime scheduledAt;

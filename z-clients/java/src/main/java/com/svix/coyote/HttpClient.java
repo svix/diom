@@ -91,7 +91,7 @@ public class HttpClient {
             .socketFactory(new HelpImTrappedInANagleFactory())
             .build();
 
-        this.objectMapper = Utils.getObjectMapper();
+        this.objectMapper = Utils.getMsgpackObjectMapper();
     }
 
     public HttpUrl.Builder newUrlBuilder() {
@@ -101,6 +101,8 @@ public class HttpClient {
                 .port(baseUrl.port());
     }
 
+    private static final MediaType APPLICATION_MSGPACK = MediaType.parse("application/msgpack");
+
     public <Req, Res> Res executeRequest(
             String method, HttpUrl url, Headers headers, Req reqBody, Class<Res> responseClass)
             throws ApiException, IOException {
@@ -108,8 +110,8 @@ public class HttpClient {
 
         // Handle request body
         if (reqBody != null) {
-            String jsonBody = objectMapper.writeValueAsString(reqBody);
-            RequestBody body = RequestBody.create(jsonBody, MediaType.parse("application/json"));
+            byte[] msgpackBody = objectMapper.writeValueAsBytes(reqBody);
+            RequestBody body = RequestBody.create(msgpackBody, APPLICATION_MSGPACK);
             reqBuilder.method(method, body);
         } else {
             reqBuilder.method(method, null);
@@ -117,6 +119,8 @@ public class HttpClient {
 
         // Add default headers
         defaultHeaders.forEach(reqBuilder::addHeader);
+
+        reqBuilder.addHeader("accept", "application/msgpack");
 
         String idempotencyKey = headers == null ? null : headers.get("idempotency-key");
         if ((idempotencyKey == null || idempotencyKey.isEmpty()) && method.toUpperCase() == "POST") {
@@ -139,16 +143,18 @@ public class HttpClient {
             throw new ApiException("Body is null", response.code(), "");
         }
 
-        String bodyString = response.body().string();
+        byte[] bodyBytes = response.body().bytes();
 
         if (response.code() == 204) {
             return null;
         }
 
         if (response.code() >= 200 && response.code() < 300) {
-            return objectMapper.readValue(bodyString, responseClass);
+            return objectMapper.readValue(bodyBytes, responseClass);
         }
 
+        String bodyString = objectMapper.readTree(bodyBytes).toString();
+    
         throw new ApiException(
                 "Non 200 status code: `" + response.code() + "`", response.code(), bodyString);
     }
