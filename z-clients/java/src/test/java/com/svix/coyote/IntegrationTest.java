@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.svix.coyote.models.*;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -33,15 +31,6 @@ class IntegrationTest {
         client = new Coyote(TOKEN, opts);
     }
 
-    private static List<Byte> toBytes(String s) {
-        byte[] raw = s.getBytes();
-        Byte[] boxed = new Byte[raw.length];
-        for (int i = 0; i < raw.length; i++) {
-            boxed[i] = raw[i];
-        }
-        return Arrays.asList(boxed);
-    }
-
     @Test
     void testHealthPing() throws Exception {
         PingOut resp = client.getHealth().ping();
@@ -51,7 +40,7 @@ class IntegrationTest {
     @Test
     void testKvSetGetDelete() throws Exception {
         String key = "java-integration-kv-key";
-        List<Byte> value = toBytes("java-integration-kv-value");
+        byte[] value = "java-integration-kv-value".getBytes();
 
         // Set
         KvSetOut setResp = client.getKv().set(key, value);
@@ -59,7 +48,7 @@ class IntegrationTest {
 
         // Get
         KvGetOut getResp = client.getKv().get(key);
-        assertEquals(value, getResp.getValue());
+        assertArrayEquals(value, getResp.getValue());
 
         // Delete
         KvDeleteOut delResp = client.getKv().delete(key);
@@ -73,14 +62,14 @@ class IntegrationTest {
     @Test
     void testCacheSetGetDelete() throws Exception {
         String key = "java-integration-cache-key";
-        List<Byte> value = toBytes("java-integration-cache-value");
+        byte[] value = "java-integration-cache-value".getBytes();
 
         // Set
         client.getCache().set(key, value, new CacheSetIn().ttl(Duration.ofMillis(60000)));
 
         // Get
         CacheGetOut getResp = client.getCache().get(key);
-        assertEquals(value, getResp.getValue());
+        assertArrayEquals(value, getResp.getValue());
 
         // Delete
         CacheDeleteOut delResp = client.getCache().delete(key);

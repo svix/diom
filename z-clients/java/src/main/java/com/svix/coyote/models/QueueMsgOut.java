@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.coyote.DurationMsSerializer;
 import com.svix.coyote.DurationMsDeserializer;
+import com.svix.coyote.ByteArrayAsIntArraySerializer;
+import com.svix.coyote.ByteArrayAsIntArrayDeserializer;
 import com.svix.coyote.Utils;
 import java.time.Duration;
 import java.util.Map;
@@ -34,7 +36,7 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class QueueMsgOut {
     @JsonProperty("msg_id") private String msgId;
-    @JsonProperty private List<Byte> value;
+    @JsonProperty @JsonSerialize(using = ByteArrayAsIntArraySerializer.class) @JsonDeserialize(using = ByteArrayAsIntArrayDeserializer.class) private byte[] value;
     @JsonProperty private Map<String,String> headers;
     @JsonProperty private OffsetDateTime timestamp;
     @JsonProperty("scheduled_at") private OffsetDateTime scheduledAt;
@@ -59,29 +61,22 @@ public class QueueMsgOut {
         this.msgId = msgId;
     }
 
-    public QueueMsgOut value(List<Byte> value) {
+    public QueueMsgOut value(byte[] value) {
         this.value = value;
         return this;
     }
 
-    public QueueMsgOut addValueItem(Byte valueItem) {
-        if (this.value == null) {
-            this.value = new ArrayList<>();
-        }
-        this.value.add(valueItem);
-        return this;
-    }
     /**
     * Get value
     *
      * @return value
      */
     @javax.annotation.Nonnull
-    public List<Byte> getValue() {
+    public byte[] getValue() {
         return value;
     }
 
-    public void setValue(List<Byte> value) {
+    public void setValue(byte[] value) {
         this.value = value;
     }
 
