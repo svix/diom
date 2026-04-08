@@ -7,10 +7,18 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[derive(Clone)]
 pub struct InstrumentedMutex<T> {
     id: u64,
     inner: Arc<Mutex<T>>,
+}
+
+impl<T> Clone for InstrumentedMutex<T> {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            inner: Arc::clone(&self.inner),
+        }
+    }
 }
 
 static ID_GENERATOR: AtomicU64 = AtomicU64::new(0);

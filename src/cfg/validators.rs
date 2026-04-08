@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use validator::ValidationError;
 
 use crate::cfg::ClusterConfiguration;
@@ -8,15 +6,6 @@ pub(super) fn validate_admin_token(token: &str) -> Result<(), ValidationError> {
     if token.len() < 20 {
         return Err(ValidationError::new(
             "admin_token must be at least 20 characters long",
-        ));
-    }
-    Ok(())
-}
-
-pub(super) fn validate_log_sync_interval_duration(d: &Duration) -> Result<(), ValidationError> {
-    if d.is_zero() {
-        return Err(ValidationError::new(
-            "sync interval duration must be non-zero",
         ));
     }
     Ok(())
