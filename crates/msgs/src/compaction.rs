@@ -62,9 +62,11 @@ impl Factory for IdempotencyExpiryFilterFactory {
 #[cfg(test)]
 mod tests {
     use super::IdempotencyExpiryFilterFactory;
-    use crate::METADATA_KEYSPACE;
-    use crate::entities::{MsgsIdempotencyKey, TopicName};
-    use crate::tables::{IdempotencyRow, TopicRow};
+    use crate::{
+        METADATA_KEYSPACE,
+        entities::{MsgsIdempotencyKey, TopicName},
+        tables::{IdempotencyRow, TopicRow},
+    };
     use diom_core::Monotime;
     use diom_id::{NamespaceId, UuidV7RandomBytes};
     use fjall::{Database, KeyspaceCreateOptions};
