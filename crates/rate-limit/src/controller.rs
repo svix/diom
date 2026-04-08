@@ -142,7 +142,7 @@ mod tests {
     fn config() -> TokenBucket {
         TokenBucket {
             refill_rate: 1,
-            refill_interval: DurationMs::from(100),
+            refill_interval: DurationMs::from_millis(100),
             bucket_size: 5,
         }
     }
@@ -150,7 +150,7 @@ mod tests {
     fn config_refill_2() -> TokenBucket {
         TokenBucket {
             refill_rate: 2,
-            refill_interval: DurationMs::from(100),
+            refill_interval: DurationMs::from_millis(100),
             bucket_size: 5,
         }
     }
@@ -177,7 +177,7 @@ mod tests {
             limiter.limit(clock, ns(), id, 1, config()).await.unwrap();
         assert!(!result);
         assert_eq!(remaining, 0);
-        assert_eq!(retry_after, Some(DurationMs::from(100)));
+        assert_eq!(retry_after, Some(DurationMs::from_millis(100)));
     }
 
     #[tokio::test]
@@ -227,7 +227,7 @@ mod tests {
         fn make_config() -> TokenBucket {
             TokenBucket {
                 refill_rate: 2,
-                refill_interval: DurationMs::from(5000),
+                refill_interval: DurationMs::from_millis(5000),
                 bucket_size: 6,
             }
         }
