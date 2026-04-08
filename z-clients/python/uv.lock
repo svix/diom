@@ -52,7 +52,7 @@ wheels = [
 ]
 
 [[package]]
-name = "coyote"
+name = "diom"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

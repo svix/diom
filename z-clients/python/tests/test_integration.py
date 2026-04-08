@@ -4,8 +4,8 @@ from datetime import timedelta
 
 import pytest
 
-from coyote import Coyote, CoyoteAsync, CoyoteOptions
-from coyote.models import (
+from diom import Diom, DiomAsync, DiomOptions
+from diom.models import (
     CacheDeleteIn,
     CacheGetIn,
     CacheSetIn,
@@ -13,23 +13,23 @@ from coyote.models import (
     KvGetIn,
 )
 
-TOKEN = os.environ["COYOTE_TOKEN"]
-SERVER_URL = os.environ["COYOTE_SERVER_URL"]
+TOKEN = os.environ["DIOM_TOKEN"]
+SERVER_URL = os.environ["DIOM_SERVER_URL"]
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("COYOTE_INTEGRATION") != "1",
-    reason="Set COYOTE_INTEGRATION=1 to run integration tests",
+    os.environ.get("DIOM_INTEGRATION") != "1",
+    reason="Set DIOM_INTEGRATION=1 to run integration tests",
 )
 
 
 @pytest.fixture
-def client() -> Coyote:
-    return Coyote(TOKEN, CoyoteOptions(server_url=SERVER_URL))
+def client() -> Diom:
+    return Diom(TOKEN, DiomOptions(server_url=SERVER_URL))
 
 
 @pytest.fixture
-def async_client() -> CoyoteAsync:
-    return CoyoteAsync(TOKEN, CoyoteOptions(server_url=SERVER_URL))
+def async_client() -> DiomAsync:
+    return DiomAsync(TOKEN, DiomOptions(server_url=SERVER_URL))
 
 
 # --- Sync tests ---
