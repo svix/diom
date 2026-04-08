@@ -43,6 +43,7 @@ itertools.workspace = true
 jiff.workspace = true
 mimalloc.workspace = true
 rand.workspace = true
+redis = { version = "0.27", features = ["tokio-comp"] }
 rustls.workspace = true
 sqlx = { workspace = true }
 serde.workspace = true

@@ -26,7 +26,9 @@ use rand::{
     distr::{Alphanumeric, SampleString},
     rngs::StdRng,
 };
+use redis::AsyncCommands;
 use serde::Serialize;
+use sqlx::Row as _;
 use tokio::sync::Barrier;
 
 // TODO(238): Idempotency/Rate-limit does not currently work in SDK
@@ -136,6 +138,14 @@ pub struct BenchmarkArgs {
     /// Glob filter: only run benchmarks whose name matches
     #[arg(long)]
     pub filter: Option<String>,
+
+    /// PostgreSQL connection URL for direct comparison benchmarks
+    #[arg(long, value_name = "URL", default_value = "postgres://postgres:postgres@localhost:5432/postgres")]
+    pub postgres_url: String,
+
+    /// Redis URL for direct comparison benchmarks
+    #[arg(long, value_name = "URL", default_value = "redis://localhost:6385")]
+    pub redis_url: String,
 }
 
 impl BenchmarkArgs {
@@ -170,6 +180,20 @@ impl BenchmarkArgs {
             eprintln!();
             bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
             bench_kv_pg(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+            bench_postgres(
+                Arc::clone(&bench_cfg),
+                &self.postgres_url,
+                &mut all_stats,
+                filter.as_ref(),
+            )
+            .await?;
+            bench_redis(
+                Arc::clone(&bench_cfg),
+                &self.redis_url,
+                &mut all_stats,
+                filter.as_ref(),
+            )
+            .await?;
             // bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
             // bench_msgs_stream(
             //     Arc::clone(&bench_cfg),
@@ -799,6 +823,276 @@ async fn bench_kv_pg(
     BenchKvPgGet::new()
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
+    Ok(())
+}
+
+// Direct PostgreSQL comparison benchmarks (pg.set / pg.get)
+
+#[derive(Clone)]
+struct BenchPgSet {
+    bench_result: BenchResult,
+    pool: sqlx::PgPool,
+}
+
+impl BenchPgSet {
+    fn new(pool: sqlx::PgPool) -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+            pool,
+        }
+    }
+}
+
+impl BenchShard for BenchPgSet {
+    fn test_name(&self) -> String {
+        "pg.set".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        _client: &DiomClient,
+        rng: &mut StdRng,
+        shard_id: u64,
+        iteration: u64,
+    ) -> Result<()> {
+        let key = bench_generate_key(shard_id, iteration);
+        let mut value = vec![0u8; 2054];
+        rng.fill(&mut value[..]);
+
+        let bytes = value.len() as u64;
+        let t = Instant::now();
+        sqlx::query(
+            "INSERT INTO diom_bench_kv (key, value) VALUES ($1, $2) \
+             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+        )
+        .bind(&key)
+        .bind(&value)
+        .execute(&self.pool)
+        .await?;
+        self.bench_result.process(t.elapsed(), bytes)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+#[derive(Clone)]
+struct BenchPgGet {
+    bench_result: BenchResult,
+    pool: sqlx::PgPool,
+}
+
+impl BenchPgGet {
+    fn new(pool: sqlx::PgPool) -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+            pool,
+        }
+    }
+}
+
+impl BenchShard for BenchPgGet {
+    fn test_name(&self) -> String {
+        "pg.get".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        _client: &DiomClient,
+        _rng: &mut StdRng,
+        shard_id: u64,
+        iteration: u64,
+    ) -> Result<()> {
+        let key = bench_generate_key(shard_id, iteration);
+
+        let t = Instant::now();
+        let row = sqlx::query("SELECT value FROM diom_bench_kv WHERE key = $1")
+            .bind(&key)
+            .fetch_optional(&self.pool)
+            .await?;
+        let bytes = row
+            .map(|r| r.get::<Vec<u8>, _>(0).len() as u64)
+            .unwrap_or(0);
+        self.bench_result.process(t.elapsed(), bytes)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+async fn bench_postgres(
+    cfg: Arc<BenchConfig>,
+    pg_url: &str,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
+    let pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(cfg.concurrency as u32 + 4)
+        .connect(pg_url)
+        .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS diom_bench_kv (key TEXT PRIMARY KEY, value BYTEA NOT NULL)",
+    )
+    .execute(&pool)
+    .await?;
+
+    BenchPgSet::new(pool.clone())
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    BenchPgGet::new(pool)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+
+    Ok(())
+}
+
+// Direct Redis comparison benchmarks (redis.set / redis.get)
+
+#[derive(Clone)]
+struct BenchRedisSet {
+    bench_result: BenchResult,
+    conn: redis::aio::MultiplexedConnection,
+}
+
+impl BenchRedisSet {
+    fn new(conn: redis::aio::MultiplexedConnection) -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+            conn,
+        }
+    }
+}
+
+impl BenchShard for BenchRedisSet {
+    fn test_name(&self) -> String {
+        "redis.set".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        _client: &DiomClient,
+        rng: &mut StdRng,
+        shard_id: u64,
+        iteration: u64,
+    ) -> Result<()> {
+        let key = bench_generate_key(shard_id, iteration);
+        let mut value = vec![0u8; 2054];
+        rng.fill(&mut value[..]);
+
+        let bytes = value.len() as u64;
+        let t = Instant::now();
+        self.conn.set::<_, _, ()>(&key, value.as_slice()).await?;
+        self.bench_result.process(t.elapsed(), bytes)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+#[derive(Clone)]
+struct BenchRedisGet {
+    bench_result: BenchResult,
+    conn: redis::aio::MultiplexedConnection,
+}
+
+impl BenchRedisGet {
+    fn new(conn: redis::aio::MultiplexedConnection) -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+            conn,
+        }
+    }
+}
+
+impl BenchShard for BenchRedisGet {
+    fn test_name(&self) -> String {
+        "redis.get".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        _client: &DiomClient,
+        _rng: &mut StdRng,
+        shard_id: u64,
+        iteration: u64,
+    ) -> Result<()> {
+        let key = bench_generate_key(shard_id, iteration);
+
+        let t = Instant::now();
+        let value: Vec<u8> = self.conn.get(&key).await?;
+        let bytes = value.len() as u64;
+        self.bench_result.process(t.elapsed(), bytes)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+async fn bench_redis(
+    cfg: Arc<BenchConfig>,
+    redis_url: &str,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
+    let client = redis::Client::open(redis_url)?;
+    let conn = client.get_multiplexed_tokio_connection().await?;
+
+    BenchRedisSet::new(conn.clone())
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    BenchRedisGet::new(conn)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+
     Ok(())
 }
 
