@@ -16,6 +16,7 @@ fjall-utils.workspace = true
 jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
+sqlx.workspace = true
 tap.workspace = true
 tokio.workspace = true
 tracing.workspace = true

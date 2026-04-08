@@ -23,6 +23,9 @@ pub struct KvSetIn {
     /// Use the `version` field from a prior `get` response.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<u64>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub use_postgres: bool,
 }
 
 impl KvSetIn {
@@ -32,6 +35,7 @@ impl KvSetIn {
             ttl: None,
             behavior: None,
             version: None,
+            use_postgres: false,
         }
     }
 
@@ -52,6 +56,11 @@ impl KvSetIn {
 
     pub fn with_version(mut self, value: impl Into<Option<u64>>) -> Self {
         self.version = value.into();
+        self
+    }
+
+    pub fn with_use_postgres(mut self, value: bool) -> Self {
+        self.use_postgres = value;
         self
     }
 }
@@ -81,4 +90,7 @@ pub(crate) struct KvSetIn_ {
     /// Use the `version` field from a prior `get` response.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<u64>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub use_postgres: bool,
 }

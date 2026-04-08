@@ -10,6 +10,9 @@ pub struct KvGetIn {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub consistency: Option<Consistency>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub use_postgres: bool,
 }
 
 impl KvGetIn {
@@ -17,6 +20,7 @@ impl KvGetIn {
         Self {
             namespace: None,
             consistency: None,
+            use_postgres: false,
         }
     }
 
@@ -27,6 +31,11 @@ impl KvGetIn {
 
     pub fn with_consistency(mut self, value: impl Into<Option<Consistency>>) -> Self {
         self.consistency = value.into();
+        self
+    }
+
+    pub fn with_use_postgres(mut self, value: bool) -> Self {
+        self.use_postgres = value;
         self
     }
 }
@@ -40,4 +49,7 @@ pub(crate) struct KvGetIn_ {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub consistency: Option<Consistency>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub use_postgres: bool,
 }

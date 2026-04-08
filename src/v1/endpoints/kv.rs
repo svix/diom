@@ -67,6 +67,10 @@ pub struct KvSetIn {
     /// If set, the write only succeeds when the stored version matches this value.
     /// Use the `version` field from a prior `get` response.
     pub version: Option<u64>,
+
+    /// If true, store in postgres instead of fjall (for benchmarking).
+    #[serde(default)]
+    pub use_postgres: bool,
 }
 
 request_input!(KvSetIn, "set");
@@ -88,6 +92,10 @@ pub struct KvGetIn {
     pub key: EntityKey,
     #[serde(default = "Consistency::strong")]
     pub consistency: Consistency,
+
+    /// If true, fetch from postgres instead of fjall (for benchmarking).
+    #[serde(default)]
+    pub use_postgres: bool,
 }
 
 request_input!(KvGetIn, "get");
@@ -155,6 +163,7 @@ async fn kv_set(
         data.ttl,
         data.behavior,
         data.version,
+        data.use_postgres,
     );
     let SetResponseData { version, success } =
         repl.client_write(operation).await.or_internal_error()?.0?;
@@ -174,6 +183,16 @@ async fn kv_get(
         .namespace_state
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
+
+    if data.use_postgres {
+        let value = diom_kv::pg::pg_fetch(&data.key).await?;
+        let ret = KvGetOut {
+            expiry: None,
+            value,
+            version: 0,
+        };
+        return Ok(MsgPackOrJson(ret));
+    }
 
     if data.consistency.linearizable() {
         repl.wait_linearizable().await.or_internal_error()?;

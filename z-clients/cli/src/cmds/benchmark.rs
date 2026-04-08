@@ -169,21 +169,22 @@ impl BenchmarkArgs {
 
             eprintln!();
             bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
-            bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
-            bench_msgs_stream(
-                Arc::clone(&bench_cfg),
-                batch_size,
-                &mut all_stats,
-                filter.as_ref(),
-            )
-            .await?;
-            bench_msgs_queue(
-                Arc::clone(&bench_cfg),
-                batch_size,
-                &mut all_stats,
-                filter.as_ref(),
-            )
-            .await?;
+            bench_kv_pg(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+            // bench_cache(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+            // bench_msgs_stream(
+            //     Arc::clone(&bench_cfg),
+            //     batch_size,
+            //     &mut all_stats,
+            //     filter.as_ref(),
+            // )
+            // .await?;
+            // bench_msgs_queue(
+            //     Arc::clone(&bench_cfg),
+            //     batch_size,
+            //     &mut all_stats,
+            //     filter.as_ref(),
+            // )
+            // .await?;
         }
 
         eprintln!("\n");
@@ -674,6 +675,128 @@ async fn bench_kv(
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     BenchKvGet::new()
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    Ok(())
+}
+
+// KV module — postgres backend
+
+#[derive(Clone)]
+struct BenchKvPgSet {
+    bench_result: BenchResult,
+}
+
+impl BenchKvPgSet {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
+
+impl BenchShard for BenchKvPgSet {
+    fn test_name(&self) -> String {
+        "kv.pg.set".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        client: &DiomClient,
+        rng: &mut StdRng,
+        shard_id: u64,
+        iteration: u64,
+    ) -> Result<()> {
+        let key = bench_generate_key(shard_id, iteration);
+        let mut value = vec![0u8; 2054];
+        rng.fill(&mut value[..]);
+
+        let bytes = value.len() as u64;
+        let t = Instant::now();
+        client
+            .kv()
+            .set(key, value, KvSetIn::new().with_use_postgres(true))
+            .await?;
+        self.bench_result.process(t.elapsed(), bytes)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+#[derive(Clone)]
+struct BenchKvPgGet {
+    bench_result: BenchResult,
+}
+
+impl BenchKvPgGet {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
+
+impl BenchShard for BenchKvPgGet {
+    fn test_name(&self) -> String {
+        "kv.pg.get".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        client: &DiomClient,
+        _rng: &mut StdRng,
+        shard_id: u64,
+        iteration: u64,
+    ) -> Result<()> {
+        let key = bench_generate_key(shard_id, iteration);
+
+        let t = Instant::now();
+        let ret = client
+            .kv()
+            .get(key, KvGetIn::new().with_use_postgres(true))
+            .await?;
+        let bytes = ret.value.expect("key should exist").len() as u64;
+        self.bench_result.process(t.elapsed(), bytes)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+async fn bench_kv_pg(
+    cfg: Arc<BenchConfig>,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
+    BenchKvPgSet::new()
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    BenchKvPgGet::new()
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
     Ok(())

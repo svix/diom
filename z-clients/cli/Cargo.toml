@@ -44,6 +44,7 @@ jiff.workspace = true
 mimalloc.workspace = true
 rand.workspace = true
 rustls.workspace = true
+sqlx = { workspace = true }
 serde.workspace = true
 serde_json.workspace = true
 tokio = { workspace = true, features = ["macros", "time", "rt-multi-thread"] }

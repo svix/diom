@@ -24,6 +24,7 @@ impl<'a> Kv<'a> {
             ttl: kv_set_in.ttl,
             behavior: kv_set_in.behavior,
             version: kv_set_in.version,
+            use_postgres: kv_set_in.use_postgres,
         };
 
         crate::request::Request::new(http::Method::POST, "/api/v1.kv.set")
@@ -38,6 +39,7 @@ impl<'a> Kv<'a> {
             namespace: kv_get_in.namespace,
             key,
             consistency: kv_get_in.consistency,
+            use_postgres: kv_get_in.use_postgres,
         };
 
         crate::request::Request::new(http::Method::POST, "/api/v1.kv.get")

@@ -27,6 +27,8 @@ pub struct SetOperation {
     version: Option<u64>,
     ttl: Option<DurationMs>,
     behavior: OperationBehavior,
+    #[serde(default)]
+    use_postgres: bool,
 }
 
 impl SetOperation {
@@ -37,6 +39,7 @@ impl SetOperation {
         ttl: Option<DurationMs>,
         behavior: OperationBehavior,
         version: Option<u64>,
+        use_postgres: bool,
     ) -> Self {
         Self {
             namespace_id: namespace.id,
@@ -45,12 +48,21 @@ impl SetOperation {
             version,
             ttl,
             behavior,
+            use_postgres,
         }
     }
 }
 
 impl SetOperation {
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
+        if self.use_postgres {
+            crate::pg::pg_set(&self.key, &self.value).await?;
+            return Ok(SetResponseData {
+                success: true,
+                version: ctx.log_index,
+            });
+        }
+
         let now = ctx.timestamp;
         let expiry = self
             .ttl
