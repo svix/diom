@@ -190,11 +190,11 @@ async fn publish(
 // stream/receive
 // ---------------------------------------------------------------------------
 
-fn default_batch_size() -> NonZeroU16 {
+const fn default_batch_size() -> NonZeroU16 {
     NonZeroU16::new(10).unwrap()
 }
 
-fn default_lease_duration_ms() -> DurationMs {
+const fn default_lease_duration_ms() -> DurationMs {
     DurationMs::from_mins(5)
 }
 
@@ -404,7 +404,7 @@ async fn stream_seek(
 // queue/receive
 // ---------------------------------------------------------------------------
 
-fn default_queue_lease_duration() -> DurationMs {
+const fn default_queue_lease_duration() -> DurationMs {
     DurationMs::from_secs(30)
 }
 

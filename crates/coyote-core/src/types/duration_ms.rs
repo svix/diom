@@ -22,7 +22,7 @@ impl DurationMs {
     ///
     /// Panics if `secs * 1000` overflows the `u64` range.
     #[track_caller]
-    pub fn from_secs(secs: u64) -> Self {
+    pub const fn from_secs(secs: u64) -> Self {
         Self(secs.checked_mul(1000).expect("integer overflow"))
     }
 
@@ -32,7 +32,7 @@ impl DurationMs {
     ///
     /// Panics if `mins * 60_000` overflows the `u64` range.
     #[track_caller]
-    pub fn from_mins(mins: u64) -> Self {
+    pub const fn from_mins(mins: u64) -> Self {
         Self(mins.checked_mul(60_000).expect("integer overflow"))
     }
 
@@ -42,8 +42,14 @@ impl DurationMs {
     ///
     /// Panics if `hours * 3_600_000` overflows the `u64` range.
     #[track_caller]
-    pub fn from_hours(hours: u64) -> Self {
+    pub const fn from_hours(hours: u64) -> Self {
         Self(hours.checked_mul(3_600_000).expect("integer overflow"))
+    }
+
+    /// Create a duration from the given number of milliseconds.
+    #[track_caller]
+    pub const fn from_millis(milliseconds: u64) -> Self {
+        Self(milliseconds)
     }
 
     pub fn as_millis(self) -> u64 {
@@ -55,6 +61,17 @@ impl DurationMs {
     }
 }
 
+impl TryFrom<Duration> for DurationMs {
+    type Error = std::num::TryFromIntError;
+
+    /// Convert from a Duration to a DurationMs
+    ///
+    /// Fails if the Duration contains more than 18446744073709551616 milliseconds
+    fn try_from(value: Duration) -> Result<Self, Self::Error> {
+        Ok(Self(value.as_millis().try_into()?))
+    }
+}
+
 impl From<DurationMs> for Duration {
     fn from(value: DurationMs) -> Self {
         Duration::from_millis(value.0)
@@ -63,6 +80,7 @@ impl From<DurationMs> for Duration {
 
 impl From<u64> for DurationMs {
     #[inline]
+    /// Assume the given value represents an integer number of milliseconds and treat it as a DurationMs
     fn from(millis: u64) -> Self {
         Self(millis)
     }
