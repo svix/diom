@@ -17,10 +17,10 @@ from .apis import (
     RateLimitAsync,
 )
 from .client_base import ClientBase
-from .options import CoyoteOptions
+from .options import DiomOptions
 
 
-class Coyote(ClientBase):
+class Diom(ClientBase):
     @property
     def admin(self) -> Admin:
         return Admin(self._client)
@@ -50,7 +50,7 @@ class Coyote(ClientBase):
         return RateLimit(self._client)
 
 
-class CoyoteAsync(ClientBase):
+class DiomAsync(ClientBase):
     @property
     def admin(self) -> AdminAsync:
         return AdminAsync(self._client)
@@ -80,4 +80,4 @@ class CoyoteAsync(ClientBase):
         return RateLimitAsync(self._client)
 
 
-__all__ = ["Coyote", "CoyoteAsync", "CoyoteOptions"]
+__all__ = ["Diom", "DiomAsync", "DiomOptions"]
