@@ -33,6 +33,7 @@ async fn complete(client: &TestClient, key: &str, response: &str, ttl_ms: u64) -
     Ok(())
 }
 
+#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
 async fn complete_with_context(
     client: &TestClient,
     key: &str,
@@ -376,7 +377,6 @@ async fn get_namespace_not_found() -> TestResult {
     Ok(())
 }
 
-#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
 #[tokio::test]
 async fn test_idempotency_context() -> TestResult {
     let TestContext {
