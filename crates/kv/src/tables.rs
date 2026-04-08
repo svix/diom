@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use diom_error::{Result, ResultExt};
 use diom_id::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
@@ -12,18 +14,18 @@ enum RowType {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct KvPairRow {
-    pub value: Vec<u8>,
+pub struct KvPairRow<'a> {
+    pub value: Cow<'a, [u8]>,
     pub expiry: Option<Timestamp>,
     #[serde(default)]
     pub version: u64,
 }
 
-impl TableRow for KvPairRow {
+impl TableRow for KvPairRow<'_> {
     const ROW_TYPE: u8 = RowType::Pair as u8;
 }
 
-impl KvPairRow {
+impl KvPairRow<'_> {
     pub(crate) fn key_for(namespace_id: NamespaceId, key: &str) -> TableKey<Self> {
         TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[key])
     }

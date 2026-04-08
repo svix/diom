@@ -65,7 +65,7 @@ impl TryStartOperation {
                 })
             }
             Some(kv_model) => {
-                let idem_state: IdempotencyState = kv_model.value.into();
+                let idem_state: IdempotencyState = (&*kv_model.value).into();
                 let result = match idem_state {
                     IdempotencyState::InProgress => IdempotencyStartResult::Locked,
                     IdempotencyState::Completed { response, context } => {

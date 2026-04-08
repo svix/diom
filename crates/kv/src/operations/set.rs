@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::{
     KvNamespace, State,
     kvcontroller::{KvModelIn, OperationBehavior},
@@ -5,13 +7,14 @@ use crate::{
 };
 
 use super::{KvRequest, SetResponse};
-use diom_core::types::{DurationMs, EntityKey};
+use diom_core::types::{DurationMs, EntityKey, Yoke};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tap::TapOptional;
+use yoke::Yokeable;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetResponseData {
@@ -19,21 +22,34 @@ pub struct SetResponseData {
     pub version: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SetOperation {
+#[derive(Clone, Debug)]
+pub struct SetOperation(pub Yoke<SetOperationInner<'static>>);
+
+impl<'de> Deserialize<'de> for SetOperation {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // need a type-erased backing cart now I guess
+        todo!()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Yokeable)]
+pub struct SetOperationInner<'a> {
     namespace_id: NamespaceId,
     pub(crate) key: EntityKey,
-    value: Vec<u8>,
+    value: Cow<'a, [u8]>,
     version: Option<u64>,
     ttl: Option<DurationMs>,
     behavior: OperationBehavior,
 }
 
-impl SetOperation {
+impl<'a> SetOperationInner<'a> {
     pub fn new(
         namespace: KvNamespace,
         key: EntityKey,
-        value: Vec<u8>,
+        value: &'a [u8],
         ttl: Option<DurationMs>,
         behavior: OperationBehavior,
         version: Option<u64>,
@@ -41,7 +57,7 @@ impl SetOperation {
         Self {
             namespace_id: namespace.id,
             key,
-            value,
+            value: value.into(),
             version,
             ttl,
             behavior,
@@ -51,25 +67,26 @@ impl SetOperation {
 
 impl SetOperation {
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
+        let data = self.0.get();
         let now = ctx.timestamp;
-        let expiry = self
+        let expiry = data
             .ttl
             .map(|ttl| now + ttl)
             .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
 
         let model = KvModelIn {
-            value: self.value,
+            value: data.value,
             expiry,
-            version: self.version,
+            version: data.version,
         };
 
         let result = state
             .controller()
             .set(
-                self.namespace_id,
-                self.key,
+                data.namespace_id,
+                data.key,
                 model,
-                self.behavior,
+                data.behavior,
                 ctx.timestamp,
                 ctx.log_index,
             )
@@ -81,7 +98,7 @@ impl SetOperation {
     }
 }
 
-impl KvRequest for SetOperation {
+impl KvRequest for SetOperation<'static> {
     async fn apply(self, state: KvRaftState<'_>, ctx: &OpContext) -> SetResponse {
         SetResponse::new(self.apply_real(state.state, ctx).await)
     }

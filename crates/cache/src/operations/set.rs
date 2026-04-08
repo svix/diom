@@ -52,7 +52,7 @@ impl SetOperation {
                 self.namespace_id,
                 self.key,
                 KvModelIn {
-                    value: self.value,
+                    value: self.value.into(),
                     expiry,
                     version: None,
                 },

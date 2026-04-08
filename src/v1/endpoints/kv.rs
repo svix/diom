@@ -14,11 +14,12 @@ use diom_kv::{
     operations::{CreateKvOperation, DeleteOperation, SetOperation, SetResponseData},
 };
 use diom_namespace::entities::NamespaceName;
-use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{AccessMetadata, MsgPackOrJson, MsgPackOrJson2, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
+use yoke::Yokeable;
 
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
@@ -45,16 +46,16 @@ macro_rules! request_input {
     };
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Validate, JsonSchema, Yokeable)]
 #[schemars(extend("x-positional" = ["key", "value"]))]
-pub struct KvSetIn {
+pub struct KvSetIn<'a> {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
     pub key: EntityKey,
 
-    pub value: Vec<u8>,
+    pub value: &'a [u8],
 
     /// Time to live in milliseconds
     #[serde(rename = "ttl_ms")]
@@ -69,7 +70,7 @@ pub struct KvSetIn {
     pub version: Option<u64>,
 }
 
-request_input!(KvSetIn, "set");
+request_input!(KvSetIn<'_>, "set");
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct KvSetOut {
@@ -92,7 +93,7 @@ pub struct KvGetIn {
 
 request_input!(KvGetIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Validate, JsonSchema)]
 pub struct KvGetOut {
     /// Time of expiry
     pub expiry: Option<Timestamp>,
@@ -105,10 +106,10 @@ pub struct KvGetOut {
 }
 
 impl KvGetOut {
-    fn from_model(model: KvModel) -> Self {
+    fn from_model(model: KvModel<'_>) -> Self {
         Self {
             expiry: model.expiry,
-            value: Some(model.value),
+            value: Some(model.value.into_owned()),
             version: model.version,
         }
     }
@@ -141,21 +142,23 @@ pub struct KvDeleteOut {
 async fn kv_set(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<KvSetIn>,
+    data: MsgPackOrJson2<KvSetIn<'static>>,
 ) -> Result<MsgPackOrJson<KvSetOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.get().namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = SetOperation::new(
-        namespace,
-        data.key,
-        data.value,
-        data.ttl,
-        data.behavior,
-        data.version,
-    );
+    data.0.map_project(|data| {
+        SetOperationInner::new(
+            namespace,
+            data.key,
+            data.value,
+            data.ttl,
+            data.behavior,
+            data.version,
+        )
+    });
     let SetResponseData { version, success } =
         repl.client_write(operation).await.or_internal_error()?.0?;
 

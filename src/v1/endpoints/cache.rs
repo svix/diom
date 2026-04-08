@@ -90,10 +90,10 @@ pub struct CacheGetOut {
 }
 
 impl CacheGetOut {
-    fn from_model(model: KvModel) -> Self {
+    fn from_model(model: KvModel<'_>) -> Self {
         Self {
             expiry: model.expiry,
-            value: Some(model.value),
+            value: Some(model.value.into_owned()),
         }
     }
 }

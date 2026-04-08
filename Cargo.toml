@@ -86,6 +86,7 @@ tracing-subscriber = { workspace = true, features = ["json"] }
 url.workspace = true
 uuid.workspace = true
 validator.workspace = true
+yoke.workspace = true
 zip.workspace = true
 
 [dev-dependencies]
@@ -229,6 +230,7 @@ uuid = { version = "1.19.0", features = ["v7", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
 which = "8"
 yansi = "1.0.1"
+yoke = { version = "0.8.2", features = ["derive"] }
 zip = "7"
 
 [workspace.lints.rust]

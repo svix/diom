@@ -29,6 +29,7 @@ thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 validator.workspace = true
+yoke.workspace = true
 
 [lints]
 workspace = true

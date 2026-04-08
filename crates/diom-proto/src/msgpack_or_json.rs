@@ -216,12 +216,12 @@ where
 }
 
 #[derive(Clone, Copy)]
-enum SupportedContentType {
+pub(crate) enum SupportedContentType {
     MsgPack,
     Json,
 }
 
-fn classify_content_type(
+pub(crate) fn classify_content_type(
     headers: &HeaderMap,
 ) -> Result<SupportedContentType, MsgPackOrJsonRejection> {
     let content_type = headers

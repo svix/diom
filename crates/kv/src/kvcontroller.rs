@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    borrow::Cow,
+    time::{Duration, Instant},
+};
 
 use diom_core::{
     instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard},
@@ -17,7 +20,7 @@ use crate::tables::{ExpirationRow, KvPairRow};
 const EXPIRATION_BATCH_SIZE: usize = 1_000;
 const WARN_LONG_LOCK_DURATION: Duration = Duration::from_millis(100);
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[derive(Default)]
 pub enum OperationBehavior {
@@ -28,9 +31,9 @@ pub enum OperationBehavior {
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
-pub struct KvModel {
+pub struct KvModel<'a> {
     pub expiry: Option<Timestamp>,
-    pub value: Vec<u8>,
+    pub value: Cow<'a, [u8]>,
     /// Opaque version token for optimistic concurrency control.
     pub version: u64,
 }
@@ -38,8 +41,8 @@ pub struct KvModel {
 /// Input model for [`KvController::set`]. `version` is the expected current
 /// version for OCC — `None` skips the check.
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
-pub struct KvModelIn {
-    pub value: Vec<u8>,
+pub struct KvModelIn<'a> {
+    pub value: Cow<'a, [u8]>,
     pub expiry: Option<Timestamp>,
     pub version: Option<u64>,
 }
@@ -50,8 +53,8 @@ pub struct KvSetResult {
     pub success: bool,
 }
 
-impl From<KvPairRow> for KvModel {
-    fn from(row: KvPairRow) -> Self {
+impl<'a> From<KvPairRow<'a>> for KvModel<'a> {
+    fn from(row: KvPairRow<'a>) -> Self {
         Self {
             expiry: row.expiry,
             value: row.value,
@@ -87,7 +90,7 @@ impl KvController {
         namespace_id: NamespaceId,
         key: &str,
         now: Timestamp,
-    ) -> Result<Option<KvModel>> {
+    ) -> Result<Option<KvModel<'static>>> {
         let Some(data) = KvPairRow::fetch(keyspace, KvPairRow::key_for(namespace_id, key))? else {
             return Ok(None);
         };
@@ -105,7 +108,7 @@ impl KvController {
         namespace_id: NamespaceId,
         key: K,
         now: Timestamp,
-    ) -> Result<Option<KvModel>> {
+    ) -> Result<Option<KvModel<'static>>> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
             Self::fetch_inner(&keyspace, namespace_id, key.as_ref(), now)
@@ -118,7 +121,7 @@ impl KvController {
         keyspace: &Keyspace,
         namespace_id: NamespaceId,
         key: &str,
-        model: KvModel,
+        model: KvModel<'_>,
         old_expiry: Option<Timestamp>,
     ) -> Result<()> {
         let mut batch = db.batch();
@@ -152,7 +155,7 @@ impl KvController {
         &self,
         namespace_id: NamespaceId,
         key: K,
-        model: KvModelIn,
+        model: KvModelIn<'_>,
         behavior: OperationBehavior,
         now: Timestamp,
         // This is a monotonically increasing global counter (e.g. raft offset)
@@ -161,7 +164,7 @@ impl KvController {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
 
-        spawn_blocking_in_current_span(move || {
+        tokio::task::block_in_place(move || {
             let key = key.as_ref();
             let current = Self::fetch_inner(&keyspace, namespace_id, key, now)?;
             // OCC check: if the caller supplied an expected version, verify it.
@@ -236,7 +239,6 @@ impl KvController {
                 success: true,
             })
         })
-        .await?
     }
 
     #[tracing::instrument(skip_all)]
@@ -280,7 +282,7 @@ impl KvController {
         .await?
     }
 
-    pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow>> {
+    pub fn iter(&self) -> Result<impl Iterator<Item = KvPairRow<'static>>> {
         KvPairRow::values(&self.keyspace)
     }
 
@@ -429,7 +431,7 @@ mod tests {
                 ns(),
                 key,
                 KvModelIn {
-                    value: b"hello world".to_vec(),
+                    value: b"hello world".into(),
                     expiry: None,
                     version: None,
                 },
@@ -447,7 +449,7 @@ mod tests {
             .unwrap();
         assert!(retrieved.is_some());
         let retrieved = retrieved.unwrap();
-        assert_eq!(retrieved.value, b"hello world");
+        assert_eq!(*retrieved.value, b"hello world"[..]);
         assert_eq!(retrieved.expiry, None);
 
         assert!(!key_exists(&controller, "nonexistent:key").await);
@@ -464,7 +466,7 @@ mod tests {
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"key1 updated".to_vec(),
+                    value: b"key1 updated".into(),
                     expiry: None,
                     version: None,
                 },
@@ -481,7 +483,7 @@ mod tests {
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"key1 inserted".to_vec(),
+                    value: b"key1 inserted".into(),
                     expiry: None,
                     version: None,
                 },
@@ -504,7 +506,7 @@ mod tests {
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"another value".to_vec(),
+                    value: b"another value".into(),
                     expiry: None,
                     version: None,
                 },
@@ -521,14 +523,14 @@ mod tests {
             .unwrap();
         assert!(result.is_some());
 
-        assert_eq!(result.unwrap().value, b"key1 inserted");
+        assert_eq!(*result.unwrap().value, b"key1 inserted"[..]);
 
         let res = controller
             .set(
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"key1 upserted".to_vec(),
+                    value: b"key1 upserted".into(),
                     expiry: None,
                     version: None,
                 },
@@ -544,7 +546,7 @@ mod tests {
             .await
             .unwrap();
         assert!(result.is_some());
-        assert_eq!(result.unwrap().value, b"key1 upserted");
+        assert_eq!(*result.unwrap().value, b"key1 upserted"[..]);
     }
 
     #[tokio::test]
@@ -558,7 +560,7 @@ mod tests {
                 ns(),
                 key,
                 KvModelIn {
-                    value: b"first value".to_vec(),
+                    value: b"first value".into(),
                     expiry: None,
                     version: None,
                 },
@@ -573,7 +575,7 @@ mod tests {
                 ns(),
                 key,
                 KvModelIn {
-                    value: b"second value".to_vec(),
+                    value: b"second value".into(),
                     expiry: None,
                     version: None,
                 },
@@ -590,7 +592,7 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(retrieved.value, b"second value");
+        assert_eq!(*retrieved.value, b"second value"[..]);
     }
 
     #[tokio::test]
@@ -605,7 +607,7 @@ mod tests {
                 ns(),
                 "expired:key",
                 KvModelIn {
-                    value: b"expired data".to_vec(),
+                    value: b"expired data".into(),
                     expiry: Some(now.checked_sub(1.hour()).unwrap()),
                     version: None,
                 },
@@ -639,14 +641,14 @@ mod tests {
             ),
         ];
 
-        for (key, expiry, value) in &expired_models {
+        for (key, expiry, value) in expired_models {
             controller
                 .set(
                     ns(),
                     key.to_string(),
                     KvModelIn {
-                        value: value.to_vec(),
-                        expiry: Some(*expiry),
+                        value: value.into(),
+                        expiry: Some(expiry),
                         version: None,
                     },
                     OperationBehavior::Upsert,
@@ -663,7 +665,7 @@ mod tests {
                 ns(),
                 valid_key,
                 KvModelIn {
-                    value: b"valid data".to_vec(),
+                    value: b"valid data".into(),
                     expiry: Some(now.checked_add(1.hour()).unwrap()),
                     version: None,
                 },
@@ -680,7 +682,7 @@ mod tests {
                 ns(),
                 permanent_key,
                 KvModelIn {
-                    value: b"permanent data".to_vec(),
+                    value: b"permanent data".into(),
                     expiry: None,
                     version: None,
                 },
@@ -728,7 +730,7 @@ mod tests {
             .await
             .unwrap();
         assert!(valid.is_some());
-        assert_eq!(valid.unwrap().value, b"valid data");
+        assert_eq!(*valid.unwrap().value, b"valid data"[..]);
 
         assert!(key_exists(&controller, permanent_key).await);
         let permanent = controller
@@ -736,7 +738,7 @@ mod tests {
             .await
             .unwrap();
         assert!(permanent.is_some());
-        assert_eq!(permanent.unwrap().value, b"permanent data");
+        assert_eq!(*permanent.unwrap().value, b"permanent data"[..]);
     }
 
     #[tokio::test]
@@ -759,7 +761,7 @@ mod tests {
                 ns,
                 key,
                 KvModelIn {
-                    value: b"first value".to_vec(),
+                    value: b"first value".into(),
                     expiry: Some(expiry),
                     version: None,
                 },
@@ -789,7 +791,7 @@ mod tests {
                 ns,
                 key,
                 KvModelIn {
-                    value: b"first value".to_vec(),
+                    value: b"first value".into(),
                     expiry: Some(later_expiry),
                     version: None,
                 },

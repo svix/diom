@@ -11,7 +11,7 @@
 
 pub mod operations;
 
-use std::time::Duration;
+use std::{borrow::Cow, time::Duration};
 
 use diom_core::{Monotime, types::Metadata};
 use diom_error::Result;
@@ -50,9 +50,17 @@ pub enum IdempotencyStartResult {
     },
 }
 
-impl From<IdempotencyState> for Vec<u8> {
+impl From<IdempotencyState> for Cow<'static, [u8]> {
     fn from(state: IdempotencyState) -> Self {
-        rmp_serde::to_vec_named(&state).expect("Failed to serialize IdempotencyState")
+        rmp_serde::to_vec_named(&state)
+            .expect("Failed to serialize IdempotencyState")
+            .into()
+    }
+}
+
+impl From<&[u8]> for IdempotencyState {
+    fn from(value: &[u8]) -> Self {
+        rmp_serde::from_slice(value).expect("Failed to deserialize IdempotencyState")
     }
 }
 

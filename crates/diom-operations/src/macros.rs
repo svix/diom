@@ -4,7 +4,7 @@ macro_rules! raft_module_operations {
         $trait_name:ident,
         $module_op_name:ident {
             $(
-                $variant:ident($operation:ident) -> $response_data_type:tt
+                $variant:ident($operation:ty) -> $response_data_type:tt
             ),* $(,)?
         },
         state = $state_type:ty $(,)?
@@ -23,7 +23,7 @@ macro_rules! raft_module_operations {
         $trait_name:ident,
         $module_op_name:ident {
             $(
-                $variant:ident($operation:ident) -> $response_data_type:tt
+                $variant:ident($operation:ty) -> $response_data_type:tt
             ),* $(,)?
         },
         state = $state_type:ty,
