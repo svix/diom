@@ -276,11 +276,40 @@ impl AppState {
         let path = format!("/api/{op_id}");
         self.internal_client.post(&path, body).await
     }
+
+    pub fn namespace_state(&self) -> &diom_namespace::State {
+        &self.namespace_state
+    }
 }
 
 /// Run the server with the given configuration
 pub async fn run(cfg: Configuration) {
     run_with_listeners(cfg, None, None, Monotime::initial(), Initialized::new()).await
+}
+
+/// Set up just the Raft stack without binding any HTTP listeners.
+/// Intended for benchmarking to isolate Raft overhead from HTTP/axum overhead.
+pub async fn initialize_raft_only(
+    cfg: &Configuration,
+    time: Monotime,
+) -> anyhow::Result<(AppState, RaftState)> {
+    use std::collections::BTreeMap;
+    let initialized = Initialized::new();
+    let app_state = AppState::new(
+        cfg.clone(),
+        time.clone(),
+        InternalClient::useless_instance_for_tests(),
+    );
+    let raft =
+        core::cluster::initialize_raft(cfg, app_state.clone(), time, initialized.clone()).await?;
+
+    let mut members = BTreeMap::new();
+    members.insert(raft.node_id, core::cluster::Node::NoAddress);
+    core::cluster::raft::initialize_cluster(&raft.raft, members).await?;
+
+    let _ = initialized.set();
+
+    Ok((app_state, raft))
 }
 
 static BOOTSTRAPPED: AtomicBool = AtomicBool::new(false);

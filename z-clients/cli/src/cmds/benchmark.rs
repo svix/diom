@@ -17,6 +17,8 @@ use diom::{
         MsgQueueAckIn, MsgQueueReceiveIn, MsgStreamCommitIn, MsgStreamReceiveIn,
     },
 };
+use diom_backend::core::cluster::RaftState;
+use diom_kv::{KvNamespace, kvcontroller::OperationBehavior, operations::SetOperation};
 use futures_util::future::try_join_all;
 use glob::Pattern;
 use hdrhistogram::Histogram;
@@ -140,7 +142,11 @@ pub struct BenchmarkArgs {
     pub filter: Option<String>,
 
     /// PostgreSQL connection URL for direct comparison benchmarks
-    #[arg(long, value_name = "URL", default_value = "postgres://postgres:postgres@localhost:5432/postgres")]
+    #[arg(
+        long,
+        value_name = "URL",
+        default_value = "postgres://postgres:postgres@localhost:5432/postgres"
+    )]
     pub postgres_url: String,
 
     /// Redis URL for direct comparison benchmarks
@@ -178,8 +184,12 @@ impl BenchmarkArgs {
             });
 
             eprintln!();
+            BenchHttpPing::new()
+                .bench_shards_concurrent(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref())
+                .await?;
             bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
             bench_kv_pg(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
+            bench_kv_raft_only(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
             bench_postgres(
                 Arc::clone(&bench_cfg),
                 &self.postgres_url,
@@ -586,6 +596,54 @@ fn bench_generate_key(shard_id: u64, iteration: u64) -> String {
     Alphanumeric.sample_string(&mut rng, 16)
 }
 
+// HTTP overhead
+
+#[derive(Clone)]
+struct BenchHttpPing {
+    bench_result: BenchResult,
+}
+
+impl BenchHttpPing {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
+
+impl BenchShard for BenchHttpPing {
+    fn test_name(&self) -> String {
+        "http.ping".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        client: &DiomClient,
+        _rng: &mut StdRng,
+        _shard_id: u64,
+        _iteration: u64,
+    ) -> Result<()> {
+        let t = Instant::now();
+        client.health().ping().await?;
+        self.bench_result.process(t.elapsed(), 0)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
 // KV module
 
 #[derive(Clone)]
@@ -826,7 +884,116 @@ async fn bench_kv_pg(
     Ok(())
 }
 
-// Direct PostgreSQL comparison benchmarks (pg.set / pg.get)
+// Raft-only KV benchmark: Raft consensus, no HTTP/TCP.
+
+#[derive(Clone)]
+struct BenchRaftSet {
+    bench_result: BenchResult,
+    raft: RaftState,
+    namespace_state: diom_namespace::State,
+}
+
+impl BenchRaftSet {
+    fn new(raft: RaftState, namespace_state: diom_namespace::State) -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+            raft,
+            namespace_state,
+        }
+    }
+}
+
+impl BenchShard for BenchRaftSet {
+    fn test_name(&self) -> String {
+        "kv.raft_only.set".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        _client: &DiomClient,
+        rng: &mut StdRng,
+        shard_id: u64,
+        iteration: u64,
+    ) -> Result<()> {
+        let key = diom_core::types::EntityKey::from(bench_generate_key(shard_id, iteration));
+        let mut value = vec![0u8; 2054];
+        rng.fill(&mut value[..]);
+
+        let bytes = value.len() as u64;
+        let t = Instant::now();
+        let namespace: KvNamespace = self
+            .namespace_state
+            .fetch_namespace(Some("bench"))?
+            .context("namespace not found")?;
+        let op = SetOperation::new(
+            namespace,
+            key,
+            value,
+            None,
+            OperationBehavior::Upsert,
+            None,
+            false,
+        );
+        self.raft.client_write(op).await?;
+        self.bench_result.process(t.elapsed(), bytes)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+async fn bench_kv_raft_only(
+    cfg: Arc<BenchConfig>,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
+    use diom_backend::initialize_raft_only;
+    use diom_core::Monotime;
+    use diom_kv::operations::CreateKvOperation;
+    use diom_namespace::entities::NamespaceName;
+    use test_utils::server::default_server_config;
+
+    let tmpdir = tempfile::tempdir()?;
+    let server_cfg = Arc::new(default_server_config(tmpdir.path()));
+    let time = Monotime::initial();
+    time.update_now();
+
+    let (app_state, raft) = initialize_raft_only(&server_cfg, time).await?;
+
+    for _ in 0..50 {
+        if raft.raft.current_leader().await.is_some() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    anyhow::ensure!(
+        raft.raft.current_leader().await.is_some(),
+        "raft never elected a leader"
+    );
+
+    let name: NamespaceName = "bench".parse()?;
+    raft.client_write(CreateKvOperation::new(name))
+        .await
+        .context("creating kv namespace")?;
+
+    BenchRaftSet::new(raft, app_state.namespace_state().clone())
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+
+    Ok(())
+}
 
 #[derive(Clone)]
 struct BenchPgSet {
@@ -845,7 +1012,7 @@ impl BenchPgSet {
 
 impl BenchShard for BenchPgSet {
     fn test_name(&self) -> String {
-        "pg.set".to_owned()
+        "direct.pg.set".to_owned()
     }
 
     async fn run(
@@ -905,7 +1072,7 @@ impl BenchPgGet {
 
 impl BenchShard for BenchPgGet {
     fn test_name(&self) -> String {
-        "pg.get".to_owned()
+        "direct.pg.get".to_owned()
     }
 
     async fn run(
@@ -971,8 +1138,6 @@ async fn bench_postgres(
     Ok(())
 }
 
-// Direct Redis comparison benchmarks (redis.set / redis.get)
-
 #[derive(Clone)]
 struct BenchRedisSet {
     bench_result: BenchResult,
@@ -990,7 +1155,7 @@ impl BenchRedisSet {
 
 impl BenchShard for BenchRedisSet {
     fn test_name(&self) -> String {
-        "redis.set".to_owned()
+        "direct.redis.set".to_owned()
     }
 
     async fn run(
@@ -1043,7 +1208,7 @@ impl BenchRedisGet {
 
 impl BenchShard for BenchRedisGet {
     fn test_name(&self) -> String {
-        "redis.get".to_owned()
+        "direct.redis.get".to_owned()
     }
 
     async fn run(
