@@ -16,6 +16,13 @@ pub use self::{
     },
 };
 
+/// Version envelope for values stored in fjall. The serialized form starts
+/// with a varint discriminant (0x00 for V0), leaving room for future migrations.
+#[derive(serde::Serialize, serde::Deserialize)]
+pub enum V0Wrapper<T> {
+    V0(T),
+}
+
 /// Useful for verifying all table prefixes for a given keyspace are unique,
 /// at compile time.
 pub const fn are_all_unique(strings: &[&str]) -> bool {
@@ -63,5 +70,30 @@ mod tests {
         assert!(are_all_unique(&[]));
         assert!(!are_all_unique(&["a", "a"]));
         assert!(!are_all_unique(&["foo", "bar", "foo"]));
+    }
+
+    #[test]
+    fn v0_wrapper_starts_with_zero() {
+        let bytes = postcard::to_allocvec(&V0Wrapper::V0(42u32)).unwrap();
+        assert_eq!(bytes[0], 0x00, "V0 discriminant must be the first byte");
+    }
+
+    #[test]
+    fn v0_wrapper_roundtrip() {
+        let original = 0xdeadbeef_u32;
+        let bytes = postcard::to_allocvec(&V0Wrapper::V0(original)).unwrap();
+        let V0Wrapper::V0(recovered) = postcard::from_bytes::<V0Wrapper<u32>>(&bytes).unwrap();
+        assert_eq!(recovered, original);
+    }
+
+    #[test]
+    fn v0_wrapper_payload_matches_bare_encoding() {
+        // The bytes after the leading 0x00 should be identical to encoding the
+        // inner value directly, so existing logic only needs to handle the prefix.
+        let inner = 12345u32;
+        let wrapped = postcard::to_allocvec(&V0Wrapper::V0(inner)).unwrap();
+        let bare = postcard::to_allocvec(&inner).unwrap();
+        assert_eq!(wrapped[0], 0x00);
+        assert_eq!(&wrapped[1..], bare.as_slice());
     }
 }

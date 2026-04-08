@@ -16,13 +16,15 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
     const ROW_TYPE: u8;
 
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
-        rmp_serde::to_vec_named(&self)
+        postcard::to_allocvec(&crate::V0Wrapper::V0(self))
             .map(|bytes| bytes.into())
             .or_internal_error()
     }
 
     fn from_fjall_value(value: fjall::UserValue) -> Result<Self> {
-        rmp_serde::from_slice(&value).or_internal_error()
+        postcard::from_bytes::<crate::V0Wrapper<Self>>(&value)
+            .map(|crate::V0Wrapper::V0(inner)| inner)
+            .or_internal_error()
     }
 
     fn fetch<K: ReadableKeyspace>(keyspace: &K, key: TableKey<Self>) -> Result<Option<Self>> {
