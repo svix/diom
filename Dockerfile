@@ -40,7 +40,7 @@ EOF
 COPY --from=planner /app/recipe.json recipe.json
 
 # Build dependencies - this is the caching Docker layer
-RUN cargo chef cook --release --package diom-server --features diom/openapi --recipe-path recipe.json
+RUN cargo chef cook --release --package diom-server --features diom-backend/openapi --recipe-path recipe.json
 RUN cargo chef cook --release --package diom-cli --recipe-path recipe.json
 
 # Build the server
@@ -49,7 +49,7 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
-RUN cargo build --release --package diom-server --bin diom-server --features diom/openapi --frozen
+RUN cargo build --release --package diom-server --bin diom-server --features diom-backend/openapi --frozen
 RUN cargo build --release --package diom-cli --bin diom --frozen
 
 # Production
