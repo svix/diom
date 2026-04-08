@@ -18,6 +18,7 @@ rustls-tls = ["dep:hyper-rustls", "dep:rustls", "hyper-rustls?/rustls-native-cer
 
 [dependencies]
 form_urlencoded.workspace = true
+headers.workspace = true
 http.workspace = true
 http-body-util.workspace = true
 hyper.workspace = true
