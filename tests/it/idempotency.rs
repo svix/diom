@@ -33,6 +33,26 @@ async fn complete(client: &TestClient, key: &str, response: &str, ttl_ms: u64) -
     Ok(())
 }
 
+async fn complete_with_context(
+    client: &TestClient,
+    key: &str,
+    response: &str,
+    ttl_ms: u64,
+    context: serde_json::Value,
+) -> TestResult<()> {
+    client
+        .post("v1.idempotency.complete")
+        .json(json!({
+            "key": key,
+            "response": response.as_bytes(),
+            "ttl_ms": ttl_ms,
+            "context": context,
+        }))
+        .await?
+        .expect(StatusCode::OK);
+    Ok(())
+}
+
 async fn abandon(client: &TestClient, key: &str) -> TestResult<()> {
     client
         .post("v1.idempotency.abort")
@@ -352,6 +372,59 @@ async fn get_namespace_not_found() -> TestResult {
         }))
         .await?
         .ensure_not_found()?;
+
+    Ok(())
+}
+
+#[allow(clippy::disallowed_types)] // serde_json::Value okay for tests
+#[tokio::test]
+async fn test_idempotency_context() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    // context is returned alongside the response on cache hit
+    start(&client, "k1", 60_000).await?;
+    complete_with_context(
+        &client,
+        "k1",
+        "v1",
+        60_000,
+        json!({"request_id": "abc123", "user": "alice"}),
+    )
+    .await?;
+    let response = start(&client, "k1", 60_000).await?;
+    assert_eq!(response["status"], "completed");
+    assert_eq!(response["data"]["response"], json!("v1".as_bytes()));
+    assert_eq!(response["data"]["context"]["request_id"], "abc123");
+    assert_eq!(response["data"]["context"]["user"], "alice");
+
+    // completing without context returns no context field
+    start(&client, "k2", 60_000).await?;
+    complete(&client, "k2", "v2", 60_000).await?;
+    let response = start(&client, "k2", 60_000).await?;
+    assert_eq!(response["status"], "completed");
+    assert!(response["data"]["context"].is_null());
+
+    // context from latest complete wins when completing multiple times
+    start(&client, "k3", 60_000).await?;
+    complete_with_context(&client, "k3", "v1", 60_000, json!({"version": "1"})).await?;
+    complete_with_context(&client, "k3", "v2", 60_000, json!({"version": "2"})).await?;
+    let response = start(&client, "k3", 60_000).await?;
+    assert_eq!(response["status"], "completed");
+    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
+    assert_eq!(response["data"]["context"]["version"], "2");
+
+    // context can be cleared by completing without it
+    start(&client, "k4", 60_000).await?;
+    complete_with_context(&client, "k4", "v1", 60_000, json!({"key": "value"})).await?;
+    complete(&client, "k4", "v2", 60_000).await?;
+    let response = start(&client, "k4", 60_000).await?;
+    assert_eq!(response["status"], "completed");
+    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
+    assert!(response["data"]["context"].is_null());
 
     Ok(())
 }
