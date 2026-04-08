@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt};
 
-use schemars::{JsonSchema, Schema};
+use schemars::{JsonSchema, Schema, json_schema};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -59,8 +59,13 @@ impl JsonSchema for UnixTimestampMs {
         "UnixTimestampMs".into()
     }
 
-    fn json_schema(g: &mut schemars::SchemaGenerator) -> Schema {
-        u64::json_schema(g)
+    fn json_schema(_: &mut schemars::SchemaGenerator) -> Schema {
+        json_schema!({
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
+        })
     }
 
     fn inline_schema() -> bool {

@@ -4941,12 +4941,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -4988,12 +4990,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5016,6 +5020,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "enabled": {
@@ -5041,12 +5046,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5089,6 +5096,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -5129,17 +5137,20 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "expiry": {
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "role": {
@@ -5182,12 +5193,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5211,6 +5224,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "enabled": {
@@ -5320,12 +5334,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5383,12 +5399,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5420,6 +5438,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "metadata": {
@@ -5470,12 +5489,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5493,12 +5514,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "token": {
             "type": "string"
@@ -5552,6 +5575,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -5582,12 +5606,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5636,17 +5662,20 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "expiry": {
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "metadata": {
@@ -5703,6 +5732,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -5719,12 +5749,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "token": {
             "type": "string"
@@ -5755,6 +5787,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "metadata": {
@@ -5834,12 +5867,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5931,12 +5966,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5954,6 +5991,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "value": {
@@ -5995,7 +6033,8 @@
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "DurationMs"
           }
         },
         "required": [
@@ -6021,7 +6060,8 @@
             "description": "The wall-clock time at which the snapshot was initiated",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "snapshot_log_index": {
             "description": "The log index at which the snapshot was initiated",
@@ -6101,7 +6141,8 @@
             "description": "The timestamp of the last transaction committed on this node",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "this_node_last_snapshot_id": {
             "description": "The last snapshot taken on this node",
@@ -6199,7 +6240,8 @@
             "description": "How long to keep the idempotency response for.",
             "type": "integer",
             "format": "uint64",
-            "minimum": 1
+            "minimum": 1,
+            "x-subtype": "DurationMs"
           }
         },
         "required": [
@@ -6258,12 +6300,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6292,12 +6336,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6324,7 +6370,8 @@
             "description": "How long to hold the lock on start before releasing it.",
             "type": "integer",
             "format": "uint64",
-            "minimum": 1
+            "minimum": 1,
+            "x-subtype": "DurationMs"
           }
         },
         "required": [
@@ -6408,12 +6455,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6509,12 +6558,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6531,6 +6582,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "value": {
@@ -6582,6 +6634,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "behavior": {
@@ -6756,6 +6809,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": null,
             "nullable": true
           }
@@ -6797,12 +6851,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6838,12 +6894,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -7031,6 +7089,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": 30000
           }
         },
@@ -7106,6 +7165,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": 30000
           },
           "batch_wait_ms": {
@@ -7113,6 +7173,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": null,
             "nullable": true
           }
@@ -7225,6 +7286,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": 300000
           },
           "default_starting_position": {
@@ -7236,6 +7298,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": null,
             "nullable": true
           }
@@ -7420,12 +7483,14 @@
           "timestamp": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "scheduled_at": {
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           }
         },
@@ -7484,6 +7549,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -7512,6 +7578,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
+            "x-subtype": "DurationMs",
             "default": 1000
           }
         },
@@ -7540,12 +7607,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -7574,12 +7643,14 @@
           "created": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -7626,6 +7697,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -7667,6 +7739,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         }
@@ -7734,12 +7807,14 @@
           "timestamp": {
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "scheduled_at": {
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           }
         },
