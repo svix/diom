@@ -40,7 +40,7 @@ EOF
 COPY --from=planner /app/recipe.json recipe.json
 
 # Build dependencies - this is the caching Docker layer
-RUN cargo chef cook --release --package coyote-server --features coyote/openapi --recipe-path recipe.json
+RUN cargo chef cook --release --package coyote-server --features coyote-backend/openapi --recipe-path recipe.json
 RUN cargo chef cook --release --package coyote-cli --recipe-path recipe.json
 
 # Build the server
@@ -49,7 +49,7 @@ COPY . .
 ARG CARGO_LOG
 ARG GITHUB_SHA
 ARG RELEASE_VERSION
-RUN cargo build --release --package coyote-server --bin coyote-server --features coyote/openapi --frozen
+RUN cargo build --release --package coyote-server --bin coyote-server --features coyote-backend/openapi --frozen
 RUN cargo build --release --package coyote-cli --bin coyote --frozen
 
 # Production
