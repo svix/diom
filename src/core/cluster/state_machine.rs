@@ -521,7 +521,7 @@ impl Store {
                 .ephemeral
                 .persist(self.state.cfg.sync_mode.into())?;
         }
-        self.metrics.record_apply(num_entries, start.elapsed());
+        self.metrics.record_apply(start.elapsed());
         Ok(())
     }
 

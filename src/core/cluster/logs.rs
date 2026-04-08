@@ -490,7 +490,7 @@ impl DiomLogs {
             self.log_cache.push(entry);
         }
 
-        self.metric_record(|m| m.record_append(num_entries, start.elapsed()));
+        self.metric_record(|m| m.record_append(start.elapsed()));
 
         Ok(())
     }
