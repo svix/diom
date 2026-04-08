@@ -5,9 +5,7 @@ from .options import DiomOptions
 class ClientBase:
     _client: AuthenticatedHttpClient
 
-    def __init__(
-        self, auth_token: str, options: DiomOptions = DiomOptions()
-    ) -> None:
+    def __init__(self, auth_token: str, options: DiomOptions = DiomOptions()) -> None:
         if len(options.retry_schedule) > 5:
             raise ValueError("number of retries must not exceed 5")
 
