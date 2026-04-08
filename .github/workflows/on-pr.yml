@@ -16,6 +16,8 @@ jobs:
       java: ${{ steps.filter.outputs.java }}
       javascript: ${{ steps.filter.outputs.javascript }}
       python: ${{ steps.filter.outputs.python }}
+      main-docker: ${{ steps.filter.outputs.main-docker }}
+      operator-docker: ${{ steps.filter.outputs.operator-docker }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
@@ -37,6 +39,14 @@ jobs:
             python:
               - '.github/workflows/python.yml'
               - 'z-clients/python/**'
+            main-docker:
+              - '.github/workflows/docker-test-build.yml'
+              - 'Dockerfile'
+              - 'Cargo.toml'
+            operator-docker:
+              - '.github/workflows/docker-test-build.yml'
+              - 'infra/operator/Dockerfile'
+              - 'infra/operator/Cargo.toml'
 
   ci:
     permissions:
@@ -74,6 +84,22 @@ jobs:
     if: needs.filter.outputs.python == 'true'
     uses: ./.github/workflows/python.yml
 
+  main-docker-test-build:
+    needs: filter
+    if: needs.filter.outputs.main-docker == 'true'
+    uses: ./.github/workflows/docker-test-build.yml
+    with:
+      target: prod
+      file: ./Dockerfile
+
+  operator-docker-test-build:
+    needs: filter
+    if: needs.filter.outputs.operator-docker == 'true'
+    uses: ./.github/workflows/docker-test-build.yml
+    with:
+      target: prod
+      file: ./infra/operator/Dockerfile
+
   ci-required-checks:
     name: CI Required Checks
     runs-on: ubuntu-24.04
@@ -84,6 +110,7 @@ jobs:
       - java
       - javascript
       - python
+      - main-docker-test-build
     # Always run so that this job is a stable required status check: if an
     # upstream job is skipped (e.g. due to path filters added in the future)
     # that is fine; we only fail if something actually failed or was cancelled.
