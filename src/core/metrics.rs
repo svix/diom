@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use http::StatusCode;
-use openraft::ServerState;
 use opentelemetry::{
     KeyValue, Value,
     metrics::{Counter, Gauge, Histogram, Meter},
@@ -40,8 +39,6 @@ pub struct DbMetrics {
     compaction_time: Gauge<u64>,
     outstanding_flushes: Gauge<u64>,
 
-    apply_operations: Counter<u64>,
-    apply_batch_size: Histogram<u64>,
     apply_latency: Histogram<u64>,
     snapshot_operations: Counter<u64>,
     snapshot_size: Histogram<u64>,
@@ -84,14 +81,6 @@ impl DbMetrics {
             outstanding_flushes: meter
                 .u64_gauge("coyote.db.outstanding_flushes")
                 .with_description("Number of outstanding flushes to the disk")
-                .build(),
-            apply_operations: meter
-                .u64_counter("coyote.raft.apply_count")
-                .with_description("Raft apply operations")
-                .build(),
-            apply_batch_size: meter
-                .u64_histogram("coyote.raft.apply_batch_size")
-                .with_description("Raft apply operation batch sizes")
                 .build(),
             apply_latency: meter
                 .u64_histogram("coyote.raft.apply_latency")
@@ -147,10 +136,8 @@ impl DbMetrics {
         Ok(())
     }
 
-    pub fn record_apply(&self, batch_size: usize, duration: Duration) {
+    pub fn record_apply(&self, duration: Duration) {
         let context = std::slice::from_ref(&self.node_id_kv);
-        self.apply_operations.add(1, context);
-        self.apply_batch_size.record(batch_size as u64, context);
         self.apply_latency
             .record(duration.as_micros() as _, context);
     }
@@ -169,8 +156,6 @@ pub struct LogMetrics {
     bytes_used: Gauge<u64>,
     entry_count: Gauge<u64>,
 
-    append_operations: Counter<u64>,
-    append_batch_size: Histogram<u64>,
     append_latency: Histogram<u64>,
 
     read_operations: Counter<u64>,
@@ -192,17 +177,10 @@ impl LogMetrics {
                 .u64_gauge("coyote.raft.log.entry_count")
                 .with_description("Raft log entry count")
                 .build(),
-            append_operations: meter
-                .u64_counter("coyote.raft.log.append_count")
-                .with_description("Raft log append operations")
-                .build(),
-            append_batch_size: meter
-                .u64_histogram("coyote.raft.log.append_batch_size")
-                .with_description("Raft log append operation batch sizes")
-                .build(),
             append_latency: meter
                 .u64_histogram("coyote.raft.log.append_latency")
                 .with_description("Raft log append operation latency")
+                .with_unit("us")
                 .build(),
             read_operations: meter
                 .u64_counter("coyote.raft.log.read_count")
@@ -216,12 +194,9 @@ impl LogMetrics {
         }
     }
 
-    pub fn record_append(&self, batch_size: usize, duration: Duration) {
-        self.append_operations.add(1, &self.context);
-        self.append_batch_size
-            .record(batch_size as u64, &self.context);
+    pub fn record_append(&self, duration: Duration) {
         self.append_latency
-            .record(duration.as_millis() as _, &self.context);
+            .record(duration.as_micros() as _, &self.context);
     }
 
     pub fn record_log_read(&self, batch_size: usize) {
@@ -262,10 +237,6 @@ impl From<WriteType> for KeyValue {
 
 #[derive(Clone)]
 pub struct ClusterMetrics {
-    state_leader: Gauge<u64>,
-    state_follower: Gauge<u64>,
-    state_candidate: Gauge<u64>,
-
     writes: Counter<u64>,
     write_latency: Histogram<u64>,
     linearizable_reads: Counter<u64>,
@@ -277,19 +248,6 @@ impl ClusterMetrics {
     pub fn new(meter: &Meter, node_id: NodeId) -> Self {
         let context = vec![node_id.into()];
         Self {
-            state_leader: meter
-                .u64_gauge("coyote.raft.state.leader")
-                .with_description("1 if and only if the current node is a leader")
-                .build(),
-            state_follower: meter
-                .u64_gauge("coyote.raft.state.follower")
-                .with_description("1 if and only if the current node is a follower")
-                .build(),
-            state_candidate: meter
-                .u64_gauge("coyote.raft.state.candidate")
-                .with_description("1 if and only if the current node is a candidate")
-                .build(),
-
             writes: meter
                 .u64_counter("coyote.raft.writes")
                 .with_description("The number of writes handled")
@@ -308,15 +266,6 @@ impl ClusterMetrics {
                 .build(),
 
             context,
-        }
-    }
-
-    pub fn record_state(&self, state: ServerState) {
-        match state {
-            ServerState::Leader => self.state_leader.record(1, &self.context),
-            ServerState::Follower => self.state_follower.record(1, &self.context),
-            ServerState::Candidate => self.state_candidate.record(1, &self.context),
-            _ => {}
         }
     }
 
@@ -410,7 +359,7 @@ impl RequestMetrics {
             latency: meter
                 .u64_histogram("coyote.request.duration")
                 .with_description("Request latency")
-                .with_unit("ms")
+                .with_unit("us")
                 .build(),
             content_length: meter
                 .u64_histogram("coyote.request.content_length")
@@ -450,10 +399,164 @@ impl RequestMetrics {
             self.client_error.add(1, attrs);
         }
 
-        self.latency.record(duration.as_millis() as _, attrs);
+        self.latency.record(duration.as_micros() as _, attrs);
 
         if let Some(cl) = content_length {
             self.content_length.record(cl, attrs);
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct OpenraftMetrics {
+    apply_batch_calls: Counter<u64>,
+    apply_batch_entry_count: Histogram<u64>,
+
+    append_batch_calls: Counter<u64>,
+    append_batch_entry_count: Histogram<u64>,
+
+    write_batch_calls: Counter<u64>,
+    write_batch_entry_count: Histogram<u64>,
+
+    term: Gauge<u64>,
+    last_log_index: Gauge<u64>,
+    last_applied_log_index: Gauge<u64>,
+    snapshot_index: Gauge<u64>,
+    purged_log_index: Gauge<u64>,
+    server_state: Gauge<u64>,
+
+    votes: Counter<u64>,
+    heartbeats: Counter<u64>,
+    appends: Counter<u64>,
+
+    context: Vec<KeyValue>,
+}
+
+impl OpenraftMetrics {
+    pub fn new(meter: &Meter, node_id: NodeId) -> Self {
+        Self {
+            apply_batch_calls: meter
+                .u64_counter("coyote.raft.apply_count")
+                .with_description("apply_batch operations")
+                .build(),
+            apply_batch_entry_count: meter
+                .u64_histogram("coyote.raft.apply_batch_size")
+                .with_description("apply_batch entry counts")
+                .with_unit("message")
+                .build(),
+            append_batch_calls: meter
+                .u64_counter("coyote.raft.log.append_count")
+                .with_description("append_batch operations")
+                .build(),
+            append_batch_entry_count: meter
+                .u64_histogram("coyote.raft.log.append_batch_size")
+                .with_description("append_batch entry counts")
+                .with_unit("message")
+                .build(),
+            write_batch_calls: meter
+                .u64_counter("coyote.raft.write_batch")
+                .with_description("write_batch operations")
+                .build(),
+            write_batch_entry_count: meter
+                .u64_histogram("coyote.raft.write_batch_entry_count")
+                .with_description("write_batch entry counts")
+                .with_unit("message")
+                .build(),
+
+            term: meter
+                .u64_gauge("coyote.raft.term")
+                .with_description("Current term")
+                .build(),
+            last_log_index: meter
+                .u64_gauge("coyote.raft.last_log_index")
+                .with_description("Current log index")
+                .build(),
+            last_applied_log_index: meter
+                .u64_gauge("coyote.raft.last_applied_log_index")
+                .with_description("Most-recently-applied log index")
+                .build(),
+            snapshot_index: meter
+                .u64_gauge("coyote.raft.snapshot_index")
+                .with_description("Current snapshot index")
+                .build(),
+            purged_log_index: meter
+                .u64_gauge("coyote.raft.purged_log_index")
+                .with_description("Purged log index")
+                .build(),
+            server_state: meter
+                .u64_gauge("coyote.raft.server_state")
+                .with_description("Current server state")
+                .build(),
+            votes: meter
+                .u64_counter("coyote.raft.votes")
+                .with_description("vote operations")
+                .build(),
+            heartbeats: meter
+                .u64_counter("coyote.raft.heartbeats")
+                .with_description("heartbeat operations")
+                .build(),
+            appends: meter
+                .u64_counter("coyote.raft.appends")
+                .with_description("append operations")
+                .build(),
+
+            context: vec![node_id.into()],
+        }
+    }
+}
+
+impl openraft::metrics::MetricsRecorder for OpenraftMetrics {
+    fn record_apply_batch(&self, entry_count: u64) {
+        self.apply_batch_calls.add(1, &self.context);
+        self.apply_batch_entry_count
+            .record(entry_count, &self.context);
+    }
+
+    fn record_append_batch(&self, entry_count: u64) {
+        self.append_batch_calls.add(1, &self.context);
+        self.append_batch_entry_count
+            .record(entry_count, &self.context);
+    }
+
+    fn record_write_batch(&self, entry_count: u64) {
+        self.write_batch_calls.add(1, &self.context);
+        self.write_batch_entry_count
+            .record(entry_count, &self.context);
+    }
+
+    fn set_current_term(&self, term: u64) {
+        self.term.record(term, &self.context);
+    }
+
+    fn set_last_log_index(&self, index: u64) {
+        self.last_log_index.record(index, &self.context);
+    }
+
+    fn set_applied_index(&self, index: u64) {
+        self.last_applied_log_index.record(index, &self.context);
+    }
+
+    fn set_snapshot_index(&self, index: u64) {
+        self.snapshot_index.record(index, &self.context);
+    }
+
+    fn set_purged_index(&self, index: u64) {
+        self.purged_log_index.record(index, &self.context);
+    }
+
+    fn set_server_state(&self, state: u8) {
+        self.server_state.record(state.into(), &self.context);
+    }
+
+    fn increment_vote(&self) {
+        self.votes.add(1, &self.context);
+    }
+
+    fn increment_heartbeat(&self) {
+        self.heartbeats.add(1, &self.context);
+    }
+
+    fn increment_append(&self) {
+        self.appends.add(1, &self.context);
     }
 }
