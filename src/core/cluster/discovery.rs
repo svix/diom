@@ -40,7 +40,11 @@ impl Discovery {
         my_node_id: NodeId,
         network: NetworkFactory,
     ) -> anyhow::Result<Self> {
-        let client = build_client(&cfg, Some(cfg.cluster.discovery_request_timeout), true)?;
+        let client = build_client(
+            &cfg,
+            Some(cfg.cluster.discovery_request_timeout.into()),
+            true,
+        )?;
         let my_addr = detect_address(&cfg, my_node_id).await?;
         Ok(Self {
             my_addr,
@@ -172,7 +176,9 @@ impl Discovery {
         // delay a little bit to allow simultaneous startups to finish
         let token = shutting_down_token();
         if token
-            .run_until_cancelled(tokio::time::sleep(self.cfg.cluster.startup_discovery_delay))
+            .run_until_cancelled(tokio::time::sleep(
+                self.cfg.cluster.startup_discovery_delay.into(),
+            ))
             .await
             .is_none()
         {

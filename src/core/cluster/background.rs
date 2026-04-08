@@ -50,7 +50,7 @@ impl BackgroundWorker for RecordLogTimestamps {
     const NAME: &str = "record-log-timestamps";
 
     async fn run(self) -> BackgroundResult<()> {
-        let mut ticker = tokio::time::interval(self.cfg.cluster.log_index_interval);
+        let mut ticker = tokio::time::interval(self.cfg.cluster.log_index_interval.into());
         loop {
             tracing::trace!("recording log timestamps");
             let op = RecordLogTimestampOperation {};
@@ -343,7 +343,7 @@ pub(super) async fn run_background_jobs_on_all_nodes(
             cfg.cluster.snapshot_after_time
             && last_snapshot_time.elapsed() > threshold
         {
-            (true, PurgeBy::Time(threshold), None)
+            (true, PurgeBy::Time(threshold.into()), None)
         } else if let Some(threshold) = cfg.cluster.snapshot_after_writes
             && let Some(delta) = delta
             && delta > (threshold as u64)

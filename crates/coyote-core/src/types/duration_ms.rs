@@ -16,6 +16,8 @@ use validator::ValidateRange;
 pub struct DurationMs(u64);
 
 impl DurationMs {
+    pub const ZERO: Self = Self(0);
+
     /// Create a duration from the given number of seconds.
     ///
     /// # Panics
@@ -95,6 +97,26 @@ impl From<DurationMs> for jiff::TimestampArithmetic {
 impl fmt::Debug for DurationMs {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl PartialEq<DurationMs> for Duration {
+    fn eq(&self, other: &DurationMs) -> bool {
+        *self == Duration::from(*other)
+    }
+}
+
+impl PartialOrd<DurationMs> for Duration {
+    fn partial_cmp(&self, other: &DurationMs) -> Option<std::cmp::Ordering> {
+        self.partial_cmp(&Duration::from(*other))
+    }
+}
+
+impl Add<DurationMs> for std::time::Instant {
+    type Output = Self;
+
+    fn add(self, rhs: DurationMs) -> Self::Output {
+        self + Duration::from(rhs)
     }
 }
 
