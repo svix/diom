@@ -141,6 +141,7 @@ impl JsonSchema for DurationMs {
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
         })
     }
 

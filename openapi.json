@@ -5012,6 +5012,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "enabled": {
@@ -5083,6 +5084,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -5200,6 +5202,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "enabled": {
@@ -5405,6 +5408,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "metadata": {
@@ -5533,6 +5537,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -5679,6 +5684,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -5729,6 +5735,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "metadata": {
@@ -5964,7 +5971,8 @@
             "description": "Time to live in milliseconds",
             "type": "integer",
             "format": "uint64",
-            "minimum": 0
+            "minimum": 0,
+            "x-subtype": "DurationMs"
           }
         },
         "required": [
@@ -6166,7 +6174,8 @@
             "description": "How long to keep the idempotency response for.",
             "type": "integer",
             "format": "uint64",
-            "minimum": 1
+            "minimum": 1,
+            "x-subtype": "DurationMs"
           }
         },
         "required": [
@@ -6287,7 +6296,8 @@
             "description": "How long to hold the lock on start before releasing it.",
             "type": "integer",
             "format": "uint64",
-            "minimum": 1
+            "minimum": 1,
+            "x-subtype": "DurationMs"
           }
         },
         "required": [
@@ -6540,6 +6550,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
+            "x-subtype": "DurationMs",
             "nullable": true
           },
           "behavior": {
@@ -6714,6 +6725,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": null,
             "nullable": true
           }
@@ -6985,6 +6997,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": 30000
           }
         },
@@ -7060,6 +7073,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": 30000
           },
           "batch_wait_ms": {
@@ -7067,6 +7081,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": null,
             "nullable": true
           }
@@ -7179,6 +7194,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": 300000
           },
           "default_starting_position": {
@@ -7190,6 +7206,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "default": null,
             "nullable": true
           }
@@ -7436,6 +7453,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -7464,6 +7482,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 1,
+            "x-subtype": "DurationMs",
             "default": 1000
           }
         },
@@ -7574,6 +7593,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         },
@@ -7615,6 +7635,7 @@
             "type": "integer",
             "format": "uint64",
             "minimum": 0,
+            "x-subtype": "DurationMs",
             "nullable": true
           }
         }
