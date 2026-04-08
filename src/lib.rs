@@ -26,7 +26,7 @@ use coyote_authorization::{AccessRule, Permissions};
 use coyote_core::Monotime;
 use coyote_error::Error;
 use coyote_msgs::TopicPublishNotifier;
-use coyote_proto::{InternalClient, InternalRequest, InternalRequestError};
+use diom_proto::{InternalClient, InternalRequest, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::metrics::Meter;
 use tokio::{
@@ -175,7 +175,7 @@ async fn run_interserver(
                 request_metrics,
                 core::otel_spans::request_metrics_middleware,
             ),
-            middleware::from_fn(coyote_proto::capture_accept_hdr),
+            middleware::from_fn(diom_proto::capture_accept_hdr),
             DefaultBodyLimit::disable(),
         ));
 
@@ -199,7 +199,7 @@ async fn run_internal(
             request_metrics,
             core::otel_spans::request_metrics_middleware,
         ),
-        middleware::from_fn(coyote_proto::capture_accept_hdr),
+        middleware::from_fn(diom_proto::capture_accept_hdr),
     ));
 
     // FIXME: Do we want to delay graceful shutdown of the internal API server
@@ -415,7 +415,7 @@ pub async fn run_with_listeners(
         .layer((
             trace_layer(),
             CatchPanicLayer::custom(handle_panic),
-            middleware::from_fn(coyote_proto::capture_accept_hdr),
+            middleware::from_fn(diom_proto::capture_accept_hdr),
             CorsLayer::new()
                 .allow_origin(Any)
                 .allow_methods(Any)

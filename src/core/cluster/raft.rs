@@ -211,7 +211,7 @@ pub async fn initialize_raft(
 mod tests {
     use std::time::Duration;
 
-    use coyote_proto::InternalClient;
+    use diom_proto::InternalClient;
     use fjall::Database;
     use openraft::testing::log::StoreBuilder;
     use tempfile::TempDir;

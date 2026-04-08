@@ -8,7 +8,7 @@ use aide::axum::{
     routing::{get_with, post_with},
 };
 use coyote_derive::aide_annotate;
-use coyote_proto::MsgPackOrJson;
+use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

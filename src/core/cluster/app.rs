@@ -10,7 +10,7 @@ use axum::{
     routing::{get, post},
 };
 use axum_extra::TypedHeader;
-use coyote_proto::{MsgPack, MsgPackOrJson};
+use diom_proto::{MsgPack, MsgPackOrJson};
 use headers::{Authorization, authorization::Bearer};
 use http::StatusCode;
 use openraft::{

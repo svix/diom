@@ -14,7 +14,7 @@ use coyote_kv::{
     operations::{CreateKvOperation, DeleteOperation, SetOperation, SetResponseData},
 };
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

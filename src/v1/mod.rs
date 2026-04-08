@@ -44,7 +44,7 @@ pub fn router(state: Option<AppState>) -> ApiRouter<AppState> {
 #[cfg(debug_assertions)]
 mod development {
     use axum::{Router, extract::FromRequestParts, routing::get};
-    use coyote_proto::MsgPackOrJson;
+    use diom_proto::MsgPackOrJson;
     use http::request::Parts;
     use serde::Serialize;
 

@@ -14,7 +14,7 @@ use coyote_namespace::{
     Namespace,
     entities::{CacheConfig, EvictionPolicy, NamespaceName},
 };
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

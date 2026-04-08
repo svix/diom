@@ -12,7 +12,7 @@ use coyote_authorization::RequestedOperation;
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, ResultExt};
 use coyote_id::Module;
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use futures_util::StreamExt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

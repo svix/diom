@@ -7,7 +7,7 @@ use crate::cfg::{Configuration, PeerAddr};
 
 use super::{LogId, Node, NodeId, proto, raft::TypeConfig};
 use anyhow::Context;
-use coyote_proto::prelude::*;
+use diom_proto::prelude::*;
 use http::{HeaderMap, HeaderValue, header};
 use openraft::{
     RaftNetworkFactory, RaftNetworkV2,

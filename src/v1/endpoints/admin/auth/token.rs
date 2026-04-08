@@ -10,7 +10,7 @@ use coyote_core::types::{DurationMs, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{Error, ResultExt};
 use coyote_id::{AuthTokenId, Module, Public};
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

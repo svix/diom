@@ -1,5 +1,5 @@
 [package]
-name = "coyote-proto"
+name = "diom-proto"
 edition = "2024"
 license.workspace = true
 version.workspace = true

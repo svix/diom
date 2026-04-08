@@ -22,7 +22,7 @@ use coyote_msgs::{
     },
 };
 use coyote_namespace::entities::NamespaceName;
-use coyote_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
+use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use fjall_utils::{ReadableDatabase, ReadonlyConnection, StorageType};
 use jiff::Timestamp;
 use schemars::JsonSchema;

@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use coyote_proto::prelude::*;
+use diom_proto::prelude::*;
 use futures_util::{StreamExt, stream};
 use itertools::Itertools;
 use openraft::ServerState;

@@ -1125,9 +1125,9 @@ dependencies = [
  "coyote-msgs",
  "coyote-namespace",
  "coyote-operations",
- "coyote-proto",
  "coyote-rate-limit",
  "ctor",
+ "diom-proto",
  "fjall",
  "fjall-utils",
  "fs-err",
@@ -1275,7 +1275,7 @@ dependencies = [
  "aide 0.16.0-alpha.2",
  "axum",
  "coyote-core",
- "coyote-proto",
+ "diom-proto",
  "fjall",
  "hyper",
  "serde_json",
@@ -1410,31 +1410,6 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "coyote-proto"
-version = "0.0.1"
-dependencies = [
- "aide 0.16.0-alpha.2",
- "axum",
- "bytes",
- "coyote-authorization",
- "coyote-core",
- "http",
- "http-body-util",
- "mime",
- "reqwest 0.13.2",
- "rmp-serde",
- "schemars 1.2.1",
- "serde",
- "serde_json",
- "serde_path_to_error",
- "tap",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "validator",
 ]
 
 [[package]]
@@ -1808,6 +1783,31 @@ dependencies = [
  "block-buffer",
  "crypto-common",
  "subtle",
+]
+
+[[package]]
+name = "diom-proto"
+version = "0.0.1"
+dependencies = [
+ "aide 0.16.0-alpha.2",
+ "axum",
+ "bytes",
+ "coyote-authorization",
+ "coyote-core",
+ "http",
+ "http-body-util",
+ "mime",
+ "reqwest 0.13.2",
+ "rmp-serde",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "tap",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "validator",
 ]
 
 [[package]]
