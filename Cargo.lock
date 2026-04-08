@@ -2021,13 +2021,13 @@ name = "fjall-utils"
 version = "0.0.1"
 dependencies = [
  "anyhow",
- "byteorder",
  "diom-error",
  "fjall",
  "itertools 0.14.0",
  "rmp-serde",
  "schemars 1.2.1",
  "serde",
+ "tap",
  "tracing",
 ]
 

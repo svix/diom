@@ -8,13 +8,13 @@ edition = "2024"
 
 [dependencies]
 anyhow.workspace = true
-byteorder.workspace = true
 diom-error.workspace = true
 fjall.workspace = true
 itertools.workspace = true
 rmp-serde.workspace = true
 schemars.workspace = true
 serde.workspace = true
+tap.workspace = true
 tracing.workspace = true
 
 [lints]

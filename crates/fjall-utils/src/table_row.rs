@@ -1,8 +1,12 @@
-use std::{marker::PhantomData, ops::Bound};
+use std::{
+    marker::PhantomData,
+    ops::{Bound, RangeBounds},
+};
 
 use super::readonly_db::ReadableKeyspace;
 use diom_error::{Result, ResultExt};
 use serde::{Serialize, de::DeserializeOwned};
+use tap::Pipe;
 
 /// A trait for types that can be stored as rows in a fjall keyspace.
 ///
@@ -126,6 +130,36 @@ impl WriteBatchExt for fjall::OwnedWriteBatch {
     }
 }
 
+/// Adds convenience methods to fjall's Keyspace that work with TableRow
+pub trait KeyspaceExt {
+    fn insert_row<T: TableRow>(&self, key: TableKey<T>, row: &T) -> Result<()>;
+
+    fn get_row<T: TableRow>(&self, key: TableKey<T>) -> Result<Option<T>>;
+
+    fn remove_row<T: TableRow>(&self, key: TableKey<T>) -> Result<()>;
+}
+
+impl KeyspaceExt for fjall::Keyspace {
+    fn insert_row<T: TableRow>(&self, key: TableKey<T>, row: &T) -> Result<()> {
+        self.insert(key.into_fjall_key(), row.to_fjall_value()?)?;
+        Ok(())
+    }
+
+    fn get_row<T: TableRow>(&self, key: TableKey<T>) -> Result<Option<T>> {
+        if let Some(value) = self.get(key.into_fjall_key())? {
+            Some(T::from_fjall_value(value)?)
+        } else {
+            None
+        }
+        .pipe(Ok)
+    }
+
+    fn remove_row<T: TableRow>(&self, key: TableKey<T>) -> Result<()> {
+        self.remove(key.into_fjall_key())?;
+        Ok(())
+    }
+}
+
 /// Can't change the size, will break everything.
 pub type TableKeyType = u8;
 
@@ -199,4 +233,119 @@ pub trait TableKeyFromFjall {
     type Key;
 
     fn key_from_fjall_key(key: fjall::UserKey) -> Result<Self::Key>;
+}
+
+pub trait MonotonicTableKey: Copy {
+    type BYTES: AsRef<[u8]>;
+
+    const MIN: Self;
+    const MAX: Self;
+
+    fn successor(self) -> Self;
+    fn to_be_bytes(self) -> Self::BYTES;
+    fn from_slice(slice: &[u8]) -> Result<Self>;
+}
+
+impl MonotonicTableKey for u64 {
+    type BYTES = [u8; 8];
+
+    const MIN: u64 = u64::MIN;
+    const MAX: u64 = u64::MAX;
+
+    fn successor(self) -> u64 {
+        self + 1
+    }
+
+    fn to_be_bytes(self) -> Self::BYTES {
+        self.to_be_bytes()
+    }
+
+    fn from_slice(slice: &[u8]) -> Result<Self> {
+        debug_assert!(slice.len() == 8);
+        Ok(Self::from_be_bytes(slice.try_into().or_internal_error()?))
+    }
+}
+
+fn range_helper<K, T, B>(keyspace: &K, bounds: B) -> impl DoubleEndedIterator<Item = fjall::Guard>
+where
+    K: ReadableKeyspace,
+    T: MonotonicTableRow,
+    B: RangeBounds<T::KeyType>,
+{
+    let start = match bounds.start_bound() {
+        Bound::Unbounded => T::key_for_value(T::KeyType::MIN),
+        Bound::Included(x) => T::key_for_value(*x),
+        Bound::Excluded(x) => T::key_for_value((*x).successor()),
+    }
+    .into_fjall_key();
+    match bounds.end_bound() {
+        Bound::Unbounded => {
+            keyspace.range(start..=T::key_for_value(T::KeyType::MAX).into_fjall_key())
+        }
+        Bound::Included(x) => keyspace.range(start..=T::key_for_value(*x).into_fjall_key()),
+        Bound::Excluded(x) => keyspace.range(start..T::key_for_value(*x).into_fjall_key()),
+    }
+}
+
+/// Specialization for TableRows whose key can be used for monotonic range operations
+///
+/// Specifically:
+///  - the key type must have a defined "minimum" and "maximum" which follow algebraic rules
+///  - the key must have a "successor" operation
+///  - the key type must encode to bytes in a way that preserves ordering
+pub trait MonotonicTableRow: TableRow {
+    type KeyType: MonotonicTableKey;
+
+    fn get_key(&self) -> Self::KeyType;
+
+    #[doc(hidden)]
+    fn key_for_value(val: Self::KeyType) -> TableKey<Self> {
+        TableKey::init_key(Self::ROW_TYPE, &[val.to_be_bytes().as_ref()], &[])
+    }
+
+    fn key(&self) -> TableKey<Self> {
+        Self::key_for_value(self.get_key())
+    }
+
+    /// Return an iterator over all key/value pairs within the given bounds
+    fn range<K: ReadableKeyspace, B: RangeBounds<Self::KeyType> + Send + Clone>(
+        keyspace: &K,
+        bounds: B,
+    ) -> impl DoubleEndedIterator<Item = Result<(Self::KeyType, Self)>> {
+        range_helper::<K, Self, B>(keyspace, bounds).map(|item: fjall::Guard| {
+            let (key, value) = item.into_inner()?;
+            let key = Self::KeyType::from_slice(&key[1..])?;
+            let value = Self::from_fjall_value(value)?;
+            Ok((key, value))
+        })
+    }
+
+    /// Remove all keys in the given range
+    ///
+    /// Implemented via a loop; may take a long time
+    fn remove_keys_in_range<B: RangeBounds<Self::KeyType> + Send + Clone>(
+        db: &fjall::Database,
+        keyspace: &fjall::Keyspace,
+        bounds: B,
+        batch_size: usize,
+        persist_mode: fjall::PersistMode,
+    ) -> Result<usize> {
+        let mut total_removed = 0;
+        loop {
+            let mut removed = 0;
+            let mut tx = db.batch().durability(Some(persist_mode));
+            for item in range_helper::<_, Self, B>(keyspace, bounds.clone()).take(batch_size) {
+                let key = item.key().or_internal_error()?;
+                tx.remove(keyspace, key);
+                removed += 1;
+            }
+            tx.commit()?;
+            if removed == 0 {
+                break;
+            } else {
+                total_removed += removed;
+            }
+        }
+        Ok(total_removed)
+    }
 }
