@@ -29,6 +29,7 @@ pub(crate) fn setup_tracing(
             format!("fjall={level}"),
             format!("fjall_utils={level}"),
             format!("tower_http={level}"),
+            format!("openraft={level}"),
             "opentelemetry_sdk=ERROR".to_string(),
         ];
 
