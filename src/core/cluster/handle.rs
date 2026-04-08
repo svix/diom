@@ -16,6 +16,7 @@ use anyhow::Context;
 use coyote_core::Monotime;
 use coyote_error::ResultExt;
 use coyote_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
+use fjall_utils::StorageType;
 use itertools::Itertools;
 use jiff::Timestamp;
 use maplit::btreeset;
@@ -58,20 +59,24 @@ pub enum Request {
 }
 
 impl Request {
-    pub fn affects_persistent(&self) -> bool {
-        matches!(
-            self,
+    fn db_type(&self) -> StorageType {
+        match self {
             Self::ClusterInternal(_)
-                | Self::Kv(_)
-                | Self::Idempotency(_)
-                | Self::Msgs(_)
-                | Self::AuthToken(_)
-                | Self::AdminAuth(_)
-        )
+            | Self::Kv(_)
+            | Self::Idempotency(_)
+            | Self::Msgs(_)
+            | Self::AuthToken(_)
+            | Self::AdminAuth(_) => StorageType::Persistent,
+            Self::Cache(_) | Self::RateLimit(_) => StorageType::Ephemeral,
+        }
     }
 
-    pub fn affects_ephemeral(&self) -> bool {
-        matches!(self, Self::Cache(_) | Self::RateLimit(_))
+    pub(crate) fn affects_persistent(&self) -> bool {
+        self.db_type() == StorageType::Persistent
+    }
+
+    pub(crate) fn affects_ephemeral(&self) -> bool {
+        self.db_type() == StorageType::Ephemeral
     }
 }
 
