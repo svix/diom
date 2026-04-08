@@ -4,14 +4,16 @@ mod fixed_key;
 mod options;
 mod readonly_db;
 mod table_row;
-pub mod table_row2;
 
 pub use self::{
     db::{Databases, ReadonlyConnection, ReadonlyDatabases, StorageType},
     fixed_key::FjallFixedKey,
     options::{SchemaManifest, SerializableKeyspaceCreateOptions},
     readonly_db::{ReadableDatabase, ReadableKeyspace, ReadonlyDatabase, ReadonlyKeyspace},
-    table_row::{TableKey, TableKeyFromFjall, TableKeyType, TableRow, WriteBatchExt},
+    table_row::{
+        KeyspaceExt, MonotonicTableKey, MonotonicTableRow, TableKey, TableKeyFromFjall,
+        TableKeyType, TableRow, WriteBatchExt,
+    },
 };
 
 /// Useful for verifying all table prefixes for a given keyspace are unique,
