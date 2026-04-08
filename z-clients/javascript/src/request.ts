@@ -88,7 +88,7 @@ export function makeRequestContext(token: string, options: CoyoteOptions) {
   };
 }
 
-type QueryParameter = string | boolean | number | Date | string[] | null | undefined;
+type QueryParameter = string | boolean | number | string[] | null | undefined;
 
 export class CoyoteRequest {
   constructor(
@@ -123,8 +123,6 @@ export class CoyoteRequest {
       this.queryParams[name] = value;
     } else if (typeof value === "boolean" || typeof value === "number") {
       this.queryParams[name] = value.toString();
-    } else if (value instanceof Date) {
-      this.queryParams[name] = value.toISOString();
     } else if (Array.isArray(value)) {
       if (value.length > 0) {
         this.queryParams[name] = value.join(",");

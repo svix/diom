@@ -20,12 +20,6 @@
         {%- else -%}
             new Uint8Array({{ field_expr }})
         {%- endif -%}
-    {%- elif type.is_datetime() -%}
-        {% if not field_required -%}
-            {{ field_expr }} ? new Date({{ field_expr }}) : null
-        {%- else -%}
-            new Date({{ field_expr }})
-        {%- endif -%}
     {%- elif type.is_schema_ref() -%}
         {%- if not field_required -%}
             {{ field_expr }} != null ? {{ type.to_js() }}Serializer._fromJsonObject({{ field_expr }}): undefined
@@ -35,8 +29,7 @@
     {%- elif type.is_list() or type.is_set() -%}
         {{ field_expr }}
         {%- set inner_t = type.inner_type() -%}
-        {%- if inner_t.is_datetime()
-            or inner_t.is_schema_ref()
+        {%- if inner_t.is_schema_ref()
             or inner_t.is_list()
             or inner_t.is_set()
             or inner_t.is_map() -%}
@@ -45,8 +38,7 @@
         {%- endif -%}
     {%- elif type.is_map() -%}
         {%- set value_t = type.value_type() -%}
-        {%- if value_t.is_datetime()
-            or value_t.is_schema_ref()
+        {%- if value_t.is_schema_ref()
             or value_t.is_list()
             or value_t.is_set()
             or value_t.is_map() -%}
