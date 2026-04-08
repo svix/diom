@@ -249,18 +249,20 @@ impl JsonSchema for TopicIn {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct MsgsIdempotencyKey(String);
+pub struct MsgsIdempotencyKey([u8; 32]);
 
 impl MsgsIdempotencyKey {
-    pub fn new(key: &str) -> Self {
+    pub fn new(key: &str, topic: &TopicName) -> Self {
         let mut hasher = Sha256::new();
+        hasher.update(topic.as_bytes());
+        hasher.update(b":");
         hasher.update(key.as_bytes());
-        Self(hex::encode(hasher.finalize()))
+        Self(hasher.finalize().into())
     }
 
-    pub fn as_str(&self) -> &str {
+    pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
 }

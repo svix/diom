@@ -34,6 +34,13 @@ impl Error {
         })
     }
 
+    pub fn conflict(detail: impl Into<Option<String>>) -> Self {
+        Self::new(ErrorType::Conflict(StandardErrorBody::new(
+            "conflict",
+            detail.into().unwrap_or_else(|| "Conflict".to_owned()),
+        )))
+    }
+
     pub fn not_found(detail: impl Into<Option<String>>) -> Self {
         Self::new(ErrorType::NotFound(StandardErrorBody::new(
             "not_found",
@@ -108,6 +115,11 @@ impl Error {
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
+            ErrorType::Conflict(body) => (
+                StatusCode::CONFLICT,
+                Some(body.code().to_owned()),
+                Some(body.detail().to_owned()),
+            ),
             ErrorType::Authentication(body) => (
                 StatusCode::UNAUTHORIZED,
                 Some(body.code().to_owned()),
@@ -165,6 +177,10 @@ impl IntoResponse for Error {
             ErrorType::NotFound(body) => {
                 tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
+            }
+            ErrorType::Conflict(body) => {
+                tracing::debug!(error = %body, "conflict");
+                (StatusCode::CONFLICT, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
@@ -272,6 +288,9 @@ pub enum ErrorType {
     /// Entity not found
     NotFound(StandardErrorBody),
 
+    /// A conflict occurred
+    Conflict(StandardErrorBody),
+
     /// Authentication error
     Authentication(StandardErrorBody),
 
@@ -302,6 +321,7 @@ impl fmt::Display for ErrorType {
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::NotFound(s) => write!(f, "not_found {s}"),
+            Self::Conflict(s) => write!(f, "conflict {s}"),
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
             Self::Validation(s) => s.fmt(f),

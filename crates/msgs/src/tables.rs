@@ -354,7 +354,11 @@ impl TableRow for IdempotencyRow {
 
 impl IdempotencyRow {
     pub(crate) fn key_for(namespace_id: NamespaceId, key: &MsgsIdempotencyKey) -> TableKey<Self> {
-        TableKey::init_key(Self::ROW_TYPE, &[namespace_id.as_bytes()], &[key.as_str()])
+        TableKey::init_key(
+            Self::ROW_TYPE,
+            &[namespace_id.as_bytes(), key.as_bytes()],
+            &[],
+        )
     }
 }
 

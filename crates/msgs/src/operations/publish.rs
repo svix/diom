@@ -1,11 +1,10 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::LazyLock};
 
 use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
-use hyper::StatusCode;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
@@ -30,7 +29,7 @@ pub struct PublishOperation {
     idempotency_key: Option<MsgsIdempotencyKey>,
 }
 
-const IDEMPOTENCY_TTL_SECS: u64 = 120;
+static IDEMPOTENCY_TTL: LazyLock<DurationMs> = LazyLock::new(|| DurationMs::from_hours(1));
 
 impl PublishOperation {
     pub fn new(
@@ -78,17 +77,14 @@ impl PublishOperation {
                 if let Some(existing) = existing
                     && existing.expiry > now
                 {
-                    return Err(Error::operation(
-                        StatusCode::CONFLICT,
-                        Some("idempotency key already used".to_owned()),
-                    ));
+                    return Err(Error::conflict("idempotency key already used".to_owned()));
                 }
 
                 batch.insert_row(
                     &state.metadata_tables,
                     IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
                     &IdempotencyRow {
-                        expiry: now + DurationMs::from_secs(IDEMPOTENCY_TTL_SECS),
+                        expiry: now + *IDEMPOTENCY_TTL,
                     },
                 )?;
             }
