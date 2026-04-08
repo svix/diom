@@ -18,7 +18,7 @@ use crate::{
             operations::SetClusterUuidOperation,
             state_machine::{ClusterId, StoreHandle},
         },
-        metrics::{ClusterMetrics, LogMetrics},
+        metrics::{ClusterMetrics, LogMetrics, OpenraftMetrics},
     },
 };
 
@@ -124,6 +124,10 @@ pub async fn initialize_raft(
         .await
         .context("initializing openraft")?;
 
+    let openraft_metrics = OpenraftMetrics::new(&app_state.meter, id);
+    raft.set_metrics_recorder(Some(Arc::new(openraft_metrics)))
+        .await?;
+
     let (bgtx, bgrx) = tokio::sync::mpsc::channel(10);
     let handle = RaftState {
         raft,
@@ -135,23 +139,6 @@ pub async fn initialize_raft(
         cfg: cfg.clone(),
         metrics: metrics.clone(),
     };
-
-    tokio::spawn({
-        let handle = handle.clone();
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(10));
-        let shutdown = coyote_core::shutdown::shutting_down_token();
-        async move {
-            while shutdown
-                .run_until_cancelled(interval.tick())
-                .await
-                .is_some()
-            {
-                if let Ok(state) = handle.state().await {
-                    metrics.record_state(state);
-                }
-            }
-        }
-    });
 
     #[cfg(feature = "raft-runtime-stats")]
     tokio::spawn({
