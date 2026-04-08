@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, sync::LazyLock};
+use std::collections::BTreeMap;
 
 use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
 use diom_error::{Error, Result};
@@ -29,7 +29,7 @@ pub struct PublishOperation {
     idempotency_key: Option<MsgsIdempotencyKey>,
 }
 
-static IDEMPOTENCY_TTL: LazyLock<DurationMs> = LazyLock::new(|| DurationMs::from_hours(1));
+const IDEMPOTENCY_TTL: DurationMs = DurationMs::from_hours(1);
 
 impl PublishOperation {
     pub fn new(
@@ -88,7 +88,7 @@ impl PublishOperation {
                     &state.metadata_tables,
                     IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
                     &IdempotencyRow {
-                        expiry: now + *IDEMPOTENCY_TTL,
+                        expiry: now + IDEMPOTENCY_TTL,
                     },
                 )?;
             }
