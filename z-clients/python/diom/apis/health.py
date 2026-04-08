@@ -7,6 +7,16 @@ from ..models import (
 
 
 class HealthAsync(ApiBase):
+    async def no_content(
+        self,
+    ) -> None:
+        """Verify the server is up and running."""
+
+        await self._request_asyncio(
+            method="get",
+            path="/api/v1.health.no-content",
+        )
+
     async def ping(
         self,
     ) -> PingOut:
@@ -30,6 +40,16 @@ class HealthAsync(ApiBase):
 
 
 class Health(ApiBase):
+    def no_content(
+        self,
+    ) -> None:
+        """Verify the server is up and running."""
+
+        self._request_sync(
+            method="get",
+            path="/api/v1.health.no-content",
+        )
+
     def ping(
         self,
     ) -> PingOut:

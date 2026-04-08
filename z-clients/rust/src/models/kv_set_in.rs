@@ -24,8 +24,9 @@ pub struct KvSetIn {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<u64>,
 
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub use_postgres: bool,
+    /// If true, store in postgres instead of fjall (for benchmarking).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_postgres: Option<bool>,
 }
 
 impl KvSetIn {
@@ -35,7 +36,7 @@ impl KvSetIn {
             ttl: None,
             behavior: None,
             version: None,
-            use_postgres: false,
+            use_postgres: None,
         }
     }
 
@@ -59,8 +60,8 @@ impl KvSetIn {
         self
     }
 
-    pub fn with_use_postgres(mut self, value: bool) -> Self {
-        self.use_postgres = value;
+    pub fn with_use_postgres(mut self, value: impl Into<Option<bool>>) -> Self {
+        self.use_postgres = value.into();
         self
     }
 }
@@ -91,6 +92,7 @@ pub(crate) struct KvSetIn_ {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<u64>,
 
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub use_postgres: bool,
+    /// If true, store in postgres instead of fjall (for benchmarking).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_postgres: Option<bool>,
 }

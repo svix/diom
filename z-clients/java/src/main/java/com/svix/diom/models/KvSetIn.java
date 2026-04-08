@@ -37,6 +37,7 @@ public class KvSetIn {
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
+    @JsonProperty("use_postgres") private Boolean usePostgres;
     public KvSetIn() {}
 
     public KvSetIn namespace(String namespace) {
@@ -114,5 +115,24 @@ Use the `version` field from a prior `get` response.
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public KvSetIn usePostgres(Boolean usePostgres) {
+        this.usePostgres = usePostgres;
+        return this;
+    }
+
+    /**
+    * If true, store in postgres instead of fjall (for benchmarking).
+    *
+     * @return usePostgres
+     */
+    @javax.annotation.Nullable
+    public Boolean getUsePostgres() {
+        return usePostgres;
+    }
+
+    public void setUsePostgres(Boolean usePostgres) {
+        this.usePostgres = usePostgres;
     }
 }

@@ -45,7 +45,8 @@ public class Kv {
             value,
             kvSetIn.getTtl(),
             kvSetIn.getBehavior(),
-            kvSetIn.getVersion()
+            kvSetIn.getVersion(),
+            kvSetIn.getUsePostgres()
         );
 
         return this.client.executeRequest(
@@ -78,7 +79,8 @@ public class Kv {
         KvGetIn_ body = new KvGetIn_(
             kvGetIn.getNamespace(),
             key,
-            kvGetIn.getConsistency()
+            kvGetIn.getConsistency(),
+            kvGetIn.getUsePostgres()
         );
 
         return this.client.executeRequest(

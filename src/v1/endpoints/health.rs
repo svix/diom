@@ -7,6 +7,7 @@ use aide::axum::{
     ApiRouter,
     routing::{get_with, post_with},
 };
+use axum::http::StatusCode;
 use diom_derive::aide_annotate;
 use diom_proto::MsgPackOrJson;
 use schemars::JsonSchema;
@@ -40,10 +41,21 @@ async fn panic() -> Result<()> {
     panic!("oh dear")
 }
 
+/// Verify the server is up and running.
+#[aide_annotate(op_id = "v1.health.no-content")]
+async fn no_content() -> StatusCode {
+    StatusCode::NO_CONTENT
+}
+
 pub fn router() -> ApiRouter<AppState> {
     let tag = openapi_tag("Health");
 
     let router = ApiRouter::new()
+        .api_route_with(
+            no_content_path,
+            get_with(no_content, no_content_operation),
+            &tag,
+        )
         .api_route_with(ping_path, get_with(ping, ping_operation), &tag)
         .api_route_with(error_path, post_with(error, error_operation), &tag);
 

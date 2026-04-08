@@ -5,10 +5,12 @@ package diom_models
 type KvGetIn struct {
 	Namespace   *string      `msgpack:"namespace,omitempty"`
 	Consistency *Consistency `msgpack:"consistency,omitempty"`
+	UsePostgres *bool        `msgpack:"use_postgres,omitempty"` // If true, fetch from postgres instead of fjall (for benchmarking).
 }
 
 type KvGetIn_ struct {
 	Namespace   *string      `msgpack:"namespace,omitempty"`
 	Key         string       `msgpack:"key"`
 	Consistency *Consistency `msgpack:"consistency,omitempty"`
+	UsePostgres *bool        `msgpack:"use_postgres,omitempty"` // If true, fetch from postgres instead of fjall (for benchmarking).
 }

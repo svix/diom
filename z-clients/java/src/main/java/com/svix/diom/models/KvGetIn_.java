@@ -31,15 +31,18 @@ public class KvGetIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String key;
     @JsonProperty private Consistency consistency;
+    @JsonProperty("use_postgres") private Boolean usePostgres;
 
     public KvGetIn_(
         String namespace,
         String key,
-        Consistency consistency
+        Consistency consistency,
+        Boolean usePostgres
     ) {
         this.namespace = namespace;
         this.key = key;
         this.consistency = consistency;
+        this.usePostgres = usePostgres;
     }
 
     /**

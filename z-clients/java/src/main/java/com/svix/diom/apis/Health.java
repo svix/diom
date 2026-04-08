@@ -24,6 +24,21 @@ public class Health {
     }
 
     /** Verify the server is up and running. */
+    public void noContent(
+        
+    ) throws IOException, ApiException {
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.health.no-content");
+
+        this.client.executeRequest(
+            "GET",
+            url.build(),
+            null,
+            null,
+            null
+        );
+    }
+
+    /** Verify the server is up and running. */
     public PingOut ping(
         
     ) throws IOException, ApiException {

@@ -14,6 +14,8 @@ export interface KvSetIn {
      * Use the `version` field from a prior `get` response.
      */
     version?: number | null;
+    /** If true, store in postgres instead of fjall (for benchmarking). */
+    usePostgres?: boolean;
 }
 
 export interface KvSetIn_ {
@@ -28,6 +30,8 @@ export interface KvSetIn_ {
      * Use the `version` field from a prior `get` response.
      */
     version?: number | null;
+    /** If true, store in postgres instead of fjall (for benchmarking). */
+    usePostgres?: boolean;
 }
 
 export const KvSetInSerializer = {
@@ -40,6 +44,7 @@ export const KvSetInSerializer = {
             ttlMs: object['ttl_ms'],
             behavior: object['behavior'] != null ? OperationBehaviorSerializer._fromJsonObject(object['behavior']): undefined,
             version: object['version'],
+            usePostgres: object['use_postgres'],
         };
     },
 
@@ -52,6 +57,7 @@ export const KvSetInSerializer = {
             'ttl_ms': self.ttlMs,
             'behavior': self.behavior != null ? OperationBehaviorSerializer._toJsonObject(self.behavior) : undefined,
             'version': self.version,
+            'use_postgres': self.usePostgres,
         };
     }
 }

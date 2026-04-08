@@ -19,7 +19,8 @@ pub enum KvCommands {
   \"namespace\": \"...\",
   \"ttl_ms\": \"...\",
   \"behavior\": \"...\",
-  \"version\": \"...\"
+  \"version\": \"...\",
+  \"use_postgres\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"success\": \"...\",
@@ -34,7 +35,8 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"...\",
-  \"consistency\": \"...\"
+  \"consistency\": \"...\",
+  \"use_postgres\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"expiry\": \"...\",

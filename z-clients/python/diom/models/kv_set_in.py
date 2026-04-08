@@ -19,6 +19,9 @@ class KvSetIn(BaseModel):
     """If set, the write only succeeds when the stored version matches this value.
     Use the `version` field from a prior `get` response."""
 
+    use_postgres: bool | None = None
+    """If true, store in postgres instead of fjall (for benchmarking)."""
+
 
 class _KvSetIn(BaseModel):
     namespace: str | None = None
@@ -35,3 +38,6 @@ class _KvSetIn(BaseModel):
     version: int | None = None
     """If set, the write only succeeds when the stored version matches this value.
     Use the `version` field from a prior `get` response."""
+
+    use_postgres: bool | None = None
+    """If true, store in postgres instead of fjall (for benchmarking)."""

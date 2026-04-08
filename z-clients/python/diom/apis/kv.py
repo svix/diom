@@ -38,6 +38,7 @@ class KvAsync(ApiBase):
             ttl=kv_set_in.ttl,
             behavior=kv_set_in.behavior,
             version=kv_set_in.version,
+            use_postgres=kv_set_in.use_postgres,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -57,6 +58,7 @@ class KvAsync(ApiBase):
             namespace=kv_get_in.namespace,
             key=key,
             consistency=kv_get_in.consistency,
+            use_postgres=kv_get_in.use_postgres,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -105,6 +107,7 @@ class Kv(ApiBase):
             ttl=kv_set_in.ttl,
             behavior=kv_set_in.behavior,
             version=kv_set_in.version,
+            use_postgres=kv_set_in.use_postgres,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(
@@ -124,6 +127,7 @@ class Kv(ApiBase):
             namespace=kv_get_in.namespace,
             key=key,
             consistency=kv_get_in.consistency,
+            use_postgres=kv_get_in.use_postgres,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

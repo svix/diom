@@ -7,12 +7,16 @@ import {
 export interface KvGetIn {
     namespace?: string | null;
     consistency?: Consistency;
+    /** If true, fetch from postgres instead of fjall (for benchmarking). */
+    usePostgres?: boolean;
 }
 
 export interface KvGetIn_ {
     namespace?: string | null;
     key: string;
     consistency?: Consistency;
+    /** If true, fetch from postgres instead of fjall (for benchmarking). */
+    usePostgres?: boolean;
 }
 
 export const KvGetInSerializer = {
@@ -22,6 +26,7 @@ export const KvGetInSerializer = {
             namespace: object['namespace'],
             key: object['key'],
             consistency: object['consistency'] != null ? ConsistencySerializer._fromJsonObject(object['consistency']): undefined,
+            usePostgres: object['use_postgres'],
         };
     },
 
@@ -31,6 +36,7 @@ export const KvGetInSerializer = {
             'namespace': self.namespace,
             'key': self.key,
             'consistency': self.consistency != null ? ConsistencySerializer._toJsonObject(self.consistency) : undefined,
+            'use_postgres': self.usePostgres,
         };
     }
 }

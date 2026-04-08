@@ -29,12 +29,13 @@ func (kv Kv) Set(
 	kvSetIn diom_models.KvSetIn,
 ) (*diom_models.KvSetOut, error) {
 	body := diom_models.KvSetIn_{
-		Namespace: kvSetIn.Namespace,
-		Key:       key,
-		Value:     value,
-		Ttl:       kvSetIn.Ttl,
-		Behavior:  kvSetIn.Behavior,
-		Version:   kvSetIn.Version,
+		Namespace:   kvSetIn.Namespace,
+		Key:         key,
+		Value:       value,
+		Ttl:         kvSetIn.Ttl,
+		Behavior:    kvSetIn.Behavior,
+		Version:     kvSetIn.Version,
+		UsePostgres: kvSetIn.UsePostgres,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.KvSetIn_, diom_models.KvSetOut](
@@ -56,6 +57,7 @@ func (kv Kv) Get(
 		Namespace:   kvGetIn.Namespace,
 		Key:         key,
 		Consistency: kvGetIn.Consistency,
+		UsePostgres: kvGetIn.UsePostgres,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.KvGetIn_, diom_models.KvGetOut](

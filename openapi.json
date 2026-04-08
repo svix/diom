@@ -4706,6 +4706,21 @@
         ]
       }
     },
+    "/api/v1.health.no-content": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "No Content",
+        "description": "Verify the server is up and running.",
+        "operationId": "v1.health.no-content",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1.health.ping": {
       "get": {
         "tags": [
@@ -6441,6 +6456,11 @@
           "consistency": {
             "default": "strong",
             "$ref": "#/components/schemas/Consistency"
+          },
+          "use_postgres": {
+            "description": "If true, fetch from postgres instead of fjall (for benchmarking).",
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
@@ -6552,6 +6572,11 @@
             "format": "uint64",
             "minimum": 0,
             "nullable": true
+          },
+          "use_postgres": {
+            "description": "If true, store in postgres instead of fjall (for benchmarking).",
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [

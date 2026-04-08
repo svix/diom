@@ -187,6 +187,9 @@ impl BenchmarkArgs {
             BenchHttpPing::new()
                 .bench_shards_concurrent(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref())
                 .await?;
+            BenchHttpNoContent::new()
+                .bench_shards_concurrent(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref())
+                .await?;
             bench_kv(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
             bench_kv_pg(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
             bench_kv_raft_only(Arc::clone(&bench_cfg), &mut all_stats, filter.as_ref()).await?;
@@ -461,6 +464,7 @@ impl BenchResult {
         }
     }
 
+    #[allow(unused)]
     fn set_batch_size(mut self, batch_size: u16) -> Self {
         self.batch_size = batch_size;
         self
@@ -596,8 +600,6 @@ fn bench_generate_key(shard_id: u64, iteration: u64) -> String {
     Alphanumeric.sample_string(&mut rng, 16)
 }
 
-// HTTP overhead
-
 #[derive(Clone)]
 struct BenchHttpPing {
     bench_result: BenchResult,
@@ -625,6 +627,52 @@ impl BenchShard for BenchHttpPing {
     ) -> Result<()> {
         let t = Instant::now();
         client.health().ping().await?;
+        self.bench_result.process(t.elapsed(), 0)?;
+        Ok(())
+    }
+
+    fn finalize_result_stats(
+        &self,
+        cfg: Arc<BenchConfig>,
+        results: impl IntoIterator<Item = Self>,
+        all_stats: &mut Vec<Stats>,
+    ) -> Result<()> {
+        BenchResult::finalize_result_stats(
+            cfg,
+            results.into_iter().map(|x| x.bench_result),
+            self.test_name(),
+            all_stats,
+        )
+    }
+}
+
+#[derive(Clone)]
+struct BenchHttpNoContent {
+    bench_result: BenchResult,
+}
+
+impl BenchHttpNoContent {
+    fn new() -> Self {
+        Self {
+            bench_result: BenchResult::new(),
+        }
+    }
+}
+
+impl BenchShard for BenchHttpNoContent {
+    fn test_name(&self) -> String {
+        "http.no_content".to_owned()
+    }
+
+    async fn run(
+        &mut self,
+        client: &DiomClient,
+        _rng: &mut StdRng,
+        _shard_id: u64,
+        _iteration: u64,
+    ) -> Result<()> {
+        let t = Instant::now();
+        client.health().no_content().await?;
         self.bench_result.process(t.elapsed(), 0)?;
         Ok(())
     }
@@ -1264,6 +1312,7 @@ async fn bench_redis(
 // Cache module
 
 #[derive(Clone)]
+#[allow(unused)]
 struct BenchCacheSet {
     bench_result: BenchResult,
 }
@@ -1320,6 +1369,7 @@ impl BenchShard for BenchCacheSet {
 }
 
 #[derive(Clone)]
+#[allow(unused)]
 struct BenchCacheGet {
     bench_result: BenchResult,
 }
@@ -1369,6 +1419,7 @@ impl BenchShard for BenchCacheGet {
     }
 }
 
+#[allow(unused)]
 async fn bench_cache(
     cfg: Arc<BenchConfig>,
     all_stats: &mut Vec<Stats>,
@@ -1386,6 +1437,7 @@ async fn bench_cache(
 // Msgs module
 
 #[derive(Clone)]
+#[allow(unused)]
 struct BenchMsgsPublish<'a> {
     bench_result: BenchResult,
     batch_size: u16,
@@ -1452,6 +1504,7 @@ impl<'a> BenchShard for BenchMsgsPublish<'a> {
 }
 
 #[derive(Clone)]
+#[allow(unused)]
 struct BenchMsgsStreamReceive<'a> {
     bench_result_rcv: BenchResult,
     bench_result_commit: BenchResult,
@@ -1558,6 +1611,7 @@ impl<'a> BenchShard for BenchMsgsStreamReceive<'a> {
 }
 
 #[derive(Clone)]
+#[allow(unused)]
 struct BenchMsgsQueueReceive<'a> {
     bench_result_rcv: BenchResult,
     bench_result_ack: BenchResult,
@@ -1649,6 +1703,7 @@ impl<'a> BenchShard for BenchMsgsQueueReceive<'a> {
     }
 }
 
+#[allow(unused)]
 async fn bench_msgs_stream(
     cfg: Arc<BenchConfig>,
     batch_size: u16,
@@ -1688,6 +1743,7 @@ async fn bench_msgs_stream(
     Ok(())
 }
 
+#[allow(unused)]
 async fn bench_msgs_queue(
     cfg: Arc<BenchConfig>,
     batch_size: u16,

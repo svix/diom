@@ -11,6 +11,14 @@ impl<'a> Health<'a> {
     }
 
     /// Verify the server is up and running.
+    pub async fn no_content(&self) -> Result<()> {
+        crate::request::Request::new(http::Method::GET, "/api/v1.health.no-content")
+            .returns_nothing()
+            .execute(self.cfg)
+            .await
+    }
+
+    /// Verify the server is up and running.
     pub async fn ping(&self) -> Result<PingOut> {
         crate::request::Request::new(http::Method::GET, "/api/v1.health.ping")
             .execute(self.cfg)

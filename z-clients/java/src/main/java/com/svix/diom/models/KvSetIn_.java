@@ -34,6 +34,7 @@ public class KvSetIn_ {
     @JsonProperty("ttl_ms") @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class) private Duration ttl;
     @JsonProperty private OperationBehavior behavior;
     @JsonProperty private Long version;
+    @JsonProperty("use_postgres") private Boolean usePostgres;
 
     public KvSetIn_(
         String namespace,
@@ -41,7 +42,8 @@ public class KvSetIn_ {
         byte[] value,
         Duration ttl,
         OperationBehavior behavior,
-        Long version
+        Long version,
+        Boolean usePostgres
     ) {
         this.namespace = namespace;
         this.key = key;
@@ -49,6 +51,7 @@ public class KvSetIn_ {
         this.ttl = ttl;
         this.behavior = behavior;
         this.version = version;
+        this.usePostgres = usePostgres;
     }
 
     /**

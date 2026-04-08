@@ -10,6 +10,9 @@ class KvGetIn(BaseModel):
 
     consistency: Consistency | None = None
 
+    use_postgres: bool | None = None
+    """If true, fetch from postgres instead of fjall (for benchmarking)."""
+
 
 class _KvGetIn(BaseModel):
     namespace: str | None = None
@@ -17,3 +20,6 @@ class _KvGetIn(BaseModel):
     key: str
 
     consistency: Consistency | None = None
+
+    use_postgres: bool | None = None
+    """If true, fetch from postgres instead of fjall (for benchmarking)."""

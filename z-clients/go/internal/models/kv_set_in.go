@@ -12,7 +12,8 @@ type KvSetIn struct {
 	Behavior  *OperationBehavior       `msgpack:"behavior,omitempty"`
 	// If set, the write only succeeds when the stored version matches this value.
 	// Use the `version` field from a prior `get` response.
-	Version *uint64 `msgpack:"version,omitempty"`
+	Version     *uint64 `msgpack:"version,omitempty"`
+	UsePostgres *bool   `msgpack:"use_postgres,omitempty"` // If true, store in postgres instead of fjall (for benchmarking).
 }
 
 type KvSetIn_ struct {
@@ -23,5 +24,6 @@ type KvSetIn_ struct {
 	Behavior  *OperationBehavior       `msgpack:"behavior,omitempty"`
 	// If set, the write only succeeds when the stored version matches this value.
 	// Use the `version` field from a prior `get` response.
-	Version *uint64 `msgpack:"version,omitempty"`
+	Version     *uint64 `msgpack:"version,omitempty"`
+	UsePostgres *bool   `msgpack:"use_postgres,omitempty"` // If true, store in postgres instead of fjall (for benchmarking).
 }

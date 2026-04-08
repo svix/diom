@@ -10,6 +10,13 @@ export class Health {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
     /** Verify the server is up and running. */
+    public noContent(
+    ): Promise<void> {
+        const request = new DiomRequest(HttpMethod.GET, "/api/v1.health.no-content");
+
+        
+        return request.sendNoResponseBody(this.requestCtx);
+    }/** Verify the server is up and running. */
     public ping(
     ): Promise<PingOut> {
         const request = new DiomRequest(HttpMethod.GET, "/api/v1.health.ping");

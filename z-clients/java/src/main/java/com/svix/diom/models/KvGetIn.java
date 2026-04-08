@@ -35,6 +35,7 @@ import lombok.ToString;
 public class KvGetIn {
     @JsonProperty private String namespace;
     @JsonProperty private Consistency consistency;
+    @JsonProperty("use_postgres") private Boolean usePostgres;
     public KvGetIn() {}
 
     public KvGetIn namespace(String namespace) {
@@ -73,5 +74,24 @@ public class KvGetIn {
 
     public void setConsistency(Consistency consistency) {
         this.consistency = consistency;
+    }
+
+    public KvGetIn usePostgres(Boolean usePostgres) {
+        this.usePostgres = usePostgres;
+        return this;
+    }
+
+    /**
+    * If true, fetch from postgres instead of fjall (for benchmarking).
+    *
+     * @return usePostgres
+     */
+    @javax.annotation.Nullable
+    public Boolean getUsePostgres() {
+        return usePostgres;
+    }
+
+    public void setUsePostgres(Boolean usePostgres) {
+        this.usePostgres = usePostgres;
     }
 }

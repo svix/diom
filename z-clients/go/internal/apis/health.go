@@ -18,6 +18,20 @@ func NewHealth(client *diom_proto.HttpClient) Health {
 }
 
 // Verify the server is up and running.
+func (health Health) NoContent(
+	ctx context.Context,
+) error {
+	_, err := diom_proto.ExecuteRequest[any, any](
+		ctx,
+		health.client,
+		"GET",
+		"/api/v1.health.no-content",
+		nil,
+	)
+	return err
+}
+
+// Verify the server is up and running.
 func (health Health) Ping(
 	ctx context.Context,
 ) (*diom_models.PingOut, error) {
