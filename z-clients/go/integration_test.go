@@ -90,7 +90,7 @@ func TestCacheSetGetDelete(t *testing.T) {
 	value := []uint8("go-integration-cache-value")
 
 	// Set
-	_, err := client.Cache().Set(ctx, key, value, diom.CacheSetIn{TtlMs: 60000})
+	_, err := client.Cache().Set(ctx, key, value, diom.CacheSetIn{Ttl: diom.DurationMs(60000)})
 	if err != nil {
 		t.Fatalf("cache set failed: %v", err)
 	}

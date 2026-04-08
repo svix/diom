@@ -32,7 +32,7 @@ func (cache Cache) Set(
 		Namespace: cacheSetIn.Namespace,
 		Key:       key,
 		Value:     value,
-		TtlMs:     cacheSetIn.TtlMs,
+		Ttl:       cacheSetIn.Ttl,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.CacheSetIn_, diom_models.CacheSetOut](

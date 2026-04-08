@@ -31,3 +31,25 @@ func (t *Timestamp) DecodeMsgpack(dec *msgpack.Decoder) error {
 	t = &timestamp
 	return nil
 }
+
+// Duration in milliseconds.
+type DurationMs uint64
+
+func (d DurationMs) Milliseconds() uint64 {
+	return uint64(d)
+}
+
+func (d *DurationMs) EncodeMsgpack(enc *msgpack.Encoder) error {
+	return enc.EncodeUint64(uint64(*d))
+}
+
+func (d *DurationMs) DecodeMsgpack(dec *msgpack.Decoder) error {
+	i, err := dec.DecodeUint64()
+	if err != nil {
+		return err
+	}
+
+	duration := DurationMs(i)
+	d = &duration
+	return nil
+}

@@ -29,12 +29,12 @@ func (msgsQueue MsgsQueue) Receive(
 	msgQueueReceiveIn diom_models.MsgQueueReceiveIn,
 ) (*diom_models.MsgQueueReceiveOut, error) {
 	body := diom_models.MsgQueueReceiveIn_{
-		Namespace:       msgQueueReceiveIn.Namespace,
-		Topic:           topic,
-		ConsumerGroup:   consumerGroup,
-		BatchSize:       msgQueueReceiveIn.BatchSize,
-		LeaseDurationMs: msgQueueReceiveIn.LeaseDurationMs,
-		BatchWaitMs:     msgQueueReceiveIn.BatchWaitMs,
+		Namespace:     msgQueueReceiveIn.Namespace,
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		BatchSize:     msgQueueReceiveIn.BatchSize,
+		LeaseDuration: msgQueueReceiveIn.LeaseDuration,
+		BatchWait:     msgQueueReceiveIn.BatchWait,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgQueueReceiveIn_, diom_models.MsgQueueReceiveOut](
@@ -82,11 +82,11 @@ func (msgsQueue MsgsQueue) ExtendLease(
 	msgQueueExtendLeaseIn diom_models.MsgQueueExtendLeaseIn,
 ) (*diom_models.MsgQueueExtendLeaseOut, error) {
 	body := diom_models.MsgQueueExtendLeaseIn_{
-		Namespace:       msgQueueExtendLeaseIn.Namespace,
-		Topic:           topic,
-		ConsumerGroup:   consumerGroup,
-		MsgIds:          msgQueueExtendLeaseIn.MsgIds,
-		LeaseDurationMs: msgQueueExtendLeaseIn.LeaseDurationMs,
+		Namespace:     msgQueueExtendLeaseIn.Namespace,
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		MsgIds:        msgQueueExtendLeaseIn.MsgIds,
+		LeaseDuration: msgQueueExtendLeaseIn.LeaseDuration,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgQueueExtendLeaseIn_, diom_models.MsgQueueExtendLeaseOut](

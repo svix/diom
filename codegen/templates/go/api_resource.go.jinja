@@ -1,3 +1,4 @@
+{% from "types/macros.go.jinja" import field_name -%}
 {% set resource_type_name = resource.name | to_upper_camel_case -%}
 {% set resource_self_name = resource.name | to_lower_camel_case -%}
 package diom_apis
@@ -77,9 +78,10 @@ func ({{ resource_self_name }} {{ resource_type_name }}) {{ op.name | to_upper_c
 		{% if positional_fields | length > 0 -%}
 	body := diom_models.{{ op.request_body_schema_name }}_{
 		{%- for field in body_schema.fields %}
-			{{ field.name | to_upper_camel_case }}:
+			{% set f_name = field_name(field) -%}
+			{{ f_name }}:
 			{%- if field.positional %} {{ field.name | to_lower_camel_case }}
-			{%- else %} {{ request_body_param }}.{{ field.name | to_upper_camel_case }}
+			{%- else %} {{ request_body_param }}.{{ f_name }}
 			{%- endif %},
 		{%- endfor %}
 	}

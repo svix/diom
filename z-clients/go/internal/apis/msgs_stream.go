@@ -32,9 +32,9 @@ func (msgsStream MsgsStream) Receive(
 		Topic:                   topic,
 		ConsumerGroup:           consumerGroup,
 		BatchSize:               msgStreamReceiveIn.BatchSize,
-		LeaseDurationMs:         msgStreamReceiveIn.LeaseDurationMs,
+		LeaseDuration:           msgStreamReceiveIn.LeaseDuration,
 		DefaultStartingPosition: msgStreamReceiveIn.DefaultStartingPosition,
-		BatchWaitMs:             msgStreamReceiveIn.BatchWaitMs,
+		BatchWait:               msgStreamReceiveIn.BatchWait,
 	}
 
 	return diom_proto.ExecuteRequest[diom_models.MsgStreamReceiveIn_, diom_models.MsgStreamReceiveOut](

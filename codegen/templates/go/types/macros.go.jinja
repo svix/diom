@@ -1,5 +1,16 @@
+{% macro field_name(field) -%}
+	{% set f_name = field.name | to_upper_camel_case -%}
+	{% if field.name is endingwith "_ms" -%}
+		{% set f_name = f_name | strip_trailing_str("Ms") -%}
+	{% endif -%}
+	{{ f_name }}
+{%- endmacro %}
 {% macro field_type(field) -%}
 	{% set f_type = field.type.to_go() -%}
+	{% if field.name is endingwith "_ms" -%}
+		{% if not field.type.is_u64() %}{% do panic("_ms type should be uint64") %}{% endif -%}
+		{% set f_type = "diom_types.DurationMs" -%}
+	{% endif -%}
 	{% if (not field.required or field.nullable) -%}
 		{% if field.type.is_datetime() -%}
 			{% set f_type = "diom_types.Timestamp" -%}
@@ -11,7 +22,7 @@
 	{{ f_type }}
 {%- endmacro -%}
 {% macro field_decl(field) -%}
-	{% set f_name = field.name | to_upper_camel_case -%}
+	{% set f_name = field_name(field) -%}
 	{% set extra_annotation = "" -%}
 	{% if (not field.required or field.nullable) -%}
 		{% set extra_annotation = ",omitempty" -%}
