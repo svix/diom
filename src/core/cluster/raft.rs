@@ -76,6 +76,7 @@ pub async fn initialize_raft(
         cfg.cluster.log_path(cfg)?,
         cfg.cluster.log_sync_interval_commits,
         cfg.cluster.log_sync_interval_duration.into(),
+        cfg.cluster.log_sync_interval_auto,
         cfg.cluster.log_ack_immediately,
         cfg.fsync_mode,
     )
@@ -84,7 +85,8 @@ pub async fn initialize_raft(
         .get_node_id()
         .await
         .context("reading node ID from logs")?;
-    logs.enable_metrics(LogMetrics::new(&app_state.meter, id));
+    logs.enable_metrics(LogMetrics::new(&app_state.meter, id))
+        .await?;
     let config = openraft::Config {
         heartbeat_interval: cfg.cluster.heartbeat_interval.as_millis(),
         election_timeout_min: cfg.cluster.election_timeout_min.as_millis(),
@@ -239,6 +241,7 @@ mod tests {
                 log_path,
                 1,
                 Duration::from_secs(10),
+                false,
                 true,
                 FsyncMode::default(),
             )?;
