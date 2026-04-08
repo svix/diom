@@ -473,7 +473,7 @@ impl Store {
                     Response::Blank
                 }
                 EntryPayload::Normal(req) => {
-                    tracing::trace!(log_id=?item.log_id, request=?req, "applying user request");
+                    tracing::trace!(log_id=?item.log_id, request=%req, "applying user request");
 
                     if req.inner.affects_persistent() {
                         touched_persistent = true;
