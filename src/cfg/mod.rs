@@ -345,7 +345,13 @@ pub struct ClusterConfiguration {
     /// Interval (in transactions) between fsyncing the commit log.
     ///
     /// This can be used to force transactions to fsync logs more often than the
-    /// default `log_sync_interval_ms` timer.
+    /// default `log_sync_interval_ms` timer. If `log_sync_mode` is set to "buffer", it's
+    /// reasonable to set this value to `1` to flush to the OS buffer on every log.
+    ///
+    /// If this is set to 0, only the interval timer will be used
+    ///
+    /// If this is set to a value higher than 1 and the interval timer is long, then
+    /// single-threaded clients (including bootstrap) will be extremely slow.
     #[validate(range(min = 0, max = 1024000))]
     #[serde(default = "defaults::cluster_log_sync_interval_commits")]
     pub log_sync_interval_commits: usize,
@@ -365,14 +371,13 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::default_true")]
     pub log_sync_interval_auto: bool,
 
-    /// Commit logs to the cluster immediately, before fsyncing them to persistent storage.
+    /// Should a log sync actually trigger an fsync?
     ///
-    /// This should be set to `false` for full ACID compliance, but can be set to `true` to enable
-    /// higher throughput than your fsync rate. Note that we always flush to the OS buffers before
-    /// acking, so data will only be lost if the OS crashes. If that happens, the node should be
-    /// removed from the cluster, erased, and resynced
-    #[serde(default = "defaults::default_false")]
-    pub log_ack_immediately: bool,
+    /// If this is set to "buffer" and a node suffers a catastrophic failure where OS buffers
+    /// are not written to disk, that node should be erased and re-snapshotted before being
+    /// re-added to the cluster.
+    #[serde(default)]
+    pub log_sync_mode: SyncMode,
 
     /// Trigger a background snapshot after this many writes
     pub snapshot_after_writes: Option<u32>,
