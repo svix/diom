@@ -29,12 +29,12 @@ func (msgsQueue MsgsQueue) Receive(
 	msgQueueReceiveIn coyote_models.MsgQueueReceiveIn,
 ) (*coyote_models.MsgQueueReceiveOut, error) {
 	body := coyote_models.MsgQueueReceiveIn_{
-		Namespace:       msgQueueReceiveIn.Namespace,
-		Topic:           topic,
-		ConsumerGroup:   consumerGroup,
-		BatchSize:       msgQueueReceiveIn.BatchSize,
-		LeaseDurationMs: msgQueueReceiveIn.LeaseDurationMs,
-		BatchWaitMs:     msgQueueReceiveIn.BatchWaitMs,
+		Namespace:     msgQueueReceiveIn.Namespace,
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		BatchSize:     msgQueueReceiveIn.BatchSize,
+		LeaseDuration: msgQueueReceiveIn.LeaseDuration,
+		BatchWait:     msgQueueReceiveIn.BatchWait,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueReceiveIn_, coyote_models.MsgQueueReceiveOut](
@@ -82,11 +82,11 @@ func (msgsQueue MsgsQueue) ExtendLease(
 	msgQueueExtendLeaseIn coyote_models.MsgQueueExtendLeaseIn,
 ) (*coyote_models.MsgQueueExtendLeaseOut, error) {
 	body := coyote_models.MsgQueueExtendLeaseIn_{
-		Namespace:       msgQueueExtendLeaseIn.Namespace,
-		Topic:           topic,
-		ConsumerGroup:   consumerGroup,
-		MsgIds:          msgQueueExtendLeaseIn.MsgIds,
-		LeaseDurationMs: msgQueueExtendLeaseIn.LeaseDurationMs,
+		Namespace:     msgQueueExtendLeaseIn.Namespace,
+		Topic:         topic,
+		ConsumerGroup: consumerGroup,
+		MsgIds:        msgQueueExtendLeaseIn.MsgIds,
+		LeaseDuration: msgQueueExtendLeaseIn.LeaseDuration,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgQueueExtendLeaseIn_, coyote_models.MsgQueueExtendLeaseOut](
