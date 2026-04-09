@@ -368,7 +368,7 @@ mod tests {
     ) {
         let mut batch = db.batch();
         let row = MsgRow {
-            value: vec![],
+            value: b"".into(),
             headers: HashMap::new(),
             timestamp: Timestamp::UNIX_EPOCH,
             scheduled_at: None,

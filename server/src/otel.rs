@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use coyote::cfg::{self, ConfigurationInner};
+use coyote_backend::cfg::{self, ConfigurationInner};
 use coyote_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
@@ -29,6 +29,7 @@ pub(crate) fn setup_tracing(
             format!("fjall={level}"),
             format!("fjall_utils={level}"),
             format!("tower_http={level}"),
+            format!("openraft={level}"),
             "opentelemetry_sdk=ERROR".to_string(),
         ];
 

@@ -32,9 +32,9 @@ func (msgsStream MsgsStream) Receive(
 		Topic:                   topic,
 		ConsumerGroup:           consumerGroup,
 		BatchSize:               msgStreamReceiveIn.BatchSize,
-		LeaseDurationMs:         msgStreamReceiveIn.LeaseDurationMs,
+		LeaseDuration:           msgStreamReceiveIn.LeaseDuration,
 		DefaultStartingPosition: msgStreamReceiveIn.DefaultStartingPosition,
-		BatchWaitMs:             msgStreamReceiveIn.BatchWaitMs,
+		BatchWait:               msgStreamReceiveIn.BatchWait,
 	}
 
 	return coyote_proto.ExecuteRequest[coyote_models.MsgStreamReceiveIn_, coyote_models.MsgStreamReceiveOut](

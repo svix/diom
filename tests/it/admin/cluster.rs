@@ -1,4 +1,4 @@
-use coyote::cfg::PeerAddr;
+use coyote_backend::cfg::PeerAddr;
 use maplit::btreeset;
 use serde_json::json;
 use std::collections::BTreeSet;

@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use clap_complete::Shell;
 use concolor_clap::Color;
-use coyote_client::{CoyoteClient, CoyoteOptions, DEFAULT_URL};
+use coyote::{CoyoteClient, CoyoteOptions, DEFAULT_URL};
 use mimalloc::MiMalloc;
 
 #[global_allocator]

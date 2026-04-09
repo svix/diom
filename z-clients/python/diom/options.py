@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class CoyoteOptions:
+class DiomOptions:
     debug: bool = False
     server_url: str | None = None
     """

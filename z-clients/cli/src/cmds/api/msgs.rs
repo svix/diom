@@ -1,6 +1,6 @@
 // this file is @generated
 use clap::{Args, Subcommand};
-use coyote_client::CoyoteClient;
+use coyote::CoyoteClient;
 
 use super::{MsgsNamespaceArgs, MsgsQueueArgs, MsgsStreamArgs, MsgsTopicArgs};
 #[derive(Args)]
@@ -27,7 +27,7 @@ pub enum MsgsCommands {
 }")]
     Publish {
         topic: String,
-        msg_publish_in: crate::json::JsonOf<coyote_client::models::MsgPublishIn>,
+        msg_publish_in: crate::json::JsonOf<coyote::models::MsgPublishIn>,
     },
 }
 

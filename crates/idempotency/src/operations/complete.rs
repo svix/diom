@@ -1,6 +1,6 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, IdempotencyState};
-use coyote_core::types::{DurationMs, Metadata};
+use coyote_core::types::{ByteString, DurationMs, Metadata};
 use coyote_error::Result;
 use coyote_id::NamespaceId;
 use coyote_kv::kvcontroller::{KvModelIn, OperationBehavior};
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 pub struct CompleteOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
-    pub(crate) response: Vec<u8>,
+    pub(crate) response: ByteString,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) context: Option<Metadata>,
     #[serde(rename = "ttl_ms")]
@@ -22,7 +22,7 @@ impl CompleteOperation {
     pub fn new(
         namespace: IdempotencyNamespace,
         key: String,
-        response: Vec<u8>,
+        response: ByteString,
         context: Option<Metadata>,
         ttl: DurationMs,
     ) -> Self {

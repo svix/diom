@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
-use coyote_core::types::DurationMs;
+use coyote_core::types::{ByteString, DurationMs};
 use coyote_error::Error;
 use jiff::Timestamp;
 use schemars::JsonSchema;
@@ -333,7 +333,7 @@ impl JsonSchema for MsgId {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct MsgIn {
-    pub value: Vec<u8>,
+    pub value: ByteString,
     #[serde(default)]
     pub headers: HashMap<String, String>,
     /// Optional partition key.
@@ -352,7 +352,7 @@ pub struct MsgIn {
 pub struct StreamMsgOut {
     pub offset: Offset,
     pub topic: TopicPartition,
-    pub value: Vec<u8>,
+    pub value: ByteString,
     #[serde(default)]
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
@@ -363,7 +363,7 @@ pub struct StreamMsgOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct QueueMsgOut {
     pub msg_id: MsgId,
-    pub value: Vec<u8>,
+    pub value: ByteString,
     #[serde(default)]
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,

@@ -18,11 +18,14 @@ ROOT_DIR="$SCRIPT_DIR/.."
 export COYOTE_TOKEN="${COYOTE_TOKEN:-admin_abcdefghijlmnopqrstuvwxyz012345}"
 export COYOTE_SERVER_URL="${COYOTE_SERVER_URL:-http://localhost:8050}"
 
+export DIOM_TOKEN="$COYOTE_TOKEN"
+export DIOM_SERVER_URL="$COYOTE_SERVER_URL"
+
 ALL_SDKS=(rust python javascript go java)
 
 run_rust() {
     echo "==> Running Rust SDK integration tests"
-    (cd "$ROOT_DIR" && cargo test --package coyote-client -- --ignored)
+    (cd "$ROOT_DIR" && cargo test --package coyote -- --ignored)
 }
 
 run_python() {

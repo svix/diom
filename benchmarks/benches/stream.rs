@@ -1,7 +1,7 @@
-use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use coyote_client::models::{
+use coyote::models::{
     MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
 };
+use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
@@ -46,13 +46,11 @@ fn bench_stream<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benchmark
             || make_msg_batch(100),
             |msgs| {
                 rt.block_on(async {
-                    std::hint::black_box(
-                        client
-                            .msgs()
-                            .publish(topic.clone(), MsgPublishIn::new(msgs)),
-                    )
-                    .await
-                    .unwrap();
+                    client
+                        .msgs()
+                        .publish(topic.clone(), MsgPublishIn::new(msgs))
+                        .await
+                        .unwrap();
                 })
             },
             BatchSize::SmallInput,
@@ -76,33 +74,29 @@ fn bench_stream<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benchmark
     group.bench_function("receive_commit_batch_100", |b| {
         b.iter(|| {
             rt.block_on(async {
-                let out = std::hint::black_box(
-                    client
-                        .msgs()
-                        .stream()
-                        .receive(
-                            topic.clone(),
-                            consumer_group.clone(),
-                            MsgStreamReceiveIn::new().with_batch_size(100),
-                        )
-                        .await
-                        .unwrap(),
-                );
+                let out = client
+                    .msgs()
+                    .stream()
+                    .receive(
+                        topic.clone(),
+                        consumer_group.clone(),
+                        MsgStreamReceiveIn::new().with_batch_size(100),
+                    )
+                    .await
+                    .unwrap();
                 let Some(last) = out.msgs.last() else {
                     return;
                 };
-                std::hint::black_box(
-                    client
-                        .msgs()
-                        .stream()
-                        .commit(
-                            last.topic.clone(),
-                            consumer_group.clone(),
-                            MsgStreamCommitIn::new(last.offset),
-                        )
-                        .await
-                        .unwrap(),
-                );
+                client
+                    .msgs()
+                    .stream()
+                    .commit(
+                        last.topic.clone(),
+                        consumer_group.clone(),
+                        MsgStreamCommitIn::new(last.offset),
+                    )
+                    .await
+                    .unwrap();
             })
         })
     });

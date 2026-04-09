@@ -10,7 +10,7 @@ use std::{
 use anyhow::{Context, Result};
 use clap::Args;
 use comfy_table::{Table, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL_CONDENSED};
-use coyote_client::{
+use coyote::{
     CoyoteClient,
     models::{
         CacheGetIn, CacheSetIn, KvGetIn, KvSetIn, MsgIn, MsgNamespaceCreateIn, MsgPublishIn,

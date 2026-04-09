@@ -1,6 +1,6 @@
 use clap::{Args, Subcommand};
 use comfy_table::{Attribute, Cell, Table};
-use coyote_client::{
+use coyote::{
     CoyoteClient,
     models::{ClusterInitializeIn, ClusterInitializeOut, ClusterRemoveNodeIn},
 };

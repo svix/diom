@@ -1,7 +1,7 @@
 #![allow(unused)]
 
-use coyote::{cfg::LogLevel, core::cluster::proto::HealthResponse};
-use coyote_client::{CoyoteClient, CoyoteOptions};
+use coyote::{CoyoteClient, CoyoteOptions};
+use coyote_backend::{cfg::LogLevel, core::cluster::proto::HealthResponse};
 use openraft::ServerState;
 use std::sync::{Arc, Once};
 use tempfile::TempDir;

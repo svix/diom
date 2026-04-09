@@ -1,7 +1,7 @@
 use std::time::Duration;
 
+use coyote::models::{CacheDeleteIn, CacheGetIn, CacheSetIn};
 use coyote_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use coyote_client::models::{CacheDeleteIn, CacheGetIn, CacheSetIn};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
@@ -31,13 +31,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             || (test_key.clone(), test_val.clone()),
             |(key, val)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.cache().set(
-                        key,
-                        val,
-                        CacheSetIn::new(Duration::from_secs(60)),
-                    ))
-                    .await
-                    .unwrap();
+                    client
+                        .cache()
+                        .set(key, val, CacheSetIn::new(Duration::from_secs(60)))
+                        .await
+                        .unwrap();
                 })
             },
             BatchSize::SmallInput,
@@ -49,13 +47,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             || (test_key.clone(), test_val.clone()),
             |(key, val)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.cache().set(
-                        key,
-                        val,
-                        CacheSetIn::new(Duration::from_millis(1)),
-                    ))
-                    .await
-                    .unwrap();
+                    client
+                        .cache()
+                        .set(key, val, CacheSetIn::new(Duration::from_millis(1)))
+                        .await
+                        .unwrap();
                 })
             },
             BatchSize::SmallInput,
@@ -72,13 +68,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.cache().set(
-                        k,
-                        v,
-                        CacheSetIn::new(Duration::from_secs(60)),
-                    ))
-                    .await
-                    .unwrap();
+                    client
+                        .cache()
+                        .set(k, v, CacheSetIn::new(Duration::from_secs(60)))
+                        .await
+                        .unwrap();
                 })
             },
             BatchSize::SmallInput,
@@ -95,13 +89,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.cache().set(
-                        k,
-                        v,
-                        CacheSetIn::new(Duration::from_secs(60)),
-                    ))
-                    .await
-                    .unwrap();
+                    client
+                        .cache()
+                        .set(k, v, CacheSetIn::new(Duration::from_secs(60)))
+                        .await
+                        .unwrap();
                 })
             },
             BatchSize::SmallInput,
@@ -118,13 +110,11 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             },
             |(k, v)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.cache().set(
-                        k,
-                        v,
-                        CacheSetIn::new(Duration::from_secs(60)),
-                    ))
-                    .await
-                    .unwrap();
+                    client
+                        .cache()
+                        .set(k, v, CacheSetIn::new(Duration::from_secs(60)))
+                        .await
+                        .unwrap();
                 })
             },
             BatchSize::SmallInput,
@@ -133,13 +123,15 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
 
     // Make sure we have a key to test repeated gets
     rt.block_on(async {
-        std::hint::black_box(client.cache().set(
-            test_key.clone(),
-            test_val.clone(),
-            CacheSetIn::new(Duration::from_secs(60)),
-        ))
-        .await
-        .unwrap();
+        client
+            .cache()
+            .set(
+                test_key.clone(),
+                test_val.clone(),
+                CacheSetIn::new(Duration::from_secs(60)),
+            )
+            .await
+            .unwrap();
     });
 
     group.bench_function("cache_get", |b| {
@@ -147,9 +139,7 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             || test_key.clone(),
             |key| {
                 rt.block_on(async {
-                    std::hint::black_box(client.cache().get(key, CacheGetIn::new()))
-                        .await
-                        .unwrap();
+                    client.cache().get(key, CacheGetIn::new()).await.unwrap();
                 })
             },
             BatchSize::SmallInput,
@@ -161,14 +151,14 @@ fn bench_cache<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             || (test_key.clone(), test_key.clone(), test_val.clone()),
             |(key1, key2, val)| {
                 rt.block_on(async {
-                    std::hint::black_box(client.cache().set(
-                        key1,
-                        val,
-                        CacheSetIn::new(Duration::from_secs(60)),
-                    ))
-                    .await
-                    .unwrap();
-                    std::hint::black_box(client.cache().delete(key2, CacheDeleteIn::new()))
+                    client
+                        .cache()
+                        .set(key1, val, CacheSetIn::new(Duration::from_secs(60)))
+                        .await
+                        .unwrap();
+                    client
+                        .cache()
+                        .delete(key2, CacheDeleteIn::new())
                         .await
                         .unwrap();
                 })

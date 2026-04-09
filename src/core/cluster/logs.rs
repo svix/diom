@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::BTreeMap,
     fmt::Debug,
     ops::{Bound, RangeBounds},
@@ -9,10 +8,7 @@ use std::{
 
 use anyhow::Context;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
-use fjall_utils::{
-    FjallFixedKey,
-    table_row2::{MonotonicTableRowExt, TableRow},
-};
+use fjall_utils::{FjallFixedKey, KeyspaceExt, MonotonicTableRow, TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use openraft::{
     EntryPayload, OptionalSend, RaftLogReader, RaftTypeConfig,
@@ -30,6 +26,7 @@ use crate::{
     core::{cluster::ClusterId, metrics::LogMetrics},
 };
 use coyote_core::task::spawn_blocking_in_current_span;
+use coyote_error::Result;
 
 // This is an implementation of an openraft Logs store backed by fjall
 
@@ -112,16 +109,26 @@ impl LogCache {
     }
 }
 
+/// These values can never change. Only additions are allowed.
+#[repr(u8)]
+enum RowType {
+    Log = 0,
+    LogIndex = 1,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 struct Log(LogEntry);
 
 impl TableRow for Log {
-    const TABLE_PREFIX: &str = "log";
-    type Key = u64;
+    const ROW_TYPE: u8 = RowType::Log as u8;
+}
 
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Owned(self.0.log_id.index)
+impl MonotonicTableRow for Log {
+    type KeyType = u64;
+
+    fn get_key(&self) -> u64 {
+        self.0.log_id.index
     }
 }
 
@@ -132,11 +139,14 @@ struct LogIndex {
 }
 
 impl TableRow for LogIndex {
-    const TABLE_PREFIX: &str = "timestamps";
-    type Key = u64;
+    const ROW_TYPE: u8 = RowType::LogIndex as u8;
+}
 
-    fn get_key(&self) -> Cow<'_, Self::Key> {
-        Cow::Owned(self.unix_timestamp_ms)
+impl MonotonicTableRow for LogIndex {
+    type KeyType = u64;
+
+    fn get_key(&self) -> u64 {
+        self.unix_timestamp_ms
     }
 }
 
@@ -362,6 +372,8 @@ pub struct CoyoteLogs {
 }
 
 impl CoyoteLogs {
+    const DELETE_BATCH_SIZE: usize = 10_000;
+
     pub fn new(
         path: Dir,
         commits_before_fsync: usize,
@@ -424,10 +436,8 @@ impl CoyoteLogs {
             log_id: log_index,
         };
         tracing::trace!(?rec, "recording log/timestamp checkpoint");
-        let (k, v) = rec.to_fjall_entry()?;
         let keyspace = self.log_keyspace.clone();
-        spawn_blocking_in_current_span(move || -> fjall::Result<()> { keyspace.insert(k, v) })
-            .await??;
+        spawn_blocking_in_current_span(move || keyspace.insert_row(rec.key(), &rec)).await??;
         Ok(())
     }
 
@@ -471,8 +481,8 @@ impl CoyoteLogs {
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
             let _guard = tracing::info_span!("append:write_entries").entered();
             for entry in persisted_entries {
-                let (k, v) = Log(entry).to_fjall_entry()?;
-                batch.insert(&keyspace, k, v);
+                let log = Log(entry);
+                batch.insert_row(&keyspace, log.key(), &log)?;
             }
             batch.commit()?;
             Ok(())
@@ -490,7 +500,7 @@ impl CoyoteLogs {
             self.log_cache.push(entry);
         }
 
-        self.metric_record(|m| m.record_append(num_entries, start.elapsed()));
+        self.metric_record(|m| m.record_append(start.elapsed()));
 
         Ok(())
     }
@@ -500,12 +510,16 @@ impl CoyoteLogs {
         let start = log_id.map(|l| l.index + 1).unwrap_or(0);
         self.log_cache.truncate(start);
         let log_keyspace = self.log_keyspace.clone();
-        let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
-        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            for key in Log::keys_in_range(&log_keyspace, start..)? {
-                tx.remove(&log_keyspace, key);
-            }
-            tx.commit()?;
+        let db = self.db.clone();
+        spawn_blocking_in_current_span(move || {
+            let deleted = Log::remove_keys_in_range(
+                &db,
+                &log_keyspace,
+                start..,
+                Self::DELETE_BATCH_SIZE,
+                PersistMode::Buffer,
+            )?;
+            tracing::debug!(deleted, "deleted entries for truncation");
             Ok(())
         })
         .await?
@@ -516,13 +530,17 @@ impl CoyoteLogs {
         self.log_cache.purge(log_id.index);
         let meta_keyspace = self.meta_keyspace.clone();
         let log_keyspace = self.log_keyspace.clone();
-        let mut tx = self.db.batch().durability(Some(PersistMode::Buffer));
+        let db = self.db.clone();
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            for key in Log::keys_in_range(&log_keyspace, ..=log_id.index)? {
-                tx.remove(&log_keyspace, key);
-            }
-            LAST_PURGED_LOG_ID.store_tx(&mut tx, &meta_keyspace, &log_id)?;
-            tx.commit()?;
+            LAST_PURGED_LOG_ID.store(&meta_keyspace, &log_id)?;
+            let deleted = Log::remove_keys_in_range(
+                &db,
+                &log_keyspace,
+                ..=log_id.index,
+                Self::DELETE_BATCH_SIZE,
+                PersistMode::Buffer,
+            )?;
+            tracing::debug!(deleted, "deleted entries for purge");
             Ok(())
         })
         .await?

@@ -47,7 +47,7 @@ func TestKvSetGetDelete(t *testing.T) {
 	value := []uint8("go-integration-kv-value")
 
 	// Set
-	setResp, err := client.Kv().Set(ctx, key, coyote.KvSetIn{Value: value})
+	setResp, err := client.Kv().Set(ctx, key, value, coyote.KvSetIn{})
 	if err != nil {
 		t.Fatalf("kv set failed: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestCacheSetGetDelete(t *testing.T) {
 	value := []uint8("go-integration-cache-value")
 
 	// Set
-	_, err := client.Cache().Set(ctx, key, coyote.CacheSetIn{Value: value, TtlMs: 60000})
+	_, err := client.Cache().Set(ctx, key, value, coyote.CacheSetIn{Ttl: coyote.DurationMs(60000)})
 	if err != nil {
 		t.Fatalf("cache set failed: %v", err)
 	}

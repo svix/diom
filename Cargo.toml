@@ -1,6 +1,6 @@
 ### Library manifest ###
 [package]
-name = "coyote"
+name = "coyote-backend"
 publish = false
 version.workspace = true
 license.workspace = true
@@ -136,12 +136,12 @@ comfy-table = "7"
 concolor-clap = "0.1.0"
 config = { version = "0.15.19", default-features = false, features = ["toml", "yaml"] }
 constant_time_eq = "0.4"
-coyote.path = "."
+coyote.path = "z-clients/rust"
 coyote-admin-auth.path = "crates/coyote-admin-auth"
 coyote-auth-token.path = "crates/auth-token"
 coyote-authorization.path = "crates/coyote-authorization"
+coyote-backend.path = "."
 coyote-cache.path = "crates/cache"
-coyote-client.path = "z-clients/rust"
 coyote-core.path = "crates/coyote-core"
 coyote-derive.path = "crates/coyote-derive"
 coyote-error.path = "crates/coyote-error"
@@ -284,7 +284,7 @@ strip = true
 # performance for some given hardware, but these optimizations make the
 # debug-build results close enough to production that useful before / after
 # comparisons can be made.
-coyote-client.opt-level = 2
+coyote.opt-level = 2
 hyper.opt-level = 2
 tokio.opt-level = 2
 
