@@ -454,6 +454,7 @@ pub async fn run_with_listeners(
     let worker_handle = tokio::task::spawn({
         let raft_state = raft_state.clone();
         let shutting_down = shutting_down_token();
+        let app_state = app_state.clone();
         async move {
             initialized.wait().await?;
             let mut workers = Workers::new(app_state);
@@ -473,6 +474,17 @@ pub async fn run_with_listeners(
     tracing::debug!("done serving; waiting for background tasks to finish");
     let _ = worker_handle.await;
     let _ = interserver.await;
+    tracing::debug!("running final fsync on databases");
+    app_state
+        .do_not_use_dbs
+        .persistent
+        .persist(fjall::PersistMode::SyncAll)
+        .expect("failed to fsync persistent db at shutdown");
+    app_state
+        .do_not_use_dbs
+        .ephemeral
+        .persist(fjall::PersistMode::SyncAll)
+        .expect("failed to fsync ephemeral db at shutdown");
     tracing::debug!("we're outta here!");
 }
 
