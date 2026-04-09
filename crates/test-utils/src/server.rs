@@ -4,8 +4,8 @@ use crate::TestClient;
 use coyote_backend::{
     Initialized,
     cfg::{
-        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, LogFormat, LogLevel,
-        SyncMode,
+        ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, FsyncMode,
+        LogFormat, LogLevel, SyncMode,
     },
     core::cluster::{ClusterId, NodeId, proto::HealthResponse},
     run_with_listeners,
@@ -321,6 +321,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         bootstrap_cfg: None,
         bootstrap_cfg_path: None,
         sync_mode: SyncMode::Buffer,
+        fsync_mode: FsyncMode::SyncData,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
         jwt: None,
     }

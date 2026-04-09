@@ -77,6 +77,7 @@ pub async fn initialize_raft(
         cfg.cluster.log_sync_interval_commits,
         cfg.cluster.log_sync_interval_duration.into(),
         cfg.cluster.log_ack_immediately,
+        cfg.fsync_mode,
     )
     .context("setting up log store")?;
     let id: NodeId = logs
@@ -225,7 +226,7 @@ mod tests {
         },
         TypeConfig,
     };
-    use crate::cfg::Dir;
+    use crate::cfg::{Dir, FsyncMode};
 
     struct CoyoteStoreBuilder;
 
@@ -234,7 +235,13 @@ mod tests {
             let workdir = tempfile::tempdir()?;
             let log_path = workdir.path().to_path_buf().join("logs");
             let log_path = Dir::new(log_path)?;
-            let logs = CoyoteLogs::new(log_path, 1, Duration::from_secs(10), false)?;
+            let logs = CoyoteLogs::new(
+                log_path,
+                1,
+                Duration::from_secs(10),
+                true,
+                FsyncMode::default(),
+            )?;
 
             let data_path = workdir.path().join("data");
             let e_data_path = workdir.path().join("edata");
