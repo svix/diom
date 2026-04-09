@@ -1,5 +1,5 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
-use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
+use crate::{IdempotencyNamespace, IdempotencyStartResult, storage::IdempotencyState};
 use coyote_core::types::DurationMs;
 use coyote_error::Result;
 use coyote_id::NamespaceId;

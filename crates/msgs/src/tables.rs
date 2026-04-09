@@ -2,7 +2,7 @@ use coyote_core::types::ByteString;
 use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
-use coyote_error::{Result, ResultExt as _};
+use coyote_error::Result;
 use fjall_utils::{TableKey, TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -237,7 +237,7 @@ impl QueueLeaseRow {
                 continue;
             }
 
-            let row: Self = rmp_serde::from_slice(&val).or_internal_error()?;
+            let row = Self::from_fjall_value(val)?;
             results.push((MsgId::new(partition, offset), row));
         }
 
@@ -328,7 +328,7 @@ impl MsgRow {
         let end = Self::key_for(topic_id, partition, offset + batch_size as u64).into_fjall_key();
         for entry in keyspace.range(start..end) {
             let val = entry.value()?;
-            let msg = rmp_serde::from_slice(&val).or_internal_error()?;
+            let msg = Self::from_fjall_value(val)?;
             results.push(msg);
         }
 

@@ -88,7 +88,6 @@ pub struct RequestWithContext {
         with = "jiff::fmt::serde::timestamp::millisecond::required"
     )]
     pub timestamp: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<OperationRequestMetadata>,
 }
 

@@ -17,7 +17,8 @@ impl SchemaManifest {
         for row in keyspace.iter() {
             let (key, value) = row.into_inner()?;
             let keyspace_name = std::str::from_utf8(&key)?.to_owned();
-            let value = rmp_serde::from_slice(&value)?;
+            let value = postcard::from_bytes::<crate::V0Wrapper<_>>(&value)
+                .map(|crate::V0Wrapper::V0(inner)| inner)?;
             tracing::debug!(?keyspace_name, "loaded schema for keyspace from db");
             keyspaces.insert(keyspace_name, value);
         }
@@ -148,7 +149,8 @@ impl SerializableKeyspaceCreateOptions {
         keyspace_name: &str,
     ) -> anyhow::Result<fjall::Keyspace> {
         let schema = database.keyspace("_schema", fjall::KeyspaceCreateOptions::default)?;
-        let serialized = rmp_serde::to_vec_named(&self).context("serializing schema")?;
+        let serialized =
+            postcard::to_allocvec(&crate::V0Wrapper::V0(&self)).context("serializing schema")?;
         schema.insert(keyspace_name, serialized)?;
         database
             .keyspace(keyspace_name, || self.into())
