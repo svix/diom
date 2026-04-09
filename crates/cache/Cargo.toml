@@ -17,7 +17,6 @@ jiff.workspace = true
 schemars.workspace = true
 serde.workspace = true
 tokio.workspace = true
-tracing.workspace = true
 validator.workspace = true
 
 [lints]

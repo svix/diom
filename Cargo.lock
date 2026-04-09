@@ -1205,7 +1205,6 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "tokio",
- "tracing",
  "validator",
 ]
 
@@ -1315,7 +1314,6 @@ dependencies = [
  "tempfile",
  "test-utils",
  "tokio",
- "tracing",
 ]
 
 [[package]]
