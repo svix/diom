@@ -3,6 +3,7 @@ use std::time::{Duration, Instant};
 use diom_core::{
     instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard},
     task::spawn_blocking_in_current_span,
+    types::ByteString,
 };
 use diom_error::{Error, Result};
 use diom_id::NamespaceId;
@@ -30,7 +31,7 @@ pub enum OperationBehavior {
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct KvModel {
     pub expiry: Option<Timestamp>,
-    pub value: Vec<u8>,
+    pub value: ByteString,
     /// Opaque version token for optimistic concurrency control.
     pub version: u64,
 }
@@ -39,7 +40,7 @@ pub struct KvModel {
 /// version for OCC — `None` skips the check.
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct KvModelIn {
-    pub value: Vec<u8>,
+    pub value: ByteString,
     pub expiry: Option<Timestamp>,
     pub version: Option<u64>,
 }
@@ -429,7 +430,7 @@ mod tests {
                 ns(),
                 key,
                 KvModelIn {
-                    value: b"hello world".to_vec(),
+                    value: b"hello world".into(),
                     expiry: None,
                     version: None,
                 },
@@ -464,7 +465,7 @@ mod tests {
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"key1 updated".to_vec(),
+                    value: b"key1 updated".into(),
                     expiry: None,
                     version: None,
                 },
@@ -481,7 +482,7 @@ mod tests {
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"key1 inserted".to_vec(),
+                    value: b"key1 inserted".into(),
                     expiry: None,
                     version: None,
                 },
@@ -504,7 +505,7 @@ mod tests {
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"another value".to_vec(),
+                    value: b"another value".into(),
                     expiry: None,
                     version: None,
                 },
@@ -528,7 +529,7 @@ mod tests {
                 ns(),
                 "key1",
                 KvModelIn {
-                    value: b"key1 upserted".to_vec(),
+                    value: b"key1 upserted".into(),
                     expiry: None,
                     version: None,
                 },
@@ -558,7 +559,7 @@ mod tests {
                 ns(),
                 key,
                 KvModelIn {
-                    value: b"first value".to_vec(),
+                    value: b"first value".into(),
                     expiry: None,
                     version: None,
                 },
@@ -573,7 +574,7 @@ mod tests {
                 ns(),
                 key,
                 KvModelIn {
-                    value: b"second value".to_vec(),
+                    value: b"second value".into(),
                     expiry: None,
                     version: None,
                 },
@@ -605,7 +606,7 @@ mod tests {
                 ns(),
                 "expired:key",
                 KvModelIn {
-                    value: b"expired data".to_vec(),
+                    value: b"expired data".into(),
                     expiry: Some(now.checked_sub(1.hour()).unwrap()),
                     version: None,
                 },
@@ -639,14 +640,14 @@ mod tests {
             ),
         ];
 
-        for (key, expiry, value) in &expired_models {
+        for (key, expiry, value) in expired_models {
             controller
                 .set(
                     ns(),
                     key.to_string(),
                     KvModelIn {
-                        value: value.to_vec(),
-                        expiry: Some(*expiry),
+                        value: value.into(),
+                        expiry: Some(expiry),
                         version: None,
                     },
                     OperationBehavior::Upsert,
@@ -663,7 +664,7 @@ mod tests {
                 ns(),
                 valid_key,
                 KvModelIn {
-                    value: b"valid data".to_vec(),
+                    value: b"valid data".into(),
                     expiry: Some(now.checked_add(1.hour()).unwrap()),
                     version: None,
                 },
@@ -680,7 +681,7 @@ mod tests {
                 ns(),
                 permanent_key,
                 KvModelIn {
-                    value: b"permanent data".to_vec(),
+                    value: b"permanent data".into(),
                     expiry: None,
                     version: None,
                 },
@@ -759,7 +760,7 @@ mod tests {
                 ns,
                 key,
                 KvModelIn {
-                    value: b"first value".to_vec(),
+                    value: b"first value".into(),
                     expiry: Some(expiry),
                     version: None,
                 },
@@ -789,7 +790,7 @@ mod tests {
                 ns,
                 key,
                 KvModelIn {
-                    value: b"first value".to_vec(),
+                    value: b"first value".into(),
                     expiry: Some(later_expiry),
                     version: None,
                 },

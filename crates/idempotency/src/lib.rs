@@ -13,7 +13,10 @@ pub mod operations;
 
 use std::time::Duration;
 
-use diom_core::{Monotime, types::Metadata};
+use diom_core::{
+    Monotime,
+    types::{ByteString, Metadata},
+};
 use diom_error::Result;
 use diom_kv::kvcontroller::KvController;
 use diom_namespace::{Namespace, entities::IdempotencyConfig};
@@ -32,7 +35,7 @@ pub(crate) enum IdempotencyState {
     InProgress,
     /// Request completed successfully with a response
     Completed {
-        response: Vec<u8>,
+        response: ByteString,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         context: Option<Metadata>,
     },
@@ -44,20 +47,23 @@ pub enum IdempotencyStartResult {
     Started,
     Locked,
     Completed {
-        response: Vec<u8>,
+        response: ByteString,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         context: Option<Metadata>,
     },
 }
 
-impl From<IdempotencyState> for Vec<u8> {
+impl From<IdempotencyState> for ByteString {
     fn from(state: IdempotencyState) -> Self {
-        rmp_serde::to_vec_named(&state).expect("Failed to serialize IdempotencyState")
+        // FIXME(jplatte): Could probably serialize in place
+        rmp_serde::to_vec_named(&state)
+            .expect("Failed to serialize IdempotencyState")
+            .into()
     }
 }
 
-impl From<Vec<u8>> for IdempotencyState {
-    fn from(value: Vec<u8>) -> Self {
+impl From<ByteString> for IdempotencyState {
+    fn from(value: ByteString) -> Self {
         rmp_serde::from_slice(&value).expect("Failed to deserialize IdempotencyState")
     }
 }

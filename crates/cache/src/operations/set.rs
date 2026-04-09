@@ -1,6 +1,6 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
 use crate::CacheNamespace;
-use diom_core::types::DurationMs;
+use diom_core::types::{ByteString, DurationMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
@@ -13,7 +13,7 @@ pub struct SetOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
     ttl: Option<DurationMs>,
-    value: Vec<u8>,
+    value: ByteString,
 }
 
 impl SetOperation {
@@ -21,7 +21,7 @@ impl SetOperation {
         namespace: CacheNamespace,
         key: String,
         ttl: Option<DurationMs>,
-        value: Vec<u8>,
+        value: ByteString,
     ) -> Self {
         Self {
             namespace_id: namespace.id,
