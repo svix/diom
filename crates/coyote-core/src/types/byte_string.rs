@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq)]
-pub struct ByteString(Arc<[u8]>);
+pub struct ByteString(Arc<Vec<u8>>);
 
 impl fmt::Debug for ByteString {
     #[inline]
@@ -25,7 +25,7 @@ impl Deref for ByteString {
 impl From<&[u8]> for ByteString {
     #[inline]
     fn from(value: &[u8]) -> Self {
-        Self(value.into())
+        Self(value.to_owned().into())
     }
 }
 
