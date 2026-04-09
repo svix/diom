@@ -26,7 +26,8 @@ impl CompactionFilter for IdempotencyExpiryFilter {
 
         let value = item.value()?;
         let Ok(row) = IdempotencyRow::from_fjall_value(value) else {
-            return Ok(Verdict::Keep);
+            tracing::error!("failed to deserialize idempotency row during compaction");
+            return Ok(Verdict::Remove);
         };
 
         if row.expiry < self.now {
