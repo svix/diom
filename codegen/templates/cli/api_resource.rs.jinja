@@ -8,6 +8,9 @@
 use diom::DiomClient;
 use clap::{Args, Subcommand};
 
+#[allow(unused)]
+use crate::prelude::*;
+
 {% for _, sub in resource.subresources | items -%}
 use super::{{ sub.name | to_upper_camel_case }}Args;
 {% endfor %}
@@ -65,7 +68,12 @@ pub enum {{ resource_type_name }}Commands {
                     {% if field.description is defined -%}
                         {{ field.description | to_doc_comment(style="rust") }}
                     {% endif -%}
-                    {{ field.name | to_snake_case }}: {{ field.type.to_rust() }},
+                    {% if field.type.is_bytes() -%}
+                        {% set field_type = "ByteString" -%}
+                    {% else -%}
+                        {% set field_type = field.type.to_rust() -%}
+                    {% endif -%}
+                    {{ field.name | to_snake_case }}: {{ field_type }},
                 {% endfor -%}
 
                 {# body parameter struct -#}
@@ -121,7 +129,11 @@ impl {{ resource_type_name }}Commands {
                                     | selectattr("positional", "false")
                                     | length == 0 %}
                                 {% for field in body_schema.fields | selectattr("positional") -%}
-                                    {{ field.name | to_snake_case }},
+                                    {% if field.type.is_bytes() -%}
+                                        {{ field.name | to_snake_case }}.into(),
+                                    {% else -%}
+                                        {{ field.name | to_snake_case }},
+                                    {% endif -%}
                                 {% endfor -%}
 
                                 {# body parameter struct -#}

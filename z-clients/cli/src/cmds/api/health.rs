@@ -2,6 +2,9 @@
 use clap::{Args, Subcommand};
 use diom::DiomClient;
 
+#[allow(unused)]
+use crate::prelude::*;
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct HealthArgs {

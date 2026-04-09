@@ -22,6 +22,7 @@ use self::{
 mod cmds;
 mod config;
 mod json;
+mod prelude;
 mod utils;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
