@@ -18,11 +18,13 @@ jobs:
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build server binary
-        run: cargo build --release --package diom-server --bin diom-server
+        run: |
+          cargo build --package diom-server --bin diom-server
+          strip target/debug/diom-server
       - uses: actions/upload-artifact@v7
         with:
           name: diom-server-binary
-          path: target/release/diom-server
+          path: target/debug/diom-server
           retention-days: 1
 
   test-rust:
