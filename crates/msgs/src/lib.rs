@@ -6,14 +6,12 @@ use fjall::KeyspaceCreateOptions;
 use jiff::Timestamp;
 
 use entities::{ConsumerGroup, Partition, TopicName};
-use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow, WriteBatchExt};
+use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
 use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
-use crate::{
-    metrics::{record_end_offsets, record_topic_lag_metrics},
-    tables::IdempotencyRow,
-};
+use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
 
+pub mod compaction;
 pub mod entities;
 pub mod metrics;
 pub mod operations;
@@ -161,38 +159,6 @@ pub fn estimate_available_stream_messages(
         count: total,
         available_partitions,
     })
-}
-
-const EXPIRATION_BATCH_SIZE: usize = 1000;
-
-// FIXME: Not currently used since it's not efficient. To be called from the worker loop.
-#[tracing::instrument(skip_all, fields(cleared))]
-pub fn clear_expired_in_background(state: &State, now: Timestamp) -> Result<()> {
-    let mut cleared = 0;
-    let mut iterated_keys = 0;
-
-    tracing::trace!("msgs: clearing expired idempotency keys");
-
-    let mut batch = state.db.batch();
-
-    // FIXME: this is inefficient and doesn't expire keys across different namespaces fairly.
-    // We need to implement proper random sampling of keys to expire, since we don't have a secondary index for expirations.
-    for (key, row) in IdempotencyRow::iter(&state.metadata_tables) {
-        iterated_keys += 1;
-        if iterated_keys >= EXPIRATION_BATCH_SIZE {
-            tracing::trace!("reached batch size limit, stopping iteration");
-            break;
-        }
-
-        if row.expiry < now {
-            batch.remove_row(&state.metadata_tables, key)?;
-            cleared += 1;
-        }
-    }
-
-    tracing::trace!("cleared {} expired idempotency keys", cleared);
-
-    Ok(())
 }
 
 #[derive(Clone)]
