@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeMap,
+    collections::VecDeque,
     fmt::Debug,
     ops::{Bound, RangeBounds},
     sync::Arc,
@@ -37,51 +37,62 @@ type IoFlushedCallback = IOFlushed<TypeConfig>;
 
 #[derive(Debug)]
 struct LogCacheInner {
-    inner: BTreeMap<u64, LogEntry>,
+    inner: VecDeque<LogEntry>,
     capacity: usize,
+    // log_id.index of inner[0], if the deque is non-empty
+    base_index: Option<u64>,
 }
 
 impl LogCacheInner {
     fn new(capacity: usize) -> Self {
         Self {
-            inner: BTreeMap::new(),
+            inner: VecDeque::with_capacity(capacity),
             capacity,
+            base_index: None,
         }
     }
 
     fn push(&mut self, entry: LogEntry) {
-        while self.inner.len() >= self.capacity {
-            self.inner.pop_first();
+        if self.inner.len() >= self.capacity {
+            self.inner.pop_front();
+            self.base_index = self.inner.front().map(|e| e.log_id.index);
         }
-        self.inner.insert(entry.log_id.index, entry);
+        if self.base_index.is_none() {
+            self.base_index = Some(entry.log_id.index);
+        }
+        self.inner.push_back(entry);
     }
 
     fn purge(&mut self, log_index: u64) {
-        // https://github.com/rust-lang/rust/issues/81074
-        let keys = self
-            .inner
-            .range(..=log_index)
-            .map(|(k, _v)| *k)
-            .collect::<Vec<_>>();
-        for key in keys {
-            self.inner.remove(&key);
+        while let Some(front) = self.inner.front() {
+            if front.log_id.index <= log_index {
+                self.inner.pop_front();
+            } else {
+                break;
+            }
         }
+        self.base_index = self.inner.front().map(|e| e.log_id.index);
     }
 
     fn truncate(&mut self, log_index: u64) {
-        // https://github.com/rust-lang/rust/issues/81074
-        let keys = self
-            .inner
-            .range(log_index..)
-            .map(|(k, _v)| *k)
-            .collect::<Vec<_>>();
-        for key in keys {
-            self.inner.remove(&key);
+        while let Some(back) = self.inner.back() {
+            if back.log_id.index >= log_index {
+                self.inner.pop_back();
+            } else {
+                break;
+            }
+        }
+        if self.inner.is_empty() {
+            self.base_index = None;
         }
     }
 
     fn get(&self, log_index: &u64) -> Option<&LogEntry> {
-        self.inner.get(log_index)
+        let base = self.base_index?;
+        let offset = log_index.checked_sub(base)? as usize;
+        self.inner
+            .get(offset)
+            .filter(|e| e.log_id.index == *log_index)
     }
 }
 
