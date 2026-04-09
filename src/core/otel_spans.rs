@@ -158,9 +158,9 @@ impl<B> OnResponse<B> for AxumOtelOnResponse {
         span.record("otel.status_code", "OK");
 
         tracing::debug!(
-            "finished processing request latency={} ms status={}",
-            latency.as_millis(),
-            response.status().as_u16(),
+            latency_micros = latency.as_micros(),
+            status = response.status().as_u16(),
+            "finished processing request"
         );
     }
 }
