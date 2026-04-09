@@ -321,7 +321,7 @@ mod tests {
 
         let out = cursor.into_inner();
 
-        assert_eq!(&out[..8], b"DIOM01");
+        assert_eq!(&out[..6], b"DIOM01");
 
         let mut db2_path = workdir.path().to_path_buf();
         db2_path.push("db_loaded/");

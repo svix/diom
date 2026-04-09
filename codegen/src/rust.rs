@@ -28,12 +28,7 @@ pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {
 
     exec(
         "cargo",
-        [
-            "+nightly",
-            "fmt",
-            "--package=diom",
-            "--package=diom-cli",
-        ],
+        ["+nightly", "fmt", "--package=diom", "--package=diom-cli"],
     )
     .await?;
 

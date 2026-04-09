@@ -7,6 +7,6 @@ import (
 )
 
 type AdminAuthTokenExpireIn struct {
-	Id     string                   `msgpack:"id"`
+	Id     string                 `msgpack:"id"`
 	Expiry *diom_types.DurationMs `msgpack:"expiry_ms,omitempty"` // Milliseconds from now until the token expires. `None` means expire immediately.
 }

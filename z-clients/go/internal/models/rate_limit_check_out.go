@@ -7,7 +7,7 @@ import (
 )
 
 type RateLimitCheckOut struct {
-	Allowed    bool                     `msgpack:"allowed"`                  // Whether the request is allowed
-	Remaining  uint64                   `msgpack:"remaining"`                // Number of tokens remaining
+	Allowed    bool                   `msgpack:"allowed"`                  // Whether the request is allowed
+	Remaining  uint64                 `msgpack:"remaining"`                // Number of tokens remaining
 	RetryAfter *diom_types.DurationMs `msgpack:"retry_after_ms,omitempty"` // Milliseconds until enough tokens are available (only present when allowed is false)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type RateLimitConfig struct {
-	Capacity       uint64                   `msgpack:"capacity"`                     // Maximum capacity of the bucket
-	RefillAmount   uint64                   `msgpack:"refill_amount"`                // Number of tokens to add per refill interval
+	Capacity       uint64                 `msgpack:"capacity"`                     // Maximum capacity of the bucket
+	RefillAmount   uint64                 `msgpack:"refill_amount"`                // Number of tokens to add per refill interval
 	RefillInterval *diom_types.DurationMs `msgpack:"refill_interval_ms,omitempty"` // Interval in milliseconds between refills (minimum 1 millisecond)
 }

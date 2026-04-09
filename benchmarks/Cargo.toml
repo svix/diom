@@ -8,9 +8,9 @@ rust-version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+criterion.workspace = true
 diom.workspace = true
 diom-backend.workspace = true
-criterion.workspace = true
 openraft.workspace = true
 rand.workspace = true
 reqwest.workspace = true

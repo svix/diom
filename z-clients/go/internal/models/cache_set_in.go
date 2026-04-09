@@ -7,13 +7,13 @@ import (
 )
 
 type CacheSetIn struct {
-	Namespace *string                 `msgpack:"namespace,omitempty"`
+	Namespace *string               `msgpack:"namespace,omitempty"`
 	Ttl       diom_types.DurationMs `msgpack:"ttl_ms"` // Time to live in milliseconds
 }
 
 type CacheSetIn_ struct {
-	Namespace *string                 `msgpack:"namespace,omitempty"`
-	Key       string                  `msgpack:"key"`
-	Value     []uint8                 `msgpack:"value"`
+	Namespace *string               `msgpack:"namespace,omitempty"`
+	Key       string                `msgpack:"key"`
+	Value     []uint8               `msgpack:"value"`
 	Ttl       diom_types.DurationMs `msgpack:"ttl_ms"` // Time to live in milliseconds
 }

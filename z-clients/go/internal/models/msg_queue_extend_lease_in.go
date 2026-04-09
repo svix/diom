@@ -7,15 +7,15 @@ import (
 )
 
 type MsgQueueExtendLeaseIn struct {
-	Namespace     *string                  `msgpack:"namespace,omitempty"`
-	MsgIds        []string                 `msgpack:"msg_ids"`
+	Namespace     *string                `msgpack:"namespace,omitempty"`
+	MsgIds        []string               `msgpack:"msg_ids"`
 	LeaseDuration *diom_types.DurationMs `msgpack:"lease_duration_ms,omitempty"`
 }
 
 type MsgQueueExtendLeaseIn_ struct {
-	Namespace     *string                  `msgpack:"namespace,omitempty"`
-	Topic         string                   `msgpack:"topic"`
-	ConsumerGroup string                   `msgpack:"consumer_group"`
-	MsgIds        []string                 `msgpack:"msg_ids"`
+	Namespace     *string                `msgpack:"namespace,omitempty"`
+	Topic         string                 `msgpack:"topic"`
+	ConsumerGroup string                 `msgpack:"consumer_group"`
+	MsgIds        []string               `msgpack:"msg_ids"`
 	LeaseDuration *diom_types.DurationMs `msgpack:"lease_duration_ms,omitempty"`
 }

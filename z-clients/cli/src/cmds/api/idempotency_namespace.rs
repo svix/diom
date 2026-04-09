@@ -39,8 +39,7 @@ pub enum IdempotencyNamespaceCommands {
   \"updated\": \"...\"
 }")]
     Get {
-        idempotency_get_namespace_in:
-            crate::json::JsonOf<diom::models::IdempotencyGetNamespaceIn>,
+        idempotency_get_namespace_in: crate::json::JsonOf<diom::models::IdempotencyGetNamespaceIn>,
     },
 }
 

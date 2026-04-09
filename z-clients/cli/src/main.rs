@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use clap_complete::Shell;
 use concolor_clap::Color;
-use diom::{DiomClient, DiomOptions, DEFAULT_URL};
+use diom::{DEFAULT_URL, DiomClient, DiomOptions};
 use mimalloc::MiMalloc;
 
 #[global_allocator]

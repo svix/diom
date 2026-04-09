@@ -7,8 +7,8 @@ import (
 )
 
 type AdminAuthTokenUpdateIn struct {
-	Id      string                   `msgpack:"id"`
-	Name    *string                  `msgpack:"name,omitempty"`
+	Id      string                 `msgpack:"id"`
+	Name    *string                `msgpack:"name,omitempty"`
 	Expiry  *diom_types.DurationMs `msgpack:"expiry_ms,omitempty"`
-	Enabled *bool                    `msgpack:"enabled,omitempty"`
+	Enabled *bool                  `msgpack:"enabled,omitempty"`
 }
