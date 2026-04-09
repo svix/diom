@@ -87,7 +87,7 @@ async fn scheduled_msg_delivered_after_delay() -> TestResult {
         1,
         "scheduled message should be delivered after delay"
     );
-    assert_eq!(msgs[0]["value"], json!("delayed".as_bytes()));
+    assert_eq!(msgs[0]["value"], "delayed");
 
     Ok(())
 }
@@ -135,8 +135,8 @@ async fn immediate_msg_delivered_while_scheduled_msg_held() -> TestResult {
 
     let msgs = r["msgs"].assert_array();
     assert_eq!(msgs.len(), 2, "only immediates message should be delivered");
-    assert_eq!(msgs[0]["value"], json!("immediate1".as_bytes()));
-    assert_eq!(msgs[1]["value"], json!("immediate2".as_bytes()));
+    assert_eq!(msgs[0]["value"], "immediate1");
+    assert_eq!(msgs[1]["value"], "immediate2");
 
     // Fast-forward and ack the immediate message to advance the cursor past it
     let msg_id = msgs[0]["msg_id"].assert_str();
@@ -180,7 +180,7 @@ async fn immediate_msg_delivered_while_scheduled_msg_held() -> TestResult {
         1,
         "delayed message should be delivered after delay"
     );
-    assert_eq!(msgs2[0]["value"], json!("delayed".as_bytes()));
+    assert_eq!(msgs2[0]["value"], "delayed");
 
     Ok(())
 }

@@ -206,7 +206,8 @@ where
                 (&mime::APPLICATION_MSGPACK, serialize_result)
             }
             SupportedContentType::Json => {
-                let serialize_result = serde_json::to_writer(&mut buf, &self.0).map_err(box_error);
+                let serialize_result =
+                    diom_core::json::to_writer(&mut buf, &self.0).map_err(box_error);
 
                 (&mime::APPLICATION_JSON, serialize_result)
             }

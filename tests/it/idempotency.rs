@@ -96,7 +96,7 @@ async fn test_idempotency_start_and_complete() -> TestResult {
 
     let response = start(&client, "k3", 60_000).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
+    assert_eq!(response["data"]["response"], "v2");
 
     start(&client, "k4", 60_000).await?;
     abandon(&client, "k4").await?;
@@ -106,18 +106,18 @@ async fn test_idempotency_start_and_complete() -> TestResult {
     start(&client, "k5", 60_000).await?;
     complete(&client, "k5", "v2", 60_000).await?;
     let response = start(&client, "k5", 60_000).await?;
-    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
+    assert_eq!(response["data"]["response"], "v2");
 
     complete(&client, "k5", "v3", 60_000).await?;
     let response = start(&client, "k5", 60_000).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["data"]["response"], json!("v3".as_bytes()));
+    assert_eq!(response["data"]["response"], "v3");
 
     start(&client, "k6", 60_000).await?;
     complete(&client, "k6", "v4", 60_000).await?;
 
     let response = start(&client, "k6", 60_000).await?;
-    assert_eq!(response["data"]["response"], json!("v4".as_bytes()));
+    assert_eq!(response["data"]["response"], "v4");
 
     abandon(&client, "k6").await?;
 
@@ -195,7 +195,7 @@ async fn test_idempotency_expiration() -> TestResult {
     time.fast_forward(Duration::from_secs(1));
     let response = start(&client, "k5", 1_000).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["data"]["response"], json!("v1".as_bytes()));
+    assert_eq!(response["data"]["response"], "v1");
 
     Ok(())
 }
@@ -397,7 +397,7 @@ async fn test_idempotency_context() -> TestResult {
     .await?;
     let response = start(&client, "k1", 60_000).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["data"]["response"], json!("v1".as_bytes()));
+    assert_eq!(response["data"]["response"], "v1");
     assert_eq!(response["data"]["context"]["request_id"], "abc123");
     assert_eq!(response["data"]["context"]["user"], "alice");
 
@@ -410,20 +410,20 @@ async fn test_idempotency_context() -> TestResult {
 
     // context from latest complete wins when completing multiple times
     start(&client, "k3", 60_000).await?;
-    complete_with_context(&client, "k3", "v1", 60_000, json!({"version": "1"})).await?;
-    complete_with_context(&client, "k3", "v2", 60_000, json!({"version": "2"})).await?;
+    complete_with_context(&client, "k3", "v1", 60_000, json!({ "version": "1" })).await?;
+    complete_with_context(&client, "k3", "v2", 60_000, json!({ "version": "2" })).await?;
     let response = start(&client, "k3", 60_000).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
+    assert_eq!(response["data"]["response"], "v2");
     assert_eq!(response["data"]["context"]["version"], "2");
 
     // context can be cleared by completing without it
     start(&client, "k4", 60_000).await?;
-    complete_with_context(&client, "k4", "v1", 60_000, json!({"key": "value"})).await?;
+    complete_with_context(&client, "k4", "v1", 60_000, json!({ "key": "value" })).await?;
     complete(&client, "k4", "v2", 60_000).await?;
     let response = start(&client, "k4", 60_000).await?;
     assert_eq!(response["status"], "completed");
-    assert_eq!(response["data"]["response"], json!("v2".as_bytes()));
+    assert_eq!(response["data"]["response"], "v2");
     assert!(response["data"]["context"].is_null());
 
     Ok(())

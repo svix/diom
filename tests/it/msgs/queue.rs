@@ -100,7 +100,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
 
     let msgs1 = r1["msgs"].assert_array();
     assert_eq!(msgs1.len(), 1);
-    assert_eq!(msgs1[0]["value"], json!("a".as_bytes()));
+    assert_eq!(msgs1[0]["value"], "a");
 
     // Second receive gets message "b" (message "a" is leased, skipped)
     let r2 = client
@@ -117,7 +117,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
 
     let msgs2 = r2["msgs"].assert_array();
     assert_eq!(msgs2.len(), 1);
-    assert_eq!(msgs2[0]["value"], json!("b".as_bytes()));
+    assert_eq!(msgs2[0]["value"], "b");
 
     // Third receive — all messages leased, should be empty
     let r3 = client
@@ -450,7 +450,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     // The re-delivered message should be the middle one (value "b")
     let middle_id = msgs[1]["msg_id"].assert_str();
     assert_eq!(msgs2[0]["msg_id"].assert_str(), middle_id);
-    assert_eq!(msgs2[0]["value"], json!("b".as_bytes()));
+    assert_eq!(msgs2[0]["value"], "b");
 
     Ok(())
 }
@@ -1190,7 +1190,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
 
     let dlq_msgs = r_dlq["msgs"].assert_array();
     assert_eq!(dlq_msgs.len(), 1, "message should appear in DLQ topic");
-    assert_eq!(dlq_msgs[0]["value"], json!("a".as_bytes()));
+    assert_eq!(dlq_msgs[0]["value"], "a");
 
     Ok(())
 }

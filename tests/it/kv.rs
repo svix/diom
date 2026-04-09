@@ -90,7 +90,7 @@ async fn test_kv_set_and_get() -> TestResult {
 
     let response = kv_get(&client, "kv-key-1").await?;
 
-    assert_eq!(response["value"], json!("kv-value-456".as_bytes()));
+    assert_eq!(response["value"], "kv-value-456");
     assert!(response["expiry"].is_null());
 
     let expires_in = 1000;
@@ -147,7 +147,7 @@ async fn test_kv_set_with_insert_and_delete() -> TestResult {
     kv_set_unsuccessful(&client, "kv-key-2", None, "value-ignored-2", "insert").await?;
 
     let response = kv_get(&client, "kv-key-2").await?;
-    assert_eq!(response["value"], json!("permanent-value".as_bytes()));
+    assert_eq!(response["value"], "permanent-value");
     assert_eq!(response["expiry"], json!(null));
 
     let delete_response = client
@@ -207,7 +207,7 @@ async fn test_kv_update_expiration() -> TestResult {
     time.fast_forward(Duration::from_millis(1500));
 
     let response = kv_get(&client, "kv4").await?;
-    assert_eq!(response["value"], json!("v4".as_bytes()));
+    assert_eq!(response["value"], "v4");
     assert_eq!(response["expiry"], expires_at);
 
     kv_set(&client, "kv5", Some(3000), "v5", "upsert").await?;
@@ -224,7 +224,7 @@ async fn test_kv_update_expiration() -> TestResult {
     time.fast_forward(Duration::from_millis(500));
 
     let response = kv_get(&client, "kv6").await?;
-    assert_eq!(response["value"], json!("v6".as_bytes()));
+    assert_eq!(response["value"], "v6");
 
     time.fast_forward(Duration::from_millis(501));
 
@@ -388,7 +388,7 @@ async fn test_kv_delete_with_version() -> TestResult {
 
     // Key should still be intact
     let get_resp = kv_get(&client, "occ-del-key").await?;
-    assert_eq!(get_resp["value"], json!("v1".as_bytes()));
+    assert_eq!(get_resp["value"], "v1");
 
     // Delete with the correct version → success
     let del_resp = client
@@ -446,7 +446,7 @@ async fn test_kv_delete_with_stale_version() -> TestResult {
 
     // Key should still hold the updated value
     let get_resp = kv_get(&client, "occ-del-stale").await?;
-    assert_eq!(get_resp["value"], json!("v2".as_bytes()));
+    assert_eq!(get_resp["value"], "v2");
 
     Ok(())
 }

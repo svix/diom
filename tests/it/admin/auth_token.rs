@@ -323,7 +323,7 @@ async fn test_admin_auth_token_use_for_kv() -> TestResult {
         .post("v1.kv.set")
         .json(json!({
             "key": "hello",
-            "value": "world".as_bytes(),
+            "value": "world",
             "behavior": "upsert"
         }))
         .await?
@@ -338,7 +338,7 @@ async fn test_admin_auth_token_use_for_kv() -> TestResult {
         .ensure(StatusCode::OK)?
         .json();
 
-    assert_eq!(resp["value"], json!("world".as_bytes()));
+    assert_eq!(resp["value"], "world");
 
     Ok(())
 }

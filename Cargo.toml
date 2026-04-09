@@ -226,6 +226,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["a
 tracing-test = "0.2"
 url = { version = "2.2.2", features = ["serde"] }
 uuid = { version = "1.19.0", features = ["v7", "serde"] }
+v_jsonescape = { version = "0.7.8", features = ["buf-min", "bytes-buf"] }
 validator = { version = "0.20.0", features = ["derive"] }
 which = "8"
 yansi = "1.0.1"

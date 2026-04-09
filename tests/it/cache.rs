@@ -42,7 +42,7 @@ async fn test_cache_set_and_get() -> TestResult {
 
     let response = cache_get(&client, "test-key-1").await?;
 
-    assert_eq!(response["value"], json!("test-value-123".as_bytes()));
+    assert_eq!(response["value"], "test-value-123");
     assert!(response["expiry"].is_string());
 
     // set should fail if namespace doesn't exist:
@@ -83,7 +83,7 @@ async fn test_cache_set_get_and_delete() -> TestResult {
     cache_set(&client, "test-key-2", 30000, "another-value").await?;
 
     let response = cache_get(&client, "test-key-2").await?;
-    assert_eq!(response["value"], json!("another-value".as_bytes()));
+    assert_eq!(response["value"], "another-value");
 
     let delete_response = client
         .post("v1.cache.delete")

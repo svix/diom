@@ -45,7 +45,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    assert_eq!(response["value"], json!(b"test-value-123"));
+    assert_eq!(response["value"], "test-value-123");
     assert!(response["expiry"].is_string());
 
     Ok(())
