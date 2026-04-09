@@ -93,16 +93,12 @@ pub struct RequestWithContext {
 
 impl fmt::Display for RequestWithContext {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.inner {
-            Request::ClusterInternal(_) => write!(f, "cluster_internal"),
-            Request::Kv(_) => write!(f, "kv"),
-            Request::RateLimit(_) => write!(f, "ratelimiter"),
-            Request::Idempotency(_) => write!(f, "idempotency"),
-            Request::Cache(_) => write!(f, "cache"),
-            Request::Msgs(_) => write!(f, "msgs"),
-            Request::AuthToken(_) => write!(f, "auth_token"),
-            Request::AdminAuth(_) => write!(f, "admin_auth"),
-        }
+        write!(
+            f,
+            "Request(module={}, hashed_key={})",
+            self.module(),
+            self.hashed_key().as_deref().unwrap_or("")
+        )
     }
 }
 
