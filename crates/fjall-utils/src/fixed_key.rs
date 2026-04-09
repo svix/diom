@@ -6,7 +6,7 @@ use diom_error::{Error, Result, ResultExt};
 use serde::{Serialize, de::DeserializeOwned};
 
 /// This is a useful wrapper for key/value pairs stored in a fjall keyspace
-/// whose key and type are statically known; data is always serialized as msgpack
+/// whose key and type are statically known; data is serialized as postcard with a V0 version prefix
 pub struct FjallFixedKey<T: Serialize + DeserializeOwned + 'static> {
     key: &'static str,
     _phantom: PhantomData<T>,
@@ -23,7 +23,11 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
     pub fn get<K: ReadableKeyspace>(&self, keyspace: &K) -> Result<Option<T>> {
         keyspace
             .get(self.key)?
-            .map(|v| rmp_serde::from_slice(&v).or_internal_error())
+            .map(|v| {
+                postcard::from_bytes::<crate::V0Wrapper<T>>(&v)
+                    .map(|crate::V0Wrapper::V0(inner)| inner)
+                    .or_internal_error()
+            })
             .transpose()
             .map_err(|err| {
                 tracing::warn!(key = self.key, ?err, "error deserializing key from DB");
@@ -32,7 +36,7 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
     }
 
     pub fn store(&self, keyspace: &fjall::Keyspace, value: &T) -> Result<()> {
-        let serialized = rmp_serde::encode::to_vec_named(&value).or_internal_error()?;
+        let serialized = postcard::to_allocvec(&crate::V0Wrapper::V0(value)).or_internal_error()?;
         keyspace.insert(self.key, serialized).or_internal_error()
     }
 
@@ -46,7 +50,7 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
         keyspace: &fjall::Keyspace,
         value: &T,
     ) -> Result<()> {
-        let serialized = rmp_serde::encode::to_vec_named(&value).or_internal_error()?;
+        let serialized = postcard::to_allocvec(&crate::V0Wrapper::V0(value)).or_internal_error()?;
         tx.insert(keyspace, self.key, serialized);
         Ok(())
     }

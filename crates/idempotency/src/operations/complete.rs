@@ -1,5 +1,5 @@
 use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
-use crate::{IdempotencyNamespace, IdempotencyState};
+use crate::{IdempotencyNamespace, storage::IdempotencyState};
 use diom_core::types::{ByteString, DurationMs, Metadata};
 use diom_error::Result;
 use diom_id::NamespaceId;

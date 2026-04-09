@@ -1,5 +1,5 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
-use crate::{IdempotencyNamespace, IdempotencyStartResult, IdempotencyState};
+use crate::{IdempotencyNamespace, IdempotencyStartResult, storage::IdempotencyState};
 use diom_core::types::DurationMs;
 use diom_error::Result;
 use diom_id::NamespaceId;

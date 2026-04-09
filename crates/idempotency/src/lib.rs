@@ -10,6 +10,7 @@
 //! - The API probably needs changing.
 
 pub mod operations;
+pub(crate) mod storage;
 
 use std::time::Duration;
 
@@ -30,19 +31,6 @@ const IDEMPOTENCY_KEYSPACE: &str = "mod_idempotency";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
-pub(crate) enum IdempotencyState {
-    /// Request is in progress (locked)
-    InProgress,
-    /// Request completed successfully with a response
-    Completed {
-        response: ByteString,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        context: Option<Metadata>,
-    },
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "status", rename_all = "snake_case")]
 pub enum IdempotencyStartResult {
     Started,
     Locked,
@@ -51,21 +39,6 @@ pub enum IdempotencyStartResult {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         context: Option<Metadata>,
     },
-}
-
-impl From<IdempotencyState> for ByteString {
-    fn from(state: IdempotencyState) -> Self {
-        // FIXME(jplatte): Could probably serialize in place
-        rmp_serde::to_vec_named(&state)
-            .expect("Failed to serialize IdempotencyState")
-            .into()
-    }
-}
-
-impl From<ByteString> for IdempotencyState {
-    fn from(value: ByteString) -> Self {
-        rmp_serde::from_slice(&value).expect("Failed to deserialize IdempotencyState")
-    }
 }
 
 #[derive(Clone)]

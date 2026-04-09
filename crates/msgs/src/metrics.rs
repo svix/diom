@@ -5,7 +5,7 @@ use crate::{
     entities::{ConsumerGroup, Partition, TopicName},
     tables::{MsgRow, StreamLeaseRow, TopicRow},
 };
-use diom_error::{Result, ResultExt as _};
+use diom_error::Result;
 
 impl From<&TopicName> for opentelemetry::KeyValue {
     fn from(topic: &TopicName) -> Self {
@@ -257,7 +257,7 @@ fn compute_topic_lag(
     let mut results = Vec::new();
     for guard in metadata_tables.prefix([TopicRow::ROW_TYPE]) {
         let (_, val) = guard.into_inner()?;
-        let topic_row: TopicRow = rmp_serde::from_slice(&val).or_internal_error()?;
+        let topic_row: TopicRow = TopicRow::from_fjall_value(val)?;
 
         let prefix = StreamLeaseRow::topic_scan_prefix(topic_row.id);
 
@@ -300,7 +300,7 @@ pub(crate) fn record_end_offsets(state: &State) -> Result<()> {
 
     for guard in state.metadata_tables.prefix([TopicRow::ROW_TYPE]) {
         let (_, val) = guard.into_inner()?;
-        let topic_row: TopicRow = rmp_serde::from_slice(&val).or_internal_error()?;
+        let topic_row: TopicRow = TopicRow::from_fjall_value(val)?;
         for partition_idx in 0..topic_row.partitions {
             let Ok(partition) = Partition::new(partition_idx) else {
                 continue;

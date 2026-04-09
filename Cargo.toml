@@ -193,6 +193,7 @@ opentelemetry_sdk = { version = "0.31.0", features = ["metrics", "rt-tokio", "rt
 parking_lot = { version = "0.12", features = ["arc_lock", "send_guard"] }
 pastey = "0.2"
 pnet = "0.35"
+postcard = { version = "1", features = ["alloc"] }
 proc-macro2 = "1.0.78"
 quote = "1.0.15"
 rand = "0.9.2"
