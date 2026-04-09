@@ -5,7 +5,7 @@
 {% macro field_name(field, as_ident=true) -%}
     {%- set field_name = field.name | to_snake_case -%}
     {%- if field_name is endingwith "_ms" -%}
-        {%- if not field.type.is_u64() and not (field.type.is_duration_ms() or field.type.is_unix_timestamp_ms())%}{% do panic("_ms type should be uint64, current type is " ~ field.type) %}{% endif -%}
+        {%- if not (field.type.is_u64() or field.type.is_duration_ms() or field.type.is_unix_timestamp_ms()) %}{% do panic("_ms type should be uint64, current type is " ~ field.type) %}{% endif -%}
         {%- set field_name = field_name | strip_trailing_str("_ms") -%}
     {%- endif -%}
     {%- if as_ident -%}
