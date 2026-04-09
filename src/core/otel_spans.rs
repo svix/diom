@@ -88,12 +88,12 @@ impl<B> MakeSpan<B> for AxumOtelSpanCreator {
             .headers()
             .get("x-request-id")
             .and_then(|id| id.to_str().map(ToOwned::to_owned).ok())
-            // If `x-request-id` isn't set, check `svix-req-id`. If the `svix-req-id` isn't a
+            // If `x-request-id` isn't set, check `diom-req-id`. If the `diom-req-id` isn't a
             // valid `str`, or it isn't set, then fallback to a random [`Uuid`]
             .or_else(|| {
                 request
                     .headers()
-                    .get("svix-req-id")
+                    .get("diom-req-id")
                     .and_then(|v| v.to_str().map(ToOwned::to_owned).ok())
             })
             .unwrap_or_else(|| Uuid::new_v4().to_string());
