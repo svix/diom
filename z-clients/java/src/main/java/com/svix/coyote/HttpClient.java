@@ -133,7 +133,7 @@ public class HttpClient {
         }
 
         reqBuilder.addHeader(
-                "svix-req-id",
+                "diom-req-id",
                 String.valueOf(ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE)));
 
         Request request = reqBuilder.build();
@@ -154,7 +154,7 @@ public class HttpClient {
         }
 
         String bodyString = objectMapper.readTree(bodyBytes).toString();
-    
+
         throw new ApiException(
                 "Non 200 status code: `" + response.code() + "`", response.code(), bodyString);
     }
@@ -171,7 +171,7 @@ public class HttpClient {
 
             Request retryRequest =
                     request.newBuilder()
-                            .header("svix-retry-count", String.valueOf(retryCount + 1))
+                            .header("diom-retry-count", String.valueOf(retryCount + 1))
                             .build();
             response = client.newCall(retryRequest).execute();
             retryCount++;

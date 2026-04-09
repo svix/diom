@@ -73,7 +73,7 @@ func ExecuteRequest[ReqBody any, ResBody any](
 	}
 
 	req.Header.Set("accept", "application/msgpack")
-	req.Header.Set("svix-req-id", strconv.FormatUint(rand.Uint64(), 10))
+	req.Header.Set("diom-req-id", strconv.FormatUint(rand.Uint64(), 10))
 	for hKey, hVal := range client.DefaultHeaders {
 		req.Header.Add(hKey, hVal)
 	}
@@ -145,7 +145,7 @@ func executeRequestWithRetries(client *HttpClient, request *http.Request) (*http
 		if bodyBytes != nil {
 			request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
-		request.Header.Set("svix-retry-count", strconv.Itoa(try+1))
+		request.Header.Set("diom-retry-count", strconv.Itoa(try+1))
 		sleepTime := client.RetrySchedule[try]
 		time.Sleep(sleepTime)
 		resp, err = client.HTTPClient.Do(request)

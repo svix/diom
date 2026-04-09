@@ -59,7 +59,7 @@ class ApiBase:
 
         headers: t.Dict[str, str] = {
             **self._client.get_headers(),
-            "svix-req-id": f"{random.getrandbits(64)}",
+            "diom-req-id": f"{random.getrandbits(64)}",
             "accept": APPLICATION_MSGPACK,
         }
         if header_params is not None:
@@ -107,7 +107,7 @@ class ApiBase:
                 break
 
             await asyncio.sleep(sleep_time)
-            httpx_kwargs["headers"]["svix-retry-count"] = str(retry_count)
+            httpx_kwargs["headers"]["diom-retry-count"] = str(retry_count)
             response = await self._httpx_async_client.request(**httpx_kwargs)
 
         return _parse_response(response, response_type)
@@ -133,7 +133,7 @@ class ApiBase:
                 break
 
             time.sleep(sleep_time)
-            httpx_kwargs["headers"]["svix-retry-count"] = str(retry_count)
+            httpx_kwargs["headers"]["diom-retry-count"] = str(retry_count)
             response = self._httpx_client.request(**httpx_kwargs)
 
         return _parse_response(response, response_type)

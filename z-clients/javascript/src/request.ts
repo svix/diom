@@ -202,7 +202,7 @@ export class CoyoteRequest {
           accept: APPLICATION_MSGPACK,
           authorization: `Bearer ${ctx.token}`,
           "user-agent": USER_AGENT,
-          "svix-req-id": randomId.toString(),
+          "diom-req-id": randomId.toString(),
           ...this.headerParams,
         },
         credentials: isCredentialsSupported ? "same-origin" : undefined,
@@ -278,7 +278,7 @@ async function sendWithRetry(
   }
 
   await sleep(nextInterval);
-  init.headers["svix-retry-count"] = retryCount.toString();
+  init.headers["diom-retry-count"] = retryCount.toString();
   nextInterval = retryScheduleInMs?.[retryCount] || nextInterval * 2;
   return await sendWithRetry(
     url,
