@@ -312,6 +312,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
             snapshot_after_time: None,
             log_sync_interval_commits: 0,
             log_sync_interval_duration: DurationMs::from_secs(30),
+            log_sync_interval_auto: false,
             log_ack_immediately: true,
             shut_down_on_go_away: true,
             replication_lag_threshold: 1_000_000,

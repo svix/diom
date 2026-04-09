@@ -161,6 +161,9 @@ pub struct LogMetrics {
     read_operations: Counter<u64>,
     read_batch_size: Histogram<u64>,
 
+    sync_latency: Histogram<u64>,
+    sync_entry_count: Histogram<u64>,
+
     context: Vec<KeyValue>,
 }
 
@@ -190,6 +193,16 @@ impl LogMetrics {
                 .u64_histogram("diom.raft.log.read_batch_size")
                 .with_description("Raft log read operation batch sizes")
                 .build(),
+            sync_latency: meter
+                .u64_histogram("diom.raft.log.sync_latency")
+                .with_description("Raft log sync latency")
+                .with_unit("us")
+                .build(),
+            sync_entry_count: meter
+                .u64_histogram("diom.raft.log.sync_entry_count")
+                .with_description("Number of entries included in a log sync")
+                .with_unit("message")
+                .build(),
             context,
         }
     }
@@ -211,6 +224,12 @@ impl LogMetrics {
 
     pub fn entry_count(&self, count: u64) {
         self.entry_count.record(count, &self.context);
+    }
+
+    pub fn record_fsync(&self, duration: Duration, entries: usize) {
+        self.sync_latency
+            .record(duration.as_micros() as _, &self.context);
+        self.sync_entry_count.record(entries as _, &self.context);
     }
 }
 

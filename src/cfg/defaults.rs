@@ -91,7 +91,7 @@ pub(super) fn cluster_log_sync_interval_commits() -> usize {
 }
 
 pub(super) fn cluster_log_sync_interval_duration() -> DurationMs {
-    DurationMs::from(10)
+    DurationMs::from(2)
 }
 
 pub(super) fn cluster_send_snapshot_timeout() -> DurationMs {

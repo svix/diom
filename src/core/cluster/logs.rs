@@ -33,6 +33,7 @@ use diom_error::Result;
 type LogEntry = <TypeConfig as RaftTypeConfig>::Entry;
 type LogId = LogIdOf<TypeConfig>;
 type Vote = VoteOf<TypeConfig>;
+type IoFlushedCallback = IOFlushed<TypeConfig>;
 
 #[derive(Debug)]
 struct LogCacheInner {
@@ -253,98 +254,134 @@ impl std::error::Error for BackgroundFsyncFailedError {
     }
 }
 
-// Specialization for `flush_worker` when commits_before_fsync is 1 (which implies
-// that ack_immediately is false) which just fsyncs as fast as it can.
-async fn flush_every_worker(
-    db: Database,
-    mut channel: tokio::sync::mpsc::Receiver<IOFlushed<TypeConfig>>,
-) {
-    while let Some(callback) = channel.recv().await {
-        let db = db.clone();
-        // this shouldn't inherit our span
-        #[allow(clippy::disallowed_methods)]
-        let result = tokio::task::spawn_blocking(move || {
-            let _guard = tracing::info_span!("logs:flush_worker:every").entered();
-            tracing::trace!("fsyncing logs to disk");
-            db.persist(PersistMode::SyncAll)
-                // fjall::Error isn't Clone
-                .map_err(|err| {
-                    tracing::error!(?err, "error flushing fjall in background");
-                    BackgroundFsyncFailedError(err.to_string())
-                })
-        })
-        .await
-        .expect("failed joining blocking task");
-        callback.io_completed(result.map_err(std::io::Error::other));
+struct SimpleEstimator<const COUNT: usize> {
+    samples: [Option<Duration>; COUNT],
+    count: usize,
+}
+
+impl<const COUNT: usize> SimpleEstimator<COUNT> {
+    fn new(initial: Duration) -> Self {
+        let mut samples = [None; COUNT];
+        samples[0] = Some(initial);
+        Self { samples, count: 1 }
     }
+
+    fn push(&mut self, sample: Duration) {
+        self.samples[self.count % 5] = Some(sample);
+        self.count += 1;
+    }
+
+    fn estimate(&self) -> Duration {
+        let count = self.samples.iter().filter(|x| x.is_some()).count() as u64;
+        if count == 0 {
+            panic!("this is impossible, there's always at least one count")
+        }
+        let sum: u64 = self
+            .samples
+            .iter()
+            .filter_map(|o| o.map(|d| d.as_micros().try_into().unwrap_or(u64::MAX)))
+            .sum();
+
+        Duration::from_micros(sum / count)
+    }
+}
+
+enum FlushMessage {
+    EnableMetrics(LogMetrics),
+    Callback(IoFlushedCallback),
 }
 
 /// General background worker for flushing the fjall database
 async fn flush_worker(
     db: Database,
-    mut channel: tokio::sync::mpsc::Receiver<IOFlushed<TypeConfig>>,
+    mut channel: tokio::sync::mpsc::Receiver<FlushMessage>,
     commits_before_fsync: usize,
     duration_before_fsync: Duration,
+    autoscale_duration: bool,
     ack_immediately: bool,
     fsync_mode: FsyncMode,
 ) {
     let mut pending = Vec::new();
     let mut done = false;
     let shutting_down = crate::shutting_down_token();
+    let mut duration_estimator = SimpleEstimator::<7>::new(duration_before_fsync);
+    let mut last_estimate = duration_before_fsync;
     let mut ticker = tokio::time::interval(duration_before_fsync);
+
+    let mut metrics = None;
+
     while !done {
+        let mut synced = false;
+
         async {
-            let mut sync_now = false;
+            let mut sync_from_ticker = false;
 
             tokio::select! {
                 message = channel.recv() => {
-                    if let Some(callback) = message {
-                        if ack_immediately {
-                            let db = db.clone();
-                            let result = spawn_blocking_in_current_span(move || {
-                                let _guard = tracing::info_span!("logs:flush_worker:buffer").entered();
-                                db.persist(PersistMode::Buffer)
-                                    // fjall::Error isn't Clone
-                                    .map_err(|err| {
-                                        tracing::error!(?err, "error flushing fjall in background");
-                                        BackgroundFsyncFailedError(err.to_string())
-                                    })
-                            })
-                            .await
-                            .expect("failed joining blocking task");
-                            callback.io_completed(result.map_err(std::io::Error::other));
-                            pending.push(None);
-                        } else {
-                            pending.push(Some(callback))
-                        }
-                    } else {
-                        done = true;
+                    match message {
+                        Some(FlushMessage::EnableMetrics(new_metrics)) => {
+                            tracing::info!("enabling metrics in background flush worker");
+                            metrics = Some(new_metrics)
+                        },
+                        Some(FlushMessage::Callback(callback)) => {
+                            if ack_immediately {
+                                let db = db.clone();
+                                let result = spawn_blocking_in_current_span(move || {
+                                    let _guard = tracing::info_span!("logs:flush_worker:buffer").entered();
+                                    db.persist(PersistMode::Buffer)
+                                        // fjall::Error isn't Clone
+                                        .map_err(|err| {
+                                            tracing::error!(?err, "error flushing fjall in background");
+                                            BackgroundFsyncFailedError(err.to_string())
+                                        })
+                                })
+                                .await
+                                .expect("failed joining blocking task");
+                                callback.io_completed(result.map_err(std::io::Error::other));
+                                pending.push(None);
+                            } else {
+                                pending.push(Some(callback))
+                            }
+                        },
+                        None => { done = true }
                     }
                 },
                 _ = shutting_down.cancelled() => {
                     done = true
                 },
                 _ = ticker.tick() => {
-                    sync_now = !pending.is_empty()
+                    sync_from_ticker = true;
                 }
             }
 
-            if sync_now || (commits_before_fsync > 0 && pending.len() >= commits_before_fsync) {
+            let sync_from_count = commits_before_fsync > 0 && pending.len() >= commits_before_fsync;
+
+            if !pending.is_empty() && (sync_from_ticker || sync_from_count) {
                 let db = db.clone();
                 let num_commits = pending.len();
                 let result = spawn_blocking_in_current_span(
-                    move || -> Result<(), BackgroundFsyncFailedError> {
+                    move || -> Result<Duration, BackgroundFsyncFailedError> {
                         let _guard =
                             tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
                         tracing::trace!("flushing logs to disk");
+                        let start_persist = std::time::Instant::now();
                         db.persist(fsync_mode.into()).map_err(|err| {
                             tracing::error!(?err, "error flushing fjall");
                             BackgroundFsyncFailedError(err.to_string())
-                        })
+                        })?;
+                        let persist_time = start_persist.elapsed();
+                        Ok(persist_time)
                     },
                 )
                 .await
-                .expect("failed joining blocking task");
+                .expect("failed joining blocking task")
+                .map(|persist_time| {
+                    duration_estimator.push(persist_time);
+                    if let Some(metrics) = &metrics {
+                        metrics.record_fsync(persist_time, pending.len());
+                    }
+                    synced = true;
+                });
                 tracing::trace!(num_pending = pending.len(), "committed for some items");
                 tracing::info_span!("logs:flush_worker:drain").in_scope(|| {
                     for callback in pending.drain(..).flatten() {
@@ -354,7 +391,24 @@ async fn flush_worker(
             }
         }
         .instrument(tracing::info_span!("logs:flush_worker"))
-        .await
+        .await;
+
+        if autoscale_duration && synced {
+            let new_estimate = duration_estimator.estimate();
+            if new_estimate < Duration::from_micros(1) {
+                tracing::debug!(?new_estimate, "ignoring obviously bogus fsync time")
+            } else if new_estimate.abs_diff(last_estimate) > Duration::from_micros(100) {
+                // only update when it changed significantly so we're not tearing down and
+                // recreating the tokio timer all the time
+                tracing::trace!(
+                    ?last_estimate,
+                    ?new_estimate,
+                    "updating fsync time estimate"
+                );
+                ticker = tokio::time::interval(new_estimate);
+                last_estimate = new_estimate;
+            }
+        }
     }
     if let Err(err) = db.persist(fsync_mode.into()) {
         tracing::error!(?err, "error flushing fjall at shutdown");
@@ -366,7 +420,7 @@ pub struct DiomLogs {
     db: Database,
     meta_keyspace: Keyspace,
     log_keyspace: Keyspace,
-    flush_tx: tokio::sync::mpsc::Sender<IOFlushed<TypeConfig>>,
+    flush_tx: tokio::sync::mpsc::Sender<FlushMessage>,
     log_cache: LogCache,
     metrics: Option<LogMetrics>,
     last_vote: Arc<Mutex<Option<Vote>>>,
@@ -379,6 +433,7 @@ impl DiomLogs {
         path: Dir,
         commits_before_fsync: usize,
         duration_before_fsync: Duration,
+        autoscale_duration: bool,
         ack_immediately: bool,
         fsync_mode: FsyncMode,
     ) -> anyhow::Result<Self> {
@@ -391,18 +446,15 @@ impl DiomLogs {
         })?;
         let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
         let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(65536);
-        if commits_before_fsync == 1 {
-            tokio::spawn(flush_every_worker(db.clone(), flush_rx));
-        } else {
-            tokio::spawn(flush_worker(
-                db.clone(),
-                flush_rx,
-                commits_before_fsync,
-                duration_before_fsync,
-                ack_immediately,
-                fsync_mode,
-            ));
-        }
+        tokio::spawn(flush_worker(
+            db.clone(),
+            flush_rx,
+            commits_before_fsync,
+            duration_before_fsync,
+            autoscale_duration,
+            ack_immediately,
+            fsync_mode,
+        ));
         Ok(Self {
             db,
             log_keyspace,
@@ -414,9 +466,13 @@ impl DiomLogs {
         })
     }
 
-    pub(crate) fn enable_metrics(&mut self, metrics: LogMetrics) {
+    pub(crate) async fn enable_metrics(&mut self, metrics: LogMetrics) -> anyhow::Result<()> {
         self.metrics = Some(metrics.clone());
+        self.flush_tx
+            .send(FlushMessage::EnableMetrics(metrics.clone()))
+            .await?;
         self.start_metrics(metrics);
+        Ok(())
     }
 
     fn metric_record<F>(&self, f: F)
@@ -493,7 +549,7 @@ impl DiomLogs {
         .await??;
 
         self.flush_tx
-            .send(callback)
+            .send(FlushMessage::Callback(callback))
             .await
             .context("requesting background fsync")?;
 
@@ -795,6 +851,7 @@ mod tests {
                 logdir,
                 0,
                 Duration::from_hours(1),
+                false,
                 true,
                 FsyncMode::default(),
             )

@@ -344,17 +344,16 @@ pub struct ClusterConfiguration {
 
     /// Interval (in transactions) between fsyncing the commit log.
     ///
-    /// This should be set to 1 for full ACID compliance; at any other value,
-    /// data may be lost in the event of catastrophic hardware failure.
-    /// If you are using a multi-node cluster and set this to a value other than
-    /// 1, if a node experiences catastrophic failure and the OS shuts down uncleanly, that node
-    /// should be removed from the cluster and rebuilt. If set to 0, logs will only be fsynced on a
-    /// timer
-    #[validate(range(min = 0, max = 1024))]
+    /// This can be used to force transactions to fsync logs more often than the
+    /// default `log_sync_interval_ms` timer.
+    #[validate(range(min = 0, max = 1024000))]
     #[serde(default = "defaults::cluster_log_sync_interval_commits")]
     pub log_sync_interval_commits: usize,
 
     /// Interval (in milliseconds) between fsyncing the commit log.
+    ///
+    /// If `log_sync_interval_auto` is set to true, this is just the initial estimate
+    /// and will be auto-scaled
     #[validate(custom(function = "validators::validate_log_sync_interval_duration"))]
     #[serde(
         rename = "log_sync_interval_ms",
@@ -362,11 +361,16 @@ pub struct ClusterConfiguration {
     )]
     pub log_sync_interval_duration: DurationMs,
 
+    /// Automatically attempt to determine the log sync interval from observed fsync timings
+    #[serde(default = "defaults::default_true")]
+    pub log_sync_interval_auto: bool,
+
     /// Commit logs to the cluster immediately, before fsyncing them to persistent storage.
     ///
     /// This should be set to `false` for full ACID compliance, but can be set to `true` to enable
     /// higher throughput than your fsync rate. Note that we always flush to the OS buffers before
-    /// acking, so data will only be lost of the OS crashes.
+    /// acking, so data will only be lost if the OS crashes. If that happens, the node should be
+    /// removed from the cluster, erased, and resynced
     #[serde(default = "defaults::default_false")]
     pub log_ack_immediately: bool,
 
