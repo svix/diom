@@ -4,7 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_authorization::RequestedOperation;
-use coyote_core::types::{DurationMs, EntityKey, Metadata};
+use coyote_core::types::{ByteString, DurationMs, EntityKey, Metadata};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt as _, ResultExt};
 use coyote_id::Module;
@@ -85,7 +85,7 @@ pub enum IdempotencyStartOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IdempotencyCompleted {
-    pub response: Vec<u8>,
+    pub response: ByteString,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<Metadata>,
 }
@@ -112,7 +112,7 @@ pub struct IdempotencyCompleteIn {
     pub key: EntityKey,
 
     /// The response to cache
-    pub response: Vec<u8>,
+    pub response: ByteString,
 
     /// Optional metadata to store alongside the response
     #[serde(default)]

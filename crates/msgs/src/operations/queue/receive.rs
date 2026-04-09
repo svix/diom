@@ -1,6 +1,9 @@
 use std::{collections::HashMap, num::NonZeroU16};
 
-use coyote_core::{task::spawn_blocking_in_current_span, types::DurationMs};
+use coyote_core::{
+    task::spawn_blocking_in_current_span,
+    types::{ByteString, DurationMs},
+};
 use coyote_error::{Error, Result};
 use coyote_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -279,7 +282,7 @@ pub(crate) fn compact_cursor(
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueueReceiveMsg {
     pub msg_id: MsgId,
-    pub value: Vec<u8>,
+    pub value: ByteString,
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
     pub scheduled_at: Option<Timestamp>,

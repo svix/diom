@@ -4,7 +4,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use coyote_authorization::RequestedOperation;
-use coyote_core::types::{Consistency, DurationMs, EntityKey};
+use coyote_core::types::{ByteString, Consistency, DurationMs, EntityKey};
 use coyote_derive::aide_annotate;
 use coyote_error::{OptionExt, ResultExt};
 use coyote_id::Module;
@@ -54,7 +54,7 @@ pub struct KvSetIn {
     #[validate(nested)]
     pub key: EntityKey,
 
-    pub value: Vec<u8>,
+    pub value: ByteString,
 
     /// Time to live in milliseconds
     #[serde(rename = "ttl_ms")]
@@ -97,7 +97,7 @@ pub struct KvGetOut {
     /// Time of expiry
     pub expiry: Option<Timestamp>,
 
-    pub value: Option<Vec<u8>>,
+    pub value: Option<ByteString>,
 
     /// Opaque version token for optimistic concurrency control.
     /// Pass as `version` in a subsequent `set` to perform a conditional write.
