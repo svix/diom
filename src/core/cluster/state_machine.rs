@@ -129,6 +129,7 @@ pub struct Store {
     pub(super) time: Monotime,
     pub(super) logs: DiomLogs,
     metrics: DbMetrics,
+    persist_mode: PersistMode,
 }
 
 trait SnapshotIdx {
@@ -200,6 +201,12 @@ impl Store {
         );
 
         let metrics = DbMetrics::new(&app_state.meter, node_id);
+
+        let persist_mode = app_state
+            .cfg
+            .sync_mode
+            .into_persist_mode(app_state.cfg.fsync_mode);
+
         let mut this = Self {
             stores: Arc::new(RwLock::new(stores)),
             state: app_state,
@@ -214,6 +221,7 @@ impl Store {
             time,
             logs,
             metrics,
+            persist_mode,
         };
         this.load_information().await?;
         this.start_metrics();
@@ -366,13 +374,14 @@ impl Store {
         let meta_keyspace = self.meta_keyspace.clone();
         let last_applied_log_id = self.last_applied_log_id;
         let last_membership = self.last_membership.clone();
+        let persist_mode = self.persist_mode;
         spawn_blocking_in_current_span(move || {
             let mut tx = handle
                 .read()
                 .databases
                 .persistent
                 .batch()
-                .durability(Some(PersistMode::Buffer));
+                .durability(Some(persist_mode));
             if let Some(log_id) = &last_applied_log_id {
                 LAST_APPLIED_LOG_ID.store_tx(&mut tx, &meta_keyspace, log_id)?;
             } else {
@@ -512,14 +521,14 @@ impl Store {
                 .stores
                 .databases
                 .persistent
-                .persist(self.state.cfg.sync_mode.into())?;
+                .persist(self.persist_mode)?;
         }
         if touched_ephemeral {
             context
                 .stores
                 .databases
                 .ephemeral
-                .persist(self.state.cfg.sync_mode.into())?;
+                .persist(self.persist_mode)?;
         }
         self.metrics.record_apply(start.elapsed());
         Ok(())

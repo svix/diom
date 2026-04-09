@@ -22,7 +22,7 @@ use tracing::{Instrument, Span};
 
 use super::{NodeId, raft::TypeConfig};
 use crate::{
-    cfg::Dir,
+    cfg::{Dir, FsyncMode},
     core::{cluster::ClusterId, metrics::LogMetrics},
 };
 use diom_core::task::spawn_blocking_in_current_span;
@@ -286,6 +286,7 @@ async fn flush_worker(
     commits_before_fsync: usize,
     duration_before_fsync: Duration,
     ack_immediately: bool,
+    fsync_mode: FsyncMode,
 ) {
     let mut pending = Vec::new();
     let mut done = false;
@@ -336,7 +337,7 @@ async fn flush_worker(
                         let _guard =
                             tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
                         tracing::trace!("flushing logs to disk");
-                        db.persist(PersistMode::SyncAll).map_err(|err| {
+                        db.persist(fsync_mode.into()).map_err(|err| {
                             tracing::error!(?err, "error flushing fjall");
                             BackgroundFsyncFailedError(err.to_string())
                         })
@@ -355,7 +356,7 @@ async fn flush_worker(
         .instrument(tracing::info_span!("logs:flush_worker"))
         .await
     }
-    if let Err(err) = db.persist(PersistMode::SyncAll) {
+    if let Err(err) = db.persist(fsync_mode.into()) {
         tracing::error!(?err, "error flushing fjall at shutdown");
     }
 }
@@ -379,6 +380,7 @@ impl DiomLogs {
         commits_before_fsync: usize,
         duration_before_fsync: Duration,
         ack_immediately: bool,
+        fsync_mode: FsyncMode,
     ) -> anyhow::Result<Self> {
         let pb: std::path::PathBuf = path.into();
         let db = Database::builder(&pb).worker_threads(1).open()?;
@@ -398,6 +400,7 @@ impl DiomLogs {
                 commits_before_fsync,
                 duration_before_fsync,
                 ack_immediately,
+                fsync_mode,
             ));
         }
         Ok(Self {
@@ -774,7 +777,7 @@ mod tests {
     use std::time::Duration;
 
     use super::DiomLogs;
-    use crate::cfg::Dir;
+    use crate::cfg::{Dir, FsyncMode};
     use jiff::{Span, Timestamp};
     use tempfile::TempDir;
     use test_utils::TestResult;
@@ -788,7 +791,14 @@ mod tests {
         fn new() -> Self {
             let workdir = tempfile::tempdir().unwrap();
             let logdir = Dir::new(&workdir).unwrap();
-            let logs = DiomLogs::new(logdir, 0, Duration::from_hours(1), true).unwrap();
+            let logs = DiomLogs::new(
+                logdir,
+                0,
+                Duration::from_hours(1),
+                true,
+                FsyncMode::default(),
+            )
+            .unwrap();
             Self {
                 _workdir: workdir,
                 logs,
