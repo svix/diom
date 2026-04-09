@@ -13,7 +13,6 @@ use std::{
     time::Duration,
 };
 
-use ::serde::{Serialize, de::DeserializeOwned};
 use aide::axum::ApiRouter;
 use axum::{
     Extension,
@@ -29,6 +28,7 @@ use diom_msgs::TopicPublishNotifier;
 use diom_proto::{InternalClient, InternalRequest, InternalRequestError};
 use fjall_utils::{Databases, ReadonlyDatabases};
 use opentelemetry::metrics::Meter;
+use serde::{Serialize, de::DeserializeOwned};
 use tokio::{
     net::TcpListener,
     sync::{Barrier, mpsc},
@@ -56,7 +56,6 @@ pub mod cfg;
 pub mod core;
 pub use diom_error as error;
 pub mod openapi;
-mod serde;
 pub mod v1;
 mod workers;
 

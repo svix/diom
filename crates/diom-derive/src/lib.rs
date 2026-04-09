@@ -143,11 +143,11 @@ impl EoField {
 
         if let Some(option_inner) = as_ty_option(&field.ty) {
             is_optional = true;
-            is_duration = is_ty_name("Duration", option_inner);
+            is_duration = is_ty_name("DurationMs", option_inner);
             is_vec = is_ty_name("Vec", option_inner);
         } else {
             is_optional = false;
-            is_duration = is_ty_name("Duration", &field.ty);
+            is_duration = is_ty_name("DurationMs", &field.ty);
             is_vec = is_ty_name("Vec", &field.ty);
         }
 

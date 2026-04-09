@@ -38,7 +38,7 @@ pub(super) fn build_client(
     }
     tracing::debug!(connect_timeout = ?cfg.cluster.connection_timeout, ?request_timeout, "initializing interserver client");
     let client = reqwest::Client::builder()
-        .connect_timeout(cfg.cluster.connection_timeout)
+        .connect_timeout(cfg.cluster.connection_timeout.into())
         .pipe(|client| {
             if let Some(timeout) = request_timeout {
                 client.timeout(timeout)

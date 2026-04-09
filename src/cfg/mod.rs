@@ -8,10 +8,10 @@ use std::{
     path::{Path, PathBuf},
     str::FromStr,
     sync::Arc,
-    time::Duration,
 };
 
 use anyhow::Context;
+use diom_core::types::DurationMs;
 use diom_derive::EnvOverridable;
 use fs_err as fs;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -251,20 +251,18 @@ pub struct ClusterConfiguration {
     /// This should be set to approximately 2X the RTT of your farthest-apart nodes.
     #[serde(
         rename = "replication_request_timeout_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_replication_request_timeout"
     )]
-    pub replication_request_timeout: Duration,
+    pub replication_request_timeout: DurationMs,
 
     /// Timeout for discovery requests.
     ///
     /// This should be set to approximately 2X the RTT of your farthest-apart nodes.
     #[serde(
         rename = "discovery_request_timeout_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_discovery_request_timeout"
     )]
-    pub discovery_request_timeout: Duration,
+    pub discovery_request_timeout: DurationMs,
 
     /// Timeout for new connections.
     ///
@@ -273,10 +271,9 @@ pub struct ClusterConfiguration {
     /// depending on your operating system).
     #[serde(
         rename = "connection_timeout_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_connection_timeout"
     )]
-    pub connection_timeout: Duration,
+    pub connection_timeout: DurationMs,
 
     /// How often to send heartbeats.
     ///
@@ -284,10 +281,9 @@ pub struct ClusterConfiguration {
     /// Must not be less than `replication_request_timeout`.
     #[serde(
         rename = "heartbeat_interval_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_heartbeat_interval"
     )]
-    pub heartbeat_interval: Duration,
+    pub heartbeat_interval: DurationMs,
 
     /// The minimum time to let an election run for.
     ///
@@ -295,10 +291,9 @@ pub struct ClusterConfiguration {
     /// and must not be less than `heartbeat_interval_ms`.
     #[serde(
         rename = "election_timeout_min_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_election_timeout_min"
     )]
-    pub election_timeout_min: Duration,
+    pub election_timeout_min: DurationMs,
 
     /// The minimum time to let an election run for.
     ///
@@ -306,10 +301,9 @@ pub struct ClusterConfiguration {
     /// and must not be less than `cluster_election_timeout_max`.
     #[serde(
         rename = "election_timeout_max_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_election_timeout_max"
     )]
-    pub election_timeout_max: Duration,
+    pub election_timeout_max: DurationMs,
 
     /// The minimum time to let an election run for.
     ///
@@ -317,10 +311,9 @@ pub struct ClusterConfiguration {
     /// and must not be less than `cluster_election_timeout_max`.
     #[serde(
         rename = "send_snapshot_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_send_snapshot_timeout"
     )]
-    pub send_snapshot_timeout: Duration,
+    pub send_snapshot_timeout: DurationMs,
 
     /// Address that other nodes should use to communicate with this one.
     ///
@@ -342,24 +335,21 @@ pub struct ClusterConfiguration {
 
     #[serde(
         rename = "discovery_timeout_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_discovery_timeout"
     )]
-    pub discovery_timeout: Duration,
+    pub discovery_timeout: DurationMs,
 
     #[serde(
         rename = "startup_discovery_delay_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::cluster_startup_discovery_delay"
     )]
-    pub startup_discovery_delay: Duration,
+    pub startup_discovery_delay: DurationMs,
 
     #[serde(
         rename = "log_index_interval_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::log_index_interval"
     )]
-    pub log_index_interval: Duration,
+    pub log_index_interval: DurationMs,
 
     /// Interval (in transactions) between fsyncing the commit log.
     ///
@@ -376,11 +366,10 @@ pub struct ClusterConfiguration {
     /// Interval (in milliseconds) between fsyncing the commit log.
     #[validate(custom(function = "validators::validate_log_sync_interval_duration"))]
     #[serde(
-        default = "defaults::cluster_log_sync_interval_duration",
         rename = "log_sync_interval_ms",
-        with = "crate::serde::duration::millis"
+        default = "defaults::cluster_log_sync_interval_duration"
     )]
-    pub log_sync_interval_duration: Duration,
+    pub log_sync_interval_duration: DurationMs,
 
     /// Commit logs to the cluster immediately, before fsyncing them to persistent storage.
     ///
@@ -396,10 +385,9 @@ pub struct ClusterConfiguration {
     /// Trigger a background snapshot after this many milliseconds
     #[serde(
         rename = "snapshot_after_ms",
-        with = "crate::serde::duration::opt_ms",
         default = "defaults::cluster_snapshot_after_time"
     )]
-    pub snapshot_after_time: Option<Duration>,
+    pub snapshot_after_time: Option<DurationMs>,
 
     /// Shut down the process when the it is evicted from the cluster
     ///
@@ -498,10 +486,9 @@ pub struct ConfigurationInner {
 
     #[serde(
         rename = "opentelemetry_metrics_period_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::opentelemetry_metrics_period"
     )]
-    pub opentelemetry_metrics_period: Duration,
+    pub opentelemetry_metrics_period: DurationMs,
 
     /// The ratio at which to sample spans when sending to OpenTelemetry.
     ///
@@ -533,22 +520,17 @@ pub struct ConfigurationInner {
     /// Maximum time to wait for cluster initialization at startup
     ///
     /// If this is unset, we will wait indefinitely.
-    #[serde(
-        rename = "bootstrap_max_wait_ms",
-        with = "crate::serde::duration::opt_ms",
-        default
-    )]
-    pub bootstrap_max_wait_time: Option<Duration>,
+    #[serde(rename = "bootstrap_max_wait_ms", default)]
+    pub bootstrap_max_wait_time: Option<DurationMs>,
 
     /// How often to run background cleanup/garbage collection jobs
     ///
     /// Correctness should never be affected by this, just wasted memory/disk.
     #[serde(
         rename = "background_cleanup_interval_ms",
-        with = "crate::serde::duration::millis",
         default = "defaults::background_cleanup_interval"
     )]
-    pub background_cleanup_interval: Duration,
+    pub background_cleanup_interval: DurationMs,
 
     /// How to persist data to the actual underlying database
     ///

@@ -75,7 +75,7 @@ pub async fn initialize_raft(
     let mut logs = super::DiomLogs::new(
         cfg.cluster.log_path(cfg)?,
         cfg.cluster.log_sync_interval_commits,
-        cfg.cluster.log_sync_interval_duration,
+        cfg.cluster.log_sync_interval_duration.into(),
         cfg.cluster.log_ack_immediately,
     )
     .context("setting up log store")?;
@@ -85,9 +85,9 @@ pub async fn initialize_raft(
         .context("reading node ID from logs")?;
     logs.enable_metrics(LogMetrics::new(&app_state.meter, id));
     let config = openraft::Config {
-        heartbeat_interval: cfg.cluster.heartbeat_interval.as_millis() as u64,
-        election_timeout_min: cfg.cluster.election_timeout_min.as_millis() as u64,
-        election_timeout_max: cfg.cluster.election_timeout_max.as_millis() as u64,
+        heartbeat_interval: cfg.cluster.heartbeat_interval.as_millis(),
+        election_timeout_min: cfg.cluster.election_timeout_min.as_millis(),
+        election_timeout_max: cfg.cluster.election_timeout_max.as_millis(),
         cluster_name: cfg.cluster.name.clone(),
 
         replication_lag_threshold: cfg.cluster.replication_lag_threshold,
@@ -96,8 +96,8 @@ pub async fn initialize_raft(
 
         // we're using the v1 version of snapshot sending for now
         #[allow(deprecated)]
-        send_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis() as u64,
-        install_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis() as u64,
+        send_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis(),
+        install_snapshot_timeout: cfg.cluster.send_snapshot_timeout.as_millis(),
         ..Default::default()
     };
     let config = Arc::new(config.validate().context("configuring openraft")?);

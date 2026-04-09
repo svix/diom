@@ -31,7 +31,7 @@ impl Workers {
             self.spawn(diom_kv::AllNodesWorker::new(
                 state,
                 time,
-                bg_clean_interval,
+                bg_clean_interval.into(),
             ));
         }
         {
@@ -41,7 +41,7 @@ impl Workers {
             self.spawn(diom_cache::AllNodesWorker::new(
                 state,
                 time,
-                bg_clean_interval,
+                bg_clean_interval.into(),
             ));
         }
         {
@@ -51,7 +51,7 @@ impl Workers {
             self.spawn(diom_idempotency::AllNodesWorker::new(
                 state,
                 time,
-                bg_clean_interval,
+                bg_clean_interval.into(),
             ));
         }
     }
