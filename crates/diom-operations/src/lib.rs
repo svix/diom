@@ -46,15 +46,17 @@ impl std::error::Error for BackgroundError {
 pub type BackgroundResult<T> = Result<T, BackgroundError>;
 
 // Not part of the trait below so do_write_request only has to be codegen'ed once
-pub trait OperationWriterBase {
+pub trait OperationWriterBase: Send + Sync + Clone {
     type Request: Sized;
     type Response: Sized;
 
     /// Execute a write against the replicated state machine
     ///
     /// This should typically not be called by users
-    #[allow(async_fn_in_trait)]
-    async fn do_write_request(&self, request: Self::Request) -> BackgroundResult<Self::Response>;
+    fn do_write_request(
+        &self,
+        request: Self::Request,
+    ) -> impl Future<Output = BackgroundResult<Self::Response>> + Send;
 }
 
 // The M generic is not required for anything (the only impl is generic over it)
@@ -67,21 +69,24 @@ pub trait OperationWriter<M: ModuleRequest>:
     ///
     /// This calls `.do_write_request` internally, and takes care of wrapping/unwrapping
     /// the request appropriately.
-    #[allow(async_fn_in_trait)]
-    async fn write_request<O>(&self, op: O) -> BackgroundResult<O::Response>
+    fn write_request<O>(&self, op: O) -> impl Future<Output = BackgroundResult<O::Response>> + Send
     where
         O: OperationRequest<RequestParent = M, Response: TryFrom<M::Response>>
-            + Into<O::RequestParent>,
+            + Into<O::RequestParent>
+            + Send,
+        Self: Sync,
     {
-        let module_request: O::RequestParent = op.into();
-        let top_level_request: Self::Request = module_request.into();
-        let top_level_response = self.do_write_request(top_level_request).await?;
-        let Ok(module_response): Result<M::Response, _> = top_level_response.try_into() else {
-            return Err(BackgroundError::InvalidResponse);
-        };
-        module_response
-            .try_into()
-            .map_err(|_| BackgroundError::InvalidResponse)
+        async {
+            let module_request: O::RequestParent = op.into();
+            let top_level_request: Self::Request = module_request.into();
+            let top_level_response = self.do_write_request(top_level_request).await?;
+            let Ok(module_response): Result<M::Response, _> = top_level_response.try_into() else {
+                return Err(BackgroundError::InvalidResponse);
+            };
+            module_response
+                .try_into()
+                .map_err(|_| BackgroundError::InvalidResponse)
+        }
     }
 }
 

@@ -1,9 +1,11 @@
 use crate::State;
 
+mod clear_expired;
 mod create_namespace;
 mod delete;
 mod set;
 
+pub use clear_expired::ClearExpiredOperation;
 pub use create_namespace::{CreateCacheOperation, CreateCacheResponseData};
 pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::SetOperation;
@@ -21,6 +23,7 @@ raft_module_operations!(
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> DeleteResponseData,
         CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
+        ClearExpired(ClearExpiredOperation) -> (),
     },
     state = CacheRaftState<'_>,
 );
@@ -31,6 +34,7 @@ impl CacheOperation {
             Self::Set(op) => Some(&op.key),
             Self::Delete(op) => Some(&op.key),
             Self::CreateCache(op) => Some(&op.name),
+            Self::ClearExpired(_) => None,
         }
     }
 }

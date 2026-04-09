@@ -103,12 +103,32 @@ impl BackgroundJobRunner {
             .spawn(async move { job.run_while_handling_panics().await });
     }
 
-    fn spawn_all(&mut self, cfg: Configuration, handle: RaftState) {
+    async fn spawn_all(&mut self, cfg: Configuration, handle: RaftState) {
         self.spawn_job(RecordLogTimestamps {
-            cfg,
+            cfg: cfg.clone(),
             handle: handle.clone(),
         });
-        self.spawn_job(Tick { handle });
+        self.spawn_job(Tick {
+            handle: handle.clone(),
+        });
+        self.spawn_job(diom_kv::LeaderWorker::new(
+            handle.state_machine.kv_store().await,
+            handle.time.clone(),
+            cfg.background_cleanup_interval,
+            handle.clone(),
+        ));
+        self.spawn_job(diom_cache::LeaderWorker::new(
+            handle.state_machine.cache_store().await,
+            handle.time.clone(),
+            cfg.background_cleanup_interval,
+            handle.clone(),
+        ));
+        self.spawn_job(diom_idempotency::LeaderWorker::new(
+            handle.state_machine.idempotency_store().await,
+            handle.time.clone(),
+            cfg.background_cleanup_interval,
+            handle.clone(),
+        ));
     }
 
     async fn stop_all(mut self) -> anyhow::Result<()> {
@@ -198,7 +218,7 @@ pub(super) async fn run_background_jobs_on_leader(
     let mut chan = leadership_changes(handle.clone()).await;
     while wait_until_leader(handle.node_id, chan.resubscribe()).await {
         let mut runner = BackgroundJobRunner::new();
-        runner.spawn_all(cfg.clone(), handle.clone());
+        runner.spawn_all(cfg.clone(), handle.clone()).await;
         loop {
             tokio::select! {
                 new_leader = chan.recv() => {

@@ -1,9 +1,6 @@
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
-use diom_core::{
-    instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard},
-    task::spawn_blocking_in_current_span,
-};
+use diom_core::task::spawn_blocking_in_current_span;
 use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall::{Database, Keyspace};
@@ -14,8 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::tables::{ExpirationRow, KvPairRow};
 
-const EXPIRATION_BATCH_SIZE: usize = 1_000;
-const WARN_LONG_LOCK_DURATION: Duration = Duration::from_millis(100);
+const EXPIRATION_BATCH_SIZE: usize = 10_000;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -62,7 +58,7 @@ impl From<KvPairRow> for KvModel {
 
 #[derive(Clone)]
 pub struct KvController {
-    db: InstrumentedMutex<Database>,
+    db: Database,
     keyspace: Keyspace,
     keyspace_name: &'static str,
 }
@@ -75,7 +71,7 @@ impl KvController {
             .expect("should be able to open keyspace");
 
         Self {
-            db: InstrumentedMutex::new(db),
+            db,
             keyspace: tables,
             keyspace_name,
         }
@@ -114,7 +110,7 @@ impl KvController {
     }
 
     fn insert_with_expiration(
-        db: InstrumentedMutexGuard<'_, Database>,
+        db: &Database,
         keyspace: &Keyspace,
         namespace_id: NamespaceId,
         key: &str,
@@ -180,12 +176,10 @@ impl KvController {
                 version: new_version,
             };
 
-            let db = db.lock("kvcontroller::set");
-
             match behavior {
                 OperationBehavior::Upsert => {
                     Self::insert_with_expiration(
-                        db,
+                        &db,
                         &keyspace,
                         namespace_id,
                         key,
@@ -201,7 +195,7 @@ impl KvController {
                         });
                     } else {
                         Self::insert_with_expiration(
-                            db,
+                            &db,
                             &keyspace,
                             namespace_id,
                             key,
@@ -215,7 +209,7 @@ impl KvController {
 
                     if exists {
                         Self::insert_with_expiration(
-                            db,
+                            &db,
                             &keyspace,
                             namespace_id,
                             key,
@@ -265,8 +259,6 @@ impl KvController {
             let Some(current) = current else {
                 return Ok(false);
             };
-
-            let db = db.lock("kvcontroller::delete");
             let mut batch = db.batch();
 
             if let Some(expiry) = current.expiry {
@@ -302,70 +294,58 @@ impl KvController {
         keyspace_name = self.keyspace_name,
         cleared
     ))]
-    pub fn clear_expired_in_background(&self, now: Timestamp) -> Result<usize> {
-        let grace_period = now - jiff::SignedDuration::from_secs(10);
+    pub async fn clear_expired_in_raft(&self, now: Timestamp) -> Result<usize> {
         let start =
             ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
-        let end = ExpirationRow::key_for(NamespaceId::max(), grace_period, "").into_fjall_key();
+        let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
-        let mut cleared = 0;
+        let keyspace = self.keyspace.clone();
+        let db = self.db.clone();
 
-        loop {
-            let mut keys = self
-                .keyspace
+        let cleared = spawn_blocking_in_current_span(move || -> Result<usize> {
+            let mut cleared = 0;
+            let mut keys = keyspace
                 .range(start.clone()..=end.clone())
                 .take(EXPIRATION_BATCH_SIZE)
                 .map(|item| item.key());
             let Some(Ok(first)) = keys.next() else {
                 tracing::trace!("nothing to clean up");
-                break;
+                return Ok(cleared);
             };
             let Some(Ok(last)) = keys.last() else {
-                break;
+                return Ok(cleared);
             };
 
             tracing::trace!(first_key=?first, last_key=?last, "about to prune some expired keys");
 
             let start_batch = Instant::now();
-            let num_this_batch = tracing::debug_span!("clear_expired_in_background:remove_chunk")
-                .in_scope(|| {
-                let db = self.db.lock("kv_controller::clear_expired_in_background");
-                let start_lock = Instant::now();
-                let mut batch = db.batch();
-                let mut num_this_batch = 0;
+            let num_this_batch =
+                tracing::debug_span!("clear_expired_in_raft:remove_chunk").in_scope(|| {
+                    let mut batch = db.batch();
+                    let mut num_this_batch = 0;
 
-                for item in self.keyspace.range(first..=last) {
-                    cleared += 1;
-                    num_this_batch += 1;
-                    let k = item.key()?;
-                    let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
-                    batch.remove_row(&self.keyspace, KvPairRow::key_for(namespace_id, main_key))?;
+                    for item in keyspace.range(first..=last) {
+                        cleared += 1;
+                        num_this_batch += 1;
+                        let k = item.key()?;
+                        let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
+                        batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, main_key))?;
 
-                    batch.remove(&self.keyspace, k);
-                }
-                batch.commit()?;
-                drop(db);
-                let duration = start_lock.elapsed();
-                if duration > WARN_LONG_LOCK_DURATION {
-                    tracing::warn!(
-                        lock_us = duration.as_micros(),
-                        "clear_expired_in_background locked kvcontroller for a long time"
-                    );
-                }
-                Ok::<_, Error>(num_this_batch)
-            })?;
+                        batch.remove(&keyspace, k);
+                    }
+                    batch.commit()?;
+                    Ok::<_, Error>(num_this_batch)
+                })?;
             tracing::trace!(num_this_batch, elapsed=?start_batch.elapsed(), "cleared a batch of items");
 
-            if num_this_batch < EXPIRATION_BATCH_SIZE {
-                break;
+            if cleared > 0 {
+                tracing::debug!(cleared, "cleared some keys");
+            } else {
+                tracing::trace!("no expired keys");
             }
-        }
+            Ok(cleared)
+        }).await??;
 
-        if cleared > 0 {
-            tracing::debug!(cleared, "cleared some keys");
-        } else {
-            tracing::trace!("no expired keys");
-        }
         tracing::Span::current().record("cleared", cleared);
 
         Ok(cleared)
@@ -594,7 +574,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_clear_expired_in_background_removes_expired_entries() {
+    async fn test_clear_expired_in_raft_removes_expired_entries() {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
@@ -703,9 +683,7 @@ mod tests {
         }
 
         assert_eq!(
-            controller
-                .clear_expired_in_background(Timestamp::now())
-                .unwrap(),
+            controller.clear_expired_in_raft(Timestamp::now()).unwrap(),
             4
         );
 

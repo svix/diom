@@ -3,6 +3,7 @@ use diom_operations::{BackgroundError, BackgroundResult, workers::BackgroundWork
 use tokio::task::JoinSet;
 
 pub(crate) struct Workers {
+    #[allow(unused)]
     app_state: AppState,
     join_set: JoinSet<BackgroundResult<()>>,
 }
@@ -17,42 +18,10 @@ impl Workers {
 
     pub(crate) async fn spawn_all(&mut self, state: RaftState) {
         tracing::debug!("spawning background workers");
-        let bg_clean_interval = self.app_state.cfg.background_cleanup_interval;
-        let time = state.state_machine.time.clone();
         {
             tracing::debug!("spawning msgs module worker");
             let state = state.state_machine.msgs_store().await;
             self.spawn(diom_msgs::AllNodesWorker::new(state));
-        }
-        {
-            tracing::debug!("spawning KV module worker");
-            let state = state.state_machine.kv_store().await;
-            let time = time.clone();
-            self.spawn(diom_kv::AllNodesWorker::new(
-                state,
-                time,
-                bg_clean_interval,
-            ));
-        }
-        {
-            tracing::debug!("spawning cache module worker");
-            let state = state.state_machine.cache_store().await;
-            let time = time.clone();
-            self.spawn(diom_cache::AllNodesWorker::new(
-                state,
-                time,
-                bg_clean_interval,
-            ));
-        }
-        {
-            tracing::debug!("spawning idempotency module worker");
-            let state = state.state_machine.idempotency_store().await;
-            let time = time.clone();
-            self.spawn(diom_idempotency::AllNodesWorker::new(
-                state,
-                time,
-                bg_clean_interval,
-            ));
         }
     }
 
