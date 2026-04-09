@@ -8,7 +8,7 @@
 {% macro field_type(field) -%}
 	{% set f_type = field.type.to_go() -%}
 	{% if field.name is endingwith "_ms" -%}
-		{% if not field.type.is_u64() %}{% do panic("_ms type should be uint64") %}{% endif -%}
+		{%- if not (field.type.is_u64() or field.type.is_duration_ms() or field.type.is_unix_timestamp_ms()) %}{% do panic("_ms type should be uint64, current type is " ~ field.type) %}{% endif -%}
 		{% set f_type = "coyote_types.DurationMs" -%}
 	{% endif -%}
 	{% if (not field.required or field.nullable) -%}
