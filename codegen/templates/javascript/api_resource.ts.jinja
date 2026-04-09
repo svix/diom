@@ -33,7 +33,7 @@ export class {{ resource_type_name }} {
         {% set body_schema = api.types[op.request_body_schema_name] -%}
         {% set positional_fields = body_schema.fields | selectattr("positional") -%}
         {% for field in positional_fields -%}
-            {{ field.name | to_snake_case }}: {% if field.type.is_bytes() %}Uint8Array{% else %}{{ field.type.to_js() }}{% endif %},
+            {{ field.name | to_snake_case }}: {{ field.type.to_js() }},
         {% endfor -%}
 
         {# body parameter interface -#}
