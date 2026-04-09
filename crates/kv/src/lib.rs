@@ -3,7 +3,7 @@ use std::time::Duration;
 use diom_core::Monotime;
 use diom_error::Result;
 use diom_namespace::{Namespace, entities::KeyValueConfig};
-use diom_operations::{BackgroundError, BackgroundResult};
+use diom_operations::BackgroundResult;
 use fjall_utils::Databases;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -45,19 +45,29 @@ pub enum OperationBehavior {
 }
 
 #[derive(Clone)]
-pub struct AllNodesWorker {
+pub struct LeaderWorker<F: diom_operations::OperationWriter<operations::KvOperation>> {
     state: State,
     time: Monotime,
     cleanup_interval: Duration,
+    handle: F,
 }
 
-impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
-    const NAME: &'static str = "bg-worker:kv";
+impl<F: diom_operations::OperationWriter<operations::KvOperation>> LeaderWorker<F> {
+    pub fn new(state: State, time: Monotime, cleanup_interval: Duration, handle: F) -> Self {
+        Self {
+            state,
+            time,
+            cleanup_interval,
+            handle,
+        }
+    }
+}
 
-    /// This is a worker function which runs on every node
-    ///
-    /// It should not mutate the database in any way that could possibly be customer- or
-    /// replication-visible; all  mutations should be written through the writer function
+impl<F: diom_operations::OperationWriter<operations::KvOperation>>
+    diom_operations::workers::BackgroundWorker for LeaderWorker<F>
+{
+    const NAME: &'static str = "leader-worker:kv";
+
     async fn run(self) -> BackgroundResult<()> {
         let mut timer = tokio::time::interval(self.cleanup_interval);
 
@@ -68,30 +78,17 @@ impl diom_operations::workers::BackgroundWorker for AllNodesWorker {
             .await
             .is_some()
         {
-            self.worker_loop(self.time.now()).await?;
+            let handle = self.handle.clone();
+            self.state
+                .controller
+                .clear_expired_in_raft_until_done(self.time.now_utm(), async move || {
+                    handle
+                        .write_request(operations::ClearExpiredOperation::new())
+                        .await
+                })
+                .await?;
         }
 
-        Ok(())
-    }
-}
-
-impl AllNodesWorker {
-    pub fn new(state: State, time: Monotime, cleanup_interval: Duration) -> Self {
-        Self {
-            state,
-            time,
-            cleanup_interval,
-        }
-    }
-
-    #[tracing::instrument(skip_all)]
-    async fn worker_loop(&self, now: jiff::Timestamp) -> BackgroundResult<()> {
-        let mut tasks = tokio::task::JoinSet::new();
-        let state = self.state.clone();
-        tasks.spawn_blocking(move || state.controller.clear_expired_in_background(now.into()));
-        for result in tasks.join_all().await {
-            result.map_err(BackgroundError::Other)?;
-        }
         Ok(())
     }
 }
