@@ -8,5 +8,5 @@ import (
 
 type CacheGetOut struct {
 	Expiry *diom_types.Timestamp `msgpack:"expiry,omitempty"` // Time of expiry
-	Value  []uint8                 `msgpack:"value,omitempty"`
+	Value  []uint8               `msgpack:"value,omitempty"`
 }

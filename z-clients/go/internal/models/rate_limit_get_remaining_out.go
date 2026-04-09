@@ -7,6 +7,6 @@ import (
 )
 
 type RateLimitGetRemainingOut struct {
-	Remaining  uint64                   `msgpack:"remaining"`                // Number of tokens remaining
+	Remaining  uint64                 `msgpack:"remaining"`                // Number of tokens remaining
 	RetryAfter *diom_types.DurationMs `msgpack:"retry_after_ms,omitempty"` // Milliseconds until at least one token is available (only present when remaining is 0)
 }
