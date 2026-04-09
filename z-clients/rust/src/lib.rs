@@ -9,6 +9,6 @@ mod serde_bytes_opt;
 
 pub(crate) use self::client::Configuration;
 pub use self::{
-    client::{DiomClient, DiomOptions, DEFAULT_URL},
+    client::{DEFAULT_URL, DiomClient, DiomOptions},
     error::{Error, Result},
 };

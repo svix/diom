@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use diom::models::{MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn};
-use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use criterion::{
     BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
+use diom::models::{MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn};
+use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use rand::{Rng, SeedableRng, rngs::StdRng};
 
 fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGroup<'a, M>) {

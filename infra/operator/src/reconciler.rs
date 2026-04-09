@@ -132,11 +132,7 @@ async fn update_status(cluster: &DiomCluster, client: &Client, ns: &str) -> Resu
     Ok(())
 }
 
-pub(crate) fn error_policy(
-    _cluster: Arc<DiomCluster>,
-    err: &Error,
-    _ctx: Arc<Context>,
-) -> Action {
+pub(crate) fn error_policy(_cluster: Arc<DiomCluster>, err: &Error, _ctx: Arc<Context>) -> Action {
     warn!("Reconcile error: {err:?}");
     Action::requeue(Duration::from_secs(30))
 }

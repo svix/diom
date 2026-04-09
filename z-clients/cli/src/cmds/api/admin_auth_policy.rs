@@ -27,8 +27,7 @@ pub enum AdminAuthPolicyCommands {
   \"updated\": \"...\"
 }")]
     Upsert {
-        admin_access_policy_upsert_in:
-            crate::json::JsonOf<diom::models::AdminAccessPolicyUpsertIn>,
+        admin_access_policy_upsert_in: crate::json::JsonOf<diom::models::AdminAccessPolicyUpsertIn>,
     },
     /// Delete an access policy
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -39,8 +38,7 @@ pub enum AdminAuthPolicyCommands {
   \"success\": \"...\"
 }")]
     Delete {
-        admin_access_policy_delete_in:
-            crate::json::JsonOf<diom::models::AdminAccessPolicyDeleteIn>,
+        admin_access_policy_delete_in: crate::json::JsonOf<diom::models::AdminAccessPolicyDeleteIn>,
     },
     /// Get an access policy by ID
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m

@@ -1,7 +1,7 @@
-use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
+use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use rand::{
     Rng, SeedableRng,
     distr::{Alphanumeric, SampleString},

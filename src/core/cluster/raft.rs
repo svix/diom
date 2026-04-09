@@ -285,8 +285,7 @@ mod tests {
     impl StoreBuilder<TypeConfig, DiomLogs, StoreHandle, TempDir> for DiomStoreBuilder {
         async fn build(
             &self,
-        ) -> Result<(TempDir, DiomLogs, StoreHandle), openraft::StorageError<TypeConfig>>
-        {
+        ) -> Result<(TempDir, DiomLogs, StoreHandle), openraft::StorageError<TypeConfig>> {
             Ok(Self::setup().await.unwrap())
         }
     }

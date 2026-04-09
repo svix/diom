@@ -41,15 +41,15 @@ impl BootstrapCommand {
             BootstrapCommand::Idempotency(v) => {
                 tracing::debug!(name = v.name, "bootstrapping idempotency");
                 raft_state
-                    .client_write(
-                        diom_idempotency::operations::CreateIdempotencyOperation::from(v),
-                    )
+                    .client_write(diom_idempotency::operations::CreateIdempotencyOperation::from(v))
                     .await?;
             }
             BootstrapCommand::RateLimit(v) => {
                 tracing::debug!(name = v.name, "bootstrapping rate-limit");
                 raft_state
-                    .client_write(diom_rate_limit::operations::CreateRateLimitOperation::from(v))
+                    .client_write(diom_rate_limit::operations::CreateRateLimitOperation::from(
+                        v,
+                    ))
                     .await?;
             }
             BootstrapCommand::Msgs(v) => {

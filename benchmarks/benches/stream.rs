@@ -1,10 +1,10 @@
+use criterion::{
+    BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
+};
 use diom::models::{
     MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
 };
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use criterion::{
-    BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
-};
 use rand::{Rng, SeedableRng, rngs::StdRng};
 
 fn bench_stream<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGroup<'a, M>) {
