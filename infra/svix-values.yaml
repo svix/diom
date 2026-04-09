@@ -48,7 +48,6 @@ cluster:
         operator: Equal
         value: diom
         effect: NoSchedule
-    tolerations:
       - key: db-name
         operator: Equal
         value: coyote
