@@ -64,13 +64,10 @@ impl LogCacheInner {
     }
 
     fn purge(&mut self, log_index: u64) {
-        while let Some(front) = self.inner.front() {
-            if front.log_id.index <= log_index {
-                self.inner.pop_front();
-            } else {
-                break;
-            }
+        while let Some(front) = self.inner.front() && front.log_id.index <= log_index {
+          self.inner.pop_front();
         }
+}
         self.base_index = self.inner.front().map(|e| e.log_id.index);
     }
 
