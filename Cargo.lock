@@ -1202,11 +1202,9 @@ dependencies = [
  "coyote-operations",
  "fjall-utils",
  "jiff",
- "schemars 1.2.1",
  "serde",
  "tokio",
  "tracing",
- "validator",
 ]
 
 [[package]]
