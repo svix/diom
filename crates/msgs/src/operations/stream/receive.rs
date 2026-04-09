@@ -1,6 +1,9 @@
 use std::num::NonZeroU16;
 
-use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
+use diom_core::{
+    task::spawn_blocking_in_current_span,
+    types::{ByteString, DurationMs},
+};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -193,7 +196,7 @@ impl StreamReceiveOperation {
 pub struct StreamReceiveMsg {
     pub offset: Offset,
     pub topic: TopicPartition,
-    pub value: Vec<u8>,
+    pub value: ByteString,
     pub headers: std::collections::HashMap<String, String>,
     pub timestamp: Timestamp,
     pub scheduled_at: Option<Timestamp>,

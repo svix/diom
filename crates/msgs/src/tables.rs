@@ -1,3 +1,4 @@
+use diom_core::types::ByteString;
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
@@ -267,7 +268,7 @@ impl TableRow for QueueConfigRow {
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct MsgRow {
-    pub value: Vec<u8>,
+    pub value: ByteString,
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
     #[serde(default)]

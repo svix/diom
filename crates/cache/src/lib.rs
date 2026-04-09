@@ -16,9 +16,6 @@ use diom_namespace::{Namespace, entities::CacheConfig};
 use diom_operations::{BackgroundError, BackgroundResult};
 use fjall_utils::Databases;
 use jiff::Timestamp;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use validator::Validate;
 
 pub type CacheNamespace = Namespace<CacheConfig>;
 
@@ -39,13 +36,6 @@ impl State {
     pub fn controller(&self) -> &KvController {
         &self.controller
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub struct CacheModel {
-    pub expiry: Option<Timestamp>,
-
-    pub value: Vec<u8>,
 }
 
 #[derive(Clone)]

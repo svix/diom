@@ -1,3 +1,4 @@
+use diom_core::types::ByteString;
 use diom_error::{Result, ResultExt};
 use diom_id::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
@@ -13,7 +14,7 @@ enum RowType {
 
 #[derive(Serialize, Deserialize)]
 pub struct KvPairRow {
-    pub value: Vec<u8>,
+    pub value: ByteString,
     pub expiry: Option<Timestamp>,
     #[serde(default)]
     pub version: u64,
