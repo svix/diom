@@ -683,7 +683,10 @@ mod tests {
         }
 
         assert_eq!(
-            controller.clear_expired_in_raft(Timestamp::now()).unwrap(),
+            controller
+                .clear_expired_in_raft(Timestamp::now())
+                .await
+                .unwrap(),
             4
         );
 
