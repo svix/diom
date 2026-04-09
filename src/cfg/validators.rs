@@ -1,5 +1,4 @@
-use std::time::Duration;
-
+use coyote_core::types::DurationMs;
 use validator::ValidationError;
 
 use crate::cfg::ClusterConfiguration;
@@ -13,8 +12,8 @@ pub(super) fn validate_admin_token(token: &str) -> Result<(), ValidationError> {
     Ok(())
 }
 
-pub(super) fn validate_log_sync_interval_duration(d: &Duration) -> Result<(), ValidationError> {
-    if d.is_zero() {
+pub(super) fn validate_log_sync_interval_duration(d: &DurationMs) -> Result<(), ValidationError> {
+    if *d == DurationMs::ZERO {
         return Err(ValidationError::new(
             "sync interval duration must be non-zero",
         ));

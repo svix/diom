@@ -225,7 +225,7 @@ fn load_commands(
 async fn wait_for_up(config: &AppConfig, raft_state: &RaftState) -> anyhow::Result<()> {
     let mut deadline: std::pin::Pin<Box<dyn Future<Output = ()> + Send>> =
         if let Some(time) = config.bootstrap_max_wait_time {
-            Box::pin(tokio::time::sleep(time))
+            Box::pin(tokio::time::sleep(time.into()))
         } else {
             Box::pin(futures_util::future::pending())
         };

@@ -1,4 +1,6 @@
-use std::{fmt, str::FromStr, time::Duration};
+use std::{fmt, str::FromStr};
+
+use coyote_core::types::DurationMs;
 use tap::Pipe;
 
 pub(super) fn env_var<T, S>(name: S) -> anyhow::Result<Option<T>>
@@ -9,11 +11,11 @@ where
     env_var_parse(name, FromStr::from_str)
 }
 
-pub(super) fn env_var_ms<S>(name: S) -> anyhow::Result<Option<Duration>>
+pub(super) fn env_var_ms<S>(name: S) -> anyhow::Result<Option<DurationMs>>
 where
     S: AsRef<str>,
 {
-    env_var::<u64, S>(name)?.map(Duration::from_millis).pipe(Ok)
+    env_var::<u64, S>(name)?.map(DurationMs::from).pipe(Ok)
 }
 
 pub(super) fn env_var_comma_separated<T, S>(name: S) -> anyhow::Result<Option<Vec<T>>>
