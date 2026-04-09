@@ -198,9 +198,7 @@ where
         let mut buf = BytesMut::with_capacity(128).writer();
         let (content_type, res) = match res_content_type {
             SupportedContentType::MsgPack => {
-                let mut serializer = rmp_serde::Serializer::new(&mut buf)
-                    .with_struct_map()
-                    .with_bytes(rmp_serde::config::BytesMode::ForceAll);
+                let mut serializer = rmp_serde::Serializer::new(&mut buf).with_struct_map();
                 let serialize_result = self.0.serialize(&mut serializer).map_err(box_error);
 
                 (&mime::APPLICATION_MSGPACK, serialize_result)
