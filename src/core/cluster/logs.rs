@@ -64,20 +64,20 @@ impl LogCacheInner {
     }
 
     fn purge(&mut self, log_index: u64) {
-        while let Some(front) = self.inner.front() && front.log_id.index <= log_index {
-          self.inner.pop_front();
+        while let Some(front) = self.inner.front()
+            && front.log_id.index <= log_index
+        {
+            self.inner.pop_front();
         }
-}
+
         self.base_index = self.inner.front().map(|e| e.log_id.index);
     }
 
     fn truncate(&mut self, log_index: u64) {
-        while let Some(back) = self.inner.back() {
-            if back.log_id.index >= log_index {
-                self.inner.pop_back();
-            } else {
-                break;
-            }
+        while let Some(back) = self.inner.back()
+            && back.log_id.index >= log_index
+        {
+            self.inner.pop_back();
         }
         if self.inner.is_empty() {
             self.base_index = None;
@@ -87,9 +87,9 @@ impl LogCacheInner {
     fn get(&self, log_index: &u64) -> Option<&LogEntry> {
         let base = self.base_index?;
         let offset = log_index.checked_sub(base)? as usize;
-        self.inner
-            .get(offset)
-            .filter(|e| e.log_id.index == *log_index)
+        let ret = self.inner.get(offset);
+        debug_assert!(ret.is_none_or(|e| e.log_id.index == *log_index));
+        ret
     }
 }
 
