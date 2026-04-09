@@ -89,7 +89,7 @@ impl Request {
         let mut request = self.build_request(conf)?;
         request
             .headers_mut()
-            .insert("svix-req-id", rand::rng().random::<u32>().into());
+            .insert("diom-req-id", rand::rng().random::<u32>().into());
 
         let mut retry_count = 0;
 
@@ -143,7 +143,7 @@ impl Request {
 
             request
                 .headers_mut()
-                .insert("svix-retry-count", retry_count.into());
+                .insert("diom-retry-count", retry_count.into());
         }
     }
 
