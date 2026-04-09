@@ -87,7 +87,7 @@ jobs:
     with:
       image_tag: sha-${{ github.sha }}
       environment: svix-cloud-staging-apply
-      namespace: diom-db
+      namespace: diom
     secrets: inherit
 
   benchmark-environment:
@@ -100,4 +100,4 @@ jobs:
     with:
       image_tag: sha-${{ github.sha }}
       environment: svix-cloud-staging-apply
-      namespace: diom-db
+      namespace: diom
