@@ -101,15 +101,6 @@ impl Serialize for PeerAddr {
     }
 }
 
-impl From<SyncMode> for fjall::PersistMode {
-    fn from(value: SyncMode) -> Self {
-        match value {
-            SyncMode::Buffer => fjall::PersistMode::Buffer,
-            SyncMode::Sync => fjall::PersistMode::SyncAll,
-        }
-    }
-}
-
 #[derive(Clone, Debug, Default, Deserialize, EnvOverridable, Serialize)]
 pub struct DatabaseConfig {
     /// Directory in which this database is stored
@@ -540,6 +531,10 @@ pub struct ConfigurationInner {
     #[serde(default)]
     pub sync_mode: SyncMode,
 
+    /// When fsyncing, should we use fsync(2) or fdatasync(2)
+    #[serde(default)]
+    pub fsync_mode: FsyncMode,
+
     /// An auth token for admin access to Coyote
     ///
     /// It's useful for bootstrapping a new Coyote cluster, or using it in CI pipelines or other
@@ -708,6 +703,40 @@ pub enum SyncMode {
 }
 
 from_str_via_serde!(SyncMode);
+
+impl SyncMode {
+    pub fn into_persist_mode(&self, fsync_mode: FsyncMode) -> fjall::PersistMode {
+        match self {
+            Self::Buffer => fjall::PersistMode::Buffer,
+            Self::Sync => fsync_mode.into(),
+        }
+    }
+}
+
+/// How data is synchronized to the underlying database
+///
+/// In general, sync-data is faster but may not be safe on some platforms. Please consult
+/// your operating system documentation for more details.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum FsyncMode {
+    /// fdatasync(2)
+    #[default]
+    SyncData,
+    /// fsync(2)
+    SyncAll,
+}
+
+from_str_via_serde!(FsyncMode);
+
+impl From<FsyncMode> for fjall::PersistMode {
+    fn from(value: FsyncMode) -> Self {
+        match value {
+            FsyncMode::SyncData => fjall::PersistMode::SyncData,
+            FsyncMode::SyncAll => fjall::PersistMode::SyncAll,
+        }
+    }
+}
 
 pub fn load(config_path: Option<&Path>) -> anyhow::Result<Arc<ConfigurationInner>> {
     let config_toml = match config_path {
