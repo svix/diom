@@ -8,6 +8,7 @@ edition = "2024"
 
 [dependencies]
 anyhow.workspace = true
+byteview.workspace = true
 diom-error.workspace = true
 fjall.workspace = true
 itertools.workspace = true
@@ -17,5 +18,14 @@ serde.workspace = true
 tap.workspace = true
 tracing.workspace = true
 
+[dev-dependencies]
+criterion.workspace = true
+rand.workspace = true
+serde_bytes.workspace = true
+
 [lints]
 workspace = true
+
+[[bench]]
+name = "postcard_serialize"
+harness = false
