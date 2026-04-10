@@ -105,8 +105,8 @@ export async function runCli(rawArgv: string[], io: IoContext): Promise<number> 
 
   const wrap =
     (reg: (a: Argv, b: IoContext) => Argv) =>
-    (y2: Argv): Argv =>
-      reg(y2, io);
+      (y2: Argv): Argv =>
+        reg(y2, io);
 
   attachTopLevel(y, wrap);
 
