@@ -22,7 +22,7 @@ export const MsgQueueExtendLeaseInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             msgIds: object['msg_ids'],
-            leaseDurationMs: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : null,
+            leaseDuration: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : null,
         };
     },
 
@@ -33,7 +33,7 @@ export const MsgQueueExtendLeaseInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'msg_ids': self.msgIds,
-            'lease_duration_ms': self.leaseDurationMs,
+            'lease_duration_ms': self.leaseDuration,
         };
     }
 }

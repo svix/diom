@@ -11,7 +11,7 @@ export const AdminAuthTokenExpireInSerializer = {
     _fromJsonObject(object: any): AdminAuthTokenExpireIn {
         return {
             id: object['id'],
-            expiryMs: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
+            expiry: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
         };
     },
 
@@ -19,7 +19,7 @@ export const AdminAuthTokenExpireInSerializer = {
     _toJsonObject(self: AdminAuthTokenExpireIn): any {
         return {
             'id': self.id,
-            'expiry_ms': self.expiryMs,
+            'expiry_ms': self.expiry,
         };
     }
 }

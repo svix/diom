@@ -29,7 +29,7 @@ export const IdempotencyCompleteInSerializer = {
             key: object['key'],
             response: new Uint8Array(object['response']),
             context: object['context'],
-            ttlMs: new Date(object['ttl_ms']),
+            ttl: new Date(object['ttl_ms']),
         };
     },
 
@@ -40,7 +40,7 @@ export const IdempotencyCompleteInSerializer = {
             'key': self.key,
             'response': Array.from(self.response),
             'context': self.context,
-            'ttl_ms': self.ttlMs,
+            'ttl_ms': self.ttl,
         };
     }
 }

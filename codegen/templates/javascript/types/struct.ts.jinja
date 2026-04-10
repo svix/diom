@@ -1,4 +1,4 @@
-{% from "types/macros.ts.jinja" import field_decl, field_from_json, field_to_json -%}
+{% from "types/macros.ts.jinja" import field_decl, field_from_json, field_to_json, field_name -%}
 {% for c in referenced_components -%}
 import {
     type {{ c | to_upper_camel_case }},
@@ -36,7 +36,7 @@ export const {{ type_name }}Serializer = {
         return {
         {%- for field in type.fields %}
             {% set field_expr %}object['{{ field.name }}']{% endset -%}
-            {{ field.name | to_lower_camel_case }}: {{ field_from_json(field_expr, field.type, field.required) }},
+            {{ field_name(field) }}: {{ field_from_json(field_expr, field.type, field.required) }},
         {%- endfor %}
         };
     },
@@ -45,7 +45,7 @@ export const {{ type_name }}Serializer = {
     _toJsonObject({{ underscore_prefix }}self: {{ type_name }}): any {
         return {
         {%- for field in type.fields %}
-            {% set field_expr %}self.{{ field.name | to_lower_camel_case }}{% endset -%}
+            {% set field_expr %}self.{{ field_name(field) }}{% endset -%}
             '{{ field.name }}': {{ field_to_json(field_expr, field.type, field.required) }},
         {%- endfor %}
         };

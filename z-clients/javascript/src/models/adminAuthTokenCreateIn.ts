@@ -15,7 +15,7 @@ export const AdminAuthTokenCreateInSerializer = {
         return {
             name: object['name'],
             role: object['role'],
-            expiryMs: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
+            expiry: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
             enabled: object['enabled'],
         };
     },
@@ -25,7 +25,7 @@ export const AdminAuthTokenCreateInSerializer = {
         return {
             'name': self.name,
             'role': self.role,
-            'expiry_ms': self.expiryMs,
+            'expiry_ms': self.expiry,
             'enabled': self.enabled,
         };
     }

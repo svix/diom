@@ -21,7 +21,7 @@ export const CacheSetInSerializer = {
             namespace: object['namespace'],
             key: object['key'],
             value: new Uint8Array(object['value']),
-            ttlMs: new Date(object['ttl_ms']),
+            ttl: new Date(object['ttl_ms']),
         };
     },
 
@@ -31,7 +31,7 @@ export const CacheSetInSerializer = {
             'namespace': self.namespace,
             'key': self.key,
             'value': Array.from(self.value),
-            'ttl_ms': self.ttlMs,
+            'ttl_ms': self.ttl,
         };
     }
 }

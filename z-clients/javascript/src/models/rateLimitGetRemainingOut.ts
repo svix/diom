@@ -12,7 +12,7 @@ export const RateLimitGetRemainingOutSerializer = {
     _fromJsonObject(object: any): RateLimitGetRemainingOut {
         return {
             remaining: object['remaining'],
-            retryAfterMs: object['retry_after_ms'] ? new Date(object['retry_after_ms']) : null,
+            retryAfter: object['retry_after_ms'] ? new Date(object['retry_after_ms']) : null,
         };
     },
 
@@ -20,7 +20,7 @@ export const RateLimitGetRemainingOutSerializer = {
     _toJsonObject(self: RateLimitGetRemainingOut): any {
         return {
             'remaining': self.remaining,
-            'retry_after_ms': self.retryAfterMs,
+            'retry_after_ms': self.retryAfter,
         };
     }
 }

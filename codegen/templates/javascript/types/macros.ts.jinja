@@ -1,8 +1,9 @@
+{% macro field_name(field) %}{{field.name | to_lower_camel_case | strip_trailing_str("Ms")}}{% endmacro %}
 {% macro field_decl(field) -%}
     {% if field.description is defined -%}
         {{ field.description | with_javadoc_deprecation(field.deprecated) | to_doc_comment(style="js") | indent(5) }}
     {% endif -%}
-    {% set field_lhs = field.name | to_lower_camel_case | strip_trailing_str("Ms")  -%}
+    {% set field_lhs = field_name(field)  -%}
     {% if not field.required %}{% set field_lhs %}{{ field_lhs }}?{% endset %}{% endif -%}
     {% if field.type.is_bytes() -%}
         {% set ty = "Uint8Array" -%}

@@ -15,7 +15,7 @@ export const RateLimitConfigSerializer = {
         return {
             capacity: object['capacity'],
             refillAmount: object['refill_amount'],
-            refillIntervalMs: object['refill_interval_ms'] ? new Date(object['refill_interval_ms']) : null,
+            refillInterval: object['refill_interval_ms'] ? new Date(object['refill_interval_ms']) : null,
         };
     },
 
@@ -24,7 +24,7 @@ export const RateLimitConfigSerializer = {
         return {
             'capacity': self.capacity,
             'refill_amount': self.refillAmount,
-            'refill_interval_ms': self.refillIntervalMs,
+            'refill_interval_ms': self.refillInterval,
         };
     }
 }

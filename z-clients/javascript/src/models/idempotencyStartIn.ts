@@ -19,7 +19,7 @@ export const IdempotencyStartInSerializer = {
         return {
             namespace: object['namespace'],
             key: object['key'],
-            lockPeriodMs: new Date(object['lock_period_ms']),
+            lockPeriod: new Date(object['lock_period_ms']),
         };
     },
 
@@ -28,7 +28,7 @@ export const IdempotencyStartInSerializer = {
         return {
             'namespace': self.namespace,
             'key': self.key,
-            'lock_period_ms': self.lockPeriodMs,
+            'lock_period_ms': self.lockPeriod,
         };
     }
 }

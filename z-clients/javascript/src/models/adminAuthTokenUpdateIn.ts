@@ -13,7 +13,7 @@ export const AdminAuthTokenUpdateInSerializer = {
         return {
             id: object['id'],
             name: object['name'],
-            expiryMs: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
+            expiry: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
             enabled: object['enabled'],
         };
     },
@@ -23,7 +23,7 @@ export const AdminAuthTokenUpdateInSerializer = {
         return {
             'id': self.id,
             'name': self.name,
-            'expiry_ms': self.expiryMs,
+            'expiry_ms': self.expiry,
             'enabled': self.enabled,
         };
     }
