@@ -83,7 +83,7 @@ request_input!(CacheGetIn, "get");
 #[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct CacheGetOut {
     /// Time of expiry
-    pub expiry: Option<Timestamp>,
+    pub expiry: Timestamp,
 
     pub value: Option<ByteString>,
 }
@@ -157,7 +157,7 @@ async fn cache_set(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = SetOperation::new(namespace, data.key.to_string(), Some(data.ttl), data.value);
+    let operation = SetOperation::new(namespace, data.key.to_string(), data.ttl, data.value);
     repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(CacheSetOut {}))
 }
@@ -188,7 +188,7 @@ async fn cache_get(
     let ret = match model {
         Some(m) => CacheGetOut::from_model(m),
         None => CacheGetOut {
-            expiry: None,
+            expiry: repl.time.now(),
             value: None,
         },
     };

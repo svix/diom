@@ -13,8 +13,7 @@ enum RowType {
 #[derive(Serialize, Deserialize)]
 pub(crate) struct CacheRow {
     pub value: ByteString,
-    pub expiry: Option<Timestamp>,
-    pub version: u64,
+    pub expiry: Timestamp,
 }
 
 impl TableRow for CacheRow {

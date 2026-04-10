@@ -23,7 +23,7 @@ pub const CACHE_KEYSPACE: &str = "mod_cache";
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CacheModel {
     pub value: ByteString,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Timestamp,
 }
 
 #[derive(Clone)]

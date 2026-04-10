@@ -47,7 +47,7 @@ public class CacheGetOut {
     *
      * @return expiry
      */
-    @javax.annotation.Nullable
+    @javax.annotation.Nonnull
     public OffsetDateTime getExpiry() {
         return expiry;
     }

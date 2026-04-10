@@ -29,7 +29,7 @@ impl CompactionFilter for CacheExpiryFilter {
             return Ok(Verdict::Remove);
         };
 
-        if row.expiry.is_some_and(|e| e < self.now) {
+        if row.expiry < self.now {
             Ok(Verdict::Remove)
         } else {
             Ok(Verdict::Keep)
@@ -62,10 +62,8 @@ impl Factory for CacheExpiryFilterFactory {
 #[cfg(test)]
 mod tests {
     use super::CacheExpiryFilterFactory;
-    use crate::CACHE_KEYSPACE;
-    use crate::tables::CacheRow;
-    use diom_core::Monotime;
-    use diom_core::types::ByteString;
+    use crate::{CACHE_KEYSPACE, tables::CacheRow};
+    use diom_core::{Monotime, types::ByteString};
     use diom_id::NamespaceId;
     use fjall::{Database, KeyspaceCreateOptions};
     use fjall_utils::TableRow;
@@ -96,8 +94,7 @@ mod tests {
             CacheRow::key_for(ns, "expired"),
             &CacheRow {
                 value: ByteString::from(b"old".as_slice()),
-                expiry: Some(Timestamp::from_second(1)?),
-                version: 1,
+                expiry: Timestamp::from_second(1)?,
             },
         )?;
 
@@ -107,19 +104,7 @@ mod tests {
             CacheRow::key_for(ns, "fresh"),
             &CacheRow {
                 value: ByteString::from(b"new".as_slice()),
-                expiry: Some(Timestamp::from_second(20)?),
-                version: 1,
-            },
-        )?;
-
-        // No-expiry entry (should always be kept)
-        CacheRow::insert(
-            &ks,
-            CacheRow::key_for(ns, "permanent"),
-            &CacheRow {
-                value: ByteString::from(b"forever".as_slice()),
-                expiry: None,
-                version: 1,
+                expiry: Timestamp::from_second(20)?,
             },
         )?;
 
@@ -129,7 +114,6 @@ mod tests {
 
         assert!(CacheRow::fetch(&ks, CacheRow::key_for(ns, "expired"))?.is_none());
         assert!(CacheRow::fetch(&ks, CacheRow::key_for(ns, "fresh"))?.is_some());
-        assert!(CacheRow::fetch(&ks, CacheRow::key_for(ns, "permanent"))?.is_some());
 
         Ok(())
     }

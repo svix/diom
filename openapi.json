@@ -5929,8 +5929,7 @@
           "expiry": {
             "description": "Time of expiry",
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "value": {
             "type": "array",
@@ -5942,7 +5941,10 @@
             },
             "nullable": true
           }
-        }
+        },
+        "required": [
+          "expiry"
+        ]
       },
       "CacheSetIn": {
         "type": "object",

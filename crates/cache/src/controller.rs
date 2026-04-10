@@ -38,7 +38,7 @@ impl CacheController {
             return Ok(None);
         };
 
-        if row.expiry.is_some_and(|exp| exp < now) {
+        if row.expiry < now {
             return Ok(None);
         }
 
@@ -68,19 +68,14 @@ impl CacheController {
         namespace_id: NamespaceId,
         key: K,
         value: ByteString,
-        expiry: Option<Timestamp>,
-        log_index: u64,
+        expiry: Timestamp,
     ) -> Result<()> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
 
         spawn_blocking_in_current_span(move || {
             let key = key.as_ref();
-            let row = CacheRow {
-                value,
-                expiry,
-                version: log_index + 1,
-            };
+            let row = CacheRow { value, expiry };
             let db = db.lock("cache_controller::set");
             let mut batch = db.batch();
             batch.insert_row(&keyspace, CacheRow::key_for(namespace_id, key), &row)?;
