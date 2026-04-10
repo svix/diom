@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 //! # Cache module.
 //!
 //! This module implements a cache store.

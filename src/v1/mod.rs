@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 use aide::axum::ApiRouter;
 
 use crate::{AppState, core::auth::authorization};
