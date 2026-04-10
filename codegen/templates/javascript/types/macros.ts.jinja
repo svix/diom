@@ -19,13 +19,13 @@
 {% macro field_from_json(field_expr, type, field_required) %}
     {%- if type.is_bytes() -%}
         {% if not field_required -%}
-            {{ field_expr }} != null ? new Uint8Array({{ field_expr }}) : null
+            {{ field_expr }} != null ? new Uint8Array({{ field_expr }}) : undefined
         {%- else -%}
             new Uint8Array({{ field_expr }})
         {%- endif -%}
     {%- elif type.is_datetime() or type.is_unix_timestamp_ms() or type.is_duration_ms() -%}
         {% if not field_required -%}
-            {{ field_expr }} ? new Date({{ field_expr }}) : null
+            {{ field_expr }} ? new Date({{ field_expr }}) : undefined
         {%- else -%}
             new Date({{ field_expr }})
         {%- endif -%}
@@ -70,6 +70,12 @@
         {{ field_expr }} != null ? Array.from({{ field_expr }}) : undefined
         {%- else -%}
         Array.from({{ field_expr }})
+        {%- endif -%}
+    {%- elif type.is_unix_timestamp_ms() or type.is_duration_ms() -%}
+        {%- if not field_required -%}
+        {{ field_expr }} != null ? {{ field_expr }}.getTime() : undefined
+        {%- else -%}
+        {{ field_expr }}.getTime()
         {%- endif -%}
     {%- elif type.is_schema_ref() -%}
         {%- if not field_required -%}

@@ -40,7 +40,7 @@ export const IdempotencyCompleteInSerializer = {
             'key': self.key,
             'response': Array.from(self.response),
             'context': self.context,
-            'ttl_ms': self.ttl,
+            'ttl_ms': self.ttl.getTime(),
         };
     }
 }

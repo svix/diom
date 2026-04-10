@@ -25,7 +25,7 @@ export const MsgInSerializer = {
             value: new Uint8Array(object['value']),
             headers: object['headers'],
             key: object['key'],
-            delay: object['delay_ms'] ? new Date(object['delay_ms']) : null,
+            delay: object['delay_ms'] ? new Date(object['delay_ms']) : undefined,
         };
     },
 
@@ -35,7 +35,7 @@ export const MsgInSerializer = {
             'value': Array.from(self.value),
             'headers': self.headers,
             'key': self.key,
-            'delay_ms': self.delay,
+            'delay_ms': self.delay != null ? self.delay.getTime() : undefined,
         };
     }
 }

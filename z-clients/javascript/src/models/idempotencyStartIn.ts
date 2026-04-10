@@ -28,7 +28,7 @@ export const IdempotencyStartInSerializer = {
         return {
             'namespace': self.namespace,
             'key': self.key,
-            'lock_period_ms': self.lockPeriod,
+            'lock_period_ms': self.lockPeriod.getTime(),
         };
     }
 }

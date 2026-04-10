@@ -15,7 +15,7 @@ export const RateLimitCheckOutSerializer = {
         return {
             allowed: object['allowed'],
             remaining: object['remaining'],
-            retryAfter: object['retry_after_ms'] ? new Date(object['retry_after_ms']) : null,
+            retryAfter: object['retry_after_ms'] ? new Date(object['retry_after_ms']) : undefined,
         };
     },
 
@@ -24,7 +24,7 @@ export const RateLimitCheckOutSerializer = {
         return {
             'allowed': self.allowed,
             'remaining': self.remaining,
-            'retry_after_ms': self.retryAfter,
+            'retry_after_ms': self.retryAfter != null ? self.retryAfter.getTime() : undefined,
         };
     }
 }

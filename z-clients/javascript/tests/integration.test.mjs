@@ -43,7 +43,7 @@ describe("SDK Integration Tests", () => {
 
     // Verify deleted
     const getResp2 = await client.kv.get(key, {});
-    assert.strictEqual(getResp2.value, null);
+    assert.strictEqual(getResp2.value, undefined);
   });
 
   it("test_cache_set_get_delete", async () => {
@@ -51,8 +51,10 @@ describe("SDK Integration Tests", () => {
     const key = "js-integration-cache-key";
     const value = toBytes("js-integration-cache-value");
 
+    const ttl = new Date(60 * 1000); // 60 second TTL
+
     // Set
-    await client.cache.set(key, value, { ttlMs: 60000 });
+    await client.cache.set(key, value, {ttl: ttl});
 
     // Get
     const getResp = await client.cache.get(key, {});
@@ -64,6 +66,6 @@ describe("SDK Integration Tests", () => {
 
     // Verify deleted
     const getResp2 = await client.cache.get(key, {});
-    assert.strictEqual(getResp2.value, null);
+    assert.strictEqual(getResp2.value, undefined);
   });
 });

@@ -37,7 +37,7 @@ export const KvSetInSerializer = {
             namespace: object['namespace'],
             key: object['key'],
             value: new Uint8Array(object['value']),
-            ttl: object['ttl_ms'] ? new Date(object['ttl_ms']) : null,
+            ttl: object['ttl_ms'] ? new Date(object['ttl_ms']) : undefined,
             behavior: object['behavior'] != null ? OperationBehaviorSerializer._fromJsonObject(object['behavior']): undefined,
             version: object['version'],
         };
@@ -49,7 +49,7 @@ export const KvSetInSerializer = {
             'namespace': self.namespace,
             'key': self.key,
             'value': Array.from(self.value),
-            'ttl_ms': self.ttl,
+            'ttl_ms': self.ttl != null ? self.ttl.getTime() : undefined,
             'behavior': self.behavior != null ? OperationBehaviorSerializer._toJsonObject(self.behavior) : undefined,
             'version': self.version,
         };

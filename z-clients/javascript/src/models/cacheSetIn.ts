@@ -31,7 +31,7 @@ export const CacheSetInSerializer = {
             'namespace': self.namespace,
             'key': self.key,
             'value': Array.from(self.value),
-            'ttl_ms': self.ttl,
+            'ttl_ms': self.ttl.getTime(),
         };
     }
 }

@@ -26,8 +26,8 @@ export const MsgQueueReceiveInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
-            leaseDuration: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : null,
-            batchWait: object['batch_wait_ms'] ? new Date(object['batch_wait_ms']) : null,
+            leaseDuration: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : undefined,
+            batchWait: object['batch_wait_ms'] ? new Date(object['batch_wait_ms']) : undefined,
         };
     },
 
@@ -38,8 +38,8 @@ export const MsgQueueReceiveInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'batch_size': self.batchSize,
-            'lease_duration_ms': self.leaseDuration,
-            'batch_wait_ms': self.batchWait,
+            'lease_duration_ms': self.leaseDuration != null ? self.leaseDuration.getTime() : undefined,
+            'batch_wait_ms': self.batchWait != null ? self.batchWait.getTime() : undefined,
         };
     }
 }
