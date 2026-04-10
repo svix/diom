@@ -77,7 +77,7 @@ pub async fn initialize_raft(
         cfg.cluster.log_sync_interval_commits,
         cfg.cluster.log_sync_interval_duration.into(),
         cfg.cluster.log_sync_interval_auto,
-        cfg.cluster.log_ack_immediately,
+        cfg.cluster.log_sync_mode,
         cfg.fsync_mode,
     )
     .context("setting up log store")?;
@@ -242,7 +242,7 @@ mod tests {
                 1,
                 Duration::from_secs(10),
                 false,
-                true,
+                crate::cfg::SyncMode::Buffer,
                 FsyncMode::default(),
             )?;
 
