@@ -4,7 +4,7 @@ export interface AdminAuthTokenCreateIn {
     name: string;
     role: string;
     /** Milliseconds from now until the token expires. */
-    expiryMs?: number | null;
+    expiry?: Date | null;
     /** Whether the token is enabled. Defaults to `true`. */
     enabled?: boolean;
 }
@@ -15,7 +15,7 @@ export const AdminAuthTokenCreateInSerializer = {
         return {
             name: object['name'],
             role: object['role'],
-            expiryMs: object['expiry_ms'],
+            expiryMs: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
             enabled: object['enabled'],
         };
     },

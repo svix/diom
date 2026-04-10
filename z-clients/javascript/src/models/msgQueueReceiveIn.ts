@@ -3,9 +3,9 @@
 export interface MsgQueueReceiveIn {
     namespace?: string | null;
     batchSize?: number;
-    leaseDurationMs?: number;
+    leaseDuration?: Date;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWaitMs?: number | null;
+    batchWait?: Date | null;
 }
 
 export interface MsgQueueReceiveIn_ {
@@ -13,9 +13,9 @@ export interface MsgQueueReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
-    leaseDurationMs?: number;
+    leaseDuration?: Date;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWaitMs?: number | null;
+    batchWait?: Date | null;
 }
 
 export const MsgQueueReceiveInSerializer = {
@@ -26,8 +26,8 @@ export const MsgQueueReceiveInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
-            leaseDurationMs: object['lease_duration_ms'],
-            batchWaitMs: object['batch_wait_ms'],
+            leaseDurationMs: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : null,
+            batchWaitMs: object['batch_wait_ms'] ? new Date(object['batch_wait_ms']) : null,
         };
     },
 

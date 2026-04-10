@@ -15,7 +15,7 @@ export interface MsgIn {
      * The message will not be delivered to queue consumers
      * until the delay has elapsed from the time of publish.
      */
-    delayMs?: number | null;
+    delay?: Date | null;
 }
 
 export const MsgInSerializer = {
@@ -25,7 +25,7 @@ export const MsgInSerializer = {
             value: new Uint8Array(object['value']),
             headers: object['headers'],
             key: object['key'],
-            delayMs: object['delay_ms'],
+            delayMs: object['delay_ms'] ? new Date(object['delay_ms']) : null,
         };
     },
 

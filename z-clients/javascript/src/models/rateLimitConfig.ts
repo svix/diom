@@ -6,7 +6,7 @@ export interface RateLimitConfig {
     /** Number of tokens to add per refill interval */
     refillAmount: number;
     /** Interval in milliseconds between refills (minimum 1 millisecond) */
-    refillIntervalMs?: number;
+    refillInterval?: Date;
 }
 
 export const RateLimitConfigSerializer = {
@@ -15,7 +15,7 @@ export const RateLimitConfigSerializer = {
         return {
             capacity: object['capacity'],
             refillAmount: object['refill_amount'],
-            refillIntervalMs: object['refill_interval_ms'],
+            refillIntervalMs: object['refill_interval_ms'] ? new Date(object['refill_interval_ms']) : null,
         };
     },
 

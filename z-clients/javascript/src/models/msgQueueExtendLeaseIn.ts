@@ -3,7 +3,7 @@
 export interface MsgQueueExtendLeaseIn {
     namespace?: string | null;
     msgIds: string[];
-    leaseDurationMs?: number;
+    leaseDuration?: Date;
 }
 
 export interface MsgQueueExtendLeaseIn_ {
@@ -11,7 +11,7 @@ export interface MsgQueueExtendLeaseIn_ {
     topic: string;
     consumerGroup: string;
     msgIds: string[];
-    leaseDurationMs?: number;
+    leaseDuration?: Date;
 }
 
 export const MsgQueueExtendLeaseInSerializer = {
@@ -22,7 +22,7 @@ export const MsgQueueExtendLeaseInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             msgIds: object['msg_ids'],
-            leaseDurationMs: object['lease_duration_ms'],
+            leaseDurationMs: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : null,
         };
     },
 

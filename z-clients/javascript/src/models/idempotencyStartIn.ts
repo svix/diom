@@ -3,14 +3,14 @@
 export interface IdempotencyStartIn {
     namespace?: string | null;
     /** How long to hold the lock on start before releasing it. */
-    lockPeriodMs: number;
+    lockPeriod: Date;
 }
 
 export interface IdempotencyStartIn_ {
     namespace?: string | null;
     key: string;
     /** How long to hold the lock on start before releasing it. */
-    lockPeriodMs: number;
+    lockPeriod: Date;
 }
 
 export const IdempotencyStartInSerializer = {
@@ -19,7 +19,7 @@ export const IdempotencyStartInSerializer = {
         return {
             namespace: object['namespace'],
             key: object['key'],
-            lockPeriodMs: object['lock_period_ms'],
+            lockPeriodMs: new Date(object['lock_period_ms']),
         };
     },
 

@@ -3,7 +3,7 @@
 export interface AdminAuthTokenExpireIn {
     id: string;
     /** Milliseconds from now until the token expires. `None` means expire immediately. */
-    expiryMs?: number | null;
+    expiry?: Date | null;
 }
 
 export const AdminAuthTokenExpireInSerializer = {
@@ -11,7 +11,7 @@ export const AdminAuthTokenExpireInSerializer = {
     _fromJsonObject(object: any): AdminAuthTokenExpireIn {
         return {
             id: object['id'],
-            expiryMs: object['expiry_ms'],
+            expiryMs: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
         };
     },
 

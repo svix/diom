@@ -3,7 +3,7 @@
 export interface AdminAuthTokenUpdateIn {
     id: string;
     name?: string | null;
-    expiryMs?: number | null;
+    expiry?: Date | null;
     enabled?: boolean | null;
 }
 
@@ -13,7 +13,7 @@ export const AdminAuthTokenUpdateInSerializer = {
         return {
             id: object['id'],
             name: object['name'],
-            expiryMs: object['expiry_ms'],
+            expiryMs: object['expiry_ms'] ? new Date(object['expiry_ms']) : null,
             enabled: object['enabled'],
         };
     },

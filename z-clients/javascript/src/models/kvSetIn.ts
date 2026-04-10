@@ -7,7 +7,7 @@ import {
 export interface KvSetIn {
     namespace?: string | null;
     /** Time to live in milliseconds */
-    ttlMs?: number | null;
+    ttl?: Date | null;
     behavior?: OperationBehavior;
     /**
      * If set, the write only succeeds when the stored version matches this value.
@@ -21,7 +21,7 @@ export interface KvSetIn_ {
     key: string;
     value: Uint8Array;
     /** Time to live in milliseconds */
-    ttlMs?: number | null;
+    ttl?: Date | null;
     behavior?: OperationBehavior;
     /**
      * If set, the write only succeeds when the stored version matches this value.
@@ -37,7 +37,7 @@ export const KvSetInSerializer = {
             namespace: object['namespace'],
             key: object['key'],
             value: new Uint8Array(object['value']),
-            ttlMs: object['ttl_ms'],
+            ttlMs: object['ttl_ms'] ? new Date(object['ttl_ms']) : null,
             behavior: object['behavior'] != null ? OperationBehaviorSerializer._fromJsonObject(object['behavior']): undefined,
             version: object['version'],
         };

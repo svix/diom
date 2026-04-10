@@ -7,7 +7,7 @@ export interface IdempotencyCompleteIn {
     /** Optional metadata to store alongside the response */
     context?: { [key: string]: string } | null;
     /** How long to keep the idempotency response for. */
-    ttlMs: number;
+    ttl: Date;
 }
 
 export interface IdempotencyCompleteIn_ {
@@ -18,7 +18,7 @@ export interface IdempotencyCompleteIn_ {
     /** Optional metadata to store alongside the response */
     context?: { [key: string]: string } | null;
     /** How long to keep the idempotency response for. */
-    ttlMs: number;
+    ttl: Date;
 }
 
 export const IdempotencyCompleteInSerializer = {
@@ -29,7 +29,7 @@ export const IdempotencyCompleteInSerializer = {
             key: object['key'],
             response: new Uint8Array(object['response']),
             context: object['context'],
-            ttlMs: object['ttl_ms'],
+            ttlMs: new Date(object['ttl_ms']),
         };
     },
 

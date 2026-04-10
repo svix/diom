@@ -7,10 +7,10 @@ import {
 export interface MsgStreamReceiveIn {
     namespace?: string | null;
     batchSize?: number;
-    leaseDurationMs?: number;
+    leaseDuration?: Date;
     defaultStartingPosition?: SeekPosition;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWaitMs?: number | null;
+    batchWait?: Date | null;
 }
 
 export interface MsgStreamReceiveIn_ {
@@ -18,10 +18,10 @@ export interface MsgStreamReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
-    leaseDurationMs?: number;
+    leaseDuration?: Date;
     defaultStartingPosition?: SeekPosition;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWaitMs?: number | null;
+    batchWait?: Date | null;
 }
 
 export const MsgStreamReceiveInSerializer = {
@@ -32,9 +32,9 @@ export const MsgStreamReceiveInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
-            leaseDurationMs: object['lease_duration_ms'],
+            leaseDurationMs: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : null,
             defaultStartingPosition: object['default_starting_position'] != null ? SeekPositionSerializer._fromJsonObject(object['default_starting_position']): undefined,
-            batchWaitMs: object['batch_wait_ms'],
+            batchWaitMs: object['batch_wait_ms'] ? new Date(object['batch_wait_ms']) : null,
         };
     },
 
