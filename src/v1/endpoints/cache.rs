@@ -176,7 +176,7 @@ async fn cache_get(
         repl.wait_linearizable().await.or_internal_error()?;
     }
 
-    let cache_state = diom_cache::State::init(state.do_not_use_dbs.clone())?;
+    let cache_state = repl.state_machine.cache_store().await;
     let controller = cache_state.controller();
 
     let model = controller
