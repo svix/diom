@@ -2,12 +2,41 @@ use k8s_openapi::{
     api::policy::v1::{PodDisruptionBudget, PodDisruptionBudgetSpec},
     apimachinery::pkg::{apis::meta::v1::LabelSelector, util::intstr::IntOrString},
 };
-use kube::{Resource, ResourceExt, core::ObjectMeta};
+use kube::{
+    Resource,
+    api::{DeleteParams, Patch},
+    core::ObjectMeta,
+};
 
-use crate::{crd::DiomCluster, error::Result, labels};
+use crate::{context::ClusterCtx, error::Result, labels};
 
-pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<PodDisruptionBudget> {
-    let cluster_name = cluster.name_any();
+pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
+    if ctx.cluster.spec.diom.replicas > 1 {
+        let pdb = build(ctx)?;
+        ctx.pdb_api()
+            .patch(
+                pdb.metadata.name.as_deref().unwrap(),
+                &ctx.pp(),
+                &Patch::Apply(&pdb),
+            )
+            .await?;
+    } else {
+        match ctx
+            .pdb_api()
+            .delete(&ctx.name, &DeleteParams::default())
+            .await
+        {
+            Ok(_) => {}
+            Err(kube::Error::Api(e)) if e.code == 404 => {} // already absent
+            Err(e) => return Err(e.into()),
+        }
+    }
+    Ok(())
+}
+
+pub(crate) fn build(ctx: &ClusterCtx) -> Result<PodDisruptionBudget> {
+    let cluster = &ctx.cluster;
+    let cluster_name = &ctx.name;
     let replicas = cluster.spec.diom.replicas;
 
     // Require a strict majority to be available at all times, which maintains quorum.
@@ -16,15 +45,15 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<PodDisruptionBudg
     Ok(PodDisruptionBudget {
         metadata: ObjectMeta {
             name: Some(cluster_name.clone()),
-            namespace: Some(ns.into()),
-            labels: Some(labels::general_labels(&cluster_name)),
+            namespace: Some(ctx.ns.clone()),
+            labels: Some(labels::general_labels(cluster_name)),
             owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
             ..Default::default()
         },
         spec: Some(PodDisruptionBudgetSpec {
             min_available: Some(IntOrString::Int(min_available)),
             selector: Some(LabelSelector {
-                match_labels: Some(labels::selector(&cluster_name)),
+                match_labels: Some(labels::selector(cluster_name)),
                 ..Default::default()
             }),
             ..Default::default()

@@ -8,6 +8,7 @@ use kube::{
 };
 use tracing::*;
 
+mod context;
 mod crd;
 mod error;
 mod labels;

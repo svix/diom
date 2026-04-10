@@ -13,10 +13,11 @@ use k8s_openapi::{
         api::resource::Quantity, apis::meta::v1::LabelSelector, util::intstr::IntOrString,
     },
 };
-use kube::{Resource, ResourceExt, core::ObjectMeta};
+use kube::{Resource, api::Patch, core::ObjectMeta};
 
 use crate::{
-    crd::{DiomCluster, DiomClusterSpec, INTRACLUSTER_PORT},
+    context::ClusterCtx,
+    crd::{DiomClusterSpec, INTRACLUSTER_PORT},
     error::Result,
     labels,
     resources::services,
@@ -34,17 +35,25 @@ const LOGS_DATA_PATH: &str = "/data/logs";
 /// Path inside the container for Raft snapshots (when a separate volume is configured).
 const SNAPSHOTS_DATA_PATH: &str = "/data/snapshots";
 
-pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
-    let cluster_name = cluster.name_any();
-    let spec = &cluster.spec;
-    let headless_svc = services::headless_name(&cluster_name);
+pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
+    let sts = build(ctx)?;
+    ctx.sts_api()
+        .patch(&ctx.name, &ctx.pp(), &Patch::Apply(&sts))
+        .await?;
+    Ok(())
+}
 
-    let env = build_env(spec, &cluster_name, &headless_svc, ns);
+fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
+    let cluster_name = &ctx.name;
+    let spec = &ctx.cluster.spec;
+    let headless_svc = services::headless_name(cluster_name);
+
+    let env = build_env(spec, cluster_name, &headless_svc, &ctx.ns);
     let volume_claim_templates = build_volume_claim_templates(spec);
     let volume_mounts = build_volume_mounts(spec);
     let container = build_container(spec, env, volume_mounts);
 
-    let pod_labels = labels::general_labels(&cluster_name);
+    let pod_labels = labels::general_labels(cluster_name);
     let pod_annotations = spec.pod_annotations.clone();
 
     let pod_spec = PodSpec {
@@ -66,16 +75,16 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
     Ok(StatefulSet {
         metadata: ObjectMeta {
             name: Some(cluster_name.clone()),
-            namespace: Some(ns.into()),
-            labels: Some(labels::general_labels(&cluster_name)),
-            owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
+            namespace: Some(ctx.ns.clone()),
+            labels: Some(labels::general_labels(cluster_name)),
+            owner_references: Some(vec![ctx.cluster.controller_owner_ref(&()).unwrap()]),
             ..Default::default()
         },
         spec: Some(StatefulSetSpec {
             replicas: Some(spec.diom.replicas),
             service_name: Some(headless_svc),
             selector: LabelSelector {
-                match_labels: Some(labels::selector(&cluster_name)),
+                match_labels: Some(labels::selector(cluster_name)),
                 ..Default::default()
             },
             template: PodTemplateSpec {
@@ -107,18 +116,14 @@ fn build_env(
 
     // These must come before any vars that reference them via $(VAR) substitution.
     let mut env: Vec<EnvVar> = vec![
-        // Downward API: pod name and namespace, used to construct stable DNS addresses.
         env_from_field("POD_NAME", "metadata.name"),
         env_from_field("POD_NAMESPACE", "metadata.namespace"),
-        // Each pod advertises its stable StatefulSet DNS name so peers can reach it.
-        // Uses k8s env var substitution: $(VAR) references earlier vars in this list.
         env_var(
             "DIOM_CLUSTER_ADVERTISED_ADDRESS",
             format!(
                 "$(POD_NAME).{headless_svc}.$(POD_NAMESPACE).svc.cluster.local:{intracluster_port}"
             ),
         ),
-        // Seed nodes: all pods in the StatefulSet by their stable DNS names.
         env_var(
             "DIOM_CLUSTER_SEED_NODES",
             seed_nodes_value(
@@ -129,16 +134,11 @@ fn build_env(
                 intracluster_port,
             ),
         ),
-        // Allow any pod to initialize a new cluster if it can't find peers and has no state.
-        // StatefulSets start pods sequentially (pod-0 first), so in practice pod-0 initializes
-        // first. Setting this on all pods ensures the cluster can still form if pod-0 restarts.
         env_var("DIOM_CLUSTER_AUTO_INITIALIZE", "true"),
         env_var(
             "DIOM_LISTEN_ADDRESS",
             format!("0.0.0.0:{}", spec.diom.api_port),
         ),
-        // This variable is only used by the CLI, but allows the CLI to talk to the local server
-        // without any special configuration
         env_var(
             "DIOM_SERVER_URL",
             format!("http://localhost:{}", spec.diom.api_port),
@@ -329,8 +329,6 @@ fn build_volume_mounts(spec: &DiomClusterSpec) -> Vec<VolumeMount> {
 
     mounts
 }
-
-// --- Helpers ---
 
 fn env_var(name: &str, value: impl Into<String>) -> EnvVar {
     EnvVar {
