@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, Field, Ident, LitInt, spanned::Spanned};
+use syn::{DeriveInput, Expr, Field, Ident, LitInt, spanned::Spanned};
 
 struct KeyField {
     ident: Ident,
@@ -18,19 +18,14 @@ fn parse_key_index(field: &Field) -> Result<Option<usize>, syn::Error> {
     Ok(None)
 }
 
-fn parse_prefix(input: &DeriveInput) -> Result<LitInt, syn::Error> {
+fn parse_prefix(input: &DeriveInput) -> Result<Expr, syn::Error> {
     for attr in &input.attrs {
         if attr.path().is_ident("table_key") {
             let mut prefix = None;
             attr.parse_nested_meta(|meta| {
                 if meta.path.is_ident("prefix") {
                     let value = meta.value()?;
-                    let lit = value.parse::<LitInt>()?;
-                    // Validate it fits in a u8
-                    lit.base10_parse::<u8>().map_err(|e| {
-                        syn::Error::new(lit.span(), format!("prefix must be a u8 (0-255): {e}"))
-                    })?;
-                    prefix = Some(lit);
+                    prefix = Some(value.parse::<Expr>()?);
                     Ok(())
                 } else {
                     Err(meta.error("expected `prefix`"))
@@ -43,7 +38,7 @@ fn parse_prefix(input: &DeriveInput) -> Result<LitInt, syn::Error> {
     }
     Err(syn::Error::new(
         input.ident.span(),
-        "missing #[table_key(prefix = <u8>)] attribute",
+        "missing #[table_key(prefix = ...)] attribute",
     ))
 }
 
@@ -92,7 +87,7 @@ fn collect_fields(input: &DeriveInput) -> Result<Vec<KeyField>, syn::Error> {
 /// `field_expr` maps each `KeyField` to the token stream used to reference it
 /// (e.g. `self.field` or a local binding).
 fn gen_key_build(
-    prefix: &LitInt,
+    prefix: &Expr,
     fields: &[KeyField],
     field_expr: impl Fn(&KeyField) -> TokenStream,
 ) -> TokenStream {
@@ -105,7 +100,7 @@ fn gen_key_build(
         // Most keys are well under 64 bytes (prefix + a few fixed-size fields).
         let mut stack_buf = [0u8; 64];
         let mut heap_buf;
-        let buf: &mut [u8] = if total_len <= 64 {
+        let buf: &mut [u8] = if total_len <= stack_buf.len() {
             &mut stack_buf[..total_len]
         } else {
             heap_buf = vec![0u8; total_len];
@@ -113,7 +108,7 @@ fn gen_key_build(
         };
         let mut pos = 0;
 
-        buf[pos] = #prefix;
+        buf[pos] = #prefix as u8;
         pos += 1;
 
         #({
@@ -127,7 +122,7 @@ fn gen_key_build(
 }
 
 /// Generates the body of `from_fjall_key` that parses a key back into a struct.
-fn gen_key_parse(struct_name: &Ident, prefix: &LitInt, fields: &[KeyField]) -> TokenStream {
+fn gen_key_parse(struct_name: &Ident, prefix: &Expr, fields: &[KeyField]) -> TokenStream {
     // Build parsing statements: one per field in key-index order.
     // Each binds a local `__field_<ident>` so we can construct the struct
     // with the original field names regardless of key ordering.
@@ -160,10 +155,10 @@ fn gen_key_parse(struct_name: &Ident, prefix: &LitInt, fields: &[KeyField]) -> T
 
     quote! {
         let bytes: &[u8] = &key;
-        if bytes.first().copied() != ::std::option::Option::Some(#prefix) {
+        if bytes.first().copied() != ::std::option::Option::Some(#prefix as u8) {
             return ::std::result::Result::Err(::std::borrow::Cow::Owned(::std::format!(
                 "key does not start with expected prefix {} (for {})",
-                #prefix, ::std::stringify!(#struct_name)
+                #prefix as u8, ::std::stringify!(#struct_name)
             )));
         }
         let mut pos = 1;
@@ -184,7 +179,6 @@ fn gen_key_parse(struct_name: &Ident, prefix: &LitInt, fields: &[KeyField]) -> T
 pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     let input: DeriveInput = syn::parse2(input)?;
     let prefix = parse_prefix(&input)?;
-    let prefix_val: u8 = prefix.base10_parse()?;
     let fields = collect_fields(&input)?;
     let name = &input.ident;
 
@@ -205,7 +199,6 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
             }
         })
         .collect();
-    let uniqueness_symbol = quote::format_ident!("__FJALL_KEY_PREFIX_{}", prefix_val);
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let fjall_key_body = gen_key_build(&prefix, &fields, |f| {
@@ -214,21 +207,6 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     });
 
     let from_fjall_key_body = gen_key_parse(name, &prefix, &fields);
-
-    let range_build_start = gen_key_build(&prefix, &fields, |f| {
-        let ident = &f.ident;
-        quote! { start.#ident }
-    });
-
-    let range_build_end = gen_key_build(&prefix, &fields, |f| {
-        let ident = &f.ident;
-        quote! { end.#ident }
-    });
-
-    let range_build_end_only = gen_key_build(&prefix, &fields, |f| {
-        let ident = &f.ident;
-        quote! { end.#ident }
-    });
 
     // Generate extract_<field> methods for each field.
     // Each method reads a single field from a raw key without constructing the
@@ -261,11 +239,11 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
                     ::std::borrow::Cow<'static, str>,
                 > {
                     let bytes: &[u8] = key;
-                    if bytes.first().copied() != ::std::option::Option::Some(#prefix) {
+                    if bytes.first().copied() != ::std::option::Option::Some(#prefix as u8) {
                         return ::std::result::Result::Err(::std::borrow::Cow::Owned(
                             ::std::format!(
                                 "key does not start with expected prefix {} (for {})",
-                                #prefix, ::std::stringify!(#name)
+                                #prefix as u8, ::std::stringify!(#name)
                             ),
                         ));
                     }
@@ -280,19 +258,11 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         .collect();
 
     Ok(quote! {
-        /// Emits a linker symbol named after the prefix value (e.g. `__FJALL_KEY_PREFIX_1`).
-        /// If two types claim the same prefix, the duplicate symbol causes a compile-time
-        /// error, enforcing global uniqueness across the binary.
-        ///
-        /// SAFETY: the symbol is a zero-sized `()` value with no consumers — `no_mangle`
-        /// is used purely to produce a deterministic name for collision detection.
-        #[unsafe(no_mangle)]
-        #[used]
-        static #uniqueness_symbol: () = ();
-
         #(#fixed_size_assertions)*
 
         impl #impl_generics ::fjall_utils::FjallKeyAble for #name #ty_generics #where_clause {
+            const PREFIX: u8 = #prefix as u8;
+
             fn fjall_key(&self) -> ::fjall_utils::UserKey {
                 #fjall_key_body
             }
@@ -301,23 +271,6 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
                 key: ::fjall_utils::UserKey,
             ) -> ::std::result::Result<Self, ::std::borrow::Cow<'static, str>> {
                 #from_fjall_key_body
-            }
-
-            fn range(start: Self, end: Self) -> ::std::ops::Range<::fjall_utils::UserKey> {
-                let start_key = { #range_build_start };
-                let end_key = { #range_build_end };
-                start_key..end_key
-            }
-
-            fn range_inclusive(start: Self, end: Self) -> ::std::ops::RangeInclusive<::fjall_utils::UserKey> {
-                let start_key = { #range_build_start };
-                let end_key = { #range_build_end };
-                start_key..=end_key
-            }
-
-            fn range_end_inclusive(end: Self) -> ::std::ops::RangeToInclusive<::fjall_utils::UserKey> {
-                let end_key = { #range_build_end_only };
-                ..=end_key
             }
         }
 

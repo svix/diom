@@ -20,7 +20,7 @@ pub use self::{
         TableKeyType, TableRow, WriteBatchExt,
     },
 };
-pub use diom_derive::FjallKeyAble;
+pub use diom_derive::{FjallKeyAble, KeyComponent};
 pub use fjall::UserKey;
 
 /// Version envelope for values stored in fjall. The serialized form starts

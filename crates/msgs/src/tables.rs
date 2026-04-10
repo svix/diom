@@ -9,8 +9,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, TopicName};
 
-/// FIXME(@svix-gabriel) NUKE
-/// These values can never change. Only additions are allowed.
 #[repr(u8)]
 enum RowType {
     Topic = 0,
@@ -265,7 +263,7 @@ impl TableRow for QueueConfigRow {
 }
 
 #[derive(FjallKeyAble)]
-#[table_key(prefix = 3)]
+#[table_key(prefix = RowType::Msg)]
 pub(crate) struct MsgKey {
     #[key(0)]
     pub(crate) topic_id: TopicId,
@@ -290,13 +288,12 @@ impl MsgRow {
         topic_id: TopicId,
         partition: Partition,
     ) -> Result<Offset> {
-        let range = MsgKey::range_inclusive(
+        let range = MsgKey::range(
             MsgKey {
                 topic_id,
                 partition,
                 offset: Offset::MIN,
-            },
-            MsgKey {
+            }..=MsgKey {
                 topic_id,
                 partition,
                 offset: Offset::MAX,
@@ -327,8 +324,7 @@ impl MsgRow {
                 topic_id,
                 partition,
                 offset,
-            },
-            MsgKey {
+            }..MsgKey {
                 topic_id,
                 partition,
                 offset: offset + batch_size as u64,

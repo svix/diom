@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    ops::{Range, RangeInclusive, RangeToInclusive},
+    ops::{Bound, RangeBounds},
 };
 
 use crate::{TableKey, TableRow};
@@ -25,8 +25,9 @@ use crate::{TableKey, TableRow};
 ///
 /// ## Requirements
 ///
-/// - `prefix` must be a `u8` literal, globally unique across the binary. If it's not globally unique,
-///   you'll get a compile error.
+/// - `prefix` must be a constant expression that fits in a `u8` (e.g. a literal
+///   like `3` or an enum variant like `RowType::Msg`), unique among types sharing
+///   a keyspace.
 /// - Every field needs a `#[key(N)]` attribute specifying its position. Changing a key's position
 ///   is a breaking disk change and should be avoided.
 /// - All field types must implement [`KeyComponent`]. This is already implemented for most native types.
@@ -38,7 +39,7 @@ use crate::{TableKey, TableRow};
 /// The macro generates:
 ///
 /// - **`FjallKeyAble` trait impl** — `fjall_key()`, `from_fjall_key()`,
-///   `range()`, `range_inclusive()`, `range_end_inclusive()`.
+///   `range()` (provided default).
 /// - **`extract_<field>()` methods** on the struct — read a single field
 ///   from a raw `fjall::UserKey` without constructing the full struct.
 ///   Returns the borrowed form where possible (`&str` for `String`,
@@ -54,13 +55,26 @@ use crate::{TableKey, TableRow};
 /// big-endian encoding to preserve sort order). The trailing variable-size
 /// field, if any, consumes the remaining bytes.
 pub trait FjallKeyAble: Sized {
+    /// The prefix byte that identifies this key type in the binary layout.
+    const PREFIX: u8;
+
     fn fjall_key(&self) -> crate::UserKey;
 
     fn from_fjall_key(key: crate::UserKey) -> Result<Self, Cow<'static, str>>;
 
-    fn range(start: Self, end: Self) -> Range<crate::UserKey>;
-    fn range_inclusive(start: Self, end: Self) -> RangeInclusive<crate::UserKey>;
-    fn range_end_inclusive(end: Self) -> RangeToInclusive<crate::UserKey>;
+    fn range<RB: RangeBounds<Self>>(bounds: RB) -> (Bound<crate::UserKey>, Bound<crate::UserKey>) {
+        let start = match bounds.start_bound() {
+            Bound::Included(v) => Bound::Included(v.fjall_key()),
+            Bound::Excluded(v) => Bound::Excluded(v.fjall_key()),
+            Bound::Unbounded => Bound::Unbounded,
+        };
+        let end = match bounds.end_bound() {
+            Bound::Included(v) => Bound::Included(v.fjall_key()),
+            Bound::Excluded(v) => Bound::Excluded(v.fjall_key()),
+            Bound::Unbounded => Bound::Unbounded,
+        };
+        (start, end)
+    }
 }
 
 /// FIXME(@svix-gabriel)
@@ -329,26 +343,31 @@ mod tests {
 
     #[test]
     fn test_range() {
-        let range =
-            ExampleSingleKey::range(ExampleSingleKey { id: 1 }, ExampleSingleKey { id: 10 });
+        let (start, end) =
+            ExampleSingleKey::range(ExampleSingleKey { id: 1 }..ExampleSingleKey { id: 10 });
         let mut start_expected = Vec::new();
         start_expected.push(1u8);
         start_expected.extend_from_slice(&1u32.to_be_bytes());
         let mut end_expected = Vec::new();
         end_expected.push(1u8);
         end_expected.extend_from_slice(&10u32.to_be_bytes());
-        assert_eq!(&*range.start, &start_expected);
-        assert_eq!(&*range.end, &end_expected);
+        let std::ops::Bound::Included(start_key) = start else {
+            panic!()
+        };
+        let std::ops::Bound::Excluded(end_key) = end else {
+            panic!()
+        };
+        assert_eq!(&*start_key, &start_expected);
+        assert_eq!(&*end_key, &end_expected);
     }
 
     #[test]
     fn test_composite_range() {
-        let range = ExampleCompositeKey::range(
+        let (start, _end) = ExampleCompositeKey::range(
             ExampleCompositeKey {
                 group: "a".to_string(),
                 id: 0,
-            },
-            ExampleCompositeKey {
+            }..ExampleCompositeKey {
                 group: "z".to_string(),
                 id: 100,
             },
@@ -357,7 +376,10 @@ mod tests {
         start_expected.push(2u8);
         start_expected.extend_from_slice(&0u32.to_be_bytes());
         start_expected.extend_from_slice(b"a");
-        assert_eq!(&*range.start, &start_expected);
+        let std::ops::Bound::Included(start_key) = start else {
+            panic!()
+        };
+        assert_eq!(&*start_key, &start_expected);
     }
 
     #[test]

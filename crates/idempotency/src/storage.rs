@@ -1,5 +1,4 @@
 use diom_core::types::{ByteString, Metadata};
-use fjall_utils::FjallKeyAble;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,13 +18,6 @@ impl From<IdempotencyState> for ByteString {
             .expect("Failed to serialize IdempotencyState")
             .into()
     }
-}
-
-#[derive(FjallKeyAble)]
-#[table_key(prefix = 1)]
-pub(crate) struct X {
-    #[key(0)]
-    pub(crate) topic_id: String,
 }
 
 impl From<ByteString> for IdempotencyState {
