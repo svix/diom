@@ -6,7 +6,7 @@ use crate::{
     context::ClusterCtx,
     crd::{DiomCluster, Phase},
     error::{Error, Result},
-    resources::{pdb, services, statefulset},
+    resources::{pdb, pvcs, services, statefulset},
 };
 
 pub(crate) struct Context {
@@ -26,14 +26,13 @@ impl Reconciler {
 
     async fn run(self) -> Result<Action> {
         services::reconcile(&self.ctx).await?;
-
         statefulset::reconcile(&self.ctx).await?;
-
+        pvcs::reconcile_pvcs(&self.ctx).await?;
         pdb::reconcile(&self.ctx).await?;
 
         self.update_status().await?;
         tracing::info!(name = %self.ctx.name, ns = %self.ctx.ns, "Reconcile complete");
-        Ok(Action::requeue(Duration::from_secs(300)))
+        Ok(Action::requeue(Duration::from_secs(60)))
     }
 
     async fn update_status(&self) -> Result<()> {
