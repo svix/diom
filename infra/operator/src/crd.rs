@@ -20,7 +20,7 @@ fn default_api_port() -> u16 {
     DEFAULT_API_PORT
 }
 
-fn default_nodes() -> i32 {
+fn default_replicas() -> i32 {
     1
 }
 
@@ -34,7 +34,7 @@ fn default_nodes() -> i32 {
     namespaced,
     status = "DiomClusterStatus",
     shortname = "cc",
-    printcolumn = r#"{"name":"Nodes","type":"integer","jsonPath":".spec.nodes"}"#,
+    printcolumn = r#"{"name":"Replicas","type":"integer","jsonPath":".spec.replicas"}"#,
     printcolumn = r#"{"name":"Phase","type":"string","jsonPath":".status.phase"}"#,
     printcolumn = r#"{"name":"Ready","type":"integer","jsonPath":".status.readyReplicas"}"#
 )]
@@ -134,12 +134,12 @@ pub(crate) struct VolumeSpec {
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct DiomSpec {
-    /// Number of Diom nodes.
+    /// Number of Diom replicas.
     ///
     /// Should be an odd number. Recommended value is 3, or 1 if you want only a single node.
-    #[serde(default = "default_nodes")]
-    #[schemars(schema_with = "nodes_schema")]
-    pub nodes: i32,
+    #[serde(default = "default_replicas")]
+    #[schemars(schema_with = "replicas_schema")]
+    pub replicas: i32,
 
     /// Port for the external API and service.
     #[serde(default = "default_api_port")]
@@ -267,12 +267,12 @@ impl ValueOrSecretRef {
     }
 }
 
-fn nodes_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+fn replicas_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({
         "type": "integer",
         "format": "int32",
         "default": 1,
         "minimum": 1.0,
-        "description": "Number of Diom nodes. Should be odd for quorum (1, 3, 5...)."
+        "description": "Number of Diom replicas. Should be odd for quorum (1, 3, 5...)."
     })
 }

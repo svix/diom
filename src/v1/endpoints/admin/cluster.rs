@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 use std::{collections::BTreeSet, time::Duration};
 
 use aide::axum::{

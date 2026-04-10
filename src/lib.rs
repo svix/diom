@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 #![warn(clippy::all)]
 
 use std::{

@@ -20,8 +20,8 @@
       {
         "additionalPrinterColumns": [
           {
-            "jsonPath": ".spec.nodes",
-            "name": "Nodes",
+            "jsonPath": ".spec.replicas",
+            "name": "Replicas",
             "type": "integer"
           },
           {
@@ -984,13 +984,6 @@
                     "nullable": true,
                     "type": "object"
                   },
-                  "nodes": {
-                    "default": 1,
-                    "description": "Number of Diom nodes.\n\nShould be an odd number. Recommended value is 3, or 1 if you want only a single node.",
-                    "format": "int32",
-                    "minimum": 1.0,
-                    "type": "integer"
-                  },
                   "opentelemetryAddress": {
                     "description": "The OpenTelemetry address to send events to if given.\n\nCurrently only GRPC exports are supported.",
                     "nullable": true,
@@ -1013,6 +1006,13 @@
                     "default": {},
                     "description": "Additional annotations to add to pods.",
                     "type": "object"
+                  },
+                  "replicas": {
+                    "default": 1,
+                    "description": "Number of Diom replicas.\n\nShould be an odd number. Recommended value is 3, or 1 if you want only a single node.",
+                    "format": "int32",
+                    "minimum": 1.0,
+                    "type": "integer"
                   },
                   "resources": {
                     "default": {},

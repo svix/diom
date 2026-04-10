@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 //! Module defining utilities for crating `tracing` spans compatible with OpenTelemetry's
 //! conventions.
 use std::{net::SocketAddr, time::Instant};
