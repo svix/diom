@@ -381,7 +381,7 @@ pub struct ClusterConfiguration {
     /// If this is set to "buffer" and a node suffers a catastrophic failure where OS buffers
     /// are not written to disk, that node should be erased and re-snapshotted before being
     /// re-added to the cluster.
-    #[serde(default)]
+    #[serde(default = "SyncMode::sync")]
     pub log_sync_mode: SyncMode,
 
     /// Trigger a background snapshot after this many writes
@@ -542,7 +542,7 @@ pub struct ConfigurationInner {
     /// This is similar to the `cluster.log_sync` options, but applies to the actual
     /// primary data as opposed to the log, and is applied at every batch commit from the
     /// underlying replication system.
-    #[serde(default)]
+    #[serde(default = "SyncMode::buffer")]
     pub sync_mode: SyncMode,
 
     /// When fsyncing, should we use fsync(2) or fdatasync(2)
@@ -706,11 +706,10 @@ impl fmt::Display for LogLevel {
 }
 
 /// How data is synchronized to the underlying database
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum SyncMode {
     /// Write data to the OS, but do not fsync
-    #[default]
     Buffer,
     /// fsync the data on every batch apply
     Sync,
@@ -719,6 +718,14 @@ pub enum SyncMode {
 from_str_via_serde!(SyncMode);
 
 impl SyncMode {
+    fn buffer() -> Self {
+        Self::Buffer
+    }
+
+    fn sync() -> Self {
+        Self::Sync
+    }
+
     pub fn into_persist_mode(&self, fsync_mode: FsyncMode) -> fjall::PersistMode {
         match self {
             Self::Buffer => fjall::PersistMode::Buffer,
