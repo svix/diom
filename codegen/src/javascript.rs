@@ -22,6 +22,10 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
             "javascript/component_type.ts.jinja",
         ],
     ),
+    OutputDirectory::managed_dir(
+        "z-clients/cli-js/src/generated",
+        &["cli_js/api_summary.ts.jinja", "cli_js/api_resource.ts.jinja"],
+    ),
 ];
 
 pub(crate) async fn generate(api: &Api) -> anyhow::Result<()> {

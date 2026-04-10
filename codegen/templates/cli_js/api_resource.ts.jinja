@@ -1,0 +1,150 @@
+// @ts-nocheck
+// this file is @generated
+{% set resource_type_name = resource.name | to_upper_camel_case -%}
+
+{% for _, sub in resource.subresources | items -%}
+import { register{{ sub.name | to_upper_camel_case }}Commands } from "./{{ sub.name | to_lower_camel_case }}.js";
+{% endfor -%}
+import type { Argv } from "yargs";
+import type { IoContext } from "../io.js";
+import { getCliDiom } from "../diom-holder.js";
+import { parseByteString } from "../byte-string.js";
+import { parseJsonArg } from "../json-arg.js";
+import { printJsonOutput } from "../print-json.js";
+
+{%- macro plain_schema_example(title, schema) %}
+{{ title }}:
+{
+{%- for field in schema.fields | selectattr("positional", "false") %}
+  "{{ field.name }}": "{{ field.example if field.example is defined else '...' }}"{{ "," if not loop.last else "" }}
+{%- endfor %}
+}
+{%- endmacro %}
+
+{%- macro diom_chain(resource) -%}
+{%- for segment in resource.name | split(".") -%}
+.{{ segment | to_lower_camel_case }}
+{%- endfor -%}
+{%- endmacro %}
+
+/**
+ * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
+ */
+export function register{{ resource_type_name }}Commands(
+  y: Argv,
+  io: IoContext,
+): Argv {
+  {% for name, sub in resource.subresources | items -%}
+  y.command(
+    "{{ name | replace('_', '-') }}",
+    "",
+    (y2) => {
+      register{{ sub.name | to_upper_camel_case }}Commands(y2, io);
+      return y2.demandCommand(1).strict();
+    },
+  );
+  {% endfor %}
+
+  {% for op in resource.operations -%}
+  {% if op.request_body_schema_name is defined -%}
+  {% set body_schema = api.types[op.request_body_schema_name] -%}
+  {% set positional_fields = body_schema.fields | selectattr("positional") -%}
+  {% set body_schema_all_optional = body_schema.fields
+      | selectattr("required")
+      | selectattr("positional", "false")
+      | length == 0 %}
+  {% set usage -%}
+{{ op.name | replace("_", "-") }}{% for field in positional_fields %} <{{ field.name | replace("_", "-") }}>{% endfor %}{% if body_schema_all_optional %} [body]{% else %} <body>{% endif %}
+  {%- endset %}
+  y.command(
+    `{{ usage | trim }}`,
+    `{% if op.deprecated %}[deprecated] {% endif %}{{ op.description | default("", true) | replace("`", "'") }}`,
+    (cmdY) => {
+      {%- if op.request_body_schema_name is defined or op.response_body_schema_name is defined %}
+      cmdY.epilog(
+        [
+          {%- if op.request_body_schema_name is defined %}
+          `{{ plain_schema_example("Example body", api.types[op.request_body_schema_name]) | trim | replace("`", "'") }}`,
+          {%- endif %}
+          {%- if op.request_body_schema_name is defined and op.response_body_schema_name is defined %}
+          "",
+          {%- endif %}
+          {%- if op.response_body_schema_name is defined %}
+          `{{ plain_schema_example("Example response", api.types[op.response_body_schema_name]) | trim | replace("`", "'") }}`,
+          {%- endif %}
+        ].join("\n"),
+      );
+      {%- endif %}
+      return cmdY;
+    },
+    async (argv) => {
+      const client = getCliDiom(io);
+      {%- for field in positional_fields %}
+      {% if field.type.is_bytes() %}
+      const {{ field.name | to_lower_camel_case }} = parseByteString(
+        String(argv["{{ field.name | replace('_', '-') }}"]),
+      );
+      {% else %}
+      const {{ field.name | to_lower_camel_case }} = String(
+        argv["{{ field.name | replace('_', '-') }}"],
+      );
+      {% endif %}
+      {%- endfor %}
+      {% set body_param = op.request_body_schema_name | to_lower_camel_case %}
+      {% if body_schema_all_optional %}
+      const bodyRaw = argv.body as string | undefined;
+      const {{ body_param }} =
+        bodyRaw === undefined
+          ? {}
+          : await parseJsonArg(bodyRaw, io.readStdin);
+      {% else %}
+      const {{ body_param }} = await parseJsonArg(
+        String(argv.body),
+        io.readStdin,
+      );
+      {% endif %}
+      {%- if op.response_body_schema_name is defined %}
+      const resp = await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}(
+        {% for field in positional_fields -%}
+        {{ field.name | to_lower_camel_case }},
+        {% endfor -%}
+        {{ op.request_body_schema_name | to_lower_camel_case }},
+      );
+      printJsonOutput(resp);
+      {%- else %}
+      await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}(
+        {% for field in positional_fields -%}
+        {{ field.name | to_lower_camel_case }},
+        {% endfor -%}
+        {{ op.request_body_schema_name | to_lower_camel_case }},
+      );
+      {%- endif %}
+    },
+  );
+  {% else %}
+  y.command(
+    "{{ op.name | replace('_', '-') }}",
+    `{% if op.deprecated %}[deprecated] {% endif %}{{ op.description | default("", true) | replace("`", "'") }}`,
+    (cmdY) => {
+      {%- if op.response_body_schema_name is defined %}
+      cmdY.epilog(
+        `{{ plain_schema_example("Example response", api.types[op.response_body_schema_name]) | trim | replace("`", "'") }}`,
+      );
+      {%- endif %}
+      return cmdY;
+    },
+    async (argv) => {
+      const client = getCliDiom(io);
+      {%- if op.response_body_schema_name is defined %}
+      const resp = await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}();
+      printJsonOutput(resp);
+      {%- else %}
+      await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}();
+      {%- endif %}
+    },
+  );
+  {% endif %}
+  {% endfor %}
+
+  return y.demandCommand(1).strict();
+}

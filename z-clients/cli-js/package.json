@@ -1,0 +1,29 @@
+{
+  "name": "diom-cli-js",
+  "version": "1.85.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "diom-js": "dist/bin.js"
+  },
+  "scripts": {
+    "build": "esbuild src/bin.ts --bundle --platform=node --format=esm --outfile=dist/bin.js --sourcemap",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "biome check ."
+  },
+  "dependencies": {
+    "diom": "file:../javascript",
+    "smol-toml": "^1.4.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.15",
+    "@types/node": "^22.10.2",
+    "@types/yargs": "^17.0.33",
+    "esbuild": "^0.25.0",
+    "msgpackr": "^1.11.9",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,13 @@
+// this file is @generated
+{% do set_summary_filename("register_api.ts") -%}
+
+{% macro reexport(resource) -%}
+export { register{{ resource.name | to_upper_camel_case }}Commands } from "./{{ resource.name | to_lower_camel_case }}.js";
+{% for _, sub in resource.subresources | items -%}
+{{ reexport(sub) -}}
+{% endfor %}
+{% endmacro %}
+
+{% for res in api.resources -%}
+{{ reexport(res) -}}
+{% endfor %}
