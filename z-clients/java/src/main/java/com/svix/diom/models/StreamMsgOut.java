@@ -115,7 +115,7 @@ public class StreamMsgOut {
     *
      * @return headers
      */
-    @javax.annotation.Nullable
+    @javax.annotation.Nonnull
     public Map<String,String> getHeaders() {
         return headers;
     }
