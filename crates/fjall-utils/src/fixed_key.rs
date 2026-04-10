@@ -36,7 +36,9 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
     }
 
     pub fn store(&self, keyspace: &fjall::Keyspace, value: &T) -> Result<()> {
-        let serialized = postcard::to_allocvec(&crate::V0Wrapper::V0(value)).or_internal_error()?;
+        let serialized = crate::postcard_to_byteview(&crate::V0Wrapper::V0(value))
+            .map(fjall::Slice::from)
+            .or_internal_error()?;
         keyspace.insert(self.key, serialized).or_internal_error()
     }
 
@@ -50,7 +52,9 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
         keyspace: &fjall::Keyspace,
         value: &T,
     ) -> Result<()> {
-        let serialized = postcard::to_allocvec(&crate::V0Wrapper::V0(value)).or_internal_error()?;
+        let serialized = crate::postcard_to_byteview(&crate::V0Wrapper::V0(value))
+            .map(fjall::Slice::from)
+            .or_internal_error()?;
         tx.insert(keyspace, self.key, serialized);
         Ok(())
     }

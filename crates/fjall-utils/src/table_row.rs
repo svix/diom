@@ -16,8 +16,8 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
     const ROW_TYPE: u8;
 
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
-        postcard::to_allocvec(&crate::V0Wrapper::V0(self))
-            .map(|bytes| bytes.into())
+        crate::postcard_to_byteview(&crate::V0Wrapper::V0(self))
+            .map(fjall::Slice::from)
             .or_internal_error()
     }
 
