@@ -21,6 +21,7 @@ pub use self::{
     },
 };
 pub use diom_derive::FjallKeyAble;
+pub use fjall::UserKey;
 
 /// Version envelope for values stored in fjall. The serialized form starts
 /// with a varint discriminant (0x00 for V0), leaving room for future migrations.

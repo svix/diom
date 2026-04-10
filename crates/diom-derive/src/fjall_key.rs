@@ -122,7 +122,7 @@ fn gen_key_build(
         })*
 
         debug_assert_eq!(pos, total_len);
-        ::fjall::UserKey::from(&*buf)
+        ::fjall_utils::UserKey::from(&*buf)
     }
 }
 
@@ -256,7 +256,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
 
             quote! {
                 #[doc = #doc]
-                fn #method_name(key: &fjall::UserKey) -> ::std::result::Result<
+                fn #method_name(key: &::fjall_utils::UserKey) -> ::std::result::Result<
                     <#ty as ::fjall_utils::KeyComponent>::Ref<'_>,
                     ::std::borrow::Cow<'static, str>,
                 > {
@@ -293,29 +293,29 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         #(#fixed_size_assertions)*
 
         impl #impl_generics ::fjall_utils::FjallKeyAble for #name #ty_generics #where_clause {
-            fn fjall_key(&self) -> ::fjall::UserKey {
+            fn fjall_key(&self) -> ::fjall_utils::UserKey {
                 #fjall_key_body
             }
 
             fn from_fjall_key(
-                key: ::fjall::UserKey,
+                key: ::fjall_utils::UserKey,
             ) -> ::std::result::Result<Self, ::std::borrow::Cow<'static, str>> {
                 #from_fjall_key_body
             }
 
-            fn range(start: Self, end: Self) -> ::std::ops::Range<::fjall::UserKey> {
+            fn range(start: Self, end: Self) -> ::std::ops::Range<::fjall_utils::UserKey> {
                 let start_key = { #range_build_start };
                 let end_key = { #range_build_end };
                 start_key..end_key
             }
 
-            fn range_inclusive(start: Self, end: Self) -> ::std::ops::RangeInclusive<::fjall::UserKey> {
+            fn range_inclusive(start: Self, end: Self) -> ::std::ops::RangeInclusive<::fjall_utils::UserKey> {
                 let start_key = { #range_build_start };
                 let end_key = { #range_build_end };
                 start_key..=end_key
             }
 
-            fn range_end_inclusive(end: Self) -> ::std::ops::RangeToInclusive<::fjall::UserKey> {
+            fn range_end_inclusive(end: Self) -> ::std::ops::RangeToInclusive<::fjall_utils::UserKey> {
                 let end_key = { #range_build_end_only };
                 ..=end_key
             }

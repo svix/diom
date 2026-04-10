@@ -335,7 +335,7 @@ mod tests {
     use jiff::Timestamp;
 
     use super::*;
-    use crate::tables::{MsgRow, StreamLeaseRow, TopicRow};
+    use crate::tables::{MsgKey, MsgRow, StreamLeaseRow, TopicRow};
 
     fn make_db() -> (fjall::Database, tempfile::TempDir) {
         let dir = tempfile::tempdir().unwrap();
@@ -374,7 +374,15 @@ mod tests {
             scheduled_at: None,
         };
         batch
-            .insert_row(msgs, MsgRow::key_for(topic_row.id, partition, offset), &row)
+            .insert_row(
+                msgs,
+                MsgKey {
+                    topic_id: topic_row.id,
+                    partition,
+                    offset,
+                },
+                &row,
+            )
             .unwrap();
         batch.commit().unwrap();
     }

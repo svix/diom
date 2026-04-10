@@ -3,12 +3,13 @@ use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
 use diom_error::Result;
-use fjall_utils::{TableKey, TableRow, WriteBatchExt};
+use fjall_utils::{FjallKeyAble, TableKey, TableRow, WriteBatchExt};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, TopicName};
 
+/// FIXME(@svix-gabriel) NUKE
 /// These values can never change. Only additions are allowed.
 #[repr(u8)]
 enum RowType {
@@ -19,8 +20,6 @@ enum RowType {
     QueueConfig = 4,
     Idempotency = 5,
 }
-
-const SIZE_U64: usize = size_of::<u64>();
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct TopicRow {
@@ -265,6 +264,17 @@ impl TableRow for QueueConfigRow {
     const ROW_TYPE: u8 = RowType::QueueConfig as u8;
 }
 
+#[derive(FjallKeyAble)]
+#[table_key(prefix = 3)]
+pub(crate) struct MsgKey {
+    #[key(0)]
+    pub(crate) topic_id: TopicId,
+    #[key(1)]
+    pub(crate) partition: Partition,
+    #[key(2)]
+    pub(crate) offset: Offset,
+}
+
 #[derive(Serialize, Deserialize)]
 pub(crate) struct MsgRow {
     pub value: ByteString,
@@ -274,39 +284,29 @@ pub(crate) struct MsgRow {
 }
 
 impl MsgRow {
-    pub(crate) fn key_for(
-        topic_id: TopicId,
-        partition: Partition,
-        offset: Offset,
-    ) -> TableKey<Self> {
-        TableKey::init_key(
-            Self::ROW_TYPE,
-            &[
-                topic_id.as_bytes(),
-                &partition.get().to_be_bytes(),
-                &offset.to_be_bytes(),
-            ],
-            &[],
-        )
-    }
-
     #[tracing::instrument(skip_all, level = "debug")]
     pub(crate) fn next_offset(
         keyspace: &impl fjall_utils::ReadableKeyspace,
         topic_id: TopicId,
         partition: Partition,
     ) -> Result<Offset> {
-        let start = Self::key_for(topic_id, partition, Offset::MIN).into_fjall_key();
-        let end = Self::key_for(topic_id, partition, Offset::MAX).into_fjall_key();
-        let item = keyspace.range(start..=end).next_back();
+        let range = MsgKey::range_inclusive(
+            MsgKey {
+                topic_id,
+                partition,
+                offset: Offset::MIN,
+            },
+            MsgKey {
+                topic_id,
+                partition,
+                offset: Offset::MAX,
+            },
+        );
+        let item = keyspace.range(range).next_back();
         match item {
             Some(kv) => {
                 let key = kv.key()?;
-                let offset = u64::from_be_bytes(
-                    key[key.len().saturating_sub(SIZE_U64)..]
-                        .try_into()
-                        .expect("We know the size is right"),
-                );
+                let offset = MsgKey::extract_offset(&key).expect("valid MsgKey in msg table");
                 Ok(offset + 1)
             }
             None => Ok(0),
@@ -322,9 +322,19 @@ impl MsgRow {
         batch_size: u16,
     ) -> Result<Vec<Self>> {
         let mut results = Vec::with_capacity(batch_size as usize);
-        let start = Self::key_for(topic_id, partition, offset).into_fjall_key();
-        let end = Self::key_for(topic_id, partition, offset + batch_size as u64).into_fjall_key();
-        for entry in keyspace.range(start..end) {
+        let range = MsgKey::range(
+            MsgKey {
+                topic_id,
+                partition,
+                offset,
+            },
+            MsgKey {
+                topic_id,
+                partition,
+                offset: offset + batch_size as u64,
+            },
+        );
+        for entry in keyspace.range(range) {
             let val = entry.value()?;
             let msg = Self::from_fjall_value(val)?;
             results.push(msg);

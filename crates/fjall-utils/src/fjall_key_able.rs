@@ -54,13 +54,13 @@ use crate::{TableKey, TableRow};
 /// big-endian encoding to preserve sort order). The trailing variable-size
 /// field, if any, consumes the remaining bytes.
 pub trait FjallKeyAble: Sized {
-    fn fjall_key(&self) -> fjall::UserKey;
+    fn fjall_key(&self) -> crate::UserKey;
 
-    fn from_fjall_key(key: fjall::UserKey) -> Result<Self, Cow<'static, str>>;
+    fn from_fjall_key(key: crate::UserKey) -> Result<Self, Cow<'static, str>>;
 
-    fn range(start: Self, end: Self) -> Range<fjall::UserKey>;
-    fn range_inclusive(start: Self, end: Self) -> RangeInclusive<fjall::UserKey>;
-    fn range_end_inclusive(end: Self) -> RangeToInclusive<fjall::UserKey>;
+    fn range(start: Self, end: Self) -> Range<crate::UserKey>;
+    fn range_inclusive(start: Self, end: Self) -> RangeInclusive<crate::UserKey>;
+    fn range_end_inclusive(end: Self) -> RangeToInclusive<crate::UserKey>;
 }
 
 /// FIXME(@svix-gabriel)

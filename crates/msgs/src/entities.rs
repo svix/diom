@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
+use std::{collections::HashMap, fmt, mem::size_of, num::NonZeroU64, ops::Deref, str::FromStr};
 
 use diom_core::types::{ByteString, DurationMs, UnixTimestampMs};
 use diom_error::Error;
@@ -22,6 +22,31 @@ pub const TOPIC_PARTITION_DELIMITER: &str = "~";
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Partition(u16);
+
+impl fjall_utils::KeyComponent for Partition {
+    const FIXED_SIZE: bool = true;
+    const BYTE_SIZE: usize = size_of::<Self>();
+    type Ref<'a> = Self;
+
+    fn key_len(&self) -> usize {
+        Self::BYTE_SIZE
+    }
+
+    fn write_to_key(&self, buf: &mut [u8]) -> usize {
+        self.0.write_to_key(buf)
+    }
+
+    fn read_from_key(buf: &[u8]) -> Result<(Self, usize), std::borrow::Cow<'static, str>> {
+        let (val, len) = u16::read_from_key(buf)?;
+        Ok((Self(val), len))
+    }
+
+    fn read_ref_from_key(
+        buf: &[u8],
+    ) -> Result<(Self::Ref<'_>, usize), std::borrow::Cow<'static, str>> {
+        Self::read_from_key(buf)
+    }
+}
 
 impl Partition {
     pub fn new(index: u16) -> Result<Self, Error> {
