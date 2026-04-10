@@ -1771,6 +1771,7 @@ dependencies = [
  "http",
  "http-body-util",
  "mime",
+ "postcard",
  "reqwest 0.13.2",
  "rmp-serde",
  "schemars 1.2.1",
