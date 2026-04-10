@@ -23,6 +23,18 @@ pub enum V0Wrapper<T> {
     V0(T),
 }
 
+/// Serialize `value` directly into a [`byteview::ByteView`],
+/// avoiding an intermediate `Vec<u8>` allocation.
+pub(crate) fn postcard_to_byteview(
+    value: &impl serde::Serialize,
+) -> Result<byteview::ByteView, postcard::Error> {
+    use postcard::ser_flavors;
+    let size = postcard::serialize_with_flavor(value, ser_flavors::Size::default())?;
+    let mut builder = byteview::ByteView::builder(size);
+    postcard::serialize_with_flavor(value, ser_flavors::Slice::new(&mut builder))?;
+    Ok(builder.freeze())
+}
+
 /// Useful for verifying all table prefixes for a given keyspace are unique,
 /// at compile time.
 pub const fn are_all_unique(strings: &[&str]) -> bool {
@@ -95,5 +107,21 @@ mod tests {
         let bare = postcard::to_allocvec(&inner).unwrap();
         assert_eq!(wrapped[0], 0x00);
         assert_eq!(&wrapped[1..], bare.as_slice());
+    }
+
+    #[test]
+    fn postcard_to_byteview_roundtrip() {
+        let original = 0xdeadbeef_u32;
+        let slice = postcard_to_byteview(&V0Wrapper::V0(original)).unwrap();
+        let V0Wrapper::V0(recovered) = postcard::from_bytes::<V0Wrapper<u32>>(&slice).unwrap();
+        assert_eq!(recovered, original);
+    }
+
+    #[test]
+    fn postcard_to_byteview_matches_allocvec() {
+        let original = 42u32;
+        let via_slice = postcard_to_byteview(&V0Wrapper::V0(original)).unwrap();
+        let via_vec = postcard::to_allocvec(&V0Wrapper::V0(original)).unwrap();
+        assert_eq!(&*via_slice, via_vec.as_slice());
     }
 }
