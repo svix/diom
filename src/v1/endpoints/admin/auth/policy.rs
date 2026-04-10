@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::{Extension, State};
 use diom_admin_auth::{

@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 //! # Idempotency module.
 //!
 //! This module implements idempotency, so people can use it to implement idempotency in their web

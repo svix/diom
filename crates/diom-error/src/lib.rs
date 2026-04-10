@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Diom Authors
-// SPDX-License-Identifier: MIT
-
 use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
