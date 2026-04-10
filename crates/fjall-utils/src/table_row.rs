@@ -27,22 +27,29 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
             .or_internal_error()
     }
 
-    fn fetch<K: ReadableKeyspace>(keyspace: &K, key: TableKey<Self>) -> Result<Option<Self>> {
+    fn fetch<K: ReadableKeyspace, TK: Into<TableKey<Self>>>(
+        keyspace: &K,
+        key: TK,
+    ) -> Result<Option<Self>> {
         keyspace
-            .get(key.into_fjall_key())?
+            .get(key.into().into_fjall_key())?
             .map(Self::from_fjall_value)
             .transpose()
     }
 
-    fn insert(keyspace: &fjall::Keyspace, key: TableKey<Self>, row: &Self) -> Result<()> {
-        let fjall_key = key.key;
+    fn insert<TK: Into<TableKey<Self>>>(
+        keyspace: &fjall::Keyspace,
+        key: TK,
+        row: &Self,
+    ) -> Result<()> {
+        let fjall_key = key.into().key;
         let value = row.to_fjall_value()?;
         keyspace.insert(fjall_key, value)?;
         Ok(())
     }
 
-    fn remove(keyspace: &fjall::Keyspace, key: TableKey<Self>) -> Result<()> {
-        keyspace.remove(key.into_fjall_key())?;
+    fn remove<TK: Into<TableKey<Self>>>(keyspace: &fjall::Keyspace, key: TK) -> Result<()> {
+        keyspace.remove(key.into().into_fjall_key())?;
         Ok(())
     }
 
@@ -98,58 +105,58 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
 
 /// Adds convenience methods to fjall's WriteBatch that work with TableRow
 pub trait WriteBatchExt {
-    fn insert_row<T: TableRow>(
+    fn insert_row<T: TableRow, TK: Into<TableKey<T>>>(
         &mut self,
         keyspace: &fjall::Keyspace,
-        key: TableKey<T>,
+        key: TK,
         row: &T,
     ) -> Result<()>;
 
-    fn remove_row<T: TableRow>(
+    fn remove_row<T: TableRow, TK: Into<TableKey<T>>>(
         &mut self,
         keyspace: &fjall::Keyspace,
-        key: TableKey<T>,
+        key: TK,
     ) -> Result<()>;
 }
 
 impl WriteBatchExt for fjall::OwnedWriteBatch {
-    fn insert_row<T: TableRow>(
+    fn insert_row<T: TableRow, TK: Into<TableKey<T>>>(
         &mut self,
         keyspace: &fjall::Keyspace,
-        key: TableKey<T>,
+        key: TK,
         row: &T,
     ) -> Result<()> {
-        self.insert(keyspace, key.into_fjall_key(), row.to_fjall_value()?);
+        self.insert(keyspace, key.into().into_fjall_key(), row.to_fjall_value()?);
         Ok(())
     }
 
-    fn remove_row<T: TableRow>(
+    fn remove_row<T: TableRow, TK: Into<TableKey<T>>>(
         &mut self,
         keyspace: &fjall::Keyspace,
-        key: TableKey<T>,
+        key: TK,
     ) -> Result<()> {
-        self.remove(keyspace, key.into_fjall_key());
+        self.remove(keyspace, key.into().into_fjall_key());
         Ok(())
     }
 }
 
 /// Adds convenience methods to fjall's Keyspace that work with TableRow
 pub trait KeyspaceExt {
-    fn insert_row<T: TableRow>(&self, key: TableKey<T>, row: &T) -> Result<()>;
+    fn insert_row<T: TableRow, TK: Into<TableKey<T>>>(&self, key: TK, row: &T) -> Result<()>;
 
-    fn get_row<T: TableRow>(&self, key: TableKey<T>) -> Result<Option<T>>;
+    fn get_row<T: TableRow, TK: Into<TableKey<T>>>(&self, key: TK) -> Result<Option<T>>;
 
-    fn remove_row<T: TableRow>(&self, key: TableKey<T>) -> Result<()>;
+    fn remove_row<T: TableRow, TK: Into<TableKey<T>>>(&self, key: TK) -> Result<()>;
 }
 
 impl KeyspaceExt for fjall::Keyspace {
-    fn insert_row<T: TableRow>(&self, key: TableKey<T>, row: &T) -> Result<()> {
-        self.insert(key.into_fjall_key(), row.to_fjall_value()?)?;
+    fn insert_row<T: TableRow, TK: Into<TableKey<T>>>(&self, key: TK, row: &T) -> Result<()> {
+        self.insert(key.into().into_fjall_key(), row.to_fjall_value()?)?;
         Ok(())
     }
 
-    fn get_row<T: TableRow>(&self, key: TableKey<T>) -> Result<Option<T>> {
-        if let Some(value) = self.get(key.into_fjall_key())? {
+    fn get_row<T: TableRow, TK: Into<TableKey<T>>>(&self, key: TK) -> Result<Option<T>> {
+        if let Some(value) = self.get(key.into().into_fjall_key())? {
             Some(T::from_fjall_value(value)?)
         } else {
             None
@@ -157,8 +164,8 @@ impl KeyspaceExt for fjall::Keyspace {
         .pipe(Ok)
     }
 
-    fn remove_row<T: TableRow>(&self, key: TableKey<T>) -> Result<()> {
-        self.remove(key.into_fjall_key())?;
+    fn remove_row<T: TableRow, TK: Into<TableKey<T>>>(&self, key: TK) -> Result<()> {
+        self.remove(key.into().into_fjall_key())?;
         Ok(())
     }
 }
