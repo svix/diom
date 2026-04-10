@@ -176,8 +176,7 @@ async fn kv_get(
         repl.wait_linearizable().await.or_internal_error()?;
     }
 
-    // FIXME: this state should be passed, not created every time.
-    let kv_state = diom_kv::State::init(state.do_not_use_dbs.clone())?;
+    let kv_state = repl.state_machine.kv_store().await;
     let controller = kv_state.controller();
 
     let model = controller
