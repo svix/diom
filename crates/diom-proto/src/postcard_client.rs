@@ -75,12 +75,12 @@ pub trait PostcardResponse {
 
 impl PostcardResponse for reqwest::Response {
     async fn postcard<T: DeserializeOwned>(self) -> Result<T, PostcardResponseError> {
-        if let Some(content_type) = self.headers().get(CONTENT_TYPE) {
-            if content_type != APPLICATION_POSTCARD {
-                return Err(PostcardResponseError::InvalidResponseContentType(
-                    content_type.clone(),
-                ));
-            }
+        if let Some(content_type) = self.headers().get(CONTENT_TYPE)
+            && content_type != APPLICATION_POSTCARD
+        {
+            return Err(PostcardResponseError::InvalidResponseContentType(
+                content_type.clone(),
+            ));
         }
 
         let full = self.bytes().await?;

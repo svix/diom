@@ -75,12 +75,12 @@ pub trait MsgpackResponse {
 
 impl MsgpackResponse for reqwest::Response {
     async fn msgpack<T: DeserializeOwned>(self) -> Result<T, MsgpackResponseError> {
-        if let Some(content_type) = self.headers().get(CONTENT_TYPE) {
-            if content_type != APPLICATION_MSGPACK {
-                return Err(MsgpackResponseError::InvalidResponseContentType(
-                    content_type.clone(),
-                ));
-            }
+        if let Some(content_type) = self.headers().get(CONTENT_TYPE)
+            && content_type != APPLICATION_MSGPACK
+        {
+            return Err(MsgpackResponseError::InvalidResponseContentType(
+                content_type.clone(),
+            ));
         }
 
         let full = self.bytes().await?;

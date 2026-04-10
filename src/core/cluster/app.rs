@@ -1,3 +1,5 @@
+#![expect(clippy::disallowed_types)] // some things use Json
+
 use std::sync::Arc;
 
 use axum::{
