@@ -818,7 +818,7 @@ mod tests {
     use std::time::Duration;
 
     use super::DiomLogs;
-    use crate::cfg::{Dir, FsyncMode, SyncMod};
+    use crate::cfg::{Dir, FsyncMode, SyncMode};
     use jiff::{Span, Timestamp};
     use tempfile::TempDir;
     use test_utils::TestResult;
