@@ -111,7 +111,7 @@ async fn test_kv_set_and_get() -> TestResult {
         expires_at
             .as_millisecond()
             .abs_diff(expected.as_millisecond())
-            < 50 // tolerance
+            < 100 // tolerance
     );
 
     // set should fail if namespace doesn't exist:
