@@ -26,6 +26,8 @@ pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 
 const IDEMPOTENCY_KEYSPACE: &str = "mod_idempotency";
 
+// Note: do not ever serialize this to the DB, because it uses both skip_serializing_if
+// and tag.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum IdempotencyStartResult {
