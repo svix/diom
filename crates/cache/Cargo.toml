@@ -9,14 +9,18 @@ rust-version.workspace = true
 diom-core.workspace = true
 diom-error.workspace = true
 diom-id.workspace = true
-diom-kv.workspace = true
 diom-namespace.workspace = true
 diom-operations.workspace = true
+fjall.workspace = true
 fjall-utils.workspace = true
 jiff.workspace = true
 serde.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+test-utils.workspace = true
 
 [lints]
 workspace = true

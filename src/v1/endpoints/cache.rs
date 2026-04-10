@@ -1,12 +1,14 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_cache::operations::{CreateCacheOperation, DeleteOperation, SetOperation};
+use diom_cache::{
+    CacheModel,
+    operations::{CreateCacheOperation, DeleteOperation, SetOperation},
+};
 use diom_core::types::{ByteString, Consistency, DurationMs, EntityKey};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
-use diom_kv::kvcontroller::KvModel;
 use diom_namespace::{
     Namespace,
     entities::{CacheConfig, EvictionPolicy, NamespaceName},
@@ -87,7 +89,7 @@ pub struct CacheGetOut {
 }
 
 impl CacheGetOut {
-    fn from_model(model: KvModel) -> Self {
+    fn from_model(model: CacheModel) -> Self {
         Self {
             expiry: model.expiry,
             value: Some(model.value),

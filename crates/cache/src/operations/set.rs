@@ -3,7 +3,6 @@ use crate::CacheNamespace;
 use diom_core::types::{ByteString, DurationMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
-use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use diom_operations::OpContext;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -48,20 +47,8 @@ impl SetOperation {
         state
             .state
             .controller()
-            .set(
-                self.namespace_id,
-                self.key,
-                KvModelIn {
-                    value: self.value,
-                    expiry,
-                    version: None,
-                },
-                OperationBehavior::Upsert,
-                now,
-                log_index,
-            )
-            .await?;
-        Ok(())
+            .set(self.namespace_id, self.key, self.value, expiry, log_index)
+            .await
     }
 }
 

@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::Context;
-use diom_core::types::DurationMs;
+use diom_core::{Monotime, types::DurationMs};
 use diom_derive::EnvOverridable;
 use fs_err as fs;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -168,13 +168,19 @@ impl DatabaseConfig {
         }
     }
 
-    fn database(dir: &Path, file: &str) -> Result<fjall::Database> {
+    fn database(dir: &Path, file: &str, time: Monotime) -> Result<fjall::Database> {
         let dir = Dir::new(dir)?;
         let path = dir.join(file);
         // FIXME: we should probably make the cache size a config.
         fjall::Database::builder(path)
             .cache_size(Self::default_cache_size())
             .manual_journal_persist(true)
+            .with_compaction_filter_factories(Arc::new(move |keyspace| match keyspace {
+                diom_cache::CACHE_KEYSPACE => Some(Arc::new(
+                    diom_cache::compaction::CacheExpiryFilterFactory::new(time.clone()),
+                ) as _),
+                _ => None,
+            }))
             .open()
             .map_err(|err| {
                 tracing::error!(?err, "error building database");
@@ -182,17 +188,19 @@ impl DatabaseConfig {
             })
     }
 
-    pub fn persistent(db_config: &DatabaseConfig) -> Result<fjall::Database> {
+    pub fn persistent(db_config: &DatabaseConfig, time: Monotime) -> Result<fjall::Database> {
         Self::database(
             &db_config.path,
             db_config.filename.as_deref().unwrap_or("fjall_persistent"),
+            time,
         )
     }
 
-    pub fn ephemeral(db_config: &DatabaseConfig) -> Result<fjall::Database> {
+    pub fn ephemeral(db_config: &DatabaseConfig, time: Monotime) -> Result<fjall::Database> {
         Self::database(
             &db_config.path,
             db_config.filename.as_deref().unwrap_or("fjall_ephemeral"),
+            time,
         )
     }
 }

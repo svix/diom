@@ -34,7 +34,7 @@ impl DeleteOperation {
         let success = state
             .state
             .controller()
-            .delete(self.namespace_id, self.key, None, ctx.timestamp)
+            .delete(self.namespace_id, self.key, ctx.timestamp)
             .await?;
         Ok(DeleteResponseData { success })
     }
