@@ -254,8 +254,10 @@ impl JsonSchema for TopicIn {
 pub struct MsgsIdempotencyKey([u8; 32]);
 
 impl MsgsIdempotencyKey {
-    pub fn new(key: &str, topic: &TopicName) -> Self {
+    pub fn new(authorization: Option<&[u8]>, topic: &TopicName, key: &str) -> Self {
         let mut hasher = Sha256::new();
+        hasher.update(authorization.unwrap_or(b"_internal_"));
+        hasher.update(b":");
         hasher.update(topic.as_bytes());
         hasher.update(b":");
         hasher.update(key.as_bytes());

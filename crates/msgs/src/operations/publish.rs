@@ -77,7 +77,11 @@ impl PublishOperation {
                 if let Some(existing) = existing
                     && existing.expiry > now
                 {
-                    return Err(Error::conflict("idempotency key already used".to_owned()));
+                    let retry_after = now.duration_until(existing.expiry);
+                    return Err(Error::conflict(
+                        "idempotency key already used".to_owned(),
+                        Some(DurationMs::from_secs(retry_after.as_secs() as u64)),
+                    ));
                 }
 
                 batch.insert_row(

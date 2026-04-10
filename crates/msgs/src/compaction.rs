@@ -102,7 +102,7 @@ mod tests {
             ),
         )?;
 
-        let expired_key = MsgsIdempotencyKey::new("old", &topic);
+        let expired_key = MsgsIdempotencyKey::new(None, &topic, "old");
         IdempotencyRow::insert(
             &ks,
             IdempotencyRow::key_for(ns, &expired_key),
@@ -111,7 +111,7 @@ mod tests {
             },
         )?;
 
-        let fresh_key = MsgsIdempotencyKey::new("new", &topic);
+        let fresh_key = MsgsIdempotencyKey::new(None, &topic, "new");
         IdempotencyRow::insert(
             &ks,
             IdempotencyRow::key_for(ns, &fresh_key),

@@ -1,8 +1,14 @@
-use std::{error, fmt, panic::Location};
+use std::{error, fmt, panic::Location, time::Duration};
 
 use aide::OperationOutput;
-use axum::response::{IntoResponse, Response};
-use diom_core::validation::{ValidationErrorBody, ValidationErrorItem};
+use axum::{
+    http::{HeaderValue, header::RETRY_AFTER},
+    response::{IntoResponse, Response},
+};
+use diom_core::{
+    types::DurationMs,
+    validation::{ValidationErrorBody, ValidationErrorItem},
+};
 use diom_proto::{MsgPackOrJson, StandardErrorBody};
 use hyper::StatusCode;
 use serde_json::json;
@@ -34,11 +40,11 @@ impl Error {
         })
     }
 
-    pub fn conflict(detail: impl Into<Option<String>>) -> Self {
-        Self::new(ErrorType::Conflict(StandardErrorBody::new(
-            "conflict",
-            detail.into().unwrap_or_else(|| "Conflict".to_owned()),
-        )))
+    pub fn conflict(detail: impl fmt::Display, retry_after: Option<DurationMs>) -> Self {
+        Self::new(ErrorType::Conflict {
+            body: StandardErrorBody::new("conflict", detail.to_string()),
+            retry_after,
+        })
     }
 
     pub fn not_found(detail: impl Into<Option<String>>) -> Self {
@@ -115,7 +121,7 @@ impl Error {
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
-            ErrorType::Conflict(body) => (
+            ErrorType::Conflict { body, .. } => (
                 StatusCode::CONFLICT,
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
@@ -178,9 +184,18 @@ impl IntoResponse for Error {
                 tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
-            ErrorType::Conflict(body) => {
-                tracing::debug!(error = %body, "conflict");
-                (StatusCode::CONFLICT, MsgPackOrJson(body)).into_response()
+            ErrorType::Conflict { body, retry_after } => {
+                tracing::debug!(error = %body, retry_after = ?retry_after, "conflict");
+                let mut response = (StatusCode::CONFLICT, MsgPackOrJson(body)).into_response();
+                if let Some(retry_after) = retry_after {
+                    let retry_after: Duration = retry_after.into();
+                    response.headers_mut().insert(
+                        RETRY_AFTER,
+                        HeaderValue::from_str(&retry_after.as_secs().to_string())
+                            .expect("seconds to string contains valid characters"),
+                    );
+                }
+                response
             }
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
@@ -289,7 +304,11 @@ pub enum ErrorType {
     NotFound(StandardErrorBody),
 
     /// A conflict occurred
-    Conflict(StandardErrorBody),
+    Conflict {
+        body: StandardErrorBody,
+        /// When set, how long to wait before retrying; emitted as HTTP `Retry-After`.
+        retry_after: Option<DurationMs>,
+    },
 
     /// Authentication error
     Authentication(StandardErrorBody),
@@ -321,7 +340,7 @@ impl fmt::Display for ErrorType {
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
             Self::NotFound(s) => write!(f, "not_found {s}"),
-            Self::Conflict(s) => write!(f, "conflict {s}"),
+            Self::Conflict { body, .. } => write!(f, "conflict {body}"),
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
             Self::Validation(s) => s.fmt(f),

@@ -2,7 +2,11 @@ use std::num::NonZeroU16;
 
 use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Extension, extract::State};
+use axum::{
+    Extension,
+    extract::State,
+    http::{HeaderMap, header::AUTHORIZATION},
+};
 use diom_authorization::RequestedOperation;
 use diom_core::types::DurationMs;
 use diom_derive::aide_annotate;
@@ -165,6 +169,7 @@ struct MsgPublishOut {
 async fn publish(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
+    headers: HeaderMap,
     MsgPackOrJson(data): MsgPackOrJson<MsgPublishIn>,
 ) -> Result<MsgPackOrJson<MsgPublishOut>> {
     let namespace: MsgsNamespace = state
@@ -173,10 +178,11 @@ async fn publish(
         .ok_or_not_found()?;
 
     let topic_name = data.topic.name();
+    let authorization_header = headers.get(AUTHORIZATION).map(|c| c.as_bytes());
     let idempotency_key = data
         .idempotency_key
         .as_deref()
-        .map(|key| MsgsIdempotencyKey::new(key, topic_name));
+        .map(|key| MsgsIdempotencyKey::new(authorization_header, topic_name, key));
     let operation = PublishOperation::new(namespace.id, data.topic, data.msgs, idempotency_key)?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
