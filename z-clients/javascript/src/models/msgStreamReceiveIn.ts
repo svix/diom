@@ -3,14 +3,15 @@ import {
     type SeekPosition,
     SeekPositionSerializer,
 } from './seekPosition';
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface MsgStreamReceiveIn {
     namespace?: string | null;
     batchSize?: number;
-    leaseDuration?: Date;
+    leaseDuration?: Temporal.Duration;
     defaultStartingPosition?: SeekPosition;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWait?: Date | null;
+    batchWait?: Temporal.Duration | null;
 }
 
 export interface MsgStreamReceiveIn_ {
@@ -18,10 +19,10 @@ export interface MsgStreamReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
-    leaseDuration?: Date;
+    leaseDuration?: Temporal.Duration;
     defaultStartingPosition?: SeekPosition;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWait?: Date | null;
+    batchWait?: Temporal.Duration | null;
 }
 
 export const MsgStreamReceiveInSerializer = {
@@ -32,9 +33,9 @@ export const MsgStreamReceiveInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
-            leaseDuration: object['lease_duration_ms'] ? new Date(object['lease_duration_ms']) : undefined,
+            leaseDuration: object['lease_duration_ms'] != null ? Temporal.Duration.from({ milliseconds: object['lease_duration_ms'] }) : undefined,
             defaultStartingPosition: object['default_starting_position'] != null ? SeekPositionSerializer._fromJsonObject(object['default_starting_position']): undefined,
-            batchWait: object['batch_wait_ms'] ? new Date(object['batch_wait_ms']) : undefined,
+            batchWait: object['batch_wait_ms'] != null ? Temporal.Duration.from({ milliseconds: object['batch_wait_ms'] }) : undefined,
         };
     },
 
@@ -45,9 +46,9 @@ export const MsgStreamReceiveInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'batch_size': self.batchSize,
-            'lease_duration_ms': self.leaseDuration != null ? self.leaseDuration.getTime() : undefined,
+            'lease_duration_ms': self.leaseDuration != null ? self.leaseDuration.total('millisecond') : undefined,
             'default_starting_position': self.defaultStartingPosition != null ? SeekPositionSerializer._toJsonObject(self.defaultStartingPosition) : undefined,
-            'batch_wait_ms': self.batchWait != null ? self.batchWait.getTime() : undefined,
+            'batch_wait_ms': self.batchWait != null ? self.batchWait.total('millisecond') : undefined,
         };
     }
 }

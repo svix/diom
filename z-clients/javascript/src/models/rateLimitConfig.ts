@@ -1,4 +1,5 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface RateLimitConfig {
     /** Maximum capacity of the bucket */
@@ -6,7 +7,7 @@ export interface RateLimitConfig {
     /** Number of tokens to add per refill interval */
     refillAmount: number;
     /** Interval in milliseconds between refills (minimum 1 millisecond) */
-    refillInterval?: Date;
+    refillInterval?: Temporal.Duration;
 }
 
 export const RateLimitConfigSerializer = {
@@ -15,7 +16,7 @@ export const RateLimitConfigSerializer = {
         return {
             capacity: object['capacity'],
             refillAmount: object['refill_amount'],
-            refillInterval: object['refill_interval_ms'] ? new Date(object['refill_interval_ms']) : undefined,
+            refillInterval: object['refill_interval_ms'] != null ? Temporal.Duration.from({ milliseconds: object['refill_interval_ms'] }) : undefined,
         };
     },
 
@@ -24,7 +25,7 @@ export const RateLimitConfigSerializer = {
         return {
             'capacity': self.capacity,
             'refill_amount': self.refillAmount,
-            'refill_interval_ms': self.refillInterval != null ? self.refillInterval.getTime() : undefined,
+            'refill_interval_ms': self.refillInterval != null ? self.refillInterval.total('millisecond') : undefined,
         };
     }
 }

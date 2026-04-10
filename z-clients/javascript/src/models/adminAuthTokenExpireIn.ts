@@ -1,9 +1,10 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface AdminAuthTokenExpireIn {
     id: string;
     /** Milliseconds from now until the token expires. `None` means expire immediately. */
-    expiry?: Date | null;
+    expiry?: Temporal.Duration | null;
 }
 
 export const AdminAuthTokenExpireInSerializer = {
@@ -11,7 +12,7 @@ export const AdminAuthTokenExpireInSerializer = {
     _fromJsonObject(object: any): AdminAuthTokenExpireIn {
         return {
             id: object['id'],
-            expiry: object['expiry_ms'] ? new Date(object['expiry_ms']) : undefined,
+            expiry: object['expiry_ms'] != null ? Temporal.Duration.from({ milliseconds: object['expiry_ms'] }) : undefined,
         };
     },
 
@@ -19,7 +20,7 @@ export const AdminAuthTokenExpireInSerializer = {
     _toJsonObject(self: AdminAuthTokenExpireIn): any {
         return {
             'id': self.id,
-            'expiry_ms': self.expiry != null ? self.expiry.getTime() : undefined,
+            'expiry_ms': self.expiry != null ? self.expiry.total('millisecond') : undefined,
         };
     }
 }

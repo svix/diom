@@ -1,10 +1,11 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface RateLimitGetRemainingOut {
     /** Number of tokens remaining */
     remaining: number;
     /** Milliseconds until at least one token is available (only present when remaining is 0) */
-    retryAfter?: Date | null;
+    retryAfter?: Temporal.Duration | null;
 }
 
 export const RateLimitGetRemainingOutSerializer = {
@@ -12,7 +13,7 @@ export const RateLimitGetRemainingOutSerializer = {
     _fromJsonObject(object: any): RateLimitGetRemainingOut {
         return {
             remaining: object['remaining'],
-            retryAfter: object['retry_after_ms'] ? new Date(object['retry_after_ms']) : undefined,
+            retryAfter: object['retry_after_ms'] != null ? Temporal.Duration.from({ milliseconds: object['retry_after_ms'] }) : undefined,
         };
     },
 
@@ -20,7 +21,7 @@ export const RateLimitGetRemainingOutSerializer = {
     _toJsonObject(self: RateLimitGetRemainingOut): any {
         return {
             'remaining': self.remaining,
-            'retry_after_ms': self.retryAfter != null ? self.retryAfter.getTime() : undefined,
+            'retry_after_ms': self.retryAfter != null ? self.retryAfter.total('millisecond') : undefined,
         };
     }
 }

@@ -1,9 +1,10 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface CacheSetIn {
     namespace?: string | null;
     /** Time to live in milliseconds */
-    ttl: Date;
+    ttl: Temporal.Duration;
 }
 
 export interface CacheSetIn_ {
@@ -11,7 +12,7 @@ export interface CacheSetIn_ {
     key: string;
     value: Uint8Array;
     /** Time to live in milliseconds */
-    ttl: Date;
+    ttl: Temporal.Duration;
 }
 
 export const CacheSetInSerializer = {
@@ -21,7 +22,7 @@ export const CacheSetInSerializer = {
             namespace: object['namespace'],
             key: object['key'],
             value: new Uint8Array(object['value']),
-            ttl: new Date(object['ttl_ms']),
+            ttl: Temporal.Duration.from({ milliseconds: object['ttl_ms'] }),
         };
     },
 
@@ -31,7 +32,7 @@ export const CacheSetInSerializer = {
             'namespace': self.namespace,
             'key': self.key,
             'value': Array.from(self.value),
-            'ttl_ms': self.ttl.getTime(),
+            'ttl_ms': self.ttl.total('millisecond'),
         };
     }
 }

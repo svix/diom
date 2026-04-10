@@ -1,4 +1,5 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface IdempotencyCompleteIn {
     namespace?: string | null;
@@ -7,7 +8,7 @@ export interface IdempotencyCompleteIn {
     /** Optional metadata to store alongside the response */
     context?: { [key: string]: string } | null;
     /** How long to keep the idempotency response for. */
-    ttl: Date;
+    ttl: Temporal.Duration;
 }
 
 export interface IdempotencyCompleteIn_ {
@@ -18,7 +19,7 @@ export interface IdempotencyCompleteIn_ {
     /** Optional metadata to store alongside the response */
     context?: { [key: string]: string } | null;
     /** How long to keep the idempotency response for. */
-    ttl: Date;
+    ttl: Temporal.Duration;
 }
 
 export const IdempotencyCompleteInSerializer = {
@@ -29,7 +30,7 @@ export const IdempotencyCompleteInSerializer = {
             key: object['key'],
             response: new Uint8Array(object['response']),
             context: object['context'],
-            ttl: new Date(object['ttl_ms']),
+            ttl: Temporal.Duration.from({ milliseconds: object['ttl_ms'] }),
         };
     },
 
@@ -40,7 +41,7 @@ export const IdempotencyCompleteInSerializer = {
             'key': self.key,
             'response': Array.from(self.response),
             'context': self.context,
-            'ttl_ms': self.ttl.getTime(),
+            'ttl_ms': self.ttl.total('millisecond'),
         };
     }
 }

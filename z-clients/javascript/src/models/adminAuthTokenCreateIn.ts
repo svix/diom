@@ -1,10 +1,11 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface AdminAuthTokenCreateIn {
     name: string;
     role: string;
     /** Milliseconds from now until the token expires. */
-    expiry?: Date | null;
+    expiry?: Temporal.Duration | null;
     /** Whether the token is enabled. Defaults to `true`. */
     enabled?: boolean;
 }
@@ -15,7 +16,7 @@ export const AdminAuthTokenCreateInSerializer = {
         return {
             name: object['name'],
             role: object['role'],
-            expiry: object['expiry_ms'] ? new Date(object['expiry_ms']) : undefined,
+            expiry: object['expiry_ms'] != null ? Temporal.Duration.from({ milliseconds: object['expiry_ms'] }) : undefined,
             enabled: object['enabled'],
         };
     },
@@ -25,7 +26,7 @@ export const AdminAuthTokenCreateInSerializer = {
         return {
             'name': self.name,
             'role': self.role,
-            'expiry_ms': self.expiry != null ? self.expiry.getTime() : undefined,
+            'expiry_ms': self.expiry != null ? self.expiry.total('millisecond') : undefined,
             'enabled': self.enabled,
         };
     }

@@ -1,4 +1,5 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface RateLimitCheckOut {
     /** Whether the request is allowed */
@@ -6,7 +7,7 @@ export interface RateLimitCheckOut {
     /** Number of tokens remaining */
     remaining: number;
     /** Milliseconds until enough tokens are available (only present when allowed is false) */
-    retryAfter?: Date | null;
+    retryAfter?: Temporal.Duration | null;
 }
 
 export const RateLimitCheckOutSerializer = {
@@ -15,7 +16,7 @@ export const RateLimitCheckOutSerializer = {
         return {
             allowed: object['allowed'],
             remaining: object['remaining'],
-            retryAfter: object['retry_after_ms'] ? new Date(object['retry_after_ms']) : undefined,
+            retryAfter: object['retry_after_ms'] != null ? Temporal.Duration.from({ milliseconds: object['retry_after_ms'] }) : undefined,
         };
     },
 
@@ -24,7 +25,7 @@ export const RateLimitCheckOutSerializer = {
         return {
             'allowed': self.allowed,
             'remaining': self.remaining,
-            'retry_after_ms': self.retryAfter != null ? self.retryAfter.getTime() : undefined,
+            'retry_after_ms': self.retryAfter != null ? self.retryAfter.total('millisecond') : undefined,
         };
     }
 }
