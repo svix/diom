@@ -72,7 +72,7 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
             ..Default::default()
         },
         spec: Some(StatefulSetSpec {
-            replicas: Some(spec.diom.nodes),
+            replicas: Some(spec.diom.replicas),
             service_name: Some(headless_svc),
             selector: LabelSelector {
                 match_labels: Some(labels::selector(&cluster_name)),
@@ -125,7 +125,7 @@ fn build_env(
                 cluster_name,
                 headless_svc,
                 ns,
-                spec.diom.nodes,
+                spec.diom.replicas,
                 intracluster_port,
             ),
         ),

@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 use std::collections::HashMap;
 
 use aide::axum::{ApiRouter, routing::post_with};

@@ -68,8 +68,8 @@ pub(crate) async fn reconcile(cluster: Arc<DiomCluster>, ctx: Arc<Context>) -> R
         )
         .await?;
 
-    // PodDisruptionBudget (only meaningful for nodes > 1)
-    if cluster.spec.diom.nodes > 1 {
+    // PodDisruptionBudget (only meaningful for replicas > 1)
+    if cluster.spec.diom.replicas > 1 {
         let pdb_api: Api<PodDisruptionBudget> = Api::namespaced(client.clone(), &ns);
         let pdb = resources::pdb::build(&cluster, &ns)?;
         pdb_api
@@ -99,7 +99,7 @@ async fn update_status(cluster: &DiomCluster, client: &Client, ns: &str) -> Resu
                 .as_ref()
                 .and_then(|s| s.ready_replicas)
                 .unwrap_or(0);
-            let desired = cluster.spec.diom.nodes;
+            let desired = cluster.spec.diom.replicas;
             let phase = if ready == desired {
                 Phase::Running
             } else if ready == 0 {
