@@ -15,7 +15,6 @@ fjall.workspace = true
 fjall-utils.workspace = true
 jiff.workspace = true
 serde.workspace = true
-tokio.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
