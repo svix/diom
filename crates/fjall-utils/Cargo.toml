@@ -9,7 +9,9 @@ edition = "2024"
 [dependencies]
 anyhow.workspace = true
 byteview.workspace = true
+diom-derive.workspace = true
 diom-error.workspace = true
+diom-id.workspace = true
 fjall.workspace = true
 itertools.workspace = true
 postcard.workspace = true

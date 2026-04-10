@@ -1,6 +1,10 @@
+#[allow(unused_extern_crates)]
+extern crate self as fjall_utils;
+
 mod db;
 pub mod duration_millis;
 mod fixed_key;
+mod fjall_key_able;
 mod options;
 mod readonly_db;
 mod table_row;
@@ -8,6 +12,7 @@ mod table_row;
 pub use self::{
     db::{Databases, ReadonlyConnection, ReadonlyDatabases, StorageType},
     fixed_key::FjallFixedKey,
+    fjall_key_able::*,
     options::{SchemaManifest, SerializableKeyspaceCreateOptions},
     readonly_db::{ReadableDatabase, ReadableKeyspace, ReadonlyDatabase, ReadonlyKeyspace},
     table_row::{
@@ -15,6 +20,7 @@ pub use self::{
         TableKeyType, TableRow, WriteBatchExt,
     },
 };
+pub use diom_derive::FjallKeyAble;
 
 /// Version envelope for values stored in fjall. The serialized form starts
 /// with a varint discriminant (0x00 for V0), leaving room for future migrations.

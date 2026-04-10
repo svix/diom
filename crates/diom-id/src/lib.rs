@@ -9,8 +9,11 @@ mod public;
 mod marker;
 mod module;
 
-use self::marker::{IdMarker, PublicIdMarker};
-pub use self::{module::Module, public::Public};
+pub use self::{
+    marker::{IdMarker, PublicIdMarker},
+    module::Module,
+    public::Public,
+};
 
 const V7_RANDOM_BYTES_LEN: usize = 10;
 

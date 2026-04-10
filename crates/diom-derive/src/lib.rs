@@ -7,6 +7,7 @@ mod utils;
 
 use crate::env_overridable::derive_env_overridable;
 use utils::add_trait_bounds;
+mod fjall_key;
 
 use self::aide::{AideAnnotateArgumentList, expand_aide_annotate};
 
@@ -32,6 +33,13 @@ pub fn derive_model_out(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 
     // Hand the output tokens back to the compiler.
     proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_derive(FjallKeyAble, attributes(table_key, key))]
+pub fn derive_fjall_key_able(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    fjall_key::derive(input.into())
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }
 
 /// Does nothing.
