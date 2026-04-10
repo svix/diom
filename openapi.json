@@ -7388,7 +7388,6 @@
           },
           "headers": {
             "type": "object",
-            "default": {},
             "additionalProperties": {
               "type": "string"
             }
@@ -7406,6 +7405,7 @@
         "required": [
           "msg_id",
           "value",
+          "headers",
           "timestamp"
         ]
       },
@@ -7700,7 +7700,6 @@
           },
           "headers": {
             "type": "object",
-            "default": {},
             "additionalProperties": {
               "type": "string"
             }
@@ -7719,6 +7718,7 @@
           "offset",
           "topic",
           "value",
+          "headers",
           "timestamp"
         ]
       },

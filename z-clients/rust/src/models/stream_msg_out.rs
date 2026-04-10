@@ -10,8 +10,7 @@ pub struct StreamMsgOut {
     #[serde(with = "serde_bytes")]
     pub value: Vec<u8>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub headers: Option<std::collections::HashMap<String, String>>,
+    pub headers: std::collections::HashMap<String, String>,
 
     pub timestamp: jiff::Timestamp,
 
@@ -20,23 +19,21 @@ pub struct StreamMsgOut {
 }
 
 impl StreamMsgOut {
-    pub fn new(offset: u64, topic: String, value: Vec<u8>, timestamp: jiff::Timestamp) -> Self {
+    pub fn new(
+        offset: u64,
+        topic: String,
+        value: Vec<u8>,
+        headers: std::collections::HashMap<String, String>,
+        timestamp: jiff::Timestamp,
+    ) -> Self {
         Self {
             offset,
             topic,
             value,
-            headers: None,
+            headers,
             timestamp,
             scheduled_at: None,
         }
-    }
-
-    pub fn with_headers(
-        mut self,
-        value: impl Into<Option<std::collections::HashMap<String, String>>>,
-    ) -> Self {
-        self.headers = value.into();
-        self
     }
 
     pub fn with_scheduled_at(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {

@@ -374,10 +374,8 @@ pub struct StreamMsgOut {
     pub offset: Offset,
     pub topic: TopicPartition,
     pub value: ByteString,
-    #[serde(default)]
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scheduled_at: Option<Timestamp>,
 }
 
@@ -385,10 +383,8 @@ pub struct StreamMsgOut {
 pub struct QueueMsgOut {
     pub msg_id: MsgId,
     pub value: ByteString,
-    #[serde(default)]
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scheduled_at: Option<Timestamp>,
 }
 

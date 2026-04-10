@@ -133,9 +133,7 @@ impl TableRow for StreamLeaseRow {
 #[derive(Serialize, Deserialize)]
 pub(crate) struct QueueLeaseRow {
     pub expiry: Timestamp,
-    #[serde(default)]
     pub dlq: bool,
-    #[serde(default)]
     pub attempt_count: u32,
 }
 
@@ -272,7 +270,6 @@ pub(crate) struct MsgRow {
     pub value: ByteString,
     pub headers: HashMap<String, String>,
     pub timestamp: Timestamp,
-    #[serde(default)]
     pub scheduled_at: Option<Timestamp>,
 }
 

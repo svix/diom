@@ -12,7 +12,6 @@ pub struct CompleteOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
     pub(crate) response: ByteString,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) context: Option<Metadata>,
     #[serde(rename = "ttl_ms")]
     pub(crate) ttl: DurationMs,

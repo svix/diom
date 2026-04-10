@@ -4,7 +4,7 @@ export interface StreamMsgOut {
     offset: number;
     topic: string;
     value: Uint8Array;
-    headers?: { [key: string]: string };
+    headers: { [key: string]: string };
     timestamp: Date;
     scheduledAt?: Date | null;
 }

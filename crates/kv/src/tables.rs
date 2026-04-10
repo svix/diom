@@ -16,7 +16,6 @@ enum RowType {
 pub struct KvPairRow {
     pub value: ByteString,
     pub expiry: Option<Timestamp>,
-    #[serde(default)]
     pub version: u64,
 }
 
