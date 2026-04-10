@@ -242,7 +242,7 @@ mod tests {
                 1,
                 Duration::from_secs(10),
                 false,
-                true,
+                crate::cfg::SyncMode::Buffer,
                 FsyncMode::default(),
             )?;
 
