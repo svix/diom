@@ -31,7 +31,7 @@ pub(crate) fn postcard_to_byteview(
     use postcard::ser_flavors;
     let size = postcard::serialize_with_flavor(value, ser_flavors::Size::default())?;
     let mut builder = byteview::ByteView::builder(size);
-    postcard::serialize_with_flavor(value, ser_flavors::Slice::new(&mut builder))?;
+    postcard::to_slice(value, &mut builder)?;
     Ok(builder.freeze())
 }
 

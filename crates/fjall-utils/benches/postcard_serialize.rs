@@ -38,8 +38,7 @@ fn bench_size(c: &mut Criterion, name: &str, row: &KvPairLike) {
             let size =
                 postcard::serialize_with_flavor(&wrapped, ser_flavors::Size::default()).unwrap();
             let mut builder = byteview::ByteView::builder(size);
-            postcard::serialize_with_flavor(&wrapped, ser_flavors::Slice::new(&mut builder))
-                .unwrap();
+            postcard::to_slice(&wrapped, &mut builder).unwrap();
             let _slice: fjall::Slice = builder.freeze().into();
         });
     });
