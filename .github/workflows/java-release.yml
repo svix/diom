@@ -1,0 +1,52 @@
+name: Java Release
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Mega Releaser
+    types:
+      - completed
+
+jobs:
+  java:
+    name: Java Release
+    runs-on: ubuntu-24.04
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Restore gradle.properties
+        run: |
+          mkdir -p ~/.gradle/
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> "$GITHUB_ENV"
+
+          {
+            echo "NEXUS_USERNAME=$NEXUS_USERNAME"
+            echo "NEXUS_PASSWORD=$NEXUS_PASSWORD"
+            echo "signing.gnupg.keyName=$OSSRH_GPG_KEY_NAME"
+            echo "signing.gnupg.passphrase=$OSSRH_GPG_SECRET_KEY_PASSWORD"
+          } >> ~/.gradle/gradle.properties
+        env:
+          NEXUS_USERNAME: "${{secrets.NEXUS_USERNAME}}"
+          NEXUS_PASSWORD: "${{secrets.NEXUS_PASSWORD}}"
+          OSSRH_GPG_KEY_NAME: "${{secrets.OSSRH_GPG_KEY_NAME}}"
+          OSSRH_GPG_SECRET_KEY_PASSWORD: "${{secrets.OSSRH_GPG_SECRET_KEY_PASSWORD}}"
+
+      - name: Install GPG Signing Key
+        run: |
+          echo -e "$OSSRH_GPG_SECRET_KEY" | gpg --batch --import
+        env:
+          OSSRH_GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+
+      - name: Publish
+        run: |
+          cd z-clients/java
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository

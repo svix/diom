@@ -1,0 +1,31 @@
+name: Python Release
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Mega Releaser
+    types:
+      - completed
+
+jobs:
+  build:
+    permissions:
+      id-token: write
+    name: Build distributions
+    runs-on: ubuntu-24.04
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Build distributions
+        run: uv build
+        working-directory: z-clients/python
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: z-clients/python/dist
