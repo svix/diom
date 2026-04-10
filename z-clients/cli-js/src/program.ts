@@ -83,6 +83,10 @@ export async function runCli(rawArgv: string[], io: IoContext): Promise<number> 
     .alias("V", "version")
     .help("h")
     .alias("h", "help")
+    .completion(
+      "completion",
+      "Generate the autocompletion script for bash/zsh",
+    )
     .strict()
     .demandCommand(1, "A command is required")
     .middleware((argv: Record<string, unknown>) => {
@@ -116,21 +120,35 @@ export async function runCli(rawArgv: string[], io: IoContext): Promise<number> 
   );
 
   let exitCode = 0;
-  y.fail((msg, err) => {
+  let hasFailed = false;
+  y.fail((msg, err, failYargs) => {
+    if (hasFailed) return;
+    hasFailed = true;
     if (msg) {
       console.error(msg);
     } else if (err) {
       console.error(err.message);
     }
+    // Extract just the usage line from the help text (first non-empty line).
+    (failYargs.showHelp as (fn: (s: string) => void) => void)((help) => {
+      const usageLine = help.split("\n").find((l) => l.trim());
+      if (usageLine) {
+        console.error(`\nUsage: ${usageLine.trim()}`);
+      }
+    });
+    console.error("\nFor more information, try '--help'.");
     exitCode = 1;
   });
 
   try {
     await y.parseAsync(args);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (msg) {
-      console.error(msg);
+    if (!hasFailed) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg) {
+        console.error(msg);
+      }
+      console.error("\nFor more information, try '--help'.");
     }
     exitCode = 1;
   }
