@@ -8,6 +8,7 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self},
 };
+use sha2::{Digest, Sha256};
 use validator::Validate;
 
 pub type Offset = u64;
@@ -245,6 +246,26 @@ impl JsonSchema for TopicIn {
 
     fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
         String::json_schema(generator)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct MsgsIdempotencyKey([u8; 32]);
+
+impl MsgsIdempotencyKey {
+    pub fn new(authorization: Option<&[u8]>, topic: &TopicName, key: &str) -> Self {
+        let mut hasher = Sha256::new();
+        hasher.update(authorization.unwrap_or(b"_internal_"));
+        hasher.update(b":");
+        hasher.update(topic.as_bytes());
+        hasher.update(b":");
+        hasher.update(key.as_bytes());
+        Self(hasher.finalize().into())
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
     }
 }
 

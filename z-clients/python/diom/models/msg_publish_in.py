@@ -11,6 +11,8 @@ class MsgPublishIn(BaseModel):
 
     msgs: t.List[MsgIn]
 
+    idempotency_key: str | None = None
+
 
 class _MsgPublishIn(BaseModel):
     namespace: str | None = None
@@ -18,3 +20,5 @@ class _MsgPublishIn(BaseModel):
     topic: str
 
     msgs: t.List[MsgIn]
+
+    idempotency_key: str | None = None

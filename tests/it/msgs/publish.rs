@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use serde_json::json;
 use test_utils::{
     JsonFastAndLoose as _, StatusCode, TestResult,
@@ -262,6 +264,166 @@ async fn publish_keyless_same_partition() -> TestResult {
     for topic in topics {
         assert!(topic["topic"].assert_str().starts_with("keyless-topic~"));
     }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn publish_rejects_reused_idempotency_key() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        time,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-idem" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "topic",
+            "consumer_group": "cg",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "topic",
+            "idempotency_key": "same-request",
+            "msgs": [{ "value": "first".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "topic",
+            "idempotency_key": "same-request",
+            "msgs": [{ "value": "second".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::CONFLICT);
+
+    // Same idempotency key, different topic should succeed
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "topic2",
+            "idempotency_key": "same-request",
+            "msgs": [{ "value": "from-topic-2".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    let response = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "topic",
+            "consumer_group": "cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(msgs.len(), 1);
+    assert_eq!(msgs[0]["value"], json!("first".as_bytes()));
+
+    time.fast_forward(Duration::from_hours(1) + Duration::from_secs(1));
+
+    // key resets after TTL
+    client
+        .post("v1.msgs.publish")
+        .json(json!({
+            "namespace": "ns-idem",
+            "topic": "topic",
+            "idempotency_key": "same-request",
+            "msgs": [{ "value": "third".as_bytes() }],
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 10)]
+async fn publish_with_idempotency_key_concurrent() -> TestResult {
+    let TestContext {
+        client,
+        handle: _handle,
+        ..
+    } = start_server().await;
+
+    client
+        .post("v1.msgs.namespace.create")
+        .json(json!({ "name": "ns-idem-conc" }))
+        .await?
+        .expect(StatusCode::OK);
+
+    client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem-conc",
+            "topic": "topic",
+            "consumer_group": "cg",
+        }))
+        .await?
+        .expect(StatusCode::OK);
+
+    // Fire 10 concurrent publishes with the same idempotency key.
+    let mut handles = Vec::new();
+    for _ in 0..10 {
+        let c = client.clone();
+        handles.push(tokio::spawn(async move {
+            c.post("v1.msgs.publish")
+                .json(json!({
+                    "namespace": "ns-idem-conc",
+                    "topic": "topic",
+                    "idempotency_key": "same-concurrent-key",
+                    "msgs": [{ "value": "once".as_bytes() }],
+                }))
+                .await
+        }));
+    }
+
+    let mut ok = 0;
+    for handle in handles {
+        let resp = handle.await??;
+        if matches!(resp.status(), StatusCode::OK) {
+            ok += 1;
+        } else {
+            assert!(matches!(resp.status(), StatusCode::CONFLICT));
+        }
+    }
+
+    assert_eq!(ok, 1);
+
+    let response = client
+        .post("v1.msgs.stream.receive")
+        .json(json!({
+            "namespace": "ns-idem-conc",
+            "topic": "topic",
+            "consumer_group": "cg",
+        }))
+        .await?
+        .expect(StatusCode::OK)
+        .json();
+
+    let msgs = response["msgs"].assert_array();
+    assert_eq!(msgs.len(), 1);
 
     Ok(())
 }

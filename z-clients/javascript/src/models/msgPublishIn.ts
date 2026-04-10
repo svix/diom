@@ -7,12 +7,14 @@ import {
 export interface MsgPublishIn {
     namespace?: string | null;
     msgs: MsgIn[];
+    idempotencyKey?: string | null;
 }
 
 export interface MsgPublishIn_ {
     namespace?: string | null;
     topic: string;
     msgs: MsgIn[];
+    idempotencyKey?: string | null;
 }
 
 export const MsgPublishInSerializer = {
@@ -22,6 +24,7 @@ export const MsgPublishInSerializer = {
             namespace: object['namespace'],
             topic: object['topic'],
             msgs: object['msgs'].map((item: MsgIn) => MsgInSerializer._fromJsonObject(item)),
+            idempotencyKey: object['idempotency_key'],
         };
     },
 
@@ -31,6 +34,7 @@ export const MsgPublishInSerializer = {
             'namespace': self.namespace,
             'topic': self.topic,
             'msgs': self.msgs.map((item) => MsgInSerializer._toJsonObject(item)),
+            'idempotency_key': self.idempotencyKey,
         };
     }
 }

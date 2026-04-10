@@ -35,6 +35,7 @@ import lombok.ToString;
 public class MsgPublishIn {
     @JsonProperty private String namespace;
     @JsonProperty private List<MsgIn> msgs;
+    @JsonProperty("idempotency_key") private String idempotencyKey;
     public MsgPublishIn() {}
 
     public MsgPublishIn namespace(String namespace) {
@@ -80,5 +81,24 @@ public class MsgPublishIn {
 
     public void setMsgs(List<MsgIn> msgs) {
         this.msgs = msgs;
+    }
+
+    public MsgPublishIn idempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
+        return this;
+    }
+
+    /**
+    * Get idempotencyKey
+    *
+     * @return idempotencyKey
+     */
+    @javax.annotation.Nullable
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 }

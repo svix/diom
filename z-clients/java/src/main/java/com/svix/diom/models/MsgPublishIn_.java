@@ -31,15 +31,18 @@ public class MsgPublishIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty private List<MsgIn> msgs;
+    @JsonProperty("idempotency_key") private String idempotencyKey;
 
     public MsgPublishIn_(
         String namespace,
         String topic,
-        List<MsgIn> msgs
+        List<MsgIn> msgs,
+        String idempotencyKey
     ) {
         this.namespace = namespace;
         this.topic = topic;
         this.msgs = msgs;
+        this.idempotencyKey = idempotencyKey;
     }
 
     /**

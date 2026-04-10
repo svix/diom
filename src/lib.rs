@@ -224,8 +224,10 @@ async fn run_internal(
 
 impl AppState {
     fn new(cfg: Configuration, time: Monotime, internal_client: InternalClient) -> Self {
-        let persistent_db = DatabaseConfig::persistent(&cfg.persistent_db).expect("persistent db");
-        let ephemeral_db = DatabaseConfig::ephemeral(&cfg.ephemeral_db).expect("ephemeral db");
+        let persistent_db =
+            DatabaseConfig::persistent(&cfg.persistent_db, time.clone()).expect("persistent db");
+        let ephemeral_db =
+            DatabaseConfig::ephemeral(&cfg.ephemeral_db, time.clone()).expect("ephemeral db");
 
         let dbs = Databases::new(persistent_db, ephemeral_db);
         let ro_dbs = dbs.readonly();

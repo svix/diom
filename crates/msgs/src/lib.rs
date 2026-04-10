@@ -11,6 +11,7 @@ use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
 
 use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
 
+pub mod compaction;
 pub mod entities;
 pub mod metrics;
 pub mod operations;
