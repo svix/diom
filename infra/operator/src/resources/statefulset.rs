@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, time::Duration};
+use std::collections::BTreeMap;
 
 use k8s_openapi::{
     api::{
@@ -13,11 +13,7 @@ use k8s_openapi::{
         api::resource::Quantity, apis::meta::v1::LabelSelector, util::intstr::IntOrString,
     },
 };
-use kube::{
-    Resource,
-    api::{DeleteParams, Patch, PostParams, PropagationPolicy},
-    core::ObjectMeta,
-};
+use kube::{Resource, core::ObjectMeta};
 
 use crate::{
     context::ClusterCtx,
@@ -39,38 +35,7 @@ const LOGS_DATA_PATH: &str = "/data/logs";
 /// Path inside the container for Raft snapshots (when a separate volume is configured).
 const SNAPSHOTS_DATA_PATH: &str = "/data/snapshots";
 
-pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
-    let new_sts = build(ctx)?;
-    let sts_api = ctx.sts_api();
-
-    if let Some(current) = sts_api.get_opt(&ctx.name).await?
-        && volume_claim_templates_differ(&current, &new_sts)
-    {
-        tracing::info!(
-            name = %ctx.name,
-            "volumeClaimTemplates changed. Orphaning/Deleting the StatefulSet."
-        );
-        sts_api
-            .delete(
-                &ctx.name,
-                &DeleteParams {
-                    propagation_policy: Some(PropagationPolicy::Orphan),
-                    ..Default::default()
-                },
-            )
-            .await?;
-        wait_for_sts_deleted(&sts_api, &ctx.name).await?;
-        sts_api.create(&PostParams::default(), &new_sts).await?;
-    } else {
-        sts_api
-            .patch(&ctx.name, &ctx.pp(), &Patch::Apply(new_sts))
-            .await?;
-    }
-
-    Ok(())
-}
-
-fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
+pub(crate) fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
     let cluster_name = &ctx.name;
     let spec = &ctx.cluster.spec;
     let headless_svc = services::headless_svc_name(cluster_name);
@@ -422,127 +387,4 @@ fn seed_nodes_value(
         .map(|i| format!("{cluster_name}-{i}.{headless_svc}.{ns}.svc.cluster.local:{cluster_port}"))
         .collect::<Vec<_>>()
         .join(",")
-}
-
-fn volume_claim_templates_differ(current: &StatefulSet, desired: &StatefulSet) -> bool {
-    let current_templates = current
-        .spec
-        .as_ref()
-        .and_then(|s| s.volume_claim_templates.as_deref())
-        .unwrap_or(&[]);
-    let desired_templates = desired
-        .spec
-        .as_ref()
-        .and_then(|s| s.volume_claim_templates.as_deref())
-        .unwrap_or(&[]);
-
-    for desired_tpl in desired_templates {
-        let desired_name = desired_tpl.metadata.name.as_deref().unwrap_or("");
-        let desired_size = desired_tpl
-            .spec
-            .as_ref()
-            .and_then(|s| s.resources.as_ref())
-            .and_then(|r| r.requests.as_ref())
-            .and_then(|r| r.get("storage"));
-
-        let current_size = current_templates
-            .iter()
-            .find(|t| t.metadata.name.as_deref() == Some(desired_name))
-            .and_then(|t| t.spec.as_ref())
-            .and_then(|s| s.resources.as_ref())
-            .and_then(|r| r.requests.as_ref())
-            .and_then(|r| r.get("storage"));
-
-        if desired_size != current_size {
-            return true;
-        }
-    }
-    false
-}
-
-async fn wait_for_sts_deleted(sts_api: &kube::Api<StatefulSet>, name: &str) -> Result<()> {
-    const TIMEOUT_SECS: u64 = 30;
-    const POLL_INTERVAL: Duration = Duration::from_secs(1);
-
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(TIMEOUT_SECS);
-
-    loop {
-        if sts_api.get_opt(name).await?.is_none() {
-            return Ok(());
-        }
-        if tokio::time::Instant::now() >= deadline {
-            return Err(Error::Timeout(format!(
-                "StatefulSet {name} not deleted after {TIMEOUT_SECS}s"
-            )));
-        }
-        tokio::time::sleep(POLL_INTERVAL).await;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use k8s_openapi::{
-        api::core::v1::{
-            PersistentVolumeClaim, PersistentVolumeClaimSpec, VolumeResourceRequirements,
-        },
-        apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::ObjectMeta},
-    };
-    use std::collections::BTreeMap;
-
-    fn make_pvc(name: &str, storage: &str) -> PersistentVolumeClaim {
-        let mut requests = BTreeMap::new();
-        requests.insert("storage".to_string(), Quantity(storage.to_string()));
-        PersistentVolumeClaim {
-            metadata: ObjectMeta {
-                name: Some(name.to_string()),
-                ..Default::default()
-            },
-            spec: Some(PersistentVolumeClaimSpec {
-                resources: Some(VolumeResourceRequirements {
-                    requests: Some(requests),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
-    }
-
-    fn make_sts(pvcs: Vec<PersistentVolumeClaim>) -> StatefulSet {
-        use k8s_openapi::api::apps::v1::StatefulSetSpec;
-        StatefulSet {
-            spec: Some(StatefulSetSpec {
-                volume_claim_templates: Some(pvcs),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
-    }
-
-    #[test]
-    fn test_volume_claim_templates_differ() {
-        let a = make_sts(vec![make_pvc("data", "10Gi")]);
-        let b = make_sts(vec![make_pvc("data", "10Gi")]);
-        assert!(!volume_claim_templates_differ(&a, &b));
-
-        let current = make_sts(vec![make_pvc("data", "10Gi")]);
-        let desired = make_sts(vec![make_pvc("data", "20Gi")]);
-        assert!(volume_claim_templates_differ(&current, &desired));
-
-        let current = make_sts(vec![make_pvc("data", "20Gi")]);
-        let desired = make_sts(vec![make_pvc("data", "10Gi")]);
-        assert!(volume_claim_templates_differ(&current, &desired));
-
-        let current = make_sts(vec![make_pvc("data", "10Gi")]);
-        let desired = make_sts(vec![make_pvc("data", "10Gi"), make_pvc("logs", "5Gi")]);
-        assert!(volume_claim_templates_differ(&current, &desired));
-
-        let current = make_sts(vec![make_pvc("data", "10Gi"), make_pvc("logs", "5Gi")]);
-        let desired = make_sts(vec![make_pvc("data", "10Gi")]);
-        assert!(!volume_claim_templates_differ(&current, &desired));
-
-        let empty = make_sts(vec![]);
-        assert!(!volume_claim_templates_differ(&empty, &empty));
-    }
 }

@@ -2,7 +2,7 @@ use k8s_openapi::{
     api::core::v1::{Service, ServicePort, ServiceSpec},
     apimachinery::pkg::util::intstr::IntOrString,
 };
-use kube::{Resource, api::Patch, core::ObjectMeta};
+use kube::{Resource, core::ObjectMeta};
 
 use crate::{
     context::ClusterCtx,
@@ -18,23 +18,6 @@ pub(crate) fn headless_svc_name(cluster_name: &str) -> String {
 /// Name of load-balancing service
 pub(crate) fn lb_svc_name(cluster_name: &str) -> String {
     cluster_name.to_string()
-}
-
-pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
-    let svc_api = ctx.svc_api();
-    let pp = ctx.pp();
-
-    let headless = build_headless(ctx)?;
-    svc_api
-        .patch(&headless_svc_name(&ctx.name), &pp, &Patch::Apply(&headless))
-        .await?;
-
-    let client_svc = build_lb_svc(ctx)?;
-    svc_api
-        .patch(&lb_svc_name(&ctx.name), &pp, &Patch::Apply(&client_svc))
-        .await?;
-
-    Ok(())
 }
 
 /// Build headless service.
