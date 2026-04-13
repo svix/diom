@@ -78,10 +78,10 @@ enum RootCommands {
     Msgs(MsgsArgs),
     RateLimit(RateLimitArgs),
     Health(HealthArgs),
-    /// Send raw administrative commands.
+    /// Send administrative commands.
     ///
     /// Prefer the cluster-admin family of CLI commands.
-    RawAdmin(AdminArgs),
+    Admin(AdminArgs),
     /// Manipulate a Diom cluster
     ClusterAdmin(ClusterAdminArgs),
     /// Benchmark module throughput
@@ -150,7 +150,7 @@ async fn main() -> Result<()> {
             let client = get_client(&cfg?)?;
             args.command.exec(&client).await?;
         }
-        RootCommands::RawAdmin(args) => {
+        RootCommands::Admin(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client).await?;
         }
