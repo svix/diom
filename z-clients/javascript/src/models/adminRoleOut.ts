@@ -23,8 +23,8 @@ export const AdminRoleOutSerializer = {
             rules: object['rules'].map((item: AccessRule) => AccessRuleSerializer._fromJsonObject(item)),
             policies: object['policies'],
             context: object['context'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: new Date(Number(object['created'])),
+            updated: new Date(Number(object['updated'])),
         };
     },
 

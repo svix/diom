@@ -17,8 +17,8 @@ export const StreamMsgOutSerializer = {
             topic: object['topic'],
             value: new Uint8Array(object['value']),
             headers: object['headers'],
-            timestamp: new Date(object['timestamp']),
-            scheduledAt: object['scheduled_at'] ? new Date(object['scheduled_at']) : null,
+            timestamp: new Date(Number(object['timestamp'])),
+            scheduledAt: object['scheduled_at'] ? new Date(Number(object['scheduled_at'])) : null,
         };
     },
 

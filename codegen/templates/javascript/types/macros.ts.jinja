@@ -27,9 +27,9 @@
         {%- endif -%}
     {%- elif type.is_datetime() or type.is_unix_timestamp_ms() -%}
         {% if not field_required -%}
-            {{ field_expr }} ? new Date({{ field_expr }}) : null
+            {{ field_expr }} ? new Date(Number({{ field_expr }})) : null
         {%- else -%}
-            new Date({{ field_expr }})
+            new Date(Number({{ field_expr }}))
         {%- endif -%}
     {%- elif type.is_duration_ms() -%}
         {% if not field_required -%}

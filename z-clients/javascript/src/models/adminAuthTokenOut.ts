@@ -17,9 +17,9 @@ export const AdminAuthTokenOutSerializer = {
         return {
             id: object['id'],
             name: object['name'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
-            expiry: object['expiry'] ? new Date(object['expiry']) : null,
+            created: new Date(Number(object['created'])),
+            updated: new Date(Number(object['updated'])),
+            expiry: object['expiry'] ? new Date(Number(object['expiry'])) : null,
             role: object['role'],
             enabled: object['enabled'],
         };

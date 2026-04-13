@@ -13,8 +13,8 @@ export const AdminAuthTokenCreateOutSerializer = {
         return {
             id: object['id'],
             token: object['token'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: new Date(Number(object['created'])),
+            updated: new Date(Number(object['updated'])),
         };
     },
 
