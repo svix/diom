@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, Partition, TopicName},
-    tables::{MsgRow, QueueConfigRow, QueueLeaseRow, TopicRow},
+    tables::{MsgKey, MsgRow, QueueConfigRow, QueueLeaseRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueNackResponse};
@@ -141,7 +141,11 @@ fn forward_to_dlq(
 ) -> Result<()> {
     let original = MsgRow::fetch(
         &state.msg_table,
-        MsgRow::key_for(source_topic_id, msg_id.partition, msg_id.offset),
+        MsgKey {
+            topic_id: source_topic_id,
+            partition: msg_id.partition,
+            offset: msg_id.offset,
+        },
     )?
     .ok_or_else(|| Error::internal("nacked message not found"))?;
 
@@ -160,7 +164,11 @@ fn forward_to_dlq(
 
     batch.insert_row(
         &state.msg_table,
-        MsgRow::key_for(dlq_topic_row.id, dlq_partition, dlq_offset),
+        MsgKey {
+            topic_id: dlq_topic_row.id,
+            partition: dlq_partition,
+            offset: dlq_offset,
+        },
         &MsgRow {
             value: original.value,
             headers: original.headers,

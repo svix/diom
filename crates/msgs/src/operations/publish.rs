@@ -16,7 +16,7 @@ use crate::{
         MsgIn, MsgsIdempotencyKey, Offset, Partition, TopicIn, TopicName, TopicPartition,
         partition_for_key,
     },
-    tables::{IdempotencyRow, MsgRow, TopicRow},
+    tables::{IdempotencyRow, MsgKey, MsgRow, TopicRow},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -228,7 +228,11 @@ fn write_msg_batch(
             };
             batch.insert_row(
                 msg_table,
-                MsgRow::key_for(topic_id, partition, offset),
+                MsgKey {
+                    topic_id,
+                    partition,
+                    offset,
+                },
                 &msg,
             )?;
             offset += 1;
