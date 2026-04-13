@@ -5,7 +5,7 @@ use diom::models::{
     MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
 };
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::StdRng};
 
 fn bench_stream<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkGroup<'a, M>) {
     let client = ctx.client;
