@@ -83,10 +83,6 @@ export async function runCli(rawArgv: string[], io: IoContext): Promise<number> 
     .alias("V", "version")
     .help("h")
     .alias("h", "help")
-    .completion(
-      "completion",
-      "Generate the autocompletion script for bash/zsh",
-    )
     .strict()
     .demandCommand(1, "A command is required")
     .middleware((argv: Record<string, unknown>) => {
