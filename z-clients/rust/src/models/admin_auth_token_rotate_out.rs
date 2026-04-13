@@ -7,13 +7,20 @@ pub struct AdminAuthTokenRotateOut {
 
     pub token: String,
 
-    pub created: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub created: jiff::Timestamp,
 
-    pub updated: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub updated: jiff::Timestamp,
 }
 
 impl AdminAuthTokenRotateOut {
-    pub fn new(id: String, token: String, created: u64, updated: u64) -> Self {
+    pub fn new(
+        id: String,
+        token: String,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
+    ) -> Self {
         Self {
             id,
             token,

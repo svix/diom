@@ -15,9 +15,11 @@ pub struct AdminRoleOut {
 
     pub context: std::collections::HashMap<String, String>,
 
-    pub created: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub created: jiff::Timestamp,
 
-    pub updated: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub updated: jiff::Timestamp,
 }
 
 impl AdminRoleOut {
@@ -27,8 +29,8 @@ impl AdminRoleOut {
         rules: Vec<AccessRule>,
         policies: Vec<String>,
         context: std::collections::HashMap<String, String>,
-        created: u64,
-        updated: u64,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
     ) -> Self {
         Self {
             id,

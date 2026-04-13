@@ -6,6 +6,7 @@ mod error;
 pub mod models;
 mod request;
 mod serde_bytes_opt;
+mod unix_timestamp_ms_serde;
 
 pub(crate) use self::client::Configuration;
 pub use self::{

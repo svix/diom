@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ClusterForceSnapshotOut {
     /// The wall-clock time at which the snapshot was initiated
-    pub snapshot_time: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub snapshot_time: jiff::Timestamp,
 
     /// The log index at which the snapshot was initiated
     pub snapshot_log_index: u64,
@@ -15,7 +16,7 @@ pub struct ClusterForceSnapshotOut {
 }
 
 impl ClusterForceSnapshotOut {
-    pub fn new(snapshot_time: u64, snapshot_log_index: u64) -> Self {
+    pub fn new(snapshot_time: jiff::Timestamp, snapshot_log_index: u64) -> Self {
         Self {
             snapshot_time,
             snapshot_log_index,

@@ -9,13 +9,20 @@ pub struct MsgNamespaceCreateOut {
 
     pub retention: Retention,
 
-    pub created: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub created: jiff::Timestamp,
 
-    pub updated: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub updated: jiff::Timestamp,
 }
 
 impl MsgNamespaceCreateOut {
-    pub fn new(name: String, retention: Retention, created: u64, updated: u64) -> Self {
+    pub fn new(
+        name: String,
+        retention: Retention,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
+    ) -> Self {
         Self {
             name,
             retention,

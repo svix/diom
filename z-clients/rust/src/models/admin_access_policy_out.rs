@@ -11,9 +11,11 @@ pub struct AdminAccessPolicyOut {
 
     pub rules: Vec<AccessRule>,
 
-    pub created: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub created: jiff::Timestamp,
 
-    pub updated: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub updated: jiff::Timestamp,
 }
 
 impl AdminAccessPolicyOut {
@@ -21,8 +23,8 @@ impl AdminAccessPolicyOut {
         id: String,
         description: String,
         rules: Vec<AccessRule>,
-        created: u64,
-        updated: u64,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
     ) -> Self {
         Self {
             id,

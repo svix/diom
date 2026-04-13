@@ -7,12 +7,17 @@ pub struct AdminAuthTokenOut {
 
     pub name: String,
 
-    pub created: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub created: jiff::Timestamp,
 
-    pub updated: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub updated: jiff::Timestamp,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiry: Option<u64>,
+    #[serde(
+        with = "crate::unix_timestamp_ms_serde::optional",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub expiry: Option<jiff::Timestamp>,
 
     pub role: String,
 
@@ -24,8 +29,8 @@ impl AdminAuthTokenOut {
     pub fn new(
         id: String,
         name: String,
-        created: u64,
-        updated: u64,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
         role: String,
         enabled: bool,
     ) -> Self {
@@ -40,7 +45,7 @@ impl AdminAuthTokenOut {
         }
     }
 
-    pub fn with_expiry(mut self, value: impl Into<Option<u64>>) -> Self {
+    pub fn with_expiry(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {
         self.expiry = value.into();
         self
     }

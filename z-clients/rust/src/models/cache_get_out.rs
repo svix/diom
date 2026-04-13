@@ -4,8 +4,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct CacheGetOut {
     /// Time of expiry
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiry: Option<u64>,
+    #[serde(
+        with = "crate::unix_timestamp_ms_serde::optional",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub expiry: Option<jiff::Timestamp>,
 
     #[serde(
         with = "crate::serde_bytes_opt",
@@ -22,7 +25,7 @@ impl CacheGetOut {
         }
     }
 
-    pub fn with_expiry(mut self, value: impl Into<Option<u64>>) -> Self {
+    pub fn with_expiry(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {
         self.expiry = value.into();
         self
     }

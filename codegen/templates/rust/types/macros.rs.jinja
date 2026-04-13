@@ -16,7 +16,9 @@
 {%- endmacro %}
 {% macro field_type(field) -%}
     {% set field_ty = field.type.to_rust() -%}
-    {% if field.name is endingwith "_ms" -%}
+    {% if field.type.is_unix_timestamp_ms() -%}
+        {% set field_ty = "jiff::Timestamp" -%}
+    {% elif field.name is endingwith "_ms" -%}
         {% set field_ty = "std::time::Duration" -%}
     {% endif -%}
     {% if not field.required or field.nullable -%}
@@ -35,6 +37,10 @@
         {% else -%}
             with = "serde_bytes",
         {% endif -%}
+    {% elif field.type.is_unix_timestamp_ms() -%}
+        with = "crate::unix_timestamp_ms_serde
+            {%- if not field.required or field.nullable %}::optional{% endif -%}
+        ",
     {% endif -%}
     {% if not field.required or field.nullable -%}
         skip_serializing_if = "Option::is_none",

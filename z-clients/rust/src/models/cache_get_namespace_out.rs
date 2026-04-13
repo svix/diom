@@ -9,13 +9,20 @@ pub struct CacheGetNamespaceOut {
 
     pub eviction_policy: EvictionPolicy,
 
-    pub created: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub created: jiff::Timestamp,
 
-    pub updated: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub updated: jiff::Timestamp,
 }
 
 impl CacheGetNamespaceOut {
-    pub fn new(name: String, eviction_policy: EvictionPolicy, created: u64, updated: u64) -> Self {
+    pub fn new(
+        name: String,
+        eviction_policy: EvictionPolicy,
+        created: jiff::Timestamp,
+        updated: jiff::Timestamp,
+    ) -> Self {
         Self {
             name,
             eviction_policy,

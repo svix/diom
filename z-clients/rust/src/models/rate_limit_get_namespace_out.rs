@@ -5,13 +5,15 @@ use serde::{Deserialize, Serialize};
 pub struct RateLimitGetNamespaceOut {
     pub name: String,
 
-    pub created: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub created: jiff::Timestamp,
 
-    pub updated: u64,
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
+    pub updated: jiff::Timestamp,
 }
 
 impl RateLimitGetNamespaceOut {
-    pub fn new(name: String, created: u64, updated: u64) -> Self {
+    pub fn new(name: String, created: jiff::Timestamp, updated: jiff::Timestamp) -> Self {
         Self {
             name,
             created,
