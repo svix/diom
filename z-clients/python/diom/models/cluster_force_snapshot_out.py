@@ -1,10 +1,11 @@
 # this file is @generated
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class ClusterForceSnapshotOut(BaseModel):
-    snapshot_time: int
+    snapshot_time: UnixTimestampMs
     """The wall-clock time at which the snapshot was initiated"""
 
     snapshot_log_index: int

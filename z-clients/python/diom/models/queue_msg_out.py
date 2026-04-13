@@ -2,6 +2,7 @@
 import typing as t
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class QueueMsgOut(BaseModel):
@@ -11,6 +12,6 @@ class QueueMsgOut(BaseModel):
 
     headers: t.Dict[str, str]
 
-    timestamp: int
+    timestamp: UnixTimestampMs
 
-    scheduled_at: int | None = None
+    scheduled_at: UnixTimestampMs | None = None

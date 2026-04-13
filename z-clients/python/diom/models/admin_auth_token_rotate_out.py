@@ -1,6 +1,7 @@
 # this file is @generated
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class AdminAuthTokenRotateOut(BaseModel):
@@ -8,6 +9,6 @@ class AdminAuthTokenRotateOut(BaseModel):
 
     token: str
 
-    created: int
+    created: UnixTimestampMs
 
-    updated: int
+    updated: UnixTimestampMs

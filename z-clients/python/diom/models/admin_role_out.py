@@ -2,6 +2,7 @@
 import typing as t
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 from .access_rule import AccessRule
 
@@ -17,6 +18,6 @@ class AdminRoleOut(BaseModel):
 
     context: t.Dict[str, str]
 
-    created: int
+    created: UnixTimestampMs
 
-    updated: int
+    updated: UnixTimestampMs

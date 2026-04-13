@@ -2,6 +2,7 @@
 import typing as t
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 from .node_status_out import NodeStatusOut
 from .server_state import ServerState
@@ -24,7 +25,7 @@ class ClusterStatusOut(BaseModel):
     this_node_state: ServerState
     """The cluster state of the node servicing this request"""
 
-    this_node_last_committed_timestamp: int
+    this_node_last_committed_timestamp: UnixTimestampMs
     """The timestamp of the last transaction committed on this node"""
 
     this_node_last_snapshot_id: str | None = None

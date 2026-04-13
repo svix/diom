@@ -1,10 +1,11 @@
 # this file is @generated
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class KvGetOut(BaseModel):
-    expiry: int | None = None
+    expiry: UnixTimestampMs | None = None
     """Time of expiry"""
 
     value: bytes | None = None

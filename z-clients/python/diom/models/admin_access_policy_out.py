@@ -2,6 +2,7 @@
 import typing as t
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 from .access_rule import AccessRule
 
@@ -13,6 +14,6 @@ class AdminAccessPolicyOut(BaseModel):
 
     rules: t.List[AccessRule]
 
-    created: int
+    created: UnixTimestampMs
 
-    updated: int
+    updated: UnixTimestampMs
