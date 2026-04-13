@@ -74,38 +74,12 @@ impl RateLimitController {
         .await?
     }
 
-    /// Checks whether a request will be denied if called by `limit`.
-    pub async fn check_limit<I: AsRef<str> + 'static + Send>(
-        &self,
-        now: Timestamp,
-        namespace_id: NamespaceId,
-        identifier: I,
-        wanted: u64,
-        config: TokenBucket,
-    ) -> Result<(bool, u64, Option<DurationMs>)> {
-        let tables = self.tables.clone();
-        spawn_blocking_in_current_span(move || {
-            let identifier = identifier.as_ref();
-            let (capacity, _) =
-                Self::calculate_capacity(&tables, namespace_id, identifier, &config, now)?;
-            if capacity < wanted {
-                Ok((
-                    false,
-                    capacity,
-                    Some(config.calculate_retry_after(capacity, wanted)),
-                ))
-            } else {
-                Ok((true, capacity, None))
-            }
-        })
-        .await?
-    }
-
     pub async fn get_remaining<I: AsRef<str> + 'static + Send>(
         &self,
         now: Timestamp,
         namespace_id: NamespaceId,
         identifier: I,
+        wanted: u64,
         config: TokenBucket,
     ) -> Result<(u64, Option<DurationMs>)> {
         let tables = self.tables.clone();
@@ -114,9 +88,9 @@ impl RateLimitController {
             let (capacity, _) =
                 Self::calculate_capacity(&tables, namespace_id, identifier, &config, now)?;
 
-            if capacity == 0 {
-                let retry_after = config.calculate_retry_after(capacity, 1);
-                return Ok((0, Some(retry_after)));
+            if capacity < wanted {
+                let retry_after = config.calculate_retry_after(capacity, wanted);
+                return Ok((capacity, Some(retry_after)));
             }
 
             Ok((capacity, None))
@@ -223,7 +197,7 @@ mod tests {
 
         clock += Duration::from_millis(100);
         let (remaining, retry_after) = limiter
-            .get_remaining(clock, ns(), id, config_refill_2())
+            .get_remaining(clock, ns(), id, 1, config_refill_2())
             .await
             .unwrap();
         assert_eq!(remaining, 2);
@@ -231,7 +205,7 @@ mod tests {
 
         clock += Duration::from_millis(200);
         let (remaining, retry_after) = limiter
-            .get_remaining(clock, ns(), id, config_refill_2())
+            .get_remaining(clock, ns(), id, 1, config_refill_2())
             .await
             .unwrap();
         assert_eq!(remaining, 5);

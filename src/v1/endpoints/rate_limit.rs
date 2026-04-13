@@ -153,15 +153,15 @@ async fn rate_limit_limit(
     // Fast path: if local state already shows exhaustion, no need to go to raft.
     let now = repl.time.now();
     let rate_limit_state = repl.state_machine.rate_limit_store().await;
-    let (allowed, remaining, retry_after) = rate_limit_state
+    let (remaining, retry_after) = rate_limit_state
         .controller()
-        .check_limit(now, namespace.id, key.clone(), tokens, config.clone())
+        .get_remaining(now, namespace.id, key.clone(), tokens, config.clone())
         .await?;
-    if !allowed {
+    if let Some(retry_after) = retry_after {
         return Ok(MsgPackOrJson(RateLimitCheckOut {
-            allowed,
+            allowed: false,
             remaining,
-            retry_after,
+            retry_after: Some(retry_after),
         }));
     }
 
@@ -193,7 +193,7 @@ async fn rate_limit_get_remaining(
     let rate_limit_state = repl.state_machine.rate_limit_store().await;
     let controller = rate_limit_state.controller();
     let (remaining, retry_after) = controller
-        .get_remaining(now, namespace.id, data.key, data.config.into())
+        .get_remaining(now, namespace.id, data.key, 1, data.config.into())
         .await?;
 
     Ok(MsgPackOrJson(RateLimitGetRemainingOut {
