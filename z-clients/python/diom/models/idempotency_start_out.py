@@ -21,12 +21,12 @@ class IdempotencyStartOut(BaseModel):
         if "data" not in data:
             data["data"] = {}
         output = handler(data)
-        if output.type == "started":
+        if output.status == "started":
             output.data = data.get("data", {})
-        elif output.type == "locked":
+        elif output.status == "locked":
             output.data = data.get("data", {})
-        elif output.type == "completed":
+        elif output.status == "completed":
             output.data = IdempotencyCompleted.model_validate(data.get("data", {}))
         else:
-            raise ValueError(f"Unexpected type `{output.type}`")
+            raise ValueError(f"Unexpected type `{output.status}`")
         return output
