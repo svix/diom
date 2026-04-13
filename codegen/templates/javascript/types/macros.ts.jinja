@@ -1,10 +1,19 @@
+{% macro field_name(field) %}{{field.name | to_lower_camel_case | strip_trailing_str("Ms")}}{% endmacro %}
 {% macro field_decl(field) -%}
     {% if field.description is defined -%}
         {{ field.description | with_javadoc_deprecation(field.deprecated) | to_doc_comment(style="js") | indent(5) }}
     {% endif -%}
-    {% set field_lhs = field.name | to_lower_camel_case -%}
+    {% set field_lhs = field_name(field)  -%}
     {% if not field.required %}{% set field_lhs %}{{ field_lhs }}?{% endset %}{% endif -%}
-    {% set ty = field.type.to_js() -%}
+    {% if field.type.is_bytes() -%}
+        {% set ty = "Uint8Array" -%}
+    {% elif field.type.is_unix_timestamp_ms() -%}
+        {% set ty = "Date" -%}
+    {% elif field.type.is_duration_ms() -%}
+        {% set ty = "Temporal.Duration" -%}
+    {% else -%}
+        {% set ty = field.type.to_js() -%}
+    {% endif -%}
     {% if field.nullable %}{% set ty %}{{ ty }} | null{% endset %}{% endif -%}
     {{ field_lhs }}: {{ ty }};
 {%- endmacro -%}
@@ -16,11 +25,17 @@
         {%- else -%}
             new Uint8Array({{ field_expr }})
         {%- endif -%}
-    {%- elif type.is_datetime() -%}
+    {%- elif type.is_datetime() or type.is_unix_timestamp_ms() -%}
         {% if not field_required -%}
             {{ field_expr }} ? new Date({{ field_expr }}) : null
         {%- else -%}
             new Date({{ field_expr }})
+        {%- endif -%}
+    {%- elif type.is_duration_ms() -%}
+        {% if not field_required -%}
+            {{ field_expr }} != null ? Temporal.Duration.from({ milliseconds: {{ field_expr }} }) : undefined
+        {%- else -%}
+            Temporal.Duration.from({ milliseconds: {{ field_expr }} })
         {%- endif -%}
     {%- elif type.is_schema_ref() -%}
         {%- if not field_required -%}
@@ -63,6 +78,18 @@
         {{ field_expr }} != null ? Array.from({{ field_expr }}) : undefined
         {%- else -%}
         Array.from({{ field_expr }})
+        {%- endif -%}
+    {%- elif type.is_unix_timestamp_ms() -%}
+        {%- if not field_required -%}
+        {{ field_expr }} != null ? {{ field_expr }}.getTime() : undefined
+        {%- else -%}
+        {{ field_expr }}.getTime()
+        {%- endif -%}
+    {%- elif type.is_duration_ms() -%}
+        {%- if not field_required -%}
+        {{ field_expr }} != null ? {{ field_expr }}.total('millisecond') : undefined
+        {%- else -%}
+        {{ field_expr }}.total('millisecond')
         {%- endif -%}
     {%- elif type.is_schema_ref() -%}
         {%- if not field_required -%}

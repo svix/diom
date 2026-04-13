@@ -1,6 +1,7 @@
 // this file is @generated
 
 {% set resource_type_name = resource.name | to_upper_camel_case -%}
+{% from "types/macros.ts.jinja" import field_name -%}
 
 {% for c in referenced_components -%}
 import {
@@ -50,7 +51,7 @@ export class {{ resource_type_name }} {
             {
                 ...{{ req_body_schema_name }},
             {%- for field in positional_fields %}
-                {{ field.name | to_lower_camel_case }}: {{ field.name | to_snake_case }},
+                {{ field_name(field) }}: {{ field.name | to_snake_case }},
             {%- endfor %}
             }
         {%- endset -%}

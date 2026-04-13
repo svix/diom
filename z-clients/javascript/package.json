@@ -29,6 +29,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "msgpackr": "^1.11.9"
+    "msgpackr": "^1.11.9",
+    "temporal-polyfill-lite": "^0.3.3"
   }
 }

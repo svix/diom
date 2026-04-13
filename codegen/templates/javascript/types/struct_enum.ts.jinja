@@ -4,7 +4,10 @@ import {
     type {{ c | to_upper_camel_case }},
     {{ c | to_upper_camel_case }}Serializer,
 } from './{{ c | to_lower_camel_case }}';
-{% endfor %}
+{% endfor -%}
+{% for field in type.fields if field.type.is_duration_ms() %}{% if loop.first -%}
+import { Temporal } from 'temporal-polyfill-lite';
+{% endif %}{% endfor %}
 
 {% set type_name = type.name | to_upper_camel_case -%}
 {% set disc_field_name = type.discriminator_field | to_lower_camel_case -%}
@@ -74,7 +77,7 @@ export const {{ type.name | to_upper_camel_case }}Serializer = {
             {{ content_field_name }}:get{{ content_field_name | to_upper_camel_case }}({{ disc_field_name }}),
             {% for field in type.fields -%}
                 {% set field_expr %}object['{{ field.name }}']{% endset -%}
-                {{ field.name | to_lower_camel_case }}: {{ field_from_json(field_expr, field.type, field.required) }},
+                {{ field_name(field) }}: {{ field_from_json(field_expr, field.type, field.required) }},
             {% endfor -%}
         };
     },
@@ -104,7 +107,7 @@ export const {{ type.name | to_upper_camel_case }}Serializer = {
             '{{ type.discriminator_field }}': self.{{ disc_field_name }},
             '{{ type.content_field }}': {{ content_field_name }},
             {% for field in type.fields -%}
-                {% set field_expr %}self.{{ field.name | to_lower_camel_case }}{% endset -%}
+                {% set field_expr %}self.{{ field_name(field) }}{% endset -%}
                 '{{ field.name }}': {{ field_to_json(field_expr, field.type, field.required) }},
             {% endfor -%}
         };

@@ -1,9 +1,10 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface MsgQueueExtendLeaseIn {
     namespace?: string | null;
     msgIds: string[];
-    leaseDurationMs?: number;
+    leaseDuration?: Temporal.Duration;
 }
 
 export interface MsgQueueExtendLeaseIn_ {
@@ -11,7 +12,7 @@ export interface MsgQueueExtendLeaseIn_ {
     topic: string;
     consumerGroup: string;
     msgIds: string[];
-    leaseDurationMs?: number;
+    leaseDuration?: Temporal.Duration;
 }
 
 export const MsgQueueExtendLeaseInSerializer = {
@@ -22,7 +23,7 @@ export const MsgQueueExtendLeaseInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             msgIds: object['msg_ids'],
-            leaseDurationMs: object['lease_duration_ms'],
+            leaseDuration: object['lease_duration_ms'] != null ? Temporal.Duration.from({ milliseconds: object['lease_duration_ms'] }) : undefined,
         };
     },
 
@@ -33,7 +34,7 @@ export const MsgQueueExtendLeaseInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'msg_ids': self.msgIds,
-            'lease_duration_ms': self.leaseDurationMs,
+            'lease_duration_ms': self.leaseDuration != null ? self.leaseDuration.total('millisecond') : undefined,
         };
     }
 }
