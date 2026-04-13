@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     MsgPublishIn,
     MsgPublishOut,
@@ -55,12 +55,12 @@ class MsgsAsync(ApiBase):
             idempotency_key=msg_publish_in.idempotency_key,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.publish",
             body=body,
-            response_type=MsgPublishOut,
         )
+        return parse_response(response, MsgPublishOut)
 
 
 class Msgs(ApiBase):
@@ -93,9 +93,9 @@ class Msgs(ApiBase):
             idempotency_key=msg_publish_in.idempotency_key,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.publish",
             body=body,
-            response_type=MsgPublishOut,
         )
+        return parse_response(response, MsgPublishOut)

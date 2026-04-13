@@ -15,12 +15,18 @@ dependencies = [
     "pydantic>=2.12.5,<3.0.0",
 ]
 
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+]
+
 [project.urls]
 Homepage = "https://www.svix.com"
 Repository = "https://github.com/svix/diom"
 
 [dependency-groups]
 dev = [
+    "pyrefly>=0.60.2",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.25.0",
     "ruff>=0.15.5",

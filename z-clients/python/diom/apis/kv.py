@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     KvDeleteIn,
     KvDeleteOut,
@@ -40,12 +40,12 @@ class KvAsync(ApiBase):
             version=kv_set_in.version,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.kv.set",
             body=body,
-            response_type=KvSetOut,
         )
+        return parse_response(response, KvSetOut)
 
     async def get(
         self,
@@ -59,12 +59,12 @@ class KvAsync(ApiBase):
             consistency=kv_get_in.consistency,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.kv.get",
             body=body,
-            response_type=KvGetOut,
         )
+        return parse_response(response, KvGetOut)
 
     async def delete(
         self,
@@ -78,12 +78,12 @@ class KvAsync(ApiBase):
             version=kv_delete_in.version,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.kv.delete",
             body=body,
-            response_type=KvDeleteOut,
         )
+        return parse_response(response, KvDeleteOut)
 
 
 class Kv(ApiBase):
@@ -107,12 +107,12 @@ class Kv(ApiBase):
             version=kv_set_in.version,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.kv.set",
             body=body,
-            response_type=KvSetOut,
         )
+        return parse_response(response, KvSetOut)
 
     def get(
         self,
@@ -126,12 +126,12 @@ class Kv(ApiBase):
             consistency=kv_get_in.consistency,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.kv.get",
             body=body,
-            response_type=KvGetOut,
         )
+        return parse_response(response, KvGetOut)
 
     def delete(
         self,
@@ -145,9 +145,9 @@ class Kv(ApiBase):
             version=kv_delete_in.version,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.kv.delete",
             body=body,
-            response_type=KvDeleteOut,
         )
+        return parse_response(response, KvDeleteOut)

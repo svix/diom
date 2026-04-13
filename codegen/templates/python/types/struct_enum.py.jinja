@@ -39,7 +39,7 @@ class {{ type_name }}(BaseModel):
         {% for v in type.variants -%}
 
 
-        {% if loop.first -%}if{% else %}elif{% endif %} output.type == "{{ v.name }}":
+        {% if loop.first -%}if{% else %}elif{% endif %} output.{{ type.discriminator_field }} == "{{ v.name }}":
             {%- if v.schema_ref is defined %}
             output.{{ type.content_field | to_snake_case }} = {{ v.schema_ref | to_upper_camel_case }}.model_validate(data.get("{{ type.content_field }}", {}))
             {%- else %}
@@ -47,5 +47,5 @@ class {{ type_name }}(BaseModel):
             {%- endif %}
         {% endfor -%}
         else:
-            raise ValueError(f"Unexpected type `{output.type}`")
+            raise ValueError(f"Unexpected type `{output.{{ type.discriminator_field }}}`")
         return output

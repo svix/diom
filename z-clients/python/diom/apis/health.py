@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, check_response, parse_response
 from ..models import (
     PingOut,
 )
@@ -12,21 +12,22 @@ class HealthAsync(ApiBase):
     ) -> PingOut:
         """Verify the server is up and running."""
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="get",
             path="/api/v1.health.ping",
-            response_type=PingOut,
         )
+        return parse_response(response, PingOut)
 
     async def error(
         self,
     ) -> None:
         """Intentionally return an error"""
 
-        await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.health.error",
         )
+        check_response(response)
 
 
 class Health(ApiBase):
@@ -35,18 +36,19 @@ class Health(ApiBase):
     ) -> PingOut:
         """Verify the server is up and running."""
 
-        return self._request_sync(
+        response = self._request_sync(
             method="get",
             path="/api/v1.health.ping",
-            response_type=PingOut,
         )
+        return parse_response(response, PingOut)
 
     def error(
         self,
     ) -> None:
         """Intentionally return an error"""
 
-        self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.health.error",
         )
+        check_response(response)

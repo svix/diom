@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     MsgQueueAckIn,
     MsgQueueAckOut,
@@ -45,12 +45,12 @@ class MsgsQueueAsync(ApiBase):
             batch_wait=msg_queue_receive_in.batch_wait,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.queue.receive",
             body=body,
-            response_type=MsgQueueReceiveOut,
         )
+        return parse_response(response, MsgQueueReceiveOut)
 
     async def ack(
         self,
@@ -68,12 +68,12 @@ class MsgsQueueAsync(ApiBase):
             msg_ids=msg_queue_ack_in.msg_ids,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.queue.ack",
             body=body,
-            response_type=MsgQueueAckOut,
         )
+        return parse_response(response, MsgQueueAckOut)
 
     async def extend_lease(
         self,
@@ -93,12 +93,12 @@ class MsgsQueueAsync(ApiBase):
             lease_duration=msg_queue_extend_lease_in.lease_duration,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.queue.extend-lease",
             body=body,
-            response_type=MsgQueueExtendLeaseOut,
         )
+        return parse_response(response, MsgQueueExtendLeaseOut)
 
     async def configure(
         self,
@@ -118,12 +118,12 @@ class MsgsQueueAsync(ApiBase):
             dlq_topic=msg_queue_configure_in.dlq_topic,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.queue.configure",
             body=body,
-            response_type=MsgQueueConfigureOut,
         )
+        return parse_response(response, MsgQueueConfigureOut)
 
     async def nack(
         self,
@@ -142,12 +142,12 @@ class MsgsQueueAsync(ApiBase):
             msg_ids=msg_queue_nack_in.msg_ids,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.queue.nack",
             body=body,
-            response_type=MsgQueueNackOut,
         )
+        return parse_response(response, MsgQueueNackOut)
 
     async def redrive_dlq(
         self,
@@ -162,12 +162,12 @@ class MsgsQueueAsync(ApiBase):
             consumer_group=consumer_group,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.queue.redrive-dlq",
             body=body,
-            response_type=MsgQueueRedriveDlqOut,
         )
+        return parse_response(response, MsgQueueRedriveDlqOut)
 
 
 class MsgsQueue(ApiBase):
@@ -191,12 +191,12 @@ class MsgsQueue(ApiBase):
             batch_wait=msg_queue_receive_in.batch_wait,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.queue.receive",
             body=body,
-            response_type=MsgQueueReceiveOut,
         )
+        return parse_response(response, MsgQueueReceiveOut)
 
     def ack(
         self,
@@ -214,12 +214,12 @@ class MsgsQueue(ApiBase):
             msg_ids=msg_queue_ack_in.msg_ids,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.queue.ack",
             body=body,
-            response_type=MsgQueueAckOut,
         )
+        return parse_response(response, MsgQueueAckOut)
 
     def extend_lease(
         self,
@@ -239,12 +239,12 @@ class MsgsQueue(ApiBase):
             lease_duration=msg_queue_extend_lease_in.lease_duration,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.queue.extend-lease",
             body=body,
-            response_type=MsgQueueExtendLeaseOut,
         )
+        return parse_response(response, MsgQueueExtendLeaseOut)
 
     def configure(
         self,
@@ -264,12 +264,12 @@ class MsgsQueue(ApiBase):
             dlq_topic=msg_queue_configure_in.dlq_topic,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.queue.configure",
             body=body,
-            response_type=MsgQueueConfigureOut,
         )
+        return parse_response(response, MsgQueueConfigureOut)
 
     def nack(
         self,
@@ -288,12 +288,12 @@ class MsgsQueue(ApiBase):
             msg_ids=msg_queue_nack_in.msg_ids,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.queue.nack",
             body=body,
-            response_type=MsgQueueNackOut,
         )
+        return parse_response(response, MsgQueueNackOut)
 
     def redrive_dlq(
         self,
@@ -308,9 +308,9 @@ class MsgsQueue(ApiBase):
             consumer_group=consumer_group,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.queue.redrive-dlq",
             body=body,
-            response_type=MsgQueueRedriveDlqOut,
         )
+        return parse_response(response, MsgQueueRedriveDlqOut)

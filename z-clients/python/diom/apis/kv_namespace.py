@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     KvCreateNamespaceIn,
     KvCreateNamespaceOut,
@@ -17,12 +17,12 @@ class KvNamespaceAsync(ApiBase):
         """Create KV namespace"""
         body = kv_create_namespace_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.kv.namespace.create",
             body=body,
-            response_type=KvCreateNamespaceOut,
         )
+        return parse_response(response, KvCreateNamespaceOut)
 
     async def get(
         self,
@@ -31,12 +31,12 @@ class KvNamespaceAsync(ApiBase):
         """Get KV namespace"""
         body = kv_get_namespace_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.kv.namespace.get",
             body=body,
-            response_type=KvGetNamespaceOut,
         )
+        return parse_response(response, KvGetNamespaceOut)
 
 
 class KvNamespace(ApiBase):
@@ -47,12 +47,12 @@ class KvNamespace(ApiBase):
         """Create KV namespace"""
         body = kv_create_namespace_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.kv.namespace.create",
             body=body,
-            response_type=KvCreateNamespaceOut,
         )
+        return parse_response(response, KvCreateNamespaceOut)
 
     def get(
         self,
@@ -61,9 +61,9 @@ class KvNamespace(ApiBase):
         """Get KV namespace"""
         body = kv_get_namespace_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.kv.namespace.get",
             body=body,
-            response_type=KvGetNamespaceOut,
         )
+        return parse_response(response, KvGetNamespaceOut)

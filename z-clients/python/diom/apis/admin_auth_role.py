@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     AdminRoleDeleteIn,
     AdminRoleDeleteOut,
@@ -21,12 +21,12 @@ class AdminAuthRoleAsync(ApiBase):
         """Create or update a role"""
         body = admin_role_upsert_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-role.upsert",
             body=body,
-            response_type=AdminRoleUpsertOut,
         )
+        return parse_response(response, AdminRoleUpsertOut)
 
     async def delete(
         self,
@@ -35,12 +35,12 @@ class AdminAuthRoleAsync(ApiBase):
         """Delete a role"""
         body = admin_role_delete_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-role.delete",
             body=body,
-            response_type=AdminRoleDeleteOut,
         )
+        return parse_response(response, AdminRoleDeleteOut)
 
     async def get(
         self,
@@ -49,12 +49,12 @@ class AdminAuthRoleAsync(ApiBase):
         """Get a role by ID"""
         body = admin_role_get_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-role.get",
             body=body,
-            response_type=AdminRoleOut,
         )
+        return parse_response(response, AdminRoleOut)
 
     async def list(
         self,
@@ -63,12 +63,12 @@ class AdminAuthRoleAsync(ApiBase):
         """List all roles"""
         body = admin_role_list_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-role.list",
             body=body,
-            response_type=ListResponseAdminRoleOut,
         )
+        return parse_response(response, ListResponseAdminRoleOut)
 
 
 class AdminAuthRole(ApiBase):
@@ -79,12 +79,12 @@ class AdminAuthRole(ApiBase):
         """Create or update a role"""
         body = admin_role_upsert_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-role.upsert",
             body=body,
-            response_type=AdminRoleUpsertOut,
         )
+        return parse_response(response, AdminRoleUpsertOut)
 
     def delete(
         self,
@@ -93,12 +93,12 @@ class AdminAuthRole(ApiBase):
         """Delete a role"""
         body = admin_role_delete_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-role.delete",
             body=body,
-            response_type=AdminRoleDeleteOut,
         )
+        return parse_response(response, AdminRoleDeleteOut)
 
     def get(
         self,
@@ -107,12 +107,12 @@ class AdminAuthRole(ApiBase):
         """Get a role by ID"""
         body = admin_role_get_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-role.get",
             body=body,
-            response_type=AdminRoleOut,
         )
+        return parse_response(response, AdminRoleOut)
 
     def list(
         self,
@@ -121,9 +121,9 @@ class AdminAuthRole(ApiBase):
         """List all roles"""
         body = admin_role_list_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-role.list",
             body=body,
-            response_type=ListResponseAdminRoleOut,
         )
+        return parse_response(response, ListResponseAdminRoleOut)
