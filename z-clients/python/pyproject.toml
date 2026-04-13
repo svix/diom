@@ -1,13 +1,23 @@
 [project]
 name = "diom"
 version = "0.1.0"
+description = "Diom Python client library"
 requires-python = ">=3.12"
+license = "MIT"
+authors = [
+    { name = "Svix Inc", email = "oss@svix.com" },
+]
+keywords = ["diom"]
 dependencies = [
     "attrs>=25.4.0,<26.0.0",
     "httpx[http2]>=0.28.1,<0.29.0",
     "msgpack>=1.1.2,<2.0.0",
     "pydantic>=2.12.5,<3.0.0",
 ]
+
+[project.urls]
+Homepage = "https://www.svix.com"
+Repository = "https://github.com/svix/diom"
 
 [dependency-groups]
 dev = [
