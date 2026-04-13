@@ -1,6 +1,6 @@
 {
-  "name": "diom",
-  "version": "1.85.0",
+  "name": "@diomhq/diom",
+  "version": "0.0.1",
   "description": "Diom JavaScript client library",
   "author": "Svix Inc. <oss@svix.com>",
   "repository": "https://github.com/svix/diom",

@@ -1,7 +1,7 @@
 [package]
 name = "diom"
+version = "0.0.1"
 license.workspace = true
-version.workspace = true
 rust-version.workspace = true
 edition = "2024"
 authors = ["Svix Inc. <oss@svix.com>"]
