@@ -903,6 +903,36 @@ impl StoreHandle {
             .clone()
     }
 
+    pub(crate) async fn rate_limit_store(&self) -> diom_rate_limit::State {
+        self.inner
+            .read()
+            .await
+            .stores
+            .read()
+            .rate_limit_state
+            .clone()
+    }
+
+    pub(crate) async fn auth_token_store(&self) -> diom_auth_token::State {
+        self.inner
+            .read()
+            .await
+            .stores
+            .read()
+            .auth_token_state
+            .clone()
+    }
+
+    pub(crate) async fn admin_auth_store(&self) -> diom_admin_auth::State {
+        self.inner
+            .read()
+            .await
+            .stores
+            .read()
+            .admin_auth_state
+            .clone()
+    }
+
     /// Mark this node as removed from a cluster and ineligible to continue
     pub(super) async fn poison(&self, cluster_id: ClusterId) -> anyhow::Result<()> {
         let handle = self.inner.write().await;

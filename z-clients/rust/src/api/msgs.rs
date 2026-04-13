@@ -37,6 +37,7 @@ impl<'a> Msgs<'a> {
             namespace: msg_publish_in.namespace,
             topic,
             msgs: msg_publish_in.msgs,
+            idempotency_key: msg_publish_in.idempotency_key,
         };
 
         crate::request::Request::new(http::Method::POST, "/api/v1.msgs.publish")

@@ -2,7 +2,11 @@ use std::num::NonZeroU16;
 
 use crate::{AppState, core::cluster::RaftState, v1::utils::openapi_tag};
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::{Extension, extract::State};
+use axum::{
+    Extension,
+    extract::State,
+    http::{HeaderMap, header::AUTHORIZATION},
+};
 use diom_authorization::RequestedOperation;
 use diom_core::types::DurationMs;
 use diom_derive::aide_annotate;
@@ -11,8 +15,8 @@ use diom_id::Module;
 use diom_msgs::{
     MsgsNamespace,
     entities::{
-        ConsumerGroup, MsgId, Offset, QueueMsgOut, Retention, SeekPosition, StreamMsgOut, TopicIn,
-        TopicName, TopicPartition,
+        ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, QueueMsgOut, Retention, SeekPosition,
+        StreamMsgOut, TopicIn, TopicName, TopicPartition,
     },
     operations::{
         CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
@@ -142,6 +146,8 @@ struct MsgPublishIn {
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub msgs: Vec<diom_msgs::entities::MsgIn>,
+    #[serde(default)]
+    pub idempotency_key: Option<String>,
 }
 
 request_input!(MsgPublishIn, "publish");
@@ -163,6 +169,7 @@ struct MsgPublishOut {
 async fn publish(
     State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
+    headers: HeaderMap,
     MsgPackOrJson(data): MsgPackOrJson<MsgPublishIn>,
 ) -> Result<MsgPackOrJson<MsgPublishOut>> {
     let namespace: MsgsNamespace = state
@@ -170,7 +177,13 @@ async fn publish(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let operation = PublishOperation::new(namespace.id, data.topic, data.msgs)?;
+    let topic_name = data.topic.name();
+    let authorization_header = headers.get(AUTHORIZATION).map(|c| c.as_bytes());
+    let idempotency_key = data
+        .idempotency_key
+        .as_deref()
+        .map(|key| MsgsIdempotencyKey::new(authorization_header, topic_name, key));
+    let operation = PublishOperation::new(namespace.id, data.topic, data.msgs, idempotency_key)?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgPublishOut {

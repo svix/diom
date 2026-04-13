@@ -52,6 +52,7 @@ class MsgsAsync(ApiBase):
             namespace=msg_publish_in.namespace,
             topic=topic,
             msgs=msg_publish_in.msgs,
+            idempotency_key=msg_publish_in.idempotency_key,
         ).model_dump(exclude_none=True)
 
         return await self._request_asyncio(
@@ -89,6 +90,7 @@ class Msgs(ApiBase):
             namespace=msg_publish_in.namespace,
             topic=topic,
             msgs=msg_publish_in.msgs,
+            idempotency_key=msg_publish_in.idempotency_key,
         ).model_dump(exclude_none=True)
 
         return self._request_sync(

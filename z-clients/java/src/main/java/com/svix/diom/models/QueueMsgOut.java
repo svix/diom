@@ -13,8 +13,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
+import com.svix.diom.UnixTimestampMsSerializer;
+import com.svix.diom.UnixTimestampMsDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -95,7 +98,7 @@ public class QueueMsgOut {
     *
      * @return headers
      */
-    @javax.annotation.Nullable
+    @javax.annotation.Nonnull
     public Map<String,String> getHeaders() {
         return headers;
     }

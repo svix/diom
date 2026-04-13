@@ -9,6 +9,9 @@ pub struct MsgPublishIn {
     pub namespace: Option<String>,
 
     pub msgs: Vec<MsgIn>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
 }
 
 impl MsgPublishIn {
@@ -16,11 +19,17 @@ impl MsgPublishIn {
         Self {
             namespace: None,
             msgs,
+            idempotency_key: None,
         }
     }
 
     pub fn with_namespace(mut self, value: impl Into<Option<String>>) -> Self {
         self.namespace = value.into();
+        self
+    }
+
+    pub fn with_idempotency_key(mut self, value: impl Into<Option<String>>) -> Self {
+        self.idempotency_key = value.into();
         self
     }
 }
@@ -33,4 +42,7 @@ pub(crate) struct MsgPublishIn_ {
     pub topic: String,
 
     pub msgs: Vec<MsgIn>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
 }

@@ -257,7 +257,7 @@ async fn auth_token_verify(
         .ok_or_not_found()?;
 
     let token_hashed = TokenHashed::from(data.token.as_str());
-    let auth_token_state = diom_auth_token::State::init(state.do_not_use_dbs.clone())?;
+    let auth_token_state = repl.state_machine.auth_token_store().await;
     let token = auth_token_state
         .controller
         .fetch_non_expired(namespace.id, &token_hashed, repl.time.now())
@@ -299,7 +299,7 @@ async fn auth_token_list(
     let limit = data.pagination.limit.0 as usize;
     let iterator = data.pagination.iterator.map(|id| id.into_inner());
 
-    let auth_token_state = diom_auth_token::State::init(state.do_not_use_dbs.clone())?;
+    let auth_token_state = repl.state_machine.auth_token_store().await;
     let models = auth_token_state
         .controller
         .list_by_owner(namespace.id, &data.owner_id, limit + 1, iterator)

@@ -22,7 +22,7 @@ use tracing::{Instrument, Span};
 
 use super::{NodeId, raft::TypeConfig};
 use crate::{
-    cfg::{Dir, FsyncMode},
+    cfg::{Dir, FsyncMode, SyncMode},
     core::{cluster::ClusterId, metrics::LogMetrics},
 };
 use diom_core::task::spawn_blocking_in_current_span;
@@ -306,7 +306,7 @@ async fn flush_worker(
     commits_before_fsync: usize,
     duration_before_fsync: Duration,
     autoscale_duration: bool,
-    ack_immediately: bool,
+    sync_mode: SyncMode,
     fsync_mode: FsyncMode,
 ) {
     let mut pending = Vec::new();
@@ -315,6 +315,8 @@ async fn flush_worker(
     let mut duration_estimator = SimpleEstimator::<7>::new(duration_before_fsync);
     let mut last_estimate = duration_before_fsync;
     let mut ticker = tokio::time::interval(duration_before_fsync);
+
+    let persist_mode = sync_mode.into_persist_mode(fsync_mode);
 
     let mut metrics = None;
 
@@ -332,24 +334,7 @@ async fn flush_worker(
                             metrics = Some(new_metrics)
                         },
                         Some(FlushMessage::Callback(callback)) => {
-                            if ack_immediately {
-                                let db = db.clone();
-                                let result = spawn_blocking_in_current_span(move || {
-                                    let _guard = tracing::info_span!("logs:flush_worker:buffer").entered();
-                                    db.persist(PersistMode::Buffer)
-                                        // fjall::Error isn't Clone
-                                        .map_err(|err| {
-                                            tracing::error!(?err, "error flushing fjall in background");
-                                            BackgroundFsyncFailedError(err.to_string())
-                                        })
-                                })
-                                .await
-                                .expect("failed joining blocking task");
-                                callback.io_completed(result.map_err(std::io::Error::other));
-                                pending.push(None);
-                            } else {
-                                pending.push(Some(callback))
-                            }
+                            pending.push(Some(callback))
                         },
                         None => { done = true }
                     }
@@ -371,9 +356,9 @@ async fn flush_worker(
                     move || -> Result<Duration, BackgroundFsyncFailedError> {
                         let _guard =
                             tracing::info_span!("logs:flush_worker:flush", num_commits).entered();
-                        tracing::trace!("flushing logs to disk");
+                        tracing::trace!(?sync_mode, "flushing logs to disk");
                         let start_persist = std::time::Instant::now();
-                        db.persist(fsync_mode.into()).map_err(|err| {
+                        db.persist(persist_mode).map_err(|err| {
                             tracing::error!(?err, "error flushing fjall");
                             BackgroundFsyncFailedError(err.to_string())
                         })?;
@@ -442,7 +427,7 @@ impl DiomLogs {
         commits_before_fsync: usize,
         duration_before_fsync: Duration,
         autoscale_duration: bool,
-        ack_immediately: bool,
+        sync_mode: SyncMode,
         fsync_mode: FsyncMode,
     ) -> anyhow::Result<Self> {
         let pb: std::path::PathBuf = path.into();
@@ -460,7 +445,7 @@ impl DiomLogs {
             commits_before_fsync,
             duration_before_fsync,
             autoscale_duration,
-            ack_immediately,
+            sync_mode,
             fsync_mode,
         ));
         Ok(Self {
@@ -841,7 +826,7 @@ mod tests {
     use std::time::Duration;
 
     use super::DiomLogs;
-    use crate::cfg::{Dir, FsyncMode};
+    use crate::cfg::{Dir, FsyncMode, SyncMode};
     use jiff::{Span, Timestamp};
     use tempfile::TempDir;
     use test_utils::TestResult;
@@ -860,7 +845,7 @@ mod tests {
                 0,
                 Duration::from_hours(1),
                 false,
-                true,
+                SyncMode::Buffer,
                 FsyncMode::default(),
             )
             .unwrap();

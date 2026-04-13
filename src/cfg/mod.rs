@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::Context;
-use diom_core::types::DurationMs;
+use diom_core::{Monotime, types::DurationMs};
 use diom_derive::EnvOverridable;
 use fs_err as fs;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -168,13 +168,19 @@ impl DatabaseConfig {
         }
     }
 
-    fn database(dir: &Path, file: &str) -> Result<fjall::Database> {
+    fn database(dir: &Path, file: &str, time: Monotime) -> Result<fjall::Database> {
         let dir = Dir::new(dir)?;
         let path = dir.join(file);
         // FIXME: we should probably make the cache size a config.
         fjall::Database::builder(path)
             .cache_size(Self::default_cache_size())
             .manual_journal_persist(true)
+            .with_compaction_filter_factories(Arc::new(move |keyspace| match keyspace {
+                diom_msgs::METADATA_KEYSPACE => Some(Arc::new(
+                    diom_msgs::compaction::IdempotencyExpiryFilterFactory::new(time.clone()),
+                )),
+                _ => None,
+            }))
             .open()
             .map_err(|err| {
                 tracing::error!(?err, "error building database");
@@ -182,17 +188,19 @@ impl DatabaseConfig {
             })
     }
 
-    pub fn persistent(db_config: &DatabaseConfig) -> Result<fjall::Database> {
+    pub fn persistent(db_config: &DatabaseConfig, time: Monotime) -> Result<fjall::Database> {
         Self::database(
             &db_config.path,
             db_config.filename.as_deref().unwrap_or("fjall_persistent"),
+            time,
         )
     }
 
-    pub fn ephemeral(db_config: &DatabaseConfig) -> Result<fjall::Database> {
+    pub fn ephemeral(db_config: &DatabaseConfig, time: Monotime) -> Result<fjall::Database> {
         Self::database(
             &db_config.path,
             db_config.filename.as_deref().unwrap_or("fjall_ephemeral"),
+            time,
         )
     }
 }
@@ -342,7 +350,13 @@ pub struct ClusterConfiguration {
     /// Interval (in transactions) between fsyncing the commit log.
     ///
     /// This can be used to force transactions to fsync logs more often than the
-    /// default `log_sync_interval_ms` timer.
+    /// default `log_sync_interval_ms` timer. If `log_sync_mode` is set to "buffer", it's
+    /// reasonable to set this value to `1` to flush to the OS buffer on every log.
+    ///
+    /// If this is set to 0, only the interval timer will be used
+    ///
+    /// If this is set to a value higher than 1 and the interval timer is long, then
+    /// single-threaded clients (including bootstrap) will be extremely slow.
     #[validate(range(min = 0, max = 1024000))]
     #[serde(default = "defaults::cluster_log_sync_interval_commits")]
     pub log_sync_interval_commits: usize,
@@ -362,14 +376,13 @@ pub struct ClusterConfiguration {
     #[serde(default = "defaults::default_true")]
     pub log_sync_interval_auto: bool,
 
-    /// Commit logs to the cluster immediately, before fsyncing them to persistent storage.
+    /// Should a log sync actually trigger an fsync?
     ///
-    /// This should be set to `false` for full ACID compliance, but can be set to `true` to enable
-    /// higher throughput than your fsync rate. Note that we always flush to the OS buffers before
-    /// acking, so data will only be lost if the OS crashes. If that happens, the node should be
-    /// removed from the cluster, erased, and resynced
-    #[serde(default = "defaults::default_false")]
-    pub log_ack_immediately: bool,
+    /// If this is set to "buffer" and a node suffers a catastrophic failure where OS buffers
+    /// are not written to disk, that node should be erased and re-snapshotted before being
+    /// re-added to the cluster.
+    #[serde(default = "SyncMode::sync")]
+    pub log_sync_mode: SyncMode,
 
     /// Trigger a background snapshot after this many writes
     pub snapshot_after_writes: Option<u32>,
@@ -529,7 +542,7 @@ pub struct ConfigurationInner {
     /// This is similar to the `cluster.log_sync` options, but applies to the actual
     /// primary data as opposed to the log, and is applied at every batch commit from the
     /// underlying replication system.
-    #[serde(default)]
+    #[serde(default = "SyncMode::buffer")]
     pub sync_mode: SyncMode,
 
     /// When fsyncing, should we use fsync(2) or fdatasync(2)
@@ -693,11 +706,10 @@ impl fmt::Display for LogLevel {
 }
 
 /// How data is synchronized to the underlying database
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum SyncMode {
     /// Write data to the OS, but do not fsync
-    #[default]
     Buffer,
     /// fsync the data on every batch apply
     Sync,
@@ -706,6 +718,14 @@ pub enum SyncMode {
 from_str_via_serde!(SyncMode);
 
 impl SyncMode {
+    fn buffer() -> Self {
+        Self::Buffer
+    }
+
+    fn sync() -> Self {
+        Self::Sync
+    }
+
     pub fn into_persist_mode(&self, fsync_mode: FsyncMode) -> fjall::PersistMode {
         match self {
             Self::Buffer => fjall::PersistMode::Buffer,

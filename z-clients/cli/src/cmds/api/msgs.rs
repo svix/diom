@@ -23,7 +23,8 @@ pub enum MsgsCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"...\",
-  \"msgs\": \"...\"
+  \"msgs\": \"...\",
+  \"idempotency_key\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"topics\": \"...\"
