@@ -55,7 +55,7 @@ async fn test_cache_set_and_get_msgpack_in() -> TestResult {
 struct CacheGetOut {
     value: Option<Vec<u8>>,
     #[allow(unused)]
-    expiry: Option<String>,
+    expiry: Option<u64>,
 }
 
 #[tokio::test]
