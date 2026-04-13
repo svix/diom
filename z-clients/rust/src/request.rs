@@ -127,15 +127,18 @@ impl Request {
 
             let next_backoff = retries.next().copied();
 
-            match res {
+            let e = match res {
+                Err(e) if e.is_retryable() => e,
+                Err(e) => return Err(e),
                 Ok(result) => return Ok(result),
-                Err(e) if !e.is_retryable() || next_backoff.is_none() => {
-                    return Err(e);
-                }
-                _ => {}
-            }
+            };
 
-            tokio::time::sleep(next_backoff.expect("next_backoff is always Some")).await;
+            let Some(next_backoff) = next_backoff else {
+                // retries exhausted
+                return Err(e);
+            };
+
+            tokio::time::sleep(next_backoff).await;
             retry_count += 1;
 
             request
