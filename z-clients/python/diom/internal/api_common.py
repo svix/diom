@@ -88,11 +88,11 @@ class ApiBase:
         self,
         method: str,
         path: str,
+        response_type: type[T],
         *,
         header_params: t.Optional[t.Dict[str, str]] = None,
         body: t.Optional[t.Any] = None,
-        response_type: t.Optional[type[T]] = None,
-    ) -> t.Optional[T]:
+    ) -> T:
         httpx_kwargs = self._get_httpx_kwargs(
             method,
             path,
@@ -116,11 +116,11 @@ class ApiBase:
         self,
         method: str,
         path: str,
+        response_type: type[T],
         *,
         header_params: t.Optional[t.Dict[str, str]] = None,
         body: t.Optional[t.Any] = None,
-        response_type: t.Optional[type[T]] = None,
-    ) -> t.Optional[T]:
+    ) -> T:
         httpx_kwargs = self._get_httpx_kwargs(
             method,
             path,
@@ -149,16 +149,15 @@ def decode_response_body(response: httpx.Response):
 
 def _parse_response[T: BaseModel](
     response: httpx.Response,
-    response_type: t.Optional[type[T]],
-) -> t.Optional[T]:
+    response_type: type[T],
+) -> T:
     if 200 <= response.status_code <= 299:
-        if response_type is not None:
-            response_decoded = decode_response_body(response)
-            return response_type.model_validate(
-                response_decoded,
-                by_alias=True,
-                by_name=False,
-            )
+        response_decoded = decode_response_body(response)
+        return response_type.model_validate(
+            response_decoded,
+            by_alias=True,
+            by_name=False,
+        )
     else:
         response_decoded = decode_response_body(response)
         if response.status_code == 422:
