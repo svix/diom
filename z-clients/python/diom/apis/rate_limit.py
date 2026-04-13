@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     RateLimitCheckIn,
     RateLimitCheckOut,
@@ -27,12 +27,12 @@ class RateLimitAsync(ApiBase):
         """Rate Limiter Check and Consume"""
         body = rate_limit_check_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.rate-limit.limit",
             body=body,
-            response_type=RateLimitCheckOut,
         )
+        return parse_response(response, RateLimitCheckOut)
 
     async def get_remaining(
         self,
@@ -41,12 +41,12 @@ class RateLimitAsync(ApiBase):
         """Rate Limiter Get Remaining"""
         body = rate_limit_get_remaining_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.rate-limit.get-remaining",
             body=body,
-            response_type=RateLimitGetRemainingOut,
         )
+        return parse_response(response, RateLimitGetRemainingOut)
 
     async def reset(
         self,
@@ -55,12 +55,12 @@ class RateLimitAsync(ApiBase):
         """Rate Limiter Reset"""
         body = rate_limit_reset_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.rate-limit.reset",
             body=body,
-            response_type=RateLimitResetOut,
         )
+        return parse_response(response, RateLimitResetOut)
 
 
 class RateLimit(ApiBase):
@@ -75,12 +75,12 @@ class RateLimit(ApiBase):
         """Rate Limiter Check and Consume"""
         body = rate_limit_check_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.rate-limit.limit",
             body=body,
-            response_type=RateLimitCheckOut,
         )
+        return parse_response(response, RateLimitCheckOut)
 
     def get_remaining(
         self,
@@ -89,12 +89,12 @@ class RateLimit(ApiBase):
         """Rate Limiter Get Remaining"""
         body = rate_limit_get_remaining_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.rate-limit.get-remaining",
             body=body,
-            response_type=RateLimitGetRemainingOut,
         )
+        return parse_response(response, RateLimitGetRemainingOut)
 
     def reset(
         self,
@@ -103,9 +103,9 @@ class RateLimit(ApiBase):
         """Rate Limiter Reset"""
         body = rate_limit_reset_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.rate-limit.reset",
             body=body,
-            response_type=RateLimitResetOut,
         )
+        return parse_response(response, RateLimitResetOut)

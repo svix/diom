@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     CacheDeleteIn,
     CacheDeleteOut,
@@ -38,12 +38,12 @@ class CacheAsync(ApiBase):
             ttl=cache_set_in.ttl,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.cache.set",
             body=body,
-            response_type=CacheSetOut,
         )
+        return parse_response(response, CacheSetOut)
 
     async def get(
         self,
@@ -57,12 +57,12 @@ class CacheAsync(ApiBase):
             consistency=cache_get_in.consistency,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.cache.get",
             body=body,
-            response_type=CacheGetOut,
         )
+        return parse_response(response, CacheGetOut)
 
     async def delete(
         self,
@@ -75,12 +75,12 @@ class CacheAsync(ApiBase):
             key=key,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.cache.delete",
             body=body,
-            response_type=CacheDeleteOut,
         )
+        return parse_response(response, CacheDeleteOut)
 
 
 class Cache(ApiBase):
@@ -102,12 +102,12 @@ class Cache(ApiBase):
             ttl=cache_set_in.ttl,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.cache.set",
             body=body,
-            response_type=CacheSetOut,
         )
+        return parse_response(response, CacheSetOut)
 
     def get(
         self,
@@ -121,12 +121,12 @@ class Cache(ApiBase):
             consistency=cache_get_in.consistency,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.cache.get",
             body=body,
-            response_type=CacheGetOut,
         )
+        return parse_response(response, CacheGetOut)
 
     def delete(
         self,
@@ -139,9 +139,9 @@ class Cache(ApiBase):
             key=key,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.cache.delete",
             body=body,
-            response_type=CacheDeleteOut,
         )
+        return parse_response(response, CacheDeleteOut)

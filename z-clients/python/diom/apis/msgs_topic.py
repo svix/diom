@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     MsgTopicConfigureIn,
     MsgTopicConfigureOut,
@@ -24,12 +24,12 @@ class MsgsTopicAsync(ApiBase):
             partitions=msg_topic_configure_in.partitions,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.msgs.topic.configure",
             body=body,
-            response_type=MsgTopicConfigureOut,
         )
+        return parse_response(response, MsgTopicConfigureOut)
 
 
 class MsgsTopic(ApiBase):
@@ -47,9 +47,9 @@ class MsgsTopic(ApiBase):
             partitions=msg_topic_configure_in.partitions,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.msgs.topic.configure",
             body=body,
-            response_type=MsgTopicConfigureOut,
         )
+        return parse_response(response, MsgTopicConfigureOut)

@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     ClusterForceSnapshotIn,
     ClusterForceSnapshotOut,
@@ -18,11 +18,11 @@ class AdminClusterAsync(ApiBase):
     ) -> ClusterStatusOut:
         """Get information about the current cluster"""
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="get",
             path="/api/v1.admin.cluster.status",
-            response_type=ClusterStatusOut,
         )
+        return parse_response(response, ClusterStatusOut)
 
     async def initialize(
         self,
@@ -34,12 +34,12 @@ class AdminClusterAsync(ApiBase):
         initialized and is not currently a member of a cluster."""
         body = cluster_initialize_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.cluster.initialize",
             body=body,
-            response_type=ClusterInitializeOut,
         )
+        return parse_response(response, ClusterInitializeOut)
 
     async def remove_node(
         self,
@@ -51,12 +51,12 @@ class AdminClusterAsync(ApiBase):
         before it can safely be added to the cluster."""
         body = cluster_remove_node_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.cluster.remove-node",
             body=body,
-            response_type=ClusterRemoveNodeOut,
         )
+        return parse_response(response, ClusterRemoveNodeOut)
 
     async def force_snapshot(
         self,
@@ -65,12 +65,12 @@ class AdminClusterAsync(ApiBase):
         """Force the cluster to take a snapshot immediately"""
         body = cluster_force_snapshot_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.cluster.force-snapshot",
             body=body,
-            response_type=ClusterForceSnapshotOut,
         )
+        return parse_response(response, ClusterForceSnapshotOut)
 
 
 class AdminCluster(ApiBase):
@@ -79,11 +79,11 @@ class AdminCluster(ApiBase):
     ) -> ClusterStatusOut:
         """Get information about the current cluster"""
 
-        return self._request_sync(
+        response = self._request_sync(
             method="get",
             path="/api/v1.admin.cluster.status",
-            response_type=ClusterStatusOut,
         )
+        return parse_response(response, ClusterStatusOut)
 
     def initialize(
         self,
@@ -95,12 +95,12 @@ class AdminCluster(ApiBase):
         initialized and is not currently a member of a cluster."""
         body = cluster_initialize_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.cluster.initialize",
             body=body,
-            response_type=ClusterInitializeOut,
         )
+        return parse_response(response, ClusterInitializeOut)
 
     def remove_node(
         self,
@@ -112,12 +112,12 @@ class AdminCluster(ApiBase):
         before it can safely be added to the cluster."""
         body = cluster_remove_node_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.cluster.remove-node",
             body=body,
-            response_type=ClusterRemoveNodeOut,
         )
+        return parse_response(response, ClusterRemoveNodeOut)
 
     def force_snapshot(
         self,
@@ -126,9 +126,9 @@ class AdminCluster(ApiBase):
         """Force the cluster to take a snapshot immediately"""
         body = cluster_force_snapshot_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.cluster.force-snapshot",
             body=body,
-            response_type=ClusterForceSnapshotOut,
         )
+        return parse_response(response, ClusterForceSnapshotOut)

@@ -5,7 +5,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from deprecated import deprecated
 
-from ..internal.api_common import ApiBase, BaseOptions, serialize_params
+from ..internal.api_common import ApiBase, BaseOptions, check_response, parse_response, serialize_params
 {%- if referenced_components %}
 from ..models import (
     {%- for c in referenced_components %}
@@ -103,18 +103,20 @@ class {{ resource.name | to_upper_camel_case }}{% if is_async %}Async{% endif %}
         .model_dump(exclude_none=True)
         {%- endif %}
 
-        {% if op.response_body_schema_name is defined -%}return {% endif -%}
-        {%- if is_async %}await {% endif -%}
+        response = {% if is_async %}await {% endif -%}
         self.{{ internal_func_name }}(
             method="{{ op.method }}",
             path="{{ op.path }}",
             {%- if op.request_body_schema_name is defined %}
             body=body,
             {%- endif %}
-            {%- if op.response_body_schema_name is defined %}
-            response_type={{ op.response_body_schema_name | to_upper_camel_case }},
-            {%- endif %}
         )
+
+        {%- if op.response_body_schema_name is defined %}
+        return parse_response(response, {{ op.response_body_schema_name | to_upper_camel_case }})
+        {%- else %}
+        check_response(response)
+        {%- endif %}
 
     {%- set api_operation_extra %}
         {% if is_async -%}

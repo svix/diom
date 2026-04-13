@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     IdempotencyCreateNamespaceIn,
     IdempotencyCreateNamespaceOut,
@@ -17,12 +17,12 @@ class IdempotencyNamespaceAsync(ApiBase):
         """Create idempotency namespace"""
         body = idempotency_create_namespace_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.idempotency.namespace.create",
             body=body,
-            response_type=IdempotencyCreateNamespaceOut,
         )
+        return parse_response(response, IdempotencyCreateNamespaceOut)
 
     async def get(
         self,
@@ -31,12 +31,12 @@ class IdempotencyNamespaceAsync(ApiBase):
         """Get idempotency namespace"""
         body = idempotency_get_namespace_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.idempotency.namespace.get",
             body=body,
-            response_type=IdempotencyGetNamespaceOut,
         )
+        return parse_response(response, IdempotencyGetNamespaceOut)
 
 
 class IdempotencyNamespace(ApiBase):
@@ -47,12 +47,12 @@ class IdempotencyNamespace(ApiBase):
         """Create idempotency namespace"""
         body = idempotency_create_namespace_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.idempotency.namespace.create",
             body=body,
-            response_type=IdempotencyCreateNamespaceOut,
         )
+        return parse_response(response, IdempotencyCreateNamespaceOut)
 
     def get(
         self,
@@ -61,9 +61,9 @@ class IdempotencyNamespace(ApiBase):
         """Get idempotency namespace"""
         body = idempotency_get_namespace_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.idempotency.namespace.get",
             body=body,
-            response_type=IdempotencyGetNamespaceOut,
         )
+        return parse_response(response, IdempotencyGetNamespaceOut)
