@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { Diom } from "../dist/index.mjs";
+import { Temporal } from "temporal-polyfill-lite";
 
 const TOKEN = process.env.DIOM_TOKEN;
 const SERVER_URL = process.env.DIOM_SERVER_URL;
@@ -51,8 +52,10 @@ describe("SDK Integration Tests", () => {
     const key = "js-integration-cache-key";
     const value = toBytes("js-integration-cache-value");
 
+    const ttl = Temporal.Duration.from({ seconds: 60 }); // 60 second TTL
+
     // Set
-    await client.cache.set(key, value, { ttlMs: 60000 });
+    await client.cache.set(key, value, {ttl: ttl});
 
     // Get
     const getResp = await client.cache.get(key, {});

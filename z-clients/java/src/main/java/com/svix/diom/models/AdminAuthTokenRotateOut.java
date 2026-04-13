@@ -38,8 +38,8 @@ import lombok.ToString;
 public class AdminAuthTokenRotateOut {
     @JsonProperty private String id;
     @JsonProperty private String token;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public AdminAuthTokenRotateOut() {}
 
     public AdminAuthTokenRotateOut id(String id) {
@@ -80,7 +80,7 @@ public class AdminAuthTokenRotateOut {
         this.token = token;
     }
 
-    public AdminAuthTokenRotateOut created(OffsetDateTime created) {
+    public AdminAuthTokenRotateOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -91,15 +91,15 @@ public class AdminAuthTokenRotateOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public AdminAuthTokenRotateOut updated(OffsetDateTime updated) {
+    public AdminAuthTokenRotateOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -110,11 +110,11 @@ public class AdminAuthTokenRotateOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 

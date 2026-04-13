@@ -43,7 +43,7 @@ async fn test_cache_set_and_get() -> TestResult {
     let response = cache_get(&client, "test-key-1").await?;
 
     assert_eq!(response["value"], json!("test-value-123".as_bytes()));
-    assert!(response["expiry"].is_string());
+    assert!(response["expiry"].is_u64());
 
     // set should fail if namespace doesn't exist:
     client
@@ -128,8 +128,8 @@ async fn create_namespace_with_defaults() -> TestResult {
 
     assert_eq!(response["name"], "my-namespace");
     assert_eq!(response["eviction_policy"], "NoEviction");
-    assert!(response["created"].is_string());
-    assert!(response["updated"].is_string());
+    assert!(response["created"].is_u64());
+    assert!(response["updated"].is_u64());
 
     Ok(())
 }
@@ -151,7 +151,7 @@ async fn create_namespace_upserts() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let created_ts = first["created"].assert_str().to_owned();
+    let created_ts = first["created"].assert_u64();
     assert_eq!(first["name"], "upsert-ns");
 
     // Upsert

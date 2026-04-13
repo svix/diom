@@ -1,14 +1,13 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_core::types::{DurationMs, EntityKey};
+use diom_core::types::{DurationMs, EntityKey, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
 use diom_namespace::entities::NamespaceName;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
 use diom_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -242,8 +241,8 @@ impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitCreateNamespaceOut {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -256,8 +255,8 @@ namespace_request_input!(RateLimitGetNamespaceIn, "get");
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceOut {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 /// Create rate limiter namespace
@@ -270,8 +269,8 @@ async fn rate_limit_create_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(RateLimitCreateNamespaceOut {
         name: resp.name,
-        created: resp.created,
-        updated: resp.updated,
+        created: resp.created.into(),
+        updated: resp.updated.into(),
     }))
 }
 
@@ -291,8 +290,8 @@ async fn rate_limit_get_namespace(
 
     Ok(MsgPackOrJson(RateLimitGetNamespaceOut {
         name: namespace.name,
-        created: namespace.created,
-        updated: namespace.updated,
+        created: namespace.created.into(),
+        updated: namespace.updated.into(),
     }))
 }
 

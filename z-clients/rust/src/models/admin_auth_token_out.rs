@@ -7,11 +7,16 @@ pub struct AdminAuthTokenOut {
 
     pub name: String,
 
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
     pub created: jiff::Timestamp,
 
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
     pub updated: jiff::Timestamp,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        with = "crate::unix_timestamp_ms_serde::optional",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub expiry: Option<jiff::Timestamp>,
 
     pub role: String,

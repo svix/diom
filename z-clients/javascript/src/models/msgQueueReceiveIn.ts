@@ -1,11 +1,12 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface MsgQueueReceiveIn {
     namespace?: string | null;
     batchSize?: number;
-    leaseDurationMs?: number;
+    leaseDuration?: Temporal.Duration;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWaitMs?: number | null;
+    batchWait?: Temporal.Duration | null;
 }
 
 export interface MsgQueueReceiveIn_ {
@@ -13,9 +14,9 @@ export interface MsgQueueReceiveIn_ {
     topic: string;
     consumerGroup: string;
     batchSize?: number;
-    leaseDurationMs?: number;
+    leaseDuration?: Temporal.Duration;
     /** Maximum time (in milliseconds) to wait for messages before returning. */
-    batchWaitMs?: number | null;
+    batchWait?: Temporal.Duration | null;
 }
 
 export const MsgQueueReceiveInSerializer = {
@@ -26,8 +27,8 @@ export const MsgQueueReceiveInSerializer = {
             topic: object['topic'],
             consumerGroup: object['consumer_group'],
             batchSize: object['batch_size'],
-            leaseDurationMs: object['lease_duration_ms'],
-            batchWaitMs: object['batch_wait_ms'],
+            leaseDuration: object['lease_duration_ms'] != null ? Temporal.Duration.from({ milliseconds: object['lease_duration_ms'] }) : undefined,
+            batchWait: object['batch_wait_ms'] != null ? Temporal.Duration.from({ milliseconds: object['batch_wait_ms'] }) : undefined,
         };
     },
 
@@ -38,8 +39,8 @@ export const MsgQueueReceiveInSerializer = {
             'topic': self.topic,
             'consumer_group': self.consumerGroup,
             'batch_size': self.batchSize,
-            'lease_duration_ms': self.leaseDurationMs,
-            'batch_wait_ms': self.batchWaitMs,
+            'lease_duration_ms': self.leaseDuration != null ? self.leaseDuration.total('millisecond') : undefined,
+            'batch_wait_ms': self.batchWait != null ? self.batchWait.total('millisecond') : undefined,
         };
     }
 }

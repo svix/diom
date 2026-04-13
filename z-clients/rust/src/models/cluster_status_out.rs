@@ -24,6 +24,7 @@ pub struct ClusterStatusOut {
     pub this_node_state: ServerState,
 
     /// The timestamp of the last transaction committed on this node
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
     pub this_node_last_committed_timestamp: jiff::Timestamp,
 
     /// The last snapshot taken on this node

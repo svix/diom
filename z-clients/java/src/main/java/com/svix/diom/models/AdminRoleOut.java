@@ -41,8 +41,8 @@ public class AdminRoleOut {
     @JsonProperty private List<AccessRule> rules;
     @JsonProperty private List<String> policies;
     @JsonProperty private Map<String,String> context;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public AdminRoleOut() {}
 
     public AdminRoleOut id(String id) {
@@ -161,7 +161,7 @@ public class AdminRoleOut {
         this.context = context;
     }
 
-    public AdminRoleOut created(OffsetDateTime created) {
+    public AdminRoleOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -172,15 +172,15 @@ public class AdminRoleOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public AdminRoleOut updated(OffsetDateTime updated) {
+    public AdminRoleOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -191,11 +191,11 @@ public class AdminRoleOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 

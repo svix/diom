@@ -1,8 +1,8 @@
 # this file is @generated
 import typing as t
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class StreamMsgOut(BaseModel):
@@ -14,6 +14,6 @@ class StreamMsgOut(BaseModel):
 
     headers: t.Dict[str, str]
 
-    timestamp: datetime
+    timestamp: UnixTimestampMs
 
-    scheduled_at: datetime | None = None
+    scheduled_at: UnixTimestampMs | None = None

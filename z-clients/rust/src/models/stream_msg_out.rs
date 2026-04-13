@@ -12,9 +12,13 @@ pub struct StreamMsgOut {
 
     pub headers: std::collections::HashMap<String, String>,
 
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
     pub timestamp: jiff::Timestamp,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        with = "crate::unix_timestamp_ms_serde::optional",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub scheduled_at: Option<jiff::Timestamp>,
 }
 

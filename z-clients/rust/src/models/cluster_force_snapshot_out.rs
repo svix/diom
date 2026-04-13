@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ClusterForceSnapshotOut {
     /// The wall-clock time at which the snapshot was initiated
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
     pub snapshot_time: jiff::Timestamp,
 
     /// The log index at which the snapshot was initiated

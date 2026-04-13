@@ -1,8 +1,8 @@
 # this file is @generated
 import typing as t
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 from .access_rule import AccessRule
 
@@ -14,6 +14,6 @@ class AdminAccessPolicyOut(BaseModel):
 
     rules: t.List[AccessRule]
 
-    created: datetime
+    created: UnixTimestampMs
 
-    updated: datetime
+    updated: UnixTimestampMs

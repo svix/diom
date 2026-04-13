@@ -11,7 +11,9 @@
 {%- endmacro -%}
 {% macro field_type(field) -%}
     {% set field_ty = field.type.to_python() -%}
-    {% if field.name is endingwith "_ms" -%}
+    {% if field.type.is_unix_timestamp_ms() -%}
+        {% set field_ty = "UnixTimestampMs" -%}
+    {% elif field.name is endingwith "_ms" -%}
         {% set field_ty = "TimeDeltaMs" -%}
     {% endif -%}
     {{ field_ty }}

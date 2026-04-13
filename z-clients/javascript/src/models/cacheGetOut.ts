@@ -10,7 +10,7 @@ export const CacheGetOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): CacheGetOut {
         return {
-            expiry: object['expiry'] ? new Date(object['expiry']) : null,
+            expiry: object['expiry'] ? new Date(Number(object['expiry'])) : null,
             value: object['value'] != null ? new Uint8Array(object['value']) : null,
         };
     },
@@ -18,7 +18,7 @@ export const CacheGetOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: CacheGetOut): any {
         return {
-            'expiry': self.expiry,
+            'expiry': self.expiry != null ? self.expiry.getTime() : undefined,
             'value': self.value != null ? Array.from(self.value) : undefined,
         };
     }

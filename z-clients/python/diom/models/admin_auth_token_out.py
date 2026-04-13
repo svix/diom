@@ -1,7 +1,7 @@
 # this file is @generated
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class AdminAuthTokenOut(BaseModel):
@@ -9,11 +9,11 @@ class AdminAuthTokenOut(BaseModel):
 
     name: str
 
-    created: datetime
+    created: UnixTimestampMs
 
-    updated: datetime
+    updated: UnixTimestampMs
 
-    expiry: datetime | None = None
+    expiry: UnixTimestampMs | None = None
 
     role: str
 

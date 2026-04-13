@@ -5,10 +5,12 @@ pub use reqwest::StatusCode;
 mod json;
 pub mod server;
 mod test_client;
+mod time;
 
 pub use self::{
     json::JsonFastAndLoose,
     test_client::{TestClient, TestRequestBuilder, TestResponse},
+    time::U64Ext,
 };
 
 #[derive(Debug)] // needed to be able to return TestResult from #[test] fns

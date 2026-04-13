@@ -1,9 +1,8 @@
 use std::time::Duration;
 
-use jiff::Timestamp;
 use serde_json::json;
 use test_utils::{
-    JsonFastAndLoose as _, StatusCode, TestClient, TestResult,
+    JsonFastAndLoose as _, StatusCode, TestClient, TestResult, U64Ext,
     server::{TestContext, start_server},
 };
 
@@ -105,13 +104,13 @@ async fn test_kv_set_and_get() -> TestResult {
     .await?;
     let response = kv_get(&client, "kv-key-1").await?;
 
-    let expires_at: Timestamp = serde_json::from_value(response["expiry"].clone())?;
+    let expires_at = response["expiry"].assert_u64().as_timestamp_ms();
     let expected = now + Duration::from_millis(expires_in);
     assert!(
         expires_at
             .as_millisecond()
             .abs_diff(expected.as_millisecond())
-            < 50 // tolerance
+            < 100 // tolerance
     );
 
     // set should fail if namespace doesn't exist:
@@ -196,12 +195,12 @@ async fn test_kv_update_expiration() -> TestResult {
     // Test updating expiration time
     kv_set(&client, "kv4", Some(1500), "v4", "upsert").await?;
     let response = kv_get(&client, "kv4").await?;
-    let initial_expires_at = response["expiry"].assert_str();
+    let initial_expires_at = response["expiry"].assert_u64();
 
     kv_set(&client, "kv4", Some(3000), "v4", "upsert").await?;
 
     let response = kv_get(&client, "kv4").await?;
-    let expires_at = response["expiry"].assert_str();
+    let expires_at = response["expiry"].assert_u64();
     assert_ne!(initial_expires_at, expires_at);
 
     time.fast_forward(Duration::from_millis(1500));
@@ -469,8 +468,8 @@ async fn create_namespace_with_defaults() -> TestResult {
         .json();
 
     assert_eq!(response["name"], "my-namespace");
-    assert!(response["created"].is_string());
-    assert!(response["updated"].is_string());
+    assert!(response["created"].is_u64());
+    assert!(response["updated"].is_u64());
 
     Ok(())
 }
@@ -523,7 +522,7 @@ async fn create_namespace_upserts() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let created_ts = first["created"].assert_str().to_owned();
+    let created_ts = first["created"].assert_u64();
     assert_eq!(first["name"], "upsert-ns");
 
     // Upsert

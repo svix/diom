@@ -1,21 +1,22 @@
 // this file is @generated
+import { Temporal } from 'temporal-polyfill-lite';
 
 export interface Retention {
-    periodMs?: number | null;
+    period?: Temporal.Duration | null;
 }
 
 export const RetentionSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): Retention {
         return {
-            periodMs: object['period_ms'],
+            period: object['period_ms'] != null ? Temporal.Duration.from({ milliseconds: object['period_ms'] }) : undefined,
         };
     },
 
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: Retention): any {
         return {
-            'period_ms': self.periodMs,
+            'period_ms': self.period != null ? self.period.total('millisecond') : undefined,
         };
     }
 }

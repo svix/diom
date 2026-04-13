@@ -11,8 +11,8 @@ export const KvGetNamespaceOutSerializer = {
     _fromJsonObject(object: any): KvGetNamespaceOut {
         return {
             name: object['name'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: new Date(Number(object['created'])),
+            updated: new Date(Number(object['updated'])),
         };
     },
 
@@ -20,8 +20,8 @@ export const KvGetNamespaceOutSerializer = {
     _toJsonObject(self: KvGetNamespaceOut): any {
         return {
             'name': self.name,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }
