@@ -1,7 +1,7 @@
 # this file is @generated
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 from .retention import Retention
 
@@ -11,6 +11,6 @@ class MsgNamespaceCreateOut(BaseModel):
 
     retention: Retention
 
-    created: datetime
+    created: UnixTimestampMs
 
-    updated: datetime
+    updated: UnixTimestampMs

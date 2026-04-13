@@ -38,8 +38,8 @@ import lombok.ToString;
 public class MsgNamespaceCreateOut {
     @JsonProperty private String name;
     @JsonProperty private Retention retention;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public MsgNamespaceCreateOut() {}
 
     public MsgNamespaceCreateOut name(String name) {
@@ -80,7 +80,7 @@ public class MsgNamespaceCreateOut {
         this.retention = retention;
     }
 
-    public MsgNamespaceCreateOut created(OffsetDateTime created) {
+    public MsgNamespaceCreateOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -91,15 +91,15 @@ public class MsgNamespaceCreateOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public MsgNamespaceCreateOut updated(OffsetDateTime updated) {
+    public MsgNamespaceCreateOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -110,11 +110,11 @@ public class MsgNamespaceCreateOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 

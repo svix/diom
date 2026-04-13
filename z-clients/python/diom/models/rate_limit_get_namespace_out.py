@@ -1,12 +1,12 @@
 # this file is @generated
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class RateLimitGetNamespaceOut(BaseModel):
     name: str
 
-    created: datetime
+    created: UnixTimestampMs
 
-    updated: datetime
+    updated: UnixTimestampMs

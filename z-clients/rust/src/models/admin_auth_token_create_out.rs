@@ -7,8 +7,10 @@ pub struct AdminAuthTokenCreateOut {
 
     pub token: String,
 
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
     pub created: jiff::Timestamp,
 
+    #[serde(with = "crate::unix_timestamp_ms_serde")]
     pub updated: jiff::Timestamp,
 }
 

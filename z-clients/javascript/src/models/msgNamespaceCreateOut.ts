@@ -17,8 +17,8 @@ export const MsgNamespaceCreateOutSerializer = {
         return {
             name: object['name'],
             retention: RetentionSerializer._fromJsonObject(object['retention']),
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: new Date(Number(object['created'])),
+            updated: new Date(Number(object['updated'])),
         };
     },
 
@@ -27,8 +27,8 @@ export const MsgNamespaceCreateOutSerializer = {
         return {
             'name': self.name,
             'retention': RetentionSerializer._toJsonObject(self.retention),
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

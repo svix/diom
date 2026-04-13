@@ -4939,12 +4939,16 @@
             }
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -4984,12 +4988,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5036,12 +5044,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5123,16 +5135,22 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "expiry": {
-            "type": "string",
-            "format": "date-time",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "role": {
@@ -5173,12 +5191,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5310,12 +5332,16 @@
             }
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5371,12 +5397,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5457,12 +5487,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5478,12 +5512,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "token": {
             "type": "string"
@@ -5566,12 +5604,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5618,16 +5660,22 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "expiry": {
-            "type": "string",
-            "format": "date-time",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "metadata": {
@@ -5699,12 +5747,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "token": {
             "type": "string"
@@ -5813,12 +5865,16 @@
             "$ref": "#/components/schemas/EvictionPolicy"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5908,12 +5964,16 @@
             "$ref": "#/components/schemas/EvictionPolicy"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -5928,8 +5988,10 @@
         "properties": {
           "expiry": {
             "description": "Time of expiry",
-            "type": "string",
-            "format": "date-time",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "value": {
@@ -5996,8 +6058,10 @@
         "properties": {
           "snapshot_time": {
             "description": "The wall-clock time at which the snapshot was initiated",
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "snapshot_log_index": {
             "description": "The log index at which the snapshot was initiated",
@@ -6075,8 +6139,10 @@
           },
           "this_node_last_committed_timestamp": {
             "description": "The timestamp of the last transaction committed on this node",
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "this_node_last_snapshot_id": {
             "description": "The last snapshot taken on this node",
@@ -6232,12 +6298,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6264,12 +6334,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6379,12 +6453,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6478,12 +6556,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6497,8 +6579,10 @@
         "properties": {
           "expiry": {
             "description": "Time of expiry",
-            "type": "string",
-            "format": "date-time",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           },
           "value": {
@@ -6765,12 +6849,16 @@
             "$ref": "#/components/schemas/Retention"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -6804,12 +6892,16 @@
             "$ref": "#/components/schemas/Retention"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -7393,12 +7485,16 @@
             }
           },
           "timestamp": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "scheduled_at": {
-            "type": "string",
-            "format": "date-time",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           }
         },
@@ -7514,12 +7610,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -7546,12 +7646,16 @@
             "type": "string"
           },
           "created": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "updated": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           }
         },
         "required": [
@@ -7705,12 +7809,16 @@
             }
           },
           "timestamp": {
-            "type": "string",
-            "format": "date-time"
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
           },
           "scheduled_at": {
-            "type": "string",
-            "format": "date-time",
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs",
             "nullable": true
           }
         },

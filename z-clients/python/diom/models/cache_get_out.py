@@ -1,11 +1,11 @@
 # this file is @generated
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
+from ..internal.types import UnixTimestampMs
 
 
 class CacheGetOut(BaseModel):
-    expiry: datetime | None = None
+    expiry: UnixTimestampMs | None = None
     """Time of expiry"""
 
     value: bytes | None = None

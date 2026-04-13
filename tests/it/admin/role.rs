@@ -26,8 +26,8 @@ async fn test_admin_role_upsert_and_get() -> TestResult {
         .json();
 
     assert_eq!(resp["id"], "editor");
-    assert!(resp["created"].is_string());
-    assert!(resp["updated"].is_string());
+    assert!(resp["created"].is_i64());
+    assert!(resp["updated"].is_i64());
 
     let get_resp = client
         .post("v1.admin.auth-role.get")
@@ -60,7 +60,7 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
         .ensure(StatusCode::OK)?
         .json();
 
-    let created_at = first["created"].assert_str().to_owned();
+    let created_at = first["created"].assert_u64();
 
     let second = client
         .post("v1.admin.auth-role.upsert")

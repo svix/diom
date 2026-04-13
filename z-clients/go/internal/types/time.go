@@ -12,22 +12,17 @@ import (
 type Timestamp time.Time
 
 func (t *Timestamp) EncodeMsgpack(enc *msgpack.Encoder) error {
-	s := time.Time(*t).Format(time.RFC3339)
-	return enc.EncodeString(s)
+	i := time.Time(*t).UnixMilli()
+	return enc.EncodeInt64(i)
 }
 
 func (t *Timestamp) DecodeMsgpack(dec *msgpack.Decoder) error {
-	s, err := dec.DecodeString()
+	i, err := dec.DecodeInt64()
 	if err != nil {
 		return err
 	}
 
-	time, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return err
-	}
-
-	timestamp := Timestamp(time)
+	timestamp := Timestamp(time.UnixMilli(i))
 	t = &timestamp
 	return nil
 }

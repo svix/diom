@@ -37,8 +37,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class AdminAccessPolicyUpsertOut {
     @JsonProperty private String id;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public AdminAccessPolicyUpsertOut() {}
 
     public AdminAccessPolicyUpsertOut id(String id) {
@@ -60,7 +60,7 @@ public class AdminAccessPolicyUpsertOut {
         this.id = id;
     }
 
-    public AdminAccessPolicyUpsertOut created(OffsetDateTime created) {
+    public AdminAccessPolicyUpsertOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -71,15 +71,15 @@ public class AdminAccessPolicyUpsertOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public AdminAccessPolicyUpsertOut updated(OffsetDateTime updated) {
+    public AdminAccessPolicyUpsertOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -90,11 +90,11 @@ public class AdminAccessPolicyUpsertOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 

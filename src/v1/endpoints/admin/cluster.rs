@@ -6,6 +6,7 @@ use aide::axum::{
 };
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
+use diom_core::types::UnixTimestampMs;
 use diom_derive::aide_annotate;
 use diom_error::{Error, ResultExt};
 use diom_id::Module;
@@ -94,7 +95,7 @@ pub struct ClusterStatusOut {
     /// The cluster state of the node servicing this request
     pub this_node_state: ServerState,
     /// The timestamp of the last transaction committed on this node
-    pub this_node_last_committed_timestamp: jiff::Timestamp,
+    pub this_node_last_committed_timestamp: UnixTimestampMs,
     /// The last snapshot taken on this node
     pub this_node_last_snapshot_id: Option<String>,
     /// A list of all nodes known to be in the cluster
@@ -188,7 +189,7 @@ async fn cluster_status(
         cluster_name,
         this_node_id,
         this_node_state,
-        this_node_last_committed_timestamp,
+        this_node_last_committed_timestamp: this_node_last_committed_timestamp.into(),
         this_node_last_snapshot_id,
         nodes,
     }))
@@ -266,7 +267,7 @@ request_input!(ClusterForceSnapshotIn, "force-snapshot");
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 struct ClusterForceSnapshotOut {
     /// The wall-clock time at which the snapshot was initiated
-    snapshot_time: jiff::Timestamp,
+    snapshot_time: UnixTimestampMs,
     /// The log index at which the snapshot was initiated
     snapshot_log_index: u64,
     /// If this is `null`, the snapshot is still building in the background
@@ -336,7 +337,7 @@ async fn cluster_force_snapshot(
     };
 
     Ok(MsgPackOrJson(ClusterForceSnapshotOut {
-        snapshot_time,
+        snapshot_time: snapshot_time.into(),
         snapshot_log_index: log_id.index,
         snapshot_id,
     }))

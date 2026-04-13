@@ -1,8 +1,7 @@
 use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
-use diom_core::types::{ByteString, DurationMs};
+use diom_core::types::{ByteString, DurationMs, UnixTimestampMs};
 use diom_error::Error;
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
@@ -375,8 +374,8 @@ pub struct StreamMsgOut {
     pub topic: TopicPartition,
     pub value: ByteString,
     pub headers: HashMap<String, String>,
-    pub timestamp: Timestamp,
-    pub scheduled_at: Option<Timestamp>,
+    pub timestamp: UnixTimestampMs,
+    pub scheduled_at: Option<UnixTimestampMs>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
@@ -384,8 +383,8 @@ pub struct QueueMsgOut {
     pub msg_id: MsgId,
     pub value: ByteString,
     pub headers: HashMap<String, String>,
-    pub timestamp: Timestamp,
-    pub scheduled_at: Option<Timestamp>,
+    pub timestamp: UnixTimestampMs,
+    pub scheduled_at: Option<UnixTimestampMs>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

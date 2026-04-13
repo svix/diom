@@ -247,8 +247,8 @@ async fn create_namespace_with_defaults() -> TestResult {
         .json();
 
     assert_eq!(response["name"], "my-namespace");
-    assert!(response["created"].is_string());
-    assert!(response["updated"].is_string());
+    assert!(response["created"].is_u64());
+    assert!(response["updated"].is_u64());
 
     Ok(())
 }
@@ -301,7 +301,7 @@ async fn create_namespace_upserts() -> TestResult {
         .expect(StatusCode::OK)
         .json();
 
-    let created_ts = first["created"].assert_str().to_owned();
+    let created_ts = first["created"].assert_u64();
     assert_eq!(first["name"], "upsert-ns");
 
     // Upsert

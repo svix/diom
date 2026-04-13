@@ -364,8 +364,8 @@ async fn test_admin_auth_token_create_with_expiry() -> TestResult {
 
     let id = resp["id"].assert_str().to_owned();
     assert!(!id.is_empty());
-    assert!(resp["created"].is_string());
-    assert!(resp["updated"].is_string());
+    assert!(resp["created"].is_i64());
+    assert!(resp["updated"].is_i64());
 
     let list_resp = client
         .post("v1.admin.auth-token.list")

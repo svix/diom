@@ -17,8 +17,8 @@ export const CacheGetNamespaceOutSerializer = {
         return {
             name: object['name'],
             evictionPolicy: EvictionPolicySerializer._fromJsonObject(object['eviction_policy']),
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: new Date(Number(object['created'])),
+            updated: new Date(Number(object['updated'])),
         };
     },
 
@@ -27,8 +27,8 @@ export const CacheGetNamespaceOutSerializer = {
         return {
             'name': self.name,
             'eviction_policy': EvictionPolicySerializer._toJsonObject(self.evictionPolicy),
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

@@ -41,7 +41,7 @@ export const ClusterStatusOutSerializer = {
             clusterName: object['cluster_name'],
             thisNodeId: object['this_node_id'],
             thisNodeState: ServerStateSerializer._fromJsonObject(object['this_node_state']),
-            thisNodeLastCommittedTimestamp: new Date(object['this_node_last_committed_timestamp']),
+            thisNodeLastCommittedTimestamp: new Date(Number(object['this_node_last_committed_timestamp'])),
             thisNodeLastSnapshotId: object['this_node_last_snapshot_id'],
             nodes: object['nodes'].map((item: NodeStatusOut) => NodeStatusOutSerializer._fromJsonObject(item)),
         };
@@ -54,7 +54,7 @@ export const ClusterStatusOutSerializer = {
             'cluster_name': self.clusterName,
             'this_node_id': self.thisNodeId,
             'this_node_state': ServerStateSerializer._toJsonObject(self.thisNodeState),
-            'this_node_last_committed_timestamp': self.thisNodeLastCommittedTimestamp,
+            'this_node_last_committed_timestamp': self.thisNodeLastCommittedTimestamp.getTime(),
             'this_node_last_snapshot_id': self.thisNodeLastSnapshotId,
             'nodes': self.nodes.map((item) => NodeStatusOutSerializer._toJsonObject(item)),
         };

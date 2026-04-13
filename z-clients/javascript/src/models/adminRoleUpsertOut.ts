@@ -11,8 +11,8 @@ export const AdminRoleUpsertOutSerializer = {
     _fromJsonObject(object: any): AdminRoleUpsertOut {
         return {
             id: object['id'],
-            created: new Date(object['created']),
-            updated: new Date(object['updated']),
+            created: new Date(Number(object['created'])),
+            updated: new Date(Number(object['updated'])),
         };
     },
 
@@ -20,8 +20,8 @@ export const AdminRoleUpsertOutSerializer = {
     _toJsonObject(self: AdminRoleUpsertOut): any {
         return {
             'id': self.id,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

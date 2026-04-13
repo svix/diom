@@ -37,8 +37,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class IdempotencyGetNamespaceOut {
     @JsonProperty private String name;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public IdempotencyGetNamespaceOut() {}
 
     public IdempotencyGetNamespaceOut name(String name) {
@@ -60,7 +60,7 @@ public class IdempotencyGetNamespaceOut {
         this.name = name;
     }
 
-    public IdempotencyGetNamespaceOut created(OffsetDateTime created) {
+    public IdempotencyGetNamespaceOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -71,15 +71,15 @@ public class IdempotencyGetNamespaceOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public IdempotencyGetNamespaceOut updated(OffsetDateTime updated) {
+    public IdempotencyGetNamespaceOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -90,11 +90,11 @@ public class IdempotencyGetNamespaceOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 

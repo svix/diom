@@ -12,8 +12,12 @@ use crate::validation::validation_error;
 mod byte_string;
 mod duration_ms;
 mod metadata;
+mod unix_timestamp_ms;
 
-pub use self::{byte_string::ByteString, duration_ms::DurationMs, metadata::Metadata};
+pub use self::{
+    byte_string::ByteString, duration_ms::DurationMs, metadata::Metadata,
+    unix_timestamp_ms::UnixTimestampMs,
+};
 
 const ALL_ERROR: &str = "__all__";
 
