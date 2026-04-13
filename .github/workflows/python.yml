@@ -8,9 +8,12 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: z-clients/python
     steps:
       - uses: actions/checkout@v6
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - run: uv run --only-dev ruff check
-        working-directory: z-clients/python
+      - run: uv run pyrefly check

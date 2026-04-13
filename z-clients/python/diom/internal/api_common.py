@@ -68,7 +68,7 @@ class ApiBase:
         if headers.get("idempotency-key") is None and method.upper() == "POST":
             headers["idempotency-key"] = f"auto_{uuid.uuid4()}"
 
-        httpx_kwargs = {
+        httpx_kwargs: dict[str, t.Any] = {
             "method": method.upper(),
             "url": url,
             "headers": headers,
@@ -77,7 +77,8 @@ class ApiBase:
         }
 
         if body is not None:
-            encoded_body = msgpack.packb(body, strict_types=True)
+            # pyrefly: ignore
+            encoded_body: bytes = msgpack.packb(body, strict_types=True)
             httpx_kwargs["content"] = encoded_body
             headers["content-type"] = APPLICATION_MSGPACK
             headers["content-length"] = str(len(encoded_body))
