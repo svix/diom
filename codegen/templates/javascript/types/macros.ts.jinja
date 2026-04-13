@@ -21,13 +21,13 @@
 {% macro field_from_json(field_expr, type, field_required) %}
     {%- if type.is_bytes() -%}
         {% if not field_required -%}
-            {{ field_expr }} != null ? new Uint8Array({{ field_expr }}) : undefined
+            {{ field_expr }} != null ? new Uint8Array({{ field_expr }}) : null
         {%- else -%}
             new Uint8Array({{ field_expr }})
         {%- endif -%}
     {%- elif type.is_datetime() or type.is_unix_timestamp_ms() -%}
         {% if not field_required -%}
-            {{ field_expr }} ? new Date({{ field_expr }}) : undefined
+            {{ field_expr }} ? new Date({{ field_expr }}) : null
         {%- else -%}
             new Date({{ field_expr }})
         {%- endif -%}

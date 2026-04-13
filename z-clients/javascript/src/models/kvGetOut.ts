@@ -15,8 +15,8 @@ export const KvGetOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _fromJsonObject(object: any): KvGetOut {
         return {
-            expiry: object['expiry'] ? new Date(object['expiry']) : undefined,
-            value: object['value'] != null ? new Uint8Array(object['value']) : undefined,
+            expiry: object['expiry'] ? new Date(object['expiry']) : null,
+            value: object['value'] != null ? new Uint8Array(object['value']) : null,
             version: object['version'],
         };
     },

@@ -44,7 +44,7 @@ describe("SDK Integration Tests", () => {
 
     // Verify deleted
     const getResp2 = await client.kv.get(key, {});
-    assert.strictEqual(getResp2.value, undefined);
+    assert.strictEqual(getResp2.value, null);
   });
 
   it("test_cache_set_get_delete", async () => {
@@ -67,6 +67,6 @@ describe("SDK Integration Tests", () => {
 
     // Verify deleted
     const getResp2 = await client.cache.get(key, {});
-    assert.strictEqual(getResp2.value, undefined);
+    assert.strictEqual(getResp2.value, null);
   });
 });

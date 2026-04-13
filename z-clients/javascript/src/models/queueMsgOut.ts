@@ -16,7 +16,7 @@ export const QueueMsgOutSerializer = {
             value: new Uint8Array(object['value']),
             headers: object['headers'],
             timestamp: new Date(object['timestamp']),
-            scheduledAt: object['scheduled_at'] ? new Date(object['scheduled_at']) : undefined,
+            scheduledAt: object['scheduled_at'] ? new Date(object['scheduled_at']) : null,
         };
     },
 
