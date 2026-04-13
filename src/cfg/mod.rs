@@ -9,7 +9,7 @@ use std::{
 
 use anyhow::Context;
 use diom_core::{Monotime, types::DurationMs};
-use diom_derive::EnvOverridable;
+use diom_derive::{DumpableConfig, EnvOverridable};
 use fs_err as fs;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tracing::Level;
@@ -18,9 +18,11 @@ use validator::Validate;
 use crate::error::{Error, Result};
 
 mod defaults;
+mod dumpable_config;
 pub(crate) mod env_overridable;
 mod validators;
 
+use dumpable_config::DumpableConfig as _;
 use env_overridable::EnvOverridable as _;
 pub use env_overridable::Variable;
 
@@ -98,11 +100,12 @@ impl Serialize for PeerAddr {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, EnvOverridable, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, EnvOverridable, Serialize, DumpableConfig)]
 pub struct DatabaseConfig {
     /// Directory in which this database is stored
     pub path: PathBuf,
-    /// Filename under the directory specified in `path`
+    /// Filename under the directory specified in `path`. If not specified, uses a default value
+    /// based on the database type.
     pub filename: Option<String>,
 }
 
@@ -205,7 +208,7 @@ impl DatabaseConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Validate, EnvOverridable)]
+#[derive(Clone, Debug, Deserialize, Serialize, Validate, EnvOverridable, DumpableConfig)]
 #[validate(schema(
     function = "validators::validate_cluster_configuration",
     skip_on_field_errors = true
@@ -449,17 +452,24 @@ fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Erro
     T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Validate, EnvOverridable)]
+#[derive(Clone, Debug, Serialize, Deserialize, Validate, EnvOverridable, DumpableConfig)]
 pub struct ConfigurationInner {
     /// The address to listen on
     #[serde(default = "defaults::listen_address")]
     pub listen_address: SocketAddr,
 
+    /// Storage configuration for the persistent database, which is used by most modules and
+    /// should be placed on durable storage
     #[serde(default = "defaults::persistent_db")]
     #[env_overridable(nest_with_prefix("PERSISTENT_DB"))]
+    #[dumpable_config(nest)]
     pub persistent_db: DatabaseConfig,
+
+    /// Storage configuration for the ephemeral database, which is used by rate-limiting and some
+    /// other modules, and can be placed on less-durable storage, such as local instance storage
     #[serde(default = "defaults::ephemeral_db")]
     #[env_overridable(nest_with_prefix("EPHEMERAL_DB"))]
+    #[dumpable_config(nest)]
     pub ephemeral_db: DatabaseConfig,
 
     /// The log level to run the service with. Supported: info, debug, trace
@@ -509,9 +519,11 @@ pub struct ConfigurationInner {
     #[serde(default)]
     pub environment: Environment,
 
+    /// Configuration for the cluster/replication system
     #[validate(nested)]
     #[serde(default)]
     #[env_overridable(nest_with_prefix("CLUSTER"))]
+    #[dumpable_config(nest)]
     pub cluster: ClusterConfiguration,
 
     /// The path to a YAML bootstrap file
@@ -568,8 +580,16 @@ pub struct ConfigurationInner {
     /// (object with string values) that is forwarded to internal diom handlers.
     #[serde(default)]
     #[env_overridable(skip)]
+    #[dumpable_config(skip)] // no straightforward way to serialize a #[serde(flatten)]
     #[validate(nested)]
     pub jwt: Option<JwtConfig>,
+}
+
+impl ConfigurationInner {
+    /// Write the current configuration to the given Writer as TOML (with comments!)
+    pub fn dump_config<W: std::io::Write>(&self, writer: &mut W) -> anyhow::Result<()> {
+        self.dump_fields(writer, "".to_string())
+    }
 }
 
 /// JWT configuration for verifying JWT bearer tokens.

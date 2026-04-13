@@ -2,10 +2,11 @@ use quote::quote;
 use syn::{DeriveInput, ItemFn, parse_macro_input};
 
 mod aide;
+mod dumpable_config;
 mod env_overridable;
 mod utils;
 
-use crate::env_overridable::derive_env_overridable;
+use crate::{dumpable_config::derive_dumpable_config, env_overridable::derive_env_overridable};
 use utils::add_trait_bounds;
 mod fjall_key;
 mod key_component;
@@ -92,4 +93,9 @@ pub fn aide_annotate(
 #[proc_macro_derive(EnvOverridable, attributes(env_overridable))]
 pub fn macro_derive_env_overridable(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_env_overridable(input)
+}
+
+#[proc_macro_derive(DumpableConfig, attributes(dumpable_config))]
+pub fn macro_derive_dumpable_config(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    derive_dumpable_config(input)
 }

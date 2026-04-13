@@ -1842,7 +1842,6 @@ dependencies = [
  "opentelemetry_sdk",
  "reqwest 0.13.2",
  "tokio",
- "toml",
  "tracing",
  "tracing-log",
  "tracing-opentelemetry",
