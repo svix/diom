@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     AdminAccessPolicyDeleteIn,
     AdminAccessPolicyDeleteOut,
@@ -21,12 +21,12 @@ class AdminAuthPolicyAsync(ApiBase):
         """Create or update an access policy"""
         body = admin_access_policy_upsert_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-policy.upsert",
             body=body,
-            response_type=AdminAccessPolicyUpsertOut,
         )
+        return parse_response(response, AdminAccessPolicyUpsertOut)
 
     async def delete(
         self,
@@ -35,12 +35,12 @@ class AdminAuthPolicyAsync(ApiBase):
         """Delete an access policy"""
         body = admin_access_policy_delete_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-policy.delete",
             body=body,
-            response_type=AdminAccessPolicyDeleteOut,
         )
+        return parse_response(response, AdminAccessPolicyDeleteOut)
 
     async def get(
         self,
@@ -49,12 +49,12 @@ class AdminAuthPolicyAsync(ApiBase):
         """Get an access policy by ID"""
         body = admin_access_policy_get_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-policy.get",
             body=body,
-            response_type=AdminAccessPolicyOut,
         )
+        return parse_response(response, AdminAccessPolicyOut)
 
     async def list(
         self,
@@ -63,12 +63,12 @@ class AdminAuthPolicyAsync(ApiBase):
         """List all access policies"""
         body = admin_access_policy_list_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-policy.list",
             body=body,
-            response_type=ListResponseAdminAccessPolicyOut,
         )
+        return parse_response(response, ListResponseAdminAccessPolicyOut)
 
 
 class AdminAuthPolicy(ApiBase):
@@ -79,12 +79,12 @@ class AdminAuthPolicy(ApiBase):
         """Create or update an access policy"""
         body = admin_access_policy_upsert_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-policy.upsert",
             body=body,
-            response_type=AdminAccessPolicyUpsertOut,
         )
+        return parse_response(response, AdminAccessPolicyUpsertOut)
 
     def delete(
         self,
@@ -93,12 +93,12 @@ class AdminAuthPolicy(ApiBase):
         """Delete an access policy"""
         body = admin_access_policy_delete_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-policy.delete",
             body=body,
-            response_type=AdminAccessPolicyDeleteOut,
         )
+        return parse_response(response, AdminAccessPolicyDeleteOut)
 
     def get(
         self,
@@ -107,12 +107,12 @@ class AdminAuthPolicy(ApiBase):
         """Get an access policy by ID"""
         body = admin_access_policy_get_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-policy.get",
             body=body,
-            response_type=AdminAccessPolicyOut,
         )
+        return parse_response(response, AdminAccessPolicyOut)
 
     def list(
         self,
@@ -121,9 +121,9 @@ class AdminAuthPolicy(ApiBase):
         """List all access policies"""
         body = admin_access_policy_list_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-policy.list",
             body=body,
-            response_type=ListResponseAdminAccessPolicyOut,
         )
+        return parse_response(response, ListResponseAdminAccessPolicyOut)

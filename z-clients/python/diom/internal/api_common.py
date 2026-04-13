@@ -68,7 +68,7 @@ class ApiBase:
         if headers.get("idempotency-key") is None and method.upper() == "POST":
             headers["idempotency-key"] = f"auto_{uuid.uuid4()}"
 
-        httpx_kwargs = {
+        httpx_kwargs: dict[str, t.Any] = {
             "method": method.upper(),
             "url": url,
             "headers": headers,
@@ -77,7 +77,8 @@ class ApiBase:
         }
 
         if body is not None:
-            encoded_body = msgpack.packb(body, strict_types=True)
+            # pyrefly: ignore
+            encoded_body: bytes = msgpack.packb(body, strict_types=True)
             httpx_kwargs["content"] = encoded_body
             headers["content-type"] = APPLICATION_MSGPACK
             headers["content-length"] = str(len(encoded_body))
@@ -91,8 +92,7 @@ class ApiBase:
         *,
         header_params: t.Optional[t.Dict[str, str]] = None,
         body: t.Optional[t.Any] = None,
-        response_type: t.Optional[type[T]] = None,
-    ) -> t.Optional[T]:
+    ) -> httpx.Response:
         httpx_kwargs = self._get_httpx_kwargs(
             method,
             path,
@@ -110,7 +110,7 @@ class ApiBase:
             httpx_kwargs["headers"]["diom-retry-count"] = str(retry_count)
             response = await self._httpx_async_client.request(**httpx_kwargs)
 
-        return _parse_response(response, response_type)
+        return response
 
     def _request_sync[T: BaseModel](
         self,
@@ -119,8 +119,7 @@ class ApiBase:
         *,
         header_params: t.Optional[t.Dict[str, str]] = None,
         body: t.Optional[t.Any] = None,
-        response_type: t.Optional[type[T]] = None,
-    ) -> t.Optional[T]:
+    ) -> httpx.Response:
         httpx_kwargs = self._get_httpx_kwargs(
             method,
             path,
@@ -136,7 +135,7 @@ class ApiBase:
             httpx_kwargs["headers"]["diom-retry-count"] = str(retry_count)
             response = self._httpx_client.request(**httpx_kwargs)
 
-        return _parse_response(response, response_type)
+        return response
 
 
 def decode_response_body(response: httpx.Response):
@@ -147,19 +146,8 @@ def decode_response_body(response: httpx.Response):
         return response.json()
 
 
-def _parse_response[T: BaseModel](
-    response: httpx.Response,
-    response_type: t.Optional[type[T]],
-) -> t.Optional[T]:
-    if 200 <= response.status_code <= 299:
-        if response_type is not None:
-            response_decoded = decode_response_body(response)
-            return response_type.model_validate(
-                response_decoded,
-                by_alias=True,
-                by_name=False,
-            )
-    else:
+def check_response(response: httpx.Response) -> None:
+    if response.status_code >= 300:
         response_decoded = decode_response_body(response)
         if response.status_code == 422:
             raise HttpValidationError.init_exception(
@@ -167,3 +155,15 @@ def _parse_response[T: BaseModel](
             )
         else:
             raise HttpError.init_exception(response_decoded, response.status_code)
+
+
+def parse_response[T: BaseModel](
+    response: httpx.Response,
+    response_type: type[T],
+) -> T:
+    check_response(response)
+    return response_type.model_validate(
+        decode_response_body(response),
+        by_alias=True,
+        by_name=False,
+    )

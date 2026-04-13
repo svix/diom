@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     AdminAuthTokenCreateIn,
     AdminAuthTokenCreateOut,
@@ -27,12 +27,12 @@ class AdminAuthTokenAsync(ApiBase):
         """Create an auth token"""
         body = admin_auth_token_create_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-token.create",
             body=body,
-            response_type=AdminAuthTokenCreateOut,
         )
+        return parse_response(response, AdminAuthTokenCreateOut)
 
     async def expire(
         self,
@@ -41,12 +41,12 @@ class AdminAuthTokenAsync(ApiBase):
         """Expire an auth token"""
         body = admin_auth_token_expire_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-token.expire",
             body=body,
-            response_type=AdminAuthTokenExpireOut,
         )
+        return parse_response(response, AdminAuthTokenExpireOut)
 
     async def rotate(
         self,
@@ -55,12 +55,12 @@ class AdminAuthTokenAsync(ApiBase):
         """Rotate an auth token, invalidating the old one and issuing a new secret"""
         body = admin_auth_token_rotate_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-token.rotate",
             body=body,
-            response_type=AdminAuthTokenRotateOut,
         )
+        return parse_response(response, AdminAuthTokenRotateOut)
 
     async def delete(
         self,
@@ -69,12 +69,12 @@ class AdminAuthTokenAsync(ApiBase):
         """Delete an auth token"""
         body = admin_auth_token_delete_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-token.delete",
             body=body,
-            response_type=AdminAuthTokenDeleteOut,
         )
+        return parse_response(response, AdminAuthTokenDeleteOut)
 
     async def list(
         self,
@@ -83,12 +83,12 @@ class AdminAuthTokenAsync(ApiBase):
         """List auth tokens for a given owner"""
         body = admin_auth_token_list_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-token.list",
             body=body,
-            response_type=ListResponseAdminAuthTokenOut,
         )
+        return parse_response(response, ListResponseAdminAuthTokenOut)
 
     async def update(
         self,
@@ -97,12 +97,12 @@ class AdminAuthTokenAsync(ApiBase):
         """Update an auth token's properties"""
         body = admin_auth_token_update_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-token.update",
             body=body,
-            response_type=AdminAuthTokenUpdateOut,
         )
+        return parse_response(response, AdminAuthTokenUpdateOut)
 
     async def whoami(
         self,
@@ -111,12 +111,12 @@ class AdminAuthTokenAsync(ApiBase):
         """Return the role of the currently authenticated token"""
         body = admin_auth_token_whoami_in.model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.admin.auth-token.whoami",
             body=body,
-            response_type=AdminAuthTokenWhoamiOut,
         )
+        return parse_response(response, AdminAuthTokenWhoamiOut)
 
 
 class AdminAuthToken(ApiBase):
@@ -127,12 +127,12 @@ class AdminAuthToken(ApiBase):
         """Create an auth token"""
         body = admin_auth_token_create_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-token.create",
             body=body,
-            response_type=AdminAuthTokenCreateOut,
         )
+        return parse_response(response, AdminAuthTokenCreateOut)
 
     def expire(
         self,
@@ -141,12 +141,12 @@ class AdminAuthToken(ApiBase):
         """Expire an auth token"""
         body = admin_auth_token_expire_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-token.expire",
             body=body,
-            response_type=AdminAuthTokenExpireOut,
         )
+        return parse_response(response, AdminAuthTokenExpireOut)
 
     def rotate(
         self,
@@ -155,12 +155,12 @@ class AdminAuthToken(ApiBase):
         """Rotate an auth token, invalidating the old one and issuing a new secret"""
         body = admin_auth_token_rotate_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-token.rotate",
             body=body,
-            response_type=AdminAuthTokenRotateOut,
         )
+        return parse_response(response, AdminAuthTokenRotateOut)
 
     def delete(
         self,
@@ -169,12 +169,12 @@ class AdminAuthToken(ApiBase):
         """Delete an auth token"""
         body = admin_auth_token_delete_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-token.delete",
             body=body,
-            response_type=AdminAuthTokenDeleteOut,
         )
+        return parse_response(response, AdminAuthTokenDeleteOut)
 
     def list(
         self,
@@ -183,12 +183,12 @@ class AdminAuthToken(ApiBase):
         """List auth tokens for a given owner"""
         body = admin_auth_token_list_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-token.list",
             body=body,
-            response_type=ListResponseAdminAuthTokenOut,
         )
+        return parse_response(response, ListResponseAdminAuthTokenOut)
 
     def update(
         self,
@@ -197,12 +197,12 @@ class AdminAuthToken(ApiBase):
         """Update an auth token's properties"""
         body = admin_auth_token_update_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-token.update",
             body=body,
-            response_type=AdminAuthTokenUpdateOut,
         )
+        return parse_response(response, AdminAuthTokenUpdateOut)
 
     def whoami(
         self,
@@ -211,9 +211,9 @@ class AdminAuthToken(ApiBase):
         """Return the role of the currently authenticated token"""
         body = admin_auth_token_whoami_in.model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.admin.auth-token.whoami",
             body=body,
-            response_type=AdminAuthTokenWhoamiOut,
         )
+        return parse_response(response, AdminAuthTokenWhoamiOut)

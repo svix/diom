@@ -1,6 +1,6 @@
 # This file is @generated
 
-from ..internal.api_common import ApiBase
+from ..internal.api_common import ApiBase, parse_response
 from ..models import (
     IdempotencyAbortIn,
     IdempotencyAbortOut,
@@ -36,12 +36,12 @@ class IdempotencyAsync(ApiBase):
             lock_period=idempotency_start_in.lock_period,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.idempotency.start",
             body=body,
-            response_type=IdempotencyStartOut,
         )
+        return parse_response(response, IdempotencyStartOut)
 
     async def complete(
         self,
@@ -57,12 +57,12 @@ class IdempotencyAsync(ApiBase):
             ttl=idempotency_complete_in.ttl,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.idempotency.complete",
             body=body,
-            response_type=IdempotencyCompleteOut,
         )
+        return parse_response(response, IdempotencyCompleteOut)
 
     async def abort(
         self,
@@ -75,12 +75,12 @@ class IdempotencyAsync(ApiBase):
             key=key,
         ).model_dump(exclude_none=True)
 
-        return await self._request_asyncio(
+        response = await self._request_asyncio(
             method="post",
             path="/api/v1.idempotency.abort",
             body=body,
-            response_type=IdempotencyAbortOut,
         )
+        return parse_response(response, IdempotencyAbortOut)
 
 
 class Idempotency(ApiBase):
@@ -100,12 +100,12 @@ class Idempotency(ApiBase):
             lock_period=idempotency_start_in.lock_period,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.idempotency.start",
             body=body,
-            response_type=IdempotencyStartOut,
         )
+        return parse_response(response, IdempotencyStartOut)
 
     def complete(
         self,
@@ -121,12 +121,12 @@ class Idempotency(ApiBase):
             ttl=idempotency_complete_in.ttl,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.idempotency.complete",
             body=body,
-            response_type=IdempotencyCompleteOut,
         )
+        return parse_response(response, IdempotencyCompleteOut)
 
     def abort(
         self,
@@ -139,9 +139,9 @@ class Idempotency(ApiBase):
             key=key,
         ).model_dump(exclude_none=True)
 
-        return self._request_sync(
+        response = self._request_sync(
             method="post",
             path="/api/v1.idempotency.abort",
             body=body,
-            response_type=IdempotencyAbortOut,
         )
+        return parse_response(response, IdempotencyAbortOut)
