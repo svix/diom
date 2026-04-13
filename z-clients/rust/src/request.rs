@@ -67,7 +67,7 @@ impl Request {
             // T::default() here instead since () implements that, but then we'd
             // need to impl default for all models.
             None => Ok(rmp_serde::from_slice(&[0xc0]).expect("serde null value")),
-            Some(bytes) => Ok(rmp_serde::from_slice(&bytes).map_err(Error::generic)?),
+            Some(bytes) => Ok(rmp_serde::from_slice(&bytes).map_err(Error::other)?),
         }
     }
 
@@ -94,7 +94,7 @@ impl Request {
         let mut retry_count = 0;
 
         let execute_request = async |request| {
-            let response = conf.client.request(request).await.map_err(Error::generic)?;
+            let response = conf.client.request(request).await.map_err(Error::network)?;
 
             let status = response.status();
             if !status.is_success() {
@@ -109,7 +109,7 @@ impl Request {
                     .into_body()
                     .collect()
                     .await
-                    .map_err(Error::generic)?
+                    .map_err(Error::network)?
                     .to_bytes();
                 Ok(Some(bytes))
             }
@@ -120,7 +120,7 @@ impl Request {
             let res = if let Some(duration) = conf.timeout {
                 tokio::time::timeout(duration, request_fut)
                     .await
-                    .map_err(Error::generic)?
+                    .map_err(|_| Error::Timeout)?
             } else {
                 request_fut.await
             };
@@ -129,13 +129,10 @@ impl Request {
 
             match res {
                 Ok(result) => return Ok(result),
-                e @ Err(Error::Validation(_)) => return e,
-                Err(Error::Http(err)) if err.status.as_u16() < 500 => return Err(Error::Http(err)),
-                e @ Err(_) => {
-                    if next_backoff.is_none() {
-                        return e;
-                    }
+                Err(e) if !e.is_retryable() || next_backoff.is_none() => {
+                    return Err(e);
                 }
+                _ => {}
             }
 
             tokio::time::sleep(next_backoff.expect("next_backoff is always Some")).await;
@@ -161,16 +158,16 @@ impl Request {
             uri += &query_string_str;
         }
 
-        let uri = http::Uri::try_from(uri).map_err(Error::generic)?;
+        let uri = http::Uri::try_from(uri).map_err(Error::other)?;
         let mut req_builder = http::Request::builder().uri(uri).method(self.method);
 
         let mut request = if let Some(body) = self.serialized_body {
             let req_headers = req_builder.headers_mut().unwrap();
             req_headers.insert(CONTENT_TYPE, APPLICATION_MSGPACK);
             req_headers.insert(CONTENT_LENGTH, body.len().into());
-            req_builder.body(Full::from(body)).map_err(Error::generic)?
+            req_builder.body(Full::from(body)).map_err(Error::other)?
         } else {
-            req_builder.body(Full::default()).map_err(Error::generic)?
+            req_builder.body(Full::default()).map_err(Error::other)?
         };
 
         let request_headers = request.headers_mut();
@@ -185,9 +182,7 @@ impl Request {
         match auth {
             Auth::Bearer => {
                 if let Some(token) = &conf.bearer_access_token {
-                    let value = format!("Bearer {token}")
-                        .try_into()
-                        .map_err(Error::generic)?;
+                    let value = format!("Bearer {token}").try_into().map_err(Error::other)?;
                     request_headers.insert(AUTHORIZATION, value);
                 }
             }
@@ -195,12 +190,12 @@ impl Request {
         }
 
         if let Some(user_agent) = &conf.user_agent {
-            let value = user_agent.try_into().map_err(Error::generic)?;
+            let value = user_agent.try_into().map_err(Error::other)?;
             request_headers.insert(USER_AGENT, value);
         }
 
         for (k, v) in self.header_params {
-            let v = v.try_into().map_err(Error::generic)?;
+            let v = v.try_into().map_err(Error::other)?;
             request_headers.insert(k, v);
         }
 
