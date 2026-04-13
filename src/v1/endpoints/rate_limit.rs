@@ -145,11 +145,26 @@ async fn rate_limit_limit(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let key = data.key.0.clone();
-    let units = data.tokens;
-    let method = data.config.into();
+    let key = data.key.0;
+    let tokens = data.tokens;
+    let config: TokenBucket = data.config.into();
 
-    let operation = LimitOperation::new(namespace, key, units, method);
+    // Fast path: if local state already shows exhaustion, no need to go to raft.
+    let now = repl.time.now();
+    let rate_limit_state = repl.state_machine.rate_limit_store().await;
+    let (remaining, retry_after) = rate_limit_state
+        .controller()
+        .get_remaining(now, namespace.id, key.clone(), tokens, config.clone())
+        .await?;
+    if let Some(retry_after) = retry_after {
+        return Ok(MsgPackOrJson(RateLimitCheckOut {
+            allowed: false,
+            remaining,
+            retry_after: Some(retry_after),
+        }));
+    }
+
+    let operation = LimitOperation::new(namespace, key, tokens, config);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(RateLimitCheckOut {
@@ -177,7 +192,7 @@ async fn rate_limit_get_remaining(
     let rate_limit_state = repl.state_machine.rate_limit_store().await;
     let controller = rate_limit_state.controller();
     let (remaining, retry_after) = controller
-        .get_remaining(now, namespace.id, data.key, data.config.into())
+        .get_remaining(now, namespace.id, data.key, 1, data.config.into())
         .await?;
 
     Ok(MsgPackOrJson(RateLimitGetRemainingOut {
