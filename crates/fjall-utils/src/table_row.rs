@@ -16,8 +16,8 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
     const ROW_TYPE: u8;
 
     fn to_fjall_value(&self) -> Result<fjall::UserValue> {
-        postcard::to_allocvec(&crate::V0Wrapper::V0(self))
-            .map(|bytes| bytes.into())
+        crate::postcard_to_byteview(&crate::V0Wrapper::V0(self))
+            .map(fjall::Slice::from)
             .or_internal_error()
     }
 
@@ -46,10 +46,11 @@ pub trait TableRow: Sized + Serialize + DeserializeOwned {
         Ok(())
     }
 
-    fn iter<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = (fjall::Slice, Self)> {
+    fn iter<K: ReadableKeyspace>(keyspace: &K) -> impl Iterator<Item = (TableKey<Self>, Self)> {
         let prefix = &[Self::ROW_TYPE];
         keyspace.prefix(prefix).map(|g| {
             let (k, v) = g.into_inner().expect("io error");
+            let k = TableKey::<Self>::init_from_bytes(&k);
             let v = Self::from_fjall_value(v).expect("deserialize error?");
             (k, v)
         })

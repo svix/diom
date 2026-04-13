@@ -12,15 +12,12 @@ operator:
       operator: Equal
       value: diom
       effect: NoSchedule
-    - key: db-name
-      operator: Equal
-      value: coyote
-      effect: NoSchedule
 
 cluster:
   image:
     tag: ""
   spec:
+    replicas: 3
     service:
       type: LoadBalancer
       annotations:
@@ -28,7 +25,7 @@ cluster:
         service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
         service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
         service.beta.kubernetes.io/aws-load-balancer-attributes: dns_record.client_routing_policy=availability_zone_affinity
-        external-dns.alpha.kubernetes.io/hostname: "coyote.svix.local"
+        external-dns.alpha.kubernetes.io/hostname: "diom.svix.local"
     storage:
       persistent:
         size: 64Gi
@@ -42,15 +39,11 @@ cluster:
       - name: RUST_BACKTRACE
         value: "1"
     nodeSelector:
-      db-name: coyote
+      db-name: diom
     tolerations:
       - key: db-name
         operator: Equal
         value: diom
-        effect: NoSchedule
-      - key: db-name
-        operator: Equal
-        value: coyote
         effect: NoSchedule
     affinity:
       podAntiAffinity:

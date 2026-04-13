@@ -1,12 +1,8 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 use std::collections::HashMap;
 
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::{Extension, State};
+use axum::extract::Extension;
 use diom_admin_auth::{
-    State as AdminAuthState,
     controller::RoleModel,
     operations::{DeleteRoleOperation, UpsertRoleOperation},
 };
@@ -165,12 +161,11 @@ request_input!(AdminRoleGetIn, "get");
 /// Get a role by ID
 #[aide_annotate(op_id = "v1.admin.auth-role.get")]
 async fn role_get(
-    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminRoleGetIn>,
 ) -> Result<MsgPackOrJson<AdminRoleOut>> {
     repl.wait_linearizable().await.or_internal_error()?;
-    let admin_auth_state = AdminAuthState::init(state.do_not_use_dbs.clone())?;
+    let admin_auth_state = repl.state_machine.admin_auth_store().await;
     let model = admin_auth_state
         .controller
         .get_role(&data.id)
@@ -198,12 +193,11 @@ pub type AdminRoleListOut = ListResponse<AdminRoleOut>;
 /// List all roles
 #[aide_annotate(op_id = "v1.admin.auth-role.list")]
 async fn role_list(
-    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminRoleListIn>,
 ) -> Result<MsgPackOrJson<AdminRoleListOut>> {
     repl.wait_linearizable().await.or_internal_error()?;
-    let admin_auth_state = AdminAuthState::init(state.do_not_use_dbs.clone())?;
+    let admin_auth_state = repl.state_machine.admin_auth_store().await;
     let limit = data.pagination.limit.into();
     let iterator = data.pagination.iterator;
     let models = admin_auth_state

@@ -35,7 +35,8 @@ public class Msgs {
         MsgPublishIn_ body = new MsgPublishIn_(
             msgPublishIn.getNamespace(),
             topic,
-            msgPublishIn.getMsgs()
+            msgPublishIn.getMsgs(),
+            msgPublishIn.getIdempotencyKey()
         );
 
         return this.client.executeRequest(

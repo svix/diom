@@ -1,10 +1,6 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 use aide::axum::{ApiRouter, routing::post_with};
-use axum::extract::{Extension, State};
+use axum::extract::Extension;
 use diom_admin_auth::{
-    State as AdminAuthState,
     controller::AccessPolicyModel,
     operations::{DeleteAccessPolicyOperation, UpsertAccessPolicyOperation},
 };
@@ -149,12 +145,11 @@ request_input!(AdminAccessPolicyGetIn, "get");
 /// Get an access policy by ID
 #[aide_annotate(op_id = "v1.admin.auth-policy.get")]
 async fn access_policy_get(
-    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminAccessPolicyGetIn>,
 ) -> Result<MsgPackOrJson<AdminAccessPolicyOut>> {
     repl.wait_linearizable().await.or_internal_error()?;
-    let admin_auth_state = AdminAuthState::init(state.do_not_use_dbs.clone())?;
+    let admin_auth_state = repl.state_machine.admin_auth_store().await;
     let model = admin_auth_state
         .controller
         .get_policy(&data.id)
@@ -182,12 +177,11 @@ pub type AdminAccessPolicyListOut = ListResponse<AdminAccessPolicyOut>;
 /// List all access policies
 #[aide_annotate(op_id = "v1.admin.auth-policy.list")]
 async fn access_policy_list(
-    State(state): State<AppState>,
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<AdminAccessPolicyListIn>,
 ) -> Result<MsgPackOrJson<AdminAccessPolicyListOut>> {
     repl.wait_linearizable().await.or_internal_error()?;
-    let admin_auth_state = AdminAuthState::init(state.do_not_use_dbs.clone())?;
+    let admin_auth_state = repl.state_machine.admin_auth_store().await;
     let limit = data.pagination.limit.into();
     let iterator = data.pagination.iterator;
     let models = admin_auth_state

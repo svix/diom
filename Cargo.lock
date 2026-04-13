@@ -1702,7 +1702,9 @@ dependencies = [
  "rand 0.9.2",
  "schemars 1.2.1",
  "serde",
+ "sha2",
  "tempfile",
+ "test-utils",
  "tokio",
  "tracing",
  "validator",
@@ -2049,12 +2051,16 @@ name = "fjall-utils"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "byteview",
+ "criterion",
  "diom-error",
  "fjall",
  "itertools 0.14.0",
  "postcard",
+ "rand 0.9.2",
  "schemars 1.2.1",
  "serde",
+ "serde_bytes",
  "tap",
  "tracing",
 ]

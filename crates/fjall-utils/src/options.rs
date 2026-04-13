@@ -149,8 +149,9 @@ impl SerializableKeyspaceCreateOptions {
         keyspace_name: &str,
     ) -> anyhow::Result<fjall::Keyspace> {
         let schema = database.keyspace("_schema", fjall::KeyspaceCreateOptions::default)?;
-        let serialized =
-            postcard::to_allocvec(&crate::V0Wrapper::V0(&self)).context("serializing schema")?;
+        let serialized = crate::postcard_to_byteview(&crate::V0Wrapper::V0(&self))
+            .map(fjall::Slice::from)
+            .context("serializing schema")?;
         schema.insert(keyspace_name, serialized)?;
         database
             .keyspace(keyspace_name, || self.into())

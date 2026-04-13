@@ -7,7 +7,9 @@
     {{ name | to_lower_camel_case }}
 {%- endmacro -%}
 {% macro field_type(field) -%}
-    {%- if field.name is endingwith "_ms" -%}
+    {%- if field.type.is_unix_timestamp_ms() -%}
+        Instant
+    {%- elif field.type.is_duration_ms() -%}
         Duration
     {%- elif field.type.is_bytes() -%}
         byte[]
@@ -21,7 +23,9 @@
     {%- else -%}
         @JsonProperty
     {%- endif -%}
-    {%- if field.name is endingwith "_ms" %} @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class){% endif -%}
+    {%- if field.type.is_unix_timestamp_ms() %} @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class)
+    {%- elif field.type.is_duration_ms() %} @JsonSerialize(using = DurationMsSerializer.class) @JsonDeserialize(using = DurationMsDeserializer.class)
+    {%- endif -%}
 {%- endmacro -%}
 {% macro field_decl(field, annotate=true) -%}
     {% if annotate %}{{ field_annotation(field) }} {% endif %}private {{ field_type(field) }} {{ field_name(field) }};

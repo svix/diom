@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 macro_rules! namespace_request_input {
     ($ty:ty, $action:literal) => {
         impl diom_proto::RequestInput for $ty {

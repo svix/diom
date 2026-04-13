@@ -14,7 +14,6 @@ pub(crate) enum IdempotencyState {
 
 impl From<IdempotencyState> for ByteString {
     fn from(state: IdempotencyState) -> Self {
-        // FIXME(jplatte): Could probably serialize in place, currently an allocation.
         postcard::to_allocvec(&fjall_utils::V0Wrapper::V0(&state))
             .expect("Failed to serialize IdempotencyState")
             .into()

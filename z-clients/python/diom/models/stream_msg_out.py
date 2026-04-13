@@ -12,7 +12,7 @@ class StreamMsgOut(BaseModel):
 
     value: bytes
 
-    headers: t.Dict[str, str] | None = None
+    headers: t.Dict[str, str]
 
     timestamp: datetime
 

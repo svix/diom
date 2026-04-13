@@ -4,10 +4,6 @@ use diom_core::types::DurationMs;
 
 use super::DatabaseConfig;
 
-pub(super) fn default_false() -> bool {
-    false
-}
-
 pub(super) fn default_true() -> bool {
     true
 }

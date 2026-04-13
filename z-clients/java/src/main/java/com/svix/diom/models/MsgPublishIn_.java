@@ -13,8 +13,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.svix.diom.DurationMsSerializer;
 import com.svix.diom.DurationMsDeserializer;
+import com.svix.diom.UnixTimestampMsSerializer;
+import com.svix.diom.UnixTimestampMsDeserializer;
 import com.svix.diom.Utils;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -31,15 +34,18 @@ public class MsgPublishIn_ {
     @JsonProperty private String namespace;
     @JsonProperty private String topic;
     @JsonProperty private List<MsgIn> msgs;
+    @JsonProperty("idempotency_key") private String idempotencyKey;
 
     public MsgPublishIn_(
         String namespace,
         String topic,
-        List<MsgIn> msgs
+        List<MsgIn> msgs,
+        String idempotencyKey
     ) {
         this.namespace = namespace;
         this.topic = topic;
         this.msgs = msgs;
+        this.idempotencyKey = idempotencyKey;
     }
 
     /**

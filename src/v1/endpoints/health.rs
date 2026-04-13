@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: © 2022 Svix Authors
-// SPDX-License-Identifier: MIT
-
 #[cfg(debug_assertions)]
 use aide::axum::routing::post;
 use aide::axum::{

@@ -1,0 +1,68 @@
+name: Diom Docker Test Build
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        required: true
+        type: string
+      context:
+        required: false
+        type: string
+        default: '.'
+      file:
+        required: false
+        type: string
+        default: './Dockerfile'
+
+jobs:
+  build-image:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: '0'
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.file }}
+          target: ${{ inputs.target }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Scan image with Grype for only fixable
+        id: scan
+        uses: anchore/scan-action@v6
+        with:
+          image: ${{ steps.build.outputs.imageid }}
+          fail-build: true
+          severity-cutoff: high
+          only-fixed: true
+          output-file: grype.sarif
+
+      - name: Inspect action SARIF report
+        if: ${{ always() && hashFiles('grype.sarif') != '' }}
+        run: cat ${{ steps.scan.outputs.sarif }}
+
+      - name: Scan image with Grype for all
+        id: scan-all
+        uses: anchore/scan-action@v6
+        with:
+          image: ${{ steps.build.outputs.imageid }}
+          fail-build: false
+          severity-cutoff: negligible
+          only-fixed: false
+          output-file: grype-all.sarif
+
+      - name: Inspect action SARIF report for all CVEs
+        if: ${{ !cancelled() && hashFiles('grype-all.sarif') != '' }}
+        run: cat ${{ steps.scan-all.outputs.sarif }}
