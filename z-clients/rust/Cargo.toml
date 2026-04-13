@@ -6,7 +6,7 @@ rust-version.workspace = true
 edition = "2024"
 authors = ["Svix Inc. <oss@svix.com>"]
 description = "Diom Rust client library"
-homepage = "https://www.diom.com"
+homepage = "https://diom.svix.com"
 repository = "https://github.com/svix/diom"
 keywords = ["diom"]
 

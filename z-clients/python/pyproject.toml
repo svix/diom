@@ -21,7 +21,7 @@ project-includes = [
 ]
 
 [project.urls]
-Homepage = "https://www.svix.com"
+Homepage = "https://diom.svix.com"
 Repository = "https://github.com/svix/diom"
 
 [dependency-groups]
