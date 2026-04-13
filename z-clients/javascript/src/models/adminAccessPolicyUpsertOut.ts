@@ -20,8 +20,8 @@ export const AdminAccessPolicyUpsertOutSerializer = {
     _toJsonObject(self: AdminAccessPolicyUpsertOut): any {
         return {
             'id': self.id,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

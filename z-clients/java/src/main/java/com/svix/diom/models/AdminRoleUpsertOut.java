@@ -37,8 +37,8 @@ import lombok.ToString;
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class AdminRoleUpsertOut {
     @JsonProperty private String id;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public AdminRoleUpsertOut() {}
 
     public AdminRoleUpsertOut id(String id) {
@@ -60,7 +60,7 @@ public class AdminRoleUpsertOut {
         this.id = id;
     }
 
-    public AdminRoleUpsertOut created(OffsetDateTime created) {
+    public AdminRoleUpsertOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -71,15 +71,15 @@ public class AdminRoleUpsertOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public AdminRoleUpsertOut updated(OffsetDateTime updated) {
+    public AdminRoleUpsertOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -90,11 +90,11 @@ public class AdminRoleUpsertOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 

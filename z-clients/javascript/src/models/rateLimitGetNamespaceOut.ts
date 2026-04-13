@@ -20,8 +20,8 @@ export const RateLimitGetNamespaceOutSerializer = {
     _toJsonObject(self: RateLimitGetNamespaceOut): any {
         return {
             'name': self.name,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

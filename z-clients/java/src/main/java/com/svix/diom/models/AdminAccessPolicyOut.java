@@ -39,8 +39,8 @@ public class AdminAccessPolicyOut {
     @JsonProperty private String id;
     @JsonProperty private String description;
     @JsonProperty private List<AccessRule> rules;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
     public AdminAccessPolicyOut() {}
 
     public AdminAccessPolicyOut id(String id) {
@@ -107,7 +107,7 @@ public class AdminAccessPolicyOut {
         this.rules = rules;
     }
 
-    public AdminAccessPolicyOut created(OffsetDateTime created) {
+    public AdminAccessPolicyOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -118,15 +118,15 @@ public class AdminAccessPolicyOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public AdminAccessPolicyOut updated(OffsetDateTime updated) {
+    public AdminAccessPolicyOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -137,11 +137,11 @@ public class AdminAccessPolicyOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 

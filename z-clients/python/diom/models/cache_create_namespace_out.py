@@ -1,5 +1,4 @@
 # this file is @generated
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
 
@@ -11,6 +10,6 @@ class CacheCreateNamespaceOut(BaseModel):
 
     eviction_policy: EvictionPolicy
 
-    created: datetime
+    created: int
 
-    updated: datetime
+    updated: int

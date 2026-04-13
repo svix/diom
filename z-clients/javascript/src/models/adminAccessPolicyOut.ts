@@ -30,8 +30,8 @@ export const AdminAccessPolicyOutSerializer = {
             'id': self.id,
             'description': self.description,
             'rules': self.rules.map((item) => AccessRuleSerializer._toJsonObject(item)),
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

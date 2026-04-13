@@ -36,8 +36,8 @@ export const AdminRoleOutSerializer = {
             'rules': self.rules.map((item) => AccessRuleSerializer._toJsonObject(item)),
             'policies': self.policies,
             'context': self.context,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

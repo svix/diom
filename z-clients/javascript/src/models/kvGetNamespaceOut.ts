@@ -20,8 +20,8 @@ export const KvGetNamespaceOutSerializer = {
     _toJsonObject(self: KvGetNamespaceOut): any {
         return {
             'name': self.name,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

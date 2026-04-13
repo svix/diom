@@ -24,7 +24,7 @@ export const KvGetOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: KvGetOut): any {
         return {
-            'expiry': self.expiry,
+            'expiry': self.expiry != null ? self.expiry.getTime() : undefined,
             'value': self.value != null ? Array.from(self.value) : undefined,
             'version': self.version,
         };

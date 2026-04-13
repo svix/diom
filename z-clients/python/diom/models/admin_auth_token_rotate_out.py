@@ -1,5 +1,4 @@
 # this file is @generated
-from datetime import datetime
 
 from ..internal.base_model import BaseModel
 
@@ -9,6 +8,6 @@ class AdminAuthTokenRotateOut(BaseModel):
 
     token: str
 
-    created: datetime
+    created: int
 
-    updated: datetime
+    updated: int

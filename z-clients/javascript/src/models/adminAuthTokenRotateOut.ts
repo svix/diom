@@ -23,8 +23,8 @@ export const AdminAuthTokenRotateOutSerializer = {
         return {
             'id': self.id,
             'token': self.token,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

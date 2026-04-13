@@ -27,8 +27,8 @@ export const MsgNamespaceGetOutSerializer = {
         return {
             'name': self.name,
             'retention': RetentionSerializer._toJsonObject(self.retention),
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

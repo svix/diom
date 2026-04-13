@@ -30,9 +30,9 @@ export const AdminAuthTokenOutSerializer = {
         return {
             'id': self.id,
             'name': self.name,
-            'created': self.created,
-            'updated': self.updated,
-            'expiry': self.expiry,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
+            'expiry': self.expiry != null ? self.expiry.getTime() : undefined,
             'role': self.role,
             'enabled': self.enabled,
         };

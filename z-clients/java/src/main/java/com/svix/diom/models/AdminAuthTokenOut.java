@@ -38,9 +38,9 @@ import lombok.ToString;
 public class AdminAuthTokenOut {
     @JsonProperty private String id;
     @JsonProperty private String name;
-    @JsonProperty private OffsetDateTime created;
-    @JsonProperty private OffsetDateTime updated;
-    @JsonProperty private OffsetDateTime expiry;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant created;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant updated;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant expiry;
     @JsonProperty private String role;
     @JsonProperty private Boolean enabled;
     public AdminAuthTokenOut() {}
@@ -83,7 +83,7 @@ public class AdminAuthTokenOut {
         this.name = name;
     }
 
-    public AdminAuthTokenOut created(OffsetDateTime created) {
+    public AdminAuthTokenOut created(Instant created) {
         this.created = created;
         return this;
     }
@@ -94,15 +94,15 @@ public class AdminAuthTokenOut {
      * @return created
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public void setCreated(OffsetDateTime created) {
+    public void setCreated(Instant created) {
         this.created = created;
     }
 
-    public AdminAuthTokenOut updated(OffsetDateTime updated) {
+    public AdminAuthTokenOut updated(Instant updated) {
         this.updated = updated;
         return this;
     }
@@ -113,15 +113,15 @@ public class AdminAuthTokenOut {
      * @return updated
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getUpdated() {
+    public Instant getUpdated() {
         return updated;
     }
 
-    public void setUpdated(OffsetDateTime updated) {
+    public void setUpdated(Instant updated) {
         this.updated = updated;
     }
 
-    public AdminAuthTokenOut expiry(OffsetDateTime expiry) {
+    public AdminAuthTokenOut expiry(Instant expiry) {
         this.expiry = expiry;
         return this;
     }
@@ -132,11 +132,11 @@ public class AdminAuthTokenOut {
      * @return expiry
      */
     @javax.annotation.Nullable
-    public OffsetDateTime getExpiry() {
+    public Instant getExpiry() {
         return expiry;
     }
 
-    public void setExpiry(OffsetDateTime expiry) {
+    public void setExpiry(Instant expiry) {
         this.expiry = expiry;
     }
 

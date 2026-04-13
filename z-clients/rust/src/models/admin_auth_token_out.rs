@@ -7,12 +7,12 @@ pub struct AdminAuthTokenOut {
 
     pub name: String,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiry: Option<jiff::Timestamp>,
+    pub expiry: Option<u64>,
 
     pub role: String,
 
@@ -24,8 +24,8 @@ impl AdminAuthTokenOut {
     pub fn new(
         id: String,
         name: String,
-        created: jiff::Timestamp,
-        updated: jiff::Timestamp,
+        created: u64,
+        updated: u64,
         role: String,
         enabled: bool,
     ) -> Self {
@@ -40,7 +40,7 @@ impl AdminAuthTokenOut {
         }
     }
 
-    pub fn with_expiry(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {
+    pub fn with_expiry(mut self, value: impl Into<Option<u64>>) -> Self {
         self.expiry = value.into();
         self
     }

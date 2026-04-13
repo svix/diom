@@ -10,10 +10,10 @@ pub struct QueueMsgOut {
 
     pub headers: std::collections::HashMap<String, String>,
 
-    pub timestamp: jiff::Timestamp,
+    pub timestamp: u64,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scheduled_at: Option<jiff::Timestamp>,
+    pub scheduled_at: Option<u64>,
 }
 
 impl QueueMsgOut {
@@ -21,7 +21,7 @@ impl QueueMsgOut {
         msg_id: String,
         value: Vec<u8>,
         headers: std::collections::HashMap<String, String>,
-        timestamp: jiff::Timestamp,
+        timestamp: u64,
     ) -> Self {
         Self {
             msg_id,
@@ -32,7 +32,7 @@ impl QueueMsgOut {
         }
     }
 
-    pub fn with_scheduled_at(mut self, value: impl Into<Option<jiff::Timestamp>>) -> Self {
+    pub fn with_scheduled_at(mut self, value: impl Into<Option<u64>>) -> Self {
         self.scheduled_at = value.into();
         self
     }

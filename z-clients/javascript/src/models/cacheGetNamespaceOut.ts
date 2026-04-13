@@ -27,8 +27,8 @@ export const CacheGetNamespaceOutSerializer = {
         return {
             'name': self.name,
             'eviction_policy': EvictionPolicySerializer._toJsonObject(self.evictionPolicy),
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

@@ -26,8 +26,8 @@ export const QueueMsgOutSerializer = {
             'msg_id': self.msgId,
             'value': Array.from(self.value),
             'headers': self.headers,
-            'timestamp': self.timestamp,
-            'scheduled_at': self.scheduledAt,
+            'timestamp': self.timestamp.getTime(),
+            'scheduled_at': self.scheduledAt != null ? self.scheduledAt.getTime() : undefined,
         };
     }
 }

@@ -22,7 +22,7 @@ export const ClusterForceSnapshotOutSerializer = {
     // biome-ignore lint/suspicious/noExplicitAny: intentional any
     _toJsonObject(self: ClusterForceSnapshotOut): any {
         return {
-            'snapshot_time': self.snapshotTime,
+            'snapshot_time': self.snapshotTime.getTime(),
             'snapshot_log_index': self.snapshotLogIndex,
             'snapshot_id': self.snapshotId,
         };

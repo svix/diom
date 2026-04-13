@@ -20,8 +20,8 @@ export const AdminRoleUpsertOutSerializer = {
     _toJsonObject(self: AdminRoleUpsertOut): any {
         return {
             'id': self.id,
-            'created': self.created,
-            'updated': self.updated,
+            'created': self.created.getTime(),
+            'updated': self.updated.getTime(),
         };
     }
 }

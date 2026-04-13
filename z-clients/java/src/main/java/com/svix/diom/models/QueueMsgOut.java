@@ -39,8 +39,8 @@ public class QueueMsgOut {
     @JsonProperty("msg_id") private String msgId;
     @JsonProperty private byte[] value;
     @JsonProperty private Map<String,String> headers;
-    @JsonProperty private OffsetDateTime timestamp;
-    @JsonProperty("scheduled_at") private OffsetDateTime scheduledAt;
+    @JsonProperty @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant timestamp;
+    @JsonProperty("scheduled_at") @JsonSerialize(using = UnixTimestampMsSerializer.class) @JsonDeserialize(using = UnixTimestampMsDeserializer.class) private Instant scheduledAt;
     public QueueMsgOut() {}
 
     public QueueMsgOut msgId(String msgId) {
@@ -107,7 +107,7 @@ public class QueueMsgOut {
         this.headers = headers;
     }
 
-    public QueueMsgOut timestamp(OffsetDateTime timestamp) {
+    public QueueMsgOut timestamp(Instant timestamp) {
         this.timestamp = timestamp;
         return this;
     }
@@ -118,15 +118,15 @@ public class QueueMsgOut {
      * @return timestamp
      */
     @javax.annotation.Nonnull
-    public OffsetDateTime getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(OffsetDateTime timestamp) {
+    public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
     }
 
-    public QueueMsgOut scheduledAt(OffsetDateTime scheduledAt) {
+    public QueueMsgOut scheduledAt(Instant scheduledAt) {
         this.scheduledAt = scheduledAt;
         return this;
     }
@@ -137,11 +137,11 @@ public class QueueMsgOut {
      * @return scheduledAt
      */
     @javax.annotation.Nullable
-    public OffsetDateTime getScheduledAt() {
+    public Instant getScheduledAt() {
         return scheduledAt;
     }
 
-    public void setScheduledAt(OffsetDateTime scheduledAt) {
+    public void setScheduledAt(Instant scheduledAt) {
         this.scheduledAt = scheduledAt;
     }
 

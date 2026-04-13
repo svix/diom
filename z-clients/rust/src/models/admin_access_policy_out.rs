@@ -11,9 +11,9 @@ pub struct AdminAccessPolicyOut {
 
     pub rules: Vec<AccessRule>,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 }
 
 impl AdminAccessPolicyOut {
@@ -21,8 +21,8 @@ impl AdminAccessPolicyOut {
         id: String,
         description: String,
         rules: Vec<AccessRule>,
-        created: jiff::Timestamp,
-        updated: jiff::Timestamp,
+        created: u64,
+        updated: u64,
     ) -> Self {
         Self {
             id,

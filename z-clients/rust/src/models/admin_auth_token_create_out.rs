@@ -7,18 +7,13 @@ pub struct AdminAuthTokenCreateOut {
 
     pub token: String,
 
-    pub created: jiff::Timestamp,
+    pub created: u64,
 
-    pub updated: jiff::Timestamp,
+    pub updated: u64,
 }
 
 impl AdminAuthTokenCreateOut {
-    pub fn new(
-        id: String,
-        token: String,
-        created: jiff::Timestamp,
-        updated: jiff::Timestamp,
-    ) -> Self {
+    pub fn new(id: String, token: String, created: u64, updated: u64) -> Self {
         Self {
             id,
             token,

@@ -29,8 +29,8 @@ export const StreamMsgOutSerializer = {
             'topic': self.topic,
             'value': Array.from(self.value),
             'headers': self.headers,
-            'timestamp': self.timestamp,
-            'scheduled_at': self.scheduledAt,
+            'timestamp': self.timestamp.getTime(),
+            'scheduled_at': self.scheduledAt != null ? self.scheduledAt.getTime() : undefined,
         };
     }
 }
