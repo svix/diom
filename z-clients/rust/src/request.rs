@@ -120,7 +120,8 @@ impl Request {
             let res = if let Some(duration) = conf.timeout {
                 tokio::time::timeout(duration, request_fut)
                     .await
-                    .map_err(|_| Error::Timeout)?
+                    .map_err(|_| Error::Timeout)
+                    .flatten()
             } else {
                 request_fut.await
             };
