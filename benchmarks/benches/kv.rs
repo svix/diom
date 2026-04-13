@@ -4,7 +4,7 @@ use criterion::{
 use diom::models::{KvDeleteIn, KvGetIn, KvSetIn};
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use rand::{
-    Rng, SeedableRng,
+    RngExt, SeedableRng,
     distr::{Alphanumeric, SampleString},
     rngs::StdRng,
 };

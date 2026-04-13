@@ -7,7 +7,7 @@ use headers::{ContentType, Header as _};
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HeaderValue, USER_AGENT};
 use http_body_util::{BodyExt as _, Full};
 use hyper::body::Bytes;
-use rand::Rng;
+use rand::RngExt;
 use serde::de::DeserializeOwned;
 
 use crate::{Configuration, error::Error};
