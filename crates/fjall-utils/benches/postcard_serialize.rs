@@ -1,7 +1,7 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use fjall_utils::V0Wrapper;
 use postcard::ser_flavors;
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::StdRng};
 
 /// Mimics KvPairRow: a struct with a large byte payload, an optional timestamp, and a version.
 #[derive(serde::Serialize, serde::Deserialize)]
