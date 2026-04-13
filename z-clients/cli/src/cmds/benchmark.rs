@@ -22,7 +22,7 @@ use glob::Pattern;
 use hdrhistogram::Histogram;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::{
-    Rng, SeedableRng,
+    RngExt, SeedableRng,
     distr::{Alphanumeric, SampleString},
     rngs::StdRng,
 };

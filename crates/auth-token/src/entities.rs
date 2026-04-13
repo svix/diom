@@ -13,7 +13,7 @@ pub struct TokenPlaintext(String);
 impl TokenPlaintext {
     pub fn generate(prefix: &str, suffix: Option<&str>) -> Result<Self> {
         let mut buf = [0u8; KEY_SIZE];
-        rand::RngCore::fill_bytes(&mut rand::rng(), &mut buf);
+        rand::Rng::fill_bytes(&mut rand::rng(), &mut buf);
 
         let generated = URL_SAFE_NO_PAD.encode(buf);
 

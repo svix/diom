@@ -6,7 +6,7 @@ use criterion::{
 use diom::models::{CacheDeleteIn, CacheGetIn, CacheSetIn};
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use rand::{
-    Rng, SeedableRng,
+    RngExt, SeedableRng,
     distr::{Alphanumeric, SampleString},
     rngs::StdRng,
 };
