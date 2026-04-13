@@ -74,6 +74,33 @@ impl RateLimitController {
         .await?
     }
 
+    /// Checks whether a request will be denied if called by `limit`.
+    pub async fn check_limit<I: AsRef<str> + 'static + Send>(
+        &self,
+        now: Timestamp,
+        namespace_id: NamespaceId,
+        identifier: I,
+        wanted: u64,
+        config: TokenBucket,
+    ) -> Result<(bool, u64, Option<DurationMs>)> {
+        let tables = self.tables.clone();
+        spawn_blocking_in_current_span(move || {
+            let identifier = identifier.as_ref();
+            let (capacity, _) =
+                Self::calculate_capacity(&tables, namespace_id, identifier, &config, now)?;
+            if capacity < wanted {
+                Ok((
+                    false,
+                    capacity,
+                    Some(config.calculate_retry_after(capacity, wanted)),
+                ))
+            } else {
+                Ok((true, capacity, None))
+            }
+        })
+        .await?
+    }
+
     pub async fn get_remaining<I: AsRef<str> + 'static + Send>(
         &self,
         now: Timestamp,

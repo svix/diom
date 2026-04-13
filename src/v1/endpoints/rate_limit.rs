@@ -146,11 +146,26 @@ async fn rate_limit_limit(
         .fetch_namespace(data.namespace.as_deref())?
         .ok_or_not_found()?;
 
-    let key = data.key.0.clone();
-    let units = data.tokens;
-    let method = data.config.into();
+    let key = data.key.0;
+    let tokens = data.tokens;
+    let config: TokenBucket = data.config.into();
 
-    let operation = LimitOperation::new(namespace, key, units, method);
+    // Fast path: if local state already shows exhaustion, no need to go to raft.
+    let now = repl.time.now();
+    let rate_limit_state = repl.state_machine.rate_limit_store().await;
+    let (allowed, remaining, retry_after) = rate_limit_state
+        .controller()
+        .check_limit(now, namespace.id, key.clone(), tokens, config.clone())
+        .await?;
+    if !allowed {
+        return Ok(MsgPackOrJson(RateLimitCheckOut {
+            allowed,
+            remaining,
+            retry_after,
+        }));
+    }
+
+    let operation = LimitOperation::new(namespace, key, tokens, config);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(RateLimitCheckOut {
