@@ -75,7 +75,7 @@ impl DumpableField {
 
 pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenStream {
     let syn::Data::Struct(obj) = input.data else {
-        return quote! { compile_error!("This macro may only be applied to structs") }.into();
+        return quote! { compile_error!("This macro may only be applied to structs") };
     };
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
@@ -85,7 +85,7 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
         let parsed = match DumpableField::parse(field) {
             Ok(Some(field)) => field,
             Ok(None) => continue,
-            Err(e) => return e.to_compile_error().into(),
+            Err(e) => return e.to_compile_error(),
         };
         fields.push(parsed);
     }
