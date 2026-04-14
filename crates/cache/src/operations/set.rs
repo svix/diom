@@ -1,6 +1,9 @@
 use super::{CacheRaftState, CacheRequest, SetResponse};
 use crate::CacheNamespace;
-use diom_core::types::{ByteString, DurationMs};
+use diom_core::{
+    PersistableValue,
+    types::{ByteString, DurationMs},
+};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
@@ -8,7 +11,7 @@ use diom_operations::OpContext;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,

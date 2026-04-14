@@ -246,7 +246,7 @@ pub(crate) struct MsgKey {
     pub(crate) offset: Offset,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PersistableValue)]
 pub(crate) struct MsgRow {
     pub value: ByteString,
     pub headers: HashMap<String, String>,
@@ -309,7 +309,7 @@ impl TableRow for MsgRow {
     const ROW_TYPE: u8 = RowType::Msg as u8;
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PersistableValue)]
 pub(crate) struct IdempotencyRow {
     pub expiry: Timestamp,
 }

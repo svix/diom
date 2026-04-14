@@ -1,3 +1,4 @@
+use diom_core::PersistableValue;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -12,7 +13,7 @@ pub struct DeleteResponseData {
     pub success: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct DeleteAuthTokenOperation {
     namespace_id: NamespaceId,
     pub id: AuthTokenId,

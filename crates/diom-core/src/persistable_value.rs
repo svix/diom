@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
-    num::NonZeroU64,
+    num::{NonZeroU16, NonZeroU32, NonZeroU64},
 };
 
 /// Marker trait for whether something can be
@@ -28,6 +28,8 @@ impl PersistableValue for i32 {}
 impl PersistableValue for i64 {}
 impl PersistableValue for i128 {}
 // TODO: use std::num::NonZero<T> when stabilized
+impl PersistableValue for NonZeroU16 {}
+impl PersistableValue for NonZeroU32 {}
 impl PersistableValue for NonZeroU64 {}
 impl PersistableValue for String {}
 impl PersistableValue for &str {}

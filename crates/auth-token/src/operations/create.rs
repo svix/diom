@@ -7,7 +7,7 @@ use crate::{
     entities::TokenHashed,
     operations::{AuthTokenRaftState, AuthTokenRequest, CreateResponse},
 };
-use diom_core::types::Metadata;
+use diom_core::{PersistableValue, types::Metadata};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes};
 use diom_operations::OpContext;
@@ -16,7 +16,7 @@ pub struct CreateResponseData {
     pub model: AuthTokenModel,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct CreateAuthTokenOperation {
     namespace_id: NamespaceId,
     id_random_bytes: UuidV7RandomBytes,

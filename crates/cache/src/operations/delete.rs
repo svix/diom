@@ -1,5 +1,6 @@
 use super::{CacheRaftState, CacheRequest, DeleteResponse};
 use crate::CacheNamespace;
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
@@ -10,7 +11,7 @@ pub struct DeleteResponseData {
     pub success: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct DeleteOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,

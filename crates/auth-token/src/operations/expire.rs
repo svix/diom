@@ -1,3 +1,4 @@
+use diom_core::PersistableValue;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +16,7 @@ pub struct ExpireResponseData {
     pub model: Option<AuthTokenModel>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct ExpireAuthTokenOperation {
     namespace_id: NamespaceId,
     pub id: AuthTokenId,

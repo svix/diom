@@ -5,7 +5,10 @@ use crate::{
 };
 
 use super::{KvRequest, SetResponse};
-use diom_core::types::{ByteString, DurationMs, EntityKey};
+use diom_core::{
+    PersistableValue,
+    types::{ByteString, DurationMs, EntityKey},
+};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
@@ -19,7 +22,7 @@ pub struct SetResponseData {
     pub version: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct SetOperation {
     namespace_id: NamespaceId,
     pub(crate) key: EntityKey,

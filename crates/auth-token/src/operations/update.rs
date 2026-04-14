@@ -6,7 +6,7 @@ use crate::{
     controller::{AuthTokenModel, PartialUpdateInput},
     operations::{AuthTokenRaftState, AuthTokenRequest, UpdateResponse},
 };
-use diom_core::types::Metadata;
+use diom_core::{PersistableValue, types::Metadata};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
 use diom_operations::OpContext;
@@ -16,7 +16,7 @@ pub struct UpdateResponseData {
     pub model: Option<AuthTokenModel>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct UpdateAuthTokenOperation {
     namespace_id: NamespaceId,
     pub id: AuthTokenId,

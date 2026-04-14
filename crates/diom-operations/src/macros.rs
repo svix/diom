@@ -59,6 +59,7 @@ macro_rules! raft_module_operations {
                 Clone,
                 $crate::__reexports::serde::Serialize,
                 $crate::__reexports::serde::Deserialize,
+                $crate::__reexports::diom_core::PersistableValue
             )]
             #[serde(crate = "diom_operations::__reexports::serde")]
             pub enum $module_op_name {

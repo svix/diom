@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
 use diom_core::{
+    PersistableValue,
     instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard},
     task::spawn_blocking_in_current_span,
     types::ByteString,
@@ -18,7 +19,7 @@ use crate::tables::{ExpirationRow, KvPairRow};
 const EXPIRATION_BATCH_SIZE: usize = 1_000;
 const WARN_LONG_LOCK_DURATION: Duration = Duration::from_millis(100);
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue)]
 #[serde(rename_all = "snake_case")]
 #[derive(Default)]
 pub enum OperationBehavior {

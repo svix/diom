@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use diom_core::task::spawn_blocking_in_current_span;
+use diom_core::{PersistableValue, task::spawn_blocking_in_current_span};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -18,7 +18,7 @@ use crate::{
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueNackResponse};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct QueueNackOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,

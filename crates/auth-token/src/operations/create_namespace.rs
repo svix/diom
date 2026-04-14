@@ -1,3 +1,4 @@
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_id::UuidV7RandomBytes;
 use diom_namespace::{
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::operations::{AuthTokenRaftState, AuthTokenRequest, CreateNamespaceResponse};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct CreateAuthTokenNamespaceOperation {
     pub(crate) name: NamespaceName,
     id_random_bytes: UuidV7RandomBytes,

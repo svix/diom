@@ -1,8 +1,9 @@
 use super::{InternalRequest, TickResponse as Response};
 use crate::core::cluster::state_machine::Store;
+use diom_core::PersistableValue;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct TickOperation {}
 
 impl InternalRequest for TickOperation {

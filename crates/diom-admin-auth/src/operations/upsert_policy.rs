@@ -1,4 +1,5 @@
 use diom_authorization::{AccessPolicyId, AccessRule};
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_operations::OpContext;
 use jiff::Timestamp;
@@ -15,7 +16,7 @@ pub struct UpsertAccessPolicyResponseData {
     pub model: AccessPolicyModel,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct UpsertAccessPolicyOperation {
     pub id: AccessPolicyId,
     pub description: String,

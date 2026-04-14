@@ -1,7 +1,10 @@
-use diom_core::types::{ByteString, Metadata};
+use diom_core::{
+    PersistableValue,
+    types::{ByteString, Metadata},
+};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, PersistableValue)]
 pub(crate) enum IdempotencyState {
     /// Request is in progress (locked)
     InProgress,

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
+use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::DurationMs};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
@@ -19,7 +19,7 @@ use crate::{
     tables::{IdempotencyKey, IdempotencyRow, MsgKey, MsgRow, TopicKey, TopicRow},
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct PublishOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,
