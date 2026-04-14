@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.KvDeleteIn;
@@ -30,6 +29,10 @@ public class Kv {
 
     public Kv(HttpClient client) {
         this.client = client;
+    }
+
+    public KvNamespace getNamespace() {
+        return new KvNamespace(this.client);
     }
 
     /** KV Set */

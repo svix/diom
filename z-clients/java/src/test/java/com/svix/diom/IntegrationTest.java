@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.svix.diom.models.*;
 import java.time.Duration;
+import java.util.Collections;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,31 @@ class IntegrationTest {
         // Verify deleted
         KvGetOut getResp2 = client.getKv().get(key);
         assertNull(getResp2.getValue());
+    }
+
+    @Test
+    void testMsgsQueueSubresourceChaining() throws Exception {
+        String namespace = "java-integration-ns";
+        String topic = "java-integration-topic";
+        String consumerGroup = "java-integration-cg";
+
+        client.getMsgs().getNamespace().create(namespace);
+        client.getMsgs().publish(topic, new MsgPublishIn()
+            .namespace(namespace)
+            .msgs(Collections.singletonList(new MsgIn().value("hello".getBytes()))));
+
+        MsgQueueReceiveOut received = client.getMsgs().getQueue().receive(
+            topic, consumerGroup, new MsgQueueReceiveIn().namespace(namespace));
+        assertNotNull(received);
+        assertFalse(received.getMsgs().isEmpty());
+
+        String msgId = received.getMsgs().get(0).getMsgId();
+        MsgQueueAckOut ackResp = client.getMsgs().getQueue().ack(
+            topic, consumerGroup,
+            new MsgQueueAckIn()
+                .namespace(namespace)
+                .msgIds(Collections.singletonList(msgId)));
+        assertNotNull(ackResp);
     }
 
     @Test

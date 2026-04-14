@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.CacheDeleteIn;
@@ -30,6 +29,10 @@ public class Cache {
 
     public Cache(HttpClient client) {
         this.client = client;
+    }
+
+    public CacheNamespace getNamespace() {
+        return new CacheNamespace(this.client);
     }
 
     /** Cache Set */
