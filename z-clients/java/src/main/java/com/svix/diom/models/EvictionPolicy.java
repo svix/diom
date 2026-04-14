@@ -4,7 +4,7 @@ package com.svix.diom.models;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum EvictionPolicy {
-    NO_EVICTION("NoEviction");
+    NO_EVICTION("no-eviction");
     private final String value;
 
     EvictionPolicy(String value) {

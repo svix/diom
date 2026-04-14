@@ -18,7 +18,7 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(default_cache["name"], "default");
-    assert_eq!(default_cache["eviction_policy"], "NoEviction");
+    assert_eq!(default_cache["eviction_policy"], "no-eviction");
 
     let default_idempotency = client
         .post("v1.idempotency.namespace.get")
@@ -51,7 +51,7 @@ async fn assert_bootstrap_namespaces(client: &TestClient) -> TestResult {
         .expect(StatusCode::OK)
         .json();
     assert_eq!(cache1["name"], "cache1");
-    assert_eq!(cache1["eviction_policy"], "NoEviction");
+    assert_eq!(cache1["eviction_policy"], "no-eviction");
 
     let msgs2 = client
         .post("v1.msgs.namespace.get")

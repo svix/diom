@@ -127,7 +127,7 @@ async fn create_namespace_with_defaults() -> TestResult {
         .json();
 
     assert_eq!(response["name"], "my-namespace");
-    assert_eq!(response["eviction_policy"], "NoEviction");
+    assert_eq!(response["eviction_policy"], "no-eviction");
     assert!(response["created"].is_u64());
     assert!(response["updated"].is_u64());
 
