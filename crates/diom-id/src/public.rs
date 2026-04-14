@@ -48,6 +48,9 @@ impl<'de, M: PublicIdMarker> Deserialize<'de> for Public<Id<M>> {
     }
 }
 
+// we promise to keep the serialization of Public stable
+impl<M: PublicIdMarker> diom_core::persistable_value::PersistableValue for Public<M> {}
+
 impl<M: PublicIdMarker> JsonSchema for Public<Id<M>> {
     fn schema_name() -> std::borrow::Cow<'static, str> {
         format!("Id<{}>", std::any::type_name::<M>()).into()

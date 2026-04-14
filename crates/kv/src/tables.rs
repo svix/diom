@@ -1,4 +1,4 @@
-use diom_core::types::ByteString;
+use diom_core::{PersistableValue, types::ByteString};
 use diom_error::{Result, ResultExt};
 use diom_id::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
@@ -12,7 +12,7 @@ enum RowType {
     Expiration = 1,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PersistableValue)]
 pub struct KvPairRow {
     pub value: ByteString,
     pub expiry: Option<Timestamp>,
@@ -29,7 +29,7 @@ impl KvPairRow {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PersistableValue)]
 pub(crate) struct ExpirationRow {}
 
 impl ExpirationRow {

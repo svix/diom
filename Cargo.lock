@@ -1461,6 +1461,7 @@ dependencies = [
 name = "diom-authorization"
 version = "0.1.0"
 dependencies = [
+ "diom-core",
  "diom-id",
  "itertools 0.14.0",
  "schemars 1.2.1",
@@ -1659,6 +1660,7 @@ version = "0.1.0"
 dependencies = [
  "data-encoding",
  "data-encoding-macro",
+ "diom-core",
  "itertools 0.14.0",
  "jiff",
  "rand 0.10.1",

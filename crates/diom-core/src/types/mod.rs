@@ -84,6 +84,8 @@ macro_rules! string_wrapper {
         #[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
         pub struct $name_id(pub String);
 
+        impl $crate::PersistableValue for $name_id {}
+
         impl $crate::types::StringWrapper for $name_id {
             const INFO: $crate::types::StringSchema = $crate::types::StringSchema {
                 $($init)*

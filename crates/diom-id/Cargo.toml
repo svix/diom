@@ -8,6 +8,7 @@ rust-version.workspace = true
 [dependencies]
 data-encoding = "2.10.0"
 data-encoding-macro = "0.1.19"
+diom-core.workspace = true
 jiff.workspace = true
 rand.workspace = true
 schemars.workspace = true

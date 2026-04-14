@@ -1,4 +1,4 @@
-use diom_core::types::ByteString;
+use diom_core::{PersistableValue, types::ByteString};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
@@ -19,7 +19,7 @@ enum RowType {
     Idempotency = 5,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PersistableValue)]
 pub(crate) struct TopicRow {
     pub id: TopicId,
     pub name: TopicName,
@@ -74,7 +74,7 @@ impl TopicRow {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PersistableValue)]
 pub(crate) struct StreamLeaseRow {
     pub offset: u64,
     pub expiry: Timestamp,
@@ -116,7 +116,7 @@ pub(crate) struct StreamLeaseKey {
 /// - No row → message was never leased, available
 ///
 /// Rows below the queue cursor are deleted during cursor compaction to prevent unbounded growth.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PersistableValue)]
 pub(crate) struct QueueLeaseRow {
     pub expiry: Timestamp,
     pub dlq: bool,
@@ -216,7 +216,7 @@ pub(crate) struct QueueLeaseKey {
 }
 
 /// Per-consumer-group queue configuration
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PersistableValue)]
 pub(crate) struct QueueConfigRow {
     pub retry_schedule: Vec<u64>,
     pub dlq_topic: Option<TopicName>,

@@ -1,6 +1,9 @@
 use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
-use diom_core::types::{ByteString, DurationMs, UnixTimestampMs};
+use diom_core::{
+    PersistableValue,
+    types::{ByteString, DurationMs, UnixTimestampMs},
+};
 use diom_error::Error;
 use fjall_utils::KeyComponent;
 use schemars::JsonSchema;
@@ -57,7 +60,7 @@ impl FromStr for Partition {
 ///
 /// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`, or just
 /// `"topic"` when the namespace is the default.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, KeyComponent)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, KeyComponent, PersistableValue)]
 pub struct TopicName(String);
 
 impl TopicName {

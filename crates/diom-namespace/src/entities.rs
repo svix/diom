@@ -1,6 +1,6 @@
 use std::{fmt::Debug, num::NonZeroU64};
 
-use diom_core::{string_wrapper, types::DurationMs};
+use diom_core::{PersistableValue, string_wrapper, types::DurationMs};
 use diom_id::Module;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -12,7 +12,9 @@ string_wrapper!(NamespaceName {
     example: "some_namespace"
 });
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
+#[derive(
+    Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema, PersistableValue,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum EvictionPolicy {
     #[default]
@@ -20,12 +22,12 @@ pub enum EvictionPolicy {
 }
 
 pub trait ModuleConfig:
-    Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned + Send + Sync
+    Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned + Send + Sync + PersistableValue
 {
     fn module() -> Module;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 pub struct KeyValueConfig {}
 
 impl KeyValueConfig {
@@ -38,7 +40,7 @@ impl ModuleConfig for KeyValueConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 pub struct CacheConfig {
     pub eviction_policy: EvictionPolicy,
 }
@@ -53,7 +55,7 @@ impl ModuleConfig for CacheConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, PersistableValue)]
 pub struct MsgsConfig {
     pub retention_period: Option<DurationMs>,
     pub retention_bytes: Option<NonZeroU64>,
@@ -65,7 +67,7 @@ impl ModuleConfig for MsgsConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 pub struct RateLimitConfig {}
 
 impl ModuleConfig for RateLimitConfig {
@@ -74,7 +76,7 @@ impl ModuleConfig for RateLimitConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 pub struct IdempotencyConfig {}
 
 impl ModuleConfig for IdempotencyConfig {
@@ -87,7 +89,7 @@ impl IdempotencyConfig {
     pub const NAMESPACE: &'static str = "idempotency_store";
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 pub struct AuthTokenConfig {}
 
 impl AuthTokenConfig {

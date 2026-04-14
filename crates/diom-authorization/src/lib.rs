@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
+use diom_core::PersistableValue;
 use diom_id::{AuthTokenId, Module};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,7 +17,7 @@ pub use self::{
     verification::{Forbidden, verify_operation},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 #[serde(transparent)]
 pub struct RoleId(pub String);
 
@@ -47,7 +48,7 @@ impl fmt::Display for RoleId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 #[serde(transparent)]
 pub struct AccessPolicyId(pub String);
 
@@ -82,7 +83,7 @@ pub struct AccessPolicy {
     pub rules: Vec<AccessRule>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 pub struct AccessRule {
     pub effect: AccessRuleEffect,
     pub resource: ResourcePattern,
@@ -147,7 +148,7 @@ impl AccessRule {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, JsonSchema, PersistableValue)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessRuleEffect {
     Allow,

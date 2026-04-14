@@ -119,6 +119,9 @@ impl<'de, M: IdMarker> Deserialize<'de> for Id<M> {
     }
 }
 
+// we promise to keep the serialization of Id stable
+impl<M: IdMarker> diom_core::persistable_value::PersistableValue for Id<M> {}
+
 // DO NOT implement JsonSchema for Id<M> (Public<Id<M>> should be used)
 
 #[cfg(test)]
