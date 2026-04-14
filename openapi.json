@@ -7759,12 +7759,12 @@
       "ServerState": {
         "type": "string",
         "enum": [
-          "Leader",
-          "Follower",
-          "Learner",
-          "Candidate",
-          "Shutdown",
-          "Unknown"
+          "leader",
+          "follower",
+          "learner",
+          "candidate",
+          "shutdown",
+          "unknown"
         ]
       },
       "StandardErrorBody": {

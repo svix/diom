@@ -5,29 +5,29 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum ServerState {
-    #[serde(rename = "Leader")]
+    #[serde(rename = "leader")]
     Leader,
-    #[serde(rename = "Follower")]
+    #[serde(rename = "follower")]
     Follower,
-    #[serde(rename = "Learner")]
+    #[serde(rename = "learner")]
     Learner,
-    #[serde(rename = "Candidate")]
+    #[serde(rename = "candidate")]
     Candidate,
-    #[serde(rename = "Shutdown")]
+    #[serde(rename = "shutdown")]
     Shutdown,
-    #[serde(rename = "Unknown")]
+    #[serde(rename = "unknown")]
     Unknown,
 }
 
 impl fmt::Display for ServerState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = match self {
-            Self::Leader => "Leader",
-            Self::Follower => "Follower",
-            Self::Learner => "Learner",
-            Self::Candidate => "Candidate",
-            Self::Shutdown => "Shutdown",
-            Self::Unknown => "Unknown",
+            Self::Leader => "leader",
+            Self::Follower => "follower",
+            Self::Learner => "learner",
+            Self::Candidate => "candidate",
+            Self::Shutdown => "shutdown",
+            Self::Unknown => "unknown",
         };
         f.write_str(value)
     }

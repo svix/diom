@@ -26,6 +26,7 @@ jobs:
           filters: |
             openapi:
               - '.github/workflows/lint-openapi.yml'
+              - '.vacuum.yaml'
               - 'openapi.json'
             go:
               - '.github/workflows/go.yml'

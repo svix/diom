@@ -3,12 +3,12 @@ from enum import Enum
 
 
 class ServerState(str, Enum):
-    LEADER = "Leader"
-    FOLLOWER = "Follower"
-    LEARNER = "Learner"
-    CANDIDATE = "Candidate"
-    SHUTDOWN = "Shutdown"
-    UNKNOWN = "Unknown"
+    LEADER = "leader"
+    FOLLOWER = "follower"
+    LEARNER = "learner"
+    CANDIDATE = "candidate"
+    SHUTDOWN = "shutdown"
+    UNKNOWN = "unknown"
 
     def __str__(self) -> str:
         return str(self.value)
