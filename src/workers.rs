@@ -21,7 +21,9 @@ impl Workers {
         {
             tracing::debug!("spawning msgs module worker");
             let state = state.state_machine.msgs_store().await;
-            self.spawn(diom_msgs::AllNodesWorker::new(state));
+            let namespace_state = self.app_state.namespace_state.clone();
+            let time = self.app_state.time.clone();
+            self.spawn(diom_msgs::AllNodesWorker::new(state, namespace_state, time));
         }
     }
 
