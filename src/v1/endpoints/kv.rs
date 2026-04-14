@@ -45,6 +45,7 @@ macro_rules! request_input {
 #[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct KvSetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -78,6 +79,7 @@ pub struct KvSetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvGetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -114,6 +116,7 @@ impl KvGetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvDeleteIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -217,6 +220,7 @@ async fn kv_del(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -231,6 +235,7 @@ struct KvGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct KvCreateNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 

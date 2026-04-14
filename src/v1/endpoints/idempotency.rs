@@ -55,6 +55,7 @@ pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyStartIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -102,6 +103,7 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyCompleteIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -129,6 +131,7 @@ pub struct IdempotencyCompleteOut {}
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyAbortIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -206,6 +209,7 @@ async fn idempotency_abort(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -220,6 +224,7 @@ struct IdempotencyGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct IdempotencyCreateNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
