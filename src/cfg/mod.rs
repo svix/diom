@@ -104,7 +104,9 @@ impl Serialize for PeerAddr {
 pub struct DatabaseConfig {
     /// Directory in which this database is stored
     pub path: PathBuf,
-    /// Filename under the directory specified in `path`. If not specified, uses a default value
+    /// Filename under the directory specified in `path`.
+    ///
+    /// If not specified, uses a default value
     /// based on the database type.
     pub filename: Option<String>,
 }
@@ -402,6 +404,7 @@ pub struct ClusterConfiguration {
     /// This should be true unless you are testing internal details of the replication system
     #[serde(default = "defaults::default_true")]
     #[env_overridable(skip)]
+    #[dumpable_config(skip)]
     pub shut_down_on_go_away: bool,
 
     /// How many commits behind must the current node be to be considered "lagging" and eligible for

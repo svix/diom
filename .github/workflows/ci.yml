@@ -128,7 +128,7 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
-      - name: Regerate config.default.toml
+      - name: Regerate config.defaults.toml
         run: cargo run -- write-config config.defaults.toml
       - name: Check for uncommitted changes
         run: |

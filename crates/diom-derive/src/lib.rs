@@ -97,5 +97,6 @@ pub fn macro_derive_env_overridable(input: proc_macro::TokenStream) -> proc_macr
 
 #[proc_macro_derive(DumpableConfig, attributes(dumpable_config))]
 pub fn macro_derive_dumpable_config(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    derive_dumpable_config(input)
+    let input = parse_macro_input!(input as DeriveInput);
+    derive_dumpable_config(input).into()
 }

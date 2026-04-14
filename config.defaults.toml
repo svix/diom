@@ -195,11 +195,6 @@ seed_nodes = []
 # and must not be less than `cluster_election_timeout_max`.
 send_snapshot_ms = 30000
 
-# Shut down the process when the it is evicted from the cluster
-#
-# This should be true unless you are testing internal details of the replication system
-shut_down_on_go_away = true
-
 # Trigger a background snapshot after this many milliseconds
 snapshot_after_ms = 900000
 
@@ -219,7 +214,9 @@ startup_discovery_delay_ms = 10
 
 [ephemeral_db]
 
-# Filename under the directory specified in `path`. If not specified, uses a default value
+# Filename under the directory specified in `path`.
+#
+# If not specified, uses a default value
 # based on the database type.
 # filename =
 
@@ -230,7 +227,9 @@ path = "./db"
 
 [persistent_db]
 
-# Filename under the directory specified in `path`. If not specified, uses a default value
+# Filename under the directory specified in `path`.
+#
+# If not specified, uses a default value
 # based on the database type.
 # filename =
 

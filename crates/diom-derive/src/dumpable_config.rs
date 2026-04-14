@@ -1,5 +1,5 @@
 use quote::quote;
-use syn::{DeriveInput, Ident, LitStr, Token, parse_macro_input};
+use syn::{DeriveInput, Ident, LitStr, Token};
 
 use crate::utils::as_ty_option;
 
@@ -73,10 +73,7 @@ impl DumpableField {
     }
 }
 
-pub(crate) fn derive_dumpable_config(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    // Parse the input tokens into a syntax tree.
-    let input = parse_macro_input!(input as DeriveInput);
-
+pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenStream {
     let syn::Data::Struct(obj) = input.data else {
         return quote! { compile_error!("This macro may only be applied to structs") }.into();
     };
@@ -100,11 +97,12 @@ pub(crate) fn derive_dumpable_config(input: proc_macro::TokenStream) -> proc_mac
         let name = parsed.name;
         let is_optional = parsed.is_optional;
         let docs = parsed.docstring.iter().map(|d| {
-            if d.trim().is_empty() {
-                quote! { write!(writer, "#\n")?; }
+            let format_string = if d.trim().is_empty() {
+                "#{}\n"
             } else {
-                quote! { write!(writer, "# {}\n", #d.trim())?;  }
-            }
+                "# {}\n"
+            };
+            quote! { write!(writer, #format_string, #d.trim())?; }
         });
 
         let lister = if parsed.nest {
@@ -118,28 +116,24 @@ pub(crate) fn derive_dumpable_config(input: proc_macro::TokenStream) -> proc_mac
                 self.#field.dump_map(writer, new_prefix)?;
             }
         } else {
+            let dump_serialized = quote! {
+                let serialized = serde::Serialize::serialize(
+                    &self.#field,
+                    toml::ser::ValueSerializer::new(&mut buffer)
+                )?;
+                write!(writer, "{} = {}\n", #name, serialized)?;
+                buffer.clear();
+            };
             let getter = if is_optional {
                 quote! {
                     if self.#field.is_none() {
                         write!(writer, "# {} =\n", #name)?;
                     } else {
-                        let serialized = serde::Serialize::serialize(
-                            &self.#field,
-                            toml::ser::ValueSerializer::new(&mut buffer)
-                        )?;
-                        write!(writer, "{} = {}\n", #name, serialized)?;
-                        buffer.clear();
+                        #dump_serialized
                     }
                 }
             } else {
-                quote! {
-                    let serialized = serde::Serialize::serialize(
-                        &self.#field,
-                        toml::ser::ValueSerializer::new(&mut buffer)
-                    )?;
-                    write!(writer, "{} = {}\n", #name, serialized)?;
-                    buffer.clear();
-                }
+                dump_serialized
             };
             quote! {
                 writeln!(writer)?;
@@ -150,10 +144,9 @@ pub(crate) fn derive_dumpable_config(input: proc_macro::TokenStream) -> proc_mac
         lists.push(lister);
     }
 
-    // Used in the quasi-quotation below as `#name`.
     let name = input.ident;
 
-    let expanded = quote! {
+    quote! {
         impl #impl_generics crate::cfg::dumpable_config::DumpableConfig for #name #ty_generics #where_clause {
             fn dump_fields<W: std::io::Write>(&self, writer: &mut W, prefix: String) -> ::anyhow::Result<()> {
                 let mut buffer = String::new();
@@ -161,8 +154,5 @@ pub(crate) fn derive_dumpable_config(input: proc_macro::TokenStream) -> proc_mac
                 Ok(())
             }
         }
-    };
-
-    // Hand the output tokens back to the compiler.
-    proc_macro::TokenStream::from(expanded)
+    }
 }
