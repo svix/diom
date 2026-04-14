@@ -1,8 +1,10 @@
+use std::sync::LazyLock;
+
 use diom_error::Result;
 use fjall::{Error, KeyspaceCreateOptions};
 use fjall_utils::Databases;
 
-use crate::entities::ModuleConfig;
+use crate::entities::{ModuleConfig, NamespaceName};
 
 pub mod entities;
 pub mod operations;
@@ -10,12 +12,13 @@ mod tables;
 
 pub use self::tables::Namespace;
 
-pub const DEFAULT_NAMESPACE_NAME: &str = "default";
+pub static DEFAULT_NAMESPACE_NAME: LazyLock<NamespaceName> =
+    LazyLock::new(|| NamespaceName("default".to_owned()));
 
 pub fn parse_namespace(key: &str) -> (Option<&str>, &str) {
     match key.split_once(":") {
         Some((ns, key)) => (
-            if !ns.is_empty() && ns != DEFAULT_NAMESPACE_NAME {
+            if !ns.is_empty() && ns != DEFAULT_NAMESPACE_NAME.as_str() {
                 Some(ns)
             } else {
                 None
@@ -62,10 +65,10 @@ impl State {
     #[tracing::instrument(skip_all, fields(?namespace_name))]
     pub fn fetch_namespace<C: ModuleConfig>(
         &self,
-        namespace_name: Option<&str>,
+        namespace_name: Option<&NamespaceName>,
     ) -> Result<Option<Namespace<C>>> {
         if let Some(ns) = namespace_name
-            && ns == DEFAULT_NAMESPACE_NAME
+            && *ns == *DEFAULT_NAMESPACE_NAME
         {
             return Err(diom_error::Error::bad_request(
                 "no_explicit_default_namespace",
@@ -75,7 +78,7 @@ impl State {
 
         Namespace::fetch(
             &self.keyspace,
-            namespace_name.unwrap_or(DEFAULT_NAMESPACE_NAME),
+            namespace_name.unwrap_or(&DEFAULT_NAMESPACE_NAME),
         )
     }
 
@@ -107,7 +110,7 @@ mod tests {
         assert_eq!(parse_namespace("bill"), (None, "bill"));
         assert_eq!(parse_namespace(":bar"), (None, "bar"));
         assert_eq!(
-            parse_namespace(&format!("{DEFAULT_NAMESPACE_NAME}:bar")),
+            parse_namespace(&format!("{}:bar", DEFAULT_NAMESPACE_NAME.as_str())),
             (None, "bar")
         );
     }

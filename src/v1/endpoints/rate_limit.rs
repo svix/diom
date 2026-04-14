@@ -20,13 +20,13 @@ pub use diom_rate_limit::TokenBucket;
 pub use diom_rate_limit::RateLimitNamespace;
 
 fn rate_limit_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     key: &'a EntityKey,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::RateLimit,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(key.as_str()),
         action,
     })
@@ -36,7 +36,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                rate_limit_metadata(self.namespace.as_deref(), &self.key, $action)
+                rate_limit_metadata(self.namespace.as_ref(), &self.key, $action)
             }
         }
     };
@@ -142,7 +142,7 @@ async fn rate_limit_limit(
 ) -> Result<MsgPackOrJson<RateLimitCheckOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let key = data.key.0;
@@ -183,7 +183,7 @@ async fn rate_limit_get_remaining(
 ) -> Result<MsgPackOrJson<RateLimitGetRemainingOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     repl.wait_linearizable().await.or_internal_error()?;
@@ -228,7 +228,7 @@ async fn rate_limit_reset(
 ) -> Result<MsgPackOrJson<RateLimitResetOut>> {
     let namespace: RateLimitNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let key = data.key.0.clone();

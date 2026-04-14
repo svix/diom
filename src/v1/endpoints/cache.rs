@@ -19,13 +19,13 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 fn cache_access_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     key: &'a EntityKey,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Cache,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(key.as_str()),
         action,
     })
@@ -35,7 +35,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                cache_access_metadata(self.namespace.as_deref(), &self.key, $action)
+                cache_access_metadata(self.namespace.as_ref(), &self.key, $action)
             }
         }
     };
@@ -151,7 +151,7 @@ async fn cache_set(
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(namespace, data.key.to_string(), Some(data.ttl), data.value);
@@ -168,7 +168,7 @@ async fn cache_get(
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
@@ -201,7 +201,7 @@ async fn cache_del(
 ) -> Result<MsgPackOrJson<CacheDeleteOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());

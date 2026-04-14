@@ -19,7 +19,7 @@ pub enum IdempotencyCommands {
     /// Start an idempotent request
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"lock_period_ms\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -31,7 +31,7 @@ pub enum IdempotencyCommands {
     /// Complete an idempotent request with a response
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"response\": \"...\",
   \"context\": \"...\",
   \"ttl_ms\": \"...\"
@@ -45,7 +45,7 @@ pub enum IdempotencyCommands {
     /// Abandon an idempotent request (remove lock without saving response)
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\"
+  \"namespace\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

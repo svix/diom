@@ -23,13 +23,13 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 fn idempotency_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     key: &'a EntityKey,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Idempotency,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(key.as_str()),
         action,
     })
@@ -39,7 +39,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                idempotency_metadata(self.namespace.as_deref(), &self.key, $action)
+                idempotency_metadata(self.namespace.as_ref(), &self.key, $action)
             }
         }
     };
@@ -153,7 +153,7 @@ async fn idempotency_start(
 ) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = TryStartOperation::new(namespace, data.key.to_string(), data.lock_period);
@@ -171,7 +171,7 @@ async fn idempotency_complete(
 ) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = CompleteOperation::new(
@@ -195,7 +195,7 @@ async fn idempotency_abort(
 ) -> Result<MsgPackOrJson<IdempotencyAbortOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = AbortOperation::new(namespace, data.key.to_string());

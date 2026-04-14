@@ -33,13 +33,13 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 fn msgs_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     tp: &'a TopicName,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Msgs,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(tp),
         action,
     })
@@ -49,7 +49,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                msgs_metadata(self.namespace.as_deref(), self.topic.name(), $action)
+                msgs_metadata(self.namespace.as_ref(), self.topic.name(), $action)
             }
         }
     };
@@ -173,7 +173,7 @@ async fn publish(
 ) -> Result<MsgPackOrJson<MsgPublishOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let topic_name = data.topic.name();
@@ -247,7 +247,7 @@ async fn stream_receive(
 ) -> Result<MsgPackOrJson<MsgStreamReceiveOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if let Some(max_wait) = data.batch_wait {
@@ -349,7 +349,7 @@ async fn stream_commit(
 ) -> Result<MsgPackOrJson<MsgStreamCommitOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -392,7 +392,7 @@ async fn stream_seek(
 ) -> Result<MsgPackOrJson<MsgStreamSeekOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let target = match (data.offset, data.position) {
@@ -456,7 +456,7 @@ async fn queue_receive(
 ) -> Result<MsgPackOrJson<MsgQueueReceiveOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if let Some(max_wait) = data.batch_wait {
@@ -555,7 +555,7 @@ async fn queue_ack(
 ) -> Result<MsgPackOrJson<MsgQueueAckOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -598,7 +598,7 @@ async fn queue_extend_lease(
 ) -> Result<MsgPackOrJson<MsgQueueExtendLeaseOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = QueueExtendLeaseOperation::new(
@@ -649,7 +649,7 @@ async fn queue_configure(
 ) -> Result<MsgPackOrJson<MsgQueueConfigureOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = QueueConfigureOperation::new(
@@ -698,7 +698,7 @@ async fn queue_nack(
 ) -> Result<MsgPackOrJson<MsgQueueNackOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -735,7 +735,7 @@ async fn queue_redrive_dlq(
 ) -> Result<MsgPackOrJson<MsgQueueRedriveDlqOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = QueueRedriveDlqOperation::new(namespace.id, data.topic, data.consumer_group);
@@ -775,7 +775,7 @@ async fn topic_configure(
 ) -> Result<MsgPackOrJson<MsgTopicConfigureOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions)?;
