@@ -1,3 +1,4 @@
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_id::UuidV7RandomBytes;
 use diom_namespace::{
@@ -10,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use super::{CreateNamespaceResponse, MsgsRaftState, MsgsRequest};
 use crate::entities::Retention;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct CreateNamespaceOperation {
     pub name: NamespaceName,
     pub retention: Retention,

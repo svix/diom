@@ -1,5 +1,5 @@
 use crate::entities::TokenHashed;
-use diom_core::types::Metadata;
+use diom_core::{PersistableValue, types::Metadata};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
 use fjall_utils::{TableKey, TableRow, WriteBatchExt};
@@ -15,7 +15,7 @@ enum RowType {
 }
 
 /// Primary row. Keyed by (namespace_id, token_hashed) — the hot verify path.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct AuthTokenRow {
     pub id: AuthTokenId,
     pub name: String,
@@ -44,7 +44,7 @@ impl AuthTokenRow {
 }
 
 /// Secondary index: maps (namespace_id, id) → token_hashed for ID-based lookups.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PersistableValue)]
 pub struct IdIndexRow {
     pub token_hashed: TokenHashed,
 }
@@ -70,7 +70,7 @@ impl IdIndexRow {
 
 /// Secondary index: keyed by (namespace_id, owner_id, token_hashed) for owner listing.
 /// Prefix-scan on (namespace_id, owner_id) to list all tokens for an owner.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct OwnerIndexRow {}
 
 impl TableRow for OwnerIndexRow {

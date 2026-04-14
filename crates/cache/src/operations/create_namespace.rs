@@ -1,3 +1,4 @@
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_id::UuidV7RandomBytes;
 use diom_namespace::{
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::operations::{CacheRaftState, CacheRequest, CreateCacheResponse};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct CreateCacheOperation {
     pub(crate) name: NamespaceName,
     eviction_policy: EvictionPolicy,

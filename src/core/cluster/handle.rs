@@ -13,7 +13,7 @@ use crate::{
 };
 
 use anyhow::Context;
-use diom_core::Monotime;
+use diom_core::{Monotime, PersistableValue};
 use diom_error::ResultExt;
 use diom_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use fjall_utils::StorageType;
@@ -46,7 +46,7 @@ impl std::error::Error for ResponseParseError {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PersistableValue)]
 pub enum Request {
     ClusterInternal(InternalOperation),
     Kv(diom_kv::operations::KvOperation),

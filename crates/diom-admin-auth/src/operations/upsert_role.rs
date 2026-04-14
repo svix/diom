@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_operations::OpContext;
 use jiff::Timestamp;
@@ -17,7 +18,7 @@ pub struct UpsertRoleResponseData {
     pub model: RoleModel,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct UpsertRoleOperation {
     pub id: RoleId,
     pub description: String,

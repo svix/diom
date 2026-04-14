@@ -1,8 +1,8 @@
-use diom_core::types::DurationMs;
+use diom_core::{PersistableValue, types::DurationMs};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PersistableValue)]
 pub struct TokenBucket {
     /// Token refill rate in tokens per refill interval
     pub refill_rate: u64,

@@ -1,10 +1,11 @@
 use super::{AbortResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::IdempotencyNamespace;
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct AbortOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,

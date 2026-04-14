@@ -1461,6 +1461,7 @@ dependencies = [
 name = "diom-authorization"
 version = "0.1.0"
 dependencies = [
+ "diom-core",
  "diom-id",
  "itertools 0.14.0",
  "schemars 1.2.1",
@@ -1611,8 +1612,10 @@ dependencies = [
 name = "diom-core"
 version = "0.1.0"
 dependencies = [
+ "diom-derive",
  "jiff",
  "parking_lot",
+ "pastey",
  "rand 0.10.1",
  "regex",
  "schemars 1.2.1",
@@ -1657,6 +1660,7 @@ version = "0.1.0"
 dependencies = [
  "data-encoding",
  "data-encoding-macro",
+ "diom-core",
  "itertools 0.14.0",
  "jiff",
  "rand 0.10.1",
@@ -2073,6 +2077,7 @@ dependencies = [
  "anyhow",
  "byteview",
  "criterion",
+ "diom-core",
  "diom-derive",
  "diom-error",
  "diom-id",

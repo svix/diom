@@ -4,6 +4,7 @@ use std::{
     str::FromStr,
 };
 
+use diom_core::PersistableValue;
 use diom_id::Module;
 use itertools::Itertools;
 use schemars::JsonSchema;
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize, de};
 
 use crate::RequestedOperation;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub struct ResourcePattern {
     pub module: ModulePattern,
     pub namespace: NamespacePattern,
@@ -32,7 +33,7 @@ impl JsonSchema for ResourcePattern {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub enum ModulePattern {
     /// Wildcard (`*`).
     ///
@@ -41,7 +42,7 @@ pub enum ModulePattern {
     Exactly(Module),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub enum NamespacePattern {
     Default,
     Named(String),
@@ -49,7 +50,7 @@ pub enum NamespacePattern {
     // FIXME: Do namespaces have any sort of hierarchy?
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub struct KeyPattern {
     pub segments: Vec<KeyPatternSegment>,
     /// Whether the pattern has a trailing `*` segment.
@@ -58,7 +59,7 @@ pub struct KeyPattern {
     pub trailing_any: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub enum KeyPatternSegment {
     Fixed(String),
     Placeholder(String),

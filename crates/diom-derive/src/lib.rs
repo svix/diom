@@ -4,9 +4,13 @@ use syn::{DeriveInput, ItemFn, parse_macro_input};
 mod aide;
 mod dumpable_config;
 mod env_overridable;
+mod persistable_value;
 mod utils;
 
-use crate::{dumpable_config::derive_dumpable_config, env_overridable::derive_env_overridable};
+use crate::{
+    dumpable_config::derive_dumpable_config, env_overridable::derive_env_overridable,
+    persistable_value::derive_persistable_value,
+};
 use utils::add_trait_bounds;
 mod fjall_key;
 mod key_component;
@@ -99,4 +103,10 @@ pub fn macro_derive_env_overridable(input: proc_macro::TokenStream) -> proc_macr
 pub fn macro_derive_dumpable_config(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_dumpable_config(input).into()
+}
+
+#[proc_macro_derive(PersistableValue)]
+pub fn macro_derive_persistable_value(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    derive_persistable_value(input).into()
 }

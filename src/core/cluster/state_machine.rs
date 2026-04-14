@@ -12,7 +12,7 @@ use crate::{
     core::metrics::{DbMetrics, DbType},
 };
 use anyhow::Context;
-use diom_core::{Monotime, task::spawn_blocking_in_current_span};
+use diom_core::{Monotime, PersistableValue, task::spawn_blocking_in_current_span};
 use diom_error::CanFailExt;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{Databases, FjallFixedKey, ReadonlyKeyspace, StorageType};
@@ -47,7 +47,19 @@ fn io_err(e: anyhow::Error) -> std::io::Error {
     std::io::Error::other(e)
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    Hash,
+    PersistableValue,
+)]
 #[serde(transparent)]
 pub struct ClusterId(#[serde(with = "uuid::serde::simple")] Uuid);
 

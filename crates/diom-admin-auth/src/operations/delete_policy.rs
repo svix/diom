@@ -1,4 +1,5 @@
 use diom_authorization::AccessPolicyId;
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_operations::OpContext;
 use serde::{Deserialize, Serialize};
@@ -13,7 +14,7 @@ pub struct DeleteAccessPolicyResponseData {
     pub success: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct DeleteAccessPolicyOperation {
     pub id: AccessPolicyId,
 }

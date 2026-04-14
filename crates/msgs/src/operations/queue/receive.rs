@@ -1,6 +1,7 @@
 use std::{collections::HashMap, num::NonZeroU16};
 
 use diom_core::{
+    PersistableValue,
     task::spawn_blocking_in_current_span,
     types::{ByteString, DurationMs},
 };
@@ -19,7 +20,7 @@ use crate::{
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueReceiveResponse};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct QueueReceiveOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,

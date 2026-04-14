@@ -1,5 +1,6 @@
 use std::{fmt, marker::PhantomData};
 
+use diom_core::PersistableValue;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::{Builder, Uuid};
@@ -17,7 +18,7 @@ pub use self::{
 
 const V7_RANDOM_BYTES_LEN: usize = 10;
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PersistableValue)]
 #[serde(transparent)]
 pub struct UuidV7RandomBytes([u8; V7_RANDOM_BYTES_LEN]);
 
@@ -118,6 +119,9 @@ impl<'de, M: IdMarker> Deserialize<'de> for Id<M> {
         Ok(Self::from_uuid(Uuid::deserialize(deserializer)?))
     }
 }
+
+// we promise to keep the serialization of Id stable
+impl<M: IdMarker> PersistableValue for Id<M> {}
 
 // DO NOT implement JsonSchema for Id<M> (Public<Id<M>> should be used)
 

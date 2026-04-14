@@ -11,7 +11,9 @@ use tap::Pipe;
 /// A trait for types that can be stored as rows in a fjall keyspace.
 ///
 /// This is useful for having logical "tables" within the same keyspace.
-pub trait TableRow: Sized + Serialize + DeserializeOwned {
+pub trait TableRow:
+    Sized + Serialize + DeserializeOwned + diom_core::persistable_value::PersistableValue
+{
     // FIXME: can probably get rid of this, and encode it in the type system.
     const ROW_TYPE: u8;
 

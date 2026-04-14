@@ -1,6 +1,7 @@
 use std::num::NonZeroU16;
 
 use diom_core::{
+    PersistableValue,
     task::spawn_blocking_in_current_span,
     types::{ByteString, DurationMs},
 };
@@ -21,7 +22,7 @@ use crate::{
 
 use super::super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct StreamReceiveOperation {
     namespace_id: NamespaceId,
     pub(crate) topic: TopicName,

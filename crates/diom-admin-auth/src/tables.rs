@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
+use diom_core::PersistableValue;
 use diom_error::{Result, ResultExt as _};
 use fjall_utils::{TableKey, TableRow};
 use jiff::Timestamp;
@@ -14,7 +15,7 @@ enum RowType {
 }
 
 /// Primary row for a Role, keyed by `[ROW_TYPE][role_id_bytes]`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct RoleRow {
     // FIXME: remove the id from this, we don't want it serialized.
     pub id: RoleId,
@@ -37,7 +38,7 @@ impl RoleRow {
 }
 
 /// Primary row for an AccessPolicy, keyed by `[ROW_TYPE][policy_id_bytes]`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct AccessPolicyRow {
     pub description: String,
     pub rules: Vec<AccessRule>,

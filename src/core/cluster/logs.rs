@@ -7,6 +7,7 @@ use std::{
 };
 
 use anyhow::Context;
+use diom_derive::PersistableValue;
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};
 use fjall_utils::{FjallFixedKey, KeyspaceExt, MonotonicTableRow, TableRow, WriteBatchExt};
 use jiff::Timestamp;
@@ -129,6 +130,9 @@ enum RowType {
 #[serde(transparent)]
 struct Log(LogEntry);
 
+// this one right here officer, this is the bad one
+impl diom_core::persistable_value::PersistableValue for Log {}
+
 impl TableRow for Log {
     const ROW_TYPE: u8 = RowType::Log as u8;
 }
@@ -141,7 +145,7 @@ impl MonotonicTableRow for Log {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PersistableValue)]
 struct LogIndex {
     unix_timestamp_ms: u64,
     log_id: u64,

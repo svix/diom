@@ -1,10 +1,11 @@
 use super::{RateLimitRaftState, RateLimitRequest, ResetResponse};
 use crate::{RateLimitNamespace, TokenBucket};
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct ResetOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,

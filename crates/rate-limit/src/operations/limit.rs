@@ -1,13 +1,13 @@
 use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
 use crate::{RateLimitNamespace, TokenBucket};
-use diom_core::types::DurationMs;
+use diom_core::{PersistableValue, types::DurationMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct LimitOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,

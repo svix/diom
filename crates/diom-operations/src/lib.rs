@@ -93,6 +93,7 @@ impl<T, M: ModuleRequest> OperationWriter<M> for T where
 /// Macro support module
 #[doc(hidden)]
 pub mod __reexports {
+    pub use diom_core;
     pub use diom_error;
     pub use pastey;
     pub use serde;

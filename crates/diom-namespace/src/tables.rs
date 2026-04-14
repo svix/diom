@@ -1,3 +1,4 @@
+use diom_core::PersistableValue;
 use diom_error::Result;
 use diom_id::NamespaceId;
 use fjall::Keyspace;
@@ -13,7 +14,7 @@ enum RowType {
     Namespace = 0,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PersistableValue)]
 #[serde(bound = "C: ModuleConfig")]
 pub struct Namespace<C: ModuleConfig> {
     pub id: NamespaceId,

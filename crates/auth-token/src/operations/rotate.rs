@@ -1,3 +1,4 @@
+use diom_core::PersistableValue;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +17,7 @@ pub struct RotateResponseData {
     pub model: Option<AuthTokenModel>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct RotateAuthTokenOperation {
     namespace_id: NamespaceId,
     old_id: AuthTokenId,

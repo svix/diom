@@ -1,6 +1,6 @@
 use super::{DeleteResponse, KvRequest};
 use crate::{KvNamespace, State, operations::KvRaftState};
-use diom_core::types::EntityKey;
+use diom_core::{PersistableValue, types::EntityKey};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
@@ -11,7 +11,7 @@ pub struct DeleteResponseData {
     pub success: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct DeleteOperation {
     namespace_id: NamespaceId,
     pub(crate) key: EntityKey,

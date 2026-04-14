@@ -1,6 +1,7 @@
+use diom_core::PersistableValue;
 use std::{fmt, str::FromStr};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PersistableValue)]
 pub enum Module {
     Cache = 1,
     Idempotency = 2,

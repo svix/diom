@@ -1,6 +1,9 @@
 use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
-use diom_core::types::{ByteString, DurationMs, UnixTimestampMs};
+use diom_core::{
+    PersistableValue,
+    types::{ByteString, DurationMs, UnixTimestampMs},
+};
 use diom_error::Error;
 use fjall_utils::KeyComponent;
 use schemars::JsonSchema;
@@ -21,7 +24,18 @@ pub const MAX_PARTITION_COUNT: u16 = 64;
 pub const TOPIC_PARTITION_DELIMITER: &str = "~";
 
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, KeyComponent,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    fjall_utils::KeyComponent,
+    PersistableValue,
 )]
 #[serde(transparent)]
 pub struct Partition(u16);
@@ -57,7 +71,7 @@ impl FromStr for Partition {
 ///
 /// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`, or just
 /// `"topic"` when the namespace is the default.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, KeyComponent)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, KeyComponent, PersistableValue)]
 pub struct TopicName(String);
 
 impl TopicName {
@@ -126,7 +140,7 @@ impl JsonSchema for TopicName {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub struct TopicPartition {
     pub topic: TopicName,
     pub partition: Partition,
@@ -251,7 +265,9 @@ impl JsonSchema for TopicIn {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, KeyComponent)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, KeyComponent, PersistableValue,
+)]
 #[serde(transparent)]
 pub struct MsgsIdempotencyKey([u8; 32]);
 
@@ -297,7 +313,7 @@ fn djb2_hash(data: &[u8]) -> u32 {
 }
 
 /// An opaque message ID that internally encodes `(partition, offset)`.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PersistableValue)]
 pub struct MsgId {
     pub partition: Partition,
     pub offset: Offset,
@@ -354,7 +370,9 @@ impl JsonSchema for MsgId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema, PersistableValue,
+)]
 pub struct MsgIn {
     pub value: ByteString,
     #[serde(default)]
@@ -390,7 +408,9 @@ pub struct QueueMsgOut {
     pub scheduled_at: Option<UnixTimestampMs>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, PersistableValue,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum SeekPosition {
     Earliest,
@@ -401,7 +421,9 @@ pub enum SeekPosition {
 /// A validated consumer group identifier.
 ///
 /// Must be at most 64 bytes and only contain ASCII alphanumeric characters, `_`, `-`, or `.`.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, KeyComponent)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, KeyComponent, PersistableValue,
+)]
 #[serde(transparent)]
 pub struct ConsumerGroup(pub(crate) String);
 
@@ -481,7 +503,9 @@ impl JsonSchema for ConsumerGroup {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema, PersistableValue,
+)]
 pub struct Retention {
     #[serde(rename = "period_ms")]
     pub period: Option<DurationMs>,

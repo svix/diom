@@ -1,13 +1,13 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
 use crate::{IdempotencyNamespace, IdempotencyStartResult, storage::IdempotencyState};
-use diom_core::types::DurationMs;
+use diom_core::{PersistableValue, types::DurationMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
 pub struct TryStartOperation {
     namespace_id: NamespaceId,
     pub(crate) key: String,
