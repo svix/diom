@@ -1,138 +1,130 @@
 use std::{sync::Arc, time::Duration};
 
-use k8s_openapi::api::{apps::v1::StatefulSet, core::v1::Service, policy::v1::PodDisruptionBudget};
-use kube::{
-    Api, Client, Resource, ResourceExt,
-    api::{Patch, PatchParams},
-    runtime::controller::Action,
-};
-use tracing::*;
+use kube::{Client, Resource, api::Patch, runtime::controller::Action};
 
 use crate::{
+    context::ClusterCtx,
     crd::{DiomCluster, Phase},
     error::{Error, Result},
-    resources,
+    resources::{pdb, pvcs, services, statefulset},
 };
-
-const FIELD_MANAGER: &str = "diom-operator";
 
 pub(crate) struct Context {
     pub client: Client,
 }
 
-pub(crate) async fn reconcile(cluster: Arc<DiomCluster>, ctx: Arc<Context>) -> Result<Action> {
-    let ns = cluster
-        .namespace()
-        .ok_or(Error::MissingField("namespace"))?;
-    let name = cluster.name_any();
-    let client = &ctx.client;
-    let pp = PatchParams::apply(FIELD_MANAGER).force();
+struct Reconciler {
+    ctx: ClusterCtx,
+}
 
-    // If the cluster is being deleted, nothing to do — owned resources are
-    // garbage collected automatically via owner references.
+impl Reconciler {
+    fn new(cluster: Arc<DiomCluster>, client: Client) -> Result<Self> {
+        Ok(Self {
+            ctx: ClusterCtx::new(cluster, client)?,
+        })
+    }
+
+    async fn run(self) -> Result<Action> {
+        services::reconcile(&self.ctx).await?;
+        statefulset::reconcile(&self.ctx).await?;
+        pvcs::reconcile(&self.ctx).await?;
+        pdb::reconcile(&self.ctx).await?;
+
+        self.update_status().await?;
+        tracing::info!(name = %self.ctx.name, ns = %self.ctx.ns, "Reconcile complete");
+        Ok(Action::requeue(Duration::from_secs(60)))
+    }
+
+    async fn update_status(&self) -> Result<()> {
+        let name = &self.ctx.name;
+        let current_status = self.ctx.cluster.status.as_ref();
+        let current_phase = current_status.map(|s| s.phase.clone()).unwrap_or_default();
+        let current_ready = current_status.map(|s| s.ready_replicas).unwrap_or(0);
+
+        let (ready_replicas, phase) = match self.ctx.sts_api().get_opt(name).await? {
+            Some(sts) => {
+                let ready = sts
+                    .status
+                    .as_ref()
+                    .and_then(|s| s.ready_replicas)
+                    .unwrap_or(0);
+                let desired = self.ctx.cluster.spec.diom.replicas;
+                let phase = compute_phase(ready, desired, &current_phase);
+                (ready, phase)
+            }
+            None => (0, Phase::Initializing),
+        };
+
+        if phase == current_phase && ready_replicas == current_ready {
+            return Ok(());
+        }
+
+        let status_patch = serde_json::json!({
+            "apiVersion": "diom.svix.com/v1alpha1",
+            "kind": "DiomCluster",
+            "status": {
+                "readyReplicas": ready_replicas,
+                "phase": phase,
+            }
+        });
+
+        self.ctx
+            .cluster_api()
+            .patch_status(name, &self.ctx.status_pp(), &Patch::Apply(status_patch))
+            .await?;
+
+        Ok(())
+    }
+}
+
+fn compute_phase(ready: i32, desired: i32, current_phase: &Phase) -> Phase {
+    if ready == desired {
+        Phase::Running
+    } else if matches!(current_phase, Phase::Initializing) {
+        Phase::Initializing
+    } else {
+        Phase::Degraded
+    }
+}
+
+pub(crate) async fn reconcile(cluster: Arc<DiomCluster>, ctx: Arc<Context>) -> Result<Action> {
     if cluster.meta().deletion_timestamp.is_some() {
         return Ok(Action::await_change());
     }
 
-    info!(name, ns, "Reconciling DiomCluster");
-
-    // Headless service (inter-node DNS)
-    let svc_api: Api<Service> = Api::namespaced(client.clone(), &ns);
-    let headless = resources::services::build_headless(&cluster, &ns)?;
-    svc_api
-        .patch(
-            headless.metadata.name.as_deref().unwrap(),
-            &pp,
-            &Patch::Apply(&headless),
-        )
-        .await?;
-
-    // Client-facing service
-    let client_svc = resources::services::build_client(&cluster, &ns)?;
-    svc_api
-        .patch(
-            client_svc.metadata.name.as_deref().unwrap(),
-            &pp,
-            &Patch::Apply(&client_svc),
-        )
-        .await?;
-
-    // StatefulSet
-    let sts_api: Api<StatefulSet> = Api::namespaced(client.clone(), &ns);
-    let sts = resources::statefulset::build(&cluster, &ns)?;
-    sts_api
-        .patch(
-            sts.metadata.name.as_deref().unwrap(),
-            &pp,
-            &Patch::Apply(&sts),
-        )
-        .await?;
-
-    // PodDisruptionBudget (only meaningful for replicas > 1)
-    if cluster.spec.diom.replicas > 1 {
-        let pdb_api: Api<PodDisruptionBudget> = Api::namespaced(client.clone(), &ns);
-        let pdb = resources::pdb::build(&cluster, &ns)?;
-        pdb_api
-            .patch(
-                pdb.metadata.name.as_deref().unwrap(),
-                &pp,
-                &Patch::Apply(&pdb),
-            )
-            .await?;
-    }
-
-    update_status(&cluster, client, &ns).await?;
-
-    info!(name, ns, "Reconcile complete");
-    Ok(Action::requeue(Duration::from_secs(300)))
-}
-
-async fn update_status(cluster: &DiomCluster, client: &Client, ns: &str) -> Result<()> {
-    let cluster_api: Api<DiomCluster> = Api::namespaced(client.clone(), ns);
-    let name = cluster.name_any();
-
-    let sts_api: Api<StatefulSet> = Api::namespaced(client.clone(), ns);
-    let (ready_replicas, phase) = match sts_api.get_opt(&name).await? {
-        Some(sts) => {
-            let ready = sts
-                .status
-                .as_ref()
-                .and_then(|s| s.ready_replicas)
-                .unwrap_or(0);
-            let desired = cluster.spec.diom.replicas;
-            let phase = if ready == desired {
-                Phase::Running
-            } else if ready == 0 {
-                Phase::Initializing
-            } else {
-                Phase::Degraded
-            };
-            (ready, phase)
-        }
-        None => (0, Phase::Initializing),
-    };
-
-    let status_patch = serde_json::json!({
-        "apiVersion": "diom.svix.com/v1alpha1",
-        "kind": "DiomCluster",
-        "status": {
-            "readyReplicas": ready_replicas,
-            "phase": phase,
-        }
-    });
-
-    cluster_api
-        .patch_status(
-            &name,
-            &PatchParams::apply(FIELD_MANAGER),
-            &Patch::Apply(status_patch),
-        )
-        .await?;
-
-    Ok(())
+    let r = Reconciler::new(cluster, ctx.client.clone())?;
+    tracing::info!(name = %r.ctx.name, ns = %r.ctx.ns, "Reconciling DiomCluster");
+    r.run().await
 }
 
 pub(crate) fn error_policy(_cluster: Arc<DiomCluster>, err: &Error, _ctx: Arc<Context>) -> Action {
-    warn!("Reconcile error: {err:?}");
+    tracing::warn!("Reconcile error: {err:?}");
     Action::requeue(Duration::from_secs(30))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute_phase() {
+        assert_eq!(compute_phase(3, 3, &Phase::Initializing), Phase::Running);
+        assert_eq!(compute_phase(3, 3, &Phase::Degraded), Phase::Running);
+        assert_eq!(compute_phase(3, 3, &Phase::Running), Phase::Running);
+        assert_eq!(
+            compute_phase(0, 3, &Phase::Initializing),
+            Phase::Initializing
+        );
+        assert_eq!(compute_phase(0, 3, &Phase::Running), Phase::Degraded);
+        assert_eq!(compute_phase(0, 3, &Phase::Degraded), Phase::Degraded);
+        assert_eq!(
+            compute_phase(1, 3, &Phase::Initializing),
+            Phase::Initializing
+        );
+        assert_eq!(
+            compute_phase(2, 3, &Phase::Initializing),
+            Phase::Initializing
+        );
+        assert_eq!(compute_phase(1, 3, &Phase::Running), Phase::Degraded);
+    }
 }

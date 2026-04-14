@@ -1,8 +1,8 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, time::Duration};
 
 use k8s_openapi::{
     api::{
-        apps::v1::{StatefulSet, StatefulSetSpec},
+        apps::v1::{StatefulSet, StatefulSetPersistentVolumeClaimRetentionPolicy, StatefulSetSpec},
         core::v1::{
             Container, ContainerPort, EnvVar, EnvVarSource, HTTPGetAction, ObjectFieldSelector,
             PersistentVolumeClaim, PersistentVolumeClaimSpec, PodSecurityContext, PodSpec,
@@ -13,11 +13,16 @@ use k8s_openapi::{
         api::resource::Quantity, apis::meta::v1::LabelSelector, util::intstr::IntOrString,
     },
 };
-use kube::{Resource, ResourceExt, core::ObjectMeta};
+use kube::{
+    Resource,
+    api::{DeleteParams, Patch, PostParams, PropagationPolicy},
+    core::ObjectMeta,
+};
 
 use crate::{
-    crd::{DiomCluster, DiomClusterSpec, INTRACLUSTER_PORT},
-    error::Result,
+    context::ClusterCtx,
+    crd::{DiomClusterSpec, INTRACLUSTER_PORT},
+    error::{Error, Result},
     labels,
     resources::services,
 };
@@ -34,17 +39,48 @@ const LOGS_DATA_PATH: &str = "/data/logs";
 /// Path inside the container for Raft snapshots (when a separate volume is configured).
 const SNAPSHOTS_DATA_PATH: &str = "/data/snapshots";
 
-pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
-    let cluster_name = cluster.name_any();
-    let spec = &cluster.spec;
-    let headless_svc = services::headless_name(&cluster_name);
+pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
+    let new_sts = build(ctx)?;
+    let sts_api = ctx.sts_api();
 
-    let env = build_env(spec, &cluster_name, &headless_svc, ns);
+    if let Some(current) = sts_api.get_opt(&ctx.name).await?
+        && volume_claim_templates_differ(&current, &new_sts)
+    {
+        tracing::info!(
+            name = %ctx.name,
+            "volumeClaimTemplates changed. Orphaning/Deleting the StatefulSet."
+        );
+        sts_api
+            .delete(
+                &ctx.name,
+                &DeleteParams {
+                    propagation_policy: Some(PropagationPolicy::Orphan),
+                    ..Default::default()
+                },
+            )
+            .await?;
+        wait_for_sts_deleted(&sts_api, &ctx.name).await?;
+        sts_api.create(&PostParams::default(), &new_sts).await?;
+    } else {
+        sts_api
+            .patch(&ctx.name, &ctx.pp(), &Patch::Apply(new_sts))
+            .await?;
+    }
+
+    Ok(())
+}
+
+fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
+    let cluster_name = &ctx.name;
+    let spec = &ctx.cluster.spec;
+    let headless_svc = services::headless_svc_name(cluster_name);
+
+    let env = build_env(spec, cluster_name, &headless_svc, &ctx.ns);
     let volume_claim_templates = build_volume_claim_templates(spec);
     let volume_mounts = build_volume_mounts(spec);
     let container = build_container(spec, env, volume_mounts);
 
-    let pod_labels = labels::general_labels(&cluster_name);
+    let pod_labels = labels::general_labels(cluster_name);
     let pod_annotations = spec.pod_annotations.clone();
 
     let pod_spec = PodSpec {
@@ -66,16 +102,20 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
     Ok(StatefulSet {
         metadata: ObjectMeta {
             name: Some(cluster_name.clone()),
-            namespace: Some(ns.into()),
-            labels: Some(labels::general_labels(&cluster_name)),
-            owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
+            namespace: Some(ctx.ns.clone()),
+            labels: Some(labels::general_labels(cluster_name)),
+            owner_references: Some(vec![
+                ctx.cluster
+                    .controller_owner_ref(&())
+                    .ok_or(Error::MissingField("owner UID"))?,
+            ]),
             ..Default::default()
         },
         spec: Some(StatefulSetSpec {
             replicas: Some(spec.diom.replicas),
             service_name: Some(headless_svc),
             selector: LabelSelector {
-                match_labels: Some(labels::selector(&cluster_name)),
+                match_labels: Some(labels::selector(cluster_name)),
                 ..Default::default()
             },
             template: PodTemplateSpec {
@@ -91,6 +131,12 @@ pub(crate) fn build(cluster: &DiomCluster, ns: &str) -> Result<StatefulSet> {
                 spec: Some(pod_spec),
             },
             volume_claim_templates: Some(volume_claim_templates),
+            persistent_volume_claim_retention_policy: Some(
+                StatefulSetPersistentVolumeClaimRetentionPolicy {
+                    when_deleted: Some("Retain".into()),
+                    when_scaled: Some("Retain".into()),
+                },
+            ),
             ..Default::default()
         }),
         ..Default::default()
@@ -107,18 +153,14 @@ fn build_env(
 
     // These must come before any vars that reference them via $(VAR) substitution.
     let mut env: Vec<EnvVar> = vec![
-        // Downward API: pod name and namespace, used to construct stable DNS addresses.
         env_from_field("POD_NAME", "metadata.name"),
         env_from_field("POD_NAMESPACE", "metadata.namespace"),
-        // Each pod advertises its stable StatefulSet DNS name so peers can reach it.
-        // Uses k8s env var substitution: $(VAR) references earlier vars in this list.
         env_var(
             "DIOM_CLUSTER_ADVERTISED_ADDRESS",
             format!(
                 "$(POD_NAME).{headless_svc}.$(POD_NAMESPACE).svc.cluster.local:{intracluster_port}"
             ),
         ),
-        // Seed nodes: all pods in the StatefulSet by their stable DNS names.
         env_var(
             "DIOM_CLUSTER_SEED_NODES",
             seed_nodes_value(
@@ -129,16 +171,11 @@ fn build_env(
                 intracluster_port,
             ),
         ),
-        // Allow any pod to initialize a new cluster if it can't find peers and has no state.
-        // StatefulSets start pods sequentially (pod-0 first), so in practice pod-0 initializes
-        // first. Setting this on all pods ensures the cluster can still form if pod-0 restarts.
         env_var("DIOM_CLUSTER_AUTO_INITIALIZE", "true"),
         env_var(
             "DIOM_LISTEN_ADDRESS",
             format!("0.0.0.0:{}", spec.diom.api_port),
         ),
-        // This variable is only used by the CLI, but allows the CLI to talk to the local server
-        // without any special configuration
         env_var(
             "DIOM_SERVER_URL",
             format!("http://localhost:{}", spec.diom.api_port),
@@ -330,8 +367,6 @@ fn build_volume_mounts(spec: &DiomClusterSpec) -> Vec<VolumeMount> {
     mounts
 }
 
-// --- Helpers ---
-
 fn env_var(name: &str, value: impl Into<String>) -> EnvVar {
     EnvVar {
         name: name.into(),
@@ -387,4 +422,127 @@ fn seed_nodes_value(
         .map(|i| format!("{cluster_name}-{i}.{headless_svc}.{ns}.svc.cluster.local:{cluster_port}"))
         .collect::<Vec<_>>()
         .join(",")
+}
+
+fn volume_claim_templates_differ(current: &StatefulSet, desired: &StatefulSet) -> bool {
+    let current_templates = current
+        .spec
+        .as_ref()
+        .and_then(|s| s.volume_claim_templates.as_deref())
+        .unwrap_or(&[]);
+    let desired_templates = desired
+        .spec
+        .as_ref()
+        .and_then(|s| s.volume_claim_templates.as_deref())
+        .unwrap_or(&[]);
+
+    for desired_tpl in desired_templates {
+        let desired_name = desired_tpl.metadata.name.as_deref().unwrap_or("");
+        let desired_size = desired_tpl
+            .spec
+            .as_ref()
+            .and_then(|s| s.resources.as_ref())
+            .and_then(|r| r.requests.as_ref())
+            .and_then(|r| r.get("storage"));
+
+        let current_size = current_templates
+            .iter()
+            .find(|t| t.metadata.name.as_deref() == Some(desired_name))
+            .and_then(|t| t.spec.as_ref())
+            .and_then(|s| s.resources.as_ref())
+            .and_then(|r| r.requests.as_ref())
+            .and_then(|r| r.get("storage"));
+
+        if desired_size != current_size {
+            return true;
+        }
+    }
+    false
+}
+
+async fn wait_for_sts_deleted(sts_api: &kube::Api<StatefulSet>, name: &str) -> Result<()> {
+    const TIMEOUT_SECS: u64 = 30;
+    const POLL_INTERVAL: Duration = Duration::from_secs(1);
+
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(TIMEOUT_SECS);
+
+    loop {
+        if sts_api.get_opt(name).await?.is_none() {
+            return Ok(());
+        }
+        if tokio::time::Instant::now() >= deadline {
+            return Err(Error::Timeout(format!(
+                "StatefulSet {name} not deleted after {TIMEOUT_SECS}s"
+            )));
+        }
+        tokio::time::sleep(POLL_INTERVAL).await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use k8s_openapi::{
+        api::core::v1::{
+            PersistentVolumeClaim, PersistentVolumeClaimSpec, VolumeResourceRequirements,
+        },
+        apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::ObjectMeta},
+    };
+    use std::collections::BTreeMap;
+
+    fn make_pvc(name: &str, storage: &str) -> PersistentVolumeClaim {
+        let mut requests = BTreeMap::new();
+        requests.insert("storage".to_string(), Quantity(storage.to_string()));
+        PersistentVolumeClaim {
+            metadata: ObjectMeta {
+                name: Some(name.to_string()),
+                ..Default::default()
+            },
+            spec: Some(PersistentVolumeClaimSpec {
+                resources: Some(VolumeResourceRequirements {
+                    requests: Some(requests),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }
+    }
+
+    fn make_sts(pvcs: Vec<PersistentVolumeClaim>) -> StatefulSet {
+        use k8s_openapi::api::apps::v1::StatefulSetSpec;
+        StatefulSet {
+            spec: Some(StatefulSetSpec {
+                volume_claim_templates: Some(pvcs),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_volume_claim_templates_differ() {
+        let a = make_sts(vec![make_pvc("data", "10Gi")]);
+        let b = make_sts(vec![make_pvc("data", "10Gi")]);
+        assert!(!volume_claim_templates_differ(&a, &b));
+
+        let current = make_sts(vec![make_pvc("data", "10Gi")]);
+        let desired = make_sts(vec![make_pvc("data", "20Gi")]);
+        assert!(volume_claim_templates_differ(&current, &desired));
+
+        let current = make_sts(vec![make_pvc("data", "20Gi")]);
+        let desired = make_sts(vec![make_pvc("data", "10Gi")]);
+        assert!(volume_claim_templates_differ(&current, &desired));
+
+        let current = make_sts(vec![make_pvc("data", "10Gi")]);
+        let desired = make_sts(vec![make_pvc("data", "10Gi"), make_pvc("logs", "5Gi")]);
+        assert!(volume_claim_templates_differ(&current, &desired));
+
+        let current = make_sts(vec![make_pvc("data", "10Gi"), make_pvc("logs", "5Gi")]);
+        let desired = make_sts(vec![make_pvc("data", "10Gi")]);
+        assert!(!volume_claim_templates_differ(&current, &desired));
+
+        let empty = make_sts(vec![]);
+        assert!(!volume_claim_templates_differ(&empty, &empty));
+    }
 }
