@@ -28,6 +28,19 @@ rules:
       functionOptions:
         type: pascal
     type: style
+  kebab-case-enums:
+    category:
+      id: schemas
+    description: String enum names should use kebab-case for consistency.
+    given: $.components.schemas.*.enum[*]
+    id: kebab-case-enums
+    recommended: true
+    resolved: true
+    severity: error
+    then:
+      function: casing
+      functionOptions:
+        type: kebab
   # rules from recommended ruleset
   component-description:
     category:
