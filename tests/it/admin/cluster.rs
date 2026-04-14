@@ -40,7 +40,7 @@ async fn test_cluster_status() -> TestResult {
         cluster_status["this_node_id"].assert_str(),
         node_id.to_string()
     );
-    assert_eq!(cluster_status["this_node_state"].assert_str(), "Leader",);
+    assert_eq!(cluster_status["this_node_state"].assert_str(), "leader");
 
     let nodes = cluster_status["nodes"].assert_array();
     assert_eq!(nodes.len(), 1);
@@ -97,7 +97,7 @@ async fn test_cluster_remove() -> TestResult {
         btreeset! { node_id.to_string(), second_node_id.to_string() }
     );
     // ideally, the first node is still the leader before we evict the second node
-    assert_eq!(cluster_status["this_node_state"], "Leader");
+    assert_eq!(cluster_status["this_node_state"], "leader");
     let cluster_status_from_second_node = second_client
         .get("v1.admin.cluster.status")
         .await?
@@ -105,7 +105,7 @@ async fn test_cluster_remove() -> TestResult {
         .json();
     assert_eq!(
         cluster_status_from_second_node["this_node_state"],
-        "Follower"
+        "follower"
     );
 
     // now remove the second node

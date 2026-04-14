@@ -4,12 +4,12 @@ package com.svix.diom.models;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ServerState {
-    LEADER("Leader"),
-    FOLLOWER("Follower"),
-    LEARNER("Learner"),
-    CANDIDATE("Candidate"),
-    SHUTDOWN("Shutdown"),
-    UNKNOWN("Unknown");
+    LEADER("leader"),
+    FOLLOWER("follower"),
+    LEARNER("learner"),
+    CANDIDATE("candidate"),
+    SHUTDOWN("shutdown"),
+    UNKNOWN("unknown");
     private final String value;
 
     ServerState(String value) {
