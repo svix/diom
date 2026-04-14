@@ -81,7 +81,7 @@ pub trait BaseUid: Deref<Target = String> {
 
 #[macro_export]
 macro_rules! string_wrapper {
-    ($name_id:ident) => {
+    ($name_id:ident, $string_schema:expr) => {
         #[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
         pub struct $name_id(pub String);
 
@@ -110,10 +110,6 @@ macro_rules! string_wrapper {
                 $name_id(s)
             }
         }
-    };
-
-    ($name_id:ident, $string_schema:expr) => {
-        string_wrapper!($name_id);
 
         impl ::schemars::JsonSchema for $name_id {
             fn schema_name() -> ::std::borrow::Cow<'static, str> {
