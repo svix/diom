@@ -47,8 +47,10 @@ pub type CacheNamespace = Namespace<CacheConfig>;
 #[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct CacheSetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
+    #[validate(nested)]
     pub key: EntityKey,
 
     pub value: ByteString,
@@ -67,6 +69,7 @@ pub struct CacheSetOut {}
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheGetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -98,6 +101,7 @@ impl CacheGetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheDeleteIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -121,6 +125,7 @@ struct CacheGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct CacheCreateNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
     #[serde(default)]
     pub eviction_policy: EvictionPolicy,
@@ -213,6 +218,7 @@ async fn cache_del(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheGetNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 

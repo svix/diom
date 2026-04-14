@@ -75,6 +75,7 @@ fn default_interval_ms() -> DurationMs {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimitCheckIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -111,6 +112,7 @@ pub struct RateLimitCheckOut {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimitGetRemainingIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -204,6 +206,7 @@ async fn rate_limit_get_remaining(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub struct RateLimitResetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -242,6 +245,7 @@ async fn rate_limit_reset(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct RateLimitCreateNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -262,6 +266,7 @@ struct RateLimitCreateNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct RateLimitGetNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
