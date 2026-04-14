@@ -28,8 +28,8 @@ enum BootstrapCommand {
     RateLimit(RateLimitCreateNamespaceIn),
     Msgs(MsgNamespaceCreateIn),
     AuthToken(AuthTokenCreateNamespaceIn),
-    AuthPolicy(AdminAccessPolicyUpsertIn),
-    AuthRole(AdminRoleUpsertIn),
+    AdminAuthPolicy(AdminAccessPolicyUpsertIn),
+    AdminAuthRole(AdminRoleUpsertIn),
 }
 
 impl BootstrapCommand {
@@ -75,7 +75,7 @@ impl BootstrapCommand {
                     )
                     .await?;
             }
-            BootstrapCommand::AuthPolicy(v) => {
+            BootstrapCommand::AdminAuthPolicy(v) => {
                 tracing::debug!(id = v.id.as_str(), "bootstrapping auth-policy");
                 raft_state
                     .client_write(
@@ -87,7 +87,7 @@ impl BootstrapCommand {
                     )
                     .await?;
             }
-            BootstrapCommand::AuthRole(v) => {
+            BootstrapCommand::AdminAuthRole(v) => {
                 tracing::debug!(id = v.id.as_str(), "bootstrapping auth-role");
                 raft_state
                     .client_write(diom_admin_auth::operations::UpsertRoleOperation::new(
@@ -111,7 +111,9 @@ impl BootstrapCommand {
             BootstrapCommand::RateLimit(v) => &v.name,
             BootstrapCommand::Msgs(v) => &v.name,
             BootstrapCommand::AuthToken(v) => &v.name,
-            BootstrapCommand::AuthPolicy(_) | BootstrapCommand::AuthRole(_) => return None,
+            BootstrapCommand::AdminAuthPolicy(_) | BootstrapCommand::AdminAuthRole(_) => {
+                return None;
+            }
         })
     }
 }
@@ -158,11 +160,11 @@ impl FromStr for BootstrapCommand {
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for msgs namespace: {json_str:?}"))?,
             )),
-            ("admin", "auth-policy", "upsert") => Ok(BootstrapCommand::AuthPolicy(
+            ("admin", "auth-policy", "upsert") => Ok(BootstrapCommand::AdminAuthPolicy(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for admin auth-policy: {json_str:?}"))?,
             )),
-            ("admin", "auth-role", "upsert") => Ok(BootstrapCommand::AuthRole(
+            ("admin", "auth-role", "upsert") => Ok(BootstrapCommand::AdminAuthRole(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for admin auth-role: {json_str:?}"))?,
             )),
@@ -404,7 +406,7 @@ mod tests {
             r#"admin auth-policy upsert {"id":"mypolicy","description":"test","rules":[]}"#
                 .parse()
                 .unwrap();
-        let BootstrapCommand::AuthPolicy(v) = cmd else {
+        let BootstrapCommand::AdminAuthPolicy(v) = cmd else {
             panic!()
         };
         assert_eq!(v.id.as_str(), "mypolicy");
@@ -418,7 +420,7 @@ mod tests {
             r#"admin auth-role upsert {"id":"myrole","description":"test","rules":[]}"#
                 .parse()
                 .unwrap();
-        let BootstrapCommand::AuthRole(v) = cmd else {
+        let BootstrapCommand::AdminAuthRole(v) = cmd else {
             panic!()
         };
         assert_eq!(v.id.as_str(), "myrole");
