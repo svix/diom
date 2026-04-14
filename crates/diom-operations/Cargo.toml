@@ -14,6 +14,7 @@ http-serde.workspace = true
 jiff.workspace = true
 opentelemetry.workspace = true
 pastey.workspace = true
+rand.workspace = true
 serde.workspace = true
 tokio.workspace = true
 tracing.workspace = true

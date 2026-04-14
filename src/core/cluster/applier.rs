@@ -59,6 +59,7 @@ pub(super) async fn apply_request(
         timestamp: request.timestamp,
         log_index: log_id.index,
         term: log_id.leader_id.term,
+        rng_seed: request.rng_seed,
     };
 
     let request = Arc::unwrap_or_clone(request);

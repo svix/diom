@@ -89,6 +89,10 @@ pub struct RequestWithContext {
     )]
     pub timestamp: Timestamp,
     pub context: Option<OperationRequestMetadata>,
+    /// Seed for deterministic RNG during apply. Generated at request creation,
+    /// replicated through Raft so every node uses the same seed.
+    #[serde(default = "rand::random")]
+    pub rng_seed: u64,
 }
 
 impl fmt::Display for RequestWithContext {
@@ -112,6 +116,7 @@ impl RequestWithContext {
             inner: req,
             timestamp,
             context: ctx,
+            rng_seed: rand::random(),
         }
     }
 

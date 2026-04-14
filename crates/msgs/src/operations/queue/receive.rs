@@ -55,8 +55,14 @@ impl QueueReceiveOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueReceiveResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        ctx: &diom_operations::OpContext,
+    ) -> Result<QueueReceiveResponseData> {
         let state = state.clone();
+        let mut rng = ctx.rng();
+        let now = ctx.timestamp;
 
         spawn_blocking_in_current_span(move || {
             let mut remaining = self.batch_size.get();
@@ -80,7 +86,7 @@ impl QueueReceiveOperation {
             let partitions = self
                 .partition
                 .map(|p| vec![p.get()])
-                .unwrap_or_else(|| topic_row.partitions_shuffled());
+                .unwrap_or_else(|| topic_row.partitions_shuffled(&mut rng));
 
             for partition_idx in partitions {
                 let partition = Partition::new(partition_idx)?;
@@ -299,6 +305,6 @@ impl MsgsRequest for QueueReceiveOperation {
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> QueueReceiveResponse {
-        QueueReceiveResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
+        QueueReceiveResponse::new(self.apply_real(state.msgs, ctx).await)
     }
 }

@@ -60,8 +60,14 @@ impl StreamReceiveOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<StreamReceiveResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        ctx: &diom_operations::OpContext,
+    ) -> Result<StreamReceiveResponseData> {
         let state = state.clone();
+        let mut rng = ctx.rng();
+        let now = ctx.timestamp;
 
         spawn_blocking_in_current_span(move || {
             let mut remaining = self.batch_size.get();
@@ -84,7 +90,7 @@ impl StreamReceiveOperation {
             let partitions = self
                 .partition
                 .map(|p| vec![p.get()])
-                .unwrap_or_else(|| topic_row.partitions_shuffled());
+                .unwrap_or_else(|| topic_row.partitions_shuffled(&mut rng));
 
             let mut no_lease_available = true;
 
@@ -213,6 +219,6 @@ impl MsgsRequest for StreamReceiveOperation {
         state: MsgsRaftState<'_>,
         ctx: &diom_operations::OpContext,
     ) -> StreamReceiveResponse {
-        StreamReceiveResponse::new(self.apply_real(state.msgs, ctx.timestamp).await)
+        StreamReceiveResponse::new(self.apply_real(state.msgs, ctx).await)
     }
 }
