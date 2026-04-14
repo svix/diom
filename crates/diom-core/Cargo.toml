@@ -7,8 +7,10 @@ rust-version.workspace = true
 edition = "2024"
 
 [dependencies]
+diom-derive.workspace = true
 jiff.workspace = true
 parking_lot.workspace = true
+pastey.workspace = true
 rand.workspace = true
 regex.workspace = true
 schemars.workspace = true

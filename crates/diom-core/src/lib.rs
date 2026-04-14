@@ -4,6 +4,7 @@ pub mod backoff;
 pub mod fifo_cache;
 pub mod instrumented_mutex;
 mod monotime;
+pub mod persistable_value;
 pub mod shutdown;
 pub mod task;
 pub mod types;
@@ -20,3 +21,6 @@ pub mod __reexport {
     pub use serde_json;
     pub use validator;
 }
+
+pub use diom_derive::PersistableValue;
+pub use persistable_value::PersistableValue;

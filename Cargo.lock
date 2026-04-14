@@ -1611,8 +1611,10 @@ dependencies = [
 name = "diom-core"
 version = "0.1.0"
 dependencies = [
+ "diom-derive",
  "jiff",
  "parking_lot",
+ "pastey",
  "rand 0.10.1",
  "regex",
  "schemars 1.2.1",
@@ -2073,6 +2075,7 @@ dependencies = [
  "anyhow",
  "byteview",
  "criterion",
+ "diom-core",
  "diom-derive",
  "diom-error",
  "diom-id",
