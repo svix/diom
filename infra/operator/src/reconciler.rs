@@ -27,7 +27,7 @@ impl Reconciler {
     async fn run(self) -> Result<Action> {
         services::reconcile(&self.ctx).await?;
         statefulset::reconcile(&self.ctx).await?;
-        pvcs::reconcile_pvcs(&self.ctx).await?;
+        pvcs::reconcile(&self.ctx).await?;
         pdb::reconcile(&self.ctx).await?;
 
         self.update_status().await?;

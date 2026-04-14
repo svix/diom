@@ -4,13 +4,19 @@ use k8s_openapi::{
 };
 use kube::{Resource, api::Patch, core::ObjectMeta};
 
-use crate::{context::ClusterCtx, error::Result, labels};
+use crate::{
+    context::ClusterCtx,
+    error::{Error, Result},
+    labels,
+};
 
-pub(crate) fn headless_name(cluster_name: &str) -> String {
+/// Name of headless service
+pub(crate) fn headless_svc_name(cluster_name: &str) -> String {
     format!("{cluster_name}-headless")
 }
 
-pub(crate) fn client_name(cluster_name: &str) -> String {
+/// Name of load-balancing service
+pub(crate) fn lb_svc_name(cluster_name: &str) -> String {
     cluster_name.to_string()
 }
 
@@ -20,25 +26,18 @@ pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
 
     let headless = build_headless(ctx)?;
     svc_api
-        .patch(
-            headless.metadata.name.as_deref().unwrap(),
-            &pp,
-            &Patch::Apply(&headless),
-        )
+        .patch(&headless_svc_name(&ctx.name), &pp, &Patch::Apply(&headless))
         .await?;
 
-    let client_svc = build_client_facing(ctx)?;
+    let client_svc = build_lb_svc(ctx)?;
     svc_api
-        .patch(
-            client_svc.metadata.name.as_deref().unwrap(),
-            &pp,
-            &Patch::Apply(&client_svc),
-        )
+        .patch(&lb_svc_name(&ctx.name), &pp, &Patch::Apply(&client_svc))
         .await?;
 
     Ok(())
 }
 
+/// Build headless service.
 pub(crate) fn build_headless(ctx: &ClusterCtx) -> Result<Service> {
     let cluster = &ctx.cluster;
     let cluster_name = &ctx.name;
@@ -47,10 +46,14 @@ pub(crate) fn build_headless(ctx: &ClusterCtx) -> Result<Service> {
 
     Ok(Service {
         metadata: ObjectMeta {
-            name: Some(headless_name(cluster_name)),
+            name: Some(headless_svc_name(cluster_name)),
             namespace: Some(ctx.ns.clone()),
             labels: Some(labels::general_labels(cluster_name)),
-            owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
+            owner_references: Some(vec![
+                cluster
+                    .controller_owner_ref(&())
+                    .ok_or(Error::MissingField("owner UID"))?,
+            ]),
             ..Default::default()
         },
         spec: Some(ServiceSpec {
@@ -77,8 +80,8 @@ pub(crate) fn build_headless(ctx: &ClusterCtx) -> Result<Service> {
     })
 }
 
-/// Client-facing service — load-balances across all ready pods.
-pub(crate) fn build_client_facing(ctx: &ClusterCtx) -> Result<Service> {
+/// Build load-balancing service
+pub(crate) fn build_lb_svc(ctx: &ClusterCtx) -> Result<Service> {
     let cluster = &ctx.cluster;
     let cluster_name = &ctx.name;
     let spec = &cluster.spec;
@@ -90,7 +93,7 @@ pub(crate) fn build_client_facing(ctx: &ClusterCtx) -> Result<Service> {
         .unwrap_or_else(|| "ClusterIP".into());
 
     let mut metadata = ObjectMeta {
-        name: Some(client_name(cluster_name)),
+        name: Some(lb_svc_name(cluster_name)),
         namespace: Some(ctx.ns.clone()),
         labels: Some(labels::general_labels(cluster_name)),
         owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),

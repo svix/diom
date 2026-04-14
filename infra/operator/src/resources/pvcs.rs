@@ -15,7 +15,8 @@ use crate::{
     error::{Error, Result},
 };
 
-pub(crate) async fn reconcile_pvcs(ctx: &ClusterCtx) -> Result<()> {
+/// Reconcile persistent volume claims.
+pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
     let storage = &ctx.cluster.spec.diom.storage;
     let nodes = ctx.cluster.spec.diom.replicas;
 
@@ -66,7 +67,7 @@ async fn reconcile_volume(
         let name = pvc_name(volume_name, &ctx.name, ordinal);
 
         let Some(pvc) = pvc_api.get_opt(&name).await? else {
-            tracing::debug!(name, "PVC not found; skipping resize.");
+            tracing::warn!(name, "PVC not found; skipping reconcile.");
             continue;
         };
 
@@ -119,7 +120,7 @@ async fn patch_pvc_size(
     });
     tracing::info!(
         name,
-        desired = desired.to_string(),
+        %desired,
         "Patching PVC with new size"
     );
     pvc_api
@@ -158,9 +159,7 @@ async fn storage_class_allows_expansion(
 fn pvc_requested_size(pvc: &PersistentVolumeClaim) -> Result<ParsedQuantity> {
     pvc.spec
         .as_ref()
-        .and_then(|s| s.resources.as_ref())
-        .and_then(|r| r.requests.as_ref())
-        .and_then(|r| r.get("storage"))
+        .and_then(|s| s.resources.as_ref()?.requests.as_ref()?.get("storage"))
         .cloned()
         .ok_or_else(|| Error::Storage("Storage not found".to_owned()))?
         .try_into()

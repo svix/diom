@@ -8,17 +8,17 @@ use kube::{
     core::ObjectMeta,
 };
 
-use crate::{context::ClusterCtx, error::Result, labels};
+use crate::{
+    context::ClusterCtx,
+    error::{Error, Result},
+    labels,
+};
 
 pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
     if ctx.cluster.spec.diom.replicas > 1 {
         let pdb = build(ctx)?;
         ctx.pdb_api()
-            .patch(
-                pdb.metadata.name.as_deref().unwrap(),
-                &ctx.pp(),
-                &Patch::Apply(&pdb),
-            )
+            .patch(&ctx.name, &ctx.pp(), &Patch::Apply(&pdb))
             .await?;
     } else {
         match ctx
@@ -47,7 +47,11 @@ pub(crate) fn build(ctx: &ClusterCtx) -> Result<PodDisruptionBudget> {
             name: Some(cluster_name.clone()),
             namespace: Some(ctx.ns.clone()),
             labels: Some(labels::general_labels(cluster_name)),
-            owner_references: Some(vec![cluster.controller_owner_ref(&()).unwrap()]),
+            owner_references: Some(vec![
+                cluster
+                    .controller_owner_ref(&())
+                    .ok_or(Error::MissingField("owner UID"))?,
+            ]),
             ..Default::default()
         },
         spec: Some(PodDisruptionBudgetSpec {

@@ -73,7 +73,7 @@ pub(crate) async fn reconcile(ctx: &ClusterCtx) -> Result<()> {
 fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
     let cluster_name = &ctx.name;
     let spec = &ctx.cluster.spec;
-    let headless_svc = services::headless_name(cluster_name);
+    let headless_svc = services::headless_svc_name(cluster_name);
 
     let env = build_env(spec, cluster_name, &headless_svc, &ctx.ns);
     let volume_claim_templates = build_volume_claim_templates(spec);
@@ -104,7 +104,11 @@ fn build(ctx: &ClusterCtx) -> Result<StatefulSet> {
             name: Some(cluster_name.clone()),
             namespace: Some(ctx.ns.clone()),
             labels: Some(labels::general_labels(cluster_name)),
-            owner_references: Some(vec![ctx.cluster.controller_owner_ref(&()).unwrap()]),
+            owner_references: Some(vec![
+                ctx.cluster
+                    .controller_owner_ref(&())
+                    .ok_or(Error::MissingField("owner UID"))?,
+            ]),
             ..Default::default()
         },
         spec: Some(StatefulSetSpec {
