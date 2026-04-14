@@ -65,8 +65,11 @@ test-dc-rebuild service:
     docker compose -f {{ HERE / "testing-docker-compose.yml" }} up --build -d {{ service }}
 
 # Generate all of the client libraries
-codegen:
+codegen: default-config
     cargo codegen
+
+default-config:
+    env -u DIOM_ADMIN_TOKEN cargo run -- write-config config.defaults.toml
 
 # Run all the test commands
 test-all: test test-sdks

@@ -9,10 +9,7 @@ use diom_backend::{
 };
 use dotenvy::dotenv;
 use mimalloc::MiMalloc;
-use std::{
-    io::{BufWriter, Write},
-    path::PathBuf,
-};
+use std::{io::BufWriter, path::PathBuf};
 use tracing_subscriber::util::SubscriberInitExt;
 
 #[global_allocator]
@@ -54,17 +51,17 @@ enum Commands {
 }
 
 fn dump_config(cfg: Configuration, path: Option<PathBuf>) -> anyhow::Result<()> {
-    let str = toml::to_string_pretty(&cfg)?;
     if let Some(path) = path
         && path.to_str() != Some("-")
     {
-        let f = fs_err::File::open(path)?;
+        let f = fs_err::File::create(path)?;
         let mut bf = BufWriter::new(f);
-        write!(bf, "{str}")?;
+        cfg.dump_config(&mut bf)
     } else {
-        print!("{str}");
+        let stdout = std::io::stdout();
+        let mut stdout_l = stdout.lock();
+        cfg.dump_config(&mut stdout_l)
     }
-    Ok(())
 }
 
 #[tokio::main]

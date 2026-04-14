@@ -116,7 +116,7 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           edit-mode: replace
   check-codegen:
-    name: Check openapi.json and SDK freshness
+    name: Check openapi.json, SDK, and default config freshness
     runs-on: ubicloud-standard-4-ubuntu-2404
     steps:
       - uses: actions/checkout@v6
@@ -128,6 +128,8 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Regerate openapi.json and SDKs
         run: cargo codegen
+      - name: Regerate config.defaults.toml
+        run: cargo run -- write-config config.defaults.toml
       - name: Check for uncommitted changes
         run: |
           gs=$(git status -s)
