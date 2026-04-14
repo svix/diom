@@ -7,8 +7,11 @@ use serde::{Serialize, de::DeserializeOwned};
 
 /// This is a useful wrapper for key/value pairs stored in a fjall keyspace
 /// whose key and type are statically known; data is serialized as postcard with a V0 version prefix
+///
+/// Because this doesn't use the TableKey abstraction, it shouldn't be mixed into the same
+/// keyspace as TableRows, because the keys might overlap.
 pub struct FjallFixedKey<T: Serialize + DeserializeOwned + 'static> {
-    key: &'static str,
+    pub key: &'static str,
     _phantom: PhantomData<T>,
 }
 
@@ -30,20 +33,9 @@ impl<T: Serialize + DeserializeOwned + 'static> FjallFixedKey<T> {
             })
             .transpose()
             .map_err(|err| {
-                tracing::warn!(key = self.key, ?err, "error deserializing key from DB");
+                tracing::error!(key = self.key, ?err, "error deserializing key from DB");
                 Error::internal(err)
             })
-    }
-
-    pub fn store(&self, keyspace: &fjall::Keyspace, value: &T) -> Result<()> {
-        let serialized = crate::postcard_to_byteview(&crate::V0Wrapper::V0(value))
-            .map(fjall::Slice::from)
-            .or_internal_error()?;
-        keyspace.insert(self.key, serialized).or_internal_error()
-    }
-
-    pub fn remove(&self, keyspace: &fjall::Keyspace) -> Result<()> {
-        keyspace.remove(self.key).or_internal_error()
     }
 
     pub fn store_tx(

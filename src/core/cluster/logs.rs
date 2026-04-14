@@ -417,6 +417,7 @@ pub struct DiomLogs {
     log_cache: LogCache,
     metrics: Option<LogMetrics>,
     last_vote: Arc<Mutex<Option<Vote>>>,
+    fsync_mode: FsyncMode,
 }
 
 impl DiomLogs {
@@ -437,7 +438,11 @@ impl DiomLogs {
                 .manual_journal_persist(true)
                 .expect_point_read_hits(true)
         })?;
-        let meta_keyspace = db.keyspace("cluster:meta", KeyspaceCreateOptions::default)?;
+        let meta_keyspace = db.keyspace("cluster:meta", || {
+            KeyspaceCreateOptions::default()
+                .manual_journal_persist(true)
+                .expect_point_read_hits(true)
+        })?;
         let (flush_tx, flush_rx) = tokio::sync::mpsc::channel(65536);
         tokio::spawn(flush_worker(
             db.clone(),
@@ -456,7 +461,40 @@ impl DiomLogs {
             log_cache: LogCache::new(100),
             metrics: None,
             last_vote: Arc::new(Mutex::new(None)),
+            fsync_mode,
         })
+    }
+
+    async fn read_metadata<T: Serialize + serde::de::DeserializeOwned + Send + Sync + 'static>(
+        &self,
+        key: &'static FjallFixedKey<T>,
+    ) -> anyhow::Result<Option<T>> {
+        let keyspace = self.meta_keyspace.clone();
+        spawn_blocking_in_current_span(move || key.get(&keyspace))
+            .await?
+            .with_context(|| format!("reading metadata for {}", key.key))
+    }
+
+    async fn save_metadata<T: Serialize + serde::de::DeserializeOwned + Send + Sync + 'static>(
+        &self,
+        key: &'static FjallFixedKey<T>,
+        value: T,
+        sync: bool,
+    ) -> anyhow::Result<()> {
+        let keyspace = self.meta_keyspace.clone();
+        let db = self.db.clone();
+        let durability = if sync {
+            self.fsync_mode.into()
+        } else {
+            PersistMode::Buffer
+        };
+        spawn_blocking_in_current_span(move || {
+            let mut batch = db.batch().durability(Some(durability));
+            key.store_tx(&mut batch, &keyspace, &value)?;
+            batch.commit()?;
+            Ok(())
+        })
+        .await?
     }
 
     pub(crate) async fn enable_metrics(&mut self, metrics: LogMetrics) -> anyhow::Result<()> {
@@ -495,24 +533,16 @@ impl DiomLogs {
 
     /// Get the NodeId (or, if we don't have one, make a new one)
     pub async fn get_node_id(&mut self) -> anyhow::Result<NodeId> {
-        let db = self.db.clone();
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
-            if let Some(node_id) = NODE_ID.get(&meta_keyspace)? {
-                tracing::info!(%node_id, "starting up with existing node ID");
-                node_id
-            } else {
-                let node_id = NodeId::generate();
-                tracing::info!(%node_id, "generated a new node ID");
-                NODE_ID
-                    .store(&meta_keyspace, &node_id)
-                    .context("saving node ID to logs database")?;
-                db.persist(PersistMode::SyncAll)?;
-                node_id
-            }
-            .pipe(Ok)
-        })
-        .await?
+        if let Some(node_id) = self.read_metadata(&NODE_ID).await? {
+            tracing::info!(%node_id, "starting up with existing node ID");
+            node_id
+        } else {
+            let node_id = NodeId::generate();
+            tracing::info!(%node_id, "generated a new node ID");
+            self.save_metadata(&NODE_ID, node_id, true).await?;
+            node_id
+        }
+        .pipe(Ok)
     }
 
     #[tracing::instrument(skip_all, fields(num_entries))]
@@ -584,7 +614,9 @@ impl DiomLogs {
         let log_keyspace = self.log_keyspace.clone();
         let db = self.db.clone();
         spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            LAST_PURGED_LOG_ID.store(&meta_keyspace, &log_id)?;
+            let mut tx = db.batch().durability(Some(PersistMode::Buffer));
+            LAST_PURGED_LOG_ID.store_tx(&mut tx, &meta_keyspace, &log_id)?;
+            tx.commit()?;
             let deleted = Log::remove_keys_in_range(
                 &db,
                 &log_keyspace,
@@ -670,16 +702,7 @@ impl DiomLogs {
 
     async fn save_vote_(&self, vote: Vote) -> anyhow::Result<()> {
         tracing::trace!(?vote, "saving a vote");
-        let db = self.db.clone();
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || -> anyhow::Result<()> {
-            VOTE.store(&meta_keyspace, &vote)?;
-            tracing::info_span!("save_vote:persist")
-                .in_scope(|| db.persist(PersistMode::SyncAll))?;
-            Ok(())
-        })
-        .await?
-        .context("saving vote")?;
+        self.save_metadata(&VOTE, vote, true).await?;
         let mut guard = self.last_vote.lock();
         *guard = Some(vote);
         Ok(())
@@ -692,8 +715,7 @@ impl DiomLogs {
                 return Ok(Some(*vote));
             }
         }
-        let keyspace = self.meta_keyspace.clone();
-        let Some(vote) = spawn_blocking_in_current_span(move || VOTE.get(&keyspace)).await?? else {
+        let Some(vote) = self.read_metadata(&VOTE).await? else {
             tracing::trace!("couldn't find a vote");
             return Ok(None);
         };
@@ -706,23 +728,16 @@ impl DiomLogs {
     }
 
     async fn save_committed_(&self, committed: Option<LogId>) -> anyhow::Result<()> {
-        let meta_keyspace = self.meta_keyspace.clone();
         tracing::trace!(?committed, "saving committed state");
-        spawn_blocking_in_current_span(move || COMMITTED.store(&meta_keyspace, &committed))
-            .await?
-            .context("saving committed state")
+        self.save_metadata(&COMMITTED, committed, false).await
     }
 
     async fn read_committed_(&self) -> anyhow::Result<Option<LogId>> {
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
-            COMMITTED
-                .get(&meta_keyspace)?
-                .tap_some(|committed| tracing::trace!(?committed, "read committed state"))
-                .flatten()
-                .pipe(Ok)
-        })
-        .await?
+        self.read_metadata(&COMMITTED)
+            .await?
+            .tap_some(|committed| tracing::trace!(?committed, "read committed state"))
+            .flatten()
+            .pipe(Ok)
     }
 
     fn start_metrics(&self, metrics: LogMetrics) {
@@ -800,24 +815,16 @@ impl DiomLogs {
     }
 
     pub(crate) async fn poison(&self, cluster_id: ClusterId) -> anyhow::Result<()> {
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || POISONED.store(&meta_keyspace, &cluster_id))
-            .await?
-            .context("saving poisoned state")
+        self.save_metadata(&POISONED, cluster_id, true).await
     }
 
     pub(crate) async fn is_poisoned(&self) -> anyhow::Result<bool> {
-        let meta_keyspace = self.meta_keyspace.clone();
-        spawn_blocking_in_current_span(move || {
-            POISONED
-                .get(&meta_keyspace)?
-                .tap_some(|cluster_id| {
-                    tracing::error!(?cluster_id, "this node was previously poisoned")
-                })
-                .is_some()
-                .pipe(Ok)
+        self.read_metadata(&POISONED).await.map(|c| {
+            c.is_some_and(|cluster_id| {
+                tracing::error!(?cluster_id, "this node was previously poisoned");
+                true
+            })
         })
-        .await?
     }
 }
 
