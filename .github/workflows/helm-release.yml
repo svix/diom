@@ -1,0 +1,121 @@
+name: Helm Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: Version bump type
+        required: true
+        type: choice
+        options: [major, minor, patch]
+      dry_run:
+        description: Dry run (skip pushes)
+        required: false
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      bump_type:
+        required: true
+        type: string
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  compute-versions:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      new_helm_version: ${{ steps.versions.outputs.new_helm_version }}
+      new_helm_tag: ${{ steps.versions.outputs.new_helm_tag }}
+      operator_image_tag: ${{ steps.versions.outputs.operator_image_tag }}
+      server_image_tag: ${{ steps.versions.outputs.server_image_tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate inputs
+        run: |
+          if [[ ! "${{ inputs.bump_type }}" =~ ^(major|minor|patch)$ ]]; then
+            echo "::error::Invalid bump_type: ${{ inputs.bump_type }}"
+            exit 1
+          fi
+
+      - name: Compute versions
+        id: versions
+        run: |
+          bump_version() {
+            local version="${1#v}"
+            local bump_type="$2"
+            IFS='.' read -r major minor patch <<< "$version"
+            case "$bump_type" in
+              major) echo "v$((major + 1)).0.0" ;;
+              minor) echo "v${major}.$((minor + 1)).0" ;;
+              patch) echo "v${major}.${minor}.$((patch + 1))" ;;
+            esac
+          }
+
+          # Helm version
+          latest_helm=$(git tag --list 'helm/v*' | sed 's|^helm/||' | sort -V | tail -1)
+          latest_helm="${latest_helm:-v0.0.0}"
+          new_helm=$(bump_version "$latest_helm" "${{ inputs.bump_type }}")
+          echo "new_helm_version=${new_helm}" >> "$GITHUB_OUTPUT"
+          echo "new_helm_tag=helm/${new_helm}" >> "$GITHUB_OUTPUT"
+
+          # Operator image tag (latest operator/v* tag)
+          # TODO: remove before merging
+          latest_operator="v0.0.1"
+          latest_operator=$(git tag --list 'operator/v*' | sed 's|^operator/||' | sort -V | tail -1)
+          if [[ -z "$latest_operator" ]]; then
+            echo "::error::No operator/v* tags found. Run an operator release first."
+            exit 1
+          fi
+          echo "operator_image_tag=${latest_operator}" >> "$GITHUB_OUTPUT"
+
+          # Server image tag (latest v* tag)
+          # TODO: remove before merging
+          latest_server="v0.0.1"
+          latest_server=$(git tag --list 'v*' | sort -V | tail -1)
+          if [[ -z "$latest_server" ]]; then
+            echo "::error::No v* tags found. Run a server release first."
+            exit 1
+          fi
+          echo "server_image_tag=${latest_server}" >> "$GITHUB_OUTPUT"
+
+          echo "Helm: ${latest_helm} -> ${new_helm}"
+          echo "Operator image tag: ${latest_operator}"
+          echo "Server image tag: ${latest_server}"
+
+      - name: Push git tag
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.versions.outputs.new_helm_tag }}" -m "Helm chart release ${{ steps.versions.outputs.new_helm_version }}"
+          git push origin "${{ steps.versions.outputs.new_helm_tag }}"
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "=== DRY RUN ==="
+          echo "Would release Helm chart: ${{ steps.versions.outputs.new_helm_tag }}"
+          echo "Operator image tag: ${{ steps.versions.outputs.operator_image_tag }}"
+          echo "Server image tag: ${{ steps.versions.outputs.server_image_tag }}"
+          echo "Would push to: oci://ghcr.io/svix/charts"
+
+  publish:
+    needs: compute-versions
+    if: ${{ !inputs.dry_run }}
+    uses: ./.github/workflows/helm-publish.yml
+    with:
+      version: ${{ needs.compute-versions.outputs.new_helm_version }}
+      operator_image_tag: ${{ needs.compute-versions.outputs.operator_image_tag }}
+      server_image_tag: ${{ needs.compute-versions.outputs.server_image_tag }}
+      is_release: true
+    secrets: inherit

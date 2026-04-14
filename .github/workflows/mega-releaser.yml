@@ -1,6 +1,18 @@
 name: Mega Releaser
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: Version bump type
+        required: true
+        type: choice
+        options: [major, minor]
+      dry_run:
+        description: Dry run (skip pushes)
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   kick-off:
@@ -8,3 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: /bin/true
+
+  helm-release:
+    needs: kick-off
+    uses: ./.github/workflows/helm-release.yml
+    with:
+      bump_type: ${{ inputs.bump_type }}
+      dry_run: ${{ inputs.dry_run }}
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write

@@ -6,9 +6,15 @@ on:
       version:
         required: true
         type: string
-      image_tag:
+      operator_image_tag:
         required: true
         type: string
+      server_image_tag:
+        required: true
+        type: string
+      is_release:
+        type: boolean
+        default: false
 
 jobs:
   helm-publish:
@@ -32,7 +38,12 @@ jobs:
 
       - name: Set image tags
         run: |
-          sed -i 's/tag: ""/tag: "${{ inputs.image_tag }}"/g' infra/helm-diom/values.yaml
+          yq -i '.operator.image.tag = "${{ inputs.operator_image_tag }}"' infra/helm-diom/values.yaml
+          yq -i '.cluster.image.tag = "${{ inputs.server_image_tag }}"' infra/helm-diom/values.yaml
+
+      - name: Use private chart name if not a release build
+        if: ${{ !inputs.is_release }}
+        run: yq -i '.name = "diom-private"' infra/helm-diom/Chart.yaml
 
       - name: Package and push chart
         run: |

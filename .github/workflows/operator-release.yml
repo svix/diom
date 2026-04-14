@@ -1,0 +1,119 @@
+name: Operator Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: Version bump type
+        required: true
+        type: choice
+        options: [major, minor, patch]
+      dry_run:
+        description: Dry run (skip pushes)
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: operator-release
+  cancel-in-progress: false
+
+jobs:
+  operator-release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    outputs:
+      new_version: ${{ steps.versions.outputs.new_version }}
+      new_tag: ${{ steps.versions.outputs.new_tag }}
+      helm_bump_type: ${{ steps.versions.outputs.helm_bump_type }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate inputs
+        run: |
+          if [[ ! "${{ inputs.bump_type }}" =~ ^(major|minor|patch)$ ]]; then
+            echo "::error::Invalid bump_type: ${{ inputs.bump_type }}"
+            exit 1
+          fi
+
+      - name: Compute versions
+        id: versions
+        run: |
+          bump_version() {
+            local version="${1#v}"
+            local bump_type="$2"
+            IFS='.' read -r major minor patch <<< "$version"
+            case "$bump_type" in
+              major) echo "v$((major + 1)).0.0" ;;
+              minor) echo "v${major}.$((minor + 1)).0" ;;
+              patch) echo "v${major}.${minor}.$((patch + 1))" ;;
+            esac
+          }
+
+          latest=$(git tag --list 'operator/v*' | sed 's|^operator/||' | sort -V | tail -1)
+          latest="${latest:-v0.0.0}"
+          new_version=$(bump_version "$latest" "${{ inputs.bump_type }}")
+          new_tag="operator/${new_version}"
+
+          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "new_tag=${new_tag}" >> "$GITHUB_OUTPUT"
+
+          # Helm gets a major bump only if operator is a major bump
+          if [[ "${{ inputs.bump_type }}" == "major" ]]; then
+            echo "helm_bump_type=major" >> "$GITHUB_OUTPUT"
+          else
+            echo "helm_bump_type=minor" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Operator: ${latest} -> ${new_version}"
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "=== DRY RUN ==="
+          echo "Would release operator: ${{ steps.versions.outputs.new_tag }}"
+          echo "Would push Docker image: svix/diom-operator:${{ steps.versions.outputs.new_version }}"
+
+  docker-build:
+    needs: operator-release
+    uses: ./.github/workflows/docker-build-release.yml
+    with:
+      image_repo: svix/diom-operator
+      version: ${{ needs.operator-release.outputs.new_version }}
+      dockerfile: ./infra/operator/Dockerfile
+      dry_run: ${{ inputs.dry_run }}
+    secrets: inherit
+
+  push-tag:
+    needs: [docker-build, operator-release]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Push git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.operator-release.outputs.new_tag }}" -m "Operator release ${{ needs.operator-release.outputs.new_version }}"
+          git push origin "${{ needs.operator-release.outputs.new_tag }}"
+
+  helm-release:
+    needs: [push-tag, operator-release]
+    uses: ./.github/workflows/helm-release.yml
+    with:
+      bump_type: ${{ needs.operator-release.outputs.helm_bump_type }}
+      dry_run: ${{ inputs.dry_run }}
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write
