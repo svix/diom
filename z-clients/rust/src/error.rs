@@ -7,9 +7,157 @@ use serde::Deserialize;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Clone)]
+pub struct Error(Arc<ErrorImpl>);
+
+impl Error {
+    fn new(op_id: &'static str, kind: ErrorKind) -> Self {
+        Self(Arc::new(ErrorImpl { op_id, kind }))
+    }
+
+    pub(crate) fn network(
+        op_id: &'static str,
+        err: impl std::error::Error + Send + Sync + 'static,
+    ) -> Self {
+        Self::new(op_id, ErrorKind::Network(NetworkError(Box::new(err) as _)))
+    }
+
+    fn client(
+        op_id: &'static str,
+        http_status: http::StatusCode,
+        body: Option<ClientErrorBody>,
+    ) -> Self {
+        let kind = ErrorKind::Client(ClientError::new(http_status, body));
+        Self::new(op_id, kind)
+    }
+
+    fn server(
+        op_id: &'static str,
+        http_status: http::StatusCode,
+        body: Option<StandardHttpError>,
+    ) -> Self {
+        let kind = ErrorKind::Server(ServerError::new(http_status, body));
+        Self::new(op_id, kind)
+    }
+
+    pub(crate) fn timeout(op_id: &'static str) -> Error {
+        Self::new(op_id, ErrorKind::Timeout)
+    }
+
+    pub(crate) fn other(
+        op_id: &'static str,
+        err: impl std::error::Error + Send + Sync + 'static,
+    ) -> Self {
+        Self::new(op_id, ErrorKind::Other(GenericError(Box::new(err) as _)))
+    }
+
+    /// Returns the ID of the operation that was attempted when this error occurred.
+    #[must_use]
+    pub fn operation_id(&self) -> &str {
+        self.0.op_id
+    }
+
+    #[must_use]
+    pub fn is_network(&self) -> bool {
+        matches!(self.0.kind, ErrorKind::Network(_))
+    }
+
+    #[must_use]
+    pub fn is_client(&self) -> bool {
+        matches!(self.0.kind, ErrorKind::Client(_))
+    }
+
+    #[must_use]
+    pub fn is_server(&self) -> bool {
+        matches!(self.0.kind, ErrorKind::Server(_))
+    }
+
+    #[must_use]
+    pub fn is_timeout(&self) -> bool {
+        matches!(self.0.kind, ErrorKind::Timeout)
+    }
+
+    #[must_use]
+    pub fn is_other(&self) -> bool {
+        matches!(self.0.kind, ErrorKind::Other(_))
+    }
+
+    pub(crate) fn is_retryable(&self) -> bool {
+        match self.0.kind {
+            ErrorKind::Network(_) | ErrorKind::Server(_) | ErrorKind::Timeout => true,
+            ErrorKind::Client(_) | ErrorKind::Other(_) => false,
+        }
+    }
+
+    pub(crate) async fn from_response(
+        op_id: &'static str,
+        status_code: http::StatusCode,
+        body: Incoming,
+        content_type: ContentType,
+    ) -> Self {
+        match body.collect().await {
+            Ok(collected) => {
+                let bytes = collected.to_bytes();
+                let mime: headers::Mime = content_type.into();
+                if status_code == http::StatusCode::UNPROCESSABLE_ENTITY {
+                    let body = deserialize_body(status_code, &mime, &bytes)
+                        .map(ClientErrorBody::Validation);
+                    Self::client(op_id, status_code, body)
+                } else if status_code.is_client_error() {
+                    let body =
+                        deserialize_body(status_code, &mime, &bytes).map(ClientErrorBody::Standard);
+                    Self::client(op_id, status_code, body)
+                } else {
+                    let body = deserialize_body(status_code, &mime, &bytes);
+                    Self::server(op_id, status_code, body)
+                }
+            }
+            Err(e) => Self::network(op_id, e),
+        }
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.0.kind {
+            // don't print inner errors that are returned from Error::source
+            ErrorKind::Network(_) => write!(f, "network error"),
+            ErrorKind::Client(e) => write!(f, "client error: {e}"),
+            ErrorKind::Server(e) => write!(f, "server error: {e}"),
+            ErrorKind::Timeout => write!(f, "timeout"),
+            ErrorKind::Other(_) => write!(f, "other"),
+        }
+    }
+}
+
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let ErrorImpl { op_id, kind } = &*self.0;
+        f.debug_struct("Error")
+            .field("operation_id", op_id)
+            .field("kind", kind)
+            .finish()
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match &self.0.kind {
+            ErrorKind::Network(e) => Some(&*e.0),
+            ErrorKind::Other(e) => Some(&*e.0),
+            _ => None,
+        }
+    }
+}
+
+struct ErrorImpl {
+    op_id: &'static str,
+    kind: ErrorKind,
+}
+
 /// The error type returned from the Diom API
-#[derive(Clone, Debug)]
-pub enum Error {
+#[derive(Debug)]
+pub enum ErrorKind {
     /// Could not make the intended request and fully receive the response.
     Network(NetworkError),
     /// The server indicated that the request was invalid.
@@ -22,111 +170,15 @@ pub enum Error {
     Other(GenericError),
 }
 
-impl Error {
-    pub(crate) fn network(err: impl std::error::Error + Send + Sync + 'static) -> Self {
-        Self::Network(NetworkError(Arc::new(err) as _))
-    }
+#[derive(Debug)]
+pub struct NetworkError(Box<dyn std::error::Error + Send + Sync + 'static>);
 
-    pub(crate) fn other(err: impl std::error::Error + Send + Sync + 'static) -> Self {
-        Self::Other(GenericError(Arc::new(err) as _))
-    }
-
-    #[must_use]
-    pub fn is_network(&self) -> bool {
-        matches!(self, Self::Network(_))
-    }
-
-    #[must_use]
-    pub fn is_client(&self) -> bool {
-        matches!(self, Self::Client(_))
-    }
-
-    #[must_use]
-    pub fn is_server(&self) -> bool {
-        matches!(self, Self::Server(_))
-    }
-
-    #[must_use]
-    pub fn is_timeout(&self) -> bool {
-        matches!(self, Self::Timeout)
-    }
-
-    #[must_use]
-    pub fn is_other(&self) -> bool {
-        matches!(self, Self::Other(_))
-    }
-
-    pub(crate) fn is_retryable(&self) -> bool {
-        match self {
-            Self::Network(_) | Self::Server(_) | Self::Timeout => true,
-            Self::Client(_) | Self::Other(_) => false,
-        }
-    }
-
-    pub(crate) async fn from_response(
-        status_code: http::StatusCode,
-        body: Incoming,
-        content_type: ContentType,
-    ) -> Self {
-        match body.collect().await {
-            Ok(collected) => {
-                let bytes = collected.to_bytes();
-                let mime: headers::Mime = content_type.into();
-                if status_code == http::StatusCode::UNPROCESSABLE_ENTITY {
-                    Self::Client(ClientError::new(
-                        status_code,
-                        deserialize_body(status_code, &mime, &bytes)
-                            .map(ClientErrorBody::Validation),
-                    ))
-                } else if status_code.is_client_error() {
-                    Self::Client(ClientError::new(
-                        status_code,
-                        deserialize_body(status_code, &mime, &bytes).map(ClientErrorBody::Standard),
-                    ))
-                } else {
-                    Self::Server(ServerError::new(
-                        status_code,
-                        deserialize_body(status_code, &mime, &bytes),
-                    ))
-                }
-            }
-            Err(e) => Self::network(e),
-        }
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            // don't print inner errors that are returned from Error::source
-            Self::Network(_) => write!(f, "network error"),
-            Self::Client(e) => write!(f, "client error: {e}"),
-            Self::Server(e) => write!(f, "server error: {e}"),
-            Self::Timeout => write!(f, "timeout"),
-            Self::Other(_) => write!(f, "other"),
-        }
-    }
-}
-
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::Network(e) => Some(&*e.0),
-            Self::Other(e) => Some(&*e.0),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct NetworkError(Arc<dyn std::error::Error + Send + Sync + 'static>);
-
-#[derive(Clone, Debug)]
-pub struct ClientError(Arc<ClientErrorInner>);
+#[derive(Debug)]
+pub struct ClientError(Box<ClientErrorInner>);
 
 impl ClientError {
     fn new(http_status: http::StatusCode, body: Option<ClientErrorBody>) -> Self {
-        Self(Arc::new(ClientErrorInner { http_status, body }))
+        Self(Box::new(ClientErrorInner { http_status, body }))
     }
 
     /// Stable identifier for the specific error condition that was triggered.
@@ -183,24 +235,27 @@ enum ClientErrorBody {
     Validation(HttpValidationError),
 }
 
-#[derive(Clone, Debug)]
-pub struct ServerError(Arc<ServerErrorInner>);
+#[derive(Debug)]
+pub struct ServerError {
+    http_status: http::StatusCode,
+    body: Option<StandardHttpError>,
+}
 
 impl ServerError {
     fn new(http_status: http::StatusCode, body: Option<StandardHttpError>) -> Self {
-        Self(Arc::new(ServerErrorInner { http_status, body }))
+        Self { http_status, body }
     }
 
     /// Get the HTTP status associated with this error.
     pub fn http_status(&self) -> http::StatusCode {
-        self.0.http_status
+        self.http_status
     }
 }
 
 impl fmt::Display for ServerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "HTTP {}", self.0.http_status)?;
-        match &self.0.body {
+        write!(f, "HTTP {}", self.http_status)?;
+        match &self.body {
             Some(e) => {
                 write!(f, " (code='{}', detail='{}')", e.code, e.detail)
             }
@@ -210,13 +265,7 @@ impl fmt::Display for ServerError {
 }
 
 #[derive(Debug)]
-struct ServerErrorInner {
-    http_status: http::StatusCode,
-    body: Option<StandardHttpError>,
-}
-
-#[derive(Clone, Debug)]
-pub struct GenericError(Arc<dyn std::error::Error + Send + Sync + 'static>);
+pub struct GenericError(Box<dyn std::error::Error + Send + Sync + 'static>);
 
 fn deserialize_body<'b, 'a, T>(
     status_code: http::StatusCode,
@@ -241,13 +290,13 @@ where
     payload
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct StandardHttpError {
     pub code: String,
     pub detail: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct HttpValidationError {
     pub detail: Vec<ValidationError>,
 }

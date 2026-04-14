@@ -27,6 +27,7 @@ pub(crate) enum Auth {
 pub(crate) struct Request {
     method: http::Method,
     path: &'static str,
+    op_id: &'static str,
     query_params: HashMap<&'static str, String>,
     no_return_type: bool,
     header_params: HashMap<&'static str, String>,
@@ -35,9 +36,15 @@ pub(crate) struct Request {
 
 impl Request {
     pub(crate) fn new(method: http::Method, path: &'static str) -> Self {
+        let op_id = path.strip_prefix("/api/").unwrap_or_else(|| {
+            tracing::error!("request path must begin with /api/");
+            "[ERROR]"
+        });
+
         Request {
             method,
             path,
+            op_id,
             query_params: HashMap::new(),
             header_params: HashMap::new(),
             serialized_body: None,
@@ -59,6 +66,7 @@ impl Request {
         self,
         conf: &Configuration,
     ) -> Result<T, Error> {
+        let op_id = self.op_id;
         match self.execute_with_backoff(conf).await? {
             // This is a hack; if there's no_ret_type, T is (), but rmp_serde gives an
             // error when deserializing b"" into (), so deserialize a msgpack null into
@@ -67,12 +75,13 @@ impl Request {
             // T::default() here instead since () implements that, but then we'd
             // need to impl default for all models.
             None => Ok(rmp_serde::from_slice(&[0xc0]).expect("serde null value")),
-            Some(bytes) => Ok(rmp_serde::from_slice(&bytes).map_err(Error::other)?),
+            Some(bytes) => Ok(rmp_serde::from_slice(&bytes).map_err(|e| Error::other(op_id, e))?),
         }
     }
 
     async fn execute_with_backoff(self, conf: &Configuration) -> Result<Option<Bytes>, Error> {
         let no_return_type = self.no_return_type;
+        let op_id = self.op_id;
 
         const MAX_BACKOFF: Duration = Duration::from_secs(5);
 
@@ -94,14 +103,18 @@ impl Request {
         let mut retry_count = 0;
 
         let execute_request = async |request| {
-            let response = conf.client.request(request).await.map_err(Error::network)?;
+            let response = conf
+                .client
+                .request(request)
+                .await
+                .map_err(|e| Error::network(op_id, e))?;
 
             let status = response.status();
             if !status.is_success() {
                 let mut values = response.headers().get_all(CONTENT_TYPE).iter();
                 let content_type =
                     ContentType::decode(&mut values).unwrap_or_else(|_| ContentType::json());
-                Err(Error::from_response(status, response.into_body(), content_type).await)
+                Err(Error::from_response(op_id, status, response.into_body(), content_type).await)
             } else if no_return_type {
                 Ok(None)
             } else {
@@ -109,7 +122,7 @@ impl Request {
                     .into_body()
                     .collect()
                     .await
-                    .map_err(Error::network)?
+                    .map_err(|e| Error::network(op_id, e))?
                     .to_bytes();
                 Ok(Some(bytes))
             }
@@ -120,7 +133,7 @@ impl Request {
             let res = if let Some(duration) = conf.timeout {
                 tokio::time::timeout(duration, request_fut)
                     .await
-                    .map_err(|_| Error::Timeout)
+                    .map_err(|_| Error::timeout(op_id))
                     .flatten()
             } else {
                 request_fut.await
@@ -149,6 +162,7 @@ impl Request {
     }
 
     fn build_request(self, conf: &Configuration) -> Result<http::Request<Full<Bytes>>, Error> {
+        let op_id = self.op_id;
         let mut uri = format!("{}{}", conf.server_url, self.path);
 
         let mut query_string = form_urlencoded::Serializer::new("".to_owned());
@@ -162,16 +176,20 @@ impl Request {
             uri += &query_string_str;
         }
 
-        let uri = http::Uri::try_from(uri).map_err(Error::other)?;
+        let uri = http::Uri::try_from(uri).map_err(|e| Error::other(op_id, e))?;
         let mut req_builder = http::Request::builder().uri(uri).method(self.method);
 
         let mut request = if let Some(body) = self.serialized_body {
             let req_headers = req_builder.headers_mut().unwrap();
             req_headers.insert(CONTENT_TYPE, APPLICATION_MSGPACK);
             req_headers.insert(CONTENT_LENGTH, body.len().into());
-            req_builder.body(Full::from(body)).map_err(Error::other)?
+            req_builder
+                .body(Full::from(body))
+                .map_err(|e| Error::other(op_id, e))?
         } else {
-            req_builder.body(Full::default()).map_err(Error::other)?
+            req_builder
+                .body(Full::default())
+                .map_err(|e| Error::other(op_id, e))?
         };
 
         let request_headers = request.headers_mut();
@@ -186,7 +204,9 @@ impl Request {
         match auth {
             Auth::Bearer => {
                 if let Some(token) = &conf.bearer_access_token {
-                    let value = format!("Bearer {token}").try_into().map_err(Error::other)?;
+                    let value = format!("Bearer {token}")
+                        .try_into()
+                        .map_err(|e| Error::other(op_id, e))?;
                     request_headers.insert(AUTHORIZATION, value);
                 }
             }
@@ -194,12 +214,12 @@ impl Request {
         }
 
         if let Some(user_agent) = &conf.user_agent {
-            let value = user_agent.try_into().map_err(Error::other)?;
+            let value = user_agent.try_into().map_err(|e| Error::other(op_id, e))?;
             request_headers.insert(USER_AGENT, value);
         }
 
         for (k, v) in self.header_params {
-            let v = v.try_into().map_err(Error::other)?;
+            let v = v.try_into().map_err(|e| Error::other(op_id, e))?;
             request_headers.insert(k, v);
         }
 

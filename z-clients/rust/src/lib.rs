@@ -11,5 +11,8 @@ mod unix_timestamp_ms_serde;
 pub(crate) use self::client::Configuration;
 pub use self::{
     client::{DEFAULT_URL, DiomClient, DiomOptions},
-    error::{ClientError, Error, GenericError, Result, ServerError, ValidationError},
+    error::{
+        ClientError, Error, ErrorKind, GenericError, NetworkError, Result, ServerError,
+        ValidationError,
+    },
 };
