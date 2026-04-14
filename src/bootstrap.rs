@@ -103,17 +103,16 @@ impl BootstrapCommand {
         Ok(())
     }
 
-    fn name(&self) -> &NamespaceName {
-        match self {
+    fn namespace(&self) -> Option<&NamespaceName> {
+        Some(match self {
             BootstrapCommand::Kv(v) => &v.name,
             BootstrapCommand::Cache(v) => &v.name,
             BootstrapCommand::Idempotency(v) => &v.name,
             BootstrapCommand::RateLimit(v) => &v.name,
             BootstrapCommand::Msgs(v) => &v.name,
             BootstrapCommand::AuthToken(v) => &v.name,
-            BootstrapCommand::AuthPolicy(v) => v.id.as_str(),
-            BootstrapCommand::AuthRole(v) => v.id.as_str(),
-        }
+            BootstrapCommand::AuthPolicy(_) | BootstrapCommand::AuthRole(_) => return None,
+        })
     }
 }
 
@@ -191,7 +190,8 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
     macro_rules! ensure_default {
         ($variant:ident, $constructor:expr) => {
             if !commands.iter().any(|c| {
-                matches!(c, BootstrapCommand::$variant(_)) && *c.name() == *DEFAULT_NAMESPACE_NAME
+                matches!(c, BootstrapCommand::$variant(_))
+                    && c.namespace() == Some(&*DEFAULT_NAMESPACE_NAME)
             }) {
                 commands.insert(0, $constructor);
             }
