@@ -71,7 +71,7 @@ impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgNamespaceCreateOut {
     pub name: NamespaceName,
     pub retention: Retention,
@@ -104,7 +104,7 @@ struct MsgNamespaceGetIn {
 
 namespace_request_input!(MsgNamespaceGetIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgNamespaceGetOut {
     pub name: NamespaceName,
     pub retention: Retention,
@@ -151,14 +151,14 @@ struct MsgPublishIn {
 
 request_input!(MsgPublishIn, "publish");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgPublishOutTopic {
     pub topic: TopicPartition,
     pub start_offset: Offset,
     pub offset: Offset,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgPublishOut {
     pub topics: Vec<MsgPublishOutTopic>,
 }
@@ -230,7 +230,7 @@ struct MsgStreamReceiveIn {
 
 request_input!(MsgStreamReceiveIn, "stream.receive");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgStreamReceiveOut {
     pub msgs: Vec<StreamMsgOut>,
 }
@@ -334,7 +334,7 @@ struct MsgStreamCommitIn {
 
 request_input!(MsgStreamCommitIn, "stream.commit");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgStreamCommitOut {}
 
 /// Commits an offset for a consumer group on a specific partition.
@@ -376,7 +376,7 @@ struct MsgStreamSeekIn {
 
 request_input!(MsgStreamSeekIn, "stream.seek");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgStreamSeekOut {}
 
 /// Repositions a consumer group's read cursor on a topic.
@@ -438,7 +438,7 @@ struct MsgQueueReceiveIn {
 
 request_input!(MsgQueueReceiveIn, "queue.receive");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueReceiveOut {
     pub msgs: Vec<QueueMsgOut>,
 }
@@ -541,7 +541,7 @@ struct MsgQueueAckIn {
 
 request_input!(MsgQueueAckIn, "queue.ack");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueAckOut {}
 
 /// Acknowledges messages by their opaque msg_ids.
@@ -583,7 +583,7 @@ struct MsgQueueExtendLeaseIn {
 
 request_input!(MsgQueueExtendLeaseIn, "extend-lease");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueExtendLeaseOut {}
 
 /// Extends the lease on in-flight messages.
@@ -631,7 +631,7 @@ struct MsgQueueConfigureIn {
 
 request_input!(MsgQueueConfigureIn, "queue.configure");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueConfigureOut {
     pub retry_schedule: Vec<u64>,
     pub dlq_topic: Option<TopicName>,
@@ -683,7 +683,7 @@ struct MsgQueueNackIn {
 
 request_input!(MsgQueueNackIn, "queue.nack");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueNackOut {}
 
 /// Rejects messages, sending them to the dead-letter queue.
@@ -723,7 +723,7 @@ struct MsgQueueRedriveDlqIn {
 
 request_input!(MsgQueueRedriveDlqIn, "queue.redrive-dlq");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueRedriveDlqOut {}
 
 /// Moves all dead-letter queue messages back to the main queue for reprocessing.
@@ -759,7 +759,7 @@ struct MsgTopicConfigureIn {
 
 request_input!(MsgTopicConfigureIn, "topic.configure");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgTopicConfigureOut {
     pub partitions: u16,
 }

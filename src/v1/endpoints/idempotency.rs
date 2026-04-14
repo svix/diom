@@ -211,7 +211,7 @@ struct IdempotencyGetNamespaceIn {
 
 namespace_request_input!(IdempotencyGetNamespaceIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
@@ -231,7 +231,7 @@ impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct IdempotencyCreateNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,

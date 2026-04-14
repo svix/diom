@@ -414,7 +414,7 @@ struct AuthTokenGetNamespaceIn {
 
 namespace_request_input!(AuthTokenGetNamespaceIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct AuthTokenGetNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
@@ -434,7 +434,7 @@ impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct AuthTokenCreateNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,

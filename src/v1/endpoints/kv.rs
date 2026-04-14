@@ -67,7 +67,7 @@ pub struct KvSetIn {
 
 request_input!(KvSetIn, "set");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KvSetOut {
     /// Whether the operation succeeded or was a noop due to pre-conditions.
     pub success: bool,
@@ -88,7 +88,7 @@ pub struct KvGetIn {
 
 request_input!(KvGetIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KvGetOut {
     /// Time of expiry
     pub expiry: Option<UnixTimestampMs>,
@@ -126,7 +126,7 @@ pub struct KvDeleteIn {
 
 request_input!(KvDeleteIn, "delete");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KvDeleteOut {
     /// Whether the operation succeeded or was a noop due to pre-conditions.
     pub success: bool,
@@ -222,7 +222,7 @@ struct KvGetNamespaceIn {
 
 namespace_request_input!(KvGetNamespaceIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct KvGetNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
@@ -242,7 +242,7 @@ impl From<KvCreateNamespaceIn> for CreateKvOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct KvCreateNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
