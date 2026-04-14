@@ -14,7 +14,7 @@ use tracing::Span;
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, Partition, TopicIn, TopicName},
-    tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow},
+    tables::{MsgRow, QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueReceiveResponse};
@@ -89,7 +89,7 @@ impl QueueReceiveOperation {
                 // Queue starts from offset 0 (earliest), unlike stream which starts from latest.
                 let mut cursor = match StreamLeaseRow::fetch(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
                 )? {
                     Some(cursor) => cursor,
                     None => StreamLeaseRow::new()?,
@@ -146,7 +146,7 @@ impl QueueReceiveOperation {
 
                 batch.insert_row(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
                     &cursor,
                 )?;
 
@@ -191,7 +191,7 @@ fn lease_available_msgs(
 
         let existing_lease = QueueLeaseRow::fetch(
             &state.metadata_tables,
-            QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
+            QueueLeaseKey::build_key(&topic_id, &msg_id.partition, &msg_id.offset, consumer_group),
         )?;
 
         if existing_lease
@@ -209,7 +209,12 @@ fn lease_available_msgs(
         {
             batch.insert_row(
                 &state.metadata_tables,
-                QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
+                QueueLeaseKey::build_key(
+                    &topic_id,
+                    &msg_id.partition,
+                    &msg_id.offset,
+                    consumer_group,
+                ),
                 &QueueLeaseRow {
                     expiry: scheduled_at,
                     dlq: false,
@@ -224,7 +229,7 @@ fn lease_available_msgs(
 
         batch.insert_row(
             &state.metadata_tables,
-            QueueLeaseRow::key_for(topic_id, &msg_id, consumer_group),
+            QueueLeaseKey::build_key(&topic_id, &msg_id.partition, &msg_id.offset, consumer_group),
             &QueueLeaseRow {
                 expiry,
                 dlq: false,
@@ -258,15 +263,23 @@ pub(crate) fn compact_cursor(
 ) -> Result<()> {
     loop {
         let check_id = MsgId::new(partition, cursor.offset);
-        match QueueLeaseRow::fetch(
-            &state.metadata_tables,
-            QueueLeaseRow::key_for(topic_id, &check_id, consumer_group),
-        )? {
+        let key = QueueLeaseKey::build_key(
+            &topic_id,
+            &check_id.partition,
+            &check_id.offset,
+            consumer_group,
+        );
+        match QueueLeaseRow::fetch(&state.metadata_tables, key)? {
             Some(lease) if lease.is_acked() => {
-                batch.remove(
+                batch.remove_row::<QueueLeaseRow, _>(
                     &state.metadata_tables,
-                    QueueLeaseRow::key_for(topic_id, &check_id, consumer_group).into_fjall_key(),
-                );
+                    QueueLeaseKey::build_key(
+                        &topic_id,
+                        &check_id.partition,
+                        &check_id.offset,
+                        consumer_group,
+                    ),
+                )?;
                 cursor.offset += 1;
             }
             // Advance past DLQ'd messages but keep their rows for redrive

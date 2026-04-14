@@ -8,6 +8,7 @@
   ```bash
   code --enable-extension rust-lang.rust-analyzer
   ```
+* Do not bother checking for unused imports. Automatic linting tools will handle that.
 
 # Code Style
 * NEVER make changes to `/clients` or `openapi.json` unless specifically directed to. Code generation tools will handle this for us.

@@ -15,7 +15,10 @@ use crate::{
 };
 use anyhow::{Context, bail};
 use diom_msgs::entities::Retention;
-use diom_namespace::{DEFAULT_NAMESPACE_NAME, entities::EvictionPolicy};
+use diom_namespace::{
+    DEFAULT_NAMESPACE_NAME,
+    entities::{EvictionPolicy, NamespaceName},
+};
 
 #[derive(Debug)]
 enum BootstrapCommand {
@@ -33,25 +36,25 @@ impl BootstrapCommand {
     async fn apply(self, raft_state: &RaftState) -> anyhow::Result<()> {
         match self {
             BootstrapCommand::Kv(v) => {
-                tracing::debug!(name = v.name, "bootstrapping kv");
+                tracing::debug!(name = v.name.as_str(), "bootstrapping kv");
                 raft_state
                     .client_write(diom_kv::operations::CreateKvOperation::from(v))
                     .await?;
             }
             BootstrapCommand::Cache(v) => {
-                tracing::debug!(name = v.name, "bootstrapping cache");
+                tracing::debug!(name = v.name.as_str(), "bootstrapping cache");
                 raft_state
                     .client_write(diom_cache::operations::CreateCacheOperation::from(v))
                     .await?;
             }
             BootstrapCommand::Idempotency(v) => {
-                tracing::debug!(name = v.name, "bootstrapping idempotency");
+                tracing::debug!(name = v.name.as_str(), "bootstrapping idempotency");
                 raft_state
                     .client_write(diom_idempotency::operations::CreateIdempotencyOperation::from(v))
                     .await?;
             }
             BootstrapCommand::RateLimit(v) => {
-                tracing::debug!(name = v.name, "bootstrapping rate-limit");
+                tracing::debug!(name = v.name.as_str(), "bootstrapping rate-limit");
                 raft_state
                     .client_write(diom_rate_limit::operations::CreateRateLimitOperation::from(
                         v,
@@ -59,13 +62,13 @@ impl BootstrapCommand {
                     .await?;
             }
             BootstrapCommand::Msgs(v) => {
-                tracing::debug!(name = v.name, "bootstrapping msgs");
+                tracing::debug!(name = v.name.as_str(), "bootstrapping msgs");
                 raft_state
                     .client_write(diom_msgs::operations::CreateNamespaceOperation::from(v))
                     .await?;
             }
             BootstrapCommand::AuthToken(v) => {
-                tracing::debug!(name = v.name, "bootstrapping auth_token");
+                tracing::debug!(name = v.name.as_str(), "bootstrapping auth_token");
                 raft_state
                     .client_write(
                         diom_auth_token::operations::CreateAuthTokenNamespaceOperation::from(v),
@@ -100,7 +103,7 @@ impl BootstrapCommand {
         Ok(())
     }
 
-    fn name(&self) -> &str {
+    fn name(&self) -> &NamespaceName {
         match self {
             BootstrapCommand::Kv(v) => &v.name,
             BootstrapCommand::Cache(v) => &v.name,
@@ -188,7 +191,7 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
     macro_rules! ensure_default {
         ($variant:ident, $constructor:expr) => {
             if !commands.iter().any(|c| {
-                matches!(c, BootstrapCommand::$variant(_)) && c.name() == DEFAULT_NAMESPACE_NAME
+                matches!(c, BootstrapCommand::$variant(_)) && *c.name() == *DEFAULT_NAMESPACE_NAME
             }) {
                 commands.insert(0, $constructor);
             }
@@ -198,45 +201,45 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
     ensure_default!(
         AuthToken,
         BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
-            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
     commands.insert(
         0,
         BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
-            name: INTERNAL_NAMESPACE.to_string(),
+            name: (*INTERNAL_NAMESPACE).clone(),
         }),
     );
     ensure_default!(
         Msgs,
         BootstrapCommand::Msgs(MsgNamespaceCreateIn {
-            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            name: (*DEFAULT_NAMESPACE_NAME).clone(),
             retention: Retention::default(),
         })
     );
     ensure_default!(
         RateLimit,
         BootstrapCommand::RateLimit(RateLimitCreateNamespaceIn {
-            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
     ensure_default!(
         Idempotency,
         BootstrapCommand::Idempotency(IdempotencyCreateNamespaceIn {
-            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
     ensure_default!(
         Cache,
         BootstrapCommand::Cache(CacheCreateNamespaceIn {
-            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            name: (*DEFAULT_NAMESPACE_NAME).clone(),
             eviction_policy: EvictionPolicy::NoEviction,
         })
     );
     ensure_default!(
         Kv,
         BootstrapCommand::Kv(KvCreateNamespaceIn {
-            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
 }
@@ -323,7 +326,7 @@ mod tests {
         let BootstrapCommand::Kv(v) = cmd else {
             panic!()
         };
-        assert_eq!(v.name, "myns");
+        assert_eq!(v.name.as_str(), "myns");
     }
 
     #[test]
@@ -342,14 +345,14 @@ mod tests {
         let BootstrapCommand::Idempotency(v) = cmd else {
             panic!()
         };
-        assert_eq!(v.name, "myns");
+        assert_eq!(v.name.as_str(), "myns");
     }
 
     #[test]
     fn rate_limit() {
         let cmd: BootstrapCommand =
             r#"rate-limit namespace create {"name":"myns"}"#.parse().unwrap();
-        assert!(matches!(cmd, BootstrapCommand::RateLimit(v) if &v.name == "myns"));
+        assert!(matches!(cmd, BootstrapCommand::RateLimit(v) if v.name.as_str() == "myns"));
     }
 
     #[test]
@@ -358,7 +361,7 @@ mod tests {
         let BootstrapCommand::Msgs(v) = cmd else {
             panic!()
         };
-        assert_eq!(v.name, "myns");
+        assert_eq!(v.name.as_str(), "myns");
         assert_eq!(v.retention, Retention::default());
     }
 
@@ -463,8 +466,8 @@ mod tests {
         "#;
         let cmds = parse_bootstrap(input).unwrap();
         assert_eq!(cmds.len(), 2);
-        assert!(matches!(&cmds[0], BootstrapCommand::Kv(v) if v.name == "foo"));
-        assert!(matches!(&cmds[1], BootstrapCommand::Cache(v) if v.name == "bar"));
+        assert!(matches!(&cmds[0], BootstrapCommand::Kv(v) if v.name.as_str() == "foo"));
+        assert!(matches!(&cmds[1], BootstrapCommand::Cache(v) if v.name.as_str() == "bar"));
     }
 
     #[test]
@@ -487,22 +490,22 @@ mod tests {
         assert!(cmds.len() >= 5);
         assert!(
             cmds.iter()
-                .any(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == DEFAULT_NAMESPACE_NAME))
+                .any(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == *DEFAULT_NAMESPACE_NAME))
         );
         assert!(
             cmds.iter().any(
-                |c| matches!(c, BootstrapCommand::Cache(v) if v.name == DEFAULT_NAMESPACE_NAME)
+                |c| matches!(c, BootstrapCommand::Cache(v) if v.name == *DEFAULT_NAMESPACE_NAME)
             )
         );
         assert!(cmds.iter().any(
-            |c| matches!(c, BootstrapCommand::Idempotency(v) if v.name == DEFAULT_NAMESPACE_NAME)
+            |c| matches!(c, BootstrapCommand::Idempotency(v) if v.name == *DEFAULT_NAMESPACE_NAME)
         ));
         assert!(cmds.iter().any(
-            |c| matches!(c, BootstrapCommand::RateLimit(v) if v.name == DEFAULT_NAMESPACE_NAME)
+            |c| matches!(c, BootstrapCommand::RateLimit(v) if v.name == *DEFAULT_NAMESPACE_NAME)
         ));
         assert!(
             cmds.iter().any(
-                |c| matches!(c, BootstrapCommand::Msgs(v) if v.name == DEFAULT_NAMESPACE_NAME)
+                |c| matches!(c, BootstrapCommand::Msgs(v) if v.name == *DEFAULT_NAMESPACE_NAME)
             )
         );
     }
@@ -510,12 +513,12 @@ mod tests {
     #[test]
     fn ensure_defaults_does_not_duplicate_existing_default() {
         let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
-            name: DEFAULT_NAMESPACE_NAME.to_string(),
+            name: DEFAULT_NAMESPACE_NAME.clone(),
         })];
         ensure_defaults(&mut cmds);
         let kv_defaults: Vec<_> = cmds
             .iter()
-            .filter(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == DEFAULT_NAMESPACE_NAME))
+            .filter(|c| matches!(c, BootstrapCommand::Kv(v) if v.name == *DEFAULT_NAMESPACE_NAME))
             .collect();
         assert_eq!(kv_defaults.len(), 1);
     }
@@ -523,7 +526,7 @@ mod tests {
     #[test]
     fn ensure_defaults_does_not_suppress_non_default_namespaces() {
         let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
-            name: "other".to_string(),
+            name: NamespaceName("other".to_owned()),
         })];
         ensure_defaults(&mut cmds);
         let kv_count = cmds

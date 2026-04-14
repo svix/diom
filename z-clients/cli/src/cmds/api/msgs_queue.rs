@@ -21,7 +21,7 @@ pub enum MsgsQueueCommands {
     /// are acked or their lease expires.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"batch_size\": \"...\",
   \"lease_duration_ms\": \"...\",
   \"batch_wait_ms\": \"...\"
@@ -39,7 +39,7 @@ pub enum MsgsQueueCommands {
     /// Acked messages are permanently removed from the queue and will never be re-delivered.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"msg_ids\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -55,7 +55,7 @@ pub enum MsgsQueueCommands {
     /// message from being re-delivered to another consumer.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"msg_ids\": \"...\",
   \"lease_duration_ms\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -72,7 +72,7 @@ pub enum MsgsQueueCommands {
     /// the message is moved to the DLQ (or forwarded to `dlq_topic` if set).
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"retry_schedule\": \"...\",
   \"dlq_topic\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -91,7 +91,7 @@ pub enum MsgsQueueCommands {
     /// move them back to the queue for reprocessing.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"msg_ids\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -104,7 +104,7 @@ pub enum MsgsQueueCommands {
     /// Moves all dead-letter queue messages back to the main queue for reprocessing.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\"
+  \"namespace\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

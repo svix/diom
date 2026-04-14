@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, TopicName},
-    tables::{QueueConfigRow, TopicRow},
+    tables::{QueueConfigKey, QueueConfigRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueConfigureResponse};
@@ -63,7 +63,7 @@ impl QueueConfigureOperation {
 
             batch.insert_row(
                 &state.metadata_tables,
-                QueueConfigRow::key_for(topic_row.id, &self.consumer_group),
+                QueueConfigKey::build_key(&topic_row.id, &self.consumer_group),
                 &config,
             )?;
             batch.commit().map_err(Error::from)?;

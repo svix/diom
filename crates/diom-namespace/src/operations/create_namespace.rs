@@ -6,12 +6,16 @@ use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
-use crate::{State, entities::ModuleConfig, tables::Namespace};
+use crate::{
+    State,
+    entities::{ModuleConfig, NamespaceName},
+    tables::Namespace,
+};
 
 #[derive(Deserialize, Serialize)]
 #[serde(bound = "C: ModuleConfig")]
 pub struct CreateNamespace<C: ModuleConfig> {
-    name: String,
+    name: NamespaceName,
     config: C,
     id_random_bytes: UuidV7RandomBytes,
 }
@@ -19,14 +23,14 @@ pub struct CreateNamespace<C: ModuleConfig> {
 #[derive(Deserialize, Serialize)]
 #[serde(bound = "C: ModuleConfig")]
 pub struct CreateNamespaceOutput<C: ModuleConfig> {
-    pub name: String,
+    pub name: NamespaceName,
     pub config: C,
     pub created: Timestamp,
     pub updated: Timestamp,
 }
 
 impl<C: ModuleConfig + 'static> CreateNamespace<C> {
-    pub fn new(name: String, config: C, id_random_bytes: UuidV7RandomBytes) -> Self {
+    pub fn new(name: NamespaceName, config: C, id_random_bytes: UuidV7RandomBytes) -> Self {
         Self {
             name,
             config,

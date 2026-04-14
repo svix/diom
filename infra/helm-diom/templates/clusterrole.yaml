@@ -6,35 +6,38 @@ metadata:
   labels:
     {{- include "diom-operator.labels" . | nindent 4 }}
 rules:
-  # Manage DiomCluster resources and their status subresource.
   - apiGroups: ["diom.svix.com"]
     resources: ["diomclusters"]
     verbs: ["get", "list", "watch", "patch", "update"]
+
   - apiGroups: ["diom.svix.com"]
     resources: ["diomclusters/status"]
     verbs: ["get", "patch", "update"]
 
-  # Manage owned StatefulSets.
   - apiGroups: ["apps"]
     resources: ["statefulsets"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
-  # Manage owned Services.
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
-  # Manage owned PodDisruptionBudgets.
   - apiGroups: ["policy"]
     resources: ["poddisruptionbudgets"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
-  # Read pod status (used to determine cluster health).
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
 
-  # Emit Kubernetes events.
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch"]

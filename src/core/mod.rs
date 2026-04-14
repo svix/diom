@@ -1,3 +1,7 @@
+use std::sync::LazyLock;
+
+use diom_namespace::entities::NamespaceName;
+
 pub mod auth;
 pub mod cluster;
 pub mod jwt;
@@ -5,7 +9,8 @@ pub mod metrics;
 pub mod otel_spans;
 pub mod retry;
 
-pub const INTERNAL_NAMESPACE: &str = "_internal";
+pub static INTERNAL_NAMESPACE: LazyLock<NamespaceName> =
+    LazyLock::new(|| NamespaceName("_internal".to_owned()));
 
 #[cfg(test)]
 mod tests {

@@ -66,7 +66,7 @@ mod tests {
     use crate::{
         METADATA_KEYSPACE,
         entities::{MsgsIdempotencyKey, TopicName},
-        tables::{IdempotencyRow, TopicRow},
+        tables::{IdempotencyKey, IdempotencyRow, TopicKey, TopicRow},
     };
     use diom_core::Monotime;
     use diom_id::{NamespaceId, UuidV7RandomBytes};
@@ -97,7 +97,7 @@ mod tests {
 
         TopicRow::insert(
             &ks,
-            TopicRow::key_for(ns, &topic),
+            TopicKey::build_key(&ns, &topic),
             &TopicRow::new(
                 topic.clone(),
                 Timestamp::UNIX_EPOCH,
@@ -108,7 +108,7 @@ mod tests {
         let expired_key = MsgsIdempotencyKey::new(None, &topic, "old");
         IdempotencyRow::insert(
             &ks,
-            IdempotencyRow::key_for(ns, &expired_key),
+            IdempotencyKey::build_key(&ns, &expired_key),
             &IdempotencyRow {
                 expiry: Timestamp::from_second(1)?,
             },
@@ -117,7 +117,7 @@ mod tests {
         let fresh_key = MsgsIdempotencyKey::new(None, &topic, "new");
         IdempotencyRow::insert(
             &ks,
-            IdempotencyRow::key_for(ns, &fresh_key),
+            IdempotencyKey::build_key(&ns, &fresh_key),
             &IdempotencyRow {
                 expiry: Timestamp::from_second(20)?,
             },
@@ -127,9 +127,11 @@ mod tests {
         ks.rotate_memtable_and_wait()?;
         ks.major_compact()?;
 
-        assert!(TopicRow::fetch(&ks, TopicRow::key_for(ns, &topic))?.is_some());
-        assert!(IdempotencyRow::fetch(&ks, IdempotencyRow::key_for(ns, &expired_key))?.is_none());
-        assert!(IdempotencyRow::fetch(&ks, IdempotencyRow::key_for(ns, &fresh_key))?.is_some());
+        assert!(TopicRow::fetch(&ks, TopicKey::build_key(&ns, &topic))?.is_some());
+        assert!(
+            IdempotencyRow::fetch(&ks, IdempotencyKey::build_key(&ns, &expired_key))?.is_none()
+        );
+        assert!(IdempotencyRow::fetch(&ks, IdempotencyKey::build_key(&ns, &fresh_key))?.is_some());
 
         Ok(())
     }

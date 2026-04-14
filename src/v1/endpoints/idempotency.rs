@@ -23,13 +23,13 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 fn idempotency_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     key: &'a EntityKey,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Idempotency,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(key.as_str()),
         action,
     })
@@ -39,7 +39,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                idempotency_metadata(self.namespace.as_deref(), &self.key, $action)
+                idempotency_metadata(self.namespace.as_ref(), &self.key, $action)
             }
         }
     };
@@ -55,6 +55,7 @@ pub type IdempotencyNamespace = Namespace<IdempotencyConfig>;
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyStartIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -102,6 +103,7 @@ impl From<IdempotencyStartResult> for IdempotencyStartOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyCompleteIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -129,6 +131,7 @@ pub struct IdempotencyCompleteOut {}
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct IdempotencyAbortIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -153,7 +156,7 @@ async fn idempotency_start(
 ) -> Result<MsgPackOrJson<IdempotencyStartOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = TryStartOperation::new(namespace, data.key.to_string(), data.lock_period);
@@ -171,7 +174,7 @@ async fn idempotency_complete(
 ) -> Result<MsgPackOrJson<IdempotencyCompleteOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = CompleteOperation::new(
@@ -195,7 +198,7 @@ async fn idempotency_abort(
 ) -> Result<MsgPackOrJson<IdempotencyAbortOut>> {
     let namespace: IdempotencyNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = AbortOperation::new(namespace, data.key.to_string());
@@ -206,12 +209,13 @@ async fn idempotency_abort(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct IdempotencyGetNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
 namespace_request_input!(IdempotencyGetNamespaceIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct IdempotencyGetNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
@@ -220,6 +224,7 @@ struct IdempotencyGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct IdempotencyCreateNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -231,7 +236,7 @@ impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct IdempotencyCreateNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,

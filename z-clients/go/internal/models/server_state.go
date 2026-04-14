@@ -12,21 +12,21 @@ import (
 type ServerState string
 
 const (
-	SERVERSTATE_LEADER    ServerState = "Leader"
-	SERVERSTATE_FOLLOWER  ServerState = "Follower"
-	SERVERSTATE_LEARNER   ServerState = "Learner"
-	SERVERSTATE_CANDIDATE ServerState = "Candidate"
-	SERVERSTATE_SHUTDOWN  ServerState = "Shutdown"
-	SERVERSTATE_UNKNOWN   ServerState = "Unknown"
+	SERVERSTATE_LEADER    ServerState = "leader"
+	SERVERSTATE_FOLLOWER  ServerState = "follower"
+	SERVERSTATE_LEARNER   ServerState = "learner"
+	SERVERSTATE_CANDIDATE ServerState = "candidate"
+	SERVERSTATE_SHUTDOWN  ServerState = "shutdown"
+	SERVERSTATE_UNKNOWN   ServerState = "unknown"
 )
 
 var allowedServerState = []ServerState{
-	"Leader",
-	"Follower",
-	"Learner",
-	"Candidate",
-	"Shutdown",
-	"Unknown",
+	"leader",
+	"follower",
+	"learner",
+	"candidate",
+	"shutdown",
+	"unknown",
 }
 
 func (v *ServerState) UnmarshalMsgpack(src []byte) error {
@@ -45,10 +45,10 @@ func (v *ServerState) UnmarshalMsgpack(src []byte) error {
 }
 
 var ServerStateFromString = map[string]ServerState{
-	"Leader":    SERVERSTATE_LEADER,
-	"Follower":  SERVERSTATE_FOLLOWER,
-	"Learner":   SERVERSTATE_LEARNER,
-	"Candidate": SERVERSTATE_CANDIDATE,
-	"Shutdown":  SERVERSTATE_SHUTDOWN,
-	"Unknown":   SERVERSTATE_UNKNOWN,
+	"leader":    SERVERSTATE_LEADER,
+	"follower":  SERVERSTATE_FOLLOWER,
+	"learner":   SERVERSTATE_LEARNER,
+	"candidate": SERVERSTATE_CANDIDATE,
+	"shutdown":  SERVERSTATE_SHUTDOWN,
+	"unknown":   SERVERSTATE_UNKNOWN,
 }

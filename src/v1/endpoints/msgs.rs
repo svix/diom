@@ -33,13 +33,13 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 fn msgs_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     tp: &'a TopicName,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Msgs,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(tp),
         action,
     })
@@ -49,7 +49,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                msgs_metadata(self.namespace.as_deref(), self.topic.name(), $action)
+                msgs_metadata(self.namespace.as_ref(), self.topic.name(), $action)
             }
         }
     };
@@ -58,6 +58,7 @@ macro_rules! request_input {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 pub(crate) struct MsgNamespaceCreateIn {
+    #[validate(nested)]
     pub name: NamespaceName,
     #[serde(default)]
     pub retention: Retention,
@@ -71,7 +72,7 @@ impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgNamespaceCreateOut {
     pub name: NamespaceName,
     pub retention: Retention,
@@ -99,12 +100,13 @@ async fn create_namespace(
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
 struct MsgNamespaceGetIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
 namespace_request_input!(MsgNamespaceGetIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgNamespaceGetOut {
     pub name: NamespaceName,
     pub retention: Retention,
@@ -142,6 +144,7 @@ async fn get_namespace(
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgPublishIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub msgs: Vec<diom_msgs::entities::MsgIn>,
@@ -151,14 +154,14 @@ struct MsgPublishIn {
 
 request_input!(MsgPublishIn, "publish");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgPublishOutTopic {
     pub topic: TopicPartition,
     pub start_offset: Offset,
     pub offset: Offset,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgPublishOut {
     pub topics: Vec<MsgPublishOutTopic>,
 }
@@ -173,7 +176,7 @@ async fn publish(
 ) -> Result<MsgPackOrJson<MsgPublishOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let topic_name = data.topic.name();
@@ -214,6 +217,7 @@ const fn default_lease_duration_ms() -> DurationMs {
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamReceiveIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
@@ -230,7 +234,7 @@ struct MsgStreamReceiveIn {
 
 request_input!(MsgStreamReceiveIn, "stream.receive");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgStreamReceiveOut {
     pub msgs: Vec<StreamMsgOut>,
 }
@@ -247,7 +251,7 @@ async fn stream_receive(
 ) -> Result<MsgPackOrJson<MsgStreamReceiveOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if let Some(max_wait) = data.batch_wait {
@@ -326,6 +330,7 @@ async fn stream_receive(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamCommitIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicPartition,
     pub consumer_group: ConsumerGroup,
@@ -334,7 +339,7 @@ struct MsgStreamCommitIn {
 
 request_input!(MsgStreamCommitIn, "stream.commit");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgStreamCommitOut {}
 
 /// Commits an offset for a consumer group on a specific partition.
@@ -349,7 +354,7 @@ async fn stream_commit(
 ) -> Result<MsgPackOrJson<MsgStreamCommitOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -367,6 +372,7 @@ async fn stream_commit(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgStreamSeekIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
@@ -376,7 +382,7 @@ struct MsgStreamSeekIn {
 
 request_input!(MsgStreamSeekIn, "stream.seek");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgStreamSeekOut {}
 
 /// Repositions a consumer group's read cursor on a topic.
@@ -392,7 +398,7 @@ async fn stream_seek(
 ) -> Result<MsgPackOrJson<MsgStreamSeekOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let target = match (data.offset, data.position) {
@@ -424,6 +430,7 @@ const fn default_queue_lease_duration() -> DurationMs {
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueReceiveIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicIn,
     pub consumer_group: ConsumerGroup,
@@ -438,7 +445,7 @@ struct MsgQueueReceiveIn {
 
 request_input!(MsgQueueReceiveIn, "queue.receive");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueReceiveOut {
     pub msgs: Vec<QueueMsgOut>,
 }
@@ -456,7 +463,7 @@ async fn queue_receive(
 ) -> Result<MsgPackOrJson<MsgQueueReceiveOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if let Some(max_wait) = data.batch_wait {
@@ -533,6 +540,7 @@ async fn queue_receive(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueAckIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -541,7 +549,7 @@ struct MsgQueueAckIn {
 
 request_input!(MsgQueueAckIn, "queue.ack");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueAckOut {}
 
 /// Acknowledges messages by their opaque msg_ids.
@@ -555,7 +563,7 @@ async fn queue_ack(
 ) -> Result<MsgPackOrJson<MsgQueueAckOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -573,6 +581,7 @@ async fn queue_ack(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueExtendLeaseIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -583,7 +592,7 @@ struct MsgQueueExtendLeaseIn {
 
 request_input!(MsgQueueExtendLeaseIn, "extend-lease");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueExtendLeaseOut {}
 
 /// Extends the lease on in-flight messages.
@@ -598,7 +607,7 @@ async fn queue_extend_lease(
 ) -> Result<MsgPackOrJson<MsgQueueExtendLeaseOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = QueueExtendLeaseOperation::new(
@@ -621,6 +630,7 @@ async fn queue_extend_lease(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueConfigureIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -631,7 +641,7 @@ struct MsgQueueConfigureIn {
 
 request_input!(MsgQueueConfigureIn, "queue.configure");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueConfigureOut {
     pub retry_schedule: Vec<u64>,
     pub dlq_topic: Option<TopicName>,
@@ -649,7 +659,7 @@ async fn queue_configure(
 ) -> Result<MsgPackOrJson<MsgQueueConfigureOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = QueueConfigureOperation::new(
@@ -675,6 +685,7 @@ async fn queue_configure(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueNackIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -683,7 +694,7 @@ struct MsgQueueNackIn {
 
 request_input!(MsgQueueNackIn, "queue.nack");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueNackOut {}
 
 /// Rejects messages, sending them to the dead-letter queue.
@@ -698,7 +709,7 @@ async fn queue_nack(
 ) -> Result<MsgPackOrJson<MsgQueueNackOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation =
@@ -716,6 +727,7 @@ async fn queue_nack(
 #[schemars(extend("x-positional" = ["topic", "consumer_group"]))]
 struct MsgQueueRedriveDlqIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub consumer_group: ConsumerGroup,
@@ -723,7 +735,7 @@ struct MsgQueueRedriveDlqIn {
 
 request_input!(MsgQueueRedriveDlqIn, "queue.redrive-dlq");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgQueueRedriveDlqOut {}
 
 /// Moves all dead-letter queue messages back to the main queue for reprocessing.
@@ -735,7 +747,7 @@ async fn queue_redrive_dlq(
 ) -> Result<MsgPackOrJson<MsgQueueRedriveDlqOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = QueueRedriveDlqOperation::new(namespace.id, data.topic, data.consumer_group);
@@ -752,6 +764,7 @@ async fn queue_redrive_dlq(
 #[schemars(extend("x-positional" = ["topic"]))]
 struct MsgTopicConfigureIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
     pub topic: TopicName,
     pub partitions: u16,
@@ -759,7 +772,7 @@ struct MsgTopicConfigureIn {
 
 request_input!(MsgTopicConfigureIn, "topic.configure");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct MsgTopicConfigureOut {
     pub partitions: u16,
 }
@@ -775,7 +788,7 @@ async fn topic_configure(
 ) -> Result<MsgPackOrJson<MsgTopicConfigureOut>> {
     let namespace: MsgsNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = TopicConfigureOperation::new(namespace.id, data.topic, data.partitions)?;

@@ -19,13 +19,13 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 fn kv_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     key: &'a EntityKey,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Kv,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(key.as_str()),
         action,
     })
@@ -35,7 +35,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                kv_metadata(self.namespace.as_deref(), &self.key, $action)
+                kv_metadata(self.namespace.as_ref(), &self.key, $action)
             }
         }
     };
@@ -45,6 +45,7 @@ macro_rules! request_input {
 #[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct KvSetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -67,7 +68,7 @@ pub struct KvSetIn {
 
 request_input!(KvSetIn, "set");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KvSetOut {
     /// Whether the operation succeeded or was a noop due to pre-conditions.
     pub success: bool,
@@ -78,6 +79,7 @@ pub struct KvSetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvGetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -88,7 +90,7 @@ pub struct KvGetIn {
 
 request_input!(KvGetIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KvGetOut {
     /// Time of expiry
     pub expiry: Option<UnixTimestampMs>,
@@ -114,6 +116,7 @@ impl KvGetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvDeleteIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -126,7 +129,7 @@ pub struct KvDeleteIn {
 
 request_input!(KvDeleteIn, "delete");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KvDeleteOut {
     /// Whether the operation succeeded or was a noop due to pre-conditions.
     pub success: bool,
@@ -141,7 +144,7 @@ async fn kv_set(
 ) -> Result<MsgPackOrJson<KvSetOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(
@@ -168,7 +171,7 @@ async fn kv_get(
 ) -> Result<MsgPackOrJson<KvGetOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
@@ -202,7 +205,7 @@ async fn kv_del(
 ) -> Result<MsgPackOrJson<KvDeleteOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let key = data.key;
@@ -217,12 +220,13 @@ async fn kv_del(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
 namespace_request_input!(KvGetNamespaceIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct KvGetNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
@@ -231,6 +235,7 @@ struct KvGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct KvCreateNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -242,7 +247,7 @@ impl From<KvCreateNamespaceIn> for CreateKvOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct KvCreateNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,

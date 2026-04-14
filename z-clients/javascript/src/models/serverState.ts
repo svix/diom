@@ -1,12 +1,12 @@
 // this file is @generated
 
 export enum ServerState {
-    Leader = 'Leader',
-    Follower = 'Follower',
-    Learner = 'Learner',
-    Candidate = 'Candidate',
-    Shutdown = 'Shutdown',
-    Unknown = 'Unknown',
+    Leader = 'leader',
+    Follower = 'follower',
+    Learner = 'learner',
+    Candidate = 'candidate',
+    Shutdown = 'shutdown',
+    Unknown = 'unknown',
     }
 
 export const ServerStateSerializer = {

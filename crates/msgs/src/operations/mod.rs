@@ -56,13 +56,17 @@ impl MsgsOperation {
 #[cfg(test)]
 mod tests {
     use diom_id::NamespaceId;
+    use diom_namespace::entities::NamespaceName;
 
     use super::*;
     use crate::entities::{Retention, TopicIn, TopicName};
 
     #[test]
     fn test_msgs_operation_key_name() {
-        let op = CreateNamespaceOperation::new("my-namespace".to_string(), Retention::default());
+        let op = CreateNamespaceOperation::new(
+            NamespaceName("my-namespace".to_owned()),
+            Retention::default(),
+        );
         assert_eq!(
             MsgsOperation::CreateNamespace(op).key_name(),
             "my-namespace"

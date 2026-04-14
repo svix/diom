@@ -1,11 +1,16 @@
 use std::{fmt::Debug, num::NonZeroU64};
 
-use diom_core::types::DurationMs;
+use diom_core::{string_wrapper, types::DurationMs};
 use diom_id::Module;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-pub type NamespaceName = String;
+string_wrapper!(NamespaceName {
+    min_length: 1,
+    max_length: 256,
+    pattern: r"^[a-zA-Z0-9\-/_.=+]+$",
+    example: "some_namespace"
+});
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
 #[serde(rename_all = "kebab-case")]

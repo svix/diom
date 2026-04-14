@@ -19,13 +19,13 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 fn cache_access_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     key: &'a EntityKey,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Cache,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(key.as_str()),
         action,
     })
@@ -35,7 +35,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                cache_access_metadata(self.namespace.as_deref(), &self.key, $action)
+                cache_access_metadata(self.namespace.as_ref(), &self.key, $action)
             }
         }
     };
@@ -47,8 +47,10 @@ pub type CacheNamespace = Namespace<CacheConfig>;
 #[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct CacheSetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
+    #[validate(nested)]
     pub key: EntityKey,
 
     pub value: ByteString,
@@ -67,6 +69,7 @@ pub struct CacheSetOut {}
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheGetIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -98,6 +101,7 @@ impl CacheGetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct CacheDeleteIn {
     #[serde(default)]
+    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
     #[validate(nested)]
@@ -106,12 +110,12 @@ pub struct CacheDeleteIn {
 
 request_input!(CacheDeleteIn, "delete");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CacheDeleteOut {
     pub success: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct CacheGetNamespaceOut {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
@@ -121,6 +125,7 @@ struct CacheGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct CacheCreateNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
     #[serde(default)]
     pub eviction_policy: EvictionPolicy,
@@ -134,7 +139,7 @@ impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct CacheCreateNamespaceOut {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
@@ -151,7 +156,7 @@ async fn cache_set(
 ) -> Result<MsgPackOrJson<CacheSetOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(namespace, data.key.to_string(), Some(data.ttl), data.value);
@@ -168,7 +173,7 @@ async fn cache_get(
 ) -> Result<MsgPackOrJson<CacheGetOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
@@ -201,7 +206,7 @@ async fn cache_del(
 ) -> Result<MsgPackOrJson<CacheDeleteOut>> {
     let namespace: CacheNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = DeleteOperation::new(namespace, data.key.to_string());
@@ -213,6 +218,7 @@ async fn cache_del(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct CacheGetNamespaceIn {
+    #[validate(nested)]
     pub name: NamespaceName,
 }
 

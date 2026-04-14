@@ -44,6 +44,10 @@ use crate::{TableKey, TableRow};
 ///   from a raw `fjall::UserKey` without constructing the full struct.
 ///   Returns the borrowed form where possible (`&str` for `String`,
 ///   `&[u8]` for `Vec<u8>`, the value directly for fixed-size types).
+/// - **`prefix_<field>()` methods** on the struct — build a key prefix
+///   from the leading fields up to and including the named field.
+///   Generated for each field except the last (use `fjall_key()` for
+///   full keys). Only generated when the struct has 2+ fields.
 ///
 /// ## Binary layout
 ///
@@ -90,6 +94,12 @@ where
 {
     fn from(value: K) -> Self {
         TableKey::init_from_bytes(&value.fjall_key())
+    }
+}
+
+impl<T: TableRow> From<crate::UserKey> for TableKey<T> {
+    fn from(key: crate::UserKey) -> Self {
+        TableKey::init_from_bytes(&key)
     }
 }
 
@@ -232,6 +242,37 @@ impl KeyComponent for String {
         let s = std::str::from_utf8(buf)
             .map_err(|e| Cow::Owned(format!("invalid utf8 in String key component: {e}")))?;
         Ok((s, buf.len()))
+    }
+}
+
+impl<const N: usize> KeyComponent for [u8; N] {
+    const FIXED_SIZE: bool = true;
+    const BYTE_SIZE: usize = N;
+    type Ref<'a> = [u8; N];
+
+    fn key_len(&self) -> usize {
+        N
+    }
+
+    fn write_to_key(&self, buf: &mut [u8]) -> usize {
+        buf[..N].copy_from_slice(self);
+        N
+    }
+
+    fn read_from_key(buf: &[u8]) -> Result<(Self, usize), Cow<'static, str>> {
+        if buf.len() < N {
+            return Err(Cow::Owned(format!(
+                "key buffer too short for [u8; {N}]: expected {N} bytes, got {}",
+                buf.len()
+            )));
+        }
+        let mut arr = [0u8; N];
+        arr.copy_from_slice(&buf[..N]);
+        Ok((arr, N))
+    }
+
+    fn read_ref_from_key(buf: &[u8]) -> Result<(Self::Ref<'_>, usize), Cow<'static, str>> {
+        Self::read_from_key(buf)
     }
 }
 
@@ -398,5 +439,89 @@ mod tests {
         let bytes = key.fjall_key();
         assert_eq!(ExampleCompositeKey::extract_id(&bytes).unwrap(), 7);
         assert_eq!(ExampleCompositeKey::extract_group(&bytes).unwrap(), "hello");
+    }
+
+    #[derive(FjallKeyAble)]
+    #[table_key(prefix = 3)]
+    struct ExampleTripleKey {
+        #[key(0)]
+        a: u32,
+        #[key(1)]
+        b: u16,
+        #[key(2)]
+        tag: String,
+    }
+
+    #[test]
+    fn test_prefix_composite_key() {
+        let prefix = ExampleCompositeKey::prefix_id(&7u32);
+        let mut expected = Vec::new();
+        expected.push(2u8);
+        expected.extend_from_slice(&7u32.to_be_bytes());
+        assert_eq!(prefix, expected);
+    }
+
+    #[test]
+    fn test_prefix_is_prefix_of_full_key() {
+        let key = ExampleCompositeKey {
+            id: 7,
+            group: "hello".to_string(),
+        };
+        let full = key.fjall_key();
+        let prefix = ExampleCompositeKey::prefix_id(&7u32);
+        assert!(full.starts_with(&prefix));
+    }
+
+    #[test]
+    fn test_prefix_triple_key() {
+        let prefix_a = ExampleTripleKey::prefix_a(&10u32);
+        let mut expected = Vec::new();
+        expected.push(3u8);
+        expected.extend_from_slice(&10u32.to_be_bytes());
+        assert_eq!(prefix_a, expected);
+
+        let prefix_b = ExampleTripleKey::prefix_b(&10u32, &5u16);
+        let mut expected = Vec::new();
+        expected.push(3u8);
+        expected.extend_from_slice(&10u32.to_be_bytes());
+        expected.extend_from_slice(&5u16.to_be_bytes());
+        assert_eq!(prefix_b, expected);
+    }
+
+    #[test]
+    fn test_prefix_nesting() {
+        let prefix_a = ExampleTripleKey::prefix_a(&10u32);
+        let prefix_b = ExampleTripleKey::prefix_b(&10u32, &5u16);
+        let key = ExampleTripleKey {
+            a: 10,
+            b: 5,
+            tag: "x".to_string(),
+        };
+        let full = key.fjall_key();
+        assert!(prefix_b.starts_with(&prefix_a));
+        assert!(full.starts_with(&prefix_b));
+    }
+
+    #[test]
+    fn test_build_key_matches_fjall_key() {
+        let key = ExampleCompositeKey {
+            id: 42,
+            group: "test".to_string(),
+        };
+        let from_struct = key.fjall_key();
+        let from_build = ExampleCompositeKey::build_key(&42u32, &"test".to_string());
+        assert_eq!(&*from_struct, &*from_build);
+    }
+
+    #[test]
+    fn test_build_key_triple() {
+        let key = ExampleTripleKey {
+            a: 1,
+            b: 2,
+            tag: "abc".to_string(),
+        };
+        let from_struct = key.fjall_key();
+        let from_build = ExampleTripleKey::build_key(&1u32, &2u16, &"abc".to_string());
+        assert_eq!(&*from_struct, &*from_build);
     }
 }

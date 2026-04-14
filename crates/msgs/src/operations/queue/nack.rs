@@ -10,7 +10,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, Partition, TopicName},
-    tables::{MsgKey, MsgRow, QueueConfigRow, QueueLeaseRow, TopicRow},
+    tables::{
+        MsgKey, MsgRow, QueueConfigKey, QueueConfigRow, QueueLeaseKey, QueueLeaseRow, TopicKey,
+        TopicRow,
+    },
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueNackResponse};
@@ -48,13 +51,13 @@ impl QueueNackOperation {
             let nack_count = self.msg_ids.len() as u64;
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
             .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
             let config = QueueConfigRow::fetch(
                 &state.metadata_tables,
-                QueueConfigRow::key_for(topic_row.id, &self.consumer_group),
+                QueueConfigKey::build_key(&topic_row.id, &self.consumer_group),
             )?;
 
             let retry_schedule = config
@@ -69,7 +72,12 @@ impl QueueNackOperation {
             for msg_id in &self.msg_ids {
                 let existing = QueueLeaseRow::fetch(
                     &state.metadata_tables,
-                    QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                    QueueLeaseKey::build_key(
+                        &topic_row.id,
+                        &msg_id.partition,
+                        &msg_id.offset,
+                        &self.consumer_group,
+                    ),
                 )?;
                 let attempt_count = existing.map(|r| r.attempt_count).unwrap_or(0);
 
@@ -78,7 +86,12 @@ impl QueueNackOperation {
                     let expiry = now + Duration::from_millis(delay_ms);
                     batch.insert_row(
                         &state.metadata_tables,
-                        QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                        QueueLeaseKey::build_key(
+                            &topic_row.id,
+                            &msg_id.partition,
+                            &msg_id.offset,
+                            &self.consumer_group,
+                        ),
                         &QueueLeaseRow {
                             expiry,
                             dlq: false,
@@ -104,7 +117,12 @@ impl QueueNackOperation {
                     // No config or no DLQ topic — immediate DLQ
                     batch.insert_row(
                         &state.metadata_tables,
-                        QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                        QueueLeaseKey::build_key(
+                            &topic_row.id,
+                            &msg_id.partition,
+                            &msg_id.offset,
+                            &self.consumer_group,
+                        ),
                         &QueueLeaseRow::dlq_marker(attempt_count),
                     )?;
                     dlq_count += 1;

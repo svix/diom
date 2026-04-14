@@ -1,7 +1,7 @@
 use diom_error::Result;
 use diom_id::UuidV7RandomBytes;
 use diom_namespace::{
-    entities::{CacheConfig, EvictionPolicy},
+    entities::{CacheConfig, EvictionPolicy, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -11,7 +11,7 @@ use crate::operations::{CacheRaftState, CacheRequest, CreateCacheResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateCacheOperation {
-    pub(crate) name: String,
+    pub(crate) name: NamespaceName,
     eviction_policy: EvictionPolicy,
     id_random_bytes: UuidV7RandomBytes,
 }
@@ -29,7 +29,7 @@ impl From<CreateCacheOperation> for CreateNamespace<CacheConfig> {
 }
 
 impl CreateCacheOperation {
-    pub fn new(name: String, eviction_policy: EvictionPolicy) -> Self {
+    pub fn new(name: NamespaceName, eviction_policy: EvictionPolicy) -> Self {
         Self {
             name,
             eviction_policy,
@@ -50,7 +50,7 @@ impl CreateCacheOperation {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateCacheResponseData {
-    pub name: String,
+    pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
     pub created: Timestamp,
     pub updated: Timestamp,

@@ -43,6 +43,7 @@ macro_rules! request_input {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 pub enum ServerState {
     Leader,
     Follower,

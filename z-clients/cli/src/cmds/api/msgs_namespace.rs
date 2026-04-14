@@ -20,7 +20,7 @@ pub enum MsgsNamespaceCommands {
   \"retention\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"name\": \"...\",
+  \"name\": \"some_namespace\",
   \"retention\": \"...\",
   \"created\": \"...\",
   \"updated\": \"...\"
@@ -34,7 +34,7 @@ pub enum MsgsNamespaceCommands {
 {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"name\": \"...\",
+  \"name\": \"some_namespace\",
   \"retention\": \"...\",
   \"created\": \"...\",
   \"updated\": \"...\"

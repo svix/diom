@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, TopicName},
-    tables::{QueueLeaseRow, StreamLeaseRow, TopicRow},
+    tables::{QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
 };
 
 use super::{
@@ -47,7 +47,7 @@ impl QueueAckOperation {
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
             .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
@@ -71,7 +71,7 @@ impl QueueAckOperation {
             for partition in affected_partitions {
                 let Some(mut cursor) = StreamLeaseRow::fetch(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
                 )?
                 else {
                     continue;
@@ -88,7 +88,7 @@ impl QueueAckOperation {
 
                 batch.insert_row(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
                     &cursor,
                 )?;
             }
