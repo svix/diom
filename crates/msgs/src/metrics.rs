@@ -3,7 +3,7 @@ use opentelemetry::metrics::{Counter, Gauge, Meter};
 use crate::{
     State,
     entities::{ConsumerGroup, Partition, TopicName},
-    tables::{MsgRow, StreamLeaseRow, TopicRow},
+    tables::{MsgRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 use diom_error::Result;
 
@@ -259,14 +259,12 @@ fn compute_topic_lag(
         let (_, val) = guard.into_inner()?;
         let topic_row: TopicRow = TopicRow::from_fjall_value(val)?;
 
-        let prefix = StreamLeaseRow::topic_scan_prefix(topic_row.id);
+        let prefix = StreamLeaseKey::prefix_topic_id(&topic_row.id);
 
         let mut consumer_groups = HashSet::new();
         for guard in metadata_tables.prefix(&prefix) {
             let (key, _) = guard.into_inner()?;
-            if let Some(cg_str) = StreamLeaseRow::consumer_group_from_key(&key)
-                && let Ok(consumer_group) = ConsumerGroup::try_from(cg_str)
-            {
+            if let Ok(consumer_group) = StreamLeaseKey::extract_consumer_group(&key) {
                 consumer_groups.insert(consumer_group);
             }
         }
@@ -278,7 +276,7 @@ fn compute_topic_lag(
                 };
                 let cursor_offset = StreamLeaseRow::fetch(
                     metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &cg),
+                    StreamLeaseKey::build_key(&topic_row.id, &partition, &cg),
                 )?
                 .map(|c| c.offset)
                 .unwrap_or(0);
@@ -335,7 +333,7 @@ mod tests {
     use jiff::Timestamp;
 
     use super::*;
-    use crate::tables::{MsgKey, MsgRow, StreamLeaseRow, TopicRow};
+    use crate::tables::{MsgKey, MsgRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow};
 
     fn make_db() -> (fjall::Database, tempfile::TempDir) {
         let dir = tempfile::tempdir().unwrap();
@@ -352,7 +350,7 @@ mod tests {
         batch
             .insert_row(
                 meta,
-                TopicRow::key_for(NamespaceId::nil(), &topic_row.name),
+                TopicKey::build_key(&NamespaceId::nil(), &topic_row.name),
                 topic_row,
             )
             .unwrap();
@@ -404,7 +402,7 @@ mod tests {
         batch
             .insert_row(
                 meta,
-                StreamLeaseRow::key_for(topic_row.id, partition, cg),
+                StreamLeaseKey::build_key(&topic_row.id, &partition, cg),
                 &row,
             )
             .unwrap();

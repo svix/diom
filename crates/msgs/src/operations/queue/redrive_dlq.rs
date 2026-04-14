@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, Partition, TopicName},
-    tables::{QueueLeaseRow, StreamLeaseRow, TopicRow},
+    tables::{QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueRedriveDlqResponse};
@@ -35,7 +35,7 @@ impl QueueRedriveDlqOperation {
         spawn_blocking_in_current_span(move || {
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
             .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
@@ -47,7 +47,7 @@ impl QueueRedriveDlqOperation {
 
                 let Some(mut cursor) = StreamLeaseRow::fetch(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
                 )?
                 else {
                     continue;
@@ -64,11 +64,15 @@ impl QueueRedriveDlqOperation {
                 let mut partition_redriven: u64 = 0;
                 for (msg_id, lease) in &leases {
                     if lease.is_dlq() {
-                        batch.remove(
+                        batch.remove_row::<QueueLeaseRow, _>(
                             &state.metadata_tables,
-                            QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group)
-                                .into_fjall_key(),
-                        );
+                            QueueLeaseKey::build_key(
+                                &topic_row.id,
+                                &msg_id.partition,
+                                &msg_id.offset,
+                                &self.consumer_group,
+                            ),
+                        )?;
                         min_redriven =
                             Some(min_redriven.map_or(msg_id.offset, |m| m.min(msg_id.offset)));
                         partition_redriven += 1;
@@ -80,7 +84,7 @@ impl QueueRedriveDlqOperation {
                     cursor.offset = new_offset;
                     batch.insert_row(
                         &state.metadata_tables,
-                        StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                        StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
                         &cursor,
                     )?;
                 }

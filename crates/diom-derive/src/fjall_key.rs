@@ -176,6 +176,84 @@ fn gen_key_parse(struct_name: &Ident, prefix: &Expr, fields: &[KeyField]) -> Tok
     }
 }
 
+/// Generates `build_key()`: takes all fields by reference, returns `UserKey`.
+fn gen_build_key_method(prefix: &Expr, fields: &[KeyField]) -> TokenStream {
+    let params: Vec<TokenStream> = fields
+        .iter()
+        .map(|f| {
+            let ident = &f.ident;
+            let ty = &f.ty;
+            quote! { #ident: &#ty }
+        })
+        .collect();
+
+    let body = gen_key_build(prefix, fields, |f| {
+        let ident = &f.ident;
+        quote! { *#ident }
+    });
+
+    quote! {
+        /// Serialize a key from borrowed fields without constructing the struct.
+        pub fn build_key(#(#params),*) -> ::fjall_utils::UserKey {
+            #body
+        }
+    }
+}
+
+/// Generates a `prefix_<last_field>()` static method that builds a key prefix
+/// from the first N fields.
+fn gen_prefix_method(_prefix: &Expr, fields: &[KeyField]) -> TokenStream {
+    let last_field = &fields[fields.len() - 1];
+    let method_name = quote::format_ident!("prefix_{}", last_field.ident);
+
+    let params: Vec<TokenStream> = fields
+        .iter()
+        .map(|f| {
+            let ident = &f.ident;
+            let ty = &f.ty;
+            quote! { #ident: &#ty }
+        })
+        .collect();
+
+    let types: Vec<&syn::Type> = fields.iter().map(|f| &f.ty).collect();
+    let len_expr = quote! {
+        1usize #(+ <#types as ::fjall_utils::KeyComponent>::BYTE_SIZE)*
+    };
+
+    let writes: Vec<TokenStream> = fields
+        .iter()
+        .map(|f| {
+            let ident = &f.ident;
+            quote! {
+                pos += ::fjall_utils::KeyComponent::write_to_key(#ident, &mut buf[pos..]);
+            }
+        })
+        .collect();
+
+    let field_names: Vec<String> = fields.iter().map(|f| f.ident.to_string()).collect();
+    let doc = format!(
+        "Returns the key prefix: [PREFIX][{}].",
+        field_names.join("][")
+    );
+
+    quote! {
+        #[doc = #doc]
+        pub fn #method_name(#(#params),*) -> ::std::vec::Vec<u8> {
+            let total_len = #len_expr;
+            let mut buf = ::std::vec![0u8; total_len];
+            let mut pos = 0;
+
+            buf[pos] = <Self as ::fjall_utils::FjallKeyAble>::PREFIX;
+            pos += 1;
+
+            #(#writes)*
+
+            ::std::debug_assert_eq!(pos, total_len);
+            buf
+        }
+    }
+}
+
 pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
     let input: DeriveInput = syn::parse2(input)?;
     let prefix = parse_prefix(&input)?;
@@ -234,7 +312,7 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
 
             quote! {
                 #[doc = #doc]
-                fn #method_name(key: &::fjall_utils::UserKey) -> ::std::result::Result<
+                pub fn #method_name(key: &::fjall_utils::UserKey) -> ::std::result::Result<
                     <#ty as ::fjall_utils::KeyComponent>::Ref<'_>,
                     ::std::borrow::Cow<'static, str>,
                 > {
@@ -257,6 +335,19 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         })
         .collect();
 
+    // Generate prefix_<field> methods for each leading subsequence of fixed-size fields.
+    // For position i in 0..fields.len()-1, generate a method that builds
+    // [PREFIX][field_0]...[field_i]. Skip structs with only 1 field.
+    let prefix_methods: Vec<TokenStream> = if fields.len() >= 2 {
+        (0..fields.len() - 1)
+            .map(|i| gen_prefix_method(&prefix, &fields[..=i]))
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    let build_key_method = gen_build_key_method(&prefix, &fields);
+
     Ok(quote! {
         #(#fixed_size_assertions)*
 
@@ -277,6 +368,8 @@ pub(crate) fn derive(input: TokenStream) -> Result<TokenStream, syn::Error> {
         #[allow(dead_code)]
         impl #impl_generics #name #ty_generics #where_clause {
             #(#extract_methods)*
+            #(#prefix_methods)*
+            #build_key_method
         }
     })
 }

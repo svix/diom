@@ -16,7 +16,7 @@ use crate::{
     entities::{
         ConsumerGroup, Offset, Partition, SeekPosition, TopicIn, TopicName, TopicPartition,
     },
-    tables::{MsgRow, StreamLeaseRow, TopicRow},
+    tables::{MsgRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, StreamReceiveResponse};
@@ -92,7 +92,11 @@ impl StreamReceiveOperation {
                 let topic = TopicPartition::new(self.topic.clone(), Partition::new(partition)?);
                 let (mut lease, is_new) = match StreamLeaseRow::fetch(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, topic.partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(
+                        &topic_row.id,
+                        &topic.partition,
+                        &self.consumer_group,
+                    ),
                 )? {
                     Some(lease) => (lease, false),
                     None => {
@@ -126,9 +130,9 @@ impl StreamReceiveOperation {
                     if is_new {
                         batch.insert_row(
                             &state.metadata_tables,
-                            StreamLeaseRow::key_for(
-                                topic_row.id,
-                                topic.partition,
+                            StreamLeaseKey::build_key(
+                                &topic_row.id,
+                                &topic.partition,
                                 &self.consumer_group,
                             ),
                             &lease,
@@ -159,7 +163,11 @@ impl StreamReceiveOperation {
 
                 batch.insert_row(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, topic.partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(
+                        &topic_row.id,
+                        &topic.partition,
+                        &self.consumer_group,
+                    ),
                     &lease,
                 )?;
 

@@ -7,7 +7,7 @@ use jiff::Timestamp;
 
 use entities::{ConsumerGroup, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
-use tables::{MsgRow, QueueLeaseRow, StreamLeaseRow, TopicRow};
+use tables::{MsgRow, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow};
 
 use crate::metrics::{record_end_offsets, record_topic_lag_metrics};
 
@@ -71,7 +71,8 @@ pub fn estimate_available_queue_messages(
     consumer_group: &ConsumerGroup,
     now: Timestamp,
 ) -> Result<u64> {
-    let Some(topic_row) = TopicRow::fetch(metadata_tables, TopicRow::key_for(namespace_id, topic))?
+    let Some(topic_row) =
+        TopicRow::fetch(metadata_tables, TopicKey::build_key(&namespace_id, topic))?
     else {
         return Ok(0);
     };
@@ -84,7 +85,7 @@ pub fn estimate_available_queue_messages(
         // the name is misleading here.
         let cursor_offset = StreamLeaseRow::fetch(
             metadata_tables,
-            StreamLeaseRow::key_for(topic_row.id, partition, consumer_group),
+            StreamLeaseKey::build_key(&topic_row.id, &partition, consumer_group),
         )?
         .map(|c| c.offset)
         .unwrap_or(0);
@@ -128,7 +129,8 @@ pub fn estimate_available_stream_messages(
     consumer_group: &ConsumerGroup,
     now: Timestamp,
 ) -> Result<StreamEstimate> {
-    let Some(topic_row) = TopicRow::fetch(metadata_tables, TopicRow::key_for(namespace_id, topic))?
+    let Some(topic_row) =
+        TopicRow::fetch(metadata_tables, TopicKey::build_key(&namespace_id, topic))?
     else {
         return Ok(StreamEstimate::default());
     };
@@ -140,7 +142,7 @@ pub fn estimate_available_stream_messages(
 
         let cursor = StreamLeaseRow::fetch(
             metadata_tables,
-            StreamLeaseRow::key_for(topic_row.id, partition, consumer_group),
+            StreamLeaseKey::build_key(&topic_row.id, &partition, consumer_group),
         )?;
 
         // Skip partitions with active leases
