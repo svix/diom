@@ -19,13 +19,13 @@ use validator::Validate;
 use crate::{AppState, core::cluster::RaftState, error::Result, v1::utils::openapi_tag};
 
 fn kv_metadata<'a>(
-    ns: Option<&'a str>,
+    ns: Option<&'a NamespaceName>,
     key: &'a EntityKey,
     action: &'static str,
 ) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::Kv,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: Some(key.as_str()),
         action,
     })
@@ -35,7 +35,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                kv_metadata(self.namespace.as_deref(), &self.key, $action)
+                kv_metadata(self.namespace.as_ref(), &self.key, $action)
             }
         }
     };
@@ -141,7 +141,7 @@ async fn kv_set(
 ) -> Result<MsgPackOrJson<KvSetOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = SetOperation::new(
@@ -168,7 +168,7 @@ async fn kv_get(
 ) -> Result<MsgPackOrJson<KvGetOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     if data.consistency.linearizable() {
@@ -202,7 +202,7 @@ async fn kv_del(
 ) -> Result<MsgPackOrJson<KvDeleteOut>> {
     let namespace: KvNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let key = data.key;

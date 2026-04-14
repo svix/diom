@@ -1,11 +1,23 @@
 use std::{fmt::Debug, num::NonZeroU64};
 
-use diom_core::types::DurationMs;
+use diom_core::{
+    string_wrapper,
+    types::{DurationMs, StringSchema},
+};
 use diom_id::Module;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, json_schema};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-pub type NamespaceName = String;
+string_wrapper!(
+    NamespaceName,
+    StringSchema {
+        string_validation: Some(json_schema!({
+            "maxLength": 256,
+            "pattern": r"^[a-zA-Z0-9\-/_.=+]+$",
+        })),
+        example: Some("some_namespace".to_string()),
+    }
+);
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
 pub enum EvictionPolicy {

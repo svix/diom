@@ -19,7 +19,7 @@ pub enum CacheCommands {
     /// Cache Set
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"ttl_ms\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -32,7 +32,7 @@ pub enum CacheCommands {
     /// Cache Get
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"consistency\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -46,7 +46,7 @@ pub enum CacheCommands {
     /// Cache Delete
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\"
+  \"namespace\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"success\": \"...\"

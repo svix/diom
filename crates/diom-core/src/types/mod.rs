@@ -79,23 +79,13 @@ pub trait BaseUid: Deref<Target = String> {
     }
 }
 
+#[macro_export]
 macro_rules! string_wrapper {
     ($name_id:ident) => {
         #[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
         pub struct $name_id(pub String);
 
-        string_wrapper_impl!($name_id);
-    };
-    ($name_id:ident, $string_schema:expr) => {
-        string_wrapper!($name_id);
-
-        common_jsonschema_impl!($name_id, $string_schema);
-    };
-}
-
-macro_rules! string_wrapper_impl {
-    ($name_id:ident) => {
-        impl Deref for $name_id {
+        impl std::ops::Deref for $name_id {
             type Target = String;
 
             fn deref(&self) -> &Self::Target {
@@ -111,13 +101,49 @@ macro_rules! string_wrapper_impl {
 
         impl std::fmt::Display for $name_id {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                self.0.fmt(f)
+                std::fmt::Display::fmt(&self.0, f)
             }
         }
 
         impl From<String> for $name_id {
             fn from(s: String) -> Self {
                 $name_id(s)
+            }
+        }
+    };
+
+    ($name_id:ident, $string_schema:expr) => {
+        string_wrapper!($name_id);
+
+        impl ::schemars::JsonSchema for $name_id {
+            fn schema_name() -> ::std::borrow::Cow<'static, str> {
+                stringify!($name_id).into()
+            }
+
+            fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+                let mut schema = String::json_schema(generator);
+
+                if let Some(obj) = schema.as_object_mut() {
+                    // This is just to help with type hints when the macro is expanded.
+                    let options: $crate::types::StringSchema = $string_schema;
+
+                    if let Some(mut v) = options.string_validation {
+                        obj.extend(::std::mem::take(v.ensure_object()));
+                    }
+
+                    if let Some(example) = options.example {
+                        obj.insert(
+                            "example".to_owned(),
+                            $crate::__reexport::serde_json::Value::String(example),
+                        );
+                    }
+                }
+
+                schema
+            }
+
+            fn inline_schema() -> bool {
+                true
             }
         }
     };
@@ -149,43 +175,6 @@ impl StringSchema {
             example: Some(format!("unique-{prefix}identifier").replace('_', "-")),
         }
     }
-}
-
-/// Macro to generate a [`JsonSchema`] impl for string wrapper types.
-/// * `name_id` is the name of the identifier for which the impl is generated.
-/// * `string_schema` is a [`StringSchema`] to enrich the generated schema with
-///   more information.
-macro_rules! common_jsonschema_impl {
-    ($name_id:ident, $string_schema:expr) => {
-        impl ::schemars::JsonSchema for $name_id {
-            fn schema_name() -> ::std::borrow::Cow<'static, str> {
-                stringify!($name_id).into()
-            }
-
-            fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-                let mut schema = String::json_schema(generator);
-
-                if let Some(obj) = schema.as_object_mut() {
-                    // This is just to help with type hints when the macro is expanded.
-                    let options: $crate::types::StringSchema = $string_schema;
-
-                    if let Some(mut v) = options.string_validation {
-                        obj.extend(::std::mem::take(v.ensure_object()));
-                    }
-
-                    if let Some(example) = options.example {
-                        obj.insert("example".to_owned(), serde_json::Value::String(example));
-                    }
-                }
-
-                schema
-            }
-
-            fn inline_schema() -> bool {
-                true
-            }
-        }
-    };
 }
 
 string_wrapper!(

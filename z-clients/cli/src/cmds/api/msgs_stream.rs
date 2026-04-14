@@ -20,7 +20,7 @@ pub enum MsgsStreamCommands {
     /// specified duration to prevent duplicate delivery within the same consumer group.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"batch_size\": \"...\",
   \"lease_duration_ms\": \"...\",
   \"default_starting_position\": \"...\",
@@ -40,7 +40,7 @@ pub enum MsgsStreamCommands {
     /// successfully processed offset; future receives will start after it.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"offset\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -57,7 +57,7 @@ pub enum MsgsStreamCommands {
     /// `"latest"` and may be used with or without a partition suffix.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"offset\": \"...\",
   \"position\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m

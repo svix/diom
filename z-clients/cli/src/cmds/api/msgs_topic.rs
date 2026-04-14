@@ -19,7 +19,7 @@ pub enum MsgsTopicCommands {
     /// Partition count can only be increased, never decreased. The default for a new topic is 1.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"partitions\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {

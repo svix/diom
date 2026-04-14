@@ -129,7 +129,7 @@ async fn authorization_inner(
             "v1.auth-token.verify",
             &AuthTokenVerifyIn {
                 token: token.to_owned(),
-                namespace: Some(INTERNAL_NAMESPACE.to_owned()),
+                namespace: Some(INTERNAL_NAMESPACE.clone()),
             },
         )
         .await

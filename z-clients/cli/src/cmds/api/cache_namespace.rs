@@ -17,11 +17,11 @@ pub enum CacheNamespaceCommands {
     /// Create cache namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"name\": \"...\",
+  \"name\": \"some_namespace\",
   \"eviction_policy\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"name\": \"...\",
+  \"name\": \"some_namespace\",
   \"eviction_policy\": \"...\",
   \"created\": \"...\",
   \"updated\": \"...\"
@@ -32,10 +32,10 @@ pub enum CacheNamespaceCommands {
     /// Get cache namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"name\": \"...\"
+  \"name\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"name\": \"...\",
+  \"name\": \"some_namespace\",
   \"eviction_policy\": \"...\",
   \"created\": \"...\",
   \"updated\": \"...\"

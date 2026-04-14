@@ -5420,6 +5420,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "nullable": true
           },
           "name": {
@@ -5473,7 +5476,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -5484,7 +5490,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -5539,6 +5548,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "nullable": true
           },
           "id": {
@@ -5565,6 +5577,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "nullable": true
           },
           "id": {
@@ -5590,7 +5605,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -5601,7 +5619,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -5627,6 +5648,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "nullable": true
           },
           "owner_id": {
@@ -5714,6 +5738,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "nullable": true
           },
           "id": {
@@ -5774,6 +5801,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "nullable": true
           },
           "id": {
@@ -5821,6 +5851,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "nullable": true
           },
           "token": {
@@ -5844,7 +5877,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "eviction_policy": {
             "default": "NoEviction",
@@ -5859,7 +5895,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "eviction_policy": {
             "$ref": "#/components/schemas/EvictionPolicy"
@@ -5889,6 +5928,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -5922,6 +5964,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -5947,7 +5992,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -5958,7 +6006,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "eviction_policy": {
             "$ref": "#/components/schemas/EvictionPolicy"
@@ -6011,6 +6062,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6183,6 +6237,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6208,6 +6265,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6284,7 +6344,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -6295,7 +6358,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -6320,7 +6386,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -6331,7 +6400,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -6357,6 +6429,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6439,7 +6514,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -6450,7 +6528,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -6476,6 +6557,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6517,6 +6601,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6542,7 +6629,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -6553,7 +6643,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -6611,6 +6704,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6822,7 +6918,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "retention": {
             "default": {
@@ -6843,7 +6942,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "retention": {
             "$ref": "#/components/schemas/Retention"
@@ -6872,7 +6974,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -6886,7 +6991,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "retention": {
             "$ref": "#/components/schemas/Retention"
@@ -6916,6 +7024,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -6984,6 +7095,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7018,6 +7132,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7075,6 +7192,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7116,6 +7236,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7150,6 +7273,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7211,6 +7337,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7238,6 +7367,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7271,6 +7403,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7336,6 +7471,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7373,6 +7511,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7510,6 +7651,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7596,7 +7740,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -7607,7 +7754,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -7632,7 +7782,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
@@ -7643,7 +7796,10 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -7669,6 +7825,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },
@@ -7715,6 +7874,9 @@
         "properties": {
           "namespace": {
             "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace",
             "default": null,
             "nullable": true
           },

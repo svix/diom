@@ -1,7 +1,7 @@
 use diom_error::Result;
 use diom_id::UuidV7RandomBytes;
 use diom_namespace::{
-    entities::KeyValueConfig,
+    entities::{KeyValueConfig, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
 use jiff::Timestamp;
@@ -11,7 +11,7 @@ use crate::operations::{CreateKvResponse, KvRaftState, KvRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateKvOperation {
-    pub(crate) name: String,
+    pub(crate) name: NamespaceName,
     id_random_bytes: UuidV7RandomBytes,
 }
 
@@ -22,7 +22,7 @@ impl From<CreateKvOperation> for CreateNamespace<KeyValueConfig> {
 }
 
 impl CreateKvOperation {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: NamespaceName) -> Self {
         Self {
             name,
             id_random_bytes: UuidV7RandomBytes::new_random(),
@@ -42,7 +42,7 @@ impl CreateKvOperation {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateKvResponseData {
-    pub name: String,
+    pub name: NamespaceName,
     pub created: Timestamp,
     pub updated: Timestamp,
 }

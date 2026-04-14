@@ -19,7 +19,7 @@ pub enum KvCommands {
     /// KV Set
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"ttl_ms\": \"...\",
   \"behavior\": \"...\",
   \"version\": \"...\"
@@ -36,7 +36,7 @@ pub enum KvCommands {
     /// KV Get
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"consistency\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
@@ -51,7 +51,7 @@ pub enum KvCommands {
     /// KV Delete
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"namespace\": \"...\",
+  \"namespace\": \"some_namespace\",
   \"version\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {

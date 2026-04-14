@@ -31,10 +31,13 @@ use crate::{
     v1::utils::{ListResponse, ListResponseItem, Pagination, openapi_tag},
 };
 
-fn auth_token_access_metadata<'a>(ns: Option<&'a str>, action: &'static str) -> AccessMetadata<'a> {
+fn auth_token_access_metadata<'a>(
+    ns: Option<&'a NamespaceName>,
+    action: &'static str,
+) -> AccessMetadata<'a> {
     AccessMetadata::RuleProtected(RequestedOperation {
         module: Module::AuthToken,
-        namespace: ns,
+        namespace: ns.map(|n| n.as_str()),
         key: None,
         action,
     })
@@ -44,7 +47,7 @@ macro_rules! request_input {
     ($ty:ty, $action:literal) => {
         impl RequestInput for $ty {
             fn access_metadata(&self) -> AccessMetadata<'_> {
-                auth_token_access_metadata(self.namespace.as_deref(), $action)
+                auth_token_access_metadata(self.namespace.as_ref(), $action)
             }
         }
     };
@@ -88,7 +91,7 @@ impl From<AuthTokenModel> for AuthTokenOut {
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenCreateIn {
-    pub namespace: Option<String>,
+    pub namespace: Option<NamespaceName>,
     pub name: String,
     #[serde(default = "default_prefix")]
     pub prefix: String,
@@ -133,7 +136,7 @@ async fn auth_token_create(
 ) -> Result<MsgPackOrJson<AuthTokenCreateOut>> {
     let namespace: AuthTokenNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
@@ -160,7 +163,7 @@ async fn auth_token_create(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenExpireIn {
-    pub namespace: Option<String>,
+    pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
     /// Milliseconds from now until the token expires. `None` means expire immediately.
     #[serde(rename = "expiry_ms")]
@@ -181,7 +184,7 @@ async fn auth_token_expire(
 ) -> Result<MsgPackOrJson<AuthTokenExpireOut>> {
     let namespace: AuthTokenNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let expiry = data.expiry.map(|ms| repl.time.now() + ms);
@@ -192,7 +195,7 @@ async fn auth_token_expire(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenDeleteIn {
-    pub namespace: Option<String>,
+    pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
 }
 
@@ -220,7 +223,7 @@ async fn auth_token_delete(
 ) -> Result<MsgPackOrJson<AuthTokenDeleteOut>> {
     let namespace: AuthTokenNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = DeleteAuthTokenOperation::new(namespace, data.id.into_inner());
@@ -230,7 +233,7 @@ async fn auth_token_delete(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenVerifyIn {
-    pub namespace: Option<String>,
+    pub namespace: Option<NamespaceName>,
     pub token: String,
 }
 
@@ -252,7 +255,7 @@ async fn auth_token_verify(
 
     let namespace: AuthTokenNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let token_hashed = TokenHashed::from(data.token.as_str());
@@ -271,7 +274,7 @@ async fn auth_token_verify(
 
 #[derive(Clone, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenListIn {
-    pub namespace: Option<String>,
+    pub namespace: Option<NamespaceName>,
     pub owner_id: String,
     #[serde(flatten)]
     pub pagination: Pagination<Public<AuthTokenId>>,
@@ -292,7 +295,7 @@ async fn auth_token_list(
 
     let namespace: AuthTokenNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let limit = data.pagination.limit.0 as usize;
@@ -315,7 +318,7 @@ async fn auth_token_list(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenUpdateIn {
-    pub namespace: Option<String>,
+    pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
     pub name: Option<String>,
     #[serde(rename = "expiry_ms")]
@@ -339,7 +342,7 @@ async fn auth_token_update(
 ) -> Result<MsgPackOrJson<AuthTokenUpdateOut>> {
     let namespace: AuthTokenNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let operation = UpdateAuthTokenOperation::new(
@@ -357,7 +360,7 @@ async fn auth_token_update(
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
 pub struct AuthTokenRotateIn {
-    pub namespace: Option<String>,
+    pub namespace: Option<NamespaceName>,
     pub id: Public<AuthTokenId>,
     #[serde(default = "default_prefix")]
     pub prefix: String,
@@ -386,7 +389,7 @@ async fn auth_token_rotate(
 ) -> Result<MsgPackOrJson<AuthTokenRotateOut>> {
     let namespace: AuthTokenNamespace = state
         .namespace_state
-        .fetch_namespace(data.namespace.as_deref())?
+        .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
