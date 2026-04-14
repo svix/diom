@@ -4,7 +4,7 @@ use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationErrors};
+use validator::ValidationErrors;
 
 use crate::validation::validation_error;
 
@@ -18,7 +18,7 @@ pub use self::{
     unix_timestamp_ms::UnixTimestampMs,
 };
 
-const ALL_ERROR: &str = "__all__";
+pub const ALL_ERROR: &str = "__all__";
 
 fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {
     const MAX_LENGTH: usize = 256;
@@ -116,14 +116,16 @@ macro_rules! string_wrapper {
             }
         }
 
-        impl schemars::JsonSchema for $name_id {
+        impl $crate::__reexport::schemars::JsonSchema for $name_id {
             fn schema_name() -> std::borrow::Cow<'static, str> {
                 stringify!($name_id).into()
             }
 
-            fn json_schema(_g: &mut schemars::SchemaGenerator) -> schemars::Schema {
+            fn json_schema(
+                _g: &mut $crate::__reexport::schemars::SchemaGenerator,
+            ) -> $crate::__reexport::schemars::Schema {
                 let info = <Self as $crate::types::StringWrapper>::INFO;
-                schemars::json_schema!({
+                $crate::__reexport::schemars::json_schema!({
                     "type": "string",
                     "maxLength": info.max_length,
                     "pattern": info.pattern,
@@ -133,6 +135,48 @@ macro_rules! string_wrapper {
 
             fn inline_schema() -> bool {
                 true
+            }
+        }
+
+        impl $crate::__reexport::validator::Validate for $name_id {
+            fn validate(&self) -> Result<(), $crate::__reexport::validator::ValidationErrors> {
+                use std::sync::LazyLock;
+                use $crate::__reexport::regex::Regex;
+
+                static RE: LazyLock<Regex> = LazyLock::new(|| {
+                    Regex::new(<$name_id as $crate::types::StringWrapper>::INFO.pattern).unwrap()
+                });
+
+                let info = <Self as $crate::types::StringWrapper>::INFO;
+                let mut errors = $crate::__reexport::validator::ValidationErrors::new();
+                if self.0.is_empty() {
+                    errors.add(
+                        $crate::types::ALL_ERROR,
+                        $crate::validation::validation_error(
+                            Some("length"),
+                            Some("String must be at least one character"),
+                        ),
+                    );
+                } else if self.0.len() > info.max_length {
+                    errors.add(
+                        $crate::types::ALL_ERROR,
+                        $crate::validation::validation_error(Some("length"), Some("String too long")),
+                    );
+                } else if !RE.is_match(&self.0) {
+                    errors.add(
+                        $crate::types::ALL_ERROR,
+                        $crate::validation::validation_error(
+                            Some("invalid_entity_key"),
+                            Some(r"Entity key must match the following pattern: ^[a-zA-Z0-9\-/_.=+:]+$."),
+                        ),
+                    );
+                }
+
+                if errors.is_empty() {
+                    Ok(())
+                } else {
+                    Err(errors)
+                }
             }
         }
     };
@@ -155,42 +199,6 @@ string_wrapper!(EntityKey {
     pattern: r"^[a-zA-Z0-9\-/_.=+:]+$",
     example: "some_key"
 });
-
-impl Validate for EntityKey {
-    fn validate(&self) -> Result<(), ValidationErrors> {
-        const MAX_LENGTH: usize = 256;
-        static RE: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-/_.=+:]+$").unwrap());
-        let mut errors = ValidationErrors::new();
-        if self.0.is_empty() {
-            errors.add(
-                ALL_ERROR,
-                validation_error(
-                    Some("length"),
-                    Some("String must be at least one character"),
-                ),
-            );
-        } else if self.0.len() > MAX_LENGTH {
-            errors.add(
-                ALL_ERROR,
-                validation_error(Some("length"), Some("String too long")),
-            );
-        } else if !RE.is_match(&self.0) {
-            errors.add(
-                ALL_ERROR,
-                validation_error(
-                    Some("invalid_entity_key"),
-                    Some(r"Entity key must match the following pattern: ^[a-zA-Z0-9\-/_.=+:]+$."),
-                ),
-            );
-        }
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
-    }
-}
 
 /// Consistency level for reads.
 ///

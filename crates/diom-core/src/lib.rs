@@ -15,5 +15,8 @@ pub use self::monotime::Monotime;
 
 #[doc(hidden)]
 pub mod __reexport {
+    pub use regex;
+    pub use schemars;
     pub use serde_json;
+    pub use validator;
 }
