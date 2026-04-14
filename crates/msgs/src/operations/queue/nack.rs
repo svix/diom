@@ -26,6 +26,7 @@ pub struct QueueNackOperation {
     consumer_group: ConsumerGroup,
     msg_ids: Vec<MsgId>,
     dlq_topic_id_random_bytes: UuidV7RandomBytes,
+    retention_period: Option<DurationMs>,
 }
 
 impl QueueNackOperation {
@@ -34,6 +35,7 @@ impl QueueNackOperation {
         topic: TopicName,
         consumer_group: ConsumerGroup,
         msg_ids: Vec<MsgId>,
+        retention_period: Option<DurationMs>,
     ) -> Self {
         Self {
             namespace_id,
@@ -41,6 +43,7 @@ impl QueueNackOperation {
             consumer_group,
             msg_ids,
             dlq_topic_id_random_bytes: UuidV7RandomBytes::new_random(),
+            retention_period,
         }
     }
 
@@ -53,6 +56,11 @@ impl QueueNackOperation {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
+            let expiry_cutoff = self
+                .retention_period
+                .map(|rp| now.saturating_sub(rp))
+                .unwrap_or(UnixTimestampMs::UNIX_EPOCH);
+
             let nack_count = self.msg_ids.len() as u64;
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
@@ -116,6 +124,7 @@ impl QueueNackOperation {
                         &self.consumer_group,
                         now,
                         self.dlq_topic_id_random_bytes,
+                        expiry_cutoff,
                     )?;
                     dlq_count += 1;
                 } else {
@@ -161,14 +170,14 @@ fn forward_to_dlq(
     consumer_group: &ConsumerGroup,
     now: UnixTimestampMs,
     dlq_topic_id_random_bytes: UuidV7RandomBytes,
+    expiry_cutoff: UnixTimestampMs,
 ) -> Result<()> {
-    let original = MsgRow::fetch(
+    let original = MsgRow::fetch_by_offset(
         &state.msg_table,
-        MsgKey {
-            topic_id: source_topic_id,
-            partition: msg_id.partition,
-            offset: msg_id.offset,
-        },
+        source_topic_id,
+        msg_id.partition,
+        msg_id.offset,
+        expiry_cutoff,
     )?
     .ok_or_else(|| Error::internal("nacked message not found"))?;
 
@@ -190,6 +199,7 @@ fn forward_to_dlq(
         MsgKey {
             topic_id: dlq_topic_row.id,
             partition: dlq_partition,
+            timestamp: now,
             offset: dlq_offset,
         },
         &MsgRow {

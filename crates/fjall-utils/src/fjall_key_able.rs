@@ -3,6 +3,8 @@ use std::{
     ops::{Bound, RangeBounds},
 };
 
+use diom_core::types::UnixTimestampMs;
+
 use crate::{TableKey, TableRow};
 
 /// Marks a struct as a key used in Fjall queries, and generates a bunch
@@ -217,6 +219,31 @@ macro_rules! impl_key_component_int {
 // as the order of those types when converted to big endian bytes
 // doesn't match the intrinsic order of the types
 impl_key_component_int!(u16, u32, u64, u128);
+
+impl KeyComponent for UnixTimestampMs {
+    const FIXED_SIZE: bool = true;
+    const BYTE_SIZE: usize = u64::BYTE_SIZE;
+    type Ref<'a> = UnixTimestampMs;
+
+    fn key_len(&self) -> usize {
+        Self::BYTE_SIZE
+    }
+
+    fn write_to_key(&self, buf: &mut [u8]) -> usize {
+        self.as_millisecond().write_to_key(buf)
+    }
+
+    fn read_from_key(buf: &[u8]) -> Result<(Self, usize), Cow<'static, str>> {
+        let (millis, len) = u64::read_from_key(buf)?;
+        let ts = UnixTimestampMs::try_from_millisecond(millis as i64)
+            .ok_or(Cow::Borrowed("invalid timestamp"))?;
+        Ok((ts, len))
+    }
+
+    fn read_ref_from_key(buf: &[u8]) -> Result<(Self::Ref<'_>, usize), Cow<'static, str>> {
+        Self::read_from_key(buf)
+    }
+}
 
 impl KeyComponent for String {
     const FIXED_SIZE: bool = false;

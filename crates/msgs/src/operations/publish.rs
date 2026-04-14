@@ -234,6 +234,7 @@ fn write_msg_batch(
                 MsgKey {
                     topic_id,
                     partition,
+                    timestamp: now,
                     offset,
                 },
                 &msg,
