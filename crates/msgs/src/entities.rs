@@ -19,7 +19,19 @@ pub const MAX_PARTITION_COUNT: u16 = 64;
 
 pub const TOPIC_PARTITION_DELIMITER: &str = "~";
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    fjall_utils::KeyComponent,
+)]
 #[serde(transparent)]
 pub struct Partition(u16);
 

@@ -29,7 +29,7 @@ jobs:
     secrets: inherit
     needs: ci
     with:
-      image_name: svix/diom-server
+      image_name: svix/diom-server-private
       target: prod
     permissions:
       actions: read
@@ -42,7 +42,7 @@ jobs:
     secrets: inherit
     needs: ci
     with:
-      image_name: svix/diom-cli
+      image_name: svix/diom-cli-private
       target: cli-prod
     permissions:
       actions: read
@@ -55,7 +55,7 @@ jobs:
     secrets: inherit
     needs: ci
     with:
-      image_name: svix/diom-operator
+      image_name: svix/diom-operator-private
       target: prod
       file: ./infra/operator/Dockerfile
     permissions:
@@ -63,41 +63,3 @@ jobs:
       contents: read
       packages: write
       security-events: write
-
-  helm-publish:
-    needs: ci
-    uses: ./.github/workflows/helm-publish.yml
-    secrets: inherit
-    permissions:
-      contents: read
-      packages: write
-    with:
-      version: 0.0.0-${{ github.sha }}
-      image_tag: sha-${{ github.sha }}
-
-  svix-cloud-deploy:
-    needs:
-      - docker_publish_server
-      - docker_publish_operator
-    permissions:
-      contents: read
-      packages: read
-      id-token: write
-    uses: ./.github/workflows/svix-cloud-operator.yml
-    with:
-      image_tag: sha-${{ github.sha }}
-      environment: svix-cloud-staging-apply
-      namespace: diom
-    secrets: inherit
-
-  benchmark-environment:
-    needs: svix-cloud-deploy
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/benchmark-env.yml
-    secrets: inherit
-    with:
-      image_tag: sha-${{ github.sha }}
-      environment: svix-cloud-staging-apply
-      namespace: diom
