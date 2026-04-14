@@ -106,12 +106,12 @@ pub struct CacheDeleteIn {
 
 request_input!(CacheDeleteIn, "delete");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CacheDeleteOut {
     pub success: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct CacheGetNamespaceOut {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
@@ -134,7 +134,7 @@ impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct CacheCreateNamespaceOut {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,

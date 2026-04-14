@@ -253,7 +253,7 @@ impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct RateLimitCreateNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
@@ -267,7 +267,7 @@ struct RateLimitGetNamespaceIn {
 
 namespace_request_input!(RateLimitGetNamespaceIn, "get");
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 struct RateLimitGetNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
