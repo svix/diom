@@ -127,6 +127,7 @@ macro_rules! string_wrapper {
                 let info = <Self as $crate::types::StringWrapper>::INFO;
                 $crate::__reexport::schemars::json_schema!({
                     "type": "string",
+                    "minLength": info.min_length,
                     "maxLength": info.max_length,
                     "pattern": info.pattern,
                     "example": info.example,
@@ -149,13 +150,10 @@ macro_rules! string_wrapper {
 
                 let info = <Self as $crate::types::StringWrapper>::INFO;
                 let mut errors = $crate::__reexport::validator::ValidationErrors::new();
-                if self.0.is_empty() {
+                if self.0.len() < info.min_length {
                     errors.add(
                         $crate::types::ALL_ERROR,
-                        $crate::validation::validation_error(
-                            Some("length"),
-                            Some("String must be at least one character"),
-                        ),
+                        $crate::validation::validation_error(Some("length"), Some("String too short")),
                     );
                 } else if self.0.len() > info.max_length {
                     errors.add(
@@ -184,6 +182,7 @@ macro_rules! string_wrapper {
 
 #[doc(hidden)]
 pub struct StringSchema {
+    pub min_length: usize,
     pub max_length: usize,
     pub pattern: &'static str,
     pub example: &'static str,
@@ -195,6 +194,7 @@ pub trait StringWrapper {
 }
 
 string_wrapper!(EntityKey {
+    min_length: 1,
     max_length: 256,
     pattern: r"^[a-zA-Z0-9\-/_.=+:]+$",
     example: "some_key"

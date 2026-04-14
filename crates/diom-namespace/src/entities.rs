@@ -6,6 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 string_wrapper!(NamespaceName {
+    min_length: 1,
     max_length: 256,
     pattern: r"^[a-zA-Z0-9\-/_.=+]+$",
     example: "some_namespace"
