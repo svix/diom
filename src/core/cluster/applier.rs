@@ -6,7 +6,7 @@ use super::{
     state_machine::{Store, Stores},
 };
 use crate::AppState;
-use opentelemetry::{Value, propagation::TextMapPropagator};
+use opentelemetry::propagation::TextMapPropagator;
 use opentelemetry_sdk::propagation::TraceContextPropagator;
 use tracing::{Instrument, info_span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
@@ -48,9 +48,9 @@ pub(super) async fn apply_request(
         // This should only fail if OTEL is not enabled:
         let _ = child_span.set_parent(propagator.extract(ctx));
     }
-    child_span.set_attribute("request", Value::String(request.to_string().into()));
+    child_span.set_attribute("request", request.module());
     if let Some(hash) = request.hashed_key() {
-        child_span.set_attribute("hashed_key", Value::String(hash.into()));
+        child_span.set_attribute("hashed_key", hash);
     }
 
     state_machine.time.update_from_other(request.timestamp);
