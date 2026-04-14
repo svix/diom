@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 pub type NamespaceName = String;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 pub enum EvictionPolicy {
     #[default]
     NoEviction,

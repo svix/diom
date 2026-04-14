@@ -5847,7 +5847,7 @@
             "type": "string"
           },
           "eviction_policy": {
-            "default": "NoEviction",
+            "default": "no-eviction",
             "$ref": "#/components/schemas/EvictionPolicy"
           }
         },
@@ -6175,7 +6175,7 @@
       "EvictionPolicy": {
         "type": "string",
         "enum": [
-          "NoEviction"
+          "no-eviction"
         ]
       },
       "IdempotencyAbortIn": {
