@@ -4,9 +4,13 @@ use crate::{
     cfg::Configuration as AppConfig,
     core::{INTERNAL_NAMESPACE, cluster::RaftState},
     v1::endpoints::{
-        auth_token::AuthTokenCreateNamespaceIn, cache::CacheCreateNamespaceIn,
-        idempotency::IdempotencyCreateNamespaceIn, kv::KvCreateNamespaceIn,
-        msgs::MsgNamespaceCreateIn, rate_limit::RateLimitCreateNamespaceIn,
+        admin::auth::{policy::AdminAccessPolicyUpsertIn, role::AdminRoleUpsertIn},
+        auth_token::AuthTokenCreateNamespaceIn,
+        cache::CacheCreateNamespaceIn,
+        idempotency::IdempotencyCreateNamespaceIn,
+        kv::KvCreateNamespaceIn,
+        msgs::MsgNamespaceCreateIn,
+        rate_limit::RateLimitCreateNamespaceIn,
     },
 };
 use anyhow::{Context, bail};
@@ -21,6 +25,8 @@ enum BootstrapCommand {
     RateLimit(RateLimitCreateNamespaceIn),
     Msgs(MsgNamespaceCreateIn),
     AuthToken(AuthTokenCreateNamespaceIn),
+    AuthPolicy(AdminAccessPolicyUpsertIn),
+    AuthRole(AdminRoleUpsertIn),
 }
 
 impl BootstrapCommand {
@@ -66,6 +72,30 @@ impl BootstrapCommand {
                     )
                     .await?;
             }
+            BootstrapCommand::AuthPolicy(v) => {
+                tracing::debug!(id = v.id.as_str(), "bootstrapping auth-policy");
+                raft_state
+                    .client_write(
+                        diom_admin_auth::operations::UpsertAccessPolicyOperation::new(
+                            v.id,
+                            v.description,
+                            v.rules,
+                        ),
+                    )
+                    .await?;
+            }
+            BootstrapCommand::AuthRole(v) => {
+                tracing::debug!(id = v.id.as_str(), "bootstrapping auth-role");
+                raft_state
+                    .client_write(diom_admin_auth::operations::UpsertRoleOperation::new(
+                        v.id,
+                        v.description,
+                        v.rules,
+                        v.policies,
+                        v.context,
+                    ))
+                    .await?;
+            }
         }
         Ok(())
     }
@@ -78,6 +108,8 @@ impl BootstrapCommand {
             BootstrapCommand::RateLimit(v) => &v.name,
             BootstrapCommand::Msgs(v) => &v.name,
             BootstrapCommand::AuthToken(v) => &v.name,
+            BootstrapCommand::AuthPolicy(v) => v.id.as_str(),
+            BootstrapCommand::AuthRole(v) => v.id.as_str(),
         }
     }
 }
@@ -87,50 +119,52 @@ impl FromStr for BootstrapCommand {
 
     fn from_str(line: &str) -> anyhow::Result<Self> {
         let (module, rest) = line.split_once(char::is_whitespace).with_context(|| {
-            format!("expected '<module> namespace create <json>', got: {line:?}")
+            format!("expected '<module> <resource> <action> <json>', got: {line:?}")
         })?;
         let rest = rest.trim_start();
 
         let (resource, rest) = rest
             .split_once(char::is_whitespace)
-            .with_context(|| format!("expected 'namespace create <json>', got: {rest:?}"))?;
-        if resource != "namespace" {
-            bail!("expected 'namespace', got {resource:?}");
-        }
+            .with_context(|| format!("expected '<resource> <action> <json>', got: {rest:?}"))?;
         let rest = rest.trim_start();
 
         let (action, json_str) = rest
             .split_once(char::is_whitespace)
-            .with_context(|| format!("expected 'create <json>', got: {rest:?}"))?;
-        if action != "create" {
-            bail!("expected 'create', got {action:?}");
-        }
+            .with_context(|| format!("expected '<action> <json>', got: {rest:?}"))?;
         let json_str = json_str.trim();
 
-        match module {
-            "kv" => Ok(BootstrapCommand::Kv(
+        match (module, resource, action) {
+            ("kv", "namespace", "create") => Ok(BootstrapCommand::Kv(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for kv namespace: {json_str:?}"))?,
             )),
-            "cache" => Ok(BootstrapCommand::Cache(
+            ("cache", "namespace", "create") => Ok(BootstrapCommand::Cache(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for cache namespace: {json_str:?}"))?,
             )),
-            "idempotency" => Ok(BootstrapCommand::Idempotency(
+            ("idempotency", "namespace", "create") => Ok(BootstrapCommand::Idempotency(
                 serde_json::from_str(json_str).with_context(|| {
                     format!("invalid JSON for idempotency namespace: {json_str:?}")
                 })?,
             )),
-            "rate-limit" => Ok(BootstrapCommand::RateLimit(
+            ("rate-limit", "namespace", "create") => Ok(BootstrapCommand::RateLimit(
                 serde_json::from_str(json_str).with_context(|| {
                     format!("invalid JSON for rate-limit namespace: {json_str:?}")
                 })?,
             )),
-            "msgs" => Ok(BootstrapCommand::Msgs(
+            ("msgs", "namespace", "create") => Ok(BootstrapCommand::Msgs(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for msgs namespace: {json_str:?}"))?,
             )),
-            _ => bail!("unknown module {module:?}"),
+            ("admin", "auth-policy", "upsert") => Ok(BootstrapCommand::AuthPolicy(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for admin auth-policy: {json_str:?}"))?,
+            )),
+            ("admin", "auth-role", "upsert") => Ok(BootstrapCommand::AuthRole(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for admin auth-role: {json_str:?}"))?,
+            )),
+            _ => bail!("unknown command: {module} {resource} {action}"),
         }
     }
 }
@@ -359,6 +393,40 @@ mod tests {
     #[test]
     fn unknown_module() {
         assert!(r#"blob namespace create {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
+    }
+
+    #[test]
+    fn auth_policy_upsert() {
+        let cmd: BootstrapCommand =
+            r#"admin auth-policy upsert {"id":"mypolicy","description":"test","rules":[]}"#
+                .parse()
+                .unwrap();
+        let BootstrapCommand::AuthPolicy(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.id.as_str(), "mypolicy");
+        assert_eq!(v.description, "test");
+        assert!(v.rules.is_empty());
+    }
+
+    #[test]
+    fn auth_role_upsert() {
+        let cmd: BootstrapCommand =
+            r#"admin auth-role upsert {"id":"myrole","description":"test","rules":[]}"#
+                .parse()
+                .unwrap();
+        let BootstrapCommand::AuthRole(v) = cmd else {
+            panic!()
+        };
+        assert_eq!(v.id.as_str(), "myrole");
+        assert_eq!(v.description, "test");
+        assert!(v.rules.is_empty());
+        assert!(v.policies.is_empty());
+    }
+
+    #[test]
+    fn unknown_admin_subcommand() {
+        assert!(r#"admin unknown upsert {"id":"x"}"#.parse::<BootstrapCommand>().is_err());
     }
 
     #[test]
