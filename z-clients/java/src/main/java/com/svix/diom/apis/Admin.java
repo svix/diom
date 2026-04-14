@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 
@@ -21,5 +20,21 @@ public class Admin {
 
     public Admin(HttpClient client) {
         this.client = client;
+    }
+
+    public AdminAuthPolicy getAuthPolicy() {
+        return new AdminAuthPolicy(this.client);
+    }
+
+    public AdminAuthRole getAuthRole() {
+        return new AdminAuthRole(this.client);
+    }
+
+    public AdminAuthToken getAuthToken() {
+        return new AdminAuthToken(this.client);
+    }
+
+    public AdminCluster getCluster() {
+        return new AdminCluster(this.client);
     }
 }

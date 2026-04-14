@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.RateLimitCheckIn;
@@ -27,6 +26,10 @@ public class RateLimit {
 
     public RateLimit(HttpClient client) {
         this.client = client;
+    }
+
+    public RateLimitNamespace getNamespace() {
+        return new RateLimitNamespace(this.client);
     }
 
     /** Rate Limiter Check and Consume */

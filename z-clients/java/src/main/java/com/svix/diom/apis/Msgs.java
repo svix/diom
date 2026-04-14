@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.Getter;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import com.svix.diom.models.MsgPublishIn;
@@ -24,6 +23,22 @@ public class Msgs {
 
     public Msgs(HttpClient client) {
         this.client = client;
+    }
+
+    public MsgsNamespace getNamespace() {
+        return new MsgsNamespace(this.client);
+    }
+
+    public MsgsQueue getQueue() {
+        return new MsgsQueue(this.client);
+    }
+
+    public MsgsStream getStream() {
+        return new MsgsStream(this.client);
+    }
+
+    public MsgsTopic getTopic() {
+        return new MsgsTopic(this.client);
     }
 
     /** Publishes messages to a topic within a namespace. */
