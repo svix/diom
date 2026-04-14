@@ -1,3 +1,5 @@
+#![warn(clippy::str_to_string)]
+
 #[allow(unused_extern_crates)]
 extern crate self as fjall_utils;
 
