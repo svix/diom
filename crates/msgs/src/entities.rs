@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt, num::NonZeroU64, ops::Deref, str::FromStr};
 
 use diom_core::types::{ByteString, DurationMs, UnixTimestampMs};
 use diom_error::Error;
+use fjall_utils::KeyComponent;
 use schemars::JsonSchema;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
@@ -20,17 +21,7 @@ pub const MAX_PARTITION_COUNT: u16 = 64;
 pub const TOPIC_PARTITION_DELIMITER: &str = "~";
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Serialize,
-    Deserialize,
-    fjall_utils::KeyComponent,
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, KeyComponent,
 )]
 #[serde(transparent)]
 pub struct Partition(u16);
@@ -66,7 +57,7 @@ impl FromStr for Partition {
 ///
 /// Carries the `namespace` that owns this topic. Serializes as `"namespace:topic"`, or just
 /// `"topic"` when the namespace is the default.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, KeyComponent)]
 pub struct TopicName(String);
 
 impl TopicName {
@@ -260,7 +251,7 @@ impl JsonSchema for TopicIn {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, KeyComponent)]
 #[serde(transparent)]
 pub struct MsgsIdempotencyKey([u8; 32]);
 
@@ -410,7 +401,7 @@ pub enum SeekPosition {
 /// A validated consumer group identifier.
 ///
 /// Must be at most 64 bytes and only contain ASCII alphanumeric characters, `_`, `-`, or `.`.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, KeyComponent)]
 #[serde(transparent)]
 pub struct ConsumerGroup(pub(crate) String);
 

@@ -16,7 +16,7 @@ use crate::{
         MsgIn, MsgsIdempotencyKey, Offset, Partition, TopicIn, TopicName, TopicPartition,
         partition_for_key,
     },
-    tables::{IdempotencyRow, MsgKey, MsgRow, TopicRow},
+    tables::{IdempotencyKey, IdempotencyRow, MsgKey, MsgRow, TopicKey, TopicRow},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,7 +71,7 @@ impl PublishOperation {
             if let Some(idempotency_key) = self.idempotency_key {
                 let existing = IdempotencyRow::fetch(
                     &state.metadata_tables,
-                    IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
+                    IdempotencyKey::build_key(&self.namespace_id, &idempotency_key),
                 )?;
 
                 if let Some(existing) = existing
@@ -86,7 +86,7 @@ impl PublishOperation {
 
                 batch.insert_row(
                     &state.metadata_tables,
-                    IdempotencyRow::key_for(self.namespace_id, &idempotency_key),
+                    IdempotencyKey::build_key(&self.namespace_id, &idempotency_key),
                     &IdempotencyRow {
                         expiry: now + IDEMPOTENCY_TTL,
                     },
@@ -95,7 +95,7 @@ impl PublishOperation {
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
             )?;
             let topic_row = match (topic_row, self.partition) {
                 (Some(row), Some(partition)) if (0..row.partitions).contains(&partition.get()) => {
@@ -112,7 +112,7 @@ impl PublishOperation {
                     let row = TopicRow::new(self.topic.clone(), now, self.topic_id_random_bytes);
                     batch.insert_row(
                         &state.metadata_tables,
-                        TopicRow::key_for(self.namespace_id, &self.topic),
+                        TopicKey::build_key(&self.namespace_id, &self.topic),
                         &row,
                     )?;
                     row

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, Offset, Partition, SeekPosition, TopicIn, TopicName},
-    tables::{MsgRow, StreamLeaseRow, TopicRow},
+    tables::{MsgRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, StreamSeekResponse};
@@ -64,7 +64,7 @@ impl StreamSeekOperation {
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
             .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
@@ -92,7 +92,7 @@ impl StreamSeekOperation {
 
                 batch.insert_row(
                     &state.metadata_tables,
-                    StreamLeaseRow::key_for(topic_row.id, partition, &self.consumer_group),
+                    StreamLeaseKey::build_key(&topic_row.id, &partition, &self.consumer_group),
                     &lease,
                 )?;
             }

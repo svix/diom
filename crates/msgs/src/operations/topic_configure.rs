@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{MAX_PARTITION_COUNT, TopicName},
-    tables::TopicRow,
+    tables::{TopicKey, TopicRow},
 };
 
 use super::{MsgsRaftState, MsgsRequest, TopicConfigureResponse};
@@ -41,7 +41,7 @@ impl TopicConfigureOperation {
         spawn_blocking_in_current_span(move || {
             let mut topic_row = match TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
             )? {
                 Some(topic_row) => topic_row,
                 None => TopicRow::new(self.topic.clone(), now, self.topic_id_random_bytes),
@@ -58,7 +58,7 @@ impl TopicConfigureOperation {
             let mut batch = state.db.batch();
             batch.insert_row(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
                 &topic_row,
             )?;
             batch.commit().map_err(Error::from)?;

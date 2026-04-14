@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, MsgId, TopicName},
-    tables::{QueueLeaseRow, TopicRow},
+    tables::{QueueLeaseKey, QueueLeaseRow, TopicKey, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, QueueExtendLeaseResponse};
@@ -52,7 +52,7 @@ impl QueueExtendLeaseOperation {
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &self.topic),
+                TopicKey::build_key(&self.namespace_id, &self.topic),
             )?
             .ok_or_else(|| Error::invalid_user_input("topic must exist"))?;
 
@@ -65,7 +65,12 @@ impl QueueExtendLeaseOperation {
             for msg_id in &self.msg_ids {
                 let lease = QueueLeaseRow::fetch(
                     &state.metadata_tables,
-                    QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                    QueueLeaseKey::build_key(
+                        &topic_row.id,
+                        &msg_id.partition,
+                        &msg_id.offset,
+                        &self.consumer_group,
+                    ),
                 )?;
 
                 let lease = match lease {
@@ -88,7 +93,12 @@ impl QueueExtendLeaseOperation {
 
                 batch.insert_row(
                     &state.metadata_tables,
-                    QueueLeaseRow::key_for(topic_row.id, msg_id, &self.consumer_group),
+                    QueueLeaseKey::build_key(
+                        &topic_row.id,
+                        &msg_id.partition,
+                        &msg_id.offset,
+                        &self.consumer_group,
+                    ),
                     &QueueLeaseRow {
                         expiry: new_expiry,
                         dlq: false,

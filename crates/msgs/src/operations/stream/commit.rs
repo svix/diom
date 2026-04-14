@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     State,
     entities::{ConsumerGroup, Offset, TopicPartition},
-    tables::{StreamLeaseRow, TopicRow},
+    tables::{StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow},
 };
 
 use super::super::{MsgsRaftState, MsgsRequest, StreamCommitResponse};
@@ -45,13 +45,13 @@ impl StreamCommitOperation {
 
             let topic_row = TopicRow::fetch(
                 &state.metadata_tables,
-                TopicRow::key_for(self.namespace_id, &topic.topic),
+                TopicKey::build_key(&self.namespace_id, &topic.topic),
             )?
             .ok_or_else(|| Error::invalid_user_input("partition must exist"))?;
 
             let mut lease = StreamLeaseRow::fetch(
                 &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, topic.partition, &self.consumer_group),
+                StreamLeaseKey::build_key(&topic_row.id, &topic.partition, &self.consumer_group),
             )?
             .ok_or_else(|| Error::invalid_user_input("lease not found"))?;
 
@@ -62,7 +62,7 @@ impl StreamCommitOperation {
 
             batch.insert_row(
                 &state.metadata_tables,
-                StreamLeaseRow::key_for(topic_row.id, topic.partition, &self.consumer_group),
+                StreamLeaseKey::build_key(&topic_row.id, &topic.partition, &self.consumer_group),
                 &lease,
             )?;
 
