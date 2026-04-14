@@ -1,7 +1,7 @@
 // this file is @generated
 
 export enum EvictionPolicy {
-    NoEviction = 'NoEviction',
+    NoEviction = 'no-eviction',
     }
 
 export const EvictionPolicySerializer = {

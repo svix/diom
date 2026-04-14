@@ -12,11 +12,11 @@ import (
 type EvictionPolicy string
 
 const (
-	EVICTIONPOLICY_NO_EVICTION EvictionPolicy = "NoEviction"
+	EVICTIONPOLICY_NO_EVICTION EvictionPolicy = "no-eviction"
 )
 
 var allowedEvictionPolicy = []EvictionPolicy{
-	"NoEviction",
+	"no-eviction",
 }
 
 func (v *EvictionPolicy) UnmarshalMsgpack(src []byte) error {
@@ -35,5 +35,5 @@ func (v *EvictionPolicy) UnmarshalMsgpack(src []byte) error {
 }
 
 var EvictionPolicyFromString = map[string]EvictionPolicy{
-	"NoEviction": EVICTIONPOLICY_NO_EVICTION,
+	"no-eviction": EVICTIONPOLICY_NO_EVICTION,
 }
