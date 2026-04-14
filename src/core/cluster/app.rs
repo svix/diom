@@ -176,7 +176,7 @@ async fn handle_forwarded_write(
     MsgPack(mut req): MsgPack<ForwardedWriteRequest>,
 ) -> Result<MsgPack<ForwardedWriteResponse>, crate::Error> {
     // reset the timestamp in case the forwarding node was out of sync
-    req.request.timestamp = state.state_machine.now();
+    req.request.timestamp = state.state_machine.time.now_utm();
 
     // intentionally do not use state.client_write because we don't want an infinite recursion
     // of forwardings

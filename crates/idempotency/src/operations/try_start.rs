@@ -4,7 +4,6 @@ use diom_core::{PersistableValue, types::DurationMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
@@ -34,7 +33,7 @@ impl TryStartOperation {
     async fn apply_real(
         self,
         state: &IdempotencyRaftState<'_>,
-        now: Timestamp,
+        now: diom_core::types::UnixTimestampMs,
         log_index: u64,
     ) -> Result<TryStartResponseData> {
         let expiry = now + self.lock_period;

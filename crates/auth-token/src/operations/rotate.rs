@@ -1,5 +1,4 @@
-use diom_core::PersistableValue;
-use jiff::Timestamp;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -24,7 +23,7 @@ pub struct RotateAuthTokenOperation {
     new_id_random_bytes: UuidV7RandomBytes,
     new_token_hashed: TokenHashed,
     /// When the old token expires. `None` means expire immediately (now).
-    old_expiry: Option<Timestamp>,
+    old_expiry: Option<UnixTimestampMs>,
 }
 
 impl RotateAuthTokenOperation {
@@ -32,7 +31,7 @@ impl RotateAuthTokenOperation {
         namespace: AuthTokenNamespace,
         old_id: AuthTokenId,
         new_token_hashed: TokenHashed,
-        old_expiry: Option<Timestamp>,
+        old_expiry: Option<UnixTimestampMs>,
     ) -> Self {
         Self {
             namespace_id: namespace.id,

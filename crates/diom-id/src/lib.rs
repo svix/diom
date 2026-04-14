@@ -1,7 +1,6 @@
 use std::{fmt, marker::PhantomData};
 
-use diom_core::PersistableValue;
-use jiff::Timestamp;
+use diom_core::{PersistableValue, types::AsMillisecond};
 use serde::{Deserialize, Serialize};
 use uuid::{Builder, Uuid};
 
@@ -57,8 +56,8 @@ impl<M: IdMarker> Id<M> {
         }
     }
 
-    pub fn new(now: Timestamp, random_bytes: UuidV7RandomBytes) -> Self {
-        let millis = now.as_millisecond() as u64;
+    pub fn new<TS: AsMillisecond>(now: TS, random_bytes: UuidV7RandomBytes) -> Self {
+        let millis = now.as_millisecond();
         Self::from_uuid(Builder::from_unix_timestamp_millis(millis, &random_bytes.0).into_uuid())
     }
 

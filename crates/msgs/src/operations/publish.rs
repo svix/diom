@@ -5,7 +5,6 @@ use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
@@ -61,7 +60,11 @@ impl PublishOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<PublishResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: diom_core::types::UnixTimestampMs,
+    ) -> Result<PublishResponseData> {
         let state = state.clone();
 
         let results = spawn_blocking_in_current_span(move || {
@@ -77,10 +80,10 @@ impl PublishOperation {
                 if let Some(existing) = existing
                     && existing.expiry > now
                 {
-                    let retry_after = now.duration_until(existing.expiry);
+                    let retry_after = now.saturating_duration_until(existing.expiry);
                     return Err(Error::conflict(
                         "idempotency key already used".to_owned(),
-                        Some(DurationMs::from_secs(retry_after.as_secs() as u64)),
+                        Some(retry_after),
                     ));
                 }
 
@@ -207,7 +210,7 @@ fn write_msg_batch(
     topic_name: &TopicName,
     topic_id: TopicId,
     msgs_by_partition: BTreeMap<Partition, Vec<MsgIn>>,
-    now: Timestamp,
+    now: diom_core::types::UnixTimestampMs,
 ) -> Result<Vec<PublishedTopic>> {
     let mut results: Vec<PublishedTopic> = Vec::with_capacity(msgs_by_partition.len());
 

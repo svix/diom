@@ -1,7 +1,6 @@
-use diom_core::PersistableValue;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_id::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -13,7 +12,7 @@ enum RowType {
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, PersistableValue)]
 pub struct TokenBucketRow {
     pub tokens: u64,
-    pub last_refill: Timestamp,
+    pub last_refill: UnixTimestampMs,
 }
 
 impl TableRow for TokenBucketRow {

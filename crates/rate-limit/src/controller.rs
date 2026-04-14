@@ -1,9 +1,11 @@
-use diom_core::{task::spawn_blocking_in_current_span, types::DurationMs};
+use diom_core::{
+    task::spawn_blocking_in_current_span,
+    types::{DurationMs, UnixTimestampMs},
+};
 use diom_error::{Result, ResultExt as _};
 use diom_id::NamespaceId;
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
-use jiff::Timestamp;
 
 use crate::{RATE_LIMIT_KEYSPACE, algorithms::TokenBucket, tables::TokenBucketRow};
 
@@ -26,8 +28,8 @@ impl RateLimitController {
         namespace_id: NamespaceId,
         identifier: &str,
         config: &TokenBucket,
-        now: Timestamp,
-    ) -> Result<(u64, Timestamp)> {
+        now: UnixTimestampMs,
+    ) -> Result<(u64, UnixTimestampMs)> {
         let bucket =
             TokenBucketRow::fetch(tables, TokenBucketRow::key_for(namespace_id, identifier))?
                 .unwrap_or(TokenBucketRow {
@@ -38,15 +40,16 @@ impl RateLimitController {
     }
 
     // Using the same identifier but changing the algorithm is considered a different resource.
-    pub async fn limit<I: AsRef<str> + 'static + Send>(
+    pub async fn limit<I: AsRef<str> + 'static + Send, TS: Into<UnixTimestampMs>>(
         &self,
-        now: Timestamp,
+        now: TS,
         namespace_id: NamespaceId,
         identifier: I,
         wanted: u64,
         config: TokenBucket,
     ) -> Result<(bool, u64, Option<DurationMs>)> {
         let tables = self.tables.clone();
+        let now = now.into();
 
         spawn_blocking_in_current_span(move || {
             let identifier = identifier.as_ref();
@@ -74,15 +77,16 @@ impl RateLimitController {
         .await?
     }
 
-    pub async fn get_remaining<I: AsRef<str> + 'static + Send>(
+    pub async fn get_remaining<I: AsRef<str> + 'static + Send, TS: Into<UnixTimestampMs>>(
         &self,
-        now: Timestamp,
+        now: TS,
         namespace_id: NamespaceId,
         identifier: I,
         wanted: u64,
         config: TokenBucket,
     ) -> Result<(u64, Option<DurationMs>)> {
         let tables = self.tables.clone();
+        let now = now.into();
         spawn_blocking_in_current_span(move || {
             let identifier = identifier.as_ref();
             let (capacity, _) =

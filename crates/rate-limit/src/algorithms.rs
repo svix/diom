@@ -1,5 +1,7 @@
-use diom_core::{PersistableValue, types::DurationMs};
-use jiff::Timestamp;
+use diom_core::{
+    PersistableValue,
+    types::{DurationMs, UnixTimestampMs},
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PersistableValue)]
@@ -16,18 +18,14 @@ impl TokenBucket {
     pub(crate) fn get_new_capacity(
         &self,
         current: u64,
-        now: Timestamp,
-        last_refill: Timestamp,
-    ) -> (u64, Timestamp) {
+        now: UnixTimestampMs,
+        last_refill: UnixTimestampMs,
+    ) -> (u64, UnixTimestampMs) {
         let mut capacity = current;
         let mut new_last_refill = last_refill;
 
         if last_refill < now {
-            let elapsed_ms: u64 = now
-                .duration_since(last_refill)
-                .as_millis()
-                .try_into()
-                .unwrap();
+            let elapsed_ms: u64 = now.saturating_duration_since(last_refill).as_millis();
             let refill_interval_ms: u64 = self.refill_interval.as_millis();
             let intervals = elapsed_ms / refill_interval_ms;
 

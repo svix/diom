@@ -88,7 +88,7 @@ impl AllNodesWorker {
     async fn worker_loop(&self, now: jiff::Timestamp) -> BackgroundResult<()> {
         let mut tasks = tokio::task::JoinSet::new();
         let state = self.state.clone();
-        tasks.spawn_blocking(move || state.controller.clear_expired_in_background(now));
+        tasks.spawn_blocking(move || state.controller.clear_expired_in_background(now.into()));
         for result in tasks.join_all().await {
             result.map_err(BackgroundError::Other)?;
         }

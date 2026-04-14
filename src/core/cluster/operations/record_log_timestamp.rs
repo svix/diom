@@ -12,7 +12,7 @@ impl InternalRequest for RecordLogTimestampOperation {
     async fn apply(self, state: &mut Store, context: &diom_operations::OpContext) -> Response {
         state
             .logs
-            .record_log_timestamp(context.timestamp, context.log_index)
+            .record_log_timestamp(context.timestamp.into(), context.log_index)
             .await
             .map_err(|e| Error::internal(e).into())
             .pipe(Response)

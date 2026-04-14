@@ -57,7 +57,7 @@ pub(crate) async fn initialize_cluster(
     #[allow(clippy::disallowed_methods)]
     raft.client_write(Arc::new(RequestWithContext::new(
         Request::ClusterInternal(SetClusterUuidOperation(new_id).into()),
-        jiff::Timestamp::now(),
+        jiff::Timestamp::now().into(),
         None,
     )))
     .await

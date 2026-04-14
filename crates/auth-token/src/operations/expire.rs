@@ -1,4 +1,4 @@
-use diom_core::PersistableValue;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +21,7 @@ pub struct ExpireAuthTokenOperation {
     namespace_id: NamespaceId,
     pub id: AuthTokenId,
     /// The timestamp at which the token expires. `None` means expire immediately (now).
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
 }
 
 impl ExpireAuthTokenOperation {
@@ -29,7 +29,7 @@ impl ExpireAuthTokenOperation {
         Self {
             namespace_id: namespace.id,
             id,
-            expiry,
+            expiry: expiry.map(|e| e.into()),
         }
     }
 

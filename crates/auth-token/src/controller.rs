@@ -1,9 +1,11 @@
 use crate::entities::TokenHashed;
-use diom_core::{task::spawn_blocking_in_current_span, types::Metadata};
+use diom_core::{
+    task::spawn_blocking_in_current_span,
+    types::{Metadata, UnixTimestampMs},
+};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::tables::{AuthTokenEntity, AuthTokenRow, IdIndexRow, OwnerIndexRow};
@@ -12,14 +14,14 @@ use crate::tables::{AuthTokenEntity, AuthTokenRow, IdIndexRow, OwnerIndexRow};
 pub struct AuthTokenModel {
     pub id: AuthTokenId,
     pub name: String,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub metadata: Metadata,
     pub owner_id: String,
     pub scopes: Vec<String>,
     /// Whether this token is currently enabled.
     pub enabled: bool,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl From<AuthTokenRow> for AuthTokenModel {
@@ -43,12 +45,12 @@ pub struct CreateTokenInput {
     pub id: AuthTokenId,
     pub name: String,
     pub token_hashed: TokenHashed,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub metadata: Metadata,
     pub owner_id: String,
     pub scopes: Vec<String>,
     pub enabled: bool,
-    pub now: Timestamp,
+    pub now: UnixTimestampMs,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -56,18 +58,18 @@ pub struct RotateTokenInput {
     pub new_id: AuthTokenId,
     pub new_token_hashed: TokenHashed,
     /// When the old token expires.
-    pub old_expiry: Timestamp,
-    pub now: Timestamp,
+    pub old_expiry: UnixTimestampMs,
+    pub now: UnixTimestampMs,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PartialUpdateInput {
     pub name: Option<String>,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub metadata: Option<Metadata>,
     pub scopes: Option<Vec<String>>,
     pub enabled: Option<bool>,
-    pub now: Timestamp,
+    pub now: UnixTimestampMs,
 }
 
 #[derive(Clone)]
@@ -89,7 +91,7 @@ impl AuthTokenController {
         keyspace: &fjall::Keyspace,
         namespace_id: NamespaceId,
         token_hashed: &TokenHashed,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<Option<AuthTokenRow>> {
         let Some(row) =
             AuthTokenRow::fetch(keyspace, AuthTokenRow::key_for(namespace_id, token_hashed))?
@@ -110,7 +112,7 @@ impl AuthTokenController {
         keyspace: &fjall::Keyspace,
         namespace_id: NamespaceId,
         id: AuthTokenId,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<Option<(IdIndexRow, AuthTokenRow)>> {
         let Some(index_row) = IdIndexRow::fetch(keyspace, IdIndexRow::key_for(namespace_id, id))?
         else {
@@ -129,7 +131,7 @@ impl AuthTokenController {
         &self,
         namespace_id: NamespaceId,
         token_hashed: &TokenHashed,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<Option<AuthTokenModel>> {
         let keyspace = self.keyspace.clone();
         let token_hashed = token_hashed.clone();
@@ -178,8 +180,8 @@ impl AuthTokenController {
         keyspace: &fjall::Keyspace,
         namespace_id: NamespaceId,
         id: AuthTokenId,
-        expiry: Timestamp,
-        now: Timestamp,
+        expiry: UnixTimestampMs,
+        now: UnixTimestampMs,
     ) -> Result<Option<AuthTokenModel>> {
         let Some((index_row, mut row)) =
             Self::fetch_by_id_non_expired(keyspace, namespace_id, id, now)?
@@ -201,8 +203,8 @@ impl AuthTokenController {
         &self,
         namespace_id: NamespaceId,
         id: AuthTokenId,
-        expiry: Timestamp,
-        now: Timestamp,
+        expiry: UnixTimestampMs,
+        now: UnixTimestampMs,
     ) -> Result<Option<AuthTokenModel>> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
@@ -427,7 +429,7 @@ mod tests {
             owner_id: owner_id.to_string(),
             scopes: vec![],
             enabled: true,
-            now: ts,
+            now: ts.into(),
         };
         controller.create(ns(), input).await.unwrap()
     }

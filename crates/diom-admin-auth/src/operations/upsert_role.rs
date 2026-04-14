@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
-use diom_core::PersistableValue;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_operations::OpContext;
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -44,7 +43,11 @@ impl UpsertRoleOperation {
         }
     }
 
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<UpsertRoleResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: UnixTimestampMs,
+    ) -> Result<UpsertRoleResponseData> {
         let model = state
             .controller
             .upsert_role(UpsertRoleInput {

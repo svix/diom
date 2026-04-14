@@ -1,9 +1,11 @@
 use crate::entities::TokenHashed;
-use diom_core::{PersistableValue, types::Metadata};
+use diom_core::{
+    PersistableValue,
+    types::{Metadata, UnixTimestampMs},
+};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
 use fjall_utils::{TableKey, TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -19,14 +21,14 @@ enum RowType {
 pub struct AuthTokenRow {
     pub id: AuthTokenId,
     pub name: String,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub metadata: Metadata,
     pub owner_id: String,
     pub scopes: Vec<String>,
     /// Whether this token is currently enabled.
     pub enabled: bool,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl TableRow for AuthTokenRow {

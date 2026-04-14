@@ -135,8 +135,8 @@ async fn get_namespace(
             period: namespace.config.retention_period,
             size_bytes: namespace.config.retention_bytes,
         },
-        created: namespace.created.into(),
-        updated: namespace.updated.into(),
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 
@@ -266,7 +266,7 @@ async fn stream_receive(
         let ns_id = namespace.id;
         let topic_name = data.topic.name().clone();
         let cg = data.consumer_group.clone();
-        let now = state.time.now();
+        let now = state.time.now_utm();
         let batch_size = data.batch_size;
 
         let estimate = diom_core::task::spawn_blocking_in_current_span(move || {
@@ -282,6 +282,8 @@ async fn stream_receive(
         .await
         .or_internal_error()??;
 
+        tracing::trace!(?estimate, "estimate of available messages");
+
         if (estimate.count as usize) < batch_size.get() as usize {
             let needed = batch_size.get() as u64 - estimate.count;
             let mut notified = state.topic_publish_notifier.register_notifier(
@@ -289,10 +291,8 @@ async fn stream_receive(
                 data.topic.name().clone(),
                 estimate.available_partitions,
             );
-            tokio::select! {
-                _ = notified.wait(needed) => {},
-                _ = state.time.sleep(max_wait.into()) => {},
-            }
+            tracing::trace!(needed, "waiting for more messages");
+            let _ = tokio::time::timeout(max_wait.into(), notified.wait(needed)).await;
         }
     }
 
@@ -315,8 +315,8 @@ async fn stream_receive(
                 topic: m.topic,
                 value: m.value,
                 headers: m.headers,
-                timestamp: m.timestamp.into(),
-                scheduled_at: m.scheduled_at.map(Into::into),
+                timestamp: m.timestamp,
+                scheduled_at: m.scheduled_at,
             })
             .collect(),
     }))
@@ -478,7 +478,7 @@ async fn queue_receive(
         let ns_id = namespace.id;
         let topic_name = data.topic.name().clone();
         let cg = data.consumer_group.clone();
-        let now = state.time.now();
+        let now = state.time.now_utm();
         let batch_size = data.batch_size;
 
         let estimated = diom_core::task::spawn_blocking_in_current_span(move || {
@@ -501,10 +501,8 @@ async fn queue_receive(
                 data.topic.name().clone(),
                 vec![],
             );
-            tokio::select! {
-                _ = notified.wait(needed) => {},
-                _ = state.time.sleep(max_wait.into()) => {},
-            }
+            tracing::trace!(needed, "waiting for more messages");
+            let _ = tokio::time::timeout(max_wait.into(), notified.wait(needed)).await;
         }
     }
 
@@ -525,8 +523,8 @@ async fn queue_receive(
                 msg_id: m.msg_id,
                 value: m.value,
                 headers: m.headers,
-                timestamp: m.timestamp.into(),
-                scheduled_at: m.scheduled_at.map(Into::into),
+                timestamp: m.timestamp,
+                scheduled_at: m.scheduled_at,
             })
             .collect(),
     }))

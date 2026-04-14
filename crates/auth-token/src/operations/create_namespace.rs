@@ -33,7 +33,7 @@ impl CreateAuthTokenNamespaceOperation {
     async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
-        now: Timestamp,
+        now: diom_core::types::UnixTimestampMs,
     ) -> Result<CreateAuthTokenNamespaceResponseData> {
         let op: CreateNamespace<AuthTokenConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;

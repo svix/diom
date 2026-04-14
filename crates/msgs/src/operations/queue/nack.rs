@@ -1,10 +1,11 @@
-use std::time::Duration;
-
-use diom_core::{PersistableValue, task::spawn_blocking_in_current_span};
+use diom_core::{
+    PersistableValue,
+    task::spawn_blocking_in_current_span,
+    types::{DurationMs, UnixTimestampMs},
+};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -44,7 +45,11 @@ impl QueueNackOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueNackResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: UnixTimestampMs,
+    ) -> Result<QueueNackResponseData> {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
@@ -83,7 +88,7 @@ impl QueueNackOperation {
 
                 if let Some(&delay_ms) = retry_schedule.get(attempt_count as usize) {
                     // Schedule for retry: set expiry to now + delay, message becomes available after
-                    let expiry = now + Duration::from_millis(delay_ms);
+                    let expiry = now + DurationMs::from_millis(delay_ms);
                     batch.insert_row(
                         &state.metadata_tables,
                         QueueLeaseKey::build_key(
@@ -154,7 +159,7 @@ fn forward_to_dlq(
     msg_id: &MsgId,
     dlq_topic: &TopicName,
     consumer_group: &ConsumerGroup,
-    now: Timestamp,
+    now: UnixTimestampMs,
     dlq_topic_id_random_bytes: UuidV7RandomBytes,
 ) -> Result<()> {
     let original = MsgRow::fetch(

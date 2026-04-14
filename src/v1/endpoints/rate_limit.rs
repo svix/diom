@@ -310,8 +310,8 @@ async fn rate_limit_get_namespace(
 
     Ok(MsgPackOrJson(RateLimitGetNamespaceOut {
         name: namespace.name,
-        created: namespace.created.into(),
-        updated: namespace.updated.into(),
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

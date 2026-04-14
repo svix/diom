@@ -1,8 +1,7 @@
-use diom_core::{PersistableValue, task::spawn_blocking_in_current_span};
+use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::UnixTimestampMs};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -36,7 +35,11 @@ impl TopicConfigureOperation {
         })
     }
 
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<TopicConfigureResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: UnixTimestampMs,
+    ) -> Result<TopicConfigureResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let mut topic_row = match TopicRow::fetch(

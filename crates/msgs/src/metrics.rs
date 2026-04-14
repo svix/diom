@@ -328,9 +328,9 @@ pub(crate) fn record_topic_lag_metrics(state: &State) -> Result<()> {
 mod tests {
     use std::collections::HashMap;
 
+    use diom_core::types::UnixTimestampMs;
     use diom_id::UuidV7RandomBytes;
     use fjall_utils::WriteBatchExt as _;
-    use jiff::Timestamp;
 
     use super::*;
     use crate::tables::{MsgKey, MsgRow, StreamLeaseKey, StreamLeaseRow, TopicKey, TopicRow};
@@ -368,7 +368,7 @@ mod tests {
         let row = MsgRow {
             value: b"".into(),
             headers: HashMap::new(),
-            timestamp: Timestamp::UNIX_EPOCH,
+            timestamp: UnixTimestampMs::UNIX_EPOCH,
             scheduled_at: None,
         };
         batch
@@ -396,7 +396,7 @@ mod tests {
         let mut batch = db.batch();
         let row = StreamLeaseRow {
             offset,
-            expiry: Timestamp::UNIX_EPOCH,
+            expiry: UnixTimestampMs::UNIX_EPOCH,
             end_offset: offset,
         };
         batch
@@ -431,7 +431,7 @@ mod tests {
         let topic_name = TopicName::new("test-topic".to_string()).unwrap();
         let topic_row = TopicRow::new(
             topic_name,
-            Timestamp::UNIX_EPOCH,
+            UnixTimestampMs::UNIX_EPOCH,
             UuidV7RandomBytes::new_random(),
         );
         let cg = ConsumerGroup::try_from("my-group").unwrap();

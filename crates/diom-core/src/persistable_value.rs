@@ -35,8 +35,6 @@ impl PersistableValue for String {}
 impl PersistableValue for &str {}
 impl PersistableValue for &[u8] {}
 impl PersistableValue for uuid::Uuid {}
-// TODO: do we want to serialize jiff timestamps raw?
-impl PersistableValue for jiff::Timestamp {}
 impl PersistableValue for crate::types::ByteString {}
 impl PersistableValue for crate::types::DurationMs {}
 impl PersistableValue for crate::types::UnixTimestampMs {}

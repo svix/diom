@@ -1,8 +1,10 @@
-use diom_core::{PersistableValue, types::ByteString};
+use diom_core::{
+    PersistableValue,
+    types::{ByteString, UnixTimestampMs},
+};
 use diom_error::{Result, ResultExt};
 use diom_id::NamespaceId;
 use fjall_utils::{TableKey, TableRow};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -15,7 +17,7 @@ enum RowType {
 #[derive(Serialize, Deserialize, PersistableValue)]
 pub struct KvPairRow {
     pub value: ByteString,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub version: u64,
 }
 
@@ -39,7 +41,7 @@ impl ExpirationRow {
 
     pub(crate) fn key_for(
         namespace_id: NamespaceId,
-        expiration_time: Timestamp,
+        expiration_time: UnixTimestampMs,
         key: &str,
     ) -> TableKey<Self> {
         let ts_ms = expiration_time.as_millisecond();
@@ -53,13 +55,14 @@ impl ExpirationRow {
     }
 
     #[cfg(test)]
-    pub(crate) fn extract_ts_from_fjall_key(key: &fjall::UserKey) -> Result<Timestamp> {
+    pub(crate) fn extract_ts_from_fjall_key(key: &fjall::UserKey) -> UnixTimestampMs {
         let offset = 1 /* row_type */;
         let array: [u8; 8] = (&key[offset..=size_of::<i64>()])
             .try_into()
-            .or_internal_error()?;
+            .expect("incorrect key size");
         let millis = i64::from_be_bytes(array);
-        Timestamp::from_millisecond(millis).or_internal_error()
+        UnixTimestampMs::try_from_millisecond(millis)
+            .expect("failed to extract timestamp from fjall key")
     }
 
     pub(crate) fn extract_key_from_fjall_key(key: &fjall::UserKey) -> Result<(NamespaceId, &str)> {

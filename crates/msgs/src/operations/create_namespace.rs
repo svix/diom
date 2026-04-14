@@ -30,7 +30,7 @@ impl CreateNamespaceOperation {
     async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
-        now: Timestamp,
+        now: diom_core::types::UnixTimestampMs,
     ) -> Result<CreateNamespaceResponseData> {
         let op = CreateNamespace::new(
             self.name,

@@ -91,7 +91,7 @@ pub struct CacheGetOut {
 impl CacheGetOut {
     fn from_model(model: KvModel) -> Self {
         Self {
-            expiry: model.expiry.map(Into::into),
+            expiry: model.expiry,
             value: Some(model.value),
         }
     }
@@ -258,8 +258,8 @@ async fn cache_get_namespace(
     Ok(MsgPackOrJson(CacheGetNamespaceOut {
         name: namespace.name,
         eviction_policy: namespace.config.eviction_policy,
-        created: namespace.created.into(),
-        updated: namespace.updated.into(),
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

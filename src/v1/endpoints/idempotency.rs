@@ -275,8 +275,8 @@ async fn idempotency_get_namespace(
 
     Ok(MsgPackOrJson(IdempotencyGetNamespaceOut {
         name: namespace.name,
-        created: namespace.created.into(),
-        updated: namespace.updated.into(),
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

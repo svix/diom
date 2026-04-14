@@ -1,9 +1,9 @@
+use diom_core::types::UnixTimestampMs;
 use diom_error::{Error, Result, ResultExt};
 use diom_id::NamespaceId;
 use diom_namespace::{Namespace, entities::MsgsConfig};
 use diom_operations::BackgroundResult;
 use fjall::KeyspaceCreateOptions;
-use jiff::Timestamp;
 
 use entities::{ConsumerGroup, Partition, TopicName};
 use fjall_utils::{ReadableKeyspace, SerializableKeyspaceCreateOptions, TableRow};
@@ -69,7 +69,7 @@ pub fn estimate_available_queue_messages(
     namespace_id: NamespaceId,
     topic: &TopicName,
     consumer_group: &ConsumerGroup,
-    now: Timestamp,
+    now: UnixTimestampMs,
 ) -> Result<u64> {
     let Some(topic_row) =
         TopicRow::fetch(metadata_tables, TopicKey::build_key(&namespace_id, topic))?
@@ -108,7 +108,7 @@ pub fn estimate_available_queue_messages(
 }
 
 /// Result of estimating available stream messages.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct StreamEstimate {
     /// Estimated number of available messages across all unlocked partitions.
     pub count: u64,
@@ -127,7 +127,7 @@ pub fn estimate_available_stream_messages(
     namespace_id: NamespaceId,
     topic: &TopicName,
     consumer_group: &ConsumerGroup,
-    now: Timestamp,
+    now: UnixTimestampMs,
 ) -> Result<StreamEstimate> {
     let Some(topic_row) =
         TopicRow::fetch(metadata_tables, TopicKey::build_key(&namespace_id, topic))?

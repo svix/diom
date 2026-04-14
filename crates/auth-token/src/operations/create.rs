@@ -1,4 +1,3 @@
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -7,10 +6,14 @@ use crate::{
     entities::TokenHashed,
     operations::{AuthTokenRaftState, AuthTokenRequest, CreateResponse},
 };
-use diom_core::{PersistableValue, types::Metadata};
+use diom_core::{
+    PersistableValue,
+    types::{Metadata, UnixTimestampMs},
+};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId, UuidV7RandomBytes};
 use diom_operations::OpContext;
+use jiff::Timestamp;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateResponseData {
     pub model: AuthTokenModel,
@@ -22,7 +25,7 @@ pub struct CreateAuthTokenOperation {
     id_random_bytes: UuidV7RandomBytes,
     name: String,
     token_hashed: TokenHashed,
-    expiry: Option<Timestamp>,
+    expiry: Option<UnixTimestampMs>,
     metadata: Metadata,
     owner_id: String,
     scopes: Vec<String>,
@@ -48,7 +51,7 @@ impl CreateAuthTokenOperation {
             id_random_bytes: UuidV7RandomBytes::new_random(),
             name,
             token_hashed,
-            expiry,
+            expiry: expiry.map(|e| e.into()),
             metadata,
             owner_id,
             scopes,
