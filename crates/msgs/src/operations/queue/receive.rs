@@ -81,7 +81,7 @@ impl QueueReceiveOperation {
             let partitions = self
                 .partition
                 .map(|p| vec![p.get()])
-                .unwrap_or_else(|| topic_row.partitions_shuffled());
+                .unwrap_or_else(|| topic_row.partitions_shuffled(now.as_millisecond() as u64));
 
             for partition_idx in partitions {
                 let partition = Partition::new(partition_idx)?;
