@@ -49,6 +49,7 @@ pub struct CacheSetIn {
     #[serde(default)]
     pub namespace: Option<NamespaceName>,
 
+    #[validate(nested)]
     pub key: EntityKey,
 
     pub value: ByteString,
