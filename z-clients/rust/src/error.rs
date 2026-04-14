@@ -41,7 +41,7 @@ impl Error {
     }
 
     pub(crate) fn timeout(op_id: &'static str) -> Error {
-        Self::new(op_id, ErrorKind::Timeout)
+        Self::new(op_id, ErrorKind::Timeout(TimeoutError))
     }
 
     pub(crate) fn other(
@@ -74,7 +74,7 @@ impl Error {
 
     #[must_use]
     pub fn is_timeout(&self) -> bool {
-        matches!(self.0.kind, ErrorKind::Timeout)
+        matches!(self.0.kind, ErrorKind::Timeout(_))
     }
 
     #[must_use]
@@ -84,7 +84,7 @@ impl Error {
 
     pub(crate) fn is_retryable(&self) -> bool {
         match self.0.kind {
-            ErrorKind::Network(_) | ErrorKind::Server(_) | ErrorKind::Timeout => true,
+            ErrorKind::Network(_) | ErrorKind::Server(_) | ErrorKind::Timeout(_) => true,
             ErrorKind::Client(_) | ErrorKind::Other(_) => false,
         }
     }
@@ -124,7 +124,7 @@ impl fmt::Display for Error {
             ErrorKind::Network(_) => write!(f, "network error"),
             ErrorKind::Client(e) => write!(f, "client error: {e}"),
             ErrorKind::Server(e) => write!(f, "server error: {e}"),
-            ErrorKind::Timeout => write!(f, "timeout"),
+            ErrorKind::Timeout(_) => write!(f, "timeout"),
             ErrorKind::Other(_) => write!(f, "other"),
         }
     }
@@ -165,7 +165,7 @@ pub enum ErrorKind {
     /// Unexpected server-side error.
     Server(ServerError),
     /// The configured request timeout was hit.
-    Timeout,
+    Timeout(TimeoutError),
     /// Some other error that could not be classified.
     Other(GenericError),
 }
@@ -263,6 +263,10 @@ impl fmt::Display for ServerError {
         }
     }
 }
+
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct TimeoutError;
 
 #[derive(Debug)]
 pub struct GenericError(Box<dyn std::error::Error + Send + Sync + 'static>);
