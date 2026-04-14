@@ -3,7 +3,6 @@ use std::{ops::Deref, sync::LazyLock};
 use regex::Regex;
 #[allow(unused_imports)]
 use schemars::JsonSchema;
-use schemars::{Schema, json_schema};
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationErrors};
 
@@ -81,9 +80,15 @@ pub trait BaseUid: Deref<Target = String> {
 
 #[macro_export]
 macro_rules! string_wrapper {
-    ($name_id:ident, $string_schema:expr) => {
+    ($name_id:ident { $($init:tt)* }) => {
         #[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
         pub struct $name_id(pub String);
+
+        impl $crate::types::StringWrapper for $name_id {
+            const INFO: $crate::types::StringSchema = $crate::types::StringSchema {
+                $($init)*
+            };
+        }
 
         impl std::ops::Deref for $name_id {
             type Target = String;
@@ -111,31 +116,19 @@ macro_rules! string_wrapper {
             }
         }
 
-        impl ::schemars::JsonSchema for $name_id {
-            fn schema_name() -> ::std::borrow::Cow<'static, str> {
+        impl schemars::JsonSchema for $name_id {
+            fn schema_name() -> std::borrow::Cow<'static, str> {
                 stringify!($name_id).into()
             }
 
-            fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-                let mut schema = String::json_schema(generator);
-
-                if let Some(obj) = schema.as_object_mut() {
-                    // This is just to help with type hints when the macro is expanded.
-                    let options: $crate::types::StringSchema = $string_schema;
-
-                    if let Some(mut v) = options.string_validation {
-                        obj.extend(::std::mem::take(v.ensure_object()));
-                    }
-
-                    if let Some(example) = options.example {
-                        obj.insert(
-                            "example".to_owned(),
-                            $crate::__reexport::serde_json::Value::String(example),
-                        );
-                    }
-                }
-
-                schema
+            fn json_schema(_g: &mut schemars::SchemaGenerator) -> schemars::Schema {
+                let info = <Self as $crate::types::StringWrapper>::INFO;
+                schemars::json_schema!({
+                    "type": "string",
+                    "maxLength": info.max_length,
+                    "pattern": info.pattern,
+                    "example": info.example,
+                })
             }
 
             fn inline_schema() -> bool {
@@ -145,44 +138,23 @@ macro_rules! string_wrapper {
     };
 }
 
-/// A container type for storing schema information commonly used by string
-/// wrapper types.
-#[derive(Default)]
+#[doc(hidden)]
 pub struct StringSchema {
-    pub string_validation: Option<Schema>,
-    pub example: Option<String>,
+    pub max_length: usize,
+    pub pattern: &'static str,
+    pub example: &'static str,
 }
 
-impl StringSchema {
-    pub fn schema_for_ids(prefix: &'static str) -> Self {
-        Self {
-            string_validation: None,
-            example: Some(format!("{prefix}1srOrx2ZWZBpBUvZwXKQmoEYga2")),
-        }
-    }
-
-    pub fn schema_for_uids(prefix: &'static str) -> Self {
-        Self {
-            string_validation: Some(json_schema!({
-                "minLength": 1,
-                "maxLength": 256,
-                "pattern": r"^[a-zA-Z0-9\-_.]+$",
-            })),
-            example: Some(format!("unique-{prefix}identifier").replace('_', "-")),
-        }
-    }
+#[doc(hidden)]
+pub trait StringWrapper {
+    const INFO: StringSchema;
 }
 
-string_wrapper!(
-    EntityKey,
-    StringSchema {
-        string_validation: Some(json_schema!({
-            "maxLength": 256,
-            "pattern": r"^[a-zA-Z0-9\-/_.=+:]+$",
-        })),
-        example: Some("some_key".to_string()),
-    }
-);
+string_wrapper!(EntityKey {
+    max_length: 256,
+    pattern: r"^[a-zA-Z0-9\-/_.=+:]+$",
+    example: "some_key"
+});
 
 impl Validate for EntityKey {
     fn validate(&self) -> Result<(), ValidationErrors> {
