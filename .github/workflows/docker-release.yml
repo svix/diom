@@ -1,0 +1,43 @@
+name: Docker Release
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Mega Releaser
+    types:
+      - completed
+
+jobs:
+  get-version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Get version
+        id: version
+        run: echo "version=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+
+  docker-server:
+    name: release docker - server
+    needs: get-version
+    uses: ./.github/workflows/docker-build-release.yml
+    with:
+      image_repo: svix/diom-server
+      version: ${{ needs.get-version.outputs.version }}
+    secrets: inherit
+
+  docker-cli:
+    name: release docker - cli
+    needs: get-version
+    uses: ./.github/workflows/docker-build-release.yml
+    with:
+      image_repo: svix/diom-cli
+      version: ${{ needs.get-version.outputs.version }}
+      target: cli-prod
+    secrets: inherit
