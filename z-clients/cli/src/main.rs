@@ -79,8 +79,6 @@ enum RootCommands {
     RateLimit(RateLimitArgs),
     Health(HealthArgs),
     /// Send administrative commands.
-    ///
-    /// Prefer the cluster-admin family of CLI commands.
     Admin(AdminArgs),
     /// Manipulate a Diom cluster
     ClusterAdmin(ClusterAdminArgs),

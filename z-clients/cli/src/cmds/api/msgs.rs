@@ -6,6 +6,7 @@ use diom::DiomClient;
 use crate::prelude::*;
 
 use super::{MsgsNamespaceArgs, MsgsQueueArgs, MsgsStreamArgs, MsgsTopicArgs};
+
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct MsgsArgs {

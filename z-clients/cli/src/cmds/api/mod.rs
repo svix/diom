@@ -3,7 +3,6 @@ mod admin;
 mod admin_auth_policy;
 mod admin_auth_role;
 mod admin_auth_token;
-mod admin_cluster;
 mod cache;
 mod cache_namespace;
 mod health;
@@ -21,8 +20,8 @@ mod rate_limit_namespace;
 
 pub(crate) use self::{
     admin::AdminArgs, admin_auth_policy::AdminAuthPolicyArgs, admin_auth_role::AdminAuthRoleArgs,
-    admin_auth_token::AdminAuthTokenArgs, admin_cluster::AdminClusterArgs, cache::CacheArgs,
-    cache_namespace::CacheNamespaceArgs, health::HealthArgs, idempotency::IdempotencyArgs,
+    admin_auth_token::AdminAuthTokenArgs, cache::CacheArgs, cache_namespace::CacheNamespaceArgs,
+    health::HealthArgs, idempotency::IdempotencyArgs,
     idempotency_namespace::IdempotencyNamespaceArgs, kv::KvArgs, kv_namespace::KvNamespaceArgs,
     msgs::MsgsArgs, msgs_namespace::MsgsNamespaceArgs, msgs_queue::MsgsQueueArgs,
     msgs_stream::MsgsStreamArgs, msgs_topic::MsgsTopicArgs, rate_limit::RateLimitArgs,

@@ -12,10 +12,13 @@ use clap::{Args, Subcommand};
 use crate::prelude::*;
 
 {% for _, sub in resource.subresources | items -%}
-use super::{{ sub.name | to_upper_camel_case }}Args;
+    {# exclude internal-ish API, exposed in a better manner under cluster-admin -#}
+    {% if sub.name != "admin.cluster" -%}
+    use super::{{ sub.name | to_upper_camel_case }}Args;
+    {% endif -%}
 {% endfor %}
 
-{%- macro render_schema_example(title, schema) -%}
+{% macro render_schema_example(title, schema) -%}
 \x1b[1;4m{{ title }}:\x1b[0m
 {
 {%- for field in schema.fields | selectattr("positional", "false") %}
@@ -34,7 +37,9 @@ pub struct {{ resource_type_name }}Args {
 #[derive(Subcommand)]
 pub enum {{ resource_type_name }}Commands {
     {% for name, sub in resource.subresources | items -%}
+        {% if sub.name != "admin.cluster" -%}
         {{ name | to_upper_camel_case }}({{ sub.name | to_upper_camel_case }}Args),
+        {% endif -%}
     {% endfor -%}
 
     {% for op in resource.operations -%}
@@ -88,10 +93,12 @@ pub enum {{ resource_type_name }}Commands {
 impl {{ resource_type_name }}Commands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
-            {% for name, _ in resource.subresources | items -%}
+            {% for name, sub in resource.subresources | items -%}
+                {% if sub.name != "admin.cluster" -%}
                 Self::{{ name | to_upper_camel_case }}(args) => {
                     args.command.exec(client).await?;
                 }
+                {% endif -%}
             {% endfor -%}
 
             {% for op in resource.operations -%}

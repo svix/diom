@@ -2,7 +2,10 @@
 {% macro resource_mods(resource) -%}
     mod {{ resource.name | to_snake_case }};
     {%- for _, sub in resource.subresources | items -%}
+        {#- FIXME: Actually stop writing this module file -#}
+        {%- if sub.name != "admin.cluster" -%}
         {{- resource_mods(sub) -}}
+        {%- endif -%}
     {%- endfor -%}
 {% endmacro -%}
 
@@ -14,7 +17,9 @@
     {% set resource_type_name = resource.name | to_upper_camel_case -%}
     {{ resource.name | to_snake_case }}::{{ resource_type_name }}Args,
     {% for _, sub in resource.subresources | items -%}
+        {% if sub.name != "admin.cluster" -%}
         {{ resource_reexports(sub) -}}
+        {% endif -%}
     {% endfor -%}
 {% endmacro -%}
 
