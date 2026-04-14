@@ -235,7 +235,7 @@ impl KeyComponent for String {
     fn read_from_key(buf: &[u8]) -> Result<(Self, usize), Cow<'static, str>> {
         let s = std::str::from_utf8(buf)
             .map_err(|e| Cow::Owned(format!("invalid utf8 in String key component: {e}")))?;
-        Ok((s.to_string(), buf.len()))
+        Ok((s.to_owned(), buf.len()))
     }
 
     fn read_ref_from_key(buf: &[u8]) -> Result<(Self::Ref<'_>, usize), Cow<'static, str>> {
@@ -366,7 +366,7 @@ mod tests {
     #[test]
     fn test_composite_key_bytes() {
         let key = ExampleCompositeKey {
-            group: "hello".to_string(),
+            group: "hello".to_owned(),
             id: 7,
         };
         let bytes = key.fjall_key();
@@ -406,10 +406,10 @@ mod tests {
     fn test_composite_range() {
         let (start, _end) = ExampleCompositeKey::range(
             ExampleCompositeKey {
-                group: "a".to_string(),
+                group: "a".to_owned(),
                 id: 0,
             }..ExampleCompositeKey {
-                group: "z".to_string(),
+                group: "z".to_owned(),
                 id: 100,
             },
         );
@@ -434,7 +434,7 @@ mod tests {
     fn test_extract_composite_fields() {
         let key = ExampleCompositeKey {
             id: 7,
-            group: "hello".to_string(),
+            group: "hello".to_owned(),
         };
         let bytes = key.fjall_key();
         assert_eq!(ExampleCompositeKey::extract_id(&bytes).unwrap(), 7);
@@ -465,7 +465,7 @@ mod tests {
     fn test_prefix_is_prefix_of_full_key() {
         let key = ExampleCompositeKey {
             id: 7,
-            group: "hello".to_string(),
+            group: "hello".to_owned(),
         };
         let full = key.fjall_key();
         let prefix = ExampleCompositeKey::prefix_id(&7u32);
@@ -495,7 +495,7 @@ mod tests {
         let key = ExampleTripleKey {
             a: 10,
             b: 5,
-            tag: "x".to_string(),
+            tag: "x".to_owned(),
         };
         let full = key.fjall_key();
         assert!(prefix_b.starts_with(&prefix_a));
@@ -506,10 +506,10 @@ mod tests {
     fn test_build_key_matches_fjall_key() {
         let key = ExampleCompositeKey {
             id: 42,
-            group: "test".to_string(),
+            group: "test".to_owned(),
         };
         let from_struct = key.fjall_key();
-        let from_build = ExampleCompositeKey::build_key(&42u32, &"test".to_string());
+        let from_build = ExampleCompositeKey::build_key(&42u32, &"test".to_owned());
         assert_eq!(&*from_struct, &*from_build);
     }
 
@@ -518,10 +518,10 @@ mod tests {
         let key = ExampleTripleKey {
             a: 1,
             b: 2,
-            tag: "abc".to_string(),
+            tag: "abc".to_owned(),
         };
         let from_struct = key.fjall_key();
-        let from_build = ExampleTripleKey::build_key(&1u32, &2u16, &"abc".to_string());
+        let from_build = ExampleTripleKey::build_key(&1u32, &2u16, &"abc".to_owned());
         assert_eq!(&*from_struct, &*from_build);
     }
 }

@@ -1,4 +1,6 @@
-#[allow(unused_extern_crates)]
+#![warn(clippy::str_to_string)]
+
+#[cfg(test)]
 extern crate self as fjall_utils;
 
 mod db;
