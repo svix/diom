@@ -1,4 +1,4 @@
-use diom_core::PersistableValue;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_id::UuidV7RandomBytes;
 use diom_namespace::{
@@ -33,7 +33,7 @@ impl ConfigureIdempotencyOperation {
     async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
-        now: diom_core::types::UnixTimestampMs,
+        now: UnixTimestampMs,
     ) -> Result<ConfigureIdempotencyResponseData> {
         let op: CreateNamespace<IdempotencyConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;

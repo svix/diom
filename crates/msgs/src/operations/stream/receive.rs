@@ -88,7 +88,7 @@ impl StreamReceiveOperation {
             let partitions = self
                 .partition
                 .map(|p| vec![p.get()])
-                .unwrap_or_else(|| topic_row.partitions_shuffled());
+                .unwrap_or_else(|| topic_row.partitions_shuffled(now.as_millisecond()));
 
             let mut no_lease_available = true;
 

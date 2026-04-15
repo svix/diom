@@ -1,6 +1,9 @@
 use super::{IdempotencyRaftState, IdempotencyRequest, TryStartResponse};
 use crate::{IdempotencyNamespace, IdempotencyStartResult, storage::IdempotencyState};
-use diom_core::{PersistableValue, types::DurationMs};
+use diom_core::{
+    PersistableValue,
+    types::{DurationMs, UnixTimestampMs},
+};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
@@ -33,7 +36,7 @@ impl TryStartOperation {
     async fn apply_real(
         self,
         state: &IdempotencyRaftState<'_>,
-        now: diom_core::types::UnixTimestampMs,
+        now: UnixTimestampMs,
         log_index: u64,
     ) -> Result<TryStartResponseData> {
         let expiry = now + self.lock_period;

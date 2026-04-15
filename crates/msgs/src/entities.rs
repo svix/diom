@@ -7,10 +7,7 @@ use diom_core::{
 use diom_error::Error;
 use fjall_utils::KeyComponent;
 use schemars::JsonSchema;
-use serde::{
-    Deserialize, Deserializer, Serialize, Serializer,
-    de::{self},
-};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use sha2::{Digest, Sha256};
 use validator::Validate;
 
@@ -34,7 +31,7 @@ pub const TOPIC_PARTITION_DELIMITER: &str = "~";
     Hash,
     Serialize,
     Deserialize,
-    fjall_utils::KeyComponent,
+    KeyComponent,
     PersistableValue,
 )]
 #[serde(transparent)]
