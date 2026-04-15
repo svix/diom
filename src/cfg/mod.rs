@@ -582,8 +582,8 @@ pub struct ConfigurationInner {
     /// The JWT must contain a `role` claim (string) and may contain a `context` claim
     /// (object with string values) that is forwarded to internal diom handlers.
     #[serde(default)]
-    #[env_overridable(skip)]
-    #[dumpable_config(skip)] // no straightforward way to serialize a #[serde(flatten)]
+    #[env_overridable(nest_with_prefix("JWT"))]
+    #[dumpable_config(nest)]
     #[validate(nested)]
     pub jwt: JwtConfig,
 }
@@ -605,9 +605,13 @@ impl ConfigurationInner {
 /// The optional `audience` and `issuer` fields enable claim validation.  When
 /// omitted, the respective claims are not checked (and may be absent from the
 /// token).
-#[derive(Clone, Debug, Default, Serialize, Deserialize, Validate)]
+#[derive(
+    Clone, Debug, Default, Serialize, Deserialize, Validate, EnvOverridable, DumpableConfig,
+)]
 pub struct JwtConfig {
     #[serde(flatten)]
+    #[env_overridable(skip)]
+    #[dumpable_config(skip)] // no straightforward way to serialize a #[serde(flatten)]
     pub key: Option<JwtKey>,
     /// Expected `aud` values. When set, the token must contain one of these
     /// values in its `aud` claim. When absent, `aud` is not validated.

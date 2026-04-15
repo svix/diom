@@ -222,6 +222,21 @@ startup_discovery_delay_ms = 10
 
 # Directory in which this database is stored
 path = "./db"
+# Configuration for verifying JWT bearer tokens.
+#
+# When set, bearer tokens in JWT format are verified using this configuration.
+# The JWT must contain a `role` claim (string) and may contain a `context` claim
+# (object with string values) that is forwarded to internal diom handlers.
+
+[jwt]
+
+# Expected `aud` values. When set, the token must contain one of these
+# values in its `aud` claim. When absent, `aud` is not validated.
+# audience =
+
+# Expected `iss` values. When set, the token's `iss` claim must match one
+# of these values. When absent, `iss` is not validated.
+# issuer =
 # Storage configuration for the persistent database, which is used by most modules and
 # should be placed on durable storage
 
