@@ -6,7 +6,10 @@ use crate::utils::{OutputDirectory, generate_outputs};
 pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     OutputDirectory::unmanaged_dir(
         "z-clients/javascript/src",
-        &["javascript/api_summary.ts.jinja"],
+        &[
+            "javascript/api_summary.ts.jinja",
+            "javascript/summary.ts.jinja",
+        ],
     ),
     OutputDirectory::managed_dir(
         "z-clients/javascript/src/apis",
@@ -14,7 +17,10 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     ),
     OutputDirectory::managed_dir(
         "z-clients/javascript/src/models",
-        &["javascript/component_type.ts.jinja"],
+        &[
+            "javascript/component_type_summary.ts.jinja",
+            "javascript/component_type.ts.jinja",
+        ],
     ),
 ];
 

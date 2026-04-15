@@ -1,4 +1,5 @@
 // this file is @generated
+{% do set_summary_filename("index.ts") -%}
 {% for type in api.types -%}
-export { {{ type | to_upper_camel_case }} } from "./{{ type | to_lower_camel_case }}";
+export type { {{ type | to_upper_camel_case }} } from "./{{ type | to_lower_camel_case }}";
 {% endfor %}

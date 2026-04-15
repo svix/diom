@@ -1,0 +1,6 @@
+// this file is @generated
+{# Basename must be `summary` (openapi-codegen only allows api_resource, api_summary, component_type, component_type_summary, summary). Emits `internal.ts`: serializer re-exports for `@diomhq/diom/internal`. #}
+{% do set_summary_filename("internal.ts") -%}
+{% for type in api.types -%}
+export { {{ type | to_upper_camel_case }}Serializer } from "./models/{{ type | to_lower_camel_case }}";
+{% endfor %}
