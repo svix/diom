@@ -121,7 +121,7 @@ rust-version = "1.91"
 
 [workspace.dependencies]
 addr = "0.15"
-aide = { version = "=0.16.0-alpha.2", features = ["axum", "axum-json", "axum-query", "macros"] }
+aide = { version = "=0.16.0-alpha.4", features = ["axum", "axum-json"] }
 anyerror = { version = "0.1.13", features = ["anyhow"] }
 anyhow = "1.0.56"
 assert_matches = "1.5.0"

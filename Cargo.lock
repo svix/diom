@@ -79,11 +79,10 @@ dependencies = [
 
 [[package]]
 name = "aide"
-version = "0.16.0-alpha.2"
+version = "0.16.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29e03dae8ee60626675f62a8d0c503fdc2721b01ae7feb2fd1e233b6bb16223a"
+checksum = "390515b47251185fa076ac92a7a582d9d383b03e13cef0c801e7670cf928229b"
 dependencies = [
- "aide-macros",
  "axum",
  "bytes",
  "cfg-if",
@@ -97,18 +96,6 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
-]
-
-[[package]]
-name = "aide-macros"
-version = "0.16.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a02baae51c9c0637df98b62762a431aff6d13d34f05cfc9a30f059dbb8dff72f"
-dependencies = [
- "darling 0.20.11",
- "proc-macro2",
- "quote",
- "syn 2.0.117",
 ]
 
 [[package]]
@@ -888,7 +875,7 @@ dependencies = [
 name = "codegen"
 version = "0.1.0"
 dependencies = [
- "aide 0.16.0-alpha.2",
+ "aide 0.16.0-alpha.4",
  "anyhow",
  "async-io",
  "async-process",
@@ -1474,7 +1461,7 @@ name = "diom-backend"
 version = "0.1.0"
 dependencies = [
  "addr",
- "aide 0.16.0-alpha.2",
+ "aide 0.16.0-alpha.4",
  "anyerror",
  "anyhow",
  "assert_matches",
@@ -1644,7 +1631,7 @@ dependencies = [
 name = "diom-error"
 version = "0.1.0"
 dependencies = [
- "aide 0.16.0-alpha.2",
+ "aide 0.16.0-alpha.4",
  "axum",
  "diom-core",
  "diom-proto",
@@ -1789,7 +1776,7 @@ dependencies = [
 name = "diom-proto"
 version = "0.1.0"
 dependencies = [
- "aide 0.16.0-alpha.2",
+ "aide 0.16.0-alpha.4",
  "axum",
  "bytes",
  "diom-authorization",
@@ -2182,7 +2169,6 @@ checksum = "8b147ee9d1f6d097cef9ce628cd2ee62288d963e16fb287bd9286455b241382d"
 dependencies = [
  "futures-channel",
  "futures-core",
- "futures-executor",
  "futures-io",
  "futures-sink",
  "futures-task",
@@ -5054,15 +5040,15 @@ dependencies = [
 
 [[package]]
 name = "serde_qs"
-version = "0.14.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b417bedc008acbdf6d6b4bc482d29859924114bbe2650b7921fb68a261d0aa6"
+checksum = "c2316d01592c3382277c5062105510e35e0a6bfb2851e30028485f7af8cf1240"
 dependencies = [
  "axum",
- "futures",
+ "itoa",
  "percent-encoding",
+ "ryu",
  "serde",
- "thiserror 2.0.18",
 ]
 
 [[package]]
