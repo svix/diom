@@ -8,7 +8,7 @@ if [[ $status -eq 0 ]]; then
     mv target/llvm-cov/html ./coverage-html
     coverage_percentage=$(cargo llvm-cov report --json | jq '.data[].totals.lines.percent')
     if [[ -n "$GITHUB_OUTPUT" ]]; then
-        printf 'coverage_percent=%.2f\n' "$coverage_percentage" >> "$GITHUB_OUTPUT"
+        printf 'coverage_percent=%.2f\n' "$coverage_percentage" >>"$GITHUB_OUTPUT"
     fi
 fi
 

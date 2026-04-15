@@ -39,7 +39,7 @@ DIOM_LISTEN_ADDRESS="0.0.0.0:$PORT" \
 echo $! >"$PID_FILE"
 
 echo "==> Waiting for server to be ready..."
-for i in $(seq 1 60); do
+for _i in $(seq 1 60); do
     if curl -sf "http://localhost:$PORT/api/v1.health.ping" >/dev/null 2>&1; then
         echo "Server is ready (pid $(cat "$PID_FILE"))"
         exit 0
