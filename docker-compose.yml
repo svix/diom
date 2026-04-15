@@ -1,30 +1,34 @@
 x-diom-node: &diom-node
   build:
     context: .
+    target: prod
     dockerfile: Dockerfile
   image: "diom-server"
   ulimits:
     memlock: -1
   healthcheck:
-    test: ["CMD-SHELL", "diom healthcheck http://localhost:8050"]
+    test: ["CMD-SHELL", "diom healthcheck http://localhost:8624"]
     interval: 1s
     timeout: 1s
     retries: 600
   environment: &diom-node-env
-    DIOM_LISTEN_ADDRESS: "0.0.0.0:8050"
+    DIOM_LISTEN_ADDRESS: "0.0.0.0:8624"
     DIOM_ENVIRONMENT: "dev"
     # Cluster configuration
-    DIOM_CLUSTER_LISTEN_ADDRESS: "0.0.0.0:18050"
+    DIOM_CLUSTER_LISTEN_ADDRESS: "0.0.0.0:8625"
     # NOTE: the cluster is not secured with this configuration. Need to set a proper secret.
     DIOM_CLUSTER_SECRET: "insecure-cluster"
-    DIOM_CLUSTER_SEED_NODES: "diom-node-0:8050, diom-node-1:8050, diom-node-2:8050"
+    DIOM_CLUSTER_SEED_NODES: "diom-node-0:8625, diom-node-1:8625, diom-node-2:8625"
     # It's best practice to only enable it for node-0, but Diom also supports just turning it on for all.
     DIOM_CLUSTER_AUTO_INITIALIZE: false
+    # This token has superuser privileges on your cluster and should not be kept in plaintext
+    # in a production installation
+    DIOM_ADMIN_TOKEN: admin_insecure_abcdefghijlmnopqrstuvwxyz012345
 services:
   diom-node-0:
     !!merge <<: *diom-node
     ports:
-      - "8050:8050"
+      - "8624:8624"
     volumes:
       - diom-node-0:/storage
     environment:
@@ -32,14 +36,19 @@ services:
       DIOM_CLUSTER_AUTO_INITIALIZE: true
   diom-node-1:
     !!merge <<: *diom-node
+    depends_on:
+      - diom-node-0
     ports:
-      - "8051:8050"
+      - "18624:8624"
     volumes:
       - diom-node-1:/storage
   diom-node-2:
     !!merge <<: *diom-node
+    depends_on:
+      - diom-node-0
+      - diom-node-1
     ports:
-      - "8052:8050"
+      - "28624:8624"
     volumes:
       - diom-node-2:/storage
 # FIXME: should we add jaeger and the likes? Or maybe in another file.

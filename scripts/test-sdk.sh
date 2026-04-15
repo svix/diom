@@ -10,13 +10,13 @@ set -euo pipefail
 #
 # Environment variables:
 #   DIOM_TOKEN       Auth token for the running server (has a default)
-#   DIOM_SERVER_URL  Server URL (default: http://localhost:8050)
+#   DIOM_SERVER_URL  Server URL (default: http://localhost:8624)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR/.."
 
 export DIOM_TOKEN="${DIOM_TOKEN:-admin_abcdefghijlmnopqrstuvwxyz012345}"
-export DIOM_SERVER_URL="${DIOM_SERVER_URL:-http://localhost:8050}"
+export DIOM_SERVER_URL="${DIOM_SERVER_URL:-http://localhost:8624}"
 
 export DIOM_TOKEN="$DIOM_TOKEN"
 export DIOM_SERVER_URL="$DIOM_SERVER_URL"
@@ -52,7 +52,7 @@ run_java() {
 SDKS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        rust|python|javascript|go|java)
+        rust | python | javascript | go | java)
             SDKS+=("$1")
             shift
             ;;

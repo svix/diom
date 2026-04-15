@@ -52,20 +52,8 @@ ARG RELEASE_VERSION
 RUN cargo build --release --package diom-server --bin diom-server --features diom-backend/openapi --frozen
 RUN cargo build --release --package diom-cli --bin diom --frozen
 
-# Production
-FROM docker.io/debian:trixie-slim AS prod
-
-RUN <<EOF
-    #!/bin/bash
-    set -euxo pipefail
-    mkdir -p /app
-    useradd appuser
-    chown -R appuser: /app
-    mkdir -p /home/appuser
-    chown -R appuser: /home/appuser
-    mkdir -p /storage
-    chown -R appuser: /storage
-EOF
+# shared base image with dependencies
+FROM docker.io/debian:trixie-slim AS base
 
 ENV __BUST_DOCKER_BUILD_CACHE=2026-01-30
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
@@ -77,6 +65,25 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/
         ca-certificates=20250419 \
         --no-install-recommends
     update-ca-certificates
+EOF
+
+RUN <<EOF
+    #!/bin/bash
+    set -euxo pipefail
+    mkdir -p /app
+    useradd appuser
+    chown -R appuser: /app
+    mkdir -p /home/appuser
+    chown -R appuser: /home/appuser
+EOF
+
+# Production
+FROM base AS prod
+
+RUN <<EOF
+    #!/bin/bash
+    mkdir -p /storage
+    chown -R appuser: /storage
 EOF
 
 ENV DIOM_PERSISTENT_DB_PATH="/storage/db"
@@ -87,7 +94,8 @@ ENV DIOM_CLUSTER_SNAPSHOT_PATH="/storage/snapshots"
 
 USER appuser
 WORKDIR /home/appuser
-EXPOSE 8050
+EXPOSE 8624/tcp
+EXPOSE 8625/tcp
 
 COPY --chown=root:root --chmod=755 --from=build /app/target/release/diom-server /usr/local/bin/diom-server
 COPY --chown=root:root --chmod=755 --from=build /app/target/release/diom /usr/local/bin/diom
@@ -95,27 +103,7 @@ COPY --chown=root:root --chmod=755 --from=build /app/target/release/diom /usr/lo
 CMD ["/usr/local/bin/diom-server"]
 
 # CLI Production
-FROM docker.io/debian:trixie-slim AS cli-prod
-
-RUN <<EOF
-    #!/bin/bash
-    set -euxo pipefail
-    useradd appuser
-    mkdir -p /home/appuser
-    chown -R appuser: /home/appuser
-EOF
-
-ENV __BUST_DOCKER_BUILD_CACHE=2026-01-30
-RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked --mount=target=/var/cache/apt,type=cache,sharing=locked <<EOF
-    #!/bin/bash
-    set -euxo pipefail
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -q
-    apt-get install -y \
-        ca-certificates=20250419 \
-        --no-install-recommends
-    update-ca-certificates
-EOF
+FROM base AS cli-prod
 
 USER appuser
 WORKDIR /home/appuser

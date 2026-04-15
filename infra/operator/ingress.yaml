@@ -17,4 +17,4 @@ spec:
               service:
                 name: diom
                 port:
-                  number: 8080
+                  number: 8624

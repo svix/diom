@@ -218,10 +218,9 @@ impl DatabaseConfig {
     skip_on_field_errors = true
 ))]
 pub struct ClusterConfiguration {
-    /// The address to listen on for replication. Defaults to the main listen address,
-    /// but with the port incremented by 10000
-    #[serde(default)]
-    pub listen_address: Option<SocketAddr>,
+    /// The address to listen on for replication.
+    #[serde(default = "defaults::cluster_listen_address")]
+    pub listen_address: SocketAddr,
 
     /// Human-facing name for this cluster.
     ///
@@ -435,14 +434,6 @@ impl ClusterConfiguration {
         } else {
             Dir::new(root.persistent_db.path.join("cluster_snapshots"))
         }
-    }
-
-    pub fn listen_address(&self, root: &ConfigurationInner) -> SocketAddr {
-        self.listen_address.unwrap_or_else(|| {
-            let port = root.listen_address.port() + 10000;
-            let ip = root.listen_address.ip();
-            SocketAddr::new(ip, port)
-        })
     }
 }
 
@@ -1121,22 +1112,22 @@ persistent_db.path = "/2"
 
     #[test]
     fn test_peer_addr_parsing() {
-        let Ok(PeerAddr::SocketAddr(SocketAddr::V4(sa))) = "127.0.0.2:8050".parse() else {
+        let Ok(PeerAddr::SocketAddr(SocketAddr::V4(sa))) = "127.0.0.2:8624".parse() else {
             panic!("failed to parse v4 addr")
         };
-        assert_eq!(sa.port(), 8050);
+        assert_eq!(sa.port(), 8624);
         assert_eq!(*sa.ip(), Ipv4Addr::new(127, 0, 0, 2));
-        let Ok(PeerAddr::SocketAddr(SocketAddr::V6(sa))) = "[::1001:2%1234]:8050".parse() else {
+        let Ok(PeerAddr::SocketAddr(SocketAddr::V6(sa))) = "[::1001:2%1234]:8624".parse() else {
             panic!("failed to parse v6 addr");
         };
         assert_eq!(sa.scope_id(), 1234);
-        assert_eq!(sa.port(), 8050);
+        assert_eq!(sa.port(), 8624);
         assert_eq!(*sa.ip(), Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0x1001, 0x2));
         assert_eq!(
-            "foobar:8050".parse::<PeerAddr>().expect("should parse"),
+            "foobar:8624".parse::<PeerAddr>().expect("should parse"),
             PeerAddr::HostnameAndPort {
                 hostname: "foobar".to_owned(),
-                port: 8050
+                port: 8624
             }
         );
         "  illegal-hostname:1"
@@ -1155,7 +1146,7 @@ persistent_db.path = "/2"
         let addrs = [
             PeerAddr::SocketAddr(SocketAddr::new(
                 IpAddr::V4(Ipv4Addr::new(127, 0, 0, 2)),
-                8050,
+                8624,
             )),
             PeerAddr::SocketAddr(SocketAddr::new(
                 IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 2)),

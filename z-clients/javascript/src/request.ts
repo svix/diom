@@ -60,7 +60,7 @@ export type DiomRequestContext = {
 >;
 
 export function makeRequestContext(token: string, options: DiomOptions) {
-  const baseUrl = options.serverUrl ?? "http://localhost:8050";
+  const baseUrl = options.serverUrl ?? "http://localhost:8624";
 
   if (options.retryScheduleInMs) {
     return {
