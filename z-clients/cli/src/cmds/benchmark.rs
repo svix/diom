@@ -540,6 +540,7 @@ trait BenchShard {
         let iterations = cfg.iterations;
         let label = format!("{} (conc={})", self.test_name(), cfg.concurrency);
         let pb = new_bar(label, concurrency * iterations);
+        pb.set_message("running benchmark");
         let barrier = Arc::new(Barrier::new(concurrency as usize));
         let progress = Arc::new(AtomicU64::new(0));
         let handles = (0..concurrency).map(|shard_id| {
@@ -555,8 +556,9 @@ trait BenchShard {
         });
 
         let joined_handles = try_join_all(handles).await?.into_iter();
-        pb.finish();
+        pb.set_message("analyzing...");
         self.finalize_result_stats(Arc::clone(&cfg), joined_handles, all_stats)?;
+        pb.finish();
 
         Ok(())
     }
