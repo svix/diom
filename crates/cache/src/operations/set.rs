@@ -2,7 +2,7 @@ use super::{CacheRaftState, CacheRequest, SetResponse};
 use crate::CacheNamespace;
 use diom_core::{
     PersistableValue,
-    types::{ByteString, DurationMs},
+    types::{ByteString, DurationMs, UnixTimestampMs},
 };
 use diom_error::Result;
 use diom_id::NamespaceId;
@@ -38,7 +38,7 @@ impl SetOperation {
     async fn apply_real(
         self,
         state: &CacheRaftState<'_>,
-        now: diom_core::types::UnixTimestampMs,
+        now: UnixTimestampMs,
         log_index: u64,
     ) -> Result<()> {
         let expiry = self.ttl.map(|ttl| now + ttl);

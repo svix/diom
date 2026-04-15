@@ -1,6 +1,10 @@
 use std::collections::BTreeMap;
 
-use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::DurationMs};
+use diom_core::{
+    PersistableValue,
+    task::spawn_blocking_in_current_span,
+    types::{DurationMs, UnixTimestampMs},
+};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall::OwnedWriteBatch;
@@ -60,11 +64,7 @@ impl PublishOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(msg_count = self.msgs.len()))]
-    async fn apply_real(
-        self,
-        state: &State,
-        now: diom_core::types::UnixTimestampMs,
-    ) -> Result<PublishResponseData> {
+    async fn apply_real(self, state: &State, now: UnixTimestampMs) -> Result<PublishResponseData> {
         let state = state.clone();
 
         let results = spawn_blocking_in_current_span(move || {
@@ -210,7 +210,7 @@ fn write_msg_batch(
     topic_name: &TopicName,
     topic_id: TopicId,
     msgs_by_partition: BTreeMap<Partition, Vec<MsgIn>>,
-    now: diom_core::types::UnixTimestampMs,
+    now: UnixTimestampMs,
 ) -> Result<Vec<PublishedTopic>> {
     let mut results: Vec<PublishedTopic> = Vec::with_capacity(msgs_by_partition.len());
 
