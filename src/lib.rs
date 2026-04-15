@@ -246,9 +246,8 @@ impl AppState {
             Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(10_000)));
         let rules_cache = Arc::new(parking_lot::RwLock::new(core::auth::FifoCache::new(1_000)));
 
-        let jwt_verifier = cfg.jwt.as_ref().map(|jwt_cfg| {
-            core::jwt::JwtVerifier::try_new(jwt_cfg).expect("invalid JWT configuration")
-        });
+        let jwt_verifier =
+            core::jwt::JwtVerifier::try_new(&cfg.jwt).expect("invalid JWT configuration");
 
         AppState {
             cfg,

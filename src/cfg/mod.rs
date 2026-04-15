@@ -585,7 +585,7 @@ pub struct ConfigurationInner {
     #[env_overridable(skip)]
     #[dumpable_config(skip)] // no straightforward way to serialize a #[serde(flatten)]
     #[validate(nested)]
-    pub jwt: Option<JwtConfig>,
+    pub jwt: JwtConfig,
 }
 
 impl ConfigurationInner {
@@ -605,10 +605,10 @@ impl ConfigurationInner {
 /// The optional `audience` and `issuer` fields enable claim validation.  When
 /// omitted, the respective claims are not checked (and may be absent from the
 /// token).
-#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, Validate)]
 pub struct JwtConfig {
     #[serde(flatten)]
-    pub key: JwtKey,
+    pub key: Option<JwtKey>,
     /// Expected `aud` values. When set, the token must contain one of these
     /// values in its `aud` claim. When absent, `aud` is not validated.
     #[serde(default)]

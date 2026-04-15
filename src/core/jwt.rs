@@ -19,10 +19,14 @@ pub(crate) struct JwtVerifier {
 }
 
 impl JwtVerifier {
-    pub(crate) fn try_new(cfg: &JwtConfig) -> Result<Self> {
+    pub(crate) fn try_new(cfg: &JwtConfig) -> Result<Option<Self>> {
         use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 
-        let (algorithm, key) = match &cfg.key {
+        let Some(cfg_key) = &cfg.key else {
+            return Ok(None);
+        };
+
+        let (algorithm, key) = match cfg_key {
             JwtKey::Hs256 { secret } => (
                 Algorithm::HS256,
                 DecodingKey::from_secret(secret.as_bytes()),
@@ -88,7 +92,7 @@ impl JwtVerifier {
             validation.required_spec_claims.insert("iss".to_string());
         }
 
-        Ok(Self { key, validation })
+        Ok(Some(Self { key, validation }))
     }
 
     /// Returns `true` if `token` has the three-part `header.payload.signature` structure of a JWT.

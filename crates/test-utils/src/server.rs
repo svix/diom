@@ -324,7 +324,7 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         sync_mode: SyncMode::Buffer,
         fsync_mode: FsyncMode::SyncData,
         admin_token: Some(TEST_ADMIN_TOKEN.to_string()),
-        jwt: None,
+        jwt: Default::default(),
     }
 }
 
