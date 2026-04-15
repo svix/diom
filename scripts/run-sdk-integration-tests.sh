@@ -11,7 +11,6 @@ set -euo pipefail
 #   --no-build          Skip building the server binary (use existing binary)
 #   --binary <path>     Use a specific binary instead of building
 
-
 SCRIPT_DIR="$(dirname "$0")"
 ROOT_DIR="$SCRIPT_DIR/.."
 
@@ -30,7 +29,7 @@ while [[ $# -gt 0 ]]; do
             BINARY="${2:?--binary requires a path argument}"
             shift 2
             ;;
-        rust|python|javascript|go|java|all)
+        rust | python | javascript | go | java | all)
             SDK_ARGS+=("$1")
             shift
             ;;

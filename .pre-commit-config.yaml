@@ -29,3 +29,13 @@ repos:
     rev: v1.45.0
     hooks:
       - id: typos
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.13.1-1
+    hooks:
+      - id: shfmt
+        exclude: z-clients/java/gradlew
+        args: ["--write", "-i", "4", "-ci"]
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.11.0
+    hooks:
+      - id: shellcheck
