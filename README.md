@@ -1,6 +1,6 @@
-# Diom
+# 💎 Diom
 
-This is a multimodal, clustered database being developed by [Svix](https://www.svix.com). For more information, see its project website at <https://diom.svix.io>.
+This is a multimodal, clustered database being developed by [Svix](https://www.svix.com). For more information, see its project website at <https://diom.svix.com>.
 
 ## Running Diom
 
