@@ -1,13 +1,13 @@
 # this file is @generated
 from .access_rule import AccessRule
 from .access_rule_effect import AccessRuleEffect
+from .admin_access_policy_configure_in import AdminAccessPolicyConfigureIn
+from .admin_access_policy_configure_out import AdminAccessPolicyConfigureOut
 from .admin_access_policy_delete_in import AdminAccessPolicyDeleteIn
 from .admin_access_policy_delete_out import AdminAccessPolicyDeleteOut
 from .admin_access_policy_get_in import AdminAccessPolicyGetIn
 from .admin_access_policy_list_in import AdminAccessPolicyListIn
 from .admin_access_policy_out import AdminAccessPolicyOut
-from .admin_access_policy_upsert_in import AdminAccessPolicyUpsertIn
-from .admin_access_policy_upsert_out import AdminAccessPolicyUpsertOut
 from .admin_auth_token_create_in import AdminAuthTokenCreateIn
 from .admin_auth_token_create_out import AdminAuthTokenCreateOut
 from .admin_auth_token_delete_in import AdminAuthTokenDeleteIn
@@ -22,15 +22,15 @@ from .admin_auth_token_update_in import AdminAuthTokenUpdateIn
 from .admin_auth_token_update_out import AdminAuthTokenUpdateOut
 from .admin_auth_token_whoami_in import AdminAuthTokenWhoamiIn
 from .admin_auth_token_whoami_out import AdminAuthTokenWhoamiOut
+from .admin_role_configure_in import AdminRoleConfigureIn
+from .admin_role_configure_out import AdminRoleConfigureOut
 from .admin_role_delete_in import AdminRoleDeleteIn
 from .admin_role_delete_out import AdminRoleDeleteOut
 from .admin_role_get_in import AdminRoleGetIn
 from .admin_role_list_in import AdminRoleListIn
 from .admin_role_out import AdminRoleOut
-from .admin_role_upsert_in import AdminRoleUpsertIn
-from .admin_role_upsert_out import AdminRoleUpsertOut
-from .cache_create_namespace_in import CacheCreateNamespaceIn
-from .cache_create_namespace_out import CacheCreateNamespaceOut
+from .cache_configure_namespace_in import CacheConfigureNamespaceIn
+from .cache_configure_namespace_out import CacheConfigureNamespaceOut
 from .cache_delete_in import CacheDeleteIn
 from .cache_delete_out import CacheDeleteOut
 from .cache_get_in import CacheGetIn
@@ -53,14 +53,14 @@ from .idempotency_abort_out import IdempotencyAbortOut
 from .idempotency_complete_in import IdempotencyCompleteIn
 from .idempotency_complete_out import IdempotencyCompleteOut
 from .idempotency_completed import IdempotencyCompleted
-from .idempotency_create_namespace_in import IdempotencyCreateNamespaceIn
-from .idempotency_create_namespace_out import IdempotencyCreateNamespaceOut
+from .idempotency_configure_namespace_in import IdempotencyConfigureNamespaceIn
+from .idempotency_configure_namespace_out import IdempotencyConfigureNamespaceOut
 from .idempotency_get_namespace_in import IdempotencyGetNamespaceIn
 from .idempotency_get_namespace_out import IdempotencyGetNamespaceOut
 from .idempotency_start_in import IdempotencyStartIn
 from .idempotency_start_out import IdempotencyStartOut
-from .kv_create_namespace_in import KvCreateNamespaceIn
-from .kv_create_namespace_out import KvCreateNamespaceOut
+from .kv_configure_namespace_in import KvConfigureNamespaceIn
+from .kv_configure_namespace_out import KvConfigureNamespaceOut
 from .kv_delete_in import KvDeleteIn
 from .kv_delete_out import KvDeleteOut
 from .kv_get_in import KvGetIn
@@ -73,8 +73,8 @@ from .list_response_admin_access_policy_out import ListResponseAdminAccessPolicy
 from .list_response_admin_auth_token_out import ListResponseAdminAuthTokenOut
 from .list_response_admin_role_out import ListResponseAdminRoleOut
 from .msg_in import MsgIn
-from .msg_namespace_create_in import MsgNamespaceCreateIn
-from .msg_namespace_create_out import MsgNamespaceCreateOut
+from .msg_namespace_configure_in import MsgNamespaceConfigureIn
+from .msg_namespace_configure_out import MsgNamespaceConfigureOut
 from .msg_namespace_get_in import MsgNamespaceGetIn
 from .msg_namespace_get_out import MsgNamespaceGetOut
 from .msg_publish_in import MsgPublishIn
@@ -107,8 +107,8 @@ from .queue_msg_out import QueueMsgOut
 from .rate_limit_check_in import RateLimitCheckIn
 from .rate_limit_check_out import RateLimitCheckOut
 from .rate_limit_config import RateLimitConfig
-from .rate_limit_create_namespace_in import RateLimitCreateNamespaceIn
-from .rate_limit_create_namespace_out import RateLimitCreateNamespaceOut
+from .rate_limit_configure_namespace_in import RateLimitConfigureNamespaceIn
+from .rate_limit_configure_namespace_out import RateLimitConfigureNamespaceOut
 from .rate_limit_get_namespace_in import RateLimitGetNamespaceIn
 from .rate_limit_get_namespace_out import RateLimitGetNamespaceOut
 from .rate_limit_get_remaining_in import RateLimitGetRemainingIn
@@ -124,13 +124,13 @@ from .stream_msg_out import StreamMsgOut
 __all__ = [
     "AccessRule",
     "AccessRuleEffect",
+    "AdminAccessPolicyConfigureIn",
+    "AdminAccessPolicyConfigureOut",
     "AdminAccessPolicyDeleteIn",
     "AdminAccessPolicyDeleteOut",
     "AdminAccessPolicyGetIn",
     "AdminAccessPolicyListIn",
     "AdminAccessPolicyOut",
-    "AdminAccessPolicyUpsertIn",
-    "AdminAccessPolicyUpsertOut",
     "AdminAuthTokenCreateIn",
     "AdminAuthTokenCreateOut",
     "AdminAuthTokenDeleteIn",
@@ -145,15 +145,15 @@ __all__ = [
     "AdminAuthTokenUpdateOut",
     "AdminAuthTokenWhoamiIn",
     "AdminAuthTokenWhoamiOut",
+    "AdminRoleConfigureIn",
+    "AdminRoleConfigureOut",
     "AdminRoleDeleteIn",
     "AdminRoleDeleteOut",
     "AdminRoleGetIn",
     "AdminRoleListIn",
     "AdminRoleOut",
-    "AdminRoleUpsertIn",
-    "AdminRoleUpsertOut",
-    "CacheCreateNamespaceIn",
-    "CacheCreateNamespaceOut",
+    "CacheConfigureNamespaceIn",
+    "CacheConfigureNamespaceOut",
     "CacheDeleteIn",
     "CacheDeleteOut",
     "CacheGetIn",
@@ -176,14 +176,14 @@ __all__ = [
     "IdempotencyCompleteIn",
     "IdempotencyCompleteOut",
     "IdempotencyCompleted",
-    "IdempotencyCreateNamespaceIn",
-    "IdempotencyCreateNamespaceOut",
+    "IdempotencyConfigureNamespaceIn",
+    "IdempotencyConfigureNamespaceOut",
     "IdempotencyGetNamespaceIn",
     "IdempotencyGetNamespaceOut",
     "IdempotencyStartIn",
     "IdempotencyStartOut",
-    "KvCreateNamespaceIn",
-    "KvCreateNamespaceOut",
+    "KvConfigureNamespaceIn",
+    "KvConfigureNamespaceOut",
     "KvDeleteIn",
     "KvDeleteOut",
     "KvGetIn",
@@ -196,8 +196,8 @@ __all__ = [
     "ListResponseAdminAuthTokenOut",
     "ListResponseAdminRoleOut",
     "MsgIn",
-    "MsgNamespaceCreateIn",
-    "MsgNamespaceCreateOut",
+    "MsgNamespaceConfigureIn",
+    "MsgNamespaceConfigureOut",
     "MsgNamespaceGetIn",
     "MsgNamespaceGetOut",
     "MsgPublishIn",
@@ -230,8 +230,8 @@ __all__ = [
     "RateLimitCheckIn",
     "RateLimitCheckOut",
     "RateLimitConfig",
-    "RateLimitCreateNamespaceIn",
-    "RateLimitCreateNamespaceOut",
+    "RateLimitConfigureNamespaceIn",
+    "RateLimitConfigureNamespaceOut",
     "RateLimitGetNamespaceIn",
     "RateLimitGetNamespaceOut",
     "RateLimitGetRemainingIn",

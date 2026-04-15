@@ -1,13 +1,13 @@
 // this file is @generated
 
 import {
-    type KvCreateNamespaceIn,
-    KvCreateNamespaceInSerializer,
-} from '../models/kvCreateNamespaceIn';
+    type KvConfigureNamespaceIn,
+    KvConfigureNamespaceInSerializer,
+} from '../models/kvConfigureNamespaceIn';
 import {
-    type KvCreateNamespaceOut,
-    KvCreateNamespaceOutSerializer,
-} from '../models/kvCreateNamespaceOut';
+    type KvConfigureNamespaceOut,
+    KvConfigureNamespaceOutSerializer,
+} from '../models/kvConfigureNamespaceOut';
 import {
     type KvGetNamespaceIn,
     KvGetNamespaceInSerializer,
@@ -21,19 +21,19 @@ import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 export class KvNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
-    /** Create KV namespace */
-    public create(
-        kvCreateNamespaceIn: KvCreateNamespaceIn,
-    ): Promise<KvCreateNamespaceOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.kv.namespace.create");
+    /** Configure KV namespace */
+    public configure(
+        kvConfigureNamespaceIn: KvConfigureNamespaceIn,
+    ): Promise<KvConfigureNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.kv.namespace.configure");
 
         request.setBody(
-            KvCreateNamespaceInSerializer._toJsonObject(kvCreateNamespaceIn)
+            KvConfigureNamespaceInSerializer._toJsonObject(kvConfigureNamespaceIn)
         );
         
         return request.send(
             this.requestCtx,
-            KvCreateNamespaceOutSerializer._fromJsonObject,
+            KvConfigureNamespaceOutSerializer._fromJsonObject,
         );
     }/** Get KV namespace */
     public get(

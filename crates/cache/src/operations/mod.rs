@@ -1,10 +1,10 @@
 use crate::State;
 
-mod create_namespace;
+mod configure_namespace;
 mod delete;
 mod set;
 
-pub use create_namespace::{CreateCacheOperation, CreateCacheResponseData};
+pub use configure_namespace::{ConfigureCacheOperation, ConfigureCacheResponseData};
 pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::SetOperation;
 
@@ -20,7 +20,7 @@ raft_module_operations!(
     CacheOperation {
         Set(SetOperation) -> (),
         Delete(DeleteOperation) -> DeleteResponseData,
-        CreateCache(CreateCacheOperation) -> CreateCacheResponseData,
+        ConfigureCache(ConfigureCacheOperation) -> ConfigureCacheResponseData,
     },
     state = CacheRaftState<'_>,
 );
@@ -30,7 +30,7 @@ impl CacheOperation {
         match self {
             Self::Set(op) => Some(&op.key),
             Self::Delete(op) => Some(&op.key),
-            Self::CreateCache(op) => Some(&op.name),
+            Self::ConfigureCache(op) => Some(&op.name),
         }
     }
 }

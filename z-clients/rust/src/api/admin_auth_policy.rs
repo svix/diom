@@ -11,12 +11,12 @@ impl<'a> AdminAuthPolicy<'a> {
     }
 
     /// Create or update an access policy
-    pub async fn upsert(
+    pub async fn configure(
         &self,
-        admin_access_policy_upsert_in: AdminAccessPolicyUpsertIn,
-    ) -> Result<AdminAccessPolicyUpsertOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.admin.auth-policy.upsert")
-            .with_body(admin_access_policy_upsert_in)
+        admin_access_policy_configure_in: AdminAccessPolicyConfigureIn,
+    ) -> Result<AdminAccessPolicyConfigureOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.admin.auth-policy.configure")
+            .with_body(admin_access_policy_configure_in)
             .execute(self.cfg)
             .await
     }

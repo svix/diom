@@ -1,10 +1,10 @@
 use crate::State;
 
-mod create_namespace;
+mod configure_namespace;
 mod limit;
 mod reset;
 
-pub use create_namespace::{CreateRateLimitOperation, CreateRateLimitResponseData};
+pub use configure_namespace::{ConfigureRateLimitOperation, ConfigureRateLimitResponseData};
 pub use limit::{LimitOperation, LimitResponseData};
 pub use reset::ResetOperation;
 
@@ -20,7 +20,7 @@ raft_module_operations!(
     RateLimitOperation {
         Limit(LimitOperation) -> LimitResponseData,
         Reset(ResetOperation) -> (),
-        CreateRateLimit(CreateRateLimitOperation) -> CreateRateLimitResponseData,
+        ConfigureRateLimit(ConfigureRateLimitOperation) -> ConfigureRateLimitResponseData,
     },
     state = RateLimitRaftState<'_>,
 );
@@ -30,7 +30,7 @@ impl RateLimitOperation {
         match self {
             RateLimitOperation::Limit(limit_operation) => &limit_operation.key,
             RateLimitOperation::Reset(reset_operation) => &reset_operation.key,
-            RateLimitOperation::CreateRateLimit(op) => &op.name,
+            RateLimitOperation::ConfigureRateLimit(op) => &op.name,
         }
     }
 }

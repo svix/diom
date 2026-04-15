@@ -459,7 +459,7 @@ async fn create_namespace_with_defaults() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("v1.kv.namespace.create")
+        .post("v1.kv.namespace.configure")
         .json(json!({
             "name": "my-namespace",
         }))
@@ -483,7 +483,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("v1.kv.namespace.create")
+        .post("v1.kv.namespace.configure")
         .json(json!({
             "name": "custom-ns",
         }))
@@ -514,7 +514,7 @@ async fn create_namespace_upserts() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("v1.kv.namespace.create")
+        .post("v1.kv.namespace.configure")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -527,7 +527,7 @@ async fn create_namespace_upserts() -> TestResult {
 
     // Upsert
     let second = client
-        .post("v1.kv.namespace.create")
+        .post("v1.kv.namespace.configure")
         .json(json!({
             "name": "upsert-ns",
         }))
@@ -554,7 +554,7 @@ async fn get_namespace() -> TestResult {
 
     // Create a namespace first
     let created = client
-        .post("v1.kv.namespace.create")
+        .post("v1.kv.namespace.configure")
         .json(json!({
             "name": "get-test-ns",
         }))

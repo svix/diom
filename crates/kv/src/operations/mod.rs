@@ -1,10 +1,10 @@
 use crate::State;
 
-mod create_namespace;
+mod configure_namespace;
 mod delete;
 mod set;
 
-pub use create_namespace::{CreateKvOperation, CreateKvResponseData};
+pub use configure_namespace::{ConfigureKvOperation, ConfigureKvResponseData};
 pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::{SetOperation, SetResponseData};
 
@@ -20,7 +20,7 @@ raft_module_operations!(
     KvOperation {
         Set(SetOperation) -> SetResponseData,
         Delete(DeleteOperation) -> DeleteResponseData,
-        CreateKv(CreateKvOperation) -> CreateKvResponseData,
+        ConfigureKv(ConfigureKvOperation) -> ConfigureKvResponseData,
     },
     state = KvRaftState<'_>,
 );
@@ -30,7 +30,7 @@ impl KvOperation {
         match self {
             Self::Set(op) => Some(&op.key),
             Self::Delete(op) => Some(&op.key),
-            Self::CreateKv(op) => Some(&op.name),
+            Self::ConfigureKv(op) => Some(&op.name),
         }
     }
 }

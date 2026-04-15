@@ -2,14 +2,14 @@ use crate::State;
 
 mod abort;
 mod complete;
-mod create_namespace;
+mod configure_namespace;
 mod try_start;
 
 pub use abort::AbortOperation;
 pub use complete::CompleteOperation;
 pub use try_start::{TryStartOperation, TryStartResponseData};
 
-pub use create_namespace::{CreateIdempotencyOperation, CreateIdempotencyResponseData};
+pub use configure_namespace::{ConfigureIdempotencyOperation, ConfigureIdempotencyResponseData};
 
 use diom_operations::raft_module_operations;
 
@@ -24,7 +24,7 @@ raft_module_operations!(
         TryStart(TryStartOperation) -> TryStartResponseData,
         Complete(CompleteOperation) -> (),
         Abort(AbortOperation) -> (),
-        CreateIdempotency(CreateIdempotencyOperation) -> CreateIdempotencyResponseData,
+        ConfigureIdempotency(ConfigureIdempotencyOperation) -> ConfigureIdempotencyResponseData,
     },
     state = IdempotencyRaftState<'_>,
 );
@@ -35,7 +35,7 @@ impl IdempotencyOperation {
             Self::TryStart(op) => Some(&op.key),
             Self::Complete(op) => Some(&op.key),
             Self::Abort(op) => Some(&op.key),
-            Self::CreateIdempotency(op) => Some(&op.name),
+            Self::ConfigureIdempotency(op) => Some(&op.name),
         }
     }
 }

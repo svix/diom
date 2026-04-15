@@ -17,17 +17,17 @@ func NewIdempotencyNamespace(client *diom_proto.HttpClient) IdempotencyNamespace
 	return IdempotencyNamespace{client}
 }
 
-// Create idempotency namespace
-func (idempotencyNamespace IdempotencyNamespace) Create(
+// Configure idempotency namespace
+func (idempotencyNamespace IdempotencyNamespace) Configure(
 	ctx context.Context,
-	idempotencyCreateNamespaceIn diom_models.IdempotencyCreateNamespaceIn,
-) (*diom_models.IdempotencyCreateNamespaceOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.IdempotencyCreateNamespaceIn, diom_models.IdempotencyCreateNamespaceOut](
+	idempotencyConfigureNamespaceIn diom_models.IdempotencyConfigureNamespaceIn,
+) (*diom_models.IdempotencyConfigureNamespaceOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.IdempotencyConfigureNamespaceIn, diom_models.IdempotencyConfigureNamespaceOut](
 		ctx,
 		idempotencyNamespace.client,
 		"POST",
-		"/api/v1.idempotency.namespace.create",
-		&idempotencyCreateNamespaceIn,
+		"/api/v1.idempotency.namespace.configure",
+		&idempotencyConfigureNamespaceIn,
 	)
 }
 

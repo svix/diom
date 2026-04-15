@@ -7,7 +7,7 @@ use diom_error::{OptionExt, ResultExt};
 use diom_id::Module;
 use diom_namespace::entities::NamespaceName;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
-use diom_rate_limit::operations::{CreateRateLimitOperation, LimitOperation, ResetOperation};
+use diom_rate_limit::operations::{ConfigureRateLimitOperation, LimitOperation, ResetOperation};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -244,21 +244,21 @@ async fn rate_limit_reset(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub(crate) struct RateLimitCreateNamespaceIn {
+pub(crate) struct RateLimitConfigureNamespaceIn {
     #[validate(nested)]
     pub name: NamespaceName,
 }
 
-namespace_request_input!(RateLimitCreateNamespaceIn, "create");
+namespace_request_input!(RateLimitConfigureNamespaceIn, "configure");
 
-impl From<RateLimitCreateNamespaceIn> for CreateRateLimitOperation {
-    fn from(v: RateLimitCreateNamespaceIn) -> Self {
-        CreateRateLimitOperation::new(v.name)
+impl From<RateLimitConfigureNamespaceIn> for ConfigureRateLimitOperation {
+    fn from(v: RateLimitConfigureNamespaceIn) -> Self {
+        ConfigureRateLimitOperation::new(v.name)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-struct RateLimitCreateNamespaceOut {
+struct RateLimitConfigureNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
@@ -279,15 +279,15 @@ struct RateLimitGetNamespaceOut {
     pub updated: UnixTimestampMs,
 }
 
-/// Create rate limiter namespace
-#[aide_annotate(op_id = "v1.rate-limit.namespace.create")]
-async fn rate_limit_create_namespace(
+/// Configure rate limiter namespace
+#[aide_annotate(op_id = "v1.rate-limit.namespace.configure")]
+async fn rate_limit_configure_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<RateLimitCreateNamespaceIn>,
-) -> Result<MsgPackOrJson<RateLimitCreateNamespaceOut>> {
-    let operation = CreateRateLimitOperation::from(data);
+    MsgPackOrJson(data): MsgPackOrJson<RateLimitConfigureNamespaceIn>,
+) -> Result<MsgPackOrJson<RateLimitConfigureNamespaceOut>> {
+    let operation = ConfigureRateLimitOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(RateLimitCreateNamespaceOut {
+    Ok(MsgPackOrJson(RateLimitConfigureNamespaceOut {
         name: resp.name,
         created: resp.created.into(),
         updated: resp.updated.into(),
@@ -335,10 +335,10 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            rate_limit_create_namespace_path,
+            rate_limit_configure_namespace_path,
             post_with(
-                rate_limit_create_namespace,
-                rate_limit_create_namespace_operation,
+                rate_limit_configure_namespace,
+                rate_limit_configure_namespace_operation,
             ),
             &tag,
         )

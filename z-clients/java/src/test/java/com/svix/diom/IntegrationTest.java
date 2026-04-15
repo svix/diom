@@ -66,7 +66,7 @@ class IntegrationTest {
         String topic = "java-integration-topic";
         String consumerGroup = "java-integration-cg";
 
-        client.getMsgs().getNamespace().create(namespace);
+        client.getMsgs().getNamespace().configure(namespace);
         client.getMsgs().publish(topic, new MsgPublishIn()
             .namespace(namespace)
             .msgs(Collections.singletonList(new MsgIn().value("hello".getBytes()))));

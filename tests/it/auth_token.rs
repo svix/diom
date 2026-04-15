@@ -216,7 +216,7 @@ async fn test_auth_token_namespace_create_and_get() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.auth-token.namespace.create")
+        .post("v1.auth-token.namespace.configure")
         .json(json!({ "name": "at-ns-1" }))
         .await?
         .ensure(StatusCode::OK)?
@@ -348,7 +348,7 @@ async fn test_auth_token_in_custom_namespace() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.auth-token.namespace.create")
+        .post("v1.auth-token.namespace.configure")
         .json(json!({ "name": "custom-at-ns" }))
         .await?
         .ensure(StatusCode::OK)?;

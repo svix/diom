@@ -14,7 +14,7 @@ pub struct MsgsNamespaceArgs {
 
 #[derive(Subcommand)]
 pub enum MsgsNamespaceCommands {
-    /// Creates or updates a msgs namespace with the given name.
+    /// Configures a msgs namespace with the given name.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"retention\": \"...\"
@@ -25,9 +25,10 @@ pub enum MsgsNamespaceCommands {
   \"created\": \"...\",
   \"updated\": \"...\"
 }")]
-    Create {
+    Configure {
         name: String,
-        msg_namespace_create_in: Option<crate::json::JsonOf<diom::models::MsgNamespaceCreateIn>>,
+        msg_namespace_configure_in:
+            Option<crate::json::JsonOf<diom::models::MsgNamespaceConfigureIn>>,
     },
     /// Gets a msgs namespace by name.
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -48,16 +49,16 @@ pub enum MsgsNamespaceCommands {
 impl MsgsNamespaceCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
-            Self::Create {
+            Self::Configure {
                 name,
-                msg_namespace_create_in,
+                msg_namespace_configure_in,
             } => {
                 let resp = client
                     .msgs()
                     .namespace()
-                    .create(
+                    .configure(
                         name,
-                        msg_namespace_create_in.unwrap_or_default().into_inner(),
+                        msg_namespace_configure_in.unwrap_or_default().into_inner(),
                     )
                     .await?;
                 crate::json::print_json_output(&resp)?;

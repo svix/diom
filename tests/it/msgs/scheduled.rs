@@ -17,7 +17,7 @@ async fn scheduled_msg_delivered_after_delay() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-sched-queue-deliver" }))
         .await?
         .expect(StatusCode::OK);
@@ -103,7 +103,7 @@ async fn immediate_msg_delivered_while_scheduled_msg_held() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-sched-queue-mix" }))
         .await?
         .expect(StatusCode::OK);
@@ -195,7 +195,7 @@ async fn zero_delay_ms_is_immediate() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-sched-zero-delay" }))
         .await?
         .expect(StatusCode::OK);
@@ -238,7 +238,7 @@ async fn stream_sees_scheduled_msg_immediately() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-sched-stream-vis" }))
         .await?
         .expect(StatusCode::OK);
@@ -290,7 +290,7 @@ async fn queue_msg_has_scheduled_at_after_delivery() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-sched-queue-field" }))
         .await?
         .expect(StatusCode::OK);
@@ -336,7 +336,7 @@ async fn no_scheduled_at_on_immediate_message() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-sched-no-field" }))
         .await?
         .expect(StatusCode::OK);

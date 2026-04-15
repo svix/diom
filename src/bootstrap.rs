@@ -4,13 +4,13 @@ use crate::{
     cfg::Configuration as AppConfig,
     core::{INTERNAL_NAMESPACE, cluster::RaftState},
     v1::endpoints::{
-        admin::auth::{policy::AdminAccessPolicyUpsertIn, role::AdminRoleUpsertIn},
-        auth_token::AuthTokenCreateNamespaceIn,
-        cache::CacheCreateNamespaceIn,
-        idempotency::IdempotencyCreateNamespaceIn,
-        kv::KvCreateNamespaceIn,
-        msgs::MsgNamespaceCreateIn,
-        rate_limit::RateLimitCreateNamespaceIn,
+        admin::auth::{policy::AdminAccessPolicyConfigureIn, role::AdminRoleConfigureIn},
+        auth_token::AuthTokenConfigureNamespaceIn,
+        cache::CacheConfigureNamespaceIn,
+        idempotency::IdempotencyConfigureNamespaceIn,
+        kv::KvConfigureNamespaceIn,
+        msgs::MsgNamespaceConfigureIn,
+        rate_limit::RateLimitConfigureNamespaceIn,
     },
 };
 use anyhow::{Context, bail};
@@ -22,14 +22,14 @@ use diom_namespace::{
 
 #[derive(Debug)]
 enum BootstrapCommand {
-    Kv(KvCreateNamespaceIn),
-    Cache(CacheCreateNamespaceIn),
-    Idempotency(IdempotencyCreateNamespaceIn),
-    RateLimit(RateLimitCreateNamespaceIn),
-    Msgs(MsgNamespaceCreateIn),
-    AuthToken(AuthTokenCreateNamespaceIn),
-    AdminAuthPolicy(AdminAccessPolicyUpsertIn),
-    AdminAuthRole(AdminRoleUpsertIn),
+    Kv(KvConfigureNamespaceIn),
+    Cache(CacheConfigureNamespaceIn),
+    Idempotency(IdempotencyConfigureNamespaceIn),
+    RateLimit(RateLimitConfigureNamespaceIn),
+    Msgs(MsgNamespaceConfigureIn),
+    AuthToken(AuthTokenConfigureNamespaceIn),
+    AdminAuthPolicy(AdminAccessPolicyConfigureIn),
+    AdminAuthRole(AdminRoleConfigureIn),
 }
 
 impl BootstrapCommand {
@@ -38,40 +38,40 @@ impl BootstrapCommand {
             BootstrapCommand::Kv(v) => {
                 tracing::debug!(name = v.name.as_str(), "bootstrapping kv");
                 raft_state
-                    .client_write(diom_kv::operations::CreateKvOperation::from(v))
+                    .client_write(diom_kv::operations::ConfigureKvOperation::from(v))
                     .await?;
             }
             BootstrapCommand::Cache(v) => {
                 tracing::debug!(name = v.name.as_str(), "bootstrapping cache");
                 raft_state
-                    .client_write(diom_cache::operations::CreateCacheOperation::from(v))
+                    .client_write(diom_cache::operations::ConfigureCacheOperation::from(v))
                     .await?;
             }
             BootstrapCommand::Idempotency(v) => {
                 tracing::debug!(name = v.name.as_str(), "bootstrapping idempotency");
                 raft_state
-                    .client_write(diom_idempotency::operations::CreateIdempotencyOperation::from(v))
+                    .client_write(
+                        diom_idempotency::operations::ConfigureIdempotencyOperation::from(v),
+                    )
                     .await?;
             }
             BootstrapCommand::RateLimit(v) => {
                 tracing::debug!(name = v.name.as_str(), "bootstrapping rate-limit");
                 raft_state
-                    .client_write(diom_rate_limit::operations::CreateRateLimitOperation::from(
-                        v,
-                    ))
+                    .client_write(diom_rate_limit::operations::ConfigureRateLimitOperation::from(v))
                     .await?;
             }
             BootstrapCommand::Msgs(v) => {
                 tracing::debug!(name = v.name.as_str(), "bootstrapping msgs");
                 raft_state
-                    .client_write(diom_msgs::operations::CreateNamespaceOperation::from(v))
+                    .client_write(diom_msgs::operations::ConfigureNamespaceOperation::from(v))
                     .await?;
             }
             BootstrapCommand::AuthToken(v) => {
                 tracing::debug!(name = v.name.as_str(), "bootstrapping auth_token");
                 raft_state
                     .client_write(
-                        diom_auth_token::operations::CreateAuthTokenNamespaceOperation::from(v),
+                        diom_auth_token::operations::ConfigureAuthTokenNamespaceOperation::from(v),
                     )
                     .await?;
             }
@@ -79,7 +79,7 @@ impl BootstrapCommand {
                 tracing::debug!(id = v.id.as_str(), "bootstrapping auth-policy");
                 raft_state
                     .client_write(
-                        diom_admin_auth::operations::UpsertAccessPolicyOperation::new(
+                        diom_admin_auth::operations::ConfigureAccessPolicyOperation::new(
                             v.id,
                             v.description,
                             v.rules,
@@ -90,7 +90,7 @@ impl BootstrapCommand {
             BootstrapCommand::AdminAuthRole(v) => {
                 tracing::debug!(id = v.id.as_str(), "bootstrapping auth-role");
                 raft_state
-                    .client_write(diom_admin_auth::operations::UpsertRoleOperation::new(
+                    .client_write(diom_admin_auth::operations::ConfigureRoleOperation::new(
                         v.id,
                         v.description,
                         v.rules,
@@ -138,33 +138,33 @@ impl FromStr for BootstrapCommand {
         let json_str = json_str.trim();
 
         match (module, resource, action) {
-            ("kv", "namespace", "create") => Ok(BootstrapCommand::Kv(
+            ("kv", "namespace", "configure") => Ok(BootstrapCommand::Kv(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for kv namespace: {json_str:?}"))?,
             )),
-            ("cache", "namespace", "create") => Ok(BootstrapCommand::Cache(
+            ("cache", "namespace", "configure") => Ok(BootstrapCommand::Cache(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for cache namespace: {json_str:?}"))?,
             )),
-            ("idempotency", "namespace", "create") => Ok(BootstrapCommand::Idempotency(
+            ("idempotency", "namespace", "configure") => Ok(BootstrapCommand::Idempotency(
                 serde_json::from_str(json_str).with_context(|| {
                     format!("invalid JSON for idempotency namespace: {json_str:?}")
                 })?,
             )),
-            ("rate-limit", "namespace", "create") => Ok(BootstrapCommand::RateLimit(
+            ("rate-limit", "namespace", "configure") => Ok(BootstrapCommand::RateLimit(
                 serde_json::from_str(json_str).with_context(|| {
                     format!("invalid JSON for rate-limit namespace: {json_str:?}")
                 })?,
             )),
-            ("msgs", "namespace", "create") => Ok(BootstrapCommand::Msgs(
+            ("msgs", "namespace", "configure") => Ok(BootstrapCommand::Msgs(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for msgs namespace: {json_str:?}"))?,
             )),
-            ("admin", "auth-policy", "upsert") => Ok(BootstrapCommand::AdminAuthPolicy(
+            ("admin", "auth-policy", "configure") => Ok(BootstrapCommand::AdminAuthPolicy(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for admin auth-policy: {json_str:?}"))?,
             )),
-            ("admin", "auth-role", "upsert") => Ok(BootstrapCommand::AdminAuthRole(
+            ("admin", "auth-role", "configure") => Ok(BootstrapCommand::AdminAuthRole(
                 serde_json::from_str(json_str)
                     .with_context(|| format!("invalid JSON for admin auth-role: {json_str:?}"))?,
             )),
@@ -202,45 +202,45 @@ fn ensure_defaults(commands: &mut Vec<BootstrapCommand>) {
 
     ensure_default!(
         AuthToken,
-        BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
+        BootstrapCommand::AuthToken(AuthTokenConfigureNamespaceIn {
             name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
     commands.insert(
         0,
-        BootstrapCommand::AuthToken(AuthTokenCreateNamespaceIn {
+        BootstrapCommand::AuthToken(AuthTokenConfigureNamespaceIn {
             name: (*INTERNAL_NAMESPACE).clone(),
         }),
     );
     ensure_default!(
         Msgs,
-        BootstrapCommand::Msgs(MsgNamespaceCreateIn {
+        BootstrapCommand::Msgs(MsgNamespaceConfigureIn {
             name: (*DEFAULT_NAMESPACE_NAME).clone(),
             retention: Retention::default(),
         })
     );
     ensure_default!(
         RateLimit,
-        BootstrapCommand::RateLimit(RateLimitCreateNamespaceIn {
+        BootstrapCommand::RateLimit(RateLimitConfigureNamespaceIn {
             name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
     ensure_default!(
         Idempotency,
-        BootstrapCommand::Idempotency(IdempotencyCreateNamespaceIn {
+        BootstrapCommand::Idempotency(IdempotencyConfigureNamespaceIn {
             name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
     ensure_default!(
         Cache,
-        BootstrapCommand::Cache(CacheCreateNamespaceIn {
+        BootstrapCommand::Cache(CacheConfigureNamespaceIn {
             name: (*DEFAULT_NAMESPACE_NAME).clone(),
             eviction_policy: EvictionPolicy::NoEviction,
         })
     );
     ensure_default!(
         Kv,
-        BootstrapCommand::Kv(KvCreateNamespaceIn {
+        BootstrapCommand::Kv(KvConfigureNamespaceIn {
             name: (*DEFAULT_NAMESPACE_NAME).clone(),
         })
     );
@@ -324,7 +324,7 @@ mod tests {
 
     #[test]
     fn kv_defaults() {
-        let cmd: BootstrapCommand = r#"kv namespace create {"name":"myns"}"#.parse().unwrap();
+        let cmd: BootstrapCommand = r#"kv namespace configure {"name":"myns"}"#.parse().unwrap();
         let BootstrapCommand::Kv(v) = cmd else {
             panic!()
         };
@@ -333,7 +333,7 @@ mod tests {
 
     #[test]
     fn cache_defaults() {
-        let cmd: BootstrapCommand = r#"cache namespace create {"name":"myns"}"#.parse().unwrap();
+        let cmd: BootstrapCommand = r#"cache namespace configure {"name":"myns"}"#.parse().unwrap();
         let BootstrapCommand::Cache(v) = cmd else {
             panic!()
         };
@@ -342,8 +342,9 @@ mod tests {
 
     #[test]
     fn idempotency() {
-        let cmd: BootstrapCommand =
-            r#"idempotency namespace create {"name":"myns"}"#.parse().unwrap();
+        let cmd: BootstrapCommand = r#"idempotency namespace configure {"name":"myns"}"#
+            .parse()
+            .unwrap();
         let BootstrapCommand::Idempotency(v) = cmd else {
             panic!()
         };
@@ -353,13 +354,13 @@ mod tests {
     #[test]
     fn rate_limit() {
         let cmd: BootstrapCommand =
-            r#"rate-limit namespace create {"name":"myns"}"#.parse().unwrap();
+            r#"rate-limit namespace configure {"name":"myns"}"#.parse().unwrap();
         assert!(matches!(cmd, BootstrapCommand::RateLimit(v) if v.name.as_str() == "myns"));
     }
 
     #[test]
     fn msgs_defaults() {
-        let cmd: BootstrapCommand = r#"msgs namespace create {"name":"myns"}"#.parse().unwrap();
+        let cmd: BootstrapCommand = r#"msgs namespace configure {"name":"myns"}"#.parse().unwrap();
         let BootstrapCommand::Msgs(v) = cmd else {
             panic!()
         };
@@ -370,7 +371,7 @@ mod tests {
     #[test]
     fn msgs_with_options() {
         let cmd: BootstrapCommand =
-            r#"msgs namespace create {"name":"myns","retention":{"period_ms":60000,"size_bytes":500}}"#
+            r#"msgs namespace configure {"name":"myns","retention":{"period_ms":60000,"size_bytes":500}}"#
                 .parse()
                 .unwrap();
         let BootstrapCommand::Msgs(v) = cmd else {
@@ -382,12 +383,16 @@ mod tests {
 
     #[test]
     fn too_few_tokens() {
-        assert!("kv namespace create".parse::<BootstrapCommand>().is_err());
+        assert!(
+            "kv namespace configure"
+                .parse::<BootstrapCommand>()
+                .is_err()
+        );
     }
 
     #[test]
     fn wrong_resource() {
-        assert!(r#"kv config create {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
+        assert!(r#"kv config configure {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
     }
 
     #[test]
@@ -397,13 +402,13 @@ mod tests {
 
     #[test]
     fn unknown_module() {
-        assert!(r#"blob namespace create {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
+        assert!(r#"blob namespace configure {"name":"myns"}"#.parse::<BootstrapCommand>().is_err());
     }
 
     #[test]
-    fn auth_policy_upsert() {
+    fn auth_policy_configure() {
         let cmd: BootstrapCommand =
-            r#"admin auth-policy upsert {"id":"mypolicy","description":"test","rules":[]}"#
+            r#"admin auth-policy configure {"id":"mypolicy","description":"test","rules":[]}"#
                 .parse()
                 .unwrap();
         let BootstrapCommand::AdminAuthPolicy(v) = cmd else {
@@ -415,9 +420,9 @@ mod tests {
     }
 
     #[test]
-    fn auth_role_upsert() {
+    fn auth_role_configure() {
         let cmd: BootstrapCommand =
-            r#"admin auth-role upsert {"id":"myrole","description":"test","rules":[]}"#
+            r#"admin auth-role configure {"id":"myrole","description":"test","rules":[]}"#
                 .parse()
                 .unwrap();
         let BootstrapCommand::AdminAuthRole(v) = cmd else {
@@ -431,13 +436,13 @@ mod tests {
 
     #[test]
     fn unknown_admin_subcommand() {
-        assert!(r#"admin unknown upsert {"id":"x"}"#.parse::<BootstrapCommand>().is_err());
+        assert!(r#"admin unknown configure {"id":"x"}"#.parse::<BootstrapCommand>().is_err());
     }
 
     #[test]
     fn invalid_json() {
         assert!(
-            "kv namespace create not-json"
+            "kv namespace configure not-json"
                 .parse::<BootstrapCommand>()
                 .is_err()
         );
@@ -445,13 +450,13 @@ mod tests {
 
     #[test]
     fn missing_name_field() {
-        assert!(r#"kv namespace create {}"#.parse::<BootstrapCommand>().is_err());
+        assert!(r#"kv namespace configure {}"#.parse::<BootstrapCommand>().is_err());
     }
 
     #[test]
     fn invalid_eviction_policy() {
         assert!(
-            r#"cache namespace create {"name":"myns","eviction_policy":"random"}"#
+            r#"cache namespace configure {"name":"myns","eviction_policy":"random"}"#
                 .parse::<BootstrapCommand>()
                 .is_err()
         );
@@ -461,10 +466,10 @@ mod tests {
     fn skips_blank_lines_and_comments() {
         let input = r#"
             # this is a comment
-            kv namespace create {"name":"foo"}
+            kv namespace configure {"name":"foo"}
 
             # another comment
-            cache namespace create {"name":"bar"}
+            cache namespace configure {"name":"bar"}
         "#;
         let cmds = parse_bootstrap(input).unwrap();
         assert_eq!(cmds.len(), 2);
@@ -474,7 +479,7 @@ mod tests {
 
     #[test]
     fn parse_error_includes_line_number() {
-        let input = "kv namespace create {\"name\":\"foo\"}\nkv namespace create not-json\n";
+        let input = "kv namespace configure {\"name\":\"foo\"}\nkv namespace configure not-json\n";
         let err = parse_bootstrap(input).unwrap_err();
         assert!(err.to_string().contains("line 2"), "error was: {err}");
     }
@@ -514,7 +519,7 @@ mod tests {
 
     #[test]
     fn ensure_defaults_does_not_duplicate_existing_default() {
-        let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
+        let mut cmds = vec![BootstrapCommand::Kv(KvConfigureNamespaceIn {
             name: DEFAULT_NAMESPACE_NAME.clone(),
         })];
         ensure_defaults(&mut cmds);
@@ -527,7 +532,7 @@ mod tests {
 
     #[test]
     fn ensure_defaults_does_not_suppress_non_default_namespaces() {
-        let mut cmds = vec![BootstrapCommand::Kv(KvCreateNamespaceIn {
+        let mut cmds = vec![BootstrapCommand::Kv(KvConfigureNamespaceIn {
             name: NamespaceName("other".to_owned()),
         })];
         ensure_defaults(&mut cmds);

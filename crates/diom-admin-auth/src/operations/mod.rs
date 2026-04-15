@@ -1,14 +1,14 @@
 use crate::State;
 
+mod configure_policy;
+mod configure_role;
 mod delete_policy;
 mod delete_role;
-mod upsert_policy;
-mod upsert_role;
 
+pub use configure_policy::{ConfigureAccessPolicyOperation, ConfigureAccessPolicyResponseData};
+pub use configure_role::{ConfigureRoleOperation, ConfigureRoleResponseData};
 pub use delete_policy::{DeleteAccessPolicyOperation, DeleteAccessPolicyResponseData};
 pub use delete_role::{DeleteRoleOperation, DeleteRoleResponseData};
-pub use upsert_policy::{UpsertAccessPolicyOperation, UpsertAccessPolicyResponseData};
-pub use upsert_role::{UpsertRoleOperation, UpsertRoleResponseData};
 
 use diom_operations::raft_module_operations;
 
@@ -19,9 +19,9 @@ pub struct AdminAuthRaftState<'a> {
 raft_module_operations!(
     AdminAuthRequest,
     AdminAuthOperation {
-        UpsertRole(UpsertRoleOperation) -> UpsertRoleResponseData,
+        ConfigureRole(ConfigureRoleOperation) -> ConfigureRoleResponseData,
         DeleteRole(DeleteRoleOperation) -> DeleteRoleResponseData,
-        UpsertAccessPolicy(UpsertAccessPolicyOperation) -> UpsertAccessPolicyResponseData,
+        ConfigureAccessPolicy(ConfigureAccessPolicyOperation) -> ConfigureAccessPolicyResponseData,
         DeleteAccessPolicy(DeleteAccessPolicyOperation) -> DeleteAccessPolicyResponseData,
     },
     state = AdminAuthRaftState<'_>,

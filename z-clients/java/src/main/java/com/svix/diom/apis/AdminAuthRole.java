@@ -14,13 +14,13 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.diom.models.AdminRoleConfigureIn;
+import com.svix.diom.models.AdminRoleConfigureOut;
 import com.svix.diom.models.AdminRoleDeleteIn;
 import com.svix.diom.models.AdminRoleDeleteOut;
 import com.svix.diom.models.AdminRoleGetIn;
 import com.svix.diom.models.AdminRoleListIn;
 import com.svix.diom.models.AdminRoleOut;
-import com.svix.diom.models.AdminRoleUpsertIn;
-import com.svix.diom.models.AdminRoleUpsertOut;
 import com.svix.diom.models.ListResponseAdminRoleOut;
 
 public class AdminAuthRole {
@@ -31,17 +31,17 @@ public class AdminAuthRole {
     }
 
     /** Create or update a role */
-    public AdminRoleUpsertOut upsert(
-        final AdminRoleUpsertIn adminRoleUpsertIn
+    public AdminRoleConfigureOut configure(
+        final AdminRoleConfigureIn adminRoleConfigureIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-role.upsert");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-role.configure");
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            adminRoleUpsertIn,
-            AdminRoleUpsertOut.class
+            adminRoleConfigureIn,
+            AdminRoleConfigureOut.class
         );
     }
 

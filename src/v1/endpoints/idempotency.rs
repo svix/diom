@@ -8,7 +8,7 @@ use diom_id::Module;
 use diom_idempotency::{
     IdempotencyStartResult,
     operations::{
-        AbortOperation, CompleteOperation, CreateIdempotencyOperation, TryStartOperation,
+        AbortOperation, CompleteOperation, ConfigureIdempotencyOperation, TryStartOperation,
     },
 };
 use diom_namespace::{
@@ -223,35 +223,35 @@ struct IdempotencyGetNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub(crate) struct IdempotencyCreateNamespaceIn {
+pub(crate) struct IdempotencyConfigureNamespaceIn {
     #[validate(nested)]
     pub name: NamespaceName,
 }
 
-namespace_request_input!(IdempotencyCreateNamespaceIn, "create");
+namespace_request_input!(IdempotencyConfigureNamespaceIn, "configure");
 
-impl From<IdempotencyCreateNamespaceIn> for CreateIdempotencyOperation {
-    fn from(v: IdempotencyCreateNamespaceIn) -> Self {
-        CreateIdempotencyOperation::new(v.name)
+impl From<IdempotencyConfigureNamespaceIn> for ConfigureIdempotencyOperation {
+    fn from(v: IdempotencyConfigureNamespaceIn) -> Self {
+        ConfigureIdempotencyOperation::new(v.name)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-struct IdempotencyCreateNamespaceOut {
+struct IdempotencyConfigureNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
 }
 
-/// Create idempotency namespace
-#[aide_annotate(op_id = "v1.idempotency.namespace.create")]
-async fn idempotency_create_namespace(
+/// Configure idempotency namespace
+#[aide_annotate(op_id = "v1.idempotency.namespace.configure")]
+async fn idempotency_configure_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<IdempotencyCreateNamespaceIn>,
-) -> Result<MsgPackOrJson<IdempotencyCreateNamespaceOut>> {
-    let operation = CreateIdempotencyOperation::from(data);
+    MsgPackOrJson(data): MsgPackOrJson<IdempotencyConfigureNamespaceIn>,
+) -> Result<MsgPackOrJson<IdempotencyConfigureNamespaceOut>> {
+    let operation = ConfigureIdempotencyOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(IdempotencyCreateNamespaceOut {
+    Ok(MsgPackOrJson(IdempotencyConfigureNamespaceOut {
         name: resp.name,
         created: resp.created.into(),
         updated: resp.updated.into(),
@@ -304,10 +304,10 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            idempotency_create_namespace_path,
+            idempotency_configure_namespace_path,
             post_with(
-                idempotency_create_namespace,
-                idempotency_create_namespace_operation,
+                idempotency_configure_namespace,
+                idempotency_configure_namespace_operation,
             ),
             &tag,
         )

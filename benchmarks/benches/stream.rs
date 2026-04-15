@@ -2,7 +2,7 @@ use criterion::{
     BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
 use diom::models::{
-    MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
+    MsgIn, MsgNamespaceConfigureIn, MsgPublishIn, MsgStreamCommitIn, MsgStreamReceiveIn,
 };
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use rand::{RngExt, SeedableRng, rngs::StdRng};
@@ -35,7 +35,7 @@ fn bench_stream<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut Benchmark
         client
             .msgs()
             .namespace()
-            .create(ns_name.to_owned(), MsgNamespaceCreateIn::new())
+            .configure(ns_name.to_owned(), MsgNamespaceConfigureIn::new())
             .await
             .unwrap();
     });

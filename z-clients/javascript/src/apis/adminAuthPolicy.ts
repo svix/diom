@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type AdminAccessPolicyConfigureIn,
+    AdminAccessPolicyConfigureInSerializer,
+} from '../models/adminAccessPolicyConfigureIn';
+import {
+    type AdminAccessPolicyConfigureOut,
+    AdminAccessPolicyConfigureOutSerializer,
+} from '../models/adminAccessPolicyConfigureOut';
+import {
     type AdminAccessPolicyDeleteIn,
     AdminAccessPolicyDeleteInSerializer,
 } from '../models/adminAccessPolicyDeleteIn';
@@ -21,14 +29,6 @@ import {
     AdminAccessPolicyOutSerializer,
 } from '../models/adminAccessPolicyOut';
 import {
-    type AdminAccessPolicyUpsertIn,
-    AdminAccessPolicyUpsertInSerializer,
-} from '../models/adminAccessPolicyUpsertIn';
-import {
-    type AdminAccessPolicyUpsertOut,
-    AdminAccessPolicyUpsertOutSerializer,
-} from '../models/adminAccessPolicyUpsertOut';
-import {
     type ListResponseAdminAccessPolicyOut,
     ListResponseAdminAccessPolicyOutSerializer,
 } from '../models/listResponseAdminAccessPolicyOut';
@@ -38,18 +38,18 @@ export class AdminAuthPolicy {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
     /** Create or update an access policy */
-    public upsert(
-        adminAccessPolicyUpsertIn: AdminAccessPolicyUpsertIn,
-    ): Promise<AdminAccessPolicyUpsertOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.auth-policy.upsert");
+    public configure(
+        adminAccessPolicyConfigureIn: AdminAccessPolicyConfigureIn,
+    ): Promise<AdminAccessPolicyConfigureOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.auth-policy.configure");
 
         request.setBody(
-            AdminAccessPolicyUpsertInSerializer._toJsonObject(adminAccessPolicyUpsertIn)
+            AdminAccessPolicyConfigureInSerializer._toJsonObject(adminAccessPolicyConfigureIn)
         );
         
         return request.send(
             this.requestCtx,
-            AdminAccessPolicyUpsertOutSerializer._fromJsonObject,
+            AdminAccessPolicyConfigureOutSerializer._fromJsonObject,
         );
     }/** Delete an access policy */
     public delete(

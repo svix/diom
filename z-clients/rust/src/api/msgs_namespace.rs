@@ -10,19 +10,19 @@ impl<'a> MsgsNamespace<'a> {
         Self { cfg }
     }
 
-    /// Creates or updates a msgs namespace with the given name.
-    pub async fn create(
+    /// Configures a msgs namespace with the given name.
+    pub async fn configure(
         &self,
         name: String,
-        msg_namespace_create_in: MsgNamespaceCreateIn,
-    ) -> Result<MsgNamespaceCreateOut> {
-        let msg_namespace_create_in = MsgNamespaceCreateIn_ {
+        msg_namespace_configure_in: MsgNamespaceConfigureIn,
+    ) -> Result<MsgNamespaceConfigureOut> {
+        let msg_namespace_configure_in = MsgNamespaceConfigureIn_ {
             name,
-            retention: msg_namespace_create_in.retention,
+            retention: msg_namespace_configure_in.retention,
         };
 
-        crate::request::Request::new(http::Method::POST, "/api/v1.msgs.namespace.create")
-            .with_body(msg_namespace_create_in)
+        crate::request::Request::new(http::Method::POST, "/api/v1.msgs.namespace.configure")
+            .with_body(msg_namespace_configure_in)
             .execute(self.cfg)
             .await
     }

@@ -847,19 +847,19 @@
         ]
       }
     },
-    "/api/v1.admin.auth-role.upsert": {
+    "/api/v1.admin.auth-role.configure": {
       "post": {
         "tags": [
           "Admin"
         ],
-        "summary": "Role Upsert",
+        "summary": "Role Configure",
         "description": "Create or update a role",
-        "operationId": "v1.admin.auth-role.upsert",
+        "operationId": "v1.admin.auth-role.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminRoleUpsertIn"
+                "$ref": "#/components/schemas/AdminRoleConfigureIn"
               }
             }
           },
@@ -871,7 +871,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminRoleUpsertOut"
+                  "$ref": "#/components/schemas/AdminRoleConfigureOut"
                 }
               }
             }
@@ -1155,19 +1155,19 @@
         ]
       }
     },
-    "/api/v1.admin.auth-policy.upsert": {
+    "/api/v1.admin.auth-policy.configure": {
       "post": {
         "tags": [
           "Admin"
         ],
-        "summary": "Access Policy Upsert",
+        "summary": "Access Policy Configure",
         "description": "Create or update an access policy",
-        "operationId": "v1.admin.auth-policy.upsert",
+        "operationId": "v1.admin.auth-policy.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminAccessPolicyUpsertIn"
+                "$ref": "#/components/schemas/AdminAccessPolicyConfigureIn"
               }
             }
           },
@@ -1179,7 +1179,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminAccessPolicyUpsertOut"
+                  "$ref": "#/components/schemas/AdminAccessPolicyConfigureOut"
                 }
               }
             }
@@ -2009,19 +2009,19 @@
         "x-internal": true
       }
     },
-    "/api/v1.auth-token.namespace.create": {
+    "/api/v1.auth-token.namespace.configure": {
       "post": {
         "tags": [
           "Auth Tokens"
         ],
-        "summary": "Auth Token Create Namespace",
-        "description": "Create Auth Token namespace",
-        "operationId": "v1.auth-token.namespace.create",
+        "summary": "Auth Token Configure Namespace",
+        "description": "Configure Auth Token namespace",
+        "operationId": "v1.auth-token.namespace.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthTokenCreateNamespaceIn"
+                "$ref": "#/components/schemas/AuthTokenConfigureNamespaceIn"
               }
             }
           },
@@ -2033,7 +2033,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenCreateNamespaceOut"
+                  "$ref": "#/components/schemas/AuthTokenConfigureNamespaceOut"
                 }
               }
             }
@@ -2319,19 +2319,19 @@
         ]
       }
     },
-    "/api/v1.cache.namespace.create": {
+    "/api/v1.cache.namespace.configure": {
       "post": {
         "tags": [
           "Cache"
         ],
-        "summary": "Cache Create Namespace",
-        "description": "Create cache namespace",
-        "operationId": "v1.cache.namespace.create",
+        "summary": "Cache Configure Namespace",
+        "description": "Configure cache namespace",
+        "operationId": "v1.cache.namespace.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CacheCreateNamespaceIn"
+                "$ref": "#/components/schemas/CacheConfigureNamespaceIn"
               }
             }
           },
@@ -2343,7 +2343,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CacheCreateNamespaceOut"
+                  "$ref": "#/components/schemas/CacheConfigureNamespaceOut"
                 }
               }
             }
@@ -2704,19 +2704,19 @@
         ]
       }
     },
-    "/api/v1.kv.namespace.create": {
+    "/api/v1.kv.namespace.configure": {
       "post": {
         "tags": [
           "Key Value Store"
         ],
-        "summary": "Kv Create Namespace",
-        "description": "Create KV namespace",
-        "operationId": "v1.kv.namespace.create",
+        "summary": "Kv Configure Namespace",
+        "description": "Configure KV namespace",
+        "operationId": "v1.kv.namespace.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/KvCreateNamespaceIn"
+                "$ref": "#/components/schemas/KvConfigureNamespaceIn"
               }
             }
           },
@@ -2728,7 +2728,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/KvCreateNamespaceOut"
+                  "$ref": "#/components/schemas/KvConfigureNamespaceOut"
                 }
               }
             }
@@ -3166,19 +3166,19 @@
         ]
       }
     },
-    "/api/v1.rate-limit.namespace.create": {
+    "/api/v1.rate-limit.namespace.configure": {
       "post": {
         "tags": [
           "Rate Limiter"
         ],
-        "summary": "Rate Limit Create Namespace",
-        "description": "Create rate limiter namespace",
-        "operationId": "v1.rate-limit.namespace.create",
+        "summary": "Rate Limit Configure Namespace",
+        "description": "Configure rate limiter namespace",
+        "operationId": "v1.rate-limit.namespace.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RateLimitCreateNamespaceIn"
+                "$ref": "#/components/schemas/RateLimitConfigureNamespaceIn"
               }
             }
           },
@@ -3190,7 +3190,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RateLimitCreateNamespaceOut"
+                  "$ref": "#/components/schemas/RateLimitConfigureNamespaceOut"
                 }
               }
             }
@@ -3551,19 +3551,19 @@
         ]
       }
     },
-    "/api/v1.idempotency.namespace.create": {
+    "/api/v1.idempotency.namespace.configure": {
       "post": {
         "tags": [
           "Idempotency"
         ],
-        "summary": "Idempotency Create Namespace",
-        "description": "Create idempotency namespace",
-        "operationId": "v1.idempotency.namespace.create",
+        "summary": "Idempotency Configure Namespace",
+        "description": "Configure idempotency namespace",
+        "operationId": "v1.idempotency.namespace.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdempotencyCreateNamespaceIn"
+                "$ref": "#/components/schemas/IdempotencyConfigureNamespaceIn"
               }
             }
           },
@@ -3575,7 +3575,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdempotencyCreateNamespaceOut"
+                  "$ref": "#/components/schemas/IdempotencyConfigureNamespaceOut"
                 }
               }
             }
@@ -3705,19 +3705,19 @@
         ]
       }
     },
-    "/api/v1.msgs.namespace.create": {
+    "/api/v1.msgs.namespace.configure": {
       "post": {
         "tags": [
           "Msgs"
         ],
-        "summary": "Create Namespace",
-        "description": "Creates or updates a msgs namespace with the given name.",
-        "operationId": "v1.msgs.namespace.create",
+        "summary": "Configure Namespace",
+        "description": "Configures a msgs namespace with the given name.",
+        "operationId": "v1.msgs.namespace.configure",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MsgNamespaceCreateIn"
+                "$ref": "#/components/schemas/MsgNamespaceConfigureIn"
               }
             }
           },
@@ -3729,7 +3729,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MsgNamespaceCreateOut"
+                  "$ref": "#/components/schemas/MsgNamespaceConfigureOut"
                 }
               }
             }
@@ -4872,6 +4872,53 @@
           "deny"
         ]
       },
+      "AdminAccessPolicyConfigureIn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessRule"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "id",
+          "description"
+        ]
+      },
+      "AdminAccessPolicyConfigureOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
+          },
+          "updated": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated"
+        ]
+      },
       "AdminAccessPolicyDeleteIn": {
         "type": "object",
         "properties": {
@@ -4955,53 +5002,6 @@
           "id",
           "description",
           "rules",
-          "created",
-          "updated"
-        ]
-      },
-      "AdminAccessPolicyUpsertIn": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AccessRule"
-            },
-            "default": []
-          }
-        },
-        "required": [
-          "id",
-          "description"
-        ]
-      },
-      "AdminAccessPolicyUpsertOut": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "created": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "x-subtype": "UnixTimestampMs"
-          },
-          "updated": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "x-subtype": "UnixTimestampMs"
-          }
-        },
-        "required": [
-          "id",
           "created",
           "updated"
         ]
@@ -5253,6 +5253,67 @@
           "role"
         ]
       },
+      "AdminRoleConfigureIn": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessRule"
+            },
+            "default": []
+          },
+          "policies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "context": {
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "description"
+        ]
+      },
+      "AdminRoleConfigureOut": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
+          },
+          "updated": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "x-subtype": "UnixTimestampMs"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated"
+        ]
+      },
       "AdminRoleDeleteIn": {
         "type": "object",
         "properties": {
@@ -5354,47 +5415,30 @@
           "updated"
         ]
       },
-      "AdminRoleUpsertIn": {
+      "AuthTokenConfigureNamespaceIn": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AccessRule"
-            },
-            "default": []
-          },
-          "policies": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": []
-          },
-          "context": {
-            "type": "object",
-            "default": {},
-            "additionalProperties": {
-              "type": "string"
-            }
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           }
         },
         "required": [
-          "id",
-          "description"
+          "name"
         ]
       },
-      "AdminRoleUpsertOut": {
+      "AuthTokenConfigureNamespaceOut": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
+            "example": "some_namespace"
           },
           "created": {
             "type": "integer",
@@ -5410,7 +5454,7 @@
           }
         },
         "required": [
-          "id",
+          "name",
           "created",
           "updated"
         ]
@@ -5471,50 +5515,6 @@
         "required": [
           "name",
           "owner_id"
-        ]
-      },
-      "AuthTokenCreateNamespaceIn": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
-            "example": "some_namespace"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "AuthTokenCreateNamespaceOut": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 256,
-            "pattern": "^[a-zA-Z0-9\\-/_.=+]+$",
-            "example": "some_namespace"
-          },
-          "created": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "x-subtype": "UnixTimestampMs"
-          },
-          "updated": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "x-subtype": "UnixTimestampMs"
-          }
-        },
-        "required": [
-          "name",
-          "created",
-          "updated"
         ]
       },
       "AuthTokenCreateOut": {
@@ -5884,7 +5884,7 @@
           }
         }
       },
-      "CacheCreateNamespaceIn": {
+      "CacheConfigureNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -5903,7 +5903,7 @@
           "name"
         ]
       },
-      "CacheCreateNamespaceOut": {
+      "CacheConfigureNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -6365,7 +6365,7 @@
           "response"
         ]
       },
-      "IdempotencyCreateNamespaceIn": {
+      "IdempotencyConfigureNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -6380,7 +6380,7 @@
           "name"
         ]
       },
-      "IdempotencyCreateNamespaceOut": {
+      "IdempotencyConfigureNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -6541,7 +6541,7 @@
           }
         ]
       },
-      "KvCreateNamespaceIn": {
+      "KvConfigureNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -6556,7 +6556,7 @@
           "name"
         ]
       },
-      "KvCreateNamespaceOut": {
+      "KvConfigureNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -6955,7 +6955,7 @@
           "value"
         ]
       },
-      "MsgNamespaceCreateIn": {
+      "MsgNamespaceConfigureIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -6980,7 +6980,7 @@
           "name"
         ]
       },
-      "MsgNamespaceCreateOut": {
+      "MsgNamespaceConfigureOut": {
         "type": "object",
         "properties": {
           "name": {
@@ -7794,7 +7794,7 @@
           "refill_amount"
         ]
       },
-      "RateLimitCreateNamespaceIn": {
+      "RateLimitConfigureNamespaceIn": {
         "type": "object",
         "properties": {
           "name": {
@@ -7809,7 +7809,7 @@
           "name"
         ]
       },
-      "RateLimitCreateNamespaceOut": {
+      "RateLimitConfigureNamespaceOut": {
         "type": "object",
         "properties": {
           "name": {

@@ -1,7 +1,7 @@
 use aide::axum::{ApiRouter, routing::post_with};
 use axum::{Extension, extract::State};
 use diom_authorization::RequestedOperation;
-use diom_cache::operations::{CreateCacheOperation, DeleteOperation, SetOperation};
+use diom_cache::operations::{ConfigureCacheOperation, DeleteOperation, SetOperation};
 use diom_core::types::{ByteString, Consistency, DurationMs, EntityKey, UnixTimestampMs};
 use diom_derive::aide_annotate;
 use diom_error::{OptionExt, ResultExt};
@@ -124,23 +124,23 @@ struct CacheGetNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub(crate) struct CacheCreateNamespaceIn {
+pub(crate) struct CacheConfigureNamespaceIn {
     #[validate(nested)]
     pub name: NamespaceName,
     #[serde(default)]
     pub eviction_policy: EvictionPolicy,
 }
 
-namespace_request_input!(CacheCreateNamespaceIn, "create");
+namespace_request_input!(CacheConfigureNamespaceIn, "configure");
 
-impl From<CacheCreateNamespaceIn> for CreateCacheOperation {
-    fn from(v: CacheCreateNamespaceIn) -> Self {
-        CreateCacheOperation::new(v.name, v.eviction_policy)
+impl From<CacheConfigureNamespaceIn> for ConfigureCacheOperation {
+    fn from(v: CacheConfigureNamespaceIn) -> Self {
+        ConfigureCacheOperation::new(v.name, v.eviction_policy)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-struct CacheCreateNamespaceOut {
+struct CacheConfigureNamespaceOut {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
     pub created: UnixTimestampMs,
@@ -224,15 +224,15 @@ struct CacheGetNamespaceIn {
 
 namespace_request_input!(CacheGetNamespaceIn, "get");
 
-/// Create cache namespace
-#[aide_annotate(op_id = "v1.cache.namespace.create")]
-async fn cache_create_namespace(
+/// Configure cache namespace
+#[aide_annotate(op_id = "v1.cache.namespace.configure")]
+async fn cache_configure_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<CacheCreateNamespaceIn>,
-) -> Result<MsgPackOrJson<CacheCreateNamespaceOut>> {
-    let operation = CreateCacheOperation::from(data);
+    MsgPackOrJson(data): MsgPackOrJson<CacheConfigureNamespaceIn>,
+) -> Result<MsgPackOrJson<CacheConfigureNamespaceOut>> {
+    let operation = ConfigureCacheOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(CacheCreateNamespaceOut {
+    Ok(MsgPackOrJson(CacheConfigureNamespaceOut {
         name: resp.name,
         eviction_policy: resp.eviction_policy,
         created: resp.created.into(),
@@ -278,8 +278,11 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            cache_create_namespace_path,
-            post_with(cache_create_namespace, cache_create_namespace_operation),
+            cache_configure_namespace_path,
+            post_with(
+                cache_configure_namespace,
+                cache_configure_namespace_operation,
+            ),
             &tag,
         )
         .api_route_with(

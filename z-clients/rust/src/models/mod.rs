@@ -3,13 +3,13 @@
 
 mod access_rule;
 mod access_rule_effect;
+mod admin_access_policy_configure_in;
+mod admin_access_policy_configure_out;
 mod admin_access_policy_delete_in;
 mod admin_access_policy_delete_out;
 mod admin_access_policy_get_in;
 mod admin_access_policy_list_in;
 mod admin_access_policy_out;
-mod admin_access_policy_upsert_in;
-mod admin_access_policy_upsert_out;
 mod admin_auth_token_create_in;
 mod admin_auth_token_create_out;
 mod admin_auth_token_delete_in;
@@ -24,15 +24,15 @@ mod admin_auth_token_update_in;
 mod admin_auth_token_update_out;
 mod admin_auth_token_whoami_in;
 mod admin_auth_token_whoami_out;
+mod admin_role_configure_in;
+mod admin_role_configure_out;
 mod admin_role_delete_in;
 mod admin_role_delete_out;
 mod admin_role_get_in;
 mod admin_role_list_in;
 mod admin_role_out;
-mod admin_role_upsert_in;
-mod admin_role_upsert_out;
-mod cache_create_namespace_in;
-mod cache_create_namespace_out;
+mod cache_configure_namespace_in;
+mod cache_configure_namespace_out;
 mod cache_delete_in;
 mod cache_delete_out;
 mod cache_get_in;
@@ -55,14 +55,14 @@ mod idempotency_abort_out;
 mod idempotency_complete_in;
 mod idempotency_complete_out;
 mod idempotency_completed;
-mod idempotency_create_namespace_in;
-mod idempotency_create_namespace_out;
+mod idempotency_configure_namespace_in;
+mod idempotency_configure_namespace_out;
 mod idempotency_get_namespace_in;
 mod idempotency_get_namespace_out;
 mod idempotency_start_in;
 mod idempotency_start_out;
-mod kv_create_namespace_in;
-mod kv_create_namespace_out;
+mod kv_configure_namespace_in;
+mod kv_configure_namespace_out;
 mod kv_delete_in;
 mod kv_delete_out;
 mod kv_get_in;
@@ -75,8 +75,8 @@ mod list_response_admin_access_policy_out;
 mod list_response_admin_auth_token_out;
 mod list_response_admin_role_out;
 mod msg_in;
-mod msg_namespace_create_in;
-mod msg_namespace_create_out;
+mod msg_namespace_configure_in;
+mod msg_namespace_configure_out;
 mod msg_namespace_get_in;
 mod msg_namespace_get_out;
 mod msg_publish_in;
@@ -109,8 +109,8 @@ mod queue_msg_out;
 mod rate_limit_check_in;
 mod rate_limit_check_out;
 mod rate_limit_config;
-mod rate_limit_create_namespace_in;
-mod rate_limit_create_namespace_out;
+mod rate_limit_configure_namespace_in;
+mod rate_limit_configure_namespace_out;
 mod rate_limit_get_namespace_in;
 mod rate_limit_get_namespace_out;
 mod rate_limit_get_remaining_in;
@@ -124,13 +124,13 @@ mod stream_msg_out;
 
 pub use self::{
     access_rule::AccessRule, access_rule_effect::AccessRuleEffect,
+    admin_access_policy_configure_in::AdminAccessPolicyConfigureIn,
+    admin_access_policy_configure_out::AdminAccessPolicyConfigureOut,
     admin_access_policy_delete_in::AdminAccessPolicyDeleteIn,
     admin_access_policy_delete_out::AdminAccessPolicyDeleteOut,
     admin_access_policy_get_in::AdminAccessPolicyGetIn,
     admin_access_policy_list_in::AdminAccessPolicyListIn,
     admin_access_policy_out::AdminAccessPolicyOut,
-    admin_access_policy_upsert_in::AdminAccessPolicyUpsertIn,
-    admin_access_policy_upsert_out::AdminAccessPolicyUpsertOut,
     admin_auth_token_create_in::AdminAuthTokenCreateIn,
     admin_auth_token_create_out::AdminAuthTokenCreateOut,
     admin_auth_token_delete_in::AdminAuthTokenDeleteIn,
@@ -143,12 +143,12 @@ pub use self::{
     admin_auth_token_update_in::AdminAuthTokenUpdateIn,
     admin_auth_token_update_out::AdminAuthTokenUpdateOut,
     admin_auth_token_whoami_in::AdminAuthTokenWhoamiIn,
-    admin_auth_token_whoami_out::AdminAuthTokenWhoamiOut, admin_role_delete_in::AdminRoleDeleteIn,
-    admin_role_delete_out::AdminRoleDeleteOut, admin_role_get_in::AdminRoleGetIn,
-    admin_role_list_in::AdminRoleListIn, admin_role_out::AdminRoleOut,
-    admin_role_upsert_in::AdminRoleUpsertIn, admin_role_upsert_out::AdminRoleUpsertOut,
-    cache_create_namespace_in::CacheCreateNamespaceIn,
-    cache_create_namespace_out::CacheCreateNamespaceOut, cache_delete_in::CacheDeleteIn,
+    admin_auth_token_whoami_out::AdminAuthTokenWhoamiOut,
+    admin_role_configure_in::AdminRoleConfigureIn, admin_role_configure_out::AdminRoleConfigureOut,
+    admin_role_delete_in::AdminRoleDeleteIn, admin_role_delete_out::AdminRoleDeleteOut,
+    admin_role_get_in::AdminRoleGetIn, admin_role_list_in::AdminRoleListIn,
+    admin_role_out::AdminRoleOut, cache_configure_namespace_in::CacheConfigureNamespaceIn,
+    cache_configure_namespace_out::CacheConfigureNamespaceOut, cache_delete_in::CacheDeleteIn,
     cache_delete_out::CacheDeleteOut, cache_get_in::CacheGetIn,
     cache_get_namespace_in::CacheGetNamespaceIn, cache_get_namespace_out::CacheGetNamespaceOut,
     cache_get_out::CacheGetOut, cache_set_in::CacheSetIn, cache_set_out::CacheSetOut,
@@ -160,24 +160,24 @@ pub use self::{
     eviction_policy::EvictionPolicy, idempotency_abort_in::IdempotencyAbortIn,
     idempotency_abort_out::IdempotencyAbortOut, idempotency_complete_in::IdempotencyCompleteIn,
     idempotency_complete_out::IdempotencyCompleteOut, idempotency_completed::IdempotencyCompleted,
-    idempotency_create_namespace_in::IdempotencyCreateNamespaceIn,
-    idempotency_create_namespace_out::IdempotencyCreateNamespaceOut,
+    idempotency_configure_namespace_in::IdempotencyConfigureNamespaceIn,
+    idempotency_configure_namespace_out::IdempotencyConfigureNamespaceOut,
     idempotency_get_namespace_in::IdempotencyGetNamespaceIn,
     idempotency_get_namespace_out::IdempotencyGetNamespaceOut,
     idempotency_start_in::IdempotencyStartIn, idempotency_start_out::IdempotencyStartOut,
-    kv_create_namespace_in::KvCreateNamespaceIn, kv_create_namespace_out::KvCreateNamespaceOut,
-    kv_delete_in::KvDeleteIn, kv_delete_out::KvDeleteOut, kv_get_in::KvGetIn,
-    kv_get_namespace_in::KvGetNamespaceIn, kv_get_namespace_out::KvGetNamespaceOut,
-    kv_get_out::KvGetOut, kv_set_in::KvSetIn, kv_set_out::KvSetOut,
-    list_response_admin_access_policy_out::ListResponseAdminAccessPolicyOut,
+    kv_configure_namespace_in::KvConfigureNamespaceIn,
+    kv_configure_namespace_out::KvConfigureNamespaceOut, kv_delete_in::KvDeleteIn,
+    kv_delete_out::KvDeleteOut, kv_get_in::KvGetIn, kv_get_namespace_in::KvGetNamespaceIn,
+    kv_get_namespace_out::KvGetNamespaceOut, kv_get_out::KvGetOut, kv_set_in::KvSetIn,
+    kv_set_out::KvSetOut, list_response_admin_access_policy_out::ListResponseAdminAccessPolicyOut,
     list_response_admin_auth_token_out::ListResponseAdminAuthTokenOut,
     list_response_admin_role_out::ListResponseAdminRoleOut, msg_in::MsgIn,
-    msg_namespace_create_in::MsgNamespaceCreateIn, msg_namespace_create_out::MsgNamespaceCreateOut,
-    msg_namespace_get_in::MsgNamespaceGetIn, msg_namespace_get_out::MsgNamespaceGetOut,
-    msg_publish_in::MsgPublishIn, msg_publish_out::MsgPublishOut,
-    msg_publish_out_topic::MsgPublishOutTopic, msg_queue_ack_in::MsgQueueAckIn,
-    msg_queue_ack_out::MsgQueueAckOut, msg_queue_configure_in::MsgQueueConfigureIn,
-    msg_queue_configure_out::MsgQueueConfigureOut,
+    msg_namespace_configure_in::MsgNamespaceConfigureIn,
+    msg_namespace_configure_out::MsgNamespaceConfigureOut, msg_namespace_get_in::MsgNamespaceGetIn,
+    msg_namespace_get_out::MsgNamespaceGetOut, msg_publish_in::MsgPublishIn,
+    msg_publish_out::MsgPublishOut, msg_publish_out_topic::MsgPublishOutTopic,
+    msg_queue_ack_in::MsgQueueAckIn, msg_queue_ack_out::MsgQueueAckOut,
+    msg_queue_configure_in::MsgQueueConfigureIn, msg_queue_configure_out::MsgQueueConfigureOut,
     msg_queue_extend_lease_in::MsgQueueExtendLeaseIn,
     msg_queue_extend_lease_out::MsgQueueExtendLeaseOut, msg_queue_nack_in::MsgQueueNackIn,
     msg_queue_nack_out::MsgQueueNackOut, msg_queue_receive_in::MsgQueueReceiveIn,
@@ -189,8 +189,9 @@ pub use self::{
     msg_topic_configure_out::MsgTopicConfigureOut, node_status_out::NodeStatusOut,
     operation_behavior::OperationBehavior, ping_out::PingOut, queue_msg_out::QueueMsgOut,
     rate_limit_check_in::RateLimitCheckIn, rate_limit_check_out::RateLimitCheckOut,
-    rate_limit_config::RateLimitConfig, rate_limit_create_namespace_in::RateLimitCreateNamespaceIn,
-    rate_limit_create_namespace_out::RateLimitCreateNamespaceOut,
+    rate_limit_config::RateLimitConfig,
+    rate_limit_configure_namespace_in::RateLimitConfigureNamespaceIn,
+    rate_limit_configure_namespace_out::RateLimitConfigureNamespaceOut,
     rate_limit_get_namespace_in::RateLimitGetNamespaceIn,
     rate_limit_get_namespace_out::RateLimitGetNamespaceOut,
     rate_limit_get_remaining_in::RateLimitGetRemainingIn,
@@ -203,7 +204,7 @@ pub(crate) use self::{
     cache_delete_in::CacheDeleteIn_, cache_get_in::CacheGetIn_, cache_set_in::CacheSetIn_,
     idempotency_abort_in::IdempotencyAbortIn_, idempotency_complete_in::IdempotencyCompleteIn_,
     idempotency_start_in::IdempotencyStartIn_, kv_delete_in::KvDeleteIn_, kv_get_in::KvGetIn_,
-    kv_set_in::KvSetIn_, msg_namespace_create_in::MsgNamespaceCreateIn_,
+    kv_set_in::KvSetIn_, msg_namespace_configure_in::MsgNamespaceConfigureIn_,
     msg_namespace_get_in::MsgNamespaceGetIn_, msg_publish_in::MsgPublishIn_,
     msg_queue_ack_in::MsgQueueAckIn_, msg_queue_configure_in::MsgQueueConfigureIn_,
     msg_queue_extend_lease_in::MsgQueueExtendLeaseIn_, msg_queue_nack_in::MsgQueueNackIn_,

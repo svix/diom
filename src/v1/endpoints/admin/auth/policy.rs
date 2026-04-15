@@ -2,7 +2,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::Extension;
 use diom_admin_auth::{
     controller::AccessPolicyModel,
-    operations::{DeleteAccessPolicyOperation, UpsertAccessPolicyOperation},
+    operations::{ConfigureAccessPolicyOperation, DeleteAccessPolicyOperation},
 };
 use diom_authorization::{AccessPolicyId, AccessRule, RequestedOperation};
 use diom_core::types::UnixTimestampMs;
@@ -71,10 +71,10 @@ impl From<AccessPolicyModel> for AdminAccessPolicyOut {
     }
 }
 
-// Upsert
+// Configure
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
-pub struct AdminAccessPolicyUpsertIn {
+pub struct AdminAccessPolicyConfigureIn {
     pub id: AccessPolicyId,
     pub description: String,
     #[serde(default)]
@@ -82,24 +82,24 @@ pub struct AdminAccessPolicyUpsertIn {
     pub rules: Vec<AccessRule>,
 }
 
-request_input!(AdminAccessPolicyUpsertIn, "upsert");
+request_input!(AdminAccessPolicyConfigureIn, "configure");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-pub struct AdminAccessPolicyUpsertOut {
+pub struct AdminAccessPolicyConfigureOut {
     pub id: AccessPolicyId,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
 }
 
 /// Create or update an access policy
-#[aide_annotate(op_id = "v1.admin.auth-policy.upsert")]
-async fn access_policy_upsert(
+#[aide_annotate(op_id = "v1.admin.auth-policy.configure")]
+async fn access_policy_configure(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<AdminAccessPolicyUpsertIn>,
-) -> Result<MsgPackOrJson<AdminAccessPolicyUpsertOut>> {
-    let operation = UpsertAccessPolicyOperation::new(data.id, data.description, data.rules);
+    MsgPackOrJson(data): MsgPackOrJson<AdminAccessPolicyConfigureIn>,
+) -> Result<MsgPackOrJson<AdminAccessPolicyConfigureOut>> {
+    let operation = ConfigureAccessPolicyOperation::new(data.id, data.description, data.rules);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(AdminAccessPolicyUpsertOut {
+    Ok(MsgPackOrJson(AdminAccessPolicyConfigureOut {
         id: resp.model.id,
         created: resp.model.created,
         updated: resp.model.updated,
@@ -201,8 +201,8 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            access_policy_upsert_path,
-            post_with(access_policy_upsert, access_policy_upsert_operation),
+            access_policy_configure_path,
+            post_with(access_policy_configure, access_policy_configure_operation),
             &tag,
         )
         .api_route_with(

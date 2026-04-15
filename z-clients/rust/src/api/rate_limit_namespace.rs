@@ -10,13 +10,13 @@ impl<'a> RateLimitNamespace<'a> {
         Self { cfg }
     }
 
-    /// Create rate limiter namespace
-    pub async fn create(
+    /// Configure rate limiter namespace
+    pub async fn configure(
         &self,
-        rate_limit_create_namespace_in: RateLimitCreateNamespaceIn,
-    ) -> Result<RateLimitCreateNamespaceOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.rate-limit.namespace.create")
-            .with_body(rate_limit_create_namespace_in)
+        rate_limit_configure_namespace_in: RateLimitConfigureNamespaceIn,
+    ) -> Result<RateLimitConfigureNamespaceOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.rate-limit.namespace.configure")
+            .with_body(rate_limit_configure_namespace_in)
             .execute(self.cfg)
             .await
     }

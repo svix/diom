@@ -1,10 +1,10 @@
-mod create_namespace;
+mod configure_namespace;
 mod publish;
 mod queue;
 mod stream;
 mod topic_configure;
 
-pub use self::{create_namespace::*, publish::*, queue::*, stream::*, topic_configure::*};
+pub use self::{configure_namespace::*, publish::*, queue::*, stream::*, topic_configure::*};
 
 use crate::State;
 
@@ -18,7 +18,7 @@ pub struct MsgsRaftState<'a> {
 raft_module_operations!(
     MsgsRequest,
     MsgsOperation {
-        CreateNamespace(CreateNamespaceOperation) -> CreateNamespaceResponseData,
+        ConfigureNamespace(ConfigureNamespaceOperation) -> ConfigureNamespaceResponseData,
         Publish(PublishOperation) -> PublishResponseData,
         QueueAck(QueueAckOperation) -> QueueAckResponseData,
         QueueConfigure(QueueConfigureOperation) -> QueueConfigureResponseData,
@@ -37,7 +37,7 @@ raft_module_operations!(
 impl MsgsOperation {
     pub fn key_name(&self) -> String {
         match self {
-            MsgsOperation::CreateNamespace(op) => op.name.to_string(),
+            MsgsOperation::ConfigureNamespace(op) => op.name.to_string(),
             MsgsOperation::Publish(op) => op.topic.to_string(),
             MsgsOperation::QueueAck(op) => op.topic.to_string(),
             MsgsOperation::QueueConfigure(op) => op.topic.to_string(),
@@ -63,12 +63,12 @@ mod tests {
 
     #[test]
     fn test_msgs_operation_key_name() {
-        let op = CreateNamespaceOperation::new(
+        let op = ConfigureNamespaceOperation::new(
             NamespaceName("my-namespace".to_owned()),
             Retention::default(),
         );
         assert_eq!(
-            MsgsOperation::CreateNamespace(op).key_name(),
+            MsgsOperation::ConfigureNamespace(op).key_name(),
             "my-namespace"
         );
 

@@ -10,13 +10,13 @@ impl<'a> CacheNamespace<'a> {
         Self { cfg }
     }
 
-    /// Create cache namespace
-    pub async fn create(
+    /// Configure cache namespace
+    pub async fn configure(
         &self,
-        cache_create_namespace_in: CacheCreateNamespaceIn,
-    ) -> Result<CacheCreateNamespaceOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.cache.namespace.create")
-            .with_body(cache_create_namespace_in)
+        cache_configure_namespace_in: CacheConfigureNamespaceIn,
+    ) -> Result<CacheConfigureNamespaceOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.cache.namespace.configure")
+            .with_body(cache_configure_namespace_in)
             .execute(self.cfg)
             .await
     }

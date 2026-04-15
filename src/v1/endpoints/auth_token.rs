@@ -8,7 +8,7 @@ use diom_auth_token::{
     controller::AuthTokenModel,
     entities::{TokenHashed, TokenPlaintext},
     operations::{
-        CreateAuthTokenNamespaceOperation, CreateAuthTokenOperation, DeleteAuthTokenOperation,
+        ConfigureAuthTokenNamespaceOperation, CreateAuthTokenOperation, DeleteAuthTokenOperation,
         DeleteResponseData, ExpireAuthTokenOperation, RotateAuthTokenOperation,
         UpdateAuthTokenOperation,
     },
@@ -430,35 +430,35 @@ struct AuthTokenGetNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub(crate) struct AuthTokenCreateNamespaceIn {
+pub(crate) struct AuthTokenConfigureNamespaceIn {
     #[validate(nested)]
     pub name: NamespaceName,
 }
 
-namespace_request_input!(AuthTokenCreateNamespaceIn, "create");
+namespace_request_input!(AuthTokenConfigureNamespaceIn, "configure");
 
-impl From<AuthTokenCreateNamespaceIn> for CreateAuthTokenNamespaceOperation {
-    fn from(v: AuthTokenCreateNamespaceIn) -> Self {
-        CreateAuthTokenNamespaceOperation::new(v.name)
+impl From<AuthTokenConfigureNamespaceIn> for ConfigureAuthTokenNamespaceOperation {
+    fn from(v: AuthTokenConfigureNamespaceIn) -> Self {
+        ConfigureAuthTokenNamespaceOperation::new(v.name)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-struct AuthTokenCreateNamespaceOut {
+struct AuthTokenConfigureNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
 }
 
-/// Create Auth Token namespace
-#[aide_annotate(op_id = "v1.auth-token.namespace.create")]
-async fn auth_token_create_namespace(
+/// Configure Auth Token namespace
+#[aide_annotate(op_id = "v1.auth-token.namespace.configure")]
+async fn auth_token_configure_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<AuthTokenCreateNamespaceIn>,
-) -> Result<MsgPackOrJson<AuthTokenCreateNamespaceOut>> {
-    let operation = CreateAuthTokenNamespaceOperation::new(data.name);
+    MsgPackOrJson(data): MsgPackOrJson<AuthTokenConfigureNamespaceIn>,
+) -> Result<MsgPackOrJson<AuthTokenConfigureNamespaceOut>> {
+    let operation = ConfigureAuthTokenNamespaceOperation::new(data.name);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(AuthTokenCreateNamespaceOut {
+    Ok(MsgPackOrJson(AuthTokenConfigureNamespaceOut {
         name: resp.name,
         created: resp.created.into(),
         updated: resp.updated.into(),
@@ -538,10 +538,10 @@ pub fn router() -> ApiRouter<AppState> {
             &tag,
         )
         .api_route_with(
-            auth_token_create_namespace_path,
+            auth_token_configure_namespace_path,
             post_with(
-                auth_token_create_namespace,
-                internal(auth_token_create_namespace_operation),
+                auth_token_configure_namespace,
+                internal(auth_token_configure_namespace_operation),
             ),
             &tag,
         )

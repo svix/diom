@@ -1,16 +1,16 @@
 use crate::State;
 
+mod configure_namespace;
 mod create;
-mod create_namespace;
 mod delete;
 mod expire;
 mod rotate;
 mod update;
 
-pub use create::{CreateAuthTokenOperation, CreateResponseData};
-pub use create_namespace::{
-    CreateAuthTokenNamespaceOperation, CreateAuthTokenNamespaceResponseData,
+pub use configure_namespace::{
+    ConfigureAuthTokenNamespaceOperation, ConfigureAuthTokenNamespaceResponseData,
 };
+pub use create::{CreateAuthTokenOperation, CreateResponseData};
 pub use delete::{DeleteAuthTokenOperation, DeleteResponseData};
 pub use expire::{ExpireAuthTokenOperation, ExpireResponseData};
 pub use rotate::{RotateAuthTokenOperation, RotateResponseData};
@@ -31,7 +31,7 @@ raft_module_operations!(
         Delete(DeleteAuthTokenOperation) -> DeleteResponseData,
         Update(UpdateAuthTokenOperation) -> UpdateResponseData,
         Rotate(RotateAuthTokenOperation) -> RotateResponseData,
-        CreateNamespace(CreateAuthTokenNamespaceOperation) -> CreateAuthTokenNamespaceResponseData,
+        ConfigureNamespace(ConfigureAuthTokenNamespaceOperation) -> ConfigureAuthTokenNamespaceResponseData,
     },
     state = AuthTokenRaftState<'_>,
 );

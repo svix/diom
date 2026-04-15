@@ -19,7 +19,7 @@ use diom_msgs::{
         StreamMsgOut, TopicIn, TopicName, TopicPartition,
     },
     operations::{
-        CreateNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
+        ConfigureNamespaceOperation, PublishOperation, QueueAckOperation, QueueConfigureOperation,
         QueueExtendLeaseOperation, QueueNackOperation, QueueReceiveOperation,
         QueueRedriveDlqOperation, SeekTarget, StreamCommitOperation, StreamReceiveOperation,
         StreamSeekOperation, TopicConfigureOperation,
@@ -57,39 +57,39 @@ macro_rules! request_input {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 #[schemars(extend("x-positional" = ["name"]))]
-pub(crate) struct MsgNamespaceCreateIn {
+pub(crate) struct MsgNamespaceConfigureIn {
     #[validate(nested)]
     pub name: NamespaceName,
     #[serde(default)]
     pub retention: Retention,
 }
 
-namespace_request_input!(MsgNamespaceCreateIn, "create");
+namespace_request_input!(MsgNamespaceConfigureIn, "configure");
 
-impl From<MsgNamespaceCreateIn> for CreateNamespaceOperation {
-    fn from(v: MsgNamespaceCreateIn) -> Self {
-        CreateNamespaceOperation::new(v.name, v.retention)
+impl From<MsgNamespaceConfigureIn> for ConfigureNamespaceOperation {
+    fn from(v: MsgNamespaceConfigureIn) -> Self {
+        ConfigureNamespaceOperation::new(v.name, v.retention)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-struct MsgNamespaceCreateOut {
+struct MsgNamespaceConfigureOut {
     pub name: NamespaceName,
     pub retention: Retention,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
 }
 
-/// Creates or updates a msgs namespace with the given name.
-#[aide_annotate(op_id = "v1.msgs.namespace.create")]
-async fn create_namespace(
+/// Configures a msgs namespace with the given name.
+#[aide_annotate(op_id = "v1.msgs.namespace.configure")]
+async fn configure_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceCreateIn>,
-) -> Result<MsgPackOrJson<MsgNamespaceCreateOut>> {
-    let operation = CreateNamespaceOperation::from(data);
+    MsgPackOrJson(data): MsgPackOrJson<MsgNamespaceConfigureIn>,
+) -> Result<MsgPackOrJson<MsgNamespaceConfigureOut>> {
+    let operation = ConfigureNamespaceOperation::from(data);
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
-    Ok(MsgPackOrJson(MsgNamespaceCreateOut {
+    Ok(MsgPackOrJson(MsgNamespaceConfigureOut {
         name: response.name,
         retention: response.retention,
         created: response.created.into(),
@@ -802,8 +802,8 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            create_namespace_path,
-            post_with(create_namespace, create_namespace_operation),
+            configure_namespace_path,
+            post_with(configure_namespace, configure_namespace_operation),
             &tag,
         )
         .api_route_with(

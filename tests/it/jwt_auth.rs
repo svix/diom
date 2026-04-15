@@ -43,7 +43,7 @@ async fn setup() -> (test_utils::server::TestContext, String) {
         .await;
 
     ctx.client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "jwt-kv-role",
             "description": "KV read/write role used in JWT tests",
@@ -227,7 +227,7 @@ async fn test_jwt_audience_valid() -> TestResult {
         .await;
 
     ctx.client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "jwt-aud-role",
             "description": "Audience test role",
@@ -356,7 +356,7 @@ async fn test_jwt_multiple_audiences() -> TestResult {
         .await;
 
     ctx.client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "jwt-multi-aud-role",
             "description": "Multi-audience test role",
@@ -414,7 +414,7 @@ async fn test_jwt_issuer_valid() -> TestResult {
         .await;
 
     ctx.client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "jwt-iss-role",
             "description": "Issuer test role",

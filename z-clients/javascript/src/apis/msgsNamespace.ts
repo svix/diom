@@ -1,13 +1,13 @@
 // this file is @generated
 
 import {
-    type MsgNamespaceCreateIn,
-    MsgNamespaceCreateInSerializer,
-} from '../models/msgNamespaceCreateIn';
+    type MsgNamespaceConfigureIn,
+    MsgNamespaceConfigureInSerializer,
+} from '../models/msgNamespaceConfigureIn';
 import {
-    type MsgNamespaceCreateOut,
-    MsgNamespaceCreateOutSerializer,
-} from '../models/msgNamespaceCreateOut';
+    type MsgNamespaceConfigureOut,
+    MsgNamespaceConfigureOutSerializer,
+} from '../models/msgNamespaceConfigureOut';
 import {
     type MsgNamespaceGetIn,
     MsgNamespaceGetInSerializer,
@@ -21,23 +21,23 @@ import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 export class MsgsNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
-    /** Creates or updates a msgs namespace with the given name. */
-    public create(
+    /** Configures a msgs namespace with the given name. */
+    public configure(
         name: string,
-        msgNamespaceCreateIn: MsgNamespaceCreateIn,
-    ): Promise<MsgNamespaceCreateOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.msgs.namespace.create");
+        msgNamespaceConfigureIn: MsgNamespaceConfigureIn,
+    ): Promise<MsgNamespaceConfigureOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.msgs.namespace.configure");
 
         request.setBody(
-            MsgNamespaceCreateInSerializer._toJsonObject({
-                ...msgNamespaceCreateIn,
+            MsgNamespaceConfigureInSerializer._toJsonObject({
+                ...msgNamespaceConfigureIn,
                 name: name,
             })
         );
         
         return request.send(
             this.requestCtx,
-            MsgNamespaceCreateOutSerializer._fromJsonObject,
+            MsgNamespaceConfigureOutSerializer._fromJsonObject,
         );
     }/** Gets a msgs namespace by name. */
     public get(

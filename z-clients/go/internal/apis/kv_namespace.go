@@ -17,17 +17,17 @@ func NewKvNamespace(client *diom_proto.HttpClient) KvNamespace {
 	return KvNamespace{client}
 }
 
-// Create KV namespace
-func (kvNamespace KvNamespace) Create(
+// Configure KV namespace
+func (kvNamespace KvNamespace) Configure(
 	ctx context.Context,
-	kvCreateNamespaceIn diom_models.KvCreateNamespaceIn,
-) (*diom_models.KvCreateNamespaceOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.KvCreateNamespaceIn, diom_models.KvCreateNamespaceOut](
+	kvConfigureNamespaceIn diom_models.KvConfigureNamespaceIn,
+) (*diom_models.KvConfigureNamespaceOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.KvConfigureNamespaceIn, diom_models.KvConfigureNamespaceOut](
 		ctx,
 		kvNamespace.client,
 		"POST",
-		"/api/v1.kv.namespace.create",
-		&kvCreateNamespaceIn,
+		"/api/v1.kv.namespace.configure",
+		&kvConfigureNamespaceIn,
 	)
 }
 

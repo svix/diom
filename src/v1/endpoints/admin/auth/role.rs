@@ -4,7 +4,7 @@ use aide::axum::{ApiRouter, routing::post_with};
 use axum::extract::Extension;
 use diom_admin_auth::{
     controller::RoleModel,
-    operations::{DeleteRoleOperation, UpsertRoleOperation},
+    operations::{ConfigureRoleOperation, DeleteRoleOperation},
 };
 use diom_authorization::{AccessPolicyId, AccessRule, RequestedOperation, RoleId};
 use diom_core::types::UnixTimestampMs;
@@ -77,10 +77,10 @@ impl From<RoleModel> for AdminRoleOut {
     }
 }
 
-// Upsert
+// Configure
 
 #[derive(Clone, Debug, Deserialize, Serialize, Validate, JsonSchema)]
-pub struct AdminRoleUpsertIn {
+pub struct AdminRoleConfigureIn {
     pub id: RoleId,
     pub description: String,
     #[serde(default)]
@@ -92,22 +92,22 @@ pub struct AdminRoleUpsertIn {
     pub context: HashMap<String, String>,
 }
 
-request_input!(AdminRoleUpsertIn, "upsert");
+request_input!(AdminRoleConfigureIn, "configure");
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
-pub struct AdminRoleUpsertOut {
+pub struct AdminRoleConfigureOut {
     pub id: RoleId,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
 }
 
 /// Create or update a role
-#[aide_annotate(op_id = "v1.admin.auth-role.upsert")]
-async fn role_upsert(
+#[aide_annotate(op_id = "v1.admin.auth-role.configure")]
+async fn role_configure(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<AdminRoleUpsertIn>,
-) -> Result<MsgPackOrJson<AdminRoleUpsertOut>> {
-    let operation = UpsertRoleOperation::new(
+    MsgPackOrJson(data): MsgPackOrJson<AdminRoleConfigureIn>,
+) -> Result<MsgPackOrJson<AdminRoleConfigureOut>> {
+    let operation = ConfigureRoleOperation::new(
         data.id,
         data.description,
         data.rules,
@@ -115,7 +115,7 @@ async fn role_upsert(
         data.context,
     );
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(AdminRoleUpsertOut {
+    Ok(MsgPackOrJson(AdminRoleConfigureOut {
         id: resp.model.id,
         created: resp.model.created.into(),
         updated: resp.model.updated.into(),
@@ -217,8 +217,8 @@ pub fn router() -> ApiRouter<AppState> {
 
     ApiRouter::new()
         .api_route_with(
-            role_upsert_path,
-            post_with(role_upsert, role_upsert_operation),
+            role_configure_path,
+            post_with(role_configure, role_configure_operation),
             &tag,
         )
         .api_route_with(

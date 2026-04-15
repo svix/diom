@@ -5,7 +5,7 @@ use test_utils::{
 };
 
 #[tokio::test]
-async fn test_admin_access_policy_upsert_and_get() -> TestResult {
+async fn test_admin_access_policy_configure_and_get() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -13,7 +13,7 @@ async fn test_admin_access_policy_upsert_and_get() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({
             "id": "read-only",
             "description": "Allows reading everything",
@@ -41,7 +41,7 @@ async fn test_admin_access_policy_upsert_and_get() -> TestResult {
 }
 
 #[tokio::test]
-async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
+async fn test_admin_access_policy_configure_preserves_created() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -49,7 +49,7 @@ async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({
             "id": "base-policy",
             "description": "Initial description",
@@ -61,7 +61,7 @@ async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
     let created_at = first["created"].assert_u64();
 
     let second = client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({
             "id": "base-policy",
             "description": "Updated description",
@@ -89,7 +89,7 @@ async fn test_admin_access_policy_upsert_preserves_created() -> TestResult {
 }
 
 #[tokio::test]
-async fn test_admin_access_policy_upsert_with_rules() -> TestResult {
+async fn test_admin_access_policy_configure_with_rules() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -97,7 +97,7 @@ async fn test_admin_access_policy_upsert_with_rules() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({
             "id": "kv-policy",
             "description": "KV access policy",
@@ -141,13 +141,13 @@ async fn test_admin_access_policy_list() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({ "id": "policy-a", "description": "Policy A" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({ "id": "policy-b", "description": "Policy B" }))
         .await?
         .ensure(StatusCode::OK)?;
@@ -188,7 +188,7 @@ async fn test_admin_access_policy_list_pagination() -> TestResult {
         ("policy-ac", "Policy AC"),
     ] {
         client
-            .post("v1.admin.auth-policy.upsert")
+            .post("v1.admin.auth-policy.configure")
             .json(json!({ "id": id, "description": desc }))
             .await?
             .ensure(StatusCode::OK)?;
@@ -236,7 +236,7 @@ async fn test_admin_access_policy_delete() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({ "id": "to-delete", "description": "Temporary policy" }))
         .await?
         .ensure(StatusCode::OK)?;
@@ -297,7 +297,7 @@ async fn test_admin_access_policy_get_nonexistent() -> TestResult {
 }
 
 #[tokio::test]
-async fn test_admin_access_policy_upsert_internal_ns() -> TestResult {
+async fn test_admin_access_policy_configure_internal_ns() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -305,7 +305,7 @@ async fn test_admin_access_policy_upsert_internal_ns() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.auth-policy.upsert")
+        .post("v1.admin.auth-policy.configure")
         .json(json!({
             "id": "canihazinternal",
             "description": "Trying to access _internal stuff",

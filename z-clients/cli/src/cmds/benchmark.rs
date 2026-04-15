@@ -13,7 +13,7 @@ use comfy_table::{Table, modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL_CONDE
 use diom::{
     DiomClient,
     models::{
-        CacheGetIn, CacheSetIn, KvGetIn, KvSetIn, MsgIn, MsgNamespaceCreateIn, MsgPublishIn,
+        CacheGetIn, CacheSetIn, KvGetIn, KvSetIn, MsgIn, MsgNamespaceConfigureIn, MsgPublishIn,
         MsgQueueAckIn, MsgQueueReceiveIn, MsgStreamCommitIn, MsgStreamReceiveIn,
     },
 };
@@ -1076,7 +1076,7 @@ async fn bench_msgs_stream(
     cfg.client
         .msgs()
         .namespace()
-        .create("bench".to_string(), MsgNamespaceCreateIn::new())
+        .configure("bench".to_string(), MsgNamespaceConfigureIn::new())
         .await?;
 
     let topics: Vec<String> = (0..cfg.concurrency)
@@ -1115,7 +1115,7 @@ async fn bench_msgs_queue(
     cfg.client
         .msgs()
         .namespace()
-        .create("bench".to_string(), MsgNamespaceCreateIn::new())
+        .configure("bench".to_string(), MsgNamespaceConfigureIn::new())
         .await?;
 
     let topics: Vec<String> = (0..cfg.concurrency)

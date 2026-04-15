@@ -2,27 +2,27 @@
 
 from ..internal.api_common import ApiBase, parse_response
 from ..models import (
-    CacheCreateNamespaceIn,
-    CacheCreateNamespaceOut,
+    CacheConfigureNamespaceIn,
+    CacheConfigureNamespaceOut,
     CacheGetNamespaceIn,
     CacheGetNamespaceOut,
 )
 
 
 class CacheNamespaceAsync(ApiBase):
-    async def create(
+    async def configure(
         self,
-        cache_create_namespace_in: CacheCreateNamespaceIn,
-    ) -> CacheCreateNamespaceOut:
-        """Create cache namespace"""
-        body = cache_create_namespace_in.model_dump(exclude_none=True)
+        cache_configure_namespace_in: CacheConfigureNamespaceIn,
+    ) -> CacheConfigureNamespaceOut:
+        """Configure cache namespace"""
+        body = cache_configure_namespace_in.model_dump(exclude_none=True)
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.cache.namespace.create",
+            path="/api/v1.cache.namespace.configure",
             body=body,
         )
-        return parse_response(response, CacheCreateNamespaceOut)
+        return parse_response(response, CacheConfigureNamespaceOut)
 
     async def get(
         self,
@@ -40,19 +40,19 @@ class CacheNamespaceAsync(ApiBase):
 
 
 class CacheNamespace(ApiBase):
-    def create(
+    def configure(
         self,
-        cache_create_namespace_in: CacheCreateNamespaceIn,
-    ) -> CacheCreateNamespaceOut:
-        """Create cache namespace"""
-        body = cache_create_namespace_in.model_dump(exclude_none=True)
+        cache_configure_namespace_in: CacheConfigureNamespaceIn,
+    ) -> CacheConfigureNamespaceOut:
+        """Configure cache namespace"""
+        body = cache_configure_namespace_in.model_dump(exclude_none=True)
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.cache.namespace.create",
+            path="/api/v1.cache.namespace.configure",
             body=body,
         )
-        return parse_response(response, CacheCreateNamespaceOut)
+        return parse_response(response, CacheConfigureNamespaceOut)
 
     def get(
         self,

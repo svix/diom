@@ -3,7 +3,9 @@ use std::time::Duration;
 use criterion::{
     BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
-use diom::models::{MsgIn, MsgNamespaceCreateIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn};
+use diom::models::{
+    MsgIn, MsgNamespaceConfigureIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn,
+};
 use diom_benchmarks::{BenchmarkContext, setup_cluster, setup_single_server};
 use rand::{RngExt, SeedableRng, rngs::StdRng};
 
@@ -37,7 +39,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             client
                 .msgs()
                 .namespace()
-                .create(ns_name.to_owned(), MsgNamespaceCreateIn::new())
+                .configure(ns_name.to_owned(), MsgNamespaceConfigureIn::new())
                 .await
                 .unwrap();
             for _ in 0..100 {
@@ -93,7 +95,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             client
                 .msgs()
                 .namespace()
-                .create(ns_name.to_owned(), MsgNamespaceCreateIn::new())
+                .configure(ns_name.to_owned(), MsgNamespaceConfigureIn::new())
                 .await
                 .unwrap();
             for _ in 0..100 {

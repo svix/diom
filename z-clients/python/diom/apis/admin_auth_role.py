@@ -2,31 +2,31 @@
 
 from ..internal.api_common import ApiBase, parse_response
 from ..models import (
+    AdminRoleConfigureIn,
+    AdminRoleConfigureOut,
     AdminRoleDeleteIn,
     AdminRoleDeleteOut,
     AdminRoleGetIn,
     AdminRoleListIn,
     AdminRoleOut,
-    AdminRoleUpsertIn,
-    AdminRoleUpsertOut,
     ListResponseAdminRoleOut,
 )
 
 
 class AdminAuthRoleAsync(ApiBase):
-    async def upsert(
+    async def configure(
         self,
-        admin_role_upsert_in: AdminRoleUpsertIn,
-    ) -> AdminRoleUpsertOut:
+        admin_role_configure_in: AdminRoleConfigureIn,
+    ) -> AdminRoleConfigureOut:
         """Create or update a role"""
-        body = admin_role_upsert_in.model_dump(exclude_none=True)
+        body = admin_role_configure_in.model_dump(exclude_none=True)
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.admin.auth-role.upsert",
+            path="/api/v1.admin.auth-role.configure",
             body=body,
         )
-        return parse_response(response, AdminRoleUpsertOut)
+        return parse_response(response, AdminRoleConfigureOut)
 
     async def delete(
         self,
@@ -72,19 +72,19 @@ class AdminAuthRoleAsync(ApiBase):
 
 
 class AdminAuthRole(ApiBase):
-    def upsert(
+    def configure(
         self,
-        admin_role_upsert_in: AdminRoleUpsertIn,
-    ) -> AdminRoleUpsertOut:
+        admin_role_configure_in: AdminRoleConfigureIn,
+    ) -> AdminRoleConfigureOut:
         """Create or update a role"""
-        body = admin_role_upsert_in.model_dump(exclude_none=True)
+        body = admin_role_configure_in.model_dump(exclude_none=True)
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.admin.auth-role.upsert",
+            path="/api/v1.admin.auth-role.configure",
             body=body,
         )
-        return parse_response(response, AdminRoleUpsertOut)
+        return parse_response(response, AdminRoleConfigureOut)
 
     def delete(
         self,
