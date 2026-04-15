@@ -13,7 +13,7 @@ use tracing::Span;
 
 use crate::{
     State,
-    entities::{ConsumerGroup, MsgId, Partition, TopicIn, TopicName},
+    entities::{ConsumerGroup, MsgId, Offset, Partition, TopicIn, TopicName},
     tables::{MsgRow, QueueLeaseKey, QueueLeaseRow, StreamLeaseKey, StreamLeaseRow, TopicRow},
 };
 
@@ -29,6 +29,7 @@ pub struct QueueReceiveOperation {
     #[serde(rename = "lease_duration_ms")]
     lease_duration: DurationMs,
     topic_id_random_bytes: UuidV7RandomBytes,
+    retention_period: Option<DurationMs>,
 }
 
 impl QueueReceiveOperation {
@@ -38,6 +39,7 @@ impl QueueReceiveOperation {
         consumer_group: ConsumerGroup,
         batch_size: NonZeroU16,
         lease_duration: DurationMs,
+        retention_period: Option<DurationMs>,
     ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.topic, Some(tp.partition)),
@@ -51,6 +53,7 @@ impl QueueReceiveOperation {
             batch_size,
             lease_duration,
             topic_id_random_bytes: UuidV7RandomBytes::new_random(),
+            retention_period,
         })
     }
 
@@ -67,6 +70,10 @@ impl QueueReceiveOperation {
             let mut all_msgs: Vec<QueueReceiveMsg> = Vec::with_capacity(remaining.into());
 
             let expiry = now + self.lease_duration;
+            let expiry_cutoff = self
+                .retention_period
+                .map(|rp| now.saturating_sub(rp))
+                .unwrap_or(UnixTimestampMs::UNIX_EPOCH);
 
             let mut batch = state.db.batch();
 
@@ -113,20 +120,20 @@ impl QueueReceiveOperation {
                         partition,
                         scan_offset,
                         remaining,
+                        expiry_cutoff,
                     )?;
 
                     if msgs.is_empty() {
                         break;
                     }
 
-                    let msgs_len = msgs.len() as u64;
+                    let last_offset = msgs.last().expect("non-empty").0;
 
                     let n = lease_available_msgs(
                         &state,
                         &mut batch,
                         &mut all_msgs,
                         msgs,
-                        scan_offset,
                         partition,
                         topic_row.id,
                         &self.consumer_group,
@@ -135,7 +142,7 @@ impl QueueReceiveOperation {
                     )?;
                     remaining = remaining.saturating_sub(n);
 
-                    scan_offset += msgs_len;
+                    scan_offset = last_offset + 1;
                 }
 
                 // Compact cursor: advance past contiguous acked messages
@@ -179,8 +186,7 @@ fn lease_available_msgs(
     state: &State,
     batch: &mut fjall::OwnedWriteBatch,
     all_msgs: &mut Vec<QueueReceiveMsg>,
-    msgs: Vec<MsgRow>,
-    scan_offset: u64,
+    msgs: Vec<(Offset, MsgRow)>,
     partition: Partition,
     topic_id: TopicId,
     consumer_group: &ConsumerGroup,
@@ -189,8 +195,7 @@ fn lease_available_msgs(
 ) -> Result<u16> {
     let mut count = 0;
 
-    for (i, msg) in msgs.into_iter().enumerate() {
-        let offset = scan_offset + i as u64;
+    for (offset, msg) in msgs {
         let msg_id = MsgId::new(partition, offset);
 
         let existing_lease = QueueLeaseRow::fetch(

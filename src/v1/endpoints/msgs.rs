@@ -303,6 +303,7 @@ async fn stream_receive(
         data.batch_size,
         data.lease_duration,
         data.default_starting_position,
+        namespace.config.retention_period,
     )?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
@@ -512,6 +513,7 @@ async fn queue_receive(
         data.consumer_group,
         data.batch_size,
         data.lease_duration,
+        namespace.config.retention_period,
     )?;
     let response = repl.client_write(operation).await.or_internal_error()?.0?;
 
@@ -710,8 +712,13 @@ async fn queue_nack(
         .fetch_namespace(data.namespace.as_ref())?
         .ok_or_not_found()?;
 
-    let operation =
-        QueueNackOperation::new(namespace.id, data.topic, data.consumer_group, data.msg_ids);
+    let operation = QueueNackOperation::new(
+        namespace.id,
+        data.topic,
+        data.consumer_group,
+        data.msg_ids,
+        namespace.config.retention_period,
+    );
     repl.client_write(operation).await.or_internal_error()?.0?;
 
     Ok(MsgPackOrJson(MsgQueueNackOut {}))
