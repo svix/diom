@@ -25,11 +25,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             .map(|_| {
                 let mut val = vec![0u8; 256];
                 rng.fill(&mut val[..]);
-                let msg = MsgIn::new(val);
-                match delay {
-                    Some(d) => msg.with_delay(d),
-                    None => msg,
-                }
+                MsgIn::new(val).with_delay(delay)
             })
             .collect::<Vec<_>>()
     };
