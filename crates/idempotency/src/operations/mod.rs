@@ -1,11 +1,13 @@
 use crate::State;
 
 mod abort;
+mod clear_expired;
 mod complete;
 mod configure_namespace;
 mod try_start;
 
 pub use abort::AbortOperation;
+pub use clear_expired::ClearExpiredOperation;
 pub use complete::CompleteOperation;
 pub use try_start::{TryStartOperation, TryStartResponseData};
 
@@ -21,10 +23,11 @@ pub struct IdempotencyRaftState<'a> {
 raft_module_operations!(
     IdempotencyRequest,
     IdempotencyOperation {
-        TryStart(TryStartOperation) -> TryStartResponseData,
-        Complete(CompleteOperation) -> (),
         Abort(AbortOperation) -> (),
+        ClearExpired(ClearExpiredOperation) -> (),
+        Complete(CompleteOperation) -> (),
         ConfigureIdempotency(ConfigureIdempotencyOperation) -> ConfigureIdempotencyResponseData,
+        TryStart(TryStartOperation) -> TryStartResponseData,
     },
     state = IdempotencyRaftState<'_>,
 );
@@ -32,10 +35,11 @@ raft_module_operations!(
 impl IdempotencyOperation {
     pub fn key_name(&self) -> Option<&str> {
         match self {
-            Self::TryStart(op) => Some(&op.key),
-            Self::Complete(op) => Some(&op.key),
             Self::Abort(op) => Some(&op.key),
+            Self::ClearExpired(_) => None,
+            Self::Complete(op) => Some(&op.key),
             Self::ConfigureIdempotency(op) => Some(&op.name),
+            Self::TryStart(op) => Some(&op.key),
         }
     }
 }
