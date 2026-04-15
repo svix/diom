@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { MsgStreamReceiveInSerializer, MsgStreamReceiveOutSerializer, MsgStreamCommitInSerializer, MsgStreamCommitOutSerializer, MsgStreamSeekInSerializer, MsgStreamSeekOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -29,7 +31,7 @@ specified duration to prevent duplicate delivery within the same consumer group.
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "batch_size": "...",
   "lease_duration_ms": "...",
   "default_starting_position": "...",
@@ -45,7 +47,7 @@ specified duration to prevent duplicate delivery within the same consumer group.
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -62,14 +64,14 @@ specified duration to prevent duplicate delivery within the same consumer group.
       const msgStreamReceiveIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : MsgStreamReceiveInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.msgs.stream.receive(
         topic,
         consumerGroup,
         msgStreamReceiveIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgStreamReceiveOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -86,7 +88,7 @@ successfully processed offset; future receives will start after it.`,
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "offset": "..."
 }`,
           "",
@@ -98,7 +100,7 @@ successfully processed offset; future receives will start after it.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -111,9 +113,8 @@ successfully processed offset; future receives will start after it.`,
       
       
       
-      const msgStreamCommitIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const msgStreamCommitIn = MsgStreamCommitInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.msgs.stream.commit(
@@ -121,7 +122,7 @@ successfully processed offset; future receives will start after it.`,
         consumerGroup,
         msgStreamCommitIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgStreamCommitOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -139,7 +140,7 @@ partition suffix (e.g. 'ns:my-topic~0'). The 'position' field accepts '"earliest
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "offset": "...",
   "position": "..."
 }`,
@@ -152,7 +153,7 @@ partition suffix (e.g. 'ns:my-topic~0'). The 'position' field accepts '"earliest
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -169,14 +170,14 @@ partition suffix (e.g. 'ns:my-topic~0'). The 'position' field accepts '"earliest
       const msgStreamSeekIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : MsgStreamSeekInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.msgs.stream.seek(
         topic,
         consumerGroup,
         msgStreamSeekIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgStreamSeekOutSerializer._toJsonObject(resp));
     },
   );
   

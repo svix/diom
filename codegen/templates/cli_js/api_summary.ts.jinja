@@ -2,7 +2,7 @@
 {% do set_summary_filename("register_api.ts") -%}
 
 {% macro reexport(resource) -%}
-export { register{{ resource.name | to_upper_camel_case }}Commands } from "./{{ resource.name | to_lower_camel_case }}.js";
+export { register{{ resource.name | to_upper_camel_case }}Commands } from "./{{ resource.name | to_lower_camel_case }}.ts";
 {% for _, sub in resource.subresources | items -%}
 {{ reexport(sub) -}}
 {% endfor %}

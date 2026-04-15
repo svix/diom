@@ -1,15 +1,17 @@
 // @ts-nocheck
 // this file is @generated
-import { registerMsgsNamespaceCommands } from "./msgsNamespace.js";
-import { registerMsgsQueueCommands } from "./msgsQueue.js";
-import { registerMsgsStreamCommands } from "./msgsStream.js";
-import { registerMsgsTopicCommands } from "./msgsTopic.js";
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { MsgPublishInSerializer, MsgPublishOutSerializer } from "@diomhq/diom";
+import { registerMsgsNamespaceCommands } from "./msgsNamespace.ts";
+import { registerMsgsQueueCommands } from "./msgsQueue.ts";
+import { registerMsgsStreamCommands } from "./msgsStream.ts";
+import { registerMsgsTopicCommands } from "./msgsTopic.ts";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -62,8 +64,9 @@ export function registerMsgsCommands(
         [
           `Example body:
 {
-  "namespace": "...",
-  "msgs": "..."
+  "namespace": "some_namespace",
+  "msgs": "...",
+  "idempotency_key": "..."
 }`,
           "",
           `Example response:
@@ -75,7 +78,7 @@ export function registerMsgsCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -83,16 +86,15 @@ export function registerMsgsCommands(
       
       
       
-      const msgPublishIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const msgPublishIn = MsgPublishInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.msgs.publish(
         topic,
         msgPublishIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgPublishOutSerializer._toJsonObject(resp));
     },
   );
   

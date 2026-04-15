@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { MsgNamespaceConfigureInSerializer, MsgNamespaceConfigureOutSerializer, MsgNamespaceGetInSerializer, MsgNamespaceGetOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -19,8 +21,8 @@ export function registerMsgsNamespaceCommands(
   
   
   y.command(
-    `create <name> [body]`,
-    `Creates or updates a msgs namespace with the given name.`,
+    `configure <name> [body]`,
+    `Configures a msgs namespace with the given name.`,
     (cmdY) => {
       cmdY.epilog(
         [
@@ -31,7 +33,7 @@ export function registerMsgsNamespaceCommands(
           "",
           `Example response:
 {
-  "name": "...",
+  "name": "some_namespace",
   "retention": "...",
   "created": "...",
   "updated": "..."
@@ -41,7 +43,7 @@ export function registerMsgsNamespaceCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const name = String(
         argv["name"],
@@ -50,16 +52,16 @@ export function registerMsgsNamespaceCommands(
       
       
       const bodyRaw = argv.body as string | undefined;
-      const msgNamespaceCreateIn =
+      const msgNamespaceConfigureIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : MsgNamespaceConfigureInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
-      const resp = await client.msgs.namespace.create(
+      const resp = await client.msgs.namespace.configure(
         name,
-        msgNamespaceCreateIn,
+        msgNamespaceConfigureIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgNamespaceConfigureOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -77,7 +79,7 @@ export function registerMsgsNamespaceCommands(
           "",
           `Example response:
 {
-  "name": "...",
+  "name": "some_namespace",
   "retention": "...",
   "created": "...",
   "updated": "..."
@@ -87,7 +89,7 @@ export function registerMsgsNamespaceCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const name = String(
         argv["name"],
@@ -99,13 +101,13 @@ export function registerMsgsNamespaceCommands(
       const msgNamespaceGetIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : MsgNamespaceGetInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.msgs.namespace.get(
         name,
         msgNamespaceGetIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgNamespaceGetOutSerializer._toJsonObject(resp));
     },
   );
   

@@ -1,0 +1,4438 @@
+#compdef diom
+
+autoload -U is-at-least
+
+_diom() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-s+[Base url for server. Overrides any config file. If not passed, http\://localhost\:8050 is used]:SERVER_URL:_default' \
+'--server-url=[Base url for server. Overrides any config file. If not passed, http\://localhost\:8050 is used]:SERVER_URL:_default' \
+'--auth-token=[Authentication token. Overrides any config file.]:AUTH_TOKEN:_default' \
+'*-v[Log more. This option may be repeated up to 3 times]' \
+'*--verbose[Log more. This option may be repeated up to 3 times]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'-V[Print version]' \
+'--version[Print version]' \
+":: :_diom_commands" \
+"*::: :->diom-cli" \
+&& ret=0
+    case $state in
+    (diom-cli)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-command-$line[1]:"
+        case $line[1] in
+            (cache)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__cache_commands" \
+"*::: :->cache" \
+&& ret=0
+
+    case $state in
+    (cache)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-cache-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__cache__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-cache-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':cache_create_namespace_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':cache_get_namespace_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__cache__subcmd__namespace__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-cache-namespace-help-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+':value:_default' \
+':cache_set_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+'::cache_get_in:_default' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+'::cache_delete_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__cache__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-cache-help-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__cache__subcmd__help__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-cache-help-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(idempotency)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__idempotency_commands" \
+"*::: :->idempotency" \
+&& ret=0
+
+    case $state in
+    (idempotency)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-idempotency-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__idempotency__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-idempotency-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':idempotency_create_namespace_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':idempotency_get_namespace_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__idempotency__subcmd__namespace__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-idempotency-namespace-help-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(start)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+':idempotency_start_in:_default' \
+&& ret=0
+;;
+(complete)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+':idempotency_complete_in:_default' \
+&& ret=0
+;;
+(abort)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+'::idempotency_abort_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__idempotency__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-idempotency-help-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__idempotency__subcmd__help__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-idempotency-help-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(start)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(complete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(abort)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(kv)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__kv_commands" \
+"*::: :->kv" \
+&& ret=0
+
+    case $state in
+    (kv)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-kv-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__kv__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-kv-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':kv_create_namespace_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':kv_get_namespace_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__kv__subcmd__namespace__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-kv-namespace-help-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+':value:_default' \
+'::kv_set_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+'::kv_get_in:_default' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':key:_default' \
+'::kv_delete_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__kv__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-kv-help-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__kv__subcmd__help__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-kv-help-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(msgs)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__msgs_commands" \
+"*::: :->msgs" \
+&& ret=0
+
+    case $state in
+    (msgs)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__msgs__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':name:_default' \
+'::msg_namespace_create_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':name:_default' \
+'::msg_namespace_get_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__namespace__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-namespace-help-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(queue)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__msgs__subcmd__queue_commands" \
+"*::: :->queue" \
+&& ret=0
+
+    case $state in
+    (queue)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-queue-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+'::msg_queue_receive_in:_default' \
+&& ret=0
+;;
+(ack)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+':msg_queue_ack_in:_default' \
+&& ret=0
+;;
+(extend-lease)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+':msg_queue_extend_lease_in:_default' \
+&& ret=0
+;;
+(configure)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+'::msg_queue_configure_in:_default' \
+&& ret=0
+;;
+(nack)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+':msg_queue_nack_in:_default' \
+&& ret=0
+;;
+(redrive-dlq)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+'::msg_queue_redrive_dlq_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__queue__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-queue-help-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(ack)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(extend-lease)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(configure)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(nack)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(redrive-dlq)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(stream)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__msgs__subcmd__stream_commands" \
+"*::: :->stream" \
+&& ret=0
+
+    case $state in
+    (stream)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-stream-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+'::msg_stream_receive_in:_default' \
+&& ret=0
+;;
+(commit)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+':msg_stream_commit_in:_default' \
+&& ret=0
+;;
+(seek)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':consumer_group:_default' \
+'::msg_stream_seek_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__stream__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-stream-help-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(commit)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(seek)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(topic)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__msgs__subcmd__topic_commands" \
+"*::: :->topic" \
+&& ret=0
+
+    case $state in
+    (topic)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-topic-command-$line[1]:"
+        case $line[1] in
+            (configure)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':msg_topic_configure_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__topic__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-topic-help-command-$line[1]:"
+        case $line[1] in
+            (configure)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(publish)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':topic:_default' \
+':msg_publish_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-help-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__help__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-help-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(queue)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__help__subcmd__queue_commands" \
+"*::: :->queue" \
+&& ret=0
+
+    case $state in
+    (queue)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-help-queue-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(ack)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(extend-lease)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(configure)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(nack)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(redrive-dlq)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(stream)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__help__subcmd__stream_commands" \
+"*::: :->stream" \
+&& ret=0
+
+    case $state in
+    (stream)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-help-stream-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(commit)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(seek)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(topic)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__msgs__subcmd__help__subcmd__topic_commands" \
+"*::: :->topic" \
+&& ret=0
+
+    case $state in
+    (topic)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-msgs-help-topic-command-$line[1]:"
+        case $line[1] in
+            (configure)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(publish)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(rate-limit)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__rate-limit_commands" \
+"*::: :->rate-limit" \
+&& ret=0
+
+    case $state in
+    (rate-limit)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-rate-limit-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__rate-limit__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-rate-limit-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':rate_limit_create_namespace_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':rate_limit_get_namespace_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-rate-limit-namespace-help-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(limit)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':rate_limit_check_in:_default' \
+&& ret=0
+;;
+(get-remaining)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':rate_limit_get_remaining_in:_default' \
+&& ret=0
+;;
+(reset)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':rate_limit_reset_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__rate-limit__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-rate-limit-help-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__rate-limit__subcmd__help__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-rate-limit-help-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(limit)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get-remaining)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(reset)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(health)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__health_commands" \
+"*::: :->health" \
+&& ret=0
+
+    case $state in
+    (health)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-health-command-$line[1]:"
+        case $line[1] in
+            (ping)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+&& ret=0
+;;
+(error)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__health__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-health-help-command-$line[1]:"
+        case $line[1] in
+            (ping)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(error)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(raw-admin)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+":: :_diom__subcmd__raw-admin_commands" \
+"*::: :->raw-admin" \
+&& ret=0
+
+    case $state in
+    (raw-admin)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-command-$line[1]:"
+        case $line[1] in
+            (auth-policy)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__raw-admin__subcmd__auth-policy_commands" \
+"*::: :->auth-policy" \
+&& ret=0
+
+    case $state in
+    (auth-policy)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-auth-policy-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_access_policy_upsert_in:_default' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_access_policy_delete_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_access_policy_get_in:_default' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'::admin_access_policy_list_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-auth-policy-help-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(auth-role)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__raw-admin__subcmd__auth-role_commands" \
+"*::: :->auth-role" \
+&& ret=0
+
+    case $state in
+    (auth-role)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-auth-role-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_role_upsert_in:_default' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_role_delete_in:_default' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_role_get_in:_default' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'::admin_role_list_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-auth-role-help-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(auth-token)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__raw-admin__subcmd__auth-token_commands" \
+"*::: :->auth-token" \
+&& ret=0
+
+    case $state in
+    (auth-token)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-auth-token-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_auth_token_create_in:_default' \
+&& ret=0
+;;
+(expire)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_auth_token_expire_in:_default' \
+&& ret=0
+;;
+(rotate)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_auth_token_rotate_in:_default' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_auth_token_delete_in:_default' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'::admin_auth_token_list_in:_default' \
+&& ret=0
+;;
+(update)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':admin_auth_token_update_in:_default' \
+&& ret=0
+;;
+(whoami)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'::admin_auth_token_whoami_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-auth-token-help-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(expire)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(rotate)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(update)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(whoami)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(cluster)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__raw-admin__subcmd__cluster_commands" \
+"*::: :->cluster" \
+&& ret=0
+
+    case $state in
+    (cluster)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-cluster-command-$line[1]:"
+        case $line[1] in
+            (status)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+&& ret=0
+;;
+(initialize)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'::cluster_initialize_in:_default' \
+&& ret=0
+;;
+(remove-node)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+':cluster_remove_node_in:_default' \
+&& ret=0
+;;
+(force-snapshot)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'::cluster_force_snapshot_in:_default' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-cluster-help-command-$line[1]:"
+        case $line[1] in
+            (status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(initialize)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(remove-node)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(force-snapshot)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-help-command-$line[1]:"
+        case $line[1] in
+            (auth-policy)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy_commands" \
+"*::: :->auth-policy" \
+&& ret=0
+
+    case $state in
+    (auth-policy)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-help-auth-policy-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(auth-role)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role_commands" \
+"*::: :->auth-role" \
+&& ret=0
+
+    case $state in
+    (auth-role)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-help-auth-role-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(auth-token)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token_commands" \
+"*::: :->auth-token" \
+&& ret=0
+
+    case $state in
+    (auth-token)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-help-auth-token-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(expire)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(rotate)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(update)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(whoami)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(cluster)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster_commands" \
+"*::: :->cluster" \
+&& ret=0
+
+    case $state in
+    (cluster)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-raw-admin-help-cluster-command-$line[1]:"
+        case $line[1] in
+            (status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(initialize)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(remove-node)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(force-snapshot)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(cluster-admin)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_diom__subcmd__cluster-admin_commands" \
+"*::: :->cluster-admin" \
+&& ret=0
+
+    case $state in
+    (cluster-admin)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-cluster-admin-command-$line[1]:"
+        case $line[1] in
+            (status)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'--json[Output results as JSON instead of a table]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(remove-node)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'--yes-i-know-what-im-doing[This command is dangerous]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':node_id:_default' \
+&& ret=0
+;;
+(initialize)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__cluster-admin__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-cluster-admin-help-command-$line[1]:"
+        case $line[1] in
+            (status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(remove-node)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(initialize)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(benchmark)
+_arguments "${_arguments_options[@]}" : \
+'--iterations=[Number of iterations]:ITERATIONS:_default' \
+'-c+[Concurrent tasks per operation type]:CONCURRENCY:_default' \
+'--concurrency=[Concurrent tasks per operation type]:CONCURRENCY:_default' \
+'-b+[Batch size for msgs publish/receive operations]:BATCH_SIZE:_default' \
+'--batch-size=[Batch size for msgs publish/receive operations]:BATCH_SIZE:_default' \
+'--filter=[Glob filter\: only run benchmarks whose name matches]:FILTER:_default' \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'--json[Output results as JSON instead of a table]' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'::server_url -- Server URL to benchmark against (overrides config):_default' \
+&& ret=0
+;;
+(version)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(completion)
+_arguments "${_arguments_options[@]}" : \
+'--color=[Controls when to use color]:WHEN:(auto always never)' \
+'-h[Print help]' \
+'--help[Print help]' \
+':shell:(bash elvish fish powershell zsh)' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-command-$line[1]:"
+        case $line[1] in
+            (cache)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__cache_commands" \
+"*::: :->cache" \
+&& ret=0
+
+    case $state in
+    (cache)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-cache-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__cache__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-cache-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(idempotency)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__idempotency_commands" \
+"*::: :->idempotency" \
+&& ret=0
+
+    case $state in
+    (idempotency)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-idempotency-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__idempotency__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-idempotency-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(start)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(complete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(abort)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(kv)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__kv_commands" \
+"*::: :->kv" \
+&& ret=0
+
+    case $state in
+    (kv)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-kv-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__kv__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-kv-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(msgs)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__msgs_commands" \
+"*::: :->msgs" \
+&& ret=0
+
+    case $state in
+    (msgs)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-msgs-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__msgs__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-msgs-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(queue)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__msgs__subcmd__queue_commands" \
+"*::: :->queue" \
+&& ret=0
+
+    case $state in
+    (queue)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-msgs-queue-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(ack)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(extend-lease)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(configure)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(nack)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(redrive-dlq)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(stream)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__msgs__subcmd__stream_commands" \
+"*::: :->stream" \
+&& ret=0
+
+    case $state in
+    (stream)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-msgs-stream-command-$line[1]:"
+        case $line[1] in
+            (receive)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(commit)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(seek)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(topic)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__msgs__subcmd__topic_commands" \
+"*::: :->topic" \
+&& ret=0
+
+    case $state in
+    (topic)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-msgs-topic-command-$line[1]:"
+        case $line[1] in
+            (configure)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(publish)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(rate-limit)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__rate-limit_commands" \
+"*::: :->rate-limit" \
+&& ret=0
+
+    case $state in
+    (rate-limit)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-rate-limit-command-$line[1]:"
+        case $line[1] in
+            (namespace)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__rate-limit__subcmd__namespace_commands" \
+"*::: :->namespace" \
+&& ret=0
+
+    case $state in
+    (namespace)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-rate-limit-namespace-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(limit)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get-remaining)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(reset)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(health)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__health_commands" \
+"*::: :->health" \
+&& ret=0
+
+    case $state in
+    (health)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-health-command-$line[1]:"
+        case $line[1] in
+            (ping)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(error)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(raw-admin)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__raw-admin_commands" \
+"*::: :->raw-admin" \
+&& ret=0
+
+    case $state in
+    (raw-admin)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-raw-admin-command-$line[1]:"
+        case $line[1] in
+            (auth-policy)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy_commands" \
+"*::: :->auth-policy" \
+&& ret=0
+
+    case $state in
+    (auth-policy)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-raw-admin-auth-policy-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(auth-role)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role_commands" \
+"*::: :->auth-role" \
+&& ret=0
+
+    case $state in
+    (auth-role)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-raw-admin-auth-role-command-$line[1]:"
+        case $line[1] in
+            (upsert)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(auth-token)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token_commands" \
+"*::: :->auth-token" \
+&& ret=0
+
+    case $state in
+    (auth-token)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-raw-admin-auth-token-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(expire)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(rotate)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(update)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(whoami)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(cluster)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster_commands" \
+"*::: :->cluster" \
+&& ret=0
+
+    case $state in
+    (cluster)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-raw-admin-cluster-command-$line[1]:"
+        case $line[1] in
+            (status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(initialize)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(remove-node)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(force-snapshot)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(cluster-admin)
+_arguments "${_arguments_options[@]}" : \
+":: :_diom__subcmd__help__subcmd__cluster-admin_commands" \
+"*::: :->cluster-admin" \
+&& ret=0
+
+    case $state in
+    (cluster-admin)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:diom-help-cluster-admin-command-$line[1]:"
+        case $line[1] in
+            (status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(remove-node)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(initialize)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(benchmark)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(version)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(completion)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_diom_commands] )) ||
+_diom_commands() {
+    local commands; commands=(
+'cache:' \
+'idempotency:' \
+'kv:' \
+'msgs:' \
+'rate-limit:' \
+'health:' \
+'raw-admin:Send raw administrative commands' \
+'cluster-admin:Manipulate a Diom cluster' \
+'benchmark:Benchmark module throughput' \
+'version:Get the version of the Diom CLI' \
+'completion:Generate the autocompletion script for the specified shell' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__benchmark_commands] )) ||
+_diom__subcmd__benchmark_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom benchmark commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache_commands] )) ||
+_diom__subcmd__cache_commands() {
+    local commands; commands=(
+'namespace:' \
+'set:Cache Set' \
+'get:Cache Get' \
+'delete:Cache Delete' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom cache commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__delete_commands] )) ||
+_diom__subcmd__cache__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__get_commands] )) ||
+_diom__subcmd__cache__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help_commands] )) ||
+_diom__subcmd__cache__subcmd__help_commands() {
+    local commands; commands=(
+'namespace:' \
+'set:Cache Set' \
+'get:Cache Get' \
+'delete:Cache Delete' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom cache help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help__subcmd__delete_commands] )) ||
+_diom__subcmd__cache__subcmd__help__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache help delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__cache__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__cache__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help__subcmd__namespace_commands] )) ||
+_diom__subcmd__cache__subcmd__help__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create cache namespace' \
+'get:Get cache namespace' \
+    )
+    _describe -t commands 'diom cache help namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__cache__subcmd__help__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache help namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__cache__subcmd__help__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache help namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__help__subcmd__set_commands] )) ||
+_diom__subcmd__cache__subcmd__help__subcmd__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache help set commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__namespace_commands] )) ||
+_diom__subcmd__cache__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create cache namespace' \
+'get:Get cache namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom cache namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__cache__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__cache__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__namespace__subcmd__help_commands] )) ||
+_diom__subcmd__cache__subcmd__namespace__subcmd__help_commands() {
+    local commands; commands=(
+'create:Create cache namespace' \
+'get:Get cache namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom cache namespace help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__namespace__subcmd__help__subcmd__create_commands] )) ||
+_diom__subcmd__cache__subcmd__namespace__subcmd__help__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache namespace help create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__namespace__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__cache__subcmd__namespace__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache namespace help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__namespace__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__cache__subcmd__namespace__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache namespace help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cache__subcmd__set_commands] )) ||
+_diom__subcmd__cache__subcmd__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cache set commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin_commands] )) ||
+_diom__subcmd__cluster-admin_commands() {
+    local commands; commands=(
+'status:Print information about the cluster and its nodes' \
+'remove-node:Remove a node immediately from the cluster' \
+'initialize:Initialize a new single-node cluster' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom cluster-admin commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__help_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__help_commands() {
+    local commands; commands=(
+'status:Print information about the cluster and its nodes' \
+'remove-node:Remove a node immediately from the cluster' \
+'initialize:Initialize a new single-node cluster' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom cluster-admin help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cluster-admin help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__help__subcmd__initialize_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__help__subcmd__initialize_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cluster-admin help initialize commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__help__subcmd__remove-node_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__help__subcmd__remove-node_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cluster-admin help remove-node commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__help__subcmd__status_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__help__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cluster-admin help status commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__initialize_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__initialize_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cluster-admin initialize commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__remove-node_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__remove-node_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cluster-admin remove-node commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__cluster-admin__subcmd__status_commands] )) ||
+_diom__subcmd__cluster-admin__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom cluster-admin status commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__completion_commands] )) ||
+_diom__subcmd__completion_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom completion commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__health_commands] )) ||
+_diom__subcmd__health_commands() {
+    local commands; commands=(
+'ping:Verify the server is up and running' \
+'error:Intentionally return an error' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom health commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__health__subcmd__error_commands] )) ||
+_diom__subcmd__health__subcmd__error_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom health error commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__health__subcmd__help_commands] )) ||
+_diom__subcmd__health__subcmd__help_commands() {
+    local commands; commands=(
+'ping:Verify the server is up and running' \
+'error:Intentionally return an error' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom health help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__health__subcmd__help__subcmd__error_commands] )) ||
+_diom__subcmd__health__subcmd__help__subcmd__error_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom health help error commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__health__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__health__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom health help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__health__subcmd__help__subcmd__ping_commands] )) ||
+_diom__subcmd__health__subcmd__help__subcmd__ping_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom health help ping commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__health__subcmd__ping_commands] )) ||
+_diom__subcmd__health__subcmd__ping_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom health ping commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help_commands] )) ||
+_diom__subcmd__help_commands() {
+    local commands; commands=(
+'cache:' \
+'idempotency:' \
+'kv:' \
+'msgs:' \
+'rate-limit:' \
+'health:' \
+'raw-admin:Send raw administrative commands' \
+'cluster-admin:Manipulate a Diom cluster' \
+'benchmark:Benchmark module throughput' \
+'version:Get the version of the Diom CLI' \
+'completion:Generate the autocompletion script for the specified shell' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__benchmark_commands] )) ||
+_diom__subcmd__help__subcmd__benchmark_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help benchmark commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cache_commands] )) ||
+_diom__subcmd__help__subcmd__cache_commands() {
+    local commands; commands=(
+'namespace:' \
+'set:Cache Set' \
+'get:Cache Get' \
+'delete:Cache Delete' \
+    )
+    _describe -t commands 'diom help cache commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cache__subcmd__delete_commands] )) ||
+_diom__subcmd__help__subcmd__cache__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cache delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cache__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__cache__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cache get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cache__subcmd__namespace_commands] )) ||
+_diom__subcmd__help__subcmd__cache__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create cache namespace' \
+'get:Get cache namespace' \
+    )
+    _describe -t commands 'diom help cache namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cache__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__help__subcmd__cache__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cache namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cache__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__cache__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cache namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cache__subcmd__set_commands] )) ||
+_diom__subcmd__help__subcmd__cache__subcmd__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cache set commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cluster-admin_commands] )) ||
+_diom__subcmd__help__subcmd__cluster-admin_commands() {
+    local commands; commands=(
+'status:Print information about the cluster and its nodes' \
+'remove-node:Remove a node immediately from the cluster' \
+'initialize:Initialize a new single-node cluster' \
+    )
+    _describe -t commands 'diom help cluster-admin commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cluster-admin__subcmd__initialize_commands] )) ||
+_diom__subcmd__help__subcmd__cluster-admin__subcmd__initialize_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cluster-admin initialize commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cluster-admin__subcmd__remove-node_commands] )) ||
+_diom__subcmd__help__subcmd__cluster-admin__subcmd__remove-node_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cluster-admin remove-node commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__cluster-admin__subcmd__status_commands] )) ||
+_diom__subcmd__help__subcmd__cluster-admin__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help cluster-admin status commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__completion_commands] )) ||
+_diom__subcmd__help__subcmd__completion_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help completion commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__health_commands] )) ||
+_diom__subcmd__help__subcmd__health_commands() {
+    local commands; commands=(
+'ping:Verify the server is up and running' \
+'error:Intentionally return an error' \
+    )
+    _describe -t commands 'diom help health commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__health__subcmd__error_commands] )) ||
+_diom__subcmd__help__subcmd__health__subcmd__error_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help health error commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__health__subcmd__ping_commands] )) ||
+_diom__subcmd__help__subcmd__health__subcmd__ping_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help health ping commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__idempotency_commands] )) ||
+_diom__subcmd__help__subcmd__idempotency_commands() {
+    local commands; commands=(
+'namespace:' \
+'start:Start an idempotent request' \
+'complete:Complete an idempotent request with a response' \
+'abort:Abandon an idempotent request (remove lock without saving response)' \
+    )
+    _describe -t commands 'diom help idempotency commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__idempotency__subcmd__abort_commands] )) ||
+_diom__subcmd__help__subcmd__idempotency__subcmd__abort_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help idempotency abort commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__idempotency__subcmd__complete_commands] )) ||
+_diom__subcmd__help__subcmd__idempotency__subcmd__complete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help idempotency complete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__idempotency__subcmd__namespace_commands] )) ||
+_diom__subcmd__help__subcmd__idempotency__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create idempotency namespace' \
+'get:Get idempotency namespace' \
+    )
+    _describe -t commands 'diom help idempotency namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__idempotency__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__help__subcmd__idempotency__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help idempotency namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__idempotency__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__idempotency__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help idempotency namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__idempotency__subcmd__start_commands] )) ||
+_diom__subcmd__help__subcmd__idempotency__subcmd__start_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help idempotency start commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__kv_commands] )) ||
+_diom__subcmd__help__subcmd__kv_commands() {
+    local commands; commands=(
+'namespace:' \
+'set:KV Set' \
+'get:KV Get' \
+'delete:KV Delete' \
+    )
+    _describe -t commands 'diom help kv commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__kv__subcmd__delete_commands] )) ||
+_diom__subcmd__help__subcmd__kv__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help kv delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__kv__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__kv__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help kv get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__kv__subcmd__namespace_commands] )) ||
+_diom__subcmd__help__subcmd__kv__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create KV namespace' \
+'get:Get KV namespace' \
+    )
+    _describe -t commands 'diom help kv namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__kv__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__help__subcmd__kv__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help kv namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__kv__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__kv__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help kv namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__kv__subcmd__set_commands] )) ||
+_diom__subcmd__help__subcmd__kv__subcmd__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help kv set commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs_commands] )) ||
+_diom__subcmd__help__subcmd__msgs_commands() {
+    local commands; commands=(
+'namespace:' \
+'queue:' \
+'stream:' \
+'topic:' \
+'publish:Publishes messages to a topic within a namespace' \
+    )
+    _describe -t commands 'diom help msgs commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__namespace_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Creates or updates a msgs namespace with the given name' \
+'get:Gets a msgs namespace by name' \
+    )
+    _describe -t commands 'diom help msgs namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__publish_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__publish_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs publish commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__queue_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__queue_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic as competing consumers' \
+'ack:Acknowledges messages by their opaque msg_ids' \
+'extend-lease:Extends the lease on in-flight messages' \
+'configure:Configures retry and DLQ behavior for a consumer group on a topic' \
+'nack:Rejects messages, sending them to the dead-letter queue' \
+'redrive-dlq:Moves all dead-letter queue messages back to the main queue for reprocessing' \
+    )
+    _describe -t commands 'diom help msgs queue commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__ack_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__ack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs queue ack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__configure_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs queue configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__extend-lease_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__extend-lease_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs queue extend-lease commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__nack_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__nack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs queue nack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__receive_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs queue receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__redrive-dlq_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__queue__subcmd__redrive-dlq_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs queue redrive-dlq commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__stream_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__stream_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic using a consumer group' \
+'commit:Commits an offset for a consumer group on a specific partition' \
+'seek:Repositions a consumer group'\''s read cursor on a topic' \
+    )
+    _describe -t commands 'diom help msgs stream commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__stream__subcmd__commit_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__stream__subcmd__commit_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs stream commit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__stream__subcmd__receive_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__stream__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs stream receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__stream__subcmd__seek_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__stream__subcmd__seek_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs stream seek commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__topic_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__topic_commands() {
+    local commands; commands=(
+'configure:Configures the number of partitions for a topic' \
+    )
+    _describe -t commands 'diom help msgs topic commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__msgs__subcmd__topic__subcmd__configure_commands] )) ||
+_diom__subcmd__help__subcmd__msgs__subcmd__topic__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help msgs topic configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__rate-limit_commands] )) ||
+_diom__subcmd__help__subcmd__rate-limit_commands() {
+    local commands; commands=(
+'namespace:' \
+'limit:Rate Limiter Check and Consume' \
+'get-remaining:Rate Limiter Get Remaining' \
+'reset:Rate Limiter Reset' \
+    )
+    _describe -t commands 'diom help rate-limit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__rate-limit__subcmd__get-remaining_commands] )) ||
+_diom__subcmd__help__subcmd__rate-limit__subcmd__get-remaining_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help rate-limit get-remaining commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__rate-limit__subcmd__limit_commands] )) ||
+_diom__subcmd__help__subcmd__rate-limit__subcmd__limit_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help rate-limit limit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__rate-limit__subcmd__namespace_commands] )) ||
+_diom__subcmd__help__subcmd__rate-limit__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create rate limiter namespace' \
+'get:Get rate limiter namespace' \
+    )
+    _describe -t commands 'diom help rate-limit namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__rate-limit__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__help__subcmd__rate-limit__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help rate-limit namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__rate-limit__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__rate-limit__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help rate-limit namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__rate-limit__subcmd__reset_commands] )) ||
+_diom__subcmd__help__subcmd__rate-limit__subcmd__reset_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help rate-limit reset commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin_commands() {
+    local commands; commands=(
+'auth-policy:' \
+'auth-role:' \
+'auth-token:' \
+'cluster:' \
+    )
+    _describe -t commands 'diom help raw-admin commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy_commands() {
+    local commands; commands=(
+'upsert:Create or update an access policy' \
+'delete:Delete an access policy' \
+'get:Get an access policy by ID' \
+'list:List all access policies' \
+    )
+    _describe -t commands 'diom help raw-admin auth-policy commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__delete_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-policy delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-policy get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__list_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-policy list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__upsert_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-policy__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-policy upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role_commands() {
+    local commands; commands=(
+'upsert:Create or update a role' \
+'delete:Delete a role' \
+'get:Get a role by ID' \
+'list:List all roles' \
+    )
+    _describe -t commands 'diom help raw-admin auth-role commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__delete_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-role delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__get_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-role get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__list_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-role list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__upsert_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-role__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-role upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token_commands() {
+    local commands; commands=(
+'create:Create an auth token' \
+'expire:Expire an auth token' \
+'rotate:Rotate an auth token, invalidating the old one and issuing a new secret' \
+'delete:Delete an auth token' \
+'list:List auth tokens for a given owner' \
+'update:Update an auth token'\''s properties' \
+'whoami:Return the role of the currently authenticated token' \
+    )
+    _describe -t commands 'diom help raw-admin auth-token commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__create_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-token create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__delete_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-token delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__expire_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__expire_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-token expire commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__list_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-token list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__rotate_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__rotate_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-token rotate commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__update_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__update_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-token update commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__whoami_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__auth-token__subcmd__whoami_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin auth-token whoami commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster_commands() {
+    local commands; commands=(
+'status:Get information about the current cluster' \
+'initialize:Initialize this node as the leader of a new cluster' \
+'remove-node:Remove a node from the cluster' \
+'force-snapshot:Force the cluster to take a snapshot immediately' \
+    )
+    _describe -t commands 'diom help raw-admin cluster commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__force-snapshot_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__force-snapshot_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin cluster force-snapshot commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__initialize_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__initialize_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin cluster initialize commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__remove-node_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__remove-node_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin cluster remove-node commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__status_commands] )) ||
+_diom__subcmd__help__subcmd__raw-admin__subcmd__cluster__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help raw-admin cluster status commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__help__subcmd__version_commands] )) ||
+_diom__subcmd__help__subcmd__version_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom help version commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency_commands] )) ||
+_diom__subcmd__idempotency_commands() {
+    local commands; commands=(
+'namespace:' \
+'start:Start an idempotent request' \
+'complete:Complete an idempotent request with a response' \
+'abort:Abandon an idempotent request (remove lock without saving response)' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom idempotency commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__abort_commands] )) ||
+_diom__subcmd__idempotency__subcmd__abort_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency abort commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__complete_commands] )) ||
+_diom__subcmd__idempotency__subcmd__complete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency complete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help_commands() {
+    local commands; commands=(
+'namespace:' \
+'start:Start an idempotent request' \
+'complete:Complete an idempotent request with a response' \
+'abort:Abandon an idempotent request (remove lock without saving response)' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom idempotency help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help__subcmd__abort_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help__subcmd__abort_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency help abort commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help__subcmd__complete_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help__subcmd__complete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency help complete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help__subcmd__namespace_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create idempotency namespace' \
+'get:Get idempotency namespace' \
+    )
+    _describe -t commands 'diom idempotency help namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency help namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency help namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__help__subcmd__start_commands] )) ||
+_diom__subcmd__idempotency__subcmd__help__subcmd__start_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency help start commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__namespace_commands] )) ||
+_diom__subcmd__idempotency__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create idempotency namespace' \
+'get:Get idempotency namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom idempotency namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__idempotency__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__idempotency__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__namespace__subcmd__help_commands] )) ||
+_diom__subcmd__idempotency__subcmd__namespace__subcmd__help_commands() {
+    local commands; commands=(
+'create:Create idempotency namespace' \
+'get:Get idempotency namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom idempotency namespace help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__namespace__subcmd__help__subcmd__create_commands] )) ||
+_diom__subcmd__idempotency__subcmd__namespace__subcmd__help__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency namespace help create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__namespace__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__idempotency__subcmd__namespace__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency namespace help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__namespace__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__idempotency__subcmd__namespace__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency namespace help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__idempotency__subcmd__start_commands] )) ||
+_diom__subcmd__idempotency__subcmd__start_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom idempotency start commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv_commands] )) ||
+_diom__subcmd__kv_commands() {
+    local commands; commands=(
+'namespace:' \
+'set:KV Set' \
+'get:KV Get' \
+'delete:KV Delete' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom kv commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__delete_commands] )) ||
+_diom__subcmd__kv__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__get_commands] )) ||
+_diom__subcmd__kv__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help_commands] )) ||
+_diom__subcmd__kv__subcmd__help_commands() {
+    local commands; commands=(
+'namespace:' \
+'set:KV Set' \
+'get:KV Get' \
+'delete:KV Delete' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom kv help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help__subcmd__delete_commands] )) ||
+_diom__subcmd__kv__subcmd__help__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv help delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__kv__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__kv__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help__subcmd__namespace_commands] )) ||
+_diom__subcmd__kv__subcmd__help__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create KV namespace' \
+'get:Get KV namespace' \
+    )
+    _describe -t commands 'diom kv help namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__kv__subcmd__help__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv help namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__kv__subcmd__help__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv help namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__help__subcmd__set_commands] )) ||
+_diom__subcmd__kv__subcmd__help__subcmd__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv help set commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__namespace_commands] )) ||
+_diom__subcmd__kv__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create KV namespace' \
+'get:Get KV namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom kv namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__kv__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__kv__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__namespace__subcmd__help_commands] )) ||
+_diom__subcmd__kv__subcmd__namespace__subcmd__help_commands() {
+    local commands; commands=(
+'create:Create KV namespace' \
+'get:Get KV namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom kv namespace help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__namespace__subcmd__help__subcmd__create_commands] )) ||
+_diom__subcmd__kv__subcmd__namespace__subcmd__help__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv namespace help create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__namespace__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__kv__subcmd__namespace__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv namespace help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__namespace__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__kv__subcmd__namespace__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv namespace help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__kv__subcmd__set_commands] )) ||
+_diom__subcmd__kv__subcmd__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom kv set commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs_commands] )) ||
+_diom__subcmd__msgs_commands() {
+    local commands; commands=(
+'namespace:' \
+'queue:' \
+'stream:' \
+'topic:' \
+'publish:Publishes messages to a topic within a namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__help_commands() {
+    local commands; commands=(
+'namespace:' \
+'queue:' \
+'stream:' \
+'topic:' \
+'publish:Publishes messages to a topic within a namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__namespace_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Creates or updates a msgs namespace with the given name' \
+'get:Gets a msgs namespace by name' \
+    )
+    _describe -t commands 'diom msgs help namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__publish_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__publish_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help publish commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__queue_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__queue_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic as competing consumers' \
+'ack:Acknowledges messages by their opaque msg_ids' \
+'extend-lease:Extends the lease on in-flight messages' \
+'configure:Configures retry and DLQ behavior for a consumer group on a topic' \
+'nack:Rejects messages, sending them to the dead-letter queue' \
+'redrive-dlq:Moves all dead-letter queue messages back to the main queue for reprocessing' \
+    )
+    _describe -t commands 'diom msgs help queue commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__ack_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__ack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help queue ack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__configure_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help queue configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__extend-lease_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__extend-lease_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help queue extend-lease commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__nack_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__nack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help queue nack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__receive_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help queue receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__redrive-dlq_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__queue__subcmd__redrive-dlq_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help queue redrive-dlq commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__stream_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__stream_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic using a consumer group' \
+'commit:Commits an offset for a consumer group on a specific partition' \
+'seek:Repositions a consumer group'\''s read cursor on a topic' \
+    )
+    _describe -t commands 'diom msgs help stream commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__stream__subcmd__commit_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__stream__subcmd__commit_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help stream commit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__stream__subcmd__receive_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__stream__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help stream receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__stream__subcmd__seek_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__stream__subcmd__seek_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help stream seek commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__topic_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__topic_commands() {
+    local commands; commands=(
+'configure:Configures the number of partitions for a topic' \
+    )
+    _describe -t commands 'diom msgs help topic commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__help__subcmd__topic__subcmd__configure_commands] )) ||
+_diom__subcmd__msgs__subcmd__help__subcmd__topic__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs help topic configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__namespace_commands] )) ||
+_diom__subcmd__msgs__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Creates or updates a msgs namespace with the given name' \
+'get:Gets a msgs namespace by name' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__msgs__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__msgs__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__namespace__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__namespace__subcmd__help_commands() {
+    local commands; commands=(
+'create:Creates or updates a msgs namespace with the given name' \
+'get:Gets a msgs namespace by name' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs namespace help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__namespace__subcmd__help__subcmd__create_commands] )) ||
+_diom__subcmd__msgs__subcmd__namespace__subcmd__help__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs namespace help create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__namespace__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__msgs__subcmd__namespace__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs namespace help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__namespace__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__namespace__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs namespace help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__publish_commands] )) ||
+_diom__subcmd__msgs__subcmd__publish_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs publish commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic as competing consumers' \
+'ack:Acknowledges messages by their opaque msg_ids' \
+'extend-lease:Extends the lease on in-flight messages' \
+'configure:Configures retry and DLQ behavior for a consumer group on a topic' \
+'nack:Rejects messages, sending them to the dead-letter queue' \
+'redrive-dlq:Moves all dead-letter queue messages back to the main queue for reprocessing' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs queue commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__ack_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__ack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue ack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__configure_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__extend-lease_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__extend-lease_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue extend-lease commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic as competing consumers' \
+'ack:Acknowledges messages by their opaque msg_ids' \
+'extend-lease:Extends the lease on in-flight messages' \
+'configure:Configures retry and DLQ behavior for a consumer group on a topic' \
+'nack:Rejects messages, sending them to the dead-letter queue' \
+'redrive-dlq:Moves all dead-letter queue messages back to the main queue for reprocessing' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs queue help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__ack_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__ack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue help ack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__configure_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue help configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__extend-lease_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__extend-lease_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue help extend-lease commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__nack_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__nack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue help nack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__receive_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue help receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__redrive-dlq_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__help__subcmd__redrive-dlq_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue help redrive-dlq commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__nack_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__nack_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue nack commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__receive_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__queue__subcmd__redrive-dlq_commands] )) ||
+_diom__subcmd__msgs__subcmd__queue__subcmd__redrive-dlq_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs queue redrive-dlq commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic using a consumer group' \
+'commit:Commits an offset for a consumer group on a specific partition' \
+'seek:Repositions a consumer group'\''s read cursor on a topic' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs stream commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__commit_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__commit_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs stream commit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__help_commands() {
+    local commands; commands=(
+'receive:Receives messages from a topic using a consumer group' \
+'commit:Commits an offset for a consumer group on a specific partition' \
+'seek:Repositions a consumer group'\''s read cursor on a topic' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs stream help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__commit_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__commit_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs stream help commit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs stream help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__receive_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs stream help receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__seek_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__help__subcmd__seek_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs stream help seek commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__receive_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__receive_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs stream receive commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__stream__subcmd__seek_commands] )) ||
+_diom__subcmd__msgs__subcmd__stream__subcmd__seek_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs stream seek commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__topic_commands] )) ||
+_diom__subcmd__msgs__subcmd__topic_commands() {
+    local commands; commands=(
+'configure:Configures the number of partitions for a topic' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs topic commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__topic__subcmd__configure_commands] )) ||
+_diom__subcmd__msgs__subcmd__topic__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs topic configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__topic__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__topic__subcmd__help_commands() {
+    local commands; commands=(
+'configure:Configures the number of partitions for a topic' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom msgs topic help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__topic__subcmd__help__subcmd__configure_commands] )) ||
+_diom__subcmd__msgs__subcmd__topic__subcmd__help__subcmd__configure_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs topic help configure commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__msgs__subcmd__topic__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__msgs__subcmd__topic__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom msgs topic help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit_commands] )) ||
+_diom__subcmd__rate-limit_commands() {
+    local commands; commands=(
+'namespace:' \
+'limit:Rate Limiter Check and Consume' \
+'get-remaining:Rate Limiter Get Remaining' \
+'reset:Rate Limiter Reset' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom rate-limit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__get-remaining_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__get-remaining_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit get-remaining commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help_commands() {
+    local commands; commands=(
+'namespace:' \
+'limit:Rate Limiter Check and Consume' \
+'get-remaining:Rate Limiter Get Remaining' \
+'reset:Rate Limiter Reset' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom rate-limit help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help__subcmd__get-remaining_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help__subcmd__get-remaining_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit help get-remaining commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help__subcmd__limit_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help__subcmd__limit_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit help limit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help__subcmd__namespace_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create rate limiter namespace' \
+'get:Get rate limiter namespace' \
+    )
+    _describe -t commands 'diom rate-limit help namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit help namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit help namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__help__subcmd__reset_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__help__subcmd__reset_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit help reset commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__limit_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__limit_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit limit commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__namespace_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__namespace_commands() {
+    local commands; commands=(
+'create:Create rate limiter namespace' \
+'get:Get rate limiter namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom rate-limit namespace commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__namespace__subcmd__create_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__namespace__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit namespace create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__namespace__subcmd__get_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__namespace__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit namespace get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help_commands() {
+    local commands; commands=(
+'create:Create rate limiter namespace' \
+'get:Get rate limiter namespace' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom rate-limit namespace help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help__subcmd__create_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit namespace help create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit namespace help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__namespace__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit namespace help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__rate-limit__subcmd__reset_commands] )) ||
+_diom__subcmd__rate-limit__subcmd__reset_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom rate-limit reset commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin_commands] )) ||
+_diom__subcmd__raw-admin_commands() {
+    local commands; commands=(
+'auth-policy:' \
+'auth-role:' \
+'auth-token:' \
+'cluster:' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy_commands() {
+    local commands; commands=(
+'upsert:Create or update an access policy' \
+'delete:Delete an access policy' \
+'get:Get an access policy by ID' \
+'list:List all access policies' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin auth-policy commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__get_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help_commands() {
+    local commands; commands=(
+'upsert:Create or update an access policy' \
+'delete:Delete an access policy' \
+'get:Get an access policy by ID' \
+'list:List all access policies' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin auth-policy help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy help delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy help list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__upsert_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__help__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy help upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__upsert_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-policy__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-policy upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role_commands() {
+    local commands; commands=(
+'upsert:Create or update a role' \
+'delete:Delete a role' \
+'get:Get a role by ID' \
+'list:List all roles' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin auth-role commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__get_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help_commands() {
+    local commands; commands=(
+'upsert:Create or update a role' \
+'delete:Delete a role' \
+'get:Get a role by ID' \
+'list:List all roles' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin auth-role help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role help delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__get_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role help get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role help list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__upsert_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__help__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role help upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__upsert_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-role__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-role upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token_commands() {
+    local commands; commands=(
+'create:Create an auth token' \
+'expire:Expire an auth token' \
+'rotate:Rotate an auth token, invalidating the old one and issuing a new secret' \
+'delete:Delete an auth token' \
+'list:List auth tokens for a given owner' \
+'update:Update an auth token'\''s properties' \
+'whoami:Return the role of the currently authenticated token' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin auth-token commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__create_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__expire_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__expire_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token expire commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help_commands() {
+    local commands; commands=(
+'create:Create an auth token' \
+'expire:Expire an auth token' \
+'rotate:Rotate an auth token, invalidating the old one and issuing a new secret' \
+'delete:Delete an auth token' \
+'list:List auth tokens for a given owner' \
+'update:Update an auth token'\''s properties' \
+'whoami:Return the role of the currently authenticated token' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin auth-token help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__create_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__expire_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__expire_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help expire commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__rotate_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__rotate_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help rotate commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__update_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__update_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help update commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__whoami_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__help__subcmd__whoami_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token help whoami commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__rotate_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__rotate_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token rotate commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__update_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__update_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token update commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__whoami_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__auth-token__subcmd__whoami_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin auth-token whoami commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster_commands() {
+    local commands; commands=(
+'status:Get information about the current cluster' \
+'initialize:Initialize this node as the leader of a new cluster' \
+'remove-node:Remove a node from the cluster' \
+'force-snapshot:Force the cluster to take a snapshot immediately' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin cluster commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__force-snapshot_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__force-snapshot_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster force-snapshot commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help_commands() {
+    local commands; commands=(
+'status:Get information about the current cluster' \
+'initialize:Initialize this node as the leader of a new cluster' \
+'remove-node:Remove a node from the cluster' \
+'force-snapshot:Force the cluster to take a snapshot immediately' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin cluster help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__force-snapshot_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__force-snapshot_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster help force-snapshot commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__initialize_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__initialize_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster help initialize commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__remove-node_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__remove-node_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster help remove-node commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__status_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__help__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster help status commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__initialize_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__initialize_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster initialize commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__remove-node_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__remove-node_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster remove-node commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__cluster__subcmd__status_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__cluster__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin cluster status commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help_commands() {
+    local commands; commands=(
+'auth-policy:' \
+'auth-role:' \
+'auth-token:' \
+'cluster:' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'diom raw-admin help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy_commands() {
+    local commands; commands=(
+'upsert:Create or update an access policy' \
+'delete:Delete an access policy' \
+'get:Get an access policy by ID' \
+'list:List all access policies' \
+    )
+    _describe -t commands 'diom raw-admin help auth-policy commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-policy delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__get_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-policy get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-policy list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__upsert_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-policy__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-policy upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role_commands() {
+    local commands; commands=(
+'upsert:Create or update a role' \
+'delete:Delete a role' \
+'get:Get a role by ID' \
+'list:List all roles' \
+    )
+    _describe -t commands 'diom raw-admin help auth-role commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-role delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__get_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__get_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-role get commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-role list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__upsert_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-role__subcmd__upsert_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-role upsert commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token_commands() {
+    local commands; commands=(
+'create:Create an auth token' \
+'expire:Expire an auth token' \
+'rotate:Rotate an auth token, invalidating the old one and issuing a new secret' \
+'delete:Delete an auth token' \
+'list:List auth tokens for a given owner' \
+'update:Update an auth token'\''s properties' \
+'whoami:Return the role of the currently authenticated token' \
+    )
+    _describe -t commands 'diom raw-admin help auth-token commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__create_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-token create commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__delete_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-token delete commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__expire_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__expire_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-token expire commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__list_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-token list commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__rotate_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__rotate_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-token rotate commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__update_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__update_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-token update commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__whoami_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__auth-token__subcmd__whoami_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help auth-token whoami commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster_commands() {
+    local commands; commands=(
+'status:Get information about the current cluster' \
+'initialize:Initialize this node as the leader of a new cluster' \
+'remove-node:Remove a node from the cluster' \
+'force-snapshot:Force the cluster to take a snapshot immediately' \
+    )
+    _describe -t commands 'diom raw-admin help cluster commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__force-snapshot_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__force-snapshot_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help cluster force-snapshot commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__initialize_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__initialize_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help cluster initialize commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__remove-node_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__remove-node_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help cluster remove-node commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__status_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__cluster__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help cluster status commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__raw-admin__subcmd__help__subcmd__help_commands] )) ||
+_diom__subcmd__raw-admin__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom raw-admin help help commands' commands "$@"
+}
+(( $+functions[_diom__subcmd__version_commands] )) ||
+_diom__subcmd__version_commands() {
+    local commands; commands=()
+    _describe -t commands 'diom version commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_diom" ]; then
+    _diom "$@"
+else
+    compdef _diom diom
+fi

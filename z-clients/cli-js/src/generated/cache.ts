@@ -1,12 +1,15 @@
 // @ts-nocheck
 // this file is @generated
-import { registerCacheNamespaceCommands } from "./cacheNamespace.js";
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import { parseByteString } from "../byte-string.ts";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { CacheSetInSerializer, CacheSetOutSerializer, CacheGetInSerializer, CacheGetOutSerializer, CacheDeleteInSerializer, CacheDeleteOutSerializer } from "@diomhq/diom";
+import { registerCacheNamespaceCommands } from "./cacheNamespace.ts";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -35,7 +38,7 @@ export function registerCacheCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "ttl_ms": "..."
 }`,
           "",
@@ -47,7 +50,7 @@ export function registerCacheCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -60,9 +63,8 @@ export function registerCacheCommands(
       
       
       
-      const cacheSetIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const cacheSetIn = CacheSetInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.cache.set(
@@ -70,7 +72,7 @@ export function registerCacheCommands(
         value,
         cacheSetIn,
       );
-      printJsonOutput(resp);
+      printWireJson(CacheSetOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -84,7 +86,7 @@ export function registerCacheCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "consistency": "..."
 }`,
           "",
@@ -98,7 +100,7 @@ export function registerCacheCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -110,13 +112,13 @@ export function registerCacheCommands(
       const cacheGetIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : CacheGetInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.cache.get(
         key,
         cacheGetIn,
       );
-      printJsonOutput(resp);
+      printWireJson(CacheGetOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -130,7 +132,7 @@ export function registerCacheCommands(
         [
           `Example body:
 {
-  "namespace": "..."
+  "namespace": "some_namespace"
 }`,
           "",
           `Example response:
@@ -142,7 +144,7 @@ export function registerCacheCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -154,13 +156,13 @@ export function registerCacheCommands(
       const cacheDeleteIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : CacheDeleteInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.cache.delete(
         key,
         cacheDeleteIn,
       );
-      printJsonOutput(resp);
+      printWireJson(CacheDeleteOutSerializer._toJsonObject(resp));
     },
   );
   

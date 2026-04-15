@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { MsgQueueReceiveInSerializer, MsgQueueReceiveOutSerializer, MsgQueueAckInSerializer, MsgQueueAckOutSerializer, MsgQueueExtendLeaseInSerializer, MsgQueueExtendLeaseOutSerializer, MsgQueueConfigureInSerializer, MsgQueueConfigureOutSerializer, MsgQueueNackInSerializer, MsgQueueNackOutSerializer, MsgQueueRedriveDlqInSerializer, MsgQueueRedriveDlqOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -30,7 +32,7 @@ are acked or their lease expires.`,
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "batch_size": "...",
   "lease_duration_ms": "...",
   "batch_wait_ms": "..."
@@ -45,7 +47,7 @@ are acked or their lease expires.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -62,14 +64,14 @@ are acked or their lease expires.`,
       const msgQueueReceiveIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : MsgQueueReceiveInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.msgs.queue.receive(
         topic,
         consumerGroup,
         msgQueueReceiveIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgQueueReceiveOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -85,7 +87,7 @@ Acked messages are permanently removed from the queue and will never be re-deliv
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "msg_ids": "..."
 }`,
           "",
@@ -97,7 +99,7 @@ Acked messages are permanently removed from the queue and will never be re-deliv
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -110,9 +112,8 @@ Acked messages are permanently removed from the queue and will never be re-deliv
       
       
       
-      const msgQueueAckIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const msgQueueAckIn = MsgQueueAckInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.msgs.queue.ack(
@@ -120,7 +121,7 @@ Acked messages are permanently removed from the queue and will never be re-deliv
         consumerGroup,
         msgQueueAckIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgQueueAckOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -137,7 +138,7 @@ message from being re-delivered to another consumer.`,
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "msg_ids": "...",
   "lease_duration_ms": "..."
 }`,
@@ -150,7 +151,7 @@ message from being re-delivered to another consumer.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -163,9 +164,8 @@ message from being re-delivered to another consumer.`,
       
       
       
-      const msgQueueExtendLeaseIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const msgQueueExtendLeaseIn = MsgQueueExtendLeaseInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.msgs.queue.extendLease(
@@ -173,7 +173,7 @@ message from being re-delivered to another consumer.`,
         consumerGroup,
         msgQueueExtendLeaseIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgQueueExtendLeaseOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -190,7 +190,7 @@ the message is moved to the DLQ (or forwarded to 'dlq_topic' if set).`,
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "retry_schedule": "...",
   "dlq_topic": "..."
 }`,
@@ -205,7 +205,7 @@ the message is moved to the DLQ (or forwarded to 'dlq_topic' if set).`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -222,14 +222,14 @@ the message is moved to the DLQ (or forwarded to 'dlq_topic' if set).`,
       const msgQueueConfigureIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : MsgQueueConfigureInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.msgs.queue.configure(
         topic,
         consumerGroup,
         msgQueueConfigureIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgQueueConfigureOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -246,7 +246,7 @@ move them back to the queue for reprocessing.`,
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "msg_ids": "..."
 }`,
           "",
@@ -258,7 +258,7 @@ move them back to the queue for reprocessing.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -271,9 +271,8 @@ move them back to the queue for reprocessing.`,
       
       
       
-      const msgQueueNackIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const msgQueueNackIn = MsgQueueNackInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.msgs.queue.nack(
@@ -281,7 +280,7 @@ move them back to the queue for reprocessing.`,
         consumerGroup,
         msgQueueNackIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgQueueNackOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -295,7 +294,7 @@ move them back to the queue for reprocessing.`,
         [
           `Example body:
 {
-  "namespace": "..."
+  "namespace": "some_namespace"
 }`,
           "",
           `Example response:
@@ -306,7 +305,7 @@ move them back to the queue for reprocessing.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -323,14 +322,14 @@ move them back to the queue for reprocessing.`,
       const msgQueueRedriveDlqIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : MsgQueueRedriveDlqInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.msgs.queue.redriveDlq(
         topic,
         consumerGroup,
         msgQueueRedriveDlqIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgQueueRedriveDlqOutSerializer._toJsonObject(resp));
     },
   );
   

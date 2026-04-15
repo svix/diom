@@ -2,16 +2,41 @@
 // this file is @generated
 {% set resource_type_name = resource.name | to_upper_camel_case -%}
 
-{% for _, sub in resource.subresources | items -%}
-import { register{{ sub.name | to_upper_camel_case }}Commands } from "./{{ sub.name | to_lower_camel_case }}.js";
-{% endfor -%}
-import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+{%- set ns = namespace(needs_byte_string=false, needs_raw_json=false, needs_wire_json=false, serializer_imports=[]) -%}
+{%- for op in resource.operations -%}
+  {%- if op.request_body_schema_name is defined -%}
+    {%- set ns.needs_raw_json = true -%}
+    {%- set body_schema_tmp = api.types[op.request_body_schema_name] -%}
+    {%- for field in body_schema_tmp.fields | selectattr("positional") -%}
+      {%- if field.type.is_bytes() -%}
+        {%- set ns.needs_byte_string = true -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- set ns.serializer_imports = ns.serializer_imports + [op.request_body_schema_name | to_upper_camel_case ~ "Serializer"] -%}
+  {%- endif -%}
+  {%- if op.response_body_schema_name is defined -%}
+    {%- set ns.needs_wire_json = true -%}
+    {%- set ns.serializer_imports = ns.serializer_imports + [op.response_body_schema_name | to_upper_camel_case ~ "Serializer"] -%}
+  {%- endif -%}
+{%- endfor %}
 
+import type { Argv } from "yargs";
+{% if ns.needs_byte_string -%}
+import { parseByteString } from "../byte-string.ts";
+{% endif -%}
+import type { IoContext } from "../io.ts";
+{% if ns.needs_raw_json -%}
+import { readJsonArg } from "../json-arg.ts";
+{% endif -%}
+{% if ns.needs_wire_json -%}
+import { printWireJson } from "../print-json.ts";
+{% endif -%}
+{% if ns.serializer_imports | unique | list | length > 0 -%}
+import { {{ ns.serializer_imports | unique | join(", ") }} } from "@diomhq/diom";
+{% endif -%}
+{% for _, sub in resource.subresources | items -%}
+import { register{{ sub.name | to_upper_camel_case }}Commands } from "./{{ sub.name | to_lower_camel_case }}.ts";
+{% endfor %}
 {%- macro plain_schema_example(title, schema) %}
 {{ title }}:
 {
@@ -56,6 +81,7 @@ export function register{{ resource_type_name }}Commands(
   {% set usage -%}
 {{ op.name | replace("_", "-") }}{% for field in positional_fields %} <{{ field.name | replace("_", "-") }}>{% endfor %}{% if body_schema_all_optional %} [body]{% else %} <body>{% endif %}
   {%- endset %}
+  {% set body_serializer = op.request_body_schema_name | to_upper_camel_case ~ "Serializer" -%}
   y.command(
     `{{ usage | trim }}`,
     `{% if op.deprecated %}[deprecated] {% endif %}{{ op.description | default("", true) | replace("`", "'") }}`,
@@ -78,7 +104,7 @@ export function register{{ resource_type_name }}Commands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       {%- for field in positional_fields %}
       {% if field.type.is_bytes() %}
       const {{ field.name | to_lower_camel_case }} = parseByteString(
@@ -96,27 +122,27 @@ export function register{{ resource_type_name }}Commands(
       const {{ body_param }} =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : {{ body_serializer }}._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       {% else %}
-      const {{ body_param }} = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const {{ body_param }} = {{ body_serializer }}._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       {% endif %}
       {%- if op.response_body_schema_name is defined %}
+      {% set resp_serializer = op.response_body_schema_name | to_upper_camel_case ~ "Serializer" -%}
       const resp = await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}(
         {% for field in positional_fields -%}
         {{ field.name | to_lower_camel_case }},
         {% endfor -%}
-        {{ op.request_body_schema_name | to_lower_camel_case }},
+        {{ body_param }},
       );
-      printJsonOutput(resp);
+      printWireJson({{ resp_serializer }}._toJsonObject(resp));
       {%- else %}
       await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}(
         {% for field in positional_fields -%}
         {{ field.name | to_lower_camel_case }},
         {% endfor -%}
-        {{ op.request_body_schema_name | to_lower_camel_case }},
+        {{ body_param }},
       );
       {%- endif %}
     },
@@ -133,11 +159,12 @@ export function register{{ resource_type_name }}Commands(
       {%- endif %}
       return cmdY;
     },
-    async (argv) => {
-      const client = getCliDiom(io);
+    async (_argv) => {
+      const client = io.diom;
       {%- if op.response_body_schema_name is defined %}
+      {% set resp_serializer = op.response_body_schema_name | to_upper_camel_case ~ "Serializer" -%}
       const resp = await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}();
-      printJsonOutput(resp);
+      printWireJson({{ resp_serializer }}._toJsonObject(resp));
       {%- else %}
       await client{{ diom_chain(resource) }}.{{ op.name | to_lower_camel_case }}();
       {%- endif %}

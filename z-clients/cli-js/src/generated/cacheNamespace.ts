@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { CacheConfigureNamespaceInSerializer, CacheConfigureNamespaceOutSerializer, CacheGetNamespaceInSerializer, CacheGetNamespaceOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -19,20 +21,20 @@ export function registerCacheNamespaceCommands(
   
   
   y.command(
-    `create <body>`,
-    `Create cache namespace`,
+    `configure <body>`,
+    `Configure cache namespace`,
     (cmdY) => {
       cmdY.epilog(
         [
           `Example body:
 {
-  "name": "...",
+  "name": "some_namespace",
   "eviction_policy": "..."
 }`,
           "",
           `Example response:
 {
-  "name": "...",
+  "name": "some_namespace",
   "eviction_policy": "...",
   "created": "...",
   "updated": "..."
@@ -42,18 +44,17 @@ export function registerCacheNamespaceCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const cacheCreateNamespaceIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const cacheConfigureNamespaceIn = CacheConfigureNamespaceInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
-      const resp = await client.cache.namespace.create(
-        cacheCreateNamespaceIn,
+      const resp = await client.cache.namespace.configure(
+        cacheConfigureNamespaceIn,
       );
-      printJsonOutput(resp);
+      printWireJson(CacheConfigureNamespaceOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -67,12 +68,12 @@ export function registerCacheNamespaceCommands(
         [
           `Example body:
 {
-  "name": "..."
+  "name": "some_namespace"
 }`,
           "",
           `Example response:
 {
-  "name": "...",
+  "name": "some_namespace",
   "eviction_policy": "...",
   "created": "...",
   "updated": "..."
@@ -82,18 +83,17 @@ export function registerCacheNamespaceCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const cacheGetNamespaceIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const cacheGetNamespaceIn = CacheGetNamespaceInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.cache.namespace.get(
         cacheGetNamespaceIn,
       );
-      printJsonOutput(resp);
+      printWireJson(CacheGetNamespaceOutSerializer._toJsonObject(resp));
     },
   );
   

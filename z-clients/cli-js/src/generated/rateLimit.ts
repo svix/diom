@@ -1,12 +1,14 @@
 // @ts-nocheck
 // this file is @generated
-import { registerRateLimitNamespaceCommands } from "./rateLimitNamespace.js";
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { RateLimitCheckInSerializer, RateLimitCheckOutSerializer, RateLimitGetRemainingInSerializer, RateLimitGetRemainingOutSerializer, RateLimitResetInSerializer, RateLimitResetOutSerializer } from "@diomhq/diom";
+import { registerRateLimitNamespaceCommands } from "./rateLimitNamespace.ts";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -35,7 +37,7 @@ export function registerRateLimitCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "key": "some_key",
   "tokens": "...",
   "config": "..."
@@ -52,18 +54,17 @@ export function registerRateLimitCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const rateLimitCheckIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const rateLimitCheckIn = RateLimitCheckInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.rateLimit.limit(
         rateLimitCheckIn,
       );
-      printJsonOutput(resp);
+      printWireJson(RateLimitCheckOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -77,7 +78,7 @@ export function registerRateLimitCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "key": "some_key",
   "config": "..."
 }`,
@@ -92,18 +93,17 @@ export function registerRateLimitCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const rateLimitGetRemainingIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const rateLimitGetRemainingIn = RateLimitGetRemainingInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.rateLimit.getRemaining(
         rateLimitGetRemainingIn,
       );
-      printJsonOutput(resp);
+      printWireJson(RateLimitGetRemainingOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -117,7 +117,7 @@ export function registerRateLimitCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "key": "some_key",
   "config": "..."
 }`,
@@ -130,18 +130,17 @@ export function registerRateLimitCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const rateLimitResetIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const rateLimitResetIn = RateLimitResetInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.rateLimit.reset(
         rateLimitResetIn,
       );
-      printJsonOutput(resp);
+      printWireJson(RateLimitResetOutSerializer._toJsonObject(resp));
     },
   );
   

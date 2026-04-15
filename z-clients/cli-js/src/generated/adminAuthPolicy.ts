@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { AdminAccessPolicyConfigureInSerializer, AdminAccessPolicyConfigureOutSerializer, AdminAccessPolicyDeleteInSerializer, AdminAccessPolicyDeleteOutSerializer, AdminAccessPolicyGetInSerializer, AdminAccessPolicyOutSerializer, AdminAccessPolicyListInSerializer, ListResponseAdminAccessPolicyOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -19,7 +21,7 @@ export function registerAdminAuthPolicyCommands(
   
   
   y.command(
-    `upsert <body>`,
+    `configure <body>`,
     `Create or update an access policy`,
     (cmdY) => {
       cmdY.epilog(
@@ -42,18 +44,17 @@ export function registerAdminAuthPolicyCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAccessPolicyUpsertIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAccessPolicyConfigureIn = AdminAccessPolicyConfigureInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
-      const resp = await client.admin.authPolicy.upsert(
-        adminAccessPolicyUpsertIn,
+      const resp = await client.admin.authPolicy.configure(
+        adminAccessPolicyConfigureIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAccessPolicyConfigureOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -79,18 +80,17 @@ export function registerAdminAuthPolicyCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAccessPolicyDeleteIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAccessPolicyDeleteIn = AdminAccessPolicyDeleteInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.admin.authPolicy.delete(
         adminAccessPolicyDeleteIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAccessPolicyDeleteOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -120,18 +120,17 @@ export function registerAdminAuthPolicyCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAccessPolicyGetIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAccessPolicyGetIn = AdminAccessPolicyGetInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.admin.authPolicy.get(
         adminAccessPolicyGetIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAccessPolicyOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -161,19 +160,19 @@ export function registerAdminAuthPolicyCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
       const bodyRaw = argv.body as string | undefined;
       const adminAccessPolicyListIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : AdminAccessPolicyListInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.admin.authPolicy.list(
         adminAccessPolicyListIn,
       );
-      printJsonOutput(resp);
+      printWireJson(ListResponseAdminAccessPolicyOutSerializer._toJsonObject(resp));
     },
   );
   

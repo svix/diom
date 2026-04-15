@@ -1,12 +1,14 @@
 // @ts-nocheck
 // this file is @generated
-import { registerIdempotencyNamespaceCommands } from "./idempotencyNamespace.js";
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { IdempotencyStartInSerializer, IdempotencyStartOutSerializer, IdempotencyCompleteInSerializer, IdempotencyCompleteOutSerializer, IdempotencyAbortInSerializer, IdempotencyAbortOutSerializer } from "@diomhq/diom";
+import { registerIdempotencyNamespaceCommands } from "./idempotencyNamespace.ts";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -35,7 +37,7 @@ export function registerIdempotencyCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "lock_period_ms": "..."
 }`,
           "",
@@ -47,7 +49,7 @@ export function registerIdempotencyCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -55,16 +57,15 @@ export function registerIdempotencyCommands(
       
       
       
-      const idempotencyStartIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const idempotencyStartIn = IdempotencyStartInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.idempotency.start(
         key,
         idempotencyStartIn,
       );
-      printJsonOutput(resp);
+      printWireJson(IdempotencyStartOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -78,7 +79,7 @@ export function registerIdempotencyCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "response": "...",
   "context": "...",
   "ttl_ms": "..."
@@ -92,7 +93,7 @@ export function registerIdempotencyCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -100,16 +101,15 @@ export function registerIdempotencyCommands(
       
       
       
-      const idempotencyCompleteIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const idempotencyCompleteIn = IdempotencyCompleteInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.idempotency.complete(
         key,
         idempotencyCompleteIn,
       );
-      printJsonOutput(resp);
+      printWireJson(IdempotencyCompleteOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -123,7 +123,7 @@ export function registerIdempotencyCommands(
         [
           `Example body:
 {
-  "namespace": "..."
+  "namespace": "some_namespace"
 }`,
           "",
           `Example response:
@@ -134,7 +134,7 @@ export function registerIdempotencyCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -146,13 +146,13 @@ export function registerIdempotencyCommands(
       const idempotencyAbortIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : IdempotencyAbortInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.idempotency.abort(
         key,
         idempotencyAbortIn,
       );
-      printJsonOutput(resp);
+      printWireJson(IdempotencyAbortOutSerializer._toJsonObject(resp));
     },
   );
   

@@ -1,12 +1,15 @@
 // @ts-nocheck
 // this file is @generated
-import { registerKvNamespaceCommands } from "./kvNamespace.js";
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import { parseByteString } from "../byte-string.ts";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { KvSetInSerializer, KvSetOutSerializer, KvGetInSerializer, KvGetOutSerializer, KvDeleteInSerializer, KvDeleteOutSerializer } from "@diomhq/diom";
+import { registerKvNamespaceCommands } from "./kvNamespace.ts";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -35,7 +38,7 @@ export function registerKvCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "ttl_ms": "...",
   "behavior": "...",
   "version": "..."
@@ -51,7 +54,7 @@ export function registerKvCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -68,14 +71,14 @@ export function registerKvCommands(
       const kvSetIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : KvSetInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.kv.set(
         key,
         value,
         kvSetIn,
       );
-      printJsonOutput(resp);
+      printWireJson(KvSetOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -89,7 +92,7 @@ export function registerKvCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "consistency": "..."
 }`,
           "",
@@ -104,7 +107,7 @@ export function registerKvCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -116,13 +119,13 @@ export function registerKvCommands(
       const kvGetIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : KvGetInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.kv.get(
         key,
         kvGetIn,
       );
-      printJsonOutput(resp);
+      printWireJson(KvGetOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -136,7 +139,7 @@ export function registerKvCommands(
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "version": "..."
 }`,
           "",
@@ -149,7 +152,7 @@ export function registerKvCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const key = String(
         argv["key"],
@@ -161,13 +164,13 @@ export function registerKvCommands(
       const kvDeleteIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : KvDeleteInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.kv.delete(
         key,
         kvDeleteIn,
       );
-      printJsonOutput(resp);
+      printWireJson(KvDeleteOutSerializer._toJsonObject(resp));
     },
   );
   

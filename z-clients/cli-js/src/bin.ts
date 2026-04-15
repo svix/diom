@@ -1,22 +1,21 @@
 #!/usr/bin/env node
-import { runCli } from "./program.js";
-import type { IoContext } from "./io.js";
+import type { IoContext } from './io.ts'
+import { runCli } from './run-cli.ts'
 
 async function readStdinAll(): Promise<string> {
   if (process.stdin.isTTY) {
-    return "";
+    return ''
   }
-  const chunks: Buffer[] = [];
+  const chunks: Buffer[] = []
   for await (const chunk of process.stdin) {
-    chunks.push(chunk as Buffer);
+    chunks.push(chunk as Buffer)
   }
-  return Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks).toString('utf8')
 }
 
 const io: IoContext = {
   readStdin: readStdinAll,
-  fetch: globalThis.fetch,
-};
+}
 
-const code = await runCli(process.argv.slice(2), io);
-process.exit(code);
+const code = await runCli(process.argv.slice(2), io)
+process.exit(code)

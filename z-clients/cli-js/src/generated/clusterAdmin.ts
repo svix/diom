@@ -1,16 +1,18 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { ClusterStatusOutSerializer, ClusterInitializeInSerializer, ClusterInitializeOutSerializer, ClusterRemoveNodeInSerializer, ClusterRemoveNodeOutSerializer, ClusterForceSnapshotInSerializer, ClusterForceSnapshotOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
  */
-export function registerAdminClusterCommands(
+export function registerClusterAdminCommands(
   y: Argv,
   io: IoContext,
 ): Argv {
@@ -35,10 +37,10 @@ export function registerAdminClusterCommands(
       );
       return cmdY;
     },
-    async (argv) => {
-      const client = getCliDiom(io);
-      const resp = await client.admin.cluster.status();
-      printJsonOutput(resp);
+    async (_argv) => {
+      const client = io.diom;
+      const resp = await client.clusterAdmin.status();
+      printWireJson(ClusterStatusOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -66,19 +68,19 @@ initialized and is not currently a member of a cluster.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
       const bodyRaw = argv.body as string | undefined;
       const clusterInitializeIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : ClusterInitializeInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
-      const resp = await client.admin.cluster.initialize(
+      const resp = await client.clusterAdmin.initialize(
         clusterInitializeIn,
       );
-      printJsonOutput(resp);
+      printWireJson(ClusterInitializeOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -107,18 +109,17 @@ before it can safely be added to the cluster.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const clusterRemoveNodeIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const clusterRemoveNodeIn = ClusterRemoveNodeInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
-      const resp = await client.admin.cluster.removeNode(
+      const resp = await client.clusterAdmin.removeNode(
         clusterRemoveNodeIn,
       );
-      printJsonOutput(resp);
+      printWireJson(ClusterRemoveNodeOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -145,19 +146,19 @@ before it can safely be added to the cluster.`,
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
       const bodyRaw = argv.body as string | undefined;
       const clusterForceSnapshotIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : ClusterForceSnapshotInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
-      const resp = await client.admin.cluster.forceSnapshot(
+      const resp = await client.clusterAdmin.forceSnapshot(
         clusterForceSnapshotIn,
       );
-      printJsonOutput(resp);
+      printWireJson(ClusterForceSnapshotOutSerializer._toJsonObject(resp));
     },
   );
   

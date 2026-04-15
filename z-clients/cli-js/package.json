@@ -13,8 +13,9 @@
     "check": "biome check ."
   },
   "dependencies": {
-    "diom": "file:../javascript",
+    "@diomhq/diom": "^0.1.0",
     "smol-toml": "^1.4.2",
+    "string-argv": "^0.3.2",
     "yargs": "^17.7.2"
   },
   "devDependencies": {

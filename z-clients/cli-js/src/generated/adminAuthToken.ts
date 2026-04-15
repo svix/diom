@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { AdminAuthTokenCreateInSerializer, AdminAuthTokenCreateOutSerializer, AdminAuthTokenExpireInSerializer, AdminAuthTokenExpireOutSerializer, AdminAuthTokenRotateInSerializer, AdminAuthTokenRotateOutSerializer, AdminAuthTokenDeleteInSerializer, AdminAuthTokenDeleteOutSerializer, AdminAuthTokenListInSerializer, ListResponseAdminAuthTokenOutSerializer, AdminAuthTokenUpdateInSerializer, AdminAuthTokenUpdateOutSerializer, AdminAuthTokenWhoamiInSerializer, AdminAuthTokenWhoamiOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -44,18 +46,17 @@ export function registerAdminAuthTokenCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAuthTokenCreateIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAuthTokenCreateIn = AdminAuthTokenCreateInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.admin.authToken.create(
         adminAuthTokenCreateIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAuthTokenCreateOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -81,18 +82,17 @@ export function registerAdminAuthTokenCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAuthTokenExpireIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAuthTokenExpireIn = AdminAuthTokenExpireInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.admin.authToken.expire(
         adminAuthTokenExpireIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAuthTokenExpireOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -121,18 +121,17 @@ export function registerAdminAuthTokenCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAuthTokenRotateIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAuthTokenRotateIn = AdminAuthTokenRotateInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.admin.authToken.rotate(
         adminAuthTokenRotateIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAuthTokenRotateOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -158,18 +157,17 @@ export function registerAdminAuthTokenCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAuthTokenDeleteIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAuthTokenDeleteIn = AdminAuthTokenDeleteInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.admin.authToken.delete(
         adminAuthTokenDeleteIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAuthTokenDeleteOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -199,19 +197,19 @@ export function registerAdminAuthTokenCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
       const bodyRaw = argv.body as string | undefined;
       const adminAuthTokenListIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : AdminAuthTokenListInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.admin.authToken.list(
         adminAuthTokenListIn,
       );
-      printJsonOutput(resp);
+      printWireJson(ListResponseAdminAuthTokenOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -239,18 +237,17 @@ export function registerAdminAuthTokenCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const adminAuthTokenUpdateIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const adminAuthTokenUpdateIn = AdminAuthTokenUpdateInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.admin.authToken.update(
         adminAuthTokenUpdateIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAuthTokenUpdateOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -275,19 +272,19 @@ export function registerAdminAuthTokenCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
       const bodyRaw = argv.body as string | undefined;
       const adminAuthTokenWhoamiIn =
         bodyRaw === undefined
           ? {}
-          : await parseJsonArg(bodyRaw, io.readStdin);
+          : AdminAuthTokenWhoamiInSerializer._fromJsonObject(await readJsonArg(bodyRaw, io.readStdin));
       
       const resp = await client.admin.authToken.whoami(
         adminAuthTokenWhoamiIn,
       );
-      printJsonOutput(resp);
+      printWireJson(AdminAuthTokenWhoamiOutSerializer._toJsonObject(resp));
     },
   );
   

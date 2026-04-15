@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { IdempotencyConfigureNamespaceInSerializer, IdempotencyConfigureNamespaceOutSerializer, IdempotencyGetNamespaceInSerializer, IdempotencyGetNamespaceOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -19,19 +21,19 @@ export function registerIdempotencyNamespaceCommands(
   
   
   y.command(
-    `create <body>`,
-    `Create idempotency namespace`,
+    `configure <body>`,
+    `Configure idempotency namespace`,
     (cmdY) => {
       cmdY.epilog(
         [
           `Example body:
 {
-  "name": "..."
+  "name": "some_namespace"
 }`,
           "",
           `Example response:
 {
-  "name": "...",
+  "name": "some_namespace",
   "created": "...",
   "updated": "..."
 }`,
@@ -40,18 +42,17 @@ export function registerIdempotencyNamespaceCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const idempotencyCreateNamespaceIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const idempotencyConfigureNamespaceIn = IdempotencyConfigureNamespaceInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
-      const resp = await client.idempotency.namespace.create(
-        idempotencyCreateNamespaceIn,
+      const resp = await client.idempotency.namespace.configure(
+        idempotencyConfigureNamespaceIn,
       );
-      printJsonOutput(resp);
+      printWireJson(IdempotencyConfigureNamespaceOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -65,12 +66,12 @@ export function registerIdempotencyNamespaceCommands(
         [
           `Example body:
 {
-  "name": "..."
+  "name": "some_namespace"
 }`,
           "",
           `Example response:
 {
-  "name": "...",
+  "name": "some_namespace",
   "created": "...",
   "updated": "..."
 }`,
@@ -79,18 +80,17 @@ export function registerIdempotencyNamespaceCommands(
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       
-      const idempotencyGetNamespaceIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const idempotencyGetNamespaceIn = IdempotencyGetNamespaceInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.idempotency.namespace.get(
         idempotencyGetNamespaceIn,
       );
-      printJsonOutput(resp);
+      printWireJson(IdempotencyGetNamespaceOutSerializer._toJsonObject(resp));
     },
   );
   

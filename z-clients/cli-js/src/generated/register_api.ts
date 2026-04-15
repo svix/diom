@@ -1,41 +1,41 @@
 // this file is @generated
 
 
-export { registerAdminCommands } from "./admin.js";
-export { registerAdminAuthPolicyCommands } from "./adminAuthPolicy.js";
+export { registerAdminCommands } from "./admin.ts";
+export { registerAdminAuthPolicyCommands } from "./adminAuthPolicy.ts";
 
-export { registerAdminAuthRoleCommands } from "./adminAuthRole.js";
+export { registerAdminAuthRoleCommands } from "./adminAuthRole.ts";
 
-export { registerAdminAuthTokenCommands } from "./adminAuthToken.js";
-
-export { registerAdminClusterCommands } from "./adminCluster.js";
+export { registerAdminAuthTokenCommands } from "./adminAuthToken.ts";
 
 
-export { registerCacheCommands } from "./cache.js";
-export { registerCacheNamespaceCommands } from "./cacheNamespace.js";
+export { registerCacheCommands } from "./cache.ts";
+export { registerCacheNamespaceCommands } from "./cacheNamespace.ts";
 
 
-export { registerHealthCommands } from "./health.js";
+export { registerClusterAdminCommands } from "./clusterAdmin.ts";
 
-export { registerIdempotencyCommands } from "./idempotency.js";
-export { registerIdempotencyNamespaceCommands } from "./idempotencyNamespace.js";
+export { registerHealthCommands } from "./health.ts";
 
-
-export { registerKvCommands } from "./kv.js";
-export { registerKvNamespaceCommands } from "./kvNamespace.js";
+export { registerIdempotencyCommands } from "./idempotency.ts";
+export { registerIdempotencyNamespaceCommands } from "./idempotencyNamespace.ts";
 
 
-export { registerMsgsCommands } from "./msgs.js";
-export { registerMsgsNamespaceCommands } from "./msgsNamespace.js";
-
-export { registerMsgsQueueCommands } from "./msgsQueue.js";
-
-export { registerMsgsStreamCommands } from "./msgsStream.js";
-
-export { registerMsgsTopicCommands } from "./msgsTopic.js";
+export { registerKvCommands } from "./kv.ts";
+export { registerKvNamespaceCommands } from "./kvNamespace.ts";
 
 
-export { registerRateLimitCommands } from "./rateLimit.js";
-export { registerRateLimitNamespaceCommands } from "./rateLimitNamespace.js";
+export { registerMsgsCommands } from "./msgs.ts";
+export { registerMsgsNamespaceCommands } from "./msgsNamespace.ts";
+
+export { registerMsgsQueueCommands } from "./msgsQueue.ts";
+
+export { registerMsgsStreamCommands } from "./msgsStream.ts";
+
+export { registerMsgsTopicCommands } from "./msgsTopic.ts";
+
+
+export { registerRateLimitCommands } from "./rateLimit.ts";
+export { registerRateLimitNamespaceCommands } from "./rateLimitNamespace.ts";
 
 

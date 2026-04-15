@@ -1,11 +1,13 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { readJsonArg } from "../json-arg.ts";
+import { printWireJson } from "../print-json.ts";
+import { MsgTopicConfigureInSerializer, MsgTopicConfigureOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -28,7 +30,7 @@ Partition count can only be increased, never decreased. The default for a new to
         [
           `Example body:
 {
-  "namespace": "...",
+  "namespace": "some_namespace",
   "partitions": "..."
 }`,
           "",
@@ -41,7 +43,7 @@ Partition count can only be increased, never decreased. The default for a new to
       return cmdY;
     },
     async (argv) => {
-      const client = getCliDiom(io);
+      const client = io.diom;
       
       const topic = String(
         argv["topic"],
@@ -49,16 +51,15 @@ Partition count can only be increased, never decreased. The default for a new to
       
       
       
-      const msgTopicConfigureIn = await parseJsonArg(
-        String(argv.body),
-        io.readStdin,
+      const msgTopicConfigureIn = MsgTopicConfigureInSerializer._fromJsonObject(
+        await readJsonArg(String(argv.body), io.readStdin),
       );
       
       const resp = await client.msgs.topic.configure(
         topic,
         msgTopicConfigureIn,
       );
-      printJsonOutput(resp);
+      printWireJson(MsgTopicConfigureOutSerializer._toJsonObject(resp));
     },
   );
   

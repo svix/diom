@@ -1,11 +1,12 @@
 // @ts-nocheck
 // this file is @generated
+
+
 import type { Argv } from "yargs";
-import type { IoContext } from "../io.js";
-import { getCliDiom } from "../diom-holder.js";
-import { parseByteString } from "../byte-string.js";
-import { parseJsonArg } from "../json-arg.js";
-import { printJsonOutput } from "../print-json.js";
+import type { IoContext } from "../io.ts";
+import { printWireJson } from "../print-json.ts";
+import { PingOutSerializer } from "@diomhq/diom";
+
 
 /**
  * Register CLI commands for this API resource (nested yargs commands; same shape as the Rust diom-cli).
@@ -29,10 +30,10 @@ export function registerHealthCommands(
       );
       return cmdY;
     },
-    async (argv) => {
-      const client = getCliDiom(io);
+    async (_argv) => {
+      const client = io.diom;
       const resp = await client.health.ping();
-      printJsonOutput(resp);
+      printWireJson(PingOutSerializer._toJsonObject(resp));
     },
   );
   
@@ -43,8 +44,8 @@ export function registerHealthCommands(
     (cmdY) => {
       return cmdY;
     },
-    async (argv) => {
-      const client = getCliDiom(io);
+    async (_argv) => {
+      const client = io.diom;
       await client.health.error();
     },
   );
