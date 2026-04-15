@@ -1,18 +1,18 @@
 // this file is @generated
 use crate::{Configuration, error::Result, models::*};
 
-pub struct AdminCluster<'a> {
+pub struct ClusterAdmin<'a> {
     cfg: &'a Configuration,
 }
 
-impl<'a> AdminCluster<'a> {
+impl<'a> ClusterAdmin<'a> {
     pub(super) fn new(cfg: &'a Configuration) -> Self {
         Self { cfg }
     }
 
     /// Get information about the current cluster
     pub async fn status(&self) -> Result<ClusterStatusOut> {
-        crate::request::Request::new(http::Method::GET, "/api/v1.admin.cluster.status")
+        crate::request::Request::new(http::Method::GET, "/api/v1.cluster-admin.status")
             .execute(self.cfg)
             .await
     }
@@ -25,7 +25,7 @@ impl<'a> AdminCluster<'a> {
         &self,
         cluster_initialize_in: ClusterInitializeIn,
     ) -> Result<ClusterInitializeOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.admin.cluster.initialize")
+        crate::request::Request::new(http::Method::POST, "/api/v1.cluster-admin.initialize")
             .with_body(cluster_initialize_in)
             .execute(self.cfg)
             .await
@@ -39,7 +39,7 @@ impl<'a> AdminCluster<'a> {
         &self,
         cluster_remove_node_in: ClusterRemoveNodeIn,
     ) -> Result<ClusterRemoveNodeOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.admin.cluster.remove-node")
+        crate::request::Request::new(http::Method::POST, "/api/v1.cluster-admin.remove-node")
             .with_body(cluster_remove_node_in)
             .execute(self.cfg)
             .await
@@ -50,7 +50,7 @@ impl<'a> AdminCluster<'a> {
         &self,
         cluster_force_snapshot_in: ClusterForceSnapshotIn,
     ) -> Result<ClusterForceSnapshotOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.admin.cluster.force-snapshot")
+        crate::request::Request::new(http::Method::POST, "/api/v1.cluster-admin.force-snapshot")
             .with_body(cluster_force_snapshot_in)
             .execute(self.cfg)
             .await

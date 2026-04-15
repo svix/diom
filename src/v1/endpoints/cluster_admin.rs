@@ -111,7 +111,7 @@ struct PartialNodeStatus {
 }
 
 /// Get information about the current cluster
-#[aide_annotate(op_id = "v1.admin.cluster.status")]
+#[aide_annotate(op_id = "v1.cluster-admin.status")]
 async fn cluster_status(
     State(app_state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -210,7 +210,7 @@ struct ClusterInitializeOut {
 ///
 /// This operation may only be performed against a node which has not been
 /// initialized and is not currently a member of a cluster.
-#[aide_annotate(op_id = "v1.admin.cluster.initialize")]
+#[aide_annotate(op_id = "v1.cluster-admin.initialize")]
 async fn cluster_initialize(
     State(app_state): State<AppState>,
     Extension(repl): Extension<RaftState>,
@@ -248,7 +248,7 @@ struct ClusterRemoveNodeOut {
 ///
 /// This operation executes immediately and the node must be wiped and reset
 /// before it can safely be added to the cluster.
-#[aide_annotate(op_id = "v1.admin.cluster.remove-node")]
+#[aide_annotate(op_id = "v1.cluster-admin.remove-node")]
 async fn cluster_remove_node(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<ClusterRemoveNodeIn>,
@@ -301,7 +301,7 @@ async fn wait_for_snapshot_to_update(
 }
 
 /// Force the cluster to take a snapshot immediately
-#[aide_annotate(op_id = "v1.admin.cluster.force-snapshot")]
+#[aide_annotate(op_id = "v1.cluster-admin.force-snapshot")]
 async fn cluster_force_snapshot(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(_data): MsgPackOrJson<ClusterForceSnapshotIn>,
@@ -345,7 +345,7 @@ async fn cluster_force_snapshot(
 }
 
 pub fn router() -> ApiRouter<AppState> {
-    let tag = openapi_tag("Admin");
+    let tag = openapi_tag("ClusterAdmin");
 
     ApiRouter::new()
         .api_route_with(

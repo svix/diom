@@ -5,6 +5,8 @@ from .apis import (
     AdminAsync,
     Cache,
     CacheAsync,
+    ClusterAdmin,
+    ClusterAdminAsync,
     Health,
     HealthAsync,
     Idempotency,
@@ -28,6 +30,10 @@ class Diom(ClientBase):
     @property
     def cache(self) -> Cache:
         return Cache(self._client)
+
+    @property
+    def cluster_admin(self) -> ClusterAdmin:
+        return ClusterAdmin(self._client)
 
     @property
     def health(self) -> Health:
@@ -58,6 +64,10 @@ class DiomAsync(ClientBase):
     @property
     def cache(self) -> CacheAsync:
         return CacheAsync(self._client)
+
+    @property
+    def cluster_admin(self) -> ClusterAdminAsync:
+        return ClusterAdminAsync(self._client)
 
     @property
     def health(self) -> HealthAsync:

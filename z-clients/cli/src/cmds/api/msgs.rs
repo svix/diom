@@ -13,6 +13,7 @@ pub struct MsgsArgs {
     pub command: MsgsCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum MsgsCommands {
     Namespace(MsgsNamespaceArgs),

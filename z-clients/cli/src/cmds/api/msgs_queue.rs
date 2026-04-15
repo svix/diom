@@ -12,6 +12,7 @@ pub struct MsgsQueueArgs {
     pub command: MsgsQueueCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum MsgsQueueCommands {
     /// Receives messages from a topic as competing consumers.

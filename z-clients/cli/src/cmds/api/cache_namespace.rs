@@ -12,6 +12,7 @@ pub struct CacheNamespaceArgs {
     pub command: CacheNamespaceCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum CacheNamespaceCommands {
     /// Configure cache namespace

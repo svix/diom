@@ -12,6 +12,7 @@ pub struct IdempotencyNamespaceArgs {
     pub command: IdempotencyNamespaceCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum IdempotencyNamespaceCommands {
     /// Configure idempotency namespace

@@ -47,7 +47,7 @@ impl ClusterCommands {
 }
 
 async fn print_status(json: bool, client: &DiomClient) -> anyhow::Result<()> {
-    let raw_status = client.admin().cluster().status().await?;
+    let raw_status = client.cluster_admin().status().await?;
     if json {
         return crate::json::print_json_output(&raw_status);
     }
@@ -143,7 +143,7 @@ async fn print_status(json: bool, client: &DiomClient) -> anyhow::Result<()> {
 }
 
 async fn remove_node(args: RemoveNodeArgs, client: &DiomClient) -> anyhow::Result<()> {
-    let status = client.admin().cluster().status().await?;
+    let status = client.cluster_admin().status().await?;
     let Some(node) = status.nodes.iter().find(|n| n.node_id == args.node_id) else {
         anyhow::bail!("unable to find node {}", args.node_id);
     };
@@ -161,8 +161,7 @@ async fn remove_node(args: RemoveNodeArgs, client: &DiomClient) -> anyhow::Resul
         "removing node"
     );
     client
-        .admin()
-        .cluster()
+        .cluster_admin()
         .remove_node(ClusterRemoveNodeIn {
             node_id: args.node_id,
         })
@@ -172,8 +171,7 @@ async fn remove_node(args: RemoveNodeArgs, client: &DiomClient) -> anyhow::Resul
 
 async fn initialize(client: &DiomClient) -> anyhow::Result<()> {
     match client
-        .admin()
-        .cluster()
+        .cluster_admin()
         .initialize(ClusterInitializeIn::default())
         .await
     {

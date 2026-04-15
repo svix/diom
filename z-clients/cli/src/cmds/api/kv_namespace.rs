@@ -12,6 +12,7 @@ pub struct KvNamespaceArgs {
     pub command: KvNamespaceCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum KvNamespaceCommands {
     /// Configure KV namespace

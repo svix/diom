@@ -5,7 +5,7 @@ use diom::DiomClient;
 #[allow(unused)]
 use crate::prelude::*;
 
-use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs, AdminClusterArgs};
+use super::{AdminAuthPolicyArgs, AdminAuthRoleArgs, AdminAuthTokenArgs};
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
 pub struct AdminArgs {
@@ -13,12 +13,12 @@ pub struct AdminArgs {
     pub command: AdminCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum AdminCommands {
     AuthPolicy(AdminAuthPolicyArgs),
     AuthRole(AdminAuthRoleArgs),
     AuthToken(AdminAuthTokenArgs),
-    Cluster(AdminClusterArgs),
 }
 
 impl AdminCommands {
@@ -31,9 +31,6 @@ impl AdminCommands {
                 args.command.exec(client).await?;
             }
             Self::AuthToken(args) => {
-                args.command.exec(client).await?;
-            }
-            Self::Cluster(args) => {
                 args.command.exec(client).await?;
             }
         }

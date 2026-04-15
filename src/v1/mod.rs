@@ -12,6 +12,7 @@ pub fn router(state: Option<AppState>) -> ApiRouter<AppState> {
         ApiRouter::new().merge(endpoints::health::router());
 
     let mut authenticated_router: ApiRouter<AppState> = ApiRouter::new()
+        .merge(endpoints::cluster_admin::router())
         .merge(endpoints::admin::router())
         .merge(endpoints::auth_token::router())
         .merge(endpoints::cache::router())

@@ -12,6 +12,7 @@ pub struct AdminAuthTokenArgs {
     pub command: AdminAuthTokenCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum AdminAuthTokenCommands {
     /// Create an auth token
