@@ -2,7 +2,6 @@
 
 use std::fmt;
 
-use aide::OperationIo;
 use axum::{
     RequestExt as _,
     extract::{
@@ -60,13 +59,7 @@ pub fn capture_accept_hdr(request: Request, next: Next) -> impl Future<Output = 
 /// MsgPack-or-JSON extractor.
 ///
 /// Validates incoming bodies using the [`Validate`] trait.
-#[derive(Debug, Clone, Copy, Default, OperationIo)]
-#[aide(
-    // FIXME: Also document MsgPack
-    input_with = "axum::Json<T>",
-    output_with = "axum::Json<T>",
-    json_schema
-)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct MsgPackOrJson<T>(pub T);
 
 impl<T, S> FromRequest<S> for MsgPackOrJson<T>
@@ -210,6 +203,51 @@ where
             }
         };
         make_response(buf.into_inner(), content_type, res)
+    }
+}
+
+impl<T> aide::OperationInput for MsgPackOrJson<T>
+where
+    T: schemars::JsonSchema,
+{
+    fn operation_input(
+        ctx: &mut aide::generate::GenContext,
+        operation: &mut aide::openapi::Operation,
+    ) {
+        // FIXME: Also document msgpack
+        axum::Json::<T>::operation_input(ctx, operation);
+    }
+
+    fn inferred_early_responses(
+        _ctx: &mut aide::generate::GenContext,
+        _operation: &mut aide::openapi::Operation,
+    ) -> Vec<(Option<aide::openapi::StatusCode>, aide::openapi::Response)> {
+        vec![]
+    }
+}
+
+impl<T> aide::OperationOutput for MsgPackOrJson<T>
+where
+    T: schemars::JsonSchema,
+{
+    type Inner = Self;
+
+    fn operation_response(
+        ctx: &mut aide::generate::GenContext,
+        operation: &mut aide::openapi::Operation,
+    ) -> Option<aide::openapi::Response> {
+        // FIXME: Also document msgpack
+        axum::Json::<T>::operation_response(ctx, operation)
+    }
+
+    fn inferred_responses(
+        ctx: &mut aide::generate::GenContext,
+        operation: &mut aide::openapi::Operation,
+    ) -> Vec<(Option<aide::openapi::StatusCode>, aide::openapi::Response)> {
+        vec![(
+            Some(aide::openapi::StatusCode::Code(200)),
+            Self::operation_response(ctx, operation).unwrap(),
+        )]
     }
 }
 
