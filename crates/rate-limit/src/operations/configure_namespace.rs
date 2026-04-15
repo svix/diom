@@ -5,7 +5,6 @@ use diom_namespace::{
     entities::{NamespaceName, RateLimitConfig},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{ConfigureRateLimitResponse, RateLimitRaftState, RateLimitRequest};
@@ -44,8 +43,8 @@ impl ConfigureRateLimitOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigureRateLimitResponseData {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl From<CreateNamespaceOutput<RateLimitConfig>> for ConfigureRateLimitResponseData {

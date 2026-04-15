@@ -5,7 +5,6 @@ use diom_namespace::{
     entities::{AuthTokenConfig, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::operations::{AuthTokenRaftState, AuthTokenRequest, ConfigureNamespaceResponse};
@@ -44,8 +43,8 @@ impl ConfigureAuthTokenNamespaceOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigureAuthTokenNamespaceResponseData {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl From<CreateNamespaceOutput<AuthTokenConfig>> for ConfigureAuthTokenNamespaceResponseData {

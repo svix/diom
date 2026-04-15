@@ -3,7 +3,6 @@ use diom_error::Result;
 use diom_id::{NamespaceId, UuidV7RandomBytes};
 
 use fjall_utils::WriteBatchExt;
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
@@ -26,8 +25,8 @@ pub struct CreateNamespace<C: ModuleConfig> {
 pub struct CreateNamespaceOutput<C: ModuleConfig> {
     pub name: NamespaceName,
     pub config: C,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl<C: ModuleConfig + 'static> CreateNamespace<C> {
@@ -79,8 +78,8 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                 Ok(CreateNamespaceOutput {
                     name: namespace.name,
                     config: namespace.config,
-                    created: namespace.created.into(),
-                    updated: namespace.updated.into(),
+                    created: namespace.created,
+                    updated: namespace.updated,
                 })
             })
         })

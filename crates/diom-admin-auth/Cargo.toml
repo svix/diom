@@ -12,7 +12,6 @@ diom-error.workspace = true
 diom-operations.workspace = true
 fjall.workspace = true
 fjall-utils.workspace = true
-jiff.workspace = true
 serde.workspace = true
 
 [lints]
