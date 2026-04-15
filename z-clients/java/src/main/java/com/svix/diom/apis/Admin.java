@@ -33,8 +33,4 @@ public class Admin {
     public AdminAuthToken getAuthToken() {
         return new AdminAuthToken(this.client);
     }
-
-    public AdminCluster getCluster() {
-        return new AdminCluster(this.client);
-    }
 }

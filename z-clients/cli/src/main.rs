@@ -12,7 +12,10 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 use self::{
     cmds::{
-        api::{AdminArgs, CacheArgs, HealthArgs, IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs},
+        api::{
+            AdminArgs, CacheArgs, ClusterAdminArgs as RawClusterAdminArgs, HealthArgs,
+            IdempotencyArgs, KvArgs, MsgsArgs, RateLimitArgs,
+        },
         benchmark::BenchmarkArgs,
         cluster::ClusterAdminArgs,
     },
@@ -79,11 +82,14 @@ enum RootCommands {
     RateLimit(RateLimitArgs),
     Health(HealthArgs),
     /// Send administrative commands.
-    ///
-    /// Prefer the cluster-admin family of CLI commands.
     Admin(AdminArgs),
     /// Manipulate a Diom cluster
     ClusterAdmin(ClusterAdminArgs),
+    /// Send raw cluster management commands
+    ///
+    /// Prefer the cluster-admin family of commands unless
+    /// you're developing diom itself.
+    RawClusterAdmin(RawClusterAdminArgs),
     /// Benchmark module throughput
     Benchmark(BenchmarkArgs),
     /// Get the version of the Diom CLI
@@ -151,6 +157,10 @@ async fn main() -> Result<()> {
             args.command.exec(&client).await?;
         }
         RootCommands::Admin(args) => {
+            let client = get_client(&cfg?)?;
+            args.command.exec(&client).await?;
+        }
+        RootCommands::RawClusterAdmin(args) => {
             let client = get_client(&cfg?)?;
             args.command.exec(&client).await?;
         }

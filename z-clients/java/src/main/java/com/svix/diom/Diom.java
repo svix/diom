@@ -6,6 +6,7 @@ import java.util.TreeMap;
 
 import com.svix.diom.apis.Admin;
 import com.svix.diom.apis.Cache;
+import com.svix.diom.apis.ClusterAdmin;
 import com.svix.diom.apis.Health;
 import com.svix.diom.apis.Idempotency;
 import com.svix.diom.apis.Kv;
@@ -45,6 +46,10 @@ public class Diom {
 
     public Cache getCache() {
         return new Cache(this.httpClient);
+    }
+
+    public ClusterAdmin getClusterAdmin() {
+        return new ClusterAdmin(this.httpClient);
     }
 
     public Health getHealth() {

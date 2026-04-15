@@ -12,6 +12,7 @@ pub struct AdminAuthRoleArgs {
     pub command: AdminAuthRoleCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum AdminAuthRoleCommands {
     /// Create or update a role

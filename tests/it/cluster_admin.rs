@@ -24,7 +24,7 @@ async fn test_cluster_status() -> TestResult {
         .await;
 
     let cluster_status = client
-        .get("v1.admin.cluster.status")
+        .get("v1.cluster-admin.status")
         .await?
         .expect(StatusCode::OK)
         .json();
@@ -82,7 +82,7 @@ async fn test_cluster_remove() -> TestResult {
 
     // make sure both nodes are present
     let cluster_status = client
-        .get("v1.admin.cluster.status")
+        .get("v1.cluster-admin.status")
         .await?
         .expect(StatusCode::OK)
         .json();
@@ -99,7 +99,7 @@ async fn test_cluster_remove() -> TestResult {
     // ideally, the first node is still the leader before we evict the second node
     assert_eq!(cluster_status["this_node_state"], "leader");
     let cluster_status_from_second_node = second_client
-        .get("v1.admin.cluster.status")
+        .get("v1.cluster-admin.status")
         .await?
         .expect(StatusCode::OK)
         .json();
@@ -110,7 +110,7 @@ async fn test_cluster_remove() -> TestResult {
 
     // now remove the second node
     let resp = client
-        .post("v1.admin.cluster.remove-node")
+        .post("v1.cluster-admin.remove-node")
         .json(json!({"node_id": second_node_id}))
         .await?
         .expect(StatusCode::OK)
@@ -118,7 +118,7 @@ async fn test_cluster_remove() -> TestResult {
     assert_eq!(resp["node_id"].assert_str(), second_node_id.to_string());
 
     let cluster_status = client
-        .get("v1.admin.cluster.status")
+        .get("v1.cluster-admin.status")
         .await?
         .expect(StatusCode::OK)
         .json();
@@ -140,7 +140,7 @@ async fn test_cluster_force_snapshot() -> TestResult {
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
     let cluster_status = client
-        .get("v1.admin.cluster.status")
+        .get("v1.cluster-admin.status")
         .await?
         .expect(StatusCode::OK)
         .json();
@@ -159,7 +159,7 @@ async fn test_cluster_force_snapshot() -> TestResult {
         .ensure(StatusCode::OK)?;
 
     let response = client
-        .post("v1.admin.cluster.force-snapshot")
+        .post("v1.cluster-admin.force-snapshot")
         .json(json!({}))
         .await?
         .expect(StatusCode::OK)
@@ -168,7 +168,7 @@ async fn test_cluster_force_snapshot() -> TestResult {
     assert!(response["snapshot_time"].is_i64());
 
     let later_cluster_status = client
-        .get("v1.admin.cluster.status")
+        .get("v1.cluster-admin.status")
         .await?
         .expect(StatusCode::OK)
         .json();

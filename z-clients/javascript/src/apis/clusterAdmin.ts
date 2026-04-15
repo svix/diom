@@ -30,13 +30,13 @@ import {
 } from '../models/clusterStatusOut';
 import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 
-export class AdminCluster {
+export class ClusterAdmin {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
     /** Get information about the current cluster */
     public status(
     ): Promise<ClusterStatusOut> {
-        const request = new DiomRequest(HttpMethod.GET, "/api/v1.admin.cluster.status");
+        const request = new DiomRequest(HttpMethod.GET, "/api/v1.cluster-admin.status");
 
         
         return request.send(
@@ -52,7 +52,7 @@ export class AdminCluster {
     public initialize(
         clusterInitializeIn: ClusterInitializeIn,
     ): Promise<ClusterInitializeOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.cluster.initialize");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cluster-admin.initialize");
 
         request.setBody(
             ClusterInitializeInSerializer._toJsonObject(clusterInitializeIn)
@@ -71,7 +71,7 @@ export class AdminCluster {
     public removeNode(
         clusterRemoveNodeIn: ClusterRemoveNodeIn,
     ): Promise<ClusterRemoveNodeOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.cluster.remove-node");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cluster-admin.remove-node");
 
         request.setBody(
             ClusterRemoveNodeInSerializer._toJsonObject(clusterRemoveNodeIn)
@@ -85,7 +85,7 @@ export class AdminCluster {
     public forceSnapshot(
         clusterForceSnapshotIn: ClusterForceSnapshotIn,
     ): Promise<ClusterForceSnapshotOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.cluster.force-snapshot");
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cluster-admin.force-snapshot");
 
         request.setBody(
             ClusterForceSnapshotInSerializer._toJsonObject(clusterForceSnapshotIn)

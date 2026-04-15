@@ -12,6 +12,7 @@ pub struct AdminAuthPolicyArgs {
     pub command: AdminAuthPolicyCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum AdminAuthPolicyCommands {
     /// Create or update an access policy

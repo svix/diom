@@ -23,6 +23,3 @@ func (admin Admin) AuthRole() AdminAuthRole {
 func (admin Admin) AuthToken() AdminAuthToken {
 	return NewAdminAuthToken(admin.client)
 }
-func (admin Admin) Cluster() AdminCluster {
-	return NewAdminCluster(admin.client)
-}

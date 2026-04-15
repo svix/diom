@@ -22,10 +22,10 @@ import com.svix.diom.models.ClusterRemoveNodeIn;
 import com.svix.diom.models.ClusterRemoveNodeOut;
 import com.svix.diom.models.ClusterStatusOut;
 
-public class AdminCluster {
+public class ClusterAdmin {
     private final HttpClient client;
 
-    public AdminCluster(HttpClient client) {
+    public ClusterAdmin(HttpClient client) {
         this.client = client;
     }
 
@@ -33,7 +33,7 @@ public class AdminCluster {
     public ClusterStatusOut status(
         
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.status");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.status");
 
         return this.client.executeRequest(
             "GET",
@@ -53,7 +53,7 @@ public class AdminCluster {
     public ClusterInitializeOut initialize(
         final ClusterInitializeIn clusterInitializeIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.initialize");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.initialize");
 
         return this.client.executeRequest(
             "POST",
@@ -87,7 +87,7 @@ public class AdminCluster {
     public ClusterRemoveNodeOut removeNode(
         final ClusterRemoveNodeIn clusterRemoveNodeIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.remove-node");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.remove-node");
 
         return this.client.executeRequest(
             "POST",
@@ -102,7 +102,7 @@ public class AdminCluster {
     public ClusterForceSnapshotOut forceSnapshot(
         final ClusterForceSnapshotIn clusterForceSnapshotIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.cluster.force-snapshot");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cluster-admin.force-snapshot");
 
         return this.client.executeRequest(
             "POST",

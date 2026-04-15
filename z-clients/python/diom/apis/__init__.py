@@ -3,9 +3,9 @@ from .admin import Admin, AdminAsync
 from .admin_auth_policy import AdminAuthPolicy, AdminAuthPolicyAsync
 from .admin_auth_role import AdminAuthRole, AdminAuthRoleAsync
 from .admin_auth_token import AdminAuthToken, AdminAuthTokenAsync
-from .admin_cluster import AdminCluster, AdminClusterAsync
 from .cache import Cache, CacheAsync
 from .cache_namespace import CacheNamespace, CacheNamespaceAsync
+from .cluster_admin import ClusterAdmin, ClusterAdminAsync
 from .health import Health, HealthAsync
 from .idempotency import Idempotency, IdempotencyAsync
 from .idempotency_namespace import IdempotencyNamespace, IdempotencyNamespaceAsync
@@ -29,12 +29,12 @@ __all__ = [
     "AdminAuthRoleAsync",
     "AdminAuthToken",
     "AdminAuthTokenAsync",
-    "AdminCluster",
-    "AdminClusterAsync",
     "Cache",
     "CacheAsync",
     "CacheNamespace",
     "CacheNamespaceAsync",
+    "ClusterAdmin",
+    "ClusterAdminAsync",
     "Health",
     "HealthAsync",
     "Idempotency",

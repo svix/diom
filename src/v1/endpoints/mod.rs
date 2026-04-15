@@ -18,6 +18,7 @@ macro_rules! namespace_request_input {
 pub mod admin;
 pub mod auth_token;
 pub mod cache;
+pub mod cluster_admin;
 pub mod health;
 pub mod idempotency;
 pub mod kv;

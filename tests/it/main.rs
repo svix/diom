@@ -2,6 +2,7 @@ mod admin;
 mod auth_token;
 mod bootstrap;
 mod cache;
+mod cluster_admin;
 mod idempotency;
 mod jwt_auth;
 mod kv;
