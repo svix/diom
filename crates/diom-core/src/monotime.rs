@@ -6,6 +6,8 @@ use std::sync::{
     atomic::{AtomicI64, Ordering},
 };
 
+use crate::types::{AsMillisecond, UnixTimestampMs};
+
 /// A monotonic clock. Stores time internally as milliseconds since Unix epoch. In the event that
 /// wall clock goes backwards, this will stall until the clock catches up.
 ///
@@ -32,6 +34,15 @@ impl Monotime {
             .expect("time was wildly outside of acceptable ranges, I must crash")
     }
 
+    /// Get the last time that the leader set
+    ///
+    /// This returns a UnixTimestampMs, which is marginally more efficient than going through a jiff
+    /// Timestamp
+    pub fn now_utm(&self) -> UnixTimestampMs {
+        UnixTimestampMs::try_from_millisecond(self.as_i64())
+            .expect("time was wildly outside of acceptable ranges")
+    }
+
     /// Get a monotonic version of the current time, updating our internal knowledge about time.
     ///
     /// This should only be called on the leader when generating a log message.
@@ -52,8 +63,8 @@ impl Monotime {
     /// Ingest another timestamp
     ///
     /// This should be applied when reading logs or joining a cluster.
-    pub fn update_from_other(&self, other: Timestamp) {
-        self.bump_raw(other.as_millisecond());
+    pub fn update_from_other(&self, other: impl AsMillisecond) {
+        self.bump_raw(other.as_millisecond() as _);
     }
 
     /// Report the delta between our clock and the system clock

@@ -1,8 +1,7 @@
-use diom_core::{PersistableValue, task::spawn_blocking_in_current_span};
+use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::UnixTimestampMs};
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::WriteBatchExt;
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -42,7 +41,11 @@ impl QueueConfigureOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug")]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueConfigureResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: UnixTimestampMs,
+    ) -> Result<QueueConfigureResponseData> {
         let state = state.clone();
         spawn_blocking_in_current_span(move || {
             let mut batch = state.db.batch();

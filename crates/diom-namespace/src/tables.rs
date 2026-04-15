@@ -1,9 +1,8 @@
-use diom_core::PersistableValue;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use fjall::Keyspace;
 use fjall_utils::{TableKey, TableRow};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{ModuleConfig, NamespaceName};
@@ -20,8 +19,8 @@ pub struct Namespace<C: ModuleConfig> {
     pub id: NamespaceId,
     pub name: NamespaceName,
 
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 
     // Module-specific
     pub config: C,

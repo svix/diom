@@ -1,8 +1,11 @@
-use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::DurationMs};
+use diom_core::{
+    PersistableValue,
+    task::spawn_blocking_in_current_span,
+    types::{DurationMs, UnixTimestampMs},
+};
 use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -43,7 +46,7 @@ impl QueueExtendLeaseOperation {
     async fn apply_real(
         self,
         state: &State,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<QueueExtendLeaseResponseData> {
         let state = state.clone();
 

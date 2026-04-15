@@ -65,8 +65,8 @@ impl From<AccessPolicyModel> for AdminAccessPolicyOut {
             id: model.id,
             description: model.description,
             rules: model.rules,
-            created: model.created.into(),
-            updated: model.updated.into(),
+            created: model.created,
+            updated: model.updated,
         }
     }
 }
@@ -101,8 +101,8 @@ async fn access_policy_upsert(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AdminAccessPolicyUpsertOut {
         id: resp.model.id,
-        created: resp.model.created.into(),
-        updated: resp.model.updated.into(),
+        created: resp.model.created,
+        updated: resp.model.updated,
     }))
 }
 

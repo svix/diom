@@ -78,13 +78,13 @@ impl From<AuthTokenModel> for AuthTokenOut {
         Self {
             id: m.id.public(),
             name: m.name,
-            expiry: m.expiry.map(Into::into),
+            expiry: m.expiry,
             metadata: m.metadata,
             owner_id: m.owner_id,
             scopes: m.scopes,
             enabled: m.enabled,
-            created: m.created.into(),
-            updated: m.updated.into(),
+            created: m.created,
+            updated: m.updated,
         }
     }
 }
@@ -156,8 +156,8 @@ async fn auth_token_create(
     let ret = AuthTokenCreateOut {
         id: resp.model.id.public(),
         token: token.expose_plaintext_dangerously(),
-        created: resp.model.created.into(),
-        updated: resp.model.updated.into(),
+        created: resp.model.created,
+        updated: resp.model.updated,
     };
     Ok(MsgPackOrJson(ret))
 }
@@ -266,7 +266,7 @@ async fn auth_token_verify(
     let auth_token_state = repl.state_machine.auth_token_store().await;
     let token = auth_token_state
         .controller
-        .fetch_non_expired(namespace.id, &token_hashed, repl.time.now())
+        .fetch_non_expired(namespace.id, &token_hashed, repl.time.now_utm())
         .await?;
 
     // FIXME: actually do something if expired, failed for other reasons, etc.
@@ -400,7 +400,7 @@ async fn auth_token_rotate(
         .ok_or_not_found()?;
 
     let token = TokenPlaintext::generate(&data.prefix, data.suffix.as_deref())?;
-    let old_expiry = data.expiry.map(|ms| repl.time.now() + ms);
+    let old_expiry = data.expiry.map(|ms| repl.time.now_utm() + ms);
     let operation =
         RotateAuthTokenOperation::new(namespace, data.id.into_inner(), token.hash(), old_expiry);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
@@ -409,8 +409,8 @@ async fn auth_token_rotate(
     Ok(MsgPackOrJson(AuthTokenRotateOut {
         id: model.id.public(),
         token: token.expose_plaintext_dangerously(),
-        created: model.created.into(),
-        updated: model.updated.into(),
+        created: model.created,
+        updated: model.updated,
     }))
 }
 
@@ -481,8 +481,8 @@ async fn auth_token_get_namespace(
 
     Ok(MsgPackOrJson(AuthTokenGetNamespaceOut {
         name: namespace.name,
-        created: namespace.created.into(),
-        updated: namespace.updated.into(),
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

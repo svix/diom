@@ -3,12 +3,11 @@ use std::num::NonZeroU16;
 use diom_core::{
     PersistableValue,
     task::spawn_blocking_in_current_span,
-    types::{ByteString, DurationMs},
+    types::{ByteString, DurationMs, UnixTimestampMs},
 };
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
@@ -61,7 +60,11 @@ impl StreamReceiveOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<StreamReceiveResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: UnixTimestampMs,
+    ) -> Result<StreamReceiveResponseData> {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
@@ -207,8 +210,8 @@ pub struct StreamReceiveMsg {
     pub topic: TopicPartition,
     pub value: ByteString,
     pub headers: std::collections::HashMap<String, String>,
-    pub timestamp: Timestamp,
-    pub scheduled_at: Option<Timestamp>,
+    pub timestamp: UnixTimestampMs,
+    pub scheduled_at: Option<UnixTimestampMs>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

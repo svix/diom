@@ -8,7 +8,6 @@ use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_kv::kvcontroller::{KvModelIn, OperationBehavior};
 use diom_operations::OpContext;
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
@@ -39,14 +38,10 @@ impl SetOperation {
     async fn apply_real(
         self,
         state: &CacheRaftState<'_>,
-        now: Timestamp,
+        now: diom_core::types::UnixTimestampMs,
         log_index: u64,
     ) -> Result<()> {
-        let expiry = self.ttl.map(|ttl| {
-            let expiry = now + ttl;
-            debug_assert!(expiry >= Timestamp::UNIX_EPOCH);
-            expiry
-        });
+        let expiry = self.ttl.map(|ttl| now + ttl);
 
         state
             .state

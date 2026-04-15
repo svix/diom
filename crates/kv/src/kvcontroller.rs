@@ -4,13 +4,12 @@ use diom_core::{
     PersistableValue,
     instrumented_mutex::{InstrumentedMutex, InstrumentedMutexGuard},
     task::spawn_blocking_in_current_span,
-    types::ByteString,
+    types::{ByteString, DurationMs, UnixTimestampMs},
 };
 use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall::{Database, Keyspace};
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +30,7 @@ pub enum OperationBehavior {
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct KvModel {
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub value: ByteString,
     /// Opaque version token for optimistic concurrency control.
     pub version: u64,
@@ -42,7 +41,7 @@ pub struct KvModel {
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct KvModelIn {
     pub value: ByteString,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub version: Option<u64>,
 }
 
@@ -88,7 +87,7 @@ impl KvController {
         keyspace: &Keyspace,
         namespace_id: NamespaceId,
         key: &str,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<Option<KvModel>> {
         let Some(data) = KvPairRow::fetch(keyspace, KvPairRow::key_for(namespace_id, key))? else {
             return Ok(None);
@@ -102,13 +101,17 @@ impl KvController {
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn fetch<K: AsRef<str> + std::fmt::Debug + 'static + Send>(
+    pub async fn fetch<
+        K: AsRef<str> + std::fmt::Debug + 'static + Send,
+        TS: Into<UnixTimestampMs>,
+    >(
         &self,
         namespace_id: NamespaceId,
         key: K,
-        now: Timestamp,
+        now: TS,
     ) -> Result<Option<KvModel>> {
         let keyspace = self.keyspace.clone();
+        let now = now.into();
         spawn_blocking_in_current_span(move || {
             Self::fetch_inner(&keyspace, namespace_id, key.as_ref(), now)
         })
@@ -121,7 +124,7 @@ impl KvController {
         namespace_id: NamespaceId,
         key: &str,
         model: KvModel,
-        old_expiry: Option<Timestamp>,
+        old_expiry: Option<UnixTimestampMs>,
     ) -> Result<()> {
         let mut batch = db.batch();
 
@@ -150,18 +153,22 @@ impl KvController {
     }
 
     #[tracing::instrument(skip_all, fields(?behavior))]
-    pub async fn set<K: AsRef<str> + std::fmt::Debug + 'static + Send>(
+    pub async fn set<
+        K: AsRef<str> + std::fmt::Debug + 'static + Send,
+        TS: Into<UnixTimestampMs>,
+    >(
         &self,
         namespace_id: NamespaceId,
         key: K,
         model: KvModelIn,
         behavior: OperationBehavior,
-        now: Timestamp,
+        now: TS,
         // This is a monotonically increasing global counter (e.g. raft offset)
         global_counter: u64,
     ) -> Result<KvSetResult> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
+        let now = now.into();
 
         spawn_blocking_in_current_span(move || {
             let key = key.as_ref();
@@ -247,7 +254,7 @@ impl KvController {
         namespace_id: NamespaceId,
         key: T,
         version: Option<u64>,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<bool> {
         let db = self.db.clone();
         let keyspace = self.keyspace.clone();
@@ -287,11 +294,11 @@ impl KvController {
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn has_expired(&self, now: Timestamp) -> bool {
+    pub async fn has_expired(&self, now: UnixTimestampMs) -> bool {
         let keyspace = self.keyspace.clone();
 
-        let start =
-            ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
+        let start = ExpirationRow::key_for(NamespaceId::nil(), UnixTimestampMs::UNIX_EPOCH, "")
+            .into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
 
         spawn_blocking_in_current_span(move || keyspace.range(start..=end).next().is_some())
@@ -304,10 +311,10 @@ impl KvController {
         keyspace_name = self.keyspace_name,
         cleared
     ))]
-    pub fn clear_expired_in_background(&self, now: Timestamp) -> Result<usize> {
-        let grace_period = now - jiff::SignedDuration::from_secs(10);
-        let start =
-            ExpirationRow::key_for(NamespaceId::nil(), Timestamp::UNIX_EPOCH, "").into_fjall_key();
+    pub fn clear_expired_in_background(&self, now: UnixTimestampMs) -> Result<usize> {
+        let grace_period = now.saturating_sub(DurationMs::from_secs(10));
+        let start = ExpirationRow::key_for(NamespaceId::nil(), UnixTimestampMs::UNIX_EPOCH, "")
+            .into_fjall_key();
         let end = ExpirationRow::key_for(NamespaceId::max(), grace_period, "").into_fjall_key();
 
         let mut cleared = 0;
@@ -382,6 +389,10 @@ mod tests {
 
     use super::*;
 
+    fn now() -> jiff::Timestamp {
+        jiff::Timestamp::now()
+    }
+
     struct SetupFixture {
         _workdir: tempfile::TempDir,
         controller: KvController,
@@ -406,18 +417,18 @@ mod tests {
         NamespaceId::nil()
     }
 
-    async fn key_exists_as_of(controller: &KvController, key: &str, now: Timestamp) -> bool {
+    async fn key_exists_as_of<TS: Into<UnixTimestampMs>>(
+        controller: &KvController,
+        key: &str,
+        now: TS,
+    ) -> bool {
         let key = key.to_string();
         controller.fetch(ns(), key, now).await.unwrap().is_some()
     }
 
     async fn key_exists(controller: &KvController, key: &str) -> bool {
         let key = key.to_string();
-        controller
-            .fetch(ns(), key, Timestamp::now())
-            .await
-            .unwrap()
-            .is_some()
+        controller.fetch(ns(), key, now()).await.unwrap().is_some()
     }
 
     #[tokio::test]
@@ -436,17 +447,14 @@ mod tests {
                     version: None,
                 },
                 OperationBehavior::Upsert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await
             .unwrap();
 
         assert!(key_exists(&controller, "test:key1").await);
-        let retrieved = controller
-            .fetch(ns(), "test:key1", Timestamp::now())
-            .await
-            .unwrap();
+        let retrieved = controller.fetch(ns(), "test:key1", now()).await.unwrap();
         assert!(retrieved.is_some());
         let retrieved = retrieved.unwrap();
         assert_eq!(retrieved.value, b"hello world");
@@ -471,7 +479,7 @@ mod tests {
                     version: None,
                 },
                 OperationBehavior::Update,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await;
@@ -488,16 +496,13 @@ mod tests {
                     version: None,
                 },
                 OperationBehavior::Insert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await;
         assert!(res.unwrap().success);
         assert!(key_exists(&controller, "key1").await);
-        let result = controller
-            .fetch(ns(), "key1", Timestamp::now())
-            .await
-            .unwrap();
+        let result = controller.fetch(ns(), "key1", now()).await.unwrap();
         assert!(result.is_some());
 
         // Insert on existing key returns false
@@ -511,16 +516,13 @@ mod tests {
                     version: None,
                 },
                 OperationBehavior::Insert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await;
         assert!(!res.unwrap().success);
         assert!(key_exists(&controller, "key1").await);
-        let result = controller
-            .fetch(ns(), "key1", Timestamp::now())
-            .await
-            .unwrap();
+        let result = controller.fetch(ns(), "key1", now()).await.unwrap();
         assert!(result.is_some());
 
         assert_eq!(result.unwrap().value, b"key1 inserted");
@@ -535,16 +537,13 @@ mod tests {
                     version: None,
                 },
                 OperationBehavior::Upsert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await;
         assert!(res.unwrap().success);
         assert!(key_exists(&controller, "key1").await);
-        let result = controller
-            .fetch(ns(), "key1", Timestamp::now())
-            .await
-            .unwrap();
+        let result = controller.fetch(ns(), "key1", now()).await.unwrap();
         assert!(result.is_some());
         assert_eq!(result.unwrap().value, b"key1 upserted");
     }
@@ -565,7 +564,7 @@ mod tests {
                     version: None,
                 },
                 OperationBehavior::Upsert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await
@@ -580,7 +579,7 @@ mod tests {
                     version: None,
                 },
                 OperationBehavior::Upsert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await
@@ -588,7 +587,7 @@ mod tests {
 
         assert!(key_exists(&controller, "overwrite:key").await);
         let retrieved = controller
-            .fetch(ns(), "overwrite:key", Timestamp::now())
+            .fetch(ns(), "overwrite:key", now())
             .await
             .unwrap()
             .unwrap();
@@ -600,7 +599,7 @@ mod tests {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
-        let now = Timestamp::now();
+        let now = now();
 
         controller
             .set(
@@ -608,7 +607,7 @@ mod tests {
                 "expired:key",
                 KvModelIn {
                     value: b"expired data".into(),
-                    expiry: Some(now.checked_sub(1.hour()).unwrap()),
+                    expiry: Some(now.checked_sub(1.hour()).unwrap().into()),
                     version: None,
                 },
                 OperationBehavior::Upsert,
@@ -648,7 +647,7 @@ mod tests {
                     key.to_string(),
                     KvModelIn {
                         value: value.into(),
-                        expiry: Some(expiry),
+                        expiry: Some(expiry.into()),
                         version: None,
                     },
                     OperationBehavior::Upsert,
@@ -666,7 +665,7 @@ mod tests {
                 valid_key,
                 KvModelIn {
                     value: b"valid data".into(),
-                    expiry: Some(now.checked_add(1.hour()).unwrap()),
+                    expiry: Some(now.checked_add(1.hour()).unwrap().into()),
                     version: None,
                 },
                 OperationBehavior::Upsert,
@@ -697,7 +696,7 @@ mod tests {
 
         // the key should have expired by now, so key_exists should already be false
         assert!(!key_exists(&controller, "expired:key").await);
-        let then = Timestamp::now().checked_sub(6.hours()).unwrap();
+        let then = now.checked_sub(6.hours()).unwrap();
         // but if we time travel to the past, it should still be there
         assert!(key_exists_as_of(&controller, "expired:key", then).await);
         for (key, _, _) in &expired_models {
@@ -705,9 +704,7 @@ mod tests {
         }
 
         assert_eq!(
-            controller
-                .clear_expired_in_background(Timestamp::now())
-                .unwrap(),
+            controller.clear_expired_in_background(now.into()).unwrap(),
             4
         );
 
@@ -725,18 +722,12 @@ mod tests {
         assert!(!key_exists_as_of(&controller, "expired:key", then).await);
 
         assert!(key_exists(&controller, valid_key).await);
-        let valid = controller
-            .fetch(ns(), valid_key, Timestamp::now())
-            .await
-            .unwrap();
+        let valid = controller.fetch(ns(), valid_key, now).await.unwrap();
         assert!(valid.is_some());
         assert_eq!(valid.unwrap().value, b"valid data");
 
         assert!(key_exists(&controller, permanent_key).await);
-        let permanent = controller
-            .fetch(ns(), permanent_key, Timestamp::now())
-            .await
-            .unwrap();
+        let permanent = controller.fetch(ns(), permanent_key, now).await.unwrap();
         assert!(permanent.is_some());
         assert_eq!(permanent.unwrap().value, b"permanent data");
     }
@@ -750,9 +741,7 @@ mod tests {
             .smallest(jiff::Unit::Millisecond)
             .mode(jiff::RoundMode::Trunc);
 
-        let expiry = (Timestamp::now() + SignedDuration::from_secs(10))
-            .round(ms)
-            .unwrap();
+        let expiry = (now() + SignedDuration::from_secs(10)).round(ms).unwrap();
 
         let key = "overwrite:key";
         let ns = ns();
@@ -762,11 +751,11 @@ mod tests {
                 key,
                 KvModelIn {
                     value: b"first value".into(),
-                    expiry: Some(expiry),
+                    expiry: Some(expiry.into()),
                     version: None,
                 },
                 OperationBehavior::Upsert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await
@@ -776,27 +765,25 @@ mod tests {
             .unwrap()
             .collect::<Vec<fjall::UserKey>>();
         assert_eq!(expiration_rows.len(), 1);
-        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]).unwrap();
+        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]);
         let (namespace_id, found_key) =
             ExpirationRow::extract_key_from_fjall_key(&expiration_rows[0]).unwrap();
-        assert_eq!(ts, expiry);
+        assert_eq!(ts, expiry.into());
         assert_eq!(namespace_id, ns);
         assert_eq!(found_key, key);
 
-        let later_expiry = (Timestamp::now() + SignedDuration::from_secs(90))
-            .round(ms)
-            .unwrap();
+        let later_expiry = (now() + SignedDuration::from_secs(90)).round(ms).unwrap();
         controller
             .set(
                 ns,
                 key,
                 KvModelIn {
                     value: b"first value".into(),
-                    expiry: Some(later_expiry),
+                    expiry: Some(later_expiry.into()),
                     version: None,
                 },
                 OperationBehavior::Upsert,
-                Timestamp::now(),
+                now(),
                 0,
             )
             .await
@@ -807,11 +794,11 @@ mod tests {
             .collect::<Vec<fjall::UserKey>>();
         // the old index row should be deleted
         assert_eq!(expiration_rows.len(), 1);
-        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]).unwrap();
+        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]);
         let (namespace_id, found_key) =
             ExpirationRow::extract_key_from_fjall_key(&expiration_rows[0]).unwrap();
         // and the ts should be updated
-        assert_eq!(ts, later_expiry);
+        assert_eq!(ts, later_expiry.into());
         assert_eq!(namespace_id, ns);
         assert_eq!(found_key, key);
     }

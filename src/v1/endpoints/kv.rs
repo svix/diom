@@ -105,7 +105,7 @@ pub struct KvGetOut {
 impl KvGetOut {
     fn from_model(model: KvModel) -> Self {
         Self {
-            expiry: model.expiry.map(Into::into),
+            expiry: model.expiry,
             value: Some(model.value),
             version: model.version,
         }
@@ -286,8 +286,8 @@ async fn kv_get_namespace(
 
     Ok(MsgPackOrJson(KvGetNamespaceOut {
         name: namespace.name,
-        created: namespace.created.into(),
-        updated: namespace.updated.into(),
+        created: namespace.created,
+        updated: namespace.updated,
     }))
 }
 

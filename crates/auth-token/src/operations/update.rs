@@ -6,7 +6,10 @@ use crate::{
     controller::{AuthTokenModel, PartialUpdateInput},
     operations::{AuthTokenRaftState, AuthTokenRequest, UpdateResponse},
 };
-use diom_core::{PersistableValue, types::Metadata};
+use diom_core::{
+    PersistableValue,
+    types::{Metadata, UnixTimestampMs},
+};
 use diom_error::Result;
 use diom_id::{AuthTokenId, NamespaceId};
 use diom_operations::OpContext;
@@ -21,7 +24,7 @@ pub struct UpdateAuthTokenOperation {
     namespace_id: NamespaceId,
     pub id: AuthTokenId,
     pub name: Option<String>,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<UnixTimestampMs>,
     pub metadata: Option<Metadata>,
     pub scopes: Option<Vec<String>>,
     pub enabled: Option<bool>,
@@ -41,7 +44,7 @@ impl UpdateAuthTokenOperation {
             namespace_id: namespace.id,
             id,
             name,
-            expiry,
+            expiry: expiry.map(|e| e.into()),
             metadata,
             scopes,
             enabled,

@@ -13,7 +13,7 @@ use crate::{
 };
 
 use anyhow::Context;
-use diom_core::{Monotime, PersistableValue};
+use diom_core::{Monotime, PersistableValue, types::UnixTimestampMs};
 use diom_error::ResultExt;
 use diom_operations::{OperationRequest, OperationRequestMetadata, OperationResponse};
 use fjall_utils::StorageType;
@@ -83,11 +83,8 @@ impl Request {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RequestWithContext {
     pub inner: Request,
-    #[serde(
-        rename = "t",
-        with = "jiff::fmt::serde::timestamp::millisecond::required"
-    )]
-    pub timestamp: Timestamp,
+    #[serde(rename = "t")]
+    pub timestamp: UnixTimestampMs,
     pub context: Option<OperationRequestMetadata>,
 }
 
@@ -105,7 +102,7 @@ impl fmt::Display for RequestWithContext {
 impl RequestWithContext {
     pub(crate) fn new(
         req: Request,
-        timestamp: Timestamp,
+        timestamp: UnixTimestampMs,
         ctx: Option<OperationRequestMetadata>,
     ) -> Self {
         Self {
@@ -370,8 +367,11 @@ impl RaftState {
         let start = std::time::Instant::now();
         let inner: Request = op.into().into();
         let now = self.time.update_now();
-        let request =
-            RequestWithContext::new(inner, now, Some(opentelemetry::Context::current().into()));
+        let request = RequestWithContext::new(
+            inner,
+            now.into(),
+            Some(opentelemetry::Context::current().into()),
+        );
         let request = Arc::new(request);
         let mut write_type = WriteType::Local;
         let response = match self.raft.client_write(Arc::clone(&request)).await {
@@ -731,7 +731,7 @@ impl diom_operations::OperationWriterBase for RaftState {
         &self,
         request: Self::Request,
     ) -> diom_operations::BackgroundResult<Self::Response> {
-        let now = self.state_machine.now();
+        let now = self.state_machine.time.now_utm();
         let request =
             RequestWithContext::new(request, now, Some(opentelemetry::Context::current().into()));
         let request = Arc::new(request);

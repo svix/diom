@@ -33,7 +33,7 @@ impl CreateKvOperation {
     async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
-        now: Timestamp,
+        now: diom_core::types::UnixTimestampMs,
     ) -> Result<CreateKvResponseData> {
         let op: CreateNamespace<KeyValueConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;

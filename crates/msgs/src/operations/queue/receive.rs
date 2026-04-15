@@ -3,12 +3,11 @@ use std::{collections::HashMap, num::NonZeroU16};
 use diom_core::{
     PersistableValue,
     task::spawn_blocking_in_current_span,
-    types::{ByteString, DurationMs},
+    types::{ByteString, DurationMs, UnixTimestampMs},
 };
 use diom_error::{Error, Result};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use fjall_utils::{TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use tracing::Span;
 
@@ -56,7 +55,11 @@ impl QueueReceiveOperation {
     }
 
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size = self.batch_size))]
-    async fn apply_real(self, state: &State, now: Timestamp) -> Result<QueueReceiveResponseData> {
+    async fn apply_real(
+        self,
+        state: &State,
+        now: UnixTimestampMs,
+    ) -> Result<QueueReceiveResponseData> {
         let state = state.clone();
 
         spawn_blocking_in_current_span(move || {
@@ -181,8 +184,8 @@ fn lease_available_msgs(
     partition: Partition,
     topic_id: TopicId,
     consumer_group: &ConsumerGroup,
-    now: Timestamp,
-    expiry: Timestamp,
+    now: UnixTimestampMs,
+    expiry: UnixTimestampMs,
 ) -> Result<u16> {
     let mut count = 0;
 
@@ -298,8 +301,8 @@ pub struct QueueReceiveMsg {
     pub msg_id: MsgId,
     pub value: ByteString,
     pub headers: HashMap<String, String>,
-    pub timestamp: Timestamp,
-    pub scheduled_at: Option<Timestamp>,
+    pub timestamp: UnixTimestampMs,
+    pub scheduled_at: Option<UnixTimestampMs>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -809,7 +809,7 @@ impl DiomLogs {
                 if let Ok(guard) = guard
                     && let EntryPayload::Normal(req) = guard.1.0.payload
                 {
-                    return Some(req.timestamp);
+                    return Some(req.timestamp.into());
                 }
             }
             None

@@ -1,8 +1,7 @@
 use diom_authorization::{AccessPolicyId, AccessRule};
-use diom_core::PersistableValue;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_operations::OpContext;
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -35,7 +34,7 @@ impl UpsertAccessPolicyOperation {
     async fn apply_real(
         self,
         state: &State,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<UpsertAccessPolicyResponseData> {
         let model = state
             .controller

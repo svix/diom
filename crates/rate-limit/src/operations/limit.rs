@@ -1,10 +1,12 @@
 use super::{LimitResponse, RateLimitRaftState, RateLimitRequest};
 use crate::{RateLimitNamespace, TokenBucket};
-use diom_core::{PersistableValue, types::DurationMs};
+use diom_core::{
+    PersistableValue,
+    types::{DurationMs, UnixTimestampMs},
+};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PersistableValue)]
@@ -43,7 +45,7 @@ impl LimitOperation {
     async fn apply_real(
         self,
         state: &RateLimitRaftState<'_>,
-        now: Timestamp,
+        now: UnixTimestampMs,
     ) -> Result<LimitResponseData> {
         let (allowed, remaining, retry_after) = state
             .state

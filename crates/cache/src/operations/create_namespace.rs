@@ -41,7 +41,7 @@ impl CreateCacheOperation {
     async fn apply_real(
         self,
         namespace_state: &diom_namespace::State,
-        now: Timestamp,
+        now: diom_core::types::UnixTimestampMs,
     ) -> Result<CreateCacheResponseData> {
         let op: CreateNamespace<CacheConfig> = self.into();
         let out = op.apply_operation(namespace_state, now).await?;

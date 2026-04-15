@@ -1,3 +1,4 @@
+use diom_core::types::UnixTimestampMs;
 use diom_error::Result;
 use diom_id::{NamespaceId, UuidV7RandomBytes};
 
@@ -41,7 +42,7 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
     pub async fn apply_operation(
         self,
         state: &State,
-        timestamp: Timestamp,
+        timestamp: UnixTimestampMs,
     ) -> Result<CreateNamespaceOutput<C>> {
         let db = state.db().clone();
         let keyspace = state.keyspace().clone();
@@ -78,8 +79,8 @@ impl<C: ModuleConfig + 'static> CreateNamespace<C> {
                 Ok(CreateNamespaceOutput {
                     name: namespace.name,
                     config: namespace.config,
-                    created: namespace.created,
-                    updated: namespace.updated,
+                    created: namespace.created.into(),
+                    updated: namespace.updated.into(),
                 })
             })
         })

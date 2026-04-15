@@ -12,9 +12,7 @@ use diom_core::{
 use diom_error::Result;
 use diom_id::NamespaceId;
 use diom_operations::OpContext;
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use tap::TapOptional;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetResponseData {
@@ -55,10 +53,7 @@ impl SetOperation {
 impl SetOperation {
     async fn apply_real(self, state: &State, ctx: &OpContext) -> Result<SetResponseData> {
         let now = ctx.timestamp;
-        let expiry = self
-            .ttl
-            .map(|ttl| now + ttl)
-            .tap_some(|v| debug_assert!(*v >= Timestamp::UNIX_EPOCH));
+        let expiry = self.ttl.map(|ttl| now + ttl);
 
         let model = KvModelIn {
             value: self.value,

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
-use diom_core::task::spawn_blocking_in_current_span;
+use diom_core::{task::spawn_blocking_in_current_span, types::UnixTimestampMs};
 use diom_error::Result;
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
 use jiff::Timestamp;
@@ -30,8 +30,8 @@ impl From<RoleRow> for RoleModel {
             rules: row.rules,
             policies: row.policies,
             context: row.context,
-            created: row.created,
-            updated: row.updated,
+            created: row.created.into(),
+            updated: row.updated.into(),
         }
     }
 }
@@ -43,7 +43,7 @@ pub struct UpsertRoleInput {
     pub rules: Vec<AccessRule>,
     pub policies: Vec<AccessPolicyId>,
     pub context: HashMap<String, String>,
-    pub now: Timestamp,
+    pub now: UnixTimestampMs,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,8 +51,8 @@ pub struct AccessPolicyModel {
     pub id: AccessPolicyId,
     pub description: String,
     pub rules: Vec<AccessRule>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl AccessPolicyModel {
@@ -72,7 +72,7 @@ pub struct UpsertAccessPolicyInput {
     pub id: AccessPolicyId,
     pub description: String,
     pub rules: Vec<AccessRule>,
-    pub now: Timestamp,
+    pub now: UnixTimestampMs,
 }
 
 #[derive(Clone)]

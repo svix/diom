@@ -1,4 +1,4 @@
-use diom_core::{PersistableValue, task::spawn_blocking_in_current_span};
+use diom_core::{PersistableValue, task::spawn_blocking_in_current_span, types::UnixTimestampMs};
 use diom_error::{Error, Result};
 use diom_id::NamespaceId;
 use fjall_utils::{TableRow, WriteBatchExt};
@@ -57,7 +57,7 @@ impl StreamCommitOperation {
 
             lease.offset = self.offset + 1;
             if self.offset >= lease.end_offset {
-                lease.expiry = jiff::Timestamp::UNIX_EPOCH;
+                lease.expiry = UnixTimestampMs::UNIX_EPOCH;
             }
 
             batch.insert_row(

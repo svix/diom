@@ -20,6 +20,27 @@ pub use self::{
 
 pub const ALL_ERROR: &str = "__all__";
 
+/// Trait representing timestamps that can be represented as a number of milliseconds since the unix
+/// epoch
+pub trait AsMillisecond {
+    /// Get this value as the number of milliseconds since the unix epoch
+    fn as_millisecond(&self) -> u64;
+}
+
+impl AsMillisecond for jiff::Timestamp {
+    /// Get this jiff::Timestamp as the number of milliseconds since the unix epoch
+    fn as_millisecond(&self) -> u64 {
+        jiff::Timestamp::as_millisecond(*self) as _
+    }
+}
+
+impl AsMillisecond for UnixTimestampMs {
+    /// Get this UnixTimestampMs as the number of milliseconds since the unix epoch
+    fn as_millisecond(&self) -> u64 {
+        UnixTimestampMs::as_millisecond(*self)
+    }
+}
+
 fn validate_limited_str(s: &str) -> Result<(), ValidationErrors> {
     const MAX_LENGTH: usize = 256;
     static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-_.:]+$").unwrap());

@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
-use diom_core::PersistableValue;
+use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::{Result, ResultExt as _};
 use fjall_utils::{TableKey, TableRow};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 /// These values can never change. Only additions are allowed.
@@ -23,8 +22,8 @@ pub struct RoleRow {
     pub rules: Vec<AccessRule>,
     pub policies: Vec<AccessPolicyId>,
     pub context: HashMap<String, String>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl TableRow for RoleRow {
@@ -42,8 +41,8 @@ impl RoleRow {
 pub struct AccessPolicyRow {
     pub description: String,
     pub rules: Vec<AccessRule>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl TableRow for AccessPolicyRow {

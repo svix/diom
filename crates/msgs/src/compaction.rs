@@ -3,17 +3,16 @@
 //! Expired idempotency rows are dropped during LSM compactions instead of a scan-based
 //! background job.
 
-use diom_core::Monotime;
+use diom_core::{Monotime, types::UnixTimestampMs};
 use fjall::compaction::filter::{
     CompactionFilter, CompactionFilterResult, Context, Factory, ItemAccessor, Verdict,
 };
 use fjall_utils::TableRow;
-use jiff::Timestamp;
 
 use crate::tables::IdempotencyRow;
 
 struct IdempotencyExpiryFilter {
-    now: Timestamp,
+    now: UnixTimestampMs,
 }
 
 // Removes expired idempotency rows during compaction.
@@ -51,7 +50,7 @@ impl IdempotencyExpiryFilterFactory {
 impl Factory for IdempotencyExpiryFilterFactory {
     fn make_filter(&self, _ctx: &Context) -> Box<dyn CompactionFilter> {
         Box::new(IdempotencyExpiryFilter {
-            now: self.time.now(), // snapshot time when compaction starts
+            now: self.time.now_utm(), // snapshot time when compaction starts
         })
     }
 
@@ -68,7 +67,7 @@ mod tests {
         entities::{MsgsIdempotencyKey, TopicName},
         tables::{IdempotencyKey, IdempotencyRow, TopicKey, TopicRow},
     };
-    use diom_core::Monotime;
+    use diom_core::{Monotime, types::UnixTimestampMs};
     use diom_id::{NamespaceId, UuidV7RandomBytes};
     use fjall::{Database, KeyspaceCreateOptions};
     use fjall_utils::TableRow;
@@ -100,7 +99,7 @@ mod tests {
             TopicKey::build_key(&ns, &topic),
             &TopicRow::new(
                 topic.clone(),
-                Timestamp::UNIX_EPOCH,
+                UnixTimestampMs::UNIX_EPOCH,
                 UuidV7RandomBytes::new_random(),
             ),
         )?;
@@ -110,7 +109,7 @@ mod tests {
             &ks,
             IdempotencyKey::build_key(&ns, &expired_key),
             &IdempotencyRow {
-                expiry: Timestamp::from_second(1)?,
+                expiry: Timestamp::from_second(1)?.into(),
             },
         )?;
 
@@ -119,7 +118,7 @@ mod tests {
             &ks,
             IdempotencyKey::build_key(&ns, &fresh_key),
             &IdempotencyRow {
-                expiry: Timestamp::from_second(20)?,
+                expiry: Timestamp::from_second(20)?.into(),
             },
         )?;
 

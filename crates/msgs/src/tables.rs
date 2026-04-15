@@ -1,10 +1,12 @@
-use diom_core::{PersistableValue, types::ByteString};
+use diom_core::{
+    PersistableValue,
+    types::{AsMillisecond, ByteString, UnixTimestampMs},
+};
 use diom_id::{NamespaceId, TopicId, UuidV7RandomBytes};
 use std::collections::HashMap;
 
 use diom_error::Result;
 use fjall_utils::{FjallKeyAble, TableRow, WriteBatchExt};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{ConsumerGroup, MsgId, MsgsIdempotencyKey, Offset, Partition, TopicName};
@@ -40,7 +42,11 @@ pub(crate) struct TopicKey {
 }
 
 impl TopicRow {
-    pub(crate) fn new(name: TopicName, now: Timestamp, id_random_bytes: UuidV7RandomBytes) -> Self {
+    pub(crate) fn new(
+        name: TopicName,
+        now: impl AsMillisecond,
+        id_random_bytes: UuidV7RandomBytes,
+    ) -> Self {
         Self {
             id: TopicId::new(now, id_random_bytes),
             name,
@@ -61,7 +67,7 @@ impl TopicRow {
         batch: &mut fjall::OwnedWriteBatch,
         namespace_id: NamespaceId,
         topic: &TopicName,
-        now: Timestamp,
+        now: impl AsMillisecond,
         id_random_bytes: UuidV7RandomBytes,
     ) -> Result<Self> {
         let key = TopicKey::build_key(&namespace_id, topic);
@@ -77,7 +83,7 @@ impl TopicRow {
 #[derive(Serialize, Deserialize, PersistableValue)]
 pub(crate) struct StreamLeaseRow {
     pub offset: u64,
-    pub expiry: Timestamp,
+    pub expiry: UnixTimestampMs,
     /// Last offset in the current leased batch. The lease is only released
     /// when the committed offset reaches this value.
     pub end_offset: Offset,
@@ -87,7 +93,7 @@ impl StreamLeaseRow {
     pub(crate) fn new() -> Result<Self> {
         Ok(Self {
             offset: 0,
-            expiry: Timestamp::UNIX_EPOCH,
+            expiry: UnixTimestampMs::UNIX_EPOCH,
             end_offset: 0,
         })
     }
@@ -111,14 +117,14 @@ pub(crate) struct StreamLeaseKey {
 /// Per-message lease/ack tracking for queue semantics.
 ///
 /// - `expiry > now` → message is leased (in-flight to a consumer)
-/// - `expiry == Timestamp::MAX` → message is permanently acked
+/// - `expiry == UnixTimestampMs::MAX` → message is permanently acked
 /// - `expiry <= now` → lease expired, message is available again
 /// - No row → message was never leased, available
 ///
 /// Rows below the queue cursor are deleted during cursor compaction to prevent unbounded growth.
 #[derive(Serialize, Deserialize, PersistableValue)]
 pub(crate) struct QueueLeaseRow {
-    pub expiry: Timestamp,
+    pub expiry: UnixTimestampMs,
     pub dlq: bool,
     pub attempt_count: u32,
 }
@@ -127,7 +133,7 @@ impl QueueLeaseRow {
     /// Permanently acked — will never be re-delivered.
     pub(crate) fn acked() -> Self {
         Self {
-            expiry: Timestamp::MAX,
+            expiry: UnixTimestampMs::MAX,
             dlq: false,
             attempt_count: 0,
         }
@@ -136,7 +142,7 @@ impl QueueLeaseRow {
     /// Sent to the dead-letter queue.
     pub(crate) fn dlq_marker(attempt_count: u32) -> Self {
         Self {
-            expiry: Timestamp::MAX,
+            expiry: UnixTimestampMs::MAX,
             dlq: true,
             attempt_count,
         }
@@ -158,12 +164,12 @@ impl QueueLeaseRow {
         Ok(())
     }
 
-    pub(crate) fn is_available(&self, now: Timestamp) -> bool {
+    pub(crate) fn is_available(&self, now: UnixTimestampMs) -> bool {
         !self.dlq && self.expiry <= now
     }
 
     pub(crate) fn is_acked(&self) -> bool {
-        !self.dlq && self.expiry == Timestamp::MAX
+        !self.dlq && self.expiry == UnixTimestampMs::MAX
     }
 
     pub(crate) fn is_dlq(&self) -> bool {
@@ -250,8 +256,8 @@ pub(crate) struct MsgKey {
 pub(crate) struct MsgRow {
     pub value: ByteString,
     pub headers: HashMap<String, String>,
-    pub timestamp: Timestamp,
-    pub scheduled_at: Option<Timestamp>,
+    pub timestamp: UnixTimestampMs,
+    pub scheduled_at: Option<UnixTimestampMs>,
 }
 
 impl MsgRow {
@@ -311,7 +317,7 @@ impl TableRow for MsgRow {
 
 #[derive(Clone, Serialize, Deserialize, PersistableValue)]
 pub(crate) struct IdempotencyRow {
-    pub expiry: Timestamp,
+    pub expiry: UnixTimestampMs,
 }
 
 impl TableRow for IdempotencyRow {
@@ -329,7 +335,6 @@ pub(crate) struct IdempotencyKey {
 
 #[cfg(test)]
 mod tests {
-    use jiff::Timestamp;
 
     use super::*;
     use crate::entities::{ConsumerGroup, Partition};
@@ -337,7 +342,7 @@ mod tests {
     #[test]
     fn test_consumer_group_from_key() {
         use diom_id::TopicId;
-        let topic_id = TopicId::new(Timestamp::UNIX_EPOCH, UuidV7RandomBytes::new_random());
+        let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
         let partition = Partition::new(0).unwrap();
         let cg = ConsumerGroup::try_from("my-group").unwrap();
         let key = StreamLeaseKey::build_key(&topic_id, &partition, &cg);
