@@ -853,11 +853,7 @@ impl<'a> BenchShard for BenchMsgsPublish<'a> {
             .map(|_| {
                 let mut payload = vec![0u8; 2_834];
                 rng.fill(&mut payload[..]);
-                let msg = MsgIn::new(payload);
-                match self.delay {
-                    Some(d) => msg.with_delay(d),
-                    None => msg,
-                }
+                MsgIn::new(payload).with_delay(self.delay)
             })
             .collect();
 
