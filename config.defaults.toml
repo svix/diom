@@ -75,8 +75,8 @@ opentelemetry_service_name = "diom"
 # primary data as opposed to the log, and is applied at every batch commit from the
 # underlying replication system.
 sync_mode = "buffer"
-# Configuration for the cluster/replication system
 
+# Configuration for the cluster/replication system
 [cluster]
 
 # Address that other nodes should use to communicate with this one.
@@ -209,9 +209,9 @@ snapshot_after_ms = 900000
 # snapshot_path =
 
 startup_discovery_delay_ms = 10
+
 # Storage configuration for the ephemeral database, which is used by rate-limiting and some
 # other modules, and can be placed on less-durable storage, such as local instance storage
-
 [ephemeral_db]
 
 # Filename under the directory specified in `path`.
@@ -222,12 +222,12 @@ startup_discovery_delay_ms = 10
 
 # Directory in which this database is stored
 path = "./db"
+
 # Configuration for verifying JWT bearer tokens.
 #
 # When set, bearer tokens in JWT format are verified using this configuration.
 # The JWT must contain a `role` claim (string) and may contain a `context` claim
 # (object with string values) that is forwarded to internal diom handlers.
-
 [jwt]
 
 # Expected `aud` values. When set, the token must contain one of these
@@ -237,9 +237,9 @@ path = "./db"
 # Expected `iss` values. When set, the token's `iss` claim must match one
 # of these values. When absent, `iss` is not validated.
 # issuer =
+
 # Storage configuration for the persistent database, which is used by most modules and
 # should be placed on durable storage
-
 [persistent_db]
 
 # Filename under the directory specified in `path`.

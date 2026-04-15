@@ -107,7 +107,6 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
 
         let lister = if parsed.nest {
             quote! {
-                #(#docs)*;
                 let new_prefix = if prefix.is_empty() {
                     format!("{}", #name)
                 } else {
@@ -124,7 +123,8 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
                 write!(writer, "{} = {}\n", #name, serialized)?;
                 buffer.clear();
             };
-            let getter = if is_optional {
+
+            if is_optional {
                 quote! {
                     if self.#field.is_none() {
                         write!(writer, "# {} =\n", #name)?;
@@ -134,14 +134,14 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
                 }
             } else {
                 dump_serialized
-            };
-            quote! {
-                writeln!(writer)?;
-                #(#docs)*;
-                #getter;
             }
         };
-        lists.push(lister);
+
+        lists.push(quote! {
+            writeln!(writer)?;
+            #(#docs)*;
+            #lister
+        });
     }
 
     let name = input.ident;
