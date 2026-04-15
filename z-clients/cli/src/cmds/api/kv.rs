@@ -21,13 +21,13 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"ttl_ms\": \"...\",
+  \"ttl_ms\": 60000,
   \"behavior\": \"...\",
-  \"version\": \"...\"
+  \"version\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"success\": \"...\",
-  \"version\": \"...\"
+  \"version\": 123
 }")]
     Set {
         key: String,
@@ -41,9 +41,9 @@ pub enum KvCommands {
   \"consistency\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"expiry\": \"...\",
-  \"value\": \"...\",
-  \"version\": \"...\"
+  \"expiry\": 1234567890123,
+  \"value\": \"dGVzdA==\",
+  \"version\": 123
 }")]
     Get {
         key: String,
@@ -53,7 +53,7 @@ pub enum KvCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"version\": \"...\"
+  \"version\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"success\": \"...\"

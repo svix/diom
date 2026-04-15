@@ -23,12 +23,12 @@ pub enum MsgsStreamCommands {
 {
   \"namespace\": \"some_namespace\",
   \"batch_size\": \"...\",
-  \"lease_duration_ms\": \"...\",
+  \"lease_duration_ms\": 60000,
   \"default_starting_position\": \"...\",
-  \"batch_wait_ms\": \"...\"
+  \"batch_wait_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"msgs\": \"...\"
+  \"msgs\": [\"...\"]
 }")]
     Receive {
         topic: String,
@@ -42,7 +42,7 @@ pub enum MsgsStreamCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"offset\": \"...\"
+  \"offset\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -59,7 +59,7 @@ pub enum MsgsStreamCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"offset\": \"...\",
+  \"offset\": 123,
   \"position\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {

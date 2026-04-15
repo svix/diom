@@ -22,13 +22,13 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"tokens\": \"...\",
+  \"tokens\": 123,
   \"config\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"allowed\": \"...\",
-  \"remaining\": \"...\",
-  \"retry_after_ms\": \"...\"
+  \"remaining\": 123,
+  \"retry_after_ms\": 60000
 }")]
     Limit {
         rate_limit_check_in: crate::json::JsonOf<diom::models::RateLimitCheckIn>,
@@ -41,8 +41,8 @@ pub enum RateLimitCommands {
   \"config\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"remaining\": \"...\",
-  \"retry_after_ms\": \"...\"
+  \"remaining\": 123,
+  \"retry_after_ms\": 60000
 }")]
     GetRemaining {
         rate_limit_get_remaining_in: crate::json::JsonOf<diom::models::RateLimitGetRemainingIn>,

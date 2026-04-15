@@ -21,7 +21,7 @@ pub enum CacheCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"ttl_ms\": \"...\"
+  \"ttl_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -37,8 +37,8 @@ pub enum CacheCommands {
   \"consistency\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"expiry\": \"...\",
-  \"value\": \"...\"
+  \"expiry\": 1234567890123,
+  \"value\": \"dGVzdA==\"
 }")]
     Get {
         key: String,

@@ -15,11 +15,45 @@ use crate::prelude::*;
 use super::{{ sub.name | to_upper_camel_case }}Args;
 {% endfor %}
 
+{%- macro get_type_example(type) -%}
+    {%- if type.is_string_const() -%}
+        \"{{ type.string_const_val() }}\"
+    {%- elif type.is_unix_timestamp_ms() -%}
+        1234567890123
+    {%- elif type.is_duration_ms() -%}
+        60000
+    {%- elif type.is_datetime() -%}
+        \"2030-01-01T00:00:00Z\"
+    {%- elif type.is_u64() -%}
+        123
+    {%- elif type.is_bytes() -%}
+        \"dGVzdA==\"
+    {%- elif type.is_list() or type.is_set() -%}
+        [\"...\"]
+    {%- elif type.is_map() -%}
+        {\"key\": \"...\"}
+    {%- else -%}
+        \"...\"
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro get_field_example(field) -%}
+    {%- if field.type.is_bytes() -%}
+        \"dGVzdA==\"
+    {%- elif field.type.is_list() or field.type.is_set() -%}
+        [{{ get_type_example(field.type.inner_type()) }}]
+    {%- elif field.type.is_map() -%}
+        {\"key\": {{ get_type_example(field.type.value_type()) }}}
+    {%- else -%}
+        {{ get_type_example(field.type) }}
+    {%- endif -%}
+{%- endmacro -%}
+
 {%- macro render_schema_example(title, schema) -%}
 \x1b[1;4m{{ title }}:\x1b[0m
 {
 {%- for field in schema.fields | selectattr("positional", "false") %}
-  \"{{ field.name }}\": \"{{ field.example if field.example is defined else '...' }}\"{{ "," if not loop.last else "" }}
+  \"{{ field.name }}\": {% if field.example is defined %}\"{{ field.example }}\"{% else %}{{ get_field_example(field) }}{% endif %}{{ "," if not loop.last else "" }}
 {%- endfor %}
 }
 {%- endmacro -%}

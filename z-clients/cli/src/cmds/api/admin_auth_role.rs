@@ -20,14 +20,14 @@ pub enum AdminAuthRoleCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": \"...\",
-  \"policies\": \"...\",
-  \"context\": \"...\"
+  \"rules\": [\"...\"],
+  \"policies\": [\"...\"],
+  \"context\": {\"key\": \"...\"}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"id\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Configure {
         admin_role_configure_in: crate::json::JsonOf<diom::models::AdminRoleConfigureIn>,
@@ -51,11 +51,11 @@ pub enum AdminAuthRoleCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": \"...\",
-  \"policies\": \"...\",
-  \"context\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"rules\": [\"...\"],
+  \"policies\": [\"...\"],
+  \"context\": {\"key\": \"...\"},
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Get {
         admin_role_get_in: crate::json::JsonOf<diom::models::AdminRoleGetIn>,
@@ -63,11 +63,11 @@ pub enum AdminAuthRoleCommands {
     /// List all roles
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"limit\": \"...\",
+  \"limit\": 123,
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": \"...\",
+  \"data\": [\"...\"],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": \"...\"

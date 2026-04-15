@@ -22,9 +22,9 @@ pub enum ClusterAdminCommands {
   \"cluster_name\": \"...\",
   \"this_node_id\": \"...\",
   \"this_node_state\": \"...\",
-  \"this_node_last_committed_timestamp\": \"...\",
+  \"this_node_last_committed_timestamp\": 1234567890123,
   \"this_node_last_snapshot_id\": \"...\",
-  \"nodes\": \"...\"
+  \"nodes\": [\"...\"]
 }")]
     Status {},
     /// Initialize this node as the leader of a new cluster
@@ -59,8 +59,8 @@ pub enum ClusterAdminCommands {
 {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"snapshot_time\": \"...\",
-  \"snapshot_log_index\": \"...\",
+  \"snapshot_time\": 1234567890123,
+  \"snapshot_log_index\": 123,
   \"snapshot_id\": \"...\"
 }")]
     ForceSnapshot {

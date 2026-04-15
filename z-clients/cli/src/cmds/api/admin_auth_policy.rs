@@ -20,12 +20,12 @@ pub enum AdminAuthPolicyCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": \"...\"
+  \"rules\": [\"...\"]
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"id\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Configure {
         admin_access_policy_configure_in:
@@ -50,9 +50,9 @@ pub enum AdminAuthPolicyCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"rules\": [\"...\"],
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Get {
         admin_access_policy_get_in: crate::json::JsonOf<diom::models::AdminAccessPolicyGetIn>,
@@ -60,11 +60,11 @@ pub enum AdminAuthPolicyCommands {
     /// List all access policies
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"limit\": \"...\",
+  \"limit\": 123,
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": \"...\",
+  \"data\": [\"...\"],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": \"...\"

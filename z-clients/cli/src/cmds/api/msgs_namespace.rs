@@ -23,8 +23,8 @@ pub enum MsgsNamespaceCommands {
 {
   \"name\": \"some_namespace\",
   \"retention\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Configure {
         name: String,
@@ -38,8 +38,8 @@ pub enum MsgsNamespaceCommands {
 {
   \"name\": \"some_namespace\",
   \"retention\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Get {
         name: String,

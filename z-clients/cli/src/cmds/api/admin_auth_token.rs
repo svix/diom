@@ -20,14 +20,14 @@ pub enum AdminAuthTokenCommands {
 {
   \"name\": \"...\",
   \"role\": \"...\",
-  \"expiry_ms\": \"...\",
+  \"expiry_ms\": 60000,
   \"enabled\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"id\": \"...\",
   \"token\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Create {
         admin_auth_token_create_in: crate::json::JsonOf<diom::models::AdminAuthTokenCreateIn>,
@@ -36,7 +36,7 @@ pub enum AdminAuthTokenCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\",
-  \"expiry_ms\": \"...\"
+  \"expiry_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -51,8 +51,8 @@ pub enum AdminAuthTokenCommands {
 {
   \"id\": \"...\",
   \"token\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Rotate {
         admin_auth_token_rotate_in: crate::json::JsonOf<diom::models::AdminAuthTokenRotateIn>,
@@ -71,11 +71,11 @@ pub enum AdminAuthTokenCommands {
     /// List auth tokens for a given owner
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"limit\": \"...\",
+  \"limit\": 123,
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": \"...\",
+  \"data\": [\"...\"],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
   \"done\": \"...\"
@@ -88,7 +88,7 @@ pub enum AdminAuthTokenCommands {
 {
   \"id\": \"...\",
   \"name\": \"...\",
-  \"expiry_ms\": \"...\",
+  \"expiry_ms\": 60000,
   \"enabled\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
