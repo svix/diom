@@ -13,8 +13,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-pub(crate) const DEFAULT_API_PORT: u16 = 8080;
-pub(crate) const INTRACLUSTER_PORT: u16 = 18080;
+pub(crate) const DEFAULT_API_PORT: u16 = 8624;
+pub(crate) const INTRACLUSTER_PORT: u16 = 8625;
 
 fn default_api_port() -> u16 {
     DEFAULT_API_PORT

@@ -791,7 +791,7 @@
                     "type": "object"
                   },
                   "apiPort": {
-                    "default": 8080,
+                    "default": 8624,
                     "description": "Port for the external API and service.",
                     "format": "uint16",
                     "maximum": 65535.0,

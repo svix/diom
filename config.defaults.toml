@@ -32,7 +32,7 @@ environment = "dev"
 fsync_mode = "sync-data"
 
 # The address to listen on
-listen_address = "0.0.0.0:8050"
+listen_address = "[::]:8624"
 
 # The log format that all output will follow. Supported: default, json
 log_format = "default"
@@ -123,9 +123,8 @@ election_timeout_min_ms = 1500
 # Must not be less than `replication_request_timeout`.
 heartbeat_interval_ms = 500
 
-# The address to listen on for replication. Defaults to the main listen address,
-# but with the port incremented by 10000
-# listen_address =
+# The address to listen on for replication.
+listen_address = "[::]:8625"
 
 log_index_interval_ms = 600000
 

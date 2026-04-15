@@ -7,7 +7,7 @@ use crate::connector::{Connector, make_connector};
 
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub const DEFAULT_URL: &str = "http://localhost:8050";
+pub const DEFAULT_URL: &str = "http://localhost:8624";
 
 pub struct DiomOptions {
     pub debug: bool,

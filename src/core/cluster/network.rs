@@ -323,7 +323,7 @@ pub(crate) async fn detect_address(
         return Ok(addr.clone());
     }
 
-    let cluster_addr = cfg.cluster.listen_address(cfg);
+    let cluster_addr = cfg.cluster.listen_address;
     if !is_unspecified(&cluster_addr) {
         tracing::debug!(addr=?cluster_addr, "using configured cluster listen_address");
         return Ok(PeerAddr::SocketAddr(cluster_addr));

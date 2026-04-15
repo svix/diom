@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::{Ipv6Addr, SocketAddr};
 
 use diom_core::types::DurationMs;
 
@@ -9,7 +9,11 @@ pub(super) fn default_true() -> bool {
 }
 
 pub(super) fn listen_address() -> SocketAddr {
-    (Ipv4Addr::UNSPECIFIED, 8050).into()
+    (Ipv6Addr::UNSPECIFIED, 8624).into()
+}
+
+pub(super) fn cluster_listen_address() -> SocketAddr {
+    (Ipv6Addr::UNSPECIFIED, 8625).into()
 }
 
 pub(super) fn persistent_db() -> DatabaseConfig {

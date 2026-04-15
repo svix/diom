@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import attr
 
-DEFAULT_SERVER_URL = "http://localhost:8050"
+DEFAULT_SERVER_URL = "http://localhost:8624"
 
 
 @attr.s(auto_attribs=True)

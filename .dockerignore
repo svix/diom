@@ -33,3 +33,8 @@ node_modules/
 /clients
 !/clients/rust/
 !/clients/cli/
+
+/db/
+/example-configs/
+
+/logs

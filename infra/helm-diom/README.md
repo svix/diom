@@ -72,7 +72,7 @@ cluster:
 | `cluster.image.repository` | Diom server image repository. | `ghcr.io/svix/diom-server` |
 | `cluster.image.tag` | Diom server image tag. | Chart pre-populates current tag. |
 | `cluster.spec.replicas` | Number of Diom replicas. Should be an odd number. Recommended value is 3 for a cluster, or 1 for a single node. | `1` |
-| `cluster.spec.apiPort` | Port for the external API and service. | `8080` |
+| `cluster.spec.apiPort` | Port for the external API and service. | `8624` |
 | `cluster.spec.envVar` | Additional environment variables to inject into pods (list of `{name, value}`). | `[]` |
 | `cluster.spec.bootstrap` | Newline-delimited bootstrap script to run on cluster startup. | `""` |
 | `cluster.spec.logLevel` | The log level to run the service with. Supported: info, debug, trace. | `""` |
