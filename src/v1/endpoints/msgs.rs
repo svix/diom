@@ -561,6 +561,10 @@ async fn queue_ack(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgQueueAckIn>,
 ) -> Result<MsgPackOrJson<MsgQueueAckOut>> {
+    if data.msg_ids.is_empty() {
+        return Ok(MsgPackOrJson(MsgQueueAckOut {}));
+    }
+
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?
@@ -707,6 +711,10 @@ async fn queue_nack(
     Extension(repl): Extension<RaftState>,
     MsgPackOrJson(data): MsgPackOrJson<MsgQueueNackIn>,
 ) -> Result<MsgPackOrJson<MsgQueueNackOut>> {
+    if data.msg_ids.is_empty() {
+        return Ok(MsgPackOrJson(MsgQueueNackOut {}));
+    }
+
     let namespace: MsgsNamespace = state
         .namespace_state
         .fetch_namespace(data.namespace.as_ref())?

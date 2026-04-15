@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use criterion::{
-    BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
+    BatchSize, BenchmarkGroup, Criterion, criterion_group, criterion_main, measurement::Measurement,
 };
 use diom::models::{
     MsgIn, MsgNamespaceConfigureIn, MsgPublishIn, MsgQueueAckIn, MsgQueueReceiveIn,
@@ -20,12 +20,16 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
         .build()
         .unwrap();
 
-    let mut make_msg_batch = |size: usize| {
+    let mut make_msg_batch = |size: usize, delay: Option<Duration>| {
         (0..size)
             .map(|_| {
                 let mut val = vec![0u8; 256];
                 rng.fill(&mut val[..]);
-                MsgIn::new(val)
+                let msg = MsgIn::new(val);
+                match delay {
+                    Some(d) => msg.with_delay(d),
+                    None => msg,
+                }
             })
             .collect::<Vec<_>>()
     };
@@ -45,7 +49,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             for _ in 0..100 {
                 client
                     .msgs()
-                    .publish(topic.clone(), MsgPublishIn::new(make_msg_batch(1000)))
+                    .publish(topic.clone(), MsgPublishIn::new(make_msg_batch(1000, None)))
                     .await
                     .unwrap();
             }
@@ -101,7 +105,7 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
             for _ in 0..100 {
                 client
                     .msgs()
-                    .publish(topic.clone(), MsgPublishIn::new(make_msg_batch(1000)))
+                    .publish(topic.clone(), MsgPublishIn::new(make_msg_batch(1000, None)))
                     .await
                     .unwrap();
             }
@@ -119,6 +123,81 @@ fn bench_queue<'a, M: Measurement>(ctx: BenchmarkContext, group: &mut BenchmarkG
                             MsgQueueReceiveIn::new()
                                 .with_batch_size(100u16)
                                 .with_lease_duration(Duration::from_millis(100)),
+                        )
+                        .await
+                        .unwrap();
+                })
+            })
+        });
+    }
+
+    // Benchmark publish throughput with scheduled (delayed) messages.
+    {
+        let ns_name = "bench-queue-scheduled-publish";
+        let topic = format!("{ns_name}:bench-topic");
+
+        rt.block_on(async {
+            client
+                .msgs()
+                .namespace()
+                .configure(ns_name.to_owned(), MsgNamespaceConfigureIn::new())
+                .await
+                .unwrap();
+        });
+
+        group.bench_function("scheduled_publish_batch_100", |b| {
+            b.iter_batched(
+                || make_msg_batch(100, Some(Duration::from_secs(5))),
+                |msgs| {
+                    rt.block_on(async {
+                        client
+                            .msgs()
+                            .publish(topic.clone(), MsgPublishIn::new(msgs))
+                            .await
+                            .unwrap();
+                    })
+                },
+                BatchSize::SmallInput,
+            )
+        });
+    }
+
+    // Benchmark receive against a topic where all messages have pending schedule leases.
+    // Each receive scans and skips the synthetic leases, measuring that overhead.
+    {
+        let ns_name = "bench-queue-scheduled-receive";
+        let topic = format!("{ns_name}:bench-topic");
+        let delay = Duration::from_secs(3600);
+
+        rt.block_on(async {
+            client
+                .msgs()
+                .namespace()
+                .configure(ns_name.to_owned(), MsgNamespaceConfigureIn::new())
+                .await
+                .unwrap();
+            for _ in 0..100 {
+                client
+                    .msgs()
+                    .publish(
+                        topic.clone(),
+                        MsgPublishIn::new(make_msg_batch(1000, Some(delay))),
+                    )
+                    .await
+                    .unwrap();
+            }
+        });
+
+        group.bench_function("scheduled_receive_pending_batch_100", |b| {
+            b.iter(|| {
+                rt.block_on(async {
+                    client
+                        .msgs()
+                        .queue()
+                        .receive(
+                            topic.clone(),
+                            "bench-cg".to_owned(),
+                            MsgQueueReceiveIn::new().with_batch_size(100u16),
                         )
                         .await
                         .unwrap();
