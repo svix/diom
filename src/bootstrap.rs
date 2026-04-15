@@ -33,6 +33,63 @@ enum BootstrapCommand {
 }
 
 impl BootstrapCommand {
+    /// Shared logic for matching module/resource/action and deserializing JSON.
+    fn from_parts(
+        module: &str,
+        resource: &str,
+        action: &str,
+        json_str: &str,
+    ) -> anyhow::Result<Self> {
+        match (module, resource, action) {
+            ("kv", "namespace", "configure") => Ok(BootstrapCommand::Kv(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for kv namespace: {json_str:?}"))?,
+            )),
+            ("cache", "namespace", "configure") => Ok(BootstrapCommand::Cache(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for cache namespace: {json_str:?}"))?,
+            )),
+            ("idempotency", "namespace", "configure") => Ok(BootstrapCommand::Idempotency(
+                serde_json::from_str(json_str).with_context(|| {
+                    format!("invalid JSON for idempotency namespace: {json_str:?}")
+                })?,
+            )),
+            ("rate-limit", "namespace", "configure") => Ok(BootstrapCommand::RateLimit(
+                serde_json::from_str(json_str).with_context(|| {
+                    format!("invalid JSON for rate-limit namespace: {json_str:?}")
+                })?,
+            )),
+            ("msgs", "namespace", "configure") => Ok(BootstrapCommand::Msgs(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for msgs namespace: {json_str:?}"))?,
+            )),
+            ("admin", "auth-policy", "configure") => Ok(BootstrapCommand::AdminAuthPolicy(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for admin auth-policy: {json_str:?}"))?,
+            )),
+            ("admin", "auth-role", "configure") => Ok(BootstrapCommand::AdminAuthRole(
+                serde_json::from_str(json_str)
+                    .with_context(|| format!("invalid JSON for admin auth-role: {json_str:?}"))?,
+            )),
+            _ => bail!("unknown command: {module} {resource} {action}"),
+        }
+    }
+
+    fn split_header(line: &str) -> anyhow::Result<(&str, &str, &str, &str)> {
+        let (module, rest) = line.split_once(char::is_whitespace).with_context(|| {
+            format!("expected '<module> <resource> <action> <json>', got: {line:?}")
+        })?;
+        let rest = rest.trim_start();
+        let (resource, rest) = rest
+            .split_once(char::is_whitespace)
+            .with_context(|| format!("expected '<resource> <action> <json>', got: {rest:?}"))?;
+        let rest = rest.trim_start();
+        let (action, json_str) = rest
+            .split_once(char::is_whitespace)
+            .with_context(|| format!("expected '<action> <json>', got: {rest:?}"))?;
+        Ok((module, resource, action, json_str))
+    }
+
     async fn apply(self, raft_state: &RaftState) -> anyhow::Result<()> {
         match self {
             BootstrapCommand::Kv(v) => {
@@ -122,69 +179,63 @@ impl FromStr for BootstrapCommand {
     type Err = anyhow::Error;
 
     fn from_str(line: &str) -> anyhow::Result<Self> {
-        let (module, rest) = line.split_once(char::is_whitespace).with_context(|| {
-            format!("expected '<module> <resource> <action> <json>', got: {line:?}")
-        })?;
-        let rest = rest.trim_start();
-
-        let (resource, rest) = rest
-            .split_once(char::is_whitespace)
-            .with_context(|| format!("expected '<resource> <action> <json>', got: {rest:?}"))?;
-        let rest = rest.trim_start();
-
-        let (action, json_str) = rest
-            .split_once(char::is_whitespace)
-            .with_context(|| format!("expected '<action> <json>', got: {rest:?}"))?;
-        let json_str = json_str.trim();
-
-        match (module, resource, action) {
-            ("kv", "namespace", "configure") => Ok(BootstrapCommand::Kv(
-                serde_json::from_str(json_str)
-                    .with_context(|| format!("invalid JSON for kv namespace: {json_str:?}"))?,
-            )),
-            ("cache", "namespace", "configure") => Ok(BootstrapCommand::Cache(
-                serde_json::from_str(json_str)
-                    .with_context(|| format!("invalid JSON for cache namespace: {json_str:?}"))?,
-            )),
-            ("idempotency", "namespace", "configure") => Ok(BootstrapCommand::Idempotency(
-                serde_json::from_str(json_str).with_context(|| {
-                    format!("invalid JSON for idempotency namespace: {json_str:?}")
-                })?,
-            )),
-            ("rate-limit", "namespace", "configure") => Ok(BootstrapCommand::RateLimit(
-                serde_json::from_str(json_str).with_context(|| {
-                    format!("invalid JSON for rate-limit namespace: {json_str:?}")
-                })?,
-            )),
-            ("msgs", "namespace", "configure") => Ok(BootstrapCommand::Msgs(
-                serde_json::from_str(json_str)
-                    .with_context(|| format!("invalid JSON for msgs namespace: {json_str:?}"))?,
-            )),
-            ("admin", "auth-policy", "configure") => Ok(BootstrapCommand::AdminAuthPolicy(
-                serde_json::from_str(json_str)
-                    .with_context(|| format!("invalid JSON for admin auth-policy: {json_str:?}"))?,
-            )),
-            ("admin", "auth-role", "configure") => Ok(BootstrapCommand::AdminAuthRole(
-                serde_json::from_str(json_str)
-                    .with_context(|| format!("invalid JSON for admin auth-role: {json_str:?}"))?,
-            )),
-            _ => bail!("unknown command: {module} {resource} {action}"),
-        }
+        let (module, resource, action, json_str) = Self::split_header(line)?;
+        Self::from_parts(module, resource, action, json_str.trim())
     }
 }
 
+#[allow(clippy::disallowed_types)]
 fn parse_bootstrap(content: &str) -> anyhow::Result<Vec<BootstrapCommand>> {
     let mut commands = Vec::new();
-    for (i, line) in content.lines().enumerate() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
+    let mut lines = content.lines().enumerate().peekable();
+
+    while let Some((i, line)) = lines.next() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
             continue;
         }
-        let cmd = line
-            .parse::<BootstrapCommand>()
+
+        let (module, resource, action, json_start) = BootstrapCommand::split_header(trimmed)
+            .with_context(|| format!("on line {}", i + 1))?;
+
+        // Accumulate lines until serde can parse a complete JSON value
+        let mut json_buf = json_start.trim().to_string();
+        let json_str = loop {
+            let mut stream =
+                serde_json::Deserializer::from_str(&json_buf).into_iter::<serde_json::Value>();
+            match stream.next() {
+                Some(Ok(_)) => {
+                    let consumed = stream.byte_offset();
+                    json_buf.truncate(consumed);
+                    break json_buf;
+                }
+                Some(Err(e)) if e.classify() == serde_json::error::Category::Eof => {
+                    match lines.next() {
+                        Some((_, next_line)) => {
+                            json_buf.push('\n');
+                            json_buf.push_str(next_line);
+                        }
+                        None => {
+                            return Err(e).with_context(|| {
+                                format!("unterminated JSON starting at line {}", i + 1)
+                            });
+                        }
+                    }
+                }
+                Some(Err(e)) => {
+                    return Err(e).with_context(|| format!("invalid JSON on line {}", i + 1));
+                }
+                None => {
+                    anyhow::bail!("expected JSON on line {}", i + 1);
+                }
+            }
+        };
+
+        let cmd = BootstrapCommand::from_parts(module, resource, action, &json_str)
             .with_context(|| format!("error on line {}", i + 1))?;
         commands.push(cmd);
     }
+
     Ok(commands)
 }
 
@@ -541,5 +592,91 @@ mod tests {
             .filter(|c| matches!(c, BootstrapCommand::Kv(_)))
             .count();
         assert_eq!(kv_count, 2);
+    }
+
+    #[test]
+    fn auth_policy_configure_single_line() {
+        let input = r#"admin auth-policy configure {"id":"pol","description":"full access","rules":[{"effect":"allow","resource":"*:*:*","actions":["*"]}]}"#;
+        let cmds = parse_bootstrap(input).unwrap();
+        assert_eq!(cmds.len(), 1);
+        let BootstrapCommand::AdminAuthPolicy(v) = &cmds[0] else {
+            panic!()
+        };
+        assert_eq!(v.id.as_str(), "pol");
+        assert_eq!(v.rules.len(), 1);
+    }
+
+    #[test]
+    fn auth_policy_configure_multiline() {
+        let input = r#"admin auth-policy configure {
+            "id": "pol",
+            "description": "full access",
+            "rules": [
+                {
+                    "effect": "allow",
+                    "resource": "*:*:*",
+                    "actions": ["*"]
+                }
+            ]
+        }"#;
+        let cmds = parse_bootstrap(input).unwrap();
+        assert_eq!(cmds.len(), 1);
+        let BootstrapCommand::AdminAuthPolicy(v) = &cmds[0] else {
+            panic!()
+        };
+        assert_eq!(v.id.as_str(), "pol");
+        assert_eq!(v.rules.len(), 1);
+    }
+    #[test]
+    fn parse_multiple_commands_all_modules() {
+        let input = r#"
+            kv namespace configure {"name":"my-kv"}
+            cache namespace configure {"name":"my-cache","eviction_policy":"no-eviction"}
+            idempotency namespace configure {"name":"my-idemp"}
+            rate-limit namespace configure {"name":"my-rl"}
+            msgs namespace configure {"name":"my-msgs","retention":{"period_ms":60000,"size_bytes":500}}
+            admin auth-policy configure {"id":"pol","description":"full access","rules":[{"effect":"allow","resource":"*:*:*","actions":["*"]}]}
+            admin auth-role configure {"id":"role","description":"admin","rules":[],"policies":["pol"]}
+        "#;
+        let cmds = parse_bootstrap(input).unwrap();
+        assert_eq!(cmds.len(), 7);
+        assert!(matches!(&cmds[0], BootstrapCommand::Kv(v) if v.name.as_str() == "my-kv"));
+        assert!(matches!(&cmds[1], BootstrapCommand::Cache(v) if v.name.as_str() == "my-cache"));
+        assert!(
+            matches!(&cmds[2], BootstrapCommand::Idempotency(v) if v.name.as_str() == "my-idemp")
+        );
+        assert!(matches!(&cmds[3], BootstrapCommand::RateLimit(v) if v.name.as_str() == "my-rl"));
+        assert!(matches!(&cmds[4], BootstrapCommand::Msgs(v) if v.name.as_str() == "my-msgs"));
+        assert!(matches!(&cmds[5], BootstrapCommand::AdminAuthPolicy(v) if v.id.as_str() == "pol"));
+        assert!(matches!(&cmds[6], BootstrapCommand::AdminAuthRole(v) if v.id.as_str() == "role"));
+    }
+
+    #[test]
+    fn multiline_auth_policy_and_role() {
+        let input = r#"
+            kv namespace configure {"name":"my-kv"}
+            admin auth-policy configure {
+                "id": "pol",
+                "description": "full access",
+                "rules": [
+                    {
+                        "effect": "allow",
+                        "resource": "*:*:*",
+                        "actions": ["*"]
+                    }
+                ]
+            }
+            admin auth-role configure {
+                "id": "role",
+                "description": "admin",
+                "rules": [],
+                "policies": ["pol"]
+            }
+        "#;
+        let cmds = parse_bootstrap(input).unwrap();
+        assert_eq!(cmds.len(), 3);
+        assert!(matches!(&cmds[0], BootstrapCommand::Kv(v) if v.name.as_str() == "my-kv"));
+        assert!(matches!(&cmds[1], BootstrapCommand::AdminAuthPolicy(v) if v.id.as_str() == "pol"));
+        assert!(matches!(&cmds[2], BootstrapCommand::AdminAuthRole(v) if v.id.as_str() == "role"));
     }
 }
