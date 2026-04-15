@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use diom_backend::cfg::{self, ConfigurationInner};
+use diom_backend::cfg::{self, ConfigurationInner, OpenTelemetryProtocol};
 use diom_core::INSTANCE_ID;
 use opentelemetry::{InstrumentationScope, trace::TracerProvider as _};
 use opentelemetry_otlp::WithExportConfig;
@@ -36,7 +36,7 @@ pub(crate) fn setup_tracing(
         var.join(",")
     });
 
-    let mapped = cfg.opentelemetry_address.as_ref().map(|addr| {
+    let mapped = cfg.opentelemetry.address.as_ref().map(|addr| {
         // Configure the OpenTelemetry tracing layer
         opentelemetry::global::set_text_map_propagator(
             opentelemetry_sdk::propagation::TraceContextPropagator::new(),
@@ -59,14 +59,15 @@ pub(crate) fn setup_tracing(
 
         let provider = SdkTracerProvider::builder()
             .with_sampler(
-                cfg.opentelemetry_sample_ratio
+                cfg.opentelemetry
+                    .sample_ratio
                     .map(Sampler::TraceIdRatioBased)
                     .unwrap_or(Sampler::AlwaysOn),
             )
             .with_span_processor(batch_span_processor)
             .with_resource(
                 opentelemetry_sdk::Resource::builder()
-                    .with_service_name(cfg.opentelemetry_service_name.clone())
+                    .with_service_name(cfg.opentelemetry.service_name.clone())
                     .with_attribute(opentelemetry::KeyValue::new(
                         "instance_id",
                         INSTANCE_ID.as_str(),
@@ -124,11 +125,15 @@ pub(crate) fn setup_tracing(
 
 pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
     if let Some(addr) = cfg
-        .opentelemetry_metrics_address
+        .opentelemetry
+        .metrics_address
         .as_ref()
-        .or(cfg.opentelemetry_address.as_ref())
+        .or(cfg.opentelemetry.address.as_ref())
     {
-        let exporter = if cfg.opentelemetry_metrics_use_http {
+        let exporter = if matches!(
+            cfg.opentelemetry.metrics_protocol,
+            OpenTelemetryProtocol::Http
+        ) {
             tracing::debug!("sending http otel metrics to {addr}");
 
             opentelemetry_otlp::MetricExporter::builder()
@@ -148,14 +153,14 @@ pub(crate) fn setup_metrics(cfg: &ConfigurationInner) {
         };
 
         let reader = PeriodicReader::builder(exporter, runtime::Tokio)
-            .with_interval(cfg.opentelemetry_metrics_period.into())
+            .with_interval(cfg.opentelemetry.metrics_period.into())
             .build();
 
         let provider = SdkMeterProvider::builder()
             .with_reader(reader)
             .with_resource(
                 opentelemetry_sdk::Resource::builder()
-                    .with_service_name(cfg.opentelemetry_service_name.clone())
+                    .with_service_name(cfg.opentelemetry.service_name.clone())
                     .with_attribute(opentelemetry::KeyValue::new(
                         "instance_id",
                         INSTANCE_ID.as_str(),
