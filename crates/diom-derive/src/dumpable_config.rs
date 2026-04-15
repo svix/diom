@@ -8,6 +8,7 @@ struct DumpableField {
     field: Ident,
     docstring: Vec<String>,
     nest: bool,
+    flatten: bool,
     is_optional: bool,
 }
 
@@ -18,6 +19,7 @@ impl DumpableField {
             return Ok(None);
         };
         let mut nest = false;
+        let mut flatten = false;
         let mut name = ident.to_string();
         let is_optional = as_ty_option(&field.ty).is_some();
 
@@ -51,6 +53,8 @@ impl DumpableField {
                         meta.value()?;
                         let rename_to: LitStr = meta.input.parse()?;
                         name = rename_to.value();
+                    } else if meta.path.is_ident("flatten") {
+                        flatten = true;
                     } else if meta.path.is_ident("default") && meta.input.peek(Token![=]) {
                         meta.value()?;
                         let _: LitStr = meta.input.parse()?;
@@ -63,10 +67,18 @@ impl DumpableField {
             return Ok(None);
         }
 
+        if nest && flatten {
+            return Err(syn::Error::new_spanned(
+                field,
+                "can't combine dumpable_config(nest, flatten)",
+            ));
+        }
+
         Ok(Some(Self {
             name,
             field: ident.clone(),
             nest,
+            flatten,
             docstring,
             is_optional,
         }))
@@ -90,7 +102,10 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
         fields.push(parsed);
     }
 
-    fields.sort_by_key(|field| (field.nest, field.name.clone()));
+    // FIXME(jplatte): using flatten for ordering here makes no sense, but it
+    // makes most sense for JwtConfig, which is the only type using this feature
+    // for now. Revisit this - maybe use declared order instead of alphabetic?
+    fields.sort_by_key(|field| (field.nest, !field.flatten, field.name.clone()));
     let mut lists = Vec::with_capacity(obj.fields.len());
     for parsed in fields {
         let field = parsed.field;
@@ -113,6 +128,10 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
                     format!("{}.{}", prefix, #name)
                 };
                 self.#field.dump_map(writer, new_prefix)?;
+            }
+        } else if parsed.flatten {
+            quote! {
+                self.#field.dump_fields(writer, prefix)?;
             }
         } else {
             let dump_serialized = quote! {

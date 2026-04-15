@@ -230,6 +230,18 @@ path = "./db"
 # (object with string values) that is forwarded to internal diom handlers.
 [jwt]
 
+# JWT algorithm.
+#
+# Supported values are HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, PS256, PS384, PS512.
+# values in its `aud` claim. When absent, `aud` is not validated.
+# algorithm =
+
+# Secret for JWT algorithm HS256, HS384 or HS512
+# secret =
+
+# Public key PEM for JWT algorithm RS256, RS384, RS512, ES256, ES384, PS256, PS384 or PS512
+# public_key_pem =
+
 # Expected `aud` values. When set, the token must contain one of these
 # values in its `aud` claim. When absent, `aud` is not validated.
 # audience =
