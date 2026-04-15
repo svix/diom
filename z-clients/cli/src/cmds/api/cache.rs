@@ -34,7 +34,7 @@ pub enum CacheCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"consistency\": \"...\"
+  \"consistency\": {\"...\": \"...\"}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"expiry\": 1234567890123,
@@ -50,7 +50,7 @@ pub enum CacheCommands {
   \"namespace\": \"some_namespace\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": \"...\"
+  \"success\": true
 }")]
     Delete {
         key: String,

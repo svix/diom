@@ -20,7 +20,7 @@ pub enum AdminAuthPolicyCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [\"...\"]
+  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}]
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"id\": \"...\",
@@ -37,7 +37,7 @@ pub enum AdminAuthPolicyCommands {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": \"...\"
+  \"success\": true
 }")]
     Delete {
         admin_access_policy_delete_in: crate::json::JsonOf<diom::models::AdminAccessPolicyDeleteIn>,
@@ -50,7 +50,7 @@ pub enum AdminAuthPolicyCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [\"...\"],
+  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"created\": 1234567890123,
   \"updated\": 1234567890123
 }")]
@@ -64,10 +64,10 @@ pub enum AdminAuthPolicyCommands {
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": [\"...\"],
+  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [\"...\"], \"created\": 1234567890123, \"updated\": 1234567890123}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
-  \"done\": \"...\"
+  \"done\": true
 }")]
     List {
         admin_access_policy_list_in:

@@ -23,10 +23,10 @@ pub enum RateLimitCommands {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
   \"tokens\": 123,
-  \"config\": \"...\"
+  \"config\": {\"...\": \"...\"}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"allowed\": \"...\",
+  \"allowed\": true,
   \"remaining\": 123,
   \"retry_after_ms\": 60000
 }")]
@@ -38,7 +38,7 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": \"...\"
+  \"config\": {\"...\": \"...\"}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"remaining\": 123,
@@ -52,7 +52,7 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": \"...\"
+  \"config\": {\"...\": \"...\"}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

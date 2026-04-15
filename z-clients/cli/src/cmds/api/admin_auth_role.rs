@@ -20,7 +20,7 @@ pub enum AdminAuthRoleCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [\"...\"],
+  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"policies\": [\"...\"],
   \"context\": {\"key\": \"...\"}
 }\n\n\x1b[1;4mExample response:\x1b[0m
@@ -38,7 +38,7 @@ pub enum AdminAuthRoleCommands {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": \"...\"
+  \"success\": true
 }")]
     Delete {
         admin_role_delete_in: crate::json::JsonOf<diom::models::AdminRoleDeleteIn>,
@@ -51,7 +51,7 @@ pub enum AdminAuthRoleCommands {
 {
   \"id\": \"...\",
   \"description\": \"...\",
-  \"rules\": [\"...\"],
+  \"rules\": [{\"effect\": {\"...\": \"...\"}, \"resource\": \"...\", \"actions\": [\"...\"]}],
   \"policies\": [\"...\"],
   \"context\": {\"key\": \"...\"},
   \"created\": 1234567890123,
@@ -67,10 +67,10 @@ pub enum AdminAuthRoleCommands {
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": [\"...\"],
+  \"data\": [{\"id\": \"...\", \"description\": \"...\", \"rules\": [\"...\"], \"policies\": [\"...\"], \"context\": {\"key\": \"...\"}, \"created\": 1234567890123, \"updated\": 1234567890123}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
-  \"done\": \"...\"
+  \"done\": true
 }")]
     List {
         admin_role_list_in: Option<crate::json::JsonOf<diom::models::AdminRoleListIn>>,

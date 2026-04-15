@@ -23,12 +23,12 @@ pub enum MsgsQueueCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"batch_size\": \"...\",
+  \"batch_size\": 123,
   \"lease_duration_ms\": 60000,
   \"batch_wait_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"msgs\": [\"...\"]
+  \"msgs\": [{\"msg_id\": \"...\", \"value\": \"dGVzdA==\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
 }")]
     Receive {
         topic: String,

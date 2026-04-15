@@ -21,10 +21,10 @@ pub enum ClusterAdminCommands {
   \"cluster_id\": \"...\",
   \"cluster_name\": \"...\",
   \"this_node_id\": \"...\",
-  \"this_node_state\": \"...\",
+  \"this_node_state\": {\"...\": \"...\"},
   \"this_node_last_committed_timestamp\": 1234567890123,
   \"this_node_last_snapshot_id\": \"...\",
-  \"nodes\": [\"...\"]
+  \"nodes\": [{\"node_id\": \"...\", \"address\": \"...\", \"state\": {\"...\": \"...\"}, \"last_committed_log_index\": 123, \"last_committed_term\": 123}]
 }")]
     Status {},
     /// Initialize this node as the leader of a new cluster

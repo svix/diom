@@ -21,7 +21,7 @@ pub enum AdminAuthTokenCommands {
   \"name\": \"...\",
   \"role\": \"...\",
   \"expiry_ms\": 60000,
-  \"enabled\": \"...\"
+  \"enabled\": true
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"id\": \"...\",
@@ -63,7 +63,7 @@ pub enum AdminAuthTokenCommands {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": \"...\"
+  \"success\": true
 }")]
     Delete {
         admin_auth_token_delete_in: crate::json::JsonOf<diom::models::AdminAuthTokenDeleteIn>,
@@ -75,10 +75,10 @@ pub enum AdminAuthTokenCommands {
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": [\"...\"],
+  \"data\": [{\"id\": \"...\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
-  \"done\": \"...\"
+  \"done\": true
 }")]
     List {
         admin_auth_token_list_in: Option<crate::json::JsonOf<diom::models::AdminAuthTokenListIn>>,
@@ -89,7 +89,7 @@ pub enum AdminAuthTokenCommands {
   \"id\": \"...\",
   \"name\": \"...\",
   \"expiry_ms\": 60000,
-  \"enabled\": \"...\"
+  \"enabled\": true
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
