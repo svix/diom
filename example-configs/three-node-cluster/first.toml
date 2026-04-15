@@ -1,4 +1,4 @@
-listen_address = "127.0.0.1:8050"
+listen_address = "127.0.0.1:8624"
 jwt_secret = "insecure_cluster"
 jwt_algorithm = "HS256"
 environment = "dev"
@@ -6,11 +6,11 @@ persistent_db.path = "./db-first/persistent"
 ephemeral_db.path = "./db-first/ephemeral"
 opentelemetry_address = "http://localhost:4317"
 opentelemetry_metrics_address = "http://localhost:9090/api/v1/otlp/v1/metrics"
-opentelemetry_metrics_use_http = true
+opentelemetry_metrics_protocol = "http"
 
 [cluster]
 secret = "hunter2"
-listen_address = "127.0.0.1:18050"
+listen_address = "127.0.0.1:8625"
 name = "three-node-cluster"
-seed_nodes = ["127.0.0.1:18050", "127.0.0.1:18051", "127.0.0.1:18052"]
+seed_nodes = ["127.0.0.1:8625", "127.0.0.1:8627", "127.0.0.1:8629"]
 auto_initialize = true

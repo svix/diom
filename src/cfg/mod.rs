@@ -443,6 +443,69 @@ impl Default for ClusterConfiguration {
     }
 }
 
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OpenTelemetryProtocol {
+    #[default]
+    Grpc,
+    Http,
+}
+
+impl FromStr for OpenTelemetryProtocol {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        match s {
+            "grpc|Grpc|GRPC" => Ok(OpenTelemetryProtocol::Grpc),
+            "http|Http|HTTP" => Ok(OpenTelemetryProtocol::Http),
+            _ => anyhow::bail!("Unable to parse OpenTelemetryProtocol"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Validate, EnvOverridable, DumpableConfig)]
+pub struct OpenTelemetryConfig {
+    /// The OpenTelemetry address to send events to if given.
+    ///
+    /// Currently only GRPC exports are supported.
+    pub address: Option<String>,
+
+    /// The OpenTelemetry address to send metrics to if given.
+    ///
+    /// If not specified, the server will attempt to fall back
+    /// to `opentelemetry_address`.
+    pub metrics_address: Option<String>,
+
+    /// OpenTelemetry metrics protocol
+    ///
+    /// By default, metrics are sent via GRPC. Some metrics destinations, most
+    /// notably Prometheus, only support receiving metrics via HTTP.
+    #[serde(default)]
+    pub metrics_protocol: OpenTelemetryProtocol,
+
+    #[serde(
+        rename = "metrics_period_ms",
+        default = "defaults::opentelemetry_metrics_period"
+    )]
+    pub metrics_period: DurationMs,
+
+    /// The ratio at which to sample spans when sending to OpenTelemetry.
+    ///
+    /// When not given it defaults to always sending.
+    /// If the OpenTelemetry address is not set, this will do nothing.
+    pub sample_ratio: Option<f64>,
+
+    /// The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
+    #[serde(default = "defaults::opentelemetry_service_name")]
+    pub service_name: String,
+}
+
+impl Default for OpenTelemetryConfig {
+    fn default() -> Self {
+        default_from_serde().unwrap()
+    }
+}
+
 fn default_from_serde<T: DeserializeOwned>() -> Result<T, serde::de::value::Error> {
     let empty: [(String, String); 0] = [];
     T::deserialize(serde::de::value::MapDeserializer::new(empty.into_iter()))
@@ -475,41 +538,6 @@ pub struct ConfigurationInner {
     /// The log format that all output will follow. Supported: default, json
     #[serde(default)]
     pub log_format: LogFormat,
-
-    /// The OpenTelemetry address to send events to if given.
-    ///
-    /// Currently only GRPC exports are supported.
-    pub opentelemetry_address: Option<String>,
-
-    /// The OpenTelemetry address to send metrics to if given.
-    ///
-    /// If not specified, the server will attempt to fall back
-    /// to `opentelemetry_address`.
-    pub opentelemetry_metrics_address: Option<String>,
-
-    /// Send OpenTelemetry metrics via HTTP.
-    ///
-    /// By default, `opentelemetry_address` and `opentelemetry_metrics_address`
-    /// are expected to be a GRPC servers. When this is set to true,
-    /// HTTP is used instead for metrics exports.
-    #[serde(default)]
-    pub opentelemetry_metrics_use_http: bool,
-
-    #[serde(
-        rename = "opentelemetry_metrics_period_ms",
-        default = "defaults::opentelemetry_metrics_period"
-    )]
-    pub opentelemetry_metrics_period: DurationMs,
-
-    /// The ratio at which to sample spans when sending to OpenTelemetry.
-    ///
-    /// When not given it defaults to always sending.
-    /// If the OpenTelemetry address is not set, this will do nothing.
-    pub opentelemetry_sample_ratio: Option<f64>,
-
-    /// The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
-    #[serde(default = "defaults::opentelemetry_service_name")]
-    pub opentelemetry_service_name: String,
 
     /// The environment (dev, staging, or prod) that the server is running in.
     #[serde(default)]
@@ -579,6 +607,11 @@ pub struct ConfigurationInner {
     #[dumpable_config(nest)]
     #[validate(nested)]
     pub jwt: JwtConfig,
+
+    #[serde(default)]
+    #[env_overridable(nest_with_prefix("OPENTELEMETRY"))]
+    #[dumpable_config(nest)]
+    pub opentelemetry: OpenTelemetryConfig,
 }
 
 impl ConfigurationInner {
