@@ -149,7 +149,7 @@ async fn run_interserver(
 ) {
     let listener = axum_tcp_listener(
         listener,
-        cfg.cluster.listen_address(&cfg),
+        cfg.cluster.listen_address,
         conn_metrics.clone(),
         ConnectionType::Internal,
     )

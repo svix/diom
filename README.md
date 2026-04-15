@@ -1,7 +1,7 @@
 <h1 align="center">
     <a style="text-decoration: none" href="https://diom.svix.com">
       <img width="120" src="https://diom.svix.com/icon.svg" />
-      <p align="center">Diom - Primitives for Robust Services</p>
+      <p align="center">Diom - Components for Robust Services</p>
     </a>
 </h1>
 <h2 align="center">
@@ -14,11 +14,11 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/SvixHQ?style=social)](https://twitter.com/SvixHQ)
 [![Join our slack](https://img.shields.io/badge/Slack-join%20the%20community-blue?logo=slack&style=social)](https://www.svix.com/slack/)
 
-## Diom is the backend primitives platform
+## Diom is the backend components platform
 
-Diom (pronounced: dye-omm/daɪəm) is a backend primitives platform for building robust, idiomatic services.
+Diom (pronounced: dye-omm/daɪəm) is a backend components platform for building robust, idiomatic services.
 
-It offers high-level APIs for commonly used primitives such as cache, rate-limiting, idempotency, queue, and more. It has zero runtime dependencies, uses its own storage, and can be run as a single node or a highly-available cluster.
+It offers high-level APIs for commonly used components such as cache, rate-limiting, idempotency, queue, and more. It has zero runtime dependencies, uses its own storage, and can be run as a single node or a highly-available cluster.
 
 
 [![PyPI](https://img.shields.io/pypi/v/diom.svg)](https://pypi.python.org/pypi/diom/)

@@ -1419,7 +1419,6 @@ dependencies = [
  "diom-operations",
  "fjall",
  "fjall-utils",
- "jiff",
  "serde",
 ]
 
@@ -1730,7 +1729,6 @@ dependencies = [
  "diom-id",
  "fjall",
  "fjall-utils",
- "jiff",
  "schemars 1.2.1",
  "serde",
  "tokio",

@@ -9,6 +9,7 @@ z-clients/java/src/main/java/com/svix/diom/models/** linguist-generated
 z-clients/javascript/src/apis/** linguist-generated
 z-clients/javascript/src/client.ts linguist-generated
 z-clients/javascript/src/models/** linguist-generated
+z-clients/javascript/src/internal.ts linguist-generated
 z-clients/python/diom/__init__.py linguist-generated
 z-clients/python/diom/apis/** linguist-generated
 z-clients/python/diom/diom.py linguist-generated

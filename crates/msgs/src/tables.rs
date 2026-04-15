@@ -251,6 +251,8 @@ pub(crate) struct MsgKey {
     pub(crate) partition: Partition,
     #[key(2)]
     pub(crate) offset: Offset,
+    #[key(3)]
+    pub(crate) timestamp: UnixTimestampMs,
 }
 
 #[derive(Serialize, Deserialize, PersistableValue)]
@@ -280,6 +282,27 @@ impl MsgRow {
         }
     }
 
+    /// Fetch a single message by offset, skipping it if expired.
+    #[tracing::instrument(skip_all, level = "debug")]
+    pub(crate) fn fetch_by_offset(
+        keyspace: &impl fjall_utils::ReadableKeyspace,
+        topic_id: TopicId,
+        partition: Partition,
+        offset: Offset,
+        expiry_cutoff: UnixTimestampMs,
+    ) -> Result<Option<Self>> {
+        let prefix = MsgKey::prefix_offset(&topic_id, &partition, &offset);
+        for entry in keyspace.prefix(prefix) {
+            let (_, val) = entry.into_inner_if(|k| {
+                MsgKey::extract_timestamp(k).expect("valid MsgKey in msg table") >= expiry_cutoff
+            })?;
+            if let Some(v) = val {
+                return Ok(Some(Self::from_fjall_value(v)?));
+            }
+        }
+        Ok(None)
+    }
+
     #[tracing::instrument(skip_all, level = "debug", fields(batch_size))]
     pub(crate) fn fetch_range(
         keyspace: &fjall::Keyspace,
@@ -287,23 +310,31 @@ impl MsgRow {
         partition: Partition,
         offset: Offset,
         batch_size: u16,
-    ) -> Result<Vec<Self>> {
+        expiry_cutoff: UnixTimestampMs,
+    ) -> Result<Vec<(Offset, Self)>> {
         let mut results = Vec::with_capacity(batch_size as usize);
         let range = MsgKey::range(
             MsgKey {
                 topic_id,
                 partition,
                 offset,
+                timestamp: expiry_cutoff,
             }..MsgKey {
                 topic_id,
                 partition,
                 offset: offset + batch_size as u64,
+                timestamp: UnixTimestampMs::UNIX_EPOCH,
             },
         );
         for entry in keyspace.range(range) {
-            let val = entry.value()?;
-            let msg = Self::from_fjall_value(val)?;
-            results.push(msg);
+            let (key, val) = entry.into_inner_if(|k| {
+                MsgKey::extract_timestamp(k).expect("valid MsgKey in msg table") >= expiry_cutoff
+            })?;
+            if let Some(val) = val {
+                let msg_offset = MsgKey::extract_offset(&key).expect("valid MsgKey in msg table");
+                let msg = Self::from_fjall_value(val)?;
+                results.push((msg_offset, msg));
+            }
         }
 
         tracing::Span::current().record("msgs_found", results.len());
@@ -351,5 +382,76 @@ mod tests {
             &*StreamLeaseKey::extract_consumer_group(&key).unwrap(),
             "my-group"
         );
+    }
+
+    #[test]
+    fn fetch_range_filters_expired_messages() {
+        use std::collections::HashMap;
+
+        use diom_id::TopicId;
+        use fjall_utils::WriteBatchExt as _;
+
+        let dir = tempfile::tempdir().unwrap();
+        let db = fjall::Database::builder(dir.path())
+            .temporary(true)
+            .open()
+            .unwrap();
+        let ks = db
+            .keyspace("msgs", fjall::KeyspaceCreateOptions::default)
+            .unwrap();
+        let topic_id = TopicId::new(UnixTimestampMs::UNIX_EPOCH, UuidV7RandomBytes::new_random());
+        let partition = Partition::new(0).unwrap();
+
+        let t1 = UnixTimestampMs::try_from_millisecond(1000).unwrap();
+        let t2 = UnixTimestampMs::try_from_millisecond(2000).unwrap();
+        let t3 = UnixTimestampMs::try_from_millisecond(3000).unwrap();
+
+        for (ts, offset) in [(t1, 0), (t2, 1), (t3, 2)] {
+            let mut batch = db.batch();
+            batch
+                .insert_row(
+                    &ks,
+                    MsgKey {
+                        topic_id,
+                        partition,
+                        timestamp: ts,
+                        offset,
+                    },
+                    &MsgRow {
+                        value: b"msg".into(),
+                        headers: HashMap::new(),
+                        timestamp: ts,
+                        scheduled_at: None,
+                    },
+                )
+                .unwrap();
+            batch.commit().unwrap();
+        }
+
+        // No expiry: all 3 messages returned
+        let msgs =
+            MsgRow::fetch_range(&ks, topic_id, partition, 0, 10, UnixTimestampMs::UNIX_EPOCH)
+                .unwrap();
+        assert_eq!(msgs.len(), 3, "no expiry should return all messages");
+
+        // Cutoff at 1500: only t2 and t3 survive
+        let cutoff = UnixTimestampMs::try_from_millisecond(1500).unwrap();
+        let msgs = MsgRow::fetch_range(&ks, topic_id, partition, 0, 10, cutoff).unwrap();
+        assert_eq!(msgs.len(), 2, "cutoff should filter out the oldest message");
+
+        // Cutoff past all: nothing returned
+        let cutoff = UnixTimestampMs::try_from_millisecond(5000).unwrap();
+        let msgs = MsgRow::fetch_range(&ks, topic_id, partition, 0, 10, cutoff).unwrap();
+        assert_eq!(msgs.len(), 0, "cutoff past all should return nothing");
+
+        // fetch_by_offset: non-expired
+        let msg = MsgRow::fetch_by_offset(&ks, topic_id, partition, 1, UnixTimestampMs::UNIX_EPOCH)
+            .unwrap();
+        assert!(msg.is_some());
+
+        // fetch_by_offset: expired
+        let cutoff = UnixTimestampMs::try_from_millisecond(1500).unwrap();
+        let msg = MsgRow::fetch_by_offset(&ks, topic_id, partition, 0, cutoff).unwrap();
+        assert!(msg.is_none(), "expired message should not be returned");
     }
 }

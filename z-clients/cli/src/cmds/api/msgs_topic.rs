@@ -12,6 +12,7 @@ pub struct MsgsTopicArgs {
     pub command: MsgsTopicCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum MsgsTopicCommands {
     /// Configures the number of partitions for a topic.

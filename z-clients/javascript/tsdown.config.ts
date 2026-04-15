@@ -2,6 +2,7 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   tsconfig: "tsconfig.json",
+  entry: ["src/index.ts", "src/internal.ts"],
   outDir: "dist",
   format: {
     esm: {
@@ -9,4 +10,7 @@ export default defineConfig({
     }
   },
   sourcemap: true,
+  outputOptions: {
+    chunkFileNames: "[hash].mjs", // the default ([name]-[hash].mjs) produces stupid names
+  },
 });

@@ -32,6 +32,7 @@ pub struct StreamReceiveOperation {
     lease_duration: DurationMs,
     default_starting_position: SeekPosition,
     topic_id_random_bytes: UuidV7RandomBytes,
+    retention_period: Option<DurationMs>,
 }
 
 impl StreamReceiveOperation {
@@ -42,6 +43,7 @@ impl StreamReceiveOperation {
         batch_size: NonZeroU16,
         lease_duration: DurationMs,
         default_starting_position: SeekPosition,
+        retention_period: Option<DurationMs>,
     ) -> Result<Self> {
         let (topic, partition) = match topic {
             TopicIn::TopicPartition(tp) => (tp.topic, Some(tp.partition)),
@@ -56,6 +58,7 @@ impl StreamReceiveOperation {
             lease_duration,
             default_starting_position,
             topic_id_random_bytes: UuidV7RandomBytes::new_random(),
+            retention_period,
         })
     }
 
@@ -71,6 +74,10 @@ impl StreamReceiveOperation {
             let mut remaining = self.batch_size.get();
             let mut all_msgs: Vec<StreamReceiveMsg> = Vec::with_capacity(remaining as usize);
             let expiry = now + self.lease_duration;
+            let expiry_cutoff = self
+                .retention_period
+                .map(|rp| now.saturating_sub(rp))
+                .unwrap_or(UnixTimestampMs::UNIX_EPOCH);
 
             let mut batch = state.db.batch();
 
@@ -128,6 +135,7 @@ impl StreamReceiveOperation {
                     topic.partition,
                     lease.offset,
                     remaining,
+                    expiry_cutoff,
                 )?;
 
                 if msgs.is_empty() {
@@ -147,23 +155,17 @@ impl StreamReceiveOperation {
 
                 lease.expiry = expiry;
 
-                // FIXME(@svix-gabriel) - I should just be able to reference msgs.last.offset.
-                // this'll require a larger change though.
-                lease.end_offset = lease.offset + msgs.len() as u64 - 1;
+                lease.end_offset = msgs.last().expect("non-empty").0;
                 remaining -= msgs.len() as u16;
 
-                all_msgs.extend(
-                    msgs.into_iter()
-                        .enumerate()
-                        .map(|(i, msg)| StreamReceiveMsg {
-                            value: msg.value,
-                            timestamp: msg.timestamp,
-                            headers: msg.headers,
-                            offset: lease.offset + i as u64,
-                            topic: topic.clone(),
-                            scheduled_at: msg.scheduled_at,
-                        }),
-                );
+                all_msgs.extend(msgs.into_iter().map(|(offset, msg)| StreamReceiveMsg {
+                    value: msg.value,
+                    timestamp: msg.timestamp,
+                    headers: msg.headers,
+                    offset,
+                    topic: topic.clone(),
+                    scheduled_at: msg.scheduled_at,
+                }));
 
                 batch.insert_row(
                     &state.metadata_tables,

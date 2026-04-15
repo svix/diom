@@ -1,16 +1,17 @@
-use crate::{AccessRule, AccessRuleEffect, RequestedOperation};
+use crate::{AccessRule, AccessRuleEffect, Context, RequestedOperation};
 
 pub struct Forbidden;
 
 pub fn verify_operation(
     operation: &RequestedOperation<'_>,
     rules: &[AccessRule],
+    context: Context<'_>,
 ) -> Result<(), Forbidden> {
     // Fallback if no rule matches: reject
     let mut result = Err(Forbidden);
 
     for rule in rules {
-        if rule.matches(operation) {
+        if rule.matches(operation, context) {
             match rule.effect {
                 AccessRuleEffect::Allow => {
                     // found an allow rule, so set the result accordingly.

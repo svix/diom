@@ -12,6 +12,7 @@ pub struct HealthArgs {
     pub command: HealthCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum HealthCommands {
     /// Verify the server is up and running.

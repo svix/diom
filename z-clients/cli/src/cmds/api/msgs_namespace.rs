@@ -12,6 +12,7 @@ pub struct MsgsNamespaceArgs {
     pub command: MsgsNamespaceCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum MsgsNamespaceCommands {
     /// Configures a msgs namespace with the given name.

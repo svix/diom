@@ -310,8 +310,8 @@ async fn health(Extension(state): Extension<RaftState>) -> impl IntoResponse {
                 server_state: s.server_state,
                 cluster_id,
                 leader,
-                wall_time,
-                monotonic_time,
+                wall_time: wall_time.into(),
+                monotonic_time: monotonic_time.into(),
             };
             let status = if s.server_state.is_leader()
                 || s.server_state.is_follower()

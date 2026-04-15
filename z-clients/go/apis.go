@@ -18,6 +18,12 @@ func (diom Diom) Cache() Cache {
 	return diom_apis.NewCache(&diom.inner)
 }
 
+type ClusterAdmin = diom_apis.ClusterAdmin
+
+func (diom Diom) ClusterAdmin() ClusterAdmin {
+	return diom_apis.NewClusterAdmin(&diom.inner)
+}
+
 type Health = diom_apis.Health
 
 func (diom Diom) Health() Health {

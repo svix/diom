@@ -10,14 +10,14 @@
     }
   },
   "paths": {
-    "/api/v1.admin.cluster.status": {
+    "/api/v1.cluster-admin.status": {
       "get": {
         "tags": [
-          "Admin"
+          "ClusterAdmin"
         ],
         "summary": "Cluster Status",
         "description": "Get information about the current cluster",
-        "operationId": "v1.admin.cluster.status",
+        "operationId": "v1.cluster-admin.status",
         "responses": {
           "200": {
             "description": "",
@@ -77,14 +77,14 @@
         ]
       }
     },
-    "/api/v1.admin.cluster.initialize": {
+    "/api/v1.cluster-admin.initialize": {
       "post": {
         "tags": [
-          "Admin"
+          "ClusterAdmin"
         ],
         "summary": "Cluster Initialize",
         "description": "Initialize this node as the leader of a new cluster\n\nThis operation may only be performed against a node which has not been\ninitialized and is not currently a member of a cluster.",
-        "operationId": "v1.admin.cluster.initialize",
+        "operationId": "v1.cluster-admin.initialize",
         "requestBody": {
           "content": {
             "application/json": {
@@ -154,14 +154,14 @@
         ]
       }
     },
-    "/api/v1.admin.cluster.remove-node": {
+    "/api/v1.cluster-admin.remove-node": {
       "post": {
         "tags": [
-          "Admin"
+          "ClusterAdmin"
         ],
         "summary": "Cluster Remove Node",
         "description": "Remove a node from the cluster.\n\nThis operation executes immediately and the node must be wiped and reset\nbefore it can safely be added to the cluster.",
-        "operationId": "v1.admin.cluster.remove-node",
+        "operationId": "v1.cluster-admin.remove-node",
         "requestBody": {
           "content": {
             "application/json": {
@@ -231,14 +231,14 @@
         ]
       }
     },
-    "/api/v1.admin.cluster.force-snapshot": {
+    "/api/v1.cluster-admin.force-snapshot": {
       "post": {
         "tags": [
-          "Admin"
+          "ClusterAdmin"
         ],
         "summary": "Cluster Force Snapshot",
         "description": "Force the cluster to take a snapshot immediately",
-        "operationId": "v1.admin.cluster.force-snapshot",
+        "operationId": "v1.cluster-admin.force-snapshot",
         "requestBody": {
           "content": {
             "application/json": {

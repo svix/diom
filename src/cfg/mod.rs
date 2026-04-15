@@ -218,10 +218,9 @@ impl DatabaseConfig {
     skip_on_field_errors = true
 ))]
 pub struct ClusterConfiguration {
-    /// The address to listen on for replication. Defaults to the main listen address,
-    /// but with the port incremented by 10000
-    #[serde(default)]
-    pub listen_address: Option<SocketAddr>,
+    /// The address to listen on for replication.
+    #[serde(default = "defaults::cluster_listen_address")]
+    pub listen_address: SocketAddr,
 
     /// Human-facing name for this cluster.
     ///
@@ -436,17 +435,72 @@ impl ClusterConfiguration {
             Dir::new(root.persistent_db.path.join("cluster_snapshots"))
         }
     }
-
-    pub fn listen_address(&self, root: &ConfigurationInner) -> SocketAddr {
-        self.listen_address.unwrap_or_else(|| {
-            let port = root.listen_address.port() + 10000;
-            let ip = root.listen_address.ip();
-            SocketAddr::new(ip, port)
-        })
-    }
 }
 
 impl Default for ClusterConfiguration {
+    fn default() -> Self {
+        default_from_serde().unwrap()
+    }
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum OpenTelemetryProtocol {
+    #[default]
+    Grpc,
+    Http,
+}
+
+impl FromStr for OpenTelemetryProtocol {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        match s {
+            "grpc|Grpc|GRPC" => Ok(OpenTelemetryProtocol::Grpc),
+            "http|Http|HTTP" => Ok(OpenTelemetryProtocol::Http),
+            _ => anyhow::bail!("Unable to parse OpenTelemetryProtocol"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, Validate, EnvOverridable, DumpableConfig)]
+pub struct OpenTelemetryConfig {
+    /// The OpenTelemetry address to send events to if given.
+    ///
+    /// Currently only GRPC exports are supported.
+    pub address: Option<String>,
+
+    /// The OpenTelemetry address to send metrics to if given.
+    ///
+    /// If not specified, the server will attempt to fall back
+    /// to `opentelemetry_address`.
+    pub metrics_address: Option<String>,
+
+    /// OpenTelemetry metrics protocol
+    ///
+    /// By default, metrics are sent via GRPC. Some metrics destinations, most
+    /// notably Prometheus, only support receiving metrics via HTTP.
+    #[serde(default)]
+    pub metrics_protocol: OpenTelemetryProtocol,
+
+    #[serde(
+        rename = "metrics_period_ms",
+        default = "defaults::opentelemetry_metrics_period"
+    )]
+    pub metrics_period: DurationMs,
+
+    /// The ratio at which to sample spans when sending to OpenTelemetry.
+    ///
+    /// When not given it defaults to always sending.
+    /// If the OpenTelemetry address is not set, this will do nothing.
+    pub sample_ratio: Option<f64>,
+
+    /// The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
+    #[serde(default = "defaults::opentelemetry_service_name")]
+    pub service_name: String,
+}
+
+impl Default for OpenTelemetryConfig {
     fn default() -> Self {
         default_from_serde().unwrap()
     }
@@ -484,41 +538,6 @@ pub struct ConfigurationInner {
     /// The log format that all output will follow. Supported: default, json
     #[serde(default)]
     pub log_format: LogFormat,
-
-    /// The OpenTelemetry address to send events to if given.
-    ///
-    /// Currently only GRPC exports are supported.
-    pub opentelemetry_address: Option<String>,
-
-    /// The OpenTelemetry address to send metrics to if given.
-    ///
-    /// If not specified, the server will attempt to fall back
-    /// to `opentelemetry_address`.
-    pub opentelemetry_metrics_address: Option<String>,
-
-    /// Send OpenTelemetry metrics via HTTP.
-    ///
-    /// By default, `opentelemetry_address` and `opentelemetry_metrics_address`
-    /// are expected to be a GRPC servers. When this is set to true,
-    /// HTTP is used instead for metrics exports.
-    #[serde(default)]
-    pub opentelemetry_metrics_use_http: bool,
-
-    #[serde(
-        rename = "opentelemetry_metrics_period_ms",
-        default = "defaults::opentelemetry_metrics_period"
-    )]
-    pub opentelemetry_metrics_period: DurationMs,
-
-    /// The ratio at which to sample spans when sending to OpenTelemetry.
-    ///
-    /// When not given it defaults to always sending.
-    /// If the OpenTelemetry address is not set, this will do nothing.
-    pub opentelemetry_sample_ratio: Option<f64>,
-
-    /// The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
-    #[serde(default = "defaults::opentelemetry_service_name")]
-    pub opentelemetry_service_name: String,
 
     /// The environment (dev, staging, or prod) that the server is running in.
     #[serde(default)]
@@ -588,6 +607,11 @@ pub struct ConfigurationInner {
     #[dumpable_config(nest)]
     #[validate(nested)]
     pub jwt: JwtConfig,
+
+    #[serde(default)]
+    #[env_overridable(nest_with_prefix("OPENTELEMETRY"))]
+    #[dumpable_config(nest)]
+    pub opentelemetry: OpenTelemetryConfig,
 }
 
 impl ConfigurationInner {
@@ -1121,22 +1145,22 @@ persistent_db.path = "/2"
 
     #[test]
     fn test_peer_addr_parsing() {
-        let Ok(PeerAddr::SocketAddr(SocketAddr::V4(sa))) = "127.0.0.2:8050".parse() else {
+        let Ok(PeerAddr::SocketAddr(SocketAddr::V4(sa))) = "127.0.0.2:8624".parse() else {
             panic!("failed to parse v4 addr")
         };
-        assert_eq!(sa.port(), 8050);
+        assert_eq!(sa.port(), 8624);
         assert_eq!(*sa.ip(), Ipv4Addr::new(127, 0, 0, 2));
-        let Ok(PeerAddr::SocketAddr(SocketAddr::V6(sa))) = "[::1001:2%1234]:8050".parse() else {
+        let Ok(PeerAddr::SocketAddr(SocketAddr::V6(sa))) = "[::1001:2%1234]:8624".parse() else {
             panic!("failed to parse v6 addr");
         };
         assert_eq!(sa.scope_id(), 1234);
-        assert_eq!(sa.port(), 8050);
+        assert_eq!(sa.port(), 8624);
         assert_eq!(*sa.ip(), Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0x1001, 0x2));
         assert_eq!(
-            "foobar:8050".parse::<PeerAddr>().expect("should parse"),
+            "foobar:8624".parse::<PeerAddr>().expect("should parse"),
             PeerAddr::HostnameAndPort {
                 hostname: "foobar".to_owned(),
-                port: 8050
+                port: 8624
             }
         );
         "  illegal-hostname:1"
@@ -1155,7 +1179,7 @@ persistent_db.path = "/2"
         let addrs = [
             PeerAddr::SocketAddr(SocketAddr::new(
                 IpAddr::V4(Ipv4Addr::new(127, 0, 0, 2)),
-                8050,
+                8624,
             )),
             PeerAddr::SocketAddr(SocketAddr::new(
                 IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 2)),

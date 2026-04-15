@@ -1,6 +1,6 @@
 # This is a configuration used for benchmarking, not for general use
 
-listen_address = "0.0.0.0:8050"
+listen_address = "0.0.0.0:8624"
 log_level="info"
 environment = "dev"
 

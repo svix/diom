@@ -12,6 +12,7 @@ pub struct RateLimitNamespaceArgs {
     pub command: RateLimitNamespaceCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum RateLimitNamespaceCommands {
     /// Configure rate limiter namespace

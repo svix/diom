@@ -7,13 +7,14 @@ use crate::prelude::*;
 
 #[derive(Args)]
 #[command(args_conflicts_with_subcommands = true, flatten_help = true)]
-pub struct AdminClusterArgs {
+pub struct ClusterAdminArgs {
     #[command(subcommand)]
-    pub command: AdminClusterCommands,
+    pub command: ClusterAdminCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
-pub enum AdminClusterCommands {
+pub enum ClusterAdminCommands {
     /// Get information about the current cluster
     #[command(after_long_help = "\x1b[1;4mExample response:\x1b[0m
 {
@@ -68,19 +69,18 @@ pub enum AdminClusterCommands {
     },
 }
 
-impl AdminClusterCommands {
+impl ClusterAdminCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
             Self::Status {} => {
-                let resp = client.admin().cluster().status().await?;
+                let resp = client.cluster_admin().status().await?;
                 crate::json::print_json_output(&resp)?;
             }
             Self::Initialize {
                 cluster_initialize_in,
             } => {
                 let resp = client
-                    .admin()
-                    .cluster()
+                    .cluster_admin()
                     .initialize(cluster_initialize_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
@@ -89,8 +89,7 @@ impl AdminClusterCommands {
                 cluster_remove_node_in,
             } => {
                 let resp = client
-                    .admin()
-                    .cluster()
+                    .cluster_admin()
                     .remove_node(cluster_remove_node_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
@@ -99,8 +98,7 @@ impl AdminClusterCommands {
                 cluster_force_snapshot_in,
             } => {
                 let resp = client
-                    .admin()
-                    .cluster()
+                    .cluster_admin()
                     .force_snapshot(cluster_force_snapshot_in.unwrap_or_default().into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;

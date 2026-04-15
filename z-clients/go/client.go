@@ -21,7 +21,7 @@ type Diom struct {
 }
 
 func New(token string, options *DiomOptions) (*Diom, error) {
-	httpClient := diom_proto.DefaultHttpClient("http://localhost:8050")
+	httpClient := diom_proto.DefaultHttpClient("http://localhost:8624")
 
 	if options != nil {
 		if options.ServerUrl != nil {

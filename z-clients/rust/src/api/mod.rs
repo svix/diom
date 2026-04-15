@@ -5,9 +5,9 @@ mod admin;
 mod admin_auth_policy;
 mod admin_auth_role;
 mod admin_auth_token;
-mod admin_cluster;
 mod cache;
 mod cache_namespace;
+mod cluster_admin;
 mod health;
 mod idempotency;
 mod idempotency_namespace;
@@ -23,8 +23,8 @@ mod rate_limit_namespace;
 
 pub use self::{
     admin::Admin, admin_auth_policy::AdminAuthPolicy, admin_auth_role::AdminAuthRole,
-    admin_auth_token::AdminAuthToken, admin_cluster::AdminCluster, cache::Cache,
-    cache_namespace::CacheNamespace, health::Health, idempotency::Idempotency,
+    admin_auth_token::AdminAuthToken, cache::Cache, cache_namespace::CacheNamespace,
+    cluster_admin::ClusterAdmin, health::Health, idempotency::Idempotency,
     idempotency_namespace::IdempotencyNamespace, kv::Kv, kv_namespace::KvNamespace, msgs::Msgs,
     msgs_namespace::MsgsNamespace, msgs_queue::MsgsQueue, msgs_stream::MsgsStream,
     msgs_topic::MsgsTopic, rate_limit::RateLimit, rate_limit_namespace::RateLimitNamespace,
@@ -37,6 +37,10 @@ impl DiomClient {
 
     pub fn cache(&self) -> Cache<'_> {
         Cache::new(&self.cfg)
+    }
+
+    pub fn cluster_admin(&self) -> ClusterAdmin<'_> {
+        ClusterAdmin::new(&self.cfg)
     }
 
     pub fn health(&self) -> Health<'_> {

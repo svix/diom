@@ -1,4 +1,6 @@
-use diom_authorization::{RequestedOperation, ResourcePattern};
+use std::collections::HashMap;
+
+use diom_authorization::{Context, RequestedOperation, ResourcePattern};
 use diom_id::Module;
 
 static EXAMPLE_OP_KV: RequestedOperation<'static> = RequestedOperation {
@@ -11,31 +13,31 @@ static EXAMPLE_OP_KV: RequestedOperation<'static> = RequestedOperation {
 #[test]
 fn test_default_namespace_exact_key_match() {
     let pat = "kv::foo/bar".parse::<ResourcePattern>().unwrap();
-    assert!(pat.matches(&EXAMPLE_OP_KV));
+    assert!(pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()));
 }
 
 #[test]
 fn test_any_namespace_exact_key_match() {
     let pat = "kv:*:foo/bar".parse::<ResourcePattern>().unwrap();
-    assert!(pat.matches(&EXAMPLE_OP_KV));
+    assert!(pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()));
 }
 
 #[test]
 fn test_default_namespace_any_key_match() {
     let pat = "kv::*".parse::<ResourcePattern>().unwrap();
-    assert!(pat.matches(&EXAMPLE_OP_KV));
+    assert!(pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()));
 }
 
 #[test]
 fn test_any_namespace_any_key_match() {
     let pat = "kv:*:*".parse::<ResourcePattern>().unwrap();
-    assert!(pat.matches(&EXAMPLE_OP_KV));
+    assert!(pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()));
 }
 
 #[test]
 fn test_module_glob_match() {
     let pat = "*::*".parse::<ResourcePattern>().unwrap();
-    assert!(pat.matches(&EXAMPLE_OP_KV));
+    assert!(pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()));
 }
 
 #[test]
@@ -43,7 +45,10 @@ fn test_any_namespace_wrong_module() {
     for wrong_module in ["auth_token", "cache", "idempotency", "msgs"] {
         let pat_s = &format!("{wrong_module}::*");
         let pat = pat_s.parse::<ResourcePattern>().unwrap();
-        assert!(!pat.matches(&EXAMPLE_OP_KV), "{pat_s}");
+        assert!(
+            !pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()),
+            "{pat_s}"
+        );
     }
 }
 
@@ -52,7 +57,10 @@ fn test_any_namespace_wrong_exact_key_pattern() {
     for wrong_key in ["foo/baz", "foox/bar", "foo/ba", "foo/bars", "foobar"] {
         let pat_s = format!("kv:*:{wrong_key}");
         let pat = pat_s.parse::<ResourcePattern>().unwrap();
-        assert!(!pat.matches(&EXAMPLE_OP_KV), "{pat_s}");
+        assert!(
+            !pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()),
+            "{pat_s}"
+        );
     }
 }
 
@@ -61,7 +69,51 @@ fn test_missing_context() {
     let pat = "kv:*:foo/${context.bar}"
         .parse::<ResourcePattern>()
         .unwrap();
-    assert!(!pat.matches(&EXAMPLE_OP_KV));
+    assert!(!pat.matches(&EXAMPLE_OP_KV, Context::empty_for_tests()));
+}
+
+#[test]
+fn test_role_placeholder() {
+    let pat = "kv:*:foo/${role}".parse::<ResourcePattern>().unwrap();
+    let context = Context {
+        role: "bar",
+        map: &HashMap::new(),
+    };
+    assert!(pat.matches(&EXAMPLE_OP_KV, context));
+}
+
+#[test]
+fn test_role_placeholder_mismatch() {
+    let pat = "kv:*:foo/${role}".parse::<ResourcePattern>().unwrap();
+    let context = Context {
+        role: "notbar",
+        map: &HashMap::new(),
+    };
+    assert!(!pat.matches(&EXAMPLE_OP_KV, context));
+}
+
+#[test]
+fn test_context_placeholder() {
+    let pat = "kv:*:foo/${context.xyz}"
+        .parse::<ResourcePattern>()
+        .unwrap();
+    let context = Context {
+        role: "whocares",
+        map: &HashMap::from([("xyz".to_owned(), "bar".to_owned())]),
+    };
+    assert!(pat.matches(&EXAMPLE_OP_KV, context));
+}
+
+#[test]
+fn test_context_placeholder_mismatch() {
+    let pat = "kv:*:foo/${context.xyz}"
+        .parse::<ResourcePattern>()
+        .unwrap();
+    let context = Context {
+        role: "whocares",
+        map: &HashMap::from([("xyz".to_owned(), "barr".to_owned())]),
+    };
+    assert!(!pat.matches(&EXAMPLE_OP_KV, context));
 }
 
 static EXAMPLE_OP_AUTH_TOKEN: RequestedOperation<'static> = RequestedOperation {
@@ -74,13 +126,13 @@ static EXAMPLE_OP_AUTH_TOKEN: RequestedOperation<'static> = RequestedOperation {
 #[test]
 fn test_explicit_namespace_any_key_match() {
     let pat = "auth_token:my-ns:*".parse::<ResourcePattern>().unwrap();
-    assert!(pat.matches(&EXAMPLE_OP_AUTH_TOKEN));
+    assert!(pat.matches(&EXAMPLE_OP_AUTH_TOKEN, Context::empty_for_tests()));
 }
 
 #[test]
 fn test_any_namespace_any_key_match_2() {
     let pat = "auth_token:*:*".parse::<ResourcePattern>().unwrap();
-    assert!(pat.matches(&EXAMPLE_OP_AUTH_TOKEN));
+    assert!(pat.matches(&EXAMPLE_OP_AUTH_TOKEN, Context::empty_for_tests()));
 }
 
 #[test]
@@ -88,7 +140,10 @@ fn test_wrong_namespace() {
     for wrong_ns in ["myns", "my-", "-ns", "m", "my-ns-"] {
         let pat_s = format!("auth_token:{wrong_ns}:*");
         let pat = pat_s.parse::<ResourcePattern>().unwrap();
-        assert!(!pat.matches(&EXAMPLE_OP_AUTH_TOKEN), "{pat_s}");
+        assert!(
+            !pat.matches(&EXAMPLE_OP_AUTH_TOKEN, Context::empty_for_tests()),
+            "{pat_s}"
+        );
     }
 }
 
@@ -102,5 +157,5 @@ static EXAMPLE_OP_POLICY: RequestedOperation<'static> = RequestedOperation {
 #[test]
 fn test_module_glob_no_match_on_admin_api() {
     let pat = "*:*:*".parse::<ResourcePattern>().unwrap();
-    assert!(!pat.matches(&EXAMPLE_OP_POLICY));
+    assert!(!pat.matches(&EXAMPLE_OP_POLICY, Context::empty_for_tests()));
 }

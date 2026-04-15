@@ -3,6 +3,7 @@ import type { DiomOptions } from "./options";
 import { makeRequestContext, type DiomRequestContext } from "./request";
 import { Admin } from "./apis/admin";
 import { Cache } from "./apis/cache";
+import { ClusterAdmin } from "./apis/clusterAdmin";
 import { Health } from "./apis/health";
 import { Idempotency } from "./apis/idempotency";
 import { Kv } from "./apis/kv";
@@ -12,6 +13,7 @@ import { RateLimit } from "./apis/rateLimit";
 export {
   Admin,
   Cache,
+  ClusterAdmin,
   Health,
   Idempotency,
   Kv,
@@ -32,6 +34,10 @@ export class Diom {
 
   public get cache(){
     return new Cache(this.requestCtx);
+  }
+
+  public get clusterAdmin(){
+    return new ClusterAdmin(this.requestCtx);
   }
 
   public get health(){

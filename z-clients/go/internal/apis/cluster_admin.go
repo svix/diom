@@ -9,23 +9,23 @@ import (
 	diom_proto "github.com/svix/diom/z-clients/go/internal/proto"
 )
 
-type AdminCluster struct {
+type ClusterAdmin struct {
 	client *diom_proto.HttpClient
 }
 
-func NewAdminCluster(client *diom_proto.HttpClient) AdminCluster {
-	return AdminCluster{client}
+func NewClusterAdmin(client *diom_proto.HttpClient) ClusterAdmin {
+	return ClusterAdmin{client}
 }
 
 // Get information about the current cluster
-func (adminCluster AdminCluster) Status(
+func (clusterAdmin ClusterAdmin) Status(
 	ctx context.Context,
 ) (*diom_models.ClusterStatusOut, error) {
 	return diom_proto.ExecuteRequest[any, diom_models.ClusterStatusOut](
 		ctx,
-		adminCluster.client,
+		clusterAdmin.client,
 		"GET",
-		"/api/v1.admin.cluster.status",
+		"/api/v1.cluster-admin.status",
 		nil,
 	)
 }
@@ -34,15 +34,15 @@ func (adminCluster AdminCluster) Status(
 //
 // This operation may only be performed against a node which has not been
 // initialized and is not currently a member of a cluster.
-func (adminCluster AdminCluster) Initialize(
+func (clusterAdmin ClusterAdmin) Initialize(
 	ctx context.Context,
 	clusterInitializeIn diom_models.ClusterInitializeIn,
 ) (*diom_models.ClusterInitializeOut, error) {
 	return diom_proto.ExecuteRequest[diom_models.ClusterInitializeIn, diom_models.ClusterInitializeOut](
 		ctx,
-		adminCluster.client,
+		clusterAdmin.client,
 		"POST",
-		"/api/v1.admin.cluster.initialize",
+		"/api/v1.cluster-admin.initialize",
 		&clusterInitializeIn,
 	)
 }
@@ -51,29 +51,29 @@ func (adminCluster AdminCluster) Initialize(
 //
 // This operation executes immediately and the node must be wiped and reset
 // before it can safely be added to the cluster.
-func (adminCluster AdminCluster) RemoveNode(
+func (clusterAdmin ClusterAdmin) RemoveNode(
 	ctx context.Context,
 	clusterRemoveNodeIn diom_models.ClusterRemoveNodeIn,
 ) (*diom_models.ClusterRemoveNodeOut, error) {
 	return diom_proto.ExecuteRequest[diom_models.ClusterRemoveNodeIn, diom_models.ClusterRemoveNodeOut](
 		ctx,
-		adminCluster.client,
+		clusterAdmin.client,
 		"POST",
-		"/api/v1.admin.cluster.remove-node",
+		"/api/v1.cluster-admin.remove-node",
 		&clusterRemoveNodeIn,
 	)
 }
 
 // Force the cluster to take a snapshot immediately
-func (adminCluster AdminCluster) ForceSnapshot(
+func (clusterAdmin ClusterAdmin) ForceSnapshot(
 	ctx context.Context,
 	clusterForceSnapshotIn diom_models.ClusterForceSnapshotIn,
 ) (*diom_models.ClusterForceSnapshotOut, error) {
 	return diom_proto.ExecuteRequest[diom_models.ClusterForceSnapshotIn, diom_models.ClusterForceSnapshotOut](
 		ctx,
-		adminCluster.client,
+		clusterAdmin.client,
 		"POST",
-		"/api/v1.admin.cluster.force-snapshot",
+		"/api/v1.cluster-admin.force-snapshot",
 		&clusterForceSnapshotIn,
 	)
 }

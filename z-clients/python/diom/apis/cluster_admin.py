@@ -12,7 +12,7 @@ from ..models import (
 )
 
 
-class AdminClusterAsync(ApiBase):
+class ClusterAdminAsync(ApiBase):
     async def status(
         self,
     ) -> ClusterStatusOut:
@@ -20,7 +20,7 @@ class AdminClusterAsync(ApiBase):
 
         response = await self._request_asyncio(
             method="get",
-            path="/api/v1.admin.cluster.status",
+            path="/api/v1.cluster-admin.status",
         )
         return parse_response(response, ClusterStatusOut)
 
@@ -36,7 +36,7 @@ class AdminClusterAsync(ApiBase):
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.admin.cluster.initialize",
+            path="/api/v1.cluster-admin.initialize",
             body=body,
         )
         return parse_response(response, ClusterInitializeOut)
@@ -53,7 +53,7 @@ class AdminClusterAsync(ApiBase):
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.admin.cluster.remove-node",
+            path="/api/v1.cluster-admin.remove-node",
             body=body,
         )
         return parse_response(response, ClusterRemoveNodeOut)
@@ -67,13 +67,13 @@ class AdminClusterAsync(ApiBase):
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.admin.cluster.force-snapshot",
+            path="/api/v1.cluster-admin.force-snapshot",
             body=body,
         )
         return parse_response(response, ClusterForceSnapshotOut)
 
 
-class AdminCluster(ApiBase):
+class ClusterAdmin(ApiBase):
     def status(
         self,
     ) -> ClusterStatusOut:
@@ -81,7 +81,7 @@ class AdminCluster(ApiBase):
 
         response = self._request_sync(
             method="get",
-            path="/api/v1.admin.cluster.status",
+            path="/api/v1.cluster-admin.status",
         )
         return parse_response(response, ClusterStatusOut)
 
@@ -97,7 +97,7 @@ class AdminCluster(ApiBase):
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.admin.cluster.initialize",
+            path="/api/v1.cluster-admin.initialize",
             body=body,
         )
         return parse_response(response, ClusterInitializeOut)
@@ -114,7 +114,7 @@ class AdminCluster(ApiBase):
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.admin.cluster.remove-node",
+            path="/api/v1.cluster-admin.remove-node",
             body=body,
         )
         return parse_response(response, ClusterRemoveNodeOut)
@@ -128,7 +128,7 @@ class AdminCluster(ApiBase):
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.admin.cluster.force-snapshot",
+            path="/api/v1.cluster-admin.force-snapshot",
             body=body,
         )
         return parse_response(response, ClusterForceSnapshotOut)

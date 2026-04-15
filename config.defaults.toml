@@ -32,42 +32,13 @@ environment = "dev"
 fsync_mode = "sync-data"
 
 # The address to listen on
-listen_address = "0.0.0.0:8050"
+listen_address = "[::]:8624"
 
 # The log format that all output will follow. Supported: default, json
 log_format = "default"
 
 # The log level to run the service with. Supported: info, debug, trace
 log_level = "info"
-
-# The OpenTelemetry address to send events to if given.
-#
-# Currently only GRPC exports are supported.
-# opentelemetry_address =
-
-# The OpenTelemetry address to send metrics to if given.
-#
-# If not specified, the server will attempt to fall back
-# to `opentelemetry_address`.
-# opentelemetry_metrics_address =
-
-opentelemetry_metrics_period_ms = 10000
-
-# Send OpenTelemetry metrics via HTTP.
-#
-# By default, `opentelemetry_address` and `opentelemetry_metrics_address`
-# are expected to be a GRPC servers. When this is set to true,
-# HTTP is used instead for metrics exports.
-opentelemetry_metrics_use_http = false
-
-# The ratio at which to sample spans when sending to OpenTelemetry.
-#
-# When not given it defaults to always sending.
-# If the OpenTelemetry address is not set, this will do nothing.
-# opentelemetry_sample_ratio =
-
-# The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
-opentelemetry_service_name = "diom"
 
 # How to persist data to the actual underlying database
 #
@@ -123,9 +94,8 @@ election_timeout_min_ms = 1500
 # Must not be less than `replication_request_timeout`.
 heartbeat_interval_ms = 500
 
-# The address to listen on for replication. Defaults to the main listen address,
-# but with the port incremented by 10000
-# listen_address =
+# The address to listen on for replication.
+listen_address = "[::]:8625"
 
 log_index_interval_ms = 600000
 
@@ -249,6 +219,36 @@ path = "./db"
 # Expected `iss` values. When set, the token's `iss` claim must match one
 # of these values. When absent, `iss` is not validated.
 # issuer =
+
+[opentelemetry]
+
+# The OpenTelemetry address to send events to if given.
+#
+# Currently only GRPC exports are supported.
+# address =
+
+# The OpenTelemetry address to send metrics to if given.
+#
+# If not specified, the server will attempt to fall back
+# to `opentelemetry_address`.
+# metrics_address =
+
+metrics_period_ms = 10000
+
+# OpenTelemetry metrics protocol
+#
+# By default, metrics are sent via GRPC. Some metrics destinations, most
+# notably Prometheus, only support receiving metrics via HTTP.
+metrics_protocol = "grpc"
+
+# The ratio at which to sample spans when sending to OpenTelemetry.
+#
+# When not given it defaults to always sending.
+# If the OpenTelemetry address is not set, this will do nothing.
+# sample_ratio =
+
+# The service name to use for OpenTelemetry. If not provided, it defaults to "diom".
+service_name = "diom"
 
 # Storage configuration for the persistent database, which is used by most modules and
 # should be placed on durable storage

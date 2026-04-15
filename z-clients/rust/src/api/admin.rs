@@ -1,5 +1,5 @@
 // this file is @generated
-use super::{AdminAuthPolicy, AdminAuthRole, AdminAuthToken, AdminCluster};
+use super::{AdminAuthPolicy, AdminAuthRole, AdminAuthToken};
 use crate::Configuration;
 
 pub struct Admin<'a> {
@@ -21,9 +21,5 @@ impl<'a> Admin<'a> {
 
     pub fn auth_token(&self) -> AdminAuthToken<'a> {
         AdminAuthToken::new(self.cfg)
-    }
-
-    pub fn cluster(&self) -> AdminCluster<'a> {
-        AdminCluster::new(self.cfg)
     }
 }

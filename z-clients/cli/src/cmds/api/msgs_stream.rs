@@ -12,6 +12,7 @@ pub struct MsgsStreamArgs {
     pub command: MsgsStreamCommands,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum MsgsStreamCommands {
     /// Receives messages from a topic using a consumer group.

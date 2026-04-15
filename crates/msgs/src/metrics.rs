@@ -377,6 +377,7 @@ mod tests {
                 MsgKey {
                     topic_id: topic_row.id,
                     partition,
+                    timestamp: UnixTimestampMs::UNIX_EPOCH,
                     offset,
                 },
                 &row,

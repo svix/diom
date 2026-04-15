@@ -5,7 +5,6 @@ use diom_namespace::{
     entities::{MsgsConfig, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::{ConfigureNamespaceResponse, MsgsRaftState, MsgsRequest};
@@ -49,8 +48,8 @@ impl ConfigureNamespaceOperation {
 pub struct ConfigureNamespaceResponseData {
     pub name: NamespaceName,
     pub retention: Retention,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl From<CreateNamespaceOutput<MsgsConfig>> for ConfigureNamespaceResponseData {

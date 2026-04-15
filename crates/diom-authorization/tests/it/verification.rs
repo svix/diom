@@ -1,4 +1,4 @@
-use diom_authorization::{AccessRule, RequestedOperation, verify_operation};
+use diom_authorization::{AccessRule, Context, RequestedOperation, verify_operation};
 use diom_id::Module;
 use serde_json::json;
 
@@ -54,7 +54,7 @@ fn test_verify_cache_example() {
         action: "get",
     };
     // no rule matches (need at least the extra /)
-    assert!(verify_operation(&op, &rules).is_err());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_err());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -63,7 +63,7 @@ fn test_verify_cache_example() {
         action: "get",
     };
     // simple match of first rule
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -72,7 +72,7 @@ fn test_verify_cache_example() {
         action: "delete",
     };
     // no matching rule for action
-    assert!(verify_operation(&op, &rules).is_err());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_err());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -81,7 +81,7 @@ fn test_verify_cache_example() {
         action: "delete",
     };
     // wildcard action allowed for this key
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -90,7 +90,7 @@ fn test_verify_cache_example() {
         action: "get",
     };
     // match of first rule with ** matching empty string
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -99,7 +99,7 @@ fn test_verify_cache_example() {
         action: "get",
     };
     // explicit deny rule matches
-    assert!(verify_operation(&op, &rules).is_err());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_err());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -108,7 +108,7 @@ fn test_verify_cache_example() {
         action: "set",
     };
     // deny rule only affects Read, not List
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -117,7 +117,7 @@ fn test_verify_cache_example() {
         action: "get",
     };
     // deny rule is exact-match, does not match here
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Cache,
@@ -126,7 +126,7 @@ fn test_verify_cache_example() {
         action: "get",
     };
     // both cache rules only apply to the default namespace
-    assert!(verify_operation(&op, &rules).is_err());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_err());
 
     let op = RequestedOperation {
         module: Module::Msgs,
@@ -135,7 +135,7 @@ fn test_verify_cache_example() {
         action: "get",
     };
     // no matching rule for module
-    assert!(verify_operation(&op, &rules).is_err());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_err());
 }
 
 #[test]
@@ -149,7 +149,7 @@ fn test_verify_kv_example() {
         action: "delete",
     };
     // matches the first rule
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Kv,
@@ -158,7 +158,7 @@ fn test_verify_kv_example() {
         action: "get",
     };
     // matches the second rule
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Kv,
@@ -167,7 +167,7 @@ fn test_verify_kv_example() {
         action: "delete",
     };
     // Create action is only available for xyz namespace
-    assert!(verify_operation(&op, &rules).is_err());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_err());
 
     let op = RequestedOperation {
         module: Module::Kv,
@@ -176,7 +176,7 @@ fn test_verify_kv_example() {
         action: "delete",
     };
     // same issue
-    assert!(verify_operation(&op, &rules).is_err());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_err());
 
     let op = RequestedOperation {
         module: Module::Kv,
@@ -185,7 +185,7 @@ fn test_verify_kv_example() {
         action: "get",
     };
     // Read action does work for arbitrary namespaces, including the default one
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 
     let op = RequestedOperation {
         module: Module::Kv,
@@ -194,5 +194,5 @@ fn test_verify_kv_example() {
         action: "set",
     };
     // Same for List action, and a different named namespace
-    assert!(verify_operation(&op, &rules).is_ok());
+    assert!(verify_operation(&op, &rules, Context::empty_for_tests()).is_ok());
 }

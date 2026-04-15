@@ -4,7 +4,6 @@ use diom_authorization::{AccessPolicyId, AccessRule, RoleId};
 use diom_core::{task::spawn_blocking_in_current_span, types::UnixTimestampMs};
 use diom_error::Result;
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::tables::{AccessPolicyRow, RoleRow};
@@ -18,8 +17,8 @@ pub struct RoleModel {
     pub rules: Vec<AccessRule>,
     pub policies: Vec<AccessPolicyId>,
     pub context: HashMap<String, String>,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl From<RoleRow> for RoleModel {
@@ -30,8 +29,8 @@ impl From<RoleRow> for RoleModel {
             rules: row.rules,
             policies: row.policies,
             context: row.context,
-            created: row.created.into(),
-            updated: row.updated.into(),
+            created: row.created,
+            updated: row.updated,
         }
     }
 }

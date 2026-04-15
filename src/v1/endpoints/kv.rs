@@ -264,8 +264,8 @@ async fn kv_configure_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(KvConfigureNamespaceOut {
         name: resp.name,
-        created: resp.created.into(),
-        updated: resp.updated.into(),
+        created: resp.created,
+        updated: resp.updated,
     }))
 }
 

@@ -10,8 +10,9 @@ use std::{
 ///
 /// Implementers must guarantee the following:
 ///
-/// 1. The serde implementation for this object doesn't do #[serde(skip_serializing_if)] or #[serde(flatten)]
-///  2. The serialization of this object is stable across version
+/// 1. The serde implementation for this object doesn't do
+///    `#[serde(skip_serializing_if)]` or `#[serde(flatten)]`
+/// 2. The serialization of this object is stable across version
 ///
 /// Generally, you should prefer to use the `PersistableValue` derive to implement this safely.
 pub trait PersistableValue {}
