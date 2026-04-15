@@ -6,7 +6,7 @@ use diom_error::Result;
 use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow};
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{AccessPolicyRow, RoleRow};
+use crate::tables::{AccessPolicyKey, AccessPolicyRow, RoleKey, RoleRow};
 
 // ── Role model ───────────────────────────────────────────────────────────────
 
@@ -96,7 +96,7 @@ impl AdminAuthController {
         let keyspace = self.keyspace.clone();
         let id = id.clone();
         spawn_blocking_in_current_span(move || {
-            let row = RoleRow::fetch(&keyspace, RoleRow::key_for(&id))?;
+            let row = RoleRow::fetch(&keyspace, RoleKey::build_key(id.as_str()))?;
             Ok(row.map(RoleModel::from))
         })
         .await?
@@ -110,7 +110,7 @@ impl AdminAuthController {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
             let prefix = vec![RoleRow::ROW_TYPE];
-            let iterator = iterator.map(|id| RoleRow::key_for(&id).into_fjall_key().to_vec());
+            let iterator = iterator.map(|id| RoleKey::build_key(id.as_str()).to_vec());
             let models = RoleRow::list_range(&keyspace, &prefix, iterator, limit)?
                 .into_iter()
                 .map(|(_, row)| RoleModel::from(row))
@@ -123,7 +123,7 @@ impl AdminAuthController {
     pub async fn upsert_role(&self, input: UpsertRoleInput) -> Result<RoleModel> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            let existing = RoleRow::fetch(&keyspace, RoleRow::key_for(&input.id))?;
+            let existing = RoleRow::fetch(&keyspace, RoleKey::build_key(input.id.as_str()))?;
             let created = existing.map(|r| r.created).unwrap_or(input.now);
             let row = RoleRow {
                 id: input.id,
@@ -134,10 +134,7 @@ impl AdminAuthController {
                 created,
                 updated: input.now,
             };
-            keyspace.insert(
-                RoleRow::key_for(&row.id).into_fjall_key(),
-                row.to_fjall_value()?,
-            )?;
+            keyspace.insert(RoleKey::build_key(row.id.as_str()), row.to_fjall_value()?)?;
             Ok(RoleModel::from(row))
         })
         .await?
@@ -147,10 +144,10 @@ impl AdminAuthController {
         let keyspace = self.keyspace.clone();
         let id = id.clone();
         spawn_blocking_in_current_span(move || {
-            if RoleRow::fetch(&keyspace, RoleRow::key_for(&id))?.is_none() {
+            if RoleRow::fetch(&keyspace, RoleKey::build_key(id.as_str()))?.is_none() {
                 return Ok(false);
             }
-            keyspace.remove(RoleRow::key_for(&id).into_fjall_key())?;
+            keyspace.remove(RoleKey::build_key(id.as_str()))?;
             Ok(true)
         })
         .await?
@@ -162,7 +159,7 @@ impl AdminAuthController {
         let keyspace = self.keyspace.clone();
         let id = id.clone();
         spawn_blocking_in_current_span(move || {
-            let row = AccessPolicyRow::fetch(&keyspace, AccessPolicyRow::key_for(&id))?;
+            let row = AccessPolicyRow::fetch(&keyspace, AccessPolicyKey::build_key(id.as_str()))?;
             Ok(row.map(|r| AccessPolicyModel::new(id, r)))
         })
         .await?
@@ -176,12 +173,13 @@ impl AdminAuthController {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
             let prefix = vec![AccessPolicyRow::ROW_TYPE];
-            let iterator =
-                iterator.map(|id| AccessPolicyRow::key_for(&id).into_fjall_key().to_vec());
+            let iterator = iterator.map(|id| AccessPolicyKey::build_key(id.as_str()).to_vec());
             let models = AccessPolicyRow::list_range(&keyspace, &prefix, iterator, limit)?
                 .into_iter()
                 .map(|(key, row)| {
-                    let id = AccessPolicyRow::decode_fjall_key(&key)?;
+                    let id_str = AccessPolicyKey::extract_id(&key)
+                        .map_err(|e| diom_error::Error::internal(e))?;
+                    let id = AccessPolicyId(id_str.to_owned());
                     Ok(AccessPolicyModel::new(id, row))
                 })
                 .collect::<Result<Vec<_>>>()?;
@@ -193,7 +191,8 @@ impl AdminAuthController {
     pub async fn upsert_policy(&self, input: UpsertAccessPolicyInput) -> Result<AccessPolicyModel> {
         let keyspace = self.keyspace.clone();
         spawn_blocking_in_current_span(move || {
-            let existing = AccessPolicyRow::fetch(&keyspace, AccessPolicyRow::key_for(&input.id))?;
+            let existing =
+                AccessPolicyRow::fetch(&keyspace, AccessPolicyKey::build_key(input.id.as_str()))?;
             let created = existing.map(|r| r.created).unwrap_or(input.now);
             let row = AccessPolicyRow {
                 description: input.description,
@@ -202,7 +201,7 @@ impl AdminAuthController {
                 updated: input.now,
             };
             keyspace.insert(
-                AccessPolicyRow::key_for(&input.id).into_fjall_key(),
+                AccessPolicyKey::build_key(input.id.as_str()),
                 row.to_fjall_value()?,
             )?;
             Ok(AccessPolicyModel::new(input.id, row))
@@ -214,10 +213,11 @@ impl AdminAuthController {
         let keyspace = self.keyspace.clone();
         let id = id.clone();
         spawn_blocking_in_current_span(move || {
-            if AccessPolicyRow::fetch(&keyspace, AccessPolicyRow::key_for(&id))?.is_none() {
+            if AccessPolicyRow::fetch(&keyspace, AccessPolicyKey::build_key(id.as_str()))?.is_none()
+            {
                 return Ok(false);
             }
-            keyspace.remove(AccessPolicyRow::key_for(&id).into_fjall_key())?;
+            keyspace.remove(AccessPolicyKey::build_key(id.as_str()))?;
             Ok(true)
         })
         .await?

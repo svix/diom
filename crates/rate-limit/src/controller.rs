@@ -7,7 +7,11 @@ use diom_id::NamespaceId;
 use fjall::KeyspaceCreateOptions;
 use fjall_utils::TableRow;
 
-use crate::{RATE_LIMIT_KEYSPACE, algorithms::TokenBucket, tables::TokenBucketRow};
+use crate::{
+    RATE_LIMIT_KEYSPACE,
+    algorithms::TokenBucket,
+    tables::{TokenBucketKey, TokenBucketRow},
+};
 
 #[derive(Clone)]
 pub struct RateLimitController {
@@ -31,7 +35,7 @@ impl RateLimitController {
         now: UnixTimestampMs,
     ) -> Result<(u64, UnixTimestampMs)> {
         let bucket =
-            TokenBucketRow::fetch(tables, TokenBucketRow::key_for(namespace_id, identifier))?
+            TokenBucketRow::fetch(tables, TokenBucketKey::build_key(&namespace_id, identifier))?
                 .unwrap_or(TokenBucketRow {
                     tokens: config.bucket_size,
                     last_refill: now,
@@ -65,7 +69,7 @@ impl RateLimitController {
 
             TokenBucketRow::insert(
                 &tables,
-                TokenBucketRow::key_for(namespace_id, identifier),
+                TokenBucketKey::build_key(&namespace_id, identifier),
                 &TokenBucketRow {
                     tokens: remaining,
                     last_refill: new_last_refill,
@@ -111,7 +115,7 @@ impl RateLimitController {
         spawn_blocking_in_current_span(move || {
             TokenBucketRow::remove(
                 &tables,
-                TokenBucketRow::key_for(namespace_id, identifier.as_ref()),
+                TokenBucketKey::build_key(&namespace_id, identifier.as_ref()),
             )
         })
         .await??;

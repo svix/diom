@@ -12,7 +12,7 @@ use fjall_utils::{SerializableKeyspaceCreateOptions, TableRow, WriteBatchExt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::tables::{ExpirationRow, KvPairRow};
+use crate::tables::{ExpirationKey, ExpirationRow, KvPairKey, KvPairRow};
 
 const EXPIRATION_BATCH_SIZE: usize = 10_000;
 
@@ -86,7 +86,8 @@ impl KvController {
         key: &str,
         now: UnixTimestampMs,
     ) -> Result<Option<KvModel>> {
-        let Some(data) = KvPairRow::fetch(keyspace, KvPairRow::key_for(namespace_id, key))? else {
+        let Some(data) = KvPairRow::fetch(keyspace, KvPairKey::build_key(&namespace_id, key))?
+        else {
             return Ok(None);
         };
 
@@ -131,16 +132,16 @@ impl KvController {
             version: model.version,
         };
 
-        batch.insert_row(keyspace, KvPairRow::key_for(namespace_id, key), &row)?;
+        batch.insert_row(keyspace, KvPairKey::build_key(&namespace_id, key), &row)?;
 
         if let Some(ts) = old_expiry {
-            let key = ExpirationRow::key_for(namespace_id, ts, key);
-            batch.remove_row(keyspace, key)?;
+            let key = ExpirationKey::build_key(&ts, &namespace_id, key);
+            batch.remove_row::<ExpirationRow, _>(keyspace, key)?;
         }
 
         if let Some(expiry) = row.expiry {
             let expiration_row = ExpirationRow::new();
-            let key = ExpirationRow::key_for(namespace_id, expiry, key);
+            let key = ExpirationKey::build_key(&expiry, &namespace_id, key);
             batch.insert_row(keyspace, key, &expiration_row)?;
         }
 
@@ -263,9 +264,13 @@ impl KvController {
             let mut batch = db.batch();
 
             if let Some(expiry) = current.expiry {
-                batch.remove_row(&keyspace, ExpirationRow::key_for(namespace_id, expiry, key))?;
+                batch.remove_row::<ExpirationRow, _>(
+                    &keyspace,
+                    ExpirationKey::build_key(&expiry, &namespace_id, key),
+                )?;
             }
-            batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, key))?;
+            batch
+                .remove_row::<KvPairRow, _>(&keyspace, KvPairKey::build_key(&namespace_id, key))?;
 
             batch.commit()?;
             Ok(true)
@@ -281,9 +286,8 @@ impl KvController {
     pub async fn has_expired(&self, now: UnixTimestampMs) -> bool {
         let keyspace = self.keyspace.clone();
 
-        let start = ExpirationRow::key_for(NamespaceId::nil(), UnixTimestampMs::UNIX_EPOCH, "")
-            .into_fjall_key();
-        let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
+        let start = ExpirationKey::build_key(&UnixTimestampMs::UNIX_EPOCH, &NamespaceId::nil(), "");
+        let end = ExpirationKey::build_key(&now, &NamespaceId::max(), "");
 
         spawn_blocking_in_current_span(move || keyspace.range(start..=end).next().is_some())
             .await
@@ -325,9 +329,8 @@ impl KvController {
         cleared
     ))]
     pub async fn clear_expired_in_raft(&self, now: UnixTimestampMs) -> Result<usize> {
-        let start = ExpirationRow::key_for(NamespaceId::nil(), UnixTimestampMs::UNIX_EPOCH, "")
-            .into_fjall_key();
-        let end = ExpirationRow::key_for(NamespaceId::max(), now, "").into_fjall_key();
+        let start = ExpirationKey::build_key(&UnixTimestampMs::UNIX_EPOCH, &NamespaceId::nil(), "");
+        let end = ExpirationKey::build_key(&now, &NamespaceId::max(), "");
 
         let keyspace = self.keyspace.clone();
         let db = self.db.clone();
@@ -358,8 +361,14 @@ impl KvController {
                         cleared += 1;
                         num_this_batch += 1;
                         let k = item.key()?;
-                        let (namespace_id, main_key) = ExpirationRow::extract_key_from_fjall_key(&k)?;
-                        batch.remove_row(&keyspace, KvPairRow::key_for(namespace_id, main_key))?;
+                        let namespace_id = ExpirationKey::extract_namespace_id(&k)
+                            .map_err(Error::internal)?;
+                        let main_key =
+                            ExpirationKey::extract_key(&k).map_err(Error::internal)?;
+                        batch.remove_row::<KvPairRow, _>(
+                            &keyspace,
+                            KvPairKey::build_key(&namespace_id, main_key),
+                        )?;
 
                         batch.remove(&keyspace, k);
                     }
@@ -761,9 +770,11 @@ mod tests {
             .unwrap()
             .collect::<Vec<fjall::UserKey>>();
         assert_eq!(expiration_rows.len(), 1);
-        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]);
-        let (namespace_id, found_key) =
-            ExpirationRow::extract_key_from_fjall_key(&expiration_rows[0]).unwrap();
+        let ts = ExpirationKey::extract_expiration_time(&expiration_rows[0]).unwrap();
+        let (namespace_id, found_key) = (
+            ExpirationKey::extract_namespace_id(&expiration_rows[0]).unwrap(),
+            ExpirationKey::extract_key(&expiration_rows[0]).unwrap(),
+        );
         assert_eq!(ts, expiry.into());
         assert_eq!(namespace_id, ns);
         assert_eq!(found_key, key);
@@ -790,9 +801,11 @@ mod tests {
             .collect::<Vec<fjall::UserKey>>();
         // the old index row should be deleted
         assert_eq!(expiration_rows.len(), 1);
-        let ts = ExpirationRow::extract_ts_from_fjall_key(&expiration_rows[0]);
-        let (namespace_id, found_key) =
-            ExpirationRow::extract_key_from_fjall_key(&expiration_rows[0]).unwrap();
+        let ts = ExpirationKey::extract_expiration_time(&expiration_rows[0]).unwrap();
+        let (namespace_id, found_key) = (
+            ExpirationKey::extract_namespace_id(&expiration_rows[0]).unwrap(),
+            ExpirationKey::extract_key(&expiration_rows[0]).unwrap(),
+        );
         // and the ts should be updated
         assert_eq!(ts, later_expiry.into());
         assert_eq!(namespace_id, ns);

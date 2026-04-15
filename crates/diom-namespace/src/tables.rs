@@ -2,7 +2,7 @@ use diom_core::{PersistableValue, types::UnixTimestampMs};
 use diom_error::Result;
 use diom_id::NamespaceId;
 use fjall::Keyspace;
-use fjall_utils::{TableKey, TableRow};
+use fjall_utils::{FjallKeyAble, TableRow};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{ModuleConfig, NamespaceName};
@@ -11,6 +11,15 @@ use crate::entities::{ModuleConfig, NamespaceName};
 #[repr(u8)]
 enum RowType {
     Namespace = 0,
+}
+
+#[derive(FjallKeyAble)]
+#[table_key(prefix = RowType::Namespace)]
+pub(crate) struct NamespaceKey {
+    #[key(0)]
+    pub(crate) module: u32,
+    #[key(1)]
+    pub(crate) name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, PersistableValue)]
@@ -31,20 +40,18 @@ impl<C: ModuleConfig> TableRow for Namespace<C> {
 }
 
 impl<C: ModuleConfig> Namespace<C> {
-    pub(crate) fn key_for(namespace_name: &str) -> TableKey<Self> {
-        let module = (C::module() as u32).to_be_bytes();
-
-        TableKey::init_key(Self::ROW_TYPE, &[&module], &[namespace_name])
+    pub(crate) fn module_id() -> u32 {
+        C::module() as u32
     }
 
     pub(crate) fn fetch(keyspace: &Keyspace, namespace_name: &str) -> Result<Option<Self>> {
-        let key = Self::key_for(namespace_name);
+        let key = NamespaceKey::build_key(&Self::module_id(), namespace_name);
         <Self as TableRow>::fetch(keyspace, key)
     }
 
     pub(crate) fn fetch_all(keyspace: &Keyspace) -> Result<impl Iterator<Item = Self>> {
-        let prefix = Self::key_for("");
-        Ok(keyspace.prefix(prefix.into_fjall_key()).map(|g| {
+        let prefix = NamespaceKey::prefix_module(&Self::module_id());
+        Ok(keyspace.prefix(prefix).map(|g| {
             let v = g.value().expect("iter error?");
             Self::from_fjall_value(v).expect("deserialize error?")
         }))
