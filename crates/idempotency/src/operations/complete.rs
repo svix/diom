@@ -2,7 +2,7 @@ use super::{CompleteResponse, IdempotencyRaftState, IdempotencyRequest};
 use crate::{IdempotencyNamespace, storage::IdempotencyState};
 use diom_core::{
     PersistableValue,
-    types::{ByteString, DurationMs, Metadata},
+    types::{ByteString, DurationMs, Metadata, UnixTimestampMs},
 };
 use diom_error::Result;
 use diom_id::NamespaceId;
@@ -41,7 +41,7 @@ impl CompleteOperation {
     async fn apply_real(
         self,
         state: &IdempotencyRaftState<'_>,
-        now: diom_core::types::UnixTimestampMs,
+        now: UnixTimestampMs,
         log_index: u64,
     ) -> Result<()> {
         let expiry = now + self.ttl;
