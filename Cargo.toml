@@ -216,7 +216,7 @@ tap = "1"
 tempfile = "3.24.0"
 test-utils.path = "crates/test-utils"
 thiserror = "2.0.18"
-tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "fs"] }
+tokio = { version = "1.24.2", features = ["rt", "rt-multi-thread", "signal", "time", "fs"] }
 tokio-util = "0.7"
 toml = { version = "1.0.3", default-features = false, features = ["parse", "serde", "display"] }
 tower = "0.5.1"
