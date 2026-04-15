@@ -18,9 +18,9 @@ fn now_secs() -> u64 {
 
 fn hs256_cfg() -> JwtConfig {
     JwtConfig {
-        key: JwtKey::Hs256 {
-            secret: JWT_SECRET.to_string(),
-        },
+        key: Some(JwtKey::Hs256 {
+            secret: JWT_SECRET.to_owned(),
+        }),
         audience: None,
         issuer: None,
     }
@@ -38,7 +38,7 @@ fn make_jwt(claims: impl Serialize) -> String {
 /// Start a server with JWT enabled and a role that can read/write the default KV namespace.
 async fn setup() -> (test_utils::server::TestContext, String) {
     let ctx = TestServerBuilder::with_default_config()
-        .tap_cfg(|cfg| cfg.jwt = Some(hs256_cfg()))
+        .tap_cfg(|cfg| cfg.jwt = hs256_cfg())
         .build()
         .await;
 
@@ -215,13 +215,10 @@ async fn test_jwt_not_used_when_unconfigured() -> TestResult {
 async fn test_jwt_audience_valid() -> TestResult {
     let ctx = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.jwt = Some(JwtConfig {
-                key: JwtKey::Hs256 {
-                    secret: JWT_SECRET.to_string(),
-                },
-                audience: Some(vec!["https://api.example.com".to_string()]),
-                issuer: None,
-            })
+            cfg.jwt.key = Some(JwtKey::Hs256 {
+                secret: JWT_SECRET.to_owned(),
+            });
+            cfg.jwt.audience = Some(vec!["https://api.example.com".to_owned()]);
         })
         .build()
         .await;
@@ -256,13 +253,10 @@ async fn test_jwt_audience_valid() -> TestResult {
 async fn test_jwt_audience_mismatch() -> TestResult {
     let ctx = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.jwt = Some(JwtConfig {
-                key: JwtKey::Hs256 {
-                    secret: JWT_SECRET.to_string(),
-                },
-                audience: Some(vec!["https://api.example.com".to_string()]),
-                issuer: None,
-            })
+            cfg.jwt.key = Some(JwtKey::Hs256 {
+                secret: JWT_SECRET.to_owned(),
+            });
+            cfg.jwt.audience = Some(vec!["https://api.example.com".to_owned()]);
         })
         .build()
         .await;
@@ -310,13 +304,10 @@ async fn test_jwt_audience_not_required_when_unconfigured() -> TestResult {
 async fn test_jwt_audience_missing_when_required() -> TestResult {
     let ctx = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.jwt = Some(JwtConfig {
-                key: JwtKey::Hs256 {
-                    secret: JWT_SECRET.to_string(),
-                },
-                audience: Some(vec!["https://api.example.com".to_string()]),
-                issuer: None,
-            })
+            cfg.jwt.key = Some(JwtKey::Hs256 {
+                secret: JWT_SECRET.to_owned(),
+            });
+            cfg.jwt.audience = Some(vec!["https://api.example.com".to_owned()]);
         })
         .build()
         .await;
@@ -341,16 +332,13 @@ async fn test_jwt_audience_missing_when_required() -> TestResult {
 async fn test_jwt_multiple_audiences() -> TestResult {
     let ctx = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.jwt = Some(JwtConfig {
-                key: JwtKey::Hs256 {
-                    secret: JWT_SECRET.to_string(),
-                },
-                audience: Some(vec![
-                    "https://api.example.com".to_string(),
-                    "https://api2.example.com".to_string(),
-                ]),
-                issuer: None,
-            })
+            cfg.jwt.key = Some(JwtKey::Hs256 {
+                secret: JWT_SECRET.to_owned(),
+            });
+            cfg.jwt.audience = Some(vec![
+                "https://api.example.com".to_owned(),
+                "https://api2.example.com".to_owned(),
+            ]);
         })
         .build()
         .await;
@@ -402,13 +390,10 @@ async fn test_jwt_multiple_audiences() -> TestResult {
 async fn test_jwt_issuer_valid() -> TestResult {
     let ctx = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.jwt = Some(JwtConfig {
-                key: JwtKey::Hs256 {
-                    secret: JWT_SECRET.to_string(),
-                },
-                audience: None,
-                issuer: Some(vec!["https://auth.example.com".to_string()]),
-            })
+            cfg.jwt.key = Some(JwtKey::Hs256 {
+                secret: JWT_SECRET.to_owned(),
+            });
+            cfg.jwt.issuer = Some(vec!["https://auth.example.com".to_owned()]);
         })
         .build()
         .await;
@@ -443,13 +428,10 @@ async fn test_jwt_issuer_valid() -> TestResult {
 async fn test_jwt_issuer_mismatch() -> TestResult {
     let ctx = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.jwt = Some(JwtConfig {
-                key: JwtKey::Hs256 {
-                    secret: JWT_SECRET.to_string(),
-                },
-                audience: None,
-                issuer: Some(vec!["https://auth.example.com".to_string()]),
-            })
+            cfg.jwt.key = Some(JwtKey::Hs256 {
+                secret: JWT_SECRET.to_owned(),
+            });
+            cfg.jwt.issuer = Some(vec!["https://auth.example.com".to_owned()]);
         })
         .build()
         .await;
@@ -474,13 +456,10 @@ async fn test_jwt_issuer_mismatch() -> TestResult {
 async fn test_jwt_issuer_missing_when_required() -> TestResult {
     let ctx = TestServerBuilder::with_default_config()
         .tap_cfg(|cfg| {
-            cfg.jwt = Some(JwtConfig {
-                key: JwtKey::Hs256 {
-                    secret: JWT_SECRET.to_string(),
-                },
-                audience: None,
-                issuer: Some(vec!["https://auth.example.com".to_string()]),
-            })
+            cfg.jwt.key = Some(JwtKey::Hs256 {
+                secret: JWT_SECRET.to_owned(),
+            });
+            cfg.jwt.issuer = Some(vec!["https://auth.example.com".to_owned()]);
         })
         .build()
         .await;

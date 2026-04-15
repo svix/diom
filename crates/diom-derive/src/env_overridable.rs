@@ -1,5 +1,5 @@
 use quote::quote;
-use syn::{DeriveInput, Ident, LitStr, parenthesized, parse_macro_input};
+use syn::{DeriveInput, Ident, LitStr, Token, parenthesized, parse_macro_input};
 
 use crate::utils::{as_ty_option, is_ty_name};
 
@@ -9,13 +9,16 @@ struct EoField {
     is_optional: bool,
     is_vec: bool,
     is_duration: bool,
+    flatten: bool,
     docstring: Vec<String>,
-    nest: Option<(String, syn::Type)>,
+    nest: Option<String>,
+    ty: syn::Type,
 }
 
 impl EoField {
     fn parse(field: &syn::Field) -> Result<Option<Self>, syn::Error> {
         let mut render = true;
+        let mut flatten = false;
         let Some(ident) = &field.ident else {
             return Ok(None);
         };
@@ -66,12 +69,22 @@ impl EoField {
                         parenthesized!(content in meta.input);
                         let lit: LitStr = content.parse()?;
                         let recursive_prefix = lit.value();
-                        let ty = field.ty.clone();
-                        nest = Some((recursive_prefix, ty));
+                        nest = Some(recursive_prefix);
                         Ok(())
                     } else {
                         Err(meta.error("unrecognized repr"))
                     }
+                })?;
+            } else if attr.path().is_ident("serde") {
+                attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("flatten") {
+                        flatten = true;
+                    } else if meta.input.peek(Token![=]) {
+                        // chomp any argument
+                        meta.value()?;
+                        let _: LitStr = meta.input.parse()?;
+                    }
+                    Ok(())
                 })?;
             }
         }
@@ -86,7 +99,9 @@ impl EoField {
             is_optional,
             is_vec,
             is_duration,
+            flatten,
             docstring,
+            ty: field.ty.clone(),
         }))
     }
 }
@@ -126,10 +141,14 @@ pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_mac
             quote! { crate::cfg::env_overridable::env_var }
         };
 
-        let field_parser = if let Some((recurse_name, _recurse_ty)) = &parsed.nest {
+        let field_parser = if let Some(recurse_name) = &parsed.nest {
             quote! {
                 let name = format!("{}_{}", prefix, #recurse_name);
                 self.#field.load_environment_with_prefix(name)?;
+            }
+        } else if parsed.flatten {
+            quote! {
+                self.#field.load_environment_with_prefix(prefix.clone())?;
             }
         } else {
             quote! {
@@ -142,11 +161,15 @@ pub(crate) fn derive_env_overridable(input: proc_macro::TokenStream) -> proc_mac
         };
         fields.push(field_parser);
 
-        let lister = if let Some((recurse_name, recurse_ty)) = &parsed.nest {
+        let field_ty = &parsed.ty;
+        let lister = if let Some(recurse_name) = &parsed.nest {
             quote! {
                 let name = format!("{}_{}", prefix, #recurse_name);
-
-                variables.extend(#recurse_ty::list_environment_variables_with_prefix(name));
+                variables.extend(<#field_ty>::list_environment_variables_with_prefix(name));
+            }
+        } else if parsed.flatten {
+            quote! {
+                variables.extend(<#field_ty>::list_environment_variables_with_prefix(prefix.clone()));
             }
         } else {
             let docstring = if parsed.docstring.is_empty() {
