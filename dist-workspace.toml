@@ -1,0 +1,27 @@
+[workspace]
+members = ["cargo:diom-cli"]
+
+# Config for 'dist'
+[dist]
+# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.30.3"
+# CI backends to support
+ci = "github"
+# The installers to generate for each app
+installers = ["shell", "powershell", "homebrew", "msi"]
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
+# Whether dist should create a Github Release or use an existing draft
+create-release = false
+# Path that installers should place binaries in
+install-path = "~/.diom/bin"
+# Whether to install an updater program
+install-updater = true
+# Whether CI should trigger releases with dispatches instead of tag pushes
+dispatch-releases = true
+# A GitHub repo to push Homebrew formulas to
+tap = "svix/homebrew-svix"
+# Publish jobs to run in CI
+publish-jobs = ["homebrew"]
+# Skip checking whether the specified configuration files are up to date
+allow-dirty = ["ci"]

@@ -296,3 +296,8 @@ inherits = "release"
 debug = true
 opt-level = 3
 strip = false
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
