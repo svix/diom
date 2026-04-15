@@ -38,7 +38,6 @@ pub(crate) async fn initialize_cluster(
     cluster: BTreeMap<NodeId, Node>,
 ) -> anyhow::Result<ClusterId> {
     let start = Instant::now();
-    let voters = cluster.keys().copied().collect::<Vec<_>>();
     match raft.initialize(cluster).await {
         Ok(_) => {}
         Err(RaftError::APIError(InitializeError::NotAllowed(_))) => {
@@ -50,7 +49,7 @@ pub(crate) async fn initialize_cluster(
         }
     };
     raft.wait(None)
-        .voter_ids(voters, "waiting for cluster to bootstrap")
+        .log_index_at_least(Some(1), "waiting for someone to become the leader")
         .await?;
     let new_id = ClusterId::generate();
     tracing::info!(cluster_id=%new_id, "cluster initialized, setting cluster_id");
