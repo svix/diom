@@ -54,10 +54,11 @@ impl TopicRow {
         }
     }
 
-    pub(crate) fn partitions_shuffled(&self) -> Vec<u16> {
-        use rand::seq::SliceRandom;
+    pub(crate) fn partitions_shuffled(&self, seed: u64) -> Vec<u16> {
+        use rand::{SeedableRng, seq::SliceRandom};
         let mut list: Vec<u16> = (0..self.partitions).collect();
-        list.shuffle(&mut rand::rng());
+        let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
+        list.shuffle(&mut rng);
         list
     }
 
