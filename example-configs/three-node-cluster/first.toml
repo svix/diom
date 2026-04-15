@@ -2,11 +2,19 @@ listen_address = "127.0.0.1:8624"
 jwt_secret = "insecure_cluster"
 jwt_algorithm = "HS256"
 environment = "dev"
-persistent_db.path = "./db-first/persistent"
-ephemeral_db.path = "./db-first/ephemeral"
 opentelemetry_address = "http://localhost:4317"
 opentelemetry_metrics_address = "http://localhost:9090/api/v1/otlp/v1/metrics"
 opentelemetry_metrics_protocol = "http"
+
+[persistent_db]
+path = "db-first"
+filename = "persistent"
+cache_size = "32MiB"
+
+[ephemeral_db]
+path = "db-first"
+filename = "ephemeral"
+cache_size = "32MiB"
 
 [cluster]
 secret = "hunter2"
