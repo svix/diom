@@ -12,7 +12,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use bytes::{BufMut as _, Bytes, BytesMut};
-use diom_authorization::{Permissions, verify_operation};
+use diom_authorization::{Context, Permissions, verify_operation};
 use diom_core::validation::{ValidationErrorBody, ValidationErrorItem, validation_errors};
 use http::{HeaderMap, HeaderValue, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
@@ -135,7 +135,7 @@ where
 
         if let Some(op) = value.operation()
             && let Some(perms) = permissions
-            && verify_operation(&op, &perms.access_rules).is_err()
+            && verify_operation(&op, &perms.access_rules, Context::new(&perms)).is_err()
         {
             return Err(MsgPackOrJsonRejection::Forbidden {
                 resource: op.resource_str(),

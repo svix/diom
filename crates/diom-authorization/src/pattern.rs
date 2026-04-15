@@ -10,7 +10,7 @@ use itertools::Itertools;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
-use crate::RequestedOperation;
+use crate::{Context, RequestedOperation};
 
 #[derive(Clone, Debug, PartialEq, Eq, PersistableValue)]
 pub struct ResourcePattern {
@@ -66,10 +66,10 @@ pub enum KeyPatternSegment {
 }
 
 impl ResourcePattern {
-    pub fn matches(&self, op: &RequestedOperation<'_>) -> bool {
+    pub fn matches(&self, op: &RequestedOperation<'_>, context: Context<'_>) -> bool {
         self.module.matches(op.module)
             && self.namespace.matches(op.namespace)
-            && self.key.matches(op.key)
+            && self.key.matches(op.key, context)
     }
 }
 
@@ -202,7 +202,7 @@ impl KeyPattern {
         }
     }
 
-    fn matches(&self, key: Option<&str>) -> bool {
+    fn matches(&self, key: Option<&str>, context: Context<'_>) -> bool {
         let Some(key) = key else {
             return self.segments.is_empty() && self.trailing_any;
         };
@@ -216,7 +216,7 @@ impl KeyPattern {
                 return self.trailing_any;
             };
 
-            if !pat_seg.matches(key_seg) {
+            if !pat_seg.matches(key_seg, context) {
                 return false;
             }
         }
@@ -276,11 +276,10 @@ impl FromStr for KeyPattern {
 }
 
 impl KeyPatternSegment {
-    fn matches(&self, key_seg: &str) -> bool {
+    fn matches(&self, key_seg: &str, context: Context<'_>) -> bool {
         match self {
             Self::Fixed(s) => s == key_seg,
-            // FIXME: Add support for context stuff
-            Self::Placeholder(_) => false,
+            Self::Placeholder(p) => context.get(p).is_some_and(|c| c == key_seg),
         }
     }
 }

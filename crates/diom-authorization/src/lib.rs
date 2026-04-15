@@ -9,10 +9,12 @@ use diom_id::{AuthTokenId, Module};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+mod context;
 mod pattern;
 mod verification;
 
 pub use self::{
+    context::Context,
     pattern::{KeyPattern, KeyPatternSegment, ModulePattern, NamespacePattern, ResourcePattern},
     verification::{Forbidden, verify_operation},
 };
@@ -139,8 +141,8 @@ impl AccessRule {
         self.resource.namespace.is_reserved()
     }
 
-    pub fn matches(&self, operation: &RequestedOperation<'_>) -> bool {
-        self.resource.matches(operation)
+    pub fn matches(&self, operation: &RequestedOperation<'_>, context: Context<'_>) -> bool {
+        self.resource.matches(operation, context)
             && self
                 .actions
                 .iter()
