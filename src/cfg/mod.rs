@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::Context;
+use anyhow::{Context, bail};
 use diom_core::{Monotime, types::DurationMs};
 use diom_derive::{DumpableConfig, EnvOverridable};
 use fs_err as fs;
@@ -23,7 +23,10 @@ pub(crate) mod env_overridable;
 mod validators;
 
 pub use self::env_overridable::Variable;
-use self::{dumpable_config::DumpableConfig, env_overridable::EnvOverridable};
+use self::{
+    dumpable_config::DumpableConfig,
+    env_overridable::{EnvOverridable, env_var},
+};
 
 pub type Configuration = Arc<ConfigurationInner>;
 
@@ -609,7 +612,6 @@ impl ConfigurationInner {
 )]
 pub struct JwtConfig {
     #[serde(flatten)]
-    #[env_overridable(skip)]
     pub key: Option<JwtKey>,
     /// Expected `aud` values. When set, the token must contain one of these
     /// values in its `aud` claim. When absent, `aud` is not validated.
@@ -690,6 +692,33 @@ impl JwtKey {
             _ => None,
         }
     }
+
+    fn set_secret(&mut self, value: String) -> bool {
+        match self {
+            Self::Hs256 { secret } | Self::Hs384 { secret } | Self::Hs512 { secret } => {
+                *secret = value;
+                true
+            }
+            _ => false,
+        }
+    }
+
+    fn set_public_key_pem(&mut self, value: String) -> bool {
+        match self {
+            Self::Rs256 { public_key_pem }
+            | Self::Rs384 { public_key_pem }
+            | Self::Rs512 { public_key_pem }
+            | Self::Es256 { public_key_pem }
+            | Self::Es384 { public_key_pem }
+            | Self::Ps256 { public_key_pem }
+            | Self::Ps384 { public_key_pem }
+            | Self::Ps512 { public_key_pem } => {
+                *public_key_pem = value;
+                true
+            }
+            _ => false,
+        }
+    }
 }
 
 impl Default for ConfigurationInner {
@@ -758,6 +787,149 @@ impl DumpableConfig for Option<JwtKey> {
         };
 
         Ok(())
+    }
+}
+
+impl EnvOverridable for Option<JwtKey> {
+    fn load_environment_with_prefix(&mut self, prefix: String) -> anyhow::Result<()> {
+        let algorithm_var = format!("{prefix}_ALGORITHM");
+        let secret_var = format!("{prefix}_SECRET");
+        let public_key_pem_var = format!("{prefix}_PUBLIC_KEY_PEM");
+
+        let secret: Option<String> = env_var(&secret_var)?;
+        let public_key_pem: Option<String> = env_var(&public_key_pem_var)?;
+        let Some(algorithm): Option<String> = env_var(&algorithm_var)? else {
+            if let Some(secret) = secret {
+                if let Some(key) = self {
+                    if !key.set_secret(secret) {
+                        tracing::warn!(
+                            "ignoring {secret_var} as {} algorithm uses {public_key_pem_var}",
+                            key.algorithm(),
+                        );
+                    }
+                } else {
+                    bail!("must set {algorithm_var} for {secret_var} to be meaningful");
+                }
+            }
+
+            if let Some(public_key_pem) = public_key_pem {
+                if let Some(key) = self {
+                    if !key.set_public_key_pem(public_key_pem) {
+                        tracing::warn!(
+                            "ignoring {public_key_pem_var} as {} algorithm uses {secret_var}",
+                            key.algorithm(),
+                        );
+                    }
+                } else {
+                    bail!("must set {algorithm_var} for {public_key_pem_var} to be meaningful");
+                }
+            }
+
+            return Ok(());
+        };
+
+        // if algorithm is set in the environment, require secret or public key PEM
+        // to also be set in the environment (type from env + value from config seems broken)
+
+        let secret_is_set = secret.is_some();
+        let public_key_pem_is_set = public_key_pem.is_some();
+
+        let get_secret = || {
+            secret.with_context(|| format!("{algorithm} algorithm requires {secret_var} to be set"))
+        };
+        let get_public_key_pem = || {
+            public_key_pem.with_context(|| {
+                format!("{algorithm} algorithm requires {public_key_pem_var} to be set")
+            })
+        };
+
+        let key = match algorithm.as_str() {
+            "HS256" => JwtKey::Hs256 {
+                secret: get_secret()?,
+            },
+            "HS384" => JwtKey::Hs384 {
+                secret: get_secret()?,
+            },
+            "HS512" => JwtKey::Hs512 {
+                secret: get_secret()?,
+            },
+            "RS256" => JwtKey::Rs256 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            "RS384" => JwtKey::Rs384 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            "RS512" => JwtKey::Rs512 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            "ES256" => JwtKey::Es256 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            "ES384" => JwtKey::Es384 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            "PS256" => JwtKey::Ps256 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            "PS384" => JwtKey::Ps384 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            "PS512" => JwtKey::Ps512 {
+                public_key_pem: get_public_key_pem()?,
+            },
+            _ => bail!("unsupported value for {algorithm_var}"),
+        };
+
+        match algorithm.as_str() {
+            "HS256" | "HS384" | "HS512" => {
+                if public_key_pem_is_set {
+                    tracing::warn!(
+                        "ignoring {public_key_pem_var} as {algorithm} algorithm uses {secret_var}"
+                    );
+                }
+            }
+            _ => {
+                if secret_is_set {
+                    tracing::warn!(
+                        "ignoring {secret_var} as {algorithm} algorithm uses {public_key_pem_var}"
+                    );
+                }
+            }
+        }
+
+        *self = Some(key);
+        Ok(())
+    }
+
+    fn list_environment_variables_with_prefix(prefix: String) -> Vec<Variable> {
+        vec![
+            Variable {
+                env_var: if prefix.is_empty() {
+                    "ALGORITHM".to_owned()
+                } else {
+                    format!("{prefix}_ALGORITHM")
+                },
+                docstring: Some("JWT signature algorithm"),
+            },
+            Variable {
+                env_var: if prefix.is_empty() {
+                    "SECRET".to_owned()
+                } else {
+                    format!("{prefix}_SECRET")
+                },
+                docstring: Some("Secret for JWT algorithms HS256 / HS384 / HS512"),
+            },
+            Variable {
+                env_var: if prefix.is_empty() {
+                    "PUBLIC_KEY_PEM".to_owned()
+                } else {
+                    format!("{prefix}_PUBLIC_KEY_PEM")
+                },
+                docstring: Some(
+                    "Public key PEM for JWT algorithms RS256 / RS384 / RS512 / ES256 / ES384 / PS256 / PS384 / PS512",
+                ),
+            },
+        ]
     }
 }
 
