@@ -71,8 +71,8 @@ impl From<RoleModel> for AdminRoleOut {
             rules: model.rules,
             policies: model.policies,
             context: model.context,
-            created: model.created.into(),
-            updated: model.updated.into(),
+            created: model.created,
+            updated: model.updated,
         }
     }
 }
@@ -117,8 +117,8 @@ async fn role_configure(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(AdminRoleConfigureOut {
         id: resp.model.id,
-        created: resp.model.created.into(),
-        updated: resp.model.updated.into(),
+        created: resp.model.created,
+        updated: resp.model.updated,
     }))
 }
 

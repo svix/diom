@@ -253,8 +253,8 @@ async fn idempotency_configure_namespace(
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
     Ok(MsgPackOrJson(IdempotencyConfigureNamespaceOut {
         name: resp.name,
-        created: resp.created.into(),
-        updated: resp.updated.into(),
+        created: resp.created,
+        updated: resp.updated,
     }))
 }
 

@@ -5,7 +5,6 @@ use diom_namespace::{
     entities::{CacheConfig, EvictionPolicy, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::operations::{CacheRaftState, CacheRequest, ConfigureCacheResponse};
@@ -53,8 +52,8 @@ impl ConfigureCacheOperation {
 pub struct ConfigureCacheResponseData {
     pub name: NamespaceName,
     pub eviction_policy: EvictionPolicy,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl From<CreateNamespaceOutput<CacheConfig>> for ConfigureCacheResponseData {

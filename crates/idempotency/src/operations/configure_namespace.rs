@@ -5,7 +5,6 @@ use diom_namespace::{
     entities::{IdempotencyConfig, NamespaceName},
     operations::create_namespace::{CreateNamespace, CreateNamespaceOutput},
 };
-use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::operations::{ConfigureIdempotencyResponse, IdempotencyRaftState, IdempotencyRequest};
@@ -44,8 +43,8 @@ impl ConfigureIdempotencyOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigureIdempotencyResponseData {
     pub name: NamespaceName,
-    pub created: Timestamp,
-    pub updated: Timestamp,
+    pub created: UnixTimestampMs,
+    pub updated: UnixTimestampMs,
 }
 
 impl From<CreateNamespaceOutput<IdempotencyConfig>> for ConfigureIdempotencyResponseData {

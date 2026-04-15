@@ -92,8 +92,8 @@ async fn configure_namespace(
     Ok(MsgPackOrJson(MsgNamespaceConfigureOut {
         name: response.name,
         retention: response.retention,
-        created: response.created.into(),
-        updated: response.updated.into(),
+        created: response.created,
+        updated: response.updated,
     }))
 }
 

@@ -235,8 +235,8 @@ async fn cache_configure_namespace(
     Ok(MsgPackOrJson(CacheConfigureNamespaceOut {
         name: resp.name,
         eviction_policy: resp.eviction_policy,
-        created: resp.created.into(),
-        updated: resp.updated.into(),
+        created: resp.created,
+        updated: resp.updated,
     }))
 }
 
