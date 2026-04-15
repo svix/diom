@@ -1,11 +1,12 @@
 /db
-/target
+target
 .claude
 .vscode
 .NOTES
 logs
 .data/
 __pycache__/
+.venv/
 
 # vacuum HTML report
 /report.html
