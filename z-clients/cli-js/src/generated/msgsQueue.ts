@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { MsgQueueReceiveInSerializer, MsgQueueReceiveOutSerializer, MsgQueueAckInSerializer, MsgQueueAckOutSerializer, MsgQueueExtendLeaseInSerializer, MsgQueueExtendLeaseOutSerializer, MsgQueueConfigureInSerializer, MsgQueueConfigureOutSerializer, MsgQueueNackInSerializer, MsgQueueNackOutSerializer, MsgQueueRedriveDlqInSerializer, MsgQueueRedriveDlqOutSerializer } from "@diomhq/diom";
+import { MsgQueueReceiveInSerializer, MsgQueueReceiveOutSerializer, MsgQueueAckInSerializer, MsgQueueAckOutSerializer, MsgQueueExtendLeaseInSerializer, MsgQueueExtendLeaseOutSerializer, MsgQueueConfigureInSerializer, MsgQueueConfigureOutSerializer, MsgQueueNackInSerializer, MsgQueueNackOutSerializer, MsgQueueRedriveDlqInSerializer, MsgQueueRedriveDlqOutSerializer } from "@diomhq/diom/internal";
 
 
 /**

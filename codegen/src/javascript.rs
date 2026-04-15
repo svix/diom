@@ -24,7 +24,10 @@ pub(crate) const OUTPUTS: &[OutputDirectory] = &[
     ),
     OutputDirectory::managed_dir(
         "z-clients/cli-js/src/generated",
-        &["cli_js/api_summary.ts.jinja", "cli_js/api_resource.ts.jinja"],
+        &[
+            "cli_js/api_summary.ts.jinja",
+            "cli_js/api_resource.ts.jinja",
+        ],
     ),
 ];
 

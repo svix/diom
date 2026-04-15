@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { AdminRoleConfigureInSerializer, AdminRoleConfigureOutSerializer, AdminRoleDeleteInSerializer, AdminRoleDeleteOutSerializer, AdminRoleGetInSerializer, AdminRoleOutSerializer, AdminRoleListInSerializer, ListResponseAdminRoleOutSerializer } from "@diomhq/diom";
+import { AdminRoleConfigureInSerializer, AdminRoleConfigureOutSerializer, AdminRoleDeleteInSerializer, AdminRoleDeleteOutSerializer, AdminRoleGetInSerializer, AdminRoleOutSerializer, AdminRoleListInSerializer, ListResponseAdminRoleOutSerializer } from "@diomhq/diom/internal";
 
 
 /**

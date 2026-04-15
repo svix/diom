@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { ClusterStatusOutSerializer, ClusterInitializeInSerializer, ClusterInitializeOutSerializer, ClusterRemoveNodeInSerializer, ClusterRemoveNodeOutSerializer, ClusterForceSnapshotInSerializer, ClusterForceSnapshotOutSerializer } from "@diomhq/diom";
+import { ClusterStatusOutSerializer, ClusterInitializeInSerializer, ClusterInitializeOutSerializer, ClusterRemoveNodeInSerializer, ClusterRemoveNodeOutSerializer, ClusterForceSnapshotInSerializer, ClusterForceSnapshotOutSerializer } from "@diomhq/diom/internal";
 
 
 /**

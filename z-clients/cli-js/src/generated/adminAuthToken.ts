@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { AdminAuthTokenCreateInSerializer, AdminAuthTokenCreateOutSerializer, AdminAuthTokenExpireInSerializer, AdminAuthTokenExpireOutSerializer, AdminAuthTokenRotateInSerializer, AdminAuthTokenRotateOutSerializer, AdminAuthTokenDeleteInSerializer, AdminAuthTokenDeleteOutSerializer, AdminAuthTokenListInSerializer, ListResponseAdminAuthTokenOutSerializer, AdminAuthTokenUpdateInSerializer, AdminAuthTokenUpdateOutSerializer, AdminAuthTokenWhoamiInSerializer, AdminAuthTokenWhoamiOutSerializer } from "@diomhq/diom";
+import { AdminAuthTokenCreateInSerializer, AdminAuthTokenCreateOutSerializer, AdminAuthTokenExpireInSerializer, AdminAuthTokenExpireOutSerializer, AdminAuthTokenRotateInSerializer, AdminAuthTokenRotateOutSerializer, AdminAuthTokenDeleteInSerializer, AdminAuthTokenDeleteOutSerializer, AdminAuthTokenListInSerializer, ListResponseAdminAuthTokenOutSerializer, AdminAuthTokenUpdateInSerializer, AdminAuthTokenUpdateOutSerializer, AdminAuthTokenWhoamiInSerializer, AdminAuthTokenWhoamiOutSerializer } from "@diomhq/diom/internal";
 
 
 /**

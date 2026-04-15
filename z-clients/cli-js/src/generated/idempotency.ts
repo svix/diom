@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { IdempotencyStartInSerializer, IdempotencyStartOutSerializer, IdempotencyCompleteInSerializer, IdempotencyCompleteOutSerializer, IdempotencyAbortInSerializer, IdempotencyAbortOutSerializer } from "@diomhq/diom";
+import { IdempotencyStartInSerializer, IdempotencyStartOutSerializer, IdempotencyCompleteInSerializer, IdempotencyCompleteOutSerializer, IdempotencyAbortInSerializer, IdempotencyAbortOutSerializer } from "@diomhq/diom/internal";
 import { registerIdempotencyNamespaceCommands } from "./idempotencyNamespace.ts";
 
 

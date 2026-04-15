@@ -7,7 +7,7 @@ import { parseByteString } from "../byte-string.ts";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { KvSetInSerializer, KvSetOutSerializer, KvGetInSerializer, KvGetOutSerializer, KvDeleteInSerializer, KvDeleteOutSerializer } from "@diomhq/diom";
+import { KvSetInSerializer, KvSetOutSerializer, KvGetInSerializer, KvGetOutSerializer, KvDeleteInSerializer, KvDeleteOutSerializer } from "@diomhq/diom/internal";
 import { registerKvNamespaceCommands } from "./kvNamespace.ts";
 
 

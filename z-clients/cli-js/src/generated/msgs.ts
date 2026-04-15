@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { MsgPublishInSerializer, MsgPublishOutSerializer } from "@diomhq/diom";
+import { MsgPublishInSerializer, MsgPublishOutSerializer } from "@diomhq/diom/internal";
 import { registerMsgsNamespaceCommands } from "./msgsNamespace.ts";
 import { registerMsgsQueueCommands } from "./msgsQueue.ts";
 import { registerMsgsStreamCommands } from "./msgsStream.ts";

@@ -7,7 +7,7 @@ import { parseByteString } from "../byte-string.ts";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { CacheSetInSerializer, CacheSetOutSerializer, CacheGetInSerializer, CacheGetOutSerializer, CacheDeleteInSerializer, CacheDeleteOutSerializer } from "@diomhq/diom";
+import { CacheSetInSerializer, CacheSetOutSerializer, CacheGetInSerializer, CacheGetOutSerializer, CacheDeleteInSerializer, CacheDeleteOutSerializer } from "@diomhq/diom/internal";
 import { registerCacheNamespaceCommands } from "./cacheNamespace.ts";
 
 

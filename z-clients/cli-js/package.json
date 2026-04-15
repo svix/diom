@@ -13,7 +13,7 @@
     "check": "biome check ."
   },
   "dependencies": {
-    "@diomhq/diom": "^0.1.0",
+    "@diomhq/diom": "file:../javascript",
     "smol-toml": "^1.4.2",
     "string-argv": "^0.3.2",
     "yargs": "^17.7.2"

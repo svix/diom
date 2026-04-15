@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { MsgTopicConfigureInSerializer, MsgTopicConfigureOutSerializer } from "@diomhq/diom";
+import { MsgTopicConfigureInSerializer, MsgTopicConfigureOutSerializer } from "@diomhq/diom/internal";
 
 
 /**

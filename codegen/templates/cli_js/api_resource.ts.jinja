@@ -32,7 +32,7 @@ import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
 {% endif -%}
 {% if ns.serializer_imports | unique | list | length > 0 -%}
-import { {{ ns.serializer_imports | unique | join(", ") }} } from "@diomhq/diom";
+import { {{ ns.serializer_imports | unique | join(", ") }} } from "@diomhq/diom/internal";
 {% endif -%}
 {% for _, sub in resource.subresources | items -%}
 import { register{{ sub.name | to_upper_camel_case }}Commands } from "./{{ sub.name | to_lower_camel_case }}.ts";

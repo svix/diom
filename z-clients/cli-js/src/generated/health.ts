@@ -5,7 +5,7 @@
 import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { printWireJson } from "../print-json.ts";
-import { PingOutSerializer } from "@diomhq/diom";
+import { PingOutSerializer } from "@diomhq/diom/internal";
 
 
 /**

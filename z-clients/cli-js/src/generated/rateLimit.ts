@@ -6,7 +6,7 @@ import type { Argv } from "yargs";
 import type { IoContext } from "../io.ts";
 import { readJsonArg } from "../json-arg.ts";
 import { printWireJson } from "../print-json.ts";
-import { RateLimitCheckInSerializer, RateLimitCheckOutSerializer, RateLimitGetRemainingInSerializer, RateLimitGetRemainingOutSerializer, RateLimitResetInSerializer, RateLimitResetOutSerializer } from "@diomhq/diom";
+import { RateLimitCheckInSerializer, RateLimitCheckOutSerializer, RateLimitGetRemainingInSerializer, RateLimitGetRemainingOutSerializer, RateLimitResetInSerializer, RateLimitResetOutSerializer } from "@diomhq/diom/internal";
 import { registerRateLimitNamespaceCommands } from "./rateLimitNamespace.ts";
 
 
