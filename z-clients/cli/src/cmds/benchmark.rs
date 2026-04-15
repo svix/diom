@@ -184,6 +184,13 @@ impl BenchmarkArgs {
                 filter.as_ref(),
             )
             .await?;
+            bench_msgs_scheduled_queue(
+                Arc::clone(&bench_cfg),
+                batch_size,
+                &mut all_stats,
+                filter.as_ref(),
+            )
+            .await?;
         }
 
         eprintln!("\n");
@@ -807,6 +814,7 @@ async fn bench_cache(
 struct BenchMsgsPublish<'a> {
     bench_result: BenchResult,
     batch_size: u16,
+    delay: Option<Duration>,
     label: String,
     topics: &'a [String],
 }
@@ -816,9 +824,15 @@ impl<'a> BenchMsgsPublish<'a> {
         Self {
             bench_result: BenchResult::new().set_batch_size(batch_size),
             batch_size,
+            delay: None,
             label: label.to_owned(),
             topics,
         }
+    }
+
+    fn with_delay(mut self, delay: Duration) -> Self {
+        self.delay = Some(delay);
+        self
     }
 }
 
@@ -839,7 +853,7 @@ impl<'a> BenchShard for BenchMsgsPublish<'a> {
             .map(|_| {
                 let mut payload = vec![0u8; 2_834];
                 rng.fill(&mut payload[..]);
-                MsgIn::new(payload)
+                MsgIn::new(payload).with_delay(self.delay)
             })
             .collect();
 
@@ -1126,6 +1140,38 @@ async fn bench_msgs_queue(
     BenchMsgsPublish::new(&topics, "queue", batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
+    BenchMsgsQueueReceive::new(&topics, &consumer_group, batch_size)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+    Ok(())
+}
+
+async fn bench_msgs_scheduled_queue(
+    cfg: Arc<BenchConfig>,
+    batch_size: u16,
+    all_stats: &mut Vec<Stats>,
+    filter: Option<&Pattern>,
+) -> Result<()> {
+    cfg.client
+        .msgs()
+        .namespace()
+        .configure("bench".to_string(), MsgNamespaceConfigureIn::new())
+        .await?;
+
+    let topics: Vec<String> = (0..cfg.concurrency)
+        .map(|shard_id| format!("bench:bench-scheduled-queue/topic/{shard_id}"))
+        .collect();
+    let consumer_group = Alphanumeric.sample_string(&mut rand::rng(), 16);
+
+    let delay = Duration::from_secs(1);
+
+    BenchMsgsPublish::new(&topics, "scheduled_queue", batch_size)
+        .with_delay(delay)
+        .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
+        .await?;
+
+    tokio::time::sleep(delay).await;
+
     BenchMsgsQueueReceive::new(&topics, &consumer_group, batch_size)
         .bench_shards_concurrent(Arc::clone(&cfg), all_stats, filter)
         .await?;
