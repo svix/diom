@@ -14,7 +14,7 @@ pub struct IdempotencyNamespaceArgs {
 
 #[derive(Subcommand)]
 pub enum IdempotencyNamespaceCommands {
-    /// Create idempotency namespace
+    /// Configure idempotency namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"
@@ -24,9 +24,9 @@ pub enum IdempotencyNamespaceCommands {
   \"created\": \"...\",
   \"updated\": \"...\"
 }")]
-    Create {
-        idempotency_create_namespace_in:
-            crate::json::JsonOf<diom::models::IdempotencyCreateNamespaceIn>,
+    Configure {
+        idempotency_configure_namespace_in:
+            crate::json::JsonOf<diom::models::IdempotencyConfigureNamespaceIn>,
     },
     /// Get idempotency namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -46,13 +46,13 @@ pub enum IdempotencyNamespaceCommands {
 impl IdempotencyNamespaceCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
-            Self::Create {
-                idempotency_create_namespace_in,
+            Self::Configure {
+                idempotency_configure_namespace_in,
             } => {
                 let resp = client
                     .idempotency()
                     .namespace()
-                    .create(idempotency_create_namespace_in.into_inner())
+                    .configure(idempotency_configure_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

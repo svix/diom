@@ -1,13 +1,13 @@
 // this file is @generated
 
 import {
-    type CacheCreateNamespaceIn,
-    CacheCreateNamespaceInSerializer,
-} from '../models/cacheCreateNamespaceIn';
+    type CacheConfigureNamespaceIn,
+    CacheConfigureNamespaceInSerializer,
+} from '../models/cacheConfigureNamespaceIn';
 import {
-    type CacheCreateNamespaceOut,
-    CacheCreateNamespaceOutSerializer,
-} from '../models/cacheCreateNamespaceOut';
+    type CacheConfigureNamespaceOut,
+    CacheConfigureNamespaceOutSerializer,
+} from '../models/cacheConfigureNamespaceOut';
 import {
     type CacheGetNamespaceIn,
     CacheGetNamespaceInSerializer,
@@ -21,19 +21,19 @@ import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 export class CacheNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
-    /** Create cache namespace */
-    public create(
-        cacheCreateNamespaceIn: CacheCreateNamespaceIn,
-    ): Promise<CacheCreateNamespaceOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cache.namespace.create");
+    /** Configure cache namespace */
+    public configure(
+        cacheConfigureNamespaceIn: CacheConfigureNamespaceIn,
+    ): Promise<CacheConfigureNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.cache.namespace.configure");
 
         request.setBody(
-            CacheCreateNamespaceInSerializer._toJsonObject(cacheCreateNamespaceIn)
+            CacheConfigureNamespaceInSerializer._toJsonObject(cacheConfigureNamespaceIn)
         );
         
         return request.send(
             this.requestCtx,
-            CacheCreateNamespaceOutSerializer._fromJsonObject,
+            CacheConfigureNamespaceOutSerializer._fromJsonObject,
         );
     }/** Get cache namespace */
     public get(

@@ -18,16 +18,16 @@ func NewAdminAuthRole(client *diom_proto.HttpClient) AdminAuthRole {
 }
 
 // Create or update a role
-func (adminAuthRole AdminAuthRole) Upsert(
+func (adminAuthRole AdminAuthRole) Configure(
 	ctx context.Context,
-	adminRoleUpsertIn diom_models.AdminRoleUpsertIn,
-) (*diom_models.AdminRoleUpsertOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.AdminRoleUpsertIn, diom_models.AdminRoleUpsertOut](
+	adminRoleConfigureIn diom_models.AdminRoleConfigureIn,
+) (*diom_models.AdminRoleConfigureOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.AdminRoleConfigureIn, diom_models.AdminRoleConfigureOut](
 		ctx,
 		adminAuthRole.client,
 		"POST",
-		"/api/v1.admin.auth-role.upsert",
-		&adminRoleUpsertIn,
+		"/api/v1.admin.auth-role.configure",
+		&adminRoleConfigureIn,
 	)
 }
 

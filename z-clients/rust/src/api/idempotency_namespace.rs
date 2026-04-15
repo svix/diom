@@ -10,15 +10,18 @@ impl<'a> IdempotencyNamespace<'a> {
         Self { cfg }
     }
 
-    /// Create idempotency namespace
-    pub async fn create(
+    /// Configure idempotency namespace
+    pub async fn configure(
         &self,
-        idempotency_create_namespace_in: IdempotencyCreateNamespaceIn,
-    ) -> Result<IdempotencyCreateNamespaceOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.idempotency.namespace.create")
-            .with_body(idempotency_create_namespace_in)
-            .execute(self.cfg)
-            .await
+        idempotency_configure_namespace_in: IdempotencyConfigureNamespaceIn,
+    ) -> Result<IdempotencyConfigureNamespaceOut> {
+        crate::request::Request::new(
+            http::Method::POST,
+            "/api/v1.idempotency.namespace.configure",
+        )
+        .with_body(idempotency_configure_namespace_in)
+        .execute(self.cfg)
+        .await
     }
 
     /// Get idempotency namespace

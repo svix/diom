@@ -2,27 +2,27 @@
 
 from ..internal.api_common import ApiBase, parse_response
 from ..models import (
-    KvCreateNamespaceIn,
-    KvCreateNamespaceOut,
+    KvConfigureNamespaceIn,
+    KvConfigureNamespaceOut,
     KvGetNamespaceIn,
     KvGetNamespaceOut,
 )
 
 
 class KvNamespaceAsync(ApiBase):
-    async def create(
+    async def configure(
         self,
-        kv_create_namespace_in: KvCreateNamespaceIn,
-    ) -> KvCreateNamespaceOut:
-        """Create KV namespace"""
-        body = kv_create_namespace_in.model_dump(exclude_none=True)
+        kv_configure_namespace_in: KvConfigureNamespaceIn,
+    ) -> KvConfigureNamespaceOut:
+        """Configure KV namespace"""
+        body = kv_configure_namespace_in.model_dump(exclude_none=True)
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.kv.namespace.create",
+            path="/api/v1.kv.namespace.configure",
             body=body,
         )
-        return parse_response(response, KvCreateNamespaceOut)
+        return parse_response(response, KvConfigureNamespaceOut)
 
     async def get(
         self,
@@ -40,19 +40,19 @@ class KvNamespaceAsync(ApiBase):
 
 
 class KvNamespace(ApiBase):
-    def create(
+    def configure(
         self,
-        kv_create_namespace_in: KvCreateNamespaceIn,
-    ) -> KvCreateNamespaceOut:
-        """Create KV namespace"""
-        body = kv_create_namespace_in.model_dump(exclude_none=True)
+        kv_configure_namespace_in: KvConfigureNamespaceIn,
+    ) -> KvConfigureNamespaceOut:
+        """Configure KV namespace"""
+        body = kv_configure_namespace_in.model_dump(exclude_none=True)
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.kv.namespace.create",
+            path="/api/v1.kv.namespace.configure",
             body=body,
         )
-        return parse_response(response, KvCreateNamespaceOut)
+        return parse_response(response, KvConfigureNamespaceOut)
 
     def get(
         self,

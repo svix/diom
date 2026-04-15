@@ -14,11 +14,11 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.diom.models.MsgNamespaceCreateIn;
-import com.svix.diom.models.MsgNamespaceCreateOut;
+import com.svix.diom.models.MsgNamespaceConfigureIn;
+import com.svix.diom.models.MsgNamespaceConfigureOut;
 import com.svix.diom.models.MsgNamespaceGetIn;
 import com.svix.diom.models.MsgNamespaceGetOut;
-import com.svix.diom.models.MsgNamespaceCreateIn_;
+import com.svix.diom.models.MsgNamespaceConfigureIn_;
 import com.svix.diom.models.MsgNamespaceGetIn_;
 
 public class MsgsNamespace {
@@ -28,15 +28,15 @@ public class MsgsNamespace {
         this.client = client;
     }
 
-    /** Creates or updates a msgs namespace with the given name. */
-    public MsgNamespaceCreateOut create(
+    /** Configures a msgs namespace with the given name. */
+    public MsgNamespaceConfigureOut configure(
         String name,
-        final MsgNamespaceCreateIn msgNamespaceCreateIn
+        final MsgNamespaceConfigureIn msgNamespaceConfigureIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.namespace.create");
-        MsgNamespaceCreateIn_ body = new MsgNamespaceCreateIn_(
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.msgs.namespace.configure");
+        MsgNamespaceConfigureIn_ body = new MsgNamespaceConfigureIn_(
             name,
-            msgNamespaceCreateIn.getRetention()
+            msgNamespaceConfigureIn.getRetention()
         );
 
         return this.client.executeRequest(
@@ -44,17 +44,17 @@ public class MsgsNamespace {
             url.build(),
             null,
             body,
-            MsgNamespaceCreateOut.class
+            MsgNamespaceConfigureOut.class
         );
     }
 
-    /** Creates or updates a msgs namespace with the given name. */
-    public MsgNamespaceCreateOut create(
+    /** Configures a msgs namespace with the given name. */
+    public MsgNamespaceConfigureOut configure(
         String name
     ) throws IOException, ApiException {
-        return this.create(
+        return this.configure(
             name,
-            new MsgNamespaceCreateIn()
+            new MsgNamespaceConfigureIn()
         );
     }
 

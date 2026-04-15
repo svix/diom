@@ -1,13 +1,13 @@
 // this file is @generated
 
 import {
-    type RateLimitCreateNamespaceIn,
-    RateLimitCreateNamespaceInSerializer,
-} from '../models/rateLimitCreateNamespaceIn';
+    type RateLimitConfigureNamespaceIn,
+    RateLimitConfigureNamespaceInSerializer,
+} from '../models/rateLimitConfigureNamespaceIn';
 import {
-    type RateLimitCreateNamespaceOut,
-    RateLimitCreateNamespaceOutSerializer,
-} from '../models/rateLimitCreateNamespaceOut';
+    type RateLimitConfigureNamespaceOut,
+    RateLimitConfigureNamespaceOutSerializer,
+} from '../models/rateLimitConfigureNamespaceOut';
 import {
     type RateLimitGetNamespaceIn,
     RateLimitGetNamespaceInSerializer,
@@ -21,19 +21,19 @@ import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 export class RateLimitNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
-    /** Create rate limiter namespace */
-    public create(
-        rateLimitCreateNamespaceIn: RateLimitCreateNamespaceIn,
-    ): Promise<RateLimitCreateNamespaceOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.rate-limit.namespace.create");
+    /** Configure rate limiter namespace */
+    public configure(
+        rateLimitConfigureNamespaceIn: RateLimitConfigureNamespaceIn,
+    ): Promise<RateLimitConfigureNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.rate-limit.namespace.configure");
 
         request.setBody(
-            RateLimitCreateNamespaceInSerializer._toJsonObject(rateLimitCreateNamespaceIn)
+            RateLimitConfigureNamespaceInSerializer._toJsonObject(rateLimitConfigureNamespaceIn)
         );
         
         return request.send(
             this.requestCtx,
-            RateLimitCreateNamespaceOutSerializer._fromJsonObject,
+            RateLimitConfigureNamespaceOutSerializer._fromJsonObject,
         );
     }/** Get rate limiter namespace */
     public get(

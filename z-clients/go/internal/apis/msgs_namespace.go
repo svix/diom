@@ -17,22 +17,22 @@ func NewMsgsNamespace(client *diom_proto.HttpClient) MsgsNamespace {
 	return MsgsNamespace{client}
 }
 
-// Creates or updates a msgs namespace with the given name.
-func (msgsNamespace MsgsNamespace) Create(
+// Configures a msgs namespace with the given name.
+func (msgsNamespace MsgsNamespace) Configure(
 	ctx context.Context,
 	name string,
-	msgNamespaceCreateIn diom_models.MsgNamespaceCreateIn,
-) (*diom_models.MsgNamespaceCreateOut, error) {
-	body := diom_models.MsgNamespaceCreateIn_{
+	msgNamespaceConfigureIn diom_models.MsgNamespaceConfigureIn,
+) (*diom_models.MsgNamespaceConfigureOut, error) {
+	body := diom_models.MsgNamespaceConfigureIn_{
 		Name:      name,
-		Retention: msgNamespaceCreateIn.Retention,
+		Retention: msgNamespaceConfigureIn.Retention,
 	}
 
-	return diom_proto.ExecuteRequest[diom_models.MsgNamespaceCreateIn_, diom_models.MsgNamespaceCreateOut](
+	return diom_proto.ExecuteRequest[diom_models.MsgNamespaceConfigureIn_, diom_models.MsgNamespaceConfigureOut](
 		ctx,
 		msgsNamespace.client,
 		"POST",
-		"/api/v1.msgs.namespace.create",
+		"/api/v1.msgs.namespace.configure",
 		&body,
 	)
 }

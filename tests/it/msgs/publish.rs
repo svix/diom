@@ -15,7 +15,7 @@ async fn publish_to_topic() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns1" }))
         .await?
         .expect(StatusCode::OK);
@@ -59,7 +59,7 @@ async fn publish_with_partition_key() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-key" }))
         .await?
         .expect(StatusCode::OK);
@@ -104,7 +104,7 @@ async fn publish_directly_to_partition() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-direct" }))
         .await?
         .expect(StatusCode::OK);
@@ -155,7 +155,7 @@ async fn publish_rejects_out_of_range_partition() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-range" }))
         .await?
         .expect(StatusCode::OK);
@@ -184,7 +184,7 @@ async fn publish_rejects_malformed_partition_topic() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-bad" }))
         .await?
         .expect(StatusCode::OK);
@@ -232,7 +232,7 @@ async fn publish_keyless_same_partition() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-kl" }))
         .await?
         .expect(StatusCode::OK);
@@ -278,7 +278,7 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-idem" }))
         .await?
         .expect(StatusCode::OK);
@@ -368,7 +368,7 @@ async fn publish_with_idempotency_key_concurrent() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-idem-conc" }))
         .await?
         .expect(StatusCode::OK);
@@ -475,7 +475,7 @@ async fn default_namespace_isolated_from_named() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "other" }))
         .await?
         .expect(StatusCode::OK);

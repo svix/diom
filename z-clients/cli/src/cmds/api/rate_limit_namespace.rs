@@ -14,7 +14,7 @@ pub struct RateLimitNamespaceArgs {
 
 #[derive(Subcommand)]
 pub enum RateLimitNamespaceCommands {
-    /// Create rate limiter namespace
+    /// Configure rate limiter namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"
@@ -24,9 +24,9 @@ pub enum RateLimitNamespaceCommands {
   \"created\": \"...\",
   \"updated\": \"...\"
 }")]
-    Create {
-        rate_limit_create_namespace_in:
-            crate::json::JsonOf<diom::models::RateLimitCreateNamespaceIn>,
+    Configure {
+        rate_limit_configure_namespace_in:
+            crate::json::JsonOf<diom::models::RateLimitConfigureNamespaceIn>,
     },
     /// Get rate limiter namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -46,13 +46,13 @@ pub enum RateLimitNamespaceCommands {
 impl RateLimitNamespaceCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
-            Self::Create {
-                rate_limit_create_namespace_in,
+            Self::Configure {
+                rate_limit_configure_namespace_in,
             } => {
                 let resp = client
                     .rate_limit()
                     .namespace()
-                    .create(rate_limit_create_namespace_in.into_inner())
+                    .configure(rate_limit_configure_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

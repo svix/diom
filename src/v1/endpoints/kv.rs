@@ -8,7 +8,7 @@ use diom_id::Module;
 use diom_kv::{
     KvNamespace,
     kvcontroller::{KvModel, OperationBehavior},
-    operations::{CreateKvOperation, DeleteOperation, SetOperation, SetResponseData},
+    operations::{ConfigureKvOperation, DeleteOperation, SetOperation, SetResponseData},
 };
 use diom_namespace::entities::NamespaceName;
 use diom_proto::{AccessMetadata, MsgPackOrJson, RequestInput};
@@ -234,35 +234,35 @@ struct KvGetNamespaceOut {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
-pub(crate) struct KvCreateNamespaceIn {
+pub(crate) struct KvConfigureNamespaceIn {
     #[validate(nested)]
     pub name: NamespaceName,
 }
 
-namespace_request_input!(KvCreateNamespaceIn, "create");
+namespace_request_input!(KvConfigureNamespaceIn, "configure");
 
-impl From<KvCreateNamespaceIn> for CreateKvOperation {
-    fn from(v: KvCreateNamespaceIn) -> Self {
-        CreateKvOperation::new(v.name)
+impl From<KvConfigureNamespaceIn> for ConfigureKvOperation {
+    fn from(v: KvConfigureNamespaceIn) -> Self {
+        ConfigureKvOperation::new(v.name)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-struct KvCreateNamespaceOut {
+struct KvConfigureNamespaceOut {
     pub name: NamespaceName,
     pub created: UnixTimestampMs,
     pub updated: UnixTimestampMs,
 }
 
-/// Create KV namespace
-#[aide_annotate(op_id = "v1.kv.namespace.create")]
-async fn kv_create_namespace(
+/// Configure KV namespace
+#[aide_annotate(op_id = "v1.kv.namespace.configure")]
+async fn kv_configure_namespace(
     Extension(repl): Extension<RaftState>,
-    MsgPackOrJson(data): MsgPackOrJson<KvCreateNamespaceIn>,
-) -> Result<MsgPackOrJson<KvCreateNamespaceOut>> {
-    let operation = CreateKvOperation::from(data);
+    MsgPackOrJson(data): MsgPackOrJson<KvConfigureNamespaceIn>,
+) -> Result<MsgPackOrJson<KvConfigureNamespaceOut>> {
+    let operation = ConfigureKvOperation::from(data);
     let resp = repl.client_write(operation).await.or_internal_error()?.0?;
-    Ok(MsgPackOrJson(KvCreateNamespaceOut {
+    Ok(MsgPackOrJson(KvConfigureNamespaceOut {
         name: resp.name,
         created: resp.created.into(),
         updated: resp.updated.into(),
@@ -298,8 +298,8 @@ pub fn router() -> ApiRouter<AppState> {
         .api_route_with(kv_set_path, post_with(kv_set, kv_set_operation), &tag)
         .api_route_with(kv_get_path, post_with(kv_get, kv_get_operation), &tag)
         .api_route_with(
-            kv_create_namespace_path,
-            post_with(kv_create_namespace, kv_create_namespace_operation),
+            kv_configure_namespace_path,
+            post_with(kv_configure_namespace, kv_configure_namespace_operation),
             &tag,
         )
         .api_route_with(

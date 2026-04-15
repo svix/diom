@@ -2,34 +2,34 @@
 
 from ..internal.api_common import ApiBase, parse_response
 from ..models import (
-    MsgNamespaceCreateIn,
-    MsgNamespaceCreateOut,
+    MsgNamespaceConfigureIn,
+    MsgNamespaceConfigureOut,
     MsgNamespaceGetIn,
     MsgNamespaceGetOut,
 )
 
-from ..models.msg_namespace_create_in import _MsgNamespaceCreateIn
+from ..models.msg_namespace_configure_in import _MsgNamespaceConfigureIn
 from ..models.msg_namespace_get_in import _MsgNamespaceGetIn
 
 
 class MsgsNamespaceAsync(ApiBase):
-    async def create(
+    async def configure(
         self,
         name: str,
-        msg_namespace_create_in: MsgNamespaceCreateIn = MsgNamespaceCreateIn(),
-    ) -> MsgNamespaceCreateOut:
-        """Creates or updates a msgs namespace with the given name."""
-        body = _MsgNamespaceCreateIn(
+        msg_namespace_configure_in: MsgNamespaceConfigureIn = MsgNamespaceConfigureIn(),
+    ) -> MsgNamespaceConfigureOut:
+        """Configures a msgs namespace with the given name."""
+        body = _MsgNamespaceConfigureIn(
             name=name,
-            retention=msg_namespace_create_in.retention,
+            retention=msg_namespace_configure_in.retention,
         ).model_dump(exclude_none=True)
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.msgs.namespace.create",
+            path="/api/v1.msgs.namespace.configure",
             body=body,
         )
-        return parse_response(response, MsgNamespaceCreateOut)
+        return parse_response(response, MsgNamespaceConfigureOut)
 
     async def get(
         self,
@@ -50,23 +50,23 @@ class MsgsNamespaceAsync(ApiBase):
 
 
 class MsgsNamespace(ApiBase):
-    def create(
+    def configure(
         self,
         name: str,
-        msg_namespace_create_in: MsgNamespaceCreateIn = MsgNamespaceCreateIn(),
-    ) -> MsgNamespaceCreateOut:
-        """Creates or updates a msgs namespace with the given name."""
-        body = _MsgNamespaceCreateIn(
+        msg_namespace_configure_in: MsgNamespaceConfigureIn = MsgNamespaceConfigureIn(),
+    ) -> MsgNamespaceConfigureOut:
+        """Configures a msgs namespace with the given name."""
+        body = _MsgNamespaceConfigureIn(
             name=name,
-            retention=msg_namespace_create_in.retention,
+            retention=msg_namespace_configure_in.retention,
         ).model_dump(exclude_none=True)
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.msgs.namespace.create",
+            path="/api/v1.msgs.namespace.configure",
             body=body,
         )
-        return parse_response(response, MsgNamespaceCreateOut)
+        return parse_response(response, MsgNamespaceConfigureOut)
 
     def get(
         self,

@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.diom.models.CacheCreateNamespaceIn;
-import com.svix.diom.models.CacheCreateNamespaceOut;
+import com.svix.diom.models.CacheConfigureNamespaceIn;
+import com.svix.diom.models.CacheConfigureNamespaceOut;
 import com.svix.diom.models.CacheGetNamespaceIn;
 import com.svix.diom.models.CacheGetNamespaceOut;
 
@@ -26,18 +26,18 @@ public class CacheNamespace {
         this.client = client;
     }
 
-    /** Create cache namespace */
-    public CacheCreateNamespaceOut create(
-        final CacheCreateNamespaceIn cacheCreateNamespaceIn
+    /** Configure cache namespace */
+    public CacheConfigureNamespaceOut configure(
+        final CacheConfigureNamespaceIn cacheConfigureNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.namespace.create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.cache.namespace.configure");
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            cacheCreateNamespaceIn,
-            CacheCreateNamespaceOut.class
+            cacheConfigureNamespaceIn,
+            CacheConfigureNamespaceOut.class
         );
     }
 

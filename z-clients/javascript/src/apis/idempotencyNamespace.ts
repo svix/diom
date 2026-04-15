@@ -1,13 +1,13 @@
 // this file is @generated
 
 import {
-    type IdempotencyCreateNamespaceIn,
-    IdempotencyCreateNamespaceInSerializer,
-} from '../models/idempotencyCreateNamespaceIn';
+    type IdempotencyConfigureNamespaceIn,
+    IdempotencyConfigureNamespaceInSerializer,
+} from '../models/idempotencyConfigureNamespaceIn';
 import {
-    type IdempotencyCreateNamespaceOut,
-    IdempotencyCreateNamespaceOutSerializer,
-} from '../models/idempotencyCreateNamespaceOut';
+    type IdempotencyConfigureNamespaceOut,
+    IdempotencyConfigureNamespaceOutSerializer,
+} from '../models/idempotencyConfigureNamespaceOut';
 import {
     type IdempotencyGetNamespaceIn,
     IdempotencyGetNamespaceInSerializer,
@@ -21,19 +21,19 @@ import { HttpMethod, DiomRequest, type DiomRequestContext } from "../request";
 export class IdempotencyNamespace {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
-    /** Create idempotency namespace */
-    public create(
-        idempotencyCreateNamespaceIn: IdempotencyCreateNamespaceIn,
-    ): Promise<IdempotencyCreateNamespaceOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.idempotency.namespace.create");
+    /** Configure idempotency namespace */
+    public configure(
+        idempotencyConfigureNamespaceIn: IdempotencyConfigureNamespaceIn,
+    ): Promise<IdempotencyConfigureNamespaceOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.idempotency.namespace.configure");
 
         request.setBody(
-            IdempotencyCreateNamespaceInSerializer._toJsonObject(idempotencyCreateNamespaceIn)
+            IdempotencyConfigureNamespaceInSerializer._toJsonObject(idempotencyConfigureNamespaceIn)
         );
         
         return request.send(
             this.requestCtx,
-            IdempotencyCreateNamespaceOutSerializer._fromJsonObject,
+            IdempotencyConfigureNamespaceOutSerializer._fromJsonObject,
         );
     }/** Get idempotency namespace */
     public get(

@@ -1,6 +1,14 @@
 // this file is @generated
 
 import {
+    type AdminRoleConfigureIn,
+    AdminRoleConfigureInSerializer,
+} from '../models/adminRoleConfigureIn';
+import {
+    type AdminRoleConfigureOut,
+    AdminRoleConfigureOutSerializer,
+} from '../models/adminRoleConfigureOut';
+import {
     type AdminRoleDeleteIn,
     AdminRoleDeleteInSerializer,
 } from '../models/adminRoleDeleteIn';
@@ -21,14 +29,6 @@ import {
     AdminRoleOutSerializer,
 } from '../models/adminRoleOut';
 import {
-    type AdminRoleUpsertIn,
-    AdminRoleUpsertInSerializer,
-} from '../models/adminRoleUpsertIn';
-import {
-    type AdminRoleUpsertOut,
-    AdminRoleUpsertOutSerializer,
-} from '../models/adminRoleUpsertOut';
-import {
     type ListResponseAdminRoleOut,
     ListResponseAdminRoleOutSerializer,
 } from '../models/listResponseAdminRoleOut';
@@ -38,18 +38,18 @@ export class AdminAuthRole {
     public constructor(private readonly requestCtx: DiomRequestContext) {}
 
     /** Create or update a role */
-    public upsert(
-        adminRoleUpsertIn: AdminRoleUpsertIn,
-    ): Promise<AdminRoleUpsertOut> {
-        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.auth-role.upsert");
+    public configure(
+        adminRoleConfigureIn: AdminRoleConfigureIn,
+    ): Promise<AdminRoleConfigureOut> {
+        const request = new DiomRequest(HttpMethod.POST, "/api/v1.admin.auth-role.configure");
 
         request.setBody(
-            AdminRoleUpsertInSerializer._toJsonObject(adminRoleUpsertIn)
+            AdminRoleConfigureInSerializer._toJsonObject(adminRoleConfigureIn)
         );
         
         return request.send(
             this.requestCtx,
-            AdminRoleUpsertOutSerializer._fromJsonObject,
+            AdminRoleConfigureOutSerializer._fromJsonObject,
         );
     }/** Delete a role */
     public delete(

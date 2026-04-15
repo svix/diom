@@ -5,7 +5,7 @@ use test_utils::{
 };
 
 #[tokio::test]
-async fn test_admin_role_upsert_and_get() -> TestResult {
+async fn test_admin_role_configure_and_get() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -13,7 +13,7 @@ async fn test_admin_role_upsert_and_get() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "editor",
             "description": "Can edit things",
@@ -43,7 +43,7 @@ async fn test_admin_role_upsert_and_get() -> TestResult {
 }
 
 #[tokio::test]
-async fn test_admin_role_upsert_preserves_created() -> TestResult {
+async fn test_admin_role_configure_preserves_created() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -51,7 +51,7 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "viewer",
             "description": "Read-only access",
@@ -63,7 +63,7 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
     let created_at = first["created"].assert_u64();
 
     let second = client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "viewer",
             "description": "Updated description",
@@ -91,7 +91,7 @@ async fn test_admin_role_upsert_preserves_created() -> TestResult {
 }
 
 #[tokio::test]
-async fn test_admin_role_upsert_with_rules_and_policies() -> TestResult {
+async fn test_admin_role_configure_with_rules_and_policies() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -99,7 +99,7 @@ async fn test_admin_role_upsert_with_rules_and_policies() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "kv-reader",
             "description": "Can read KV",
@@ -141,13 +141,13 @@ async fn test_admin_role_list() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({ "id": "role-a", "description": "Role A" }))
         .await?
         .ensure(StatusCode::OK)?;
 
     client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({ "id": "role-b", "description": "Role B" }))
         .await?
         .ensure(StatusCode::OK)?;
@@ -182,7 +182,7 @@ async fn test_admin_role_list_pagination() -> TestResult {
         ("role-ac", "Role AC"),
     ] {
         client
-            .post("v1.admin.auth-role.upsert")
+            .post("v1.admin.auth-role.configure")
             .json(json!({ "id": id, "description": desc }))
             .await?
             .ensure(StatusCode::OK)?;
@@ -230,7 +230,7 @@ async fn test_admin_role_delete() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({ "id": "to-delete", "description": "Temporary role" }))
         .await?
         .ensure(StatusCode::OK)?;
@@ -291,7 +291,7 @@ async fn test_admin_role_get_nonexistent() -> TestResult {
 }
 
 #[tokio::test]
-async fn test_admin_role_upsert_internal_ns() -> TestResult {
+async fn test_admin_role_configure_internal_ns() -> TestResult {
     let TestContext {
         client,
         handle: _handle,
@@ -299,7 +299,7 @@ async fn test_admin_role_upsert_internal_ns() -> TestResult {
     } = start_server().await;
 
     let resp = client
-        .post("v1.admin.auth-role.upsert")
+        .post("v1.admin.auth-role.configure")
         .json(json!({
             "id": "canihazinternal",
             "description": "Trying to access _internal stuff",

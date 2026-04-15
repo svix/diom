@@ -17,17 +17,17 @@ func NewCacheNamespace(client *diom_proto.HttpClient) CacheNamespace {
 	return CacheNamespace{client}
 }
 
-// Create cache namespace
-func (cacheNamespace CacheNamespace) Create(
+// Configure cache namespace
+func (cacheNamespace CacheNamespace) Configure(
 	ctx context.Context,
-	cacheCreateNamespaceIn diom_models.CacheCreateNamespaceIn,
-) (*diom_models.CacheCreateNamespaceOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.CacheCreateNamespaceIn, diom_models.CacheCreateNamespaceOut](
+	cacheConfigureNamespaceIn diom_models.CacheConfigureNamespaceIn,
+) (*diom_models.CacheConfigureNamespaceOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.CacheConfigureNamespaceIn, diom_models.CacheConfigureNamespaceOut](
 		ctx,
 		cacheNamespace.client,
 		"POST",
-		"/api/v1.cache.namespace.create",
-		&cacheCreateNamespaceIn,
+		"/api/v1.cache.namespace.configure",
+		&cacheConfigureNamespaceIn,
 	)
 }
 

@@ -16,7 +16,7 @@ async fn queue_receive_returns_published_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-queue" }))
         .await?
         .expect(StatusCode::OK);
@@ -67,7 +67,7 @@ async fn queue_receive_leases_individual_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-lease" }))
         .await?
         .expect(StatusCode::OK);
@@ -149,7 +149,7 @@ async fn queue_ack_prevents_redelivery() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-ack" }))
         .await?
         .expect(StatusCode::OK);
@@ -230,7 +230,7 @@ async fn unacked_messages_redelivered_after_lease_expiry() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-redeliver" }))
         .await?
         .expect(StatusCode::OK);
@@ -326,7 +326,7 @@ async fn queue_starts_from_earliest() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-earliest" }))
         .await?
         .expect(StatusCode::OK);
@@ -376,7 +376,7 @@ async fn partial_ack_redelivers_unacked() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-partial" }))
         .await?
         .expect(StatusCode::OK);
@@ -464,7 +464,7 @@ async fn concurrent_queue_consumers_no_overlap() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-concurrent" }))
         .await?
         .expect(StatusCode::OK);
@@ -557,7 +557,7 @@ async fn queue_consumer_groups_independent() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-cg" }))
         .await?
         .expect(StatusCode::OK);
@@ -636,7 +636,7 @@ async fn nack_sends_to_dlq() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-nack" }))
         .await?
         .expect(StatusCode::OK);
@@ -716,7 +716,7 @@ async fn nack_then_redrive_makes_available() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-redrive" }))
         .await?
         .expect(StatusCode::OK);
@@ -847,7 +847,7 @@ async fn redrive_dlq_no_dlq_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-redrive-noop" }))
         .await?
         .expect(StatusCode::OK);
@@ -886,7 +886,7 @@ async fn configure_retry_schedule() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-cfg" }))
         .await?
         .expect(StatusCode::OK);
@@ -936,7 +936,7 @@ async fn nack_retries_before_dlq() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-retry" }))
         .await?
         .expect(StatusCode::OK);
@@ -1079,7 +1079,7 @@ async fn nack_with_dlq_topic_forwards() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-dlqfwd" }))
         .await?
         .expect(StatusCode::OK);
@@ -1204,7 +1204,7 @@ async fn queue_receive_max_wait_returns_when_batch_filled() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-qwait-full" }))
         .await?
         .expect(StatusCode::OK);
@@ -1252,7 +1252,7 @@ async fn queue_receive_max_wait_returns_partial_batch_on_timeout() -> TestResult
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-qwait-partial" }))
         .await?
         .expect(StatusCode::OK);
@@ -1312,7 +1312,7 @@ async fn queue_receive_max_wait_times_out_with_no_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-qtimeout" }))
         .await?
         .expect(StatusCode::OK);
@@ -1356,7 +1356,7 @@ async fn queue_receive_max_wait_does_not_skip_partitions_with_existing_cursor() 
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-qwait-cursor" }))
         .await?
         .expect(StatusCode::OK);
@@ -1437,7 +1437,7 @@ async fn queue_receive_wakes_on_publish_notification() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-qnotify" }))
         .await?
         .expect(StatusCode::OK);
@@ -1496,7 +1496,7 @@ async fn queue_extend_lease_prevents_redelivery() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-extend" }))
         .await?
         .expect(StatusCode::OK);
@@ -1594,7 +1594,7 @@ async fn queue_extend_lease_fails_after_expiry() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-extend-expired" }))
         .await?
         .expect(StatusCode::OK);
@@ -1651,7 +1651,7 @@ async fn queue_extend_lease_fails_after_ack() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-extend-acked" }))
         .await?
         .expect(StatusCode::OK);
@@ -1717,7 +1717,7 @@ async fn queue_extend_lease_preserves_attempt_count() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-q-extend-attempts" }))
         .await?
         .expect(StatusCode::OK);

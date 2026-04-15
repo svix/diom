@@ -10,13 +10,13 @@ impl<'a> KvNamespace<'a> {
         Self { cfg }
     }
 
-    /// Create KV namespace
-    pub async fn create(
+    /// Configure KV namespace
+    pub async fn configure(
         &self,
-        kv_create_namespace_in: KvCreateNamespaceIn,
-    ) -> Result<KvCreateNamespaceOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.kv.namespace.create")
-            .with_body(kv_create_namespace_in)
+        kv_configure_namespace_in: KvConfigureNamespaceIn,
+    ) -> Result<KvConfigureNamespaceOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.kv.namespace.configure")
+            .with_body(kv_configure_namespace_in)
             .execute(self.cfg)
             .await
     }

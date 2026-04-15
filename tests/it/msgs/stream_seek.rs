@@ -13,7 +13,7 @@ async fn seek_earliest_replays_all_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-seek-earliest" }))
         .await?
         .expect(StatusCode::OK);
@@ -128,7 +128,7 @@ async fn seek_latest_skips_existing() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-seek-latest" }))
         .await?
         .expect(StatusCode::OK);
@@ -219,7 +219,7 @@ async fn seek_to_specific_offset() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-seek-offset" }))
         .await?
         .expect(StatusCode::OK);
@@ -321,7 +321,7 @@ async fn seek_offset_requires_partition_topic() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-seek-pt" }))
         .await?
         .expect(StatusCode::OK);
@@ -350,7 +350,7 @@ async fn seek_position_works_on_topic_level() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-seek-topic" }))
         .await?
         .expect(StatusCode::OK);
@@ -458,7 +458,7 @@ async fn seek_clears_lease() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-seek-lease" }))
         .await?
         .expect(StatusCode::OK);

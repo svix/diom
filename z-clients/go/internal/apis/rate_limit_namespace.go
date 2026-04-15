@@ -17,17 +17,17 @@ func NewRateLimitNamespace(client *diom_proto.HttpClient) RateLimitNamespace {
 	return RateLimitNamespace{client}
 }
 
-// Create rate limiter namespace
-func (rateLimitNamespace RateLimitNamespace) Create(
+// Configure rate limiter namespace
+func (rateLimitNamespace RateLimitNamespace) Configure(
 	ctx context.Context,
-	rateLimitCreateNamespaceIn diom_models.RateLimitCreateNamespaceIn,
-) (*diom_models.RateLimitCreateNamespaceOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.RateLimitCreateNamespaceIn, diom_models.RateLimitCreateNamespaceOut](
+	rateLimitConfigureNamespaceIn diom_models.RateLimitConfigureNamespaceIn,
+) (*diom_models.RateLimitConfigureNamespaceOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.RateLimitConfigureNamespaceIn, diom_models.RateLimitConfigureNamespaceOut](
 		ctx,
 		rateLimitNamespace.client,
 		"POST",
-		"/api/v1.rate-limit.namespace.create",
-		&rateLimitCreateNamespaceIn,
+		"/api/v1.rate-limit.namespace.configure",
+		&rateLimitConfigureNamespaceIn,
 	)
 }
 

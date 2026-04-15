@@ -2,31 +2,31 @@
 
 from ..internal.api_common import ApiBase, parse_response
 from ..models import (
+    AdminAccessPolicyConfigureIn,
+    AdminAccessPolicyConfigureOut,
     AdminAccessPolicyDeleteIn,
     AdminAccessPolicyDeleteOut,
     AdminAccessPolicyGetIn,
     AdminAccessPolicyListIn,
     AdminAccessPolicyOut,
-    AdminAccessPolicyUpsertIn,
-    AdminAccessPolicyUpsertOut,
     ListResponseAdminAccessPolicyOut,
 )
 
 
 class AdminAuthPolicyAsync(ApiBase):
-    async def upsert(
+    async def configure(
         self,
-        admin_access_policy_upsert_in: AdminAccessPolicyUpsertIn,
-    ) -> AdminAccessPolicyUpsertOut:
+        admin_access_policy_configure_in: AdminAccessPolicyConfigureIn,
+    ) -> AdminAccessPolicyConfigureOut:
         """Create or update an access policy"""
-        body = admin_access_policy_upsert_in.model_dump(exclude_none=True)
+        body = admin_access_policy_configure_in.model_dump(exclude_none=True)
 
         response = await self._request_asyncio(
             method="post",
-            path="/api/v1.admin.auth-policy.upsert",
+            path="/api/v1.admin.auth-policy.configure",
             body=body,
         )
-        return parse_response(response, AdminAccessPolicyUpsertOut)
+        return parse_response(response, AdminAccessPolicyConfigureOut)
 
     async def delete(
         self,
@@ -72,19 +72,19 @@ class AdminAuthPolicyAsync(ApiBase):
 
 
 class AdminAuthPolicy(ApiBase):
-    def upsert(
+    def configure(
         self,
-        admin_access_policy_upsert_in: AdminAccessPolicyUpsertIn,
-    ) -> AdminAccessPolicyUpsertOut:
+        admin_access_policy_configure_in: AdminAccessPolicyConfigureIn,
+    ) -> AdminAccessPolicyConfigureOut:
         """Create or update an access policy"""
-        body = admin_access_policy_upsert_in.model_dump(exclude_none=True)
+        body = admin_access_policy_configure_in.model_dump(exclude_none=True)
 
         response = self._request_sync(
             method="post",
-            path="/api/v1.admin.auth-policy.upsert",
+            path="/api/v1.admin.auth-policy.configure",
             body=body,
         )
-        return parse_response(response, AdminAccessPolicyUpsertOut)
+        return parse_response(response, AdminAccessPolicyConfigureOut)
 
     def delete(
         self,

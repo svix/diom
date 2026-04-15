@@ -18,16 +18,16 @@ func NewAdminAuthPolicy(client *diom_proto.HttpClient) AdminAuthPolicy {
 }
 
 // Create or update an access policy
-func (adminAuthPolicy AdminAuthPolicy) Upsert(
+func (adminAuthPolicy AdminAuthPolicy) Configure(
 	ctx context.Context,
-	adminAccessPolicyUpsertIn diom_models.AdminAccessPolicyUpsertIn,
-) (*diom_models.AdminAccessPolicyUpsertOut, error) {
-	return diom_proto.ExecuteRequest[diom_models.AdminAccessPolicyUpsertIn, diom_models.AdminAccessPolicyUpsertOut](
+	adminAccessPolicyConfigureIn diom_models.AdminAccessPolicyConfigureIn,
+) (*diom_models.AdminAccessPolicyConfigureOut, error) {
+	return diom_proto.ExecuteRequest[diom_models.AdminAccessPolicyConfigureIn, diom_models.AdminAccessPolicyConfigureOut](
 		ctx,
 		adminAuthPolicy.client,
 		"POST",
-		"/api/v1.admin.auth-policy.upsert",
-		&adminAccessPolicyUpsertIn,
+		"/api/v1.admin.auth-policy.configure",
+		&adminAccessPolicyConfigureIn,
 	)
 }
 

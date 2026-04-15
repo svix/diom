@@ -28,8 +28,8 @@ pub enum AdminAuthRoleCommands {
   \"created\": \"...\",
   \"updated\": \"...\"
 }")]
-    Upsert {
-        admin_role_upsert_in: crate::json::JsonOf<diom::models::AdminRoleUpsertIn>,
+    Configure {
+        admin_role_configure_in: crate::json::JsonOf<diom::models::AdminRoleConfigureIn>,
     },
     /// Delete a role
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -79,13 +79,13 @@ pub enum AdminAuthRoleCommands {
 impl AdminAuthRoleCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
-            Self::Upsert {
-                admin_role_upsert_in,
+            Self::Configure {
+                admin_role_configure_in,
             } => {
                 let resp = client
                     .admin()
                     .auth_role()
-                    .upsert(admin_role_upsert_in.into_inner())
+                    .configure(admin_role_configure_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

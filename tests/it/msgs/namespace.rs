@@ -13,7 +13,7 @@ async fn create_namespace_with_defaults() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({
             "name": "my-namespace",
         }))
@@ -40,7 +40,7 @@ async fn create_namespace_with_custom_config() -> TestResult {
     } = start_server().await;
 
     let response = client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({
             "name": "custom-ns",
             "retention": {
@@ -76,7 +76,7 @@ async fn create_namespace_upserts() -> TestResult {
     } = start_server().await;
 
     let first = client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({
             "name": "upsert-ns",
             "retention": { "size_bytes": 1024, "period_ms": 9999 }
@@ -92,7 +92,7 @@ async fn create_namespace_upserts() -> TestResult {
 
     // Upsert with different retention
     let second = client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({
             "name": "upsert-ns",
             "retention": { "size_bytes": 2048, "period_ms": 60000 }
@@ -122,7 +122,7 @@ async fn get_namespace() -> TestResult {
 
     // Create a namespace first
     let created = client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({
             "name": "get-test-ns",
             "retention": { "size_bytes": 5000, "period_ms": 30000 }

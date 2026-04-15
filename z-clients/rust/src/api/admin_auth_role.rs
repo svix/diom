@@ -11,12 +11,12 @@ impl<'a> AdminAuthRole<'a> {
     }
 
     /// Create or update a role
-    pub async fn upsert(
+    pub async fn configure(
         &self,
-        admin_role_upsert_in: AdminRoleUpsertIn,
-    ) -> Result<AdminRoleUpsertOut> {
-        crate::request::Request::new(http::Method::POST, "/api/v1.admin.auth-role.upsert")
-            .with_body(admin_role_upsert_in)
+        admin_role_configure_in: AdminRoleConfigureIn,
+    ) -> Result<AdminRoleConfigureOut> {
+        crate::request::Request::new(http::Method::POST, "/api/v1.admin.auth-role.configure")
+            .with_body(admin_role_configure_in)
             .execute(self.cfg)
             .await
     }

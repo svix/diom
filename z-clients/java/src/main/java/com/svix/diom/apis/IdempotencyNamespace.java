@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import com.svix.diom.models.IdempotencyCreateNamespaceIn;
-import com.svix.diom.models.IdempotencyCreateNamespaceOut;
+import com.svix.diom.models.IdempotencyConfigureNamespaceIn;
+import com.svix.diom.models.IdempotencyConfigureNamespaceOut;
 import com.svix.diom.models.IdempotencyGetNamespaceIn;
 import com.svix.diom.models.IdempotencyGetNamespaceOut;
 
@@ -26,18 +26,18 @@ public class IdempotencyNamespace {
         this.client = client;
     }
 
-    /** Create idempotency namespace */
-    public IdempotencyCreateNamespaceOut create(
-        final IdempotencyCreateNamespaceIn idempotencyCreateNamespaceIn
+    /** Configure idempotency namespace */
+    public IdempotencyConfigureNamespaceOut configure(
+        final IdempotencyConfigureNamespaceIn idempotencyConfigureNamespaceIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.namespace.create");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.idempotency.namespace.configure");
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            idempotencyCreateNamespaceIn,
-            IdempotencyCreateNamespaceOut.class
+            idempotencyConfigureNamespaceIn,
+            IdempotencyConfigureNamespaceOut.class
         );
     }
 

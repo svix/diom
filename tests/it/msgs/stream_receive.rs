@@ -16,7 +16,7 @@ async fn stream_receive_returns_published_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-recv" }))
         .await?
         .expect(StatusCode::OK);
@@ -88,7 +88,7 @@ async fn stream_receive_no_duplicates_within_lease() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-nodup" }))
         .await?
         .expect(StatusCode::OK);
@@ -197,7 +197,7 @@ async fn different_consumer_groups_get_same_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-cg" }))
         .await?
         .expect(StatusCode::OK);
@@ -302,7 +302,7 @@ async fn stream_receive_with_defaults() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-def" }))
         .await?
         .expect(StatusCode::OK);
@@ -355,7 +355,7 @@ async fn partition_locked_until_lease_expired_or_committed() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-lock" }))
         .await?
         .expect(StatusCode::OK);
@@ -459,7 +459,7 @@ async fn concurrent_consumers_receive_from_different_partitions() -> TestResult 
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-concurrent" }))
         .await?
         .expect(StatusCode::OK);
@@ -572,7 +572,7 @@ async fn commit_then_receive_no_duplicates() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-commit" }))
         .await?
         .expect(StatusCode::OK);
@@ -686,7 +686,7 @@ async fn commit_requires_partition_topic() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-commit-pt" }))
         .await?
         .expect(StatusCode::OK);
@@ -737,7 +737,7 @@ async fn concurrent_receives_same_cg_no_overlap() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-race" }))
         .await?
         .expect(StatusCode::OK);
@@ -814,7 +814,7 @@ async fn partial_commit_preserves_lease() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-partial" }))
         .await?
         .expect(StatusCode::OK);
@@ -929,7 +929,7 @@ async fn new_consumer_group_starts_from_latest() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-latest" }))
         .await?
         .expect(StatusCode::OK);
@@ -1093,7 +1093,7 @@ async fn default_starting_position_earliest_gets_preexisting() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-dsp" }))
         .await?
         .expect(StatusCode::OK);
@@ -1144,7 +1144,7 @@ async fn stream_receive_max_wait_returns_when_batch_filled() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-wait-full" }))
         .await?
         .expect(StatusCode::OK);
@@ -1202,7 +1202,7 @@ async fn stream_receive_max_wait_returns_partial_batch_on_timeout() -> TestResul
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-wait-partial" }))
         .await?
         .expect(StatusCode::OK);
@@ -1272,7 +1272,7 @@ async fn stream_receive_max_wait_times_out_with_no_messages() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-timeout" }))
         .await?
         .expect(StatusCode::OK);
@@ -1313,7 +1313,7 @@ async fn stream_receive_wakes_on_publish_notification() -> TestResult {
     } = start_server().await;
 
     client
-        .post("v1.msgs.namespace.create")
+        .post("v1.msgs.namespace.configure")
         .json(json!({ "name": "ns-notify" }))
         .await?
         .expect(StatusCode::OK);

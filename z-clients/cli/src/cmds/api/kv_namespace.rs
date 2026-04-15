@@ -14,7 +14,7 @@ pub struct KvNamespaceArgs {
 
 #[derive(Subcommand)]
 pub enum KvNamespaceCommands {
-    /// Create KV namespace
+    /// Configure KV namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"name\": \"some_namespace\"
@@ -24,8 +24,8 @@ pub enum KvNamespaceCommands {
   \"created\": \"...\",
   \"updated\": \"...\"
 }")]
-    Create {
-        kv_create_namespace_in: crate::json::JsonOf<diom::models::KvCreateNamespaceIn>,
+    Configure {
+        kv_configure_namespace_in: crate::json::JsonOf<diom::models::KvConfigureNamespaceIn>,
     },
     /// Get KV namespace
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
@@ -45,13 +45,13 @@ pub enum KvNamespaceCommands {
 impl KvNamespaceCommands {
     pub async fn exec(self, client: &DiomClient) -> anyhow::Result<()> {
         match self {
-            Self::Create {
-                kv_create_namespace_in,
+            Self::Configure {
+                kv_configure_namespace_in,
             } => {
                 let resp = client
                     .kv()
                     .namespace()
-                    .create(kv_create_namespace_in.into_inner())
+                    .configure(kv_configure_namespace_in.into_inner())
                     .await?;
                 crate::json::print_json_output(&resp)?;
             }

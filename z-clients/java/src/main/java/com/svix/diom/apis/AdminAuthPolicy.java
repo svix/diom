@@ -14,13 +14,13 @@ import java.util.Map;
 import java.util.Set;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import com.svix.diom.models.AdminAccessPolicyConfigureIn;
+import com.svix.diom.models.AdminAccessPolicyConfigureOut;
 import com.svix.diom.models.AdminAccessPolicyDeleteIn;
 import com.svix.diom.models.AdminAccessPolicyDeleteOut;
 import com.svix.diom.models.AdminAccessPolicyGetIn;
 import com.svix.diom.models.AdminAccessPolicyListIn;
 import com.svix.diom.models.AdminAccessPolicyOut;
-import com.svix.diom.models.AdminAccessPolicyUpsertIn;
-import com.svix.diom.models.AdminAccessPolicyUpsertOut;
 import com.svix.diom.models.ListResponseAdminAccessPolicyOut;
 
 public class AdminAuthPolicy {
@@ -31,17 +31,17 @@ public class AdminAuthPolicy {
     }
 
     /** Create or update an access policy */
-    public AdminAccessPolicyUpsertOut upsert(
-        final AdminAccessPolicyUpsertIn adminAccessPolicyUpsertIn
+    public AdminAccessPolicyConfigureOut configure(
+        final AdminAccessPolicyConfigureIn adminAccessPolicyConfigureIn
     ) throws IOException, ApiException {
-        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-policy.upsert");
+        HttpUrl.Builder url = this.client.newUrlBuilder().encodedPath("/api/v1.admin.auth-policy.configure");
 
         return this.client.executeRequest(
             "POST",
             url.build(),
             null,
-            adminAccessPolicyUpsertIn,
-            AdminAccessPolicyUpsertOut.class
+            adminAccessPolicyConfigureIn,
+            AdminAccessPolicyConfigureOut.class
         );
     }
 
