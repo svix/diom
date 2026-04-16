@@ -366,7 +366,7 @@ impl Store {
             meta,
             path: snapshot_path.clone(),
         };
-        tracing::trace!(last_snapshot=?data, "setting last_snapshot");
+        tracing::trace!(last_snapshot = ?data, "setting last_snapshot");
         let data = spawn_blocking_in_current_span(move || -> anyhow::Result<LastSnapshot> {
             let mut tx = handle
                 .read()
@@ -388,9 +388,10 @@ impl Store {
 
     async fn record_ids_(&mut self) -> anyhow::Result<()> {
         tracing::trace!(
-            last_applied_log_id=?self.last_applied_log_id,
-            last_membership=?self.last_membership,
-            "storing id values");
+            last_applied_log_id = ?self.last_applied_log_id,
+            last_membership = ?self.last_membership,
+            "storing id values",
+        );
         let handle = self.stores.clone();
         let meta_keyspace = self.meta_keyspace.clone();
         let last_applied_log_id = self.last_applied_log_id;
@@ -428,7 +429,7 @@ impl Store {
         while let Some(dent) = dents.next_entry().await? {
             if let Some(preserve_path) = keep_path.file_name() {
                 if dent.file_name() == preserve_path {
-                    tracing::trace!(filename=?dent.file_name(), "preserving used snapshot");
+                    tracing::trace!(filename = ?dent.file_name(), "preserving used snapshot");
                     continue;
                 }
             } else {
@@ -437,10 +438,10 @@ impl Store {
             if let Some(preserve_name) = &last_file_name
                 && dent.file_name() == *preserve_name
             {
-                tracing::trace!(filename=?dent.file_name(), "preserving last_snapshot");
+                tracing::trace!(filename = ?dent.file_name(), "preserving last_snapshot");
                 continue;
             }
-            tracing::debug!(filename=?dent.file_name(), "deleting unused snapshot");
+            tracing::debug!(filename = ?dent.file_name(), "deleting unused snapshot");
             tokio::fs::remove_file(dent.path()).await?;
         }
         Ok(())
@@ -503,7 +504,7 @@ impl Store {
                     Response::Blank
                 }
                 EntryPayload::Normal(req) => {
-                    tracing::trace!(log_id=?item.log_id, request=%req, "applying user request");
+                    tracing::trace!(log_id = ?item.log_id, request=%req, "applying user request");
 
                     if req.inner.affects_persistent() {
                         touched_persistent = true;
@@ -760,7 +761,11 @@ impl StoredSnapshot {
         let path_c = path.clone();
         let file = spawn_blocking_in_current_span(move || -> anyhow::Result<std::fs::File> {
             let mut tf = tempfile().tempfile_in(directory)?;
-            tracing::debug!(final_path=%path_c.display(), temp_path = %tf.path().display(), "writing snapshot");
+            tracing::debug!(
+                final_path = %path_c.display(),
+                temp_path = %tf.path().display(),
+                "writing snapshot",
+            );
             serialized_state_machine::serialize_to_file(targets, tf.as_file_mut())?;
             tf.as_file_mut().sync_all()?;
             let mut f = tf.persist_noclobber(path_c)?;

@@ -36,7 +36,11 @@ pub(super) fn build_client(
             HeaderValue::from_str(&header_value).context("invalid interserver secret")?;
         headers.insert(header::AUTHORIZATION, header_value);
     }
-    tracing::debug!(connect_timeout = ?cfg.cluster.connection_timeout, ?request_timeout, "initializing interserver client");
+    tracing::debug!(
+        connect_timeout = ?cfg.cluster.connection_timeout,
+        ?request_timeout,
+        "initializing interserver client",
+    );
     let client = reqwest::Client::builder()
         .connect_timeout(cfg.cluster.connection_timeout.into())
         .pipe(|client| {
@@ -108,7 +112,7 @@ impl NetworkClient {
                 &crate::Error::internal("no has no known addresses"),
             )));
         };
-        tracing::trace!(%url, target=?self.target, "sending internal RPC");
+        tracing::trace!(%url, target = ?self.target, "sending internal RPC");
 
         let response = self
             .client
@@ -136,12 +140,12 @@ impl NetworkClient {
             })?
             .send()
             .await
-            .map_err(|e| {
-                tracing::warn!(err=?e, "error sending message to peer");
-                if e.is_connect() {
-                    RPCError::Unreachable(Unreachable::new(&e))
+            .map_err(|err| {
+                tracing::warn!(?err, "error sending message to peer");
+                if err.is_connect() {
+                    RPCError::Unreachable(Unreachable::new(&err))
                 } else {
-                    RPCError::Network(NetworkError::new(&e))
+                    RPCError::Network(NetworkError::new(&err))
                 }
             })?
             .error_for_status()
@@ -325,7 +329,7 @@ pub(crate) async fn detect_address(
 
     let cluster_addr = cfg.cluster.listen_address;
     if !is_unspecified(&cluster_addr) {
-        tracing::debug!(addr=?cluster_addr, "using configured cluster listen_address");
+        tracing::debug!(addr = ?cluster_addr, "using configured cluster listen_address");
         return Ok(PeerAddr::SocketAddr(cluster_addr));
     }
 

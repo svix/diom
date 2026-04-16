@@ -56,8 +56,8 @@ impl Discovery {
         })
     }
 
-    async fn poll_node(&self, s: &PeerAddr) -> Option<DiscoverResponse> {
-        let url = s
+    async fn poll_node(&self, peer: &PeerAddr) -> Option<DiscoverResponse> {
+        let url = peer
             .as_base_url()
             .join("/repl/discover")
             .expect("discovery URL should be valid");
@@ -65,14 +65,14 @@ impl Discovery {
             .get(url)
             .send()
             .await
-            .tap_err(|err| tracing::warn!(peer=?s, ?err, "unable to poll seed node"))
+            .tap_err(|err| tracing::warn!(?peer, ?err, "unable to poll seed node"))
             .ok()?
             .error_for_status()
-            .tap_err(|err| tracing::warn!(peer=?s, ?err, "got invalid HTTP response from seed"))
+            .tap_err(|err| tracing::warn!(?peer, ?err, "got invalid HTTP response from seed"))
             .ok()?
             .msgpack()
             .await
-            .tap_err(|err| tracing::warn!(peer=?s, ?err, "unable to read response body from seed"))
+            .tap_err(|err| tracing::warn!(?peer, ?err, "unable to read response body from seed"))
             .ok()
     }
 
@@ -104,7 +104,8 @@ impl Discovery {
         cluster_id: ClusterId,
         peers: Vec<(PeerAddr, NodeId, DiscoverClusterResponse)>,
     ) -> anyhow::Result<()> {
-        tracing::info!(?cluster_id, peers = ?peers.iter().map(|n| &n.0).collect::<Vec<_>>(), "joining running cluster");
+        let peers_dbg = || peers.iter().map(|n| &n.0).collect::<Vec<_>>();
+        tracing::info!(?cluster_id, peers = ?peers_dbg(), "joining running cluster");
         let Some((leader_addr, leader_node_id, leader_cluster)) = peers
             .into_iter()
             .find_or_first(|p| p.2.state == ServerState::Leader)
