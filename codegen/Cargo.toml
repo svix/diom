@@ -3,6 +3,7 @@ name = "codegen"
 license.workspace = true
 version.workspace = true
 rust-version.workspace = true
+repository.workspace = true
 edition = "2024"
 
 [features]

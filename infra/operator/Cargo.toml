@@ -3,6 +3,7 @@ name = "diom-operator"
 version.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository.workspace = true
 edition = "2024"
 
 [[bin]]
