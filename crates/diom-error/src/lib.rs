@@ -5,10 +5,7 @@ use axum::{
     http::{HeaderValue, header::RETRY_AFTER},
     response::{IntoResponse, Response},
 };
-use diom_core::{
-    types::DurationMs,
-    validation::{ValidationErrorBody, ValidationErrorItem},
-};
+use diom_core::types::DurationMs;
 use diom_proto::{MsgPackOrJson, StandardErrorBody};
 use hyper::StatusCode;
 use serde_json::json;
@@ -78,10 +75,6 @@ impl Error {
         )))
     }
 
-    pub fn validation(detail: Vec<ValidationErrorItem>) -> Self {
-        Self::new(ErrorType::Validation(ValidationErrorBody::new(detail)))
-    }
-
     pub fn operation(code: StatusCode, detail: Option<String>) -> Self {
         Self::new(ErrorType::Operation {
             status: code,
@@ -131,7 +124,6 @@ impl Error {
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
-            ErrorType::Validation(_) => (StatusCode::UNPROCESSABLE_ENTITY, None, None),
             ErrorType::Operation {
                 status,
                 error_code,
@@ -191,10 +183,6 @@ impl IntoResponse for Error {
                     );
                 }
                 response
-            }
-            ErrorType::Validation(body) => {
-                tracing::debug!(error = %body, "validation error");
-                (StatusCode::UNPROCESSABLE_ENTITY, MsgPackOrJson(body)).into_response()
             }
             ErrorType::Authentication(body) => {
                 tracing::debug!(error = %body, "authentication");
@@ -256,14 +244,11 @@ impl OperationOutput for Error {
 
         let standard_error_body_response =
             MsgPackOrJson::<StandardErrorBody>::operation_response(ctx, operation).unwrap();
-        let validation_error_body_response =
-            MsgPackOrJson::<ValidationErrorBody>::operation_response(ctx, operation).unwrap();
 
         vec![
             (Some(Code(400)), standard_error_body_response.clone()),
             (Some(Code(401)), standard_error_body_response.clone()),
             (Some(Code(403)), standard_error_body_response),
-            (Some(Code(422)), validation_error_body_response),
         ]
     }
 }
@@ -311,9 +296,6 @@ pub enum ErrorType {
     /// Authorization error
     Authorization(StandardErrorBody),
 
-    /// An error from validating a request
-    Validation(ValidationErrorBody),
-
     /// An error from an Operation application
     Operation {
         status: StatusCode,
@@ -338,7 +320,6 @@ impl fmt::Display for ErrorType {
             Self::Conflict { body, .. } => write!(f, "conflict {body}"),
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
-            Self::Validation(s) => s.fmt(f),
             Self::ShuttingDown => write!(f, "shutting_down"),
             Self::Operation { detail, status, .. } => {
                 if let Some(detail) = detail {

@@ -2,6 +2,7 @@
 
 use std::fmt;
 
+use aide::{OperationInput, OperationOutput};
 use axum::{
     RequestExt as _,
     extract::{
@@ -206,7 +207,7 @@ where
     }
 }
 
-impl<T> aide::OperationInput for MsgPackOrJson<T>
+impl<T> OperationInput for MsgPackOrJson<T>
 where
     T: schemars::JsonSchema,
 {
@@ -219,14 +220,17 @@ where
     }
 
     fn inferred_early_responses(
-        _ctx: &mut aide::generate::GenContext,
-        _operation: &mut aide::openapi::Operation,
+        ctx: &mut aide::generate::GenContext,
+        operation: &mut aide::openapi::Operation,
     ) -> Vec<(Option<aide::openapi::StatusCode>, aide::openapi::Response)> {
-        vec![]
+        vec![(
+            Some(aide::openapi::StatusCode::Code(422)),
+            <MsgPackOrJson<ValidationErrorBody>>::operation_response(ctx, operation).unwrap(),
+        )]
     }
 }
 
-impl<T> aide::OperationOutput for MsgPackOrJson<T>
+impl<T> OperationOutput for MsgPackOrJson<T>
 where
     T: schemars::JsonSchema,
 {
