@@ -52,7 +52,7 @@ where
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Variable {
     pub env_var: String,
     pub docstring: Option<&'static str>,

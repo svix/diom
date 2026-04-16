@@ -9,7 +9,10 @@ use diom_backend::{
 };
 use dotenvy::dotenv;
 use mimalloc::MiMalloc;
-use std::{io::BufWriter, path::PathBuf};
+use std::{
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
 use tracing_subscriber::util::SubscriberInitExt;
 
 #[global_allocator]
@@ -47,7 +50,10 @@ enum Commands {
         path: Option<PathBuf>,
     },
     /// Describe environment variables honored by this service
-    DescribeEnvironmentVariables,
+    ///
+    /// If a path is provided, the environment variable docs will be written to that file as
+    /// markdown; otherwise, they'll be written to stdout with
+    DescribeEnvironmentVariables { path: Option<PathBuf> },
 }
 
 fn dump_config(cfg: Configuration, path: Option<PathBuf>) -> anyhow::Result<()> {
@@ -62,6 +68,55 @@ fn dump_config(cfg: Configuration, path: Option<PathBuf>) -> anyhow::Result<()> 
         let mut stdout_l = stdout.lock();
         cfg.dump_config(&mut stdout_l)
     }
+}
+
+fn dump_variables(path: Option<PathBuf>) -> anyhow::Result<()> {
+    let mut table = Table::new();
+    let mut variables = cfg::describe_environment();
+    variables.sort();
+    let (preset, rows) = if path.is_none() {
+        (
+            comfy_table::presets::UTF8_FULL,
+            variables
+                .into_iter()
+                .map(|var| {
+                    [
+                        Cell::new(var.env_var),
+                        Cell::new(var.docstring.unwrap_or_default()),
+                    ]
+                })
+                .collect::<Vec<_>>(),
+        )
+    } else {
+        (
+            comfy_table::presets::ASCII_MARKDOWN,
+            variables
+                .into_iter()
+                .map(|var| {
+                    [
+                        Cell::new(format!("`{}`", var.env_var)),
+                        Cell::new(var.docstring.unwrap_or_default().replace("\n", " ")),
+                    ]
+                })
+                .collect::<Vec<_>>(),
+        )
+    };
+    table
+        .load_preset(preset)
+        .set_header(["Environment Variable", "Description"])
+        .add_rows(rows);
+    if let Some(path) = path {
+        let f = fs_err::File::create(path)?;
+        let mut bf = BufWriter::new(f);
+        writeln!(
+            bf,
+            "The diom server accepts the following environment variables:\n"
+        )?;
+        writeln!(bf, "{table}")?;
+    } else {
+        println!("{table}");
+    }
+    Ok(())
 }
 
 #[tokio::main]
@@ -112,24 +167,7 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Healthcheck { .. }) => {
             unreachable!("Healthcheck command should be handled before config loading")
         }
-        Some(Commands::DescribeEnvironmentVariables) => {
-            let mut table = Table::new();
-            let rows = cfg::describe_environment()
-                .into_iter()
-                .map(|var| {
-                    [
-                        Cell::new(var.env_var),
-                        Cell::new(var.docstring.unwrap_or_default()),
-                    ]
-                })
-                .collect::<Vec<_>>();
-            table
-                .load_preset(comfy_table::presets::UTF8_FULL)
-                .set_header(["Environment Variable", "Description"])
-                .add_rows(rows);
-            println!("{table}");
-            cfg::describe_environment();
-        }
+        Some(Commands::DescribeEnvironmentVariables { path }) => dump_variables(path)?,
         Some(Commands::Server) | None => {
             otel::setup_metrics(&cfg);
             run(cfg).await
