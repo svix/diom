@@ -169,7 +169,7 @@ pub(crate) fn derive_dumpable_config(input: DeriveInput) -> proc_macro2::TokenSt
         impl #impl_generics crate::cfg::dumpable_config::DumpableConfig for #name #ty_generics #where_clause {
             fn dump_fields<W: std::io::Write>(&self, writer: &mut W, prefix: String) -> ::anyhow::Result<()> {
                 let mut buffer = String::new();
-                #(#lists)*;
+                #(#lists)*
                 Ok(())
             }
         }
