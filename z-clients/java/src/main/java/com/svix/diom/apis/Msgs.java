@@ -25,19 +25,19 @@ public class Msgs {
         this.client = client;
     }
 
-    public MsgsNamespace getNamespace() {
+    public MsgsNamespace namespace() {
         return new MsgsNamespace(this.client);
     }
 
-    public MsgsQueue getQueue() {
+    public MsgsQueue queue() {
         return new MsgsQueue(this.client);
     }
 
-    public MsgsStream getStream() {
+    public MsgsStream stream() {
         return new MsgsStream(this.client);
     }
 
-    public MsgsTopic getTopic() {
+    public MsgsTopic topic() {
         return new MsgsTopic(this.client);
     }
 

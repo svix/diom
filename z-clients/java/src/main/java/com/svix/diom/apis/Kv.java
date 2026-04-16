@@ -31,7 +31,7 @@ public class Kv {
         this.client = client;
     }
 
-    public KvNamespace getNamespace() {
+    public KvNamespace namespace() {
         return new KvNamespace(this.client);
     }
 

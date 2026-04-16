@@ -36,7 +36,7 @@ public class {{ resource_type_name }} {
 {%- for name, sub in resource.subresources | items %}
     {%- set sub_type_name = sub.name | to_upper_camel_case %}
 
-    public {{ sub_type_name }} get{{ name | to_upper_camel_case }}() {
+    public {{ sub_type_name }} {{ name | to_lower_camel_case }}() {
         return new {{ sub_type_name }}(this.client);
     }
 {%- endfor %}
