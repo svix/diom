@@ -9,6 +9,9 @@ on:
       image_tag:
         required: true
         type: string
+      is_release:
+        type: boolean
+        default: false
 
 jobs:
   helm-publish:
@@ -33,6 +36,11 @@ jobs:
       - name: Set image tags
         run: |
           sed -i 's/tag: ""/tag: "${{ inputs.image_tag }}"/g' infra/helm-diom/values.yaml
+
+      - name: Use private chart name if not a release build
+        if: ${{ inputs.is_release == 'false' }}
+        run: |
+          sed -i 's/name: diom/name: diom-private/' infra/helm-diom/Chart.yaml
 
       - name: Package and push chart
         run: |
