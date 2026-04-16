@@ -179,12 +179,10 @@ impl KvController {
                 }
             }
 
-            let new_version = global_counter + 1;
-
             let new_model = KvModel {
                 value: model.value,
                 expiry: model.expiry,
-                version: new_version,
+                version: global_counter,
             };
 
             match behavior {
@@ -229,7 +227,7 @@ impl KvController {
             };
 
             Ok(KvSetResult {
-                version: new_version,
+                version: global_counter,
             })
         })
         .await?

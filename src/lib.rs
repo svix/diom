@@ -416,6 +416,7 @@ pub async fn run_with_listeners(
         .layer((
             trace_layer(),
             CatchPanicLayer::custom(handle_panic),
+            middleware::from_fn(core::cluster::middleware::capture_log_id),
             middleware::from_fn(diom_proto::capture_accept_hdr),
             CorsLayer::new()
                 .allow_origin(Any)

@@ -6,6 +6,7 @@ mod background;
 mod discovery;
 mod handle;
 mod logs;
+pub(crate) mod middleware;
 pub(crate) mod network;
 mod node;
 mod operations;
