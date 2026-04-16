@@ -1,5 +1,5 @@
 [workspace]
-members = ["cargo:diom-cli"]
+members = ["cargo:z-clients/cli"]
 
 # Config for 'dist'
 [dist]
