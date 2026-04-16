@@ -45,10 +45,8 @@ macro_rules! request_input {
 #[schemars(extend("x-positional" = ["key", "value"]))]
 pub struct KvSetIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
-    #[validate(nested)]
     pub key: EntityKey,
 
     pub value: ByteString,
@@ -77,10 +75,7 @@ pub struct KvSetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvGetIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
-
-    #[validate(nested)]
     pub key: EntityKey,
     #[serde(default = "Consistency::strong")]
     pub consistency: Consistency,
@@ -114,10 +109,8 @@ impl KvGetOut {
 #[schemars(extend("x-positional" = ["key"]))]
 pub struct KvDeleteIn {
     #[serde(default)]
-    #[validate(nested)]
     pub namespace: Option<NamespaceName>,
 
-    #[validate(nested)]
     pub key: EntityKey,
 
     /// If set, the delete only succeeds when the stored version matches this value.
@@ -216,7 +209,6 @@ async fn kv_del(
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 struct KvGetNamespaceIn {
-    #[validate(nested)]
     pub name: NamespaceName,
 }
 
@@ -231,7 +223,6 @@ struct KvGetNamespaceOut {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Validate, JsonSchema)]
 pub(crate) struct KvConfigureNamespaceIn {
-    #[validate(nested)]
     pub name: NamespaceName,
 }
 
