@@ -1,6 +1,6 @@
 <h1 align="center">
     <a style="text-decoration: none" href="https://www.svix.com">
-      <img width="120" src="https://avatars.githubusercontent.com/u/80175132?s=200&v=4" />
+      <img width="120" src="https://diom.svix.com/icon.svg" />
       <p align="center">Diom - by Svix</p>
     </a>
 </h1>
@@ -20,7 +20,7 @@ You can find general usage documentation at <https://diom.svix.com/docs>.
 # Installation
 
 ```sh
-go get github.com/svix/diom/z-clients/go
+go get https://diom.svix.com/diom/go
 ```
 
 ## Usage
