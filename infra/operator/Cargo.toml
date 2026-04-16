@@ -5,6 +5,10 @@ license.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 edition = "2024"
+publish = false
+
+[package.metadata.dist]
+dist = false
 
 [[bin]]
 name = "diom-operator"

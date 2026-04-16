@@ -4,6 +4,10 @@ version.workspace = true
 license.workspace = true
 repository.workspace = true
 edition = "2024"
+publish = false
+
+[package.metadata.dist]
+dist = false
 
 [dependencies]
 anyhow.workspace = true
