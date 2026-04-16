@@ -102,7 +102,8 @@ pub trait BaseUid: Deref<Target = String> {
 #[macro_export]
 macro_rules! string_wrapper {
     ($name_id:ident { $($init:tt)* }) => {
-        #[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
+        #[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize)]
+        #[serde(transparent)]
         pub struct $name_id(pub String);
 
         impl $crate::PersistableValue for $name_id {}
@@ -133,12 +134,6 @@ macro_rules! string_wrapper {
             }
         }
 
-        impl From<String> for $name_id {
-            fn from(s: String) -> Self {
-                $name_id(s)
-            }
-        }
-
         impl $crate::__reexport::schemars::JsonSchema for $name_id {
             fn schema_name() -> std::borrow::Cow<'static, str> {
                 stringify!($name_id).into()
@@ -162,42 +157,38 @@ macro_rules! string_wrapper {
             }
         }
 
-        impl $crate::__reexport::validator::Validate for $name_id {
-            fn validate(&self) -> Result<(), $crate::__reexport::validator::ValidationErrors> {
+        impl<'de> $crate::__reexport::serde::Deserialize<'de> for $name_id {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
                 use std::sync::LazyLock;
-                use $crate::__reexport::regex::Regex;
+                use $crate::__reexport::{
+                    regex::Regex,
+                    serde::de::Error as DeError,
+                };
 
                 static RE: LazyLock<Regex> = LazyLock::new(|| {
                     Regex::new(<$name_id as $crate::types::StringWrapper>::INFO.pattern).unwrap()
                 });
 
+                let value = String::deserialize(deserializer)?;
+
                 let info = <Self as $crate::types::StringWrapper>::INFO;
-                let mut errors = $crate::__reexport::validator::ValidationErrors::new();
-                if self.0.len() < info.min_length {
-                    errors.add(
-                        $crate::types::ALL_ERROR,
-                        $crate::validation::validation_error(Some("length"), Some("String too short")),
-                    );
-                } else if self.0.len() > info.max_length {
-                    errors.add(
-                        $crate::types::ALL_ERROR,
-                        $crate::validation::validation_error(Some("length"), Some("String too long")),
-                    );
-                } else if !RE.is_match(&self.0) {
-                    errors.add(
-                        $crate::types::ALL_ERROR,
-                        $crate::validation::validation_error(
-                            Some("invalid_entity_key"),
-                            Some(r"Entity key must match the following pattern: ^[a-zA-Z0-9\-/_.=+:]+$."),
-                        ),
-                    );
+                if value.len() < info.min_length {
+                    return Err(DeError::custom("String too short"));
+                }
+                if value.len() > info.max_length {
+                    return Err(DeError::custom("String too long"));
+                }
+                if !RE.is_match(&value) {
+                    return Err(DeError::custom(::std::concat!(
+                        stringify!($name_id),
+                        r" must match the following pattern: ^[a-zA-Z0-9\-/_.=+:]+$.",
+                    )));
                 }
 
-                if errors.is_empty() {
-                    Ok(())
-                } else {
-                    Err(errors)
-                }
+                Ok(Self(value))
             }
         }
     };
@@ -252,20 +243,24 @@ impl Consistency {
 
 #[cfg(test)]
 mod tests {
-    use validator::Validate;
+    use serde::{Deserialize as _, de::value::StringDeserializer};
 
     use super::EntityKey;
 
+    fn string_de(s: &str) -> StringDeserializer<serde::de::value::Error> {
+        StringDeserializer::new(s.to_owned())
+    }
+
     fn allowed(s: &str) {
         assert!(
-            EntityKey(s.to_string()).validate().is_ok(),
+            EntityKey::deserialize(string_de(s)).is_ok(),
             "{s:?} should be allowed"
         );
     }
 
     fn rejected(s: &str) {
         assert!(
-            EntityKey(s.to_string()).validate().is_err(),
+            EntityKey::deserialize(string_de(s)).is_err(),
             "{s:?} should be rejected"
         );
     }

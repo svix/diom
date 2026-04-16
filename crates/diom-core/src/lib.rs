@@ -18,8 +18,8 @@ pub use self::monotime::Monotime;
 pub mod __reexport {
     pub use regex;
     pub use schemars;
+    pub use serde;
     pub use serde_json;
-    pub use validator;
 }
 
 pub use diom_derive::PersistableValue;
