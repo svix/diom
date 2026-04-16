@@ -319,7 +319,7 @@ async fn test_admin_auth_token_use_for_kv() -> TestResult {
     // Use the created token to make KV API calls
     let token_client = TestClient::new(format!("http://{addr}/api"), &token);
 
-    let set_resp = token_client
+    token_client
         .post("v1.kv.set")
         .json(json!({
             "key": "hello",
@@ -327,9 +327,7 @@ async fn test_admin_auth_token_use_for_kv() -> TestResult {
             "behavior": "upsert"
         }))
         .await?
-        .ensure(StatusCode::OK)?
-        .json();
-    assert_eq!(set_resp["success"], true);
+        .ensure(StatusCode::OK)?;
 
     let resp = token_client
         .post("v1.kv.get")

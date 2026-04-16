@@ -2,7 +2,7 @@ use std::net::{Ipv6Addr, SocketAddr};
 
 use diom_core::types::DurationMs;
 
-use super::DatabaseConfig;
+use super::{DatabaseConfig, MemorySize};
 
 pub(super) fn default_true() -> bool {
     true
@@ -19,14 +19,16 @@ pub(super) fn cluster_listen_address() -> SocketAddr {
 pub(super) fn persistent_db() -> DatabaseConfig {
     DatabaseConfig {
         path: "./db".into(),
-        filename: None,
+        filename: "fjall_persistent".into(),
+        cache_size: default_database_size(),
     }
 }
 
 pub(super) fn ephemeral_db() -> DatabaseConfig {
     DatabaseConfig {
         path: "./db".into(),
-        filename: None,
+        filename: "fjall_ephemeral".into(),
+        cache_size: default_database_size(),
     }
 }
 
@@ -104,4 +106,8 @@ pub(super) fn cluster_replication_lag_threshold() -> u64 {
 
 pub(super) fn background_cleanup_interval() -> DurationMs {
     DurationMs::from_secs(10)
+}
+
+pub(super) fn default_database_size() -> MemorySize {
+    MemorySize::Percent(20)
 }

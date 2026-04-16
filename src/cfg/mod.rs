@@ -20,13 +20,14 @@ use crate::error::{Error, Result};
 mod defaults;
 mod dumpable_config;
 pub(crate) mod env_overridable;
+mod memory_size;
 mod validators;
 
-pub use self::env_overridable::Variable;
 use self::{
     dumpable_config::DumpableConfig,
     env_overridable::{EnvOverridable, env_var},
 };
+pub use self::{env_overridable::Variable, memory_size::MemorySize};
 
 pub type Configuration = Arc<ConfigurationInner>;
 
@@ -102,15 +103,20 @@ impl Serialize for PeerAddr {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, EnvOverridable, Serialize, DumpableConfig)]
+#[derive(Clone, Debug, Deserialize, EnvOverridable, Serialize, DumpableConfig)]
 pub struct DatabaseConfig {
     /// Directory in which this database is stored
     pub path: PathBuf,
     /// Filename under the directory specified in `path`.
+    pub filename: String,
+    /// Amount of memory to reserve for the database layer's
+    /// caches for this database type.
     ///
-    /// If not specified, uses a default value
-    /// based on the database type.
-    pub filename: Option<String>,
+    /// Can be specified as a bare value of bytes (e.g., 1024000), a unit-ed amount
+    /// (e.g., 1024MiB), or a percentage (e.g., 20%), which will be applied against
+    /// the current cgroup limit if present and the total system memory otherwise
+    #[serde(default = "defaults::default_database_size")]
+    pub cache_size: MemorySize,
 }
 
 /// Wrapper around a path that we know to be an extant dir
@@ -160,27 +166,17 @@ impl From<Dir> for PathBuf {
 }
 
 impl DatabaseConfig {
-    fn default_cache_size() -> u64 {
-        let mut sys = sysinfo::System::new_all();
-        sys.refresh_all();
-
-        let ret = sys.total_memory();
-        if ret == 0 {
-            // Default to fjall's current default (32 MiB)
-            32 * 1024 * 1024
+    pub fn database(&self, time: Monotime, label: &'static str) -> Result<fjall::Database> {
+        let dir = Dir::new(&self.path)?;
+        let path = dir.join(&self.filename);
+        if path.exists() {
+            tracing::info!(path = %path.display(), "loading existing {} database", label);
         } else {
-            // Fjall recommends 20-25% of the memory for cache.
-            // We can probably do more, but let's start with that.
-            ret / 5
+            tracing::debug!(path = %path.display(), "initializing new {} database", label);
         }
-    }
-
-    fn database(dir: &Path, file: &str, time: Monotime) -> Result<fjall::Database> {
-        let dir = Dir::new(dir)?;
-        let path = dir.join(file);
-        // FIXME: we should probably make the cache size a config.
+        let cache_size = self.cache_size;
         fjall::Database::builder(path)
-            .cache_size(Self::default_cache_size())
+            .cache_size(cache_size.as_bytes())
             .manual_journal_persist(true)
             .with_compaction_filter_factories(Arc::new(move |keyspace| match keyspace {
                 diom_msgs::METADATA_KEYSPACE => Some(Arc::new(
@@ -193,22 +189,6 @@ impl DatabaseConfig {
                 tracing::error!(?err, "error building database");
                 err.into()
             })
-    }
-
-    pub fn persistent(db_config: &DatabaseConfig, time: Monotime) -> Result<fjall::Database> {
-        Self::database(
-            &db_config.path,
-            db_config.filename.as_deref().unwrap_or("fjall_persistent"),
-            time,
-        )
-    }
-
-    pub fn ephemeral(db_config: &DatabaseConfig, time: Monotime) -> Result<fjall::Database> {
-        Self::database(
-            &db_config.path,
-            db_config.filename.as_deref().unwrap_or("fjall_ephemeral"),
-            time,
-        )
     }
 }
 
@@ -957,9 +937,10 @@ impl EnvOverridable for Option<JwtKey> {
     }
 }
 
+#[macro_export]
 macro_rules! from_str_via_serde {
     ($ty:ty) => {
-        impl FromStr for $ty {
+        impl std::str::FromStr for $ty {
             type Err = serde::de::value::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 <Self as serde::Deserialize>::deserialize(serde::de::value::StrDeserializer::new(s))
@@ -1119,16 +1100,19 @@ mod tests {
     fn test_db() {
         let raw_config = r#"
 ephemeral_db = { path = "/1", filename = "test1" }
-persistent_db.path = "/2"
+persistent_db = { path = "/2", filename = "fjall_persistent" }
 "#;
 
         let config = load_toml(Some(raw_config)).unwrap();
 
         assert_eq!(config.ephemeral_db.path, "/1".to_string());
-        assert_eq!(config.ephemeral_db.filename, Some("test1".to_string()));
+        assert_eq!(config.ephemeral_db.filename, "test1".to_string());
 
         assert_eq!(config.persistent_db.path, "/2".to_string());
-        assert!(config.persistent_db.filename.is_none());
+        assert_eq!(
+            config.persistent_db.filename,
+            "fjall_persistent".to_string()
+        );
     }
 
     #[test]

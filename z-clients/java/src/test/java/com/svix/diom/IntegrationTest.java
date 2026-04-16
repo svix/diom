@@ -33,51 +33,53 @@ class IntegrationTest {
     }
 
     @Test
+    @Tag("integration")
     void testHealthPing() throws Exception {
-        PingOut resp = client.getHealth().ping();
+        PingOut resp = client.health().ping();
         assertNotNull(resp);
     }
 
     @Test
+    @Tag("integration")
     void testKvSetGetDelete() throws Exception {
         String key = "java-integration-kv-key";
         byte[] value = "java-integration-kv-value".getBytes();
 
         // Set
-        KvSetOut setResp = client.getKv().set(key, value);
-        assertTrue(setResp.getSuccess());
+        KvSetOut setResp = client.kv().set(key, value);
 
         // Get
-        KvGetOut getResp = client.getKv().get(key);
+        KvGetOut getResp = client.kv().get(key);
         assertArrayEquals(value, getResp.getValue());
 
         // Delete
-        KvDeleteOut delResp = client.getKv().delete(key);
+        KvDeleteOut delResp = client.kv().delete(key);
         assertTrue(delResp.getSuccess());
 
         // Verify deleted
-        KvGetOut getResp2 = client.getKv().get(key);
+        KvGetOut getResp2 = client.kv().get(key);
         assertNull(getResp2.getValue());
     }
 
     @Test
+    @Tag("integration")
     void testMsgsQueueSubresourceChaining() throws Exception {
         String namespace = "java-integration-ns";
         String topic = "java-integration-topic";
         String consumerGroup = "java-integration-cg";
 
-        client.getMsgs().getNamespace().configure(namespace);
-        client.getMsgs().publish(topic, new MsgPublishIn()
+        client.msgs().namespace().configure(namespace);
+        client.msgs().publish(topic, new MsgPublishIn()
             .namespace(namespace)
             .msgs(Collections.singletonList(new MsgIn().value("hello".getBytes()))));
 
-        MsgQueueReceiveOut received = client.getMsgs().getQueue().receive(
+        MsgQueueReceiveOut received = client.msgs().queue().receive(
             topic, consumerGroup, new MsgQueueReceiveIn().namespace(namespace));
         assertNotNull(received);
         assertFalse(received.getMsgs().isEmpty());
 
         String msgId = received.getMsgs().get(0).getMsgId();
-        MsgQueueAckOut ackResp = client.getMsgs().getQueue().ack(
+        MsgQueueAckOut ackResp = client.msgs().queue().ack(
             topic, consumerGroup,
             new MsgQueueAckIn()
                 .namespace(namespace)
@@ -86,23 +88,24 @@ class IntegrationTest {
     }
 
     @Test
+    @Tag("integration")
     void testCacheSetGetDelete() throws Exception {
         String key = "java-integration-cache-key";
         byte[] value = "java-integration-cache-value".getBytes();
 
         // Set
-        client.getCache().set(key, value, new CacheSetIn().ttl(Duration.ofMillis(60000)));
+        client.cache().set(key, value, new CacheSetIn().ttl(Duration.ofMillis(60000)));
 
         // Get
-        CacheGetOut getResp = client.getCache().get(key);
+        CacheGetOut getResp = client.cache().get(key);
         assertArrayEquals(value, getResp.getValue());
 
         // Delete
-        CacheDeleteOut delResp = client.getCache().delete(key);
+        CacheDeleteOut delResp = client.cache().delete(key);
         assertTrue(delResp.getSuccess());
 
         // Verify deleted
-        CacheGetOut getResp2 = client.getCache().get(key);
+        CacheGetOut getResp2 = client.cache().get(key);
         assertNull(getResp2.getValue());
     }
 }

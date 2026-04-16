@@ -30,12 +30,11 @@ async fn test_kv_set_get_delete() {
     let value = b"rust-integration-kv-value".to_vec();
 
     // Set
-    let set_resp = client
+    client
         .kv()
         .set(key.clone(), value.clone(), KvSetIn::new())
         .await
         .unwrap();
-    assert!(set_resp.success);
 
     // Get
     let get_resp = client.kv().get(key.clone(), KvGetIn::new()).await.unwrap();

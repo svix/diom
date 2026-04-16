@@ -45,7 +45,7 @@ run_go() {
 
 run_java() {
     echo "==> Running Java SDK integration tests"
-    (cd "$ROOT_DIR/z-clients/java" && ./gradlew integrationTest)
+    (cd "$ROOT_DIR/z-clients/java" && mvn --batch-mode -Dgpg.skip=true verify)
 }
 
 # Parse arguments

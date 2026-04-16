@@ -13,4 +13,4 @@ jobs:
         working-directory: z-clients/java
     steps:
       - uses: actions/checkout@v6
-      - run: ./gradlew build
+      - run: mvn --batch-mode package

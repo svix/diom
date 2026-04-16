@@ -50,11 +50,11 @@ First checkout the [core README](../../README.md#developing) for details on how 
 ## Requirements
 
  - Java 8+
- - Gradle
+ - Maven
 
 ## Building the library
 ```sh
-./gradlew build
+mvn package
 ```
 
 ## Running Tests
@@ -62,5 +62,5 @@ First checkout the [core README](../../README.md#developing) for details on how 
 Simply run:
 
 ```sh
-./gradlew test
+mvn test
 ```

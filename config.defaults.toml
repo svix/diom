@@ -184,11 +184,16 @@ startup_discovery_delay_ms = 10
 # other modules, and can be placed on less-durable storage, such as local instance storage
 [ephemeral_db]
 
-# Filename under the directory specified in `path`.
+# Amount of memory to reserve for the database layer's
+# caches for this database type.
 #
-# If not specified, uses a default value
-# based on the database type.
-# filename =
+# Can be specified as a bare value of bytes (e.g., 1024000), a unit-ed amount
+# (e.g., 1024MiB), or a percentage (e.g., 20%), which will be applied against
+# the current cgroup limit if present and the total system memory otherwise
+cache_size = "20%"
+
+# Filename under the directory specified in `path`.
+filename = "fjall_ephemeral"
 
 # Directory in which this database is stored
 path = "./db"
@@ -254,11 +259,16 @@ service_name = "diom"
 # should be placed on durable storage
 [persistent_db]
 
-# Filename under the directory specified in `path`.
+# Amount of memory to reserve for the database layer's
+# caches for this database type.
 #
-# If not specified, uses a default value
-# based on the database type.
-# filename =
+# Can be specified as a bare value of bytes (e.g., 1024000), a unit-ed amount
+# (e.g., 1024MiB), or a percentage (e.g., 20%), which will be applied against
+# the current cgroup limit if present and the total system memory otherwise
+cache_size = "20%"
+
+# Filename under the directory specified in `path`.
+filename = "fjall_persistent"
 
 # Directory in which this database is stored
 path = "./db"

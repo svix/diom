@@ -24,11 +24,11 @@ pub enum MsgsCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"msgs\": \"...\",
+  \"msgs\": [{\"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"key\": \"...\", \"delay_ms\": 60000}],
   \"idempotency_key\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"topics\": \"...\"
+  \"topics\": [{\"topic\": \"...\", \"start_offset\": 123, \"offset\": 123}]
 }")]
     Publish {
         topic: String,

@@ -22,8 +22,8 @@ pub enum RateLimitNamespaceCommands {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"name\": \"some_namespace\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Configure {
         rate_limit_configure_namespace_in:
@@ -36,8 +36,8 @@ pub enum RateLimitNamespaceCommands {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"name\": \"some_namespace\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Get {
         rate_limit_get_namespace_in: crate::json::JsonOf<diom::models::RateLimitGetNamespaceIn>,

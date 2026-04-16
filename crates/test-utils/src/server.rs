@@ -5,7 +5,7 @@ use diom_backend::{
     Initialized,
     cfg::{
         ClusterConfiguration, ConfigurationInner, DatabaseConfig, Environment, FsyncMode,
-        LogFormat, LogLevel, OpenTelemetryConfig, OpenTelemetryProtocol, SyncMode,
+        LogFormat, LogLevel, MemorySize, OpenTelemetryConfig, OpenTelemetryProtocol, SyncMode,
     },
     core::cluster::{ClusterId, NodeId, proto::HealthResponse},
     run_with_listeners,
@@ -274,11 +274,13 @@ pub fn default_server_config(workdir: &Path) -> ConfigurationInner {
         listen_address: addr,
         ephemeral_db: DatabaseConfig {
             path: db_dir.clone(),
-            ..Default::default()
+            filename: "fjall_ephemeral".into(),
+            cache_size: MemorySize::fjall_default_cache(),
         },
         persistent_db: DatabaseConfig {
             path: db_dir,
-            ..Default::default()
+            filename: "fjall_persistent".into(),
+            cache_size: MemorySize::fjall_default_cache(),
         },
         log_level: LogLevel::Debug,
         log_format: LogFormat::Default,

@@ -1557,10 +1557,8 @@ dependencies = [
  "diom-namespace",
  "diom-operations",
  "fjall-utils",
- "jiff",
  "serde",
  "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -1668,13 +1666,11 @@ dependencies = [
  "diom-namespace",
  "diom-operations",
  "fjall-utils",
- "jiff",
  "postcard",
  "serde",
  "tempfile",
  "test-utils",
  "tokio",
- "tracing",
 ]
 
 [[package]]

@@ -22,13 +22,13 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"tokens\": \"...\",
-  \"config\": \"...\"
+  \"tokens\": 123,
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"allowed\": \"...\",
-  \"remaining\": \"...\",
-  \"retry_after_ms\": \"...\"
+  \"allowed\": true,
+  \"remaining\": 123,
+  \"retry_after_ms\": 60000
 }")]
     Limit {
         rate_limit_check_in: crate::json::JsonOf<diom::models::RateLimitCheckIn>,
@@ -38,11 +38,11 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": \"...\"
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"remaining\": \"...\",
-  \"retry_after_ms\": \"...\"
+  \"remaining\": 123,
+  \"retry_after_ms\": 60000
 }")]
     GetRemaining {
         rate_limit_get_remaining_in: crate::json::JsonOf<diom::models::RateLimitGetRemainingIn>,
@@ -52,7 +52,7 @@ pub enum RateLimitCommands {
 {
   \"namespace\": \"some_namespace\",
   \"key\": \"some_key\",
-  \"config\": \"...\"
+  \"config\": {\"capacity\": 123, \"refill_amount\": 123, \"refill_interval_ms\": 60000}
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

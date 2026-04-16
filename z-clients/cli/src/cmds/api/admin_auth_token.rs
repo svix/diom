@@ -20,14 +20,14 @@ pub enum AdminAuthTokenCommands {
 {
   \"name\": \"...\",
   \"role\": \"...\",
-  \"expiry_ms\": \"...\",
-  \"enabled\": \"...\"
+  \"expiry_ms\": 60000,
+  \"enabled\": true
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"id\": \"...\",
   \"token\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Create {
         admin_auth_token_create_in: crate::json::JsonOf<diom::models::AdminAuthTokenCreateIn>,
@@ -36,7 +36,7 @@ pub enum AdminAuthTokenCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"id\": \"...\",
-  \"expiry_ms\": \"...\"
+  \"expiry_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -51,8 +51,8 @@ pub enum AdminAuthTokenCommands {
 {
   \"id\": \"...\",
   \"token\": \"...\",
-  \"created\": \"...\",
-  \"updated\": \"...\"
+  \"created\": 1234567890123,
+  \"updated\": 1234567890123
 }")]
     Rotate {
         admin_auth_token_rotate_in: crate::json::JsonOf<diom::models::AdminAuthTokenRotateIn>,
@@ -63,7 +63,7 @@ pub enum AdminAuthTokenCommands {
   \"id\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": \"...\"
+  \"success\": true
 }")]
     Delete {
         admin_auth_token_delete_in: crate::json::JsonOf<diom::models::AdminAuthTokenDeleteIn>,
@@ -71,14 +71,14 @@ pub enum AdminAuthTokenCommands {
     /// List auth tokens for a given owner
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
-  \"limit\": \"...\",
+  \"limit\": 123,
   \"iterator\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"data\": \"...\",
+  \"data\": [{\"id\": \"...\", \"name\": \"...\", \"created\": 1234567890123, \"updated\": 1234567890123, \"expiry\": 1234567890123, \"role\": \"...\", \"enabled\": true}],
   \"iterator\": \"...\",
   \"prev_iterator\": \"...\",
-  \"done\": \"...\"
+  \"done\": true
 }")]
     List {
         admin_auth_token_list_in: Option<crate::json::JsonOf<diom::models::AdminAuthTokenListIn>>,
@@ -88,8 +88,8 @@ pub enum AdminAuthTokenCommands {
 {
   \"id\": \"...\",
   \"name\": \"...\",
-  \"expiry_ms\": \"...\",
-  \"enabled\": \"...\"
+  \"expiry_ms\": 60000,
+  \"enabled\": true
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

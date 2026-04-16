@@ -897,14 +897,17 @@ impl StoreHandle {
         self.inner.read().await.stores.read().msgs_state.clone()
     }
 
+    #[allow(unused)]
     pub(crate) async fn kv_store(&self) -> diom_kv::State {
         self.inner.read().await.stores.read().kv_state.clone()
     }
 
+    #[allow(unused)]
     pub(crate) async fn cache_store(&self) -> diom_cache::State {
         self.inner.read().await.stores.read().cache_state.clone()
     }
 
+    #[allow(unused)]
     pub(crate) async fn idempotency_store(&self) -> diom_idempotency::State {
         self.inner
             .read()

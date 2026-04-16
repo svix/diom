@@ -13,7 +13,7 @@ async fn kv_set(
     value: &str,
     behavior: &str,
 ) -> anyhow::Result<()> {
-    let response = client
+    client
         .post("v1.kv.set")
         .json(json!({
             "key": key,
@@ -22,9 +22,7 @@ async fn kv_set(
             "behavior": behavior
         }))
         .await?
-        .ensure(StatusCode::OK)?
-        .json();
-    anyhow::ensure!(response["success"] == true, "set should succeed");
+        .ensure(StatusCode::OK)?;
     Ok(())
 }
 
@@ -35,7 +33,7 @@ async fn kv_set_unsuccessful(
     value: &str,
     behavior: &str,
 ) -> anyhow::Result<()> {
-    let response = client
+    let resp = client
         .post("v1.kv.set")
         .json(json!({
             "key": key,
@@ -44,9 +42,12 @@ async fn kv_set_unsuccessful(
             "behavior": behavior
         }))
         .await?
-        .ensure(StatusCode::OK)?
+        .ensure(StatusCode::BAD_REQUEST)?
         .json();
-    anyhow::ensure!(response["success"] == false, "set should fail");
+    anyhow::ensure!(
+        resp["code"] == "conflict",
+        "expected conflict error, got: {resp}"
+    );
     Ok(())
 }
 
@@ -383,7 +384,7 @@ async fn test_kv_delete_with_version() -> TestResult {
         .await?
         .ensure(StatusCode::BAD_REQUEST)?
         .json();
-    assert_eq!(err["code"], "version_mismatch");
+    assert_eq!(err["code"], "conflict");
 
     // Key should still be intact
     let get_resp = kv_get(&client, "occ-del-key").await?;
@@ -441,7 +442,7 @@ async fn test_kv_delete_with_stale_version() -> TestResult {
         .await?
         .ensure(StatusCode::BAD_REQUEST)?
         .json();
-    assert_eq!(err["code"], "version_mismatch");
+    assert_eq!(err["code"], "conflict");
 
     // Key should still hold the updated value
     let get_resp = kv_get(&client, "occ-del-stale").await?;

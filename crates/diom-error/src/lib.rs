@@ -1,14 +1,8 @@
-use std::{error, fmt, panic::Location, time::Duration};
+use std::{error, fmt, panic::Location};
 
 use aide::OperationOutput;
-use axum::{
-    http::{HeaderValue, header::RETRY_AFTER},
-    response::{IntoResponse, Response},
-};
-use diom_core::{
-    types::DurationMs,
-    validation::{ValidationErrorBody, ValidationErrorItem},
-};
+use axum::response::{IntoResponse, Response};
+use diom_core::validation::{ValidationErrorBody, ValidationErrorItem};
 use diom_proto::{MsgPackOrJson, StandardErrorBody};
 use hyper::StatusCode;
 use serde_json::json;
@@ -40,15 +34,15 @@ impl Error {
         })
     }
 
-    pub fn conflict(detail: impl fmt::Display, retry_after: Option<DurationMs>) -> Self {
-        Self::new(ErrorType::Conflict {
-            body: StandardErrorBody::new("conflict", detail.to_string()),
-            retry_after,
-        })
+    pub fn conflict(detail: impl fmt::Display) -> Self {
+        Self::new(ErrorType::BadRequest(StandardErrorBody::new(
+            "conflict",
+            detail.to_string(),
+        )))
     }
 
-    pub fn not_found(detail: impl Into<Option<String>>) -> Self {
-        Self::new(ErrorType::NotFound(StandardErrorBody::new(
+    pub fn entity_not_found(detail: impl Into<Option<String>>) -> Self {
+        Self::new(ErrorType::EntityNotFound(StandardErrorBody::new(
             "not_found",
             detail
                 .into()
@@ -111,18 +105,8 @@ impl Error {
     /// Decompose into HTTP status, optional error code, and optional detail message.
     pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
         match *self.0 {
-            ErrorType::BadRequest(body) => (
+            ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
                 StatusCode::BAD_REQUEST,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::NotFound(body) => (
-                StatusCode::NOT_FOUND,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::Conflict { body, .. } => (
-                StatusCode::CONFLICT,
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
@@ -180,22 +164,9 @@ impl IntoResponse for Error {
                 tracing::debug!(error = %body, "bad request");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
             }
-            ErrorType::NotFound(body) => {
+            ErrorType::EntityNotFound(body) => {
                 tracing::debug!(error = %body, "entity not found");
                 (StatusCode::BAD_REQUEST, MsgPackOrJson(body)).into_response()
-            }
-            ErrorType::Conflict { body, retry_after } => {
-                tracing::debug!(error = %body, retry_after = ?retry_after, "conflict");
-                let mut response = (StatusCode::CONFLICT, MsgPackOrJson(body)).into_response();
-                if let Some(retry_after) = retry_after {
-                    let retry_after: Duration = retry_after.into();
-                    response.headers_mut().insert(
-                        RETRY_AFTER,
-                        HeaderValue::from_str(&retry_after.as_secs().to_string())
-                            .expect("seconds to string contains valid characters"),
-                    );
-                }
-                response
             }
             ErrorType::Validation(body) => {
                 tracing::debug!(error = %body, "validation error");
@@ -301,14 +272,7 @@ pub enum ErrorType {
     BadRequest(StandardErrorBody),
 
     /// Entity not found
-    NotFound(StandardErrorBody),
-
-    /// A conflict occurred
-    Conflict {
-        body: StandardErrorBody,
-        /// When set, how long to wait before retrying; emitted as HTTP `Retry-After`.
-        retry_after: Option<DurationMs>,
-    },
+    EntityNotFound(StandardErrorBody),
 
     /// Authentication error
     Authentication(StandardErrorBody),
@@ -339,8 +303,7 @@ impl fmt::Display for ErrorType {
             Self::Internal { message, .. } => message.fmt(f),
             Self::NotReady { message } => write!(f, "not_ready {message}"),
             Self::BadRequest(s) => write!(f, "bad_request {s}"),
-            Self::NotFound(s) => write!(f, "not_found {s}"),
-            Self::Conflict { body, .. } => write!(f, "conflict {body}"),
+            Self::EntityNotFound(s) => write!(f, "not_found {s}"),
             Self::Authentication(s) => write!(f, "authn {s}"),
             Self::Authorization(s) => write!(f, "authz {s}"),
             Self::Validation(s) => s.fmt(f),

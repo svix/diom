@@ -1,9 +1,11 @@
 use crate::State;
 
+mod clear_expired;
 mod configure_namespace;
 mod delete;
 mod set;
 
+pub use clear_expired::ClearExpiredOperation;
 pub use configure_namespace::{ConfigureCacheOperation, ConfigureCacheResponseData};
 pub use delete::{DeleteOperation, DeleteResponseData};
 pub use set::SetOperation;
@@ -18,9 +20,10 @@ pub struct CacheRaftState<'a> {
 raft_module_operations!(
     CacheRequest,
     CacheOperation {
-        Set(SetOperation) -> (),
-        Delete(DeleteOperation) -> DeleteResponseData,
+        ClearExpired(ClearExpiredOperation) -> (),
         ConfigureCache(ConfigureCacheOperation) -> ConfigureCacheResponseData,
+        Delete(DeleteOperation) -> DeleteResponseData,
+        Set(SetOperation) -> (),
     },
     state = CacheRaftState<'_>,
 );
@@ -28,9 +31,10 @@ raft_module_operations!(
 impl CacheOperation {
     pub fn key_name(&self) -> Option<&str> {
         match self {
-            Self::Set(op) => Some(&op.key),
-            Self::Delete(op) => Some(&op.key),
+            Self::ClearExpired(_) => None,
             Self::ConfigureCache(op) => Some(&op.name),
+            Self::Delete(op) => Some(&op.key),
+            Self::Set(op) => Some(&op.key),
         }
     }
 }

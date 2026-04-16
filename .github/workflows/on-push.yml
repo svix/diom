@@ -63,3 +63,16 @@ jobs:
       contents: read
       packages: write
       security-events: write
+
+  helm-publish:
+    needs: ci
+    uses: ./.github/workflows/helm-publish.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+    with:
+      version: 0.0.0-${{ github.sha }}
+      server_image_tag: sha-${{ github.sha }}
+      operator_image_tag: sha-${{ github.sha }}
+      is_release: false

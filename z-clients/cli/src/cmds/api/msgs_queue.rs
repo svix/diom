@@ -23,12 +23,12 @@ pub enum MsgsQueueCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"batch_size\": \"...\",
-  \"lease_duration_ms\": \"...\",
-  \"batch_wait_ms\": \"...\"
+  \"batch_size\": 123,
+  \"lease_duration_ms\": 60000,
+  \"batch_wait_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"msgs\": \"...\"
+  \"msgs\": [{\"msg_id\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
 }")]
     Receive {
         topic: String,
@@ -41,7 +41,7 @@ pub enum MsgsQueueCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"msg_ids\": \"...\"
+  \"msg_ids\": [\"...\"]
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -57,8 +57,8 @@ pub enum MsgsQueueCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"msg_ids\": \"...\",
-  \"lease_duration_ms\": \"...\"
+  \"msg_ids\": [\"...\"],
+  \"lease_duration_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]
@@ -74,11 +74,11 @@ pub enum MsgsQueueCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"retry_schedule\": \"...\",
+  \"retry_schedule\": [123],
   \"dlq_topic\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"retry_schedule\": \"...\",
+  \"retry_schedule\": [123],
   \"dlq_topic\": \"...\"
 }")]
     Configure {
@@ -93,7 +93,7 @@ pub enum MsgsQueueCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"msg_ids\": \"...\"
+  \"msg_ids\": [\"...\"]
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
 }")]

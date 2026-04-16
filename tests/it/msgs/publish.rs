@@ -304,7 +304,7 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
         .await?
         .expect(StatusCode::OK);
 
-    client
+    let err = client
         .post("v1.msgs.publish")
         .json(json!({
             "namespace": "ns-idem",
@@ -313,7 +313,9 @@ async fn publish_rejects_reused_idempotency_key() -> TestResult {
             "msgs": [{ "value": "second".as_bytes() }],
         }))
         .await?
-        .expect(StatusCode::CONFLICT);
+        .expect(StatusCode::BAD_REQUEST)
+        .json();
+    assert_eq!(err["code"], "conflict");
 
     // Same idempotency key, different topic should succeed
     client
@@ -405,7 +407,8 @@ async fn publish_with_idempotency_key_concurrent() -> TestResult {
         if matches!(resp.status(), StatusCode::OK) {
             ok += 1;
         } else {
-            assert!(matches!(resp.status(), StatusCode::CONFLICT));
+            assert!(matches!(resp.status(), StatusCode::BAD_REQUEST));
+            assert_eq!(resp.json()["code"], "conflict");
         }
     }
 

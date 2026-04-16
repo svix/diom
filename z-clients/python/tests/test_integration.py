@@ -43,8 +43,7 @@ def test_kv_set_get_delete(client):
     value = b"python-sync-kv-value"
 
     # Set
-    set_resp = client.kv.set(key, value)
-    assert set_resp.success is True
+    client.kv.set(key, value)
 
     # Get
     get_resp = client.kv.get(key, KvGetIn())
@@ -93,8 +92,7 @@ async def test_kv_set_get_delete_async(async_client):
     value = b"python-async-kv-value"
 
     # Set
-    set_resp = await async_client.kv.set(key, value)
-    assert set_resp.success is True
+    await async_client.kv.set(key, value)
 
     # Get
     get_resp = await async_client.kv.get(key, KvGetIn())

@@ -18,7 +18,7 @@ pub enum HealthCommands {
     /// Verify the server is up and running.
     #[command(after_long_help = "\x1b[1;4mExample response:\x1b[0m
 {
-  \"ok\": \"...\"
+  \"ok\": true
 }")]
     Ping {},
     /// Intentionally return an error
