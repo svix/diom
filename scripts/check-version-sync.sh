@@ -29,8 +29,8 @@ py_version=$(sed -n 's/^version *= *"\(.*\)"/\1/p' "$REPO_ROOT/z-clients/python/
 check "z-clients/python/pyproject.toml" "$py_version"
 
 # Java
-java_version=$(sed -n 's/^VERSION_NAME=\(.*\)/\1/p' "$REPO_ROOT/z-clients/java/gradle.properties")
-check "z-clients/java/gradle.properties" "$java_version"
+java_version=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' "$REPO_ROOT/z-clients/java/pom.xml" | head -1)
+check "z-clients/java/pom.xml" "$java_version"
 
 # Helm chart version
 helm_version=$(sed -n 's/^version: *\(.*\)/\1/p' "$REPO_ROOT/infra/helm-diom/Chart.yaml")
