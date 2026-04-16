@@ -33,12 +33,14 @@ class IntegrationTest {
     }
 
     @Test
+    @Tag("integration")
     void testHealthPing() throws Exception {
         PingOut resp = client.getHealth().ping();
         assertNotNull(resp);
     }
 
     @Test
+    @Tag("integration")
     void testKvSetGetDelete() throws Exception {
         String key = "java-integration-kv-key";
         byte[] value = "java-integration-kv-value".getBytes();
@@ -61,6 +63,7 @@ class IntegrationTest {
     }
 
     @Test
+    @Tag("integration")
     void testMsgsQueueSubresourceChaining() throws Exception {
         String namespace = "java-integration-ns";
         String topic = "java-integration-topic";
@@ -86,6 +89,7 @@ class IntegrationTest {
     }
 
     @Test
+    @Tag("integration")
     void testCacheSetGetDelete() throws Exception {
         String key = "java-integration-cache-key";
         byte[] value = "java-integration-cache-value".getBytes();
