@@ -36,28 +36,8 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class KvSetOut {
-    @JsonProperty private Boolean success;
     @JsonProperty private Long version;
     public KvSetOut() {}
-
-    public KvSetOut success(Boolean success) {
-        this.success = success;
-        return this;
-    }
-
-    /**
-    * Whether the operation succeeded or was a noop due to pre-conditions.
-    *
-     * @return success
-     */
-    @javax.annotation.Nonnull
-    public Boolean getSuccess() {
-        return success;
-    }
-
-    public void setSuccess(Boolean success) {
-        this.success = success;
-    }
 
     public KvSetOut version(Long version) {
         this.version = version;

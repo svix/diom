@@ -47,7 +47,6 @@ class IntegrationTest {
 
         // Set
         KvSetOut setResp = client.kv().set(key, value);
-        assertTrue(setResp.getSuccess());
 
         // Get
         KvGetOut getResp = client.kv().get(key);

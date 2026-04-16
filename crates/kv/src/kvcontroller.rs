@@ -46,7 +46,6 @@ pub struct KvModelIn {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KvSetResult {
     pub version: u64,
-    pub success: bool,
 }
 
 impl From<KvPairRow> for KvModel {
@@ -175,7 +174,7 @@ impl KvController {
             if let Some(expected) = model.version {
                 let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
                 if current_version != expected {
-                    return Err(Error::bad_request("version_mismatch", "version mismatch"));
+                    return Err(Error::conflict("version mismatch", None));
                 }
             }
 
@@ -199,11 +198,8 @@ impl KvController {
                     )?;
                 }
                 OperationBehavior::Insert => {
-                    if let Some(current) = current {
-                        return Ok(KvSetResult {
-                            version: current.version,
-                            success: false,
-                        });
+                    if current.is_some() {
+                        return Err(Error::conflict("key already exists", None));
                     } else {
                         Self::insert_with_expiration(
                             &db,
@@ -216,9 +212,7 @@ impl KvController {
                     }
                 }
                 OperationBehavior::Update => {
-                    let exists = current.is_some();
-
-                    if exists {
+                    if current.is_some() {
                         Self::insert_with_expiration(
                             &db,
                             &keyspace,
@@ -228,17 +222,13 @@ impl KvController {
                             current.and_then(|c| c.expiry),
                         )?;
                     } else {
-                        return Ok(KvSetResult {
-                            version: 0,
-                            success: false,
-                        });
+                        return Err(Error::conflict("key not found", None));
                     }
                 }
             };
 
             Ok(KvSetResult {
                 version: new_version,
-                success: true,
             })
         })
         .await?
@@ -263,7 +253,7 @@ impl KvController {
             if let Some(expected) = version {
                 let current_version = current.as_ref().map(|m| m.version).unwrap_or(0);
                 if current_version != expected {
-                    return Err(Error::bad_request("version_mismatch", "version mismatch"));
+                    return Err(Error::conflict("version mismatch", None));
                 }
             }
 
@@ -479,7 +469,7 @@ mod tests {
         let setup = SetupFixture::new();
         let controller = setup.controller;
 
-        // Update on non-existent key returns false
+        // Update on non-existent key returns an error
         let res = controller
             .set(
                 ns(),
@@ -494,7 +484,7 @@ mod tests {
                 0,
             )
             .await;
-        assert!(!res.unwrap().success);
+        assert!(res.is_err());
         assert!(!key_exists(&controller, "key1").await);
 
         let res = controller
@@ -511,12 +501,12 @@ mod tests {
                 0,
             )
             .await;
-        assert!(res.unwrap().success);
+        assert!(res.is_ok());
         assert!(key_exists(&controller, "key1").await);
         let result = controller.fetch(ns(), "key1", now()).await.unwrap();
         assert!(result.is_some());
 
-        // Insert on existing key returns false
+        // Insert on existing key returns an error
         let res = controller
             .set(
                 ns(),
@@ -531,7 +521,7 @@ mod tests {
                 0,
             )
             .await;
-        assert!(!res.unwrap().success);
+        assert!(res.is_err());
         assert!(key_exists(&controller, "key1").await);
         let result = controller.fetch(ns(), "key1", now()).await.unwrap();
         assert!(result.is_some());
@@ -552,7 +542,7 @@ mod tests {
                 0,
             )
             .await;
-        assert!(res.unwrap().success);
+        assert!(res.is_ok());
         assert!(key_exists(&controller, "key1").await);
         let result = controller.fetch(ns(), "key1", now()).await.unwrap();
         assert!(result.is_some());

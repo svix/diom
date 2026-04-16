@@ -6798,10 +6798,6 @@
       "KvSetOut": {
         "type": "object",
         "properties": {
-          "success": {
-            "description": "Whether the operation succeeded or was a noop due to pre-conditions.",
-            "type": "boolean"
-          },
           "version": {
             "type": "integer",
             "format": "uint64",
@@ -6809,7 +6805,6 @@
           }
         },
         "required": [
-          "success",
           "version"
         ]
       },

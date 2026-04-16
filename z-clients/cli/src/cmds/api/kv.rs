@@ -26,7 +26,6 @@ pub enum KvCommands {
   \"version\": 123
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"success\": true,
   \"version\": 123
 }")]
     Set {
