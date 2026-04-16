@@ -170,6 +170,22 @@ jobs:
           else
             echo 'all good.'
           fi
+  operator-e2e:
+    name: Operator e2e tests
+    runs-on: ubicloud-standard-4-ubuntu-2404
+    continue-on-error: true
+    timeout-minutes: 20
+    env:
+      DIOM_LOG_LEVEL: debug
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ubicloud/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: helm/kind-action@v1.14.0
+      - name: Run operator e2e tests
+        run: cargo test -p diom-operator --features operator-e2e
   security-audit:
     runs-on: ubuntu-24.04
     steps:
