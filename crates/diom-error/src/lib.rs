@@ -111,13 +111,8 @@ impl Error {
     /// Decompose into HTTP status, optional error code, and optional detail message.
     pub fn into_parts(self) -> (StatusCode, Option<String>, Option<String>) {
         match *self.0 {
-            ErrorType::BadRequest(body) => (
+            ErrorType::BadRequest(body) | ErrorType::EntityNotFound(body) => (
                 StatusCode::BAD_REQUEST,
-                Some(body.code().to_owned()),
-                Some(body.detail().to_owned()),
-            ),
-            ErrorType::EntityNotFound(body) => (
-                StatusCode::NOT_FOUND,
                 Some(body.code().to_owned()),
                 Some(body.detail().to_owned()),
             ),
