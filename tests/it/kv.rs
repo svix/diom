@@ -42,7 +42,7 @@ async fn kv_set_unsuccessful(
             "behavior": behavior
         }))
         .await?
-        .ensure(StatusCode::CONFLICT)?
+        .ensure(StatusCode::BAD_REQUEST)?
         .json();
     anyhow::ensure!(
         resp["code"] == "conflict",
@@ -382,7 +382,7 @@ async fn test_kv_delete_with_version() -> TestResult {
         .post("v1.kv.delete")
         .json(json!({ "key": "occ-del-key", "version": version + 1 }))
         .await?
-        .ensure(StatusCode::CONFLICT)?
+        .ensure(StatusCode::BAD_REQUEST)?
         .json();
     assert_eq!(err["code"], "conflict");
 
@@ -440,7 +440,7 @@ async fn test_kv_delete_with_stale_version() -> TestResult {
         .post("v1.kv.delete")
         .json(json!({ "key": "occ-del-stale", "version": v1 }))
         .await?
-        .ensure(StatusCode::CONFLICT)?
+        .ensure(StatusCode::BAD_REQUEST)?
         .json();
     assert_eq!(err["code"], "conflict");
 
