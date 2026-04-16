@@ -28,7 +28,7 @@ pub enum MsgsStreamCommands {
   \"batch_wait_ms\": 60000
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
-  \"msgs\": [{\"offset\": 123, \"topic\": \"...\", \"value\": \"dGVzdA==\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
+  \"msgs\": [{\"offset\": 123, \"topic\": \"...\", \"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"timestamp\": 1234567890123, \"scheduled_at\": 1234567890123}]
 }")]
     Receive {
         topic: String,

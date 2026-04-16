@@ -42,7 +42,7 @@ pub enum KvCommands {
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
   \"expiry\": 1234567890123,
-  \"value\": \"dGVzdA==\",
+  \"value\": \"...\",
   \"version\": 123
 }")]
     Get {

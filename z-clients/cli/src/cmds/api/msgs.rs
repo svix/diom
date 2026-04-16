@@ -24,7 +24,7 @@ pub enum MsgsCommands {
     #[command(after_long_help = "\x1b[1;4mExample body:\x1b[0m
 {
   \"namespace\": \"some_namespace\",
-  \"msgs\": [{\"value\": \"dGVzdA==\", \"headers\": {\"key\": \"...\"}, \"key\": \"...\", \"delay_ms\": 60000}],
+  \"msgs\": [{\"value\": \"...\", \"headers\": {\"key\": \"...\"}, \"key\": \"...\", \"delay_ms\": 60000}],
   \"idempotency_key\": \"...\"
 }\n\n\x1b[1;4mExample response:\x1b[0m
 {
