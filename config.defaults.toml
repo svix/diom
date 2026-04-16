@@ -208,7 +208,6 @@ path = "./db"
 # JWT algorithm.
 #
 # Supported values are HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, PS256, PS384, PS512.
-# values in its `aud` claim. When absent, `aud` is not validated.
 # algorithm =
 
 # Secret for JWT algorithm HS256, HS384 or HS512

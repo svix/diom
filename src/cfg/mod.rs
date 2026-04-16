@@ -746,10 +746,6 @@ impl DumpableConfig for Option<JwtKey> {
             writer,
             "# Supported values are HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, PS256, PS384, PS512."
         )?;
-        writeln!(
-            writer,
-            "# values in its `aud` claim. When absent, `aud` is not validated.",
-        )?;
         dump_optional_field("algorithm", key.map(JwtKey::algorithm), writer)?;
 
         // secret
